@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.ProvidedPortDeclaration">
+    <Position X="4.25" Y="4.25" Width="2" />
+    <AssociationLine Name="Statement" Type="SafetySharp.Compiler.FormalModel.Ast.Statement" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6.062" Y="5.353" />
+        <Point X="6.062" Y="7.346" />
+        <Point X="7.25" Y="7.346" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQCAAAAAAAAAAAAAAAEAgA=</HashCode>
+      <FileName>FormalModel\Declarations\ProvidedPortDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ReturnType" />
+      <Property Name="Statement" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="ParameterTypes" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.ProvidedPartitionPortDeclaration">
+    <Position X="5" Y="0.5" Width="2.5" />
+    <AssociationLine Name="ReturnType" Type="SafetySharp.Compiler.FormalModel.Declarations.DataTypeDeclaration" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="5" Y="1.062" />
+        <Point X="3.963" Y="1.062" />
+        <Point X="3.963" Y="10.254" />
+        <Point X="10.188" Y="10.254" />
+        <Point X="10.188" Y="9.868" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQACAAAAAAAAAAAAAAEAAA=</HashCode>
+      <FileName>FormalModel\Declarations\ProvidedPartitionPortDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Port" />
+      <Property Name="ReturnType" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.PartitionDeclaration">
+    <Position X="9.75" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAEAAAAAAAAAAQAAAAABAAAAABAAAAAAAA=</HashCode>
+      <FileName>FormalModel\Declarations\PartitionDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Component" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="ProvidedPorts" />
+      <Property Name="RequiredPorts" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.ComponentDeclaration">
+    <Position X="9.75" Y="3.5" Width="2" />
+    <AssociationLine Name="SubComponents" Type="SafetySharp.Compiler.FormalModel.Declarations.ComponentDeclaration">
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="-0.524" Y="0.266" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAEAAAAAAQAAAQAAAAABgAAAAQAAAAAAAA=</HashCode>
+      <FileName>FormalModel\Declarations\ComponentDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="UpdateStatement" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="ProvidedPorts" />
+      <Property Name="SubComponents" />
+      <Property Name="RequiredPorts" />
+      <Property Name="Variables" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.RequiredPartitionPortDeclaration">
+    <Position X="15" Y="1.75" Width="2.5" />
+    <AssociationLine Name="ReturnType" Type="SafetySharp.Compiler.FormalModel.Declarations.DataTypeDeclaration" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="16.531" Y="3.046" />
+        <Point X="16.531" Y="9.688" />
+        <Point X="11" Y="9.688" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAEAgA=</HashCode>
+      <FileName>FormalModel\Declarations\RequiredPartitionPortDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ReturnType" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.VariableDeclaration">
+    <Position X="13.75" Y="4" Width="1.75" />
+    <AssociationLine Name="Type" Type="SafetySharp.Compiler.FormalModel.Declarations.DataTypeDeclaration" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="14.625" Y="5.296" />
+        <Point X="14.625" Y="9.375" />
+        <Point X="11" Y="9.375" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAQAAAAAAAgA=</HashCode>
+      <FileName>FormalModel\Declarations\VariableDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Type" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.RequiredPortDeclaration">
+    <Position X="11.25" Y="7.25" Width="2" />
+    <AssociationLine Name="ReturnType" Type="SafetySharp.Compiler.FormalModel.Declarations.DataTypeDeclaration" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="12.516" Y="8.546" />
+        <Point X="12.516" Y="9.125" />
+        <Point X="11" Y="9.125" />
+      </Path>
+    </AssociationLine>
+    <AssociationLine Name="ParameterTypes" Type="SafetySharp.Compiler.FormalModel.Declarations.DataTypeDeclaration" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="11.719" Y="8.546" />
+        <Point X="11.719" Y="8.75" />
+        <Point X="10.562" Y="8.75" />
+        <Point X="10.562" Y="9" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAEAgA=</HashCode>
+      <FileName>FormalModel\Declarations\RequiredPortDeclaration.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="ReturnType" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="ParameterTypes" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Declarations.DataTypeDeclaration">
+    <Position X="9.5" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>FormalModel\Declarations\DataTypeDeclaration.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SafetySharp.Compiler.FormalModel.Ast.Statement" Collapsed="true">
+    <Position X="7.25" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>FormalModel\Ast\Statement.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

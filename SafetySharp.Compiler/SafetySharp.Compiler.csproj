@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3751A884-E3F9-4731-B6FE-3D8783FA8D05}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SafetySharp.Compiler</RootNamespace>
+    <AssemblyName>ssc</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assert.cs" />
+    <Compile Include="FormalModel\Instances\ComponentInstance.cs" />
+    <Compile Include="FormalModel\Instances\Literal.cs" />
+    <Compile Include="FormalModel\Instances\PartitionInstance.cs" />
+    <Compile Include="FormalModel\Instances\PartitionPortBinding.cs" />
+    <Compile Include="FormalModel\Instances\PortBinding.cs" />
+    <Compile Include="FormalModel\Ast\AssignmentStatement.cs" />
+    <Compile Include="FormalModel\Ast\AstNode.cs" />
+    <Compile Include="FormalModel\Ast\BinaryExpression.cs" />
+    <Compile Include="FormalModel\Ast\BinaryOperator.cs" />
+    <Compile Include="FormalModel\Declarations\BooleanDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\ComponentDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\DataTypeDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\DecimalDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\IntegerDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\PartitionDeclaration.cs" />
+    <Compile Include="FormalModel\Ast\Expression.cs" />
+    <Compile Include="FormalModel\Ast\GuardedCommandStatement.cs" />
+    <Compile Include="FormalModel\Ast\IAstVisitor.cs" />
+    <Compile Include="FormalModel\Ast\LiteralExpression.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FormalModel\Declarations\ProvidedPartitionPortDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\ProvidedPortDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\RequiredPartitionPortDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\RequiredPortDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\TupleDeclaration.cs" />
+    <Compile Include="FormalModel\Declarations\VariableDeclaration.cs" />
+    <Compile Include="FormalModel\Ast\ReadPartitionPortExpression.cs" />
+    <Compile Include="FormalModel\Ast\ReadPortStatement.cs" />
+    <Compile Include="FormalModel\Ast\ReturnStatement.cs" />
+    <Compile Include="FormalModel\Ast\Statement.cs" />
+    <Compile Include="FormalModel\Ast\UnaryExpression.cs" />
+    <Compile Include="FormalModel\Ast\UnaryOperator.cs" />
+    <Compile Include="FormalModel\Ast\VariableExpression.cs" />
+    <Compile Include="ResharperAttributes.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FormalModel\Declarations\Declarations.cd" />
+    <None Include="FormalModel\Instances\Instances.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SafetySharp\SafetySharp.csproj">
+      <Project>{d9cad497-f647-42d8-be13-6406de53331d}</Project>
+      <Name>SafetySharp</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
