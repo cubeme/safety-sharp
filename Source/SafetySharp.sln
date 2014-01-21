@@ -16,6 +16,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{545B57
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Models", "Models", "{DBE36C71-06B7-4EB6-8A61-BFAB2BA3C3D5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{415B40E7-B60E-4CCB-9DD5-BFFE5C350E06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elbtunnel", "Models\Elbtunnel\Elbtunnel.csproj", "{6AE088BD-212E-4F38-96A1-B16C4F95D243}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,8 +40,15 @@ Global
 		{B0C57AC6-F3F7-4340-8268-7F028907EC1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0C57AC6-F3F7-4340-8268-7F028907EC1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0C57AC6-F3F7-4340-8268-7F028907EC1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6AE088BD-212E-4F38-96A1-B16C4F95D243} = {DBE36C71-06B7-4EB6-8A61-BFAB2BA3C3D5}
 	EndGlobalSection
 EndGlobal
