@@ -39,17 +39,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\SafetySharp.Compiler\SafetySharp.Compiler.csproj">
+      <Project>{3751a884-e3f9-4731-b6fe-3d8783fa8d05}</Project>
+      <Name>SafetySharp.Compiler</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\SafetySharp\SafetySharp.csproj">
       <Project>{d9cad497-f647-42d8-be13-6406de53331d}</Project>
       <Name>SafetySharp</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <PropertyGroup>
+    <PostBuildEvent>"$(TargetDir)ssc.exe" "$(TargetPath)" "$(ProjectPath)"</PostBuildEvent>
+  </PropertyGroup>
 </Project>
