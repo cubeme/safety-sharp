@@ -20,29 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp
-{
-	using System;
+module Test
 
-	/// <summary>
-	///     Controls the semantics of the assignment operator when the assigned value lies outside the variable's range.
-	/// </summary>
-	public enum OverflowBehavior
-	{
-		/// <summary>
-		///     Indicates the assigned value is clamped to the variable's minimum or maximum value.
-		/// </summary>
-		Clamp,
+open NUnit.Framework
+open FsUnit
 
-		/// <summary>
-		///     Indicates the assigned value wraps around if it underflows or overflows the variable's range.
-		/// </summary>
-		WrapAround,
-
-		/// <summary>
-		///     Indicates that an exception is thrown when a value outside the range of the variable is assigned during
-		///     simulation. During model-checking, however, the precise behavior of this overflow behavior is undefined.
-		/// </summary>
-		Error
-	}
-}
+[<Test>]
+let MyTest () =
+    true |> should be True
