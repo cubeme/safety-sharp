@@ -39,8 +39,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SafetySharp.Compiler\SafetySharp.Compiler.csproj">
-      <Project>{3751a884-e3f9-4731-b6fe-3d8783fa8d05}</Project>
+    <ProjectReference Include="..\..\SafetySharp.Compiler\SafetySharp.Compiler.fsproj">
+      <Project>{6f825bbc-bfc6-4004-b21e-b9d7df190db5}</Project>
       <Name>SafetySharp.Compiler</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\SafetySharp\SafetySharp.csproj">
