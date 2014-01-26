@@ -105,7 +105,7 @@ module (* internal *) Program =
         let options = Options ()
         use parser = new Parser (new Action<ParserSettings> (fun c -> c.HelpWriter <- Console.Out))
         if parser.ParseArguments (args, options) then
-            printfn "Project: %s" options.Project
+            CSharp.CompileProject options.Project |> ignore
 
         printfn ""
 
