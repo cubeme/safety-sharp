@@ -74,7 +74,7 @@ let resolveTypes context =
     enum
 
 let CompileProject projectFile =
-    let project = CSharpProjectContent () :> IProjectContent
+    let project = CSharpProjectContent ()
     let loader = CecilLoader();
 
     let assembly = [| loader.LoadAssemblyFile (typeof<int>.Assembly.Location) :> IAssemblyReference |]
