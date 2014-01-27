@@ -319,6 +319,11 @@ type PortType =
     | Required
     | Provided
 
+type Priority = {
+    Priority : int
+    SourceInfo : SourceInfo
+}
+
 /// Represents a method declaration or operator declaration of a user-defined immutable structure or a component.
 type MethodDeclaration = {
     /// The name of the method.
@@ -335,7 +340,7 @@ type MethodDeclaration = {
 
     IsOutport : bool
 
-    Priority : int
+    Priority : Priority
 
     /// The source information of the method.
     SourceInfo : SourceInfo
@@ -402,7 +407,7 @@ type PropertyDeclaration = {
 
     PortType : PortType option
 
-    Priority : int
+    Priority : Priority
 
     /// The source information of the property.
     SourceInfo : SourceInfo
@@ -440,6 +445,34 @@ type ComponentType =
     | Actuator
     | Controller
     | Environment
+    | Untyped
+
+type State = {
+    EnumType : EnumSlot
+    EnumMember : EnumMemberSlot
+
+    EntryAction : Statement
+    ExitAction : Statement
+    DoAction : Statement
+}
+
+type TransitionDeclaration = {
+    Source : State
+    Target : State
+    Guard : Expression
+    Action : Statement
+
+    Priority : Priority
+
+    Identifier : Identifier
+    
+    SourceInfo : SourceInfo
+}
+
+type StateMachine = {
+    Transitions : TransitionDeclaration list
+    States : State list
+}
 
 type ComponentDeclaration = {
     /// The name of the component.
@@ -463,6 +496,8 @@ type ComponentDeclaration = {
     Base : TypeReference
 
     Interfaces : TypeReference list
+
+    StateMachine : StateMachine option
 
     /// The source information of the component.
     SourceInfo : SourceInfo
