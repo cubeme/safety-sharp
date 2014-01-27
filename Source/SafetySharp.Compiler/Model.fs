@@ -70,6 +70,7 @@ type ParameterSlot = ParameterSlot of int
 type PropertySlot = PropertySlot of MemberInfo
 type StructSlot = StructSlot of TypeInfo
 type VariableSlot = VariableSlot of int
+type TypeParameterSlot = TypeParameterSlot of int
 
 /// Represents the declaration of an identifier used to name enumerations, components, fields, methods, and so on.
 type Identifier = {
@@ -181,6 +182,10 @@ type TypeReference =
         of TypeParameters : TypeReference list *
            ReturnType     : TypeReference *
            SourceInfo     : SourceInfo
+
+    | TypeParameter
+        of TypeParameterSlot : TypeParameterSlot *
+           SourceInfo        : SourceInfo
 
     /// Represents unknown or unsupported type used by simulation-only code.
     | Unknown
