@@ -21,6 +21,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Models", "Models", "{2D5C6ED1-ABDB-4A96-ADD5-99C94BD95A94}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elbtunnel", "Models\Elbtunnel\Elbtunnel.csproj", "{6AE088BD-212E-4F38-96A1-B16C4F95D243}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5} = {6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

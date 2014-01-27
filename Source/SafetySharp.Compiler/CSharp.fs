@@ -35,7 +35,7 @@ open SafetySharp.Compiler.Model
 open SafetySharp.Compiler.NRefactory
 
 // ======================================================================================================================================
-// NRefactory to Model Instances Conversion Functions
+// NRefactory Conversion Functions
 // ======================================================================================================================================
 
 /// Creates a SourceInfo instance for the given NRefactory AstNode.

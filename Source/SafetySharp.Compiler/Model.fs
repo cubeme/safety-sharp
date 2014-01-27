@@ -150,8 +150,8 @@ type Expression =
 
     /// Represents the creation of a tuple.
     | TupleExpression
-        of elements    : Expression list *
-           sourceInfos : SourceInfo list
+        of elements   : Expression list *
+           sourceInfo : SourceInfo
 
 /// Represents the declaration of an identifier used to name enumerations, components, fields, methods, and so on.
 type Identifier = {
