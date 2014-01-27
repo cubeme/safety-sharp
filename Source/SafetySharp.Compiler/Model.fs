@@ -100,27 +100,27 @@ type BinaryOperator =
 type Literal =
     /// Represents the Boolean constants 'true' or 'false'.
     | BooleanLiteral 
-        of value      : bool *
+        of Value      : bool *
            SourceInfo : SourceInfo
 
     /// Represents a positive or negative integer constant such as '-1', '0', or '1'.
     | IntegerLiteral 
-        of value      : int *
+        of Value      : int *
            SourceInfo : SourceInfo
 
     /// Represents a positive or negative decimal constant such as '-1.21', '0', or '3.14'.
     | DecimalLiteral 
-        of value      : decimal *
+        of Value      : decimal *
            SourceInfo : SourceInfo
 
     /// Represents an enumeration literal of the form 'EnumType.Literal'. The type slot can be used to retrieve the actual 
     /// declaration of the enumeration from the model's type information table and the literal is represented by its integer
     /// value. The literal's source information, however, maps to the literal's name in the source file.
     | EnumerationLiteral
-        of typeSlot         : EnumSlot *
-           typeSourceInfo   : SourceInfo *
-           enumMember       : EnumMemberSlot *
-           memberSourceInfo : SourceInfo
+        of TypeSlot         : EnumSlot *
+           TypeSourceInfo   : SourceInfo *
+           EnumMember       : EnumMemberSlot *
+           MemberSourceInfo : SourceInfo
 
 /// Represents a reference to a built-in or user-defined data type.
 type TypeReference =
@@ -143,34 +143,34 @@ type TypeReference =
     /// Represents a reference to a user-defined tuple type, i.e., a set of unnamed but ordered values, possibly of different types.
     /// Each element of the tuple is a type reference as well, therefore tuple-of-tuples of arbitrary depth are supported.
     | Tuple 
-        of dataTypes  : TypeReference list *
+        of DataTypes  : TypeReference list *
            SourceInfo : SourceInfo
 
     /// Represents a reference to an array, with all elements being of the same type. Arrays are of fixed size, with a length of 'None' 
     /// indicating that the length of the array has not yet been determined.
     | Array
-        of dataType   : TypeReference *
-           length     : int option *
+        of DataType   : TypeReference *
+           Length     : int option *
            SourceInfo : SourceInfo
 
     /// Represents a reference to a user-defined structure. The slot can be used to retrieve the actual declaration of the struct
     /// from the model's type information table.
     | Struct 
-        of structSlot : StructSlot *
+        of StructSlot : StructSlot *
            SourceInfo : SourceInfo
 
     /// Represents a reference to a user-defined enumeration. The slot can be used to retrieve the actual declaration of the 
     /// enumeration from the model's type information table.
     | Enum
-        of enumSlot   : EnumSlot *
+        of EnumSlot   : EnumSlot *
            SourceInfo : SourceInfo
 
     | Component
-        of componentSlot : ComponentSlot *
+        of ComponentSlot : ComponentSlot *
            SourceInfo    : SourceInfo
 
     | Interface
-        of interfaceSlot : InterfaceSlot *
+        of InterfaceSlot : InterfaceSlot *
            SourceInfo    : SourceInfo
 
     | Action
@@ -184,20 +184,20 @@ type TypeReference =
 
     /// Represents unknown or unsupported type used by simulation-only code.
     | Unknown
-        of unknownType : string *
+        of UnknownType : string *
            SourceInfo  : SourceInfo
 
 /// Represents an expression that computes a value.
 type Expression =
     /// Represents a constant value of a certain type.
     | LiteralExpression 
-        of literal    : Literal *
+        of Literal    : Literal *
            SourceInfo : SourceInfo
 
     /// Represents the application of an unary operator to a sub-expression.
     | UnaryOperatorExpression 
-        of operator   : UnaryOperator * 
-           expression : Expression *
+        of Operator   : UnaryOperator * 
+           Expression : Expression *
            SourceInfo : SourceInfo
 
     /// Represents the application of a binary operator to two sub-expressions.
@@ -209,8 +209,8 @@ type Expression =
 
     | ConditionalExpression
         of condition       : Expression *
-           trueExpression  : Expression *
-           falseExpression : Expression *
+           TrueExpression  : Expression *
+           FalseExpression : Expression *
            SourceInfo      : SourceInfo
 
     | DirectionExpression  // ref, out
@@ -219,14 +219,14 @@ type Expression =
         of SourceInfo : SourceInfo
 
     | AssignmentExpression
-        of leftExpression  : Expression *
-           rightExpression : Expression *
+        of LeftExpression  : Expression *
+           RightExpression : Expression *
            SourceInfo      : SourceInfo
 
     | InvocationExpression
         of target     : Expression *
-           methodSlot : MethodSlot *
-           parameters : Expression list *
+           MethodSlot : MethodSlot *
+           Parameters : Expression list *
            SourceInfo : SourceInfo
 
     | ParameterReferenceExpression
@@ -234,13 +234,13 @@ type Expression =
            SourceInfo    : SourceInfo
 
     | FieldReferenceExpression
-        of target     : Expression *
-           fieldSlot  : FieldSlot *
+        of Target     : Expression *
+           FieldSlot  : FieldSlot *
            SourceInfo : SourceInfo
 
     | PropertyReferenceExpression
         of target       : Expression *
-           propertySlot : PropertySlot *
+           PropertySlot : PropertySlot *
            SourceInfo   : SourceInfo
 
     | VariableReferenceExpression
@@ -258,11 +258,11 @@ type Expression =
 
     /// Represents the creation of a tuple.
     | TupleExpression
-        of elements   : Expression list *
+        of Elements   : Expression list *
            SourceInfo : SourceInfo
 
     | UnknownExpression
-        of expression : obj *
+        of Expression : obj *
            SourceInfo : SourceInfo
 
 type TypeParameterConstraint =
@@ -280,13 +280,13 @@ type Statement =
         of SourceInfo : SourceInfo
 
     | ExpressionStatement
-        of expression : Expression *
+        of Expression : Expression *
            SourceInfo : SourceInfo
 
     | IfElseStatement
-        of condition      : Expression *
-           trueStatement  : Statement *
-           falseStatement : Statement *
+        of Condition      : Expression *
+           TrueStatement  : Statement *
+           FalseStatement : Statement *
            SourceInfo     : SourceInfo
 
     | ReturnStatement
@@ -300,7 +300,7 @@ type Statement =
            SourceInfo  : SourceInfo
 
     | UnknownStatement
-        of statement  : obj *
+        of Statement  : obj *
            SourceInfo : SourceInfo
 
 /// Represents a parameter of a method declaration.
@@ -529,16 +529,16 @@ type InterfaceDeclaration = {
 type VariableMetadata = 
     /// Defines the range and the overflow behavior of an integer variable.
     | IntegerMetadata
-        of min        : int *
-           max        : int *
-           overflow   : OverflowBehavior
+        of Min        : int *
+           Max        : int *
+           Overflow   : OverflowBehavior
 
     /// Defines the range, the overflow behavior, and the resolution of a decimal variable.
     | DecimalMetadata
-        of min        : decimal *
-           max        : decimal *
-           overflow   : OverflowBehavior *
-           resolution : decimal
+        of Min        : decimal *
+           Max        : decimal *
+           Overflow   : OverflowBehavior *
+           Resolution : decimal
 
 
 type TypeTables = {
