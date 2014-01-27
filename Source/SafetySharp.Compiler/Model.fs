@@ -208,7 +208,7 @@ type Expression =
            SourceInfo      : SourceInfo
 
     | ConditionalExpression
-        of condition       : Expression *
+        of Condition       : Expression *
            TrueExpression  : Expression *
            FalseExpression : Expression *
            SourceInfo      : SourceInfo
@@ -239,12 +239,12 @@ type Expression =
            SourceInfo : SourceInfo
 
     | PropertyReferenceExpression
-        of target       : Expression *
+        of Target       : Expression *
            PropertySlot : PropertySlot *
            SourceInfo   : SourceInfo
 
     | VariableReferenceExpression
-        of variableSlot : VariableSlot *
+        of VariableSlot : VariableSlot *
            SourceInfo   : SourceInfo
 
     | BaseReferenceExpression
