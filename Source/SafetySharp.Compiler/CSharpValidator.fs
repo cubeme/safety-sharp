@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module internal SafetySharp.Compiler.CSharpValidation
+module internal SafetySharp.Compiler.CSharpValidator
 
 open System
 open System.IO

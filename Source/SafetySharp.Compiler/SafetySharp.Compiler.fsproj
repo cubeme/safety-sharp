@@ -63,8 +63,8 @@
   <ItemGroup>
     <Compile Include="Model.fs" />
     <Compile Include="NRefactory.fs" />
-    <Compile Include="CSharpValidation.fs" />
-    <Compile Include="CSharpConversion.fs" />
+    <Compile Include="CSharpValidator.fs" />
+    <Compile Include="CSharpParser.fs" />
     <Compile Include="CompilerServices.fs" />
     <Compile Include="Program.fs" />
     <None Include="packages.config" />

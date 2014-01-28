@@ -108,7 +108,7 @@ module (* internal *) Program =
         use parser = new Parser (new Action<ParserSettings> (fun c -> c.HelpWriter <- Console.Out))
         if parser.ParseArguments (args, options) then
             let context = NRefactory.ParseProject options.Project
-            CSharpConversion.resolveTypes context |> ignore
+            CSharpParser.resolveTypes context |> ignore
 
         printfn ""
 

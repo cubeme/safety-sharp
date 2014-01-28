@@ -33,14 +33,21 @@ open ICSharpCode.NRefactory.CSharp.Resolver
 open ICSharpCode.NRefactory.Semantics
 open ICSharpCode.NRefactory.TypeSystem
 
-let validate declaration =
+let private act declaration action =
     let context = NRefactory.ParseString declaration
+
     let enumDecl = 
         context.SyntaxTree.Members
         |> Seq.head 
         :?> TypeDeclaration
 
-    CSharpValidation.validateEnumDeclaration context enumDecl
+    action context enumDecl
+
+let validate declaration =
+    act declaration CSharpValidator.validateEnumDeclaration
+
+let create declaration =
+    act declaration CSharpParser.createEnumDeclaration
 
 [<Test>]
 let ``enum with implicit underlying type should be valid`` () =
@@ -85,3 +92,13 @@ let ``enum with member expression on first member should be invalid`` () =
 [<Test>]
 let ``enum with member expression on last member should be invalid`` () =
     validate "enum E { A, B, C = 3 }" |> should be False
+
+[<Test>]
+let ``enum name should be 'E'`` () =
+    let enum = create "enum E { }"
+    enum.Name.Name |> should equal "E"
+
+[<Test>]
+let ``enum without members should not have any members`` () =
+    let enum = create "enum E { }"
+    enum.Members |> should equal []

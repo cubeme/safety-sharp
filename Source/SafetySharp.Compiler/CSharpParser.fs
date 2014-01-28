@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module internal SafetySharp.Compiler.CSharpConversion
+module internal SafetySharp.Compiler.CSharpParser
 
 open System
 open System.IO
@@ -39,7 +39,7 @@ open SafetySharp.Compiler.NRefactory
 // ======================================================================================================================================
 
 /// Creates a SourceInfo instance for the given NRefactory AstNode.
-let toSourceInfo context (node : AstNode) = {  
+let createSourceInfo context (node : AstNode) = {  
     File = context.SyntaxTree.FileName
     BeginLine = node.StartLocation.Line
     BeginColumn = node.StartLocation.Column
@@ -48,19 +48,19 @@ let toSourceInfo context (node : AstNode) = {
 }
 
 /// Creates an Identifier for the given NRefactory Identifier
-let toIdentifier context (identifier : ICSharpCode.NRefactory.CSharp.Identifier) = { 
+let createIdentifier context (identifier : ICSharpCode.NRefactory.CSharp.Identifier) = { 
     Identifier.Name = identifier.Name
-    Identifier.SourceInfo = toSourceInfo context identifier
+    Identifier.SourceInfo = createSourceInfo context identifier
 }
 
 /// Creates an EnumDeclaration for the given NRefactory TypeDeclaration.
-let toEnumDeclaration context (enum : TypeDeclaration) = { 
-    SourceInfo = toSourceInfo context enum
-    Name = toIdentifier context enum.NameToken
+let createEnumDeclaration context (enum : TypeDeclaration) = { 
+    SourceInfo = createSourceInfo context enum
+    Name = createIdentifier context enum.NameToken
     Namespace = resolveNamespace context enum
     Members = 
         getDescendants<EnumMemberDeclaration> enum
-        |> Seq.map (fun m -> toIdentifier context m.NameToken)
+        |> Seq.map (fun m -> createIdentifier context m.NameToken)
         |> Seq.toList
 }
 
@@ -70,5 +70,5 @@ let resolveTypes context =
         |> Seq.filter (fun t -> t.ClassType = ClassType.Enum)
         |> Seq.head
 
-    let enum = toEnumDeclaration context enumeration
+    let enum = createEnumDeclaration context enumeration
     enum
