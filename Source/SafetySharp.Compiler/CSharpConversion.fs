@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module internal SafetySharp.Compiler.CSharp
+module internal SafetySharp.Compiler.CSharpConversion
 
 open System
 open System.IO
@@ -72,22 +72,3 @@ let resolveTypes context =
 
     let enum = toEnumDeclaration context enumeration
     enum
-
-let CompileProject projectFile =
-    let project = CSharpProjectContent ()
-    let loader = CecilLoader();
-
-    let assembly = [| loader.LoadAssemblyFile (typeof<int>.Assembly.Location) :> IAssemblyReference |]
-    let project = project.AddAssemblyReferences assembly
-
-    let parser = CSharpParser ()
-    let path = Path.Combine (Path.GetDirectoryName projectFile, "LightBarrier.cs")
-    let syntaxTree = parser.Parse (File.ReadAllText path, path)
-    let unresolvedFile = syntaxTree.ToTypeSystem ()
-
-    let project = project.AddOrUpdateFiles unresolvedFile
-
-    let compilation = project.CreateCompilation ()
-    let resolver = CSharpAstResolver (compilation, syntaxTree, unresolvedFile)
-
-    resolveTypes { SyntaxTree = syntaxTree; Resolver = resolver }

@@ -24,7 +24,9 @@ module internal SafetySharp.Compiler.NRefactory
 
 open System
 open System.Diagnostics
+open System.IO
 open System.Linq
+open System.Reflection
 
 open ICSharpCode.NRefactory
 open ICSharpCode.NRefactory.CSharp
@@ -97,3 +99,52 @@ let resolveCompileTimeConstant<'a> context (expression : Expression) =
 let resolveNamespace context (typeDeclaration : TypeDeclaration) =
     let resolveResult = resolveTypeDeclaration context typeDeclaration
     resolveResult.Type.Namespace
+
+// ======================================================================================================================================
+// Compilation Helpers
+// ======================================================================================================================================
+
+/// Creates a new NRefactory project, with the given assemblies loaded into the project. 'mscorlib' is always referenced.
+let private createProject assemblies =
+    let project = CSharpProjectContent ()
+    let loader = CecilLoader();
+
+    let assemblies = 
+        seq { 
+            yield typeof<int>.Assembly // mscorlib
+            yield! assemblies
+        } |> Seq.map (fun assembly -> loader.LoadAssemblyFile assembly.Location :> IAssemblyReference)
+
+    project.AddAssemblyReferences assemblies
+
+/// Creates a compilation context for the given project, syntax tree, and unresolved file.
+let private createContext (project : IProjectContent) syntaxTree unresolvedFile =
+    let compilation = project.CreateCompilation ()
+    let resolver = CSharpAstResolver (compilation, syntaxTree, unresolvedFile)
+
+    { SyntaxTree = syntaxTree; Resolver = resolver }
+
+/// Parses a C# program given as a string and returns the compilation context, containing the parsed syntax tree corresponding to
+/// the string and a type resolver for the program.
+let ParseString (program : string) =
+    let project = createProject Seq.empty
+
+    let parser = CSharpParser ()
+    let syntaxTree = parser.Parse (program, "temp.cs")
+    let unresolvedFile = syntaxTree.ToTypeSystem ()
+
+    let project = project.AddOrUpdateFiles unresolvedFile
+    createContext project syntaxTree unresolvedFile
+
+/// Todo...
+let ParseProject projectFile =
+    let project = createProject Seq.empty
+
+    // TODO: Analyze project file
+    let parser = CSharpParser ()
+    let path = Path.Combine (Path.GetDirectoryName projectFile, "LightBarrier.cs")
+    let syntaxTree = parser.Parse (File.ReadAllText path, path)
+    let unresolvedFile = syntaxTree.ToTypeSystem ()
+
+    let project = project.AddOrUpdateFiles unresolvedFile
+    createContext project syntaxTree unresolvedFile

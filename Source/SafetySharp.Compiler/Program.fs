@@ -31,8 +31,10 @@ module internal AssemblyMetadata =
     open System
     open System.Diagnostics
     open System.Reflection
+    open System.Runtime.CompilerServices
     open CommandLine
 
+    [<assembly: InternalsVisibleTo("Tests")>]
     [<assembly: AssemblyTitle ("Safety Sharp Compiler 0.1 dev")>]
     [<assembly: AssemblyCopyright ("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
     [<assembly: AssemblyVersion ("0.1.0.0")>]
@@ -105,7 +107,8 @@ module (* internal *) Program =
         let options = Options ()
         use parser = new Parser (new Action<ParserSettings> (fun c -> c.HelpWriter <- Console.Out))
         if parser.ParseArguments (args, options) then
-            CSharp.CompileProject options.Project |> ignore
+            let context = NRefactory.ParseProject options.Project
+            CSharpConversion.resolveTypes context |> ignore
 
         printfn ""
 

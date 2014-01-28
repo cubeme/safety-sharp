@@ -20,11 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module Test
+module internal SafetySharp.Compiler.CSharpValidation
 
-open NUnit.Framework
-open FsUnit
+open System
+open System.IO
 
-[<Test>]
-let MyTest () =
-    true |> should be True
+open ICSharpCode.NRefactory
+open ICSharpCode.NRefactory.CSharp
+open ICSharpCode.NRefactory.CSharp.Resolver
+open ICSharpCode.NRefactory.Semantics
+open ICSharpCode.NRefactory.TypeSystem
+
+open SafetySharp.Compiler.Model
+open SafetySharp.Compiler.NRefactory
+
+/// Validates an enumeration declaration.
+let validateEnumDeclaration context (enum : TypeDeclaration) =
+    let hasImplicitUnderlyingType = enum.BaseTypes.Count = 0
+    let underlyingTypeOk =
+        if not hasImplicitUnderlyingType then
+            let typeRef = resolveTypeReference context (enum.BaseTypes |> Seq.head)
+            typeRef.Type.FullName = typeof<int>.FullName
+        else
+            true
+
+    let hasMemberInitializers =
+        getDescendants<EnumMemberDeclaration> enum
+        |> Seq.exists (fun enumMember -> enumMember.Initializer <> Expression.Null)
+
+    underlyingTypeOk && not hasMemberInitializers

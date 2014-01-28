@@ -15,6 +15,7 @@
     <Name>SafetySharp.Compiler</Name>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -62,7 +63,8 @@
   <ItemGroup>
     <Compile Include="Model.fs" />
     <Compile Include="NRefactory.fs" />
-    <Compile Include="CSharp.fs" />
+    <Compile Include="CSharpValidation.fs" />
+    <Compile Include="CSharpConversion.fs" />
     <Compile Include="CompilerServices.fs" />
     <Compile Include="Program.fs" />
     <None Include="packages.config" />
