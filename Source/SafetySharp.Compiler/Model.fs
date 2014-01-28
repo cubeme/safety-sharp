@@ -218,7 +218,13 @@ type Expression =
            FalseExpression : Expression *
            SourceInfo      : SourceInfo
 
-    | DirectionExpression  // ref, out
+    | RefExpression
+        of Expression : Expression *
+           SourceInfo : SourceInfo
+
+    | OutExpression
+        of Expression : Expression *
+           SourceInfo : SourceInfo
 
     | EmptyExpression
         of SourceInfo : SourceInfo
@@ -269,12 +275,6 @@ type Expression =
     | UnknownExpression
         of Expression : obj *
            SourceInfo : SourceInfo
-
-type TypeParameterConstraint =
-    | BaseConstraint
-    | NewConstraint
-    | ClassConstraint
-    | StructConstraint
 
 type Statement =
     | BlockStatement
@@ -418,9 +418,18 @@ type PropertyDeclaration = {
     SourceInfo : SourceInfo
 }
 
+type TypeParameterConstraint =
+    | BaseConstraint
+    | NewConstraint
+    | ClassConstraint
+    | StructConstraint
+
 type TypeParameterDeclaration = {
     /// The name of the type parameter.
     Name : Identifier
+
+    /// The contraints of the type parameter.
+    Constraint : TypeParameterConstraint list
 
      /// The source information of the type parameter.
     SourceInfo : SourceInfo
@@ -495,8 +504,6 @@ type ComponentDeclaration = {
     Fields : FieldSlot list
 
     TypeParameter : TypeParameterDeclaration list
-
-    Constraints : TypeParameterConstraint list
 
     Base : TypeReference
 
