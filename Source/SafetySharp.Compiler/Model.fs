@@ -133,7 +133,6 @@ type BinaryOperator =
     /// Represents the less or equal operator in an expression such as 'x <= y'.
     | LessEqual
 
-
 /// Represents a constant value of a certain type.
 type Literal =
     /// Represents the Boolean constants 'true' or 'false'.
@@ -203,10 +202,14 @@ type TypeReference =
         of EnumSlot   : EnumSlot *
            SourceInfo : SourceInfo
 
+    /// Represents a reference to a component. The slot can be used to retrieve the actual declaration of the component from the
+    /// model's type information table.
     | Component
         of ComponentSlot : ComponentSlot *
            SourceInfo    : SourceInfo
 
+    /// Represents a reference to an interface. The slot can be used to retrieve the actual declaration of the interface from the
+    /// model's type information table.
     | Interface
         of InterfaceSlot : InterfaceSlot *
            SourceInfo    : SourceInfo
@@ -220,6 +223,8 @@ type TypeReference =
            ReturnType     : TypeReference *
            SourceInfo     : SourceInfo
 
+    /// Represents a reference to type parameter of a generic interface or component. The slot can be used to retrieve the actual
+    /// declaration of the type parameter from the enclosing component's or interface's type parameter table.
     | TypeParameter
         of TypeParameterSlot : TypeParameterSlot *
            SourceInfo        : SourceInfo
@@ -231,30 +236,32 @@ type TypeReference =
 
 /// Represents an expression that computes a value.
 type Expression =
-    /// Represents a constant value of a certain type.
+    /// Represents a constant value of a certain type as an expression.
     | LiteralExpression 
         of Literal    : Literal *
            SourceInfo : SourceInfo
 
-    /// Represents the application of an unary operator to a sub-expression.
+    /// Represents the application of an unary operator to a sub-expression such as 'op e'.
     | UnaryOperatorExpression 
         of Operator   : UnaryOperator * 
            Expression : Expression *
            SourceInfo : SourceInfo
 
-    /// Represents the application of a binary operator to two sub-expressions.
+    /// Represents the application of a binary operator to two sub-expressions such as 'e1 op e2'.
     | BinaryOperatorExpression
         of LeftExpression  : Expression * 
            Operator        : BinaryOperator * 
            RightExpression : Expression *
            SourceInfo      : SourceInfo
 
+    /// Represents the application of the ternary conditional operator, such as 'cond ? e1 : e2'.
     | ConditionalExpression
         of Condition       : Expression *
            TrueExpression  : Expression *
            FalseExpression : Expression *
            SourceInfo      : SourceInfo
 
+    (*
     | RefExpression
         of Expression : Expression *
            SourceInfo : SourceInfo
@@ -262,45 +269,61 @@ type Expression =
     | OutExpression
         of Expression : Expression *
            SourceInfo : SourceInfo
+    *)
 
+    /// Represents an empty expression. Useful, for instance, to represent an empty guard of a transition.
     | EmptyExpression
         of SourceInfo : SourceInfo
 
+    /// Represents the application of the assignment operator on two expressions, such as 'left = right'.
     | AssignmentExpression
         of LeftExpression  : Expression *
            RightExpression : Expression *
            SourceInfo      : SourceInfo
 
+    /// Represents the invocation of a function or method on a target expression such as 'target.method(params)'. The method
+    /// slot can be used to retrieve the actual declaration of the method from the model's method information table.
     | InvocationExpression
         of target     : Expression *
            MethodSlot : MethodSlot *
            Parameters : Expression list *
            SourceInfo : SourceInfo
 
+    /// Represents a reference to a method parameter. The parameter slot can be used to retrieve the actual declaration of the
+    /// parameter from the enclosing method's parameter table.
     | ParameterReferenceExpression
         of parameterSlot : ParameterSlot *
            SourceInfo    : SourceInfo
 
+    /// Represents a reference to a field of a target object such as 'target.field'. The field slot can be used to retrieve
+    /// the actual declaration of the field from the model's field information table.
     | FieldReferenceExpression
         of Target     : Expression *
            FieldSlot  : FieldSlot *
            SourceInfo : SourceInfo
 
+    /// Represents a reference to a property of a target object such as 'target.Property'. The property slot can be used to 
+    /// retrieve the actual declaration of the property from the model's property information table.
     | PropertyReferenceExpression
         of Target       : Expression *
            PropertySlot : PropertySlot *
            SourceInfo   : SourceInfo
 
+    /// Represents a reference to a locally defined variable of the enclosing method. The variable slot can be used to retrieve 
+    /// the actual declaration of the variable from the enclosing method's variable table.
     | VariableReferenceExpression
         of VariableSlot : VariableSlot *
            SourceInfo   : SourceInfo
 
+    /// Represents a reference to the base of the component that is currently executing this expression.
     | BaseReferenceExpression
         of SourceInfo : SourceInfo
 
+    /// Represents a reference to the component that is currently executing this expression.
     | ThisReferenceExpression
         of SourceInfo : SourceInfo
 
+    /// Represents a reference to a type as an expression.
     | TypeReferenceExpression
         of Type : TypeReference
 
@@ -309,10 +332,13 @@ type Expression =
         of Elements   : Expression list *
            SourceInfo : SourceInfo
 
+    /// Represents an unknown expression that is either not supported (used in simulation mode only) or contains syntactic or 
+    /// semantic errors.
     | UnknownExpression
         of Expression : obj *
            SourceInfo : SourceInfo
 
+/// Represents a statement.
 type Statement =
     | BlockStatement
         of Statements : Statement list *
