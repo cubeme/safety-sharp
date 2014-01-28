@@ -83,19 +83,56 @@ type Identifier = {
 
 /// Represents the unary operator of a unary operator expression.
 type UnaryOperator =
-    /// Represents the unary + operator in an expression such as +x.
+    /// Represents the plus operator in an expression such as '+x'.
     | Plus
-    /// Represents the unary - operator in an expression such as -x.
+
+    /// Represents the minus operator in an expression such as '-x'.
     | Minus
-    /// Represents the unary ! operator in an expression such as !b.
+
+    /// Represents the negation operator in an expression such as '!b'.
     | Negate
 
 /// Represents the binary operator of a binary operator expression.
 type BinaryOperator =
-    /// Represents the equality operator in an expression such as x == y.
+    /// Represents the addition operator in an expression such as 'x + y'.
+    | Add
+
+    /// Represents the subtraction operator in an expression such as 'x - y'.
+    | Subtract
+
+    /// Represents the multiplication operator in an expression such as 'x * y'.
+    | Multiply
+
+    /// Represents the division operator in an expression such as 'x / y'.
+    | Divide
+
+    /// Represents the modulo operator in an expression such as 'x % y'.
+    | Modulus
+
+    /// Represents the Boolean and operator in an expression such as 'x && y'.
+    | And
+
+    /// Represents the Boolean or operator in an expression such as 'x || y'.
+    | Or
+
+    /// Represents the equality operator in an expression such as 'x == y'
     | Equal
-    /// Represents the inequality operator in an expression such as x != y.
+
+    /// Represents the inequality operator in an expression such as 'x != y'.
     | NotEqual
+
+    /// Represents the greater than operator in an expression such as 'x > y'.
+    | Greater
+
+    /// Represents the less than operator in an expression such as 'x < y'.
+    | Less
+
+    /// Represents the greater or equal operator in an expression such as 'x >= y'.
+    | GreaterEqual
+
+    /// Represents the less or equal operator in an expression such as 'x <= y'.
+    | LessEqual
+
 
 /// Represents a constant value of a certain type.
 type Literal =
@@ -532,6 +569,16 @@ type InterfaceDeclaration = {
 
     /// The source information of the interface.
     SourceInfo : SourceInfo
+}
+
+type PartitionDeclaration = {
+    Component : ComponentSlot
+}
+
+type ModelConfiguration = {
+    Name : Identifier
+
+    Partitions : PartitionDeclaration list
 }
 
 // -----------------------------------------------------
