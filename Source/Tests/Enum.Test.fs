@@ -117,11 +117,11 @@ let ``enum without members should not have any members`` () =
     enum.Members |> should equal []
 
 [<Test>]
-let ``enum without members should not have one member`` () =
+let ``enum without members should have one member`` () =
     let enum = create "enum E { X }"
     memberNames enum |> should equal ["X"]
 
 [<Test>]
-let ``enum without members should not have three members 'C', 'B', and 'A'`` () =
+let ``enum without members should have three members 'C', 'B', and 'A'`` () =
     let enum = create "enum E { C, B, A }"
     memberNames enum |> should equal ["C"; "B"; "A"]
