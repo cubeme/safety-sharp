@@ -34,8 +34,8 @@ open ICSharpCode.NRefactory.CSharp.Resolver
 open ICSharpCode.NRefactory.Semantics
 open ICSharpCode.NRefactory.TypeSystem
 
-/// Parses the given enum declaration string and invokes the given action for the compilation context returned
-/// by NRefactory.
+/// Parses the given enum declaration string and invokes the given action for the compilation context and enum
+/// type declaration returned by NRefactory.
 let private act declaration action =
     let context = NRefactory.ParseString declaration
 
@@ -103,7 +103,7 @@ let ``enum with member expression on last member should be invalid`` () =
 
 [<Test>]
 let ``enum name should be 'E'`` () =
-    let enum = create "namespace N.N { enum E { } }"
+    let enum = create "namespace N.M { enum E { } }"
     enum.Name.Name |> should equal "E"
 
 [<Test>]
