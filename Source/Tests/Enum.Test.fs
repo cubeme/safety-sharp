@@ -26,6 +26,7 @@ open NUnit.Framework
 open FsUnit
 
 open SafetySharp.Compiler
+open SafetySharp.Compiler.Model
 
 open ICSharpCode.NRefactory
 open ICSharpCode.NRefactory.CSharp
@@ -33,21 +34,28 @@ open ICSharpCode.NRefactory.CSharp.Resolver
 open ICSharpCode.NRefactory.Semantics
 open ICSharpCode.NRefactory.TypeSystem
 
+/// Parses the given enum declaration string and invokes the given action for the compilation context returned
+/// by NRefactory.
 let private act declaration action =
     let context = NRefactory.ParseString declaration
 
     let enumDecl = 
-        context.SyntaxTree.Members
+        NRefactory.getDescendantsAndSelf<TypeDeclaration> context.SyntaxTree
         |> Seq.head 
-        :?> TypeDeclaration
 
     action context enumDecl
 
+/// Parses the given enum declaration string and returns the validation result.
 let validate declaration =
     act declaration CSharpValidator.validateEnumDeclaration
 
+/// Parses the given enum declaration string and returns the model enum declaration.
 let create declaration =
     act declaration CSharpParser.createEnumDeclaration
+
+/// Returns a list of the names of all members of the declared enum.
+let memberNames declaration =
+    declaration.Members |> Seq.map (fun m -> m.Name)
 
 [<Test>]
 let ``enum with implicit underlying type should be valid`` () =
@@ -95,10 +103,25 @@ let ``enum with member expression on last member should be invalid`` () =
 
 [<Test>]
 let ``enum name should be 'E'`` () =
-    let enum = create "enum E { }"
+    let enum = create "namespace N.N { enum E { } }"
     enum.Name.Name |> should equal "E"
+
+[<Test>]
+let ``enum namespace should be 'N.M'`` () =
+    let enum = create "namespace N.M { enum E { } }"
+    enum.Namespace |> should equal "N.M"
 
 [<Test>]
 let ``enum without members should not have any members`` () =
     let enum = create "enum E { }"
     enum.Members |> should equal []
+
+[<Test>]
+let ``enum without members should not have one member`` () =
+    let enum = create "enum E { X }"
+    memberNames enum |> should equal ["X"]
+
+[<Test>]
+let ``enum without members should not have three members 'C', 'B', and 'A'`` () =
+    let enum = create "enum E { C, B, A }"
+    memberNames enum |> should equal ["C"; "B"; "A"]
