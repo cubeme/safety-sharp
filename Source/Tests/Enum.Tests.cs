@@ -20,17 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace Tests
+{
+	using System;
+	using NUnit.Framework;
 
-[assembly: AssemblyTitle("SafetySharp Base Library")]
-[assembly: AssemblyDescription("SafetySharp Base Library")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("SafetySharp")]
-[assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("Tests")]
+	public class EnumTests
+	{
+		[Test]
+		public void Test()
+		{
+			Assert.Fail();
+		}
+	}
+}

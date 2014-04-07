@@ -23,11 +23,12 @@
 namespace Elbtunnel
 {
 	using System;
+	using System.ComponentModel;
 	using SafetySharp;
 
-	public class LightBarrier : Component
-	{
-	}
+	//public class LightBarrier : Component
+	//{
+	//}
 	
 	public enum MyEnum
 	{

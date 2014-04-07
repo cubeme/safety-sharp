@@ -20,17 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace SafetySharp.Utilities
+{
+	using System;
 
-[assembly: AssemblyTitle("SafetySharp Base Library")]
-[assembly: AssemblyDescription("SafetySharp Base Library")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("SafetySharp")]
-[assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("Tests")]
+	/// <summary>
+	///     Represents a log entry, describing fatal errors, non-fatal errors, or warnings as well as providing debugging
+	///     information and other informational messages.
+	/// </summary>
+	public struct LogEntry
+	{
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="logType">The type of the log entry.</param>
+		/// <param name="message">The non-empty message of the log entry.</param>
+		internal LogEntry(LogType logType, string message)
+			: this()
+		{
+			Assert.InRange(logType);
+			Assert.ArgumentNotNull(message, () => message);
+
+			LogType = logType;
+			Message = message;
+			Time = DateTime.Now;
+		}
+
+		/// <summary>
+		///     Gets the type of the log entry.
+		/// </summary>
+		public LogType LogType { get; private set; }
+
+		/// <summary>
+		///     Gets the message of the log entry.
+		/// </summary>
+		public string Message { get; private set; }
+
+		/// <summary>
+		///     Gets the date and time of the creation of the log entry.
+		/// </summary>
+		public DateTime Time { get; private set; }
+	}
+}

@@ -20,11 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp
+namespace SafetySharp.Utilities
 {
 	using System;
 
-	public class Component
+	/// <summary>
+	///     Identifies the type of information provided by a <see cref="LogEntry"/>.
+	/// </summary>
+	public enum LogType
 	{
+		/// <summary>
+		///     The <see cref="LogEntry"/> describes a fatal error.
+		/// </summary>
+		Fatal = 1,
+
+		/// <summary>
+		///     The <see cref="LogEntry"/> describes an error.
+		/// </summary>
+		Error = 2,
+
+		/// <summary>
+		///     The <see cref="LogEntry"/> describes a warning.
+		/// </summary>
+		Warning = 3,
+
+		/// <summary>
+		///     The <see cref="LogEntry"/> provides an informational message.
+		/// </summary>
+		Info = 4,
+
+		/// <summary>
+		///     The <see cref="LogEntry"/> provides debugging information.
+		/// </summary>
+		Debug = 5
 	}
 }

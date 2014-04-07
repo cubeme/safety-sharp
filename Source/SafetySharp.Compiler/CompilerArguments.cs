@@ -20,17 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace SafetySharp.Compiler
+{
+	using System;
+	using CommandLine;
+	using CommandLine.Text;
 
-[assembly: AssemblyTitle("SafetySharp Base Library")]
-[assembly: AssemblyDescription("SafetySharp Base Library")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("SafetySharp")]
-[assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("Tests")]
+	/// <summary>
+	///     Provides access to the command line arguments that have been provided to the compiler.
+	/// </summary>
+	internal class CompilerArguments
+	{
+		/// <summary>
+		///     Gets or sets the path to the solution file that should be compiled.
+		/// </summary>
+		[Option('s', "solution", Required = true, HelpText = "The path to the solution file that should be compiled.")]
+		public string SolutionFile { get; set; }
+
+		/// <summary>
+		///     Generates a help message about the correct usage of the compiler's command line arguments.
+		/// </summary>
+		[HelpOption('h', "help")]
+		public string GenerateHelpMessage()
+		{
+			var help = new HelpText
+			{
+				AdditionalNewLineAfterOption = true,
+				AddDashesToOption = true
+			};
+
+			help.AddOptions(this);
+			return help.ToString();
+		}
+	}
+}

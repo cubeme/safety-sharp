@@ -24,8 +24,8 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("SafetySharp Base Library")]
-[assembly: AssemblyDescription("SafetySharp Base Library")]
+[assembly: AssemblyTitle("SafetySharp Compiler (ssc)")]
+[assembly: AssemblyDescription("SafetySharp Compiler (ssc)")]
 [assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
 [assembly: AssemblyProduct("SafetySharp")]
 [assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]

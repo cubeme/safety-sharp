@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "SafetySharp.Compiler\Compiler.csproj", "{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafetySharp", "SafetySharp\SafetySharp.csproj", "{D9CAD497-F647-42D8-BE13-6406DE53331D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{545B57D3-C388-472C-A6F1-6E8BA41F6102}"
@@ -14,9 +16,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{545B57
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{415B40E7-B60E-4CCB-9DD5-BFFE5C350E06}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp.Compiler", "SafetySharp.Compiler\SafetySharp.Compiler.fsproj", "{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp.Compiler.Fsharp", "SafetySharp.Compiler.Fsharp\SafetySharp.Compiler.Fsharp.fsproj", "{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{7DA11FAD-A0AE-4E5B-A3FF-F3F7A4783DAE}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests.Fsharp", "Tests.Fsharp\Tests.Fsharp.fsproj", "{7DA11FAD-A0AE-4E5B-A3FF-F3F7A4783DAE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Models", "Models", "{2D5C6ED1-ABDB-4A96-ADD5-99C94BD95A94}"
 EndProject
@@ -25,33 +27,56 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elbtunnel", "Models\Elbtunn
 		{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5} = {6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "SafetySharp.Modeling\Modeling.csproj", "{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}"
+EndProject
+Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "Api Docs", "Api Docs\Api.shfbproj", "{E91BB5AC-2A76-4E59-913B-C406ECC25A3B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101} = {E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}
+		{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196} = {4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}
+		{D9CAD497-F647-42D8-BE13-6406DE53331D} = {D9CAD497-F647-42D8-BE13-6406DE53331D}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D9CAD497-F647-42D8-BE13-6406DE53331D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D9CAD497-F647-42D8-BE13-6406DE53331D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9CAD497-F647-42D8-BE13-6406DE53331D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9CAD497-F647-42D8-BE13-6406DE53331D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7DA11FAD-A0AE-4E5B-A3FF-F3F7A4783DAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7DA11FAD-A0AE-4E5B-A3FF-F3F7A4783DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7DA11FAD-A0AE-4E5B-A3FF-F3F7A4783DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7DA11FAD-A0AE-4E5B-A3FF-F3F7A4783DAE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AE088BD-212E-4F38-96A1-B16C4F95D243}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E91BB5AC-2A76-4E59-913B-C406ECC25A3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E91BB5AC-2A76-4E59-913B-C406ECC25A3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E91BB5AC-2A76-4E59-913B-C406ECC25A3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{E91BB5AC-2A76-4E59-913B-C406ECC25A3B} = {415B40E7-B60E-4CCB-9DD5-BFFE5C350E06}
 		{6AE088BD-212E-4F38-96A1-B16C4F95D243} = {2D5C6ED1-ABDB-4A96-ADD5-99C94BD95A94}
 	EndGlobalSection
 EndGlobal
