@@ -7,13 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "SafetySharp.Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafetySharp", "SafetySharp\SafetySharp.csproj", "{D9CAD497-F647-42D8-BE13-6406DE53331D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{545B57D3-C388-472C-A6F1-6E8BA41F6102}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{415B40E7-B60E-4CCB-9DD5-BFFE5C350E06}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp.Compiler.Fsharp", "SafetySharp.Compiler.Fsharp\SafetySharp.Compiler.Fsharp.fsproj", "{6F825BBC-BFC6-4004-B21E-B9D7DF190DB5}"
@@ -31,7 +24,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "SafetySharp.Modeling\Modeling.csproj", "{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}"
 EndProject
-Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "Api Docs", "Api Docs\Api.shfbproj", "{E91BB5AC-2A76-4E59-913B-C406ECC25A3B}"
+Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "Api", "Api Docs\Api.shfbproj", "{E91BB5AC-2A76-4E59-913B-C406ECC25A3B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101} = {E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}
 		{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196} = {4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}

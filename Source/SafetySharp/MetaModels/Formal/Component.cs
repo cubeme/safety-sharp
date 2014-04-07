@@ -20,31 +20,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests
+namespace SafetySharp.MetaModels.Formal
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.Immutable;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.MetaModels.Formal;
 
-	[TestFixture]
-	public class EnumTests
+	public class Component
 	{
-		[Test]
-		public void Test()
+		/// <summary>
+		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
+		/// </summary>
+		public Component(string name, ImmutableArray<Variable> variables)
 		{
-			var lightBarrier = new Component(
-				name: "LightBarrier",
-				variables: ImmutableArray.Create(new Variable("a")));
-
-			lightBarrier.Variables[0].Name.Should().Be("a");
-
-			var lightBarrier1 = new ComponentInstance(
-				component: lightBarrier,
-				values: ImmutableArray.Create<object>(1));
-
-			lightBarrier1.Values[0].Should().Be(1);
+			Name = name;
+			Variables = variables;
 		}
+
+		public string Name { get; private set; }
+		public ImmutableArray<Variable> Variables { get; private set; }
+	}
+
+	public class Variable
+	{
+		/// <summary>
+		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
+		/// </summary>
+		public Variable(string name)
+		{
+			Name = name;
+		}
+
+		public string Name { get; private set; }
+	}
+
+	public class ComponentInstance
+	{
+		/// <summary>
+		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
+		/// </summary>
+		public ComponentInstance(Component component, ImmutableArray<object> values)
+		{
+			Values = values;
+			Component = component;
+		}
+
+		public Component Component { get; private set; }
+		public ImmutableArray<object> Values { get; private set; }
 	}
 }
