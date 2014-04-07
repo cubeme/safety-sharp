@@ -56,14 +56,14 @@ namespace SafetySharp.Compiler
 				// way. If so, output the help screen and successfully terminate the application.
 				if (args.Any(arg => arg == "--help" || arg == "-h"))
 				{
-					Log.Info(arguments.GenerateHelpMessage());
+					Log.Info("{0}", arguments.GenerateHelpMessage());
 					return;
 				}
 
 				// If there was an error parsing the command line, show the help screen and terminate the application.
 				if (!parser.ParseArguments(args, arguments))
 				{
-					Log.Info(arguments.GenerateHelpMessage());
+					Log.Info("{0}", arguments.GenerateHelpMessage());
 					Log.Die("Invalid command line arguments.");
 				}
 
@@ -81,18 +81,23 @@ namespace SafetySharp.Compiler
 				switch (entry.LogType)
 				{
 					case LogType.Debug:
+						Debug.WriteLine("[Debug  ] " + entry.Message);
 						WriteToConsole(ConsoleColor.Magenta, entry);
 						break;
 					case LogType.Info:
+						Debug.WriteLine("[Info   ] " + entry.Message);
 						WriteToConsole(ConsoleColor.White, entry);
 						break;
 					case LogType.Warning:
+						Debug.WriteLine("[Warning] " + entry.Message);
 						WriteToConsole(ConsoleColor.Yellow, entry);
 						break;
 					case LogType.Error:
+						Debug.WriteLine("[Error  ] " + entry.Message);
 						WriteToConsole(ConsoleColor.Red, entry);
 						break;
 					case LogType.Fatal:
+						Debug.WriteLine("[Fatal  ] " + entry.Message);
 						WriteToConsole(ConsoleColor.Red, entry);
 						break;
 					default:
@@ -109,7 +114,6 @@ namespace SafetySharp.Compiler
 		/// <param name="entry">The entry that should be written to the console.</param>
 		private static void WriteToConsole(ConsoleColor color, LogEntry entry)
 		{
-			Debug.WriteLine(entry.Message);
 			var currentColor = Console.ForegroundColor;
 
 			Console.ForegroundColor = color;
