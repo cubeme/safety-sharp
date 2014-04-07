@@ -33,6 +33,14 @@ namespace SafetySharp.Utilities
 	public static class Log
 	{
 		/// <summary>
+		///     Initializes the type.
+		/// </summary>
+		static Log()
+		{
+			PrintToDebugOutput();
+		}
+
+		/// <summary>
 		///     Raised when a <see cref="LogEntry" /> has been generated. If the <see cref="LogEntry" />'s type is
 		///     <see cref="LogType.Fatal" />, the program terminates after all event handlers have been executed.
 		/// </summary>
@@ -110,6 +118,40 @@ namespace SafetySharp.Utilities
 		{
 			if (Logged != null)
 				Logged(new LogEntry(logType, message));
+		}
+
+		/// <summary>
+		///     Writes all generated log messages to the debug output.
+		/// </summary>
+		private static void PrintToDebugOutput()
+		{
+			Logged += entry =>
+			{
+				var type = "";
+				switch (entry.LogType)
+				{
+					case LogType.Debug:
+						type = "Debug  ";
+						break;
+					case LogType.Info:
+						type = "Info   ";
+						break;
+					case LogType.Warning:
+						type = "Warning";
+						break;
+					case LogType.Error:
+						type = "Error  ";
+						break;
+					case LogType.Fatal:
+						type = "Fatal  ";
+						break;
+					default:
+						Assert.NotReached();
+						break;
+				}
+
+				System.Diagnostics.Debug.WriteLine("[{0}  ] {1}", type, entry.Message);
+			};
 		}
 	}
 }

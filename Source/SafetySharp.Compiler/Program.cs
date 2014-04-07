@@ -81,23 +81,18 @@ namespace SafetySharp.Compiler
 				switch (entry.LogType)
 				{
 					case LogType.Debug:
-						Debug.WriteLine("[Debug  ] " + entry.Message);
 						WriteToConsole(ConsoleColor.Magenta, entry);
 						break;
 					case LogType.Info:
-						Debug.WriteLine("[Info   ] " + entry.Message);
 						WriteToConsole(ConsoleColor.White, entry);
 						break;
 					case LogType.Warning:
-						Debug.WriteLine("[Warning] " + entry.Message);
 						WriteToConsole(ConsoleColor.Yellow, entry);
 						break;
 					case LogType.Error:
-						Debug.WriteLine("[Error  ] " + entry.Message);
 						WriteToConsole(ConsoleColor.Red, entry);
 						break;
 					case LogType.Fatal:
-						Debug.WriteLine("[Fatal  ] " + entry.Message);
 						WriteToConsole(ConsoleColor.Red, entry);
 						break;
 					default:
@@ -108,9 +103,9 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Writes a colored message to the console.
+		///     Writes the <paramref name="entry" /> to the console using the given font <paramref name="color" />.
 		/// </summary>
-		/// <param name="color">The color of the message.</param>
+		/// <param name="color">The color that should be used to write <paramref name="entry" /> to the console.</param>
 		/// <param name="entry">The entry that should be written to the console.</param>
 		private static void WriteToConsole(ConsoleColor color, LogEntry entry)
 		{
