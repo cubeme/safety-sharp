@@ -163,16 +163,16 @@ namespace SafetySharp.Utilities
 	/// </summary>
 	/// <example>
 	///     <code>
-	/// 			[StringFormatMethod("message")]
-	/// 			public void ShowError(string message, params object[] args)
-	/// 			{
-	/// 			  // ...
-	/// 			}
-	/// 			public void Foo()
-	/// 			{
-	/// 			  ShowError("Failed: {0}"); // Warning: Non-existing argument in format string
-	/// 			}
-	/// 		</code>
+	/// 		[StringFormatMethod("message")]
+	/// 		public void ShowError(string message, params object[] args)
+	/// 		{
+	/// 		  // ...
+	/// 		}
+	/// 		public void Foo()
+	/// 		{
+	/// 		  ShowError("Failed: {0}"); // Warning: Non-existing argument in format string
+	/// 		}
+	/// 	</code>
 	/// </example>
 	[AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 	public sealed class StringFormatMethodAttribute : Attribute

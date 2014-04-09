@@ -20,52 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.MetaModels.Formal
+namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
 
-	public class Component
+	public class ClassDeclaration : TypeDeclaration
 	{
-		/// <summary>
-		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
-		/// </summary>
-		public Component(string name, ImmutableArray<Variable> variables)
-		{
-			Name = name;
-			Variables = variables;
-		}
-
-		public string Name { get; private set; }
-		public ImmutableArray<Variable> Variables { get; private set; }
-	}
-
-	public class Variable
-	{
-		/// <summary>
-		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
-		/// </summary>
-		public Variable(string name)
-		{
-			Name = name;
-		}
-
-		public string Name { get; private set; }
-	}
-
-	public class ComponentInstance
-	{
-		/// <summary>
-		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
-		/// </summary>
-		public ComponentInstance(Component component, ImmutableArray<object> values)
-		{
-			Values = values;
-			Component = component;
-		}
-
-		public Component Component { get; private set; }
-		public ImmutableArray<object> Values { get; private set; }
 	}
 }

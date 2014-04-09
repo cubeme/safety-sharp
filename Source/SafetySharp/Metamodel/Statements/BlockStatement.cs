@@ -20,28 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests
+namespace SafetySharp.Metamodel.Statements
 {
 	using System;
-	using NUnit.Framework;
 
-	[TestFixture]
-	public class EnumTests
+	public class BlockStatement : Statement
 	{
-		[Test]
-		public void Test()
-		{
-			//var lightBarrier = new Component(
-			//	name: "LightBarrier",
-			//	variables: ImmutableArray.Create(new Variable("myVar", "decimal")));
-
-			//lightBarrier.Variables[0].Name.Should().Be("myVar");
-
-			//var lightBarrier1 = new ComponentInstance(
-			//	component: lightBarrier,
-			//	values: ImmutableArray.Create<object>(1));
-
-			//lightBarrier1.Values[0].Should().Be(1);
-		}
 	}
 }

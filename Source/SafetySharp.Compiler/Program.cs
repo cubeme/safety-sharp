@@ -39,6 +39,7 @@ namespace SafetySharp.Compiler
 		private static void Main(string[] args)
 		{
 			PrintToConsole();
+
 			Log.Info("");
 
 			Log.Info("SafetySharp Compiler");
