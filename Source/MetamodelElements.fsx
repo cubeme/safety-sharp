@@ -8,9 +8,15 @@ open System.Threading
 // F# type definitions
 //====================================================================================================================
 
+type CollectionType = 
+    | None
+    | Array
+    | List
+
 type Property = { 
     Name : string
     Type : string
+    CollectionType : CollectionType
     Comment : string 
 }
 
@@ -44,12 +50,20 @@ let elements = [
                     {
                         Name = "Name"
                         Type = "string"
+                        CollectionType = None
                         Comment = "The name of the declared type."
                     }
                     {
                         Name = "Namespace"
                         Type = "string"
+                        CollectionType = None
                         Comment = "The namespace the type is declared in."
+                    }
+                    {
+                        Name = "Members"
+                        Type = "MemberDeclaration"
+                        CollectionType = Array
+                        Comment = "The declared members of the type."
                     }
                 ]
             }
@@ -60,8 +74,9 @@ let elements = [
                 Properties = 
                 [
                     {
-                        Name = "Members"
+                        Name = "SomeFlag"
                         Type = "bool"
+                        CollectionType = None
                         Comment = "..."
                     }
                 ]
@@ -323,11 +338,17 @@ let generateCode () =
         let collected = p |> List.map proj
         String.Join(separator, collected)
 
+    let getType (p : Property) =
+        match p.CollectionType with
+        | None -> p.Type
+        | Array -> sprintf "ImmutableArray<%s>" p.Type
+        | List -> sprintf "ImmutableList<%s>" p.Type
+
     let generateProperty (p : Property) =
         output.AppendLine("/// <summary>")
         output.AppendLine(sprintf "///     Gets %s" <| startWithLowerCase p.Comment)
         output.AppendLine("/// </summary>")
-        output.AppendLine(sprintf "public %s %s { get; private set; }" p.Type p.Name)
+        output.AppendLine(sprintf "public %s %s { get; private set; }" <| getType p <| p.Name)
         
     let generateConstructor (c : Class) = 
         output.AppendLine("/// <summary>")
@@ -336,7 +357,7 @@ let generateCode () =
         for p in allProperties c do
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
-        let parameters = allProperties c |> collect ", " (fun p -> sprintf "%s %s" p.Type <| getParameterName p.Name)
+        let parameters = allProperties c |> collect ", " (fun p -> sprintf "%s %s" <| getType p <| getParameterName p.Name)
         let visibility = if c.Abstract then "protected" else "public"
         output.AppendLine(sprintf "%s %s(%s)" visibility c.Name parameters)
 
@@ -361,7 +382,7 @@ let generateCode () =
         for p in c.Properties do
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
-        let parameters = c.Properties |> collect ", " (fun p' -> sprintf "%s %s" p'.Type <| getParameterName p'.Name)
+        let parameters = c.Properties |> collect ", " (fun p' -> sprintf "%s %s" <| getType p' <| getParameterName p'.Name)
         output.AppendLine(sprintf "partial void Validate(%s);" parameters)
 
     let generateWithMethods (c: Class) =
@@ -370,13 +391,25 @@ let generateCode () =
             output.AppendLine(sprintf "///     Replaces the %s in a copy of the <see cref=\"%s\" /> instance." <| startWithLowerCase p.Name <| c.Name)
             output.AppendLine("/// </summary>")
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
-            output.AppendLine(sprintf "public %s With%s(%s %s)" c.Name p.Name p.Type <| getParameterName p.Name)
+            output.AppendLine(sprintf "public %s With%s(%s %s)" c.Name p.Name <| getType p <| getParameterName p.Name)
             output.AppendBlockStatement <| fun () ->
                 let parameters = allProperties c |> collect ", " (fun p' -> 
                     if p' = p then getParameterName p'.Name
                     else p'.Name
                 )
                 output.AppendLine(sprintf "return Update(%s);" parameters)
+            output.Newline()
+
+    let generateAddMethods (c : Class) =
+        let collectionProperties = allProperties c |> List.filter (fun p -> p.CollectionType <> None)
+        for p in collectionProperties do
+            output.AppendLine("/// <summary>")
+            output.AppendLine(sprintf "///     Adds <paramref name=\"%s\" /> to a copy of the <see cref=\"%s\" /> instance." <| startWithLowerCase p.Name <| c.Name)
+            output.AppendLine("/// </summary>")
+            output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
+            output.AppendLine(sprintf "public %s Add%s(params %s[] %s)" c.Name p.Name p.Type <| getParameterName p.Name)
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine(sprintf "return With%s(%s.AddRange(%s));" p.Name p.Name <| getParameterName p.Name)
             output.Newline()
 
     let generateUpdateMethod (c : Class) =
@@ -387,7 +420,7 @@ let generateCode () =
         for p in allProperties c do
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
-        let parameters = allProperties c |> collect ", " (fun p' -> sprintf "%s %s" p'.Type <| getParameterName p'.Name)
+        let parameters = allProperties c |> collect ", " (fun p' -> sprintf "%s %s" <| getType p' <| getParameterName p'.Name)
         output.AppendLine(sprintf "public %s Update(%s)" c.Name parameters)
         output.AppendBlockStatement <| fun () ->
             let checkModification = allProperties c |> collect " || " (fun p' -> sprintf "%s != %s" p'.Name <| getParameterName p'.Name)
@@ -418,12 +451,14 @@ let generateCode () =
             if not c.Abstract && allProperties c |> List.length > 0 then
                 output.Newline()
                 generateWithMethods c
+                generateAddMethods c
                 generateUpdateMethod c
 
     let generateNamespace (n : Namespace) =
         output.AppendLine(sprintf "namespace %s" n.Name)
         output.AppendBlockStatement <| fun () ->
             output.AppendLine("using System;")
+            output.AppendLine("using System.Collections.Immutable;");
             output.Newline()
 
             let count = n.Classes |> List.length

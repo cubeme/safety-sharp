@@ -23,6 +23,7 @@
 namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
+	using System.Collections.Immutable;
 	using Utilities;
 
 	partial class TypeDeclaration
@@ -32,7 +33,8 @@ namespace SafetySharp.Metamodel.Declarations
 		/// </summary>
 		/// <param name="name">The name of the declared type.</param>
 		/// <param name="namespace">The namespace the type is declared in.</param>
-		partial void Validate(string name, string @namespace)
+		/// <param name="members">The declared members of the type.</param>
+		partial void Validate(string name, string @namespace, ImmutableArray<MemberDeclaration> members)
 		{
 			Assert.ArgumentNotNullOrWhitespace(name, () => name);
 			Assert.ArgumentNotNullOrWhitespace(@namespace, () => @namespace);
