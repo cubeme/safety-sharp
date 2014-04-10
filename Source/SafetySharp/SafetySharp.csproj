@@ -43,7 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Metamodel\Declarations\PropertyDeclaration.cs" />
-    <Compile Include="Metamodel\Elements.Generated.cs" />
+    <Compile Include="Metamodel\Metamodel.Generated.cs" />
+    <Compile Include="Metamodel\MetamodelVisitor`1.cs" />
+    <Compile Include="Metamodel\MetamodelVisitor.cs" />
     <Compile Include="Metamodel\Statements\BlockStatement.cs" />
     <Compile Include="Metamodel\Expressions\Expression.cs" />
     <Compile Include="Metamodel\Statements\ExpressionStatement.cs" />

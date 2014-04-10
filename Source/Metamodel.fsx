@@ -267,6 +267,9 @@ let generateCode () =
         let collected = p |> List.map proj
         String.Join(separator, collected)
 
+    let visitorTypeParam typeParam = if typeParam = "" then "" else sprintf "<%s>" typeParam
+    let visitorReturnType typeParam = if typeParam = "" then "void" else typeParam
+
     let getType (p : Property) =
         match p.CollectionType with
         | None -> p.Type
@@ -363,6 +366,21 @@ let generateCode () =
             output.Newline()
             output.AppendLine("return this;")
 
+    let generateAcceptMethod (c : Class) typeParam =
+        output.AppendLine("/// <summary>")
+        output.AppendLine("///     Accepts <paramref name=\"visitor\" />, calling the type-specific visit method.")
+        output.AppendLine("/// </summary>")
+        if typeParam <> "" then
+            output.AppendLine("/// <typeparam name=\"TResult\">The type of the value returned by <paramref name=\"visitor\" />.</typeparam>")
+        output.AppendLine("/// <param name=\"visitor\">The visitor the type-specific visit method should be invoked on.</param>")
+        let bracketedTypeParam = visitorTypeParam typeParam
+        let returnType = visitorReturnType typeParam
+        output.AppendLine(sprintf "public override %s Accept%s(MetamodelVisitor%s visitor)" returnType bracketedTypeParam bracketedTypeParam)
+        output.AppendBlockStatement <| fun () ->
+            let returnKeyword = if typeParam = "" then "" else "return "
+            output.AppendLine("Assert.ArgumentNotNull(visitor, () => visitor);")
+            output.AppendLine(sprintf "%svisitor.Visit%s(this);" returnKeyword c.Name)
+
     let generateClass (c : Class) =
         let abstractKeyword = if c.Abstract then " abstract " else " "
         output.AppendLine(sprintf "public%spartial class %s : %s" abstractKeyword c.Name c.Base)
@@ -383,11 +401,18 @@ let generateCode () =
                 generateAddMethods c
                 generateUpdateMethod c
 
+            if not c.Abstract then
+                output.Newline()
+                generateAcceptMethod c ""
+                output.Newline()
+                generateAcceptMethod c "TResult"
+
     let generateNamespace (n : Namespace) =
         output.AppendLine(sprintf "namespace %s" n.Name)
         output.AppendBlockStatement <| fun () ->
             output.AppendLine("using System;")
             output.AppendLine("using System.Collections.Immutable;");
+            output.AppendLine("using Utilities;");
             output.Newline()
 
             let count = n.Classes |> List.length
@@ -397,15 +422,89 @@ let generateCode () =
                i <- i + 1
                if i <> count then output.Newline()
 
-    let count = elements |> List.length
-    let mutable i = 0
+    let generateVisitors () =
+        let nonAbstractClasses = classes |> List.filter (fun c -> not c.Abstract)
+        let generateVisitor typeParam =
+            let bracketedTypeParam = visitorTypeParam typeParam
+            let returnType = visitorReturnType typeParam
+            output.AppendLine(sprintf "public abstract partial class MetamodelVisitor%s" bracketedTypeParam)
+            output.AppendBlockStatement <| fun () ->
+                let count = nonAbstractClasses |> List.length
+                let mutable i = 0
+                for c in nonAbstractClasses do
+                    let parameterName = getParameterName c.Name
+                    output.AppendLine("/// <summary>")
+                    output.AppendLine(sprintf "///     Visits a metamodel element of type <see cref=\"%s\" />." c.Name)
+                    output.AppendLine("/// </summary>")
+                    output.AppendLine(sprintf "/// <param name=\"%s\">The <see cref=\"%s\" /> instance that should be visited.</param>" <| startWithLowerCase c.Name <| c.Name)
+                    output.AppendLine(sprintf "public virtual %s Visit%s(%s %s)" returnType c.Name c.Name parameterName)
+                    output.AppendBlockStatement <| fun () ->
+                        output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+                        if typeParam <> "" then
+                            output.AppendLine(sprintf "return default(%s);" typeParam)
+                    i <- i + 1
+                    if i <> count then
+                        output.Newline()
+
+//        let generateRewriter () =
+//            let isRewriteable typeName = classes |> List.exists (fun c -> c.Name = typeName)
+//            output.AppendLine("public abstract partial class MetamodelRewriter : MetamodelVisitor<MetamodelElement>")
+//            output.AppendBlockStatement <| fun () ->
+//                let count = nonAbstractClasses |> List.length
+//                let mutable i = 0
+//                for c in nonAbstractClasses do
+//                    let parameterName = getParameterName c.Name
+//                    output.AppendLine("/// <summary>")
+//                    output.AppendLine(sprintf "///     Rewrites a metamodel element of type <see cref=\"%s\" />." c.Name)
+//                    output.AppendLine("/// </summary>")
+//                    output.AppendLine(sprintf "/// <param name=\"%s\">The <see cref=\"%s\" /> instance that should be rewritten.</param>" <| startWithLowerCase c.Name <| c.Name)
+//                    output.AppendLine(sprintf "public override MetamodelElement Visit%s(%s %s)" c.Name c.Name parameterName)
+//                    output.AppendBlockStatement <| fun () ->
+//                        output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+//
+//                        let properties = allProperties c
+//                        if properties |> List.length = 0 then
+//                            output.AppendLine(sprintf "return %s;" parameterName)
+//                        else
+//                            output.Newline()
+//                            for p in properties do
+//                                if isRewriteable p.Type then
+//                                    output.AppendLine(sprintf "var %s = Visit(%s.%s);" <| getParameterName p.Name <| parameterName <| p.Name)
+//                                else
+//                                    output.AppendLine(sprintf "var %s = %s.%s;" <| getParameterName p.Name <| parameterName <| p.Name)
+//
+//                            let parameters = allProperties c |> collect ", " (fun p' -> getParameterName p'.Name)
+//                            output.AppendLine(sprintf "return %s.Update(%s);" parameterName parameters)
+//
+//                    i <- i + 1
+//                    if i <> count then
+//                        output.Newline()
+
+        output.AppendLine("namespace SafetySharp.Metamodel")
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("using System;")
+            output.AppendLine("using System.Collections.Immutable;");
+            output.AppendLine("using Utilities;");
+            output.Newline()
+
+            for n in elements do
+                output.AppendLine(sprintf "using %s;" n.Name)
+
+            output.Newline()
+            generateVisitor ""
+
+            output.Newline()
+            generateVisitor "TResult"
+
+//            output.Newline()
+//            generateRewriter ()
+
     for n in elements do
         generateNamespace n
-        i <- i + 1
-        if i <> count then output.Newline()
-
-    // Write the enumeration file
-    output.WriteToFile "SafetySharp/Metamodel/Elements.Generated.cs"
+        output.Newline()
+        
+    generateVisitors ()    
+    output.WriteToFile "SafetySharp/Metamodel/Metamodel.Generated.cs"
 
 let writeColored s c =
     let c' = Console.ForegroundColor

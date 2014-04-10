@@ -54,5 +54,17 @@ namespace SafetySharp.Metamodel
 	/// </remarks>
 	public abstract class MetamodelElement
 	{
+		/// <summary>
+		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
+		/// </summary>
+		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
+		public abstract void Accept(MetamodelVisitor visitor);
+
+		/// <summary>
+		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
+		/// </summary>
+		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
+		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
+		public abstract TResult Accept<TResult>(MetamodelVisitor<TResult> visitor);
 	}
 }
