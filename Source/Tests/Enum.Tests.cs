@@ -25,6 +25,7 @@ namespace Tests
 	using System;
 	using System.Collections.Immutable;
 	using NUnit.Framework;
+	using SafetySharp.Metamodel;
 	using SafetySharp.Metamodel.Declarations;
 
 	[TestFixture]
@@ -33,7 +34,7 @@ namespace Tests
 		[Test]
 		public void Test()
 		{
-			//var c = new ClassDeclaration("a", "   ", ImmutableArray<MemberDeclaration>.Empty);
+			var c = new ClassDeclaration(new Identifier("a"), " d  ", ImmutableArray<MemberDeclaration>.Empty);
 			//var lightBarrier = new Component(
 			//	name: "LightBarrier",
 			//	variables: ImmutableArray.Create(new Variable("myVar", "decimal")));

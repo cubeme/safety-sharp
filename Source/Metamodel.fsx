@@ -31,14 +31,20 @@ open System.Threading
 //====================================================================================================================
 
 type CollectionType = 
-    | None
+    | Singleton
     | Array
     | List
+
+type Validation =
+    | None
+    | NotNull
+    | NotNullOrWhitespace
 
 type Property = { 
     Name : string
     Type : string
     CollectionType : CollectionType
+    Validation : Validation
     Comment : string 
 }
 
@@ -72,7 +78,8 @@ let elements = [
                     { 
                         Name = "Name"
                         Type = "string"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = NotNullOrWhitespace
                         Comment = "The name of the identifier."
                     }
                 ]
@@ -92,19 +99,22 @@ let elements = [
                     {
                         Name = "Name"
                         Type = "Identifier"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = NotNull
                         Comment = "The name of the declared type."
                     }
                     {
                         Name = "Namespace"
                         Type = "string"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = NotNullOrWhitespace
                         Comment = "The namespace the type is declared in."
                     }
                     {
                         Name = "Members"
                         Type = "MemberDeclaration"
                         CollectionType = Array
+                        Validation = None
                         Comment = "The declared members of the type."
                     }
                 ]
@@ -142,25 +152,29 @@ let elements = [
                     {
                         Name = "Name"
                         Type = "Identifier"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = None
                         Comment = "The name of the property."
                     }
                     {
                         Name = "Type"
                         Type = "TypeReference"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = NotNull
                         Comment = "The type of the property."
                     }
                     {
                         Name = "Getter"
                         Type = "Statement"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = None
                         Comment = "The body of the property's getter."
                     }
                     {
                         Name = "Setter"
                         Type = "Statement"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = None
                         Comment = "The body of the property's setter."
                     }
                 ]
@@ -174,13 +188,15 @@ let elements = [
                     {
                         Name = "Name"
                         Type = "Identifier"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = None
                         Comment = "The name of the state variable."
                     }
                     {
                         Name = "Type"
                         Type = "TypeReference"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = None
                         Comment = "The type of the state variable."
                     }
                 ]
@@ -266,7 +282,8 @@ let elements = [
                     {
                         Name = "Slot"
                         Type = "int"
-                        CollectionType = None
+                        CollectionType = Singleton
+                        Validation = None
                         Comment = "The slot of the interface declaration in the model's type information table."
                     }
                 ]
@@ -401,7 +418,7 @@ let generateCode () =
 
     let getType (p : Property) =
         match p.CollectionType with
-        | None -> p.Type
+        | Singleton -> p.Type
         | Array -> sprintf "ImmutableArray<%s>" p.Type
         | List -> sprintf "ImmutableList<%s>" p.Type
 
@@ -410,6 +427,16 @@ let generateCode () =
         output.AppendLine(sprintf "///     Gets %s" <| startWithLowerCase p.Comment)
         output.AppendLine("/// </summary>")
         output.AppendLine(sprintf "public %s %s { get; private set; }" <| getType p <| p.Name)
+
+    let generateValidation (p : Property) =
+        let parameterName = getParameterName p.Name
+        match p.Validation with
+        | None ->
+            ()
+        | NotNull -> 
+            output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+        | NotNullOrWhitespace -> 
+            output.AppendLine(sprintf "Assert.ArgumentNotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
         
     let generateConstructor (c : Class) = 
         output.AppendLine("/// <summary>")
@@ -428,6 +455,12 @@ let generateCode () =
         output.DecreaseIndent()
 
         output.AppendBlockStatement <| fun () ->
+            let validatedProperties = c.Properties |> List.filter (fun p -> p.Validation <> None)
+            if validatedProperties |> List.length > 0 then
+                for p in validatedProperties do
+                    generateValidation p
+                output.Newline()
+
             if c.Properties |> List.length > 0 then
                 let parameters = c.Properties |> collect ", " (fun p -> getParameterName p.Name)
                 output.AppendLine(sprintf "Validate(%s);" parameters)
@@ -462,7 +495,7 @@ let generateCode () =
             output.Newline()
 
     let generateAddMethods (c : Class) =
-        let collectionProperties = allProperties c |> List.filter (fun p -> p.CollectionType <> None)
+        let collectionProperties = allProperties c |> List.filter (fun p -> p.CollectionType <> Singleton)
         for p in collectionProperties do
             output.AppendLine("/// <summary>")
             output.AppendLine(sprintf "///     Adds <paramref name=\"%s\" /> to a copy of the <see cref=\"%s\" /> instance." <| startWithLowerCase p.Name <| c.Name)
@@ -595,7 +628,7 @@ let generateCode () =
                             output.Newline()
                             for p in properties do
                                 if isRewriteable p.Type then
-                                    let cast = if p.CollectionType <> None then "" else sprintf "(%s)" p.Type
+                                    let cast = if p.CollectionType <> Singleton then "" else sprintf "(%s)" p.Type
                                     output.AppendLine(sprintf "var %s = %sVisit(%s.%s);" <| getParameterName p.Name <| cast <| parameterName <| p.Name)
                                 else
                                     output.AppendLine(sprintf "var %s = %s.%s;" <| getParameterName p.Name <| parameterName <| p.Name)
