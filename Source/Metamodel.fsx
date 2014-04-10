@@ -60,8 +60,8 @@ type Namespace = {
 
 let elements = [
     {
-        Namespace.Name = "SafetySharp.Metamodel.Declarations"
-        Namespace.Classes = 
+        Name = "SafetySharp.Metamodel.Declarations"
+        Classes = 
         [
             {
                 Name = "TypeDeclaration"
@@ -136,8 +136,8 @@ let elements = [
         ]
     }
     {
-        Namespace.Name = "SafetySharp.Metamodel.Expressions"
-        Namespace.Classes = 
+        Name = "SafetySharp.Metamodel.Expressions"
+        Classes = 
         [
             {   
                 Name = "Expression"
@@ -154,8 +154,8 @@ let elements = [
         ]
     }
     {
-        Namespace.Name = "SafetySharp.Metamodel.Statements"
-        Namespace.Classes = 
+        Name = "SafetySharp.Metamodel.Statements"
+        Classes = 
         [
             {   
                 Name = "Statement"
