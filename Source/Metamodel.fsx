@@ -93,15 +93,7 @@ let elements = [
                 Name = "ClassDeclaration"
                 Base = "TypeDeclaration"
                 Abstract = false
-                Properties = 
-                [
-                    {
-                        Name = "SomeFlag"
-                        Type = "bool"
-                        CollectionType = None
-                        Comment = "..."
-                    }
-                ]
+                Properties = []
             }
             {   
                 Name = "ComponentDeclaration"
@@ -125,13 +117,53 @@ let elements = [
                 Name = "PropertyDeclaration"
                 Base = "MemberDeclaration"
                 Abstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = None
+                        Comment = "The name of the property."
+                    }
+                    {
+                        Name = "Type"
+                        Type = "TypeReference"
+                        CollectionType = None
+                        Comment = "The type of the property."
+                    }
+                    {
+                        Name = "Getter"
+                        Type = "Statement"
+                        CollectionType = None
+                        Comment = "The body of the property's getter."
+                    }
+                    {
+                        Name = "Setter"
+                        Type = "Statement"
+                        CollectionType = None
+                        Comment = "The body of the property's setter."
+                    }
+                ]
             }
             {   
                 Name = "StateVariableDeclaration"
                 Base = "MemberDeclaration"
                 Abstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = None
+                        Comment = "The name of the state variable."
+                    }
+                    {
+                        Name = "Type"
+                        Type = "TypeReference"
+                        CollectionType = None
+                        Comment = "The type of the state variable."
+                    }
+                ]
             }
         ]
     }
@@ -174,6 +206,50 @@ let elements = [
                 Base = "Statement"
                 Abstract = false
                 Properties = []
+            }
+        ]
+    }
+    {
+        Name = "SafetySharp.Metamodel.TypeReferences"
+        Classes = 
+        [
+            {   
+                Name = "TypeReference"
+                Base = "MetamodelElement"
+                Abstract = true
+                Properties = []
+            }
+            {   
+                Name = "VoidTypeReference"
+                Base = "TypeReference"
+                Abstract = false
+                Properties = []
+            }
+            {   
+                Name = "BooleanTypeReference"
+                Base = "TypeReference"
+                Abstract = false
+                Properties = []
+            }
+            {   
+                Name = "IntegerTypeReference"
+                Base = "TypeReference"
+                Abstract = false
+                Properties = []
+            }
+            {   
+                Name = "InterfaceTypeReference"
+                Base = "TypeReference"
+                Abstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Slot"
+                        Type = "int"
+                        CollectionType = None
+                        Comment = "The slot of the interface declaration in the model's type information table."
+                    }
+                ]
             }
         ]
     }
@@ -291,6 +367,17 @@ let generateCode () =
 
     let visitorTypeParam typeParam = if typeParam = "" then "" else sprintf "<%s>" typeParam
     let visitorReturnType typeParam = if typeParam = "" then "void" else typeParam
+
+    let writeNamespaces () =
+        output.AppendLine("using System;")
+        output.AppendLine("using System.Collections.Immutable;");
+        output.Newline()
+
+        output.AppendLine("using SafetySharp.Utilities;");
+        for n in elements do
+            output.AppendLine(sprintf "using %s;" n.Name)
+
+        output.Newline()
 
     let getType (p : Property) =
         match p.CollectionType with
@@ -432,10 +519,7 @@ let generateCode () =
     let generateNamespace (n : Namespace) =
         output.AppendLine(sprintf "namespace %s" n.Name)
         output.AppendBlockStatement <| fun () ->
-            output.AppendLine("using System;")
-            output.AppendLine("using System.Collections.Immutable;");
-            output.AppendLine("using Utilities;");
-            output.Newline()
+            writeNamespaces ()
 
             let count = n.Classes |> List.length
             let mutable i = 0
@@ -468,49 +552,44 @@ let generateCode () =
                     if i <> count then
                         output.Newline()
 
-//        let generateRewriter () =
-//            let isRewriteable typeName = classes |> List.exists (fun c -> c.Name = typeName)
-//            output.AppendLine("public abstract partial class MetamodelRewriter : MetamodelVisitor<MetamodelElement>")
-//            output.AppendBlockStatement <| fun () ->
-//                let count = nonAbstractClasses |> List.length
-//                let mutable i = 0
-//                for c in nonAbstractClasses do
-//                    let parameterName = getParameterName c.Name
-//                    output.AppendLine("/// <summary>")
-//                    output.AppendLine(sprintf "///     Rewrites a metamodel element of type <see cref=\"%s\" />." c.Name)
-//                    output.AppendLine("/// </summary>")
-//                    output.AppendLine(sprintf "/// <param name=\"%s\">The <see cref=\"%s\" /> instance that should be rewritten.</param>" <| startWithLowerCase c.Name <| c.Name)
-//                    output.AppendLine(sprintf "public override MetamodelElement Visit%s(%s %s)" c.Name c.Name parameterName)
-//                    output.AppendBlockStatement <| fun () ->
-//                        output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
-//
-//                        let properties = allProperties c
-//                        if properties |> List.length = 0 then
-//                            output.AppendLine(sprintf "return %s;" parameterName)
-//                        else
-//                            output.Newline()
-//                            for p in properties do
-//                                if isRewriteable p.Type then
-//                                    output.AppendLine(sprintf "var %s = Visit(%s.%s);" <| getParameterName p.Name <| parameterName <| p.Name)
-//                                else
-//                                    output.AppendLine(sprintf "var %s = %s.%s;" <| getParameterName p.Name <| parameterName <| p.Name)
-//
-//                            let parameters = allProperties c |> collect ", " (fun p' -> getParameterName p'.Name)
-//                            output.AppendLine(sprintf "return %s.Update(%s);" parameterName parameters)
-//
-//                    i <- i + 1
-//                    if i <> count then
-//                        output.Newline()
+        let generateRewriter () =
+            let isRewriteable typeName = classes |> List.exists (fun c -> c.Name = typeName)
+            output.AppendLine("public abstract partial class MetamodelRewriter : MetamodelVisitor<MetamodelElement>")
+            output.AppendBlockStatement <| fun () ->
+                let count = nonAbstractClasses |> List.length
+                let mutable i = 0
+                for c in nonAbstractClasses do
+                    let parameterName = getParameterName c.Name
+                    output.AppendLine("/// <summary>")
+                    output.AppendLine(sprintf "///     Rewrites a metamodel element of type <see cref=\"%s\" />." c.Name)
+                    output.AppendLine("/// </summary>")
+                    output.AppendLine(sprintf "/// <param name=\"%s\">The <see cref=\"%s\" /> instance that should be rewritten.</param>" <| startWithLowerCase c.Name <| c.Name)
+                    output.AppendLine(sprintf "public override MetamodelElement Visit%s(%s %s)" c.Name c.Name parameterName)
+                    output.AppendBlockStatement <| fun () ->
+                        output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+
+                        let properties = allProperties c
+                        if properties |> List.length = 0 then
+                            output.AppendLine(sprintf "return %s;" parameterName)
+                        else
+                            output.Newline()
+                            for p in properties do
+                                if isRewriteable p.Type then
+                                    let cast = if p.CollectionType <> None then "" else sprintf "(%s)" p.Type
+                                    output.AppendLine(sprintf "var %s = %sVisit(%s.%s);" <| getParameterName p.Name <| cast <| parameterName <| p.Name)
+                                else
+                                    output.AppendLine(sprintf "var %s = %s.%s;" <| getParameterName p.Name <| parameterName <| p.Name)
+
+                            let parameters = allProperties c |> collect ", " (fun p' -> getParameterName p'.Name)
+                            output.AppendLine(sprintf "return %s.Update(%s);" parameterName parameters)
+
+                    i <- i + 1
+                    if i <> count then
+                        output.Newline()
 
         output.AppendLine("namespace SafetySharp.Metamodel")
         output.AppendBlockStatement <| fun () ->
-            output.AppendLine("using System;")
-            output.AppendLine("using System.Collections.Immutable;");
-            output.AppendLine("using Utilities;");
-            output.Newline()
-
-            for n in elements do
-                output.AppendLine(sprintf "using %s;" n.Name)
+            writeNamespaces ()
 
             output.Newline()
             generateVisitor ""
@@ -518,8 +597,8 @@ let generateCode () =
             output.Newline()
             generateVisitor "TResult"
 
-//            output.Newline()
-//            generateRewriter ()
+            output.Newline()
+            generateRewriter ()
 
     for n in elements do
         generateNamespace n

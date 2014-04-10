@@ -20,31 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests
+namespace SafetySharp.Metamodel
 {
 	using System;
 	using System.Collections.Immutable;
-	using NUnit.Framework;
-	using SafetySharp.Metamodel.Declarations;
 
-	[TestFixture]
-	public class EnumTests
+	partial class MetamodelRewriter
 	{
-		[Test]
-		public void Test()
+		public virtual ImmutableArray<TElement> Visit<TElement>(ImmutableArray<TElement> elements)
+			where TElement : MetamodelElement
 		{
-			var c = new ClassDeclaration("a", "   ", ImmutableArray<MemberDeclaration>.Empty);
-			//var lightBarrier = new Component(
-			//	name: "LightBarrier",
-			//	variables: ImmutableArray.Create(new Variable("myVar", "decimal")));
-
-			//lightBarrier.Variables[0].Name.Should().Be("myVar");
-
-			//var lightBarrier1 = new ComponentInstance(
-			//	component: lightBarrier,
-			//	values: ImmutableArray.Create<object>(1));
-
-			//lightBarrier1.Values[0].Should().Be(1);
+			return elements;
 		}
 	}
 }

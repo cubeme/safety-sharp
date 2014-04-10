@@ -20,31 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests
+namespace SafetySharp.Metamodel.TypeReferences
 {
 	using System;
-	using System.Collections.Immutable;
-	using NUnit.Framework;
-	using SafetySharp.Metamodel.Declarations;
 
-	[TestFixture]
-	public class EnumTests
+	partial class TypeReference
 	{
-		[Test]
-		public void Test()
-		{
-			var c = new ClassDeclaration("a", "   ", ImmutableArray<MemberDeclaration>.Empty);
-			//var lightBarrier = new Component(
-			//	name: "LightBarrier",
-			//	variables: ImmutableArray.Create(new Variable("myVar", "decimal")));
-
-			//lightBarrier.Variables[0].Name.Should().Be("myVar");
-
-			//var lightBarrier1 = new ComponentInstance(
-			//	component: lightBarrier,
-			//	values: ImmutableArray.Create<object>(1));
-
-			//lightBarrier1.Values[0].Should().Be(1);
-		}
 	}
 }
