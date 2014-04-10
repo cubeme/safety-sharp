@@ -24,6 +24,7 @@ namespace Tests
 {
 	using System;
 	using NUnit.Framework;
+	using SafetySharp.Metamodel.Declarations;
 
 	[TestFixture]
 	public class EnumTests
@@ -31,6 +32,7 @@ namespace Tests
 		[Test]
 		public void Test()
 		{
+			var c = new ClassDeclaration("a", "   ", false);
 			//var lightBarrier = new Component(
 			//	name: "LightBarrier",
 			//	variables: ImmutableArray.Create(new Variable("myVar", "decimal")));

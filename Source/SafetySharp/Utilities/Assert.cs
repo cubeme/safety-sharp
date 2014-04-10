@@ -282,7 +282,7 @@ namespace SafetySharp.Utilities
 		public static void NotNullOrWhitespace(string s)
 		{
 			if (s == null)
-				throw new NullReferenceException("Expected a non-null 'String' instance.");
+				throw new NullReferenceException("Expected a non-null 'System.String' instance.");
 
 			if (String.IsNullOrWhiteSpace(s))
 				throw new InvalidOperationException("The string cannot be empty or consist of whitespace only.");
@@ -388,6 +388,30 @@ namespace SafetySharp.Utilities
 		}
 
 		/// <summary>
+		///     Throws an <see cref="InvalidCastException" /> if <paramref name="obj" /> is not of type
+		///     <typeparamref name="T" />.
+		/// </summary>
+		/// <typeparam name="T">The desired type of <paramref name="obj" />.</typeparam>
+		/// <param name="obj">The value whose type should be checked.</param>
+		/// <param name="message">An optional message providing further details about the assertion.</param>
+		/// <param name="parameters">The parameters for formatting <paramref name="message"/>.</param>
+		/// <exception cref="InvalidCastException">Thrown if <paramref name="obj" /> is not of type <typeparamref name="T" />.</exception>
+		[Conditional("DEBUG"), DebuggerHidden, StringFormatMethod("message")]
+		public static void OfType<T>(object obj, string message = null, params object[] parameters)
+			where T : class
+		{
+			if (obj is T)
+				return;
+
+			message = message == null
+				? String.Format("Expected an instance of type '{0}' but found an instance of type '{1}'.",
+								typeof(T).FullName, obj.GetType().FullName)
+				: String.Format(message, parameters);
+
+			throw new InvalidCastException(message);
+		}
+
+		/// <summary>
 		///     Retrieves the name of the argument referenced by the <paramref name="argumentName" /> expression. Expects
 		///     <paramref name="argumentName" /> to be a lambda expression of the form <c>() => argument</c>.
 		/// </summary>
@@ -395,9 +419,7 @@ namespace SafetySharp.Utilities
 		/// <returns>Returns the name of the member or local variable accessed by the expression.</returns>
 		private static string GetArgumentName<T>(Expression<Func<T>> argumentName)
 		{
-			ArgumentOfType<MemberExpression>(argumentName, () => argumentName,
-											 "Expected a lambda expression of the form '() => argument'.");
-
+			OfType<MemberExpression>(argumentName.Body, "Expected a lambda expression of the form '() => argument'.");
 			return ((MemberExpression)argumentName.Body).Member.Name;
 		}
 	}

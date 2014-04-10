@@ -23,8 +23,19 @@
 namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
+	using Utilities;
 
 	partial class TypeDeclaration
 	{
+		/// <summary>
+		///     Validates all of the given property values.
+		/// </summary>
+		/// <param name="name">The name of the declared type.</param>
+		/// <param name="namespace">The namespace the type is declared in.</param>
+		partial void Validate(string name, string @namespace)
+		{
+			Assert.ArgumentNotNullOrWhitespace(name, () => name);
+			Assert.ArgumentNotNullOrWhitespace(@namespace, () => @namespace);
+		}
 	}
 }

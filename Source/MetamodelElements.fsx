@@ -346,17 +346,23 @@ let generateCode () =
         output.DecreaseIndent()
 
         output.AppendBlockStatement <| fun () ->
+            if c.Properties |> List.length > 0 then
+                let parameters = c.Properties |> collect ", " (fun p -> getParameterName p.Name)
+                output.AppendLine(sprintf "Validate(%s);" parameters)
+
             for p in c.Properties do
                 output.AppendLine(sprintf "%s = %s;" p.Name <| getParameterName p.Name)
 
-            if allProperties c |> List.length > 0 then
-                output.AppendLine("Validate();")
-
     let generateValidateMethod (c : Class) =
         output.AppendLine("/// <summary>")
-        output.AppendLine(sprintf "///     Validates the properties of a <see cref=\"%s\" /> instance." c.Name)
+        output.AppendLine("///     Validates all of the given property values.")
         output.AppendLine("/// </summary>")
-        output.AppendLine("partial void Validate();")
+
+        for p in c.Properties do
+            output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
+
+        let parameters = c.Properties |> collect ", " (fun p' -> sprintf "%s %s" p'.Type <| getParameterName p'.Name)
+        output.AppendLine(sprintf "partial void Validate(%s);" parameters)
 
     let generateWithMethods (c: Class) =
         for p in allProperties c do
@@ -405,12 +411,11 @@ let generateCode () =
 
             generateConstructor c
 
-            let hasProperties = allProperties c |> List.length > 0
-            if hasProperties then
+            if c.Properties |> List.length > 0 then
                 output.Newline()
                 generateValidateMethod c
 
-            if not c.Abstract && hasProperties then
+            if not c.Abstract && allProperties c |> List.length > 0 then
                 output.Newline()
                 generateWithMethods c
                 generateUpdateMethod c
