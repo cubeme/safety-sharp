@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 
-	abstract partial class Statement
+	partial class Statement
 	{
 	}
 }

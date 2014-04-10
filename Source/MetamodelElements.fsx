@@ -179,7 +179,6 @@ type CodeWriter() as this =
 
     member public this.WriteToFile path =
         File.WriteAllText(path, output.ToString())
-        printfn "'%s' has been generated." path
 
     member private this.EnsureNewline() =
         if not atBeginningOfLine then
@@ -216,7 +215,7 @@ Thread.CurrentThread.CurrentCulture <- CultureInfo.InvariantCulture;
 Thread.CurrentThread.CurrentUICulture <- CultureInfo.InvariantCulture;
 
 // Generate the code
-let generateCode =
+let generateCode () =
     let output = new CodeWriter()
 
     let startWithLowerCase (s : string) =
@@ -313,7 +312,7 @@ let generateCode =
         else
             let baseClass = classes |> List.filter (fun c' -> c'.Name = c.Base)
             if baseClass |> List.length <> 1 then
-                failwith "Class '%s' has unknown base '%s'." c.Name c.Base
+                failwithf "Class '%s' has unknown base '%s'." c.Name c.Base
             let baseClass = baseClass |> List.head
             getBaseProperties baseClass @ baseClass.Properties
 
@@ -439,5 +438,16 @@ let generateCode =
     // Write the enumeration file
     output.WriteToFile "SafetySharp/Metamodel/Elements.Generated.cs"
 
-generateCode
-printfn "Done generating code."
+let writeColored s c =
+    let c' = Console.ForegroundColor
+    Console.ForegroundColor <- c
+
+    printfn "%s" s
+    Console.ForegroundColor <- c'
+
+try
+    generateCode ()
+    writeColored "Done generating code." ConsoleColor.DarkGreen
+with
+    | e ->
+        writeColored e.Message ConsoleColor.DarkRed
