@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 
-	public class ExpressionStatement : Statement
+	partial class ExpressionStatement
 	{
 	}
 }

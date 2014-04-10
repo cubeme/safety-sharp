@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
 
-	public abstract class MemberDeclaration : MetamodelElement
+	partial class MemberDeclaration
 	{
 	}
 }

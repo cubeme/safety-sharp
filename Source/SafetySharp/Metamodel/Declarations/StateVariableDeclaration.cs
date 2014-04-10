@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
 
-	public class StateVariableDeclaration : MemberDeclaration
+	partial class StateVariableDeclaration
 	{
 	}
 }

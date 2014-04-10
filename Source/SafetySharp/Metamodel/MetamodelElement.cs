@@ -23,6 +23,8 @@
 namespace SafetySharp.Metamodel
 {
 	using System;
+	using Declarations;
+	using Statements;
 
 	/// <summary>
 	///     Represents a metamodel element. Metamodel elements are organized as semantically enriched syntax trees during
@@ -41,22 +43,16 @@ namespace SafetySharp.Metamodel
 	///     </para>
 	///     <para>
 	///         Some metamodel elements are shared by both the formal and the extended tree. For instance, there is no difference
-	///         for <see cref="Statements.ExpressionStatement" /> elements between both trees, so the code is shared. In other
-	///         cases, common
+	///         for <see cref="ExpressionStatement" /> elements between both trees, so the code is shared. In other cases, common
 	///         base classes are introduced that allow the step-by-step transformation of extended metamodel elements into formal
-	///         metamodel elements. The <see cref="Declarations.MemberDeclaration" /> hierarchy, for example, makes it possible to
-	///         transform <see cref="Declarations.FieldDeclaration" /> elements into
-	///         <see cref="Declarations.StateVariableDeclaration" /> elements, while <see cref="Declarations.PropertyDeclaration" />
-	///         elements are still retained and transformed later on. Once all child elements of the
-	///         <see cref="Declarations.ClassDeclaration" /> element have been transformed, the class declaration can itself be
-	///         transformed to an <see cref="Declarations.ComponentDeclaration" /> element, for example.
+	///         metamodel elements. The <see cref="MemberDeclaration" /> hierarchy, for example, makes it possible to transform
+	///         <see cref="FieldDeclaration" /> elements into <see cref="StateVariableDeclaration" /> elements, while
+	///         <see cref="PropertyDeclaration" /> elements are still retained and transformed later on. Once all child elements of
+	///         the <see cref="ClassDeclaration" /> element have been transformed, the class declaration can itself be transformed
+	///         to an <see cref="ComponentDeclaration" /> element, for example.
 	///     </para>
 	/// </remarks>
 	public abstract class MetamodelElement
 	{
-		/// <summary>
-		///     Gets the source location of the element.
-		/// </summary>
-		public SourceLocation SourceLocation { get; private set; }
 	}
 }

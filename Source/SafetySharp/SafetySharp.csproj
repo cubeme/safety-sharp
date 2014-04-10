@@ -43,8 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Metamodel\Declarations\PropertyDeclaration.cs" />
-    <Compile Include="Metamodel\LinePosition.cs" />
-    <Compile Include="Metamodel\SourceLocation.cs" />
+    <Compile Include="Metamodel\Elements.Generated.cs" />
     <Compile Include="Metamodel\Statements\BlockStatement.cs" />
     <Compile Include="Metamodel\Expressions\Expression.cs" />
     <Compile Include="Metamodel\Statements\ExpressionStatement.cs" />
@@ -72,6 +71,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

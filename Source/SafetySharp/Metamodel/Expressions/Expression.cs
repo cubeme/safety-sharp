@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
 
-	public abstract class Expression : MetamodelElement
+	partial class Expression
 	{
 	}
 }

@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 
-	public class BlockStatement : Statement
+	partial class BlockStatement
 	{
 	}
 }

@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
 
-	public class GuardedCommandExpression : Expression
+	partial class GuardedCommandExpression
 	{
 	}
 }

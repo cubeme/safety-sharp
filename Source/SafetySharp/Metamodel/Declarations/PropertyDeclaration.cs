@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
 
-	public class PropertyDeclaration : MemberDeclaration
+	partial class PropertyDeclaration
 	{
 	}
 }

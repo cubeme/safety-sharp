@@ -24,7 +24,10 @@ namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
 
-	public class ComponentDeclaration : TypeDeclaration
+	/// <summary>
+	///     Represents the declaration of a component type in the formal tree.
+	/// </summary>
+	partial class ComponentDeclaration
 	{
 	}
 }

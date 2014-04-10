@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
 
-	public class FieldDeclaration : MemberDeclaration
+	partial class FieldDeclaration
 	{
 	}
 }
