@@ -60,6 +60,26 @@ type Namespace = {
 
 let elements = [
     {
+        Name = "SafetySharp.Metamodel"
+        Classes =
+        [
+            {
+                Name = "Identifier"
+                Base = "MetamodelElement"
+                Abstract = false
+                Properties =
+                [
+                    { 
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = None
+                        Comment = "The name of the identifier."
+                    }
+                ]
+            }
+        ]
+    }
+    {
         Name = "SafetySharp.Metamodel.Declarations"
         Classes = 
         [
@@ -71,7 +91,7 @@ let elements = [
                 [
                     {
                         Name = "Name"
-                        Type = "string"
+                        Type = "Identifier"
                         CollectionType = None
                         Comment = "The name of the declared type."
                     }
@@ -121,7 +141,7 @@ let elements = [
                 [
                     {
                         Name = "Name"
-                        Type = "string"
+                        Type = "Identifier"
                         CollectionType = None
                         Comment = "The name of the property."
                     }
@@ -153,7 +173,7 @@ let elements = [
                 [
                     {
                         Name = "Name"
-                        Type = "string"
+                        Type = "Identifier"
                         CollectionType = None
                         Comment = "The name of the state variable."
                     }

@@ -33,7 +33,7 @@ namespace Tests
 		[Test]
 		public void Test()
 		{
-			var c = new ClassDeclaration("a", "   ", ImmutableArray<MemberDeclaration>.Empty);
+			//var c = new ClassDeclaration("a", "   ", ImmutableArray<MemberDeclaration>.Empty);
 			//var lightBarrier = new Component(
 			//	name: "LightBarrier",
 			//	variables: ImmutableArray.Create(new Variable("myVar", "decimal")));
