@@ -27,6 +27,33 @@ open System.Text
 open System.Threading
 
 //====================================================================================================================
+// Metamodel code generator
+//====================================================================================================================
+
+// This F# script generates C# code for metamodel elements and visitors. The generated code is written to the output
+// file. Metamodel elements are immutable, however, C# doesn't support a concise syntax for the specification of 
+// immutable data types. From the metadata provided below, partial classes are generated for the metamodel elements
+// and visitors containing all the boilerplate code:
+// - Get-only properties
+// - Constructors taking values for all properties, optionally performing validation
+// - Additional validation is supported through a partial Validate() method
+// - A With...(...) method for each property that creates a copy of the object, changing only the value of the given
+//   property; if the property value has not changed, no copy is made and the original object is returned
+// - An Add...(...) method for each property of collection type that creates a copy of the object, adding the given
+//   values to the collection property; if the collection has not changed, no copy is made and the original object 
+//   is returned
+// - An Update(...) method that creates a new instance of the object if any of the property values have changed; if
+//   none have changed, no copy is made and the original object is returned
+// - Constructors, With* methods and Update() all take inherited properties into account, generating the appropriate
+//   code and methods instead of relying on chains of virtual function calls
+// - Accept() methods for metamodel visitors
+
+/// <summary>
+/// The path to the file the generated C# code should be written to.
+/// </summary>
+let outputFile = "SafetySharp/Metamodel/Metamodel.Generated.cs"
+
+//====================================================================================================================
 // F# type definitions
 //====================================================================================================================
 
@@ -482,7 +509,9 @@ let generateCode () =
     let generateWithMethods (c: Class) =
         for p in allProperties c do
             output.AppendLine("/// <summary>")
-            output.AppendLine(sprintf "///     Replaces the %s in a copy of the <see cref=\"%s\" /> instance." <| startWithLowerCase p.Name <| c.Name)
+            output.AppendLine(sprintf "///     Creates a copy of the <see cref=\"%s\" /> instance, changing only the value of the" c.Name)
+            output.AppendLine(sprintf "///     <see cref=\"%s.%s\" /> property; if the property value has not changed, " c.Name p.Name)
+            output.AppendLine("///     no copy is made and the original object is returned.")
             output.AppendLine("/// </summary>")
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
             output.AppendLine(sprintf "public %s With%s(%s %s)" c.Name p.Name <| getType p <| getParameterName p.Name)
@@ -498,7 +527,9 @@ let generateCode () =
         let collectionProperties = allProperties c |> List.filter (fun p -> p.CollectionType <> Singleton)
         for p in collectionProperties do
             output.AppendLine("/// <summary>")
-            output.AppendLine(sprintf "///     Adds <paramref name=\"%s\" /> to a copy of the <see cref=\"%s\" /> instance." <| startWithLowerCase p.Name <| c.Name)
+            output.AppendLine(sprintf "///     Creates a copy of the <see cref=\"%s\" /> instance, adding the given values to the" c.Name)
+            output.AppendLine(sprintf "///     <see cref=\"%s.%s\" /> collection; if <paramref name=\"%s\" /> is empty, " c.Name p.Name <| getParameterName p.Name)
+            output.AppendLine("///     no copy is made and the original instance is returned.")
             output.AppendLine("/// </summary>")
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
             output.AppendLine(sprintf "public %s Add%s(params %s[] %s)" c.Name p.Name p.Type <| getParameterName p.Name)
@@ -508,7 +539,8 @@ let generateCode () =
 
     let generateUpdateMethod (c : Class) =
         output.AppendLine("/// <summary>")
-        output.AppendLine(sprintf "///     Returns a new <see cref=\"%s\" /> instance if any properties require an update." c.Name)
+        output.AppendLine(sprintf "///     Creates a new instance of the <see cref=\"%s\" /> class if any of the property values" c.Name)
+        output.AppendLine(sprintf "///     have changed; if none have changed, no copy is made and the original instance is returned.")
         output.AppendLine("/// </summary>")
 
         for p in allProperties c do
@@ -529,8 +561,10 @@ let generateCode () =
             output.AppendLine("return this;")
 
     let generateAcceptMethod (c : Class) typeParam =
+        let curlyTypeParam = if typeParam = "" then "" else sprintf "{%s}" typeParam
         output.AppendLine("/// <summary>")
-        output.AppendLine("///     Accepts <paramref name=\"visitor\" />, calling the type-specific visit method.")
+        output.AppendLine("///     Implements the visitor pattern, calling <paramref name=\"visitor\" />'s")
+        output.AppendLine(sprintf "///     <see cref=\"MetamodelVisitor%s.Visit%s(%s)\" /> method." curlyTypeParam c.Name c.Name)
         output.AppendLine("/// </summary>")
         if typeParam <> "" then
             output.AppendLine("/// <typeparam name=\"TResult\">The type of the value returned by <paramref name=\"visitor\" />.</typeparam>")
@@ -658,7 +692,7 @@ let generateCode () =
         output.Newline()
         
     generateVisitors ()    
-    output.WriteToFile "SafetySharp/Metamodel/Metamodel.Generated.cs"
+    output.WriteToFile outputFile
 
 let writeColored s c =
     let c' = Console.ForegroundColor
