@@ -180,7 +180,16 @@ let elements = [
                 Name = "ComponentDeclaration"
                 Base = "TypeDeclaration"
                 IsAbstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "UpdateStatement"
+                        Type = "Statement"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The statement representing the Update method of the component."
+                    }
+                ]
             }
             {   
                 Name = "MemberDeclaration"
@@ -265,10 +274,93 @@ let elements = [
                 Properties = []
             }
             {   
+                Name = "GuardedCommandClause"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Guard"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The guard of the clause that determines whether the statement can be executed."
+                    }
+                    {
+                        Name = "Statement"
+                        Type = "Statement"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The statement of the clause that can only be executed if the guard holds."
+                    }
+                ]
+            }
+            {   
                 Name = "GuardedCommandExpression"
                 Base = "Expression"
                 IsAbstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "Clauses"
+                        Type = "GuardedCommandClause"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The clauses of the guarded command, one of which is chose nondeterministically during execution if multiple guards hold."
+                    }
+                ]
+            }
+            {   
+                Name = "AssignmentExpression"
+                Base = "Expression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Left"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the left-hand side of the assignment operator."
+                    }
+                    {
+                        Name = "Right"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the right-hand side of the assignment operator."
+                    }
+                ]
+            }
+            {   
+                Name = "StateVariableExpression"
+                Base = "Expression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Variable"
+                        Type = "StateVariableDeclaration"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The slot of the state variable."
+                    }
+                ]
+            }
+            {
+                Name = "BooleanLiteral"
+                Base = "Expression"
+                IsAbstract = false
+                Properties =
+                [
+                    {
+                        Name = "Value"
+                        Type = "bool"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The Boolean value of the literal."
+                    }
+                ]
             }
         ]
     }
@@ -286,13 +378,37 @@ let elements = [
                 Name = "ExpressionStatement"
                 Base = "Statement"
                 IsAbstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression that should be treated as a statement."
+                    }
+                ]
             }
             {   
                 Name = "BlockStatement"
                 Base = "Statement"
                 IsAbstract = false
                 Properties = []
+            }
+            {   
+                Name = "ReturnStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression that should be evaluated and returned."
+                    }
+                ]
             }
         ]
     }

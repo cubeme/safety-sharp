@@ -59,6 +59,7 @@
     <Compile Include="Metamodel\MetamodelElement.cs" />
     <Compile Include="Metamodel\Statements\Statement.cs" />
     <Compile Include="Metamodel\Declarations\TypeDeclaration.cs" />
+    <Compile Include="Metamodel\TypeReferences\BooleanTypeReference.cs" />
     <Compile Include="Metamodel\TypeReferences\TypeReference.cs" />
     <Compile Include="OverflowBehavior.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
