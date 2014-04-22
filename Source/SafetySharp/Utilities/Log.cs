@@ -150,7 +150,7 @@ namespace SafetySharp.Utilities
 						break;
 				}
 
-				System.Diagnostics.Debug.WriteLine("[{0}  ] {1}", type, entry.Message);
+				System.Diagnostics.Debug.WriteLine("[{0}] {1}", type, entry.Message);
 			};
 		}
 	}

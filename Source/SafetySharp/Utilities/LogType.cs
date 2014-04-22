@@ -25,33 +25,33 @@ namespace SafetySharp.Utilities
 	using System;
 
 	/// <summary>
-	///     Identifies the type of information provided by a <see cref="LogEntry"/>.
+	///     Identifies the type of information provided by a <see cref="LogEntry" />.
 	/// </summary>
 	public enum LogType
 	{
 		/// <summary>
-		///     The <see cref="LogEntry"/> describes a fatal error.
+		///     The <see cref="LogEntry" /> describes a fatal error.
 		/// </summary>
-		Fatal = 1,
+		Fatal,
 
 		/// <summary>
-		///     The <see cref="LogEntry"/> describes an error.
+		///     The <see cref="LogEntry" /> describes an error.
 		/// </summary>
-		Error = 2,
+		Error,
 
 		/// <summary>
-		///     The <see cref="LogEntry"/> describes a warning.
+		///     The <see cref="LogEntry" /> describes a warning.
 		/// </summary>
-		Warning = 3,
+		Warning,
 
 		/// <summary>
-		///     The <see cref="LogEntry"/> provides an informational message.
+		///     The <see cref="LogEntry" /> provides an informational message.
 		/// </summary>
-		Info = 4,
+		Info,
 
 		/// <summary>
-		///     The <see cref="LogEntry"/> provides debugging information.
+		///     The <see cref="LogEntry" /> provides debugging information.
 		/// </summary>
-		Debug = 5
+		Debug
 	}
 }

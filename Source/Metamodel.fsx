@@ -682,7 +682,8 @@ let createVisitorType typeParam =
             ParamType = ""
             ParamTypeSpecifier = ""
             ReturnType = "void"
-            IsGeneric = false }
+            IsGeneric = false 
+        }
     else
         { 
             VisitorType = sprintf "MetamodelVisitor<%s>" typeParam
