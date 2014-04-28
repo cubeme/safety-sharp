@@ -20,27 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel
+namespace SafetySharp.Modelchecking.Promela
 {
 	using System;
+	using Utilities;
 
-	/// <summary>
-	///     Represents a metamodel element. Metamodel elements are organized as semantically enriched syntax trees during
-	///     compilation and code transformation.
-	/// </summary>
-	public abstract class MetamodelElement
+	partial class PromelaVisitor
 	{
-		/// <summary>
-		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
-		/// </summary>
-		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		public abstract void Accept(MetamodelVisitor visitor);
-
-		/// <summary>
-		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
-		/// </summary>
-		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
-		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		public abstract TResult Accept<TResult>(MetamodelVisitor<TResult> visitor);
+		public virtual void Visit(PromelaElement element)
+		{
+			Assert.ArgumentNotNull(element, () => element);
+			element.Accept(this);
+		}
 	}
 }

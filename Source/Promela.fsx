@@ -20,27 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel
-{
-	using System;
+open System
+open System.Globalization
+open System.IO
+open System.Text
+open System.Threading
 
-	/// <summary>
-	///     Represents a metamodel element. Metamodel elements are organized as semantically enriched syntax trees during
-	///     compilation and code transformation.
-	/// </summary>
-	public abstract class MetamodelElement
-	{
-		/// <summary>
-		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
-		/// </summary>
-		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		public abstract void Accept(MetamodelVisitor visitor);
+#load "Generator.fsx"
+open Generator
 
-		/// <summary>
-		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.
-		/// </summary>
-		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
-		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
-		public abstract TResult Accept<TResult>(MetamodelVisitor<TResult> visitor);
-	}
-}
+let outputFile = "SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
+let elements = [
+    {
+        Name = "SafetySharp.Modelchecking.Promela"
+        Classes =
+        [
+            {
+                Name = "Identifier"
+                Base = "PromelaElement"
+                IsAbstract = false
+                Properties =
+                [
+                    { 
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = Generator.Singleton
+                        Validation = NotNullOrWhitespace
+                        Comment = "The name of the identifier."
+                    }
+                ]
+            }
+        ]
+    }
+]
+
+generateCode {
+    Elements = elements
+    OutputFile = outputFile
+    BaseClass = "PromelaElement"
+    VisitorName = "PromelaVisitor"
+    RewriterName = "PromelaRewriter"
+    VisitorNamespace = "SafetySharp.Modelchecking.Promela"
+} 

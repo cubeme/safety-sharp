@@ -26,5 +26,6 @@ namespace SafetySharp.Metamodel.TypeReferences
 
 	partial class TypeReference
 	{
+		public static readonly BooleanTypeReference Boolean = new BooleanTypeReference();
 	}
 }

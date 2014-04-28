@@ -29,6 +29,7 @@ namespace Tests
 	using SafetySharp.Metamodel;
 	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
+	using SafetySharp.Metamodel.Instances;
 	using SafetySharp.Metamodel.Statements;
 	using SafetySharp.Metamodel.TypeReferences;
 
@@ -38,20 +39,20 @@ namespace Tests
 		[Test]
 		public void Test()
 		{
-			var stateVar = new StateVariableDeclaration(new Identifier("x"), BooleanTypeReference.Default);
+			var guardedCommand = new GuardedCommandExpression(
+				ImmutableArray.Create(
+									  new GuardedCommandClause(
+										  new BooleanLiteral(true),
+										  new ReturnStatement(BooleanLiteral.True)),
+									  new GuardedCommandClause(
+										  new BooleanLiteral(true),
+										  new ReturnStatement(BooleanLiteral.False))
+					));
+
+			var stateVar = new StateVariableDeclaration(new Identifier("x"), TypeReference.Boolean);
 			var statement = new ExpressionStatement(
 				new AssignmentExpression(
-					new StateVariableExpression(stateVar),
-					new GuardedCommandExpression(
-						ImmutableArray.Create(
-											  new GuardedCommandClause(
-												  new BooleanLiteral(true),
-												  new ReturnStatement(new BooleanLiteral(true))),
-											  new GuardedCommandClause(
-												  new BooleanLiteral(true),
-												  new ReturnStatement(new BooleanLiteral(false)))
-							))
-					)
+					new StateVariableExpression(stateVar), guardedCommand)
 				);
 
 			var component = new ComponentDeclaration(
@@ -60,7 +61,23 @@ namespace Tests
 				members: ImmutableArray.Create<MemberDeclaration>(stateVar),
 				updateStatement: statement);
 
+			var instance = new ComponentInstance(ImmutableArray.Create<Expression>(guardedCommand));
 			((StateVariableDeclaration)component.Members[0]).Name.Name.Should().Be("x");
+
+			var rewriter = new MyRewriter();
+			var component2 = component.Accept(rewriter) as ComponentDeclaration;
+		}
+
+		class MyRewriter : MetamodelRewriter
+		{
+			/// <summary>
+			///     Rewrites a metamodel element of type <see cref="GuardedCommandExpression" />.
+			/// </summary>
+			/// <param name="guardedCommandExpression">The <see cref="GuardedCommandExpression" /> instance that should be rewritten.</param>
+			public override MetamodelElement VisitGuardedCommandExpression(GuardedCommandExpression guardedCommandExpression)
+			{
+				return new GuardedCommandExpression(ImmutableArray<GuardedCommandClause>.Empty);
+			}
 		}
 	}
 }

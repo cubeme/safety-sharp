@@ -20,11 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Declarations
+namespace SafetySharp.Modelchecking.Promela
 {
 	using System;
+	using Utilities;
 
-	partial class ClassDeclaration
+	partial class PromelaVisitor<TResult>
 	{
+		public virtual TResult Visit(PromelaElement element)
+		{
+			Assert.ArgumentNotNull(element, () => element);
+			return element.Accept(this);
+		}
 	}
 }

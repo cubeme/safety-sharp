@@ -20,11 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Declarations
+namespace SafetySharp.Modelchecking.Promela
 {
 	using System;
+	using System.Collections.Immutable;
 
-	partial class PropertyDeclaration
+	partial class PromelaRewriter
 	{
+		public virtual ImmutableArray<TElement> Visit<TElement>(ImmutableArray<TElement> elements)
+			where TElement : PromelaElement
+		{
+			return elements;
+		}
 	}
 }
