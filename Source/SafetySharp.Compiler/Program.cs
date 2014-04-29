@@ -33,6 +33,7 @@ namespace SafetySharp.Compiler
 	using System.Threading;
 	using CommandLine;
 	using CSharp;
+	using CSharp.Diagnostics;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -95,7 +96,7 @@ namespace SafetySharp.Compiler
 
 			public Test()
 			{
-				var catalog = new AssemblyCatalog(typeof(TestAnalyzer).Assembly);
+				var catalog = new AssemblyCatalog(typeof(EnumUnderlyingTypeAnalyzer).Assembly);
 				var container = new CompositionContainer(catalog);
 				container.ComposeParts(this);
 			}
@@ -112,6 +113,13 @@ namespace SafetySharp.Compiler
 									  .DescendantNodes().OfType<ReturnStatementSyntax>()
 									  .First();
 
+			var comp = project.GetCompilationAsync().Result;
+			var t = new Test();
+			var d = AnalyzerDriver.GetDiagnostics(comp, t.Analyzers, new CancellationToken());
+
+			foreach (var di in d)
+				Log.Info("{0}", di);
+
 			var newReturn =
 				SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(SyntaxFactory.TriviaList(
                     SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
@@ -124,11 +132,7 @@ namespace SafetySharp.Compiler
 			solution = solution.WithDocumentText(doc.Id, newRoot.GetText());
 			project = solution.Projects.Skip(1).First();
 
-			var comp = project.GetCompilationAsync().Result;
-			var t = new Test();
-			var d = AnalyzerDriver.GetDiagnostics(comp, t.Analyzers, new CancellationToken());
-			foreach (var di in d)
-				Log.Info("{0}", di);
+			comp = project.GetCompilationAsync().Result;
 
 			Execute(comp,project.OutputFilePath);
 		}

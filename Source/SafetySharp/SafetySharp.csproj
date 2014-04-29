@@ -64,7 +64,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharp\TestAnalyzer.cs" />
+    <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />
+    <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />
+    <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.cs" />
+    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.cs" />
     <Compile Include="Metamodel\Expressions\BinaryOperator.cs" />
     <Compile Include="Metamodel\Expressions\BooleanLiteral.cs" />
     <Compile Include="Metamodel\Expressions\UnaryOperator.cs" />
