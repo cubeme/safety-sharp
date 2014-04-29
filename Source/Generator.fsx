@@ -383,7 +383,7 @@ let generateCode context =
         | NotNullOrWhitespace -> 
             output.AppendLine(sprintf "Assert.ArgumentNotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
         | InRange ->
-            output.AppendLine(sprintf "Assert.ArgumentInRage(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Assert.ArgumentInRange(%s, () => %s);" parameterName parameterName)
         
     /// <summary>
     ///     Generates the constructor for the given class, having parameters for all inherited and non-inherited properties.
