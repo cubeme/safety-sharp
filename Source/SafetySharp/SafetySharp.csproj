@@ -89,6 +89,7 @@
     <Compile Include="Modelchecking\Promela\PromelaBinaryOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaElement.cs" />
     <Compile Include="Modelchecking\Promela\PromelaRewriter.cs" />
+    <Compile Include="Modelchecking\Promela\PromelaTypeName.cs" />
     <Compile Include="Modelchecking\Promela\PromelaUnaryOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaVisitor.cs" />
     <Compile Include="Modelchecking\Promela\PromelaVisitor`1.cs" />

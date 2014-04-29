@@ -24,7 +24,10 @@
 // Not exactly the complete Promela-Syntax, just a subset and modified to be
 // able to work with it conveniently.
 // We do not allow to declare variables as freely as in Promela. We only allow
-// global variables. But we simplify the Ast radically (no step). 
+// local variables inside a proctype. Thus there is no need to distinguish
+// between declarations (which can appear outside of proctypes) and other
+// statements. This simplify the Ast radically (no step) and makes it easier to
+// understand. Also we only allow one declaration per Statement.
 
 open System
 open System.Globalization
@@ -35,15 +38,43 @@ open System.Threading
 #load "Generator.fsx"
 open Generator
 
-// TODO: - Declarationen (global)
-//       - ProcTypes
-
 let outputFile = "SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
 let elements = [
     {
+        // proctype: [ active ] PROCTYPE name '(' [ decl_lst ]')'
+        // 	         [ priority ] [ enabler ] '{' sequence '}'
         Name = "SafetySharp.Modelchecking.Promela"
         Classes =
         [
+            {   
+                Name = "Proctype"
+                Base = "Expression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "IsActive"
+                        Type = "bool"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "If true then Proctype gets automatically executed at startup."
+                    }
+                    {
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The name of the Proctype."
+                    }
+                    {
+                        Name = "Code"
+                        Type = "Statement"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "A list of statements with the code of the Proctype."
+                    }
+                ]
+            }
         ]
     }    
     {
@@ -52,45 +83,15 @@ let elements = [
         [
             {   
                 Name = "Expression"
-                Base = "MetamodelElement"
+                Base = "PromelaElement"
                 IsAbstract = true
                 Properties = []
-            }
-            {   
-                Name = "StateVariableExpression"
-                Base = "Expression"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Variable"
-                        Type = "StateVariableDeclaration"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The slot of the state variable."
-                    }
-                ]
             }
             {
                 Name = "ConstExpression"
                 Base = "Expression"
                 IsAbstract = true
                 Properties = []
-            }
-            {
-                Name = "BooleanLiteral"
-                Base = "ConstExpression"
-                IsAbstract = false
-                Properties =
-                [
-                    {
-                        Name = "Value"
-                        Type = "bool"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "The Boolean value of the expression."
-                    }
-                ]
             }
             {
                 Name = "BooleanLiteral"
@@ -143,7 +144,7 @@ let elements = [
                     }
                     {
                         Name = "Operator"
-                        Type = "BinaryOperator"
+                        Type = "PromelaBinaryOperator"
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the binary expression."
@@ -172,7 +173,7 @@ let elements = [
                     }
                     {
                         Name = "Operator"
-                        Type = "UnaryOperator"
+                        Type = "PromelaUnaryOperator"
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the unary expression."
@@ -217,7 +218,7 @@ let elements = [
         [
             {   
                 Name = "Statement"
-                Base = "MetamodelElement"
+                Base = "PromelaElement"
                 IsAbstract = true
                 Properties = []
             }
@@ -316,7 +317,7 @@ let elements = [
             }
             {   
                 Name = "GuardedCommandClause"
-                Base = "MetamodelElement"
+                Base = "PromelaElement"
                 IsAbstract = true
                 Properties = []
             }          
@@ -376,6 +377,42 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the assignment operator."
+                    }
+                ]
+            }
+            {   
+                Name = "DeclarationStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Type"
+                        Type = "PromelaTypeName"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The type of the declared variable."
+                    }
+                    {
+                        Name = "Identifier"
+                        Type = "string"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The name of the declared variable."
+                    }
+                    {
+                        Name = "ArraySize"
+                        Type = "Int32"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The size of the array, if declared variable is an array. Otherwise 0."
+                    }
+                    {
+                        Name = "InitialValue"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "An expression, which determines the initial value of the declared variable."
                     }
                 ]
             }
