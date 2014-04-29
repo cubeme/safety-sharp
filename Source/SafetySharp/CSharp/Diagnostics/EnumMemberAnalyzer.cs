@@ -20,43 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Diagnostics
 {
 	using System;
-	using System.Collections.Immutable;
 	using System.Threading;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 
+	/// <summary>
+	///     Ensures that no enumeration members explicitly declare a constant value.
+	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(DiagnosticId, LanguageNames.CSharp)]
-	public class TestAnalyzer : ISyntaxNodeAnalyzer<SyntaxKind>
+	[ExportDiagnosticAnalyzer(IdentifierPrefix + DiagnosticIdentifier, LanguageNames.CSharp)]
+	public class EnumMemberAnalyzer : SyntaxNodeAnalyzer<EnumMemberDeclarationSyntax>
 	{
-		internal const string DiagnosticId = "MakeConst";
-		internal const string Description = "Make Constant";
-		internal const string MessageFormat = "Local vars are unsupported! {0}";
-		internal const string Category = "Usage";
+		private const string DiagnosticIdentifier = "1002";
 
-		internal static DiagnosticDescriptor Rule = new
-			DiagnosticDescriptor(DiagnosticId, Description, MessageFormat, Category,
-								 DiagnosticSeverity.Error);
-
-		public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+		/// <summary>
+		///     Initializes a new instance of the <see cref="EnumMemberAnalyzer" /> type.
+		/// </summary>
+		public EnumMemberAnalyzer()
 		{
-			get { return ImmutableArray.Create(Rule); }
+			Error(DiagnosticIdentifier,
+				  "Values of enumeration members must not be explicitly declared.",
+				  "Value of enum member '{0}' cannot be declared explicitly.");
 		}
 
-		public ImmutableArray<SyntaxKind> SyntaxKindsOfInterest
+		/// <summary>
+		///     Analyzes a syntax node.
+		/// </summary>
+		/// <param name="node">The syntax node that should be analyzed.</param>
+		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
+		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
+		protected override void Analyze(EnumMemberDeclarationSyntax node, DiagnosticCallback addDiagnostic, CancellationToken cancellationToken)
 		{
-			get { return ImmutableArray.Create(SyntaxKind.LocalDeclarationStatement); }
-		}
-
-		public void AnalyzeNode(SyntaxNode node, SemanticModel semanticModel,
-								Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
-		{
-			addDiagnostic(Diagnostic.Create(Rule, node.GetLocation(), "Depp!"));
+			if (node.EqualsValue != null)
+				addDiagnostic(node.EqualsValue.Value, node.Identifier.ValueText);
 		}
 	}
 }

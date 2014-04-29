@@ -35,7 +35,7 @@ namespace Elbtunnel
 		}
 	}
 	
-	public enum MyEnum
+	public enum MyEnum:short
 	{
 		ValueA,
 		ValueB,

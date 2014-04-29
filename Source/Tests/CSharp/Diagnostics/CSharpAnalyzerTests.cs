@@ -20,32 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module internal SafetySharp.Compiler.CSharpValidator
+namespace Tests.CSharp.Diagnostics
+{
+	using System;
+	using System.Linq;
+	using System.Threading;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.Diagnostics;
+	using SafetySharp.CSharp.Diagnostics;
 
-open System
-open System.IO
+	public class CSharpAnalyzerTests<T>
+		where T : CSharpAnalyzer, IDiagnosticAnalyzer, new()
+	{
+		private readonly T _analyzer = new T();
 
-open ICSharpCode.NRefactory
-open ICSharpCode.NRefactory.CSharp
-open ICSharpCode.NRefactory.CSharp.Resolver
-open ICSharpCode.NRefactory.Semantics
-open ICSharpCode.NRefactory.TypeSystem
+		protected bool Validate(string declaration)
+		{
+			var parsedDeclaration = CSharpSyntaxTree.ParseText(declaration);
+			var compilation = CSharpCompilation.Create(typeof(T).FullName + "Test")
+											   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
+											   .AddReferences(new MetadataFileReference(typeof(T).Assembly.Location))
+											   .AddSyntaxTrees(parsedDeclaration);
 
-open SafetySharp.Compiler.Model
-open SafetySharp.Compiler.NRefactory
-
-/// Validates an enumeration declaration.
-let validateEnumDeclaration context (enum : TypeDeclaration) =
-    let hasImplicitUnderlyingType = enum.BaseTypes.Count = 0
-    let underlyingTypeOk =
-        if not hasImplicitUnderlyingType then
-            let typeRef = resolveTypeReference context (enum.BaseTypes |> Seq.head)
-            typeRef.Type.FullName = typeof<int>.FullName
-        else
-            true
-
-    let hasMemberInitializers =
-        getDescendants<EnumMemberDeclaration> enum
-        |> Seq.exists (fun enumMember -> enumMember.Initializer <> Expression.Null)
-
-    underlyingTypeOk && not hasMemberInitializers
+			return !AnalyzerDriver.GetDiagnostics(compilation, new IDiagnosticAnalyzer[] { _analyzer }, new CancellationToken()).Any();
+		}
+	}
+}
