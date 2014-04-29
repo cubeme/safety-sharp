@@ -47,8 +47,11 @@ namespace SafetySharp.CSharp.Diagnostics
 			Assert.ArgumentNotNull(tree, () => tree);
 			Assert.ArgumentNotNull(addDiagnostic, () => addDiagnostic);
 
+			AddDiagnosticCallback diagnosticCallback =
+				(locationNode, args) => addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args));
+
 			foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<T>())
-				Analyze(node, (locationNode, args) => addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args)), cancellationToken);
+				Analyze(node, diagnosticCallback, cancellationToken);
 		}
 
 		/// <summary>
