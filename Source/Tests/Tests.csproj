@@ -61,7 +61,9 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharpTests.cs" />
+    <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
+    <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
+    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

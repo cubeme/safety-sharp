@@ -20,4 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler
+namespace Tests.CSharp.Diagnostics
+{
+	using System;
+	using FluentAssertions;
+	using NUnit.Framework;
+	using SafetySharp.CSharp.Diagnostics;
+
+	[TestFixture]
+	public class EnumMemberAnalyzerTests : CSharpAnalyzerTests<EnumMemberAnalyzer>
+	{
+		[Test]
+		public void NoExplicitValuesShouldBeValid()
+		{
+			Validate("enum E { A, B, C }").Should().BeTrue();
+		}
+
+		[Test]
+		public void ExplicitValueOnFirstMemberShouldBeInvalid()
+		{
+			Validate("enum E { A = 1, B, C }").Should().BeFalse();
+		}
+
+		[Test]
+		public void ExplicitValueOnSecondMemberShouldBeInvalid()
+		{
+			Validate("enum E { A, B = 1, C }").Should().BeFalse();
+		}
+
+		[Test]
+		public void ExplicitValueOnThirdMemberShouldBeInvalid()
+		{
+			Validate("enum E { A, B, C = 3 }").Should().BeFalse();
+		}
+
+		[Test]
+		public void ExplicitValueOnAllMembersShouldBeInvalid()
+		{
+			Validate("enum E { A = 4, B = 1, C = 3 }").Should().BeFalse();
+		}
+	}
+}
