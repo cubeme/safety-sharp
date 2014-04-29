@@ -23,16 +23,10 @@
 namespace SafetySharp.Compiler
 {
 	using System;
-	using System.Collections.Generic;
-	using System.ComponentModel.Composition;
-	using System.ComponentModel.Composition.Hosting;
 	using System.IO;
 	using System.Linq;
-	using System.Reflection;
-	using System.Text;
 	using System.Threading;
 	using CommandLine;
-	using CSharp;
 	using CSharp.Diagnostics;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -89,19 +83,6 @@ namespace SafetySharp.Compiler
 			return 0;
 		}
 
-		private class Test
-		{
-			[ImportMany]
-			public IEnumerable<IDiagnosticAnalyzer> Analyzers;
-
-			public Test()
-			{
-				var catalog = new AssemblyCatalog(typeof(EnumUnderlyingTypeAnalyzer).Assembly);
-				var container = new CompositionContainer(catalog);
-				container.ComposeParts(this);
-			}
-		}
-
 		private static void Compile(CompilerArguments arguments)
 		{
 			var workspace = MSBuildWorkspace.Create();
@@ -110,19 +91,19 @@ namespace SafetySharp.Compiler
 			var doc = project.Documents.First();
 			var root = doc.GetSyntaxRootAsync().Result;
 			var returnStatement = root
-									  .DescendantNodes().OfType<ReturnStatementSyntax>()
-									  .First();
+				.DescendantNodes().OfType<ReturnStatementSyntax>()
+				.First();
 
 			var comp = project.GetCompilationAsync().Result;
-			var t = new Test();
-			var d = AnalyzerDriver.GetDiagnostics(comp, t.Analyzers, new CancellationToken());
+			var d = AnalyzerDriver.GetDiagnostics(comp, CSharpAnalyzer.GetAnalyzers(), new CancellationToken());
 
 			foreach (var di in d)
 				Log.Info("{0}", di);
 
 			var newReturn =
-				SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(SyntaxFactory.TriviaList(
-                    SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
+				SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression,
+																			  SyntaxFactory.Literal(SyntaxFactory.TriviaList(
+																															 SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
 			var newRoot = root.ReplaceNode(returnStatement, newReturn);
 			//doc = doc.WithSyntaxRoot(newRoot);
 			//project = project.RemoveDocument(doc.Id);
@@ -134,7 +115,7 @@ namespace SafetySharp.Compiler
 
 			comp = project.GetCompilationAsync().Result;
 
-			Execute(comp,project.OutputFilePath);
+			Execute(comp, project.OutputFilePath);
 		}
 
 		private static void Execute(Compilation comp, string path)

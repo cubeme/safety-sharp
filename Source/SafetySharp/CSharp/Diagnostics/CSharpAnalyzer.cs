@@ -23,8 +23,11 @@
 namespace SafetySharp.CSharp.Diagnostics
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.Diagnostics;
 	using Utilities;
 
 	/// <summary>
@@ -51,6 +54,17 @@ namespace SafetySharp.CSharp.Diagnostics
 		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
 		public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; private set; }
+
+		/// <summary>
+		///     Gets all C# code analyzers defined by Safety Sharp.
+		/// </summary>
+		public static IEnumerable<IDiagnosticAnalyzer> GetAnalyzers()
+		{
+			return typeof(CSharpAnalyzer).Assembly.GetTypes()
+										 .Where(t => t.IsClass && !t.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(t))
+										 .Select(Activator.CreateInstance)
+										 .Cast<IDiagnosticAnalyzer>();
+		}
 
 		/// <summary>
 		///     Describes the error diagnostic of the analyzer.

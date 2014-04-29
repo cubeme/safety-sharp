@@ -30,18 +30,17 @@ namespace Elbtunnel
 	{
 		private int Do()
 		{
-			int i = 0;
 			return 1;
 		}
 	}
 	
-	public enum MyEnum:short
-	{
-		ValueA,
-		ValueB,
-		ValueC = 10,
-		ValueCQ = 104,
-		ValueCQ2 = ValueCQ + 1,
-		ValueCF 
-	}
+	//public enum MyEnum:short
+	//{
+	//	ValueA,
+	//	ValueB,
+	//	ValueC = 10,
+	//	ValueCQ = 104,
+	//	ValueCQ2 = ValueCQ + 1,
+	//	ValueCF 
+	//}
 }
