@@ -23,9 +23,12 @@
 namespace SafetySharp.Modelchecking.Promela
 {
     using System;
+    using System.Collections.Generic;
+    using System.Text;
     using SafetySharp.Modelchecking.Promela.Expressions;
     using SafetySharp.Modelchecking.Promela.Statements;
     using Utilities;
+
 
     public class PromelaModelWriter : PromelaVisitor<string>
     {
@@ -38,8 +41,23 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="proctype">The <see cref="Proctype" /> instance that should be visited.</param>
         public override string VisitProctype(Proctype proctype)
         {
+            // Goal: 
+            // 'proctype' name '('')''{'
+            //      sequence
+            // '}'
+
             Assert.ArgumentNotNull(proctype, () => proctype);
-            return default(string);
+
+            var codeStrings = new List<string>();
+
+            foreach (var code in proctype.Code)
+            {
+                codeStrings.Add(code.Accept(this));
+            }
+
+            var proctypeString = "proctype " + proctype.Name + "( ) {\n" + String.Join("\n", codeStrings)+ "\n}";
+
+            return proctypeString;
         }
         #endregion
 
