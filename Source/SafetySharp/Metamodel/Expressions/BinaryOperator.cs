@@ -20,10 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-    namespace SafetySharp.Metamodel.Expressions
+namespace SafetySharp.Metamodel.Expressions
 {
-    public enum BinaryOperator
-    {
-        
-    }
+	using System;
+
+	public enum BinaryOperator
+	{
+	}
 }

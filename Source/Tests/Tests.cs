@@ -36,48 +36,48 @@ namespace Tests
 	[TestFixture]
 	public class EnumTests
 	{
-		[Test]
-		public void Test()
-		{
-			var guardedCommand = new GuardedCommandExpression(
-				ImmutableArray.Create(
-									  new GuardedCommandClause(
-										  new BooleanLiteral(true),
-										  new ReturnStatement(BooleanLiteral.True)),
-									  new GuardedCommandClause(
-										  new BooleanLiteral(true),
-										  new ReturnStatement(BooleanLiteral.False))
-					));
+		//[Test]
+		//public void Test()
+		//{
+		//	var guardedCommand = new GuardedCommandExpression(
+		//		ImmutableArray.Create(
+		//							  new GuardedCommandClause(
+		//								  new BooleanLiteral(true),
+		//								  new ReturnStatement(BooleanLiteral.True)),
+		//							  new GuardedCommandClause(
+		//								  new BooleanLiteral(true),
+		//								  new ReturnStatement(BooleanLiteral.False))
+		//			));
 
-			var stateVar = new StateVariableDeclaration(new Identifier("x"), TypeReference.Boolean);
-			var statement = new ExpressionStatement(
-				new AssignmentExpression(
-					new StateVariableExpression(stateVar), guardedCommand)
-				);
+		//	var stateVar = new StateVariableDeclaration(new Identifier("x"), TypeReference.Boolean);
+		//	var statement = new ExpressionStatement(
+		//		new AssignmentExpression(
+		//			new StateVariableExpression(stateVar), guardedCommand)
+		//		);
 
-			var component = new ComponentDeclaration(
-				name: new Identifier("Test"),
-				@namespace: "Test",
-				members: ImmutableArray.Create<MemberDeclaration>(stateVar),
-				updateStatement: statement);
+		//	var component = new ComponentDeclaration(
+		//		name: new Identifier("Test"),
+		//		@namespace: "Test",
+		//		members: ImmutableArray.Create<MemberDeclaration>(stateVar),
+		//		updateStatement: statement);
 
-			var instance = new ComponentInstance(ImmutableArray.Create<Expression>(guardedCommand));
-			((StateVariableDeclaration)component.Members[0]).Name.Name.Should().Be("x");
+		//	var instance = new ComponentInstance(ImmutableArray.Create<Expression>(guardedCommand));
+		//	((StateVariableDeclaration)component.Members[0]).Name.Name.Should().Be("x");
 
-			var rewriter = new MyRewriter();
-			var component2 = component.Accept(rewriter) as ComponentDeclaration;
-		}
+		//	var rewriter = new MyRewriter();
+		//	var component2 = component.Accept(rewriter) as ComponentDeclaration;
+		//}
 
-		class MyRewriter : MetamodelRewriter
-		{
-			/// <summary>
-			///     Rewrites a metamodel element of type <see cref="GuardedCommandExpression" />.
-			/// </summary>
-			/// <param name="guardedCommandExpression">The <see cref="GuardedCommandExpression" /> instance that should be rewritten.</param>
-			public override MetamodelElement VisitGuardedCommandExpression(GuardedCommandExpression guardedCommandExpression)
-			{
-				return new GuardedCommandExpression(ImmutableArray<GuardedCommandClause>.Empty);
-			}
-		}
+		//class MyRewriter : MetamodelRewriter
+		//{
+		//	/// <summary>
+		//	///     Rewrites a metamodel element of type <see cref="GuardedCommandExpression" />.
+		//	/// </summary>
+		//	/// <param name="guardedCommandExpression">The <see cref="GuardedCommandExpression" /> instance that should be rewritten.</param>
+		//	public override MetamodelElement VisitGuardedCommandExpression(GuardedCommandExpression guardedCommandExpression)
+		//	{
+		//		return new GuardedCommandExpression(ImmutableArray<GuardedCommandClause>.Empty);
+		//	}
+		//}
 	}
 }
