@@ -47,7 +47,7 @@ namespace SafetySharp.CSharp.Diagnostics
 			Assert.ArgumentNotNull(tree, () => tree);
 			Assert.ArgumentNotNull(addDiagnostic, () => addDiagnostic);
 
-			AddDiagnosticCallback diagnosticCallback =
+			DiagnosticCallback diagnosticCallback =
 				(locationNode, args) => addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args));
 
 			foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<T>())
@@ -60,13 +60,13 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// <param name="node">The syntax node that should be analyzed.</param>
 		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
-		protected abstract void Analyze(T node, AddDiagnosticCallback addDiagnostic, CancellationToken cancellationToken);
+		protected abstract void Analyze(T node, DiagnosticCallback addDiagnostic, CancellationToken cancellationToken);
 
 		/// <summary>
 		///     Represents a callback that emits a diagnostic.
 		/// </summary>
 		/// <param name="locationNode">The node that causes the diagnostic to be emitted.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected delegate void AddDiagnosticCallback(CSharpSyntaxNode locationNode, params object[] messageArgs);
+		protected delegate void DiagnosticCallback(CSharpSyntaxNode locationNode, params object[] messageArgs);
 	}
 }

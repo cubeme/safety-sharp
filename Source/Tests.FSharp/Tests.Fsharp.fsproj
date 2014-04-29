@@ -102,11 +102,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\SafetySharp.Compiler.Fsharp\SafetySharp.Compiler.Fsharp.fsproj">
-      <Name>SafetySharp.Compiler.Fsharp</Name>
-      <Project>{6f825bbc-bfc6-4004-b21e-b9d7df190db5}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\SafetySharp\SafetySharp.csproj">
       <Name>SafetySharp</Name>
       <Project>{d9cad497-f647-42d8-be13-6406de53331d}</Project>
