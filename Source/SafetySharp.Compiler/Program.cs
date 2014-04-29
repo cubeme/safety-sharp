@@ -23,8 +23,22 @@
 namespace SafetySharp.Compiler
 {
 	using System;
+	using System.Collections.Generic;
+	using System.ComponentModel.Composition;
+	using System.ComponentModel.Composition.Hosting;
+	using System.IO;
 	using System.Linq;
+	using System.Reflection;
+	using System.Text;
+	using System.Threading;
 	using CommandLine;
+	using CSharp;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.Diagnostics;
+	using Microsoft.CodeAnalysis.Emit;
+	using Microsoft.CodeAnalysis.MSBuild;
 	using Utilities;
 
 	/// <summary>
@@ -36,7 +50,7 @@ namespace SafetySharp.Compiler
 		///     The entry point to the compiler.
 		/// </summary>
 		/// <param name="args">The compiler arguments passed via the command line.</param>
-		private static void Main(string[] args)
+		private static int Main(string[] args)
 		{
 			PrintToConsole();
 
@@ -57,7 +71,7 @@ namespace SafetySharp.Compiler
 				if (args.Any(arg => arg == "--help" || arg == "-h"))
 				{
 					Log.Info("{0}", arguments.GenerateHelpMessage());
-					return;
+					return -1;
 				}
 
 				// If there was an error parsing the command line, show the help screen and terminate the application.
@@ -68,7 +82,78 @@ namespace SafetySharp.Compiler
 				}
 
 				// Otherwise, we can start the compilation process.
+				Compile(arguments);
 			}
+
+			return 0;
+		}
+
+		private class Test
+		{
+			[ImportMany]
+			public IEnumerable<IDiagnosticAnalyzer> Analyzers;
+
+			public Test()
+			{
+				var catalog = new AssemblyCatalog(typeof(TestAnalyzer).Assembly);
+				var container = new CompositionContainer(catalog);
+				container.ComposeParts(this);
+			}
+		}
+
+		private static void Compile(CompilerArguments arguments)
+		{
+			var workspace = MSBuildWorkspace.Create();
+			var project = workspace.OpenProjectAsync(arguments.ProjectFile).Result;
+
+			var doc = project.Documents.First();
+			var root = doc.GetSyntaxRootAsync().Result;
+			var returnStatement = root
+									  .DescendantNodes().OfType<ReturnStatementSyntax>()
+									  .First();
+
+			var newReturn =
+				SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(SyntaxFactory.TriviaList(
+                    SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
+			var newRoot = root.ReplaceNode(returnStatement, newReturn);
+			//doc = doc.WithSyntaxRoot(newRoot);
+			//project = project.RemoveDocument(doc.Id);
+			//project = project.AddDocument(doc.Name, newRoot.GetText());
+
+			var solution = workspace.CurrentSolution;
+			solution = solution.WithDocumentText(doc.Id, newRoot.GetText());
+			project = solution.Projects.Skip(1).First();
+
+			var comp = project.GetCompilationAsync().Result;
+			var t = new Test();
+			var d = AnalyzerDriver.GetDiagnostics(comp, t.Analyzers, new CancellationToken());
+			foreach (var di in d)
+				Log.Info("{0}", di);
+
+			Execute(comp,project.OutputFilePath);
+		}
+
+		private static void Execute(Compilation comp, string path)
+		{
+			//var output = new StringBuilder();
+			EmitResult emitResult = null;
+
+			using (var ilStream = new FileStream(path, FileMode.OpenOrCreate))
+			{
+				// Emit IL, PDB and xml documentation comments for the compilation to disk.
+				emitResult = comp.Emit(ilStream);
+			}
+
+			if (!emitResult.Success)
+			{
+				//output.AppendLine("Errors:");
+				foreach (var diag in emitResult.Diagnostics)
+				{
+					Log.Error("{0}", diag);
+				}
+			}
+
+			//return output.ToString();
 		}
 
 		/// <summary>

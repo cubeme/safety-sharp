@@ -46,6 +46,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(TargetDir)ssc.exe" -s"$(SolutionPath)"</PostBuildEvent>
+    <PostBuildEvent>"$(TargetDir)ssc.exe" -p"$(ProjectPath)"</PostBuildEvent>
   </PropertyGroup>
 </Project>

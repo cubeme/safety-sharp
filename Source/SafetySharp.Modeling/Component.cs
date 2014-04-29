@@ -20,28 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel
+namespace SafetySharp.Modeling
 {
 	using System;
-	using System.ComponentModel;
-	using SafetySharp;
 
-	public class LightBarrier : Component
+	public class Component
 	{
-		private int Do()
+		public static T Choose<T>(params T[] values)
 		{
-			int i = 0;
-			return 1;
+			return values[0];
 		}
-	}
-	
-	public enum MyEnum
-	{
-		ValueA,
-		ValueB,
-		ValueC = 10,
-		ValueCQ = 104,
-		ValueCQ2 = ValueCQ + 1,
-		ValueCF 
 	}
 }

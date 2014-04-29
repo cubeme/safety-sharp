@@ -32,10 +32,10 @@ namespace SafetySharp.Compiler
 	internal class CompilerArguments
 	{
 		/// <summary>
-		///     Gets or sets the path to the solution file that should be compiled.
+		///     Gets or sets the path to the C# project file that should be compiled.
 		/// </summary>
-		[Option('s', "solution", Required = true, HelpText = "The path to the solution file that should be compiled.")]
-		public string SolutionFile { get; set; }
+		[Option('p', "project", Required = true, HelpText = "The path to the C# project file that should be compiled.")]
+		public string ProjectFile { get; set; }
 
 		/// <summary>
 		///     Generates a help message about the correct usage of the compiler's command line arguments.
