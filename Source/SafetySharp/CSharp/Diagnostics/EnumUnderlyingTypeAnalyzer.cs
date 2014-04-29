@@ -32,10 +32,10 @@ namespace SafetySharp.CSharp.Diagnostics
 	///     Ensures that no enumerations explicitly declare an underlying type.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(IdentifierPrefix + DiagnosticIdentifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer(DiagnosticIdentifier, LanguageNames.CSharp)]
 	public class EnumUnderlyingTypeAnalyzer : SyntaxNodeAnalyzer<EnumDeclarationSyntax>
 	{
-		private const string DiagnosticIdentifier = "1001";
+		private const string DiagnosticIdentifier = IdentifierPrefix + "1001";
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="EnumUnderlyingTypeAnalyzer" /> type.

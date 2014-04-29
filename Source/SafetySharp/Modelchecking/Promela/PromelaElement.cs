@@ -24,7 +24,7 @@ namespace SafetySharp.Modelchecking.Promela
 {
 	using System;
 
-	public abstract class PromelaElement
+	internal abstract class PromelaElement
 	{
 		/// <summary>
 		///     Accepts <paramref name="visitor" />, calling the type-specific visit method.

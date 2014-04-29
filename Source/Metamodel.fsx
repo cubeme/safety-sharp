@@ -404,4 +404,5 @@ generateCode {
     VisitorName = "MetamodelVisitor"
     RewriterName = "MetamodelRewriter"
     VisitorNamespace = "SafetySharp.Metamodel"
+    Public = true
 } 

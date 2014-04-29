@@ -23,8 +23,11 @@
 namespace SafetySharp.CSharp.Diagnostics
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.Diagnostics;
 	using Utilities;
 
 	/// <summary>
@@ -53,6 +56,17 @@ namespace SafetySharp.CSharp.Diagnostics
 		public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; private set; }
 
 		/// <summary>
+		///     Gets all C# code analyzers defined by Safety Sharp.
+		/// </summary>
+		public static IEnumerable<IDiagnosticAnalyzer> GetAnalyzers()
+		{
+			return typeof(CSharpAnalyzer).Assembly.GetTypes()
+										 .Where(t => t.IsClass && !t.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(t))
+										 .Select(Activator.CreateInstance)
+										 .Cast<IDiagnosticAnalyzer>();
+		}
+
+		/// <summary>
 		///     Describes the error diagnostic of the analyzer.
 		/// </summary>
 		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
@@ -69,10 +83,9 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
 		/// <param name="description">The description of the diagnostic.</param>
 		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		/// <param name="severity">The severity of the diagnostic.</param>
-		protected void Warning(string identifier, string description, string messageFormat, DiagnosticSeverity severity)
+		protected void Warning(string identifier, string description, string messageFormat)
 		{
-			SetDescriptor(identifier, description, messageFormat, severity);
+			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Warning);
 		}
 
 		/// <summary>
@@ -84,13 +97,15 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// <param name="severity">The severity of the diagnostic.</param>
 		private void SetDescriptor(string identifier, string description, string messageFormat, DiagnosticSeverity severity)
 		{
+			Assert.That(Descriptor == null, "A descriptor has already been set.");
 			Assert.ArgumentNotNullOrWhitespace(identifier, () => identifier);
 			Assert.ArgumentNotNullOrWhitespace(description, () => description);
 			Assert.ArgumentNotNullOrWhitespace(messageFormat, () => messageFormat);
 			Assert.ArgumentInRange(severity, () => severity);
-			Assert.That(Descriptor == null, "A descriptor has already been set.");
+			Assert.ArgumentSatisfies(identifier.StartsWith(IdentifierPrefix), () => identifier,
+									 "Diagnostic identifier does not start with prefix '{0}'.", IdentifierPrefix);
 
-			Descriptor = new DiagnosticDescriptor(IdentifierPrefix + identifier, description, messageFormat, Category, severity);
+			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Category, severity);
 			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
 		}
 	}

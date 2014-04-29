@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Modelchecking.Promela
 {
-    public enum PromelaUnaryOperator
+    internal enum PromelaUnaryOperator
     {
         Tilde, // ~
         Neg,   // -
