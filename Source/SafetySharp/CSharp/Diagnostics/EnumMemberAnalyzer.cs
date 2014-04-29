@@ -32,10 +32,10 @@ namespace SafetySharp.CSharp.Diagnostics
 	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(IdentifierPrefix + DiagnosticIdentifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer(DiagnosticIdentifier, LanguageNames.CSharp)]
 	public class EnumMemberAnalyzer : SyntaxNodeAnalyzer<EnumMemberDeclarationSyntax>
 	{
-		private const string DiagnosticIdentifier = "1002";
+		private const string DiagnosticIdentifier = IdentifierPrefix + "1002";
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="EnumMemberAnalyzer" /> type.
