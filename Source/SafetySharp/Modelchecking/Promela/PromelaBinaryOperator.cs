@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Modelchecking.Promela
 {
-    public enum PromelaBinaryOperator
+    internal enum PromelaBinaryOperator
     {
         And,  // &&
         Or,   // ||

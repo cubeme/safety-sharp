@@ -32,9 +32,8 @@ open System.Threading
 // Metamodel code generator
 //====================================================================================================================
 
-// This F# script generates C# code for tree-shaped elements and visitors. The generated elements are immutable, 
-// however, C# doesn't support a concise syntax for the specification of immutable data types. From the provided
-//  metadata provided partial classes are generated for the elements and visitors containing all of the boilerplate code:
+// This F# script generates C# code for tree-shaped elements and visitors. From the provided metadata provided partial
+// C# classes are generated for the elements and visitors containing all of the following boilerplate code:
 // - Get-only properties
 // - Constructors taking values for all properties, optionally performing validation
 // - Additional validation is supported through a partial Validate() method
@@ -106,18 +105,6 @@ type Namespace = {
 }
 
 /// <summary>
-///     Provides context information for the code generator.
-/// </summary>
-type Context = {
-    Elements : Namespace list
-    OutputFile : string
-    BaseClass : string
-    VisitorName : string
-    RewriterName : string
-    VisitorNamespace : string
-}
-
-/// <summary>
 ///     Represents the generic or the non-generic version of a visitor.
 /// </summary>
 type VisitorType = {
@@ -127,6 +114,19 @@ type VisitorType = {
     ParamTypeSpecifier : string
     ReturnType : string
     IsGeneric : bool
+}
+
+/// <summary>
+///     Provides context information for the code generator.
+/// </summary>
+type Context = {
+    Elements : Namespace list
+    OutputFile : string
+    BaseClass : string
+    VisitorName : string
+    RewriterName : string
+    VisitorNamespace : string
+    Public : bool
 }
 
 //====================================================================================================================
@@ -231,6 +231,11 @@ let generateCode context =
     ///     The code writer that is used to generate the C# code.
     /// </summary>
     let output = new CodeWriter()
+
+     /// <summary>
+    ///     The visibility modifier that should be used for the generated classes.
+    /// </summary>
+    let visibility = if context.Public then "public" else "internal"
 
     /// <summary>
     ///     Ensures that the first character of the given string is lower case.
@@ -555,7 +560,7 @@ let generateCode context =
     let generateClass (c : Class) =
         // Generate the class declaration
         let IsAbstractKeyword = if c.IsAbstract then " abstract " else " "
-        output.AppendLine(sprintf "public%spartial class %s : %s" IsAbstractKeyword c.Name c.Base)
+        output.AppendLine(sprintf "%s%spartial class %s : %s" visibility IsAbstractKeyword c.Name c.Base)
 
         // Generate the class members
         output.AppendBlockStatement <| fun () ->
@@ -610,7 +615,7 @@ let generateCode context =
     /// </summary>
     let generateVisitor visitorType =
         // Generate the class
-        output.AppendLine(sprintf "public abstract partial class %s" visitorType.VisitorType)
+        output.AppendLine(sprintf "%s abstract partial class %s" visibility visitorType.VisitorType)
 
         // Generate a Visit...() method for each non-abstract class
         output.AppendBlockStatement <| fun () ->
@@ -642,7 +647,7 @@ let generateCode context =
     /// </summary>
     let generateRewriter () =
         // Generate the class
-        output.AppendLine(sprintf "public abstract partial class %s : %s<%s>" context.RewriterName context.VisitorName context.BaseClass)
+        output.AppendLine(sprintf "%s abstract partial class %s : %s<%s>" visibility context.RewriterName context.VisitorName context.BaseClass)
 
         // Generate a Visit...() method with the rewriting logic for each non-abstract class
         output.AppendBlockStatement <| fun () ->

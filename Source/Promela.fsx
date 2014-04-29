@@ -187,6 +187,7 @@ generateCode {
     VisitorName = "PromelaVisitor"
     RewriterName = "PromelaRewriter"
     VisitorNamespace = "SafetySharp.Modelchecking.Promela"
+    Public = false
 }
 
 
