@@ -69,10 +69,9 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
 		/// <param name="description">The description of the diagnostic.</param>
 		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		/// <param name="severity">The severity of the diagnostic.</param>
-		protected void Warning(string identifier, string description, string messageFormat, DiagnosticSeverity severity)
+		protected void Warning(string identifier, string description, string messageFormat)
 		{
-			SetDescriptor(identifier, description, messageFormat, severity);
+			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Warning);
 		}
 
 		/// <summary>
