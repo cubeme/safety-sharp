@@ -141,65 +141,6 @@ let elements = [
                 Properties = []
             }
             {   
-                Name = "GuardedCommandClause"
-                Base = "MetamodelElement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Guard"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The guard of the clause that determines whether the statement can be executed."
-                    }
-                    {
-                        Name = "Statement"
-                        Type = "Statement"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The statement of the clause that can only be executed if the guard holds."
-                    }
-                ]
-            }
-            {   
-                Name = "GuardedCommandExpression"
-                Base = "Expression"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Clauses"
-                        Type = "GuardedCommandClause"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "The clauses of the guarded command, one of which is chose nondeterministically during execution if multiple guards hold."
-                    }
-                ]
-            }
-            {   
-                Name = "AssignmentExpression"
-                Base = "Expression"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Left"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The expression on the left-hand side of the assignment operator."
-                    }
-                    {
-                        Name = "Right"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The expression on the right-hand side of the assignment operator."
-                    }
-                ]
-            }
-            {   
                 Name = "StateVariableExpression"
                 Base = "Expression"
                 IsAbstract = false
@@ -235,6 +176,57 @@ let elements = [
                     }
                 ]
             }
+            {   
+                Name = "BinaryExpression"
+                Base = "Expression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Left"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the left-hand side of the binary operator."
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "BinaryOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the binary expression."
+                    }
+                    {
+                        Name = "Right"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the right-hand side of the binary operator."
+                    }
+                ]
+            }            
+            {   
+                Name = "UnaryExpression"
+                Base = "Expression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression of the unary expression."
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "UnaryOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the unary expression."
+                    }
+                ]
+            }
         ]
     }
     {
@@ -246,21 +238,6 @@ let elements = [
                 Base = "MetamodelElement"
                 IsAbstract = true
                 Properties = []
-            }
-            {   
-                Name = "ExpressionStatement"
-                Base = "Statement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The expression that should be treated as a statement."
-                    }
-                ]
             }
             {   
                 Name = "BlockStatement"
@@ -280,6 +257,65 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression that should be evaluated and returned."
+                    }
+                ]
+            }
+            {   
+                Name = "GuardedCommandStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Clauses"
+                        Type = "GuardedCommandClause"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The clauses of the guarded command, one of which is chose nondeterministically during execution if multiple guards hold."
+                    }
+                ]
+            }
+            {   
+                Name = "GuardedCommandClause"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Guard"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The guard of the clause that determines whether the statement can be executed."
+                    }
+                    {
+                        Name = "Statement"
+                        Type = "Statement"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The statement of the clause that can only be executed if the guard holds."
+                    }
+                ]
+            }          
+            {   
+                Name = "AssignmentStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Left"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the left-hand side of the assignment operator."
+                    }
+                    {
+                        Name = "Right"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the right-hand side of the assignment operator."
                     }
                 ]
             }
