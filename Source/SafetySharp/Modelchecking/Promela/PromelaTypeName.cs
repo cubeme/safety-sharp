@@ -26,5 +26,13 @@ namespace SafetySharp.Modelchecking.Promela
 
     public enum PromelaTypeName
     {
+        Bit,
+        Bool,
+        Byte,
+        Short,
+        Int,
+        Mtype,
+        Chan,
+        Pid //(this one is not mentioned in the short grammar of the SPIN website. It is equivalent to byte.
     }
 }

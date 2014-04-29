@@ -23,6 +23,8 @@
 
 // Not exactly the complete Promela-Syntax, just a subset and modified to be
 // able to work with it conveniently.
+// We do not allow to declare variables as freely as in Promela. We only allow
+// global variables. But we simplify the Ast radically (no step). 
 
 open System
 open System.Globalization
@@ -33,7 +35,8 @@ open System.Threading
 #load "Generator.fsx"
 open Generator
 
-
+// TODO: - Declarationen (global)
+//       - ProcTypes
 
 let outputFile = "SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
 let elements = [
@@ -41,21 +44,6 @@ let elements = [
         Name = "SafetySharp.Modelchecking.Promela"
         Classes =
         [
-            {
-                Name = "Identifier"
-                Base = "PromelaElement"
-                IsAbstract = false
-                Properties =
-                [
-                    { 
-                        Name = "Name"
-                        Type = "string"
-                        CollectionType = Generator.Singleton
-                        Validation = NotNullOrWhitespace
-                        Comment = "The name of the identifier."
-                    }
-                ]
-            }
         ]
     }    
     {
@@ -120,6 +108,21 @@ let elements = [
                 ]
             }
             {
+                Name = "NumberLiteral"
+                Base = "ConstExpression"
+                IsAbstract = false
+                Properties =
+                [
+                    {
+                        Name = "Value"
+                        Type = "Int32"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The Boolean value of the expression."
+                    }
+                ]
+            }
+            {
                 Name = "SkipLiteral" //Convenience and generated code get prettier. Is equivalent to Boolean Literal True
                 Base = "ConstExpression"
                 IsAbstract = false
@@ -173,6 +176,206 @@ let elements = [
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the unary expression."
+                    }
+                ]
+            }            
+            {   
+                //The expression which references a variable.
+                Name = "VariableReferenceExpression" // varref	: name [ '[' any_expr ']' ] [ '.' varref ]
+                Base = "Expression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "string"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The name of the identifier which references a variable."
+                    }
+                    {
+                        Name = "Index"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = None //May be Null
+                        Comment = "Identifier references an array. This is the index of a specific element in this array."
+                    }
+                    {
+                        Name = "Member"
+                        Type = "VariableReferenceExpression"
+                        CollectionType = Singleton
+                        Validation = None //May be Null
+                        Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
+                    }
+                ]
+            }
+        ]
+    }
+    {
+        Name = "SafetySharp.Modelchecking.Promela.Statements"
+        Classes = 
+        [
+            {   
+                Name = "Statement"
+                Base = "MetamodelElement"
+                IsAbstract = true
+                Properties = []
+            }
+            {   
+                Name = "BlockStatement"
+                Base = "Statement"
+                IsAbstract = true
+                Properties = 
+                [
+                    {
+                        Name = "Statements"
+                        Type = "Statement"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "A list of statements."
+                    }
+                ]
+            }
+            {   
+                Name = "SimpleBlockStatement"
+                Base = "BlockStatement"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
+                Name = "AtomicBlockStatement"
+                Base = "BlockStatement"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
+                Name = "DStepBlockStatement"
+                Base = "BlockStatement"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
+                Name = "ReturnStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression that should be evaluated and returned."
+                    }
+                ]
+            }
+            {   
+                Name = "ExpressionStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression that should be evaluated."
+                    }
+                ]
+            }
+            {   
+                Name = "GuardedCommandRepetitionStatement"  //do :: od
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Clauses"
+                        Type = "GuardedCommandClause"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
+                    }
+                ]
+            }
+            {   
+                Name = "GuardedCommandSelectionStatement" //if :: fi
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Clauses"
+                        Type = "GuardedCommandClause"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
+                    }
+                ]
+            }
+            {   
+                Name = "GuardedCommandClause"
+                Base = "MetamodelElement"
+                IsAbstract = true
+                Properties = []
+            }          
+            {   
+                Name = "GuardedCommandExpressionClause"
+                Base = "GuardedCommandClause"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Guard"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The guard of the clause that determines whether the statement can be executed."
+                    }
+                    {
+                        Name = "Statement"
+                        Type = "Statement"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The statement of the clause that can only be executed if the guard holds."
+                    }
+                ]
+            }          
+            {   
+                Name = "GuardedCommandElseClause"
+                Base = "GuardedCommandClause"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Statement"
+                        Type = "Statement"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The statement of the clause that can only be executed if no other clause holds."
+                    }
+                ]
+            }          
+            {   
+                Name = "AssignmentStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Left"
+                        Type = "VariableReferenceExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The reference to the variable on the left-hand side of the assignment operator."
+                    }
+                    {
+                        Name = "Right"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the right-hand side of the assignment operator."
                     }
                 ]
             }
