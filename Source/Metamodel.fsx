@@ -271,7 +271,7 @@ let elements = [
                         Type = "GuardedCommandClause"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The clauses of the guarded command, one of which is chose nondeterministically during execution if multiple guards hold."
+                        Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
                     }
                 ]
             }
