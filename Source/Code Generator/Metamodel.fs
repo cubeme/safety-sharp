@@ -74,9 +74,9 @@ let elements = [
                         Name = "Namespace"
                         Type = "string"
                         CollectionType = Singleton
-                        Validation = NotNullOrWhitespace
+                        Validation = NotNull
                         Comment = "The namespace the type is declared in."
-                        CanBeNull = true
+                        CanBeNull = false
                     }
                     {
                         Name = "Members"
@@ -98,7 +98,7 @@ let elements = [
                         Name = "UpdateStatement"
                         Type = "Statement"
                         CollectionType = Singleton
-                        Validation = NotNull
+                        Validation = None
                         Comment = "The statement representing the Update method of the component."
                         CanBeNull = true
                     }
@@ -285,6 +285,12 @@ let elements = [
                 Properties = []
             }
             {   
+                Name = "EmptyStatement"
+                Base = "Statement"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
                 Name = "BlockStatement"
                 Base = "Statement"
                 IsAbstract = false
@@ -300,8 +306,8 @@ let elements = [
                         Name = "Expression"
                         Type = "Expression"
                         CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The expression that should be evaluated and returned."
+                        Validation = None
+                        Comment = "The expression that should be evaluated and returned or <c>null</c> if the enclosing method returns <c>void</c>."
                         CanBeNull = true
                     }
                 ]

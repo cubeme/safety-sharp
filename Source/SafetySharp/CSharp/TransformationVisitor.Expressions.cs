@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp
 	using System;
 	using Metamodel;
 	using Metamodel.Expressions;
+	using Metamodel.Statements;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -56,6 +57,7 @@ namespace SafetySharp.CSharp
 		/// <summary>
 		///     Skips over a C# parenthesized expression.
 		/// </summary>
+		/// <param name="node">The C# expression that should be transformed.</param>
 		public override MetamodelElement VisitParenthesizedExpression(ParenthesizedExpressionSyntax node)
 		{
 			return Visit(node.Expression);
@@ -65,7 +67,6 @@ namespace SafetySharp.CSharp
 		///     Transforms a C# literal to the corresponding metamodel literal.
 		/// </summary>
 		/// <param name="node"></param>
-		/// <returns></returns>
 		public override MetamodelElement VisitLiteralExpression(LiteralExpressionSyntax node)
 		{
 			switch (node.Token.CSharpKind())

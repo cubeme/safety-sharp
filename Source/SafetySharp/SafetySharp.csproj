@@ -30,7 +30,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\..\Binaries\Release\SafetySharp.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis, Version=0.6.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -64,7 +65,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\TransformationVisitor.Statements.cs" />
     <Compile Include="CSharp\TransformationVisitor.Expressions.cs" />
+    <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />

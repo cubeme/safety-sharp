@@ -20,33 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.CSharp.Transformation
+namespace Tests.Generator
 {
 	using System;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp;
-	using SafetySharp.CSharp;
-	using SafetySharp.Metamodel.Expressions;
-	using SafetySharp.Metamodel.Statements;
+	using System.Collections.Immutable;
 
-	internal abstract class TransformationVisitorTests
+	partial class TestRewriter
 	{
-		private readonly TransformationVisitor _visitor = new TransformationVisitor();
-
-		protected void Test(Expression expectedExpression, string csharpExpression)
+		public virtual ImmutableArray<TElement> Visit<TElement>(ImmutableArray<TElement> elements)
+			where TElement : TestElement
 		{
-			var parsed = SyntaxFactory.ParseExpression(csharpExpression);
-			var element = _visitor.Visit(parsed);
-
-			element.Should().Be(expectedExpression);
-		}
-
-		protected void Test(Statement expectedStatement, string csharpStatement)
-		{
-			var parsed = SyntaxFactory.ParseStatement(csharpStatement);
-			var element = _visitor.Visit(parsed);
-
-			element.Should().Be(expectedStatement);
+			return elements;
 		}
 	}
 }

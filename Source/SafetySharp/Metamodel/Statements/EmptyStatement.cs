@@ -20,33 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.CSharp.Transformation
+namespace SafetySharp.Metamodel.Statements
 {
 	using System;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp;
-	using SafetySharp.CSharp;
-	using SafetySharp.Metamodel.Expressions;
-	using SafetySharp.Metamodel.Statements;
 
-	internal abstract class TransformationVisitorTests
+	partial class EmptyStatement
 	{
-		private readonly TransformationVisitor _visitor = new TransformationVisitor();
-
-		protected void Test(Expression expectedExpression, string csharpExpression)
-		{
-			var parsed = SyntaxFactory.ParseExpression(csharpExpression);
-			var element = _visitor.Visit(parsed);
-
-			element.Should().Be(expectedExpression);
-		}
-
-		protected void Test(Statement expectedStatement, string csharpStatement)
-		{
-			var parsed = SyntaxFactory.ParseStatement(csharpStatement);
-			var element = _visitor.Visit(parsed);
-
-			element.Should().Be(expectedStatement);
-		}
+		/// <summary>
+		///     Gets the default instance of the empty statement.
+		/// </summary>
+		public static readonly EmptyStatement Default = new EmptyStatement();
 	}
 }

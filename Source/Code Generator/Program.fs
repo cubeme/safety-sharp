@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 open System
+open TestGenerator
 open MetamodelGenerator
 open PromelaGenerator
 
@@ -36,6 +37,7 @@ let main argv =
     printfn "the MIT license (see http://opensource.org/licenses/MIT)."
     printfn " %s" Environment.NewLine
 
+    generateTest "../../Source/Tests/Generator/Test.Generated.cs"
     generateMetamodel "../../Source/SafetySharp/Metamodel/Metamodel.Generated.cs"
     generatePromela "../../Source/SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
 

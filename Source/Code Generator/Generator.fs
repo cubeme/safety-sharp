@@ -652,8 +652,14 @@ let generateCode context =
                 let properties = 
                     allProperties c 
                     |> joinProperties " && " (fun p' -> 
-                        let equalsMethod = if p'.CollectionType <> Singleton then "SequenceEqual" else "Equals"
-                        sprintf "%s.%s(element.%s)" p'.Name equalsMethod p'.Name)
+                        if p'.CanBeNull then
+                            if p'.CollectionType <> Singleton then
+                                sprintf "((%s == null && element.%s == null) || (%s != null && element.%s != null && %s.SequenceEqual(element.%s)))" p'.Name p'.Name p'.Name p'.Name p'.Name p'.Name
+                            else
+                                sprintf "Object.Equals(%s, element.%s)" p'.Name p'.Name
+                        else
+                            let equalsMethod = if p'.CollectionType <> Singleton then "SequenceEqual" else "Equals"
+                            sprintf "%s.%s(element.%s)" p'.Name equalsMethod p'.Name)
                 output.AppendLine(sprintf "return %s;" properties)
 
     /// <summary>
@@ -724,6 +730,15 @@ let generateCode context =
         // Generate the class declaration
         let IsAbstractKeyword = if c.IsAbstract then " abstract " else " "
         output.AppendLine(sprintf "%s%spartial class %s : %s" visibility IsAbstractKeyword c.Name c.Base)
+
+        // Sanity check of property values
+        for p in c.Properties do
+            if p.CanBeNull && p.CollectionType = Array then
+                failwithf "Sanity check failed for '%s.%s': Arrays cannot be null." c.Name p.Name
+            if p.CanBeNull && (p.Validation = NotNull || p.Validation = NotNullOrWhitespace) then
+                failwithf "Sanity check failed for '%s.%s': Property can be null but not-null validation is enabled." c.Name p.Name
+            if not p.CanBeNull && p.Validation = None && p.CollectionType = List then
+                failwithf "Sanity check failed for '%s.%s': List cannot be null but value is never validated." c.Name p.Name
 
         // Generate the class members
         output.AppendBlockStatement <| fun () ->

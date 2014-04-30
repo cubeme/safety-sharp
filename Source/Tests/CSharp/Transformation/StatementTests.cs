@@ -23,30 +23,37 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp;
-	using SafetySharp.CSharp;
+	using System.Collections.Immutable;
+	using NUnit.Framework;
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
 
-	internal abstract class TransformationVisitorTests
+	[TestFixture]
+	internal class StatementTests : TransformationVisitorTests
 	{
-		private readonly TransformationVisitor _visitor = new TransformationVisitor();
-
-		protected void Test(Expression expectedExpression, string csharpExpression)
+		[Test]
+		public void AssignmentStatements()
 		{
-			var parsed = SyntaxFactory.ParseExpression(csharpExpression);
-			var element = _visitor.Visit(parsed);
+			Test(new AssignmentStatement(new IntegerLiteral(1), new IntegerLiteral(5)), "1 = 5");
 
-			element.Should().Be(expectedExpression);
+			var binaryExpression = new BinaryExpression(new IntegerLiteral(5), BinaryOperator.Add, new IntegerLiteral(2));
+			Test(new AssignmentStatement(new IntegerLiteral(1), binaryExpression), "1 = 5 + 2");
 		}
 
-		protected void Test(Statement expectedStatement, string csharpStatement)
+		[Test]
+		public void EmptyStatement()
 		{
-			var parsed = SyntaxFactory.ParseStatement(csharpStatement);
-			var element = _visitor.Visit(parsed);
+			Test(new EmptyStatement(), ";");
+		}
 
-			element.Should().Be(expectedStatement);
+		[Test]
+		public void GuardedCommands()
+		{
+			var ifClause = new GuardedCommandClause(BooleanLiteral.True, new EmptyStatement());
+			var elseClause = new GuardedCommandClause(new UnaryExpression(BooleanLiteral.True, UnaryOperator.LogicalNot), new ReturnStatement(null));
+
+			Test(new GuardedCommandStatement(ImmutableArray.Create(ifClause)), "if (true) ;");
+			Test(new GuardedCommandStatement(ImmutableArray.Create(ifClause, elseClause)), "if (true) ; else return;");
 		}
 	}
 }
