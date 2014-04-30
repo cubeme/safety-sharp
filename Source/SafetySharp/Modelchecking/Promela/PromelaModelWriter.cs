@@ -30,7 +30,7 @@ namespace SafetySharp.Modelchecking.Promela
     using Utilities;
 
 
-    public class PromelaModelWriter : PromelaVisitor<string>
+    internal class PromelaModelWriter : PromelaVisitor<string>
     {
 
         #region Proctype
