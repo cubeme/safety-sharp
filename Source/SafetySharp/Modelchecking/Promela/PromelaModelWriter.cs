@@ -24,215 +24,309 @@ namespace SafetySharp.Modelchecking.Promela
 {
     using System;
     using System.Collections.Generic;
-    using System.Text;
-    using SafetySharp.Modelchecking.Promela.Expressions;
-    using SafetySharp.Modelchecking.Promela.Statements;
+    using Expressions;
+    using Statements;
     using Utilities;
 
-
-    internal class PromelaModelWriter : PromelaVisitor<string>
+    internal static class PromelaExtensionMethods
     {
+        public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            foreach (T element in source)
+                action(element);
+        }
+    }
+
+    internal class PromelaModelWriter : PromelaVisitor
+    {
+        private readonly CodeWriter codeWriter = new CodeWriter();
 
         #region Proctype
 
         /// <summary>
-        ///     Visits an element of type <see cref="Proctype" />.
+        ///   Visits an element of type <see cref="Proctype" />.
         /// </summary>
         /// <param name="proctype">The <see cref="Proctype" /> instance that should be visited.</param>
-        public override string VisitProctype(Proctype proctype)
+        public override void VisitProctype(Proctype proctype)
         {
-            // Goal: 
             // 'proctype' name '('')''{'
             //      sequence
             // '}'
 
             Assert.ArgumentNotNull(proctype, () => proctype);
 
-            var codeStrings = new List<string>();
+            codeWriter.AppendLine("proctype " + proctype.Name + "() {");
+            codeWriter.IncreaseIndent();
 
-            foreach (var code in proctype.Code)
+            proctype.Code.ForEach(stmnt =>
             {
-                codeStrings.Add(code.Accept(this));
-            }
+                stmnt.Accept(this);
+                codeWriter.NewLine();
+            });
 
-            var proctypeString = "proctype " + proctype.Name + "( ) {\n" + String.Join("\n", codeStrings)+ "\n}";
-
-            return proctypeString;
+            codeWriter.DecreaseIndent();
+            codeWriter.AppendLine("}");
         }
-        #endregion
 
         #region Expressions
+
         /// <summary>
-        ///     Visits an element of type <see cref="BooleanLiteral" />.
+        ///   Visits an element of type <see cref="BooleanLiteral" />.
         /// </summary>
         /// <param name="booleanLiteral">The <see cref="BooleanLiteral" /> instance that should be visited.</param>
-        public override string VisitBooleanLiteral(BooleanLiteral booleanLiteral)
+        public override void VisitBooleanLiteral(BooleanLiteral booleanLiteral)
         {
             Assert.ArgumentNotNull(booleanLiteral, () => booleanLiteral);
-            return default(string);
+
+            switch (booleanLiteral.Value)
+            {
+                case true:
+                    codeWriter.Append("true");
+                    break;
+                case false:
+                    codeWriter.Append("false");
+                    break;
+            }
         }
+
         /// <summary>
-        ///     Visits an element of type <see cref="NumberLiteral" />.
+        ///   Visits an element of type <see cref="NumberLiteral" />.
         /// </summary>
         /// <param name="numberLiteral">The <see cref="NumberLiteral" /> instance that should be visited.</param>
-        public override string VisitNumberLiteral(NumberLiteral numberLiteral)
+        public override void VisitNumberLiteral(NumberLiteral numberLiteral)
         {
             Assert.ArgumentNotNull(numberLiteral, () => numberLiteral);
-            return default(string);
+            codeWriter.Append(numberLiteral.Value.ToString());
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="SkipLiteral" />.
+        ///   Visits an element of type <see cref="SkipLiteral" />.
         /// </summary>
         /// <param name="skipLiteral">The <see cref="SkipLiteral" /> instance that should be visited.</param>
-        public override string VisitSkipLiteral(SkipLiteral skipLiteral)
+        public override void VisitSkipLiteral(SkipLiteral skipLiteral)
         {
             Assert.ArgumentNotNull(skipLiteral, () => skipLiteral);
-            return default(string);
+            codeWriter.Append("skip");
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="BinaryExpression" />.
+        ///   Visits an element of type <see cref="BinaryExpression" />.
         /// </summary>
         /// <param name="binaryExpression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
-        public override string VisitBinaryExpression(BinaryExpression binaryExpression)
+        public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
             Assert.ArgumentNotNull(binaryExpression, () => binaryExpression);
-            return default(string);
+            codeWriter.Append("(");
+            binaryExpression.Left.Accept(this);
+
+            switch (binaryExpression.Operator)
+            {
+                case PromelaBinaryOperator.And:
+                    codeWriter.Append("&&");
+                    break;
+                case PromelaBinaryOperator.Or:
+                    codeWriter.Append("||");
+                    break;
+                case PromelaBinaryOperator.Add:
+                    codeWriter.Append("+");
+                    break;
+                case PromelaBinaryOperator.Min:
+                    codeWriter.Append("-");
+                    break;
+                case PromelaBinaryOperator.Mul:
+                    codeWriter.Append("*");
+                    break;
+                case PromelaBinaryOperator.Div:
+                    codeWriter.Append("/");
+                    break;
+                case PromelaBinaryOperator.Mod:
+                    codeWriter.Append("%");
+                    break;
+                case PromelaBinaryOperator.BAnd:
+                    codeWriter.Append("&");
+                    break;
+                case PromelaBinaryOperator.Xor:
+                    codeWriter.Append("^");
+                    break;
+                case PromelaBinaryOperator.BOr:
+                    codeWriter.Append("|");
+                    break;
+                case PromelaBinaryOperator.Gt:
+                    codeWriter.Append(">");
+                    break;
+                case PromelaBinaryOperator.Lt:
+                    codeWriter.Append(">");
+                    break;
+                case PromelaBinaryOperator.Ge:
+                    codeWriter.Append(">=");
+                    break;
+                case PromelaBinaryOperator.Le:
+                    codeWriter.Append("<=");
+                    break;
+                case PromelaBinaryOperator.Eq:
+                    codeWriter.Append("==");
+                    break;
+                case PromelaBinaryOperator.Neq:
+                    codeWriter.Append("!=");
+                    break;
+                case PromelaBinaryOperator.Bls:
+                    codeWriter.Append("<<");
+                    break;
+                case PromelaBinaryOperator.Brs:
+                    codeWriter.Append(">>");
+                    break;
+            }
+
+            binaryExpression.Right.Accept(this);
+            codeWriter.Append(")");
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="UnaryExpression" />.
+        ///   Visits an element of type <see cref="UnaryExpression" />.
         /// </summary>
         /// <param name="unaryExpression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
-        public override string VisitUnaryExpression(UnaryExpression unaryExpression)
+        public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
             Assert.ArgumentNotNull(unaryExpression, () => unaryExpression);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="VariableReferenceExpression" />.
+        ///   Visits an element of type <see cref="VariableReferenceExpression" />.
         /// </summary>
         /// <param name="variableReferenceExpression">The <see cref="VariableReferenceExpression" /> instance that should be visited.</param>
-        public override string VisitVariableReferenceExpression(VariableReferenceExpression variableReferenceExpression)
+        public override void VisitVariableReferenceExpression(VariableReferenceExpression variableReferenceExpression)
         {
             Assert.ArgumentNotNull(variableReferenceExpression, () => variableReferenceExpression);
-            return default(string);
+            return;
         }
+
         #endregion
 
         #region Statements
+
         /// <summary>
-        ///     Visits an element of type <see cref="SimpleBlockStatement" />.
+        ///   Visits an element of type <see cref="SimpleBlockStatement" />.
         /// </summary>
         /// <param name="simpleBlockStatement">The <see cref="SimpleBlockStatement" /> instance that should be visited.</param>
-        public override string VisitSimpleBlockStatement(SimpleBlockStatement simpleBlockStatement)
+        public override void VisitSimpleBlockStatement(SimpleBlockStatement simpleBlockStatement)
         {
             Assert.ArgumentNotNull(simpleBlockStatement, () => simpleBlockStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="AtomicBlockStatement" />.
+        ///   Visits an element of type <see cref="AtomicBlockStatement" />.
         /// </summary>
         /// <param name="atomicBlockStatement">The <see cref="AtomicBlockStatement" /> instance that should be visited.</param>
-        public override string VisitAtomicBlockStatement(AtomicBlockStatement atomicBlockStatement)
+        public override void VisitAtomicBlockStatement(AtomicBlockStatement atomicBlockStatement)
         {
             Assert.ArgumentNotNull(atomicBlockStatement, () => atomicBlockStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="DStepBlockStatement" />.
+        ///   Visits an element of type <see cref="DStepBlockStatement" />.
         /// </summary>
         /// <param name="dStepBlockStatement">The <see cref="DStepBlockStatement" /> instance that should be visited.</param>
-        public override string VisitDStepBlockStatement(DStepBlockStatement dStepBlockStatement)
+        public override void VisitDStepBlockStatement(DStepBlockStatement dStepBlockStatement)
         {
             Assert.ArgumentNotNull(dStepBlockStatement, () => dStepBlockStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="ReturnStatement" />.
+        ///   Visits an element of type <see cref="ReturnStatement" />.
         /// </summary>
         /// <param name="returnStatement">The <see cref="ReturnStatement" /> instance that should be visited.</param>
-        public override string VisitReturnStatement(ReturnStatement returnStatement)
+        public override void VisitReturnStatement(ReturnStatement returnStatement)
         {
             Assert.ArgumentNotNull(returnStatement, () => returnStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="ExpressionStatement" />.
+        ///   Visits an element of type <see cref="ExpressionStatement" />.
         /// </summary>
         /// <param name="expressionStatement">The <see cref="ExpressionStatement" /> instance that should be visited.</param>
-        public override string VisitExpressionStatement(ExpressionStatement expressionStatement)
+        public override void VisitExpressionStatement(ExpressionStatement expressionStatement)
         {
             Assert.ArgumentNotNull(expressionStatement, () => expressionStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="GuardedCommandRepetitionStatement" />.
+        ///   Visits an element of type <see cref="GuardedCommandRepetitionStatement" />.
         /// </summary>
-        /// <param name="guardedCommandRepetitionStatement">The <see cref="GuardedCommandRepetitionStatement" /> instance that should be visited.</param>
-        public override string VisitGuardedCommandRepetitionStatement(GuardedCommandRepetitionStatement guardedCommandRepetitionStatement)
+        /// <param name="guardedCommandRepetitionStatement">
+        ///   The <see cref="GuardedCommandRepetitionStatement" /> instance that should be
+        ///   visited.
+        /// </param>
+        public override void VisitGuardedCommandRepetitionStatement(GuardedCommandRepetitionStatement guardedCommandRepetitionStatement)
         {
             Assert.ArgumentNotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="GuardedCommandSelectionStatement" />.
+        ///   Visits an element of type <see cref="GuardedCommandSelectionStatement" />.
         /// </summary>
-        /// <param name="guardedCommandSelectionStatement">The <see cref="GuardedCommandSelectionStatement" /> instance that should be visited.</param>
-        public override string VisitGuardedCommandSelectionStatement(GuardedCommandSelectionStatement guardedCommandSelectionStatement)
+        /// <param name="guardedCommandSelectionStatement">
+        ///   The <see cref="GuardedCommandSelectionStatement" /> instance that should be
+        ///   visited.
+        /// </param>
+        public override void VisitGuardedCommandSelectionStatement(GuardedCommandSelectionStatement guardedCommandSelectionStatement)
         {
             Assert.ArgumentNotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="GuardedCommandExpressionClause" />.
+        ///   Visits an element of type <see cref="GuardedCommandExpressionClause" />.
         /// </summary>
-        /// <param name="guardedCommandExpressionClause">The <see cref="GuardedCommandExpressionClause" /> instance that should be visited.</param>
-        public override string VisitGuardedCommandExpressionClause(GuardedCommandExpressionClause guardedCommandExpressionClause)
+        /// <param name="guardedCommandExpressionClause">
+        ///   The <see cref="GuardedCommandExpressionClause" /> instance that should be
+        ///   visited.
+        /// </param>
+        public override void VisitGuardedCommandExpressionClause(GuardedCommandExpressionClause guardedCommandExpressionClause)
         {
             Assert.ArgumentNotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="GuardedCommandElseClause" />.
+        ///   Visits an element of type <see cref="GuardedCommandElseClause" />.
         /// </summary>
         /// <param name="guardedCommandElseClause">The <see cref="GuardedCommandElseClause" /> instance that should be visited.</param>
-        public override string VisitGuardedCommandElseClause(GuardedCommandElseClause guardedCommandElseClause)
+        public override void VisitGuardedCommandElseClause(GuardedCommandElseClause guardedCommandElseClause)
         {
             Assert.ArgumentNotNull(guardedCommandElseClause, () => guardedCommandElseClause);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="AssignmentStatement" />.
+        ///   Visits an element of type <see cref="AssignmentStatement" />.
         /// </summary>
         /// <param name="assignmentStatement">The <see cref="AssignmentStatement" /> instance that should be visited.</param>
-        public override string VisitAssignmentStatement(AssignmentStatement assignmentStatement)
+        public override void VisitAssignmentStatement(AssignmentStatement assignmentStatement)
         {
             Assert.ArgumentNotNull(assignmentStatement, () => assignmentStatement);
-            return default(string);
+            return;
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="DeclarationStatement" />.
+        ///   Visits an element of type <see cref="DeclarationStatement" />.
         /// </summary>
         /// <param name="declarationStatement">The <see cref="DeclarationStatement" /> instance that should be visited.</param>
-        public override string VisitDeclarationStatement(DeclarationStatement declarationStatement)
+        public override void VisitDeclarationStatement(DeclarationStatement declarationStatement)
         {
             Assert.ArgumentNotNull(declarationStatement, () => declarationStatement);
-            return default(string);
+            return;
         }
+
         #endregion
 
+        #endregion
     }
 }
