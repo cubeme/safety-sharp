@@ -28,7 +28,7 @@ namespace Tests.CSharp.Diagnostics
 	using SafetySharp.CSharp.Diagnostics;
 
 	[TestFixture]
-	public class EnumUnderlyingTypeAnalyzerTests : CSharpAnalyzerTests<EnumUnderlyingTypeAnalyzer>
+	internal class EnumUnderlyingTypeAnalyzerTests : CSharpAnalyzerTests<EnumUnderlyingTypeAnalyzer>
 	{
 		[Test]
 		public void ByteAsUnderlyingTypeShouldBeInvalid()

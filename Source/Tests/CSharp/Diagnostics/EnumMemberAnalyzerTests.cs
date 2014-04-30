@@ -28,7 +28,7 @@ namespace Tests.CSharp.Diagnostics
 	using SafetySharp.CSharp.Diagnostics;
 
 	[TestFixture]
-	public class EnumMemberAnalyzerTests : CSharpAnalyzerTests<EnumMemberAnalyzer>
+	internal class EnumMemberAnalyzerTests : CSharpAnalyzerTests<EnumMemberAnalyzer>
 	{
 		[Test]
 		public void NoExplicitValuesShouldBeValid()

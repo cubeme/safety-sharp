@@ -33,7 +33,7 @@ namespace SafetySharp.CSharp.Diagnostics
 	/// <summary>
 	///     A base class for syntax node analyzers.
 	/// </summary>
-	public abstract class SyntaxNodeAnalyzer<T> : CSharpAnalyzer, ISyntaxTreeAnalyzer
+	internal abstract class SyntaxNodeAnalyzer<T> : CSharpAnalyzer, ISyntaxTreeAnalyzer
 		where T : CSharpSyntaxNode
 	{
 		/// <summary>

@@ -30,7 +30,7 @@ namespace Tests.CSharp.Diagnostics
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using SafetySharp.CSharp.Diagnostics;
 
-	public class CSharpAnalyzerTests<T>
+	internal class CSharpAnalyzerTests<T>
 		where T : CSharpAnalyzer, IDiagnosticAnalyzer, new()
 	{
 		private readonly T _analyzer = new T();
