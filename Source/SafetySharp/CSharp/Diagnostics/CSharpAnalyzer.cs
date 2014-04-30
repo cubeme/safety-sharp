@@ -33,7 +33,7 @@ namespace SafetySharp.CSharp.Diagnostics
 	/// <summary>
 	///     A base class for C# code analyzers.
 	/// </summary>
-	public abstract class CSharpAnalyzer
+	public abstract class CSharpAnalyzer : IDiagnosticAnalyzer
 	{
 		/// <summary>
 		///     The prefix that is used for all diagnostic identifiers.
@@ -58,12 +58,12 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// <summary>
 		///     Gets all C# code analyzers defined by Safety Sharp.
 		/// </summary>
-		public static IEnumerable<IDiagnosticAnalyzer> GetAnalyzers()
+		public static IEnumerable<CSharpAnalyzer> GetAnalyzers()
 		{
 			return typeof(CSharpAnalyzer).Assembly.GetTypes()
-										 .Where(t => t.IsClass && !t.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(t))
+										 .Where(t => t.IsClass && !t.IsAbstract && typeof(CSharpAnalyzer).IsAssignableFrom(t))
 										 .Select(Activator.CreateInstance)
-										 .Cast<IDiagnosticAnalyzer>();
+										 .Cast<CSharpAnalyzer>();
 		}
 
 		/// <summary>
