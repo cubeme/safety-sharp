@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp
 {
 	using System;
 	using Metamodel;
+	using Metamodel.Expressions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -35,6 +36,32 @@ namespace SafetySharp.CSharp
 		{
 			Assert.NotReached("C# feature is not supported: '{0}'.", node.CSharpKind());
 			return null;
+		}
+
+		public override MetamodelElement VisitBinaryExpression(BinaryExpressionSyntax node)
+		{
+			Visit(node.Left);
+			Visit(node.Right);
+			return null;
+		}
+
+		public override MetamodelElement VisitLiteralExpression(LiteralExpressionSyntax node)
+		{
+			switch (node.Token.CSharpKind())
+			{
+				case SyntaxKind.TrueKeyword:
+					return BooleanLiteral.True;
+				case SyntaxKind.FalseKeyword:
+					return BooleanLiteral.False;
+				case SyntaxKind.NumericLiteralToken:
+					if (node.Token.Value is int)
+						return new IntegerLiteral((int)node.Token.Value);
+
+					goto default;
+				default:
+					Assert.NotReached("Unsupported C# token: '{0}'.", node.Token.CSharpKind());
+					return null;
+			}
 		}
 	}
 }

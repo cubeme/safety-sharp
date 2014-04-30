@@ -34,7 +34,7 @@ namespace Tests.CSharp
 		[Test]
 		public void Test()
 		{
-			var parsed = SyntaxFactory.ParseExpression("1 + 2");
+			var parsed = SyntaxFactory.ParseExpression("false || true");
 			var visitor = new ModelTransformationVisitor();
 
 			visitor.Visit(parsed);

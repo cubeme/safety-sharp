@@ -3,7 +3,7 @@
 ## Source: https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 #SafetySharp-specific files
-Documentation/Api
+*.Generated.cs
 
 # User-specific files
 *.suo

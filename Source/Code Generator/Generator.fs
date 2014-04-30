@@ -725,7 +725,7 @@ let generateCode context =
 
         // Write the generate code to the file and show a success message
         output.WriteToFile context.OutputFile
-        writeColored <| sprintf "Done generating '%s'." context.OutputFile <| ConsoleColor.DarkGreen
+        writeColored <| sprintf "Generated C# file '%s'." context.OutputFile <| ConsoleColor.DarkGreen
     with
         | e ->
             writeColored e.Message ConsoleColor.DarkRed

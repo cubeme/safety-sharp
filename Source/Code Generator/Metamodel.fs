@@ -175,6 +175,21 @@ let elements = [
                     }
                 ]
             }
+            {
+                Name = "IntegerLiteral"
+                Base = "Literal"
+                IsAbstract = false
+                Properties =
+                [
+                    {
+                        Name = "Value"
+                        Type = "int"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The signed integer value of the literal."
+                    }
+                ]
+            }
             {   
                 Name = "BinaryExpression"
                 Base = "Expression"
