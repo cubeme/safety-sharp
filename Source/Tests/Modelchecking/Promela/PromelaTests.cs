@@ -23,6 +23,8 @@ namespace Tests.Modelchecking.Promela
 {
     using System;
     using System.Collections.Immutable;
+    using System.Diagnostics;
+    using System.IO;
     using FluentAssertions;
     using NUnit.Framework;
     using SafetySharp.Modelchecking.Promela;
@@ -32,9 +34,59 @@ namespace Tests.Modelchecking.Promela
     [TestFixture]
     public class EnumTests
     {
+        public enum SpinResult
+        {
+            Success,
+            Failed
+        }
+
+        public SpinResult ExecuteSpin(string arguments)
+        {
+            var stdoutOutputBuffer = new System.Text.StringBuilder();
+            var stderrOutputBuffer = new System.Text.StringBuilder();
+            var proc = new Process();
+            proc.StartInfo.Arguments = arguments;
+            proc.StartInfo.FileName = "Modelchecking\\Promela\\spin627.exe";
+            proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            proc.StartInfo.CreateNoWindow = true;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.RedirectStandardOutput = true;
+            proc.StartInfo.RedirectStandardError = true;
+            proc.StartInfo.RedirectStandardInput = true;
+
+            DataReceivedEventHandler addToStdErr = (sendingProcess, dataReceivedEvArgs) => stderrOutputBuffer.Append(dataReceivedEvArgs.Data);
+            DataReceivedEventHandler addToStdOut = (sendingProcess, dataReceivedEvArgs) => stdoutOutputBuffer.Append(dataReceivedEvArgs.Data);
+
+            proc.ErrorDataReceived += addToStdErr;
+            proc.OutputDataReceived += addToStdOut;
+
+            proc.Start();
+
+            proc.BeginErrorReadLine();
+            proc.BeginOutputReadLine();
+
+            proc.WaitForExit();
+
+            switch (proc.ExitCode)
+            {
+                case 0:
+                    return SpinResult.Success;
+                default:
+                    return SpinResult.Failed;
+            }
+        }
+
+        [Test]
+        public void SpinFound()
+        {
+            ExecuteSpin("-V").Should().Be(SpinResult.Success);
+        }
+
         [Test]
         public void Test()
         {
+            var filename = "Modelchecking\\Promela\\test1.pml";
+
             var expr_false = new BooleanLiteral(false);
             var expr_true = new BooleanLiteral(false);
 
@@ -50,9 +102,11 @@ namespace Tests.Modelchecking.Promela
              var testProcType = new Proctype(true,"TestProcType",code);
 
             var fileWriter = new PromelaModelWriter();
-            //var test= fileWriter.Visit(testProcType);
+            fileWriter.Visit(testProcType);
 
-            //test.Should().Be("");
+            fileWriter.CodeWriter.WriteToFile("Modelchecking\\Promela\\test1.pml");
+
+            ExecuteSpin("-a "+filename).Should().Be(SpinResult.Success);
         }
 
     }

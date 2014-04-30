@@ -39,7 +39,7 @@ namespace SafetySharp.Modelchecking.Promela
 
     internal class PromelaModelWriter : PromelaVisitor
     {
-        private readonly CodeWriter codeWriter = new CodeWriter();
+        public readonly CodeWriter CodeWriter = new CodeWriter();
 
         #region Proctype
 
@@ -49,17 +49,17 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="proctype">The <see cref="Proctype" /> instance that should be visited.</param>
         public override void VisitProctype(Proctype proctype)
         {
-            // 'proctype' name '('')''{'
+            // 'active' 'proctype' name '('')''{'
             //      sequence
             // '}'
 
             Assert.ArgumentNotNull(proctype, () => proctype);
 
-            codeWriter.AppendLine("proctype " + proctype.Name + "() {");
-            codeWriter.IncreaseIndent();
+            CodeWriter.AppendLine("active proctype " + proctype.Name + "() {{");
+            CodeWriter.IncreaseIndent();
             proctype.Code.ForEach(stmnt => stmnt.Accept(this));
-            codeWriter.DecreaseIndent();
-            codeWriter.AppendLine("}");
+            CodeWriter.DecreaseIndent();
+            CodeWriter.AppendLine("}}");
         }
 
         #endregion
@@ -77,10 +77,10 @@ namespace SafetySharp.Modelchecking.Promela
             switch (booleanLiteral.Value)
             {
                 case true:
-                    codeWriter.Append("true");
+                    CodeWriter.Append("true");
                     break;
                 case false:
-                    codeWriter.Append("false");
+                    CodeWriter.Append("false");
                     break;
             }
         }
@@ -92,7 +92,7 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitNumberLiteral(NumberLiteral numberLiteral)
         {
             Assert.ArgumentNotNull(numberLiteral, () => numberLiteral);
-            codeWriter.Append(numberLiteral.Value.ToString());
+            CodeWriter.Append(numberLiteral.Value.ToString());
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitSkipLiteral(SkipLiteral skipLiteral)
         {
             Assert.ArgumentNotNull(skipLiteral, () => skipLiteral);
-            codeWriter.Append("skip");
+            CodeWriter.Append("skip");
         }
 
         /// <summary>
@@ -112,69 +112,69 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
             Assert.ArgumentNotNull(binaryExpression, () => binaryExpression);
-            codeWriter.Append("(");
+            CodeWriter.Append("(");
             binaryExpression.Left.Accept(this);
 
             switch (binaryExpression.Operator)
             {
                 case PromelaBinaryOperator.And:
-                    codeWriter.Append("&&");
+                    CodeWriter.Append("&&");
                     break;
                 case PromelaBinaryOperator.Or:
-                    codeWriter.Append("||");
+                    CodeWriter.Append("||");
                     break;
                 case PromelaBinaryOperator.Add:
-                    codeWriter.Append("+");
+                    CodeWriter.Append("+");
                     break;
                 case PromelaBinaryOperator.Min:
-                    codeWriter.Append("-");
+                    CodeWriter.Append("-");
                     break;
                 case PromelaBinaryOperator.Mul:
-                    codeWriter.Append("*");
+                    CodeWriter.Append("*");
                     break;
                 case PromelaBinaryOperator.Div:
-                    codeWriter.Append("/");
+                    CodeWriter.Append("/");
                     break;
                 case PromelaBinaryOperator.Mod:
-                    codeWriter.Append("%");
+                    CodeWriter.Append("%");
                     break;
                 case PromelaBinaryOperator.BAnd:
-                    codeWriter.Append("&");
+                    CodeWriter.Append("&");
                     break;
                 case PromelaBinaryOperator.Xor:
-                    codeWriter.Append("^");
+                    CodeWriter.Append("^");
                     break;
                 case PromelaBinaryOperator.BOr:
-                    codeWriter.Append("|");
+                    CodeWriter.Append("|");
                     break;
                 case PromelaBinaryOperator.Gt:
-                    codeWriter.Append(">");
+                    CodeWriter.Append(">");
                     break;
                 case PromelaBinaryOperator.Lt:
-                    codeWriter.Append(">");
+                    CodeWriter.Append(">");
                     break;
                 case PromelaBinaryOperator.Ge:
-                    codeWriter.Append(">=");
+                    CodeWriter.Append(">=");
                     break;
                 case PromelaBinaryOperator.Le:
-                    codeWriter.Append("<=");
+                    CodeWriter.Append("<=");
                     break;
                 case PromelaBinaryOperator.Eq:
-                    codeWriter.Append("==");
+                    CodeWriter.Append("==");
                     break;
                 case PromelaBinaryOperator.Neq:
-                    codeWriter.Append("!=");
+                    CodeWriter.Append("!=");
                     break;
                 case PromelaBinaryOperator.Bls:
-                    codeWriter.Append("<<");
+                    CodeWriter.Append("<<");
                     break;
                 case PromelaBinaryOperator.Brs:
-                    codeWriter.Append(">>");
+                    CodeWriter.Append(">>");
                     break;
             }
 
             binaryExpression.Right.Accept(this);
-            codeWriter.Append(")");
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -184,21 +184,21 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
             Assert.ArgumentNotNull(unaryExpression, () => unaryExpression);
-            codeWriter.Append("(");
+            CodeWriter.Append("(");
             switch (unaryExpression.Operator)
             {
                 case PromelaUnaryOperator.Neg:
-                    codeWriter.Append("-");
+                    CodeWriter.Append("-");
                     break;
                 case PromelaUnaryOperator.Not:
-                    codeWriter.Append("!");
+                    CodeWriter.Append("!");
                     break;
                 case PromelaUnaryOperator.Tilde:
-                    codeWriter.Append("~");
+                    CodeWriter.Append("~");
                     break;
             }
             unaryExpression.Expression.Accept(this);
-            codeWriter.Append(")");
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -210,16 +210,16 @@ namespace SafetySharp.Modelchecking.Promela
             // varref : name [ '[' any_expr ']' ] [ '.' varref ]
             Assert.ArgumentNotNull(variableReferenceExpression, () => variableReferenceExpression);
 
-            codeWriter.Append(variableReferenceExpression.Identifier);
+            CodeWriter.Append(variableReferenceExpression.Identifier);
             if (variableReferenceExpression.Index != null)
             {
-                codeWriter.Append("[");
+                CodeWriter.Append("[");
                 variableReferenceExpression.Index.Accept(this);
-                codeWriter.Append("]");
+                CodeWriter.Append("]");
             }
             if (variableReferenceExpression.Member != null)
             {
-                codeWriter.Append(".");
+                CodeWriter.Append(".");
                 variableReferenceExpression.Member.Accept(this);
             }
         }
@@ -235,11 +235,11 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitSimpleBlockStatement(SimpleBlockStatement simpleBlockStatement)
         {
             Assert.ArgumentNotNull(simpleBlockStatement, () => simpleBlockStatement);
-            codeWriter.AppendLine("{");
-            codeWriter.IncreaseIndent();
+            CodeWriter.AppendLine("{{");
+            CodeWriter.IncreaseIndent();
             simpleBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
-            codeWriter.DecreaseIndent();
-            codeWriter.AppendLine("}");
+            CodeWriter.DecreaseIndent();
+            CodeWriter.AppendLine("}}");
         }
 
         /// <summary>
@@ -249,11 +249,11 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitAtomicBlockStatement(AtomicBlockStatement atomicBlockStatement)
         {
             Assert.ArgumentNotNull(atomicBlockStatement, () => atomicBlockStatement);
-            codeWriter.AppendLine("atomic {");
-            codeWriter.IncreaseIndent();
+            CodeWriter.AppendLine("atomic {{");
+            CodeWriter.IncreaseIndent();
             atomicBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
-            codeWriter.DecreaseIndent();
-            codeWriter.AppendLine("}");
+            CodeWriter.DecreaseIndent();
+            CodeWriter.AppendLine("}}");
         }
 
         /// <summary>
@@ -263,11 +263,11 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitDStepBlockStatement(DStepBlockStatement dStepBlockStatement)
         {
             Assert.ArgumentNotNull(dStepBlockStatement, () => dStepBlockStatement);
-            codeWriter.AppendLine("d_step {");
-            codeWriter.IncreaseIndent();
+            CodeWriter.AppendLine("d_step {{");
+            CodeWriter.IncreaseIndent();
             dStepBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
-            codeWriter.DecreaseIndent();
-            codeWriter.AppendLine("}");
+            CodeWriter.DecreaseIndent();
+            CodeWriter.AppendLine("}}");
         }
 
         /// <summary>
@@ -277,10 +277,10 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitReturnStatement(ReturnStatement returnStatement)
         {
             Assert.ArgumentNotNull(returnStatement, () => returnStatement);
-            codeWriter.Append("return ");
+            CodeWriter.Append("return ");
             returnStatement.Expression.Accept(this);
-            codeWriter.Append(";");
-            codeWriter.NewLine();
+            CodeWriter.Append(";");
+            CodeWriter.NewLine();
         }
 
         /// <summary>
@@ -291,8 +291,8 @@ namespace SafetySharp.Modelchecking.Promela
         {
             Assert.ArgumentNotNull(expressionStatement, () => expressionStatement);
             expressionStatement.Expression.Accept(this);
-            codeWriter.Append(";");
-            codeWriter.NewLine();
+            CodeWriter.Append(";");
+            CodeWriter.NewLine();
         }
 
         /// <summary>
@@ -305,9 +305,9 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitGuardedCommandRepetitionStatement(GuardedCommandRepetitionStatement guardedCommandRepetitionStatement)
         {
             Assert.ArgumentNotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
-            codeWriter.AppendLine("do");
+            CodeWriter.AppendLine("do");
             guardedCommandRepetitionStatement.Clauses.ForEach(clause => clause.Accept(this));
-            codeWriter.AppendLine("od");
+            CodeWriter.AppendLine("od");
         }
 
         /// <summary>
@@ -320,9 +320,9 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitGuardedCommandSelectionStatement(GuardedCommandSelectionStatement guardedCommandSelectionStatement)
         {
             Assert.ArgumentNotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
-            codeWriter.AppendLine("if");
+            CodeWriter.AppendLine("if");
             guardedCommandSelectionStatement.Clauses.ForEach(clause => clause.Accept(this));
-            codeWriter.AppendLine("fi");
+            CodeWriter.AppendLine("fi");
         }
 
         /// <summary>
@@ -335,13 +335,13 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitGuardedCommandExpressionClause(GuardedCommandExpressionClause guardedCommandExpressionClause)
         {
             Assert.ArgumentNotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
-            codeWriter.Append("::\t");
+            CodeWriter.Append("::\t");
             guardedCommandExpressionClause.Guard.Accept(this);
-            codeWriter.Append(" ->");
-            codeWriter.IncreaseIndent();
-            codeWriter.NewLine();
+            CodeWriter.Append(" ->");
+            CodeWriter.IncreaseIndent();
+            CodeWriter.NewLine();
             guardedCommandExpressionClause.Statement.Accept(this);
-            codeWriter.DecreaseIndent();
+            CodeWriter.DecreaseIndent();
         }
 
         /// <summary>
@@ -351,9 +351,9 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitGuardedCommandElseClause(GuardedCommandElseClause guardedCommandElseClause)
         {
             Assert.ArgumentNotNull(guardedCommandElseClause, () => guardedCommandElseClause);
-            codeWriter.AppendLine("::\telse ->");
+            CodeWriter.AppendLine("::\telse ->");
             guardedCommandElseClause.Statement.Accept(this);
-            codeWriter.DecreaseIndent();
+            CodeWriter.DecreaseIndent();
         }
 
         /// <summary>
@@ -364,9 +364,9 @@ namespace SafetySharp.Modelchecking.Promela
         {
             Assert.ArgumentNotNull(assignmentStatement, () => assignmentStatement);
             assignmentStatement.Left.Accept(this);
-            codeWriter.Append(" = ");
+            CodeWriter.Append(" = ");
             assignmentStatement.Right.Accept(this);
-            codeWriter.AppendLine(";");
+            CodeWriter.AppendLine(";");
         }
 
         /// <summary>
@@ -380,43 +380,43 @@ namespace SafetySharp.Modelchecking.Promela
             switch (declarationStatement.Type)
             {
                 case PromelaTypeName.Bit:
-                    codeWriter.Append("bit");
+                    CodeWriter.Append("bit");
                     break;
                 case PromelaTypeName.Bool:
-                    codeWriter.Append("bool");
+                    CodeWriter.Append("bool");
                     break;
                 case PromelaTypeName.Byte:
-                    codeWriter.Append("byte");
+                    CodeWriter.Append("byte");
                     break;
                 case PromelaTypeName.Short:
-                    codeWriter.Append("short");
+                    CodeWriter.Append("short");
                     break;
                 case PromelaTypeName.Int:
-                    codeWriter.Append("int");
+                    CodeWriter.Append("int");
                     break;
                 case PromelaTypeName.Mtype:
-                    codeWriter.Append("m_type");
+                    CodeWriter.Append("m_type");
                     break;
                 case PromelaTypeName.Chan:
-                    codeWriter.Append("chan");
+                    CodeWriter.Append("chan");
                     break;
                 case PromelaTypeName.Pid:
-                    codeWriter.Append("pit");
+                    CodeWriter.Append("pit");
                     break;
             }
-            codeWriter.Append(" ");
+            CodeWriter.Append(" ");
             if (declarationStatement.ArraySize != 0)
             {
-                codeWriter.Append("[");
-                codeWriter.AppendLine(declarationStatement.ArraySize.ToString());
-                codeWriter.Append("]");
+                CodeWriter.Append("[");
+                CodeWriter.AppendLine(declarationStatement.ArraySize.ToString());
+                CodeWriter.Append("]");
             }
             if (declarationStatement.InitialValue != null)
             {
-                codeWriter.Append(" = ");
+                CodeWriter.Append(" = ");
                 declarationStatement.InitialValue.Accept(this);
             }
-            codeWriter.AppendLine(";");
+            CodeWriter.AppendLine(";");
         }
 
         #endregion
