@@ -20,19 +20,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Statements
+namespace Tests.Metamodel
 {
 	using System;
-	using System.Collections.Immutable;
+	using CSharp.Transformation;
+	using FluentAssertions;
+	using NUnit.Framework;
+	using SafetySharp.Metamodel;
 
-	partial class Statement
+	[TestFixture]
+	internal class ReferenceTests : TransformationVisitorTests
 	{
-		/// <summary>
-		///     Wraps the current statement inside a <see cref="BlockStatement" />.
-		/// </summary>
-		public BlockStatement AsBlockStatement()
+		[Test]
+		public void Equality()
 		{
-			return new BlockStatement(ImmutableArray.Create(this));
+			var reference1 = new Reference<MetamodelElement>(1);
+			var reference2 = new Reference<MetamodelElement>(2);
+			var reference3 = new Reference<MetamodelElement>(2);
+
+			reference1.Equals(null).Should().BeFalse();
+			reference1.Equals(reference1).Should().BeTrue();
+			reference1.Equals(reference2).Should().BeFalse();
+			reference2.Equals(reference3).Should().BeTrue();
+			reference1.Equals((object)reference1).Should().BeTrue();
+			reference1.Equals((object)reference2).Should().BeFalse();
+			reference2.Equals((object)reference3).Should().BeTrue();
+			(reference1 == reference2).Should().BeFalse();
+			(reference3 == reference2).Should().BeTrue();
+		}
+
+		[Test]
+		public void Inequality()
+		{
+			var reference1 = new Reference<MetamodelElement>(1);
+			var reference2 = new Reference<MetamodelElement>(2);
+			var reference3 = new Reference<MetamodelElement>(2);
+
+			(reference1 != reference2).Should().BeTrue();
+			(reference3 != reference2).Should().BeFalse();
 		}
 	}
 }

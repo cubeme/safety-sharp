@@ -56,10 +56,10 @@ let elements = [
         Name = "SafetySharp.Metamodel.Declarations"
         Classes = 
         [
-            {
-                Name = "TypeDeclaration"
+            {   
+                Name = "ComponentDeclaration"
                 Base = "MetamodelElement"
-                IsAbstract = true
+                IsAbstract = false
                 Properties = 
                 [
                     {
@@ -79,22 +79,6 @@ let elements = [
                         CanBeNull = false
                     }
                     {
-                        Name = "Members"
-                        Type = "MemberDeclaration"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "The declared members of the type."
-                        CanBeNull = false
-                    }
-                ]
-            }
-            {   
-                Name = "ComponentDeclaration"
-                Base = "TypeDeclaration"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
                         Name = "UpdateStatement"
                         Type = "Statement"
                         CollectionType = Singleton
@@ -102,7 +86,21 @@ let elements = [
                         Comment = "The statement representing the Update method of the component."
                         CanBeNull = true
                     }
+                    {
+                        Name = "Methods"
+                        Type = "ElementReference<MethodDeclaration>"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The methods declared by the component."
+                        CanBeNull = false
+                    }
                 ]
+            }
+            {   
+                Name = "MethodDeclaration"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = []
             }
             {   
                 Name = "MemberDeclaration"
@@ -294,7 +292,17 @@ let elements = [
                 Name = "BlockStatement"
                 Base = "Statement"
                 IsAbstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "Statements"
+                        Type = "Statement"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The ordered list of statements the statement block consists of."
+                        CanBeNull = false
+                    }
+                ]
             }
             {   
                 Name = "ReturnStatement"

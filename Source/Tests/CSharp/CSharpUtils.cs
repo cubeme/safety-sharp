@@ -20,27 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace Tests.CSharp
 {
 	using System;
-	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Utilities;
+	using SafetySharp.Metamodel;
 
 	/// <summary>
-	///     Transforms lowered C# syntax tree into metamodel element tree.
+	///     Provides helper methods for working with C# code.
 	/// </summary>
-	internal partial class TransformationVisitor : CSharpSyntaxVisitor<MetamodelElement>
+	internal static class CSharpUtils
 	{
 		/// <summary>
-		///     Raises an exception for all unsupported C# features found in the lowered C# syntax tree.
+		///     Compiles the given C# code, returning the created compilation.
 		/// </summary>
-		/// <param name="node">The syntax node of the unsupported C# feature.</param>
-		public override MetamodelElement DefaultVisit(SyntaxNode node)
+		/// <param name="csharpCode">The C# code that should be compiled.</param>
+		public static CSharpCompilation Compile(string csharpCode)
 		{
-			Assert.NotReached("C# feature is not supported: '{0}'.", node.CSharpKind());
-			return null;
+			var compilationUnit = SyntaxFactory.ParseCompilationUnit(csharpCode);
+			var syntaxTree = compilationUnit.SyntaxTree;
+			var compilation = CSharpCompilation.Create("Test")
+											   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
+											   .AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
+											   .AddSyntaxTrees(syntaxTree);
+
+			return compilation;
 		}
 	}
 }

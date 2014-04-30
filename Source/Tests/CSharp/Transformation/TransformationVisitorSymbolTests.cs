@@ -25,39 +25,34 @@ namespace Tests.CSharp.Transformation
 	using System;
 	using System.Linq;
 	using FluentAssertions;
-	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
-	using SafetySharp.Metamodel;
-	using SafetySharp.Metamodel.Expressions;
-	using SafetySharp.Metamodel.Statements;
+	using SafetySharp.Metamodel.Declarations;
 
-	internal abstract class TransformationVisitorTests
+	[TestFixture]
+	public class TransformationVisitorSymbolTests
 	{
-		private static void CheckElementTree(MetamodelElement expectedElement, string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
+		[Test]
+		public void ComponentDeclaration()
 		{
-			csharpCode = String.Format("class C {{ void M() {{ {0} }}", csharpCode);
-			var compilation = CSharpUtils.Compile(csharpCode);
-
+			var compilation = CSharpUtils.Compile("class C { public void M() {} }");
+			var symbolMap = new SymbolMap(compilation);
 			var syntaxTree = compilation.SyntaxTrees.First();
+			var rootNode = syntaxTree.GetRoot();
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-			var methodBody = syntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
 
-			var visitor = new TransformationVisitor(semanticModel, new SymbolMap(compilation));
-			var actualElement = visitor.Visit(projection(methodBody));
+			var visitor = new TransformationVisitor(semanticModel, symbolMap);
+			var component = visitor.Visit(rootNode) as ComponentDeclaration;
 
-			actualElement.Should().Be(expectedElement);
-		}
+			component.Should().NotBeNull("The transformed element must be a component declaration.");
 
-		protected static void Test(Expression expectedExpression, string csharpExpression)
-		{
-			CheckElementTree(expectedExpression, csharpExpression,
-							 block => ((ExpressionStatementSyntax)block.Statements.First()).Expression);
-		}
+			var method = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>().First();
+			var methodSymbol = semanticModel.GetDeclaredSymbol(method);
+			var methodReference = symbolMap.GetMethodReference(methodSymbol);
 
-		protected static void Test(Statement expectedStatement, string csharpStatement)
-		{
-			CheckElementTree(expectedStatement.AsBlockStatement(), csharpStatement, block => block);
+			component.Methods[0].Should().Be(methodReference);
 		}
 	}
 }

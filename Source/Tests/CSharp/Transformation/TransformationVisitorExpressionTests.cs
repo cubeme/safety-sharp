@@ -27,7 +27,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Expressions;
 
 	[TestFixture]
-	internal class ExpressionTests : TransformationVisitorTests
+	internal class TransformationVisitorExpressionTests : TransformationVisitorTests
 	{
 		[Test]
 		public void BinaryAddExpressions()

@@ -61,12 +61,16 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\CSharpUtils.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
-    <Compile Include="CSharp\Transformation\StatementTests.cs" />
+    <Compile Include="CSharp\Transformation\SymbolMapTests.cs" />
+    <Compile Include="CSharp\Transformation\TransformationVisitorSymbolTests.cs" />
+    <Compile Include="Metamodel\ReferenceTests.cs" />
+    <Compile Include="CSharp\Transformation\TransformationVisitorStatementTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorTests.cs" />
-    <Compile Include="CSharp\Transformation\ExpressionTests.cs" />
+    <Compile Include="CSharp\Transformation\TransformationVisitorExpressionTests.cs" />
     <Compile Include="Generator\GeneratorTests.cs" />
     <Compile Include="Generator\Test.Generated.cs" />
     <Compile Include="Generator\TestElement.cs" />
@@ -74,7 +78,6 @@
     <Compile Include="Generator\TestVisitor.cs" />
     <Compile Include="Generator\TestVisitor`1.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTests.cs" />
-    <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

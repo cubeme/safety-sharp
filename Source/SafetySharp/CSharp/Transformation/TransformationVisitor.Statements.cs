@@ -20,10 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using Metamodel;
 	using Metamodel.Expressions;
 	using Metamodel.Statements;
@@ -40,6 +41,15 @@ namespace SafetySharp.CSharp
 		public override MetamodelElement VisitEmptyStatement(EmptyStatementSyntax node)
 		{
 			return EmptyStatement.Default;
+		}
+
+		/// <summary>
+		///     Transforms a C# block statement to the corresponding metamodel block statement.
+		/// </summary>
+		/// <param name="node">The C# block statement that should be transformed.</param>
+		public override MetamodelElement VisitBlock(BlockSyntax node)
+		{
+			return new BlockStatement(node.Statements.Select(s => (Statement)Visit(s)).ToImmutableArray());
 		}
 
 		/// <summary>

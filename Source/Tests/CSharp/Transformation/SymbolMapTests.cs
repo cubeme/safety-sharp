@@ -27,37 +27,55 @@ namespace Tests.CSharp.Transformation
 	using FluentAssertions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
-	using SafetySharp.Metamodel;
-	using SafetySharp.Metamodel.Expressions;
-	using SafetySharp.Metamodel.Statements;
 
-	internal abstract class TransformationVisitorTests
+	[TestFixture]
+	internal class SymbolMapTests
 	{
-		private static void CheckElementTree(MetamodelElement expectedElement, string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
+		private SymbolMap _symbolMap;
+		private SyntaxNode _syntaxRoot;
+		private SemanticModel _semanticModel;
+
+		private void CreateSymbolMap(string csharpCode)
 		{
-			csharpCode = String.Format("class C {{ void M() {{ {0} }}", csharpCode);
 			var compilation = CSharpUtils.Compile(csharpCode);
-
 			var syntaxTree = compilation.SyntaxTrees.First();
-			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-			var methodBody = syntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
 
-			var visitor = new TransformationVisitor(semanticModel, new SymbolMap(compilation));
-			var actualElement = visitor.Visit(projection(methodBody));
+			_semanticModel = compilation.GetSemanticModel(syntaxTree);
+			_syntaxRoot = syntaxTree.GetRoot();
 
-			actualElement.Should().Be(expectedElement);
+			_symbolMap = new SymbolMap(compilation);
 		}
 
-		protected static void Test(Expression expectedExpression, string csharpExpression)
+		private ISymbol GetClassSymbol(string className)
 		{
-			CheckElementTree(expectedExpression, csharpExpression,
-							 block => ((ExpressionStatementSyntax)block.Statements.First()).Expression);
+			var classDeclaration = _syntaxRoot.DescendantNodes()
+											  .OfType<ClassDeclarationSyntax>()
+											  .First(c => c.Identifier.ValueText == className);
+
+			return _semanticModel.GetDeclaredSymbol(classDeclaration);
 		}
 
-		protected static void Test(Statement expectedStatement, string csharpStatement)
+		[Test]
+		public void CollectClasses()
 		{
-			CheckElementTree(expectedStatement.AsBlockStatement(), csharpStatement, block => block);
+			CreateSymbolMap("class X {} class Y { class Z {} }");
+			var classX = GetClassSymbol("X");
+			var classY = GetClassSymbol("Y");
+			var classZ = GetClassSymbol("Z");
+
+			_symbolMap.Contains(classX).Should().BeTrue();
+			_symbolMap.Contains(classY).Should().BeTrue();
+			_symbolMap.Contains(classZ).Should().BeTrue();
+
+			var referenceX = _symbolMap.GetComponentReference(classX);
+			var referenceY = _symbolMap.GetComponentReference(classY);
+			var referenceZ = _symbolMap.GetComponentReference(classZ);
+
+			(referenceX == referenceY).Should().BeFalse();
+			(referenceX == referenceZ).Should().BeFalse();
+			(referenceZ == referenceY).Should().BeFalse();
 		}
 	}
 }

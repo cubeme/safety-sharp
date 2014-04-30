@@ -20,19 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Statements
+namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
+	using Metamodel;
+	using Metamodel.Declarations;
+	using Metamodel.Statements;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-	partial class Statement
+	partial class TransformationVisitor
 	{
-		/// <summary>
-		///     Wraps the current statement inside a <see cref="BlockStatement" />.
-		/// </summary>
-		public BlockStatement AsBlockStatement()
+		public override MetamodelElement VisitClassDeclaration(ClassDeclarationSyntax node)
 		{
-			return new BlockStatement(ImmutableArray.Create(this));
+			var reference = _symbolMap.GetComponentReference(_semanticModel.GetDeclaredSymbol(node));
+			var methodReferences = node.DescendantNodes()
+									   .OfType<MethodDeclarationSyntax>()
+									   .Select(method => _symbolMap.GetMethodReference(_semanticModel.GetDeclaredSymbol(method)))
+									   .ToImmutableArray();
+
+			return new ComponentDeclaration(new Identifier(node.Identifier.ValueText), "",
+											new BlockStatement(ImmutableArray<Statement>.Empty),
+											methodReferences);
 		}
 	}
 }
