@@ -90,7 +90,7 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
-		///     Maps the C# syntax to the corresponding unary operator.
+		///     Maps the C# syntax kind to the corresponding unary operator.
 		/// </summary>
 		/// <param name="syntaxKind">The syntax kind that should be mapped.</param>
 		private static UnaryOperator MapUnaryOperator(SyntaxKind syntaxKind)
@@ -104,13 +104,13 @@ namespace SafetySharp.CSharp.Transformation
 				case SyntaxKind.LogicalNotExpression:
 					return UnaryOperator.LogicalNot;
 				default:
-					Assert.NotReached("Unsupported C# unary operator: '{0}'.", syntaxKind);
+					Assert.NotReached("Unsupported unary C# operator: '{0}'.", syntaxKind);
 					return 0;
 			}
 		}
 
 		/// <summary>
-		///     Maps the C# syntax to the corresponding binary operator.
+		///     Maps the C# syntax kind to the corresponding binary operator.
 		/// </summary>
 		/// <param name="syntaxKind">The syntax kind that should be mapped.</param>
 		private static BinaryOperator MapBinaryOperator(SyntaxKind syntaxKind)
@@ -144,7 +144,7 @@ namespace SafetySharp.CSharp.Transformation
 				case SyntaxKind.GreaterThanOrEqualExpression:
 					return BinaryOperator.GreaterThanOrEqual;
 				default:
-					Assert.NotReached("Unsupported C# binary operator: '{0}'.", syntaxKind);
+					Assert.NotReached("Unsupported binary C# operator: '{0}'.", syntaxKind);
 					return 0;
 			}
 		}
