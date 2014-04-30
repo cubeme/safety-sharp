@@ -25,8 +25,7 @@ namespace SafetySharp.Metamodel
 	using System;
 
 	/// <summary>
-	///     Represents a metamodel element. Metamodel elements are organized as semantically enriched syntax trees during
-	///     compilation and code transformation.
+	///     Represents a metamodel element. Metamodel elements are organized as semantically enriched syntax trees.
 	/// </summary>
 	public abstract class MetamodelElement
 	{

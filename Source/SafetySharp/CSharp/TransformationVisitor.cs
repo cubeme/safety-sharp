@@ -20,8 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 namespace SafetySharp.CSharp
 {
 	using System;
@@ -30,8 +28,15 @@ namespace SafetySharp.CSharp
 	using Microsoft.CodeAnalysis.CSharp;
 	using Utilities;
 
+	/// <summary>
+	///     Transforms lowered C# syntax tree into metamodel element tree.
+	/// </summary>
 	internal partial class TransformationVisitor : CSharpSyntaxVisitor<MetamodelElement>
 	{
+		/// <summary>
+		///     Raises an exception for all unsupported C# features found in the lowered C# syntax tree.
+		/// </summary>
+		/// <param name="node">The syntax node of the unsupported C# feature.</param>
 		public override MetamodelElement DefaultVisit(SyntaxNode node)
 		{
 			Assert.NotReached("C# feature is not supported: '{0}'.", node.CSharpKind());

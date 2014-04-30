@@ -200,6 +200,22 @@ let elements = [
                     }
                 ]
             }
+            {
+                Name = "DecimalLiteral"
+                Base = "Literal"
+                IsAbstract = false
+                Properties =
+                [
+                    {
+                        Name = "Value"
+                        Type = "decimal"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The decimal value of the literal."
+                        CanBeNull = false
+                    }
+                ]
+            }
             {   
                 Name = "BinaryExpression"
                 Base = "Expression"

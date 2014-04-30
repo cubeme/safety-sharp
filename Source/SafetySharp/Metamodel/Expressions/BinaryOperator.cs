@@ -24,9 +24,30 @@ namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
 
+	/// <summary>
+	///     Represents the operator in a binary expression.
+	/// </summary>
 	public enum BinaryOperator
 	{
+		// Arithmetic operators
 		Add = 1,
-		And
+		Subtract,
+		Multiply,
+		Divide,
+		Modulo,
+
+		// Logical operators
+		LogicalAnd,
+		LogicalOr,
+
+		// Equality operators
+		Equals,
+		NotEquals,
+
+		// Comparison operators
+		LessThan,
+		LessThanOrEqual,
+		GreaterThan,
+		GreaterThanOrEqual
 	}
 }
