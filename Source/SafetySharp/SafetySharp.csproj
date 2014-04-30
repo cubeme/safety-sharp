@@ -64,6 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.cs" />
