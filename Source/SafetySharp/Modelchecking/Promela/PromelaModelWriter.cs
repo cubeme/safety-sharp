@@ -405,10 +405,12 @@ namespace SafetySharp.Modelchecking.Promela
                     break;
             }
             CodeWriter.Append(" ");
-            if (declarationStatement.ArraySize != 0)
+            CodeWriter.Append(declarationStatement.Identifier);
+            CodeWriter.Append(" ");
+            if (declarationStatement.ArraySize > 1)
             {
                 CodeWriter.Append("[");
-                CodeWriter.AppendLine(declarationStatement.ArraySize.ToString());
+                CodeWriter.Append(declarationStatement.ArraySize.ToString());
                 CodeWriter.Append("]");
             }
             if (declarationStatement.InitialValue != null)

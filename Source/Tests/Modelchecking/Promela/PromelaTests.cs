@@ -90,16 +90,14 @@ namespace Tests.Modelchecking.Promela
             var expr_false = new BooleanLiteral(false);
             var expr_true = new BooleanLiteral(false);
 
-            var stmnt_declvarx = new DeclarationStatement(PromelaTypeName.Bool, "x", 1, expr_false);
+            var stmnt_declvarx = new DeclarationStatement(PromelaTypeName.Bool, "x", 0, expr_false);
             var ref_varX = new VariableReferenceExpression("x", null, null);
             var stmnt_assignTrueToVarx = new AssignmentStatement(ref_varX, expr_true);
 
 
-            var code = ImmutableArray.Create<Statement>();
-            code.Add(stmnt_declvarx);
-            code.Add(stmnt_assignTrueToVarx);
+            var code = ImmutableArray.Create<Statement>().Add(stmnt_declvarx).Add(stmnt_assignTrueToVarx);
 
-             var testProcType = new Proctype(true,"TestProcType",code);
+            var testProcType = new Proctype(true,"TestProcType",code);
 
             var fileWriter = new PromelaModelWriter();
             fileWriter.Visit(testProcType);
