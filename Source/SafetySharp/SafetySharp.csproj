@@ -73,6 +73,7 @@
     <Compile Include="CSharp\Transformation\TransformationVisitor.Statements.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Expressions.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
+    <Compile Include="Modelchecking\Promela\MetamodelToPromela.cs" />
     <Compile Include="Modeling\Component.cs" />
     <Compile Include="Utilities\Argument.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
