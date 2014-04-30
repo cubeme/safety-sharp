@@ -53,20 +53,16 @@ namespace SafetySharp.Modelchecking.Promela
             //      sequence
             // '}'
 
-            Argument.NotNull(proctype, () => proctype);
+            Assert.ArgumentNotNull(proctype, () => proctype);
 
             codeWriter.AppendLine("proctype " + proctype.Name + "() {");
             codeWriter.IncreaseIndent();
-
-            proctype.Code.ForEach(stmnt =>
-            {
-                stmnt.Accept(this);
-                codeWriter.NewLine();
-            });
-
+            proctype.Code.ForEach(stmnt => stmnt.Accept(this));
             codeWriter.DecreaseIndent();
             codeWriter.AppendLine("}");
         }
+
+        #endregion
 
         #region Expressions
 
@@ -76,7 +72,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="booleanLiteral">The <see cref="BooleanLiteral" /> instance that should be visited.</param>
         public override void VisitBooleanLiteral(BooleanLiteral booleanLiteral)
         {
-            Argument.NotNull(booleanLiteral, () => booleanLiteral);
+            Assert.ArgumentNotNull(booleanLiteral, () => booleanLiteral);
 
             switch (booleanLiteral.Value)
             {
@@ -95,7 +91,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="numberLiteral">The <see cref="NumberLiteral" /> instance that should be visited.</param>
         public override void VisitNumberLiteral(NumberLiteral numberLiteral)
         {
-            Argument.NotNull(numberLiteral, () => numberLiteral);
+            Assert.ArgumentNotNull(numberLiteral, () => numberLiteral);
             codeWriter.Append(numberLiteral.Value.ToString());
         }
 
@@ -105,9 +101,8 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="skipLiteral">The <see cref="SkipLiteral" /> instance that should be visited.</param>
         public override void VisitSkipLiteral(SkipLiteral skipLiteral)
         {
-            Argument.NotNull(skipLiteral, () => skipLiteral);
+            Assert.ArgumentNotNull(skipLiteral, () => skipLiteral);
             codeWriter.Append("skip");
-            return;
         }
 
         /// <summary>
@@ -116,7 +111,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryExpression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
         public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
-            Argument.NotNull(binaryExpression, () => binaryExpression);
+            Assert.ArgumentNotNull(binaryExpression, () => binaryExpression);
             codeWriter.Append("(");
             binaryExpression.Left.Accept(this);
 
@@ -188,8 +183,22 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryExpression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
         public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
-            Argument.NotNull(unaryExpression, () => unaryExpression);
-            return;
+            Assert.ArgumentNotNull(unaryExpression, () => unaryExpression);
+            codeWriter.Append("(");
+            switch (unaryExpression.Operator)
+            {
+                case PromelaUnaryOperator.Neg:
+                    codeWriter.Append("-");
+                    break;
+                case PromelaUnaryOperator.Not:
+                    codeWriter.Append("!");
+                    break;
+                case PromelaUnaryOperator.Tilde:
+                    codeWriter.Append("~");
+                    break;
+            }
+            unaryExpression.Expression.Accept(this);
+            codeWriter.Append(")");
         }
 
         /// <summary>
@@ -198,8 +207,21 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="variableReferenceExpression">The <see cref="VariableReferenceExpression" /> instance that should be visited.</param>
         public override void VisitVariableReferenceExpression(VariableReferenceExpression variableReferenceExpression)
         {
-            Argument.NotNull(variableReferenceExpression, () => variableReferenceExpression);
-            return;
+            // varref : name [ '[' any_expr ']' ] [ '.' varref ]
+            Assert.ArgumentNotNull(variableReferenceExpression, () => variableReferenceExpression);
+
+            codeWriter.Append(variableReferenceExpression.Identifier);
+            if (variableReferenceExpression.Index != null)
+            {
+                codeWriter.Append("[");
+                variableReferenceExpression.Index.Accept(this);
+                codeWriter.Append("]");
+            }
+            if (variableReferenceExpression.Member != null)
+            {
+                codeWriter.Append(".");
+                variableReferenceExpression.Member.Accept(this);
+            }
         }
 
         #endregion
@@ -212,8 +234,12 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="simpleBlockStatement">The <see cref="SimpleBlockStatement" /> instance that should be visited.</param>
         public override void VisitSimpleBlockStatement(SimpleBlockStatement simpleBlockStatement)
         {
-            Argument.NotNull(simpleBlockStatement, () => simpleBlockStatement);
-            return;
+            Assert.ArgumentNotNull(simpleBlockStatement, () => simpleBlockStatement);
+            codeWriter.AppendLine("{");
+            codeWriter.IncreaseIndent();
+            simpleBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
+            codeWriter.DecreaseIndent();
+            codeWriter.AppendLine("}");
         }
 
         /// <summary>
@@ -222,8 +248,12 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="atomicBlockStatement">The <see cref="AtomicBlockStatement" /> instance that should be visited.</param>
         public override void VisitAtomicBlockStatement(AtomicBlockStatement atomicBlockStatement)
         {
-            Argument.NotNull(atomicBlockStatement, () => atomicBlockStatement);
-            return;
+            Assert.ArgumentNotNull(atomicBlockStatement, () => atomicBlockStatement);
+            codeWriter.AppendLine("atomic {");
+            codeWriter.IncreaseIndent();
+            atomicBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
+            codeWriter.DecreaseIndent();
+            codeWriter.AppendLine("}");
         }
 
         /// <summary>
@@ -232,8 +262,12 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="dStepBlockStatement">The <see cref="DStepBlockStatement" /> instance that should be visited.</param>
         public override void VisitDStepBlockStatement(DStepBlockStatement dStepBlockStatement)
         {
-            Argument.NotNull(dStepBlockStatement, () => dStepBlockStatement);
-            return;
+            Assert.ArgumentNotNull(dStepBlockStatement, () => dStepBlockStatement);
+            codeWriter.AppendLine("d_step {");
+            codeWriter.IncreaseIndent();
+            dStepBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
+            codeWriter.DecreaseIndent();
+            codeWriter.AppendLine("}");
         }
 
         /// <summary>
@@ -242,8 +276,11 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="returnStatement">The <see cref="ReturnStatement" /> instance that should be visited.</param>
         public override void VisitReturnStatement(ReturnStatement returnStatement)
         {
-            Argument.NotNull(returnStatement, () => returnStatement);
-            return;
+            Assert.ArgumentNotNull(returnStatement, () => returnStatement);
+            codeWriter.Append("return ");
+            returnStatement.Expression.Accept(this);
+            codeWriter.Append(";");
+            codeWriter.NewLine();
         }
 
         /// <summary>
@@ -252,8 +289,10 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="expressionStatement">The <see cref="ExpressionStatement" /> instance that should be visited.</param>
         public override void VisitExpressionStatement(ExpressionStatement expressionStatement)
         {
-            Argument.NotNull(expressionStatement, () => expressionStatement);
-            return;
+            Assert.ArgumentNotNull(expressionStatement, () => expressionStatement);
+            expressionStatement.Expression.Accept(this);
+            codeWriter.Append(";");
+            codeWriter.NewLine();
         }
 
         /// <summary>
@@ -265,8 +304,10 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandRepetitionStatement(GuardedCommandRepetitionStatement guardedCommandRepetitionStatement)
         {
-            Argument.NotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
-            return;
+            Assert.ArgumentNotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
+            codeWriter.AppendLine("do");
+            guardedCommandRepetitionStatement.Clauses.ForEach(clause => clause.Accept(this));
+            codeWriter.AppendLine("od");
         }
 
         /// <summary>
@@ -278,8 +319,10 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandSelectionStatement(GuardedCommandSelectionStatement guardedCommandSelectionStatement)
         {
-            Argument.NotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
-            return;
+            Assert.ArgumentNotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
+            codeWriter.AppendLine("if");
+            guardedCommandSelectionStatement.Clauses.ForEach(clause => clause.Accept(this));
+            codeWriter.AppendLine("fi");
         }
 
         /// <summary>
@@ -291,8 +334,14 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandExpressionClause(GuardedCommandExpressionClause guardedCommandExpressionClause)
         {
-            Argument.NotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
-            return;
+            Assert.ArgumentNotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
+            codeWriter.Append("::\t");
+            guardedCommandExpressionClause.Guard.Accept(this);
+            codeWriter.Append(" ->");
+            codeWriter.IncreaseIndent();
+            codeWriter.NewLine();
+            guardedCommandExpressionClause.Statement.Accept(this);
+            codeWriter.DecreaseIndent();
         }
 
         /// <summary>
@@ -301,8 +350,10 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="guardedCommandElseClause">The <see cref="GuardedCommandElseClause" /> instance that should be visited.</param>
         public override void VisitGuardedCommandElseClause(GuardedCommandElseClause guardedCommandElseClause)
         {
-            Argument.NotNull(guardedCommandElseClause, () => guardedCommandElseClause);
-            return;
+            Assert.ArgumentNotNull(guardedCommandElseClause, () => guardedCommandElseClause);
+            codeWriter.AppendLine("::\telse ->");
+            guardedCommandElseClause.Statement.Accept(this);
+            codeWriter.DecreaseIndent();
         }
 
         /// <summary>
@@ -311,8 +362,11 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="assignmentStatement">The <see cref="AssignmentStatement" /> instance that should be visited.</param>
         public override void VisitAssignmentStatement(AssignmentStatement assignmentStatement)
         {
-            Argument.NotNull(assignmentStatement, () => assignmentStatement);
-            return;
+            Assert.ArgumentNotNull(assignmentStatement, () => assignmentStatement);
+            assignmentStatement.Left.Accept(this);
+            codeWriter.Append(" = ");
+            assignmentStatement.Right.Accept(this);
+            codeWriter.AppendLine(";");
         }
 
         /// <summary>
@@ -321,11 +375,49 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="declarationStatement">The <see cref="DeclarationStatement" /> instance that should be visited.</param>
         public override void VisitDeclarationStatement(DeclarationStatement declarationStatement)
         {
-            Argument.NotNull(declarationStatement, () => declarationStatement);
-            return;
+            // one_decl : typename name [ '[' const ']' ] [ '=' any_expr ]
+            Assert.ArgumentNotNull(declarationStatement, () => declarationStatement);
+            switch (declarationStatement.Type)
+            {
+                case PromelaTypeName.Bit:
+                    codeWriter.Append("bit");
+                    break;
+                case PromelaTypeName.Bool:
+                    codeWriter.Append("bool");
+                    break;
+                case PromelaTypeName.Byte:
+                    codeWriter.Append("byte");
+                    break;
+                case PromelaTypeName.Short:
+                    codeWriter.Append("short");
+                    break;
+                case PromelaTypeName.Int:
+                    codeWriter.Append("int");
+                    break;
+                case PromelaTypeName.Mtype:
+                    codeWriter.Append("m_type");
+                    break;
+                case PromelaTypeName.Chan:
+                    codeWriter.Append("chan");
+                    break;
+                case PromelaTypeName.Pid:
+                    codeWriter.Append("pit");
+                    break;
+            }
+            codeWriter.Append(" ");
+            if (declarationStatement.ArraySize != 0)
+            {
+                codeWriter.Append("[");
+                codeWriter.AppendLine(declarationStatement.ArraySize.ToString());
+                codeWriter.Append("]");
+            }
+            if (declarationStatement.InitialValue != null)
+            {
+                codeWriter.Append(" = ");
+                declarationStatement.InitialValue.Accept(this);
+            }
+            codeWriter.AppendLine(";");
         }
-
-        #endregion
 
         #endregion
     }
