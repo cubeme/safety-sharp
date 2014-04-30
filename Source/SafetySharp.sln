@@ -15,12 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "SafetySharp.Modeling\Modeling.csproj", "{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E4016B60-FD21-4D2A-B800-69F2BE35B5F1}"
-	ProjectSection(SolutionItems) = preProject
-		Generator.fsx = Generator.fsx
-		Metamodel.fsx = Metamodel.fsx
-		Promela.fsx = Promela.fsx
-	EndProjectSection
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Code Generator", "Code Generator\Code Generator.fsproj", "{0A9DEBF8-9E1A-4517-9510-8238807CB41A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,6 +43,10 @@ Global
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
