@@ -47,6 +47,14 @@ namespace Tests.CSharp.Transformation
 		}
 
 		[Test]
+		public void ReturnStatements()
+		{
+			Test(new ReturnStatement(null), "return;");
+			Test(new ReturnStatement(new IntegerLiteral(1)), "return 1;");
+			Test(new ReturnStatement(BooleanLiteral.False), "return false;");
+		}
+
+		[Test]
 		public void GuardedCommands()
 		{
 			var ifClause = new GuardedCommandClause(BooleanLiteral.True, new EmptyStatement());
