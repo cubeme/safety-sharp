@@ -68,6 +68,7 @@
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.cs" />
+    <Compile Include="CSharp\ModelTransformationVisitor.cs" />
     <Compile Include="Metamodel\Expressions\BinaryOperator.cs" />
     <Compile Include="Metamodel\Expressions\BooleanLiteral.cs" />
     <Compile Include="Metamodel\Expressions\UnaryOperator.cs" />
