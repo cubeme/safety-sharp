@@ -20,24 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.CSharp
+namespace Tests.CSharp.Transformation
 {
 	using System;
+	using FluentAssertions;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using NUnit.Framework;
 	using SafetySharp.CSharp;
+	using SafetySharp.Metamodel.Expressions;
 
-	[TestFixture]
-	internal class ModelTransformationVisitorTests
+	internal abstract class TransformationVisitorTests
 	{
-		[Test]
-		public void Test()
-		{
-			var parsed = SyntaxFactory.ParseExpression("false || true");
-			var visitor = new ModelTransformationVisitor();
+		private readonly TransformationVisitor _visitor = new TransformationVisitor();
 
-			visitor.Visit(parsed);
+		protected void Test(Expression expectedExpression, string csharpExpression)
+		{
+			var parsed = SyntaxFactory.ParseExpression(csharpExpression);
+			var element = _visitor.Visit(parsed);
+
+			element.Should().Be(expectedExpression);
 		}
 	}
 }

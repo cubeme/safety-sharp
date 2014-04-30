@@ -20,30 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.CSharp.Diagnostics
+using System;
+
+namespace SafetySharp.CSharp
 {
 	using System;
-	using System.Linq;
-	using System.Threading;
+	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.Diagnostics;
-	using SafetySharp.CSharp.Diagnostics;
+	using Utilities;
 
-	internal abstract class CSharpAnalyzerTests<T>
-		where T : CSharpAnalyzer, IDiagnosticAnalyzer, new()
+	internal partial class TransformationVisitor : CSharpSyntaxVisitor<MetamodelElement>
 	{
-		private readonly T _analyzer = new T();
-
-		protected bool Validate(string declaration)
+		public override MetamodelElement DefaultVisit(SyntaxNode node)
 		{
-			var parsedDeclaration = CSharpSyntaxTree.ParseText(declaration);
-			var compilation = CSharpCompilation.Create(typeof(T).FullName + "Test")
-											   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
-											   .AddReferences(new MetadataFileReference(typeof(T).Assembly.Location))
-											   .AddSyntaxTrees(parsedDeclaration);
-
-			return !AnalyzerDriver.GetDiagnostics(compilation, new IDiagnosticAnalyzer[] { _analyzer }, new CancellationToken()).Any();
+			Assert.NotReached("C# feature is not supported: '{0}'.", node.CSharpKind());
+			return null;
 		}
 	}
 }

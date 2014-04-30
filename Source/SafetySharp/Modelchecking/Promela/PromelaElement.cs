@@ -38,5 +38,14 @@ namespace SafetySharp.Modelchecking.Promela
 		/// <typeparam name="TResult">The type of the value returned by <paramref name="visitor" />.</typeparam>
 		/// <param name="visitor">The visitor the type-specific visit method should be invoked on.</param>
 		public abstract TResult Accept<TResult>(PromelaVisitor<TResult> visitor);
+
+		/// <summary>
+		///     Determines whether <paramref name="other" /> is equal to the current instance.
+		/// </summary>
+		/// <param name="other">The <see cref="PromelaElement" /> to compare with the current instance.</param>
+		/// <returns>
+		///     <c>true</c> if <paramref name="other" /> is equal to the current instance; otherwise, <c>false</c>.
+		/// </returns>
+		public abstract bool Equals(PromelaElement other);
 	}
 }

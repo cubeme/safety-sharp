@@ -26,5 +26,7 @@ namespace SafetySharp.Metamodel.Expressions
 
 	public enum BinaryOperator
 	{
+		Add = 1,
+		And
 	}
 }

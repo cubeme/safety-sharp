@@ -20,48 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace Tests.CSharp.Transformation
 {
 	using System;
-	using Metamodel;
-	using Metamodel.Expressions;
-	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Utilities;
+	using NUnit.Framework;
+	using SafetySharp.Metamodel.Expressions;
 
-	internal class ModelTransformationVisitor : CSharpSyntaxVisitor<MetamodelElement>
+	[TestFixture]
+	internal class ExpressionTests : TransformationVisitorTests
 	{
-		public override MetamodelElement DefaultVisit(SyntaxNode node)
+		[Test]
+		public void Test()
 		{
-			Assert.NotReached("C# feature is not supported: '{0}'.", node.CSharpKind());
-			return null;
-		}
-
-		public override MetamodelElement VisitBinaryExpression(BinaryExpressionSyntax node)
-		{
-			Visit(node.Left);
-			Visit(node.Right);
-			return null;
-		}
-
-		public override MetamodelElement VisitLiteralExpression(LiteralExpressionSyntax node)
-		{
-			switch (node.Token.CSharpKind())
-			{
-				case SyntaxKind.TrueKeyword:
-					return BooleanLiteral.True;
-				case SyntaxKind.FalseKeyword:
-					return BooleanLiteral.False;
-				case SyntaxKind.NumericLiteralToken:
-					if (node.Token.Value is int)
-						return new IntegerLiteral((int)node.Token.Value);
-
-					goto default;
-				default:
-					Assert.NotReached("Unsupported C# token: '{0}'.", node.Token.CSharpKind());
-					return null;
-			}
+			var expression = new BinaryExpression(BooleanLiteral.False, BinaryOperator.And, BooleanLiteral.True);
+			Test(expression, "false && true");
 		}
 	}
 }

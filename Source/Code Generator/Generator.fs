@@ -48,6 +48,7 @@ open System.Threading
 // - Constructors, With* methods and Update() all take inherited properties into account, generating the appropriate
 //   code and methods instead of relying on chains of virtual function calls
 // - Accept() methods for metamodel visitors
+// - Equals() methods, equality operators and GetHashCode() with value equality
 
 // Set the thread culture to the invariant culture to avoid any possible problems by localized ToString() output
 Thread.CurrentThread.CurrentCulture <- CultureInfo.InvariantCulture;
@@ -84,7 +85,8 @@ type Property = {
     Type : string
     CollectionType : CollectionType
     Validation : Validation
-    Comment : string 
+    Comment : string
+    CanBeNull : bool
 }
 
 /// <summary>
@@ -300,6 +302,7 @@ let generateCode context =
     let writeUsings elements n =
         // Default system namespaces
         output.AppendLine("using System;")
+        output.AppendLine("using System.Linq;")
         output.AppendLine("using System.Collections.Immutable;");
         output.NewLine()
 
@@ -581,6 +584,140 @@ let generateCode context =
             output.AppendLine(sprintf "%svisitor.Visit%s(this);" returnKeyword c.Name)
 
     /// <summary>
+    ///     Generates the Equals methods for the given class.
+    /// </summary>
+    let generateEqualsMethods (c : Class) =
+        // Generate the doc comment of the untyped Equals method
+        output.AppendLine("/// <summary>")
+        output.AppendLine("///     Determines whether <paramref name=\"obj\" /> is equal to the current instance.")
+        output.AppendLine("/// </summary>")
+        output.AppendLine("/// <param name=\"obj\">The object to compare with the current instance.</param>")
+        output.AppendLine("/// <returns>")
+        output.AppendLine("///     <c>true</c> if <paramref name=\"obj\" /> is equal to the current instance; otherwise, <c>false</c>.")
+        output.AppendLine("/// </returns>")
+
+        // Generate the method signature of the untyped Equals method
+        output.AppendLine("public override bool Equals(object obj)")
+
+        // Generate the method body of the untyped Equals method
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("if (ReferenceEquals(null, obj))")
+            output.IncreaseIndent()
+            output.AppendLine("return false;")
+            output.DecreaseIndent()
+            output.NewLine()
+
+            output.AppendLine("if (ReferenceEquals(this, obj))")
+            output.IncreaseIndent()
+            output.AppendLine("	return true;")
+            output.DecreaseIndent()
+            output.NewLine()
+
+            output.AppendLine("if (obj.GetType() != GetType())")
+            output.IncreaseIndent()
+            output.AppendLine("	return false;")
+            output.NewLine()
+            output.DecreaseIndent()
+
+            output.AppendLine(sprintf "return Equals((%s)obj);" c.Name)
+
+        // Generate the doc comment of the typed Equals method
+        output.NewLine()
+        output.AppendLine("/// <summary>")
+        output.AppendLine("///     Determines whether <paramref name=\"other\" /> is equal to the current instance.")
+        output.AppendLine("/// </summary>")
+        output.AppendLine(sprintf "/// <param name=\"other\">The <see cref=\"%s\" /> to compare with the current instance.</param>" c.Name)
+        output.AppendLine("/// <returns>")
+        output.AppendLine("///     <c>true</c> if <paramref name=\"other\" /> is equal to the current instance; otherwise, <c>false</c>.")
+        output.AppendLine("/// </returns>")
+
+        // Generate the method signature of the typed Equals method
+        output.AppendLine(sprintf "public override bool Equals(%s other)" context.BaseClass)
+
+        // Generate the method body of the typed Equals method
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("Assert.ArgumentNotNull(other, () => other);")
+            output.NewLine()
+
+            output.AppendLine(sprintf "var element = other as %s;" c.Name)
+            output.AppendLine("if (element == null)")
+            output.IncreaseIndent()
+            output.AppendLine("return false;")
+            output.DecreaseIndent()
+            output.NewLine()
+
+            if allProperties c |> List.length = 0 then
+                output.AppendLine("return true;")
+            else
+                let properties = 
+                    allProperties c 
+                    |> joinProperties " && " (fun p' -> 
+                        let equalsMethod = if p'.CollectionType <> Singleton then "SequenceEqual" else "Equals"
+                        sprintf "%s.%s(element.%s)" p'.Name equalsMethod p'.Name)
+                output.AppendLine(sprintf "return %s;" properties)
+
+    /// <summary>
+    ///     Generates the GetHashCode method for the given class.
+    /// </summary>
+    let generateGetHashCodeMethod (c : Class) =
+        // Generate the doc comment
+        output.AppendLine("/// <summary>")
+        output.AppendLine("///     Gets the hash code for the current instance.")
+        output.AppendLine("/// </summary>")
+
+        // Generate the method signature
+        output.AppendLine("public override int GetHashCode()")
+
+        // Generate the method body
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("unchecked")
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine("var hash = (int)2166136261;")
+                for p in allProperties c do
+                    if p.CanBeNull then
+                        output.AppendLine(sprintf "if (%s != null)" p.Name)
+                        output.IncreaseIndent()
+
+                    output.AppendLine(sprintf "hash = hash * 16777619 ^ %s.GetHashCode();" p.Name)
+
+                    if p.CanBeNull then
+                        output.DecreaseIndent()
+                output.AppendLine("return hash;")
+    
+    /// <summary>
+    ///     Generates the equality operators for the given class.
+    /// </summary>
+    let generateEqualityOperators (c : Class) =
+        // Generate the doc comment for the equality operator
+        output.AppendLine("/// <summary>")
+        output.AppendLine("///     Checks whether <paramref name=\"left\" /> and <paramref name=\"right\" /> are equal.")
+        output.AppendLine("/// </summary>")
+        output.AppendLine("/// <param name=\"left\">The element on the left hand side of the equality operator.</param>")
+        output.AppendLine("/// <param name=\"right\">The element on the right hand side of the equality operator.</param>")
+
+        // Generate the method signature for the equality operator
+        output.AppendLine(sprintf "public static bool operator ==(%s left, %s right)" c.Name c.Name)
+
+        // Generate the method body for the equality operator
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("return Equals(left, right);")
+
+        // Generate the doc comment for the inequality operator
+        output.NewLine()
+        output.AppendLine("/// <summary>")
+        output.AppendLine("///     Checks whether <paramref name=\"left\" /> and <paramref name=\"right\" /> are not equal.")
+        output.AppendLine("/// </summary>")
+        output.AppendLine("/// <param name=\"left\">The element on the left hand side of the inequality operator.</param>")
+        output.AppendLine("/// <param name=\"right\">The element on the right hand side of the inequality operator.</param>")
+
+        // Generate the method signature for the inequality operator
+        output.AppendLine(sprintf "public static bool operator !=(%s left, %s right)" c.Name c.Name)
+
+        // Generate the method body for the inequality operator
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("return !Equals(left, right);")
+
+    /// <summary>
     ///     Generates a class declaration for the given class metadata.
     /// </summary>
     let generateClass (c : Class) =
@@ -610,12 +747,23 @@ let generateCode context =
                 generateAddMethods c
                 generateUpdateMethod c
 
-            // For non-abstract classes, generate the Accept() methods
+            // For non-abstract classes, generate some methods 
             if not c.IsAbstract then
+                // Generate the Accept() methods
                 output.NewLine()
                 generateAcceptMethod c <| createVisitorType ""
                 output.NewLine()
                 generateAcceptMethod c <| createVisitorType "TResult"
+
+                // Generate the implementations of the equality operators, the Equals methods and the GetHashCode method
+                output.NewLine()
+                generateEqualsMethods c
+
+                output.NewLine()
+                generateGetHashCodeMethod c
+
+                output.NewLine()
+                generateEqualityOperators c
 
     /// <summary>
     ///     Generates the C# code for the given namespace metadata.

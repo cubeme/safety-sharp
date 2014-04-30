@@ -64,7 +64,8 @@
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
-    <Compile Include="CSharp\ModelTransformationVisitorTests.cs" />
+    <Compile Include="CSharp\Transformation\TransformationVisitorTests.cs" />
+    <Compile Include="CSharp\Transformation\ExpressionTests.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTests.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

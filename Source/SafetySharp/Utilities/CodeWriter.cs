@@ -226,5 +226,13 @@ namespace SafetySharp.Utilities
 		{
 			File.WriteAllText(path, _buffer.ToString());
 		}
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return _buffer.ToString();
+		}
 	}
 }

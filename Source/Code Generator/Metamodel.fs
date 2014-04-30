@@ -46,6 +46,7 @@ let elements = [
                         CollectionType = Generator.Singleton
                         Validation = NotNullOrWhitespace
                         Comment = "The name of the identifier."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -67,6 +68,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The name of the declared type."
+                        CanBeNull = false
                     }
                     {
                         Name = "Namespace"
@@ -74,6 +76,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNullOrWhitespace
                         Comment = "The namespace the type is declared in."
+                        CanBeNull = true
                     }
                     {
                         Name = "Members"
@@ -81,6 +84,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "The declared members of the type."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -96,6 +100,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The statement representing the Update method of the component."
+                        CanBeNull = true
                     }
                 ]
             }
@@ -117,6 +122,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The name of the state variable."
+                        CanBeNull = false
                     }
                     {
                         Name = "Type"
@@ -124,6 +130,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The type of the state variable."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -151,6 +158,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The slot of the state variable."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -172,6 +180,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The Boolean value of the literal."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -187,6 +196,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The signed integer value of the literal."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -202,6 +212,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
+                        CanBeNull = false
                     }
                     {
                         Name = "Operator"
@@ -209,6 +220,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the binary expression."
+                        CanBeNull = false
                     }
                     {
                         Name = "Right"
@@ -216,6 +228,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
+                        CanBeNull = false
                     }
                 ]
             }            
@@ -231,6 +244,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
+                        CanBeNull = false
                     }
                     {
                         Name = "Operator"
@@ -238,6 +252,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the unary expression."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -271,6 +286,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression that should be evaluated and returned."
+                        CanBeNull = true
                     }
                 ]
             }
@@ -286,6 +302,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -301,6 +318,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The guard of the clause that determines whether the statement can be executed."
+                        CanBeNull = false
                     }
                     {
                         Name = "Statement"
@@ -308,6 +326,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The statement of the clause that can only be executed if the guard holds."
+                        CanBeNull = false
                     }
                 ]
             }          
@@ -323,6 +342,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the assignment operator."
+                        CanBeNull = false
                     }
                     {
                         Name = "Right"
@@ -330,6 +350,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the assignment operator."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -375,6 +396,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The slot of the interface declaration in the model's type information table."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -396,6 +418,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "The initial values."
+                        CanBeNull = false
                     }
                 ]
             }

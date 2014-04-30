@@ -57,6 +57,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "If true then Proctype gets automatically executed at startup."
+                        CanBeNull = false
                     }
                     {
                         Name = "Name"
@@ -64,6 +65,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The name of the Proctype."
+                        CanBeNull = false
                     }
                     {
                         Name = "Code"
@@ -71,6 +73,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "A list of statements with the code of the Proctype."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -104,6 +107,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The Boolean value of the expression."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -115,10 +119,11 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "Int32"
+                        Type = "int"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The Boolean value of the expression."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -140,6 +145,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
+                        CanBeNull = false
                     }
                     {
                         Name = "Operator"
@@ -147,6 +153,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the binary expression."
+                        CanBeNull = false
                     }
                     {
                         Name = "Right"
@@ -154,6 +161,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
+                        CanBeNull = false
                     }
                 ]
             }            
@@ -169,6 +177,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
+                        CanBeNull = false
                     }
                     {
                         Name = "Operator"
@@ -176,6 +185,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = InRange
                         Comment = "The operator of the unary expression."
+                        CanBeNull = false
                     }
                 ]
             }            
@@ -192,20 +202,23 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The name of the identifier which references a variable."
+                        CanBeNull = false
                     }
                     {
                         Name = "Index"
                         Type = "Expression"
                         CollectionType = Singleton
-                        Validation = None //May be Null
+                        Validation = None
                         Comment = "Identifier references an array. This is the index of a specific element in this array."
+                        CanBeNull = true
                     }
                     {
                         Name = "Member"
                         Type = "VariableReferenceExpression"
                         CollectionType = Singleton
-                        Validation = None //May be Null
+                        Validation = None
                         Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
+                        CanBeNull = true
                     }
                 ]
             }
@@ -233,6 +246,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "A list of statements."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -266,6 +280,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression that should be evaluated and returned."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -281,6 +296,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression that should be evaluated."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -296,6 +312,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -311,6 +328,7 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -332,6 +350,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The guard of the clause that determines whether the statement can be executed."
+                        CanBeNull = false
                     }
                     {
                         Name = "Statement"
@@ -339,6 +358,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The statement of the clause that can only be executed if the guard holds."
+                        CanBeNull = false
                     }
                 ]
             }          
@@ -354,6 +374,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The statement of the clause that can only be executed if no other clause holds."
+                        CanBeNull = false
                     }
                 ]
             }          
@@ -369,6 +390,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The reference to the variable on the left-hand side of the assignment operator."
+                        CanBeNull = false
                     }
                     {
                         Name = "Right"
@@ -376,6 +398,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the assignment operator."
+                        CanBeNull = false
                     }
                 ]
             }
@@ -391,6 +414,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The type of the declared variable."
+                        CanBeNull = false
                     }
                     {
                         Name = "Identifier"
@@ -398,6 +422,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The name of the declared variable."
+                        CanBeNull = false
                     }
                     {
                         Name = "ArraySize"
@@ -405,6 +430,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The size of the array, if declared variable is an array. Otherwise 0."
+                        CanBeNull = false
                     }
                     {
                         Name = "InitialValue"
@@ -412,6 +438,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = None
                         Comment = "An expression, which determines the initial value of the declared variable."
+                        CanBeNull = false
                     }
                 ]
             }
