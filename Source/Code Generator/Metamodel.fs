@@ -88,7 +88,7 @@ let elements = [
                     }
                     {
                         Name = "Methods"
-                        Type = "ElementReference<MethodDeclaration>"
+                        Type = "Reference<MethodDeclaration>"
                         CollectionType = Array
                         Validation = None
                         Comment = "The methods declared by the component."
