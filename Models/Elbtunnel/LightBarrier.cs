@@ -24,7 +24,6 @@ namespace Elbtunnel
 {
 	using System;
 	using System.ComponentModel;
-	using SafetySharp;
 
 	public class LightBarrier : Component
 	{
@@ -33,7 +32,7 @@ namespace Elbtunnel
 			return 1;
 		}
 	}
-	
+
 	//public enum MyEnum:short
 	//{
 	//	ValueA,
