@@ -37,13 +37,11 @@ namespace Tests.CSharp.Transformation
 		private static void CheckElementTree(MetamodelElement expectedElement, string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
 		{
 			csharpCode = String.Format("class C {{ void M() {{ {0} }}", csharpCode);
-			var compilation = CSharpUtils.Compile(csharpCode);
+			var compilation = new TestCompilation(csharpCode);
 
-			var syntaxTree = compilation.SyntaxTrees.First();
-			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-			var methodBody = syntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
+			var methodBody = compilation.SyntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
 
-			var visitor = new TransformationVisitor(semanticModel, new SymbolMap(compilation));
+			var visitor = new TransformationVisitor(compilation.SemanticModel, new SymbolMap(compilation.Compilation));
 			var actualElement = visitor.Visit(projection(methodBody));
 
 			actualElement.Should().Be(expectedElement);

@@ -65,12 +65,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\Extensions\ClassDeclarationExtensions.cs" />
+    <Compile Include="Metamodel\MetamodelResolver.cs" />
     <Compile Include="Metamodel\Reference.cs" />
     <Compile Include="CSharp\Transformation\SymbolMap.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Symbols.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Statements.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Expressions.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
+    <Compile Include="Modeling\Component.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />

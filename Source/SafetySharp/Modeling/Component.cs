@@ -20,44 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Metamodel
+namespace SafetySharp.Modeling
 {
 	using System;
-	using CSharp.Transformation;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.Metamodel;
 
-	[TestFixture]
-	internal class ReferenceTests : TransformationVisitorTests
+	public class Component
 	{
-		[Test]
-		public void Equality()
+		public static T Choose<T>(params T[] values)
 		{
-			var reference1 = new Reference<MetamodelElement>(1);
-			var reference2 = new Reference<MetamodelElement>(2);
-			var reference3 = new Reference<MetamodelElement>(2);
-
-			reference1.Equals(null).Should().BeFalse();
-			reference1.Equals(reference1).Should().BeTrue();
-			reference1.Equals(reference2).Should().BeFalse();
-			reference2.Equals(reference3).Should().BeTrue();
-			reference1.Equals((object)reference1).Should().BeTrue();
-			reference1.Equals((object)reference2).Should().BeFalse();
-			reference2.Equals((object)reference3).Should().BeTrue();
-			(reference1 == reference2).Should().BeFalse();
-			(reference3 == reference2).Should().BeTrue();
-		}
-
-		[Test]
-		public void Inequality()
-		{
-			var reference1 = new Reference<MetamodelElement>(1);
-			var reference2 = new Reference<MetamodelElement>(2);
-			var reference3 = new Reference<MetamodelElement>(2);
-
-			(reference1 != reference2).Should().BeTrue();
-			(reference3 != reference2).Should().BeFalse();
+			return values[0];
 		}
 	}
 }

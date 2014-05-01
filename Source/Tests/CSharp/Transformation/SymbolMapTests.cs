@@ -39,13 +39,12 @@ namespace Tests.CSharp.Transformation
 
 		private void CreateSymbolMap(string csharpCode)
 		{
-			var compilation = CSharpUtils.Compile(csharpCode);
-			var syntaxTree = compilation.SyntaxTrees.First();
+			var compilation = new TestCompilation(csharpCode);
 
-			_semanticModel = compilation.GetSemanticModel(syntaxTree);
-			_syntaxRoot = syntaxTree.GetRoot();
+			_semanticModel = compilation.SemanticModel;
+			_syntaxRoot = compilation.SyntaxRoot;
 
-			_symbolMap = new SymbolMap(compilation);
+			_symbolMap = new SymbolMap(compilation.Compilation);
 		}
 
 		private ISymbol GetClassSymbol(string className)
@@ -60,14 +59,15 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void CollectClasses()
 		{
-			CreateSymbolMap("class X {} class Y { class Z {} }");
+			CreateSymbolMap(
+				"using SafetySharp.Modeling; class X : Component {} class Y : SafetySharp.Modeling.Component { class Z : SafetySharp.Modeling.Component {} }");
 			var classX = GetClassSymbol("X");
 			var classY = GetClassSymbol("Y");
 			var classZ = GetClassSymbol("Z");
 
-			_symbolMap.Contains(classX).Should().BeTrue();
-			_symbolMap.Contains(classY).Should().BeTrue();
-			_symbolMap.Contains(classZ).Should().BeTrue();
+			_symbolMap.IsMapped(classX).Should().BeTrue();
+			_symbolMap.IsMapped(classY).Should().BeTrue();
+			_symbolMap.IsMapped(classZ).Should().BeTrue();
 
 			var referenceX = _symbolMap.GetComponentReference(classX);
 			var referenceY = _symbolMap.GetComponentReference(classY);

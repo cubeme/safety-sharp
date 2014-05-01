@@ -28,24 +28,46 @@ namespace Tests.CSharp
 	using SafetySharp.Metamodel;
 
 	/// <summary>
-	///     Provides helper methods for working with C# code.
+	///     Represents a compiled C# compilation unit with a single syntax tree.
 	/// </summary>
-	internal static class CSharpUtils
+	internal class TestCompilation
 	{
 		/// <summary>
-		///     Compiles the given C# code, returning the created compilation.
+		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="csharpCode">The C# code that should be compiled.</param>
-		public static CSharpCompilation Compile(string csharpCode)
+		public TestCompilation(string csharpCode)
 		{
 			var compilationUnit = SyntaxFactory.ParseCompilationUnit(csharpCode);
-			var syntaxTree = compilationUnit.SyntaxTree;
-			var compilation = CSharpCompilation.Create("Test")
-											   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
-											   .AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
-											   .AddSyntaxTrees(syntaxTree);
+			SyntaxTree = compilationUnit.SyntaxTree;
 
-			return compilation;
+			Compilation = CSharpCompilation.Create("Test")
+										   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
+										   .AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
+										   .AddSyntaxTrees(SyntaxTree);
+
+			SemanticModel = Compilation.GetSemanticModel(SyntaxTree);
+			SyntaxRoot = SyntaxTree.GetRoot();
 		}
+
+		/// <summary>
+		///     Gets the C# compilation.
+		/// </summary>
+		public CSharpCompilation Compilation { get; private set; }
+
+		/// <summary>
+		///     Gets the syntax tree of the compilation.
+		/// </summary>
+		public SyntaxTree SyntaxTree { get; private set; }
+
+		/// <summary>
+		///     Gets the root syntax node of the syntax tree.
+		/// </summary>
+		public SyntaxNode SyntaxRoot { get; private set; }
+
+		/// <summary>
+		///     Gets the semantic model for the compilation's syntax tree.
+		/// </summary>
+		public SemanticModel SemanticModel { get; private set; }
 	}
 }

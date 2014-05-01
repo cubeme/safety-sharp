@@ -20,38 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.CSharp.Transformation
+namespace SafetySharp.Metamodel
 {
 	using System;
-	using System.Linq;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Transformation;
-	using SafetySharp.Metamodel.Declarations;
 
-	[TestFixture]
-	public class TransformationVisitorSymbolTests
+	/// <summary>
+	///     Resolves metamodel element references.
+	/// </summary>
+	public class MetamodelResolver
 	{
-		[Test]
-		public void ComponentDeclaration()
-		{
-			var compilation = new TestCompilation("class C:SafetySharp.Modeling.Component { public void M() {} }");
-			var symbolMap = new SymbolMap(compilation.Compilation);
-			var rootNode = compilation.SyntaxTree.GetRoot();
-			var semanticModel = compilation.SemanticModel;
-
-			var visitor = new TransformationVisitor(semanticModel, symbolMap);
-			var component = visitor.Visit(rootNode) as ComponentDeclaration;
-
-			component.Should().NotBeNull("The transformed element must be a component declaration.");
-
-			var method = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>().First();
-			var methodSymbol = semanticModel.GetDeclaredSymbol(method);
-			var methodReference = symbolMap.GetMethodReference(methodSymbol);
-
-			component.Methods[0].Should().Be(methodReference);
-		}
 	}
 }

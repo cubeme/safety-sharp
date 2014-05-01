@@ -61,13 +61,13 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharp\CSharpUtils.cs" />
+    <Compile Include="CSharp\Extensions\ClassDeclarationExtensionsTests.cs" />
+    <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
     <Compile Include="CSharp\Transformation\SymbolMapTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorSymbolTests.cs" />
-    <Compile Include="Metamodel\ReferenceTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorStatementTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorExpressionTests.cs" />
@@ -84,10 +84,6 @@
     <ProjectReference Include="..\SafetySharp.Compiler\Compiler.csproj">
       <Project>{4d7f1b7f-cbf1-4236-bfe4-de7bd3d36196}</Project>
       <Name>Compiler</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SafetySharp.Modeling\Modeling.csproj">
-      <Project>{e9e9147b-a4c4-4e3e-bfdf-898a9b0ce101}</Project>
-      <Name>Modeling</Name>
     </ProjectReference>
     <ProjectReference Include="..\SafetySharp\SafetySharp.csproj">
       <Project>{d9cad497-f647-42d8-be13-6406de53331d}</Project>

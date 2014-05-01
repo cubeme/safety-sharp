@@ -24,7 +24,9 @@ namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.Linq;
+	using Extensions;
 	using Metamodel;
 	using Metamodel.Declarations;
 	using Microsoft.CodeAnalysis;
@@ -34,14 +36,9 @@ namespace SafetySharp.CSharp.Transformation
 	internal class SymbolMap
 	{
 		/// <summary>
-		///     Maps a C# symbol to a slot in the metamodel element map.
+		///     Maps a C# symbol to a metamodel reference.
 		/// </summary>
-		private readonly Dictionary<ISymbol, int> _symbolMap = new Dictionary<ISymbol, int>(1024);
-
-		/// <summary>
-		///     The next free symbol slot that is used when a new C# symbol is added.
-		/// </summary>
-		private int _nextSymbolSlot;
+		private readonly ImmutableDictionary<ISymbol, object> _symbolMap;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
@@ -49,13 +46,12 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="compilation">The compilation the symbol map should be generated for.</param>
 		public SymbolMap(Compilation compilation)
 		{
-			foreach (var syntaxTree in compilation.SyntaxTrees)
-			{
-				var semanticModel = compilation.GetSemanticModel(syntaxTree);
+			var symbols = compilation.SyntaxTrees.SelectMany(syntaxTree => ResolveSymbols(compilation.GetSemanticModel(syntaxTree)));
+			var slot = 0;
 
-				Add<BaseTypeDeclarationSyntax>(semanticModel, syntaxTree);
-				Add<MethodDeclarationSyntax>(semanticModel, syntaxTree);
-			}
+			_symbolMap = symbols.ToImmutableDictionary(
+				resolvedSymbol => resolvedSymbol.Symbol,
+				resolvedSymbol => resolvedSymbol.Reference(slot++));
 		}
 
 		/// <summary>
@@ -89,33 +85,87 @@ namespace SafetySharp.CSharp.Transformation
 		private Reference<T> GetReference<T>(ISymbol symbol)
 			where T : MetamodelElement
 		{
-			int slot;
-			if (!_symbolMap.TryGetValue(symbol, out slot))
+			object reference;
+			if (!_symbolMap.TryGetValue(symbol, out reference))
 				Assert.NotReached("The given C# symbol is unknown.");
 
-			return new Reference<T>(slot);
+			Assert.OfType<Reference<T>>(reference);
+			return (Reference<T>)reference;
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether <paramref name="symbol" /> is contained in the <see cref="SymbolMap" />.
+		///     Gets a value indicating whether <paramref name="symbol" /> is mapped.
 		/// </summary>
 		/// <param name="symbol">The symbol that should be checked.</param>
-		public bool Contains(ISymbol symbol)
+		public bool IsMapped(ISymbol symbol)
 		{
 			Assert.ArgumentNotNull(symbol, () => symbol);
 			return _symbolMap.ContainsKey(symbol);
 		}
 
-		private void Add<T>(SemanticModel semanticModel, SyntaxTree syntaxTree)
-			where T : SyntaxNode
+		/// <summary>
+		///     Resolves all relevant symbols found within the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model for the syntax tree that should be used to resolve the C# symbols.</param>
+		private static IEnumerable<ResolvedSymbol> ResolveSymbols(SemanticModel semanticModel)
 		{
-			var symbols = syntaxTree.GetRoot()
-									.DescendantNodesAndSelf()
-									.OfType<T>()
-									.Select(declaration => semanticModel.GetDeclaredSymbol(declaration));
+			var root = semanticModel.SyntaxTree.GetRoot();
 
-			foreach (var symbol in symbols)
-				_symbolMap.Add(symbol, _nextSymbolSlot++);
+			var components = root.DescendantNodesAndSelf()
+								 .OfType<ClassDeclarationSyntax>()
+								 .Where(classDeclaration => classDeclaration.IsComponentDeclaration(semanticModel))
+								 .Select(classDeclaration => ResolvedSymbol.Create<ComponentDeclaration>(semanticModel, classDeclaration))
+								 .ToArray();
+
+			foreach (var component in components)
+			{
+				yield return component;
+
+				var methods = component.SyntaxNode.DescendantNodes()
+									   .OfType<MethodDeclarationSyntax>()
+									   .Select(methodDeclaration => ResolvedSymbol.Create<MethodDeclaration>(semanticModel, methodDeclaration));
+
+				foreach (var method in methods)
+					yield return method;
+			}
+		}
+
+		/// <summary>
+		///     Represents a resolved C# symbol with a generator function for the corresponding metamodel element reference.
+		/// </summary>
+		private struct ResolvedSymbol
+		{
+			/// <summary>
+			///     Gets the C# syntax node corresponding to the resolved symbol.
+			/// </summary>
+			public SyntaxNode SyntaxNode { get; private set; }
+
+			/// <summary>
+			///     Gets the resolved C# symbol.
+			/// </summary>
+			public ISymbol Symbol { get; private set; }
+
+			/// <summary>
+			///     Gets the generator method for the metamodel element reference corresponding to the C# symbol.
+			/// </summary>
+			public Func<int, object> Reference { get; private set; }
+
+			/// <summary>
+			///     Creates a new <see cref="ResolvedSymbol" /> instance.
+			/// </summary>
+			/// <typeparam name="T">The type of the metamodel element corresponding to the resolved symbol.</typeparam>
+			/// <param name="semanticModel">The semantic model that should be used to resolve the C# symbol.</param>
+			/// <param name="syntaxNode">The C# syntax node that should be resolved.</param>
+			public static ResolvedSymbol Create<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
+				where T : MetamodelElement
+			{
+				return new ResolvedSymbol
+				{
+					SyntaxNode = syntaxNode,
+					Symbol = semanticModel.GetDeclaredSymbol(syntaxNode),
+					Reference = slot => new Reference<T>(slot)
+				};
+			}
 		}
 	}
 }

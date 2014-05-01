@@ -24,7 +24,11 @@ namespace SafetySharp.Metamodel
 {
 	using System;
 
-	public struct Reference<T>
+	/// <summary>
+	///     Represents a reference to a metamodel element that can be resolved by a <see cref="MetamodelResolver" />.
+	/// </summary>
+	/// <typeparam name="T">The type of the referenced metamodel element.</typeparam>
+	public class Reference<T>
 		where T : MetamodelElement
 	{
 		/// <summary>
@@ -39,61 +43,6 @@ namespace SafetySharp.Metamodel
 		public Reference(int slot)
 		{
 			_slot = slot;
-		}
-
-		/// <summary>
-		///     Determines whether <paramref name="other" /> is equal to the current instance.
-		/// </summary>
-		/// <param name="other">The <see cref="Identifier" /> to compare with the current instance.</param>
-		/// <returns>
-		///     <c>true</c> if <paramref name="other" /> is equal to the current instance; otherwise, <c>false</c>.
-		/// </returns>
-		public bool Equals(Reference<T> other)
-		{
-			return _slot == other._slot;
-		}
-
-		/// <summary>
-		///     Determines whether <paramref name="obj" /> is equal to the current instance.
-		/// </summary>
-		/// <param name="obj">The object to compare with the current instance.</param>
-		/// <returns>
-		///     <c>true</c> if <paramref name="obj" /> is equal to the current instance; otherwise, <c>false</c>.
-		/// </returns>
-		public override bool Equals(object obj)
-		{
-			if (ReferenceEquals(null, obj))
-				return false;
-
-			return obj is Reference<T> && Equals((Reference<T>)obj);
-		}
-
-		/// <summary>
-		///     Gets the hash code for the current instance.
-		/// </summary>
-		public override int GetHashCode()
-		{
-			return _slot;
-		}
-
-		/// <summary>
-		///     Checks whether <paramref name="left" /> and <paramref name="right" /> are equal.
-		/// </summary>
-		/// <param name="left">The element on the left hand side of the equality operator.</param>
-		/// <param name="right">The element on the right hand side of the equality operator.</param>
-		public static bool operator ==(Reference<T> left, Reference<T> right)
-		{
-			return left.Equals(right);
-		}
-
-		/// <summary>
-		///     Checks whether <paramref name="left" /> and <paramref name="right" /> are not equal.
-		/// </summary>
-		/// <param name="left">The element on the left hand side of the inequality operator.</param>
-		/// <param name="right">The element on the right hand side of the inequality operator.</param>
-		public static bool operator !=(Reference<T> left, Reference<T> right)
-		{
-			return !left.Equals(right);
 		}
 	}
 }
