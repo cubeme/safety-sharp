@@ -23,7 +23,6 @@
 namespace SafetySharp.Metamodel
 {
 	using System;
-	using Microsoft.CodeAnalysis;
 	using Utilities;
 
 	/// <summary>
@@ -34,16 +33,16 @@ namespace SafetySharp.Metamodel
 		/// <summary>
 		///     Initializes a new instance of the <see cref="MetamodelReference{T}" /> type.
 		/// </summary>
-		/// <param name="symbol">The C# symbol corresponding to the element.</param>
-		protected MetamodelReference(ISymbol symbol)
+		/// <param name="sourceSymbol">The source symbol that caused the creation of the reference..</param>
+		protected MetamodelReference(object sourceSymbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
-			Symbol = symbol;
+			Argument.NotNull(sourceSymbol, () => sourceSymbol);
+			SourceSymbol = sourceSymbol;
 		}
 
 		/// <summary>
 		///     Gets the C# symbol corresponding to the reference.
 		/// </summary>
-		public ISymbol Symbol { get; private set; }
+		public object SourceSymbol { get; private set; }
 	}
 }

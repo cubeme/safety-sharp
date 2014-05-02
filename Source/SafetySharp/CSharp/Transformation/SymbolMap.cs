@@ -58,7 +58,7 @@ namespace SafetySharp.CSharp.Transformation
 
 			var map = _symbolMap.ToBuilder();
 			foreach (var reference in ResolveSymbols(semanticModel))
-				map.Add(reference.Symbol, reference);
+				map.Add((ISymbol)reference.SourceSymbol, reference);
 
 			return new SymbolMap { _symbolMap = map.ToImmutable() };
 		}

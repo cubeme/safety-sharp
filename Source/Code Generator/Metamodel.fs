@@ -121,6 +121,12 @@ let elements = [
                 ]
             }
             {   
+                Name = "InterfaceDeclaration"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
                 Name = "MemberDeclaration"
                 Base = "MetamodelElement"
                 IsAbstract = true
@@ -166,7 +172,7 @@ let elements = [
                     }
                     {
                         Name = "Type"
-                        Type = "TypeReference"
+                        Type = "TypeSymbol"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The type of the field."
@@ -429,45 +435,51 @@ let elements = [
         ]
     }
     {
-        Name = "SafetySharp.Metamodel.TypeReferences"
+        Name = "SafetySharp.Metamodel.Types"
         Classes = 
         [
             {   
-                Name = "TypeReference"
+                Name = "TypeSymbol"
                 Base = "MetamodelElement"
                 IsAbstract = true
                 Properties = []
             }
             {   
-                Name = "VoidTypeReference"
-                Base = "TypeReference"
+                Name = "VoidType"
+                Base = "TypeSymbol"
                 IsAbstract = false
                 Properties = []
             }
             {   
-                Name = "BooleanTypeReference"
-                Base = "TypeReference"
+                Name = "BooleanType"
+                Base = "TypeSymbol"
                 IsAbstract = false
                 Properties = []
             }
             {   
-                Name = "IntegerTypeReference"
-                Base = "TypeReference"
+                Name = "IntegerType"
+                Base = "TypeSymbol"
                 IsAbstract = false
                 Properties = []
             }
             {   
-                Name = "InterfaceTypeReference"
-                Base = "TypeReference"
+                Name = "DecimalType"
+                Base = "TypeSymbol"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
+                Name = "InterfaceType"
+                Base = "TypeSymbol"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Slot"
-                        Type = "int"
+                        Name = "InterfaceDeclaration"
+                        Type = "MetamodelReference<InterfaceDeclaration>"
                         CollectionType = Singleton
-                        Validation = None
-                        Comment = "The slot of the interface declaration in the model's type information table."
+                        Validation = NotNull
+                        Comment = "The reference to the declaration of the interface."
                         CanBeNull = false
                     }
                 ]

@@ -31,7 +31,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
-	using SafetySharp.Metamodel.TypeReferences;
+	using SafetySharp.Metamodel.Types;
 
 	[TestFixture]
 	public class MetamodelTransformationTests
@@ -58,7 +58,7 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void ShouldTransformMultipleFields()
 		{
-			var component = TransformComponent("class X : Component { private bool value; private bool test; private bool other; }");
+			var component = TransformComponent("class X : Component { private bool value; private int test; private decimal other; }");
 			component.Fields.Length.Should().Be(3);
 
 			var field1 = component.Fields[0];
@@ -68,6 +68,10 @@ namespace Tests.CSharp.Transformation
 			field1.Identifier.Name.Should().Be("value");
 			field2.Identifier.Name.Should().Be("test");
 			field3.Identifier.Name.Should().Be("other");
+
+			field1.Type.Should().Be(TypeSymbol.Boolean);
+			field2.Type.Should().Be(TypeSymbol.Integer);
+			field3.Type.Should().Be(TypeSymbol.Decimal);
 		}
 
 		[Test]
@@ -112,6 +116,7 @@ namespace Tests.CSharp.Transformation
 
 			var field = component.Fields[0];
 			field.Identifier.Name.Should().Be("value");
+			field.Type.Should().Be(TypeSymbol.Boolean);
 		}
 
 		[Test]
@@ -143,12 +148,11 @@ class BooleanComponent : SafetySharp.Modeling.Component
 	{
 		Choose(out _value, true, false);
 	}
-}
-");
+}");
 
 			var fieldSymbol = _compilation.FindFieldSymbol("BooleanComponent", "_value");
 			var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
-			var field = new FieldDeclaration(new Identifier("_value"), TypeReference.Boolean);
+			var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
 
 			var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
 			var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);

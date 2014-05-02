@@ -26,6 +26,7 @@ namespace Tests.CSharp.Extensions
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Extensions;
+	using SafetySharp.Metamodel.Types;
 
 	[TestFixture]
 	internal class TypeSymbolExtensionsTests
@@ -42,6 +43,13 @@ namespace Tests.CSharp.Extensions
 		private static void ShouldNotDeriveFrom(string csharpCode, string baseClassName)
 		{
 			ShouldDeriveFrom(csharpCode, baseClassName, false);
+		}
+
+		private static TypeSymbol ToTypeSymbol(string csharpCode)
+		{
+			var compilation = new TestCompilation(csharpCode);
+			var fieldSymbol = compilation.FindFieldSymbol("X", "f");
+			return fieldSymbol.Type.ToTypeSymbol(compilation.SemanticModel);
 		}
 
 		[Test]
@@ -63,12 +71,6 @@ namespace Tests.CSharp.Extensions
 		}
 
 		[Test]
-		public void IsDerivedFrom_True_DirectBase()
-		{
-			ShouldDeriveFrom("class Y {} class X : Y {}", "Y");
-		}
-
-		[Test]
 		public void IsDerivedFrom_True_BaseIsNotTopLevel()
 		{
 			ShouldDeriveFrom("class Z {} class Y : Z {} class X : Y {}", "Y");
@@ -78,6 +80,30 @@ namespace Tests.CSharp.Extensions
 		public void IsDerivedFrom_True_BaseIsTwoLevelsUp()
 		{
 			ShouldDeriveFrom("class Z {} class Y : Z {} class X : Y {}", "Y");
+		}
+
+		[Test]
+		public void IsDerivedFrom_True_DirectBase()
+		{
+			ShouldDeriveFrom("class Y {} class X : Y {}", "Y");
+		}
+
+		[Test]
+		public void ToTypeSymbol_Boolean()
+		{
+			ToTypeSymbol("class X { bool f; }").Should().Be(TypeSymbol.Boolean);
+		}
+
+		[Test]
+		public void ToTypeSymbol_Decimal()
+		{
+			ToTypeSymbol("class X { decimal f; }").Should().Be(TypeSymbol.Decimal);
+		}
+
+		[Test]
+		public void ToTypeSymbol_Integer()
+		{
+			ToTypeSymbol("class X { int f; }").Should().Be(TypeSymbol.Integer);
 		}
 	}
 }

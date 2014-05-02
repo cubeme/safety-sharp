@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Extensions
 {
 	using System;
+	using Metamodel.Types;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
 
@@ -50,6 +51,33 @@ namespace SafetySharp.CSharp.Extensions
 				return true;
 
 			return IsDerivedFrom(typeSymbol.BaseType, baseType);
+		}
+
+		/// <summary>
+		///     Converts the C# <paramref name="symbol" /> to a corresponding <see cref="TypeSymbol" /> instance.
+		/// </summary>
+		/// <param name="symbol">The C# symbol that should be converted.</param>
+		/// <param name="semanticModel">The semantic model that should be used for the conversion.</param>
+		internal static TypeSymbol ToTypeSymbol(this ITypeSymbol symbol, SemanticModel semanticModel)
+		{
+			Argument.NotNull(symbol, () => symbol);
+			Argument.NotNull(semanticModel, () => semanticModel);
+
+			switch (symbol.SpecialType)
+			{
+				case SpecialType.None:
+					Assert.NotReached("Type '{0}' not yet supported.", symbol);
+					return null;
+				case SpecialType.System_Boolean:
+					return TypeSymbol.Boolean;
+				case SpecialType.System_Decimal:
+					return TypeSymbol.Decimal;
+				case SpecialType.System_Int32:
+					return TypeSymbol.Integer;
+				default:
+					Assert.NotReached("Unsupported C# type '{0}'.", symbol);
+					return null;
+			}
 		}
 	}
 }

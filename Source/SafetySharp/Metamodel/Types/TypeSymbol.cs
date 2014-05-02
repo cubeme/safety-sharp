@@ -20,12 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.TypeReferences
+namespace SafetySharp.Metamodel.Types
 {
 	using System;
 
-	partial class TypeReference
+	partial class TypeSymbol
 	{
-		public static readonly BooleanTypeReference Boolean = new BooleanTypeReference();
+		/// <summary>
+		///     Represents the Boolean type.
+		/// </summary>
+		public static readonly BooleanType Boolean = new BooleanType();
+
+		/// <summary>
+		///     Represents the type of signed, 32-bit integers.
+		/// </summary>
+		public static readonly IntegerType Integer = new IntegerType();
+
+		/// <summary>
+		///     Represents the type of decimals.
+		/// </summary>
+		public static readonly DecimalType Decimal = new DecimalType();
 	}
 }

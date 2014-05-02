@@ -81,6 +81,7 @@
     <Compile Include="CSharp\Transformation\TransformationVisitor.Expressions.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
     <Compile Include="Metamodel\Statements\ReturnStatement.cs" />
+    <Compile Include="Metamodel\Types\TypeSymbol.cs" />
     <Compile Include="Modelchecking\Promela\MetamodelToPromela.cs" />
     <Compile Include="Modeling\Component.cs" />
     <Compile Include="Utilities\Argument.cs" />
@@ -104,8 +105,6 @@
     <Compile Include="Metamodel\MetamodelElement.cs" />
     <Compile Include="Metamodel\Statements\Statement.cs" />
     <Compile Include="Metamodel\Declarations\TypeDeclaration.cs" />
-    <Compile Include="Metamodel\TypeReferences\BooleanTypeReference.cs" />
-    <Compile Include="Metamodel\TypeReferences\TypeReference.cs" />
     <Compile Include="Modelchecking\Promela\PromelaBinaryOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaElement.cs" />
     <Compile Include="Modelchecking\Promela\PromelaModelWriter.cs" />

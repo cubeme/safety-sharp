@@ -30,7 +30,6 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Metamodel.Declarations;
 	using Metamodel.Statements;
-	using Metamodel.TypeReferences;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
@@ -177,7 +176,7 @@ namespace SafetySharp.CSharp.Transformation
 			var fieldReference = SymbolMap.GetFieldReference(fieldSymbol);
 
 			var identifier = new Identifier(variable.Identifier.ValueText);
-			var field = new FieldDeclaration(identifier, new BooleanTypeReference());
+			var field = new FieldDeclaration(identifier, fieldSymbol.Type.ToTypeSymbol(compilationUnit.SemanticModel));
 			_resolver = _resolver.With(fieldReference, field);
 
 			return field;
