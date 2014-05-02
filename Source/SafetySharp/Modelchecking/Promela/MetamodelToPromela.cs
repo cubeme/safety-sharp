@@ -23,8 +23,8 @@
 namespace SafetySharp.Modelchecking.Promela
 {
     using System;
-    using System.Collections;
-    using System.Runtime.Remoting.Messaging;
+    using System.Collections.Immutable;
+    using System.Linq;
     using Metamodel;
     using Utilities;
     using MMExpressions = Metamodel.Expressions;
@@ -35,9 +35,29 @@ namespace SafetySharp.Modelchecking.Promela
     using PrStatements = Statements;
 
     #region Expressions
-    
+
+    internal class MetamodelToPromela
+    {
+        public MetamodelToPromela()
+        {
+            ExpressionVisitor = new MetamodelExpressionToPromelaExpression(this);
+            StatementVisitor = new MetamodelStatementToPromelaStatement(this);
+            ClauseVisitor = new MetamodelGuardedCommandClauseToPromelaGuardedCommandClause(this);
+
+        }
+        public MetamodelExpressionToPromelaExpression ExpressionVisitor { get; private set; }
+        public MetamodelStatementToPromelaStatement StatementVisitor { get; private set; }
+        public MetamodelGuardedCommandClauseToPromelaGuardedCommandClause ClauseVisitor { get; private set; }
+    }
+
     internal class MetamodelExpressionToPromelaExpression : MetamodelVisitor<PrExpression>
     {
+        private MetamodelToPromela CommonKnowledge { get; set; }
+        public MetamodelExpressionToPromelaExpression(MetamodelToPromela commonKnowledge)
+        {
+            CommonKnowledge = commonKnowledge;
+        }
+
         /// <summary>
         ///   Visits an element of type <see cref="MMExpressions.BooleanLiteral" />.
         /// </summary>
@@ -68,7 +88,7 @@ namespace SafetySharp.Modelchecking.Promela
             throw new NotImplementedException();
         }
 
-        private PromelaBinaryOperator MmOperatorToPrOperator(MMExpressions.BinaryOperator @operator)
+        private PromelaBinaryOperator MmBinOperatorToPrBinOperator(MMExpressions.BinaryOperator @operator)
         {
             switch (@operator)
             {
@@ -111,7 +131,7 @@ namespace SafetySharp.Modelchecking.Promela
         {
             Argument.NotNull(binaryExpression, () => binaryExpression);
             var left = binaryExpression.Left.Accept(this);
-            var @operator = MmOperatorToPrOperator(binaryExpression.Operator);
+            var @operator = MmBinOperatorToPrBinOperator(binaryExpression.Operator);
             var right = binaryExpression.Right.Accept(this);
             return new PrExpressions.BinaryExpression(left, @operator, right);
         }
@@ -123,7 +143,18 @@ namespace SafetySharp.Modelchecking.Promela
         public override PrExpression VisitUnaryExpression(MMExpressions.UnaryExpression unaryExpression)
         {
             Argument.NotNull(unaryExpression, () => unaryExpression);
-            return default(PrExpression);
+            var expression = unaryExpression.Expression.Accept(this);
+            switch (unaryExpression.Operator)
+            {
+                case MMExpressions.UnaryOperator.Plus:
+                    return expression;
+                case MMExpressions.UnaryOperator.LogicalNot:
+                    return new PrExpressions.UnaryExpression(expression, PromelaUnaryOperator.Not);
+                case MMExpressions.UnaryOperator.Minus:
+                    return new PrExpressions.UnaryExpression(expression, PromelaUnaryOperator.Neg);
+                default:
+                    throw new NotImplementedException();
+            }
         }
     }
 
@@ -133,6 +164,12 @@ namespace SafetySharp.Modelchecking.Promela
 
     internal class MetamodelStatementToPromelaStatement : MetamodelVisitor<PrStatement>
     {
+        private MetamodelToPromela CommonKnowledge { get; set; }
+        public MetamodelStatementToPromelaStatement(MetamodelToPromela commonKnowledge)
+        {
+            CommonKnowledge = commonKnowledge;
+        }
+
         /// <summary>
         ///   Visits an element of type <see cref="MMStatements.EmptyStatement" />.
         /// </summary>
@@ -140,7 +177,7 @@ namespace SafetySharp.Modelchecking.Promela
         public override PrStatement VisitEmptyStatement(MMStatements.EmptyStatement emptyStatement)
         {
             Argument.NotNull(emptyStatement, () => emptyStatement);
-            return default(PrStatement);
+            return new PrStatements.SkipStatement();
         }
 
         /// <summary>
@@ -150,7 +187,8 @@ namespace SafetySharp.Modelchecking.Promela
         public override PrStatement VisitBlockStatement(MMStatements.BlockStatement blockStatement)
         {
             Argument.NotNull(blockStatement, () => blockStatement);
-            return default(PrStatement);
+            var substatements = blockStatement.Statements.Select(statement => statement.Accept(this)).ToImmutableArray();
+            return new PrStatements.SimpleBlockStatement(substatements);
         }
 
         /// <summary>
@@ -160,27 +198,21 @@ namespace SafetySharp.Modelchecking.Promela
         public override PrStatement VisitReturnStatement(MMStatements.ReturnStatement returnStatement)
         {
             Argument.NotNull(returnStatement, () => returnStatement);
-            return default(PrStatement);
+            throw new NotImplementedException();
         }
 
         /// <summary>
         ///   Visits an element of type <see cref="MMStatements.GuardedCommandStatement" />.
         /// </summary>
-        /// <param name="guardedCommandStatement">The <see cref="MMStatements.GuardedCommandStatement" /> instance that should be visited.</param>
+        /// <param name="guardedCommandStatement">
+        ///   The <see cref="MMStatements.GuardedCommandStatement" /> instance that should be
+        ///   visited.
+        /// </param>
         public override PrStatement VisitGuardedCommandStatement(MMStatements.GuardedCommandStatement guardedCommandStatement)
         {
             Argument.NotNull(guardedCommandStatement, () => guardedCommandStatement);
-            return default(PrStatement);
-        }
-
-        /// <summary>
-        ///   Visits an element of type <see cref="MMStatements.GuardedCommandClause" />.
-        /// </summary>
-        /// <param name="guardedCommandClause">The <see cref="MMStatements.GuardedCommandClause" /> instance that should be visited.</param>
-        public override PrStatement VisitGuardedCommandClause(MMStatements.GuardedCommandClause guardedCommandClause)
-        {
-            Argument.NotNull(guardedCommandClause, () => guardedCommandClause);
-            return default(PrStatement);
+            var clauses = guardedCommandStatement.Clauses.Select(clause => clause.Accept(CommonKnowledge.ClauseVisitor)).ToImmutableArray();
+            return new PrStatements.GuardedCommandSelectionStatement(clauses);
         }
 
         /// <summary>
@@ -190,7 +222,39 @@ namespace SafetySharp.Modelchecking.Promela
         public override PrStatement VisitAssignmentStatement(MMStatements.AssignmentStatement assignmentStatement)
         {
             Argument.NotNull(assignmentStatement, () => assignmentStatement);
-            return default(PrStatement);
+            // Be careful: http://stackoverflow.com/questions/983030/type-checking-typeof-gettype-or-is
+            var stateVar = assignmentStatement.Left as MMExpressions.StateVariableExpression;
+
+            if (stateVar == null)
+            {
+                //setter is called or variable is somewhere in the hierarchie.
+                throw new NotImplementedException();
+            }
+
+            var newVarRef = new PrExpressions.VariableReferenceExpression(stateVar.Variable.Name.Name, null, null);
+            var rightExpression = assignmentStatement.Right.Accept(CommonKnowledge.ExpressionVisitor);
+
+            return new PrStatements.AssignmentStatement(newVarRef,rightExpression);
+        }
+    }
+
+    internal class MetamodelGuardedCommandClauseToPromelaGuardedCommandClause : MetamodelVisitor<PrStatements.GuardedCommandClause>
+    {
+        private MetamodelToPromela CommonKnowledge { get; set; }
+        public MetamodelGuardedCommandClauseToPromelaGuardedCommandClause(MetamodelToPromela commonKnowledge)
+        {
+            CommonKnowledge = commonKnowledge;
+        }
+        /// <summary>
+        ///   Visits an element of type <see cref="MMStatements.GuardedCommandClause" />.
+        /// </summary>
+        /// <param name="guardedCommandClause">The <see cref="MMStatements.GuardedCommandClause" /> instance that should be visited.</param>
+        public override PrStatements.GuardedCommandClause VisitGuardedCommandClause(MMStatements.GuardedCommandClause guardedCommandClause)
+        {
+            Argument.NotNull(guardedCommandClause, () => guardedCommandClause);
+            var guard = guardedCommandClause.Guard.Accept(CommonKnowledge.ExpressionVisitor);
+            var statement = guardedCommandClause.Statement.Accept(CommonKnowledge.StatementVisitor);
+            return new PrStatements.GuardedCommandExpressionClause(guard,statement);
         }
     }
 

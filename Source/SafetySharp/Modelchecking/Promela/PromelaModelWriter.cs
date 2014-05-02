@@ -96,16 +96,6 @@ namespace SafetySharp.Modelchecking.Promela
         }
 
         /// <summary>
-        ///   Visits an element of type <see cref="SkipLiteral" />.
-        /// </summary>
-        /// <param name="skipLiteral">The <see cref="SkipLiteral" /> instance that should be visited.</param>
-        public override void VisitSkipLiteral(SkipLiteral skipLiteral)
-        {
-            Argument.NotNull(skipLiteral, () => skipLiteral);
-            CodeWriter.Append("skip");
-        }
-
-        /// <summary>
         ///   Visits an element of type <see cref="BinaryExpression" />.
         /// </summary>
         /// <param name="binaryExpression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
@@ -293,6 +283,16 @@ namespace SafetySharp.Modelchecking.Promela
             expressionStatement.Expression.Accept(this);
             CodeWriter.Append(";");
             CodeWriter.NewLine();
+        }
+
+        /// <summary>
+        ///   Visits an element of type <see cref="SkipStatement" />.
+        /// </summary>
+        /// <param name="skipLiteral">The <see cref="SkipStatement" /> instance that should be visited.</param>
+        public override void VisitSkipStatement(SkipStatement skipStatement)
+        {
+            Argument.NotNull(skipStatement, () => skipStatement);
+            CodeWriter.Append("skip");
         }
 
         /// <summary>

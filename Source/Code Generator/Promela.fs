@@ -127,12 +127,6 @@ let elements = [
                     }
                 ]
             }
-            {
-                Name = "SkipLiteral" //Convenience and generated code get prettier. Is equivalent to Boolean Literal True
-                Base = "ConstExpression"
-                IsAbstract = false
-                Properties = []
-            }
             {   
                 Name = "BinaryExpression"
                 Base = "Expression"
@@ -299,6 +293,12 @@ let elements = [
                         CanBeNull = false
                     }
                 ]
+            }
+            {
+                Name = "SkipStatement" //Convenience and generated code gets prettier. In Promela it is equivalent to a ExpressionStatement with the Boolean Literal True
+                Base = "Statement"
+                IsAbstract = false
+                Properties = []
             }
             {   
                 Name = "GuardedCommandRepetitionStatement"  //do :: od
