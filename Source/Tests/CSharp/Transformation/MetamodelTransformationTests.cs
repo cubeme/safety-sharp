@@ -28,6 +28,8 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
 	using SafetySharp.Metamodel.Declarations;
+	using SafetySharp.Metamodel.Expressions;
+	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
 	public class MetamodelTransformationTests
@@ -92,6 +94,32 @@ namespace Tests.CSharp.Transformation
 			field1.Identifier.Name.Should().Be("value");
 			field2.Identifier.Name.Should().Be("test");
 			field3.Identifier.Name.Should().Be("other");
+		}
+
+		[Test]
+		public void ShouldTransformUpdateMethod()
+		{
+			var component = TransformComponent("class X : Component { protected override void Update() { return; } }");
+			component.UpdateMethod.Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
+			component.Methods.Length.Should().Be(0);
+		}
+
+		[Test]
+		public void ShouldTransformUpdateMethodAndOtherMethods()
+		{
+			var component = TransformComponent("class X : Component { protected override void Update() { return; } public void M() {} }");
+			component.UpdateMethod.Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
+			component.Methods.Length.Should().Be(1);
+			component.Methods[0].Body.Should().Be(BlockStatement.Empty);
+		}
+
+		[Test]
+		public void ShouldTransformNoUpdateMethodButOtherMethods()
+		{
+			var component = TransformComponent("class X : Component { public bool M() { return false; } }");
+			component.UpdateMethod.Body.Should().Be(BlockStatement.Empty);
+			component.Methods.Length.Should().Be(1);
+			component.Methods[0].Body.Should().Be(new ReturnStatement(BooleanLiteral.False).AsBlockStatement());
 		}
 	}
 }

@@ -72,6 +72,7 @@
     <Compile Include="CSharp\Extensions\TypeSymbolExtensions.cs" />
     <Compile Include="CSharp\KnownSymbols.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
+    <Compile Include="Metamodel\Declarations\MethodDeclaration.cs" />
     <Compile Include="Metamodel\MetamodelReference.cs" />
     <Compile Include="Metamodel\MetamodelReference`1.cs" />
     <Compile Include="Metamodel\MetamodelResolver.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="CSharp\Transformation\TransformationVisitor.Statements.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Expressions.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
+    <Compile Include="Metamodel\Statements\ReturnStatement.cs" />
     <Compile Include="Modelchecking\Promela\MetamodelToPromela.cs" />
     <Compile Include="Modeling\Component.cs" />
     <Compile Include="Utilities\Argument.cs" />
@@ -99,7 +101,6 @@
     <Compile Include="Metamodel\Expressions\Expression.cs" />
     <Compile Include="Metamodel\Declarations\ComponentDeclaration.cs" />
     <Compile Include="Metamodel\Expressions\GuardedCommandExpression.cs" />
-    <Compile Include="Metamodel\Declarations\StateVariableDeclaration.cs" />
     <Compile Include="Metamodel\Declarations\MemberDeclaration.cs" />
     <Compile Include="Metamodel\MetamodelElement.cs" />
     <Compile Include="Metamodel\Statements\Statement.cs" />

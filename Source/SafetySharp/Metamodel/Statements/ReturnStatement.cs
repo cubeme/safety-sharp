@@ -20,11 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Declarations
+namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 
-	partial class StateVariableDeclaration
+	partial class ReturnStatement
 	{
+		/// <summary>
+		///     The return statement that does not return any expression.
+		/// </summary>
+		public static readonly ReturnStatement ReturnVoid = new ReturnStatement(null);
 	}
 }

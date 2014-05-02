@@ -63,9 +63,10 @@ namespace SafetySharp.CSharp.Transformation
 		{
 			Argument.NotNull(compilation, () => compilation);
 
-			var compilationUnits = compilation.SyntaxTrees
-											  .Select(syntaxTree => new CompilationUnit(syntaxTree.GetRoot(), compilation.GetSemanticModel(syntaxTree)))
-											  .ToImmutableArray();
+			var compilationUnits = compilation
+				.SyntaxTrees
+				.Select(syntaxTree => new CompilationUnit(syntaxTree.GetRoot(), compilation.GetSemanticModel(syntaxTree)))
+				.ToImmutableArray();
 
 			foreach (var compilationUnit in compilationUnits)
 				_symbolMap = _symbolMap.AddSymbols(compilationUnit.SemanticModel);
@@ -82,9 +83,11 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="compilationUnit">The compilation unit that should be transformed.</param>
 		private void TransformCompilationUnit(CompilationUnit compilationUnit)
 		{
-			var components = compilationUnit.SyntaxRoot.DescendantNodesAndSelf()
-											.OfType<ClassDeclarationSyntax>()
-											.Where(classDeclaration => classDeclaration.IsComponentDeclaration(compilationUnit.SemanticModel));
+			var components = compilationUnit
+				.SyntaxRoot
+				.DescendantNodesAndSelf()
+				.OfType<ClassDeclarationSyntax>()
+				.Where(classDeclaration => classDeclaration.IsComponentDeclaration(compilationUnit.SemanticModel));
 
 			foreach (var component in components)
 			{
@@ -104,17 +107,32 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="classDeclaration">The C# class declaration that should be transformed.</param>
 		private ComponentDeclaration TransformComponent(CompilationUnit compilationUnit, ClassDeclarationSyntax classDeclaration)
 		{
-			var methods = ImmutableArray<MethodDeclaration>.Empty;
-			var fields = ImmutableArray<FieldDeclaration>.Empty;
+			var methods = classDeclaration
+				.Members
+				.OfType<MethodDeclarationSyntax>()
+				.Where(m => !m.IsUpdateMethod(compilationUnit.SemanticModel))
+				.Aggregate(
+					ImmutableArray<MethodDeclaration>.Empty,
+					(current, method) => current.Add(TransformMethod(compilationUnit, method)));
 
-			foreach (var method in classDeclaration.Members.OfType<MethodDeclarationSyntax>())
-				methods = methods.Add(TransformMethod(compilationUnit, method));
-
-			foreach (var field in classDeclaration.Members.OfType<FieldDeclarationSyntax>())
-				fields = fields.Add(TransformField(compilationUnit, field));
+			var fields = classDeclaration
+				.Members
+				.OfType<FieldDeclarationSyntax>()
+				.Aggregate(
+					ImmutableArray<FieldDeclaration>.Empty,
+					(current, field) => current.Add(TransformField(compilationUnit, field)));
 
 			var identifier = new Identifier(classDeclaration.GetFullName(compilationUnit.SemanticModel));
-			return new ComponentDeclaration(identifier, null, methods, fields);
+			var updateMethodDeclaration = classDeclaration
+				.Members
+				.OfType<MethodDeclarationSyntax>()
+				.SingleOrDefault(methodDeclaration => methodDeclaration.IsUpdateMethod(compilationUnit.SemanticModel));
+
+			var updateMethod = MethodDeclaration.DefaultUpdateMethod;
+			if (updateMethodDeclaration != null)
+				updateMethod = TransformMethod(compilationUnit, updateMethodDeclaration);
+
+			return new ComponentDeclaration(identifier, updateMethod, methods, fields);
 		}
 
 		/// <summary>

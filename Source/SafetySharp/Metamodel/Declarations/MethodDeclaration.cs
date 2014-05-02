@@ -20,16 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Statements
+namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
-	using System.Collections.Immutable;
+	using Modeling;
+	using Statements;
 
-	partial class BlockStatement
+	partial class MethodDeclaration
 	{
 		/// <summary>
-		///     The empty block statement that does not contain any other statements.
+		///     The default implementation of the <see cref="Component.Update()" /> method that simply returns.
 		/// </summary>
-		public static readonly BlockStatement Empty = new BlockStatement(ImmutableArray<Statement>.Empty);
+		public static readonly MethodDeclaration DefaultUpdateMethod =
+			new MethodDeclaration(new Identifier("Update"), BlockStatement.Empty);
 	}
 }

@@ -98,16 +98,16 @@ let elements = [
                         Name = "UpdateMethod"
                         Type = "MethodDeclaration"
                         CollectionType = Singleton
-                        Validation = None
+                        Validation = NotNull
                         Comment = "The Update method of the component."
-                        CanBeNull = true
+                        CanBeNull = false
                     }
                     {
                         Name = "Methods"
                         Type = "MethodDeclaration"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The methods declared by the component."
+                        Comment = "The methods declared by the component. The method overriding <see cref=\"SafetySharp.Modeling.Component.Update()\" /> is never contained in this set."
                         CanBeNull = false
                     }
                     {
