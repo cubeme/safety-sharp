@@ -27,22 +27,7 @@ namespace SafetySharp.Metamodel
 	/// <summary>
 	///     Represents a reference to a metamodel element that can be resolved by a <see cref="MetamodelResolver" />.
 	/// </summary>
-	/// <typeparam name="T">The type of the referenced metamodel element.</typeparam>
-	public class Reference<T>
-		where T : MetamodelElement
+	public abstract class MetamodelReference
 	{
-		/// <summary>
-		///     The slot that identifies the referenced element.
-		/// </summary>
-		private readonly int _slot;
-
-		/// <summary>
-		///     Initializes a new instance of the <see cref="Reference{T}" /> type.
-		/// </summary>
-		/// <param name="slot">The slot that identifies the referenced element.</param>
-		public Reference(int slot)
-		{
-			_slot = slot;
-		}
 	}
 }

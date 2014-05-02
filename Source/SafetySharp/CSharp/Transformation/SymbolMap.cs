@@ -38,7 +38,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Maps a C# symbol to a metamodel reference.
 		/// </summary>
-		private readonly ImmutableDictionary<ISymbol, object> _symbolMap;
+		private readonly ImmutableDictionary<ISymbol, MetamodelReference> _symbolMap;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
@@ -58,7 +58,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a component.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public Reference<ComponentDeclaration> GetComponentReference(ISymbol symbol)
+		public MetamodelReference<ComponentDeclaration> GetComponentReference(ISymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			Argument.OfType<ITypeSymbol>(symbol, () => symbol);
@@ -70,7 +70,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a method.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public Reference<MethodDeclaration> GetMethodReference(ISymbol symbol)
+		public MetamodelReference<MethodDeclaration> GetMethodReference(ISymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			Argument.OfType<IMethodSymbol>(symbol, () => symbol);
@@ -82,17 +82,17 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" />.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		private Reference<T> GetReference<T>(ISymbol symbol)
+		private MetamodelReference<T> GetReference<T>(ISymbol symbol)
 			where T : MetamodelElement
 		{
-			object reference;
+			MetamodelReference reference;
 			if (!_symbolMap.TryGetValue(symbol, out reference))
 				throw new InvalidOperationException("The given C# symbol is unknown.");
 
-			Assert.OfType<Reference<T>>(reference, "Expected a metamodel reference of type '{0}' but found '{1}'.",
-				typeof(Reference<T>).FullName, reference.GetType().FullName);
+			Assert.OfType<MetamodelReference<T>>(reference, "Expected a metamodel reference of type '{0}' but found '{1}'.",
+				typeof(MetamodelReference<T>).FullName, reference.GetType().FullName);
 
-			return (Reference<T>)reference;
+			return (MetamodelReference<T>)reference;
 		}
 
 		/// <summary>
@@ -150,7 +150,7 @@ namespace SafetySharp.CSharp.Transformation
 			/// <summary>
 			///     Gets the generator method for the metamodel element reference corresponding to the C# symbol.
 			/// </summary>
-			public Func<int, object> Reference { get; private set; }
+			public Func<int, MetamodelReference> Reference { get; private set; }
 
 			/// <summary>
 			///     Creates a new <see cref="ResolvedSymbol" /> instance.
@@ -165,7 +165,7 @@ namespace SafetySharp.CSharp.Transformation
 				{
 					SyntaxNode = syntaxNode,
 					Symbol = semanticModel.GetDeclaredSymbol(syntaxNode),
-					Reference = slot => new Reference<T>(slot)
+					Reference = slot => new MetamodelReference<T>(slot)
 				};
 			}
 		}

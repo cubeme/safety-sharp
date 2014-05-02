@@ -88,7 +88,7 @@ let elements = [
                     }
                     {
                         Name = "Methods"
-                        Type = "Reference<MethodDeclaration>"
+                        Type = "MetamodelReference<MethodDeclaration>"
                         CollectionType = Array
                         Validation = None
                         Comment = "The methods declared by the component."

@@ -23,11 +23,63 @@
 namespace SafetySharp.Metamodel
 {
 	using System;
+	using System.Linq;
+	using Utilities;
+	using Map = System.Collections.Immutable.ImmutableDictionary<MetamodelReference, MetamodelElement>;
 
 	/// <summary>
 	///     Resolves metamodel element references.
 	/// </summary>
 	public class MetamodelResolver
 	{
+		/// <summary>
+		///     The empty metamodel resolver that cannot resolve any references.
+		/// </summary>
+		internal static readonly MetamodelResolver Empty = new MetamodelResolver { _referenceMap = Map.Empty };
+
+		/// <summary>
+		///     Maps metamodel references to metamodel elements.
+		/// </summary>
+		private Map _referenceMap;
+
+		/// <summary>
+		///     Resolves the metamodel reference to the actual <see cref="MetamodelElement" /> instance.
+		/// </summary>
+		/// <typeparam name="T">The type of the referenced <see cref="MetamodelElement" />.</typeparam>
+		/// <param name="reference">The reference that should be resolved.</param>
+		public T Resolve<T>(MetamodelReference<T> reference)
+			where T : MetamodelElement
+		{
+			Argument.NotNull(reference, () => reference);
+			Argument.Satisfies(_referenceMap.ContainsKey(reference), () => reference, "The given reference is unknown.");
+
+			var element = _referenceMap[reference];
+			Assert.OfType<T>(element, "Metamodel reference of type '{0}' refers to a metamodel element of type '{1}'.",
+							 typeof(MetamodelReference<T>).FullName, element.GetType().FullName);
+
+			return (T)element;
+		}
+
+		/// <summary>
+		///     Creates a copy of the <see cref="MetamodelResolver" /> that can resolve <paramref name="reference" /> to
+		///     <paramref name="referencedElement" />.
+		/// </summary>
+		/// <param name="reference">The reference that should be added to the resolver.</param>
+		/// <param name="referencedElement">The referenced metamodel element that <paramref name="reference" /> refers to.</param>
+		public MetamodelResolver With(MetamodelReference reference, MetamodelElement referencedElement)
+		{
+			Argument.NotNull(reference, () => reference);
+			Argument.NotNull(referencedElement, () => referencedElement);
+			Argument.Satisfies(!_referenceMap.ContainsKey(reference), () => reference,
+							   "The given reference has already been added to the resolver.");
+			Argument.Satisfies(reference.GetType() == typeof(MetamodelReference<>) &&
+							   reference.GetType().GetGenericArguments().Count() == 1 &&
+							   reference.GetType().GetGenericArguments().Single() == referencedElement.GetType(),
+							   () => reference,
+							   "The given reference is of type '{0}' and cannot reference a metamodel element of type '{1}'.",
+							   reference.GetType().FullName, referencedElement.GetType().FullName);
+
+			return new MetamodelResolver { _referenceMap = _referenceMap.Add(reference, referencedElement) };
+		}
 	}
 }
