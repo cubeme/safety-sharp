@@ -38,7 +38,7 @@ namespace SafetySharp.CSharp.Extensions
 		///     <see cref="SafetySharp.Modeling.Component" /> base type.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be used for semantic analysis.</param>
+		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
 		internal static bool IsComponentDeclaration(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
 		{
 			return classDeclaration.IsDerivedFrom(semanticModel, typeof(Component).FullName);
@@ -49,7 +49,7 @@ namespace SafetySharp.CSharp.Extensions
 		///     <paramref name="baseTypeName" />.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be used for semantic analysis.</param>
+		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
 		/// <param name="baseTypeName">
 		///     The name of the base type <paramref name="classDeclaration" /> should be derived from. The class
 		///     name must be prefixed by all of the namespaces the class is defined in, as in 'System.Collections.ArrayList'.
@@ -64,7 +64,18 @@ namespace SafetySharp.CSharp.Extensions
 			Assert.NotNull(symbol);
 			Assert.That(symbol.TypeKind == TypeKind.Class, "Unexpected symbol kind.");
 
-			return IsDerivedFrom(symbol, String.Format("global::{0}", baseTypeName));
+			return IsDerivedFrom(symbol, baseTypeName);
+		}
+
+		/// <summary>
+		///     Gets the full name of <paramref name="classDeclaration" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
+		/// </summary>
+		/// <param name="classDeclaration">The class declaration the full name should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the full name.</param>
+		internal static string GetFullName(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
+		{
+			Argument.NotNull(classDeclaration, () => classDeclaration);
+			return semanticModel.GetDeclaredSymbol(classDeclaration).GetFullName();
 		}
 
 		/// <summary>
@@ -79,7 +90,7 @@ namespace SafetySharp.CSharp.Extensions
 				return false;
 
 			// Use a type name comparison to determine whether the type symbol's base type is the searched for type
-			if (typeSymbol.BaseType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == baseTypeName)
+			if (typeSymbol.BaseType.GetFullName() == baseTypeName)
 				return true;
 
 			return IsDerivedFrom(typeSymbol.BaseType, baseTypeName);

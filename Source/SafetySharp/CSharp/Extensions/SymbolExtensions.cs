@@ -20,30 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Transformation
+namespace SafetySharp.CSharp.Extensions
 {
 	using System;
-	using System.Collections.Immutable;
-	using System.Linq;
-	using Metamodel;
-	using Metamodel.Declarations;
-	using Metamodel.Statements;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Utilities;
 
-	partial class TransformationVisitor
+	/// <summary>
+	///     Provides extension methods for working with <see cref="ISymbol" /> instances.
+	/// </summary>
+	internal static class SymbolExtensions
 	{
-		public override MetamodelElement VisitClassDeclaration(ClassDeclarationSyntax node)
+		/// <summary>
+		///     Gets the full name of <paramref name="symbol" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
+		/// </summary>
+		/// <param name="symbol">The symbol the full name should be returned for.</param>
+		internal static string GetFullName(this ISymbol symbol)
 		{
-			var reference = _symbolMap.GetComponentReference(_semanticModel.GetDeclaredSymbol(node));
-			var methodReferences = node.DescendantNodes()
-									   .OfType<MethodDeclarationSyntax>()
-									   .Select(method => _symbolMap.GetMethodReference(_semanticModel.GetDeclaredSymbol(method)))
-									   .ToImmutableArray();
+			Argument.NotNull(symbol, () => symbol);
 
-			return new ComponentDeclaration(new Identifier(node.Identifier.ValueText), "",
-											new BlockStatement(ImmutableArray<Statement>.Empty),
-											methodReferences);
+			if (symbol.ContainingNamespace.IsGlobalNamespace && symbol.ContainingType == null)
+				return symbol.Name;
+
+			if (symbol.ContainingType != null)
+				return String.Format("{0}+{1}", GetFullName(symbol.ContainingType), symbol.Name);
+
+			return String.Format("{0}.{1}", GetFullName(symbol.ContainingNamespace), symbol.Name);
 		}
 	}
 }

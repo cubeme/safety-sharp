@@ -26,11 +26,10 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
 	/// <summary>
-	///     Transforms lowered C# syntax tree into metamodel element tree.
+	///     Transforms a lowered C# syntax tree of a method or property body into a corresponding metamodel element tree.
 	/// </summary>
 	internal partial class TransformationVisitor : CSharpSyntaxVisitor<MetamodelElement>
 	{
@@ -64,14 +63,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="node">The syntax node of the unsupported C# feature.</param>
 		public override MetamodelElement DefaultVisit(SyntaxNode node)
 		{
-			Assert.NotReached("C# feature is not supported: '{0}'.", node.CSharpKind());
+			Assert.NotReached("Encountered an unexpected C# syntax node: '{0}'.", node.CSharpKind());
 			return null;
-		}
-
-		public override MetamodelElement VisitCompilationUnit(CompilationUnitSyntax node)
-		{
-			// TODO
-			return Visit(node.Members[0]);
 		}
 	}
 }

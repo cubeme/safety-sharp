@@ -129,5 +129,12 @@ namespace Tests.CSharp.Extensions
 			Compile("class Z {} class Y : Z {} class X : Y {}");
 			_classDeclaration.IsDerivedFrom(_semanticModel, "Z").Should().BeTrue();
 		}
+
+		[Test]
+		public void IsDerivedFromSystemObject()
+		{
+			Compile("class X {}");
+			_classDeclaration.IsDerivedFrom(_semanticModel, "System.Object").Should().BeTrue();
+		}
 	}
 }

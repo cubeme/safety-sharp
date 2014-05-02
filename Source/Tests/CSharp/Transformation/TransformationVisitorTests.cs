@@ -41,7 +41,8 @@ namespace Tests.CSharp.Transformation
 
 			var methodBody = compilation.SyntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
 
-			var visitor = new TransformationVisitor(compilation.SemanticModel, new SymbolMap(compilation.Compilation));
+			var symbolMap = SymbolMap.Empty.AddSymbols(compilation.SemanticModel);
+			var visitor = new TransformationVisitor(compilation.SemanticModel, symbolMap);
 			var actualElement = visitor.Visit(projection(methodBody));
 
 			actualElement.Should().Be(expectedElement);

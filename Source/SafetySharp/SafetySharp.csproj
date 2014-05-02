@@ -66,11 +66,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Extensions\ClassDeclarationExtensions.cs" />
+    <Compile Include="CSharp\Extensions\SymbolExtensions.cs" />
+    <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="Metamodel\MetamodelReference.cs" />
     <Compile Include="Metamodel\MetamodelReference`1.cs" />
     <Compile Include="Metamodel\MetamodelResolver.cs" />
     <Compile Include="CSharp\Transformation\SymbolMap.cs" />
-    <Compile Include="CSharp\Transformation\TransformationVisitor.Symbols.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Statements.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitor.Expressions.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />

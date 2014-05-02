@@ -24,7 +24,6 @@ namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Linq;
 	using Extensions;
 	using Metamodel;
@@ -32,26 +31,39 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
+	using Map = System.Collections.Immutable.ImmutableDictionary<Microsoft.CodeAnalysis.ISymbol, Metamodel.MetamodelReference>;
 
+	/// <summary>
+	///     Provides a mapping between C# symbols and <see cref="MetamodelReference" />s.
+	/// </summary>
 	internal class SymbolMap
 	{
 		/// <summary>
-		///     Maps a C# symbol to a metamodel reference.
+		///     The empty symbol map that does not map any symbols.
 		/// </summary>
-		private readonly ImmutableDictionary<ISymbol, MetamodelReference> _symbolMap;
+		public static readonly SymbolMap Empty = new SymbolMap { _symbolMap = Map.Empty };
 
 		/// <summary>
-		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
+		///     Maps a C# symbol to a metamodel reference.
 		/// </summary>
-		/// <param name="compilation">The compilation the symbol map should be generated for.</param>
-		public SymbolMap(Compilation compilation)
+		private Map _symbolMap;
+
+		/// <summary>
+		///     Adds the symbols declared in <paramref name="semanticModel" /> to the current <see cref="SymbolMap" /> instance.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model containing the symbols that should be added.</param>
+		public SymbolMap AddSymbols(SemanticModel semanticModel)
 		{
-			var symbols = compilation.SyntaxTrees.SelectMany(syntaxTree => ResolveSymbols(compilation.GetSemanticModel(syntaxTree)));
+			Argument.NotNull(semanticModel, () => semanticModel);
+
+			var resolvedSymbols = ResolveSymbols(semanticModel);
 			var slot = 0;
 
-			_symbolMap = symbols.ToImmutableDictionary(
-				resolvedSymbol => resolvedSymbol.Symbol,
-				resolvedSymbol => resolvedSymbol.Reference(slot++));
+			var map = _symbolMap.ToBuilder();
+			foreach (var resolvedSymbol in resolvedSymbols)
+				map.Add(resolvedSymbol.Symbol, resolvedSymbol.Reference(slot++));
+
+			return new SymbolMap { _symbolMap = map.ToImmutable() };
 		}
 
 		/// <summary>
@@ -90,7 +102,7 @@ namespace SafetySharp.CSharp.Transformation
 				throw new InvalidOperationException("The given C# symbol is unknown.");
 
 			Assert.OfType<MetamodelReference<T>>(reference, "Expected a metamodel reference of type '{0}' but found '{1}'.",
-				typeof(MetamodelReference<T>).FullName, reference.GetType().FullName);
+												 typeof(MetamodelReference<T>).FullName, reference.GetType().FullName);
 
 			return (MetamodelReference<T>)reference;
 		}

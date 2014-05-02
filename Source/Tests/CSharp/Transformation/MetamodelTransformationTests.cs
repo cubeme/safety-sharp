@@ -23,35 +23,47 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
-	using System.Linq;
 	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
-	using SafetySharp.Metamodel.Declarations;
+	using SafetySharp.Metamodel;
 
 	[TestFixture]
-	public class TransformationVisitorSymbolTests
+	public class MetamodelTransformationTests
 	{
-		[Test]
-		public void ComponentDeclaration()
+		private static Model Transform(string csharpCode)
 		{
-			var compilation = new TestCompilation("class C:SafetySharp.Modeling.Component { public void M() {} }");
-			var symbolMap = new SymbolMap(compilation.Compilation);
-			var rootNode = compilation.SyntaxTree.GetRoot();
-			var semanticModel = compilation.SemanticModel;
+			var compilation = new TestCompilation(csharpCode);
+			var transformation = new MetamodelTransformation();
+			return transformation.Transform(compilation.Compilation);
+		}
 
-			var visitor = new TransformationVisitor(semanticModel, symbolMap);
-			var component = visitor.Visit(rootNode) as ComponentDeclaration;
+		[Test]
+		public void ShouldTransformOneComponentWithoutAnyMethods()
+		{
+			var model = Transform("class MyComponent : SafetySharp.Modeling.Component {}");
+			model.Components.Length.Should().Be(1);
 
-			component.Should().NotBeNull("The transformed element must be a component declaration.");
+			var component = model.Components[0];
+			component.Methods.Length.Should().Be(0);
+		}
 
-			var method = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>().First();
-			var methodSymbol = semanticModel.GetDeclaredSymbol(method);
-			var methodReference = symbolMap.GetMethodReference(methodSymbol);
+		[Test]
+		public void ShouldTransformSimpleComponentName()
+		{
+			var model = Transform("class MyComponent : SafetySharp.Modeling.Component {}");
+			var component = model.Components[0];
 
-			component.Methods[0].Should().Be(methodReference);
+			component.Identifier.Name.Should().Be("MyComponent");
+		}
+
+		[Test]
+		public void ShouldTransformNamespacedComponentName()
+		{
+			var model = Transform("namespace Tests.Components { class MyComponent : SafetySharp.Modeling.Component {} }");
+			var component = model.Components[0];
+
+			component.Identifier.Name.Should().Be("Tests.Components.MyComponent");
 		}
 	}
 }

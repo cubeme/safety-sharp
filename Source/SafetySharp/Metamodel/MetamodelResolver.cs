@@ -72,7 +72,7 @@ namespace SafetySharp.Metamodel
 			Argument.NotNull(referencedElement, () => referencedElement);
 			Argument.Satisfies(!_referenceMap.ContainsKey(reference), () => reference,
 							   "The given reference has already been added to the resolver.");
-			Argument.Satisfies(reference.GetType() == typeof(MetamodelReference<>) &&
+			Argument.Satisfies(reference.GetType().GetGenericTypeDefinition() == typeof(MetamodelReference<>) &&
 							   reference.GetType().GetGenericArguments().Count() == 1 &&
 							   reference.GetType().GetGenericArguments().Single() == referencedElement.GetType(),
 							   () => reference,

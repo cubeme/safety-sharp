@@ -62,12 +62,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Extensions\ClassDeclarationExtensionsTests.cs" />
+    <Compile Include="CSharp\Extensions\SymbolExtensionsTests.cs" />
     <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
     <Compile Include="CSharp\Transformation\SymbolMapTests.cs" />
-    <Compile Include="CSharp\Transformation\TransformationVisitorSymbolTests.cs" />
+    <Compile Include="CSharp\Transformation\MetamodelTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorStatementTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorTests.cs" />
     <Compile Include="CSharp\Transformation\TransformationVisitorExpressionTests.cs" />

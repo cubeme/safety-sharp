@@ -43,10 +43,34 @@ let elements = [
                     { 
                         Name = "Name"
                         Type = "string"
-                        CollectionType = Generator.Singleton
+                        CollectionType = Singleton
                         Validation = NotNullOrWhitespace
                         Comment = "The name of the identifier."
                         CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "Model"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties =
+                [
+                    {
+                        Name = "Components"
+                        Type = "ComponentDeclaration"
+                        CollectionType = Array
+                        Validation = None
+                        CanBeNull = false
+                        Comment = "The components declared in the compilation unit."
+                    }       
+                    {
+                        Name = "Resolver"
+                        Type = "MetamodelResolver"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        CanBeNull = false
+                        Comment = "The resolver that can be used to resolve <cref see=\"MetamodelReference\" />s within the model."
                     }
                 ]
             }
@@ -63,7 +87,7 @@ let elements = [
                 Properties = 
                 [
                     {
-                        Name = "Name"
+                        Name = "Identifier"
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = NotNull
@@ -71,24 +95,16 @@ let elements = [
                         CanBeNull = false
                     }
                     {
-                        Name = "Namespace"
-                        Type = "string"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The namespace the type is declared in."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "UpdateStatement"
-                        Type = "Statement"
+                        Name = "UpdateMethod"
+                        Type = "MethodDeclaration"
                         CollectionType = Singleton
                         Validation = None
-                        Comment = "The statement representing the Update method of the component."
+                        Comment = "The Update method of the component."
                         CanBeNull = true
                     }
                     {
                         Name = "Methods"
-                        Type = "MetamodelReference<MethodDeclaration>"
+                        Type = "MethodDeclaration"
                         CollectionType = Array
                         Validation = None
                         Comment = "The methods declared by the component."
@@ -100,7 +116,25 @@ let elements = [
                 Name = "MethodDeclaration"
                 Base = "MetamodelElement"
                 IsAbstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        CanBeNull = false
+                        Comment = "The name of the method."
+                    }
+                    {
+                        Name = "Body"
+                        Type = "Statement"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        CanBeNull = false
+                        Comment = "The body of the method."
+                    }
+                ]
             }
             {   
                 Name = "MemberDeclaration"
