@@ -20,19 +20,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp.Extensions
 {
 	using System;
+	using Microsoft.CodeAnalysis;
+	using Utilities;
 
-	public class Component
+	/// <summary>
+	///     Provides extension methods for working with <see cref="ITypeSymbol" /> instances.
+	/// </summary>
+	internal static class TypeSymbolExtensions
 	{
-		public static T Choose<T>(params T[] values)
+		/// <summary>
+		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from <paramref name="baseType." />
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="baseType">The base type <paramref name="typeSymbol" /> should be derived from.</param>
+		internal static bool IsDerivedFrom(this ITypeSymbol typeSymbol, ITypeSymbol baseType)
 		{
-			return values[0];
-		}
+			Argument.NotNull(typeSymbol, () => typeSymbol);
+			Argument.NotNull(baseType, () => baseType);
 
-		protected virtual void Update()
-		{
+			// We've reached the top of the inheritance chain (namely, System.Object) without finding the base type we've searched for
+			if (typeSymbol.BaseType == null)
+				return false;
+
+			// Use a type name comparison to determine whether the type symbol's base type is the searched for type
+			if (typeSymbol.BaseType.Equals(baseType))
+				return true;
+
+			return IsDerivedFrom(typeSymbol.BaseType, baseType);
 		}
 	}
 }

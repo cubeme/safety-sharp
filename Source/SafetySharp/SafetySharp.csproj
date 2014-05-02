@@ -66,7 +66,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Extensions\ClassDeclarationExtensions.cs" />
+    <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.cs" />
+    <Compile Include="CSharp\Extensions\MethodSymbolExtensions.cs" />
     <Compile Include="CSharp\Extensions\SymbolExtensions.cs" />
+    <Compile Include="CSharp\Extensions\TypeSymbolExtensions.cs" />
+    <Compile Include="CSharp\KnownSymbols.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="Metamodel\MetamodelReference.cs" />
     <Compile Include="Metamodel\MetamodelReference`1.cs" />

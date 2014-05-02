@@ -27,43 +27,71 @@ namespace Tests.CSharp.Transformation
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Declarations;
 
 	[TestFixture]
 	public class MetamodelTransformationTests
 	{
 		private static Model Transform(string csharpCode)
 		{
-			var compilation = new TestCompilation(csharpCode);
+			var compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
 			var transformation = new MetamodelTransformation();
 			return transformation.Transform(compilation.Compilation);
 		}
 
-		[Test]
-		public void ShouldTransformOneComponentWithoutAnyMethods()
+		private static ComponentDeclaration TransformComponent(string csharpCode)
 		{
-			var model = Transform("class MyComponent : SafetySharp.Modeling.Component {}");
+			return Transform(csharpCode).Components[0];
+		}
+
+		[Test]
+		public void ShouldTransformOneComponentWithoutAnyMembers()
+		{
+			var model = Transform("class MyComponent : Component {}");
 			model.Components.Length.Should().Be(1);
 
 			var component = model.Components[0];
 			component.Methods.Length.Should().Be(0);
+			component.Fields.Length.Should().Be(0);
 		}
 
 		[Test]
 		public void ShouldTransformSimpleComponentName()
 		{
-			var model = Transform("class MyComponent : SafetySharp.Modeling.Component {}");
-			var component = model.Components[0];
-
+			var component = TransformComponent("class MyComponent : Component {}");
 			component.Identifier.Name.Should().Be("MyComponent");
 		}
 
 		[Test]
 		public void ShouldTransformNamespacedComponentName()
 		{
-			var model = Transform("namespace Tests.Components { class MyComponent : SafetySharp.Modeling.Component {} }");
-			var component = model.Components[0];
-
+			var component = TransformComponent("namespace Tests.Components { class MyComponent : Component {} }");
 			component.Identifier.Name.Should().Be("Tests.Components.MyComponent");
+		}
+
+		[Test]
+		public void ShouldTransformSingleField()
+		{
+			var component = TransformComponent("class X : Component { private bool value; }");
+			component.Fields.Length.Should().Be(1);
+
+			var field = component.Fields[0];
+			field.Identifier.Name.Should().Be("value");
+		}
+
+		[Test]
+		public void ShouldTransformMultipleFields()
+		{
+			var component = TransformComponent("class X : Component { private bool value; private bool test; private bool other; }");
+			component.Fields.Length.Should().Be(3);
+
+			var field1 = component.Fields[0];
+			var field2 = component.Fields[1];
+			var field3 = component.Fields[2];
+
+			field1.Identifier.Name.Should().Be("value");
+			field2.Identifier.Name.Should().Be("test");
+			field3.Identifier.Name.Should().Be("other");
 		}
 	}
 }

@@ -20,19 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp.Extensions
 {
 	using System;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
+	using Utilities;
 
-	public class Component
+	/// <summary>
+	///     Provides extension methods for working with <see cref="MethodDeclarationSyntax" /> instances.
+	/// </summary>
+	internal static class MethodDeclarationExtensions
 	{
-		public static T Choose<T>(params T[] values)
+		/// <summary>
+		///     Checks whether <paramref name="methodDeclaration" /> represents the <see cref="Component.Update()" /> method of a
+		///     component.
+		/// </summary>
+		/// <param name="methodDeclaration">The method declaration that should be checked.</param>
+		/// <param name="semanticModel">
+		///     The semantic model that should be used to check whether <paramref name="methodDeclaration" />
+		///     overrides <see cref="Component.Update()" />.
+		/// </param>
+		internal static bool IsUpdateMethod(this MethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
 		{
-			return values[0];
-		}
+			Argument.NotNull(methodDeclaration, () => methodDeclaration);
+			Argument.NotNull(semanticModel, () => semanticModel);
 
-		protected virtual void Update()
-		{
+			var methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(methodDeclaration);
+			return methodSymbol.Overrides(KnownSymbols.UpdateMethod);
 		}
 	}
 }

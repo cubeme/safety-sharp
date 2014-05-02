@@ -23,8 +23,11 @@
 namespace Tests.CSharp
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.Metamodel;
 
 	/// <summary>
@@ -69,5 +72,83 @@ namespace Tests.CSharp
 		///     Gets the semantic model for the compilation's syntax tree.
 		/// </summary>
 		public SemanticModel SemanticModel { get; private set; }
+
+		/// <summary>
+		///     Finds the <see cref="ClassDeclarationSyntax" /> for the class named <paramref name="className" /> in the compilation.
+		///     Throws an exception if more than one class with the given name was found.
+		/// </summary>
+		/// <param name="className">
+		///     The name of the class that should be found in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		internal ClassDeclarationSyntax FindClassDeclaration(string className)
+		{
+			var classes = SyntaxRoot.DescendantNodesAndSelf()
+									.OfType<ClassDeclarationSyntax>()
+									.Select(classDeclaration => new
+									{
+										ClassDeclaration = classDeclaration,
+										FullName = classDeclaration.GetFullName(SemanticModel)
+									})
+									.Where(classDeclaration => classDeclaration.FullName == className)
+									.ToArray();
+
+			if (classes.Length == 0)
+				throw new InvalidOperationException(String.Format("Found no classes with name '{0}'.", className));
+
+			if (classes.Length > 1)
+				throw new InvalidOperationException(String.Format("Found more than one class with name '{0}'.", className));
+
+			return classes[0].ClassDeclaration;
+		}
+
+		/// <summary>
+		///     Finds the <see cref="MethodDeclarationSyntax" /> for the method named <paramref name="methodName" /> in the class named
+		///     <paramref name="className" /> within the compilation. Throws an exception if more than one class or method with the
+		///     given name was found.
+		/// </summary>
+		/// <param name="className">
+		///     The name of the class that contains the method that should be found in the format
+		///     'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		/// <param name="methodName">The name of the method that should be found.</param>
+		internal MethodDeclarationSyntax FindMethodDeclaration(string className, string methodName)
+		{
+			var methods = FindClassDeclaration(className).DescendantNodesAndSelf()
+														 .OfType<MethodDeclarationSyntax>()
+														 .Where(methodDeclaration => methodDeclaration.Identifier.ValueText == methodName)
+														 .ToArray();
+
+			if (methods.Length == 0)
+				throw new InvalidOperationException(String.Format("Found no methods with name '{0}' in '{1}'.", methodName, className));
+
+			if (methods.Length > 1)
+				throw new InvalidOperationException(String.Format("Found more than one method with name '{0}' in '{1}'.", methodName, className));
+
+			return methods[0];
+		}
+
+		/// <summary>
+		///     Gets the <see cref="ITypeSymbol" /> representing the class with name <paramref name="className" />.
+		/// </summary>
+		/// <param name="className">
+		///     The name of the class the symbol should be returned for in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		internal ITypeSymbol FindClassSymbol(string className)
+		{
+			return SemanticModel.GetDeclaredSymbol(FindClassDeclaration(className));
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IMethodSymbol" /> representing the method with name <paramref name="methodName" /> in the class with
+		///     name <paramref name="className" />.
+		/// </summary>
+		/// <param name="className">
+		///     The name of the class that contains the method in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		/// <param name="methodName">The name of the method that should be found.</param>
+		internal IMethodSymbol FindMethodSymbol(string className, string methodName)
+		{
+			return SemanticModel.GetDeclaredSymbol(FindMethodDeclaration(className, methodName));
+		}
 	}
 }

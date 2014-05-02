@@ -91,6 +91,18 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
+		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a field.
+		/// </summary>
+		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
+		public MetamodelReference<FieldDeclaration> GetFieldReference(ISymbol symbol)
+		{
+			Argument.NotNull(symbol, () => symbol);
+			Argument.OfType<IFieldSymbol>(symbol, () => symbol);
+
+			return GetReference<FieldDeclaration>(symbol);
+		}
+
+		/// <summary>
 		///     Gets a typed reference to the C# <paramref name="symbol" />.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
@@ -141,6 +153,14 @@ namespace SafetySharp.CSharp.Transformation
 
 				foreach (var method in methods)
 					yield return method;
+
+				var fields = component.SyntaxNode.DescendantNodes()
+									  .OfType<FieldDeclarationSyntax>()
+									  .SelectMany(fieldDeclaration=>fieldDeclaration.Declaration.Variables)
+									  .Select(fieldDeclaration => ResolvedSymbol.Create<FieldDeclaration>(semanticModel, fieldDeclaration));
+
+				foreach (var field in fields)
+					yield return field;
 			}
 		}
 
@@ -173,10 +193,13 @@ namespace SafetySharp.CSharp.Transformation
 			public static ResolvedSymbol Create<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
 				where T : MetamodelElement
 			{
+				var symbol = semanticModel.GetDeclaredSymbol(syntaxNode);
+				Assert.NotNull(symbol, "The semantic model could not find a symbol for '{0}' '{1}'.", syntaxNode.GetType().FullName, syntaxNode);
+
 				return new ResolvedSymbol
 				{
 					SyntaxNode = syntaxNode,
-					Symbol = semanticModel.GetDeclaredSymbol(syntaxNode),
+					Symbol = symbol,
 					Reference = slot => new MetamodelReference<T>(slot)
 				};
 			}

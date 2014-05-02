@@ -30,6 +30,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Metamodel.Declarations;
 	using Metamodel.Statements;
+	using Metamodel.TypeReferences;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
@@ -75,6 +76,10 @@ namespace SafetySharp.CSharp.Transformation
 			return new Model(_components.ToImmutableArray(), _resolver);
 		}
 
+		/// <summary>
+		///     Transforms the <paramref name="compilationUnit" />.
+		/// </summary>
+		/// <param name="compilationUnit">The compilation unit that should be transformed.</param>
 		private void TransformCompilationUnit(CompilationUnit compilationUnit)
 		{
 			var components = compilationUnit.SyntaxRoot.DescendantNodesAndSelf()
@@ -92,30 +97,64 @@ namespace SafetySharp.CSharp.Transformation
 			}
 		}
 
+		/// <summary>
+		///     Transforms the component declaration represented by the C# <paramref name="classDeclaration" />.
+		/// </summary>
+		/// <param name="compilationUnit">The compilation unit the component was declared in.</param>
+		/// <param name="classDeclaration">The C# class declaration that should be transformed.</param>
 		private ComponentDeclaration TransformComponent(CompilationUnit compilationUnit, ClassDeclarationSyntax classDeclaration)
 		{
 			var methods = ImmutableArray<MethodDeclaration>.Empty;
-			foreach (var method in classDeclaration.Members.OfType<MethodDeclarationSyntax>())
-			{
-				var methodSymbol = (ITypeSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(method);
-				var methodReference = _symbolMap.GetMethodReference(methodSymbol);
-				var methodDeclaration = TransformMethod(compilationUnit, method);
+			var fields = ImmutableArray<FieldDeclaration>.Empty;
 
-				_resolver = _resolver.With(methodReference, methodDeclaration);
-				methods = methods.Add(methodDeclaration);
-			}
+			foreach (var method in classDeclaration.Members.OfType<MethodDeclarationSyntax>())
+				methods = methods.Add(TransformMethod(compilationUnit, method));
+
+			foreach (var field in classDeclaration.Members.OfType<FieldDeclarationSyntax>())
+				fields = fields.Add(TransformField(compilationUnit, field));
 
 			var identifier = new Identifier(classDeclaration.GetFullName(compilationUnit.SemanticModel));
-			return new ComponentDeclaration(identifier, null, methods);
+			return new ComponentDeclaration(identifier, null, methods, fields);
 		}
 
+		/// <summary>
+		///     Transforms the method declaration represented by the C# <paramref name="methodDeclaration" />.
+		/// </summary>
+		/// <param name="compilationUnit">The compilation unit the method was declared in.</param>
+		/// <param name="methodDeclaration">The C# method declaration that should be transformed.</param>
 		private MethodDeclaration TransformMethod(CompilationUnit compilationUnit, MethodDeclarationSyntax methodDeclaration)
 		{
+			var methodSymbol = (IMethodSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(methodDeclaration);
+			var methodReference = _symbolMap.GetMethodReference(methodSymbol);
+
 			var transformation = new TransformationVisitor(compilationUnit.SemanticModel, _symbolMap);
 			var body = transformation.Visit(methodDeclaration.Body) as Statement;
 			Assert.NotNull(body, "Method has no body.");
 
-			return new MethodDeclaration(new Identifier(methodDeclaration.Identifier.ValueText), body);
+			var method = new MethodDeclaration(new Identifier(methodDeclaration.Identifier.ValueText), body);
+			_resolver = _resolver.With(methodReference, method);
+
+			return method;
+		}
+
+		/// <summary>
+		///     Transforms the field declaration represented by the C# <paramref name="fieldDeclaration" />.
+		/// </summary>
+		/// <param name="compilationUnit">The compilation unit the method was declared in.</param>
+		/// <param name="fieldDeclaration">The C# field declaration that should be transformed.</param>
+		private FieldDeclaration TransformField(CompilationUnit compilationUnit, FieldDeclarationSyntax fieldDeclaration)
+		{
+			Assert.That(fieldDeclaration.Declaration.Variables.Count == 1, "Field declaration was not correctly lowered.");
+
+			var variable = fieldDeclaration.Declaration.Variables[0];
+			var fieldSymbol = (IFieldSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(variable);
+			var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
+
+			var identifier = new Identifier(variable.Identifier.ValueText);
+			var field = new FieldDeclaration(identifier, new BooleanTypeReference());
+			_resolver = _resolver.With(fieldReference, field);
+
+			return field;
 		}
 
 		/// <summary>

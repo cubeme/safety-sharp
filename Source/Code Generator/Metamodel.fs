@@ -110,11 +110,25 @@ let elements = [
                         Comment = "The methods declared by the component."
                         CanBeNull = false
                     }
+                    {
+                        Name = "Fields"
+                        Type = "FieldDeclaration"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The fields declared by the component."
+                        CanBeNull = false
+                    }
                 ]
             }
             {   
-                Name = "MethodDeclaration"
+                Name = "MemberDeclaration"
                 Base = "MetamodelElement"
+                IsAbstract = true
+                Properties = []
+            }
+            {   
+                Name = "MethodDeclaration"
+                Base = "MemberDeclaration"
                 IsAbstract = false
                 Properties = 
                 [
@@ -137,31 +151,25 @@ let elements = [
                 ]
             }
             {   
-                Name = "MemberDeclaration"
-                Base = "MetamodelElement"
-                IsAbstract = true
-                Properties = []
-            }
-            {   
-                Name = "StateVariableDeclaration"
+                Name = "FieldDeclaration"
                 Base = "MemberDeclaration"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Name"
+                        Name = "Identifier"
                         Type = "Identifier"
                         CollectionType = Singleton
-                        Validation = None
-                        Comment = "The name of the state variable."
+                        Validation = NotNull
+                        Comment = "The name of the field."
                         CanBeNull = false
                     }
                     {
                         Name = "Type"
                         Type = "TypeReference"
                         CollectionType = Singleton
-                        Validation = None
-                        Comment = "The type of the state variable."
+                        Validation = NotNull
+                        Comment = "The type of the field."
                         CanBeNull = false
                     }
                 ]
@@ -177,22 +185,6 @@ let elements = [
                 Base = "MetamodelElement"
                 IsAbstract = true
                 Properties = []
-            }
-            {   
-                Name = "StateVariableExpression"
-                Base = "Expression"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Variable"
-                        Type = "StateVariableDeclaration"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The slot of the state variable."
-                        CanBeNull = false
-                    }
-                ]
             }
             {
                 Name = "Literal"

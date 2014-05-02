@@ -33,9 +33,12 @@ namespace Tests.CSharp.Extensions
 	[TestFixture]
 	internal class SymbolExtensionsTests
 	{
-		private void Test(string csharpCode, string fullName)
+		private static void ShouldHaveFullName(string csharpCode, string fullName)
 		{
 			var compilation = new TestCompilation(csharpCode);
+
+			// Can't use compilation.FindClassDeclaration() here as the implementation of that helper method
+			// depends on the GetFullName() extension method which we're currently testing...
 			var classDeclaration = compilation.SyntaxRoot.DescendantNodesAndSelf()
 											  .OfType<ClassDeclarationSyntax>()
 											  .Single(c => c.Identifier.ValueText == "X");
@@ -45,51 +48,51 @@ namespace Tests.CSharp.Extensions
 		}
 
 		[Test]
-		public void ClassAtTopLevel()
+		public void GetFullName_ClassAtTopLevel()
 		{
-			Test("class X {}", "X");
+			ShouldHaveFullName("class X {}", "X");
 		}
 
 		[Test]
-		public void ClassNestedInsideNamespaces()
+		public void GetFullName_ClassNestedInsideNamespaces()
 		{
-			Test("namespace Test.Other { class X {} }", "Test.Other.X");
+			ShouldHaveFullName("namespace Test.Other { class X {} }", "Test.Other.X");
 		}
 
 		[Test]
-		public void ClassNestedInsideNestedNamespaces()
+		public void GetFullName_ClassNestedInsideNestedNamespaces()
 		{
-			Test("namespace Test namespace Other {{ class X {} }}", "Test.Other.X");
+			ShouldHaveFullName("namespace Test namespace Other {{ class X {} }}", "Test.Other.X");
 		}
 
 		[Test]
-		public void ClassNestedInsideUnnestedNamespace()
+		public void GetFullName_ClassNestedInsideUnnestedNamespace()
 		{
-			Test("namespace Test { class X {} }", "Test.X");
+			ShouldHaveFullName("namespace Test { class X {} }", "Test.X");
 		}
 
 		[Test]
-		public void ClassNestedWithinClassAtTopLevel()
+		public void GetFullName_ClassNestedWithinClassAtTopLevel()
 		{
-			Test("class Y { class X {}}", "Y+X");
+			ShouldHaveFullName("class Y { class X {}}", "Y+X");
 		}
 
 		[Test]
-		public void ClassNestedWithinClassInsideNamespaces()
+		public void GetFullName_ClassNestedWithinClassInsideNamespaces()
 		{
-			Test("namespace Test.Other { class Y { class X {}} }", "Test.Other.Y+X");
+			ShouldHaveFullName("namespace Test.Other { class Y { class X {}} }", "Test.Other.Y+X");
 		}
 
 		[Test]
-		public void ClassNestedWithinClassInsideNestedNamespaces()
+		public void GetFullName_ClassNestedWithinClassInsideNestedNamespaces()
 		{
-			Test("namespace Test namespace Other {{ class Y { class X {}} }}", "Test.Other.Y+X");
+			ShouldHaveFullName("namespace Test namespace Other {{ class Y { class X {}} }}", "Test.Other.Y+X");
 		}
 
 		[Test]
-		public void ClassWithinClassNestedInsideUnnestedNamespace()
+		public void GetFullName_ClassWithinClassNestedInsideUnnestedNamespace()
 		{
-			Test("namespace Test { class Y { class X {}} }", "Test.Y+X");
+			ShouldHaveFullName("namespace Test { class Y { class X {}} }", "Test.Y+X");
 		}
 	}
 }

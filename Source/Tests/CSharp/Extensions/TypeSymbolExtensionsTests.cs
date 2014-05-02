@@ -28,54 +28,56 @@ namespace Tests.CSharp.Extensions
 	using SafetySharp.CSharp.Extensions;
 
 	[TestFixture]
-	internal class ClassDeclarationExtensionsTests
+	internal class TypeSymbolExtensionsTests
 	{
-		private static void ShouldBeComponent(string csharpCode, bool shouldBeComponent = true)
+		private static void ShouldDeriveFrom(string csharpCode, string baseClassName, bool shouldDeriveFrom = true)
 		{
 			var compilation = new TestCompilation(csharpCode);
-			var classDeclaration = compilation.FindClassDeclaration("X");
-			classDeclaration.IsComponentDeclaration(compilation.SemanticModel).Should().Be(shouldBeComponent);
+			var classSymbol = compilation.FindClassSymbol("X");
+			var baseSymbol = compilation.FindClassSymbol(baseClassName);
+
+			classSymbol.IsDerivedFrom(baseSymbol).Should().Be(shouldDeriveFrom);
 		}
 
-		private static void ShouldNotBeComponent(string csharpCode)
+		private static void ShouldNotDeriveFrom(string csharpCode, string baseClassName)
 		{
-			ShouldBeComponent(csharpCode, false);
-		}
-
-		[Test]
-		public void IsComponentDeclaration_False_NonComponentClassWithBase()
-		{
-			ShouldNotBeComponent("class Y {} class X : Y {}");
+			ShouldDeriveFrom(csharpCode, baseClassName, false);
 		}
 
 		[Test]
-		public void IsComponentDeclaration_False_NonDerivedNonComponentClass()
+		public void IsDerivedFrom_False_UnderivedBaseTypeWhenClassHasBase()
 		{
-			ShouldNotBeComponent("class X {}");
+			ShouldNotDeriveFrom("class Q {} class Y {} class X : Y {}", "Q");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClass()
+		public void IsDerivedFrom_False_UnderivedBaseTypeWhenClassHasNoBase()
 		{
-			ShouldBeComponent("class X : SafetySharp.Modeling.Component {}");
+			ShouldNotDeriveFrom("class Q {} class X {}", "Q");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClassWithUsing()
+		public void IsDerivedFrom_False_UnderivedBaseTypeWhenClassHasTwoBases()
 		{
-			ShouldBeComponent("using SafetySharp.Modeling; class X : Component {}");
+			ShouldNotDeriveFrom("class Q {} class Z {} class Y : Z {} class X : Y {}", "Q");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClass()
+		public void IsDerivedFrom_True_DirectBase()
 		{
-			ShouldBeComponent("class Y : SafetySharp.Modeling.Component {} class X : Y {}");
+			ShouldDeriveFrom("class Y {} class X : Y {}", "Y");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClassWithUsing()
+		public void IsDerivedFrom_True_BaseIsNotTopLevel()
 		{
-			ShouldBeComponent("using SafetySharp.Modeling; class Y : Component {} class X : Y {}");
+			ShouldDeriveFrom("class Z {} class Y : Z {} class X : Y {}", "Y");
+		}
+
+		[Test]
+		public void IsDerivedFrom_True_BaseIsTwoLevelsUp()
+		{
+			ShouldDeriveFrom("class Z {} class Y : Z {} class X : Y {}", "Y");
 		}
 	}
 }

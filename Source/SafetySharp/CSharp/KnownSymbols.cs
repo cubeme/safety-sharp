@@ -20,19 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp
 {
 	using System;
+	using System.Linq;
+	using Metamodel;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 
-	public class Component
+	/// <summary>
+	///     Contains known symbols for certain C# classes, methods, etc.
+	/// </summary>
+	internal static class KnownSymbols
 	{
-		public static T Choose<T>(params T[] values)
+		/// <summary>
+		///     Initializes the type.
+		/// </summary>
+		static KnownSymbols()
 		{
-			return values[0];
+			var compilation = CSharpCompilation.Create("AssemblyMetadata")
+											   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
+											   .AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location));
+
+			Component = compilation.GetTypeByMetadataName("SafetySharp.Modeling.Component");
+			UpdateMethod = Component.GetMembers("Update").OfType<IMethodSymbol>().Single();
 		}
 
-		protected virtual void Update()
-		{
-		}
+		/// <summary>
+		///     Gets the symbol representing the <see cref="SafetySharp.Modeling.Component" /> class.
+		/// </summary>
+		public static ITypeSymbol Component { get; private set; }
+
+		/// <summary>
+		///     Gets the symbol representing the <see cref="SafetySharp.Modeling.Component.Update()" /> method;
+		/// </summary>
+		public static IMethodSymbol UpdateMethod { get; private set; }
 	}
 }

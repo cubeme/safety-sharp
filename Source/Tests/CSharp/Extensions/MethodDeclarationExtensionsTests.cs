@@ -28,54 +28,48 @@ namespace Tests.CSharp.Extensions
 	using SafetySharp.CSharp.Extensions;
 
 	[TestFixture]
-	internal class ClassDeclarationExtensionsTests
+	internal class MethodsDeclarationExtensionsTests
 	{
-		private static void ShouldBeComponent(string csharpCode, bool shouldBeComponent = true)
+		private static void ShouldOverrideUpdate(string csharpCode, string methodName = "Update", bool shouldOverride = true)
 		{
-			var compilation = new TestCompilation(csharpCode);
-			var classDeclaration = compilation.FindClassDeclaration("X");
-			classDeclaration.IsComponentDeclaration(compilation.SemanticModel).Should().Be(shouldBeComponent);
+			var compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
+			var methodDeclaration = compilation.FindMethodDeclaration("X", methodName);
+			methodDeclaration.IsUpdateMethod(compilation.SemanticModel).Should().Be(shouldOverride);
 		}
 
-		private static void ShouldNotBeComponent(string csharpCode)
+		private static void ShouldNotOverrideUpdate(string csharpCode, string methodName = "Update")
 		{
-			ShouldBeComponent(csharpCode, false);
-		}
-
-		[Test]
-		public void IsComponentDeclaration_False_NonComponentClassWithBase()
-		{
-			ShouldNotBeComponent("class Y {} class X : Y {}");
+			ShouldOverrideUpdate(csharpCode, methodName, false);
 		}
 
 		[Test]
-		public void IsComponentDeclaration_False_NonDerivedNonComponentClass()
+		public void IsUpdateMethod_False_OtherMethodName()
 		{
-			ShouldNotBeComponent("class X {}");
+			ShouldNotOverrideUpdate("class X : Component { public void M() {} }", "M");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClass()
+		public void IsUpdateMethod_False_OtherUpdateMethod()
 		{
-			ShouldBeComponent("class X : SafetySharp.Modeling.Component {}");
+			ShouldNotOverrideUpdate("class X : Component { public new void Update() {} }");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClassWithUsing()
+		public void IsUpdateMethod_True_DirectlyDerived()
 		{
-			ShouldBeComponent("using SafetySharp.Modeling; class X : Component {}");
+			ShouldOverrideUpdate("class X : Component { public override void Update() {} }");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClass()
+		public void IsUpdateMethod_True_IndirectlyDerived_OverridenOnce()
 		{
-			ShouldBeComponent("class Y : SafetySharp.Modeling.Component {} class X : Y {}");
+			ShouldOverrideUpdate("class Y : Component {} class X : Y { public override void Update() {} }");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClassWithUsing()
+		public void IsUpdateMethod_True_IndirectlyDerived_OverridenTwice()
 		{
-			ShouldBeComponent("using SafetySharp.Modeling; class Y : Component {} class X : Y {}");
+			ShouldOverrideUpdate("class Y : Component { public override void Update() {}} class X : Y { public override void Update() {} }");
 		}
 	}
 }

@@ -20,19 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp.Extensions
 {
 	using System;
+	using Microsoft.CodeAnalysis;
+	using Utilities;
 
-	public class Component
+	/// <summary>
+	///     Provides extension methods for working with <see cref="IMethodSymbol" /> instances.
+	/// </summary>
+	internal static class MethodSymbolExtensions
 	{
-		public static T Choose<T>(params T[] values)
+		/// <summary>
+		///     Checks whether the <paramref name="methodSymbol" /> overrides <paramref name="overriddenMethod" />.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="overriddenMethod">The method <paramref name="methodSymbol" /> should override.</param>
+		internal static bool Overrides(this IMethodSymbol methodSymbol, IMethodSymbol overriddenMethod)
 		{
-			return values[0];
-		}
+			Argument.NotNull(methodSymbol, () => methodSymbol);
+			Argument.NotNull(overriddenMethod, () => overriddenMethod);
 
-		protected virtual void Update()
-		{
+			if (!methodSymbol.IsOverride)
+				return false;
+
+			if (methodSymbol.OverriddenMethod.Equals(overriddenMethod))
+				return true;
+
+			return Overrides(methodSymbol.OverriddenMethod, overriddenMethod);
 		}
 	}
 }

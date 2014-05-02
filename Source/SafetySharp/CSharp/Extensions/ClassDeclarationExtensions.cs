@@ -25,46 +25,37 @@ namespace SafetySharp.CSharp.Extensions
 	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for working with class declarations.
+	///     Provides extension methods for working with <see cref="ClassDeclarationSyntax"/> instances.
 	/// </summary>
 	internal static class ClassDeclarationExtensions
 	{
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is a component declaration by recursively searching for the
-		///     <see cref="SafetySharp.Modeling.Component" /> base type.
+		///     Checks whether <paramref name="classDeclaration" /> is derived from <see cref="SafetySharp.Modeling.Component" />.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
 		internal static bool IsComponentDeclaration(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
 		{
-			return classDeclaration.IsDerivedFrom(semanticModel, typeof(Component).FullName);
+			return classDeclaration.IsDerivedFrom(semanticModel, KnownSymbols.Component);
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is a transitively derived from a class with the given
-		///     <paramref name="baseTypeName" />.
+		///     Checks whether <paramref name="classDeclaration" /> is a directly or indirectly derived from
+		///     <paramref name="baseType" />.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
-		/// <param name="baseTypeName">
-		///     The name of the base type <paramref name="classDeclaration" /> should be derived from. The class
-		///     name must be prefixed by all of the namespaces the class is defined in, as in 'System.Collections.ArrayList'.
-		/// </param>
-		internal static bool IsDerivedFrom(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, string baseTypeName)
+		/// <param name="baseType">The base type <paramref name="classDeclaration" /> should be derived from.</param>
+		internal static bool IsDerivedFrom(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
 		{
 			Argument.NotNull(classDeclaration, () => classDeclaration);
 			Argument.NotNull(semanticModel, () => semanticModel);
 
-			var symbol = semanticModel.GetDeclaredSymbol(classDeclaration) as ITypeSymbol;
-
-			Assert.NotNull(symbol);
-			Assert.That(symbol.TypeKind == TypeKind.Class, "Unexpected symbol kind.");
-
-			return IsDerivedFrom(symbol, baseTypeName);
+			var symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration);
+			return symbol.IsDerivedFrom(baseType);
 		}
 
 		/// <summary>
@@ -76,24 +67,6 @@ namespace SafetySharp.CSharp.Extensions
 		{
 			Argument.NotNull(classDeclaration, () => classDeclaration);
 			return semanticModel.GetDeclaredSymbol(classDeclaration).GetFullName();
-		}
-
-		/// <summary>
-		///     Recursively checks whether <paramref name="typeSymbol" /> is derived from <paramref name="baseTypeName." />
-		/// </summary>
-		/// <param name="typeSymbol">The type symbol that should be checked.</param>
-		/// <param name="baseTypeName">The name of the base type <paramref name="typeSymbol" /> should be derived from.</param>
-		private static bool IsDerivedFrom(ITypeSymbol typeSymbol, string baseTypeName)
-		{
-			// We've reached the top of the inheritance chain (namely, System.Object) without finding the base type we've searched for
-			if (typeSymbol.BaseType == null)
-				return false;
-
-			// Use a type name comparison to determine whether the type symbol's base type is the searched for type
-			if (typeSymbol.BaseType.GetFullName() == baseTypeName)
-				return true;
-
-			return IsDerivedFrom(typeSymbol.BaseType, baseTypeName);
 		}
 	}
 }
