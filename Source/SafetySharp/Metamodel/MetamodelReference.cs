@@ -33,7 +33,7 @@ namespace SafetySharp.Metamodel
 		/// <summary>
 		///     Initializes a new instance of the <see cref="MetamodelReference{T}" /> type.
 		/// </summary>
-		/// <param name="sourceSymbol">The source symbol that caused the creation of the reference..</param>
+		/// <param name="sourceSymbol">The source symbol that caused the creation of the reference.</param>
 		protected MetamodelReference(object sourceSymbol)
 		{
 			Argument.NotNull(sourceSymbol, () => sourceSymbol);
