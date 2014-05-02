@@ -288,7 +288,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <summary>
         ///   Visits an element of type <see cref="SkipStatement" />.
         /// </summary>
-        /// <param name="skipLiteral">The <see cref="SkipStatement" /> instance that should be visited.</param>
+        /// <param name="skipStatement">The <see cref="SkipStatement" /> instance that should be visited.</param>
         public override void VisitSkipStatement(SkipStatement skipStatement)
         {
             Argument.NotNull(skipStatement, () => skipStatement);

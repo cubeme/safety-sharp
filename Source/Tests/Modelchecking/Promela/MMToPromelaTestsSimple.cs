@@ -21,16 +21,19 @@
 // THE SOFTWARE.
 namespace Tests.Modelchecking.Promela
 {
+    using System;
     using System.Collections.Immutable;
+    using FluentAssertions;
     using NUnit.Framework;
+    using SafetySharp.Modelchecking.Promela;
     using MM = SafetySharp.Metamodel;
     using MMExpressions = SafetySharp.Metamodel.Expressions;
     using MMStatements = SafetySharp.Metamodel.Statements;
-    using MMTypeReferences = SafetySharp.Metamodel.TypeReferences;
+    using MMTypes = SafetySharp.Metamodel.Types;
     using MMDeclarations = SafetySharp.Metamodel.Declarations;
     using MMInstances = SafetySharp.Metamodel.Instances;
-    using PrExpression = SafetySharp.Modelchecking.Promela.Expressions.Expression;
-    using PrStatement = SafetySharp.Modelchecking.Promela.Statements.Statement;
+    using PrExpressions = SafetySharp.Modelchecking.Promela.Expressions;
+    using PrStatements = SafetySharp.Modelchecking.Promela.Statements;
 
     [TestFixture]
     public class MMToPromelaTestsSimple
@@ -40,17 +43,15 @@ namespace Tests.Modelchecking.Promela
         [Test]
         public void Test()
         {
+            var fieldSymbol = new Object();
 
-            //var fieldSymbol = _compilation.FindFieldSymbol("BooleanComponent", "_value");
-            //var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
+            var fieldReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>(fieldSymbol);
+            var field = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
 
-            //f
-            var fieldReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
+            var fieldAccessExpr = new MMExpressions.FieldAccessExpression(fieldReference);
 
-            var field = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypeReferences.TypeReference.Boolean);
-
-            var assignment1 = new MMStatements.AssignmentStatement(new MMExpressions.FieldAccessExpression(fieldReference), MMExpressions.BooleanLiteral.True);
-            var assignment2 = new MMStatements.AssignmentStatement(new MMExpressions.FieldAccessExpression(fieldReference), MMExpressions.BooleanLiteral.False);
+            var assignment1 = new MMStatements.AssignmentStatement(fieldAccessExpr, MMExpressions.BooleanLiteral.True);
+            var assignment2 = new MMStatements.AssignmentStatement(fieldAccessExpr, MMExpressions.BooleanLiteral.False);
 
             var clause1 = new MMStatements.GuardedCommandClause(MMExpressions.BooleanLiteral.True, assignment1);
             var clause2 = new MMStatements.GuardedCommandClause(MMExpressions.BooleanLiteral.True, assignment2);
@@ -63,8 +64,14 @@ namespace Tests.Modelchecking.Promela
                                                     ImmutableArray<MMDeclarations.MethodDeclaration>.Empty,
                                                     ImmutableArray.Create(field));
 
+            var metamodelToPromela = new MetamodelToPromela();
 
-            
+            var nameOfField = metamodelToPromela.GetUniqueName(field);
+
+            var promelaFieldAccess = fieldAccessExpr.Accept(metamodelToPromela.ExpressionVisitor);
+            promelaFieldAccess.Should().BeOfType<PrExpressions.VariableReferenceExpression>();
+
+
         }
     }
 }

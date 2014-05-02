@@ -23,6 +23,7 @@
 namespace SafetySharp.Modelchecking.Promela
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
     using Metamodel;
@@ -46,6 +47,26 @@ namespace SafetySharp.Modelchecking.Promela
         }
         public MetamodelExpressionToPromelaExpression ExpressionVisitor { get; private set; }
         public MetamodelStatementToPromelaStatement StatementVisitor { get; private set; }
+
+        readonly object _objectToUniqueNameLocker = new object();
+
+        private int _objectToUniqueNameIterator = 0;
+
+        private readonly Dictionary<object,string> _objectToUniqueName = new Dictionary<object, string>();
+
+        public string GetUniqueName(object input)
+        {
+            lock (_objectToUniqueNameLocker)
+            {
+                string value;
+                if (_objectToUniqueName.TryGetValue(input, out value))
+                    return value;
+                _objectToUniqueNameIterator++;
+                value = "variable_" + _objectToUniqueNameIterator.ToString();
+                _objectToUniqueName.Add(input,value);
+                return value;
+            }
+        }
     }
 
     internal class MetamodelExpressionToPromelaExpression : MetamodelVisitor<PrExpression>
@@ -154,6 +175,23 @@ namespace SafetySharp.Modelchecking.Promela
                     throw new NotImplementedException();
             }
         }
+
+        public PrExpressions.VariableReferenceExpression ConvertFieldAccessExpression (MMExpressions.FieldAccessExpression fieldAccessExpression)
+        {
+            Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
+            var refName = CommonKnowledge.GetUniqueName(fieldAccessExpression.Field.SourceSymbol);
+            return new PrExpressions.VariableReferenceExpression(refName, null, null);
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="MMExpressions.FieldAccessExpression" />.
+        /// </summary>
+        /// <param name="fieldAccessExpression">The <see cref="MMExpressions.FieldAccessExpression" /> instance that should be visited.</param>
+        public override PrExpression VisitFieldAccessExpression(MMExpressions.FieldAccessExpression fieldAccessExpression)
+        {
+            Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
+            return this.ConvertFieldAccessExpression(fieldAccessExpression);
+        }
     }
 
     #endregion
@@ -240,11 +278,10 @@ namespace SafetySharp.Modelchecking.Promela
                 //setter is called or variable is somewhere in the hierarchie.
                 throw new NotImplementedException();
             }
-
-            var newVarRef = new PrExpressions.VariableReferenceExpression(stateVar.Field.Symbol.Name, null, null);
+            var newVarRef = CommonKnowledge.ExpressionVisitor.ConvertFieldAccessExpression(stateVar);
             var rightExpression = assignmentStatement.Right.Accept(CommonKnowledge.ExpressionVisitor);
-
-            return new PrStatements.AssignmentStatement(newVarRef,rightExpression);
+            
+            return new PrStatements.AssignmentStatement(newVarRef, rightExpression);
         }
     }
 
