@@ -296,6 +296,22 @@ let elements = [
                     }
                 ]
             }
+            {
+                Name = "FieldAccessExpression"
+                Base = "Expression"
+                IsAbstract = false
+                Properties =
+                [
+                    {
+                        Name = "Field"
+                        Type = "MetamodelReference<FieldDeclaration>"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        CanBeNull = false
+                        Comment = "The reference to the <see cref=\"FieldDeclaration\" /> that is accessed by this expression."
+                    }
+                ]
+            }
         ]
     }
     {

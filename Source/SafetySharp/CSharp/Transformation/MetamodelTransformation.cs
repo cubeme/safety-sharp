@@ -91,7 +91,7 @@ namespace SafetySharp.CSharp.Transformation
 
 			foreach (var component in components)
 			{
-				var componentSymbol = compilationUnit.SemanticModel.GetDeclaredSymbol(component);
+				var componentSymbol = (ITypeSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(component);
 				var componentReference = _symbolMap.GetComponentReference(componentSymbol);
 				var componentDeclaration = TransformComponent(compilationUnit, component);
 

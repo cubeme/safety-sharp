@@ -33,6 +33,25 @@ namespace SafetySharp.CSharp.Transformation
 	internal partial class TransformationVisitor
 	{
 		/// <summary>
+		/// Transforms a C# identifier name to the corresponding metamodel expression.
+		/// </summary>
+		/// <param name="node">The C# identifier name that should be transformed.</param>
+		public override MetamodelElement VisitIdentifierName(IdentifierNameSyntax node)
+		{
+			var symbolInfo = _semanticModel.GetSymbolInfo(node);
+			var symbol = symbolInfo.Symbol;
+
+			Assert.NotNull(symbol, "Unable to determine symbol for identifier '{0}'.", node);
+
+			var fieldSymbol = symbol as IFieldSymbol;
+			if (fieldSymbol != null)
+				return new FieldAccessExpression(_symbolMap.GetFieldReference(fieldSymbol));
+
+			Assert.NotReached("Unexpected C# symbol type: '{0}'", symbol.GetType().FullName);
+			return null;
+		}
+
+		/// <summary>
 		///     Transforms a C# unary expression to the corresponding metamodel unary expression.
 		/// </summary>
 		/// <param name="node">The C# unary expression that should be transformed.</param>

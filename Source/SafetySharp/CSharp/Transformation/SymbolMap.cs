@@ -70,10 +70,10 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a component.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public MetamodelReference<ComponentDeclaration> GetComponentReference(ISymbol symbol)
+		public MetamodelReference<ComponentDeclaration> GetComponentReference(ITypeSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
-			Argument.OfType<ITypeSymbol>(symbol, () => symbol);
+			Argument.Satisfies(symbol.TypeKind == TypeKind.Class, () => symbol, "Expected a type symbol for a class.");
 
 			return GetReference<ComponentDeclaration>(symbol);
 		}
@@ -82,11 +82,9 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a method.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public MetamodelReference<MethodDeclaration> GetMethodReference(ISymbol symbol)
+		public MetamodelReference<MethodDeclaration> GetMethodReference(IMethodSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
-			Argument.OfType<IMethodSymbol>(symbol, () => symbol);
-
 			return GetReference<MethodDeclaration>(symbol);
 		}
 
@@ -94,11 +92,9 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a field.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public MetamodelReference<FieldDeclaration> GetFieldReference(ISymbol symbol)
+		public MetamodelReference<FieldDeclaration> GetFieldReference(IFieldSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
-			Argument.OfType<IFieldSymbol>(symbol, () => symbol);
-
 			return GetReference<FieldDeclaration>(symbol);
 		}
 
@@ -156,7 +152,7 @@ namespace SafetySharp.CSharp.Transformation
 
 				var fields = component.SyntaxNode.DescendantNodes()
 									  .OfType<FieldDeclarationSyntax>()
-									  .SelectMany(fieldDeclaration=>fieldDeclaration.Declaration.Variables)
+									  .SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
 									  .Select(fieldDeclaration => ResolvedSymbol.Create<FieldDeclaration>(semanticModel, fieldDeclaration));
 
 				foreach (var field in fields)

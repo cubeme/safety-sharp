@@ -29,34 +29,53 @@ namespace Tests.CSharp.Transformation
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
 
 	internal abstract class TransformationVisitorTests
 	{
-		private static void CheckElementTree(MetamodelElement expectedElement, string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
+		protected MetamodelReference<FieldDeclaration> FieldReference { get; private set; }
+
+		private void CheckElementTree(MetamodelElement expectedElement, string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
 		{
-			csharpCode = String.Format("class C {{ void M() {{ {0} }}", csharpCode);
-			var compilation = new TestCompilation(csharpCode);
-
-			var methodBody = compilation.SyntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
-
-			var symbolMap = SymbolMap.Empty.AddSymbols(compilation.SemanticModel);
-			var visitor = new TransformationVisitor(compilation.SemanticModel, symbolMap);
-			var actualElement = visitor.Visit(projection(methodBody));
-
+			var actualElement = Transform(csharpCode, projection);
 			actualElement.Should().Be(expectedElement);
 		}
 
-		protected static void Test(Expression expectedExpression, string csharpExpression)
+		protected void Test(Expression expectedExpression, string csharpExpression)
 		{
 			CheckElementTree(expectedExpression, csharpExpression,
 							 block => ((ExpressionStatementSyntax)block.Statements.First()).Expression);
 		}
 
-		protected static void Test(Statement expectedStatement, string csharpStatement)
+		protected void Test(Statement expectedStatement, string csharpStatement)
 		{
 			CheckElementTree(expectedStatement.AsBlockStatement(), csharpStatement, block => block);
+		}
+
+		private MetamodelElement Transform(string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
+		{
+			csharpCode = String.Format("class C : SafetySharp.Modeling.Component {{ private bool field; void M() {{ {0} }}", csharpCode);
+			var compilation = new TestCompilation(csharpCode);
+
+			var methodBody = compilation.SyntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
+
+			var symbolMap = SymbolMap.Empty.AddSymbols(compilation.SemanticModel);
+			FieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "field"));
+
+			var visitor = new TransformationVisitor(compilation.SemanticModel, symbolMap);
+			return visitor.Visit(projection(methodBody));
+		}
+
+		protected MetamodelElement TransformExpression(string csharpExpression)
+		{
+			return Transform(csharpExpression, block => ((ExpressionStatementSyntax)block.Statements.First()).Expression);
+		}
+
+		protected MetamodelElement TransformStatement(string csharpStatement)
+		{
+			return Transform(csharpStatement, block => block);
 		}
 	}
 }

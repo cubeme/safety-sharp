@@ -44,10 +44,11 @@ namespace Tests.CSharp
 			var compilationUnit = SyntaxFactory.ParseCompilationUnit(csharpCode);
 			SyntaxTree = compilationUnit.SyntaxTree;
 
-			Compilation = CSharpCompilation.Create("Test")
-										   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
-										   .AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
-										   .AddSyntaxTrees(SyntaxTree);
+			Compilation = CSharpCompilation
+				.Create("Test")
+				.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
+				.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
+				.AddSyntaxTrees(SyntaxTree);
 
 			SemanticModel = Compilation.GetSemanticModel(SyntaxTree);
 			SyntaxRoot = SyntaxTree.GetRoot();
@@ -82,15 +83,16 @@ namespace Tests.CSharp
 		/// </param>
 		internal ClassDeclarationSyntax FindClassDeclaration(string className)
 		{
-			var classes = SyntaxRoot.DescendantNodesAndSelf()
-									.OfType<ClassDeclarationSyntax>()
-									.Select(classDeclaration => new
-									{
-										ClassDeclaration = classDeclaration,
-										FullName = classDeclaration.GetFullName(SemanticModel)
-									})
-									.Where(classDeclaration => classDeclaration.FullName == className)
-									.ToArray();
+			var classes = SyntaxRoot
+				.DescendantNodesAndSelf()
+				.OfType<ClassDeclarationSyntax>()
+				.Select(classDeclaration => new
+				{
+					ClassDeclaration = classDeclaration,
+					FullName = classDeclaration.GetFullName(SemanticModel)
+				})
+				.Where(classDeclaration => classDeclaration.FullName == className)
+				.ToArray();
 
 			if (classes.Length == 0)
 				throw new InvalidOperationException(String.Format("Found no classes with name '{0}'.", className));
@@ -113,10 +115,11 @@ namespace Tests.CSharp
 		/// <param name="methodName">The name of the method that should be found.</param>
 		internal MethodDeclarationSyntax FindMethodDeclaration(string className, string methodName)
 		{
-			var methods = FindClassDeclaration(className).DescendantNodesAndSelf()
-														 .OfType<MethodDeclarationSyntax>()
-														 .Where(methodDeclaration => methodDeclaration.Identifier.ValueText == methodName)
-														 .ToArray();
+			var methods = FindClassDeclaration(className)
+				.DescendantNodesAndSelf()
+				.OfType<MethodDeclarationSyntax>()
+				.Where(methodDeclaration => methodDeclaration.Identifier.ValueText == methodName)
+				.ToArray();
 
 			if (methods.Length == 0)
 				throw new InvalidOperationException(String.Format("Found no methods with name '{0}' in '{1}'.", methodName, className));
@@ -125,6 +128,34 @@ namespace Tests.CSharp
 				throw new InvalidOperationException(String.Format("Found more than one method with name '{0}' in '{1}'.", methodName, className));
 
 			return methods[0];
+		}
+
+		/// <summary>
+		///     Finds the <see cref="VariableDeclaratorSyntax" /> for the field named <paramref name="fieldName" /> in the class named
+		///     <paramref name="className" /> within the compilation. Throws an exception if more than one class or field with the
+		///     given name was found.
+		/// </summary>
+		/// <param name="className">
+		///     The name of the class that contains the field that should be found in the format
+		///     'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		/// <param name="fieldName">The name of the field that should be found.</param>
+		internal VariableDeclaratorSyntax FindFieldDeclaration(string className, string fieldName)
+		{
+			var fields = FindClassDeclaration(className)
+				.DescendantNodesAndSelf()
+				.OfType<FieldDeclarationSyntax>()
+				.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
+				.Where(variableDeclaration => variableDeclaration.Identifier.ValueText == fieldName)
+				.ToArray();
+
+			if (fields.Length == 0)
+				throw new InvalidOperationException(String.Format("Found no fields with name '{0}' in '{1}'.", fieldName, className));
+
+			if (fields.Length > 1)
+				throw new InvalidOperationException(String.Format("Found more than one field with name '{0}' in '{1}'.", fieldName, className));
+
+			return fields[0];
 		}
 
 		/// <summary>
@@ -149,6 +180,19 @@ namespace Tests.CSharp
 		internal IMethodSymbol FindMethodSymbol(string className, string methodName)
 		{
 			return SemanticModel.GetDeclaredSymbol(FindMethodDeclaration(className, methodName));
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IFieldSymbol" /> representing the field with name <paramref name="fieldName" /> in the class with
+		///     name <paramref name="className" />.
+		/// </summary>
+		/// <param name="className">
+		///     The name of the class that contains the field in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		/// <param name="fieldName">The name of the field that should be found.</param>
+		internal IFieldSymbol FindFieldSymbol(string className, string fieldName)
+		{
+			return (IFieldSymbol)SemanticModel.GetDeclaredSymbol(FindFieldDeclaration(className, fieldName));
 		}
 	}
 }

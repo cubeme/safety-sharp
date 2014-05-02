@@ -103,11 +103,12 @@ namespace SafetySharp.Utilities
 
 		/// <summary>
 		///     Throws an <see cref="InvalidOperationException" /> every time the method is invoked. This method is intended to be used
-		///     in default cases of switch statements that should never be reached, for instance.
+		///     in default cases of switch statements that should never be reached, for instance. This method throws even in non-debug
+		///     builds.
 		/// </summary>
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[Conditional("DEBUG"), DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message")]
 		public static void NotReached(string message = null, params object[] parameters)
 		{
 			message = message == null ? "Control flow should not have reached this point." : String.Format(message, parameters);

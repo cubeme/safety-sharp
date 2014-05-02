@@ -53,7 +53,7 @@ namespace Tests.CSharp.Transformation
 			return (ITypeSymbol)_semanticModel.GetDeclaredSymbol(classDeclaration);
 		}
 
-		private ISymbol GetMethodSymbol(ITypeSymbol classSymbol, string methodName)
+		private IMethodSymbol GetMethodSymbol(ITypeSymbol classSymbol, string methodName)
 		{
 			return classSymbol.GetMembers(methodName).OfType<IMethodSymbol>().Single();
 		}
@@ -109,16 +109,6 @@ namespace Tests.CSharp.Transformation
 
 			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
 			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void ComponentClassShouldNotBeOtherReferenceType()
-		{
-			Compile("class X : SafetySharp.Modeling.Component {}");
-			var classSymbol = GetClassSymbol("X");
-
-			Action getReference = () => _symbolMap.GetMethodReference(classSymbol);
-			getReference.ShouldThrow<ArgumentException>();
 		}
 
 		[Test]

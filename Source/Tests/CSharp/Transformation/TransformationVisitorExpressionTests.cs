@@ -23,6 +23,7 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
+	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.Metamodel.Expressions;
 
@@ -134,6 +135,20 @@ namespace Tests.CSharp.Transformation
 			Test(new DecimalLiteral(10m), "10m");
 			Test(new DecimalLiteral(0.5m), "0.5m");
 			Test(new DecimalLiteral(17.412m), "17.412m");
+		}
+
+		[Test]
+		public void FieldAccessExpression()
+		{
+			TransformExpression("field").Should().Be(new FieldAccessExpression(FieldReference));
+		}
+
+		[Test]
+		public void FieldAccessInBinaryExpression()
+		{
+			var actual = TransformExpression("field == false");
+			var expected = new BinaryExpression(new FieldAccessExpression(FieldReference), BinaryOperator.Equals, BooleanLiteral.False);
+			actual.Should().Be(expected);
 		}
 
 		[Test]
