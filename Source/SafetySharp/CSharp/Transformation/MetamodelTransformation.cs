@@ -51,9 +51,17 @@ namespace SafetySharp.CSharp.Transformation
 		private MetamodelResolver _resolver = MetamodelResolver.Empty;
 
 		/// <summary>
-		///     The symbol map that is used during the transformation.
+		///     Initializes a new instance of the <see cref="MetamodelTransformation" /> type.
 		/// </summary>
-		private SymbolMap _symbolMap = SymbolMap.Empty;
+		public MetamodelTransformation()
+		{
+			SymbolMap = SymbolMap.Empty;
+		}
+
+		/// <summary>
+		///     Gets the symbol map that is used during the transformation.
+		/// </summary>
+		public SymbolMap SymbolMap { get; private set; }
 
 		/// <summary>
 		///     Transforms the <paramref name="compilation" /> into a <see cref="Model" /> instance.
@@ -69,7 +77,7 @@ namespace SafetySharp.CSharp.Transformation
 				.ToImmutableArray();
 
 			foreach (var compilationUnit in compilationUnits)
-				_symbolMap = _symbolMap.AddSymbols(compilationUnit.SemanticModel);
+				SymbolMap = SymbolMap.AddSymbols(compilationUnit.SemanticModel);
 
 			foreach (var compilationUnit in compilationUnits)
 				TransformCompilationUnit(compilationUnit);
@@ -92,7 +100,7 @@ namespace SafetySharp.CSharp.Transformation
 			foreach (var component in components)
 			{
 				var componentSymbol = (ITypeSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(component);
-				var componentReference = _symbolMap.GetComponentReference(componentSymbol);
+				var componentReference = SymbolMap.GetComponentReference(componentSymbol);
 				var componentDeclaration = TransformComponent(compilationUnit, component);
 
 				_resolver = _resolver.With(componentReference, componentDeclaration);
@@ -143,9 +151,9 @@ namespace SafetySharp.CSharp.Transformation
 		private MethodDeclaration TransformMethod(CompilationUnit compilationUnit, MethodDeclarationSyntax methodDeclaration)
 		{
 			var methodSymbol = (IMethodSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(methodDeclaration);
-			var methodReference = _symbolMap.GetMethodReference(methodSymbol);
+			var methodReference = SymbolMap.GetMethodReference(methodSymbol);
 
-			var transformation = new TransformationVisitor(compilationUnit.SemanticModel, _symbolMap);
+			var transformation = new TransformationVisitor(compilationUnit.SemanticModel, SymbolMap);
 			var body = transformation.Visit(methodDeclaration.Body) as Statement;
 			Assert.NotNull(body, "Method has no body.");
 
@@ -166,7 +174,7 @@ namespace SafetySharp.CSharp.Transformation
 
 			var variable = fieldDeclaration.Declaration.Variables[0];
 			var fieldSymbol = (IFieldSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(variable);
-			var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
+			var fieldReference = SymbolMap.GetFieldReference(fieldSymbol);
 
 			var identifier = new Identifier(variable.Identifier.ValueText);
 			var field = new FieldDeclaration(identifier, new BooleanTypeReference());

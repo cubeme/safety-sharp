@@ -23,28 +23,29 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.IO.Pipes;
 
 	public class Component
 	{
-		protected static T Choose<T>()
+		protected static void Choose<T>(out T result)
 			where T : struct
 		{
-			return default(T);
+			result = default(T);
 		}
 
-		protected static T Choose<T>(T value1, T value2, params T[] values)
+		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
 		{
-			return default(T);
+			result = default(T);
 		}
 
-		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
+		protected static void ChooseFromRange(out int result, int inclusiveLowerBound, int inclusiveUpperBound)
 		{
-			return 0;
+			result = 0;
 		}
 
-		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
+		protected static void ChooseFromRange(out decimal result, decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
-			return 0;
+			result = 0;
 		}
 
 		protected virtual void Update()

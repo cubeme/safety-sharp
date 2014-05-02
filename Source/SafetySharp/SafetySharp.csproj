@@ -100,7 +100,6 @@
     <Compile Include="Metamodel\Statements\BlockStatement.cs" />
     <Compile Include="Metamodel\Expressions\Expression.cs" />
     <Compile Include="Metamodel\Declarations\ComponentDeclaration.cs" />
-    <Compile Include="Metamodel\Expressions\GuardedCommandExpression.cs" />
     <Compile Include="Metamodel\Declarations\MemberDeclaration.cs" />
     <Compile Include="Metamodel\MetamodelElement.cs" />
     <Compile Include="Metamodel\Statements\Statement.cs" />

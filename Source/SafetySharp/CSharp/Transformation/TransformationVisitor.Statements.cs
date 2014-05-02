@@ -28,6 +28,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Metamodel.Expressions;
 	using Metamodel.Statements;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
@@ -58,11 +59,48 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="node">The C# expression statement that should be transformed.</param>
 		public override MetamodelElement VisitExpressionStatement(ExpressionStatementSyntax node)
 		{
-			Assert.That(node.Expression.CSharpKind() == SyntaxKind.SimpleAssignmentExpression,
-						"Unsupported C# expression statement '{0}'.", node.Expression.CSharpKind());
+			// The metamodel does not support expressions embedded into statements. We therefore have to
+			// create the appropriate metamodel statement type depending on the type and structure of the 
+			// C# expression.
+			switch (node.Expression.CSharpKind())
+			{
+				case SyntaxKind.SimpleAssignmentExpression:
+					var assignment = node.Expression as BinaryExpressionSyntax;
+					return new AssignmentStatement((Expression)Visit(assignment.Left), (Expression)Visit(assignment.Right));
+				case SyntaxKind.InvocationExpression:
+					var symbolInfo = _semanticModel.GetSymbolInfo(node.Expression);
+					var symbol = symbolInfo.Symbol;
 
-			var assignment = (BinaryExpressionSyntax)node.Expression;
-			return new AssignmentStatement((Expression)Visit(assignment.Left), (Expression)Visit(assignment.Right));
+					Assert.NotNull(symbol, "Unable to determine symbol for invocation expression '{0}'.", node.Expression);
+
+					var invocation = node.Expression as InvocationExpressionSyntax;
+					var arguments = invocation.ArgumentList.Arguments;
+					var methodSymbol = symbol as IMethodSymbol;
+
+					if (methodSymbol != null)
+					{
+						var compareTarget = methodSymbol;
+						if (methodSymbol.OriginalDefinition != null)
+							compareTarget = methodSymbol.OriginalDefinition;
+
+						if (compareTarget.Equals(KnownSymbols.ChooseFromValuesMethod))
+						{
+							var assignmentTarget = (Expression)Visit(arguments[0].Expression);
+							var expressions = arguments.Skip(1).Select(argument => (Expression)Visit(argument.Expression));
+							var statements = expressions.Select(expression => new AssignmentStatement(assignmentTarget, expression));
+							var clauses = statements.Select(statement => new GuardedCommandClause(BooleanLiteral.True, statement));
+							return new GuardedCommandStatement(clauses.ToImmutableArray());
+						}
+
+						Assert.NotReached("Unsupported C# Choose call: '{0}'.", node.Expression);
+					}
+
+					Assert.NotReached("Unsupported C# method call: '{0}'.", node.Expression);
+					return null;
+				default:
+					Assert.NotReached("Unsupported C# expression statement '{0}'.", node.Expression.CSharpKind());
+					return null;
+			}
 		}
 
 		/// <summary>

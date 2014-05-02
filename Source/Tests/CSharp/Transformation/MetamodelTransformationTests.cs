@@ -23,6 +23,7 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
+	using System.Collections.Immutable;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
@@ -30,55 +31,28 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
+	using SafetySharp.Metamodel.TypeReferences;
 
 	[TestFixture]
 	public class MetamodelTransformationTests
 	{
-		private static Model Transform(string csharpCode)
+		private TestCompilation _compilation;
+		private Model _model;
+		private SymbolMap _symbolMap;
+
+		private void Transform(string csharpCode)
 		{
-			var compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
+			_compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
 			var transformation = new MetamodelTransformation();
-			return transformation.Transform(compilation.Compilation);
+
+			_model = transformation.Transform(_compilation.Compilation);
+			_symbolMap = transformation.SymbolMap;
 		}
 
-		private static ComponentDeclaration TransformComponent(string csharpCode)
+		private ComponentDeclaration TransformComponent(string csharpCode)
 		{
-			return Transform(csharpCode).Components[0];
-		}
-
-		[Test]
-		public void ShouldTransformOneComponentWithoutAnyMembers()
-		{
-			var model = Transform("class MyComponent : Component {}");
-			model.Components.Length.Should().Be(1);
-
-			var component = model.Components[0];
-			component.Methods.Length.Should().Be(0);
-			component.Fields.Length.Should().Be(0);
-		}
-
-		[Test]
-		public void ShouldTransformSimpleComponentName()
-		{
-			var component = TransformComponent("class MyComponent : Component {}");
-			component.Identifier.Name.Should().Be("MyComponent");
-		}
-
-		[Test]
-		public void ShouldTransformNamespacedComponentName()
-		{
-			var component = TransformComponent("namespace Tests.Components { class MyComponent : Component {} }");
-			component.Identifier.Name.Should().Be("Tests.Components.MyComponent");
-		}
-
-		[Test]
-		public void ShouldTransformSingleField()
-		{
-			var component = TransformComponent("class X : Component { private bool value; }");
-			component.Fields.Length.Should().Be(1);
-
-			var field = component.Fields[0];
-			field.Identifier.Name.Should().Be("value");
+			Transform(csharpCode);
+			return _model.Components[0];
 		}
 
 		[Test]
@@ -94,6 +68,50 @@ namespace Tests.CSharp.Transformation
 			field1.Identifier.Name.Should().Be("value");
 			field2.Identifier.Name.Should().Be("test");
 			field3.Identifier.Name.Should().Be("other");
+		}
+
+		[Test]
+		public void ShouldTransformNamespacedComponentName()
+		{
+			var component = TransformComponent("namespace Tests.Components { class MyComponent : Component {} }");
+			component.Identifier.Name.Should().Be("Tests.Components.MyComponent");
+		}
+
+		[Test]
+		public void ShouldTransformNoUpdateMethodButOtherMethods()
+		{
+			var component = TransformComponent("class X : Component { public bool M() { return false; } }");
+			component.UpdateMethod.Body.Should().Be(BlockStatement.Empty);
+			component.Methods.Length.Should().Be(1);
+			component.Methods[0].Body.Should().Be(new ReturnStatement(BooleanLiteral.False).AsBlockStatement());
+		}
+
+		[Test]
+		public void ShouldTransformOneComponentWithoutAnyMembers()
+		{
+			Transform("class MyComponent : Component {}");
+			_model.Components.Length.Should().Be(1);
+
+			var component = _model.Components[0];
+			component.Methods.Length.Should().Be(0);
+			component.Fields.Length.Should().Be(0);
+		}
+
+		[Test]
+		public void ShouldTransformSimpleComponentName()
+		{
+			var component = TransformComponent("class MyComponent : Component {}");
+			component.Identifier.Name.Should().Be("MyComponent");
+		}
+
+		[Test]
+		public void ShouldTransformSingleField()
+		{
+			var component = TransformComponent("class X : Component { private bool value; }");
+			component.Fields.Length.Should().Be(1);
+
+			var field = component.Fields[0];
+			field.Identifier.Name.Should().Be("value");
 		}
 
 		[Test]
@@ -114,12 +132,39 @@ namespace Tests.CSharp.Transformation
 		}
 
 		[Test]
-		public void ShouldTransformNoUpdateMethodButOtherMethods()
+		public void SimpleNondeterministicBooleanComponent()
 		{
-			var component = TransformComponent("class X : Component { public bool M() { return false; } }");
-			component.UpdateMethod.Body.Should().Be(BlockStatement.Empty);
-			component.Methods.Length.Should().Be(1);
-			component.Methods[0].Body.Should().Be(new ReturnStatement(BooleanLiteral.False).AsBlockStatement());
+			var actual = TransformComponent(@"
+class BooleanComponent : SafetySharp.Modeling.Component
+{
+	private bool _value;
+
+	protected override void Update()
+	{
+		Choose(out _value, true, false);
+	}
+}
+");
+
+			var fieldSymbol = _compilation.FindFieldSymbol("BooleanComponent", "_value");
+			var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
+			var field = new FieldDeclaration(new Identifier("_value"), TypeReference.Boolean);
+
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);
+
+			var clause1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
+			var clause2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
+
+			var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
+			var updateMethod = new MethodDeclaration(new Identifier("Update"), updateBody.AsBlockStatement());
+
+			var expected = new ComponentDeclaration(new Identifier("BooleanComponent"),
+													updateMethod,
+													ImmutableArray<MethodDeclaration>.Empty,
+													ImmutableArray.Create(field));
+
+			actual.Should().Be(expected);
 		}
 	}
 }

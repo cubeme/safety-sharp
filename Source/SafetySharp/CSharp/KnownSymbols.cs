@@ -48,8 +48,8 @@ namespace SafetySharp.CSharp
 			UpdateMethod = Component.GetMembers("Update").OfType<IMethodSymbol>().Single();
 
 			var chooseMethods = Component.GetMembers("Choose").OfType<IMethodSymbol>().ToArray();
-			ChooseEnumerationLiteralMethod = chooseMethods.Single(method => method.Parameters.Length == 0);
-			ChooseFromValuesMethod = chooseMethods.Single(method => method.Parameters.Length != 0);
+			ChooseEnumerationLiteralMethod = chooseMethods.Single(method => method.Parameters.Length == 1);
+			ChooseFromValuesMethod = chooseMethods.Single(method => method.Parameters.Length > 1);
 
 			var chooseRangeMethods = Component.GetMembers("ChooseFromRange").OfType<IMethodSymbol>().ToArray();
 			ChooseFromIntegerRangeMethod = chooseRangeMethods.Single(method => method.Parameters[0].Type.SpecialType == SpecialType.System_Int32);
@@ -67,26 +67,26 @@ namespace SafetySharp.CSharp
 		public static IMethodSymbol UpdateMethod { get; private set; }
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="SafetySharp.Modeling.Component.Choose{T}()" />
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="SafetySharp.Modeling.Component.Choose{T}(out T)" />
 		///     method.
 		/// </summary>
 		public static IMethodSymbol ChooseEnumerationLiteralMethod { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="IMethodSymbol " /> representing the
-		///     <see cref="SafetySharp.Modeling.Component.Choose{T}(T, T, T[])" /> method.
+		///     <see cref="SafetySharp.Modeling.Component.Choose{T}(out T, T, T, T[])" /> method.
 		/// </summary>
 		public static IMethodSymbol ChooseFromValuesMethod { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="IMethodSymbol " /> representing the
-		///     <see cref="SafetySharp.Modeling.Component.ChooseFromRange(int, int)" /> method.
+		///     <see cref="SafetySharp.Modeling.Component.ChooseFromRange(out int, int, int)" /> method.
 		/// </summary>
 		public static IMethodSymbol ChooseFromIntegerRangeMethod { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="IMethodSymbol " /> representing the
-		///     <see cref="SafetySharp.Modeling.Component.ChooseFromRange(decimal, decimal)" /> method.
+		///     <see cref="SafetySharp.Modeling.Component.ChooseFromRange(out decimal, decimal, decimal)" /> method.
 		/// </summary>
 		public static IMethodSymbol ChooseFromDecimalRangeMethod { get; private set; }
 	}

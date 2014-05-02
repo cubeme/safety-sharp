@@ -56,12 +56,9 @@ namespace SafetySharp.CSharp.Transformation
 		{
 			Argument.NotNull(semanticModel, () => semanticModel);
 
-			var resolvedSymbols = ResolveSymbols(semanticModel);
-			var slot = 0;
-
 			var map = _symbolMap.ToBuilder();
-			foreach (var resolvedSymbol in resolvedSymbols)
-				map.Add(resolvedSymbol.Symbol, resolvedSymbol.Reference(slot++));
+			foreach (var reference in ResolveSymbols(semanticModel))
+				map.Add(reference.Symbol, reference);
 
 			return new SymbolMap { _symbolMap = map.ToImmutable() };
 		}
@@ -129,31 +126,36 @@ namespace SafetySharp.CSharp.Transformation
 		///     Resolves all relevant symbols found within the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model for the syntax tree that should be used to resolve the C# symbols.</param>
-		private static IEnumerable<ResolvedSymbol> ResolveSymbols(SemanticModel semanticModel)
+		private static IEnumerable<MetamodelReference> ResolveSymbols(SemanticModel semanticModel)
 		{
 			var root = semanticModel.SyntaxTree.GetRoot();
 
 			var components = root.DescendantNodesAndSelf()
 								 .OfType<ClassDeclarationSyntax>()
 								 .Where(classDeclaration => classDeclaration.IsComponentDeclaration(semanticModel))
-								 .Select(classDeclaration => ResolvedSymbol.Create<ComponentDeclaration>(semanticModel, classDeclaration))
+								 .Select(classDeclaration =>
+											 new
+											 {
+												 Reference = CreateMetamodelReference<ComponentDeclaration>(semanticModel, classDeclaration),
+												 Declaration = classDeclaration
+											 })
 								 .ToArray();
 
 			foreach (var component in components)
 			{
-				yield return component;
+				yield return component.Reference;
 
-				var methods = component.SyntaxNode.DescendantNodes()
+				var methods = component.Declaration.DescendantNodes()
 									   .OfType<MethodDeclarationSyntax>()
-									   .Select(methodDeclaration => ResolvedSymbol.Create<MethodDeclaration>(semanticModel, methodDeclaration));
+									   .Select(methodDeclaration => CreateMetamodelReference<MethodDeclaration>(semanticModel, methodDeclaration));
 
 				foreach (var method in methods)
 					yield return method;
 
-				var fields = component.SyntaxNode.DescendantNodes()
+				var fields = component.Declaration.DescendantNodes()
 									  .OfType<FieldDeclarationSyntax>()
 									  .SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
-									  .Select(fieldDeclaration => ResolvedSymbol.Create<FieldDeclaration>(semanticModel, fieldDeclaration));
+									  .Select(fieldDeclaration => CreateMetamodelReference<FieldDeclaration>(semanticModel, fieldDeclaration));
 
 				foreach (var field in fields)
 					yield return field;
@@ -161,44 +163,18 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
-		///     Represents a resolved C# symbol with a generator function for the corresponding metamodel element reference.
+		///     Creates a new <see cref="MetamodelReference" /> instance.
 		/// </summary>
-		private struct ResolvedSymbol
+		/// <typeparam name="T">The type of the metamodel element corresponding to the resolved symbol.</typeparam>
+		/// <param name="semanticModel">The semantic model that should be used to resolve the C# symbol.</param>
+		/// <param name="syntaxNode">The C# syntax node that should be resolved.</param>
+		private static MetamodelReference CreateMetamodelReference<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
+			where T : MetamodelElement
 		{
-			/// <summary>
-			///     Gets the C# syntax node corresponding to the resolved symbol.
-			/// </summary>
-			public SyntaxNode SyntaxNode { get; private set; }
+			var symbol = semanticModel.GetDeclaredSymbol(syntaxNode);
+			Assert.NotNull(symbol, "The semantic model could not find a symbol for '{0}' '{1}'.", syntaxNode.GetType().FullName, syntaxNode);
 
-			/// <summary>
-			///     Gets the resolved C# symbol.
-			/// </summary>
-			public ISymbol Symbol { get; private set; }
-
-			/// <summary>
-			///     Gets the generator method for the metamodel element reference corresponding to the C# symbol.
-			/// </summary>
-			public Func<int, MetamodelReference> Reference { get; private set; }
-
-			/// <summary>
-			///     Creates a new <see cref="ResolvedSymbol" /> instance.
-			/// </summary>
-			/// <typeparam name="T">The type of the metamodel element corresponding to the resolved symbol.</typeparam>
-			/// <param name="semanticModel">The semantic model that should be used to resolve the C# symbol.</param>
-			/// <param name="syntaxNode">The C# syntax node that should be resolved.</param>
-			public static ResolvedSymbol Create<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
-				where T : MetamodelElement
-			{
-				var symbol = semanticModel.GetDeclaredSymbol(syntaxNode);
-				Assert.NotNull(symbol, "The semantic model could not find a symbol for '{0}' '{1}'.", syntaxNode.GetType().FullName, syntaxNode);
-
-				return new ResolvedSymbol
-				{
-					SyntaxNode = syntaxNode,
-					Symbol = symbol,
-					Reference = slot => new MetamodelReference<T>(slot)
-				};
-			}
+			return new MetamodelReference<T>(symbol);
 		}
 	}
 }

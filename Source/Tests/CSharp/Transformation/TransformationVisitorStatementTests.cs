@@ -24,6 +24,7 @@ namespace Tests.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Immutable;
+	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
@@ -32,12 +33,55 @@ namespace Tests.CSharp.Transformation
 	internal class TransformationVisitorStatementTests : TransformationVisitorTests
 	{
 		[Test]
-		public void AssignmentStatements()
+		public void AssignmentStatement_SimpleExpression()
 		{
-			Test(new AssignmentStatement(new IntegerLiteral(1), new IntegerLiteral(5)), "1 = 5");
+			var actual = TransformStatement("boolField = true;");
+			var expected = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), BooleanLiteral.True);
+			actual.Should().Be(expected);
+		}
 
-			var binaryExpression = new BinaryExpression(new IntegerLiteral(5), BinaryOperator.Add, new IntegerLiteral(2));
-			Test(new AssignmentStatement(new IntegerLiteral(1), binaryExpression), "1 = 5 + 2");
+		[Test]
+		public void AssignmentStatement_BinaryExpression()
+		{
+			var actual = TransformStatement("boolField = true || false;");
+			var expression = new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False);
+			var expected = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), expression);
+			actual.Should().Be(expected);
+		}
+
+		[Test]
+		public void ChooseFromValues_TwoValues()
+		{
+			var actual = TransformStatement("Choose(out boolField, true, false);");
+
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), BooleanLiteral.True);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), BooleanLiteral.False);
+
+			var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
+			var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
+
+			var expected = new GuardedCommandStatement(ImmutableArray.Create(case1, case2));
+			actual.Should().Be(expected);
+		}
+
+		[Test]
+		public void ChooseFromValues_FourValues()
+		{
+			var actual = TransformStatement("Choose(out intField, -17, 0, 33, 127);");
+
+			var minusSeventeen = new UnaryExpression(new IntegerLiteral(17), UnaryOperator.Minus);
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), minusSeventeen);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), new IntegerLiteral(0));
+			var assignment3 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), new IntegerLiteral(33));
+			var assignment4 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), new IntegerLiteral(127));
+
+			var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
+			var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
+			var case3 = new GuardedCommandClause(BooleanLiteral.True, assignment3);
+			var case4 = new GuardedCommandClause(BooleanLiteral.True, assignment4);
+
+			var expected = new GuardedCommandStatement(ImmutableArray.Create(case1, case2, case3, case4));
+			actual.Should().Be(expected);
 		}
 
 		[Test]

@@ -23,6 +23,7 @@
 namespace SafetySharp.Metamodel
 {
 	using System;
+	using Microsoft.CodeAnalysis;
 
 	/// <summary>
 	///     Represents a reference to a metamodel element that can be resolved by a <see cref="MetamodelResolver" />.
@@ -32,17 +33,12 @@ namespace SafetySharp.Metamodel
 		where T : MetamodelElement
 	{
 		/// <summary>
-		///     The slot that identifies the referenced element.
-		/// </summary>
-		private readonly int _slot;
-
-		/// <summary>
 		///     Initializes a new instance of the <see cref="MetamodelReference{T}" /> type.
 		/// </summary>
-		/// <param name="slot">The slot that identifies the referenced element.</param>
-		public MetamodelReference(int slot)
+		/// <param name="symbol">The C# symbol corresponding to the element.</param>
+		public MetamodelReference(ISymbol symbol)
+			: base(symbol)
 		{
-			_slot = slot;
 		}
 	}
 }

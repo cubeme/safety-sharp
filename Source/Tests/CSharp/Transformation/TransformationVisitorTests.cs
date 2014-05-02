@@ -27,6 +27,7 @@ namespace Tests.CSharp.Transformation
 	using FluentAssertions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
 	using SafetySharp.Metamodel.Declarations;
@@ -35,7 +36,15 @@ namespace Tests.CSharp.Transformation
 
 	internal abstract class TransformationVisitorTests
 	{
-		protected MetamodelReference<FieldDeclaration> FieldReference { get; private set; }
+		protected MetamodelReference<FieldDeclaration> BoolFieldReference { get; private set; }
+		protected MetamodelReference<FieldDeclaration> IntFieldReference { get; private set; }
+
+		[SetUp]
+		public void Setup()
+		{
+			BoolFieldReference = null;
+			IntFieldReference = null;
+		}
 
 		private void CheckElementTree(MetamodelElement expectedElement, string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
 		{
@@ -56,13 +65,23 @@ namespace Tests.CSharp.Transformation
 
 		private MetamodelElement Transform(string csharpCode, Func<BlockSyntax, SyntaxNode> projection)
 		{
-			csharpCode = String.Format("class C : SafetySharp.Modeling.Component {{ private bool field; void M() {{ {0} }}", csharpCode);
+			csharpCode = @"
+class C : SafetySharp.Modeling.Component 
+{
+	private bool boolField; 
+    private int intField;
+	void M()
+	{
+		" + csharpCode + @"
+	}
+}";
 			var compilation = new TestCompilation(csharpCode);
 
 			var methodBody = compilation.SyntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
 
 			var symbolMap = SymbolMap.Empty.AddSymbols(compilation.SemanticModel);
-			FieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "field"));
+			BoolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
+			IntFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
 
 			var visitor = new TransformationVisitor(compilation.SemanticModel, symbolMap);
 			return visitor.Visit(projection(methodBody));
@@ -75,7 +94,11 @@ namespace Tests.CSharp.Transformation
 
 		protected MetamodelElement TransformStatement(string csharpStatement)
 		{
-			return Transform(csharpStatement, block => block);
+			var statement = (BlockStatement)Transform(csharpStatement, block => block);
+			if (statement.Statements.Length != 1)
+				throw new InvalidOperationException("More than one statement in block.");
+
+			return statement.Statements[0];
 		}
 	}
 }

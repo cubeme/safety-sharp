@@ -23,9 +23,11 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
+	using System.Collections.Immutable;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.Metamodel.Expressions;
+	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
 	internal class TransformationVisitorExpressionTests : TransformationVisitorTests
@@ -140,14 +142,14 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void FieldAccessExpression()
 		{
-			TransformExpression("field").Should().Be(new FieldAccessExpression(FieldReference));
+			TransformExpression("boolField").Should().Be(new FieldAccessExpression(BoolFieldReference));
 		}
 
 		[Test]
 		public void FieldAccessInBinaryExpression()
 		{
-			var actual = TransformExpression("field == false");
-			var expected = new BinaryExpression(new FieldAccessExpression(FieldReference), BinaryOperator.Equals, BooleanLiteral.False);
+			var actual = TransformExpression("boolField == false");
+			var expected = new BinaryExpression(new FieldAccessExpression(BoolFieldReference), BinaryOperator.Equals, BooleanLiteral.False);
 			actual.Should().Be(expected);
 		}
 

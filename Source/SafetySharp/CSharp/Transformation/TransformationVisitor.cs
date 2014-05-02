@@ -26,6 +26,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
 	/// <summary>

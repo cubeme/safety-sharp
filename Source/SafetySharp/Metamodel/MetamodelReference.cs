@@ -23,11 +23,27 @@
 namespace SafetySharp.Metamodel
 {
 	using System;
+	using Microsoft.CodeAnalysis;
+	using Utilities;
 
 	/// <summary>
 	///     Represents a reference to a metamodel element that can be resolved by a <see cref="MetamodelResolver" />.
 	/// </summary>
 	public abstract class MetamodelReference
 	{
+		/// <summary>
+		///     Initializes a new instance of the <see cref="MetamodelReference{T}" /> type.
+		/// </summary>
+		/// <param name="symbol">The C# symbol corresponding to the element.</param>
+		protected MetamodelReference(ISymbol symbol)
+		{
+			Argument.NotNull(symbol, () => symbol);
+			Symbol = symbol;
+		}
+
+		/// <summary>
+		///     Gets the C# symbol corresponding to the reference.
+		/// </summary>
+		public ISymbol Symbol { get; private set; }
 	}
 }
