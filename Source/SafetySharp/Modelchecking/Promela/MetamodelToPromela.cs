@@ -44,7 +44,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="booleanLiteral">The <see cref="MMExpressions.BooleanLiteral" /> instance that should be visited.</param>
         public override PrExpression VisitBooleanLiteral(MMExpressions.BooleanLiteral booleanLiteral)
         {
-            Assert.ArgumentNotNull(booleanLiteral, () => booleanLiteral);
+            Argument.NotNull(booleanLiteral, () => booleanLiteral);
             return new PrExpressions.BooleanLiteral(booleanLiteral.Value);
         }
 
@@ -54,7 +54,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="integerLiteral">The <see cref="MMExpressions.IntegerLiteral" /> instance that should be visited.</param>
         public override PrExpression VisitIntegerLiteral(MMExpressions.IntegerLiteral integerLiteral)
         {
-            Assert.ArgumentNotNull(integerLiteral, () => integerLiteral);
+            Argument.NotNull(integerLiteral, () => integerLiteral);
             return new PrExpressions.NumberLiteral(integerLiteral.Value);
         }
 
@@ -64,7 +64,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="decimalLiteral">The <see cref="MMExpressions.DecimalLiteral" /> instance that should be visited.</param>
         public override PrExpression VisitDecimalLiteral(MMExpressions.DecimalLiteral decimalLiteral)
         {
-            Assert.ArgumentNotNull(decimalLiteral, () => decimalLiteral);
+            Argument.NotNull(decimalLiteral, () => decimalLiteral);
             throw new NotImplementedException();
         }
 
@@ -109,7 +109,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryExpression">The <see cref="MMExpressions.BinaryExpression" /> instance that should be visited.</param>
         public override PrExpression VisitBinaryExpression(MMExpressions.BinaryExpression binaryExpression)
         {
-            Assert.ArgumentNotNull(binaryExpression, () => binaryExpression);
+            Argument.NotNull(binaryExpression, () => binaryExpression);
             var left = binaryExpression.Left.Accept(this);
             var @operator = MmOperatorToPrOperator(binaryExpression.Operator);
             var right = binaryExpression.Right.Accept(this);
@@ -122,7 +122,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryExpression">The <see cref="MMExpressions.UnaryExpression" /> instance that should be visited.</param>
         public override PrExpression VisitUnaryExpression(MMExpressions.UnaryExpression unaryExpression)
         {
-            Assert.ArgumentNotNull(unaryExpression, () => unaryExpression);
+            Argument.NotNull(unaryExpression, () => unaryExpression);
             return default(PrExpression);
         }
     }
@@ -139,7 +139,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="emptyStatement">The <see cref="MMStatements.EmptyStatement" /> instance that should be visited.</param>
         public override PrStatement VisitEmptyStatement(MMStatements.EmptyStatement emptyStatement)
         {
-            Assert.ArgumentNotNull(emptyStatement, () => emptyStatement);
+            Argument.NotNull(emptyStatement, () => emptyStatement);
             return default(PrStatement);
         }
 
@@ -149,7 +149,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="blockStatement">The <see cref="MMStatements.BlockStatement" /> instance that should be visited.</param>
         public override PrStatement VisitBlockStatement(MMStatements.BlockStatement blockStatement)
         {
-            Assert.ArgumentNotNull(blockStatement, () => blockStatement);
+            Argument.NotNull(blockStatement, () => blockStatement);
             return default(PrStatement);
         }
 
@@ -159,7 +159,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="returnStatement">The <see cref="MMStatements.ReturnStatement" /> instance that should be visited.</param>
         public override PrStatement VisitReturnStatement(MMStatements.ReturnStatement returnStatement)
         {
-            Assert.ArgumentNotNull(returnStatement, () => returnStatement);
+            Argument.NotNull(returnStatement, () => returnStatement);
             return default(PrStatement);
         }
 
@@ -169,7 +169,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="guardedCommandStatement">The <see cref="MMStatements.GuardedCommandStatement" /> instance that should be visited.</param>
         public override PrStatement VisitGuardedCommandStatement(MMStatements.GuardedCommandStatement guardedCommandStatement)
         {
-            Assert.ArgumentNotNull(guardedCommandStatement, () => guardedCommandStatement);
+            Argument.NotNull(guardedCommandStatement, () => guardedCommandStatement);
             return default(PrStatement);
         }
 
@@ -179,7 +179,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="guardedCommandClause">The <see cref="MMStatements.GuardedCommandClause" /> instance that should be visited.</param>
         public override PrStatement VisitGuardedCommandClause(MMStatements.GuardedCommandClause guardedCommandClause)
         {
-            Assert.ArgumentNotNull(guardedCommandClause, () => guardedCommandClause);
+            Argument.NotNull(guardedCommandClause, () => guardedCommandClause);
             return default(PrStatement);
         }
 
@@ -189,7 +189,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="assignmentStatement">The <see cref="MMStatements.AssignmentStatement" /> instance that should be visited.</param>
         public override PrStatement VisitAssignmentStatement(MMStatements.AssignmentStatement assignmentStatement)
         {
-            Assert.ArgumentNotNull(assignmentStatement, () => assignmentStatement);
+            Argument.NotNull(assignmentStatement, () => assignmentStatement);
             return default(PrStatement);
         }
     }
