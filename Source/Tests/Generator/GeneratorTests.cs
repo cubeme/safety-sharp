@@ -166,7 +166,6 @@ namespace Tests.Generator
 		[Test]
 		public void BaseValidationShouldFail()
 		{
-#if DEBUG
 			Action action = () => new InheritedValidationTestElement(new object(), null, "Test", 1);
 			action.ShouldThrow<Exception>();
 
@@ -179,7 +178,6 @@ namespace Tests.Generator
 			var element = new InheritedValidationTestElement(new object(), new object(), "Test", 3);
 			action = () => element.WithNotEmpty("");
 			action.ShouldThrow<Exception>();
-#endif
 		}
 
 		[Test]
@@ -237,7 +235,6 @@ namespace Tests.Generator
 		[Test]
 		public void ValidationShouldFail()
 		{
-#if DEBUG
 			Action action = () => new ValidationTestElement(new object(), null, "Test");
 			action.ShouldThrow<Exception>();
 
@@ -253,7 +250,6 @@ namespace Tests.Generator
 			var element = new ValidationTestElement(new object(), new object(), "Test");
 			action = () => element.WithNotEmpty("");
 			action.ShouldThrow<Exception>();
-#endif
 		}
 
 		[Test]

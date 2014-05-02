@@ -74,6 +74,7 @@
     <Compile Include="CSharp\Transformation\TransformationVisitor.Expressions.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
     <Compile Include="Modeling\Component.cs" />
+    <Compile Include="Utilities\Argument.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />

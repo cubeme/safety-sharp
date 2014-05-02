@@ -51,8 +51,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
 		public TransformationVisitor(SemanticModel semanticModel, SymbolMap symbolMap)
 		{
-			Assert.ArgumentNotNull(semanticModel, () => semanticModel);
-			Assert.ArgumentNotNull(symbolMap, () => symbolMap);
+			Argument.NotNull(semanticModel, () => semanticModel);
+			Argument.NotNull(symbolMap, () => symbolMap);
 
 			_semanticModel = semanticModel;
 			_symbolMap = symbolMap;

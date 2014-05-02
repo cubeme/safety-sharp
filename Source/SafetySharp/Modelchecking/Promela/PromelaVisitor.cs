@@ -29,7 +29,7 @@ namespace SafetySharp.Modelchecking.Promela
 	{
 		public virtual void Visit(PromelaElement element)
 		{
-			Assert.ArgumentNotNull(element, () => element);
+			Argument.NotNull(element, () => element);
 			element.Accept(this);
 		}
 	}

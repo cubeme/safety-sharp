@@ -413,11 +413,11 @@ let generateCode context =
         | None ->
             ()
         | NotNull -> 
-            output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" parameterName parameterName)
         | NotNullOrWhitespace -> 
-            output.AppendLine(sprintf "Assert.ArgumentNotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Argument.NotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
         | InRange ->
-            output.AppendLine(sprintf "Assert.ArgumentInRange(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Argument.InRange(%s, () => %s);" parameterName parameterName)
         
     /// <summary>
     ///     Generates the constructor for the given class, having parameters for all inherited and non-inherited properties.
@@ -580,7 +580,7 @@ let generateCode context =
         // Generate the method body
         output.AppendBlockStatement <| fun () ->
             let returnKeyword = if visitorType.IsGeneric then "return " else ""
-            output.AppendLine("Assert.ArgumentNotNull(visitor, () => visitor);")
+            output.AppendLine("Argument.NotNull(visitor, () => visitor);")
             output.AppendLine(sprintf "%svisitor.Visit%s(this);" returnKeyword c.Name)
 
     /// <summary>
@@ -636,7 +636,7 @@ let generateCode context =
 
         // Generate the method body of the typed Equals method
         output.AppendBlockStatement <| fun () ->
-            output.AppendLine("Assert.ArgumentNotNull(other, () => other);")
+            output.AppendLine("Argument.NotNull(other, () => other);")
             output.NewLine()
 
             output.AppendLine(sprintf "var element = other as %s;" c.Name)
@@ -827,7 +827,7 @@ let generateCode context =
 
                 // Generate the method body
                 output.AppendBlockStatement <| fun () ->
-                    output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+                    output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" parameterName parameterName)
                     if visitorType.IsGeneric then
                         output.AppendLine(sprintf "return default(%s);" visitorType.ParamType)
 
@@ -859,7 +859,7 @@ let generateCode context =
 
                 // Generate the method body
                 output.AppendBlockStatement <| fun () ->
-                    output.AppendLine(sprintf "Assert.ArgumentNotNull(%s, () => %s);" parameterName parameterName)
+                    output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" parameterName parameterName)
 
                     // If the class has no properties, just return the same instance; there's nothing to rewrite
                     let properties = allProperties c

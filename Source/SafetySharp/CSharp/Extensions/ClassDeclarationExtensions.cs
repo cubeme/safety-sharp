@@ -56,8 +56,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// </param>
 		internal static bool IsDerivedFrom(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, string baseTypeName)
 		{
-			Assert.ArgumentNotNull(classDeclaration, () => classDeclaration);
-			Assert.ArgumentNotNull(semanticModel, () => semanticModel);
+			Argument.NotNull(classDeclaration, () => classDeclaration);
+			Argument.NotNull(semanticModel, () => semanticModel);
 
 			var symbol = semanticModel.GetDeclaredSymbol(classDeclaration) as ITypeSymbol;
 

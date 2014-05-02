@@ -29,7 +29,7 @@ namespace Tests.Generator
 	{
 		public virtual TResult Visit(TestElement element)
 		{
-			Assert.ArgumentNotNull(element, () => element);
+			Argument.NotNull(element, () => element);
 			return element.Accept(this);
 		}
 	}

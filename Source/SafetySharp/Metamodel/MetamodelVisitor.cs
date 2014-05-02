@@ -29,7 +29,7 @@ namespace SafetySharp.Metamodel
 	{
 		public virtual void Visit(MetamodelElement element)
 		{
-			Assert.ArgumentNotNull(element, () => element);
+			Argument.NotNull(element, () => element);
 			element.Accept(this);
 		}
 	}

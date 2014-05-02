@@ -53,7 +53,7 @@ namespace SafetySharp.Modelchecking.Promela
             //      sequence
             // '}'
 
-            Assert.ArgumentNotNull(proctype, () => proctype);
+            Argument.NotNull(proctype, () => proctype);
 
             codeWriter.AppendLine("proctype " + proctype.Name + "() {");
             codeWriter.IncreaseIndent();
@@ -76,7 +76,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="booleanLiteral">The <see cref="BooleanLiteral" /> instance that should be visited.</param>
         public override void VisitBooleanLiteral(BooleanLiteral booleanLiteral)
         {
-            Assert.ArgumentNotNull(booleanLiteral, () => booleanLiteral);
+            Argument.NotNull(booleanLiteral, () => booleanLiteral);
 
             switch (booleanLiteral.Value)
             {
@@ -95,7 +95,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="numberLiteral">The <see cref="NumberLiteral" /> instance that should be visited.</param>
         public override void VisitNumberLiteral(NumberLiteral numberLiteral)
         {
-            Assert.ArgumentNotNull(numberLiteral, () => numberLiteral);
+            Argument.NotNull(numberLiteral, () => numberLiteral);
             codeWriter.Append(numberLiteral.Value.ToString());
         }
 
@@ -105,7 +105,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="skipLiteral">The <see cref="SkipLiteral" /> instance that should be visited.</param>
         public override void VisitSkipLiteral(SkipLiteral skipLiteral)
         {
-            Assert.ArgumentNotNull(skipLiteral, () => skipLiteral);
+            Argument.NotNull(skipLiteral, () => skipLiteral);
             codeWriter.Append("skip");
             return;
         }
@@ -116,7 +116,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryExpression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
         public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
-            Assert.ArgumentNotNull(binaryExpression, () => binaryExpression);
+            Argument.NotNull(binaryExpression, () => binaryExpression);
             codeWriter.Append("(");
             binaryExpression.Left.Accept(this);
 
@@ -188,7 +188,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryExpression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
         public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
-            Assert.ArgumentNotNull(unaryExpression, () => unaryExpression);
+            Argument.NotNull(unaryExpression, () => unaryExpression);
             return;
         }
 
@@ -198,7 +198,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="variableReferenceExpression">The <see cref="VariableReferenceExpression" /> instance that should be visited.</param>
         public override void VisitVariableReferenceExpression(VariableReferenceExpression variableReferenceExpression)
         {
-            Assert.ArgumentNotNull(variableReferenceExpression, () => variableReferenceExpression);
+            Argument.NotNull(variableReferenceExpression, () => variableReferenceExpression);
             return;
         }
 
@@ -212,7 +212,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="simpleBlockStatement">The <see cref="SimpleBlockStatement" /> instance that should be visited.</param>
         public override void VisitSimpleBlockStatement(SimpleBlockStatement simpleBlockStatement)
         {
-            Assert.ArgumentNotNull(simpleBlockStatement, () => simpleBlockStatement);
+            Argument.NotNull(simpleBlockStatement, () => simpleBlockStatement);
             return;
         }
 
@@ -222,7 +222,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="atomicBlockStatement">The <see cref="AtomicBlockStatement" /> instance that should be visited.</param>
         public override void VisitAtomicBlockStatement(AtomicBlockStatement atomicBlockStatement)
         {
-            Assert.ArgumentNotNull(atomicBlockStatement, () => atomicBlockStatement);
+            Argument.NotNull(atomicBlockStatement, () => atomicBlockStatement);
             return;
         }
 
@@ -232,7 +232,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="dStepBlockStatement">The <see cref="DStepBlockStatement" /> instance that should be visited.</param>
         public override void VisitDStepBlockStatement(DStepBlockStatement dStepBlockStatement)
         {
-            Assert.ArgumentNotNull(dStepBlockStatement, () => dStepBlockStatement);
+            Argument.NotNull(dStepBlockStatement, () => dStepBlockStatement);
             return;
         }
 
@@ -242,7 +242,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="returnStatement">The <see cref="ReturnStatement" /> instance that should be visited.</param>
         public override void VisitReturnStatement(ReturnStatement returnStatement)
         {
-            Assert.ArgumentNotNull(returnStatement, () => returnStatement);
+            Argument.NotNull(returnStatement, () => returnStatement);
             return;
         }
 
@@ -252,7 +252,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="expressionStatement">The <see cref="ExpressionStatement" /> instance that should be visited.</param>
         public override void VisitExpressionStatement(ExpressionStatement expressionStatement)
         {
-            Assert.ArgumentNotNull(expressionStatement, () => expressionStatement);
+            Argument.NotNull(expressionStatement, () => expressionStatement);
             return;
         }
 
@@ -265,7 +265,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandRepetitionStatement(GuardedCommandRepetitionStatement guardedCommandRepetitionStatement)
         {
-            Assert.ArgumentNotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
+            Argument.NotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
             return;
         }
 
@@ -278,7 +278,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandSelectionStatement(GuardedCommandSelectionStatement guardedCommandSelectionStatement)
         {
-            Assert.ArgumentNotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
+            Argument.NotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
             return;
         }
 
@@ -291,7 +291,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandExpressionClause(GuardedCommandExpressionClause guardedCommandExpressionClause)
         {
-            Assert.ArgumentNotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
+            Argument.NotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
             return;
         }
 
@@ -301,7 +301,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="guardedCommandElseClause">The <see cref="GuardedCommandElseClause" /> instance that should be visited.</param>
         public override void VisitGuardedCommandElseClause(GuardedCommandElseClause guardedCommandElseClause)
         {
-            Assert.ArgumentNotNull(guardedCommandElseClause, () => guardedCommandElseClause);
+            Argument.NotNull(guardedCommandElseClause, () => guardedCommandElseClause);
             return;
         }
 
@@ -311,7 +311,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="assignmentStatement">The <see cref="AssignmentStatement" /> instance that should be visited.</param>
         public override void VisitAssignmentStatement(AssignmentStatement assignmentStatement)
         {
-            Assert.ArgumentNotNull(assignmentStatement, () => assignmentStatement);
+            Argument.NotNull(assignmentStatement, () => assignmentStatement);
             return;
         }
 
@@ -321,7 +321,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="declarationStatement">The <see cref="DeclarationStatement" /> instance that should be visited.</param>
         public override void VisitDeclarationStatement(DeclarationStatement declarationStatement)
         {
-            Assert.ArgumentNotNull(declarationStatement, () => declarationStatement);
+            Argument.NotNull(declarationStatement, () => declarationStatement);
             return;
         }
 

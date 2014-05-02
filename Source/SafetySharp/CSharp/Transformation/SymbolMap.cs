@@ -60,8 +60,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
 		public Reference<ComponentDeclaration> GetComponentReference(ISymbol symbol)
 		{
-			Assert.ArgumentNotNull(symbol, () => symbol);
-			Assert.ArgumentOfType<ITypeSymbol>(symbol, () => symbol);
+			Argument.NotNull(symbol, () => symbol);
+			Argument.OfType<ITypeSymbol>(symbol, () => symbol);
 
 			return GetReference<ComponentDeclaration>(symbol);
 		}
@@ -72,8 +72,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
 		public Reference<MethodDeclaration> GetMethodReference(ISymbol symbol)
 		{
-			Assert.ArgumentNotNull(symbol, () => symbol);
-			Assert.ArgumentOfType<IMethodSymbol>(symbol, () => symbol);
+			Argument.NotNull(symbol, () => symbol);
+			Argument.OfType<IMethodSymbol>(symbol, () => symbol);
 
 			return GetReference<MethodDeclaration>(symbol);
 		}
@@ -99,7 +99,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The symbol that should be checked.</param>
 		public bool IsMapped(ISymbol symbol)
 		{
-			Assert.ArgumentNotNull(symbol, () => symbol);
+			Argument.NotNull(symbol, () => symbol);
 			return _symbolMap.ContainsKey(symbol);
 		}
 
