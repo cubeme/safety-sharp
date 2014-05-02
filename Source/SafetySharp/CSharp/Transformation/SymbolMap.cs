@@ -87,9 +87,11 @@ namespace SafetySharp.CSharp.Transformation
 		{
 			object reference;
 			if (!_symbolMap.TryGetValue(symbol, out reference))
-				Assert.NotReached("The given C# symbol is unknown.");
+				throw new InvalidOperationException("The given C# symbol is unknown.");
 
-			Assert.OfType<Reference<T>>(reference);
+			Assert.OfType<Reference<T>>(reference, "Expected a metamodel reference of type '{0}' but found '{1}'.",
+				typeof(Reference<T>).FullName, reference.GetType().FullName);
+
 			return (Reference<T>)reference;
 		}
 

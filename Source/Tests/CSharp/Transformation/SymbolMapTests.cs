@@ -37,7 +37,7 @@ namespace Tests.CSharp.Transformation
 		private SyntaxNode _syntaxRoot;
 		private SemanticModel _semanticModel;
 
-		private void CreateSymbolMap(string csharpCode)
+		private void Compile(string csharpCode)
 		{
 			var compilation = new TestCompilation(csharpCode);
 
@@ -47,35 +47,125 @@ namespace Tests.CSharp.Transformation
 			_symbolMap = new SymbolMap(compilation.Compilation);
 		}
 
-		private ISymbol GetClassSymbol(string className)
+		private ITypeSymbol GetClassSymbol(string className)
 		{
-			var classDeclaration = _syntaxRoot.DescendantNodes()
-											  .OfType<ClassDeclarationSyntax>()
-											  .First(c => c.Identifier.ValueText == className);
+			var classDeclaration = _syntaxRoot.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.ValueText == className);
+			return (ITypeSymbol)_semanticModel.GetDeclaredSymbol(classDeclaration);
+		}
 
-			return _semanticModel.GetDeclaredSymbol(classDeclaration);
+		private ISymbol GetMethodSymbol(ITypeSymbol classSymbol, string methodName)
+		{
+			return classSymbol.GetMembers(methodName).OfType<IMethodSymbol>().Single();
 		}
 
 		[Test]
-		public void CollectClasses()
+		public void MethodOfNonComponentClassShouldNotBeMapped()
 		{
-			CreateSymbolMap(
-				"using SafetySharp.Modeling; class X : Component {} class Y : SafetySharp.Modeling.Component { class Z : SafetySharp.Modeling.Component {} }");
-			var classX = GetClassSymbol("X");
-			var classY = GetClassSymbol("Y");
-			var classZ = GetClassSymbol("Z");
+			Compile("class X { void M() {} }");
+			var classSymbol = GetClassSymbol("X");
+			var methodSymbol = GetMethodSymbol(classSymbol, "M");
 
-			_symbolMap.IsMapped(classX).Should().BeTrue();
-			_symbolMap.IsMapped(classY).Should().BeTrue();
-			_symbolMap.IsMapped(classZ).Should().BeTrue();
+			_symbolMap.IsMapped(methodSymbol).Should().BeFalse();
+			Action getReference = () => _symbolMap.GetMethodReference(methodSymbol);
+			getReference.ShouldThrow<InvalidOperationException>();
+		}
 
-			var referenceX = _symbolMap.GetComponentReference(classX);
-			var referenceY = _symbolMap.GetComponentReference(classY);
-			var referenceZ = _symbolMap.GetComponentReference(classZ);
+		[Test]
+		public void MethodOfComponentClassShouldBeMapped()
+		{
+			Compile("class X : SafetySharp.Modeling.Component { void M() {} }");
+			var classSymbol = GetClassSymbol("X");
+			var methodSymbol = GetMethodSymbol(classSymbol, "M");
 
-			(referenceX == referenceY).Should().BeFalse();
-			(referenceX == referenceZ).Should().BeFalse();
-			(referenceZ == referenceY).Should().BeFalse();
+			_symbolMap.IsMapped(methodSymbol).Should().BeTrue();
+			_symbolMap.GetMethodReference(methodSymbol).Should().NotBeNull();
+		}
+
+		[Test]
+		public void MethodsOfComponentClassShouldBeMapped()
+		{
+			Compile("class X : SafetySharp.Modeling.Component { void M() {} void N() {} }");
+			var classSymbol = GetClassSymbol("X");
+			var methodSymbolM = GetMethodSymbol(classSymbol, "M");
+			var methodSymbolN = GetMethodSymbol(classSymbol, "N");
+
+			_symbolMap.IsMapped(methodSymbolM).Should().BeTrue();
+			_symbolMap.IsMapped(methodSymbolM).Should().BeTrue();
+
+			var referenceM = _symbolMap.GetMethodReference(methodSymbolM);
+			var referenceN = _symbolMap.GetMethodReference(methodSymbolN);
+
+			referenceM.Should().NotBeNull();
+			referenceN.Should().NotBeNull();
+
+			referenceM.Should().NotBe(referenceN);
+		}
+
+		[Test]
+		public void ComponentClassShouldBeMapped()
+		{
+			Compile("class X : SafetySharp.Modeling.Component {}");
+			var classSymbol = GetClassSymbol("X");
+
+			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
+			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
+		}
+
+		[Test]
+		public void ComponentClassShouldNotBeOtherReferenceType()
+		{
+			Compile("class X : SafetySharp.Modeling.Component {}");
+			var classSymbol = GetClassSymbol("X");
+
+			Action getReference = () => _symbolMap.GetMethodReference(classSymbol);
+			getReference.ShouldThrow<ArgumentException>();
+		}
+
+		[Test]
+		public void ComponentClassesShouldBeMappedAndDifferentReferences()
+		{
+			Compile("using SafetySharp.Modeling; class Y : Component {} class X : Y {} class Z : Component {}");
+			var classSymbolX = GetClassSymbol("X");
+			var classSymbolY = GetClassSymbol("Y");
+			var classSymbolZ = GetClassSymbol("Z");
+
+			_symbolMap.IsMapped(classSymbolX).Should().BeTrue();
+			_symbolMap.IsMapped(classSymbolY).Should().BeTrue();
+			_symbolMap.IsMapped(classSymbolZ).Should().BeTrue();
+
+			var referenceX = _symbolMap.GetComponentReference(classSymbolX);
+			var referenceY = _symbolMap.GetComponentReference(classSymbolY);
+			var referenceZ = _symbolMap.GetComponentReference(classSymbolZ);
+
+			referenceX.Should().NotBeNull();
+			referenceY.Should().NotBeNull();
+			referenceZ.Should().NotBeNull();
+
+			referenceX.Should().NotBe(referenceY);
+			referenceX.Should().NotBe(referenceZ);
+			referenceZ.Should().NotBe(referenceY);
+		}
+
+		[Test]
+		public void InheritedComponentClassShouldBeMapped()
+		{
+			Compile("class Y : SafetySharp.Modeling.Component {} class X : Y {}");
+			var classSymbol = GetClassSymbol("X");
+
+			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
+			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
+		}
+
+		[Test]
+		public void NonComponentClassShouldNotBeMapped()
+		{
+			Compile("class X {}");
+			var classSymbol = GetClassSymbol("X");
+
+			_symbolMap.IsMapped(classSymbol).Should().BeFalse();
+
+			Action getReference = () => _symbolMap.GetComponentReference(classSymbol);
+			getReference.ShouldThrow<InvalidOperationException>();
 		}
 	}
 }
