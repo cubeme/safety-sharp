@@ -40,28 +40,31 @@ namespace Tests.Modelchecking.Promela
         [Test]
         public void Test()
         {
-            var stateVar = new MMDeclarations.StateVariableDeclaration(new MM.Identifier("x"), MMTypeReferences.TypeReference.Boolean);
 
-            var guardedCommand = new MMStatements.GuardedCommandStatement(
-                ImmutableArray.Create(
-                                      new MMStatements.GuardedCommandClause(
-                                          new MMExpressions.BooleanLiteral(true),
-                                          new MMStatements.AssignmentStatement(new MMExpressions.StateVariableExpression(stateVar), MMExpressions.BooleanLiteral.True)),
-                                      new MMStatements.GuardedCommandClause(
-                                          new MMExpressions.BooleanLiteral(true),
-                                          new MMStatements.AssignmentStatement(new MMExpressions.StateVariableExpression(stateVar), MMExpressions.BooleanLiteral.True))
-                    ));
+            //var fieldSymbol = _compilation.FindFieldSymbol("BooleanComponent", "_value");
+            //var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
 
-            var componentDeclaration = new MMDeclarations.ComponentDeclaration(
-                name: new MM.Identifier("Test"),
-                @namespace: "Test",
-                methods: ImmutableArray.Create<MMDeclarations.MemberDeclaration>(stateVar),
-                updateStatement: guardedCommand);
+            //f
+            var fieldReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
 
-            var instance = new MMInstances.ComponentInstance();
+            var field = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypeReferences.TypeReference.Boolean);
+
+            var assignment1 = new MMStatements.AssignmentStatement(new MMExpressions.FieldAccessExpression(fieldReference), MMExpressions.BooleanLiteral.True);
+            var assignment2 = new MMStatements.AssignmentStatement(new MMExpressions.FieldAccessExpression(fieldReference), MMExpressions.BooleanLiteral.False);
+
+            var clause1 = new MMStatements.GuardedCommandClause(MMExpressions.BooleanLiteral.True, assignment1);
+            var clause2 = new MMStatements.GuardedCommandClause(MMExpressions.BooleanLiteral.True, assignment2);
+
+            var updateBody = new MMStatements.GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
+            var updateMethod = new MMDeclarations.MethodDeclaration(new MM.Identifier("Update"), updateBody.AsBlockStatement());
+
+            var mmsimple = new MMDeclarations.ComponentDeclaration(new MM.Identifier("BooleanComponent"),
+                                                    updateMethod,
+                                                    ImmutableArray<MMDeclarations.MethodDeclaration>.Empty,
+                                                    ImmutableArray.Create(field));
 
 
-            ((MMDeclarations.StateVariableDeclaration)component.Members[0]).Name.Name.Should().Be("x");
+            
         }
     }
 }

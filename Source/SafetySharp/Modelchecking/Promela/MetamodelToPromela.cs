@@ -233,7 +233,7 @@ namespace SafetySharp.Modelchecking.Promela
         {
             Argument.NotNull(assignmentStatement, () => assignmentStatement);
             // Be careful: http://stackoverflow.com/questions/983030/type-checking-typeof-gettype-or-is
-            var stateVar = assignmentStatement.Left as MMExpressions.StateVariableExpression;
+            var stateVar = assignmentStatement.Left as MMExpressions.FieldAccessExpression;
 
             if (stateVar == null)
             {
@@ -241,7 +241,7 @@ namespace SafetySharp.Modelchecking.Promela
                 throw new NotImplementedException();
             }
 
-            var newVarRef = new PrExpressions.VariableReferenceExpression(stateVar.Variable.Name.Name, null, null);
+            var newVarRef = new PrExpressions.VariableReferenceExpression(stateVar.Field.Symbol.Name, null, null);
             var rightExpression = assignmentStatement.Right.Accept(CommonKnowledge.ExpressionVisitor);
 
             return new PrStatements.AssignmentStatement(newVarRef,rightExpression);
