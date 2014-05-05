@@ -29,6 +29,7 @@ namespace SafetySharp.CSharp.Runtime
 	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -69,10 +70,10 @@ namespace SafetySharp.CSharp.Runtime
 
 			writer.AppendLine("using System;");
 			writer.AppendLine("using System.Collections.Generic;");
-			writer.AppendLine("using SafetySharp.Modeling;");
+			writer.AppendLine("using {0};", typeof(Component).Namespace);
 
-			writer.AppendLine("public class {0}{1:X} : {2}", typeof(ModelingAssembly).Name,
-							  Guid.NewGuid().ToString().GetHashCode(), typeof(ModelingAssembly).FullName);
+			var prefix = Guid.NewGuid().ToString().GetHashCode();
+			writer.AppendLine("public class {0}{1:X} : {2}", typeof(ModelingAssembly).Name, prefix, typeof(ModelingAssembly).FullName);
 			writer.AppendBlockStatement(() =>
 			{
 				writer.AppendLine("protected override IEnumerable<string> ComponentsSourceCode");
@@ -83,13 +84,7 @@ namespace SafetySharp.CSharp.Runtime
 					{
 						writer.AppendLine("return new [] {{");
 						writer.AppendSeparated(
-							source: compilation
-								.SyntaxTrees
-								.SelectMany(syntaxTree =>
-								{
-									var semanticModel = compilation.GetSemanticModel(syntaxTree);
-									return semanticModel.GetDeclaredComponents();
-								}),
+							values: compilation.SyntaxTrees.SelectMany(syntaxTree => compilation.GetSemanticModel(syntaxTree).GetDeclaredComponents()),
 							separator: ",",
 							content: component => writer.Append("@\"{0}\"", component));
 						writer.AppendLine("}};");

@@ -160,19 +160,19 @@ namespace SafetySharp.Utilities
 		/// <summary>
 		///     Appends a list of values to the current line, with each value being separated by the given separator.
 		/// </summary>
-		/// <param name="source">The source values for each of which the content is generated.</param>
+		/// <param name="values">The source values for each of which the content is generated.</param>
 		/// <param name="separator">The separator that separates two successive values.</param>
 		/// <param name="content">
 		///     Generates the content that should be appended for each value in source by calling Append methods
 		///     of this code writer instance.
 		/// </param>
-		public void AppendSeparated<T>(IEnumerable<T> source, string separator, Action<T> content)
+		public void AppendSeparated<T>(IEnumerable<T> values, string separator, Action<T> content)
 		{
-			Argument.NotNull(source, () => source);
+			Argument.NotNull(values, () => values);
 			Argument.NotNull(separator, () => separator);
 			Argument.NotNull(content, () => content);
 
-			AppendSeparated(source, () => Append(separator), content);
+			AppendSeparated(values, () => Append(separator), content);
 		}
 
 		/// <summary>
