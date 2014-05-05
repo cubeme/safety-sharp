@@ -33,13 +33,13 @@ namespace Elbtunnel
 		}
 	}
 
-	public enum MyEnum : short
-	{
-		ValueA,
-		ValueB,
-		ValueC = 10,
-		ValueCQ = 104,
-		ValueCQ2 = ValueCQ + 1,
-		ValueCF
-	}
+	//public enum MyEnum : short
+	//{
+	//	ValueA,
+	//	ValueB,
+	//	ValueC = 10,
+	//	ValueCQ = 104,
+	//	ValueCQ2 = ValueCQ + 1,
+	//	ValueCF
+	//}
 }
