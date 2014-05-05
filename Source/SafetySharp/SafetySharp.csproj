@@ -68,9 +68,11 @@
     <Compile Include="CSharp\Extensions\ClassDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodSymbolExtensions.cs" />
-    <Compile Include="CSharp\Extensions\SymbolExtensions.cs" />
+    <Compile Include="CSharp\Extensions\SemanticModelExtensions.cs" />
+    <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensions.cs" />
     <Compile Include="CSharp\Extensions\TypeSymbolExtensions.cs" />
-    <Compile Include="CSharp\KnownSymbols.cs" />
+    <Compile Include="CSharp\Normalization\ChooseNormalizer.cs" />
+    <Compile Include="CSharp\Normalization\CSharpNormalizer.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="Metamodel\Declarations\MethodDeclaration.cs" />
     <Compile Include="Metamodel\MetamodelReference.cs" />

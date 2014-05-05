@@ -65,7 +65,7 @@
     <Compile Include="CSharp\Extensions\ClassDeclarationExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\MethodSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\TypeSymbolExtensionsTests.cs" />
-    <Compile Include="CSharp\Extensions\SymbolExtensionsTests.cs" />
+    <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />

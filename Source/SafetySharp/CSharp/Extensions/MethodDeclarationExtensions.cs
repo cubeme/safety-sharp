@@ -48,7 +48,7 @@ namespace SafetySharp.CSharp.Extensions
 			Argument.NotNull(semanticModel, () => semanticModel);
 
 			var methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(methodDeclaration);
-			return methodSymbol.Overrides(KnownSymbols.UpdateMethod);
+			return methodSymbol.Overrides(semanticModel.GetUpdateMethodSymbol());
 		}
 	}
 }

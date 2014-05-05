@@ -30,5 +30,9 @@ namespace SafetySharp.Modeling
 		{
 			return values[0];
 		}
+
+		protected virtual void Update()
+		{
+		}
 	}
 }

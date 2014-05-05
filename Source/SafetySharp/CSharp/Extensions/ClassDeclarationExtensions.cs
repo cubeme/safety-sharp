@@ -28,18 +28,18 @@ namespace SafetySharp.CSharp.Extensions
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for working with <see cref="ClassDeclarationSyntax"/> instances.
+	///     Provides extension methods for working with <see cref="ClassDeclarationSyntax" /> instances.
 	/// </summary>
 	internal static class ClassDeclarationExtensions
 	{
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is derived from <see cref="SafetySharp.Modeling.Component" />.
+		///     Checks whether <paramref name="classDeclaration" /> is a runtime component declaration.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
 		internal static bool IsComponentDeclaration(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
 		{
-			return classDeclaration.IsDerivedFrom(semanticModel, KnownSymbols.Component);
+			return classDeclaration.IsDerivedFrom(semanticModel, semanticModel.GetComponentClassSymbol());
 		}
 
 		/// <summary>
@@ -66,7 +66,7 @@ namespace SafetySharp.CSharp.Extensions
 		internal static string GetFullName(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
 		{
 			Argument.NotNull(classDeclaration, () => classDeclaration);
-			return semanticModel.GetDeclaredSymbol(classDeclaration).GetFullName();
+			return ((ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration)).GetFullName();
 		}
 	}
 }

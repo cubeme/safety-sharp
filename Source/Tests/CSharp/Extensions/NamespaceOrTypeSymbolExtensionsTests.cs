@@ -31,7 +31,7 @@ namespace Tests.CSharp.Extensions
 	using SafetySharp.CSharp.Extensions;
 
 	[TestFixture]
-	internal class SymbolExtensionsTests
+	internal class NamespaceOrTypeSymbolExtensionsTests
 	{
 		private static void ShouldHaveFullName(string csharpCode, string fullName)
 		{

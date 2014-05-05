@@ -23,16 +23,9 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.IO.Pipes;
 
 	public class Component
 	{
-		protected static void Choose<T>(out T result)
-			where T : struct
-		{
-			result = default(T);
-		}
-
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
 		{
 			result = default(T);
@@ -46,6 +39,27 @@ namespace SafetySharp.Modeling
 		protected static void ChooseFromRange(out decimal result, decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
 			result = 0;
+		}
+
+		protected static T Choose<T>()
+			where T : struct
+		{
+			return default(T);
+		}
+
+		protected static T Choose<T>(T value1, T value2, params T[] values)
+		{
+			return default(T);
+		}
+
+		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
+		{
+			return 0;
+		}
+
+		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
+		{
+			return 0;
 		}
 
 		protected virtual void Update()

@@ -128,18 +128,15 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="semanticModel">The semantic model for the syntax tree that should be used to resolve the C# symbols.</param>
 		private static IEnumerable<MetamodelReference> ResolveSymbols(SemanticModel semanticModel)
 		{
-			var root = semanticModel.SyntaxTree.GetRoot();
-
-			var components = root.DescendantNodesAndSelf()
-								 .OfType<ClassDeclarationSyntax>()
-								 .Where(classDeclaration => classDeclaration.IsComponentDeclaration(semanticModel))
-								 .Select(classDeclaration =>
-											 new
-											 {
-												 Reference = CreateMetamodelReference<ComponentDeclaration>(semanticModel, classDeclaration),
-												 Declaration = classDeclaration
-											 })
-								 .ToArray();
+			var components = semanticModel
+				.GetDeclaredComponents()
+				.Select(classDeclaration =>
+							new
+							{
+								Reference = CreateMetamodelReference<ComponentDeclaration>(semanticModel, classDeclaration),
+								Declaration = classDeclaration
+							})
+				.ToArray();
 
 			foreach (var component in components)
 			{

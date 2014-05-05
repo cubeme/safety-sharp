@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Transformation
 	using System;
 	using System.Collections.Immutable;
 	using System.Linq;
+	using Extensions;
 	using Metamodel;
 	using Metamodel.Expressions;
 	using Metamodel.Statements;
@@ -83,7 +84,7 @@ namespace SafetySharp.CSharp.Transformation
 						if (methodSymbol.OriginalDefinition != null)
 							compareTarget = methodSymbol.OriginalDefinition;
 
-						if (compareTarget.Equals(KnownSymbols.ChooseFromValuesMethod))
+						if (compareTarget.Equals(_semanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: true)))
 						{
 							var assignmentTarget = (Expression)Visit(arguments[0].Expression);
 							var expressions = arguments.Skip(1).Select(argument => (Expression)Visit(argument.Expression));

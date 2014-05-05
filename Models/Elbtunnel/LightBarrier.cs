@@ -33,6 +33,18 @@ namespace Elbtunnel
 		}
 	}
 
+	class BooleanComponent : Component
+	{
+		private bool _value;
+
+		protected override void Update()
+		{
+			_value = Choose(true, false);
+			if (Choose(true, false))
+				_value = true;
+		}
+	}
+
 	//public enum MyEnum : short
 	//{
 	//	ValueA,

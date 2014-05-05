@@ -60,10 +60,12 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// </summary>
 		public static IEnumerable<CSharpAnalyzer> GetAnalyzers()
 		{
-			return typeof(CSharpAnalyzer).Assembly.GetTypes()
-										 .Where(t => t.IsClass && !t.IsAbstract && typeof(CSharpAnalyzer).IsAssignableFrom(t))
-										 .Select(Activator.CreateInstance)
-										 .Cast<CSharpAnalyzer>();
+			return typeof(CSharpAnalyzer)
+				.Assembly
+				.GetTypes()
+				.Where(t => t.IsClass && !t.IsAbstract && typeof(CSharpAnalyzer).IsAssignableFrom(t))
+				.Select(Activator.CreateInstance)
+				.Cast<CSharpAnalyzer>();
 		}
 
 		/// <summary>
@@ -103,7 +105,7 @@ namespace SafetySharp.CSharp.Diagnostics
 			Argument.NotNullOrWhitespace(messageFormat, () => messageFormat);
 			Argument.InRange(severity, () => severity);
 			Argument.Satisfies(identifier.StartsWith(IdentifierPrefix), () => identifier,
-									 "Diagnostic identifier does not start with prefix '{0}'.", IdentifierPrefix);
+							   "Diagnostic identifier does not start with prefix '{0}'.", IdentifierPrefix);
 
 			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Category, severity);
 			SupportedDiagnostics = ImmutableArray.Create(Descriptor);

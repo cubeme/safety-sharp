@@ -29,13 +29,13 @@ namespace SafetySharp.CSharp.Extensions
 	/// <summary>
 	///     Provides extension methods for working with <see cref="ISymbol" /> instances.
 	/// </summary>
-	internal static class SymbolExtensions
+	internal static class NamespaceOrTypeSymbolExtensions
 	{
 		/// <summary>
 		///     Gets the full name of <paramref name="symbol" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
 		/// </summary>
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
-		internal static string GetFullName(this ISymbol symbol)
+		internal static string GetFullName(this INamespaceOrTypeSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 

@@ -64,6 +64,7 @@ namespace SafetySharp.Compiler
 					Log.Die("Invalid command line arguments.");
 				}
 
+				// Argument validation
 				if (!File.Exists(Arguments.ProjectFile))
 					Log.Die("Project file '{0}' could not be found.", Arguments.ProjectFile);
 			}
@@ -79,12 +80,12 @@ namespace SafetySharp.Compiler
 
 			Log.Info("");
 
-			// Otherwise, we can start the compilation process.
+			// Start the compilation process.
 			var project = new SafetySharpProject();
 			var resultCode = project.Compile();
 
 			if (resultCode == 0)
-				WriteToConsole(ConsoleColor.Green, "Compilation completed successfully.");
+				Log.Info("Compilation completed successfully.");
 
 			return resultCode;
 		}
