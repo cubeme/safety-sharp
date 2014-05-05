@@ -85,10 +85,6 @@ namespace SafetySharp.Compiler
 			foreach (var diagnostic in diagnostics)
 				LogDiagnostic(diagnostic);
 
-			// Improves readability of generated output
-			if (diagnostics.Length != 0)
-				Log.Info("");
-
 			return diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error);
 		}
 
@@ -97,9 +93,8 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		private void Rewrite()
 		{
-			_compilation = _compilation
-				.RemoveReferences(_modelingAssembly)
-				.AddReferences(new MetadataFileReference(typeof(Component).Assembly.Location));
+			var safetySharpAssembly = new MetadataFileReference(typeof(Component).Assembly.Location);
+			_compilation = _compilation.ReplaceReference(_modelingAssembly, safetySharpAssembly);
 		}
 
 		/// <summary>

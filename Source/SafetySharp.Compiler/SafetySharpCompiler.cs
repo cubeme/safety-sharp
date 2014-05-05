@@ -23,6 +23,7 @@
 namespace SafetySharp.Compiler
 {
 	using System;
+	using System.IO;
 	using System.Linq;
 	using CommandLine;
 	using Utilities;
@@ -62,6 +63,9 @@ namespace SafetySharp.Compiler
 					Log.Info("{0}", Arguments.GenerateHelpMessage());
 					Log.Die("Invalid command line arguments.");
 				}
+
+				if (!File.Exists(Arguments.ProjectFile))
+					Log.Die("Project file '{0}' could not be found.", Arguments.ProjectFile);
 			}
 
 			Log.Info("");
@@ -77,66 +81,13 @@ namespace SafetySharp.Compiler
 
 			// Otherwise, we can start the compilation process.
 			var project = new SafetySharpProject();
-			return project.Compile();
+			var resultCode = project.Compile();
+
+			if (resultCode == 0)
+				WriteToConsole(ConsoleColor.Green, "Compilation completed successfully.");
+
+			return resultCode;
 		}
-
-		private static void Compile(CompilationArguments arguments)
-		{
-			//var workspace = MSBuildWorkspace.Create();
-			//var project = workspace.OpenProjectAsync(arguments.ProjectFile).Result;
-
-			//var doc = project.Documents.First();
-			//var root = doc.GetSyntaxRootAsync().Result;
-			//var returnStatement = root
-			//	.DescendantNodes().OfType<ReturnStatementSyntax>()
-			//	.First();
-
-			//var comp = project.GetCompilationAsync().Result;
-			//var d = AnalyzerDriver.GetDiagnostics(comp, CSharpAnalyzer.GetAnalyzers(), new CancellationToken());
-
-			//foreach (var di in d)
-			//	Log.Info("{0}", di);
-
-			//var newReturn =
-			//	SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression,
-			//																  SyntaxFactory.Literal(SyntaxFactory.TriviaList(
-			//																												 SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
-			//var newRoot = root.ReplaceNode(returnStatement, newReturn);
-			////doc = doc.WithSyntaxRoot(newRoot);
-			////project = project.RemoveDocument(doc.Id);
-			////project = project.AddDocument(doc.Name, newRoot.GetText());
-
-			//var solution = workspace.CurrentSolution;
-			//solution = solution.WithDocumentText(doc.Id, newRoot.GetText());
-			//project = solution.Projects.Skip(1).First();
-
-			//comp = project.GetCompilationAsync().Result;
-
-			//Execute(comp, project.OutputFilePath);
-		}
-
-		//private static void Execute(Compilation comp, string path)
-		//{
-		//	//var output = new StringBuilder();
-		//	EmitResult emitResult = null;
-
-		//	using (var ilStream = new FileStream(path, FileMode.OpenOrCreate))
-		//	{
-		//		// Emit IL, PDB and xml documentation comments for the compilation to disk.
-		//		emitResult = comp.Emit(ilStream);
-		//	}
-
-		//	if (!emitResult.Success)
-		//	{
-		//		//output.AppendLine("Errors:");
-		//		foreach (var diag in emitResult.Diagnostics)
-		//		{
-		//			Log.Error("{0}", diag);
-		//		}
-		//	}
-
-		//	//return output.ToString();
-		//}
 
 		/// <summary>
 		///     Wires up the <see cref="Log.Logged" /> event to write all logged messages to the console.
@@ -149,20 +100,20 @@ namespace SafetySharp.Compiler
 				{
 					case LogType.Debug:
 						if (!Arguments.Silent)
-							WriteToConsole(ConsoleColor.Magenta, entry);
+							WriteToConsole(ConsoleColor.Magenta, entry.Message);
 						break;
 					case LogType.Info:
 						if (!Arguments.Silent)
-							WriteToConsole(ConsoleColor.White, entry);
+							WriteToConsole(ConsoleColor.White, entry.Message);
 						break;
 					case LogType.Warning:
-						WriteToConsole(ConsoleColor.Yellow, entry);
+						WriteToConsole(ConsoleColor.Yellow, entry.Message);
 						break;
 					case LogType.Error:
-						WriteToConsole(ConsoleColor.Red, entry);
+						WriteToConsole(ConsoleColor.Red, entry.Message);
 						break;
 					case LogType.Fatal:
-						WriteToConsole(ConsoleColor.Red, entry);
+						WriteToConsole(ConsoleColor.Red, entry.Message);
 						break;
 					default:
 						Assert.NotReached();
@@ -172,16 +123,16 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Writes the <paramref name="entry" /> to the console using the given <paramref name="color" />.
+		///     Writes the <paramref name="message" /> to the console using the given <paramref name="color" />.
 		/// </summary>
-		/// <param name="color">The color that should be used to write <paramref name="entry" /> to the console.</param>
-		/// <param name="entry">The entry that should be written to the console.</param>
-		private static void WriteToConsole(ConsoleColor color, LogEntry entry)
+		/// <param name="color">The color that should be used to write <paramref name="message" /> to the console.</param>
+		/// <param name="message">The message that should be written to the console.</param>
+		private static void WriteToConsole(ConsoleColor color, string message)
 		{
 			var currentColor = Console.ForegroundColor;
 
 			Console.ForegroundColor = color;
-			Console.WriteLine(entry.Message);
+			Console.WriteLine(message);
 			Console.ForegroundColor = currentColor;
 		}
 	}
