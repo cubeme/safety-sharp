@@ -23,7 +23,7 @@
 namespace Elbtunnel
 {
 	using System;
-	using System.ComponentModel;
+	using SafetySharp.Modeling;
 
 	public class LightBarrier : Component
 	{
@@ -33,13 +33,13 @@ namespace Elbtunnel
 		}
 	}
 
-	//public enum MyEnum:short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF 
-	//}
+	public enum MyEnum : short
+	{
+		ValueA,
+		ValueB,
+		ValueC = 10,
+		ValueCQ = 104,
+		ValueCQ2 = ValueCQ + 1,
+		ValueCF
+	}
 }

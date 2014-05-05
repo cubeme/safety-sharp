@@ -23,24 +23,20 @@
 namespace SafetySharp.Compiler
 {
 	using System;
-	using System.IO;
 	using System.Linq;
-	using System.Threading;
 	using CommandLine;
-	using CSharp.Diagnostics;
-	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Microsoft.CodeAnalysis.Diagnostics;
-	using Microsoft.CodeAnalysis.Emit;
-	using Microsoft.CodeAnalysis.MSBuild;
 	using Utilities;
 
 	/// <summary>
 	///     Represents the entry point to the compiler and sets up all necessary state.
 	/// </summary>
-	internal static class Program
+	internal static class SafetySharpCompiler
 	{
+		/// <summary>
+		///     Gets the command line arguments that have been used to invoke the compiler.
+		/// </summary>
+		internal static CompilationArguments Arguments { get; private set; }
+
 		/// <summary>
 		///     The entry point to the compiler.
 		/// </summary>
@@ -48,6 +44,25 @@ namespace SafetySharp.Compiler
 		private static int Main(string[] args)
 		{
 			PrintToConsole();
+
+			Arguments = new CompilationArguments();
+			using (var parser = new Parser(c => c.HelpWriter = null))
+			{
+				// Check the arguments for '--help' or '-h' as the command line parser library handles help in a strange
+				// way. If so, output the help screen and successfully terminate the application.
+				if (args.Any(arg => arg == "--help" || arg == "-h"))
+				{
+					Log.Info("{0}", Arguments.GenerateHelpMessage());
+					return 0;
+				}
+
+				// If there was an error parsing the command line, show the help screen and terminate the application.
+				if (!parser.ParseArguments(args, Arguments))
+				{
+					Log.Info("{0}", Arguments.GenerateHelpMessage());
+					Log.Die("Invalid command line arguments.");
+				}
+			}
 
 			Log.Info("");
 
@@ -58,88 +73,70 @@ namespace SafetySharp.Compiler
 			Log.Info("This is free software. You may redistribute copies of it under the terms of");
 			Log.Info("the MIT license (see http://opensource.org/licenses/MIT).");
 
-			var arguments = new CompilerArguments();
-			using (var parser = new Parser(c => c.HelpWriter = null))
-			{
-				// Check the arguments for '--help' or '-h' as the command line parser library handles help in a strange
-				// way. If so, output the help screen and successfully terminate the application.
-				if (args.Any(arg => arg == "--help" || arg == "-h"))
-				{
-					Log.Info("{0}", arguments.GenerateHelpMessage());
-					return -1;
-				}
+			Log.Info("");
 
-				// If there was an error parsing the command line, show the help screen and terminate the application.
-				if (!parser.ParseArguments(args, arguments))
-				{
-					Log.Info("{0}", arguments.GenerateHelpMessage());
-					Log.Die("Invalid command line arguments.");
-				}
-
-				// Otherwise, we can start the compilation process.
-				Compile(arguments);
-			}
-
-			return 0;
+			// Otherwise, we can start the compilation process.
+			var project = new SafetySharpProject();
+			return project.Compile();
 		}
 
-		private static void Compile(CompilerArguments arguments)
+		private static void Compile(CompilationArguments arguments)
 		{
-			var workspace = MSBuildWorkspace.Create();
-			var project = workspace.OpenProjectAsync(arguments.ProjectFile).Result;
+			//var workspace = MSBuildWorkspace.Create();
+			//var project = workspace.OpenProjectAsync(arguments.ProjectFile).Result;
 
-			var doc = project.Documents.First();
-			var root = doc.GetSyntaxRootAsync().Result;
-			var returnStatement = root
-				.DescendantNodes().OfType<ReturnStatementSyntax>()
-				.First();
+			//var doc = project.Documents.First();
+			//var root = doc.GetSyntaxRootAsync().Result;
+			//var returnStatement = root
+			//	.DescendantNodes().OfType<ReturnStatementSyntax>()
+			//	.First();
 
-			var comp = project.GetCompilationAsync().Result;
-			var d = AnalyzerDriver.GetDiagnostics(comp, CSharpAnalyzer.GetAnalyzers(), new CancellationToken());
+			//var comp = project.GetCompilationAsync().Result;
+			//var d = AnalyzerDriver.GetDiagnostics(comp, CSharpAnalyzer.GetAnalyzers(), new CancellationToken());
 
-			foreach (var di in d)
-				Log.Info("{0}", di);
+			//foreach (var di in d)
+			//	Log.Info("{0}", di);
 
-			var newReturn =
-				SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression,
-																			  SyntaxFactory.Literal(SyntaxFactory.TriviaList(
-																															 SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
-			var newRoot = root.ReplaceNode(returnStatement, newReturn);
-			//doc = doc.WithSyntaxRoot(newRoot);
-			//project = project.RemoveDocument(doc.Id);
-			//project = project.AddDocument(doc.Name, newRoot.GetText());
+			//var newReturn =
+			//	SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression,
+			//																  SyntaxFactory.Literal(SyntaxFactory.TriviaList(
+			//																												 SyntaxFactory.Space), "117", 117, SyntaxFactory.TriviaList())));
+			//var newRoot = root.ReplaceNode(returnStatement, newReturn);
+			////doc = doc.WithSyntaxRoot(newRoot);
+			////project = project.RemoveDocument(doc.Id);
+			////project = project.AddDocument(doc.Name, newRoot.GetText());
 
-			var solution = workspace.CurrentSolution;
-			solution = solution.WithDocumentText(doc.Id, newRoot.GetText());
-			project = solution.Projects.Skip(1).First();
+			//var solution = workspace.CurrentSolution;
+			//solution = solution.WithDocumentText(doc.Id, newRoot.GetText());
+			//project = solution.Projects.Skip(1).First();
 
-			comp = project.GetCompilationAsync().Result;
+			//comp = project.GetCompilationAsync().Result;
 
-			Execute(comp, project.OutputFilePath);
+			//Execute(comp, project.OutputFilePath);
 		}
 
-		private static void Execute(Compilation comp, string path)
-		{
-			//var output = new StringBuilder();
-			EmitResult emitResult = null;
+		//private static void Execute(Compilation comp, string path)
+		//{
+		//	//var output = new StringBuilder();
+		//	EmitResult emitResult = null;
 
-			using (var ilStream = new FileStream(path, FileMode.OpenOrCreate))
-			{
-				// Emit IL, PDB and xml documentation comments for the compilation to disk.
-				emitResult = comp.Emit(ilStream);
-			}
+		//	using (var ilStream = new FileStream(path, FileMode.OpenOrCreate))
+		//	{
+		//		// Emit IL, PDB and xml documentation comments for the compilation to disk.
+		//		emitResult = comp.Emit(ilStream);
+		//	}
 
-			if (!emitResult.Success)
-			{
-				//output.AppendLine("Errors:");
-				foreach (var diag in emitResult.Diagnostics)
-				{
-					Log.Error("{0}", diag);
-				}
-			}
+		//	if (!emitResult.Success)
+		//	{
+		//		//output.AppendLine("Errors:");
+		//		foreach (var diag in emitResult.Diagnostics)
+		//		{
+		//			Log.Error("{0}", diag);
+		//		}
+		//	}
 
-			//return output.ToString();
-		}
+		//	//return output.ToString();
+		//}
 
 		/// <summary>
 		///     Wires up the <see cref="Log.Logged" /> event to write all logged messages to the console.
@@ -151,10 +148,12 @@ namespace SafetySharp.Compiler
 				switch (entry.LogType)
 				{
 					case LogType.Debug:
-						WriteToConsole(ConsoleColor.Magenta, entry);
+						if (!Arguments.Silent)
+							WriteToConsole(ConsoleColor.Magenta, entry);
 						break;
 					case LogType.Info:
-						WriteToConsole(ConsoleColor.White, entry);
+						if (!Arguments.Silent)
+							WriteToConsole(ConsoleColor.White, entry);
 						break;
 					case LogType.Warning:
 						WriteToConsole(ConsoleColor.Yellow, entry);
@@ -173,7 +172,7 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Writes the <paramref name="entry" /> to the console using the given font <paramref name="color" />.
+		///     Writes the <paramref name="entry" /> to the console using the given <paramref name="color" />.
 		/// </summary>
 		/// <param name="color">The color that should be used to write <paramref name="entry" /> to the console.</param>
 		/// <param name="entry">The entry that should be written to the console.</param>

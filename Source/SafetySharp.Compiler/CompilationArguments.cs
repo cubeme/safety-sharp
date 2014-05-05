@@ -29,13 +29,19 @@ namespace SafetySharp.Compiler
 	/// <summary>
 	///     Provides access to the command line arguments that have been provided to the compiler.
 	/// </summary>
-	internal class CompilerArguments
+	internal class CompilationArguments
 	{
 		/// <summary>
 		///     Gets or sets the path to the C# project file that should be compiled.
 		/// </summary>
 		[Option('p', "project", Required = true, HelpText = "The path to the C# project file that should be compiled.")]
 		public string ProjectFile { get; set; }
+
+		/// <summary>
+		///     Gets or sets a value indicating whether all compiler output should be suppressed.
+		/// </summary>
+		[Option('s', "silent", Required = false, HelpText = "Suppresses all compiler output except for errors and warnings.")]
+		public bool Silent { get; set; }
 
 		/// <summary>
 		///     Generates a help message about the correct usage of the compiler's command line arguments.
