@@ -80,11 +80,7 @@ namespace SafetySharp.CSharp.Transformation
 
 					if (methodSymbol != null)
 					{
-						var compareTarget = methodSymbol;
-						if (methodSymbol.OriginalDefinition != null)
-							compareTarget = methodSymbol.OriginalDefinition;
-
-						if (compareTarget.Equals(_semanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: true)))
+						if (_semanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: true).Equals(methodSymbol.OriginalDefinition))
 						{
 							var assignmentTarget = (Expression)Visit(arguments[0].Expression);
 							var expressions = arguments.Skip(1).Select(argument => (Expression)Visit(argument.Expression));

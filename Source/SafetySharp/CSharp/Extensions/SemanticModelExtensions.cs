@@ -33,13 +33,13 @@ namespace SafetySharp.CSharp.Extensions
 	/// <summary>
 	///     Provides extension methods for working with <see cref="SemanticModel" /> instances.
 	/// </summary>
-	internal static class SemanticModelExtensions
+	public static class SemanticModelExtensions
 	{
 		/// <summary>
 		///     Gets the components declared within the context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model containing the declared components.</param>
-		internal static IEnumerable<ClassDeclarationSyntax> GetDeclaredComponents(this SemanticModel semanticModel)
+		public static IEnumerable<ClassDeclarationSyntax> GetDeclaredComponents(this SemanticModel semanticModel)
 		{
 			Argument.NotNull(semanticModel, () => semanticModel);
 

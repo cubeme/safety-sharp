@@ -25,8 +25,6 @@ namespace Tests.CSharp.Diagnostics
 	using System;
 	using System.Linq;
 	using System.Threading;
-	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using SafetySharp.CSharp.Diagnostics;
 
@@ -35,15 +33,12 @@ namespace Tests.CSharp.Diagnostics
 	{
 		private readonly T _analyzer = new T();
 
-		protected bool Validate(string declaration)
+		protected bool Validate(string csharpCode)
 		{
-			var parsedDeclaration = CSharpSyntaxTree.ParseText(declaration);
-			var compilation = CSharpCompilation.Create(typeof(T).FullName + "Test")
-											   .AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
-											   .AddReferences(new MetadataFileReference(typeof(T).Assembly.Location))
-											   .AddSyntaxTrees(parsedDeclaration);
+			var compilation = new TestCompilation(csharpCode);
 
-			return !AnalyzerDriver.GetDiagnostics(compilation, new IDiagnosticAnalyzer[] { _analyzer }, new CancellationToken()).Any();
+			var analyzers = new IDiagnosticAnalyzer[] { _analyzer };
+			return !AnalyzerDriver.GetDiagnostics(compilation.Compilation, analyzers, new CancellationToken()).Any();
 		}
 	}
 }

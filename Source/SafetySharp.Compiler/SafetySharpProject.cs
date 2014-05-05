@@ -28,6 +28,7 @@ namespace SafetySharp.Compiler
 	using System.Threading;
 	using CSharp.Diagnostics;
 	using CSharp.Normalization;
+	using CSharp.Runtime;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.Emit;
@@ -115,6 +116,8 @@ namespace SafetySharp.Compiler
 
 			foreach (var normalizer in CSharpNormalizer.GetNormalizers())
 				_compilation = normalizer.Normalize(_compilation);
+
+			_compilation = ModelingAssembly.GenerateImplementingClass(_compilation);
 		}
 
 		/// <summary>

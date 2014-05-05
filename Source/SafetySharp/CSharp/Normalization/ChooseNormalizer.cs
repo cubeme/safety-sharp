@@ -46,11 +46,7 @@ namespace SafetySharp.CSharp.Normalization
 			var methodSymbol = (IMethodSymbol)SemanticModel.GetSymbolInfo(invocation).Symbol;
 			Assert.NotNull(methodSymbol, "Unable to determine method symbol of invocation '{0}'.", invocation);
 
-			var compareTarget = methodSymbol;
-			if (methodSymbol.OriginalDefinition != null)
-				compareTarget = methodSymbol.OriginalDefinition;
-
-			if (!compareTarget.Equals(SemanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: false)))
+			if (!SemanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: false).Equals(methodSymbol.OriginalDefinition))
 				return node;
 
 			// TODO: What if node.Left is not a valid expression for an out parameter?
@@ -65,11 +61,7 @@ namespace SafetySharp.CSharp.Normalization
 			var methodSymbol = (IMethodSymbol)SemanticModel.GetSymbolInfo(node).Symbol;
 			Assert.NotNull(methodSymbol, "Unable to determine method symbol of invocation '{0}'.", node);
 
-			var compareTarget = methodSymbol;
-			if (methodSymbol.OriginalDefinition != null)
-				compareTarget = methodSymbol.OriginalDefinition;
-
-			if (compareTarget.Equals(SemanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: false)))
+			if (SemanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: false).Equals(methodSymbol.OriginalDefinition))
 				Assert.NotReached("Unsupported use of Choose function.");
 
 			return base.VisitInvocationExpression(node);

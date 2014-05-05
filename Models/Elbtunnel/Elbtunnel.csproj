@@ -30,7 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-	<Reference Include="SafetySharp.Modeling, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="SafetySharp.Modeling, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Binaries\$(Configuration)\SafetySharp.Modeling.dll</HintPath>
     </Reference>

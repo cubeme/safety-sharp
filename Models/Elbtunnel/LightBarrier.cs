@@ -40,8 +40,6 @@ namespace Elbtunnel
 		protected override void Update()
 		{
 			_value = Choose(true, false);
-			if (Choose(true, false))
-				_value = true;
 		}
 	}
 
