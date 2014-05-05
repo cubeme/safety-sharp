@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Extensions
 	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -33,7 +34,7 @@ namespace SafetySharp.CSharp.Extensions
 	internal static class ClassDeclarationExtensions
 	{
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is a runtime component declaration.
+		///     Checks whether <paramref name="classDeclaration" /> is derived from <see cref="Component"/>.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
