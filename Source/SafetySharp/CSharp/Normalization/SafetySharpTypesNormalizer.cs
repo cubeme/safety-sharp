@@ -20,48 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
-namespace Elbtunnel
+namespace SafetySharp.CSharp.Normalization
 {
 	using System;
-	using SafetySharp.Modeling;
-
-	public class LightBarrier : Component
-	{
-		private int Do()
-		{
-			return 1;
-		}
-	}
+	using Extensions;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 	/// <summary>
-	///     This is a great interface.
+	///     Removes all type declarations that are irrelevant for Safety Sharp models.
 	/// </summary>
-	internal interface MyInterface
+	public class SafetySharpTypesNormalizer : CSharpNormalizer
 	{
-	}
-
-	internal class BooleanComponent : Component
-	{
-		private bool _value;
-
-		protected override void Update()
+		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
 		{
-			_value = Choose(true, false);
+			if (node.IsComponentDeclaration(SemanticModel))
+				return node;
+
+			return null;
 		}
-	}
 
-	internal enum Test
-	{
-	}
+		public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
+		{
+			return null;
+		}
 
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
+		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
+		{
+			return null;
+		}
+
+		public override SyntaxNode VisitEnumDeclaration(EnumDeclarationSyntax node)
+		{
+			return null;
+		}
+
+		public override SyntaxNode VisitDelegateDeclaration(DelegateDeclarationSyntax node)
+		{
+			return null;
+		}
+
+
+	}
 }

@@ -38,9 +38,9 @@ namespace SafetySharp.CSharp.Runtime
 	public abstract class ModelingAssembly
 	{
 		/// <summary>
-		///     Gets the source code for the components declared in the modeling assembly.
+		///     Gets the C# source code for the syntax trees containing the Safety Sharp models of the assembly.
 		/// </summary>
-		protected abstract IEnumerable<string> ComponentsSourceCode { get; }
+		protected abstract IEnumerable<string> SyntaxTrees { get; }
 
 		/// <summary>
 		///     Gets the compilation for the Safety Sharp types in the modeling assembly and all of its
@@ -55,7 +55,7 @@ namespace SafetySharp.CSharp.Runtime
 					.Create("ModelingAssembly")
 					.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
 					.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
-					.AddSyntaxTrees(ComponentsSourceCode.Select(component => SyntaxFactory.ParseSyntaxTree(component)));
+					.AddSyntaxTrees(SyntaxTrees.Select(syntaxTree => SyntaxFactory.ParseSyntaxTree(syntaxTree)));
 			}
 		}
 
@@ -76,7 +76,7 @@ namespace SafetySharp.CSharp.Runtime
 			writer.AppendLine("public class {0}{1:X} : {2}", typeof(ModelingAssembly).Name, prefix, typeof(ModelingAssembly).FullName);
 			writer.AppendBlockStatement(() =>
 			{
-				writer.AppendLine("protected override IEnumerable<string> ComponentsSourceCode");
+				writer.AppendLine("protected override IEnumerable<string> SyntaxTrees");
 				writer.AppendBlockStatement(() =>
 				{
 					writer.AppendLine("get");
@@ -84,7 +84,7 @@ namespace SafetySharp.CSharp.Runtime
 					{
 						writer.AppendLine("return new [] {{");
 						writer.AppendSeparated(
-							values: compilation.SyntaxTrees.SelectMany(syntaxTree => compilation.GetSemanticModel(syntaxTree).GetDeclaredComponents()),
+							values: compilation.SyntaxTrees.Where(syntaxTree => compilation.GetSemanticModel(syntaxTree).GetDeclaredComponents().Any()),
 							separator: ",",
 							content: component => writer.Append("@\"{0}\"", component));
 						writer.AppendLine("}};");

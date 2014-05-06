@@ -20,48 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
-namespace Elbtunnel
+namespace Tests.CSharp.Normalization
 {
 	using System;
-	using SafetySharp.Modeling;
+	using System.Linq;
+	using Microsoft.CodeAnalysis;
+	using SafetySharp.CSharp.Normalization;
 
-	public class LightBarrier : Component
+	internal class CSharpNormalizerTests<TNormalizer>
+		where TNormalizer : CSharpNormalizer, new()
 	{
-		private int Do()
+		protected static SyntaxNode Normalize(string csharpCode)
 		{
-			return 1;
+			var compilation = new TestCompilation(csharpCode);
+
+			var normalizer = new TNormalizer();
+			return normalizer.Normalize(compilation.Compilation).SyntaxTrees.Single().GetRoot();
 		}
 	}
-
-	/// <summary>
-	///     This is a great interface.
-	/// </summary>
-	internal interface MyInterface
-	{
-	}
-
-	internal class BooleanComponent : Component
-	{
-		private bool _value;
-
-		protected override void Update()
-		{
-			_value = Choose(true, false);
-		}
-	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
 }

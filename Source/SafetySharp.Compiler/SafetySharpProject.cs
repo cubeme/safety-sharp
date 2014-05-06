@@ -114,9 +114,7 @@ namespace SafetySharp.Compiler
 			var safetySharpAssembly = new MetadataFileReference(typeof(Component).Assembly.Location);
 			_compilation = _compilation.ReplaceReference(_modelingAssembly, safetySharpAssembly);
 
-			foreach (var normalizer in CSharpNormalizer.GetNormalizers())
-				_compilation = normalizer.Normalize(_compilation);
-
+			_compilation = CSharpNormalizer.ApplyNormalizers(_compilation);
 			_compilation = ModelingAssembly.GenerateImplementingClass(_compilation);
 		}
 

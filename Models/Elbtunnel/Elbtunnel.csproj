@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="LightBarrier.cs">
     </Compile>
+    <Compile Include="MainControl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

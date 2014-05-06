@@ -19,49 +19,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
-namespace Elbtunnel
+namespace SafetySharp.CSharp.Extensions
 {
-	using System;
-	using SafetySharp.Modeling;
-
-	public class LightBarrier : Component
-	{
-		private int Do()
-		{
-			return 1;
-		}
-	}
+	using Microsoft.CodeAnalysis;
 
 	/// <summary>
-	///     This is a great interface.
+	///     Provides extension methods for working with <see cref="SyntaxTree" /> instances.
 	/// </summary>
-	internal interface MyInterface
+	internal class SyntaxTreeExtensions
 	{
+
 	}
-
-	internal class BooleanComponent : Component
-	{
-		private bool _value;
-
-		protected override void Update()
-		{
-			_value = Choose(true, false);
-		}
-	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
 }

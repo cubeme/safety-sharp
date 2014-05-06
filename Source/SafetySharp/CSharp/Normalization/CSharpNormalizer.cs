@@ -23,10 +23,9 @@
 namespace SafetySharp.CSharp.Normalization
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Utilities;
 
 	/// <summary>
 	///     A base class for C# normalizers that normalize certain C# features to equivalent ones that are easier to transform to
@@ -40,7 +39,7 @@ namespace SafetySharp.CSharp.Normalization
 		protected SemanticModel SemanticModel { get; private set; }
 
 		/// <summary>
-		///     Normalizes the C# compilation.
+		///     Normalizes the C# code contained in <paramref name="compilation." />
 		/// </summary>
 		/// <param name="compilation">The C# compilation that should be normalized.</param>
 		public Compilation Normalize(Compilation compilation)
@@ -59,16 +58,30 @@ namespace SafetySharp.CSharp.Normalization
 		}
 
 		/// <summary>
-		///     Gets all C# code normalizers defined by Safety Sharp.
+		///     Applies all C# code normalizers to the C# <paramref name="compilation" />
 		/// </summary>
-		public static IEnumerable<CSharpNormalizer> GetNormalizers()
+		/// <param name="compilation">The C# compilation that should be normalized.</param>
+		public static Compilation ApplyNormalizers(Compilation compilation)
 		{
-			return typeof(CSharpNormalizer)
-				.Assembly
-				.GetTypes()
-				.Where(t => t.IsClass && !t.IsAbstract && typeof(CSharpNormalizer).IsAssignableFrom(t))
-				.Select(Activator.CreateInstance)
-				.Cast<CSharpNormalizer>();
+			Argument.NotNull(compilation, () => compilation);
+
+			compilation = ApplyNormalizer<SafetySharpTypesNormalizer>(compilation);
+			compilation = ApplyNormalizer<TriviaNormalizer>(compilation);
+			compilation = ApplyNormalizer<ChooseNormalizer>(compilation);
+
+			return compilation;
+		}
+
+		/// <summary>
+		///     Applies the normalizer of type <typeparamref name="TNormalizer" /> to the C# <paramref name="compilation" />.
+		/// </summary>
+		/// <typeparam name="TNormalizer">The type of the normalizer that should be applied.</typeparam>
+		/// <param name="compilation">The C# compilation that should be normalized.</param>
+		private static Compilation ApplyNormalizer<TNormalizer>(Compilation compilation)
+			where TNormalizer : CSharpNormalizer, new()
+		{
+			var normalizer = new TNormalizer();
+			return normalizer.Normalize(compilation);
 		}
 	}
 }
