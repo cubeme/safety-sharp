@@ -20,19 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp.Runtime
 {
 	using System;
+	using Metamodel;
+	using Microsoft.CodeAnalysis;
+	using Modeling;
 
-	public class Component
+	internal class ModelTransformation
 	{
-		public static T Choose<T>(params T[] values)
+		//private readonly Compilation _compilation;
+
+		public ModelTransformation()
 		{
-			return values[0];
+			//_compilation = ModelingAssemblyMetadata.GetCompilationFromMetadata();
 		}
 
-		protected virtual void Update()
+		public Model Transform(Component component)
 		{
+			return null;
 		}
 	}
 }

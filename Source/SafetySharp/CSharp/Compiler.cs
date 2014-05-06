@@ -20,30 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Compiler
+namespace SafetySharp.CSharp
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
-	using CSharp.Diagnostics;
-	using CSharp.Normalization;
-	using CSharp.Runtime;
+	using Diagnostics;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.Composition;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.Emit;
 	using Microsoft.CodeAnalysis.MSBuild;
 	using Modeling;
+	using Normalization;
 	using Utilities;
 
 	/// <summary>
-	///     Represents the Safety Sharp project that is compiled.
+	///     The Safety Sharp compiler that compiles C# code into a modeling assembly.
 	/// </summary>
-	internal class SafetySharpProject
+	public class Compiler
 	{
+		/// <summary>
+		///     The prefix that is used for all diagnostic identifiers.
+		/// </summary>
+		internal const string DiagnosticsPrefix = "SS";
+
+		/// <summary>
+		///     The category that is used for all diagnostics.
+		/// </summary>
+		internal const string DiagnosticsCategory = "Safety Sharp";
+
+		/// <summary>
+		///     The version string of the compiler.
+		/// </summary>
+		internal const string Version = "0.0.1-beta";
+
 		/// <summary>
 		///     The file name of the SafetySharp.Modeling assembly.
 		/// </summary>
@@ -52,7 +64,7 @@ namespace SafetySharp.Compiler
 		/// <summary>
 		///     The path to the emitted assembly file of the project.
 		/// </summary>
-		private readonly string _assemblyPath;
+		private string _assemblyPath;
 
 		/// <summary>
 		///     The compilation for the project.
@@ -65,32 +77,48 @@ namespace SafetySharp.Compiler
 		private PortableExecutableReference _modelingAssembly;
 
 		/// <summary>
-		///     Initializes a new instance of the <see cref="SafetySharpProject" /> type.
+		///     The path to the C# project file that is being compiled.
 		/// </summary>
-		public SafetySharpProject()
+		private string _projectFile;
+
+		/// <summary>
+		///     Compiles the C# modeling project.
+		/// </summary>
+		/// <param name="projectFile">The path to the C# project file that should be compiled.</param>
+		/// <param name="configuration">The name of the project configuration that should be used for compilation.</param>
+		/// <param name="platform">The name of the project platform that should be the target of the compilation.</param>
+		public int Compile(string projectFile, string configuration, string platform)
 		{
+			Argument.NotNull(projectFile, () => projectFile);
+			Argument.NotNull(configuration, () => configuration);
+			Argument.NotNull(platform, () => platform);
+
+			if (!File.Exists(projectFile))
+				return LogError("0001", "Project file '{0}' could not be found.", projectFile);
+
+			if (String.IsNullOrWhiteSpace(configuration))
+				return LogError("0002", "Invalid project configuration: Configuration name cannot be the empty string.");
+
+			if (String.IsNullOrWhiteSpace(platform))
+				return LogError("0003", "Invalid compilation platform: Platform name cannot be the empty string.");
+
 			var msBuildProperties = new[]
 			{
-				new KeyValuePair<string, string>("Configuration", SafetySharpCompiler.Arguments.Configuration),
-				new KeyValuePair<string, string>("Platform", SafetySharpCompiler.Arguments.Platform),
+				new KeyValuePair<string, string>("Configuration", configuration),
+				new KeyValuePair<string, string>("Platform", platform)
 			};
 
 			var workspace = MSBuildWorkspace.Create(msBuildProperties);
-			var project = workspace.OpenProjectAsync(SafetySharpCompiler.Arguments.ProjectFile).Result;
+			var project = workspace.OpenProjectAsync(projectFile).Result;
 
+			_projectFile = projectFile;
 			_compilation = project.GetCompilationAsync().Result;
 			_assemblyPath = project.OutputFilePath;
-		}
 
-		/// <summary>
-		///     Compiles the project.
-		/// </summary>
-		public int Compile()
-		{
 			if (!Diagnose())
 				return -1;
 
-			Rewrite();
+			Normalize();
 			return Emit();
 		}
 
@@ -106,7 +134,7 @@ namespace SafetySharp.Compiler
 				.SingleOrDefault(reference => Path.GetFileName(reference.FullPath) == ModelingAssemblyFileName);
 
 			if (_modelingAssembly == null)
-				Log.Die("{0}: error: Assembly '{1}' is not referenced.", SafetySharpCompiler.Arguments.ProjectFile, ModelingAssemblyFileName);
+				Log.Die("{0}: error: Assembly '{1}' is not referenced.", _projectFile, ModelingAssemblyFileName);
 
 			var diagnostics = AnalyzerDriver.GetDiagnostics(_compilation, CSharpAnalyzer.GetAnalyzers(), new CancellationToken()).ToArray();
 			foreach (var diagnostic in diagnostics)
@@ -116,15 +144,32 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Rewrites the Safety Sharp code to improve the debugging and simulation experiences.
+		///     Applies of series of compile-time Safety Sharp modeling code normalizations.
 		/// </summary>
-		private void Rewrite()
+		private void Normalize()
 		{
+			// We swap out the referenced SafetySharp.Modeling assembly with the Safety Sharp core assembly behind the
+			// modelers back. This enables a couple of C# normalizations required for debugging, simulation and model
+			// transformations while only surfacing a minimal and convenient API for model creation.
 			var safetySharpAssembly = new MetadataFileReference(typeof(Component).Assembly.Location);
 			_compilation = _compilation.ReplaceReference(_modelingAssembly, safetySharpAssembly);
 
-			_compilation = CSharpNormalizer.ApplyNormalizers(_compilation);
-			_compilation = ModelingAssembly.GenerateImplementingClass(_compilation);
+			// Now that we've replaced SafetySharp.Modeling, we can safely perform the compile-time normalizations of the C# modeling code.
+			ApplyNormalizer<TypesNormalizer>();
+			ApplyNormalizer<TriviaNormalizer>();
+			ApplyNormalizer<ChooseNormalizer>();
+			ApplyNormalizer<MetadataNormalizer>();
+		}
+
+		/// <summary>
+		///     Applies the normalizer of type <typeparamref name="TNormalizer" /> to the current C# compilation.
+		/// </summary>
+		/// <typeparam name="TNormalizer">The type of the normalizer that should be applied.</typeparam>
+		private void ApplyNormalizer<TNormalizer>()
+			where TNormalizer : CSharpNormalizer, new()
+		{
+			var normalizer = new TNormalizer();
+			_compilation = normalizer.Normalize(_compilation);
 		}
 
 		/// <summary>
@@ -169,6 +214,26 @@ namespace SafetySharp.Compiler
 					Assert.NotReached("Unknown C# diagnostic severity.");
 					break;
 			}
+		}
+
+		/// <summary>
+		///     Instantiates a <see cref="Diagnostic" /> for the error and logs it.
+		/// </summary>
+		/// <param name="identifier">The identifier of the diagnostic.</param>
+		/// <param name="message">The format message of the diagnostic.</param>
+		/// <param name="formatArgs">The format arguments that should be used to format <paramref name="message" />.</param>
+		[StringFormatMethod("message")]
+		private static int LogError(string identifier, string message, params object[] formatArgs)
+		{
+			LogDiagnostic(Diagnostic.Create(
+				id: DiagnosticsPrefix + identifier,
+				category: DiagnosticsCategory,
+				message: String.Format(message, formatArgs),
+				severity: DiagnosticSeverity.Error,
+				warningLevel: 0,
+				isWarningAsError: false));
+
+			return -1;
 		}
 	}
 }

@@ -31,7 +31,7 @@ namespace Tests.CSharp.Normalization
 	using SafetySharp.CSharp.Normalization;
 
 	[TestFixture]
-	internal class SafetySharpTypesNormalizerTests : CSharpNormalizerTests<SafetySharpTypesNormalizer>
+	internal class TypesNormalizerTests : CSharpNormalizerTests<TypesNormalizer>
 	{
 		private static void Test<T>(string csharpCode, Func<T, string> identifier, bool shouldContain, string[] typeNames)
 			where T : MemberDeclarationSyntax

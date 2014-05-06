@@ -30,7 +30,7 @@ namespace SafetySharp.CSharp.Normalization
 	/// <summary>
 	///     Removes all unnecessary trivia from the C# code.
 	/// </summary>
-	public class TriviaNormalizer : CSharpNormalizer
+	internal class TriviaNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Replaces the trivia by a single space if it is any other whitespace trivia or a comment.

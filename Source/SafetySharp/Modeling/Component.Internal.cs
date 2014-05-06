@@ -20,17 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace SafetySharp.Modeling
+{
+	using System;
 
-[assembly: AssemblyTitle("SafetySharp Base Library")]
-[assembly: AssemblyDescription("SafetySharp Base Library")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("SafetySharp")]
-[assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("Tests")]
+	public partial class Component
+	{
+		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
+		{
+			result = default(T);
+		}
+
+		protected static void ChooseFromRange(out int result, int inclusiveLowerBound, int inclusiveUpperBound)
+		{
+			result = 0;
+		}
+
+		protected static void ChooseFromRange(out decimal result, decimal inclusiveLowerBound, decimal inclusiveUpperBound)
+		{
+			result = 0;
+		}
+	}
+}

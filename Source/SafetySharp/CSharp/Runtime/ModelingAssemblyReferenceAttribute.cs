@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -20,43 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.CSharp.Runtime
 {
 	using System;
-	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Utilities;
 
 	/// <summary>
-	///     A base class for C# normalizers that normalize certain C# features to equivalent ones that are easier to transform to
-	///     the metamodel.
+	///     Provides metadata about a reference of a Safety Sharp modeling assembly to another Safety Sharp modeling assembly.
 	/// </summary>
-	internal abstract class CSharpNormalizer : CSharpSyntaxRewriter
+	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
+	[UsedImplicitly]
+	public class ModelingAssemblyReferenceAttribute : Attribute
 	{
 		/// <summary>
-		///     The semantic model that can be used for semantic analysis during normalization.
+		///     Initializes a new instance of the <see cref="ModelingAssemblyReferenceAttribute" /> type.
 		/// </summary>
-		protected SemanticModel SemanticModel { get; private set; }
-
-		/// <summary>
-		///     Normalizes the C# code contained in <paramref name="compilation." />
-		/// </summary>
-		/// <param name="compilation">The C# compilation that should be normalized.</param>
-		public virtual Compilation Normalize(Compilation compilation)
+		/// <param name="assemblyName">The fully qualified name of the referenced modeling assembly.</param>
+		public ModelingAssemblyReferenceAttribute(string assemblyName)
 		{
-			foreach (var syntaxTree in compilation.SyntaxTrees)
-			{
-				SemanticModel = compilation.GetSemanticModel(syntaxTree);
-
-				var root = syntaxTree.GetRoot();
-				var normalizedRoot = Visit(root);
-
-				compilation = compilation.ReplaceSyntaxTree(syntaxTree, SyntaxFactory.SyntaxTree(normalizedRoot, syntaxTree.FilePath));
-			}
-
-			return compilation;
+			Argument.NotNull(assemblyName, () => assemblyName);
+			AssemblyName = assemblyName;
 		}
 
-	
+		/// <summary>
+		///     Gets the fully qualified name of the referenced modeling assembly.
+		/// </summary>
+		internal string AssemblyName { get; private set; }
 	}
 }

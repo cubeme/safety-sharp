@@ -75,9 +75,15 @@
     <Compile Include="CSharp\Extensions\TypeSymbolExtensions.cs" />
     <Compile Include="CSharp\Normalization\ChooseNormalizer.cs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.cs" />
-    <Compile Include="CSharp\Normalization\SafetySharpTypesNormalizer.cs" />
+    <Compile Include="CSharp\Normalization\MetadataNormalizer.cs" />
+    <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
     <Compile Include="CSharp\Normalization\TriviaNormalizer.cs" />
+    <Compile Include="CSharp\Runtime\ModelingCompilationUnitAttribute.cs" />
+    <Compile Include="CSharp\Runtime\ModelingAssemblyReferenceAttribute.cs" />
+    <Compile Include="CSharp\Runtime\ModelingAssemblyAttribute.cs" />
     <Compile Include="CSharp\Runtime\ModelingAssembly.cs" />
+    <Compile Include="CSharp\Runtime\ModelTransformation.cs" />
+    <Compile Include="CSharp\Compiler.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="Metamodel\Declarations\MethodDeclaration.cs" />
     <Compile Include="Metamodel\MetamodelReference.cs" />
@@ -91,6 +97,9 @@
     <Compile Include="Metamodel\Types\TypeSymbol.cs" />
     <Compile Include="Modelchecking\Promela\MetamodelToPromela.cs" />
     <Compile Include="Modeling\Component.cs" />
+    <Compile Include="Modeling\Component.Internal.cs" />
+    <Compile Include="Modeling\OverflowBehavior.cs" />
+    <Compile Include="Modeling\SpinModelChecker.cs" />
     <Compile Include="Utilities\Argument.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />

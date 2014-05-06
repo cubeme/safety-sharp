@@ -36,16 +36,6 @@ namespace SafetySharp.CSharp.Diagnostics
 	public abstract class CSharpAnalyzer : IDiagnosticAnalyzer
 	{
 		/// <summary>
-		///     The prefix that is used for all diagnostic identifiers.
-		/// </summary>
-		protected const string IdentifierPrefix = "SS";
-
-		/// <summary>
-		///     The category that is used for all diagnostics.
-		/// </summary>
-		private const string Category = "Safety Sharp";
-
-		/// <summary>
 		///     Gets the descriptor for the diagnostic emitted by the analyzer.
 		/// </summary>
 		protected DiagnosticDescriptor Descriptor { get; private set; }
@@ -104,10 +94,10 @@ namespace SafetySharp.CSharp.Diagnostics
 			Argument.NotNullOrWhitespace(description, () => description);
 			Argument.NotNullOrWhitespace(messageFormat, () => messageFormat);
 			Argument.InRange(severity, () => severity);
-			Argument.Satisfies(identifier.StartsWith(IdentifierPrefix), () => identifier,
-							   "Diagnostic identifier does not start with prefix '{0}'.", IdentifierPrefix);
+			Argument.Satisfies(identifier.StartsWith(Compiler.DiagnosticsPrefix), () => identifier,
+							   "Diagnostic identifier does not start with prefix '{0}'.", Compiler.DiagnosticsPrefix);
 
-			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Category, severity);
+			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Compiler.DiagnosticsCategory, severity);
 			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
 		}
 	}

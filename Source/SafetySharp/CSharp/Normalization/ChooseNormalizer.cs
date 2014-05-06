@@ -32,7 +32,7 @@ namespace SafetySharp.CSharp.Normalization
 	/// <summary>
 	///     Normalizes all usages of the nondeterministic selection methods.
 	/// </summary>
-	public class ChooseNormalizer : CSharpNormalizer
+	internal class ChooseNormalizer : CSharpNormalizer
 	{
 		public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax node)
 		{

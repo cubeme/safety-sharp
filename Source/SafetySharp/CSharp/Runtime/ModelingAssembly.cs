@@ -25,76 +25,96 @@ namespace SafetySharp.CSharp.Runtime
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using Extensions;
+	using System.Reflection;
 	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Provides metadata about Safety Sharp types in a Safety Sharp modeling assembly.
+	///     Represents a Safety Sharp modeling assembly.
 	/// </summary>
-	public abstract class ModelingAssembly
+	internal class ModelingAssembly
 	{
 		/// <summary>
-		///     Gets the C# source code for the syntax trees containing the Safety Sharp models of the assembly.
+		///     The C# assembly representing the modeling assembly.
 		/// </summary>
-		protected abstract IEnumerable<string> SyntaxTrees { get; }
+		private readonly Assembly _assembly;
 
 		/// <summary>
-		///     Gets the compilation for the Safety Sharp types in the modeling assembly and all of its
-		///     dependent modeling assemblies.
+		///     Initializes a new instance of the <see cref="ModelingAssembly" /> type.
 		/// </summary>
-		public Compilation Compilation
+		/// <param name="modelingAssembly">The C# assembly representing the modeling assembly.</param>
+		public ModelingAssembly(Assembly modelingAssembly)
+		{
+			Argument.NotNull(modelingAssembly, () => modelingAssembly);
+			_assembly = modelingAssembly;
+
+			var assemblyMetadata = modelingAssembly.GetCustomAttribute<ModelingAssemblyAttribute>();
+			Argument.Satisfies(assemblyMetadata != null, () => modelingAssembly, "Expected a Safety Sharp modeling assembly.");
+
+			CompilerVersion = assemblyMetadata.CompilerVersion;
+		}
+
+		/// <summary>
+		///     Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
+		/// </summary>
+		public string CompilerVersion { get; private set; }
+
+		/// <summary>
+		///     Gets the C# <see cref="Compilation" /> representing the source code of the modeling assembly and of all of its dependent
+		///     modeling assemblies.
+		/// </summary>
+		internal Compilation Compilation
 		{
 			get
 			{
-				// TODO: Include dependent modeling assemblies into the compilation
-				return CSharpCompilation
-					.Create("ModelingAssembly")
+				var compilation = CSharpCompilation
+					.Create("ModelingAssemblyMetadata")
 					.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
-					.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
-					.AddSyntaxTrees(SyntaxTrees.Select(syntaxTree => SyntaxFactory.ParseSyntaxTree(syntaxTree)));
+					.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location));
+
+				return AddCompilationUnits(compilation);
 			}
 		}
 
 		/// <summary>
-		///     Generates the <see cref="ModelingAssembly" /> implementing class for the given compilation.
+		///     Gets the modeling assemblies this modeling assembly depends on.
 		/// </summary>
-		/// <param name="compilation">The compilation the <see cref="ModelingAssembly" /> implementing class should be generated for.</param>
-		public static Compilation GenerateImplementingClass(Compilation compilation)
+		internal IEnumerable<ModelingAssembly> DependentAssemblies
 		{
-			Argument.NotNull(compilation, () => compilation);
-			var writer = new CodeWriter();
-
-			writer.AppendLine("using System;");
-			writer.AppendLine("using System.Collections.Generic;");
-			writer.AppendLine("using {0};", typeof(Component).Namespace);
-
-			var prefix = Guid.NewGuid().ToString().GetHashCode();
-			writer.AppendLine("public class {0}{1:X} : {2}", typeof(ModelingAssembly).Name, prefix, typeof(ModelingAssembly).FullName);
-			writer.AppendBlockStatement(() =>
+			get
 			{
-				writer.AppendLine("protected override IEnumerable<string> SyntaxTrees");
-				writer.AppendBlockStatement(() =>
-				{
-					writer.AppendLine("get");
-					writer.AppendBlockStatement(() =>
-					{
-						writer.AppendLine("return new [] {{");
-						writer.AppendSeparated(
-							values: compilation.SyntaxTrees.Where(syntaxTree => compilation.GetSemanticModel(syntaxTree).GetDeclaredComponents().Any()),
-							separator: ",",
-							content: component => writer.Append("@\"{0}\"", component.ToString().Trim()));
-						writer.AppendLine("}};");
-					});
-				});
-			});
+				return _assembly
+					.GetCustomAttributes<ModelingAssemblyReferenceAttribute>()
+					.Select(assembly => new ModelingAssembly(Assembly.Load(assembly.AssemblyName)));
+			}
+		}
 
-			var csharpCode = writer.ToString();
-			var parsedCode = SyntaxFactory.ParseSyntaxTree(csharpCode);
-			return compilation.AddSyntaxTrees(parsedCode);
+		/// <summary>
+		///     Gets the C# <see cref="SyntaxTree" />s of all compilation units of the modeling assembly.
+		/// </summary>
+		internal IEnumerable<SyntaxTree> CompilationUnits
+		{
+			get
+			{
+				return _assembly
+					.GetCustomAttributes<ModelingCompilationUnitAttribute>()
+					.Select(compilationUnit => compilationUnit.SyntaxTree);
+			}
+		}
+
+		/// <summary>
+		///     Adds the modeling assembly's compilation units and all compilation units of the assembly's dependent assemblies to the
+		///     <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the compilation units should be added to.</param>
+		private Compilation AddCompilationUnits(Compilation compilation)
+		{
+			foreach (var dependentAssembly in DependentAssemblies)
+				compilation = dependentAssembly.AddCompilationUnits(compilation);
+
+			return compilation.AddSyntaxTrees(CompilationUnits);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -23,40 +23,43 @@
 namespace SafetySharp.CSharp.Normalization
 {
 	using System;
+	using Extensions;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Utilities;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 	/// <summary>
-	///     A base class for C# normalizers that normalize certain C# features to equivalent ones that are easier to transform to
-	///     the metamodel.
+	///     Removes all type declarations that are irrelevant for Safety Sharp models.
 	/// </summary>
-	internal abstract class CSharpNormalizer : CSharpSyntaxRewriter
+	internal class TypesNormalizer : CSharpNormalizer
 	{
-		/// <summary>
-		///     The semantic model that can be used for semantic analysis during normalization.
-		/// </summary>
-		protected SemanticModel SemanticModel { get; private set; }
-
-		/// <summary>
-		///     Normalizes the C# code contained in <paramref name="compilation." />
-		/// </summary>
-		/// <param name="compilation">The C# compilation that should be normalized.</param>
-		public virtual Compilation Normalize(Compilation compilation)
+		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
 		{
-			foreach (var syntaxTree in compilation.SyntaxTrees)
-			{
-				SemanticModel = compilation.GetSemanticModel(syntaxTree);
+			if (node.IsComponentDeclaration(SemanticModel))
+				return node;
 
-				var root = syntaxTree.GetRoot();
-				var normalizedRoot = Visit(root);
-
-				compilation = compilation.ReplaceSyntaxTree(syntaxTree, SyntaxFactory.SyntaxTree(normalizedRoot, syntaxTree.FilePath));
-			}
-
-			return compilation;
+			return null;
 		}
 
-	
+		public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
+		{
+			return null;
+		}
+
+		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
+		{
+			return null;
+		}
+
+		public override SyntaxNode VisitEnumDeclaration(EnumDeclarationSyntax node)
+		{
+			return null;
+		}
+
+		public override SyntaxNode VisitDelegateDeclaration(DelegateDeclarationSyntax node)
+		{
+			return null;
+		}
+
+
 	}
 }

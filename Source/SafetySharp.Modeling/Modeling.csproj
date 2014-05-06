@@ -36,8 +36,15 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Component.cs" />
-    <Compile Include="OverflowBehavior.cs" />
+    <Compile Include="..\SafetySharp\Modeling\Component.cs">
+      <Link>Component.cs</Link>
+    </Compile>
+    <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
+      <Link>OverflowBehavior.cs</Link>
+    </Compile>
+    <Compile Include="..\SafetySharp\Modeling\SpinModelChecker.cs">
+      <Link>SpinModelChecker.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

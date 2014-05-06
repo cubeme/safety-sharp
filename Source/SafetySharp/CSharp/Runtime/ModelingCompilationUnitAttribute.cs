@@ -20,46 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.CSharp.Runtime
 {
 	using System;
-	using Extensions;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Utilities;
 
 	/// <summary>
-	///     Removes all type declarations that are irrelevant for Safety Sharp models.
+	///     Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
 	/// </summary>
-	public class SafetySharpTypesNormalizer : CSharpNormalizer
+	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
+	[UsedImplicitly]
+	public class ModelingCompilationUnitAttribute : Attribute
 	{
-		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
+		/// <summary>
+		///     Initializes a new instance of the <see cref="ModelingCompilationUnitAttribute" /> type.
+		/// </summary>
+		/// <param name="syntaxTree">The C# syntax tree representing the compilation unit.</param>
+		public ModelingCompilationUnitAttribute(string syntaxTree)
 		{
-			if (node.IsComponentDeclaration(SemanticModel))
-				return node;
-
-			return null;
+			Argument.NotNull(syntaxTree, () => syntaxTree);
+			SyntaxTree = SyntaxFactory.ParseSyntaxTree(syntaxTree);
 		}
 
-		public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
-		{
-			return null;
-		}
-
-		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
-		{
-			return null;
-		}
-
-		public override SyntaxNode VisitEnumDeclaration(EnumDeclarationSyntax node)
-		{
-			return null;
-		}
-
-		public override SyntaxNode VisitDelegateDeclaration(DelegateDeclarationSyntax node)
-		{
-			return null;
-		}
-
-
+		/// <summary>
+		///     Gets the syntax tree of the compilation unit.
+		/// </summary>
+		internal SyntaxTree SyntaxTree { get; private set; }
 	}
 }

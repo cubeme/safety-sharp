@@ -35,7 +35,7 @@ namespace SafetySharp.CSharp.Diagnostics
 	[ExportDiagnosticAnalyzer(DiagnosticIdentifier, LanguageNames.CSharp)]
 	internal class EnumUnderlyingTypeAnalyzer : SyntaxNodeAnalyzer<EnumDeclarationSyntax>
 	{
-		private const string DiagnosticIdentifier = IdentifierPrefix + "1001";
+		private const string DiagnosticIdentifier = Compiler.DiagnosticsPrefix + "1001";
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="EnumUnderlyingTypeAnalyzer" /> type.
