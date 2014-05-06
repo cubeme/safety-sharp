@@ -32,15 +32,27 @@ namespace SafetySharp.Compiler
 	internal class CompilationArguments
 	{
 		/// <summary>
+		///     Gets or sets the name of the configuration that should be used to compile the project.
+		/// </summary>
+		[Option("configuration", Required = true, HelpText = "The name of the configuration that should be used to compile the project.")]
+		public string Configuration { get; set; }
+
+		/// <summary>
+		///     Gets or sets the name of the platform that should be used to compile the project.
+		/// </summary>
+		[Option("platform", Required = true, HelpText = "The name of the platform that should be used to compile the project.")]
+		public string Platform { get; set; }
+
+		/// <summary>
 		///     Gets or sets the path to the C# project file that should be compiled.
 		/// </summary>
-		[Option('p', "project", Required = true, HelpText = "The path to the C# project file that should be compiled.")]
+		[Option("project", Required = true, HelpText = "The path to the C# project file that should be compiled.")]
 		public string ProjectFile { get; set; }
 
 		/// <summary>
 		///     Gets or sets a value indicating whether all compiler output should be suppressed.
 		/// </summary>
-		[Option('s', "silent", Required = false, HelpText = "Suppresses all compiler output except for errors and warnings.")]
+		[Option("silent", Required = false, HelpText = "Suppresses all compiler output except for errors and warnings.")]
 		public bool Silent { get; set; }
 
 		/// <summary>

@@ -23,6 +23,8 @@
 namespace SafetySharp.Compiler
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
@@ -30,6 +32,7 @@ namespace SafetySharp.Compiler
 	using CSharp.Normalization;
 	using CSharp.Runtime;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.Composition;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.Emit;
 	using Microsoft.CodeAnalysis.MSBuild;
@@ -66,7 +69,13 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		public SafetySharpProject()
 		{
-			var workspace = MSBuildWorkspace.Create();
+			var msBuildProperties = new[]
+			{
+				new KeyValuePair<string, string>("Configuration", SafetySharpCompiler.Arguments.Configuration),
+				new KeyValuePair<string, string>("Platform", SafetySharpCompiler.Arguments.Platform),
+			};
+
+			var workspace = MSBuildWorkspace.Create(msBuildProperties);
 			var project = workspace.OpenProjectAsync(SafetySharpCompiler.Arguments.ProjectFile).Result;
 
 			_compilation = project.GetCompilationAsync().Result;
