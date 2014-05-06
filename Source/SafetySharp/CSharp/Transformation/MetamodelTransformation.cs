@@ -92,8 +92,7 @@ namespace SafetySharp.CSharp.Transformation
 		{
 			var components = compilationUnit
 				.SyntaxRoot
-				.DescendantNodesAndSelf()
-				.OfType<ClassDeclarationSyntax>()
+				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
 				.Where(classDeclaration => classDeclaration.IsComponentDeclaration(compilationUnit.SemanticModel));
 
 			foreach (var component in components)

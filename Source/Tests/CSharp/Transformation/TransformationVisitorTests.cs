@@ -28,6 +28,7 @@ namespace Tests.CSharp.Transformation
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
+	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
 	using SafetySharp.Metamodel.Declarations;
@@ -77,7 +78,7 @@ class C : SafetySharp.Modeling.Component
 }";
 			var compilation = new TestCompilation(csharpCode);
 
-			var methodBody = compilation.SyntaxTree.GetRoot().DescendantNodes().OfType<BlockSyntax>().Single();
+			var methodBody = compilation.SyntaxTree.DescendantNodes<BlockSyntax>().Single();
 
 			var symbolMap = SymbolMap.Empty.AddSymbols(compilation.SemanticModel);
 			BoolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));

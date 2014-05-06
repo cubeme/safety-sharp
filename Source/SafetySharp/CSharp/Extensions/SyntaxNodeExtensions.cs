@@ -29,34 +29,33 @@ namespace SafetySharp.CSharp.Extensions
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for working with <see cref="SyntaxTree" /> instances.
+	///     Provides extension methods for working with <see cref="SyntaxNode" /> instances.
 	/// </summary>
-	internal static class SyntaxTreeExtensions
+	internal static class SyntaxNodeExtensions
 	{
 		/// <summary>
-		///     Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node of type <typeparamref name="T" />
-		///     in prefix document order.
+		///     Gets a list of descendant syntax nodes of type <typeparamref name="T" /> in prefix document order.
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
-		/// <param name="syntaxTree">The syntax tree whose descendents should be returned.</param>
-		internal static IEnumerable<T> DescendantNodes<T>(this SyntaxTree syntaxTree)
+		/// <param name="syntaxNode">The syntax node whose descendents should be returned.</param>
+		internal static IEnumerable<T> DescendantNodes<T>(this SyntaxNode syntaxNode)
 			where T : SyntaxNode
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
-			return syntaxTree.GetRoot().DescendantNodes().OfType<T>();
+			Argument.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.DescendantNodes().OfType<T>();
 		}
 
 		/// <summary>
-		///     Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node (including the root node) of type
-		///     <typeparamref name="T" /> in prefix document order.
+		///     Gets a list of descendant syntax nodes (including <paramref name="syntaxNode" />) of type <typeparamref name="T" /> in
+		///     prefix document order.
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
-		/// <param name="syntaxTree">The syntax tree whose descendents should be returned.</param>
-		internal static IEnumerable<T> DescendantNodesAndSelf<T>(this SyntaxTree syntaxTree)
+		/// <param name="syntaxNode">The syntax node whose descendents should be returned.</param>
+		internal static IEnumerable<T> DescendantNodesAndSelf<T>(this SyntaxNode syntaxNode)
 			where T : SyntaxNode
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
-			return syntaxTree.GetRoot().DescendantNodesAndSelf().OfType<T>();
+			Argument.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.DescendantNodesAndSelf().OfType<T>();
 		}
 	}
 }

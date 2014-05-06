@@ -45,9 +45,7 @@ namespace SafetySharp.CSharp.Extensions
 
 			return semanticModel
 				.SyntaxTree
-				.GetRoot()
-				.DescendantNodesAndSelf()
-				.OfType<ClassDeclarationSyntax>()
+				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
 				.Where(classDeclaration => classDeclaration.IsComponentDeclaration(semanticModel));
 		}
 

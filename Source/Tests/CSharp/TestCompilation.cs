@@ -84,8 +84,7 @@ namespace Tests.CSharp
 		internal ClassDeclarationSyntax FindClassDeclaration(string className)
 		{
 			var classes = SyntaxRoot
-				.DescendantNodesAndSelf()
-				.OfType<ClassDeclarationSyntax>()
+				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
 				.Select(classDeclaration => new
 				{
 					ClassDeclaration = classDeclaration,
@@ -116,8 +115,7 @@ namespace Tests.CSharp
 		internal MethodDeclarationSyntax FindMethodDeclaration(string className, string methodName)
 		{
 			var methods = FindClassDeclaration(className)
-				.DescendantNodesAndSelf()
-				.OfType<MethodDeclarationSyntax>()
+				.DescendantNodesAndSelf<MethodDeclarationSyntax>()
 				.Where(methodDeclaration => methodDeclaration.Identifier.ValueText == methodName)
 				.ToArray();
 
@@ -143,8 +141,7 @@ namespace Tests.CSharp
 		internal VariableDeclaratorSyntax FindFieldDeclaration(string className, string fieldName)
 		{
 			var fields = FindClassDeclaration(className)
-				.DescendantNodesAndSelf()
-				.OfType<FieldDeclarationSyntax>()
+				.DescendantNodesAndSelf<FieldDeclarationSyntax>()
 				.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
 				.Where(variableDeclaration => variableDeclaration.Identifier.ValueText == fieldName)
 				.ToArray();

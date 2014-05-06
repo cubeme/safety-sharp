@@ -25,54 +25,31 @@ namespace SafetySharp.CSharp.Normalization
 	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Utilities;
 
 	/// <summary>
-	///     Removes all unnecessary trivia from the C# code.
+	///     Removes all comment trivia from the C# code.
 	/// </summary>
-	public class TriviaNormalizer : CSharpNormalizer
+	public class CommentsNormalizer : CSharpNormalizer
 	{
 		/// <summary>
-		///     Replaces the trivia by a single space if it is any other whitespace trivia or a comment.
+		///     Replaces all comment trivia by a single space.
 		/// </summary>
 		/// <param name="trivia">The trivia that should be replaced.</param>
 		/// <remarks>
-		///     Obviously, this normalizer is not required for correctness. For heavily documented models, however, it decreases
+		///     Obviously, this normalizer is not required for correctness. For heavily commented models, however, it decreases
 		///     the size of the generated assembly and might somewhat speed up parsing at runtime.
 		/// </remarks>
 		public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
 		{
 			switch (trivia.CSharpKind())
 			{
-				case SyntaxKind.EndOfLineTrivia:
 				case SyntaxKind.SingleLineCommentTrivia:
 				case SyntaxKind.MultiLineCommentTrivia:
 				case SyntaxKind.SingleLineDocumentationCommentTrivia:
-				case SyntaxKind.WhitespaceTrivia:
+				case SyntaxKind.DocumentationCommentExteriorTrivia:
 				case SyntaxKind.MultiLineDocumentationCommentTrivia:
 					return SyntaxFactory.Space;
-				case SyntaxKind.DisabledTextTrivia:
-				case SyntaxKind.DocumentationCommentExteriorTrivia:
-				case SyntaxKind.PreprocessingMessageTrivia:
-				case SyntaxKind.IfDirectiveTrivia:
-				case SyntaxKind.ElifDirectiveTrivia:
-				case SyntaxKind.ElseDirectiveTrivia:
-				case SyntaxKind.EndIfDirectiveTrivia:
-				case SyntaxKind.RegionDirectiveTrivia:
-				case SyntaxKind.EndRegionDirectiveTrivia:
-				case SyntaxKind.DefineDirectiveTrivia:
-				case SyntaxKind.UndefDirectiveTrivia:
-				case SyntaxKind.ErrorDirectiveTrivia:
-				case SyntaxKind.WarningDirectiveTrivia:
-				case SyntaxKind.LineDirectiveTrivia:
-				case SyntaxKind.PragmaWarningDirectiveTrivia:
-				case SyntaxKind.PragmaChecksumDirectiveTrivia:
-				case SyntaxKind.ReferenceDirectiveTrivia:
-				case SyntaxKind.BadDirectiveTrivia:
-				case SyntaxKind.SkippedTokensTrivia:
-					return trivia;
 				default:
-					Assert.NotReached("Unsupported C# trivia kind: '{0}'.", trivia.CSharpKind());
 					return trivia;
 			}
 		}

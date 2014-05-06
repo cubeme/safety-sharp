@@ -27,6 +27,7 @@ namespace Tests.CSharp.Normalization
 	using FluentAssertions;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
+	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Normalization;
 
 	[TestFixture]
@@ -36,8 +37,7 @@ namespace Tests.CSharp.Normalization
 			where T : MemberDeclarationSyntax
 		{
 			Normalize("using SafetySharp.Modeling;" + csharpCode)
-				.DescendantNodesAndSelf()
-				.OfType<T>()
+				.DescendantNodesAndSelf<T>()
 				.Any(declaration => typeNames.Any(name => identifier(declaration) == name))
 				.Should()
 				.Be(shouldContain);
@@ -57,6 +57,7 @@ namespace Tests.CSharp.Normalization
 
 		private static void ShouldNotContainDelegate(string csharpCode, params string[] typeNames)
 		{
+			// Unfortunately, DelegateDeclarationSyntax is not derived from BaseTypeDeclarationSyntax
 			Test<DelegateDeclarationSyntax>(csharpCode, declaration => declaration.Identifier.ValueText, false, typeNames);
 		}
 

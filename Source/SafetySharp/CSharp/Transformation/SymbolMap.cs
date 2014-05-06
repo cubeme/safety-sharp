@@ -142,17 +142,19 @@ namespace SafetySharp.CSharp.Transformation
 			{
 				yield return component.Reference;
 
-				var methods = component.Declaration.DescendantNodes()
-									   .OfType<MethodDeclarationSyntax>()
-									   .Select(methodDeclaration => CreateMetamodelReference<MethodDeclaration>(semanticModel, methodDeclaration));
+				var methods = component
+					.Declaration
+					.DescendantNodes<MethodDeclarationSyntax>()
+					.Select(methodDeclaration => CreateMetamodelReference<MethodDeclaration>(semanticModel, methodDeclaration));
 
 				foreach (var method in methods)
 					yield return method;
 
-				var fields = component.Declaration.DescendantNodes()
-									  .OfType<FieldDeclarationSyntax>()
-									  .SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
-									  .Select(fieldDeclaration => CreateMetamodelReference<FieldDeclaration>(semanticModel, fieldDeclaration));
+				var fields = component
+					.Declaration
+					.DescendantNodes<FieldDeclarationSyntax>()
+					.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
+					.Select(fieldDeclaration => CreateMetamodelReference<FieldDeclaration>(semanticModel, fieldDeclaration));
 
 				foreach (var field in fields)
 					yield return field;

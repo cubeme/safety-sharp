@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Diagnostics
 	using System;
 	using System.Linq;
 	using System.Threading;
+	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.Diagnostics;
@@ -50,7 +51,7 @@ namespace SafetySharp.CSharp.Diagnostics
 			DiagnosticCallback diagnosticCallback =
 				(locationNode, args) => addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args));
 
-			foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<T>())
+			foreach (var node in tree.DescendantNodesAndSelf<T>())
 				Analyze(node, diagnosticCallback, cancellationToken);
 		}
 

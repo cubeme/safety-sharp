@@ -28,6 +28,7 @@ namespace Tests.CSharp.Transformation
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
+	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Transformation;
 
 	[TestFixture]
@@ -49,7 +50,7 @@ namespace Tests.CSharp.Transformation
 
 		private ITypeSymbol GetClassSymbol(string className)
 		{
-			var classDeclaration = _syntaxRoot.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.ValueText == className);
+			var classDeclaration = _syntaxRoot.DescendantNodes<ClassDeclarationSyntax>().First(c => c.Identifier.ValueText == className);
 			return (ITypeSymbol)_semanticModel.GetDeclaredSymbol(classDeclaration);
 		}
 

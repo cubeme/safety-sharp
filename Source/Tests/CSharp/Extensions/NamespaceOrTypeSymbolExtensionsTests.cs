@@ -39,9 +39,10 @@ namespace Tests.CSharp.Extensions
 
 			// Can't use compilation.FindClassDeclaration() here as the implementation of that helper method
 			// depends on the GetFullName() extension method which we're currently testing...
-			var classDeclaration = compilation.SyntaxRoot.DescendantNodesAndSelf()
-											  .OfType<ClassDeclarationSyntax>()
-											  .Single(c => c.Identifier.ValueText == "X");
+			var classDeclaration = compilation
+				.SyntaxRoot
+				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
+				.Single(c => c.Identifier.ValueText == "X");
 
 			var classSymbol = compilation.SemanticModel.GetDeclaredSymbol(classDeclaration);
 			classSymbol.GetFullName().Should().Be(fullName);

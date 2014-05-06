@@ -66,7 +66,7 @@ namespace SafetySharp.CSharp.Normalization
 			Argument.NotNull(compilation, () => compilation);
 
 			compilation = ApplyNormalizer<SafetySharpTypesNormalizer>(compilation);
-			compilation = ApplyNormalizer<TriviaNormalizer>(compilation);
+			compilation = ApplyNormalizer<CommentsNormalizer>(compilation);
 			compilation = ApplyNormalizer<ChooseNormalizer>(compilation);
 
 			return compilation;
