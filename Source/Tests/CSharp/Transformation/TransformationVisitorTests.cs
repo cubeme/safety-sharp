@@ -80,7 +80,7 @@ class C : SafetySharp.Modeling.Component
 
 			var methodBody = compilation.SyntaxTree.DescendantNodes<BlockSyntax>().Single();
 
-			var symbolMap = SymbolMap.Empty.AddSymbols(compilation.SemanticModel);
+			var symbolMap = SymbolMap.FromCompilation(compilation.Compilation);
 			BoolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
 			IntFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
 

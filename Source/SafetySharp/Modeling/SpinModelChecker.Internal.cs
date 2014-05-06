@@ -20,25 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Runtime
+namespace SafetySharp.Modeling
 {
 	using System;
+	using System.IO;
+	using System.Xml.Serialization;
+	using CSharp.Runtime;
+	using CSharp.Transformation;
 	using Metamodel;
-	using Microsoft.CodeAnalysis;
-	using Modeling;
+	using Utilities;
 
-	internal class ModelTransformation
+	partial class SpinModelChecker
 	{
-		//private readonly Compilation _compilation;
-
-		public ModelTransformation()
+		partial void CreateModel(Component component)
 		{
-			//_compilation = ModelingAssemblyMetadata.GetCompilationFromMetadata();
-		}
+			var modelingAssembly = new ModelingAssembly(component.GetType().Assembly);
+			var transformation = new MetamodelTransformation();
+			var model = transformation.Transform(modelingAssembly.Compilation);
 
-		public Model Transform(Component component)
-		{
-			return null;
+			return;
 		}
 	}
 }

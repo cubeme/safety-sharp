@@ -155,7 +155,7 @@ namespace SafetySharp.CSharp
 			_compilation = _compilation.ReplaceReference(_modelingAssembly, safetySharpAssembly);
 
 			// Now that we've replaced SafetySharp.Modeling, we can safely perform the compile-time normalizations of the C# modeling code.
-			ApplyNormalizer<TypesNormalizer>();
+			//ApplyNormalizer<TypesNormalizer>();
 			ApplyNormalizer<TriviaNormalizer>();
 			ApplyNormalizer<ChooseNormalizer>();
 			ApplyNormalizer<MetadataNormalizer>();

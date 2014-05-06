@@ -64,6 +64,18 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
+		///     Creates a new instance for the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the symbol map should be created for.</param>
+		public static SymbolMap FromCompilation(Compilation compilation)
+		{
+			return compilation
+				.SyntaxTrees
+				.Select(compilation.GetSemanticModel)
+				.Aggregate(Empty, (current, semanticModel) => current.AddSymbols(semanticModel));
+		}
+
+		/// <summary>
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a component.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>

@@ -55,8 +55,9 @@ namespace SafetySharp.CSharp.Normalization
 
 			var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
 			var compilationUnit = node.ToString().Trim().Replace("\"", "\\\"");
+			var fileName = node.SyntaxTree.FilePath.Replace("\\", "\\\\");
 
-			var csharpCode = String.Format("[assembly: {0}(\"{1}\")]", attributeName, compilationUnit);
+			var csharpCode = String.Format("[assembly: {0}(\"{1}\", \"{2}\")]", attributeName, compilationUnit, fileName);
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpCode);
 
 			var attribute = syntaxTree.DescendantNodesAndSelf<AttributeSyntax>().Single();

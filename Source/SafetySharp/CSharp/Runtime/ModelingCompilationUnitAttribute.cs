@@ -38,10 +38,13 @@ namespace SafetySharp.CSharp.Runtime
 		///     Initializes a new instance of the <see cref="ModelingCompilationUnitAttribute" /> type.
 		/// </summary>
 		/// <param name="syntaxTree">The C# syntax tree representing the compilation unit.</param>
-		public ModelingCompilationUnitAttribute(string syntaxTree)
+		/// <param name="filePath">The path of the file the C# code for the compilation unit is stored in.</param>
+		public ModelingCompilationUnitAttribute(string syntaxTree, string filePath)
 		{
 			Argument.NotNull(syntaxTree, () => syntaxTree);
-			SyntaxTree = SyntaxFactory.ParseSyntaxTree(syntaxTree);
+			Argument.NotNull(filePath, () => filePath);
+
+			SyntaxTree = SyntaxFactory.ParseSyntaxTree(syntaxTree, filePath);
 		}
 
 		/// <summary>

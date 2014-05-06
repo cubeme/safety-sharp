@@ -45,6 +45,11 @@ namespace Elbtunnel
 	{
 		private bool _value;
 
+		public BooleanComponent()
+		{
+			return;
+		}
+
 		protected override void Update()
 		{
 			_value = Choose(true, false);

@@ -24,10 +24,13 @@ namespace SafetySharp.Modeling
 {
 	using System;
 
-	public class SpinModelChecker
+	public partial class SpinModelChecker
 	{
 		public SpinModelChecker(Component component)
 		{
+			CreateModel(component);
 		}
+
+		partial void CreateModel(Component component);
 	}
 }

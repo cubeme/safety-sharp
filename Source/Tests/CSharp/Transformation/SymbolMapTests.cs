@@ -45,7 +45,7 @@ namespace Tests.CSharp.Transformation
 			_semanticModel = compilation.SemanticModel;
 			_syntaxRoot = compilation.SyntaxRoot;
 
-			_symbolMap = SymbolMap.Empty.AddSymbols(_semanticModel);
+			_symbolMap = SymbolMap.FromCompilation(compilation.Compilation);
 		}
 
 		private ITypeSymbol GetClassSymbol(string className)

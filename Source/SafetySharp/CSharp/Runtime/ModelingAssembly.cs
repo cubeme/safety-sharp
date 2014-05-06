@@ -54,6 +54,8 @@ namespace SafetySharp.CSharp.Runtime
 			Argument.Satisfies(assemblyMetadata != null, () => modelingAssembly, "Expected a Safety Sharp modeling assembly.");
 
 			CompilerVersion = assemblyMetadata.CompilerVersion;
+			if (CompilerVersion != Compiler.Version)
+				Log.Die("Modeling assembly '{0}' was compiled with a different version of the Safety Sharp compiler.", _assembly.FullName);
 		}
 
 		/// <summary>
