@@ -68,7 +68,7 @@
     <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizerTests.cs" />
     <Compile Include="CSharp\Normalization\SafetySharpTypesNormalizerTests.cs" />
-    <Compile Include="CSharp\Normalization\CommentNormalizerTests.cs" />
+    <Compile Include="CSharp\Normalization\TriviaNormalizerTests.cs" />
     <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />

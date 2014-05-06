@@ -31,7 +31,7 @@ namespace Tests.CSharp.Normalization
 	using SafetySharp.CSharp.Normalization;
 
 	[TestFixture]
-	internal class CommentNormalizerTests : CSharpNormalizerTests<CommentsNormalizer>
+	internal class TriviaNormalizerTests : CSharpNormalizerTests<TriviaNormalizer>
 	{
 		private static void ShouldNotContain(SyntaxKind syntaxKind, string csharpCode)
 		{

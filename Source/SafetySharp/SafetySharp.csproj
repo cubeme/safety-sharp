@@ -76,7 +76,7 @@
     <Compile Include="CSharp\Normalization\ChooseNormalizer.cs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.cs" />
     <Compile Include="CSharp\Normalization\SafetySharpTypesNormalizer.cs" />
-    <Compile Include="CSharp\Normalization\CommentsNormalizer.cs" />
+    <Compile Include="CSharp\Normalization\TriviaNormalizer.cs" />
     <Compile Include="CSharp\Runtime\ModelingAssembly.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="Metamodel\Declarations\MethodDeclaration.cs" />

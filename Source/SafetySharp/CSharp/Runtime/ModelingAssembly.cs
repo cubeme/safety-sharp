@@ -86,7 +86,7 @@ namespace SafetySharp.CSharp.Runtime
 						writer.AppendSeparated(
 							values: compilation.SyntaxTrees.Where(syntaxTree => compilation.GetSemanticModel(syntaxTree).GetDeclaredComponents().Any()),
 							separator: ",",
-							content: component => writer.Append("@\"{0}\"", component));
+							content: component => writer.Append("@\"{0}\"", component.ToString().Trim()));
 						writer.AppendLine("}};");
 					});
 				});
