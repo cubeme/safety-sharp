@@ -51,7 +51,11 @@ namespace SafetySharp.CSharp.Normalization
 				var root = syntaxTree.GetRoot();
 				var normalizedRoot = Visit(root);
 
-				compilation = compilation.ReplaceSyntaxTree(syntaxTree, SyntaxFactory.SyntaxTree(normalizedRoot, syntaxTree.FilePath));
+				if (root == normalizedRoot)
+					continue;
+
+				var newTree = syntaxTree.WithChangedText(normalizedRoot.GetText());
+				compilation = compilation.ReplaceSyntaxTree(syntaxTree, newTree);
 			}
 
 			return compilation;

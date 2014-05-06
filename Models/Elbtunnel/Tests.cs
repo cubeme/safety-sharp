@@ -1,6 +1,7 @@
 ﻿namespace Elbtunnel
 {
 	using System;
+	using System.Reflection;
 	using NUnit.Framework;
 	using SafetySharp.Modeling;
 
@@ -22,6 +23,7 @@
 		static void Main(string[] args)
 		{
 			var x = new X(1);
+			new LightBarrier().Do();
 			var spin = new SpinModelChecker(new BooleanComponent());
 		}
 	}

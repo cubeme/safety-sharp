@@ -28,7 +28,7 @@ namespace Elbtunnel
 
 	public class LightBarrier : Component
 	{
-		private int Do()
+		public int Do()
 		{
 			return 1;
 		}
@@ -47,6 +47,7 @@ namespace Elbtunnel
 
 		public BooleanComponent()
 		{
+			Update();
 			return;
 		}
 

@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Normalization
 {
 	using System;
 	using System.Linq;
+	using System.Text;
 	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -40,31 +41,20 @@ namespace SafetySharp.CSharp.Normalization
 		{
 			compilation = base.Normalize(compilation);
 
-			var csharpCode = String.Format("[assembly: {0}(\"{1}\")]", typeof(ModelingAssemblyAttribute).FullName, Compiler.Version);
-			var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpCode);
-			return compilation.AddSyntaxTrees(syntaxTree);
-		}
+			var csharpCode = new StringBuilder();
+			var compilationUnits = compilation.SyntaxTrees.SelectMany(syntaxTree => syntaxTree.DescendantNodesAndSelf<CompilationUnitSyntax>());
 
-		/// <summary>
-		///     Adds a <see cref="ModelingCompilationUnitAttribute" /> to the compilation unit.
-		/// </summary>
-		/// <param name="node">The compilation unit the metadata should be created for.</param>
-		public override SyntaxNode VisitCompilationUnit(CompilationUnitSyntax node)
-		{
-			node = (CompilationUnitSyntax)base.VisitCompilationUnit(node);
+			foreach (var compilationUnit in compilationUnits)
+			{
+				var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
+				var cu = compilationUnit.ToString().Trim().Replace("\"", "\"\"");
+				var fileName = compilationUnit.SyntaxTree.FilePath.Replace("\\", "\\\\");
 
-			var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
-			var compilationUnit = node.ToString().Trim().Replace("\"", "\\\"");
-			var fileName = node.SyntaxTree.FilePath.Replace("\\", "\\\\");
+				csharpCode.AppendLine(String.Format("[assembly: {0}(@\"{1}\", \"{2}\")]", attributeName, cu, fileName));
+			}
 
-			var csharpCode = String.Format("[assembly: {0}(\"{1}\", \"{2}\")]", attributeName, compilationUnit, fileName);
-			var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpCode);
-
-			var attribute = syntaxTree.DescendantNodesAndSelf<AttributeSyntax>().Single();
-			var list = new SeparatedSyntaxList<AttributeSyntax>().Add(attribute);
-			var attributeList = SyntaxFactory.AttributeList(list);
-
-			return node.AddAttributeLists(attributeList);
+			csharpCode.AppendLine(String.Format("[assembly: {0}(\"{1}\")]", typeof(ModelingAssemblyAttribute).FullName, Compiler.Version));
+			return compilation.AddSyntaxTrees(SyntaxFactory.ParseSyntaxTree(csharpCode.ToString()));
 		}
 	}
 }

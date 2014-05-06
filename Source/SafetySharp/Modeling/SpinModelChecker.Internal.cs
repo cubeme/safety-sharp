@@ -23,12 +23,8 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.IO;
-	using System.Xml.Serialization;
 	using CSharp.Runtime;
 	using CSharp.Transformation;
-	using Metamodel;
-	using Utilities;
 
 	partial class SpinModelChecker
 	{
