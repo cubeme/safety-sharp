@@ -26,21 +26,54 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
+	using Utilities;
 
+	/// <summary>
+	///     Transforms a <see cref="ModelingCompilation" /> instance and a <see cref="ModelConfiguration" /> instance into the
+	///     corresponding <see cref="MetamodelCompilation" /> and <see cref="MetamodelConfiguration" /> instances.
+	/// </summary>
 	internal class MetamodelTransformation
 	{
-		private readonly ModelConfiguration _modelConfiguration;
-		private ModelingCompilation _compilation;
-		private ComponentMapping[] _components;
+		/// <summary>
+		///     The modeling compilation that is being transformed.
+		/// </summary>
+		private readonly ModelingCompilation _compilation;
 
+		/// <summary>
+		///     The model configuration that is being transformed.
+		/// </summary>
+		private readonly ModelConfiguration _modelConfiguration;
+
+		/// <summary>
+		///     Initializes a new instance of the <see cref="MetamodelTransformation" /> type.
+		/// </summary>
+		/// <param name="compilation">The modeling compilation that should be transformed.</param>
+		/// <param name="modelConfiguration">The model configuration that should be transformed.</param>
 		internal MetamodelTransformation(ModelingCompilation compilation, ModelConfiguration modelConfiguration)
 		{
+			Argument.NotNull(compilation, () => compilation);
+			Argument.NotNull(modelConfiguration, () => modelConfiguration);
+
 			_compilation = compilation;
 			_modelConfiguration = modelConfiguration;
 		}
 
-		internal Model Transform()
+		/// <summary>
+		///     Performs the transformation to the metamodel, returning the resulting <see cref="MetamodelCompilation" /> and
+		///     <see cref="MetamodelConfiguration" /> instances on success. If any errors were encountered during the transformation,
+		///     <c>false</c> is returned.
+		/// </summary>
+		internal bool TryTransform(out MetamodelCompilation compilation, out MetamodelConfiguration configuration)
 		{
+			// We're keeping a mutable array around that is used to map all component instances of the model configuration 
+			// to their corresponding class declarations within the modeling compilation. The mapping is performed implicitly 
+			// via the array indices of the two arrays below.
+			var components = _modelConfiguration.GetComponents();
+			var classDeclarations = new ClassDeclarationSyntax[components.Length];
+
+			for (var i = 0; i < components.Length; ++i)
+				classDeclarations[i] = _compilation.GetClassDeclaration(components[i]);
+
 			//for (var i = 0; i < _components.Length; ++i)
 			//	_compilation = _compilation.Normalize1(ref _components[i].ClassDeclaration);
 
@@ -50,24 +83,19 @@ namespace SafetySharp.CSharp.Transformation
 			//for (var i = 0; i < _components.Length; ++i)
 			//	_compilation = _compilation.Normalize2(ref _components[i].ClassDeclaration);
 
-			//var compilationTransformation = new CompilationTransformation();
-			//var model = compilationTransformation.Transform(_compilation.CSharpCompilation);
+			// Transform the compilation 
+			var compilationTransformation = new CompilationTransformation(_compilation);
+			compilation = compilationTransformation.Transform();
 
-			//var partitionTransformation = new PartitionTransformation(model);
-			//return partitionTransformation.Transform(_modelConfiguration.PartitionRoots);
-			return null;
-		}
+			// Build up the required component resolver and transform the configuration
+			var componentResolver = ComponentResolver.Empty;
+			for (var i = 0; i < components.Length; ++i)
+				componentResolver.With(components[i], compilationTransformation.GetComponentDeclarationReference(classDeclarations[i]));
 
-		private void CollectComponents(Component component)
-		{
-			//_components[0].ClassDeclaration = _compilation.GetClassDeclaration(component);
-			// recursive add components....
-		}
+			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration, compilation.Resolver, componentResolver);
+			configuration = configurationTransformation.Transform();
 
-		private struct ComponentMapping
-		{
-			public ClassDeclarationSyntax ClassDeclaration;
-			public Component Component;
+			return true;
 		}
 	}
 }

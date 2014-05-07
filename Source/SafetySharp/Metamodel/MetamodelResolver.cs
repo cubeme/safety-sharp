@@ -23,9 +23,9 @@
 namespace SafetySharp.Metamodel
 {
 	using System;
+	using System.Collections.Immutable;
 	using System.Linq;
 	using Utilities;
-	using Map = System.Collections.Immutable.ImmutableDictionary<MetamodelReference, MetamodelElement>;
 
 	/// <summary>
 	///     Resolves metamodel element references.
@@ -35,15 +35,25 @@ namespace SafetySharp.Metamodel
 		/// <summary>
 		///     The empty metamodel resolver that cannot resolve any references.
 		/// </summary>
-		internal static readonly MetamodelResolver Empty = new MetamodelResolver { _referenceMap = Map.Empty };
+		internal static readonly MetamodelResolver Empty = new MetamodelResolver
+		{
+			_referenceMap = ImmutableDictionary<MetamodelReference, MetamodelElement>.Empty
+		};
 
 		/// <summary>
 		///     Maps metamodel references to metamodel elements.
 		/// </summary>
-		private Map _referenceMap;
+		private ImmutableDictionary<MetamodelReference, MetamodelElement> _referenceMap;
 
 		/// <summary>
-		///     Resolves the metamodel reference to the actual <see cref="MetamodelElement" /> instance.
+		///     Initializes a new instance of the <see cref="MetamodelResolver" /> type.
+		/// </summary>
+		private MetamodelResolver()
+		{
+		}
+
+		/// <summary>
+		///     Resolves the metamodel <paramref name="reference" /> to the actual <see cref="MetamodelElement" /> instance.
 		/// </summary>
 		/// <typeparam name="T">The type of the referenced <see cref="MetamodelElement" />.</typeparam>
 		/// <param name="reference">The reference that should be resolved.</param>

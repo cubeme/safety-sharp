@@ -50,6 +50,16 @@ namespace SafetySharp.CSharp.Extensions
 		}
 
 		/// <summary>
+		///     Gets the root node of the <paramref name="semanticModel" />'s <see cref="SyntaxTree" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model the syntax root should be returned for.</param>
+		internal static SyntaxNode GetSyntaxRoot(this SemanticModel semanticModel)
+		{
+			Argument.NotNull(semanticModel, () => semanticModel);
+			return semanticModel.SyntaxTree.GetRoot();
+		}
+
+		/// <summary>
 		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}()" />
 		///     method within the context of the <paramref name="semanticModel" />.
 		/// </summary>

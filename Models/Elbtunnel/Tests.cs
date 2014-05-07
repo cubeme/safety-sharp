@@ -12,13 +12,13 @@
 		public void FirstTest()
 		{
 			Console.WriteLine("Test");
-			var spin = new SpinModelChecker(new BooleanComponent(1));
+			//var spin = new SpinModelChecker(new BooleanComponent(1));
 		}
 
 		static void Main(string[] args)
 		{
 			new LightBarrier().Do();
-			var spin = new SpinModelChecker(new BooleanComponent(2));
+			//var spin = new SpinModelChecker(new BooleanComponent(2));
 		}
 	}
 }

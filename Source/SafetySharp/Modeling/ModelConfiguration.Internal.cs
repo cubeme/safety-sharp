@@ -25,8 +25,6 @@ namespace SafetySharp.Modeling
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
-	using System.Linq;
-	using System.Reflection;
 	using Utilities;
 
 	partial class ModelConfiguration
@@ -81,13 +79,7 @@ namespace SafetySharp.Modeling
 			if (!components.Add(component))
 				throw new InvalidOperationException(String.Format(message, component.GetType().FullName));
 
-			var subComponents = component
-				.GetType()
-				.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-				.Select(field => field.GetValue(component))
-				.OfType<Component>();
-
-			foreach (var subComponent in subComponents)
+			foreach (var subComponent in component.SubComponents)
 				CollectComponents(components, subComponent);
 		}
 	}

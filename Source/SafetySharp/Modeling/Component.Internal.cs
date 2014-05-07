@@ -32,7 +32,44 @@ namespace SafetySharp.Modeling
 
 	public partial class Component
 	{
-		private readonly Dictionary<FieldInfo, ImmutableArray<object>> _fields = new Dictionary<FieldInfo, ImmutableArray<object>>();
+		/// <summary>
+		///     Maps a field of the current component instance to its set of initial values.
+		/// </summary>
+		private readonly Dictionary<string, ImmutableArray<object>> _fields = new Dictionary<string, ImmutableArray<object>>();
+
+		/// <summary>
+		///     Gets the name of the component instance or <c>null</c> if no name could be determined.
+		/// </summary>
+		internal string Name { get; private set; }
+
+		/// <summary>
+		///     Gets the <see cref="Component" /> instances that are sub components of the current instance.
+		/// </summary>
+		internal IEnumerable<Component> SubComponents
+		{
+			get
+			{
+				return GetType()
+					.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+					.Select(field => field.GetValue(this))
+					.OfType<Component>();
+			}
+		}
+
+		/// <summary>
+		///     Gets the initial values of the field with name <paramref name="fieldName" />.
+		/// </summary>
+		/// <param name="fieldName">The name of the field the initial values should be returned for.</param>
+		internal ImmutableArray<object> GetInitialValuesOfField(string fieldName)
+		{
+			Argument.NotNull(fieldName, () => fieldName);
+
+			ImmutableArray<object> initialValues;
+			if (!_fields.TryGetValue(fieldName, out initialValues))
+				Assert.NotReached("Attempted to get initial values of unknown field '{0}'.", fieldName);
+
+			return initialValues;
+		}
 
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
 		{
@@ -64,7 +101,7 @@ namespace SafetySharp.Modeling
 			var fieldInfo = ((MemberExpression)field.Body).Member as FieldInfo;
 			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
 
-			_fields[fieldInfo] = initialValues.Cast<object>().ToImmutableArray();
+			_fields[fieldInfo.Name] = initialValues.Cast<object>().ToImmutableArray();
 		}
 	}
 }

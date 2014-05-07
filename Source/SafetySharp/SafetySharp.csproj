@@ -78,6 +78,7 @@
     <Compile Include="CSharp\Normalization\CSharpNormalizer.cs" />
     <Compile Include="CSharp\Normalization\MetadataNormalizer.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
+    <Compile Include="CSharp\Transformation\ComponentResolver.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\ModelingCompilationUnitAttribute.cs" />
@@ -86,7 +87,7 @@
     <Compile Include="CSharp\ModelingAssembly.cs" />
     <Compile Include="CSharp\Compiler.cs" />
     <Compile Include="CSharp\Transformation\CompilationTransformation.cs" />
-    <Compile Include="CSharp\Transformation\PartitionTransformation.cs" />
+    <Compile Include="CSharp\Transformation\ConfigurationTransformation.cs" />
     <Compile Include="Metamodel\Declarations\FieldDeclaration.cs" />
     <Compile Include="Metamodel\Declarations\MethodDeclaration.cs" />
     <Compile Include="Metamodel\Expressions\BinaryExpression.cs" />

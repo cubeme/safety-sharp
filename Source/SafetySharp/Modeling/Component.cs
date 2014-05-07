@@ -26,6 +26,10 @@ namespace SafetySharp.Modeling
 
 	public abstract partial class Component
 	{
+		protected Component()
+		{
+		}
+
 		protected static T Choose<T>()
 			where T : struct
 		{

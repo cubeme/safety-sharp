@@ -26,6 +26,7 @@ namespace Tests.CSharp.Transformation
 	using System.Collections.Immutable;
 	using FluentAssertions;
 	using NUnit.Framework;
+	using SafetySharp.CSharp;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
 	using SafetySharp.Metamodel.Declarations;
@@ -37,22 +38,22 @@ namespace Tests.CSharp.Transformation
 	public class CompilationTransformationTests
 	{
 		private TestCompilation _compilation;
-		private Model _model;
+		private MetamodelCompilation _metamodelCompilation;
 		private SymbolMap _symbolMap;
 
 		private void Transform(string csharpCode)
 		{
 			_compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
-			var transformation = new CompilationTransformation();
+			var transformation = new CompilationTransformation(new ModelingCompilation(_compilation.Compilation));
 
-			_model = transformation.Transform(_compilation.Compilation);
+			_metamodelCompilation = transformation.Transform();
 			_symbolMap = transformation.SymbolMap;
 		}
 
 		private ComponentDeclaration TransformComponent(string csharpCode)
 		{
 			Transform(csharpCode);
-			return _model.Components[0];
+			return _metamodelCompilation.Components[0];
 		}
 
 		[Test]
@@ -120,9 +121,9 @@ namespace Tests.CSharp.Transformation
 		public void ShouldTransformOneComponentWithoutAnyMembers()
 		{
 			Transform("class MyComponent : Component {}");
-			_model.Components.Length.Should().Be(1);
+			_metamodelCompilation.Components.Length.Should().Be(1);
 
-			var component = _model.Components[0];
+			var component = _metamodelCompilation.Components[0];
 			component.Methods.Should().BeEmpty();
 			component.Fields.Should().BeEmpty();
 		}

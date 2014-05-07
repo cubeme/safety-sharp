@@ -51,7 +51,7 @@ let elements = [
                 ]
             }
             {
-                Name = "Model"
+                Name = "MetamodelCompilation"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties =
@@ -72,6 +72,14 @@ let elements = [
                         CanBeNull = false
                         Comment = "The components declared in the model."
                     }       
+                ]
+            }
+            {
+                Name = "MetamodelConfiguration"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = 
+                [
                     {
                         Name = "Partitions"
                         Type = "Partition"
@@ -535,7 +543,7 @@ let elements = [
         ]
     }
     {
-        Name = "SafetySharp.Metamodel.Instantiation"
+        Name = "SafetySharp.Metamodel.Configurations"
         Classes = 
         [
             {
@@ -546,16 +554,16 @@ let elements = [
                 [
                     {
                         Name = "Component"
-                        Type = "ComponentInstance"
+                        Type = "ComponentConfiguration"
                         CollectionType = Singleton
                         Validation = NotNull
                         CanBeNull = false
-                        Comment = "The root component instance of the partition."
+                        Comment = "The root component configuration of the partition."
                     }
                 ]
             }
             {   
-                Name = "ComponentInstance"
+                Name = "ComponentConfiguration"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
@@ -565,7 +573,15 @@ let elements = [
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The name of the component instance."
+                        Comment = "The name of the component configuration."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Type"
+                        Type = "MetamodelReference<ComponentDeclaration>"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The type of the component configuration."
                         CanBeNull = false
                     }
                     {
@@ -573,7 +589,7 @@ let elements = [
                         Type = "InitialFieldValues"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The initial values for the component's fields."
+                        Comment = "The initial values for the component's fields. Field values are specified in the same order as the corresponding component declaration's field declarations."
                         CanBeNull = false
                     }
                 ]
@@ -590,14 +606,6 @@ let elements = [
                         CollectionType = Array
                         Validation = None
                         Comment = "The initial values of the field. The type of the values matches the type of the field."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Field"
-                        Type = "MetamodelReference<FieldDeclaration>"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The declaration of the field the initial values are provided for."
                         CanBeNull = false
                     }
                 ]

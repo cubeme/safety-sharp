@@ -23,7 +23,10 @@
 namespace Tests.CSharp
 {
 	using System;
+	using System.IO;
 	using System.Linq;
+	using System.Linq.Expressions;
+	using System.Reflection;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -48,7 +51,9 @@ namespace Tests.CSharp
 				.Create("Test")
 				.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
 				.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
-				.AddSyntaxTrees(SyntaxTree);
+				.AddReferences(new MetadataFileReference(typeof(Expression<>).Assembly.Location))
+				.AddSyntaxTrees(SyntaxTree)
+				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
 			SemanticModel = Compilation.GetSemanticModel(SyntaxTree);
 			SyntaxRoot = SyntaxTree.GetRoot();
@@ -73,6 +78,24 @@ namespace Tests.CSharp
 		///     Gets the semantic model for the compilation's syntax tree.
 		/// </summary>
 		public SemanticModel SemanticModel { get; private set; }
+
+		/// <summary>
+		///     Emits an in-memory assembly for the compilation and loads the assembly into the app domain.
+		/// </summary>
+		public Assembly Compile()
+		{
+			using (var stream = new MemoryStream())
+			{
+				var emitResult = Compilation.Emit(stream);
+				if (emitResult.Success)
+					return Assembly.Load(stream.ToArray());
+
+				foreach (var diagnostic in emitResult.Diagnostics)
+					Console.WriteLine(diagnostic);
+
+				throw new InvalidOperationException("Assembly compilation failed.");
+			}
+		}
 
 		/// <summary>
 		///     Finds the <see cref="ClassDeclarationSyntax" /> for the class named <paramref name="className" /> in the compilation.

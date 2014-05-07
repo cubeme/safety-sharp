@@ -51,20 +51,20 @@ namespace SafetySharp.CSharp
 		/// </summary>
 		internal Compilation CSharpCompilation { get; private set; }
 
-		internal ModelingCompilation Normalize1(ref ClassDeclarationSyntax classDeclaration)
-		{
-			return null;
-		}
+		//internal ModelingCompilation Normalize1(ref ClassDeclarationSyntax classDeclaration)
+		//{
+		//	return null;
+		//}
 
-		internal ModelingCompilation SubstituteGeneric(ref ClassDeclarationSyntax classDeclaration, Type[] types)
-		{
-			return null;
-		}
+		//internal ModelingCompilation SubstituteGeneric(ref ClassDeclarationSyntax classDeclaration, Type[] types)
+		//{
+		//	return null;
+		//}
 
-		internal ModelingCompilation Normalize2(ref ClassDeclarationSyntax classDeclaration)
-		{
-			return null;
-		}
+		//internal ModelingCompilation Normalize2(ref ClassDeclarationSyntax classDeclaration)
+		//{
+		//	return null;
+		//}
 
 		/// <summary>
 		///     Gets the <see cref="ClassDeclarationSyntax" /> corresponding to the <paramref name="component" />.
@@ -75,22 +75,34 @@ namespace SafetySharp.CSharp
 			Argument.NotNull(component, () => component);
 
 			var componentType = component.GetType();
-			var componentClass = (from syntaxTree in CSharpCompilation.SyntaxTrees
-								  let semanticModel = CSharpCompilation.GetSemanticModel(syntaxTree)
-								  from classDeclaration in syntaxTree.DescendantNodesAndSelf<ClassDeclarationSyntax>()
-								  where classDeclaration.GetFullName(semanticModel) == componentType.FullName
-								  select classDeclaration).ToImmutableArray();
+			var componentClasses = (from syntaxTree in CSharpCompilation.SyntaxTrees
+									let semanticModel = CSharpCompilation.GetSemanticModel(syntaxTree)
+									from classDeclaration in syntaxTree.DescendantNodesAndSelf<ClassDeclarationSyntax>()
+									where classDeclaration.GetFullName(semanticModel) == componentType.FullName
+									select classDeclaration).ToImmutableArray();
 
 			const string messageNone = "Unable to find a class declaration corresponding to type '{0}' in the modeling assembly metadata.";
 			const string messageMany = "Found more than one class declarations corresponding to type '{0}' in the modeling assembly metadata.";
 
-			if (componentClass.Length == 0)
+			if (componentClasses.Length == 0)
 				throw new InvalidOperationException(String.Format(messageNone, componentType.FullName));
 
-			if (componentClass.Length > 1)
+			if (componentClasses.Length > 1)
 				throw new InvalidOperationException(String.Format(messageMany, componentType.FullName));
 
-			return componentClass[0];
+			return componentClasses[0];
+		}
+
+		/// <summary>
+		///     Gets the <see cref="ISymbol" /> corresponding to the <paramref name="classDeclaration" />.
+		/// </summary>
+		/// <param name="classDeclaration">The class declaration the type symbol should be returned for.</param>
+		internal ITypeSymbol GetClassSymbol(ClassDeclarationSyntax classDeclaration)
+		{
+			Argument.NotNull(classDeclaration, () => classDeclaration);
+
+			var semanticModel = CSharpCompilation.GetSemanticModel(classDeclaration.SyntaxTree);
+			return (ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration);
 		}
 	}
 }

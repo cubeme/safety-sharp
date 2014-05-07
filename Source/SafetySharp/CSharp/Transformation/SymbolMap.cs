@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.Linq;
 	using Extensions;
 	using Metamodel;
@@ -31,7 +32,6 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
-	using Map = System.Collections.Immutable.ImmutableDictionary<Microsoft.CodeAnalysis.ISymbol, Metamodel.MetamodelReference>;
 
 	/// <summary>
 	///     Provides a mapping between C# symbols and <see cref="MetamodelReference" />s.
@@ -41,12 +41,22 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     The empty symbol map that does not map any symbols.
 		/// </summary>
-		internal static readonly SymbolMap Empty = new SymbolMap { _symbolMap = Map.Empty };
+		internal static readonly SymbolMap Empty = new SymbolMap
+		{
+			_symbolMap = ImmutableDictionary<ISymbol, MetamodelReference>.Empty
+		};
 
 		/// <summary>
 		///     Maps a C# symbol to a metamodel reference.
 		/// </summary>
-		private Map _symbolMap;
+		private ImmutableDictionary<ISymbol, MetamodelReference> _symbolMap;
+
+		/// <summary>
+		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
+		/// </summary>
+		private SymbolMap()
+		{
+		}
 
 		/// <summary>
 		///     Adds the symbols declared in <paramref name="semanticModel" /> to the current <see cref="SymbolMap" /> instance.
