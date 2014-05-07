@@ -33,7 +33,7 @@ namespace SafetySharp.CSharp.Transformation
 	internal partial class TransformationVisitor
 	{
 		/// <summary>
-		/// Transforms a C# identifier name to the corresponding metamodel expression.
+		///     Transforms a C# identifier name to the corresponding metamodel expression.
 		/// </summary>
 		/// <param name="node">The C# identifier name that should be transformed.</param>
 		public override MetamodelElement VisitIdentifierName(IdentifierNameSyntax node)
@@ -57,7 +57,20 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="node">The C# unary expression that should be transformed.</param>
 		public override MetamodelElement VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
 		{
-			return new UnaryExpression((Expression)Visit(node.Operand), MapUnaryOperator(node.CSharpKind()));
+			var operand = (Expression)Visit(node.Operand);
+
+			switch (node.CSharpKind())
+			{
+				case SyntaxKind.UnaryPlusExpression:
+					return operand;
+				case SyntaxKind.UnaryMinusExpression:
+					return new UnaryExpression(operand, UnaryOperator.Minus);
+				case SyntaxKind.LogicalNotExpression:
+					return new UnaryExpression(operand, UnaryOperator.LogicalNot);
+				default:
+					Assert.NotReached("Unsupported unary C# operator: '{0}'.", node.CSharpKind());
+					return null;
+			}
 		}
 
 		/// <summary>
@@ -105,26 +118,6 @@ namespace SafetySharp.CSharp.Transformation
 				default:
 					Assert.NotReached("Unsupported C# literal: '{0}'.", node.Token.CSharpKind());
 					return null;
-			}
-		}
-
-		/// <summary>
-		///     Maps the C# syntax kind to the corresponding unary operator.
-		/// </summary>
-		/// <param name="syntaxKind">The syntax kind that should be mapped.</param>
-		private static UnaryOperator MapUnaryOperator(SyntaxKind syntaxKind)
-		{
-			switch (syntaxKind)
-			{
-				case SyntaxKind.UnaryPlusExpression:
-					return UnaryOperator.Plus;
-				case SyntaxKind.UnaryMinusExpression:
-					return UnaryOperator.Minus;
-				case SyntaxKind.LogicalNotExpression:
-					return UnaryOperator.LogicalNot;
-				default:
-					Assert.NotReached("Unsupported unary C# operator: '{0}'.", syntaxKind);
-					return 0;
 			}
 		}
 

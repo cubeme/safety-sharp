@@ -20,31 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Expressions
+namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 
 	/// <summary>
-	///     Represents a Boolean literal, either <c>true</c> or <c>false</c>.
+	///     Represents an assignment of a value obtained from evaluating the expression on the right-hand side of the assignment
+	///     operator to the expression on the left-hand side of the assignment operator. The expression on the left-hand side must
+	///     refer to a variable, parameter, port, or field that is the target of the assignment.
 	/// </summary>
-	partial class BooleanLiteral
+	partial class AssignmentStatement
 	{
-		/// <summary>
-		///     Represents the <c>true</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral True = new BooleanLiteral(true);
-
-		/// <summary>
-		///     Represents the <c>false</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral False = new BooleanLiteral(false);
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value ? "true" : "false";
+			return String.Format("{0} = {1}", Left, Right);
 		}
 	}
 }

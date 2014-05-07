@@ -24,6 +24,9 @@ namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
 
+	/// <summary>
+	///     A base class for all side-effect free expressions within the metamodel.
+	/// </summary>
 	partial class Expression
 	{
 	}

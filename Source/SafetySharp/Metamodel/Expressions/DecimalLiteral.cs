@@ -23,28 +23,19 @@
 namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
+	using System.Globalization;
 
 	/// <summary>
-	///     Represents a Boolean literal, either <c>true</c> or <c>false</c>.
+	///     Represents a decimal literal such as '0.0m' or '127.123m'.
 	/// </summary>
-	partial class BooleanLiteral
+	partial class DecimalLiteral
 	{
-		/// <summary>
-		///     Represents the <c>true</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral True = new BooleanLiteral(true);
-
-		/// <summary>
-		///     Represents the <c>false</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral False = new BooleanLiteral(false);
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value ? "true" : "false";
+			return Value.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 }

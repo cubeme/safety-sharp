@@ -325,11 +325,11 @@ let elements = [
                 Properties = 
                 [
                     {
-                        Name = "Expression"
+                        Name = "Operand"
                         Type = "Expression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The expression of the unary expression."
+                        Comment = "The operand of the unary expression."
                         CanBeNull = false
                     }
                     {

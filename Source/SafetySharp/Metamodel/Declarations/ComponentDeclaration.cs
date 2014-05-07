@@ -29,5 +29,12 @@ namespace SafetySharp.Metamodel.Declarations
 	/// </summary>
 	partial class ComponentDeclaration
 	{
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return String.Format("Component '{0}'", Identifier);
+		}
 	}
 }

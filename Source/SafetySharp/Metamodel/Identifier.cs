@@ -20,31 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Expressions
+namespace SafetySharp.Metamodel
 {
 	using System;
 
 	/// <summary>
-	///     Represents a Boolean literal, either <c>true</c> or <c>false</c>.
+	///     Represents an identifier, i.e., a name of a component, field, method, etc.
 	/// </summary>
-	partial class BooleanLiteral
+	partial class Identifier
 	{
-		/// <summary>
-		///     Represents the <c>true</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral True = new BooleanLiteral(true);
-
-		/// <summary>
-		///     Represents the <c>false</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral False = new BooleanLiteral(false);
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value ? "true" : "false";
+			return Name;
 		}
 	}
 }

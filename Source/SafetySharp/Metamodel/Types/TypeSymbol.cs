@@ -24,6 +24,9 @@ namespace SafetySharp.Metamodel.Types
 {
 	using System;
 
+	/// <summary>
+	///     Base class for type that can be used throughout the metamodel.
+	/// </summary>
 	partial class TypeSymbol
 	{
 		/// <summary>

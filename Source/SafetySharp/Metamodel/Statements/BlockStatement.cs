@@ -24,12 +24,24 @@ namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
 
+	/// <summary>
+	///     Represents an ordered collection of statements.
+	/// </summary>
 	partial class BlockStatement
 	{
 		/// <summary>
 		///     The empty block statement that does not contain any other statements.
 		/// </summary>
 		public static readonly BlockStatement Empty = new BlockStatement(ImmutableArray<Statement>.Empty);
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return String.Format("{{ \n{0}\n }}", String.Join(" \n ", Statements.Select(s => s.ToString())));
+		}
 	}
 }

@@ -162,15 +162,13 @@ namespace SafetySharp.Modelchecking.Promela
         public override PrExpression VisitUnaryExpression(MMExpressions.UnaryExpression unaryExpression)
         {
             Argument.NotNull(unaryExpression, () => unaryExpression);
-            var expression = unaryExpression.Expression.Accept(this);
+            var operand = unaryExpression.Operand.Accept(this);
             switch (unaryExpression.Operator)
             {
-                case MMExpressions.UnaryOperator.Plus:
-                    return expression;
                 case MMExpressions.UnaryOperator.LogicalNot:
-                    return new PrExpressions.UnaryExpression(expression, PromelaUnaryOperator.Not);
+                    return new PrExpressions.UnaryExpression(operand, PromelaUnaryOperator.Not);
                 case MMExpressions.UnaryOperator.Minus:
-                    return new PrExpressions.UnaryExpression(expression, PromelaUnaryOperator.Neg);
+                    return new PrExpressions.UnaryExpression(operand, PromelaUnaryOperator.Neg);
                 default:
                     throw new NotImplementedException();
             }

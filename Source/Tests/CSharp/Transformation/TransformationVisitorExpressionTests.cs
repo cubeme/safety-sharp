@@ -23,11 +23,9 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
-	using System.Collections.Immutable;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.Metamodel.Expressions;
-	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
 	internal class TransformationVisitorExpressionTests : TransformationVisitorTests
@@ -183,10 +181,9 @@ namespace Tests.CSharp.Transformation
 		public void NestedUnaryAndBinaryExpressions()
 		{
 			var minusOne = new UnaryExpression(new IntegerLiteral(1), UnaryOperator.Minus);
-			var plusFive = new UnaryExpression(new IntegerLiteral(5), UnaryOperator.Plus);
 
 			var left = new BinaryExpression(minusOne, BinaryOperator.Add, new IntegerLiteral(2));
-			var right = new BinaryExpression(new IntegerLiteral(4), BinaryOperator.Add, plusFive);
+			var right = new BinaryExpression(new IntegerLiteral(4), BinaryOperator.Add, new IntegerLiteral(5));
 			var multiply = new BinaryExpression(new UnaryExpression(left, UnaryOperator.Minus), BinaryOperator.Multiply, right);
 
 			Test(multiply, "-(-1 + 2) * (4 + +5)");
@@ -195,7 +192,7 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void NestedUnaryExpressions()
 		{
-			Test(new UnaryExpression(new UnaryExpression(new IntegerLiteral(1), UnaryOperator.Plus), UnaryOperator.Minus), "-+1");
+			Test(new UnaryExpression(new IntegerLiteral(1), UnaryOperator.Minus), "-+1");
 			Test(new UnaryExpression(new UnaryExpression(BooleanLiteral.True, UnaryOperator.LogicalNot), UnaryOperator.LogicalNot), "!!true");
 		}
 
@@ -218,10 +215,10 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void UnaryPlusExpressions()
 		{
-			Test(new UnaryExpression(new DecimalLiteral(0.50m), UnaryOperator.Plus), "+.50m");
-			Test(new UnaryExpression(new DecimalLiteral(10m), UnaryOperator.Plus), "+10m");
-			Test(new UnaryExpression(new IntegerLiteral(4), UnaryOperator.Plus), "+4");
-			Test(new UnaryExpression(new IntegerLiteral(0), UnaryOperator.Plus), "+0");
+			Test(new DecimalLiteral(0.50m), "+.50m");
+			Test(new DecimalLiteral(10m), "+10m");
+			Test(new IntegerLiteral(4), "+4");
+			Test(new IntegerLiteral(0), "+0");
 		}
 	}
 }

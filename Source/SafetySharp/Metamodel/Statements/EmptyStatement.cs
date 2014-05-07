@@ -24,11 +24,22 @@ namespace SafetySharp.Metamodel.Statements
 {
 	using System;
 
+	/// <summary>
+	///     Represents the empty statement that has no effect.
+	/// </summary>
 	partial class EmptyStatement
 	{
 		/// <summary>
 		///     Gets the default instance of the empty statement.
 		/// </summary>
 		public static readonly EmptyStatement Default = new EmptyStatement();
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return ";";
+		}
 	}
 }

@@ -23,28 +23,33 @@
 namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
+	using Utilities;
 
 	/// <summary>
-	///     Represents a Boolean literal, either <c>true</c> or <c>false</c>.
+	///     Represents a unary expression, combining an operand with a <see cref="UnaryOperator" />.
 	/// </summary>
-	partial class BooleanLiteral
+	partial class UnaryExpression
 	{
-		/// <summary>
-		///     Represents the <c>true</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral True = new BooleanLiteral(true);
-
-		/// <summary>
-		///     Represents the <c>false</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral False = new BooleanLiteral(false);
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value ? "true" : "false";
+			var operatorSymbol = "";
+			switch (Operator)
+			{
+				case UnaryOperator.Minus:
+					operatorSymbol = "-";
+					break;
+				case UnaryOperator.LogicalNot:
+					operatorSymbol = "!";
+					break;
+				default:
+					Assert.NotReached("Unknown unary operator.");
+					break;
+			}
+
+			return String.Format("{0}{1}", operatorSymbol, Operand);
 		}
 	}
 }

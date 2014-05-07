@@ -25,6 +25,10 @@ namespace SafetySharp.Metamodel.Statements
 	using System;
 	using Expressions;
 
+	/// <summary>
+	///     Represents the return statement that ends the execution of a method, returning the evaluated value of the optional
+	///     expression.
+	/// </summary>
 	partial class ReturnStatement
 	{
 		/// <summary>
@@ -41,5 +45,16 @@ namespace SafetySharp.Metamodel.Statements
 		///     The return statement that returns <c>false</c>.
 		/// </summary>
 		public static readonly ReturnStatement ReturnFalse = new ReturnStatement(BooleanLiteral.False);
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			if (Expression == null)
+				return "return;";
+
+			return String.Format("return {0};", Expression);
+		}
 	}
 }

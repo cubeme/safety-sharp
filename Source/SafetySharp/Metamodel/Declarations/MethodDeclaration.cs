@@ -24,6 +24,7 @@ namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using Modeling;
 	using Statements;
 	using Types;
@@ -43,11 +44,11 @@ namespace SafetySharp.Metamodel.Declarations
 								  parameters: ImmutableArray<ParameterDeclaration>.Empty);
 
 		/// <summary>
-		///     Returns a string that represents the current method.
+		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return String.Format("{0} {1}({2})", "void", Identifier, "");
+			return String.Format("Method '{0} {1}({2})'", ReturnType, Identifier, String.Join(", ", Parameters.Select(p => p.ToString())));
 		}
 	}
 }

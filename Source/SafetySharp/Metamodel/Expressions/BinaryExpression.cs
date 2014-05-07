@@ -23,28 +23,66 @@
 namespace SafetySharp.Metamodel.Expressions
 {
 	using System;
+	using Utilities;
 
 	/// <summary>
-	///     Represents a Boolean literal, either <c>true</c> or <c>false</c>.
+	///     Represents a binary expression, combining two operands with a <see cref="BinaryOperator" />.
 	/// </summary>
-	partial class BooleanLiteral
+	partial class BinaryExpression
 	{
-		/// <summary>
-		///     Represents the <c>true</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral True = new BooleanLiteral(true);
-
-		/// <summary>
-		///     Represents the <c>false</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral False = new BooleanLiteral(false);
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value ? "true" : "false";
+			var operatorSymbol = "";
+			switch (Operator)
+			{
+				case BinaryOperator.Add:
+					operatorSymbol = "+";
+					break;
+				case BinaryOperator.Subtract:
+					operatorSymbol = "-";
+					break;
+				case BinaryOperator.Multiply:
+					operatorSymbol = "*";
+					break;
+				case BinaryOperator.Divide:
+					operatorSymbol = "/";
+					break;
+				case BinaryOperator.Modulo:
+					operatorSymbol = "%";
+					break;
+				case BinaryOperator.LogicalAnd:
+					operatorSymbol = "&&";
+					break;
+				case BinaryOperator.LogicalOr:
+					operatorSymbol = "||";
+					break;
+				case BinaryOperator.Equals:
+					operatorSymbol = "==";
+					break;
+				case BinaryOperator.NotEquals:
+					operatorSymbol = "!=";
+					break;
+				case BinaryOperator.LessThan:
+					operatorSymbol = "<";
+					break;
+				case BinaryOperator.LessThanOrEqual:
+					operatorSymbol = "<=";
+					break;
+				case BinaryOperator.GreaterThan:
+					operatorSymbol = ">";
+					break;
+				case BinaryOperator.GreaterThanOrEqual:
+					operatorSymbol = ">=";
+					break;
+				default:
+					Assert.NotReached("Unknown binary operator.");
+					break;
+			}
+
+			return String.Format("({0} {1} {2})", Left, operatorSymbol, Right);
 		}
 	}
 }

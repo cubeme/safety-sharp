@@ -25,26 +25,17 @@ namespace SafetySharp.Metamodel.Expressions
 	using System;
 
 	/// <summary>
-	///     Represents a Boolean literal, either <c>true</c> or <c>false</c>.
+	///     Represents a field that is either read or written by the containing expression or statement.
 	/// </summary>
-	partial class BooleanLiteral
+	partial class FieldAccessExpression
 	{
-		/// <summary>
-		///     Represents the <c>true</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral True = new BooleanLiteral(true);
-
-		/// <summary>
-		///     Represents the <c>false</c> Boolean literal.
-		/// </summary>
-		public static readonly BooleanLiteral False = new BooleanLiteral(false);
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value ? "true" : "false";
+			// Unfortunately, we cannot provide more information here as we don't have a resolver for the reference.
+			return "`field`";
 		}
 	}
 }

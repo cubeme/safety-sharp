@@ -30,7 +30,6 @@ namespace SafetySharp.Metamodel.Expressions
 	public enum UnaryOperator
 	{
 		Minus = 1,
-		Plus,
 		LogicalNot
 	}
 }
