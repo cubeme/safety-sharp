@@ -23,198 +23,50 @@
 namespace SafetySharp.CSharp.Transformation
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
-	using System.Linq;
-	using Extensions;
 	using Metamodel;
-	using Metamodel.Declarations;
-	using Metamodel.Statements;
-	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Utilities;
+	using Modeling;
 
-	/// <summary>
-	///     Transforms a C# compilation into a <see cref="Model" />.
-	/// </summary>
 	internal class MetamodelTransformation
 	{
-		/// <summary>
-		///     The transformed component declarations.
-		/// </summary>
-		private readonly List<ComponentDeclaration> _components = new List<ComponentDeclaration>();
+		private readonly ModelConfiguration _modelConfiguration;
+		private ModelingCompilation _compilation;
+		private ComponentMapping[] _components;
 
-		/// <summary>
-		///     The metamodel resolver that is generated during the transformation.
-		/// </summary>
-		private MetamodelResolver _resolver = MetamodelResolver.Empty;
-
-		/// <summary>
-		///     Initializes a new instance of the <see cref="MetamodelTransformation" /> type.
-		/// </summary>
-		public MetamodelTransformation()
+		public MetamodelTransformation(ModelingCompilation compilation, ModelConfiguration modelConfiguration)
 		{
-			SymbolMap = SymbolMap.Empty;
+			_compilation = compilation;
+			_modelConfiguration = modelConfiguration;
 		}
 
-		/// <summary>
-		///     Gets the symbol map that is used during the transformation.
-		/// </summary>
-		public SymbolMap SymbolMap { get; private set; }
-
-		/// <summary>
-		///     Transforms the <paramref name="compilation" /> into a <see cref="Model" /> instance.
-		/// </summary>
-		/// <param name="compilation">The compilation that should be transformed.</param>
-		public Model Transform(Compilation compilation)
+		internal Model Transform()
 		{
-			Argument.NotNull(compilation, () => compilation);
+			for (var i = 0; i < _components.Length; ++i)
+				_compilation = _compilation.Normalize1(ref _components[i].ClassDeclaration);
 
-			var compilationUnits = compilation
-				.SyntaxTrees
-				.Select(syntaxTree => new CompilationUnit(syntaxTree.GetRoot(), compilation.GetSemanticModel(syntaxTree)))
-				.ToImmutableArray();
+			for (var i = 0; i < _components.Length; ++i)
+				_compilation = _compilation.SubstituteGeneric(ref _components[i].ClassDeclaration, _components[i].GetType().GetGenericArguments());
 
-			foreach (var compilationUnit in compilationUnits)
-				SymbolMap = SymbolMap.AddSymbols(compilationUnit.SemanticModel);
+			for (var i = 0; i < _components.Length; ++i)
+				_compilation = _compilation.Normalize2(ref _components[i].ClassDeclaration);
 
-			foreach (var compilationUnit in compilationUnits)
-				TransformCompilationUnit(compilationUnit);
+			var compilationTransformation = new CompilationTransformation();
+			var model = compilationTransformation.Transform(_compilation.CSharpCompilation);
 
-			return new Model(_components.ToImmutableArray(), _resolver);
+			var partitionTransformation = new PartitionTransformation(model);
+			return partitionTransformation.Transform(_modelConfiguration.PartitionRoots);
 		}
 
-		/// <summary>
-		///     Transforms the <paramref name="compilationUnit" />.
-		/// </summary>
-		/// <param name="compilationUnit">The compilation unit that should be transformed.</param>
-		private void TransformCompilationUnit(CompilationUnit compilationUnit)
+		private void CollectComponents(Component component)
 		{
-			var components = compilationUnit
-				.SyntaxRoot
-				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
-				.Where(classDeclaration => classDeclaration.IsComponentDeclaration(compilationUnit.SemanticModel));
-
-			foreach (var component in components)
-			{
-				var componentSymbol = (ITypeSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(component);
-				var componentReference = SymbolMap.GetComponentReference(componentSymbol);
-				var componentDeclaration = TransformComponent(compilationUnit, component);
-
-				_resolver = _resolver.With(componentReference, componentDeclaration);
-				_components.Add(componentDeclaration);
-			}
+			_components[0].ClassDeclaration = _compilation.GetClassDeclaration(component);
+			// recursive add components....
 		}
 
-		/// <summary>
-		///     Transforms the component declaration represented by the C# <paramref name="classDeclaration" />.
-		/// </summary>
-		/// <param name="compilationUnit">The compilation unit the component was declared in.</param>
-		/// <param name="classDeclaration">The C# class declaration that should be transformed.</param>
-		private ComponentDeclaration TransformComponent(CompilationUnit compilationUnit, ClassDeclarationSyntax classDeclaration)
+		private struct ComponentMapping
 		{
-			var methods = classDeclaration
-				.Members
-				.OfType<MethodDeclarationSyntax>()
-				.Where(m => !m.IsUpdateMethod(compilationUnit.SemanticModel))
-				.Aggregate(
-					ImmutableArray<MethodDeclaration>.Empty,
-					(current, method) => current.Add(TransformMethod(compilationUnit, method)));
-
-			var fields = classDeclaration
-				.Members
-				.OfType<FieldDeclarationSyntax>()
-				.Aggregate(
-					ImmutableArray<FieldDeclaration>.Empty,
-					(current, field) => current.Add(TransformField(compilationUnit, field)));
-
-			var identifier = new Identifier(classDeclaration.GetFullName(compilationUnit.SemanticModel));
-			var updateMethodDeclaration = classDeclaration
-				.Members
-				.OfType<MethodDeclarationSyntax>()
-				.SingleOrDefault(methodDeclaration => methodDeclaration.IsUpdateMethod(compilationUnit.SemanticModel));
-
-			var updateMethod = MethodDeclaration.UpdateMethod;
-			if (updateMethodDeclaration != null)
-				updateMethod = TransformMethod(compilationUnit, updateMethodDeclaration);
-
-			return new ComponentDeclaration(identifier, updateMethod, methods, fields);
-		}
-
-		/// <summary>
-		///     Transforms the method declaration represented by the C# <paramref name="methodDeclaration" />.
-		/// </summary>
-		/// <param name="compilationUnit">The compilation unit the method was declared in.</param>
-		/// <param name="methodDeclaration">The C# method declaration that should be transformed.</param>
-		private MethodDeclaration TransformMethod(CompilationUnit compilationUnit, MethodDeclarationSyntax methodDeclaration)
-		{
-			var methodSymbol = (IMethodSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(methodDeclaration);
-			var methodReference = SymbolMap.GetMethodReference(methodSymbol);
-
-			var transformation = new TransformationVisitor(compilationUnit.SemanticModel, SymbolMap);
-			var body = (Statement)transformation.Visit(methodDeclaration.Body);
-
-			var identifier = new Identifier(methodDeclaration.Identifier.ValueText);
-			var returnType = methodSymbol.ReturnType.ToTypeSymbol(compilationUnit.SemanticModel);
-			var parameters = methodSymbol.Parameters.Select(parameter =>
-			{
-				var name = new Identifier(parameter.Name);
-				var type = parameter.Type.ToTypeSymbol(compilationUnit.SemanticModel);
-				return new ParameterDeclaration(name, type);
-			}).ToImmutableArray();
-
-			var method = new MethodDeclaration(identifier, returnType, parameters, body);
-			_resolver = _resolver.With(methodReference, method);
-
-			return method;
-		}
-
-		/// <summary>
-		///     Transforms the field declaration represented by the C# <paramref name="fieldDeclaration" />.
-		/// </summary>
-		/// <param name="compilationUnit">The compilation unit the method was declared in.</param>
-		/// <param name="fieldDeclaration">The C# field declaration that should be transformed.</param>
-		private FieldDeclaration TransformField(CompilationUnit compilationUnit, FieldDeclarationSyntax fieldDeclaration)
-		{
-			Assert.That(fieldDeclaration.Declaration.Variables.Count == 1, "Field declaration was not correctly lowered.");
-
-			var variable = fieldDeclaration.Declaration.Variables[0];
-			var fieldSymbol = (IFieldSymbol)compilationUnit.SemanticModel.GetDeclaredSymbol(variable);
-			var fieldReference = SymbolMap.GetFieldReference(fieldSymbol);
-
-			var identifier = new Identifier(variable.Identifier.ValueText);
-			var field = new FieldDeclaration(identifier, fieldSymbol.Type.ToTypeSymbol(compilationUnit.SemanticModel));
-			_resolver = _resolver.With(fieldReference, field);
-
-			return field;
-		}
-
-		/// <summary>
-		///     Represents a C# compilation unit that must be transformed.
-		/// </summary>
-		private struct CompilationUnit
-		{
-			/// <summary>
-			///     Initializes a new instance of the <see cref="CompilationUnit" /> type.
-			/// </summary>
-			/// <param name="syntaxRoot">The root node of the compilation unit's syntax tree.</param>
-			/// <param name="semanticModel">The semantic model for the compilation unit.</param>
-			public CompilationUnit(SyntaxNode syntaxRoot, SemanticModel semanticModel)
-				: this()
-			{
-				SyntaxRoot = syntaxRoot;
-				SemanticModel = semanticModel;
-			}
-
-			/// <summary>
-			///     Gets the root node of the compilation unit's syntax tree.
-			/// </summary>
-			public SyntaxNode SyntaxRoot { get; private set; }
-
-			/// <summary>
-			///     Gets the semantic model for the compilation unit.
-			/// </summary>
-			public SemanticModel SemanticModel { get; private set; }
+			public ClassDeclarationSyntax ClassDeclaration;
+			public Component Component;
 		}
 	}
 }

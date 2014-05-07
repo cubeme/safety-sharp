@@ -20,31 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Runtime
+namespace SafetySharp.Modeling
 {
 	using System;
-	using Utilities;
 
-	/// <summary>
-	///     Provides metadata about a reference of a Safety Sharp modeling assembly to another Safety Sharp modeling assembly.
-	/// </summary>
-	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
-	[UsedImplicitly]
-	public class ModelingAssemblyReferenceAttribute : Attribute
+	public abstract partial class ModelConfiguration
 	{
 		/// <summary>
-		///     Initializes a new instance of the <see cref="ModelingAssemblyReferenceAttribute" /> type.
+		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
 		/// </summary>
-		/// <param name="assemblyName">The fully qualified name of the referenced modeling assembly.</param>
-		public ModelingAssemblyReferenceAttribute(string assemblyName)
+		/// <param name="components">The components that should be added as root components of partitions.</param>
+		protected void AddPartitions(params Component[] components)
 		{
-			Argument.NotNull(assemblyName, () => assemblyName);
-			AssemblyName = assemblyName;
+			AddPartitionRoots(components);
 		}
 
-		/// <summary>
-		///     Gets the fully qualified name of the referenced modeling assembly.
-		/// </summary>
-		internal string AssemblyName { get; private set; }
+		partial void AddPartitionRoots(Component[] components);
 	}
 }

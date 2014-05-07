@@ -23,9 +23,17 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Collections.Immutable;
+	using System.Linq;
+	using System.Linq.Expressions;
+	using System.Reflection;
+	using Utilities;
 
 	public partial class Component
 	{
+		private readonly Dictionary<FieldInfo, ImmutableArray<object>> _fields = new Dictionary<FieldInfo, ImmutableArray<object>>();
+
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
 		{
 			result = default(T);
@@ -39,6 +47,24 @@ namespace SafetySharp.Modeling
 		protected static void ChooseFromRange(out decimal result, decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
 			result = 0;
+		}
+
+		/// <summary>
+		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
+		/// </summary>
+		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
+		/// <param name="initialValues">The initial values of the field.</param>
+		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
+		{
+			Argument.NotNull(field, () => field);
+			Argument.NotNull(initialValues, () => initialValues);
+			Argument.Satisfies(initialValues.Length > 0, () => initialValues, "At least one value must be provided.");
+			Argument.OfType<MemberExpression>(field.Body, () => field, "Expected a lambda expression of the form '() => field'.");
+
+			var fieldInfo = ((MemberExpression)field.Body).Member as FieldInfo;
+			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
+
+			_fields[fieldInfo] = initialValues.Cast<object>().ToImmutableArray();
 		}
 	}
 }

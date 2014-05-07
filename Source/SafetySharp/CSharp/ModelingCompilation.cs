@@ -20,41 +20,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.CSharp
 {
 	using System;
-	using System.Linq;
-	using System.Text;
-	using Extensions;
+	using Metamodel;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
+	using Utilities;
 
-	internal class MetadataNormalizer : CSharpNormalizer
+	/// <summary>
+	///     Represents a compilation of a Safety Sharp modeling assembly that can be be transformed to a <see cref="Model" />
+	///     instance step by step.
+	/// </summary>
+	internal class ModelingCompilation
 	{
 		/// <summary>
-		///     Normalizes the C# code contained in <paramref name="compilation." />
+		///     Initializes a new instance of the <see cref="ModelingCompilation" /> type.
 		/// </summary>
-		/// <param name="compilation">The C# compilation that should be normalized.</param>
-		public override Compilation Normalize(Compilation compilation)
+		/// <param name="compilation">The C# compilation that represents the modeling compilation.</param>
+		public ModelingCompilation(Compilation compilation)
 		{
-			compilation = base.Normalize(compilation);
+			Argument.NotNull(compilation, () => compilation);
+			CSharpCompilation = compilation;
+		}
 
-			var csharpCode = new StringBuilder();
-			var compilationUnits = compilation.SyntaxTrees.SelectMany(syntaxTree => syntaxTree.DescendantNodesAndSelf<CompilationUnitSyntax>());
+		/// <summary>
+		///     Gets the C# compilation that represents the modeling compilation.
+		/// </summary>
+		internal Compilation CSharpCompilation { get; private set; }
 
-			foreach (var compilationUnit in compilationUnits)
-			{
-				var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
-				var cu = compilationUnit.ToString().Trim().Replace("\"", "\"\"");
-				var fileName = compilationUnit.SyntaxTree.FilePath.Replace("\\", "\\\\");
+		public ModelingCompilation Normalize1(ref ClassDeclarationSyntax classDeclaration)
+		{
+			return null;
+		}
 
-				csharpCode.AppendLine(String.Format("[assembly: {0}(@\"{1}\", \"{2}\")]", attributeName, cu, fileName));
-			}
+		public ModelingCompilation SubstituteGeneric(ref ClassDeclarationSyntax classDeclaration, Type[] types)
+		{
+			return null;
+		}
 
-			csharpCode.AppendLine(String.Format("[assembly: {0}(\"{1}\")]", typeof(ModelingAssemblyAttribute).FullName, Compiler.Version));
-			return compilation.AddSyntaxTrees(SyntaxFactory.ParseSyntaxTree(csharpCode.ToString()));
+		public ModelingCompilation Normalize2(ref ClassDeclarationSyntax classDeclaration)
+		{
+			return null;
+		}
+
+		public ClassDeclarationSyntax GetClassDeclaration(Component component)
+		{
+			return null;
 		}
 	}
 }

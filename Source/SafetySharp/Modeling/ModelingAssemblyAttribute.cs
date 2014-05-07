@@ -20,36 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Runtime
+namespace SafetySharp.Modeling
 {
 	using System;
-	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Utilities;
 
 	/// <summary>
-	///     Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
+	///     Provides metadata about a Safety Sharp modeling assembly.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
 	[UsedImplicitly]
-	public class ModelingCompilationUnitAttribute : Attribute
+	public class ModelingAssemblyAttribute : Attribute
 	{
 		/// <summary>
-		///     Initializes a new instance of the <see cref="ModelingCompilationUnitAttribute" /> type.
+		///     Initializes a new instance of the <see cref="ModelingAssemblyAttribute" /> type.
 		/// </summary>
-		/// <param name="syntaxTree">The C# syntax tree representing the compilation unit.</param>
-		/// <param name="filePath">The path of the file the C# code for the compilation unit is stored in.</param>
-		public ModelingCompilationUnitAttribute(string syntaxTree, string filePath)
+		/// <param name="compilerVersion">
+		///     The version string of the Safety Sharp compiler that was used to compile the modeling assembly.
+		/// </param>
+		public ModelingAssemblyAttribute(string compilerVersion)
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
-			Argument.NotNull(filePath, () => filePath);
-
-			SyntaxTree = SyntaxFactory.ParseSyntaxTree(syntaxTree, filePath);
+			Argument.NotNullOrWhitespace(compilerVersion, () => compilerVersion);
+			CompilerVersion = compilerVersion;
 		}
 
 		/// <summary>
-		///     Gets the syntax tree of the compilation unit.
+		///     Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
 		/// </summary>
-		internal SyntaxTree SyntaxTree { get; private set; }
+		internal string CompilerVersion { get; private set; }
 	}
 }

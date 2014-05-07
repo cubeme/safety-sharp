@@ -49,7 +49,7 @@ namespace SafetySharp.CSharp.Normalization
 			if (!SemanticModel.GetChooseFromValuesMethodSymbol(normalizedMethod: false).Equals(methodSymbol.OriginalDefinition))
 				return node;
 
-			// TODO: What if node.Left is not a valid expression for an out parameter?
+			// TODO: What if node.Left is not a valid expression for an out parameter, i.e. variable declaration, etc.?
 			var outExpression = SyntaxFactory.Argument(null, SyntaxFactory.Token(SyntaxKind.OutKeyword).WithTrailingTrivia(SyntaxFactory.Space), node.Left);
 			var arguments = invocation.ArgumentList.Arguments.Insert(0, outExpression);
 			var argumentList = SyntaxFactory.ArgumentList(arguments);

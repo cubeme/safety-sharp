@@ -24,7 +24,7 @@ namespace SafetySharp.Modeling
 {
 	using System;
 
-	public partial class Component
+	public abstract partial class Component
 	{
 		protected static T Choose<T>()
 			where T : struct

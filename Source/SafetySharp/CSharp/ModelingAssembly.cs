@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Runtime
+namespace SafetySharp.CSharp
 {
 	using System;
 	using System.Collections.Generic;
@@ -29,6 +29,7 @@ namespace SafetySharp.CSharp.Runtime
 	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -67,7 +68,7 @@ namespace SafetySharp.CSharp.Runtime
 		///     Gets the C# <see cref="Compilation" /> representing the source code of the modeling assembly and of all of its dependent
 		///     modeling assemblies.
 		/// </summary>
-		internal Compilation Compilation
+		internal ModelingCompilation Compilation
 		{
 			get
 			{
@@ -76,7 +77,7 @@ namespace SafetySharp.CSharp.Runtime
 					.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
 					.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location));
 
-				return AddCompilationUnits(compilation);
+				return new ModelingCompilation(AddCompilationUnits(compilation));
 			}
 		}
 

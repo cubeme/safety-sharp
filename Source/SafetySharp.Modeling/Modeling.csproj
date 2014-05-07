@@ -39,6 +39,9 @@
     <Compile Include="..\SafetySharp\Modeling\Component.cs">
       <Link>Component.cs</Link>
     </Compile>
+    <Compile Include="..\SafetySharp\Modeling\ModelConfiguration.cs">
+      <Link>ModelConfiguration.cs</Link>
+    </Compile>
     <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
       <Link>OverflowBehavior.cs</Link>
     </Compile>

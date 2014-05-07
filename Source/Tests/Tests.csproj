@@ -68,16 +68,15 @@
     <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizerTests.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizerTests.cs" />
-    <Compile Include="CSharp\Normalization\TriviaNormalizerTests.cs" />
     <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
     <Compile Include="CSharp\Transformation\SymbolMapTests.cs" />
-    <Compile Include="CSharp\Transformation\MetamodelTransformationTests.cs" />
-    <Compile Include="CSharp\Transformation\TransformationVisitorStatementTests.cs" />
-    <Compile Include="CSharp\Transformation\TransformationVisitorTests.cs" />
-    <Compile Include="CSharp\Transformation\TransformationVisitorExpressionTests.cs" />
+    <Compile Include="CSharp\Transformation\CompilationTransformationTests.cs" />
+    <Compile Include="CSharp\Transformation\MethodTransformation.StatementTests.cs" />
+    <Compile Include="CSharp\Transformation\MethodTransformationTests.cs" />
+    <Compile Include="CSharp\Transformation\MethodTransformation.ExpressionTests.cs" />
     <Compile Include="Generator\GeneratorTests.cs" />
     <Compile Include="Generator\Test.Generated.cs" />
     <Compile Include="Generator\TestElement.cs" />
@@ -86,6 +85,7 @@
     <Compile Include="Generator\TestVisitor`1.cs" />
     <Compile Include="Modelchecking\Promela\MMToPromelaTestsSimple.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTests.cs" />
+    <Compile Include="Modeling\ModelConfigurationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

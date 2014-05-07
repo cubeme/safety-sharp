@@ -35,7 +35,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
 
-	internal abstract class TransformationVisitorTests
+	internal abstract class MethodTransformationTests
 	{
 		protected MetamodelReference<FieldDeclaration> BoolFieldReference { get; private set; }
 		protected MetamodelReference<FieldDeclaration> IntFieldReference { get; private set; }
@@ -84,7 +84,7 @@ class C : SafetySharp.Modeling.Component
 			BoolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
 			IntFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
 
-			var visitor = new TransformationVisitor(compilation.SemanticModel, symbolMap);
+			var visitor = new MethodTransformation(compilation.SemanticModel, symbolMap);
 			return visitor.Visit(projection(methodBody));
 		}
 

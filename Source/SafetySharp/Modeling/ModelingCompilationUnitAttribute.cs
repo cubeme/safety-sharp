@@ -23,14 +23,33 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Utilities;
 
-	public partial class SpinModelChecker
+	/// <summary>
+	///     Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
+	[UsedImplicitly]
+	public class ModelingCompilationUnitAttribute : Attribute
 	{
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
+		/// <summary>
+		///     Initializes a new instance of the <see cref="ModelingCompilationUnitAttribute" /> type.
+		/// </summary>
+		/// <param name="syntaxTree">The C# syntax tree representing the compilation unit.</param>
+		/// <param name="filePath">The path of the file the C# code for the compilation unit is stored in.</param>
+		public ModelingCompilationUnitAttribute(string syntaxTree, string filePath)
 		{
-			CreateModel(modelConfiguration);
+			Argument.NotNull(syntaxTree, () => syntaxTree);
+			Argument.NotNull(filePath, () => filePath);
+
+			SyntaxTree = SyntaxFactory.ParseSyntaxTree(syntaxTree, filePath);
 		}
 
-		partial void CreateModel(ModelConfiguration modelConfiguration);
+		/// <summary>
+		///     Gets the syntax tree of the compilation unit.
+		/// </summary>
+		internal SyntaxTree SyntaxTree { get; private set; }
 	}
 }

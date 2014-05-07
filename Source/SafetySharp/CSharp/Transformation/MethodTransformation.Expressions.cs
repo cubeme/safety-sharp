@@ -30,7 +30,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
-	internal partial class TransformationVisitor
+	internal partial class MethodTransformation
 	{
 		/// <summary>
 		///     Transforms a C# identifier name to the corresponding metamodel expression.

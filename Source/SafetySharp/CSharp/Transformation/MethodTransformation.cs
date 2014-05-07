@@ -26,13 +26,12 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
 	/// <summary>
 	///     Transforms a lowered C# syntax tree of a method or property body into a corresponding metamodel element tree.
 	/// </summary>
-	internal partial class TransformationVisitor : CSharpSyntaxVisitor<MetamodelElement>
+	internal partial class MethodTransformation : CSharpSyntaxVisitor<MetamodelElement>
 	{
 		/// <summary>
 		///     The semantic model that can be used to retrieve semantic information about the C# program.
@@ -45,11 +44,11 @@ namespace SafetySharp.CSharp.Transformation
 		private readonly SymbolMap _symbolMap;
 
 		/// <summary>
-		///     Initializes a new instance of the <see cref="TransformationVisitor" /> type.
+		///     Initializes a new instance of the <see cref="MethodTransformation" /> type.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model that should be used to retrieve semantic information about the C# program.</param>
 		/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
-		public TransformationVisitor(SemanticModel semanticModel, SymbolMap symbolMap)
+		public MethodTransformation(SemanticModel semanticModel, SymbolMap symbolMap)
 		{
 			Argument.NotNull(semanticModel, () => semanticModel);
 			Argument.NotNull(symbolMap, () => symbolMap);

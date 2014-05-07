@@ -23,16 +23,13 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using CSharp.Runtime;
-	using CSharp.Transformation;
 
 	partial class SpinModelChecker
 	{
-		partial void CreateModel(Component component)
+		partial void CreateModel(ModelConfiguration modelConfiguration)
 		{
-			var modelingAssembly = new ModelingAssembly(component.GetType().Assembly);
-			var transformation = new MetamodelTransformation();
-			var model = transformation.Transform(modelingAssembly.Compilation);
+			//modelConfiguration.Transform();
+			//var model = modelConfiguration.Model;
 
 			return;
 		}

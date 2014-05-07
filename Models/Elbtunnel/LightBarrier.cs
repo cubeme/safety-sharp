@@ -43,12 +43,18 @@ namespace Elbtunnel
 
 	internal class BooleanComponent : Component
 	{
-		private bool _value;
+		private bool _value = Choose(true, false);
 
-		public BooleanComponent()
+		public BooleanComponent(int i)
 		{
+			if (i == 0)
+				_value = Choose(true, false); // AddFieldInfo("_value", false, true, false);
+			else
+				_value = false; // AddFieldInfo("_value", false, false);
+
 			Update();
 			return;
+
 		}
 
 		protected override void Update()

@@ -20,17 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Metamodel.Instantiation
 {
 	using System;
+	using Declarations;
 
-	public partial class SpinModelChecker
+	/// <summary>
+	///     Represents the initial values of a <see cref="FieldDeclaration" />.
+	/// </summary>
+	partial class InitialFieldValues
 	{
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
-		{
-			CreateModel(modelConfiguration);
-		}
-
-		partial void CreateModel(ModelConfiguration modelConfiguration);
 	}
 }

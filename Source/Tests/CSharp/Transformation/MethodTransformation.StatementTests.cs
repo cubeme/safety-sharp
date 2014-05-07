@@ -30,7 +30,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
-	internal class TransformationVisitorStatementTests : TransformationVisitorTests
+	internal class MethodTransformationStatementTests : MethodTransformationTests
 	{
 		[Test]
 		public void AssignmentStatement_SimpleExpression()

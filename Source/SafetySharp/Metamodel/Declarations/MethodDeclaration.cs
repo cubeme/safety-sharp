@@ -35,7 +35,7 @@ namespace SafetySharp.Metamodel.Declarations
 	partial class MethodDeclaration
 	{
 		/// <summary>
-		///     The default implementation of the <see cref="Component.Update()" /> method that simply returns.
+		///     Represents the <see cref="Component.Update()" /> method with an empty body.
 		/// </summary>
 		public static readonly MethodDeclaration UpdateMethod =
 			new MethodDeclaration(identifier: new Identifier("Update"),

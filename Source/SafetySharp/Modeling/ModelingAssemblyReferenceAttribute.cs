@@ -20,33 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Runtime
+namespace SafetySharp.Modeling
 {
 	using System;
 	using Utilities;
 
 	/// <summary>
-	///     Provides metadata about a Safety Sharp modeling assembly.
+	///     Provides metadata about a reference of a Safety Sharp modeling assembly to another Safety Sharp modeling assembly.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
 	[UsedImplicitly]
-	public class ModelingAssemblyAttribute : Attribute
+	public class ModelingAssemblyReferenceAttribute : Attribute
 	{
 		/// <summary>
-		///     Initializes a new instance of the <see cref="ModelingAssemblyAttribute" /> type.
+		///     Initializes a new instance of the <see cref="ModelingAssemblyReferenceAttribute" /> type.
 		/// </summary>
-		/// <param name="compilerVersion">
-		///     The version string of the Safety Sharp compiler that was used to compile the modeling assembly.
-		/// </param>
-		public ModelingAssemblyAttribute(string compilerVersion)
+		/// <param name="assemblyName">The fully qualified name of the referenced modeling assembly.</param>
+		public ModelingAssemblyReferenceAttribute(string assemblyName)
 		{
-			Argument.NotNullOrWhitespace(compilerVersion, () => compilerVersion);
-			CompilerVersion = compilerVersion;
+			Argument.NotNull(assemblyName, () => assemblyName);
+			AssemblyName = assemblyName;
 		}
 
 		/// <summary>
-		///     Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
+		///     Gets the fully qualified name of the referenced modeling assembly.
 		/// </summary>
-		internal string CompilerVersion { get; private set; }
+		internal string AssemblyName { get; private set; }
 	}
 }

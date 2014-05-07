@@ -34,7 +34,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Types;
 
 	[TestFixture]
-	public class MetamodelTransformationTests
+	public class CompilationTransformationTests
 	{
 		private TestCompilation _compilation;
 		private Model _model;
@@ -43,7 +43,7 @@ namespace Tests.CSharp.Transformation
 		private void Transform(string csharpCode)
 		{
 			_compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
-			var transformation = new MetamodelTransformation();
+			var transformation = new CompilationTransformation();
 
 			_model = transformation.Transform(_compilation.Compilation);
 			_symbolMap = transformation.SymbolMap;
