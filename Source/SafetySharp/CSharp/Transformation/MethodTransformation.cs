@@ -48,7 +48,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		/// <param name="semanticModel">The semantic model that should be used to retrieve semantic information about the C# program.</param>
 		/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
-		public MethodTransformation(SemanticModel semanticModel, SymbolMap symbolMap)
+		internal MethodTransformation(SemanticModel semanticModel, SymbolMap symbolMap)
 		{
 			Argument.NotNull(semanticModel, () => semanticModel);
 			Argument.NotNull(symbolMap, () => symbolMap);

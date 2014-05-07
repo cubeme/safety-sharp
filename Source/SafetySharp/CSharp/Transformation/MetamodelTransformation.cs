@@ -33,7 +33,7 @@ namespace SafetySharp.CSharp.Transformation
 		private ModelingCompilation _compilation;
 		private ComponentMapping[] _components;
 
-		public MetamodelTransformation(ModelingCompilation compilation, ModelConfiguration modelConfiguration)
+		internal MetamodelTransformation(ModelingCompilation compilation, ModelConfiguration modelConfiguration)
 		{
 			_compilation = compilation;
 			_modelConfiguration = modelConfiguration;
@@ -41,25 +41,26 @@ namespace SafetySharp.CSharp.Transformation
 
 		internal Model Transform()
 		{
-			for (var i = 0; i < _components.Length; ++i)
-				_compilation = _compilation.Normalize1(ref _components[i].ClassDeclaration);
+			//for (var i = 0; i < _components.Length; ++i)
+			//	_compilation = _compilation.Normalize1(ref _components[i].ClassDeclaration);
 
-			for (var i = 0; i < _components.Length; ++i)
-				_compilation = _compilation.SubstituteGeneric(ref _components[i].ClassDeclaration, _components[i].GetType().GetGenericArguments());
+			//for (var i = 0; i < _components.Length; ++i)
+			//	_compilation = _compilation.SubstituteGeneric(ref _components[i].ClassDeclaration, _components[i].GetType().GetGenericArguments());
 
-			for (var i = 0; i < _components.Length; ++i)
-				_compilation = _compilation.Normalize2(ref _components[i].ClassDeclaration);
+			//for (var i = 0; i < _components.Length; ++i)
+			//	_compilation = _compilation.Normalize2(ref _components[i].ClassDeclaration);
 
-			var compilationTransformation = new CompilationTransformation();
-			var model = compilationTransformation.Transform(_compilation.CSharpCompilation);
+			//var compilationTransformation = new CompilationTransformation();
+			//var model = compilationTransformation.Transform(_compilation.CSharpCompilation);
 
-			var partitionTransformation = new PartitionTransformation(model);
-			return partitionTransformation.Transform(_modelConfiguration.PartitionRoots);
+			//var partitionTransformation = new PartitionTransformation(model);
+			//return partitionTransformation.Transform(_modelConfiguration.PartitionRoots);
+			return null;
 		}
 
 		private void CollectComponents(Component component)
 		{
-			_components[0].ClassDeclaration = _compilation.GetClassDeclaration(component);
+			//_components[0].ClassDeclaration = _compilation.GetClassDeclaration(component);
 			// recursive add components....
 		}
 

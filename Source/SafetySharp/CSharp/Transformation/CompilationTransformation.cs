@@ -54,7 +54,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Initializes a new instance of the <see cref="CompilationTransformation" /> type.
 		/// </summary>
-		public CompilationTransformation()
+		internal CompilationTransformation()
 		{
 			SymbolMap = SymbolMap.Empty;
 		}
@@ -62,13 +62,13 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Gets the symbol map that is used during the transformation.
 		/// </summary>
-		public SymbolMap SymbolMap { get; private set; }
+		internal SymbolMap SymbolMap { get; private set; }
 
 		/// <summary>
 		///     Transforms the <paramref name="compilation" /> into a <see cref="Model" /> instance.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be transformed.</param>
-		public Model Transform(Compilation compilation)
+		internal Model Transform(Compilation compilation)
 		{
 			Argument.NotNull(compilation, () => compilation);
 
@@ -201,7 +201,7 @@ namespace SafetySharp.CSharp.Transformation
 			/// </summary>
 			/// <param name="syntaxRoot">The root node of the compilation unit's syntax tree.</param>
 			/// <param name="semanticModel">The semantic model for the compilation unit.</param>
-			public CompilationUnit(SyntaxNode syntaxRoot, SemanticModel semanticModel)
+			internal CompilationUnit(SyntaxNode syntaxRoot, SemanticModel semanticModel)
 				: this()
 			{
 				SyntaxRoot = syntaxRoot;
@@ -211,12 +211,12 @@ namespace SafetySharp.CSharp.Transformation
 			/// <summary>
 			///     Gets the root node of the compilation unit's syntax tree.
 			/// </summary>
-			public SyntaxNode SyntaxRoot { get; private set; }
+			internal SyntaxNode SyntaxRoot { get; private set; }
 
 			/// <summary>
 			///     Gets the semantic model for the compilation unit.
 			/// </summary>
-			public SemanticModel SemanticModel { get; private set; }
+			internal SemanticModel SemanticModel { get; private set; }
 		}
 	}
 }

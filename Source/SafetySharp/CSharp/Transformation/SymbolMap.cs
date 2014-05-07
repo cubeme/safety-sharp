@@ -41,7 +41,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     The empty symbol map that does not map any symbols.
 		/// </summary>
-		public static readonly SymbolMap Empty = new SymbolMap { _symbolMap = Map.Empty };
+		internal static readonly SymbolMap Empty = new SymbolMap { _symbolMap = Map.Empty };
 
 		/// <summary>
 		///     Maps a C# symbol to a metamodel reference.
@@ -52,7 +52,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Adds the symbols declared in <paramref name="semanticModel" /> to the current <see cref="SymbolMap" /> instance.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model containing the symbols that should be added.</param>
-		public SymbolMap AddSymbols(SemanticModel semanticModel)
+		internal SymbolMap AddSymbols(SemanticModel semanticModel)
 		{
 			Argument.NotNull(semanticModel, () => semanticModel);
 
@@ -67,7 +67,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Creates a new instance for the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the symbol map should be created for.</param>
-		public static SymbolMap FromCompilation(Compilation compilation)
+		internal static SymbolMap FromCompilation(Compilation compilation)
 		{
 			return compilation
 				.SyntaxTrees
@@ -79,7 +79,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a component.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public MetamodelReference<ComponentDeclaration> GetComponentReference(ITypeSymbol symbol)
+		internal MetamodelReference<ComponentDeclaration> GetComponentReference(ITypeSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			Argument.Satisfies(symbol.TypeKind == TypeKind.Class, () => symbol, "Expected a type symbol for a class.");
@@ -91,7 +91,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a method.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public MetamodelReference<MethodDeclaration> GetMethodReference(IMethodSymbol symbol)
+		internal MetamodelReference<MethodDeclaration> GetMethodReference(IMethodSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			return GetReference<MethodDeclaration>(symbol);
@@ -101,7 +101,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a field.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		public MetamodelReference<FieldDeclaration> GetFieldReference(IFieldSymbol symbol)
+		internal MetamodelReference<FieldDeclaration> GetFieldReference(IFieldSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			return GetReference<FieldDeclaration>(symbol);
@@ -128,7 +128,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a value indicating whether <paramref name="symbol" /> is mapped.
 		/// </summary>
 		/// <param name="symbol">The symbol that should be checked.</param>
-		public bool IsMapped(ISymbol symbol)
+		internal bool IsMapped(ISymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			return _symbolMap.ContainsKey(symbol);

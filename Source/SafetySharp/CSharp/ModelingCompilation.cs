@@ -23,15 +23,16 @@
 namespace SafetySharp.CSharp
 {
 	using System;
-	using Metamodel;
+	using System.Collections.Immutable;
+	using System.Linq;
+	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Represents a compilation of a Safety Sharp modeling assembly that can be be transformed to a <see cref="Model" />
-	///     instance step by step.
+	///     Represents a compilation of a Safety Sharp modeling assembly.
 	/// </summary>
 	internal class ModelingCompilation
 	{
@@ -39,7 +40,7 @@ namespace SafetySharp.CSharp
 		///     Initializes a new instance of the <see cref="ModelingCompilation" /> type.
 		/// </summary>
 		/// <param name="compilation">The C# compilation that represents the modeling compilation.</param>
-		public ModelingCompilation(Compilation compilation)
+		internal ModelingCompilation(Compilation compilation)
 		{
 			Argument.NotNull(compilation, () => compilation);
 			CSharpCompilation = compilation;
@@ -50,24 +51,46 @@ namespace SafetySharp.CSharp
 		/// </summary>
 		internal Compilation CSharpCompilation { get; private set; }
 
-		public ModelingCompilation Normalize1(ref ClassDeclarationSyntax classDeclaration)
+		internal ModelingCompilation Normalize1(ref ClassDeclarationSyntax classDeclaration)
 		{
 			return null;
 		}
 
-		public ModelingCompilation SubstituteGeneric(ref ClassDeclarationSyntax classDeclaration, Type[] types)
+		internal ModelingCompilation SubstituteGeneric(ref ClassDeclarationSyntax classDeclaration, Type[] types)
 		{
 			return null;
 		}
 
-		public ModelingCompilation Normalize2(ref ClassDeclarationSyntax classDeclaration)
+		internal ModelingCompilation Normalize2(ref ClassDeclarationSyntax classDeclaration)
 		{
 			return null;
 		}
 
-		public ClassDeclarationSyntax GetClassDeclaration(Component component)
+		/// <summary>
+		///     Gets the <see cref="ClassDeclarationSyntax" /> corresponding to the <paramref name="component" />.
+		/// </summary>
+		/// <param name="component">The component the class declaration should be returned for.</param>
+		internal ClassDeclarationSyntax GetClassDeclaration(Component component)
 		{
-			return null;
+			Argument.NotNull(component, () => component);
+
+			var componentType = component.GetType();
+			var componentClass = (from syntaxTree in CSharpCompilation.SyntaxTrees
+								  let semanticModel = CSharpCompilation.GetSemanticModel(syntaxTree)
+								  from classDeclaration in syntaxTree.DescendantNodesAndSelf<ClassDeclarationSyntax>()
+								  where classDeclaration.GetFullName(semanticModel) == componentType.FullName
+								  select classDeclaration).ToImmutableArray();
+
+			const string messageNone = "Unable to find a class declaration corresponding to type '{0}' in the modeling assembly metadata.";
+			const string messageMany = "Found more than one class declarations corresponding to type '{0}' in the modeling assembly metadata.";
+
+			if (componentClass.Length == 0)
+				throw new InvalidOperationException(String.Format(messageNone, componentType.FullName));
+
+			if (componentClass.Length > 1)
+				throw new InvalidOperationException(String.Format(messageMany, componentType.FullName));
+
+			return componentClass[0];
 		}
 	}
 }

@@ -42,7 +42,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Initializes a new instance of the <see cref="PartitionTransformation" /> type.
 		/// </summary>
 		/// <param name="model">The model already containing the static parts the partitions should be added to.</param>
-		public PartitionTransformation(Model model)
+		internal PartitionTransformation(Model model)
 		{
 			Argument.NotNull(model, () => model);
 			_model = model;
@@ -53,7 +53,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     all static and dynamic parts required for model checking.
 		/// </summary>
 		/// <param name="partitionRoots">The partition root components that should be added to the model.</param>
-		public Model Transform(ImmutableArray<Component> partitionRoots)
+		internal Model Transform(ImmutableArray<Component> partitionRoots)
 		{
 			foreach (var partitionRoot in partitionRoots)
 				TransformPartition(partitionRoot);

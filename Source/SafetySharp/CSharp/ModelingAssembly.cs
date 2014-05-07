@@ -46,7 +46,7 @@ namespace SafetySharp.CSharp
 		///     Initializes a new instance of the <see cref="ModelingAssembly" /> type.
 		/// </summary>
 		/// <param name="modelingAssembly">The C# assembly representing the modeling assembly.</param>
-		public ModelingAssembly(Assembly modelingAssembly)
+		internal ModelingAssembly(Assembly modelingAssembly)
 		{
 			Argument.NotNull(modelingAssembly, () => modelingAssembly);
 			_assembly = modelingAssembly;
@@ -62,7 +62,7 @@ namespace SafetySharp.CSharp
 		/// <summary>
 		///     Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
 		/// </summary>
-		public string CompilerVersion { get; private set; }
+		internal string CompilerVersion { get; private set; }
 
 		/// <summary>
 		///     Gets the C# <see cref="Compilation" /> representing the source code of the modeling assembly and of all of its dependent
