@@ -23,15 +23,31 @@
 namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
+	using System.Collections.Immutable;
 	using Modeling;
 	using Statements;
+	using Types;
 
+	/// <summary>
+	///     Represents the declaration of a method within a component or interface.
+	/// </summary>
 	partial class MethodDeclaration
 	{
 		/// <summary>
 		///     The default implementation of the <see cref="Component.Update()" /> method that simply returns.
 		/// </summary>
-		public static readonly MethodDeclaration DefaultUpdateMethod =
-			new MethodDeclaration(new Identifier("Update"), BlockStatement.Empty);
+		public static readonly MethodDeclaration UpdateMethod =
+			new MethodDeclaration(identifier: new Identifier("Update"),
+								  body: BlockStatement.Empty,
+								  returnType: TypeSymbol.Void,
+								  parameters: ImmutableArray<ParameterDeclaration>.Empty);
+
+		/// <summary>
+		///     Returns a string that represents the current method.
+		/// </summary>
+		public override string ToString()
+		{
+			return String.Format("{0} {1}({2})", "void", Identifier, "");
+		}
 	}
 }

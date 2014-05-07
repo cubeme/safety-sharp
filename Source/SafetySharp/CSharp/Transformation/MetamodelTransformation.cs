@@ -134,7 +134,7 @@ namespace SafetySharp.CSharp.Transformation
 				.OfType<MethodDeclarationSyntax>()
 				.SingleOrDefault(methodDeclaration => methodDeclaration.IsUpdateMethod(compilationUnit.SemanticModel));
 
-			var updateMethod = MethodDeclaration.DefaultUpdateMethod;
+			var updateMethod = MethodDeclaration.UpdateMethod;
 			if (updateMethodDeclaration != null)
 				updateMethod = TransformMethod(compilationUnit, updateMethodDeclaration);
 
@@ -152,10 +152,18 @@ namespace SafetySharp.CSharp.Transformation
 			var methodReference = SymbolMap.GetMethodReference(methodSymbol);
 
 			var transformation = new TransformationVisitor(compilationUnit.SemanticModel, SymbolMap);
-			var body = transformation.Visit(methodDeclaration.Body) as Statement;
-			Assert.NotNull(body, "Method has no body.");
+			var body = (Statement)transformation.Visit(methodDeclaration.Body);
 
-			var method = new MethodDeclaration(new Identifier(methodDeclaration.Identifier.ValueText), body);
+			var identifier = new Identifier(methodDeclaration.Identifier.ValueText);
+			var returnType = methodSymbol.ReturnType.ToTypeSymbol(compilationUnit.SemanticModel);
+			var parameters = methodSymbol.Parameters.Select(parameter =>
+			{
+				var name = new Identifier(parameter.Name);
+				var type = parameter.Type.ToTypeSymbol(compilationUnit.SemanticModel);
+				return new ParameterDeclaration(name, type);
+			}).ToImmutableArray();
+
+			var method = new MethodDeclaration(identifier, returnType, parameters, body);
 			_resolver = _resolver.With(methodReference, method);
 
 			return method;

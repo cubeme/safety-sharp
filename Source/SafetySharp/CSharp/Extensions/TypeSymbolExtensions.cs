@@ -74,6 +74,8 @@ namespace SafetySharp.CSharp.Extensions
 					return TypeSymbol.Decimal;
 				case SpecialType.System_Int32:
 					return TypeSymbol.Integer;
+				case SpecialType.System_Void:
+					return TypeSymbol.Void;
 				default:
 					Assert.NotReached("Unsupported C# type '{0}'.", symbol);
 					return null;

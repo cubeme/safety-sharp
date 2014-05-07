@@ -57,7 +57,7 @@ namespace Tests.Modelchecking.Promela
             var clause2 = new MMStatements.GuardedCommandClause(MMExpressions.BooleanLiteral.True, assignment2);
 
             var updateBody = new MMStatements.GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
-            var updateMethod = new MMDeclarations.MethodDeclaration(new MM.Identifier("Update"), updateBody.AsBlockStatement());
+            var updateMethod = MMDeclarations.MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
 
             var mmsimple = new MMDeclarations.ComponentDeclaration(new MM.Identifier("BooleanComponent"),
                                                     updateMethod,

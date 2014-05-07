@@ -177,11 +177,10 @@ namespace SafetySharp.CSharp
 		/// </summary>
 		private int Emit()
 		{
-			var pdbPath = Path.Combine(Path.GetDirectoryName(_assemblyPath), Path.GetFileNameWithoutExtension(_assemblyPath)) + ".pdb";
 			EmitResult emitResult;
 
 			using (var ilStream = new FileStream(_assemblyPath, FileMode.OpenOrCreate))
-			using (var pdbStream = new FileStream(pdbPath, FileMode.OpenOrCreate))
+			using (var pdbStream = new FileStream(Path.ChangeExtension(_assemblyPath, ".pdb"), FileMode.OpenOrCreate))
 				emitResult = _compilation.Emit(ilStream, pdbStream: pdbStream);
 
 			if (emitResult.Success)

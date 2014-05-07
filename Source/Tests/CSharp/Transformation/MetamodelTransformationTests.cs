@@ -84,10 +84,36 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void ShouldTransformNoUpdateMethodButOtherMethods()
 		{
-			var component = TransformComponent("class X : Component { public bool M() { return false; } }");
+			var component = TransformComponent("class X : Component { public bool Method() { return false; } }");
 			component.UpdateMethod.Body.Should().Be(BlockStatement.Empty);
 			component.Methods.Length.Should().Be(1);
-			component.Methods[0].Body.Should().Be(new ReturnStatement(BooleanLiteral.False).AsBlockStatement());
+			component.Methods[0].Identifier.Name.Should().Be("Method");
+			component.Methods[0].Body.Should().Be(ReturnStatement.ReturnFalse.AsBlockStatement());
+			component.Methods[0].ReturnType.Should().Be(TypeSymbol.Boolean);
+			component.Methods[0].Parameters.Should().BeEmpty();
+		}
+
+		[Test]
+		public void ShouldTransformMethodsWithParameters()
+		{
+			var component = TransformComponent("class X : Component { bool M() { return true; } void N(int i, bool b) { return; } }");
+			component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod);
+
+			component.Methods.Should().HaveCount(2);
+			component.Methods[0].Identifier.Name.Should().Be("M");
+			component.Methods[0].Body.Should().Be(ReturnStatement.ReturnTrue.AsBlockStatement());
+			component.Methods[0].ReturnType.Should().Be(TypeSymbol.Boolean);
+			component.Methods[0].Parameters.Should().BeEmpty();
+
+			component.Methods[1].Identifier.Name.Should().Be("N");
+			component.Methods[1].Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
+			component.Methods[1].ReturnType.Should().Be(TypeSymbol.Void);
+			component.Methods[1].Parameters.Should().HaveCount(2);
+
+			component.Methods[1].Parameters[0].Identifier.Name.Should().Be("i");
+			component.Methods[1].Parameters[0].Type.Should().Be(TypeSymbol.Integer);
+			component.Methods[1].Parameters[1].Identifier.Name.Should().Be("b");
+			component.Methods[1].Parameters[1].Type.Should().Be(TypeSymbol.Boolean);
 		}
 
 		[Test]
@@ -97,8 +123,8 @@ namespace Tests.CSharp.Transformation
 			_model.Components.Length.Should().Be(1);
 
 			var component = _model.Components[0];
-			component.Methods.Length.Should().Be(0);
-			component.Fields.Length.Should().Be(0);
+			component.Methods.Should().BeEmpty();
+			component.Fields.Should().BeEmpty();
 		}
 
 		[Test]
@@ -124,7 +150,11 @@ namespace Tests.CSharp.Transformation
 		{
 			var component = TransformComponent("class X : Component { protected override void Update() { return; } }");
 			component.UpdateMethod.Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
-			component.Methods.Length.Should().Be(0);
+			component.UpdateMethod.Identifier.Name.Should().Be("Update");
+			component.UpdateMethod.ReturnType.Should().Be(TypeSymbol.Void);
+			component.UpdateMethod.Parameters.Should().BeEmpty();
+
+			component.Methods.Should().BeEmpty();
 		}
 
 		[Test]
@@ -161,7 +191,7 @@ class BooleanComponent : SafetySharp.Modeling.Component
 			var clause2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
 
 			var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
-			var updateMethod = new MethodDeclaration(new Identifier("Update"), updateBody.AsBlockStatement());
+			var updateMethod = MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
 
 			var expected = new ComponentDeclaration(new Identifier("BooleanComponent"),
 													updateMethod,

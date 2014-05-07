@@ -23,6 +23,7 @@
 namespace SafetySharp.Metamodel.Statements
 {
 	using System;
+	using Expressions;
 
 	partial class ReturnStatement
 	{
@@ -30,5 +31,15 @@ namespace SafetySharp.Metamodel.Statements
 		///     The return statement that does not return any expression.
 		/// </summary>
 		public static readonly ReturnStatement ReturnVoid = new ReturnStatement(null);
+
+		/// <summary>
+		///     The return statement that returns <c>true.</c>
+		/// </summary>
+		public static readonly ReturnStatement ReturnTrue = new ReturnStatement(BooleanLiteral.True);
+
+		/// <summary>
+		///     The return statement that returns <c>false</c>.
+		/// </summary>
+		public static readonly ReturnStatement ReturnFalse = new ReturnStatement(BooleanLiteral.False);
 	}
 }

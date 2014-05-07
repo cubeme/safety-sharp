@@ -120,7 +120,6 @@
     <Compile Include="Metamodel\Declarations\MemberDeclaration.cs" />
     <Compile Include="Metamodel\MetamodelElement.cs" />
     <Compile Include="Metamodel\Statements\Statement.cs" />
-    <Compile Include="Metamodel\Declarations\TypeDeclaration.cs" />
     <Compile Include="Modelchecking\Promela\PromelaBinaryOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaElement.cs" />
     <Compile Include="Modelchecking\Promela\PromelaModelWriter.cs" />

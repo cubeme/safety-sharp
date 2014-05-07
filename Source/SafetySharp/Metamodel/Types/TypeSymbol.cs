@@ -40,5 +40,10 @@ namespace SafetySharp.Metamodel.Types
 		///     Represents the type of decimals.
 		/// </summary>
 		public static readonly DecimalType Decimal = new DecimalType();
+
+		/// <summary>
+		///     Represents the 'void' type.
+		/// </summary>
+		public static readonly VoidType Void = new VoidType();
 	}
 }

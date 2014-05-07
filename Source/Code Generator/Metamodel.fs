@@ -147,6 +147,22 @@ let elements = [
                         Comment = "The name of the method."
                     }
                     {
+                        Name = "ReturnType"
+                        Type = "TypeSymbol"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        CanBeNull = false
+                        Comment = "The return type of the method."
+                    }
+                    {
+                        Name = "Parameters"
+                        Type = "ParameterDeclaration"
+                        CollectionType = Array
+                        Validation = None
+                        CanBeNull = false
+                        Comment = "The parameters of the method."
+                    }
+                    {
                         Name = "Body"
                         Type = "Statement"
                         CollectionType = Singleton
@@ -176,6 +192,30 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The type of the field."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "ParameterDeclaration"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The name of the parameter."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Type"
+                        Type = "TypeSymbol"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The type of the parameter."
                         CanBeNull = false
                     }
                 ]
