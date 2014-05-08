@@ -53,79 +53,91 @@ namespace Tests.CSharp.Extensions
 		}
 
 		[Test]
-		public void Implements_False_UnderivedBaseType_HasBase()
+		public void IsDerivedFrom_Interface_False_Self()
+		{
+			ShouldNotDeriveFrom("interface X", "X");
+		}
+
+		[Test]
+		public void IsDerivedFrom_False_Self()
+		{
+			ShouldNotDeriveFrom("class X", "X");
+		}
+
+		[Test]
+		public void IsDerivedFrom_Interface_False_UnderivedBaseType_HasBase()
 		{
 			ShouldNotDeriveFrom("interface Q {} interface Y {} interface X : Y {}", "Q");
 		}
 
 		[Test]
-		public void Implements_False_UnderivedBaseType_NoBase()
+		public void IsDerivedFrom_Interface_False_UnderivedBaseType_NoBase()
 		{
 			ShouldNotDeriveFrom("interface Q {} interface X {}", "Q");
 		}
 
 		[Test]
-		public void Implements_False_UnderivedBaseType_TwoBases()
+		public void IsDerivedFrom_Interface_False_UnderivedBaseType_TwoBases()
 		{
 			ShouldNotDeriveFrom("interface Q {} interface Z {} interface Y : Z {} interface X : Y {}", "Q");
 		}
 
 		[Test]
-		public void Implements_True_BaseBaseClassImplementsInterface_First()
+		public void IsDerivedFrom_Interface_True_BaseBaseClassImplementsInterface_First()
 		{
 			ShouldDeriveFrom("interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}", "Q");
 		}
 
 		[Test]
-		public void Implements_True_BaseBaseClassImplementsInterface_Second()
+		public void IsDerivedFrom_Interface_True_BaseBaseClassImplementsInterface_Second()
 		{
 			ShouldDeriveFrom("interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}", "S");
 		}
 
 		[Test]
-		public void Implements_True_BaseClassImplementsInterface_First()
+		public void IsDerivedFrom_Interface_True_BaseClassImplementsInterface_First()
 		{
 			ShouldDeriveFrom("interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}", "Z");
 		}
 
 		[Test]
-		public void Implements_True_BaseClassImplementsInterface_Second()
+		public void IsDerivedFrom_Interface_True_BaseClassImplementsInterface_Second()
 		{
 			ShouldDeriveFrom("interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}", "Q");
 		}
 
 		[Test]
-		public void Implements_True_BaseIsNotTopLevel()
+		public void IsDerivedFrom_Interface_True_BaseIsNotTopLevel()
 		{
 			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y {}", "Y");
 		}
 
 		[Test]
-		public void Implements_True_BaseIsTwoLevelsUp()
+		public void IsDerivedFrom_Interface_True_BaseIsTwoLevelsUp()
 		{
 			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y {}", "Y");
 		}
 
 		[Test]
-		public void Implements_True_DirectBase()
+		public void IsDerivedFrom_Interface_True_DirectBase()
 		{
 			ShouldDeriveFrom("interface Y {} interface X : Y {}", "Y");
 		}
 
 		[Test]
-		public void Implements_True_FirstBase()
+		public void IsDerivedFrom_Interface_True_FirstBase()
 		{
 			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y, Z {}", "Y");
 		}
 
 		[Test]
-		public void Implements_True_SecondBase()
+		public void IsDerivedFrom_Interface_True_SecondBase()
 		{
 			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y, Z {}", "Z");
 		}
 
 		[Test]
-		public void Implements_True_SecondBaseOfBaseInterface()
+		public void IsDerivedFrom_Interface_True_SecondBaseOfBaseInterface()
 		{
 			ShouldDeriveFrom("interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}", "Q");
 		}

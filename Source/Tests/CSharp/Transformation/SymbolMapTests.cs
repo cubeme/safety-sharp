@@ -27,6 +27,7 @@ namespace Tests.CSharp.Transformation
 	using FluentAssertions;
 	using Microsoft.CodeAnalysis;
 	using NUnit.Framework;
+	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Transformation;
 
 	[TestFixture]
@@ -39,12 +40,12 @@ namespace Tests.CSharp.Transformation
 
 		private void Compile(string csharpCode)
 		{
-			_compilation = new TestCompilation(csharpCode);
+			_compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
 
 			_semanticModel = _compilation.SemanticModel;
 			_syntaxRoot = _compilation.SyntaxRoot;
 
-			_symbolMap = SymbolMap.FromCompilation(_compilation.Compilation);
+			_symbolMap = new SymbolMap(_compilation.Compilation);
 		}
 
 		private ITypeSymbol GetClassSymbol(string className)
@@ -60,6 +61,11 @@ namespace Tests.CSharp.Transformation
 		private static IMethodSymbol GetMethodSymbol(ITypeSymbol classSymbol, string methodName)
 		{
 			return classSymbol.GetMembers(methodName).OfType<IMethodSymbol>().Single();
+		}
+
+		private static IFieldSymbol GetFieldSymbol(ITypeSymbol classSymbol, string fieldName)
+		{
+			return classSymbol.GetMembers(fieldName).OfType<IFieldSymbol>().Single();
 		}
 
 		[Test]
@@ -130,6 +136,18 @@ namespace Tests.CSharp.Transformation
 			referenceX.Should().NotBe(referenceY);
 			referenceX.Should().NotBe(referenceZ);
 			referenceZ.Should().NotBe(referenceY);
+		}
+
+		[Test]
+		public void SubComponentsShouldNotBeMapped()
+		{
+			Compile("class X : Component { Component c1; IComponent c2; }");
+			var classSymbol = GetClassSymbol("X");
+			var fieldSymbol1 = GetFieldSymbol(classSymbol, "c1");
+			var fieldSymbol2 = GetFieldSymbol(classSymbol, "c2");
+
+			_symbolMap.IsMapped(fieldSymbol1).Should().BeFalse();
+			_symbolMap.IsMapped(fieldSymbol2).Should().BeFalse();
 		}
 
 		[Test]
@@ -217,6 +235,65 @@ namespace Tests.CSharp.Transformation
 
 			Action getReference = () => _symbolMap.GetInterfaceReference(interfaceSymbol);
 			getReference.ShouldThrow<InvalidOperationException>();
+		}
+
+		[Test]
+		public void FieldOfNonComponentClassShouldNotBeMapped()
+		{
+			Compile("class X { int x; }");
+			var classSymbol = GetClassSymbol("X");
+
+			var fieldSymbol = GetFieldSymbol(classSymbol, "x");
+			_symbolMap.IsMapped(fieldSymbol).Should().BeFalse();
+
+			Action getReference = () => _symbolMap.GetFieldReference(fieldSymbol);
+			getReference.ShouldThrow<InvalidOperationException>();
+		}
+
+		[Test]
+		public void FieldOfComponentClassShouldBeMapped()
+		{
+			Compile("class X : Component { int x; }");
+			var classSymbol = GetClassSymbol("X");
+			var fieldSymbol = GetFieldSymbol(classSymbol, "x");
+
+			_symbolMap.IsMapped(fieldSymbol).Should().BeTrue();
+			_symbolMap.GetFieldReference(fieldSymbol).Should().NotBeNull();
+		}
+
+		[Test]
+		public void FieldsOfComponentClassShouldBeMapped()
+		{
+			Compile("class X : Component { int x; bool y; }");
+			var classSymbol = GetClassSymbol("X");
+			var fieldSymbol1 = GetFieldSymbol(classSymbol, "x");
+			var fieldSymbol2 = GetFieldSymbol(classSymbol, "y");
+
+			_symbolMap.IsMapped(fieldSymbol1).Should().BeTrue();
+			_symbolMap.IsMapped(fieldSymbol2).Should().BeTrue();
+
+			_symbolMap.GetFieldReference(fieldSymbol1).Should().NotBeNull();
+			_symbolMap.GetFieldReference(fieldSymbol2).Should().NotBeNull();
+		}
+
+		[Test]
+		public void ComponentBaseClassShouldBeMapped()
+		{
+			Compile("");
+			var classSymbol = _semanticModel.GetComponentClassSymbol();
+
+			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
+			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
+		}
+
+		[Test]
+		public void ComponentBaseInterfaceShouldBeMapped()
+		{
+			Compile("");
+			var interfaceSymbol = _semanticModel.GetComponentInterfaceSymbol();
+
+			_symbolMap.IsMapped(interfaceSymbol).Should().BeTrue();
+			_symbolMap.GetInterfaceReference(interfaceSymbol).Should().NotBeNull();
 		}
 	}
 }

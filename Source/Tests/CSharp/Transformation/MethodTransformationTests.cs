@@ -37,8 +37,8 @@ namespace Tests.CSharp.Transformation
 
 	internal abstract class MethodTransformationTests
 	{
-		protected MetamodelReference<FieldDeclaration> BoolFieldReference { get; private set; }
-		protected MetamodelReference<FieldDeclaration> IntFieldReference { get; private set; }
+		protected IMetamodelReference<FieldDeclaration> BoolFieldReference { get; private set; }
+		protected IMetamodelReference<FieldDeclaration> IntFieldReference { get; private set; }
 
 		[SetUp]
 		public void Setup()
@@ -80,7 +80,7 @@ class C : SafetySharp.Modeling.Component
 
 			var methodBody = compilation.SyntaxTree.DescendantNodes<BlockSyntax>().Single();
 
-			var symbolMap = SymbolMap.FromCompilation(compilation.Compilation);
+			var symbolMap = new SymbolMap(compilation.Compilation);
 			BoolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
 			IntFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
 

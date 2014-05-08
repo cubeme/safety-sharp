@@ -37,13 +37,13 @@ namespace SafetySharp.Metamodel
 		/// </summary>
 		internal static readonly MetamodelResolver Empty = new MetamodelResolver
 		{
-			_referenceMap = ImmutableDictionary<MetamodelReference, MetamodelElement>.Empty
+			_referenceMap = ImmutableDictionary<IMetamodelReference, MetamodelElement>.Empty
 		};
 
 		/// <summary>
 		///     Maps metamodel references to metamodel elements.
 		/// </summary>
-		private ImmutableDictionary<MetamodelReference, MetamodelElement> _referenceMap;
+		private ImmutableDictionary<IMetamodelReference, MetamodelElement> _referenceMap;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="MetamodelResolver" /> type.
@@ -57,7 +57,7 @@ namespace SafetySharp.Metamodel
 		/// </summary>
 		/// <typeparam name="T">The type of the referenced <see cref="MetamodelElement" />.</typeparam>
 		/// <param name="reference">The reference that should be resolved.</param>
-		public T Resolve<T>(MetamodelReference<T> reference)
+		public T Resolve<T>(IMetamodelReference<T> reference)
 			where T : MetamodelElement
 		{
 			Argument.NotNull(reference, () => reference);
@@ -76,7 +76,7 @@ namespace SafetySharp.Metamodel
 		/// </summary>
 		/// <param name="reference">The reference that should be added to the resolver.</param>
 		/// <param name="referencedElement">The referenced metamodel element that <paramref name="reference" /> refers to.</param>
-		public MetamodelResolver With(MetamodelReference reference, MetamodelElement referencedElement)
+		public MetamodelResolver With(IMetamodelReference reference, MetamodelElement referencedElement)
 		{
 			Argument.NotNull(reference, () => reference);
 			Argument.NotNull(referencedElement, () => referencedElement);

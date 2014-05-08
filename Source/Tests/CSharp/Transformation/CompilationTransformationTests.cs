@@ -62,7 +62,7 @@ namespace Tests.CSharp.Transformation
 			return _metamodelCompilation.Interfaces[0];
 		}
 
-		private T GetAndCheckSubComponent<T>(MetamodelReference<TypeDeclaration> typeDeclaration)
+		private T GetAndCheckSubComponent<T>(IMetamodelReference<TypeDeclaration> typeDeclaration)
 			where T : TypeDeclaration
 		{
 			var component = _metamodelCompilation.Resolver.Resolve(typeDeclaration);
@@ -172,6 +172,13 @@ namespace Tests.CSharp.Transformation
 			var field = component.Fields[0];
 			field.Identifier.Name.Should().Be("value");
 			field.Type.Should().Be(TypeSymbol.Boolean);
+		}
+
+		[Test]
+		public void ShouldNotReportSubComponentsAsField()
+		{
+			var component = TransformComponent("class MyComponent : Component { private Component c; private IComponent ic; }");
+			component.Fields.Should().HaveCount(0);
 		}
 
 		[Test]

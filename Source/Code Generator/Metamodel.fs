@@ -62,7 +62,7 @@ let elements = [
                         CollectionType = Singleton
                         Validation = NotNull
                         CanBeNull = false
-                        Comment = "The resolver that can be used to resolve <cref see=\"MetamodelReference\" />s within the model."
+                        Comment = "The resolver that can be used to resolve <cref see=\"IMetamodelReference\" />s within the model."
                     }
                     {
                         Name = "Components"
@@ -182,7 +182,7 @@ let elements = [
                     }
                     {
                         Name = "Type"
-                        Type = "MetamodelReference<TypeDeclaration>"
+                        Type = "IMetamodelReference<TypeDeclaration>"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The type of the sub component."
@@ -408,7 +408,7 @@ let elements = [
                 [
                     {
                         Name = "Field"
-                        Type = "MetamodelReference<FieldDeclaration>"
+                        Type = "IMetamodelReference<FieldDeclaration>"
                         CollectionType = Singleton
                         Validation = NotNull
                         CanBeNull = false
@@ -574,7 +574,7 @@ let elements = [
                 [
                     {
                         Name = "InterfaceDeclaration"
-                        Type = "MetamodelReference<InterfaceDeclaration>"
+                        Type = "IMetamodelReference<InterfaceDeclaration>"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The reference to the declaration of the interface."
@@ -620,7 +620,7 @@ let elements = [
                     }
                     {
                         Name = "Type"
-                        Type = "MetamodelReference<ComponentDeclaration>"
+                        Type = "IMetamodelReference<ComponentDeclaration>"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The type of the component configuration."

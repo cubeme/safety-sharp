@@ -89,7 +89,7 @@ namespace Tests.CSharp.Transformation
 			return configurationTransformation.Transform();
 		}
 
-		private void CheckComponentTypes(IEnumerable<MetamodelReference<ComponentDeclaration>> declarations, params Component[] components)
+		private void CheckComponentTypes(IEnumerable<IMetamodelReference<ComponentDeclaration>> declarations, params Component[] components)
 		{
 			declarations.Should().BeEquivalentTo(components.Select(_componentResolver.Resolve));
 		}

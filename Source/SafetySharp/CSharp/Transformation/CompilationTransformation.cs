@@ -58,7 +58,10 @@ namespace SafetySharp.CSharp.Transformation
 			Argument.NotNull(compilation, () => compilation);
 
 			_compilation = compilation;
-			SymbolMap = SymbolMap.Empty;
+			SymbolMap = new SymbolMap(compilation.CSharpCompilation);
+
+			_resolver = _resolver.With(SymbolMap.BaseComponentType, ComponentDeclaration.BaseComponent);
+			_resolver = _resolver.With(SymbolMap.BaseComponentInterface, InterfaceDeclaration.BaseInterface);
 		}
 
 		/// <summary>
@@ -71,7 +74,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     <paramref name="classDeclaration" />.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration the corresponding metamodel reference should be returned for.</param>
-		internal MetamodelReference<ComponentDeclaration> GetComponentDeclarationReference(ClassDeclarationSyntax classDeclaration)
+		internal IMetamodelReference<ComponentDeclaration> GetComponentDeclarationReference(ClassDeclarationSyntax classDeclaration)
 		{
 			Argument.NotNull(classDeclaration, () => classDeclaration);
 
@@ -92,9 +95,6 @@ namespace SafetySharp.CSharp.Transformation
 				.SyntaxTrees
 				.Select(syntaxTree => _compilation.CSharpCompilation.GetSemanticModel(syntaxTree))
 				.ToImmutableArray();
-
-			foreach (var semanticModel in semanticModels)
-				SymbolMap = SymbolMap.AddSymbols(semanticModel);
 
 			var components = semanticModels.Aggregate(
 				seed: ImmutableArray<ComponentDeclaration>.Empty,
@@ -154,7 +154,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Transforms the component interface declaration represented by the C# <paramref name="interfaceDeclaration" />.
 		/// </summary>
-		/// <param name="semanticModel">The semantic model the component was declared in.</param>
+		/// <param name="semanticModel">The semantic model the component interface was declared in.</param>
 		/// <param name="interfaceDeclaration">The C# interface declaration that should be transformed.</param>
 		private static InterfaceDeclaration TransformInterface(SemanticModel semanticModel, InterfaceDeclarationSyntax interfaceDeclaration)
 		{
@@ -180,6 +180,7 @@ namespace SafetySharp.CSharp.Transformation
 			var fields = classDeclaration
 				.Members
 				.OfType<FieldDeclarationSyntax>()
+				.Where(fieldDeclaration => !fieldDeclaration.IsComponentField(semanticModel))
 				.Aggregate(
 					ImmutableArray<FieldDeclaration>.Empty,
 					(current, field) => current.Add(TransformField(semanticModel, field)));
@@ -194,7 +195,13 @@ namespace SafetySharp.CSharp.Transformation
 			if (updateMethodDeclaration != null)
 				updateMethod = TransformMethod(semanticModel, updateMethodDeclaration);
 
-			var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
+			var subComponents = classDeclaration
+				.Members
+				.OfType<FieldDeclarationSyntax>()
+				.Where(fieldDeclaration => fieldDeclaration.IsComponentField(semanticModel))
+				.Aggregate(
+					ImmutableArray<SubComponentDeclaration>.Empty,
+					(current, subComponent) => current.Add(TransformSubComponent(semanticModel, subComponent)));
 
 			return new ComponentDeclaration(identifier, updateMethod, methods, fields, subComponents);
 		}
@@ -230,7 +237,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Transforms the field declaration represented by the C# <paramref name="fieldDeclaration" />.
 		/// </summary>
-		/// <param name="semanticModel">The semantic model the method was declared in.</param>
+		/// <param name="semanticModel">The semantic model the field was declared in.</param>
 		/// <param name="fieldDeclaration">The C# field declaration that should be transformed.</param>
 		private FieldDeclaration TransformField(SemanticModel semanticModel, FieldDeclarationSyntax fieldDeclaration)
 		{
@@ -245,6 +252,31 @@ namespace SafetySharp.CSharp.Transformation
 			_resolver = _resolver.With(fieldReference, field);
 
 			return field;
+		}
+
+		/// <summary>
+		///     Transforms the sub component declaration represented by the C# <paramref name="fieldDeclaration" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model the sub component was declared in.</param>
+		/// <param name="fieldDeclaration">The C# field declaration that should be transformed.</param>
+		private SubComponentDeclaration TransformSubComponent(SemanticModel semanticModel, FieldDeclarationSyntax fieldDeclaration)
+		{
+			Assert.That(fieldDeclaration.Declaration.Variables.Count == 1, "Field declaration was not correctly lowered.");
+
+			var variable = fieldDeclaration.Declaration.Variables[0];
+			var subComponentSymbol = (IFieldSymbol)semanticModel.GetDeclaredSymbol(variable);
+			var identifier = new Identifier(variable.Identifier.ValueText);
+
+			var componentClass = semanticModel.GetComponentClassSymbol();
+			if (subComponentSymbol.Type.IsDerivedFrom(componentClass) || subComponentSymbol.Type.Equals(componentClass))
+				return new SubComponentDeclaration(identifier, SymbolMap.GetComponentReference(subComponentSymbol.Type));
+
+			var componentInterface = semanticModel.GetComponentInterfaceSymbol();
+			if (subComponentSymbol.Type.IsDerivedFrom(componentInterface) || subComponentSymbol.Type.Equals(componentInterface))
+				return new SubComponentDeclaration(identifier, SymbolMap.GetInterfaceReference(subComponentSymbol.Type));
+			
+			Assert.NotReached("Unknown sub component type '{0}'.", subComponentSymbol.Type);
+			return null;
 		}
 	}
 }

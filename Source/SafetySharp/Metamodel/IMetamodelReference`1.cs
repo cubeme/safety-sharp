@@ -27,17 +27,14 @@ namespace SafetySharp.Metamodel
 	/// <summary>
 	///     Represents a reference to a metamodel element that can be resolved by a <see cref="MetamodelResolver" />.
 	/// </summary>
-	/// <typeparam name="T">The type of the referenced metamodel element.</typeparam>
-	public class MetamodelReference<T> : MetamodelReference
+	/// <typeparam name="T">The covariant type of the referenced metamodel element.</typeparam>
+	/// <remarks>
+	///     We're using an empty covariant interface here in order to be able to assign
+	///     <see cref="IMetamodelReference{ComponentDeclaration}" /> instances to
+	///     <see cref="IMetamodelReference{TypeDelcaration}" /> variables or parameters, for instance.
+	/// </remarks>
+	public interface IMetamodelReference<out T> : IMetamodelReference
 		where T : MetamodelElement
 	{
-		/// <summary>
-		///     Initializes a new instance of the <see cref="MetamodelReference{T}" /> type.
-		/// </summary>
-		/// <param name="sourceSymbol">The source symbol that caused the creation of the reference.</param>
-		public MetamodelReference(object sourceSymbol)
-			: base(sourceSymbol)
-		{
-		}
 	}
 }

@@ -31,65 +31,60 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel.Declarations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Provides a mapping between C# symbols and <see cref="MetamodelReference" />s.
+	///     Provides a mapping between C# symbols and <see cref="IMetamodelReference" />s.
 	/// </summary>
 	internal class SymbolMap
 	{
 		/// <summary>
-		///     The empty symbol map that does not map any symbols.
-		/// </summary>
-		internal static readonly SymbolMap Empty = new SymbolMap
-		{
-			_symbolMap = ImmutableDictionary<ISymbol, MetamodelReference>.Empty
-		};
-
-		/// <summary>
 		///     Maps a C# symbol to a metamodel reference.
 		/// </summary>
-		private ImmutableDictionary<ISymbol, MetamodelReference> _symbolMap;
+		private readonly ImmutableDictionary<ISymbol, IMetamodelReference> _symbolMap;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
 		/// </summary>
-		private SymbolMap()
+		internal SymbolMap(Compilation compilation)
 		{
-		}
+			var componentClassSymbol = compilation.GetTypeByMetadataName(typeof(Component).FullName);
+			var componentInterfaceSymbol = compilation.GetTypeByMetadataName(typeof(IComponent).FullName);
 
-		/// <summary>
-		///     Adds the symbols declared in <paramref name="semanticModel" /> to the current <see cref="SymbolMap" /> instance.
-		/// </summary>
-		/// <param name="semanticModel">The semantic model containing the symbols that should be added.</param>
-		internal SymbolMap AddSymbols(SemanticModel semanticModel)
-		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			BaseComponentType = new MetamodelReference<ComponentDeclaration>(componentClassSymbol);
+			BaseComponentInterface = new MetamodelReference<InterfaceDeclaration>(componentInterfaceSymbol);
 
-			var map = _symbolMap.ToBuilder();
-			foreach (var reference in ResolveSymbols(semanticModel))
-				map.Add((ISymbol)reference.SourceSymbol, reference);
+			var map = ImmutableDictionary<ISymbol, IMetamodelReference>.Empty.ToBuilder();
+			map.Add(componentClassSymbol, BaseComponentType);
+			map.Add(componentInterfaceSymbol, BaseComponentInterface);
 
-			return new SymbolMap { _symbolMap = map.ToImmutable() };
-		}
-
-		/// <summary>
-		///     Creates a new instance for the <paramref name="compilation" />.
-		/// </summary>
-		/// <param name="compilation">The compilation the symbol map should be created for.</param>
-		internal static SymbolMap FromCompilation(Compilation compilation)
-		{
-			return compilation
+			var references = compilation
 				.SyntaxTrees
 				.Select(compilation.GetSemanticModel)
-				.Aggregate(Empty, (current, semanticModel) => current.AddSymbols(semanticModel));
+				.SelectMany(ResolveSymbols);
+
+			foreach (var reference in references)
+				map.Add((ISymbol)reference.SourceSymbol, reference);
+
+			_symbolMap = map.ToImmutable();
 		}
+
+		/// <summary>
+		///     Gets the symbol map's reference to the base component type representing <see cref="Component" />.
+		/// </summary>
+		internal IMetamodelReference<ComponentDeclaration> BaseComponentType { get; private set; }
+
+		/// <summary>
+		///     Gets the symbol map's reference to the base component interface representing <see cref="IComponent" />.
+		/// </summary>
+		internal IMetamodelReference<InterfaceDeclaration> BaseComponentInterface { get; private set; }
 
 		/// <summary>
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a component.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		internal MetamodelReference<ComponentDeclaration> GetComponentReference(ITypeSymbol symbol)
+		internal IMetamodelReference<ComponentDeclaration> GetComponentReference(ITypeSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			Argument.Satisfies(symbol.TypeKind == TypeKind.Class, () => symbol, "Expected a type symbol for a class.");
@@ -101,7 +96,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing an interface.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		internal MetamodelReference<InterfaceDeclaration> GetInterfaceReference(ITypeSymbol symbol)
+		internal IMetamodelReference<InterfaceDeclaration> GetInterfaceReference(ITypeSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			Argument.Satisfies(symbol.TypeKind == TypeKind.Interface, () => symbol, "Expected a type symbol for an interface.");
@@ -113,7 +108,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a method.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		internal MetamodelReference<MethodDeclaration> GetMethodReference(IMethodSymbol symbol)
+		internal IMetamodelReference<MethodDeclaration> GetMethodReference(IMethodSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			return GetReference<MethodDeclaration>(symbol);
@@ -123,7 +118,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a field.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
-		internal MetamodelReference<FieldDeclaration> GetFieldReference(IFieldSymbol symbol)
+		internal IMetamodelReference<FieldDeclaration> GetFieldReference(IFieldSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 			return GetReference<FieldDeclaration>(symbol);
@@ -136,7 +131,7 @@ namespace SafetySharp.CSharp.Transformation
 		private MetamodelReference<T> GetReference<T>(ISymbol symbol)
 			where T : MetamodelElement
 		{
-			MetamodelReference reference;
+			IMetamodelReference reference;
 			if (!_symbolMap.TryGetValue(symbol, out reference))
 				throw new InvalidOperationException("The given C# symbol is unknown.");
 
@@ -160,7 +155,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Resolves all relevant symbols found within the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model for the syntax tree that should be used to resolve the C# symbols.</param>
-		private static IEnumerable<MetamodelReference> ResolveSymbols(SemanticModel semanticModel)
+		private static IEnumerable<IMetamodelReference> ResolveSymbols(SemanticModel semanticModel)
 		{
 			var components = semanticModel
 				.GetDeclaredComponents()
@@ -187,6 +182,7 @@ namespace SafetySharp.CSharp.Transformation
 				var fields = component
 					.Declaration
 					.DescendantNodes<FieldDeclarationSyntax>()
+					.Where(fieldDeclaration => !fieldDeclaration.IsComponentField(semanticModel))
 					.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
 					.Select(fieldDeclaration => CreateMetamodelReference<FieldDeclaration>(semanticModel, fieldDeclaration));
 
@@ -209,12 +205,12 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
-		///     Creates a new <see cref="MetamodelReference" /> instance.
+		///     Creates a new <see cref="IMetamodelReference" /> instance.
 		/// </summary>
 		/// <typeparam name="T">The type of the metamodel element corresponding to the resolved symbol.</typeparam>
 		/// <param name="semanticModel">The semantic model that should be used to resolve the C# symbol.</param>
 		/// <param name="syntaxNode">The C# syntax node that should be resolved.</param>
-		private static MetamodelReference CreateMetamodelReference<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
+		private static IMetamodelReference CreateMetamodelReference<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
 			where T : MetamodelElement
 		{
 			var symbol = semanticModel.GetDeclaredSymbol(syntaxNode);
