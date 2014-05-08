@@ -56,7 +56,14 @@ namespace SafetySharp.CSharp.Transformation
 
 			_compilation = compilation;
 			_modelConfiguration = modelConfiguration;
+			ComponentResolver = ComponentResolver.Empty;
 		}
+
+		/// <summary>
+		///     Gets the component resolver that can be used to resolve the transformed components to their corresponding metamodel
+		///     component declarations.
+		/// </summary>
+		internal ComponentResolver ComponentResolver { get; private set; }
 
 		/// <summary>
 		///     Performs the transformation to the metamodel, returning the resulting <see cref="MetamodelCompilation" /> and
@@ -88,11 +95,13 @@ namespace SafetySharp.CSharp.Transformation
 			compilation = compilationTransformation.Transform();
 
 			// Build up the required component resolver and transform the configuration
-			var componentResolver = ComponentResolver.Empty;
 			for (var i = 0; i < components.Length; ++i)
-				componentResolver.With(components[i], compilationTransformation.GetComponentDeclarationReference(classDeclarations[i]));
+			{
+				var reference = compilationTransformation.GetComponentDeclarationReference(classDeclarations[i]);
+				ComponentResolver = ComponentResolver.With(components[i], reference);
+			}
 
-			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration, compilation.Resolver, componentResolver);
+			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration, compilation.Resolver, ComponentResolver);
 			configuration = configurationTransformation.Transform();
 
 			return true;

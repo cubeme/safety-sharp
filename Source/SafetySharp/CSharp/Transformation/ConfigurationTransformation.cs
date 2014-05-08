@@ -108,10 +108,7 @@ namespace SafetySharp.CSharp.Transformation
 
 			var subComponents = componentDeclaration.SubComponents.Aggregate(
 				seed: ImmutableArray<ComponentConfiguration>.Empty,
-				func: (current, subComponent) =>
-				{
-					return current.Add(TransformComponent(component.GetSubComponent(subComponent.Identifier.Name)));
-				});
+				func: (current, subComponent) => current.Add(TransformComponent(component.GetSubComponent(subComponent.Identifier.Name))));
 
 			return new ComponentConfiguration(identifier, componentDeclarationReference, fieldValues, subComponents);
 		}

@@ -24,7 +24,6 @@ namespace Tests.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.CSharp;
@@ -35,43 +34,23 @@ namespace Tests.CSharp.Transformation
 	[TestFixture]
 	internal class MetamodelTransformationTests
 	{
-		private class TestConfiguration : ModelConfiguration
-		{
-			public TestConfiguration(params Component[] components)
-			{
-				AddPartitions(components);
-			}
-		}
-
 		private MetamodelCompilation _compilation;
 		private MetamodelConfiguration _configuration;
 		private ComponentResolver _componentResolver;
 		private Dictionary<string, Component> _components;
 
-		private void Transform(string csharpCode, params string[] componentNames)
+		private void Transform(string csharpCode, string configurationName)
 		{
 			csharpCode = "using SafetySharp.Modeling; " + csharpCode;
 			var compilation = new TestCompilation(csharpCode);
 			var assembly = compilation.Compile();
 
-			var compilationTransformation = new CompilationTransformation(new ModelingCompilation(compilation.Compilation));
-			_compilation = compilationTransformation.Transform();
+			var modelConfiguration = (ModelConfiguration)Activator.CreateInstance(assembly.GetType(configurationName));
+			var modelingCompilation = new ModelingCompilation(compilation.Compilation);
+			var transformation = new MetamodelTransformation(modelingCompilation, modelConfiguration);
 
-			_components =new Dictionary<string, Component>();
-			_componentResolver = ComponentResolver.Empty;
-
-			foreach (var componentName in componentNames)
-			{
-				var component = (Component)Activator.CreateInstance(assembly.GetType(componentName));
-				_components.Add(componentName, component);
-
-				var reference = compilationTransformation.GetComponentDeclarationReference(compilation.FindClassDeclaration(componentName));
-				_componentResolver = _componentResolver.With(component, reference);
-			}
-
-			var configuration = new TestConfiguration(_components.Values.ToArray());
-			var configurationTransformation = new ConfigurationTransformation(configuration, _compilation.Resolver, _componentResolver);
-			_configuration = configurationTransformation.Transform();
+			transformation.TryTransform(out _compilation, out _configuration).Should().BeTrue();
+			_componentResolver = transformation.ComponentResolver;
 		}
 
 		[Test]
@@ -86,12 +65,20 @@ class X : Component
 	{
 		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
 	}
-}";
-			Transform(csharpCode, "X");
+}
+class Config : ModelConfiguration
+{
+	public Config()
+	{
+		AddPartitions(new X());
+	}
+}
+";
+			Transform(csharpCode, "Config");
 			_configuration.Partitions.Should().HaveCount(1);
 
 			var componentConfiguration = _configuration.Partitions[0].Component;
-			componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
 			componentConfiguration.FieldValues.Should().HaveCount(1);
 			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
 		}
