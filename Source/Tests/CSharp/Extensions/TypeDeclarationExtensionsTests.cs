@@ -42,6 +42,54 @@ namespace Tests.CSharp.Extensions
 			ShouldBeComponent(csharpCode, false);
 		}
 
+		private static void ShouldBeComponentInterface(string csharpCode, bool shouldBeComponent = true)
+		{
+			var compilation = new TestCompilation(csharpCode);
+			var interfaceDeclaration = compilation.FindInterfaceDeclaration("X");
+			interfaceDeclaration.IsComponentInterfaceDeclaration(compilation.SemanticModel).Should().Be(shouldBeComponent);
+		}
+
+		private static void ShouldNotBeComponentInterface(string csharpCode)
+		{
+			ShouldBeComponentInterface(csharpCode, false);
+		}
+
+		[Test]
+		public void IsComponentInterfaceDeclaration_False_NonComponentInterface()
+		{
+			ShouldNotBeComponentInterface("interface X {}");
+		}
+
+		[Test]
+		public void IsComponentInterfaceDeclaration_False_NonComponentInterface_OtherBase()
+		{
+			ShouldNotBeComponentInterface("interface Y {} interface X : Y {}");
+		}
+
+		[Test]
+		public void IsComponentInterfaceDeclaration_True_DirectBase_First()
+		{
+			ShouldNotBeComponentInterface("interface Y {} interface X : IComponent, Y {}");
+		}
+
+		[Test]
+		public void IsComponentInterfaceDeclaration_True_DirectBase_Second()
+		{
+			ShouldNotBeComponentInterface("interface Y {} interface X : Y, IComponent {}");
+		}
+
+		[Test]
+		public void IsComponentInterfaceDeclaration_True_IndirectBase_Second()
+		{
+			ShouldNotBeComponentInterface("interface Q{} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}");
+		}
+
+		[Test]
+		public void IsComponentInterfaceDeclaration_True_IndirectBase_First()
+		{
+			ShouldNotBeComponentInterface("interface Q{} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}");
+		}
+
 		[Test]
 		public void IsComponentDeclaration_False_NonComponentClassWithBase()
 		{

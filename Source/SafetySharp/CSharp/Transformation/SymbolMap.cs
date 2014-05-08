@@ -98,6 +98,18 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
+		///     Gets a typed reference to the C# <paramref name="symbol" /> representing an interface.
+		/// </summary>
+		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
+		internal MetamodelReference<InterfaceDeclaration> GetInterfaceReference(ITypeSymbol symbol)
+		{
+			Argument.NotNull(symbol, () => symbol);
+			Argument.Satisfies(symbol.TypeKind == TypeKind.Interface, () => symbol, "Expected a type symbol for an interface.");
+
+			return GetReference<InterfaceDeclaration>(symbol);
+		}
+
+		/// <summary>
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a method.
 		/// </summary>
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
@@ -181,6 +193,19 @@ namespace SafetySharp.CSharp.Transformation
 				foreach (var field in fields)
 					yield return field;
 			}
+
+			var interfaces = semanticModel
+				.GetDeclaredComponentInterfaces()
+				.Select(interfaceDeclaration =>
+							new
+							{
+								Reference = CreateMetamodelReference<InterfaceDeclaration>(semanticModel, interfaceDeclaration),
+								Declaration = interfaceDeclaration
+							})
+				.ToArray();
+
+			foreach (var componentInterface in interfaces)
+				yield return componentInterface.Reference;
 		}
 
 		/// <summary>

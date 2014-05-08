@@ -139,16 +139,27 @@ namespace SafetySharp.CSharp.Transformation
 				.GetSyntaxRoot()
 				.DescendantNodesAndSelf<InterfaceDeclarationSyntax>()
 				.Where(classDeclaration => classDeclaration.IsComponentInterfaceDeclaration(semanticModel));
-			yield break;
-			//foreach (var componentInterface in interfaces)
-			//{
-			//	var interfaceSymbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(componentInterface);
-			//	var interfaceReference = SymbolMap.GetComponentInterfaceReference(interfaceSymbol);
-			//	var interfaceDeclaration = TransformComponent(semanticModel, interfaceDeclaration);
 
-			//	_resolver = _resolver.With(interfaceReference, interfaceDeclaration);
-			//	yield return interfaceDeclaration;
-			//}
+			foreach (var componentInterface in interfaces)
+			{
+				var interfaceSymbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(componentInterface);
+				var interfaceReference = SymbolMap.GetInterfaceReference(interfaceSymbol);
+				var interfaceDeclaration = TransformInterface(semanticModel, componentInterface);
+
+				_resolver = _resolver.With(interfaceReference, interfaceDeclaration);
+				yield return interfaceDeclaration;
+			}
+		}
+
+		/// <summary>
+		///     Transforms the component interface declaration represented by the C# <paramref name="interfaceDeclaration" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model the component was declared in.</param>
+		/// <param name="interfaceDeclaration">The C# interface declaration that should be transformed.</param>
+		private static InterfaceDeclaration TransformInterface(SemanticModel semanticModel, InterfaceDeclarationSyntax interfaceDeclaration)
+		{
+			var identifier = new Identifier(interfaceDeclaration.GetFullName(semanticModel));
+			return new InterfaceDeclaration(identifier);
 		}
 
 		/// <summary>

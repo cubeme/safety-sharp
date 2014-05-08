@@ -50,6 +50,20 @@ namespace SafetySharp.CSharp.Extensions
 		}
 
 		/// <summary>
+		///     Gets the component interfaces declared within the context of the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model containing the declared component interfaces.</param>
+		internal static IEnumerable<InterfaceDeclarationSyntax> GetDeclaredComponentInterfaces(this SemanticModel semanticModel)
+		{
+			Argument.NotNull(semanticModel, () => semanticModel);
+
+			return semanticModel
+				.SyntaxTree
+				.DescendantNodesAndSelf<InterfaceDeclarationSyntax>()
+				.Where(interfaceDeclaration => interfaceDeclaration.IsComponentInterfaceDeclaration(semanticModel));
+		}
+
+		/// <summary>
 		///     Gets the root node of the <paramref name="semanticModel" />'s <see cref="SyntaxTree" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the syntax root should be returned for.</param>
