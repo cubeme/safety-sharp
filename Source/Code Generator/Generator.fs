@@ -450,14 +450,14 @@ let generateCode context =
                     generateValidation p
                 output.NewLine()
 
-            // Generate the call to the partial Validate() function
-            if c.Properties |> List.length > 0 then
-                let parameters = c.Properties |> joinProperties ", " (fun p -> getValidCSharpIdentifier p.Name)
-                output.AppendLine(sprintf "Validate(%s);" parameters)
-
             // Generate the property assignments
             for p in c.Properties do
                 output.AppendLine(sprintf "%s = %s;" p.Name <| getValidCSharpIdentifier p.Name)
+
+            // Generate the call to the partial Validate() function
+            if c.Properties |> List.length > 0 then
+                output.NewLine()
+                output.AppendLine("Validate();")
 
     /// <summary>
     ///     Generates the partial Validate() method. Only properties declared by the class can be validated with this method;
@@ -466,15 +466,11 @@ let generateCode context =
     let generateValidateMethod (c : Class) =
         // Generate the doc comment
         output.AppendLine("/// <summary>")
-        output.AppendLine("///     Validates all of the given property values.")
+        output.AppendLine("///     Validates all of the property values.")
         output.AppendLine("/// </summary>")
 
-        for p in c.Properties do
-            output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
-
-        // Generate the method signature
-        let parameters = c.Properties |> joinProperties ", " (fun p' -> sprintf "%s %s" <| getType p' <| getValidCSharpIdentifier p'.Name)
-        output.AppendLine(sprintf "partial void Validate(%s);" parameters)
+        // Generate the partial method signature
+        output.AppendLine("partial void Validate();")
 
     /// <summary>
     ///     Generates the With...() methods, one for each inherited and non-inherited property.
