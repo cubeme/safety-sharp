@@ -71,7 +71,15 @@ let elements = [
                         Validation = None
                         CanBeNull = false
                         Comment = "The components declared in the model."
-                    }       
+                    }  
+                    {
+                        Name = "Interfaces"
+                        Type = "InterfaceDeclaration"
+                        CollectionType = Array
+                        Validation = None
+                        CanBeNull = false
+                        Comment = "The component interfaces declared in the model."
+                    }     
                 ]
             }
             {
@@ -97,9 +105,9 @@ let elements = [
         Classes = 
         [
             {   
-                Name = "ComponentDeclaration"
+                Name = "TypeDeclaration"
                 Base = "MetamodelElement"
-                IsAbstract = false
+                IsAbstract = true
                 Properties = 
                 [
                     {
@@ -107,9 +115,17 @@ let elements = [
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The name of the declared component."
+                        Comment = "The name of the declared type."
                         CanBeNull = false
                     }
+                ]
+            }
+            {   
+                Name = "ComponentDeclaration"
+                Base = "TypeDeclaration"
+                IsAbstract = false
+                Properties = 
+                [
                     {
                         Name = "UpdateMethod"
                         Type = "MethodDeclaration"
@@ -134,23 +150,49 @@ let elements = [
                         Comment = "The fields declared by the component."
                         CanBeNull = false
                     }
+                    {
+                        Name = "SubComponents"
+                        Type = "SubComponentDeclaration"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The sub components declared by the component."
+                        CanBeNull = false
+                    }
                 ]
             }
             {   
                 Name = "InterfaceDeclaration"
-                Base = "MetamodelElement"
+                Base = "TypeDeclaration"
                 IsAbstract = false
                 Properties = []
             }
             {   
-                Name = "MemberDeclaration"
+                Name = "SubComponentDeclaration"
                 Base = "MetamodelElement"
-                IsAbstract = true
-                Properties = []
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        CanBeNull = false
+                        Comment = "The name of the sub component."
+                    }
+                    {
+                        Name = "Type"
+                        Type = "MetamodelReference<TypeDeclaration>"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The type of the sub component."
+                        CanBeNull = false
+                    }
+                ]
             }
             {   
                 Name = "MethodDeclaration"
-                Base = "MemberDeclaration"
+                Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
                 [
@@ -190,7 +232,7 @@ let elements = [
             }
             {   
                 Name = "FieldDeclaration"
-                Base = "MemberDeclaration"
+                Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
                 [
@@ -589,7 +631,15 @@ let elements = [
                         Type = "InitialFieldValues"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The initial values for the component's fields. Field values are specified in the same order as the corresponding component declaration's field declarations."
+                        Comment = "The initial values for the component's fields. The values are specified in the same order as the corresponding field declarations of the component configuration's declaration."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "SubComponents"
+                        Type = "ComponentConfiguration"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The sub component configurations of the component. The instances are specified in the same order as the corresponding sub component declarations of the component configuration's declaration."
                         CanBeNull = false
                     }
                 ]

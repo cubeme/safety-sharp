@@ -56,6 +56,57 @@ namespace Tests.CSharp.Transformation
 			return _metamodelCompilation.Components[0];
 		}
 
+		private InterfaceDeclaration TransformInterface(string csharpCode)
+		{
+			Transform(csharpCode);
+			return _metamodelCompilation.Interfaces[0];
+		}
+
+		private T GetAndCheckSubComponent<T>(MetamodelReference<TypeDeclaration> typeDeclaration)
+			where T : TypeDeclaration
+		{
+			var component = _metamodelCompilation.Resolver.Resolve(typeDeclaration);
+			component.Should().BeOfType<T>();
+			return (T)component;
+		}
+
+		[Test]
+		public void ShouldNotTransformSubComponents()
+		{
+			var component = TransformComponent("class MyComponent : Component { private bool value; }");
+			component.SubComponents.Should().HaveCount(0);
+		}
+
+		[Test]
+		public void ShouldTransformComponentInterface()
+		{
+			var componentInterface = TransformInterface("interface IMyComponent : IComponent { }");
+			componentInterface.Identifier.Name.Should().Be("IMyComponent");
+		}
+
+		[Test]
+		public void ShouldTransformMethodsWithParameters()
+		{
+			var component = TransformComponent("class X : Component { bool M() { return true; } void N(int i, bool b) { return; } }");
+			component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod);
+
+			component.Methods.Should().HaveCount(2);
+			component.Methods[0].Identifier.Name.Should().Be("M");
+			component.Methods[0].Body.Should().Be(ReturnStatement.ReturnTrue.AsBlockStatement());
+			component.Methods[0].ReturnType.Should().Be(TypeSymbol.Boolean);
+			component.Methods[0].Parameters.Should().BeEmpty();
+
+			component.Methods[1].Identifier.Name.Should().Be("N");
+			component.Methods[1].Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
+			component.Methods[1].ReturnType.Should().Be(TypeSymbol.Void);
+			component.Methods[1].Parameters.Should().HaveCount(2);
+
+			component.Methods[1].Parameters[0].Identifier.Name.Should().Be("i");
+			component.Methods[1].Parameters[0].Type.Should().Be(TypeSymbol.Integer);
+			component.Methods[1].Parameters[1].Identifier.Name.Should().Be("b");
+			component.Methods[1].Parameters[1].Type.Should().Be(TypeSymbol.Boolean);
+		}
+
 		[Test]
 		public void ShouldTransformMultipleFields()
 		{
@@ -95,29 +146,6 @@ namespace Tests.CSharp.Transformation
 		}
 
 		[Test]
-		public void ShouldTransformMethodsWithParameters()
-		{
-			var component = TransformComponent("class X : Component { bool M() { return true; } void N(int i, bool b) { return; } }");
-			component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod);
-
-			component.Methods.Should().HaveCount(2);
-			component.Methods[0].Identifier.Name.Should().Be("M");
-			component.Methods[0].Body.Should().Be(ReturnStatement.ReturnTrue.AsBlockStatement());
-			component.Methods[0].ReturnType.Should().Be(TypeSymbol.Boolean);
-			component.Methods[0].Parameters.Should().BeEmpty();
-
-			component.Methods[1].Identifier.Name.Should().Be("N");
-			component.Methods[1].Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
-			component.Methods[1].ReturnType.Should().Be(TypeSymbol.Void);
-			component.Methods[1].Parameters.Should().HaveCount(2);
-
-			component.Methods[1].Parameters[0].Identifier.Name.Should().Be("i");
-			component.Methods[1].Parameters[0].Type.Should().Be(TypeSymbol.Integer);
-			component.Methods[1].Parameters[1].Identifier.Name.Should().Be("b");
-			component.Methods[1].Parameters[1].Type.Should().Be(TypeSymbol.Boolean);
-		}
-
-		[Test]
 		public void ShouldTransformOneComponentWithoutAnyMembers()
 		{
 			Transform("class MyComponent : Component {}");
@@ -144,6 +172,69 @@ namespace Tests.CSharp.Transformation
 			var field = component.Fields[0];
 			field.Identifier.Name.Should().Be("value");
 			field.Type.Should().Be(TypeSymbol.Boolean);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfMixedTypes()
+		{
+			var component = TransformComponent("class MyComponent : Component { private Component c1; private IComponent c2; }");
+
+			component.SubComponents.Should().HaveCount(2);
+			component.SubComponents[0].Identifier.Name.Should().Be("c1");
+			component.SubComponents[1].Identifier.Name.Should().Be("c2");
+
+			GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[0].Type);
+			GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[1].Type);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfTypeComponent()
+		{
+			var component = TransformComponent("class MyComponent : Component { private Component c1; private Component c2; }");
+
+			component.SubComponents.Should().HaveCount(2);
+			component.SubComponents[0].Identifier.Name.Should().Be("c1");
+			component.SubComponents[1].Identifier.Name.Should().Be("c2");
+
+			GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[0].Type);
+			GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[1].Type);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfTypeDerivedComponent()
+		{
+			var component = TransformComponent("class MyComponent : Component { private X c; } class X : Component {}");
+
+			component.SubComponents.Should().HaveCount(1);
+			component.SubComponents[0].Identifier.Name.Should().Be("c");
+
+			var subComponent = GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[0].Type);
+			subComponent.Should().Be(_metamodelCompilation.Components[1]);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfTypeDerivedIComponent()
+		{
+			var component = TransformComponent("class MyComponent : Component { private IX c; } interface IX : IComponent {}");
+
+			component.SubComponents.Should().HaveCount(1);
+			component.SubComponents[0].Identifier.Name.Should().Be("c");
+
+			var subComponent = GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[0].Type);
+			subComponent.Should().Be(_metamodelCompilation.Interfaces[0]);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfTypeIComponent()
+		{
+			var component = TransformComponent("class MyComponent : Component { private IComponent c1; private IComponent c2; }");
+
+			component.SubComponents.Should().HaveCount(2);
+			component.SubComponents[0].Identifier.Name.Should().Be("c1");
+			component.SubComponents[1].Identifier.Name.Should().Be("c2");
+
+			GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[0].Type);
+			GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[1].Type);
 		}
 
 		[Test]
@@ -197,7 +288,8 @@ class BooleanComponent : SafetySharp.Modeling.Component
 			var expected = new ComponentDeclaration(new Identifier("BooleanComponent"),
 													updateMethod,
 													ImmutableArray<MethodDeclaration>.Empty,
-													ImmutableArray.Create(field));
+													ImmutableArray.Create(field),
+													ImmutableArray<SubComponentDeclaration>.Empty);
 
 			actual.Should().Be(expected);
 		}

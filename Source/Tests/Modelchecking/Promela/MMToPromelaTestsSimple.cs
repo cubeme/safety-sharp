@@ -62,7 +62,8 @@ namespace Tests.Modelchecking.Promela
             var mmsimple = new MMDeclarations.ComponentDeclaration(new MM.Identifier("BooleanComponent"),
                                                     updateMethod,
                                                     ImmutableArray<MMDeclarations.MethodDeclaration>.Empty,
-                                                    ImmutableArray.Create(field));
+                                                    ImmutableArray.Create(field),
+													ImmutableArray<MMDeclarations.SubComponentDeclaration>.Empty);
 
             var metamodelToPromela = new MetamodelToPromela();
 

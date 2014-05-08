@@ -106,7 +106,9 @@ namespace SafetySharp.CSharp.Transformation
 				seed: ImmutableArray<InitialFieldValues>.Empty,
 				func: (current, field) => current.Add(new InitialFieldValues(component.GetInitialValuesOfField(field.Identifier.Name))));
 
-			return new ComponentConfiguration(identifier, componentDeclarationReference, fieldValues);
+			var subComponents = ImmutableArray<ComponentConfiguration>.Empty;
+
+			return new ComponentConfiguration(identifier, componentDeclarationReference, fieldValues, subComponents);
 		}
 	}
 }

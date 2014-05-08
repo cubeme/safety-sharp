@@ -77,7 +77,8 @@ namespace Tests.CSharp.Transformation
 					new Identifier(component.GetType().FullName),
 					MethodDeclaration.UpdateMethod,
 					ImmutableArray<MethodDeclaration>.Empty,
-					fields);
+					fields,
+					ImmutableArray<SubComponentDeclaration>.Empty);
 
 				var reference = new MetamodelReference<ComponentDeclaration>(component);
 				_componentResolver = _componentResolver.With(component, reference);

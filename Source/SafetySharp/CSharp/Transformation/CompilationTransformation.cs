@@ -100,7 +100,9 @@ namespace SafetySharp.CSharp.Transformation
 				seed: ImmutableArray<ComponentDeclaration>.Empty,
 				func: (current, semanticModel) => current.AddRange(TransformComponents(semanticModel)));
 
-			return new MetamodelCompilation(_resolver, components);
+			var interfaces = ImmutableArray<InterfaceDeclaration>.Empty;
+
+			return new MetamodelCompilation(_resolver, components, interfaces);
 		}
 
 		/// <summary>
@@ -157,7 +159,9 @@ namespace SafetySharp.CSharp.Transformation
 			if (updateMethodDeclaration != null)
 				updateMethod = TransformMethod(semanticModel, updateMethodDeclaration);
 
-			return new ComponentDeclaration(identifier, updateMethod, methods, fields);
+			var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
+
+			return new ComponentDeclaration(identifier, updateMethod, methods, fields, subComponents);
 		}
 
 		/// <summary>
