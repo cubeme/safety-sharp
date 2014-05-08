@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Extensions
 {
 	using System;
+	using System.Linq;
 	using Metamodel.Types;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
@@ -41,6 +42,7 @@ namespace SafetySharp.CSharp.Extensions
 		{
 			Argument.NotNull(typeSymbol, () => typeSymbol);
 			Argument.NotNull(baseType, () => baseType);
+			Argument.Satisfies(baseType.TypeKind == TypeKind.Class, () => baseType, "Expected a type symbol for a class.");
 
 			// We've reached the top of the inheritance chain (namely, System.Object) without finding the base type we've searched for
 			if (typeSymbol.BaseType == null)
@@ -51,6 +53,31 @@ namespace SafetySharp.CSharp.Extensions
 				return true;
 
 			return IsDerivedFrom(typeSymbol.BaseType, baseType);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="typeSymbol" /> directly or indirectly implements interface
+		///     <paramref name="baseInterface." />
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="baseInterface">The base interface <paramref name="typeSymbol" /> should implement.</param>
+		internal static bool Implements(this ITypeSymbol typeSymbol, ITypeSymbol baseInterface)
+		{
+			Argument.NotNull(typeSymbol, () => typeSymbol);
+			Argument.NotNull(baseInterface, () => baseInterface);
+			Argument.Satisfies(baseInterface.TypeKind == TypeKind.Interface, () => baseInterface, "Expected a type symbol for an interface.");
+
+			// Check whether any of the type's base classes implement the interface
+			if (typeSymbol.BaseType != null && Implements(typeSymbol.BaseType, baseInterface))
+				return true;
+
+			// We've reached the top of the inheritance chain (namely, System.Object) without finding the base type we've searched for
+			if (typeSymbol.Interfaces.IsDefaultOrEmpty)
+				return false;
+
+			// Use a type name comparison to determine whether the type symbol's base type is the searched for type
+			return typeSymbol.Interfaces.Any(implementedInterface => implementedInterface.Equals(baseInterface) ||
+																	 Implements(implementedInterface, baseInterface));
 		}
 
 		/// <summary>

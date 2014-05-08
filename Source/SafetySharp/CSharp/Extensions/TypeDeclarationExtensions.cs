@@ -29,12 +29,12 @@ namespace SafetySharp.CSharp.Extensions
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for working with <see cref="ClassDeclarationSyntax" /> instances.
+	///     Provides extension methods for working with instances derived from <see cref="TypeDeclarationSyntax" />.
 	/// </summary>
-	internal static class ClassDeclarationExtensions
+	internal static class TypeDeclarationExtensions
 	{
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is derived from <see cref="Component"/>.
+		///     Checks whether <paramref name="classDeclaration" /> is derived from <see cref="Component" />.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
@@ -44,30 +44,40 @@ namespace SafetySharp.CSharp.Extensions
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is a directly or indirectly derived from
+		///     Checks whether <paramref name="interfaceDeclaration" /> is derived from <see cref="IComponent" />.
+		/// </summary>
+		/// <param name="interfaceDeclaration">The interface declaration that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
+		internal static bool IsComponentInterfaceDeclaration(this InterfaceDeclarationSyntax interfaceDeclaration, SemanticModel semanticModel)
+		{
+			return interfaceDeclaration.IsDerivedFrom(semanticModel, semanticModel.GetComponentInterfaceSymbol());
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="typeDeclaration" /> is a directly or indirectly derived from
 		///     <paramref name="baseType" />.
 		/// </summary>
-		/// <param name="classDeclaration">The class declaration that should be checked.</param>
+		/// <param name="typeDeclaration">The type declaration that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
-		/// <param name="baseType">The base type <paramref name="classDeclaration" /> should be derived from.</param>
-		internal static bool IsDerivedFrom(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
+		/// <param name="baseType">The base type <paramref name="typeDeclaration" /> should be derived from.</param>
+		internal static bool IsDerivedFrom(this TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
 		{
-			Argument.NotNull(classDeclaration, () => classDeclaration);
+			Argument.NotNull(typeDeclaration, () => typeDeclaration);
 			Argument.NotNull(semanticModel, () => semanticModel);
 
-			var symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration);
+			var symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration);
 			return symbol.IsDerivedFrom(baseType);
 		}
 
 		/// <summary>
-		///     Gets the full name of <paramref name="classDeclaration" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
+		///     Gets the full name of <paramref name="typeDeclaration" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
 		/// </summary>
-		/// <param name="classDeclaration">The class declaration the full name should be returned for.</param>
+		/// <param name="typeDeclaration">The type declaration the full name should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the full name.</param>
-		internal static string GetFullName(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
+		internal static string GetFullName(this TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
 		{
-			Argument.NotNull(classDeclaration, () => classDeclaration);
-			return ((ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration)).GetFullName();
+			Argument.NotNull(typeDeclaration, () => typeDeclaration);
+			return ((ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration)).GetFullName();
 		}
 	}
 }

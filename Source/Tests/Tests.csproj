@@ -62,7 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensionsTests.cs" />
-    <Compile Include="CSharp\Extensions\ClassDeclarationExtensionsTests.cs" />
+    <Compile Include="CSharp\Extensions\TypeDeclarationExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\MethodSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensionsTests.cs" />

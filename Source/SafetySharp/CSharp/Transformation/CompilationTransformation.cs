@@ -100,7 +100,9 @@ namespace SafetySharp.CSharp.Transformation
 				seed: ImmutableArray<ComponentDeclaration>.Empty,
 				func: (current, semanticModel) => current.AddRange(TransformComponents(semanticModel)));
 
-			var interfaces = ImmutableArray<InterfaceDeclaration>.Empty;
+			var interfaces = semanticModels.Aggregate(
+				seed: ImmutableArray<InterfaceDeclaration>.Empty,
+				func: (current, semanticModel) => current.AddRange(TransformInterfaces(semanticModel)));
 
 			return new MetamodelCompilation(_resolver, components, interfaces);
 		}
@@ -125,6 +127,28 @@ namespace SafetySharp.CSharp.Transformation
 				_resolver = _resolver.With(componentReference, componentDeclaration);
 				yield return componentDeclaration;
 			}
+		}
+
+		/// <summary>
+		///     Transforms the component interfaces within the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model containing the component interfaces that should be transformed.</param>
+		private IEnumerable<InterfaceDeclaration> TransformInterfaces(SemanticModel semanticModel)
+		{
+			var interfaces = semanticModel
+				.GetSyntaxRoot()
+				.DescendantNodesAndSelf<InterfaceDeclarationSyntax>()
+				.Where(classDeclaration => classDeclaration.IsComponentInterfaceDeclaration(semanticModel));
+			yield break;
+			//foreach (var componentInterface in interfaces)
+			//{
+			//	var interfaceSymbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(componentInterface);
+			//	var interfaceReference = SymbolMap.GetComponentInterfaceReference(interfaceSymbol);
+			//	var interfaceDeclaration = TransformComponent(semanticModel, interfaceDeclaration);
+
+			//	_resolver = _resolver.With(interfaceReference, interfaceDeclaration);
+			//	yield return interfaceDeclaration;
+			//}
 		}
 
 		/// <summary>

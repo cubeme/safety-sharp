@@ -98,6 +98,34 @@ namespace Tests.CSharp
 		}
 
 		/// <summary>
+		///     Finds the <see cref="TypeDeclarationSyntax" /> for the type named <paramref name="typeName" /> in the compilation.
+		///     Throws an exception if more than one type with the given name was found.
+		/// </summary>
+		/// <param name="typeName">
+		///     The name of the type that should be found in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		internal TypeDeclarationSyntax FindTypeDeclaration(string typeName)
+		{
+			var types = SyntaxRoot
+				.DescendantNodesAndSelf<TypeDeclarationSyntax>()
+				.Select(typeDeclaration => new
+				{
+					TypeDeclaration = typeDeclaration,
+					FullName = typeDeclaration.GetFullName(SemanticModel)
+				})
+				.Where(typeDeclaration => typeDeclaration.FullName == typeName)
+				.ToArray();
+
+			if (types.Length == 0)
+				throw new InvalidOperationException(String.Format("Found no type with name '{0}'.", typeName));
+
+			if (types.Length > 1)
+				throw new InvalidOperationException(String.Format("Found more than one type with name '{0}'.", typeName));
+
+			return types[0].TypeDeclaration;
+		}
+
+		/// <summary>
 		///     Finds the <see cref="ClassDeclarationSyntax" /> for the class named <paramref name="className" /> in the compilation.
 		///     Throws an exception if more than one class with the given name was found.
 		/// </summary>
@@ -106,23 +134,29 @@ namespace Tests.CSharp
 		/// </param>
 		internal ClassDeclarationSyntax FindClassDeclaration(string className)
 		{
-			var classes = SyntaxRoot
-				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
-				.Select(classDeclaration => new
-				{
-					ClassDeclaration = classDeclaration,
-					FullName = classDeclaration.GetFullName(SemanticModel)
-				})
-				.Where(classDeclaration => classDeclaration.FullName == className)
-				.ToArray();
+			var classDeclaration = FindTypeDeclaration(className) as ClassDeclarationSyntax;
 
-			if (classes.Length == 0)
-				throw new InvalidOperationException(String.Format("Found no classes with name '{0}'.", className));
+			if (classDeclaration == null)
+				throw new InvalidOperationException(String.Format("Found no class with name '{0}'.", className));
 
-			if (classes.Length > 1)
-				throw new InvalidOperationException(String.Format("Found more than one class with name '{0}'.", className));
+			return classDeclaration;
+		}
 
-			return classes[0].ClassDeclaration;
+		/// <summary>
+		///     Finds the <see cref="InterfaceDeclarationSyntax" /> for the interface named <paramref name="interfaceName" /> in the
+		///     compilation. Throws an exception if more than one interface with the given name was found.
+		/// </summary>
+		/// <param name="interfaceName">
+		///     The name of the interface that should be found in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		internal InterfaceDeclarationSyntax FindInterfaceDeclaration(string interfaceName)
+		{
+			var interfaceDeclaration = FindTypeDeclaration(interfaceName) as InterfaceDeclarationSyntax;
+
+			if (interfaceDeclaration == null)
+				throw new InvalidOperationException(String.Format("Found no interface with name '{0}'.", interfaceName));
+
+			return interfaceDeclaration;
 		}
 
 		/// <summary>
@@ -179,6 +213,17 @@ namespace Tests.CSharp
 		}
 
 		/// <summary>
+		///     Gets the <see cref="ITypeSymbol" /> representing the type with name <paramref name="typeName" />.
+		/// </summary>
+		/// <param name="typeName">
+		///     The name of the type the symbol should be returned for in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		internal ITypeSymbol FindTypeSymbol(string typeName)
+		{
+			return SemanticModel.GetDeclaredSymbol(FindTypeDeclaration(typeName));
+		}
+
+		/// <summary>
 		///     Gets the <see cref="ITypeSymbol" /> representing the class with name <paramref name="className" />.
 		/// </summary>
 		/// <param name="className">
@@ -187,6 +232,17 @@ namespace Tests.CSharp
 		internal ITypeSymbol FindClassSymbol(string className)
 		{
 			return SemanticModel.GetDeclaredSymbol(FindClassDeclaration(className));
+		}
+
+		/// <summary>
+		///     Gets the <see cref="ITypeSymbol" /> representing the interface with name <paramref name="interfaceName" />.
+		/// </summary>
+		/// <param name="interfaceName">
+		///     The name of the interface the symbol should be returned for in the format 'Namespace1.Namespace2.ClassName+NestedClass'.
+		/// </param>
+		internal ITypeSymbol FindInterfaceSymbol(string interfaceName)
+		{
+			return SemanticModel.GetDeclaredSymbol(FindInterfaceDeclaration(interfaceName));
 		}
 
 		/// <summary>

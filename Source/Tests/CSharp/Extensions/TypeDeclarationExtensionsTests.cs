@@ -28,7 +28,7 @@ namespace Tests.CSharp.Extensions
 	using SafetySharp.CSharp.Extensions;
 
 	[TestFixture]
-	internal class ClassDeclarationExtensionsTests
+	internal class TypeDeclarationExtensionsTests
 	{
 		private static void ShouldBeComponent(string csharpCode, bool shouldBeComponent = true)
 		{

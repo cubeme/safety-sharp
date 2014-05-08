@@ -39,6 +39,9 @@
     <Compile Include="..\SafetySharp\Modeling\Component.cs">
       <Link>Component.cs</Link>
     </Compile>
+    <Compile Include="..\SafetySharp\Modeling\IComponent.cs">
+      <Link>IComponent.cs</Link>
+    </Compile>
     <Compile Include="..\SafetySharp\Modeling\ModelConfiguration.cs">
       <Link>ModelConfiguration.cs</Link>
     </Compile>

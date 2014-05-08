@@ -65,7 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharp\Extensions\ClassDeclarationExtensions.cs" />
+    <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodSymbolExtensions.cs" />
     <Compile Include="CSharp\Extensions\SemanticModelExtensions.cs" />
@@ -80,6 +80,7 @@
     <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
     <Compile Include="CSharp\Transformation\ComponentResolver.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
+    <Compile Include="Modeling\IComponent.cs" />
     <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\ModelingCompilationUnitAttribute.cs" />
     <Compile Include="Modeling\ModelingAssemblyReferenceAttribute.cs" />

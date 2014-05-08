@@ -119,6 +119,17 @@ namespace SafetySharp.CSharp.Extensions
 		}
 
 		/// <summary>
+		///     Gets the <see cref="ITypeSymbol " /> representing the <see cref="IComponent" /> interface within the
+		///     context of the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model that should be used to retrieve the symbol.</param>
+		internal static ITypeSymbol GetComponentInterfaceSymbol(this SemanticModel semanticModel)
+		{
+			Argument.NotNull(semanticModel, () => semanticModel);
+			return semanticModel.Compilation.GetTypeByMetadataName(typeof(IComponent).FullName);
+		}
+
+		/// <summary>
 		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
 		///     within the context of the <paramref name="semanticModel" />.
 		/// </summary>

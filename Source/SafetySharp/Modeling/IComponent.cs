@@ -24,35 +24,7 @@ namespace SafetySharp.Modeling
 {
 	using System;
 
-	public abstract partial class Component : IComponent
+	public interface IComponent
 	{
-		protected Component()
-		{
-		}
-
-		protected static T Choose<T>()
-			where T : struct
-		{
-			return default(T);
-		}
-
-		protected static T Choose<T>(T value1, T value2, params T[] values)
-		{
-			return default(T);
-		}
-
-		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
-		{
-			return 0;
-		}
-
-		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
-		{
-			return 0;
-		}
-
-		protected virtual void Update()
-		{
-		}
 	}
 }
