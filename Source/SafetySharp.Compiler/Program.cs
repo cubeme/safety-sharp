@@ -78,13 +78,22 @@ namespace SafetySharp.Compiler
 			Log.Info("");
 
 			// Start the compilation process.
-			var compiler = new Compiler();
-			var resultCode = compiler.Compile(Arguments.ProjectFile, Arguments.Configuration, Arguments.Platform);
+			try
+			{
+				var compiler = new Compiler();
+				var resultCode = compiler.Compile(Arguments.ProjectFile, Arguments.Configuration, Arguments.Platform);
 
-			if (resultCode == 0)
-				Log.Info("Compilation completed successfully.");
+				if (resultCode == 0)
+					Log.Info("Compilation completed successfully.");
 
-			return resultCode;
+				return resultCode;
+			}
+			catch (Exception e)
+			{
+				Log.Error("A fatal compilation error occurred: {0}", e.Message);
+				Log.Info("{0}", e.StackTrace);
+				return -1;
+			}
 		}
 
 		/// <summary>

@@ -55,6 +55,30 @@ namespace Tests.CSharp.Extensions
 		}
 
 		[Test]
+		public void IsComponentDeclaration_False_NonComponentClassWithBase()
+		{
+			ShouldNotBeComponent("class Y {} class X : Y {}");
+		}
+
+		[Test]
+		public void IsComponentDeclaration_False_NonDerivedNonComponentClass()
+		{
+			ShouldNotBeComponent("class X {}");
+		}
+
+		[Test]
+		public void IsComponentDeclaration_True_DirectComponentClass()
+		{
+			ShouldBeComponent("class X : Component {}");
+		}
+
+		[Test]
+		public void IsComponentDeclaration_True_NonDirectComponentClass()
+		{
+			ShouldBeComponent("class Y : Component {} class X : Y {}");
+		}
+
+		[Test]
 		public void IsComponentInterfaceDeclaration_False_NonComponentInterface()
 		{
 			ShouldNotBeComponentInterface("interface X {}");
@@ -79,51 +103,15 @@ namespace Tests.CSharp.Extensions
 		}
 
 		[Test]
-		public void IsComponentInterfaceDeclaration_True_IndirectBase_Second()
-		{
-			ShouldBeComponentInterface("interface Q{} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}");
-		}
-
-		[Test]
 		public void IsComponentInterfaceDeclaration_True_IndirectBase_First()
 		{
-			ShouldBeComponentInterface("interface Q{} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}");
+			ShouldBeComponentInterface("interface Q {} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}");
 		}
 
 		[Test]
-		public void IsComponentDeclaration_False_NonComponentClassWithBase()
+		public void IsComponentInterfaceDeclaration_True_IndirectBase_Second()
 		{
-			ShouldNotBeComponent("class Y {} class X : Y {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_False_NonDerivedNonComponentClass()
-		{
-			ShouldNotBeComponent("class X {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClass()
-		{
-			ShouldBeComponent("class X : SafetySharp.Modeling.Component {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClassWithUsing()
-		{
-			ShouldBeComponent("using SafetySharp.Modeling; class X : Component {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClass()
-		{
-			ShouldBeComponent("class Y : SafetySharp.Modeling.Component {} class X : Y {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClassWithUsing()
-		{
-			ShouldBeComponent("using SafetySharp.Modeling; class Y : Component {} class X : Y {}");
+			ShouldBeComponentInterface("interface Q {} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}");
 		}
 	}
 }
