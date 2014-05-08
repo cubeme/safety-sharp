@@ -37,7 +37,7 @@ namespace SafetySharp.CSharp.Extensions
 		///     Checks whether <paramref name="classDeclaration" /> is derived from <see cref="Component" />.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the base types.</param>
 		internal static bool IsComponentDeclaration(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
 		{
 			return classDeclaration.IsDerivedFrom(semanticModel, semanticModel.GetComponentClassSymbol());
@@ -47,41 +47,26 @@ namespace SafetySharp.CSharp.Extensions
 		///     Checks whether <paramref name="interfaceDeclaration" /> is derived from <see cref="IComponent" />.
 		/// </summary>
 		/// <param name="interfaceDeclaration">The interface declaration that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the base types.</param>
 		internal static bool IsComponentInterfaceDeclaration(this InterfaceDeclarationSyntax interfaceDeclaration, SemanticModel semanticModel)
 		{
-			return interfaceDeclaration.Implements(semanticModel, semanticModel.GetComponentInterfaceSymbol());
+			return interfaceDeclaration.IsDerivedFrom(semanticModel, semanticModel.GetComponentInterfaceSymbol());
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="classDeclaration" /> is a directly or indirectly derived from
-		///     <paramref name="baseType" />.
-		/// </summary>
-		/// <param name="classDeclaration">The class declaration that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
-		/// <param name="baseType">The base type <paramref name="classDeclaration" /> should be derived from.</param>
-		internal static bool IsDerivedFrom(this ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
-		{
-			Argument.NotNull(classDeclaration, () => classDeclaration);
-			Argument.NotNull(semanticModel, () => semanticModel);
-
-			var symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration);
-			return symbol.IsDerivedFrom(baseType);
-		}
-
-		/// <summary>
-		///     Checks whether <paramref name="typeDeclaration" /> directly or indirectly implements <paramref name="baseInterface" />.
+		///     Checks whether <paramref name="typeDeclaration" /> is directly or indirectly derived from the
+		///     <paramref name="baseType" /> interface or class.
 		/// </summary>
 		/// <param name="typeDeclaration">The type declaration that should be checked.</param>
-		/// <param name="semanticModel">The semantic model that should be to determine the base types.</param>
-		/// <param name="baseInterface">The base interface <paramref name="typeDeclaration" /> should implement.</param>
-		internal static bool Implements(this TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel, ITypeSymbol baseInterface)
+		/// <param name="semanticModel">The semantic model that should be used to determine the base types.</param>
+		/// <param name="baseType">The base type <paramref name="typeDeclaration" /> should be derived from.</param>
+		internal static bool IsDerivedFrom(this TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
 		{
 			Argument.NotNull(typeDeclaration, () => typeDeclaration);
 			Argument.NotNull(semanticModel, () => semanticModel);
 
 			var symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration);
-			return symbol.Implements(baseInterface);
+			return symbol.IsDerivedFrom(baseType);
 		}
 
 		/// <summary>

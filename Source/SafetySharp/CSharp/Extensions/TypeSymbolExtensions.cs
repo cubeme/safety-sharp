@@ -34,50 +34,30 @@ namespace SafetySharp.CSharp.Extensions
 	internal static class TypeSymbolExtensions
 	{
 		/// <summary>
-		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from <paramref name="baseType." />
+		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from the <paramref name="baseType" />
+		///     interface or class.
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
-		/// <param name="baseType">The base type <paramref name="typeSymbol" /> should be derived from.</param>
+		/// <param name="baseType">The class or interface base type that <paramref name="typeSymbol" /> should be derived from.</param>
 		internal static bool IsDerivedFrom(this ITypeSymbol typeSymbol, ITypeSymbol baseType)
 		{
 			Argument.NotNull(typeSymbol, () => typeSymbol);
 			Argument.NotNull(baseType, () => baseType);
-			Argument.Satisfies(baseType.TypeKind == TypeKind.Class, () => baseType, "Expected a type symbol for a class.");
 
-			// We've reached the top of the inheritance chain (namely, System.Object) without finding the base type we've searched for
+			// Check whether any of the interfaces or their bases match baseType
+			if (baseType.TypeKind == TypeKind.Interface && (typeSymbol.Interfaces.Any(i => i.Equals(baseType) || IsDerivedFrom(i, baseType))))
+				return true;
+
+			// We've reached the top of the inheritance chain without finding baseType
 			if (typeSymbol.BaseType == null)
 				return false;
 
-			// Use a type name comparison to determine whether the type symbol's base type is the searched for type
-			if (typeSymbol.BaseType.Equals(baseType))
+			// Check whether the base matches baseType
+			if (baseType.TypeKind == TypeKind.Class && typeSymbol.BaseType.Equals(baseType))
 				return true;
 
+			// Recursively check whether the base
 			return IsDerivedFrom(typeSymbol.BaseType, baseType);
-		}
-
-		/// <summary>
-		///     Checks whether <paramref name="typeSymbol" /> directly or indirectly implements interface
-		///     <paramref name="baseInterface." />
-		/// </summary>
-		/// <param name="typeSymbol">The type symbol that should be checked.</param>
-		/// <param name="baseInterface">The base interface <paramref name="typeSymbol" /> should implement.</param>
-		internal static bool Implements(this ITypeSymbol typeSymbol, ITypeSymbol baseInterface)
-		{
-			Argument.NotNull(typeSymbol, () => typeSymbol);
-			Argument.NotNull(baseInterface, () => baseInterface);
-			Argument.Satisfies(baseInterface.TypeKind == TypeKind.Interface, () => baseInterface, "Expected a type symbol for an interface.");
-
-			// Check whether any of the type's base classes implement the interface
-			if (typeSymbol.BaseType != null && Implements(typeSymbol.BaseType, baseInterface))
-				return true;
-
-			// We've reached the top of the inheritance chain (namely, System.Object) without finding the base type we've searched for
-			if (typeSymbol.Interfaces.IsDefaultOrEmpty)
-				return false;
-
-			// Use a type name comparison to determine whether the type symbol's base type is the searched for type
-			return typeSymbol.Interfaces.Any(implementedInterface => implementedInterface.Equals(baseInterface) ||
-																	 Implements(implementedInterface, baseInterface));
 		}
 
 		/// <summary>
