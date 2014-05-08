@@ -34,7 +34,7 @@ namespace Tests.CSharp.Extensions
 	{
 		private static void ShouldBeComponentField(string csharpCode, string fieldName, bool shouldBeComponentField = true)
 		{
-			var compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
+			var compilation = new TestCompilation(csharpCode);
 			var fieldDeclaration = compilation
 				.SyntaxRoot
 				.DescendantNodesAndSelf<FieldDeclarationSyntax>()

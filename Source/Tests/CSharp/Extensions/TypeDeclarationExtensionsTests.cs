@@ -69,25 +69,25 @@ namespace Tests.CSharp.Extensions
 		[Test]
 		public void IsComponentInterfaceDeclaration_True_DirectBase_First()
 		{
-			ShouldNotBeComponentInterface("interface Y {} interface X : IComponent, Y {}");
+			ShouldBeComponentInterface("interface Y {} interface X : IComponent, Y {}");
 		}
 
 		[Test]
 		public void IsComponentInterfaceDeclaration_True_DirectBase_Second()
 		{
-			ShouldNotBeComponentInterface("interface Y {} interface X : Y, IComponent {}");
+			ShouldBeComponentInterface("interface Y {} interface X : Y, IComponent {}");
 		}
 
 		[Test]
 		public void IsComponentInterfaceDeclaration_True_IndirectBase_Second()
 		{
-			ShouldNotBeComponentInterface("interface Q{} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}");
+			ShouldBeComponentInterface("interface Q{} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}");
 		}
 
 		[Test]
 		public void IsComponentInterfaceDeclaration_True_IndirectBase_First()
 		{
-			ShouldNotBeComponentInterface("interface Q{} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}");
+			ShouldBeComponentInterface("interface Q{} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}");
 		}
 
 		[Test]

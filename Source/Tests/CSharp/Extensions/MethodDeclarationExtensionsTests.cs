@@ -32,7 +32,7 @@ namespace Tests.CSharp.Extensions
 	{
 		private static void ShouldOverrideUpdate(string csharpCode, string methodName = "Update", bool shouldOverride = true)
 		{
-			var compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
+			var compilation = new TestCompilation(csharpCode);
 			var methodDeclaration = compilation.FindMethodDeclaration("X", methodName);
 			methodDeclaration.IsUpdateMethod(compilation.SemanticModel).Should().Be(shouldOverride);
 		}

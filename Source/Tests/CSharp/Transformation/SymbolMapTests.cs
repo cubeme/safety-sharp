@@ -40,7 +40,7 @@ namespace Tests.CSharp.Transformation
 
 		private void Compile(string csharpCode)
 		{
-			_compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
+			_compilation = new TestCompilation(csharpCode);
 
 			_semanticModel = _compilation.SemanticModel;
 			_syntaxRoot = _compilation.SyntaxRoot;

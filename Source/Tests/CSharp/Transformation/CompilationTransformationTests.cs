@@ -43,7 +43,7 @@ namespace Tests.CSharp.Transformation
 
 		private void Transform(string csharpCode)
 		{
-			_compilation = new TestCompilation("using SafetySharp.Modeling; " + csharpCode);
+			_compilation = new TestCompilation(csharpCode);
 			var transformation = new CompilationTransformation(new ModelingCompilation(_compilation.Compilation));
 
 			_metamodelCompilation = transformation.Transform();

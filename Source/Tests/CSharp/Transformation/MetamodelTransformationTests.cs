@@ -29,6 +29,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.CSharp;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Modeling;
 
 	[TestFixture]
@@ -36,12 +37,11 @@ namespace Tests.CSharp.Transformation
 	{
 		private MetamodelCompilation _compilation;
 		private MetamodelConfiguration _configuration;
-		private ComponentResolver _componentResolver;
-		private Dictionary<string, Component> _components;
+		//private ComponentResolver _componentResolver;
+		//private Dictionary<string, Component> _components;
 
 		private void Transform(string csharpCode, string configurationName)
 		{
-			csharpCode = "using SafetySharp.Modeling; " + csharpCode;
 			var compilation = new TestCompilation(csharpCode);
 			var assembly = compilation.Compile();
 
@@ -50,7 +50,7 @@ namespace Tests.CSharp.Transformation
 			var transformation = new MetamodelTransformation(modelingCompilation, modelConfiguration);
 
 			transformation.TryTransform(out _compilation, out _configuration).Should().BeTrue();
-			_componentResolver = transformation.ComponentResolver;
+			//_componentResolver = transformation.ComponentResolver;
 		}
 
 		[Test]
@@ -81,6 +81,103 @@ class Config : ModelConfiguration
 			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
 			componentConfiguration.FieldValues.Should().HaveCount(1);
 			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+			componentConfiguration.SubComponents.Should().HaveCount(0);
+		}
+
+		[Test]
+		public void Test2()
+		{
+			var csharpCode = @"
+class X : Component
+{
+	private int _field;		
+
+	public X()
+	{
+		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
+	}
+}
+class Y : Component
+{
+	private X _x = new X();
+}
+class Config : ModelConfiguration
+{
+	public Config()
+	{
+		AddPartitions(new Y(), new X());
+	}
+}
+";
+			Transform(csharpCode, "Config");
+			_configuration.Partitions.Should().HaveCount(2);
+
+			var componentConfiguration = _configuration.Partitions[1].Component;
+			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+			componentConfiguration.FieldValues.Should().HaveCount(1);
+			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+			componentConfiguration.SubComponents.Should().HaveCount(0);
+
+			componentConfiguration = _configuration.Partitions[0].Component;
+			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+			componentConfiguration.FieldValues.Should().HaveCount(0);
+			componentConfiguration.SubComponents.Should().HaveCount(1);
+
+			componentConfiguration = componentConfiguration.SubComponents[0];
+			componentConfiguration.FieldValues.Should().HaveCount(1);
+			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+			componentConfiguration.SubComponents.Should().HaveCount(0);
+		}
+
+		[Test]
+		public void Test3()
+		{
+			var csharpCode = @"
+class X : Component, Z
+{
+	private int _field;		
+
+	public X()
+	{
+		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
+	}
+}
+interface Z : IComponent {}
+class Y : Component
+{
+	private Z _x = new X();
+}
+class Config : ModelConfiguration
+{
+	public Config()
+	{
+		AddPartitions(new Y(), new X());
+	}
+}
+";
+			Transform(csharpCode, "Config");
+			_configuration.Partitions.Should().HaveCount(2);
+
+			var componentConfiguration = _configuration.Partitions[1].Component;
+			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+			componentConfiguration.FieldValues.Should().HaveCount(1);
+			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+			componentConfiguration.SubComponents.Should().HaveCount(0);
+
+			componentConfiguration = _configuration.Partitions[0].Component;
+			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+			componentConfiguration.FieldValues.Should().HaveCount(0);
+			componentConfiguration.SubComponents.Should().HaveCount(1);
+
+			componentConfiguration = componentConfiguration.SubComponents[0];
+			componentConfiguration.FieldValues.Should().HaveCount(1);
+			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+			componentConfiguration.SubComponents.Should().HaveCount(0);
+
+			_compilation.Interfaces.Should().HaveCount(1);
+			_compilation.Components[1].SubComponents.Should().HaveCount(1);
+			_compilation.Components[1].SubComponents[0].Type.Should().BeOfType<MetamodelReference<InterfaceDeclaration>>();
 		}
 	}
 }
+

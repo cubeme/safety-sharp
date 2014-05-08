@@ -44,7 +44,7 @@ namespace Tests.CSharp
 		/// <param name="csharpCode">The C# code that should be compiled.</param>
 		public TestCompilation(string csharpCode)
 		{
-			var compilationUnit = SyntaxFactory.ParseCompilationUnit(csharpCode);
+			var compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode);
 			SyntaxTree = compilationUnit.SyntaxTree;
 
 			Compilation = CSharpCompilation
