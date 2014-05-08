@@ -28,18 +28,20 @@ namespace Tests.CSharp
 	using SafetySharp.CSharp;
 	using SafetySharp.Modeling;
 
-	internal class TestComponent : Component
-	{
-	}
-
 	[TestFixture]
 	internal class ModelingCompilationTests
 	{
-		private static void GetClassDeclaration(string csharpCode, Component component)
+		private static void GetClassDeclaration(string csharpCode, Component component = null)
 		{
-			csharpCode = String.Format("namespace Tests.CSharp {{ using SafetySharp.Modeling; {0} }}", csharpCode);
+			csharpCode = String.Format("namespace Tests.CSharp {{ {0} }}", csharpCode);
 			var compilation = new TestCompilation(csharpCode);
 			var modelingCompilation = new ModelingCompilation(compilation.Compilation);
+
+			if (component == null)
+			{
+				var assembly = compilation.Compile();
+				component = (Component)Activator.CreateInstance(assembly.GetType("Tests.CSharp.TestComponent"));
+			}
 
 			var actual = modelingCompilation.GetClassDeclaration(component);
 			var expected = compilation.FindClassDeclaration(component.GetType().FullName);
@@ -47,36 +49,40 @@ namespace Tests.CSharp
 			actual.Should().Be(expected);
 		}
 
+		private class TestComponent : Component
+		{
+		}
+
 		[Test]
 		public void GetClassDeclaration_ShouldReturnDeclaration()
 		{
-			GetClassDeclaration("class TestComponent : Component {}", new TestComponent());
+			GetClassDeclaration("class TestComponent : Component {}");
 		}
 
 		[Test]
 		public void GetClassDeclaration_ShouldReturnDeclaration_OtherNamespace()
 		{
-			GetClassDeclaration("namespace Nested { class TestComponent : Component {} } class TestComponent : Component {}", new TestComponent());
+			GetClassDeclaration("namespace Nested { class TestComponent : Component {} } class TestComponent : Component {}");
 		}
 
 		[Test]
 		public void GetClassDeclaration_ShouldThrow_MultipleDeclarations()
 		{
-			Action action = () => GetClassDeclaration("class Test : Component {}", new TestComponent());
+			Action action = () => GetClassDeclaration("class TestComponent : Component {} class TestComponent : Component {}");
 			action.ShouldThrow<InvalidOperationException>();
 		}
 
 		[Test]
 		public void GetClassDeclaration_ShouldThrow_OtherNamespace()
 		{
-			Action action = () => GetClassDeclaration("namespace Nested { class TestComponent : Component {}", new TestComponent());
+			Action action = () => GetClassDeclaration("namespace Nested { class TestComponent : Component {}");
 			action.ShouldThrow<InvalidOperationException>();
 		}
 
 		[Test]
 		public void GetClassDeclaration_ShouldThrow_UnknownComponentType()
 		{
-			Action action = () => GetClassDeclaration("class TestComponent : Component {} class TestComponent : Component {}", new TestComponent());
+			Action action = () => GetClassDeclaration("class Test : Component {}", new TestComponent());
 			action.ShouldThrow<InvalidOperationException>();
 		}
 	}
