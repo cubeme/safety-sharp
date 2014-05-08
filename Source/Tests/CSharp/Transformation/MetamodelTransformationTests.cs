@@ -46,7 +46,7 @@ namespace Tests.CSharp.Transformation
 			var assembly = compilation.Compile();
 
 			var modelConfiguration = (ModelConfiguration)Activator.CreateInstance(assembly.GetType(configurationName));
-			var modelingCompilation = new ModelingCompilation(compilation.Compilation);
+			var modelingCompilation = new ModelingCompilation(compilation.CSharpCompilation);
 			var transformation = new MetamodelTransformation(modelingCompilation, modelConfiguration);
 
 			transformation.TryTransform(out _compilation, out _configuration).Should().BeTrue();

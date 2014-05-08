@@ -23,73 +23,41 @@
 namespace Tests.CSharp.Extensions
 {
 	using System;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
 
-	[TestFixture]
-	internal class MethodSymbolExtensionsTests
+	namespace MethodSymbolExtensionsTests
 	{
-		private static void ShouldOverride(string csharpCode, bool shouldOverride = true)
-		{
-			var compilation = new TestCompilation("class Y { public virtual void M() {} }" + csharpCode);
-			var methodSymbol = compilation.FindMethodSymbol("X", "M");
-			var overridenMethodSymbol = compilation.FindMethodSymbol("Y", "M");
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Extensions;
 
-			methodSymbol.Overrides(overridenMethodSymbol).Should().Be(shouldOverride);
-		}
-
-		private static void ShouldNotOverride(string csharpCode)
+		[TestFixture]
+		internal class OverridesMethod
 		{
-			ShouldOverride(csharpCode, false);
-		}
+			private static bool Overrides(string csharpCode)
+			{
+				var compilation = new TestCompilation("class Y { public virtual void M() {} }" + csharpCode);
+				var methodSymbol = compilation.FindMethodSymbol("X", "M");
+				var overridenMethodSymbol = compilation.FindMethodSymbol("Y", "M");
 
-		[Test]
-		public void Overrides_False_NewMethod()
-		{
-			ShouldNotOverride("class X : Y { public new void M() {} }");
-		}
+				return methodSymbol.Overrides(overridenMethodSymbol);
+			}
 
-		[Test]
-		public void Overrides_False_NewVirtualMethod()
-		{
-			ShouldNotOverride("class X : Y { public virtual new void M() {} }");
-		}
+			[Test]
+			public void ReturnsFalseForNonOverridingMethod()
+			{
+				Overrides("class X : Y { public new void M() {} }").Should().BeFalse();
+				Overrides("class X : Y { public virtual new void M() {} }").Should().BeFalse();
+				Overrides("class X { public virtual void M() {} }").Should().BeFalse();
+			}
 
-		[Test]
-		public void Overrides_False_NoBaseType()
-		{
-			ShouldNotOverride("class X { public virtual void M() {} }");
-		}
-
-		[Test]
-		public void Overrides_True_VirtualDirectBase()
-		{
-			ShouldOverride("class X : Y { public override void M() {} }");
-		}
-
-		[Test]
-		public void Overrides_True_Sealed_AbstractDirectBase()
-		{
-			ShouldOverride("class X : Y { public sealed override void M() {} }");
-		}
-
-		[Test]
-		public void Overrides_True_Sealed_VirtualDirectBase()
-		{
-			ShouldOverride("class X : Y { public sealed override void M() {} }");
-		}
-
-		[Test]
-		public void Overrides_True_NotDirectBase_NoOverload()
-		{
-			ShouldOverride("class Z : Y {} class X : Y { public override void M () {} }");
-		}
-
-		[Test]
-		public void Overrides_True_NotDirectBase_OverloadedTwice()
-		{
-			ShouldOverride("class Z : Y { public override void M() {} } class X : Y { public override void M () {} }");
+			[Test]
+			public void ReturnsTrueForOverridingMethod()
+			{
+				Overrides("class X : Y { public override void M() {} }").Should().BeTrue();
+				Overrides("class X : Y { public sealed override void M() {} }").Should().BeTrue();
+				Overrides("class Z : Y {} class X : Z { public override void M () {} }").Should().BeTrue();
+				Overrides("class Z : Y { public override void M() {} } class X : Z { public override void M () {} }").Should().BeTrue();
+			}
 		}
 	}
 }

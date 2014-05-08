@@ -35,7 +35,7 @@ namespace Tests.CSharp.Normalization
 			var compilation = new TestCompilation(csharpCode);
 
 			var normalizer = new TNormalizer();
-			return normalizer.Normalize(compilation.Compilation).SyntaxTrees.Single().GetRoot();
+			return normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single().GetRoot();
 		}
 	}
 }

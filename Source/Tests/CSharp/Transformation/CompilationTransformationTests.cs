@@ -44,7 +44,7 @@ namespace Tests.CSharp.Transformation
 		private void Transform(string csharpCode)
 		{
 			_compilation = new TestCompilation(csharpCode);
-			var transformation = new CompilationTransformation(new ModelingCompilation(_compilation.Compilation));
+			var transformation = new CompilationTransformation(new ModelingCompilation(_compilation.CSharpCompilation));
 
 			_metamodelCompilation = transformation.Transform();
 			_symbolMap = transformation.SymbolMap;

@@ -23,53 +23,43 @@
 namespace Tests.CSharp.Extensions
 {
 	using System;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
 
-	[TestFixture]
-	internal class MethodsDeclarationExtensionsTests
+	namespace MethodsDeclarationExtensionsTests
 	{
-		private static void ShouldOverrideUpdate(string csharpCode, string methodName = "Update", bool shouldOverride = true)
-		{
-			var compilation = new TestCompilation(csharpCode);
-			var methodDeclaration = compilation.FindMethodDeclaration("X", methodName);
-			methodDeclaration.IsUpdateMethod(compilation.SemanticModel).Should().Be(shouldOverride);
-		}
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Extensions;
 
-		private static void ShouldNotOverrideUpdate(string csharpCode, string methodName = "Update")
+		[TestFixture]
+		internal class IsUpdateMethodMethod
 		{
-			ShouldOverrideUpdate(csharpCode, methodName, false);
-		}
+			private static bool IsUpdateMethod(string csharpCode, string methodName = "Update")
+			{
+				var compilation = new TestCompilation(csharpCode);
+				var methodDeclaration = compilation.FindMethodDeclaration("X", methodName);
+				return methodDeclaration.IsUpdateMethod(compilation.SemanticModel);
+			}
 
-		[Test]
-		public void IsUpdateMethod_False_OtherMethodName()
-		{
-			ShouldNotOverrideUpdate("class X : Component { public void M() {} }", "M");
-		}
+			[Test]
+			public void ReturnsFalseIfMethodDoesNotOverrideUpdate()
+			{
+				IsUpdateMethod("class X : Component { public new void Update() {} }").Should().BeFalse();
+			}
 
-		[Test]
-		public void IsUpdateMethod_False_OtherUpdateMethod()
-		{
-			ShouldNotOverrideUpdate("class X : Component { public new void Update() {} }");
-		}
+			[Test]
+			public void ReturnsFalseIfMethodIsNotUpdate()
+			{
+				IsUpdateMethod("class X : Component { public void M() {} }", methodName: "M").Should().BeFalse();
+			}
 
-		[Test]
-		public void IsUpdateMethod_True_DirectlyDerived()
-		{
-			ShouldOverrideUpdate("class X : Component { protected override void Update() {} }");
-		}
-
-		[Test]
-		public void IsUpdateMethod_True_IndirectlyDerived_OverridenOnce()
-		{
-			ShouldOverrideUpdate("class Y : Component {} class X : Y { protected override void Update() {} }");
-		}
-
-		[Test]
-		public void IsUpdateMethod_True_IndirectlyDerived_OverridenTwice()
-		{
-			ShouldOverrideUpdate("class Y : Component { protected override void Update() {}} class X : Y { protected override void Update() {} }");
+			[Test]
+			public void ReturnsTrueIfMethodOverridesUpdate()
+			{
+				IsUpdateMethod("class X : Component { protected override void Update() {} }").Should().BeTrue();
+				IsUpdateMethod("class Y : Component {} class X : Y { protected override void Update() {} }").Should().BeTrue();
+				IsUpdateMethod("class Y : Component { protected override void Update() {}} class X : Y { protected override void Update() {} }")
+					.Should().BeTrue();
+			}
 		}
 	}
 }

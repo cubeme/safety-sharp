@@ -56,7 +56,7 @@ class C : SafetySharp.Modeling.Component
 			var compilation = new TestCompilation(csharpCode);
 			var expression = compilation.SyntaxRoot.DescendantNodes<BlockSyntax>().Single().Statements[0];
 
-			var symbolMap = new SymbolMap(compilation.Compilation);
+			var symbolMap = new SymbolMap(compilation.CSharpCompilation);
 			_boolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
 			_intFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
 

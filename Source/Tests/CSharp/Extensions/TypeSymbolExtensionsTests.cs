@@ -23,177 +23,107 @@
 namespace Tests.CSharp.Extensions
 {
 	using System;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
-	using SafetySharp.Metamodel.Types;
 
-	[TestFixture]
-	internal class TypeSymbolExtensionsTests
+	namespace TypeSymbolExtensionsTests
 	{
-		private static void ShouldDeriveFrom(string csharpCode, string baseName, bool shouldBeDerived = true)
-		{
-			var compilation = new TestCompilation(csharpCode);
-			var derivedSymbol = compilation.FindTypeSymbol("X");
-			var baseSymbol = compilation.FindTypeSymbol(baseName);
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Extensions;
+		using SafetySharp.Metamodel.Types;
 
-			derivedSymbol.IsDerivedFrom(baseSymbol).Should().Be(shouldBeDerived);
+		[TestFixture]
+		internal class IsDerivedFromMethod
+		{
+			private static bool IsDerivedFrom(string csharpCode, string baseName)
+			{
+				var compilation = new TestCompilation(csharpCode);
+				var derivedSymbol = compilation.FindTypeSymbol("X");
+				var baseSymbol = compilation.FindTypeSymbol(baseName);
+
+				return derivedSymbol.IsDerivedFrom(baseSymbol);
+			}
+
+			[Test]
+			public void ReturnsFalseForSelfChecks()
+			{
+				IsDerivedFrom("interface X {}", "X").Should().BeFalse();
+				IsDerivedFrom("class X {}", "X").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsFalseWhenClassNotDerivedFromBaseClass()
+			{
+				IsDerivedFrom("class Q {} class X {}", "Q").Should().BeFalse();
+				IsDerivedFrom("class Q {} class Y {} class X : Y {}", "Q").Should().BeFalse();
+				IsDerivedFrom("class Q {} class Z {} class Y : Z {} class X : Y {}", "Q").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsFalseWhenInterfaceNotDerivedFromBaseInterface()
+			{
+				IsDerivedFrom("interface Q {} interface X {}", "Q").Should().BeFalse();
+				IsDerivedFrom("interface Q {} interface Y {} interface X : Y {}", "Q").Should().BeFalse();
+				IsDerivedFrom("interface Q {} interface Z {} interface Y : Z {} interface X : Y {}", "Q").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsTrueWhenClassDerivesFromBaseClass()
+			{
+				IsDerivedFrom("class Y {} class X : Y {}", "Y").Should().BeTrue();
+				IsDerivedFrom("class Z {} class Y : Z {} class X : Y {}", "Y").Should().BeTrue();
+				IsDerivedFrom("class Z {} class Y : Z {} class X : Y {}", "Z").Should().BeTrue();
+			}
+
+			[Test]
+			public void ReturnsTrueWhenClassHasBaseDerivedFromBaseInterface()
+			{
+				IsDerivedFrom("interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}", "Q").Should().BeTrue();
+				IsDerivedFrom("interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}", "Z").Should().BeTrue();
+				IsDerivedFrom("interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}", "Q").Should().BeTrue();
+				IsDerivedFrom("interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}", "S").Should().BeTrue();
+			}
+
+			[Test]
+			public void ReturnsTrueWhenInterfaceDerivesFromBaseInterface()
+			{
+				IsDerivedFrom("interface Y {} interface X : Y {}", "Y").Should().BeTrue();
+				IsDerivedFrom("interface Z {} interface Y : Z {} interface X : Y {}", "Y").Should().BeTrue();
+				IsDerivedFrom("interface Z {} interface Y : Z {} interface X : Y {}", "Z").Should().BeTrue();
+				IsDerivedFrom("interface Z {} interface Y : Z {} interface X : Y, Z {}", "Y").Should().BeTrue();
+				IsDerivedFrom("interface Z {} interface Y : Z {} interface X : Y, Z {}", "Z").Should().BeTrue();
+				IsDerivedFrom("interface Z {} interface Y {} interface X : Y, Z {}", "Y").Should().BeTrue();
+				IsDerivedFrom("interface Z {} interface Y {} interface X : Y, Z {}", "Z").Should().BeTrue();
+				IsDerivedFrom("interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}", "Q").Should().BeTrue();
+			}
 		}
 
-		private static void ShouldNotDeriveFrom(string csharpCode, string baseName)
+		[TestFixture]
+		internal class ToTypeSymbolMethod
 		{
-			ShouldDeriveFrom(csharpCode, baseName, false);
-		}
+			private static TypeSymbol ToTypeSymbol(string csharpCode)
+			{
+				var compilation = new TestCompilation(csharpCode);
+				var fieldSymbol = compilation.FindFieldSymbol("X", "f");
+				return fieldSymbol.Type.ToTypeSymbol(compilation.SemanticModel);
+			}
 
-		private static TypeSymbol ToTypeSymbol(string csharpCode)
-		{
-			var compilation = new TestCompilation(csharpCode);
-			var fieldSymbol = compilation.FindFieldSymbol("X", "f");
-			return fieldSymbol.Type.ToTypeSymbol(compilation.SemanticModel);
-		}
+			[Test]
+			public void ReturnsBooleanTypeSymbolForBooleanField()
+			{
+				ToTypeSymbol("class X { bool f; }").Should().Be(TypeSymbol.Boolean);
+			}
 
-		[Test]
-		public void IsDerivedFrom_Interface_False_Self()
-		{
-			ShouldNotDeriveFrom("interface X {}", "X");
-		}
+			[Test]
+			public void ReturnsDecimalTypeSymbolForDecimalField()
+			{
+				ToTypeSymbol("class X { decimal f; }").Should().Be(TypeSymbol.Decimal);
+			}
 
-		[Test]
-		public void IsDerivedFrom_False_Self()
-		{
-			ShouldNotDeriveFrom("class X {}", "X");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_False_UnderivedBaseType_HasBase()
-		{
-			ShouldNotDeriveFrom("interface Q {} interface Y {} interface X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_False_UnderivedBaseType_NoBase()
-		{
-			ShouldNotDeriveFrom("interface Q {} interface X {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_False_UnderivedBaseType_TwoBases()
-		{
-			ShouldNotDeriveFrom("interface Q {} interface Z {} interface Y : Z {} interface X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_BaseBaseClassImplementsInterface_First()
-		{
-			ShouldDeriveFrom("interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_BaseBaseClassImplementsInterface_Second()
-		{
-			ShouldDeriveFrom("interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}", "S");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_BaseClassImplementsInterface_First()
-		{
-			ShouldDeriveFrom("interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}", "Z");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_BaseClassImplementsInterface_Second()
-		{
-			ShouldDeriveFrom("interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_BaseIsNotTopLevel()
-		{
-			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y {}", "Y");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_BaseIsTwoLevelsUp()
-		{
-			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y {}", "Y");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_DirectBase()
-		{
-			ShouldDeriveFrom("interface Y {} interface X : Y {}", "Y");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_FirstBase()
-		{
-			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y, Z {}", "Y");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_SecondBase()
-		{
-			ShouldDeriveFrom("interface Z {} interface Y : Z {} interface X : Y, Z {}", "Z");
-		}
-
-		[Test]
-		public void IsDerivedFrom_Interface_True_SecondBaseOfBaseInterface()
-		{
-			ShouldDeriveFrom("interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_False_UnderivedBaseTypeWhenClassHasBase()
-		{
-			ShouldNotDeriveFrom("class Q {} class Y {} class X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_False_UnderivedBaseTypeWhenClassHasNoBase()
-		{
-			ShouldNotDeriveFrom("class Q {} class X {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_False_UnderivedBaseTypeWhenClassHasTwoBases()
-		{
-			ShouldNotDeriveFrom("class Q {} class Z {} class Y : Z {} class X : Y {}", "Q");
-		}
-
-		[Test]
-		public void IsDerivedFrom_True_BaseIsNotTopLevel()
-		{
-			ShouldDeriveFrom("class Z {} class Y : Z {} class X : Y {}", "Y");
-		}
-
-		[Test]
-		public void IsDerivedFrom_True_BaseIsTwoLevelsUp()
-		{
-			ShouldDeriveFrom("class Z {} class Y : Z {} class X : Y {}", "Y");
-		}
-
-		[Test]
-		public void IsDerivedFrom_True_DirectBase()
-		{
-			ShouldDeriveFrom("class Y {} class X : Y {}", "Y");
-		}
-
-		[Test]
-		public void ToTypeSymbol_Boolean()
-		{
-			ToTypeSymbol("class X { bool f; }").Should().Be(TypeSymbol.Boolean);
-		}
-
-		[Test]
-		public void ToTypeSymbol_Decimal()
-		{
-			ToTypeSymbol("class X { decimal f; }").Should().Be(TypeSymbol.Decimal);
-		}
-
-		[Test]
-		public void ToTypeSymbol_Integer()
-		{
-			ToTypeSymbol("class X { int f; }").Should().Be(TypeSymbol.Integer);
+			[Test]
+			public void ReturnsIntegerTypeSymbolForIntegerField()
+			{
+				ToTypeSymbol("class X { int f; }").Should().Be(TypeSymbol.Integer);
+			}
 		}
 	}
 }

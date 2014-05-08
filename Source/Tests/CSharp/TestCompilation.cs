@@ -30,6 +30,7 @@ namespace Tests.CSharp
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using SafetySharp.CSharp;
 	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.Metamodel;
 
@@ -47,7 +48,7 @@ namespace Tests.CSharp
 			var compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode);
 			SyntaxTree = compilationUnit.SyntaxTree;
 
-			Compilation = CSharpCompilation
+			CSharpCompilation = CSharpCompilation
 				.Create("Test")
 				.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
 				.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
@@ -55,10 +56,10 @@ namespace Tests.CSharp
 				.AddSyntaxTrees(SyntaxTree)
 				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-			SemanticModel = Compilation.GetSemanticModel(SyntaxTree);
+			SemanticModel = CSharpCompilation.GetSemanticModel(SyntaxTree);
 			SyntaxRoot = SyntaxTree.GetRoot();
 
-			var diagnostics = Compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+			var diagnostics = CSharpCompilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
 			if (diagnostics.Length == 0)
 				return;
 
@@ -69,9 +70,17 @@ namespace Tests.CSharp
 		}
 
 		/// <summary>
-		///     Gets the C# compilation.
+		///     Gets the <see cref="CSharpCompilation" /> corresponding to the current instance.
 		/// </summary>
-		public CSharpCompilation Compilation { get; private set; }
+		public CSharpCompilation CSharpCompilation { get; private set; }
+
+		/// <summary>
+		///     Gets the <see cref="ModelingCompilation" /> corresponding to the current instance.
+		/// </summary>
+		public ModelingCompilation ModelingCompilation
+		{
+			get { return new ModelingCompilation(CSharpCompilation); }
+		}
 
 		/// <summary>
 		///     Gets the syntax tree of the compilation.
@@ -95,7 +104,7 @@ namespace Tests.CSharp
 		{
 			using (var stream = new MemoryStream())
 			{
-				var emitResult = Compilation.Emit(stream);
+				var emitResult = CSharpCompilation.Emit(stream);
 				if (emitResult.Success)
 					return Assembly.Load(stream.ToArray());
 

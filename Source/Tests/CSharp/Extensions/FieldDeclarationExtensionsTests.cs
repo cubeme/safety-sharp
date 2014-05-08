@@ -23,59 +23,45 @@
 namespace Tests.CSharp.Extensions
 {
 	using System;
-	using System.Linq;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
 
-	[TestFixture]
-	internal class FieldDeclarationExtensionsTests
+	namespace FieldDeclarationExtensionsTests
 	{
-		private static void ShouldBeComponentField(string csharpCode, string fieldName, bool shouldBeComponentField = true)
-		{
-			var compilation = new TestCompilation(csharpCode);
-			var fieldDeclaration = compilation
-				.SyntaxRoot
-				.DescendantNodesAndSelf<FieldDeclarationSyntax>()
-				.Single(field => field.Declaration.Variables.Any(v => v.Identifier.ValueText == fieldName));
+		using System.Linq;
+		using FluentAssertions;
+		using Microsoft.CodeAnalysis.CSharp.Syntax;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Extensions;
 
-			fieldDeclaration.IsComponentField(compilation.SemanticModel).Should().Be(shouldBeComponentField);
-		}
-
-		private static void ShouldNotBeComponentField(string csharpCode, string fieldName)
+		[TestFixture]
+		internal class IsComponentFieldMethod
 		{
-			ShouldBeComponentField(csharpCode, fieldName, false);
-		}
+			private static bool IsComponentField(string csharpCode, string fieldName)
+			{
+				var compilation = new TestCompilation(csharpCode);
+				var fieldDeclaration = compilation
+					.SyntaxRoot
+					.DescendantNodesAndSelf<FieldDeclarationSyntax>()
+					.Single(field => field.Declaration.Variables.Any(v => v.Identifier.ValueText == fieldName));
 
-		[Test]
-		public void IsComponentField_False_NonComponentField()
-		{
-			ShouldNotBeComponentField("class X : Component { int x; }", "x");
-		}
+				return fieldDeclaration.IsComponentField(compilation.SemanticModel);
+			}
 
-		[Test]
-		public void IsComponentField_True_BaseClassComponentField()
-		{
-			ShouldBeComponentField("class X : Component { Component x; }", "x");
-		}
+			[Test]
+			public void ReturnsFalseForNonComponentFields()
+			{
+				IsComponentField("class X : Component { int x; }", "x").Should().BeFalse();
+				IsComponentField("class X : Component { bool x; }", "x").Should().BeFalse();
+				IsComponentField("class X : Component { decimal x; }", "x").Should().BeFalse();
+			}
 
-		[Test]
-		public void IsComponentField_True_BaseInterfaceComponentField()
-		{
-			ShouldBeComponentField("class X : Component { IComponent x; }", "x");
-		}
-
-		[Test]
-		public void IsComponentField_True_DerivedClassComponentField()
-		{
-			ShouldBeComponentField("class Y : Component {} class X : Component { Y x; }", "x");
-		}
-
-		[Test]
-		public void IsComponentField_True_DerivedInterfaceComponentField()
-		{
-			ShouldBeComponentField("interface Y : IComponent {} class X : Component { Y x; }", "x");
+			[Test]
+			public void ReturnsTrueForComponentFields()
+			{
+				IsComponentField("class X : Component { Component x; }", "x").Should().BeTrue();
+				IsComponentField("class X : Component { IComponent x; }", "x").Should().BeTrue();
+				IsComponentField("class Y : Component {} class X : Component { Y x; }", "x").Should().BeTrue();
+				IsComponentField("interface Y : IComponent {} class X : Component { Y x; }", "x").Should().BeTrue();
+			}
 		}
 	}
 }

@@ -23,95 +23,64 @@
 namespace Tests.CSharp.Extensions
 {
 	using System;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
 
-	[TestFixture]
-	internal class TypeDeclarationExtensionsTests
+	namespace TypeDeclarationExtensionsTests
 	{
-		private static void ShouldBeComponent(string csharpCode, bool shouldBeComponent = true)
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Extensions;
+
+		[TestFixture]
+		internal class IsComponentDeclarationMethod
 		{
-			var compilation = new TestCompilation(csharpCode);
-			var classDeclaration = compilation.FindClassDeclaration("X");
-			classDeclaration.IsComponentDeclaration(compilation.SemanticModel).Should().Be(shouldBeComponent);
+			private static bool IsComponent(string csharpCode)
+			{
+				var compilation = new TestCompilation(csharpCode);
+				var classDeclaration = compilation.FindClassDeclaration("X");
+				return classDeclaration.IsComponentDeclaration(compilation.SemanticModel);
+			}
+
+			[Test]
+			public void ReturnsFalseForNonComponentClass()
+			{
+				IsComponent("class X {}").Should().BeFalse();
+				IsComponent("class Y {} class X : Y {}").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsTrueForComponentClass()
+			{
+				IsComponent("class X : Component {}").Should().BeTrue();
+				IsComponent("class Y : Component {} class X : Y {}").Should().BeTrue();
+			}
 		}
 
-		private static void ShouldNotBeComponent(string csharpCode)
+		[TestFixture]
+		internal class IsComponentInterfaceDeclarationMethod
 		{
-			ShouldBeComponent(csharpCode, false);
-		}
+			private static bool IsComponentInterface(string csharpCode)
+			{
+				var compilation = new TestCompilation(csharpCode);
+				var interfaceDeclaration = compilation.FindInterfaceDeclaration("X");
+				return interfaceDeclaration.IsComponentInterfaceDeclaration(compilation.SemanticModel);
+			}
 
-		private static void ShouldBeComponentInterface(string csharpCode, bool shouldBeComponent = true)
-		{
-			var compilation = new TestCompilation(csharpCode);
-			var interfaceDeclaration = compilation.FindInterfaceDeclaration("X");
-			interfaceDeclaration.IsComponentInterfaceDeclaration(compilation.SemanticModel).Should().Be(shouldBeComponent);
-		}
+			[Test]
+			public void ReturnsFalseForNonComponentInterface()
+			{
+				IsComponentInterface("interface X {}").Should().BeFalse();
+				IsComponentInterface("interface Y {} interface X : Y {}").Should().BeFalse();
+			}
 
-		private static void ShouldNotBeComponentInterface(string csharpCode)
-		{
-			ShouldBeComponentInterface(csharpCode, false);
-		}
-
-		[Test]
-		public void IsComponentDeclaration_False_NonComponentClassWithBase()
-		{
-			ShouldNotBeComponent("class Y {} class X : Y {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_False_NonDerivedNonComponentClass()
-		{
-			ShouldNotBeComponent("class X {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_True_DirectComponentClass()
-		{
-			ShouldBeComponent("class X : Component {}");
-		}
-
-		[Test]
-		public void IsComponentDeclaration_True_NonDirectComponentClass()
-		{
-			ShouldBeComponent("class Y : Component {} class X : Y {}");
-		}
-
-		[Test]
-		public void IsComponentInterfaceDeclaration_False_NonComponentInterface()
-		{
-			ShouldNotBeComponentInterface("interface X {}");
-		}
-
-		[Test]
-		public void IsComponentInterfaceDeclaration_False_NonComponentInterface_OtherBase()
-		{
-			ShouldNotBeComponentInterface("interface Y {} interface X : Y {}");
-		}
-
-		[Test]
-		public void IsComponentInterfaceDeclaration_True_DirectBase_First()
-		{
-			ShouldBeComponentInterface("interface Y {} interface X : IComponent, Y {}");
-		}
-
-		[Test]
-		public void IsComponentInterfaceDeclaration_True_DirectBase_Second()
-		{
-			ShouldBeComponentInterface("interface Y {} interface X : Y, IComponent {}");
-		}
-
-		[Test]
-		public void IsComponentInterfaceDeclaration_True_IndirectBase_First()
-		{
-			ShouldBeComponentInterface("interface Q {} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}");
-		}
-
-		[Test]
-		public void IsComponentInterfaceDeclaration_True_IndirectBase_Second()
-		{
-			ShouldBeComponentInterface("interface Q {} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}");
+			[Test]
+			public void ReturnsTrueForComponentInterface()
+			{
+				IsComponentInterface("interface X : IComponent {}").Should().BeTrue();
+				IsComponentInterface("interface Y {} interface X : IComponent, Y {}").Should().BeTrue();
+				IsComponentInterface("interface Y {} interface X : Y, IComponent {}").Should().BeTrue();
+				IsComponentInterface("interface Q {} interface Z : IComponent, Q {} interface Y : Z {} interface X : Y {}").Should().BeTrue();
+				IsComponentInterface("interface Q {} interface Z : Q, IComponent {} interface Y : Z {} interface X : Y {}").Should().BeTrue();
+			}
 		}
 	}
 }

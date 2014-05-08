@@ -38,7 +38,7 @@ namespace Tests.CSharp.Diagnostics
 			var compilation = new TestCompilation(csharpCode);
 
 			var analyzers = new IDiagnosticAnalyzer[] { _analyzer };
-			return !AnalyzerDriver.GetDiagnostics(compilation.Compilation, analyzers, new CancellationToken()).Any();
+			return !AnalyzerDriver.GetDiagnostics(compilation.CSharpCompilation, analyzers, new CancellationToken()).Any();
 		}
 	}
 }

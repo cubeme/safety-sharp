@@ -23,77 +23,56 @@
 namespace Tests.CSharp.Extensions
 {
 	using System;
-	using System.Linq;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
 
-	[TestFixture]
-	internal class NamespaceOrTypeSymbolExtensionsTests
+	namespace NamespaceOrTypeSymbolExtensionsTests
 	{
-		private static void ShouldHaveFullName(string csharpCode, string fullName)
+		using System.Linq;
+		using FluentAssertions;
+		using Microsoft.CodeAnalysis.CSharp;
+		using Microsoft.CodeAnalysis.CSharp.Syntax;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Extensions;
+
+		[TestFixture]
+		internal class GetFullNameMethod
 		{
-			var compilation = new TestCompilation(csharpCode);
+			private static string GetFullName(string csharpCode)
+			{
+				var compilation = new TestCompilation(csharpCode);
 
-			// Can't use compilation.FindClassDeclaration() here as the implementation of that helper method
-			// depends on the GetFullName() extension method which we're currently testing...
-			var classDeclaration = compilation
-				.SyntaxRoot
-				.DescendantNodesAndSelf<ClassDeclarationSyntax>()
-				.Single(c => c.Identifier.ValueText == "X");
+				// We can't use compilation.FindClassDeclaration() here as the implementation of that helper method
+				// depends on the GetFullName() extension method which we're currently testing...
+				var classDeclaration = compilation
+					.SyntaxRoot
+					.DescendantNodesAndSelf<ClassDeclarationSyntax>()
+					.Single(c => c.Identifier.ValueText == "X");
 
-			var classSymbol = compilation.SemanticModel.GetDeclaredSymbol(classDeclaration);
-			classSymbol.GetFullName().Should().Be(fullName);
-		}
+				var classSymbol = compilation.SemanticModel.GetDeclaredSymbol(classDeclaration);
+				return classSymbol.GetFullName();
+			}
 
-		[Test]
-		public void GetFullName_ClassAtTopLevel()
-		{
-			ShouldHaveFullName("class X {}", "X");
-		}
+			[Test]
+			public void ReturnsClassNameForClassInGlobalNamespace()
+			{
+				GetFullName("class X {}").Should().Be("X");
+			}
 
-		[Test]
-		public void GetFullName_ClassNestedInsideNamespaces()
-		{
-			ShouldHaveFullName("namespace Test.Other { class X {} }", "Test.Other.X");
-		}
+			[Test]
+			public void ReturnsNamespacedClassNameForClassInNamespace()
+			{
+				GetFullName("namespace Test { class X {} }").Should().Be("Test.X");
+				GetFullName("namespace Test.Other { class X {} }").Should().Be("Test.Other.X");
+				GetFullName("namespace Test { namespace Other { class X {} }}").Should().Be("Test.Other.X");
+			}
 
-		[Test]
-		public void GetFullName_ClassNestedInsideNestedNamespaces()
-		{
-			ShouldHaveFullName("namespace Test { namespace Other { class X {} }}", "Test.Other.X");
-		}
-
-		[Test]
-		public void GetFullName_ClassNestedInsideUnnestedNamespace()
-		{
-			ShouldHaveFullName("namespace Test { class X {} }", "Test.X");
-		}
-
-		[Test]
-		public void GetFullName_ClassNestedWithinClassAtTopLevel()
-		{
-			ShouldHaveFullName("class Y { class X {}}", "Y+X");
-		}
-
-		[Test]
-		public void GetFullName_ClassNestedWithinClassInsideNamespaces()
-		{
-			ShouldHaveFullName("namespace Test.Other { class Y { class X {}} }", "Test.Other.Y+X");
-		}
-
-		[Test]
-		public void GetFullName_ClassNestedWithinClassInsideNestedNamespaces()
-		{
-			ShouldHaveFullName("namespace Test { namespace Other { class Y { class X {}} }}", "Test.Other.Y+X");
-		}
-
-		[Test]
-		public void GetFullName_ClassWithinClassNestedInsideUnnestedNamespace()
-		{
-			ShouldHaveFullName("namespace Test { class Y { class X {}} }", "Test.Y+X");
+			[Test]
+			public void ReturnsNestedClassNameForNestedClass()
+			{
+				GetFullName("class Y { class X {}}").Should().Be("Y+X");
+				GetFullName("namespace Test.Other { class Y { class X {}} }").Should().Be("Test.Other.Y+X");
+				GetFullName("namespace Test { namespace Other { class Y { class X {}} }}").Should().Be("Test.Other.Y+X");
+				GetFullName("namespace Test { class Y { class X {}} }").Should().Be("Test.Y+X");
+			}
 		}
 	}
 }
