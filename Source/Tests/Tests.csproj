@@ -79,7 +79,6 @@
     <Compile Include="CSharp\Transformation\SymbolMapTests.cs" />
     <Compile Include="CSharp\Transformation\CompilationTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\MethodTransformation.StatementTests.cs" />
-    <Compile Include="CSharp\Transformation\MethodTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\MethodTransformation.ExpressionTests.cs" />
     <Compile Include="Generator\GeneratorTests.cs" />
     <Compile Include="Generator\Test.Generated.cs" />

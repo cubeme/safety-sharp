@@ -63,7 +63,7 @@ namespace Tests.CSharp.Extensions
 		[Test]
 		public void GetFullName_ClassNestedInsideNestedNamespaces()
 		{
-			ShouldHaveFullName("namespace Test namespace Other {{ class X {} }}", "Test.Other.X");
+			ShouldHaveFullName("namespace Test { namespace Other { class X {} }}", "Test.Other.X");
 		}
 
 		[Test]
@@ -87,7 +87,7 @@ namespace Tests.CSharp.Extensions
 		[Test]
 		public void GetFullName_ClassNestedWithinClassInsideNestedNamespaces()
 		{
-			ShouldHaveFullName("namespace Test namespace Other {{ class Y { class X {}} }}", "Test.Other.Y+X");
+			ShouldHaveFullName("namespace Test { namespace Other { class Y { class X {}} }}", "Test.Other.Y+X");
 		}
 
 		[Test]

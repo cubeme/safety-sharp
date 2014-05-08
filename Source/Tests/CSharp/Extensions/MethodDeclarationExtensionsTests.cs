@@ -57,19 +57,19 @@ namespace Tests.CSharp.Extensions
 		[Test]
 		public void IsUpdateMethod_True_DirectlyDerived()
 		{
-			ShouldOverrideUpdate("class X : Component { public override void Update() {} }");
+			ShouldOverrideUpdate("class X : Component { protected override void Update() {} }");
 		}
 
 		[Test]
 		public void IsUpdateMethod_True_IndirectlyDerived_OverridenOnce()
 		{
-			ShouldOverrideUpdate("class Y : Component {} class X : Y { public override void Update() {} }");
+			ShouldOverrideUpdate("class Y : Component {} class X : Y { protected override void Update() {} }");
 		}
 
 		[Test]
 		public void IsUpdateMethod_True_IndirectlyDerived_OverridenTwice()
 		{
-			ShouldOverrideUpdate("class Y : Component { public override void Update() {}} class X : Y { public override void Update() {} }");
+			ShouldOverrideUpdate("class Y : Component { protected override void Update() {}} class X : Y { protected override void Update() {} }");
 		}
 	}
 }

@@ -24,38 +24,76 @@ namespace Tests.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using FluentAssertions;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
+	using SafetySharp.CSharp.Extensions;
+	using SafetySharp.CSharp.Transformation;
+	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
 	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
-	internal class MethodTransformationStatementTests : MethodTransformationTests
+	internal class MethodTransformationStatementTests
 	{
+		private IMetamodelReference<FieldDeclaration> _boolFieldReference;
+		private IMetamodelReference<FieldDeclaration> _intFieldReference;
+
+		private MetamodelElement Transform(string csharpCode, string returnType = "void")
+		{
+			csharpCode = @"
+class C : SafetySharp.Modeling.Component 
+{
+	private bool boolField; 
+    private int intField;
+	" + returnType + @" M()
+	{
+		" + csharpCode + @";
+	}
+}";
+			var compilation = new TestCompilation(csharpCode);
+			var expression = compilation.SyntaxRoot.DescendantNodes<BlockSyntax>().Single().Statements[0];
+
+			var symbolMap = new SymbolMap(compilation.Compilation);
+			_boolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
+			_intFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
+
+			var visitor = new MethodTransformation(compilation.SemanticModel, symbolMap);
+			return visitor.Visit(expression);
+		}
+
+		private void Test(Statement expectedStatement, string csharpStatement, string returnType = "void")
+		{
+			var actualStatement = Transform(csharpStatement, returnType);
+			actualStatement.Should().Be(expectedStatement);
+		}
+
 		[Test]
 		public void AssignmentStatement_SimpleExpression()
 		{
-			var actual = TransformStatement("boolField = true;");
-			var expected = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), BooleanLiteral.True);
+			var actual = Transform("boolField = true;");
+			var expected = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True);
 			actual.Should().Be(expected);
 		}
 
 		[Test]
 		public void AssignmentStatement_BinaryExpression()
 		{
-			var actual = TransformStatement("boolField = true || false;");
+			var actual = Transform("boolField = true || false;");
 			var expression = new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False);
-			var expected = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), expression);
+			var expected = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), expression);
 			actual.Should().Be(expected);
 		}
 
 		[Test]
 		public void ChooseFromValues_TwoValues()
 		{
-			var actual = TransformStatement("Choose(out boolField, true, false);");
+			var actual = Transform("Choose(out boolField, true, false);");
 
-			var assignment1 = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), BooleanLiteral.True);
-			var assignment2 = new AssignmentStatement(new FieldAccessExpression(BoolFieldReference), BooleanLiteral.False);
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.False);
 
 			var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
 			var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
@@ -67,13 +105,13 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void ChooseFromValues_FourValues()
 		{
-			var actual = TransformStatement("Choose(out intField, -17, 0, 33, 127);");
+			var actual = Transform("Choose(out intField, -17, 0, 33, 127);");
 
 			var minusSeventeen = new UnaryExpression(new IntegerLiteral(17), UnaryOperator.Minus);
-			var assignment1 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), minusSeventeen);
-			var assignment2 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), new IntegerLiteral(0));
-			var assignment3 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), new IntegerLiteral(33));
-			var assignment4 = new AssignmentStatement(new FieldAccessExpression(IntFieldReference), new IntegerLiteral(127));
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), minusSeventeen);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), new IntegerLiteral(0));
+			var assignment3 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), new IntegerLiteral(33));
+			var assignment4 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), new IntegerLiteral(127));
 
 			var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
 			var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
@@ -94,8 +132,8 @@ namespace Tests.CSharp.Transformation
 		public void ReturnStatements()
 		{
 			Test(new ReturnStatement(null), "return;");
-			Test(new ReturnStatement(new IntegerLiteral(1)), "return 1;");
-			Test(new ReturnStatement(BooleanLiteral.False), "return false;");
+			Test(new ReturnStatement(new IntegerLiteral(1)), "return 1;", "int");
+			Test(new ReturnStatement(BooleanLiteral.False), "return false;", "bool");
 		}
 
 		[Test]

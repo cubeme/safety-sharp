@@ -57,6 +57,15 @@ namespace Tests.CSharp
 
 			SemanticModel = Compilation.GetSemanticModel(SyntaxTree);
 			SyntaxRoot = SyntaxTree.GetRoot();
+
+			var diagnostics = Compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+			if (diagnostics.Length == 0)
+				return;
+
+			foreach (var diagnostic in diagnostics)
+				Console.WriteLine("{0}", diagnostic);
+
+			throw new InvalidOperationException("Failed to create compilation.");
 		}
 
 		/// <summary>

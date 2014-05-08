@@ -275,25 +275,5 @@ namespace Tests.CSharp.Transformation
 			_symbolMap.GetFieldReference(fieldSymbol1).Should().NotBeNull();
 			_symbolMap.GetFieldReference(fieldSymbol2).Should().NotBeNull();
 		}
-
-		[Test]
-		public void ComponentBaseClassShouldBeMapped()
-		{
-			Compile("");
-			var classSymbol = _semanticModel.GetComponentClassSymbol();
-
-			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
-			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void ComponentBaseInterfaceShouldBeMapped()
-		{
-			Compile("");
-			var interfaceSymbol = _semanticModel.GetComponentInterfaceSymbol();
-
-			_symbolMap.IsMapped(interfaceSymbol).Should().BeTrue();
-			_symbolMap.GetInterfaceReference(interfaceSymbol).Should().NotBeNull();
-		}
 	}
 }

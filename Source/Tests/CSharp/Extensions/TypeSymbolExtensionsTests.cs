@@ -55,13 +55,13 @@ namespace Tests.CSharp.Extensions
 		[Test]
 		public void IsDerivedFrom_Interface_False_Self()
 		{
-			ShouldNotDeriveFrom("interface X", "X");
+			ShouldNotDeriveFrom("interface X {}", "X");
 		}
 
 		[Test]
 		public void IsDerivedFrom_False_Self()
 		{
-			ShouldNotDeriveFrom("class X", "X");
+			ShouldNotDeriveFrom("class X {}", "X");
 		}
 
 		[Test]

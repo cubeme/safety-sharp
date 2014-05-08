@@ -23,13 +23,51 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
+	using System.Linq;
 	using FluentAssertions;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
+	using SafetySharp.CSharp.Extensions;
+	using SafetySharp.CSharp.Transformation;
+	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
 
 	[TestFixture]
-	internal class MethodTransformationExpressionTests : MethodTransformationTests
+	internal class MethodTransformationExpressionTests
 	{
+		private IMetamodelReference<FieldDeclaration> _boolFieldReference;
+		private IMetamodelReference<FieldDeclaration> _intFieldReference;
+
+		private MetamodelElement Transform(string csharpCode)
+		{
+			csharpCode = @"
+class C : SafetySharp.Modeling.Component 
+{
+	private bool boolField; 
+    private int intField;
+	void M()
+	{
+		var x = " + csharpCode + @";
+	}
+}";
+			var compilation = new TestCompilation(csharpCode);
+			var expression = compilation.SyntaxRoot.DescendantNodes<EqualsValueClauseSyntax>().Single().Value;
+
+			var symbolMap = new SymbolMap(compilation.Compilation);
+			_boolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
+			_intFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
+
+			var visitor = new MethodTransformation(compilation.SemanticModel, symbolMap);
+			return visitor.Visit(expression);
+		}
+
+		private void Test(Expression expectedExpression, string csharpExpression)
+		{
+			var actualExpression = Transform(csharpExpression);
+			actualExpression.Should().Be(expectedExpression);
+		}
+
 		[Test]
 		public void BinaryAddExpressions()
 		{
@@ -140,14 +178,14 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void FieldAccessExpression()
 		{
-			TransformExpression("boolField").Should().Be(new FieldAccessExpression(BoolFieldReference));
+			Transform("boolField").Should().Be(new FieldAccessExpression(_boolFieldReference));
 		}
 
 		[Test]
 		public void FieldAccessInBinaryExpression()
 		{
-			var actual = TransformExpression("boolField == false");
-			var expected = new BinaryExpression(new FieldAccessExpression(BoolFieldReference), BinaryOperator.Equals, BooleanLiteral.False);
+			var actual = Transform("boolField == false");
+			var expected = new BinaryExpression(new FieldAccessExpression(_boolFieldReference), BinaryOperator.Equals, BooleanLiteral.False);
 			actual.Should().Be(expected);
 		}
 

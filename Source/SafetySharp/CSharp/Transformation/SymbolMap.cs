@@ -31,7 +31,6 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel.Declarations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -49,15 +48,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		internal SymbolMap(Compilation compilation)
 		{
-			var componentClassSymbol = compilation.GetTypeByMetadataName(typeof(Component).FullName);
-			var componentInterfaceSymbol = compilation.GetTypeByMetadataName(typeof(IComponent).FullName);
-
-			BaseComponentType = new MetamodelReference<ComponentDeclaration>(componentClassSymbol);
-			BaseComponentInterface = new MetamodelReference<InterfaceDeclaration>(componentInterfaceSymbol);
-
+			Argument.NotNull(compilation, () => compilation);
 			var map = ImmutableDictionary<ISymbol, IMetamodelReference>.Empty.ToBuilder();
-			map.Add(componentClassSymbol, BaseComponentType);
-			map.Add(componentInterfaceSymbol, BaseComponentInterface);
 
 			var references = compilation
 				.SyntaxTrees
@@ -69,16 +61,6 @@ namespace SafetySharp.CSharp.Transformation
 
 			_symbolMap = map.ToImmutable();
 		}
-
-		/// <summary>
-		///     Gets the symbol map's reference to the base component type representing <see cref="Component" />.
-		/// </summary>
-		internal IMetamodelReference<ComponentDeclaration> BaseComponentType { get; private set; }
-
-		/// <summary>
-		///     Gets the symbol map's reference to the base component interface representing <see cref="IComponent" />.
-		/// </summary>
-		internal IMetamodelReference<InterfaceDeclaration> BaseComponentInterface { get; private set; }
 
 		/// <summary>
 		///     Gets a typed reference to the C# <paramref name="symbol" /> representing a component.

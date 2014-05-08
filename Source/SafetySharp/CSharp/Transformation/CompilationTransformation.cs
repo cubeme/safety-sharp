@@ -32,6 +32,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Metamodel.Statements;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -59,9 +60,6 @@ namespace SafetySharp.CSharp.Transformation
 
 			_compilation = compilation;
 			SymbolMap = new SymbolMap(compilation.CSharpCompilation);
-
-			_resolver = _resolver.With(SymbolMap.BaseComponentType, ComponentDeclaration.BaseComponent);
-			_resolver = _resolver.With(SymbolMap.BaseComponentInterface, InterfaceDeclaration.BaseInterface);
 		}
 
 		/// <summary>
@@ -268,13 +266,17 @@ namespace SafetySharp.CSharp.Transformation
 			var identifier = new Identifier(variable.Identifier.ValueText);
 
 			var componentClass = semanticModel.GetComponentClassSymbol();
-			if (subComponentSymbol.Type.IsDerivedFrom(componentClass) || subComponentSymbol.Type.Equals(componentClass))
+			Assert.That(!subComponentSymbol.Type.Equals(componentClass), "'{0}' is not a valid sub component type.", typeof(Component).FullName);
+
+			if (subComponentSymbol.Type.IsDerivedFrom(componentClass))
 				return new SubComponentDeclaration(identifier, SymbolMap.GetComponentReference(subComponentSymbol.Type));
 
 			var componentInterface = semanticModel.GetComponentInterfaceSymbol();
+			Assert.That(!subComponentSymbol.Type.Equals(componentInterface), "'{0}' is not a valid sub component type.", typeof(IComponent).FullName);
+
 			if (subComponentSymbol.Type.IsDerivedFrom(componentInterface) || subComponentSymbol.Type.Equals(componentInterface))
 				return new SubComponentDeclaration(identifier, SymbolMap.GetInterfaceReference(subComponentSymbol.Type));
-			
+
 			Assert.NotReached("Unknown sub component type '{0}'.", subComponentSymbol.Type);
 			return null;
 		}

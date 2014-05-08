@@ -62,12 +62,22 @@ namespace Tests.CSharp.Transformation
 			return _metamodelCompilation.Interfaces[0];
 		}
 
-		private T GetAndCheckSubComponent<T>(IMetamodelReference<TypeDeclaration> typeDeclaration)
+		private T GetAndCheckSubComponentDeclaration<T>(IMetamodelReference<TypeDeclaration> typeDeclaration)
 			where T : TypeDeclaration
 		{
 			var component = _metamodelCompilation.Resolver.Resolve(typeDeclaration);
 			component.Should().BeOfType<T>();
 			return (T)component;
+		}
+
+		[Test]
+		public void ShouldNotReportSubComponentsAsField()
+		{
+			var component = TransformComponent(@"
+				interface MyInterface : IComponent {} 
+				class MyComponent2 : Component {}
+				class MyComponent : Component { private MyComponent2 c; private MyInterface ic; }");
+			component.Fields.Should().HaveCount(0);
 		}
 
 		[Test]
@@ -175,73 +185,74 @@ namespace Tests.CSharp.Transformation
 		}
 
 		[Test]
-		public void ShouldNotReportSubComponentsAsField()
+		public void ShouldTransformSubComponent_OfParentComponentType()
 		{
-			var component = TransformComponent("class MyComponent : Component { private Component c; private IComponent ic; }");
-			component.Fields.Should().HaveCount(0);
+			var component = TransformComponent("class MyComponent : Component { private MyComponent c; }");
+
+			component.SubComponents.Should().HaveCount(1);
+			component.SubComponents[0].Identifier.Name.Should().Be("c");
+
+			var sub = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[0].Type);
+			sub.Should().Be(_metamodelCompilation.Components[0]);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfComponentInterface()
+		{
+			var component = TransformComponent(@"
+				interface MyComponent3 : IComponent {} 
+				interface MyComponent2 : IComponent {}
+				class MyComponent : Component { private MyComponent2 c1; private MyComponent3 c2; }");
+
+			component.SubComponents.Should().HaveCount(2);
+			component.SubComponents[0].Identifier.Name.Should().Be("c1");
+			component.SubComponents[1].Identifier.Name.Should().Be("c2");
+
+			var sub1 = GetAndCheckSubComponentDeclaration<InterfaceDeclaration>(component.SubComponents[0].Type);
+			var sub2 = GetAndCheckSubComponentDeclaration<InterfaceDeclaration>(component.SubComponents[1].Type);
+
+			sub1.Should().Be(_metamodelCompilation.Interfaces[1]);
+			sub2.Should().Be(_metamodelCompilation.Interfaces[0]);
+		}
+
+		[Test]
+		public void ShouldTransformTwoSubComponents_OfComponentType()
+		{
+			Transform(@"
+				class MyComponent3 : Component {} 
+				class MyComponent2 : Component {}
+				class MyComponent : Component { private MyComponent2 c1; private MyComponent3 c2; }");
+
+			var component = _metamodelCompilation.Components[2];
+			component.SubComponents.Should().HaveCount(2);
+			component.SubComponents[0].Identifier.Name.Should().Be("c1");
+			component.SubComponents[1].Identifier.Name.Should().Be("c2");
+
+			var sub1 = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[0].Type);
+			var sub2 = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[1].Type);
+
+			sub1.Should().Be(_metamodelCompilation.Components[1]);
+			sub2.Should().Be(_metamodelCompilation.Components[0]);
 		}
 
 		[Test]
 		public void ShouldTransformTwoSubComponents_OfMixedTypes()
 		{
-			var component = TransformComponent("class MyComponent : Component { private Component c1; private IComponent c2; }");
+			Transform(@"
+				interface MyInterface : IComponent {} 
+				class MyComponent2 : Component {}
+				class MyComponent : Component { private MyComponent2 c1; private MyInterface c2; }");
 
+			var component = _metamodelCompilation.Components[1];
 			component.SubComponents.Should().HaveCount(2);
 			component.SubComponents[0].Identifier.Name.Should().Be("c1");
 			component.SubComponents[1].Identifier.Name.Should().Be("c2");
 
-			GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[0].Type);
-			GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[1].Type);
-		}
+			var sub1 = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[0].Type);
+			var sub2 = GetAndCheckSubComponentDeclaration<InterfaceDeclaration>(component.SubComponents[1].Type);
 
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfTypeComponent()
-		{
-			var component = TransformComponent("class MyComponent : Component { private Component c1; private Component c2; }");
-
-			component.SubComponents.Should().HaveCount(2);
-			component.SubComponents[0].Identifier.Name.Should().Be("c1");
-			component.SubComponents[1].Identifier.Name.Should().Be("c2");
-
-			GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[0].Type);
-			GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[1].Type);
-		}
-
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfTypeDerivedComponent()
-		{
-			var component = TransformComponent("class MyComponent : Component { private X c; } class X : Component {}");
-
-			component.SubComponents.Should().HaveCount(1);
-			component.SubComponents[0].Identifier.Name.Should().Be("c");
-
-			var subComponent = GetAndCheckSubComponent<ComponentDeclaration>(component.SubComponents[0].Type);
-			subComponent.Should().Be(_metamodelCompilation.Components[1]);
-		}
-
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfTypeDerivedIComponent()
-		{
-			var component = TransformComponent("class MyComponent : Component { private IX c; } interface IX : IComponent {}");
-
-			component.SubComponents.Should().HaveCount(1);
-			component.SubComponents[0].Identifier.Name.Should().Be("c");
-
-			var subComponent = GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[0].Type);
-			subComponent.Should().Be(_metamodelCompilation.Interfaces[0]);
-		}
-
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfTypeIComponent()
-		{
-			var component = TransformComponent("class MyComponent : Component { private IComponent c1; private IComponent c2; }");
-
-			component.SubComponents.Should().HaveCount(2);
-			component.SubComponents[0].Identifier.Name.Should().Be("c1");
-			component.SubComponents[1].Identifier.Name.Should().Be("c2");
-
-			GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[0].Type);
-			GetAndCheckSubComponent<InterfaceDeclaration>(component.SubComponents[1].Type);
+			sub1.Should().Be(_metamodelCompilation.Components[0]);
+			sub2.Should().Be(_metamodelCompilation.Interfaces[0]);
 		}
 
 		[Test]

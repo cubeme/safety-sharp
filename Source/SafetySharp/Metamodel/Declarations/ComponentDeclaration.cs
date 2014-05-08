@@ -23,32 +23,12 @@
 namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
-	using System.Collections.Immutable;
-	using Modeling;
 
 	/// <summary>
 	///     Represents the declaration of a component type.
 	/// </summary>
 	partial class ComponentDeclaration
 	{
-		/// <summary>
-		///     Represents the empty base component type corresponding to <see cref="Component" />.
-		/// </summary>
-		public static readonly ComponentDeclaration BaseComponent = new ComponentDeclaration(
-			new Identifier(typeof(Component).FullName),
-			MethodDeclaration.UpdateMethod,
-			ImmutableArray<MethodDeclaration>.Empty,
-			ImmutableArray<FieldDeclaration>.Empty,
-			ImmutableArray<SubComponentDeclaration>.Empty);
-
-		/// <summary>
-		///     Gets a value indicating whether the current instance represents the <see cref="Component" /> class.
-		/// </summary>
-		public bool IsBaseComponent
-		{
-			get { return this == BaseComponent; }
-		}
-
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
