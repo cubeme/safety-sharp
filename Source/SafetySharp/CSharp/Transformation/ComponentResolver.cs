@@ -39,13 +39,13 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		internal static readonly ComponentResolver Empty = new ComponentResolver
 		{
-			_map = ImmutableDictionary<Component, IMetamodelReference<ComponentDeclaration>>.Empty
+			_map = ImmutableDictionary<IComponent, IMetamodelReference<ComponentDeclaration>>.Empty
 		};
 
 		/// <summary>
 		///     Maps <see cref="Component" /> instances to <see cref="MetamodelReference{ComponentDeclaration}" /> instances.
 		/// </summary>
-		private ImmutableDictionary<Component, IMetamodelReference<ComponentDeclaration>> _map;
+		private ImmutableDictionary<IComponent, IMetamodelReference<ComponentDeclaration>> _map;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="ComponentResolver" /> type.
@@ -72,7 +72,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		/// <param name="component">The component that should be added to the resolver.</param>
 		/// <param name="reference">The referenced compnent declaration.</param>
-		public ComponentResolver With(Component component, IMetamodelReference<ComponentDeclaration> reference)
+		public ComponentResolver With(IComponent component, IMetamodelReference<ComponentDeclaration> reference)
 		{
 			Argument.NotNull(component, () => component);
 			Argument.NotNull(reference, () => reference);

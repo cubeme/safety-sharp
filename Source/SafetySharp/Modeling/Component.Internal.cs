@@ -57,6 +57,22 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
+		///     Gets the sub component with the given name.
+		/// </summary>
+		/// <param name="name">The name of the sub component that should be returned.</param>
+		internal Component GetSubComponent(string name)
+		{
+			Argument.NotNullOrWhitespace(name, () => name);
+
+			var field = GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			Argument.Satisfies(field != null, () => name, "A sub component with name '{0}' does not exist.", name);
+
+			var component = field.GetValue(this) as Component;
+			Assert.NotNull(component);
+			return component;
+		}
+
+		/// <summary>
 		///     Gets the initial values of the field with name <paramref name="fieldName" />.
 		/// </summary>
 		/// <param name="fieldName">The name of the field the initial values should be returned for.</param>
