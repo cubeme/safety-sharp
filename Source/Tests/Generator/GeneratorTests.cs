@@ -24,6 +24,7 @@ namespace Tests.Generator
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using FluentAssertions;
 	using NUnit.Framework;
 
@@ -45,52 +46,77 @@ namespace Tests.Generator
 			(element1.Equals((object)null)).Should().BeFalse();
 		}
 
-		[Test]
-		public void ObjectsShouldNotBeEqual()
+		private static void BaseObjectsShouldBeEqual(object nullObject)
 		{
-			var nullObject = new object();
 			var notNullObject = new object();
 			var notEmptyString = "Test";
 
-			var element1 = new ValidationTestElement(nullObject, notNullObject, notEmptyString);
-			var element2 = new ValidationTestElement(null, notNullObject, notEmptyString);
+			var element1 = new InheritedValidationTestElement(nullObject, notNullObject, notEmptyString, 3);
+			var element2 = new InheritedValidationTestElement(nullObject, notNullObject, notEmptyString, 3);
 
-			(element1 == element2).Should().BeFalse();
-			(element1 != element2).Should().BeTrue();
-			(element1.Equals(element2)).Should().BeFalse();
-			(element1.Equals((object)element2)).Should().BeFalse();
+			(element1 == element2).Should().BeTrue();
+			(element1 != element2).Should().BeFalse();
+			(element1.Equals(element2)).Should().BeTrue();
+			(element1.Equals((object)element2)).Should().BeTrue();
+			(element1.Equals((object)null)).Should().BeFalse();
+		}
 
-			element1 = new ValidationTestElement(nullObject, notNullObject, notEmptyString);
-			element2 = new ValidationTestElement(nullObject, notNullObject, notEmptyString + "X");
+		private static ImmutableArray<SimpleTestElement> CreateArray(params int[] values)
+		{
+			return values.Aggregate(ImmutableArray<SimpleTestElement>.Empty, (current, value) => current.Add(new SimpleTestElement(value)));
+		}
 
-			(element1 == element2).Should().BeFalse();
-			(element1 != element2).Should().BeTrue();
-			(element1.Equals(element2)).Should().BeFalse();
-			(element1.Equals((object)element2)).Should().BeFalse();
+		private static ImmutableList<SimpleTestElement> CreateList(params int[] values)
+		{
+			return values.Aggregate(ImmutableList<SimpleTestElement>.Empty, (current, value) => current.Add(new SimpleTestElement(value)));
 		}
 
 		[Test]
-		public void GetHashCodeShouldNeverThrow()
+		public void ArrayEquality()
 		{
-			var nullObject = new object();
-			var notNullObject = new object();
-			var notEmptyString = "Test";
-			var value = 1;
+			var array1 = CreateArray(1, 2, 3);
+			var array2 = CreateArray(1, 2, 3);
 
-			TestElement element = null;
-			Action getHashCode = () => element.GetHashCode();
+			var element1 = new ArrayTestElement(array1);
+			var element2 = new ArrayTestElement(array2);
+			(element1 == element2).Should().BeTrue();
 
-			element = new ValidationTestElement(nullObject, notNullObject, notEmptyString);
-			getHashCode.ShouldNotThrow();
+			element2 = new ArrayTestElement(array1);
+			(element1 == element2).Should().BeTrue();
 
-			element = new ValidationTestElement(null, notNullObject, notEmptyString);
-			getHashCode.ShouldNotThrow();
+			element1 = new ArrayTestElement(ImmutableArray<SimpleTestElement>.Empty);
+			element2 = new ArrayTestElement(ImmutableArray<SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeTrue();
+		}
 
-			element = new InheritedValidationTestElement(nullObject, notNullObject, notEmptyString, value);
-			getHashCode.ShouldNotThrow();
+		[Test]
+		public void ArrayInequality()
+		{
+			var array1 = CreateArray(1, 2, 3);
+			var array2 = CreateArray(1, 3);
+			var array3 = CreateArray(1, 3, 2);
 
-			element = new InheritedValidationTestElement(null, notNullObject, notEmptyString, value);
-			getHashCode.ShouldNotThrow();
+			var element1 = new ArrayTestElement(array1);
+			var element2 = new ArrayTestElement(array2);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new ArrayTestElement(array3);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new ArrayTestElement(ImmutableArray<SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
+		public void BaseObjectsShouldBeEqualNotNull()
+		{
+			BaseObjectsShouldBeEqual(new object());
+		}
+
+		[Test]
+		public void BaseObjectsShouldBeEqualNull()
+		{
+			BaseObjectsShouldBeEqual(null);
 		}
 
 		[Test]
@@ -124,21 +150,6 @@ namespace Tests.Generator
 			(element1 != element2).Should().BeTrue();
 			(element1.Equals(element2)).Should().BeFalse();
 			(element1.Equals((object)element2)).Should().BeFalse();
-		}
-
-		private static void BaseObjectsShouldBeEqual(object nullObject)
-		{
-			var notNullObject = new object();
-			var notEmptyString = "Test";
-
-			var element1 = new InheritedValidationTestElement(nullObject, notNullObject, notEmptyString, 3);
-			var element2 = new InheritedValidationTestElement(nullObject, notNullObject, notEmptyString, 3);
-
-			(element1 == element2).Should().BeTrue();
-			(element1 != element2).Should().BeFalse();
-			(element1.Equals(element2)).Should().BeTrue();
-			(element1.Equals((object)element2)).Should().BeTrue();
-			(element1.Equals((object)null)).Should().BeFalse();
 		}
 
 		[Test]
@@ -191,6 +202,113 @@ namespace Tests.Generator
 		}
 
 		[Test]
+		public void GetHashCodeShouldNeverThrow()
+		{
+			var nullObject = new object();
+			var notNullObject = new object();
+			var notEmptyString = "Test";
+			var value = 1;
+
+			TestElement element = null;
+			Action getHashCode = () => element.GetHashCode();
+
+			element = new ValidationTestElement(nullObject, notNullObject, notEmptyString);
+			getHashCode.ShouldNotThrow();
+
+			element = new ValidationTestElement(null, notNullObject, notEmptyString);
+			getHashCode.ShouldNotThrow();
+
+			element = new InheritedValidationTestElement(nullObject, notNullObject, notEmptyString, value);
+			getHashCode.ShouldNotThrow();
+
+			element = new InheritedValidationTestElement(null, notNullObject, notEmptyString, value);
+			getHashCode.ShouldNotThrow();
+		}
+
+		[Test]
+		public void ListEquality()
+		{
+			var list1 = CreateList(1, 2, 3);
+			var list2 = CreateList(1, 2, 3);
+
+			var element1 = new ListTestElement(list1);
+			var element2 = new ListTestElement(list2);
+			(element1 == element2).Should().BeTrue();
+
+			element2 = new ListTestElement(list1);
+			(element1 == element2).Should().BeTrue();
+
+			element1 = new ListTestElement(ImmutableList<SimpleTestElement>.Empty);
+			element2 = new ListTestElement(ImmutableList<SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeTrue();
+		}
+
+		[Test]
+		public void ListInequality()
+		{
+			var list1 = CreateList(1, 2, 3);
+			var list2 = CreateList(1, 3);
+			var list3 = CreateList(1, 3, 2);
+
+			var element1 = new ListTestElement(list1);
+			var element2 = new ListTestElement(list2);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new ListTestElement(list3);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new ListTestElement(ImmutableList<SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
+		public void NullListEquality()
+		{
+			var list1 = CreateList(1, 2, 3);
+			var list2 = CreateList(1, 2, 3);
+
+			var element1 = new NullListTestElement(list1);
+			var element2 = new NullListTestElement(list2);
+			(element1 == element2).Should().BeTrue();
+
+			element2 = new NullListTestElement(list1);
+			(element1 == element2).Should().BeTrue();
+
+			element1 = new NullListTestElement(ImmutableList<SimpleTestElement>.Empty);
+			element2 = new NullListTestElement(ImmutableList<SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeTrue();
+
+			element1 = new NullListTestElement(null);
+			element2 = new NullListTestElement(null);
+			(element1 == element2).Should().BeTrue();
+		}
+
+		[Test]
+		public void NullListInequality()
+		{
+			var list1 = CreateList(1, 2, 3);
+			var list2 = CreateList(1, 3);
+			var list3 = CreateList(1, 3, 2);
+
+			var element1 = new NullListTestElement(list1);
+			var element2 = new NullListTestElement(list2);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new NullListTestElement(list3);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new NullListTestElement(ImmutableList<SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeFalse();
+
+			element1 = new NullListTestElement(null);
+			(element1 == element2).Should().BeFalse();
+
+			element1 = new NullListTestElement(list1);
+			element2 = new NullListTestElement(null);
+			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
 		public void ObjectsShouldBeEqualNotNull()
 		{
 			ObjectsShouldBeEqual(new object());
@@ -203,15 +321,27 @@ namespace Tests.Generator
 		}
 
 		[Test]
-		public void BaseObjectsShouldBeEqualNotNull()
+		public void ObjectsShouldNotBeEqual()
 		{
-			BaseObjectsShouldBeEqual(new object());
-		}
+			var nullObject = new object();
+			var notNullObject = new object();
+			var notEmptyString = "Test";
 
-		[Test]
-		public void BaseObjectsShouldBeEqualNull()
-		{
-			BaseObjectsShouldBeEqual(null);
+			var element1 = new ValidationTestElement(nullObject, notNullObject, notEmptyString);
+			var element2 = new ValidationTestElement(null, notNullObject, notEmptyString);
+
+			(element1 == element2).Should().BeFalse();
+			(element1 != element2).Should().BeTrue();
+			(element1.Equals(element2)).Should().BeFalse();
+			(element1.Equals((object)element2)).Should().BeFalse();
+
+			element1 = new ValidationTestElement(nullObject, notNullObject, notEmptyString);
+			element2 = new ValidationTestElement(nullObject, notNullObject, notEmptyString + "X");
+
+			(element1 == element2).Should().BeFalse();
+			(element1 != element2).Should().BeTrue();
+			(element1.Equals(element2)).Should().BeFalse();
+			(element1.Equals((object)element2)).Should().BeFalse();
 		}
 
 		[Test]
@@ -260,125 +390,6 @@ namespace Tests.Generator
 
 			action = () => new ValidationTestElement(null, new object(), "Test");
 			action.ShouldNotThrow();
-		}
-
-		[Test]
-		public void ArrayEquality()
-		{
-			var array1 = ImmutableArray.Create(1, 2, 3);
-			var array2 = ImmutableArray.Create(1, 2, 3);
-
-			var element1 = new ArrayTestElement(array1);
-			var element2 = new ArrayTestElement(array2);
-			(element1 == element2).Should().BeTrue();
-
-			element2 = new ArrayTestElement(array1);
-			(element1 == element2).Should().BeTrue();
-
-			element1 = new ArrayTestElement(ImmutableArray<int>.Empty);
-			element2 = new ArrayTestElement(ImmutableArray<int>.Empty);
-			(element1 == element2).Should().BeTrue();
-		}
-
-		[Test]
-		public void ArrayInequality()
-		{
-			var array1 = ImmutableArray.Create(1, 2, 3);
-			var array2 = ImmutableArray.Create(1, 3);
-			var array3 = ImmutableArray.Create(1, 3, 2);
-
-			var element1 = new ArrayTestElement(array1);
-			var element2 = new ArrayTestElement(array2);
-			(element1 == element2).Should().BeFalse();
-
-			element2 = new ArrayTestElement(array3);
-			(element1 == element2).Should().BeFalse();
-
-			element2 = new ArrayTestElement(ImmutableArray<int>.Empty);
-			(element1 == element2).Should().BeFalse();
-		}
-
-		[Test]
-		public void ListEquality()
-		{
-			var list1 = ImmutableList.Create(1, 2, 3);
-			var list2 = ImmutableList.Create(1, 2, 3);
-
-			var element1 = new ListTestElement(list1);
-			var element2 = new ListTestElement(list2);
-			(element1 == element2).Should().BeTrue();
-
-			element2 = new ListTestElement(list1);
-			(element1 == element2).Should().BeTrue();
-
-			element1 = new ListTestElement(ImmutableList<int>.Empty);
-			element2 = new ListTestElement(ImmutableList<int>.Empty);
-			(element1 == element2).Should().BeTrue();
-		}
-
-		[Test]
-		public void ListInequality()
-		{
-			var list1 = ImmutableList.Create(1, 2, 3);
-			var list2 = ImmutableList.Create(1, 3);
-			var list3 = ImmutableList.Create(1, 3, 2);
-
-			var element1 = new ListTestElement(list1);
-			var element2 = new ListTestElement(list2);
-			(element1 == element2).Should().BeFalse();
-
-			element2 = new ListTestElement(list3);
-			(element1 == element2).Should().BeFalse();
-
-			element2 = new ListTestElement(ImmutableList<int>.Empty);
-			(element1 == element2).Should().BeFalse();
-		}
-
-		[Test]
-		public void NullListEquality()
-		{
-			var list1 = ImmutableList.Create(1, 2, 3);
-			var list2 = ImmutableList.Create(1, 2, 3);
-
-			var element1 = new NullListTestElement(list1);
-			var element2 = new NullListTestElement(list2);
-			(element1 == element2).Should().BeTrue();
-
-			element2 = new NullListTestElement(list1);
-			(element1 == element2).Should().BeTrue();
-
-			element1 = new NullListTestElement(ImmutableList<int>.Empty);
-			element2 = new NullListTestElement(ImmutableList<int>.Empty);
-			(element1 == element2).Should().BeTrue();
-
-			element1 = new NullListTestElement(null);
-			element2 = new NullListTestElement(null);
-			(element1 == element2).Should().BeTrue();
-		}
-
-		[Test]
-		public void NullListInequality()
-		{
-			var list1 = ImmutableList.Create(1, 2, 3);
-			var list2 = ImmutableList.Create(1, 3);
-			var list3 = ImmutableList.Create(1, 3, 2);
-
-			var element1 = new NullListTestElement(list1);
-			var element2 = new NullListTestElement(list2);
-			(element1 == element2).Should().BeFalse();
-
-			element2 = new NullListTestElement(list3);
-			(element1 == element2).Should().BeFalse();
-
-			element2 = new NullListTestElement(ImmutableList<int>.Empty);
-			(element1 == element2).Should().BeFalse();
-
-			element1 = new NullListTestElement(null);
-			(element1 == element2).Should().BeFalse();
-
-			element1 = new NullListTestElement(list1);
-			element2 = new NullListTestElement(null);
-			(element1 == element2).Should().BeFalse();
 		}
 	}
 }

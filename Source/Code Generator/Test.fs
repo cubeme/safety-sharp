@@ -115,6 +115,22 @@ let elements = [
                 ]
             }
             {   
+                Name = "SimpleTestElement"
+                Base = "TestElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Value"
+                        Type = "int"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The value."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
                 Name = "ArrayTestElement"
                 Base = "TestElement"
                 IsAbstract = false
@@ -122,7 +138,7 @@ let elements = [
                 [
                     {
                         Name = "Array"
-                        Type = "int"
+                        Type = "SimpleTestElement"
                         CollectionType = Array
                         Validation = None
                         Comment = "The test array."
@@ -138,7 +154,7 @@ let elements = [
                 [
                     {
                         Name = "List"
-                        Type = "int"
+                        Type = "SimpleTestElement"
                         CollectionType = List
                         Validation = NotNull
                         Comment = "The list that cannot be null."
@@ -154,7 +170,7 @@ let elements = [
                 [
                     {
                         Name = "List"
-                        Type = "int"
+                        Type = "SimpleTestElement"
                         CollectionType = List
                         Validation = None
                         Comment = "The list that cannot be null."
@@ -173,6 +189,6 @@ let generateTest outputFile =
         BaseClass = "TestElement"
         VisitorName = "TestVisitor"
         RewriterName = "TestRewriter"
-        VisitorNamespace = "Tests.Generator"
+        Namespace = "Tests.Generator"
         Public = false
     } 

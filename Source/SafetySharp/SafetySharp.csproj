@@ -135,9 +135,6 @@
     <Compile Include="Metamodel\Expressions\BooleanLiteral.cs" />
     <Compile Include="Metamodel\Expressions\UnaryOperator.cs" />
     <Compile Include="Metamodel\Metamodel.Generated.cs" />
-    <Compile Include="Metamodel\MetamodelRewriter.cs" />
-    <Compile Include="Metamodel\MetamodelVisitor`1.cs" />
-    <Compile Include="Metamodel\MetamodelVisitor.cs" />
     <Compile Include="Metamodel\Statements\BlockStatement.cs" />
     <Compile Include="Metamodel\Expressions\Expression.cs" />
     <Compile Include="Metamodel\Declarations\ComponentDeclaration.cs" />
@@ -147,11 +144,8 @@
     <Compile Include="Modelchecking\Promela\PromelaBinaryOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaElement.cs" />
     <Compile Include="Modelchecking\Promela\PromelaModelWriter.cs" />
-    <Compile Include="Modelchecking\Promela\PromelaRewriter.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTypeName.cs" />
     <Compile Include="Modelchecking\Promela\PromelaUnaryOperator.cs" />
-    <Compile Include="Modelchecking\Promela\PromelaVisitor.cs" />
-    <Compile Include="Modelchecking\Promela\PromelaVisitor`1.cs" />
     <Compile Include="Modelchecking\Promela\Promela.Generated.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Assert.cs" />

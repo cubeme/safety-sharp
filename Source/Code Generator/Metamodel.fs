@@ -652,10 +652,26 @@ let elements = [
                 [
                     {
                         Name = "Values"
-                        Type = "object"
+                        Type = "InitialValue"
                         CollectionType = Array
                         Validation = None
                         Comment = "The initial values of the field. The type of the values matches the type of the field."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "InitialValue"
+                Base = "MetamodelElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Value"
+                        Type = "object"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The initial value."
                         CanBeNull = false
                     }
                 ]
@@ -671,6 +687,6 @@ let generateMetamodel outputFile =
         BaseClass = "MetamodelElement"
         VisitorName = "MetamodelVisitor"
         RewriterName = "MetamodelRewriter"
-        VisitorNamespace = "SafetySharp.Metamodel"
+        Namespace = "SafetySharp.Metamodel"
         Public = true
     } 

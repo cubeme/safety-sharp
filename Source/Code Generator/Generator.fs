@@ -128,7 +128,7 @@ type Context = {
     BaseClass : string
     VisitorName : string
     RewriterName : string
-    VisitorNamespace : string
+    Namespace : string
     Public : bool
 }
 
@@ -303,8 +303,8 @@ let generateCode context =
         // Default system namespaces
         output.AppendLine("using System;")
         output.AppendLine("using System.Linq;")
+        output.AppendLine("using System.Collections.Generic;");
         output.AppendLine("using System.Collections.Immutable;");
-        output.NewLine()
 
         // The namespaces defined in the metadata; however, do not include the namespace we're currently in
         output.AppendLine("using SafetySharp.Utilities;");
@@ -775,6 +775,44 @@ let generateCode context =
 
                 output.NewLine()
                 generateEqualityOperators c
+    
+
+    /// <summary>
+    ///     Generates the C# code for the base class.
+    /// </summary>
+    let generateBaseClass () =
+        // Generate the namespace containing the base class
+        output.AppendLine(sprintf "namespace %s" context.Namespace)
+        output.AppendBlockStatement <| fun () ->
+            output.AppendLine("using System;")
+            output.NewLine()
+
+            // Generate the base class
+            output.AppendLine(sprintf "%s abstract partial class %s" visibility context.BaseClass)
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine("/// <summary>")
+                output.AppendLine("///     Accepts <paramref name=\"visitor\" />, calling the type-specific visit method.")
+                output.AppendLine("/// </summary>")
+                output.AppendLine("/// <param name=\"visitor\">The visitor the type-specific visit method should be invoked on.</param>")
+                output.AppendLine(sprintf "public abstract void Accept(%s visitor);" context.VisitorName)
+                output.NewLine()
+
+                output.AppendLine("/// <summary>")
+                output.AppendLine("///     Accepts <paramref name=\"visitor\" />, calling the type-specific visit method.")
+                output.AppendLine("/// </summary>")
+                output.AppendLine("/// <typeparam name=\"TResult\">The type of the value returned by <paramref name=\"visitor\" />.</typeparam>")
+                output.AppendLine("/// <param name=\"visitor\">The visitor the type-specific visit method should be invoked on.</param>")
+                output.AppendLine(sprintf "public abstract TResult Accept<TResult>(%s<TResult> visitor);" context.VisitorName)
+                output.NewLine()
+
+                output.AppendLine("/// <summary>")
+                output.AppendLine("///     Determines whether <paramref name=\"other\" /> is equal to the current instance.")
+                output.AppendLine("/// </summary>")
+                output.AppendLine(sprintf "/// <param name=\"other\">The <see cref=\"%s\" /> to compare with the current instance.</param>" context.BaseClass)
+                output.AppendLine("/// <returns>")
+                output.AppendLine("///     <c>true</c> if <paramref name=\"other\" /> is equal to the current instance; otherwise, <c>false</c>.")
+                output.AppendLine("/// </returns>")
+                output.AppendLine(sprintf "public abstract bool Equals(%s other);" context.BaseClass)
 
     /// <summary>
     ///     Generates the C# code for the given namespace metadata.
@@ -802,8 +840,19 @@ let generateCode context =
         // Generate the class
         output.AppendLine(sprintf "%s abstract partial class %s" visibility visitorType.VisitorType)
 
-        // Generate a Visit...() method for each non-abstract class
         output.AppendBlockStatement <| fun () ->
+            // Generate the default Visit method
+            output.AppendLine("/// <summary>")
+            output.AppendLine(sprintf "///     Visits an element of type <see cref=\"%s\" />." context.BaseClass)
+            output.AppendLine("/// </summary>")
+            output.AppendLine(sprintf "/// <param name=\"element\">The <see cref=\"%s\" /> instance that should be visited.</param>" context.BaseClass)
+            output.AppendLine(sprintf "public virtual %s Visit(%s element)" visitorType.ReturnType context.BaseClass)
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine("Argument.NotNull(element, () => element);")
+                output.AppendLine(sprintf "%selement.Accept(this);" <| if visitorType.IsGeneric then "return " else "")
+
+            // Generate a Visit...() method for each non-abstract class
+            output.NewLine()
             let mutable first = true
             for c in nonIsAbstractClasses do
                 if not first then
@@ -834,8 +883,33 @@ let generateCode context =
         // Generate the class
         output.AppendLine(sprintf "%s abstract partial class %s : %s<%s>" visibility context.RewriterName context.VisitorName context.BaseClass)
 
-        // Generate a Visit...() method with the rewriting logic for each non-abstract class
         output.AppendBlockStatement <| fun () ->
+            // Generate the default Visit method for arrays
+            output.AppendLine("/// <summary>")
+            output.AppendLine("///     Visits elements of type <typeparamref name=\"TElement\" /> stored in an <see cref=\"ImmutableArray{TElement}\" />.")
+            output.AppendLine("/// </summary>")
+            output.AppendLine("/// <typeparam name=\"TElement\">The types of the elements in the array that should be visited.</typeparam>")
+            output.AppendLine("/// <param name=\"elements\">The <see cref=\"ImmutableArray{TElement}\" /> instance that should be visited.</param>")
+            output.AppendLine("public virtual ImmutableArray<TElement> Visit<TElement>(ImmutableArray<TElement> elements)")
+            output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine("return elements.Aggregate(ImmutableArray<TElement>.Empty, (current, element) => current.Add((TElement)element.Accept(this)));")
+            
+            // Generate the default Visit method for lists
+            output.NewLine()
+            output.AppendLine("/// <summary>")
+            output.AppendLine("///     Visits elements of type <typeparamref name=\"TElement\" /> stored in a <see cref=\"ImmutableList{TElement}\" />.")
+            output.AppendLine("/// </summary>")
+            output.AppendLine("/// <typeparam name=\"TElement\">The types of the elements in the list that should be visited.</typeparam>")
+            output.AppendLine("/// <param name=\"elements\">The <see cref=\"ImmutableList{TElement}\" /> instance that should be visited.</param>")
+            output.AppendLine("public virtual ImmutableList<TElement> Visit<TElement>(ImmutableList<TElement> elements)")
+            output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine("Argument.NotNull(elements, () => elements);")
+                output.AppendLine("return elements.Aggregate(ImmutableList<TElement>.Empty, (current, element) => current.Add((TElement)element.Accept(this)));")
+
+            // Generate a Visit...() method with the rewriting logic for each non-abstract class
+            output.NewLine()
             let mutable first = true
             for c in nonIsAbstractClasses do
                 if not first then
@@ -866,7 +940,7 @@ let generateCode context =
 
                         // Generate a local variable for each property that holds the result of rewrite
                         for p in properties do
-                            if isRewriteable p.Type then
+                            if isRewriteable p.Type || p.CollectionType <> Singleton then
                                 // Call Visit() recursively for rewriteable types, casting the types back to the original type
                                 // Collection types do not require casts as a special overload of the Visit() method is called
                                 let cast = if p.CollectionType <> Singleton then "" else sprintf "(%s)" p.Type
@@ -883,9 +957,9 @@ let generateCode context =
     ///     Generates the non-generic and generic visitors as well as the rewriter classes
     /// </summary>
     let generateVisitors () =
-        output.AppendLine(sprintf "namespace %s" context.VisitorNamespace)
+        output.AppendLine(sprintf "namespace %s" context.Namespace)
         output.AppendBlockStatement <| fun () ->
-            writeUsings context.Elements context.VisitorNamespace
+            writeUsings context.Elements context.Namespace
 
             output.NewLine()
             generateVisitor <| createVisitorType ""
@@ -897,6 +971,10 @@ let generateCode context =
             generateRewriter ()
 
     try
+        // Generate the code for the base class
+        generateBaseClass ()
+        output.NewLine()
+
         // Generate the code for the elements
         for n in context.Elements do
             generateNamespace n

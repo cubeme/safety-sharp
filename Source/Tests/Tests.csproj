@@ -82,10 +82,6 @@
     <Compile Include="CSharp\Transformation\MethodTransformation.ExpressionTests.cs" />
     <Compile Include="Generator\GeneratorTests.cs" />
     <Compile Include="Generator\Test.Generated.cs" />
-    <Compile Include="Generator\TestElement.cs" />
-    <Compile Include="Generator\TestRewriter.cs" />
-    <Compile Include="Generator\TestVisitor.cs" />
-    <Compile Include="Generator\TestVisitor`1.cs" />
     <Compile Include="Modelchecking\Promela\MMToPromelaTestsSimple.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTests.cs" />
     <Compile Include="Modeling\ModelConfigurationTests.cs" />

@@ -104,7 +104,12 @@ namespace SafetySharp.CSharp.Transformation
 
 			var fieldValues = componentDeclaration.Fields.Aggregate(
 				seed: ImmutableArray<InitialFieldValues>.Empty,
-				func: (current, field) => current.Add(new InitialFieldValues(component.GetInitialValuesOfField(field.Identifier.Name))));
+				func: (current, field) =>
+				{
+					var values = component.GetInitialValuesOfField(field.Identifier.Name);
+					var initialValues = values.Select(value => new InitialValue(value)).ToImmutableArray();
+					return current.Add(new InitialFieldValues(initialValues));
+				});
 
 			var subComponents = componentDeclaration.SubComponents.Aggregate(
 				seed: ImmutableArray<ComponentConfiguration>.Empty,

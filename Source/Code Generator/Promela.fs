@@ -453,7 +453,7 @@ let generatePromela outputFile =
         BaseClass = "PromelaElement"
         VisitorName = "PromelaVisitor"
         RewriterName = "PromelaRewriter"
-        VisitorNamespace = "SafetySharp.Modelchecking.Promela"
+        Namespace = "SafetySharp.Modelchecking.Promela"
         Public = false
     }
 
