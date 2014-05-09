@@ -23,257 +23,371 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
-	using System.Linq;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Extensions;
-	using SafetySharp.CSharp.Transformation;
 
-	[TestFixture]
-	internal class SymbolMapTests
+	namespace SymbolMapTests
 	{
-		private SymbolMap _symbolMap;
-		private SyntaxNode _syntaxRoot;
-		private SemanticModel _semanticModel;
-		private TestCompilation _compilation;
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Transformation;
+		using SafetySharp.Metamodel;
+		using SafetySharp.Metamodel.Declarations;
 
-		private void Compile(string csharpCode)
+		internal class SymbolMapTests
 		{
-			_compilation = new TestCompilation(csharpCode);
+			protected TestCompilation _compilation;
+			protected SymbolMap _symbolMap;
 
-			_semanticModel = _compilation.SemanticModel;
-			_syntaxRoot = _compilation.SyntaxRoot;
-
-			_symbolMap = new SymbolMap(_compilation.CSharpCompilation);
+			protected void Compile(string csharpCode)
+			{
+				_compilation = new TestCompilation(csharpCode);
+				_symbolMap = new SymbolMap(_compilation.CSharpCompilation);
+			}
 		}
 
-		private ITypeSymbol GetClassSymbol(string className)
+		[TestFixture]
+		internal class IsMappedMethod : SymbolMapTests
 		{
-			return _compilation.FindClassSymbol(className);
+			private bool IsComponentMapped(string componentName)
+			{
+				return _symbolMap.IsMapped(_compilation.FindClassSymbol(componentName));
+			}
+
+			private bool IsInterfaceMapped(string interfaceName)
+			{
+				return _symbolMap.IsMapped(_compilation.FindInterfaceSymbol(interfaceName));
+			}
+
+			private bool IsFieldMapped(string className, string fieldName)
+			{
+				return _symbolMap.IsMapped(_compilation.FindFieldSymbol(className, fieldName));
+			}
+
+			private bool IsMethodMapped(string className, string methodName)
+			{
+				return _symbolMap.IsMapped(_compilation.FindMethodSymbol(className, methodName));
+			}
+
+			[Test]
+			public void ReturnsFalseForFieldsOfNonComponentClass()
+			{
+				Compile("class X { int x; }");
+				IsFieldMapped("X", "x").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsFalseForMethodsOfNonComponentClass()
+			{
+				Compile("class X { void M() {} }");
+				IsMethodMapped("X", "M").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsFalseForNonComponentClass()
+			{
+				Compile("class X {}");
+				IsComponentMapped("X").Should().BeFalse();
+
+				Compile("class Y {} class X : Y {}");
+				IsComponentMapped("X").Should().BeFalse();
+				IsComponentMapped("Y").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsFalseForNonComponentInterface()
+			{
+				Compile("interface X {}");
+				IsInterfaceMapped("X").Should().BeFalse();
+
+				Compile("interface Y {} interface X : Y {}");
+				IsInterfaceMapped("X").Should().BeFalse();
+				IsInterfaceMapped("Y").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsFalseForSubComponentFields()
+			{
+				Compile("class X : Component { Component c1; IComponent c2; }");
+				IsFieldMapped("X", "c1").Should().BeFalse();
+				IsFieldMapped("X", "c2").Should().BeFalse();
+
+				Compile("class Y : Component {} interface Z : IComponent {} class X : Component { Z c1; Y c2; }");
+				IsFieldMapped("X", "c1").Should().BeFalse();
+				IsFieldMapped("X", "c2").Should().BeFalse();
+			}
+
+			[Test]
+			public void ReturnsTrueForComponentClass()
+			{
+				Compile("class X : Component {}");
+				IsComponentMapped("X").Should().BeTrue();
+
+				Compile("class Y : Component {} class X : Y {}");
+				IsComponentMapped("X").Should().BeTrue();
+				IsComponentMapped("Y").Should().BeTrue();
+			}
+
+			[Test]
+			public void ReturnsTrueForComponentInterface()
+			{
+				Compile("interface X : IComponent {}");
+				IsInterfaceMapped("X").Should().BeTrue();
+
+				Compile("interface Y : IComponent {} interface X : Y {}");
+				IsInterfaceMapped("X").Should().BeTrue();
+				IsInterfaceMapped("Y").Should().BeTrue();
+			}
+
+			[Test]
+			public void ReturnsTrueForFieldsOfComponentClass()
+			{
+				Compile("class X : Component { int x; }");
+				IsFieldMapped("X", "x").Should().BeTrue();
+
+				Compile("class Y : Component {} class X : Y { int x; }");
+				IsFieldMapped("X", "x").Should().BeTrue();
+			}
+
+			[Test]
+			public void ReturnsTrueForMethodsOfComponentClass()
+			{
+				Compile("class X : Component { void M() {} }");
+				IsMethodMapped("X", "M").Should().BeTrue();
+
+				Compile("class Y : Component {} class X : Y { void M() {} }");
+				IsMethodMapped("X", "M").Should().BeTrue();
+			}
 		}
 
-		private ITypeSymbol GetInterfaceSymbol(string interfaceName)
+		[TestFixture]
+		internal class GetComponentReferenceMethod : SymbolMapTests
 		{
-			return _compilation.FindInterfaceSymbol(interfaceName);
+			private IMetamodelReference<ComponentDeclaration> GetReference(string componentName)
+			{
+				return _symbolMap.GetComponentReference(_compilation.FindClassSymbol(componentName));
+			}
+
+			[Test]
+			public void ReturnsDifferentReferencesForDifferentComponents()
+			{
+				Compile("class Y : Component {} class X : Y {} class Z : Component {}");
+				var referenceX = GetReference("X");
+				var referenceY = GetReference("Y");
+				var referenceZ = GetReference("Z");
+
+				referenceX.Should().NotBe(referenceY);
+				referenceX.Should().NotBe(referenceZ);
+				referenceY.Should().NotBe(referenceZ);
+			}
+
+			[Test]
+			public void ReturnsReferenceForComponent()
+			{
+				Compile("class X : Component {}");
+				GetReference("X").Should().NotBeNull();
+
+				Compile("class Y : Component {} class X : Y {}");
+				GetReference("X").Should().NotBeNull();
+				GetReference("Y").Should().NotBeNull();
+			}
+
+			[Test]
+			public void ReturnsTheSameReferenceForTheSameComponent()
+			{
+				Compile("class Y : Component {} class X : Y {}");
+
+				var reference = GetReference("X");
+				reference.Should().Be(GetReference("X"));
+			}
+
+			[Test]
+			public void ThrowsForNonComponentSymbols()
+			{
+				Compile("class Y {} class X : Y {}");
+				Action action = () => GetReference("X");
+				action.ShouldThrow<InvalidOperationException>();
+
+				action = () => GetReference("Y");
+				action.ShouldThrow<InvalidOperationException>();
+			}
 		}
 
-		private static IMethodSymbol GetMethodSymbol(ITypeSymbol classSymbol, string methodName)
+		[TestFixture]
+		internal class GetInterfaceReferenceMethod : SymbolMapTests
 		{
-			return classSymbol.GetMembers(methodName).OfType<IMethodSymbol>().Single();
+			private IMetamodelReference<InterfaceDeclaration> GetReference(string interfaceName)
+			{
+				return _symbolMap.GetInterfaceReference(_compilation.FindInterfaceSymbol(interfaceName));
+			}
+
+			[Test]
+			public void ReturnsDifferentReferencesForDifferentComponentInterfaces()
+			{
+				Compile("interface Y : IComponent {} interface X : Y {} interface Z : IComponent {}");
+				var referenceX = GetReference("X");
+				var referenceY = GetReference("Y");
+				var referenceZ = GetReference("Z");
+
+				referenceX.Should().NotBe(referenceY);
+				referenceX.Should().NotBe(referenceZ);
+				referenceY.Should().NotBe(referenceZ);
+			}
+
+			[Test]
+			public void ReturnsReferenceForComponentInterface()
+			{
+				Compile("interface X : IComponent {}");
+				GetReference("X").Should().NotBeNull();
+
+				Compile("interface Y : IComponent {} interface X : Y {}");
+				GetReference("X").Should().NotBeNull();
+				GetReference("Y").Should().NotBeNull();
+			}
+
+			[Test]
+			public void ReturnsTheSameReferenceForTheSameComponentInterface()
+			{
+				Compile("interface Y : IComponent {} interface X : Y {}");
+
+				var reference = GetReference("X");
+				reference.Should().Be(GetReference("X"));
+			}
+
+			[Test]
+			public void ThrowsForNonComponentInterfaceSymbols()
+			{
+				Compile("interface Y {} interface X : Y {}");
+				Action action = () => GetReference("X");
+				action.ShouldThrow<InvalidOperationException>();
+
+				action = () => GetReference("Y");
+				action.ShouldThrow<InvalidOperationException>();
+			}
 		}
 
-		private static IFieldSymbol GetFieldSymbol(ITypeSymbol classSymbol, string fieldName)
+		[TestFixture]
+		internal class GetFieldReferenceMethod : SymbolMapTests
 		{
-			return classSymbol.GetMembers(fieldName).OfType<IFieldSymbol>().Single();
+			private IMetamodelReference<FieldDeclaration> GetReference(string className, string fieldName)
+			{
+				return _symbolMap.GetFieldReference(_compilation.FindFieldSymbol(className, fieldName));
+			}
+
+			[Test]
+			public void ReturnsDifferentReferencesForDifferentFields()
+			{
+				Compile("class X : Component { int x; int y; } class Y : Component { int x; }");
+				var reference1 = GetReference("X", "x");
+				var reference2 = GetReference("X", "y");
+				var reference3 = GetReference("Y", "x");
+
+				reference1.Should().NotBe(reference2);
+				reference1.Should().NotBe(reference3);
+				reference2.Should().NotBe(reference3);
+			}
+
+			[Test]
+			public void ReturnsReferenceForFieldsOfComponent()
+			{
+				Compile("class X : Component { int x; }");
+				GetReference("X", "x").Should().NotBeNull();
+
+				Compile("class X : Component { int x; bool b; }");
+				GetReference("X", "x").Should().NotBeNull();
+				GetReference("X", "b").Should().NotBeNull();
+			}
+
+			[Test]
+			public void ReturnsTheSameReferenceForTheSameField()
+			{
+				Compile("class X : Component { int x; }");
+
+				var reference = GetReference("X", "x");
+				reference.Should().Be(GetReference("X", "x"));
+			}
+
+			[Test]
+			public void ThrowsForFieldsOfNonComponentSymbols()
+			{
+				Compile("class Y { int y; } class X : Y { int x; }");
+				Action action = () => GetReference("X", "x");
+				action.ShouldThrow<InvalidOperationException>();
+
+				action = () => GetReference("Y", "y");
+				action.ShouldThrow<InvalidOperationException>();
+			}
+
+			[Test]
+			public void ThrowsForSubComponentFields()
+			{
+				Compile("class X : Component { Component c1; IComponent c2; }");
+
+				Action action = () => GetReference("X", "c1");
+				action.ShouldThrow<InvalidOperationException>();
+
+				action = () => GetReference("X", "c2");
+				action.ShouldThrow<InvalidOperationException>();
+
+				Compile("class Y : Component {} interface Z : IComponent {} class X : Component { Z c1; Y c2; }");
+
+				action = () => GetReference("X", "c1");
+				action.ShouldThrow<InvalidOperationException>();
+
+				action = () => GetReference("X", "c2");
+				action.ShouldThrow<InvalidOperationException>();
+			}
 		}
 
-		[Test]
-		public void ComponentClassShouldBeMapped()
+		[TestFixture]
+		internal class GetMethodReferenceMethod : SymbolMapTests
 		{
-			Compile("class X : SafetySharp.Modeling.Component {}");
-			var classSymbol = GetClassSymbol("X");
+			private IMetamodelReference<MethodDeclaration> GetReference(string className, string methodName)
+			{
+				return _symbolMap.GetMethodReference(_compilation.FindMethodSymbol(className, methodName));
+			}
 
-			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
-			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
-		}
+			[Test]
+			public void ReturnsDifferentReferencesForDifferentMethods()
+			{
+				Compile("class X : Component { void M() {} void N() {} } class Y : Component { void M() {} }");
+				var reference1 = GetReference("X", "M");
+				var reference2 = GetReference("X", "N");
+				var reference3 = GetReference("Y", "M");
 
-		[Test]
-		public void ComponentClassesShouldBeMappedAndDifferentReferences()
-		{
-			Compile("using SafetySharp.Modeling; class Y : Component {} class X : Y {} class Z : Component {}");
-			var classSymbolX = GetClassSymbol("X");
-			var classSymbolY = GetClassSymbol("Y");
-			var classSymbolZ = GetClassSymbol("Z");
+				reference1.Should().NotBe(reference2);
+				reference1.Should().NotBe(reference3);
+				reference2.Should().NotBe(reference3);
+			}
 
-			_symbolMap.IsMapped(classSymbolX).Should().BeTrue();
-			_symbolMap.IsMapped(classSymbolY).Should().BeTrue();
-			_symbolMap.IsMapped(classSymbolZ).Should().BeTrue();
+			[Test]
+			public void ReturnsReferenceForMethodsOfComponent()
+			{
+				Compile("class X : Component { void M() {} }");
+				GetReference("X", "M").Should().NotBeNull();
 
-			var referenceX = _symbolMap.GetComponentReference(classSymbolX);
-			var referenceY = _symbolMap.GetComponentReference(classSymbolY);
-			var referenceZ = _symbolMap.GetComponentReference(classSymbolZ);
+				Compile("class X : Component { void M() {} void N() {} }");
+				GetReference("X", "M").Should().NotBeNull();
+				GetReference("X", "N").Should().NotBeNull();
+			}
 
-			referenceX.Should().NotBeNull();
-			referenceY.Should().NotBeNull();
-			referenceZ.Should().NotBeNull();
+			[Test]
+			public void ReturnsTheSameReferenceForTheSameMethod()
+			{
+				Compile("class X : Component { void M() {} }");
 
-			referenceX.Should().NotBe(referenceY);
-			referenceX.Should().NotBe(referenceZ);
-			referenceZ.Should().NotBe(referenceY);
-		}
+				var reference = GetReference("X", "M");
+				reference.Should().Be(GetReference("X", "M"));
+			}
 
-		[Test]
-		public void ComponentInterfaceShouldBeMapped()
-		{
-			Compile("interface X : SafetySharp.Modeling.IComponent {}");
-			var interfaceSymbol = GetInterfaceSymbol("X");
+			[Test]
+			public void ThrowsForMethodsOfNonComponentSymbols()
+			{
+				Compile("class Y { void M() {} } class X : Y { void N() {} }");
+				Action action = () => GetReference("X", "N");
+				action.ShouldThrow<InvalidOperationException>();
 
-			_symbolMap.IsMapped(interfaceSymbol).Should().BeTrue();
-			_symbolMap.GetInterfaceReference(interfaceSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void ComponentInterfacesShouldBeMappedAndDifferentReferences()
-		{
-			Compile("using SafetySharp.Modeling; interface Y : IComponent {} interface X : Y {} interface Z : IComponent {}");
-			var interfaceSymbolX = GetInterfaceSymbol("X");
-			var interfaceSymbolY = GetInterfaceSymbol("Y");
-			var interfaceSymbolZ = GetInterfaceSymbol("Z");
-
-			_symbolMap.IsMapped(interfaceSymbolX).Should().BeTrue();
-			_symbolMap.IsMapped(interfaceSymbolY).Should().BeTrue();
-			_symbolMap.IsMapped(interfaceSymbolZ).Should().BeTrue();
-
-			var referenceX = _symbolMap.GetInterfaceReference(interfaceSymbolX);
-			var referenceY = _symbolMap.GetInterfaceReference(interfaceSymbolY);
-			var referenceZ = _symbolMap.GetInterfaceReference(interfaceSymbolZ);
-
-			referenceX.Should().NotBeNull();
-			referenceY.Should().NotBeNull();
-			referenceZ.Should().NotBeNull();
-
-			referenceX.Should().NotBe(referenceY);
-			referenceX.Should().NotBe(referenceZ);
-			referenceZ.Should().NotBe(referenceY);
-		}
-
-		[Test]
-		public void SubComponentsShouldNotBeMapped()
-		{
-			Compile("class X : Component { Component c1; IComponent c2; }");
-			var classSymbol = GetClassSymbol("X");
-			var fieldSymbol1 = GetFieldSymbol(classSymbol, "c1");
-			var fieldSymbol2 = GetFieldSymbol(classSymbol, "c2");
-
-			_symbolMap.IsMapped(fieldSymbol1).Should().BeFalse();
-			_symbolMap.IsMapped(fieldSymbol2).Should().BeFalse();
-		}
-
-		[Test]
-		public void InheritedComponentClassShouldBeMapped()
-		{
-			Compile("class Y : SafetySharp.Modeling.Component {} class X : Y {}");
-			var classSymbol = GetClassSymbol("X");
-
-			_symbolMap.IsMapped(classSymbol).Should().BeTrue();
-			_symbolMap.GetComponentReference(classSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void InheritedComponentInterfaceShouldBeMapped()
-		{
-			Compile("interface Y : SafetySharp.Modeling.IComponent {} interface X : Y {}");
-			var interfaceSymbol = GetInterfaceSymbol("X");
-
-			_symbolMap.IsMapped(interfaceSymbol).Should().BeTrue();
-			_symbolMap.GetInterfaceReference(interfaceSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void MethodOfComponentClassShouldBeMapped()
-		{
-			Compile("class X : SafetySharp.Modeling.Component { void M() {} }");
-			var classSymbol = GetClassSymbol("X");
-			var methodSymbol = GetMethodSymbol(classSymbol, "M");
-
-			_symbolMap.IsMapped(methodSymbol).Should().BeTrue();
-			_symbolMap.GetMethodReference(methodSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void MethodOfNonComponentClassShouldNotBeMapped()
-		{
-			Compile("class X { void M() {} }");
-			var classSymbol = GetClassSymbol("X");
-			var methodSymbol = GetMethodSymbol(classSymbol, "M");
-
-			_symbolMap.IsMapped(methodSymbol).Should().BeFalse();
-			Action getReference = () => _symbolMap.GetMethodReference(methodSymbol);
-			getReference.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void MethodsOfComponentClassShouldBeMapped()
-		{
-			Compile("class X : SafetySharp.Modeling.Component { void M() {} void N() {} }");
-			var classSymbol = GetClassSymbol("X");
-			var methodSymbolM = GetMethodSymbol(classSymbol, "M");
-			var methodSymbolN = GetMethodSymbol(classSymbol, "N");
-
-			_symbolMap.IsMapped(methodSymbolM).Should().BeTrue();
-			_symbolMap.IsMapped(methodSymbolM).Should().BeTrue();
-
-			var referenceM = _symbolMap.GetMethodReference(methodSymbolM);
-			var referenceN = _symbolMap.GetMethodReference(methodSymbolN);
-
-			referenceM.Should().NotBeNull();
-			referenceN.Should().NotBeNull();
-
-			referenceM.Should().NotBe(referenceN);
-		}
-
-		[Test]
-		public void NonComponentClassShouldNotBeMapped()
-		{
-			Compile("class X {}");
-			var classSymbol = GetClassSymbol("X");
-
-			_symbolMap.IsMapped(classSymbol).Should().BeFalse();
-
-			Action getReference = () => _symbolMap.GetComponentReference(classSymbol);
-			getReference.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void NonComponentInterfaceShouldNotBeMapped()
-		{
-			Compile("interface X {}");
-			var interfaceSymbol = GetInterfaceSymbol("X");
-
-			_symbolMap.IsMapped(interfaceSymbol).Should().BeFalse();
-
-			Action getReference = () => _symbolMap.GetInterfaceReference(interfaceSymbol);
-			getReference.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void FieldOfNonComponentClassShouldNotBeMapped()
-		{
-			Compile("class X { int x; }");
-			var classSymbol = GetClassSymbol("X");
-
-			var fieldSymbol = GetFieldSymbol(classSymbol, "x");
-			_symbolMap.IsMapped(fieldSymbol).Should().BeFalse();
-
-			Action getReference = () => _symbolMap.GetFieldReference(fieldSymbol);
-			getReference.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void FieldOfComponentClassShouldBeMapped()
-		{
-			Compile("class X : Component { int x; }");
-			var classSymbol = GetClassSymbol("X");
-			var fieldSymbol = GetFieldSymbol(classSymbol, "x");
-
-			_symbolMap.IsMapped(fieldSymbol).Should().BeTrue();
-			_symbolMap.GetFieldReference(fieldSymbol).Should().NotBeNull();
-		}
-
-		[Test]
-		public void FieldsOfComponentClassShouldBeMapped()
-		{
-			Compile("class X : Component { int x; bool y; }");
-			var classSymbol = GetClassSymbol("X");
-			var fieldSymbol1 = GetFieldSymbol(classSymbol, "x");
-			var fieldSymbol2 = GetFieldSymbol(classSymbol, "y");
-
-			_symbolMap.IsMapped(fieldSymbol1).Should().BeTrue();
-			_symbolMap.IsMapped(fieldSymbol2).Should().BeTrue();
-
-			_symbolMap.GetFieldReference(fieldSymbol1).Should().NotBeNull();
-			_symbolMap.GetFieldReference(fieldSymbol2).Should().NotBeNull();
+				action = () => GetReference("Y", "M");
+				action.ShouldThrow<InvalidOperationException>();
+			}
 		}
 	}
 }
