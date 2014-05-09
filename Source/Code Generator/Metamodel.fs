@@ -652,7 +652,7 @@ let elements = [
                 [
                     {
                         Name = "Values"
-                        Type = "InitialValue"
+                        Type = "UntypedValue"
                         CollectionType = Array
                         Validation = None
                         Comment = "The initial values of the field. The type of the values matches the type of the field."
@@ -661,7 +661,7 @@ let elements = [
                 ]
             }
             {   
-                Name = "InitialValue"
+                Name = "UntypedValue"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 

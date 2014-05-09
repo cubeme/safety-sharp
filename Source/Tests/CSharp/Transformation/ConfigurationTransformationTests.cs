@@ -31,6 +31,7 @@ namespace Tests.CSharp.Transformation
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Configurations;
 	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Types;
 	using SafetySharp.Modeling;
@@ -158,13 +159,14 @@ namespace Tests.CSharp.Transformation
 
 		private void ShouldHaveInitialValues<T>(params T[] values)
 		{
+			var initialValues = values.Select(value => new UntypedValue(value));
 			var component = new TestComponent<T>(values);
 			var configuration = new TestConfiguration(component);
 
 			var metamodelConfiguration = TransformConfiguration(configuration, component);
 			var componentConfiguration = metamodelConfiguration.Partitions[0].Component;
 			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(values);
+			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(initialValues);
 		}
 
 		[Test]

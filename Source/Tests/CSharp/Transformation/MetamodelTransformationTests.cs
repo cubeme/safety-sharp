@@ -53,131 +53,131 @@ namespace Tests.CSharp.Transformation
 			//_componentResolver = transformation.ComponentResolver;
 		}
 
-		[Test]
-		public void Test()
-		{
-			var csharpCode = @"
-class X : Component
-{
-	private int _field;		
+//		[Test]
+//		public void Test()
+//		{
+//			var csharpCode = @"
+//class X : Component
+//{
+//	private int _field;		
+//
+//	public X()
+//	{
+//		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
+//	}
+//}
+//class Config : ModelConfiguration
+//{
+//	public Config()
+//	{
+//		AddPartitions(new X());
+//	}
+//}
+//";
+//			Transform(csharpCode, "Config");
+//			_configuration.Partitions.Should().HaveCount(1);
 
-	public X()
-	{
-		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
-	}
-}
-class Config : ModelConfiguration
-{
-	public Config()
-	{
-		AddPartitions(new X());
-	}
-}
-";
-			Transform(csharpCode, "Config");
-			_configuration.Partitions.Should().HaveCount(1);
+//			var componentConfiguration = _configuration.Partitions[0].Component;
+//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+//			componentConfiguration.FieldValues.Should().HaveCount(1);
+//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+//			componentConfiguration.SubComponents.Should().HaveCount(0);
+//		}
 
-			var componentConfiguration = _configuration.Partitions[0].Component;
-			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-			componentConfiguration.SubComponents.Should().HaveCount(0);
-		}
+//		[Test]
+//		public void Test2()
+//		{
+//			var csharpCode = @"
+//class X : Component
+//{
+//	private int _field;		
+//
+//	public X()
+//	{
+//		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
+//	}
+//}
+//class Y : Component
+//{
+//	private X _x = new X();
+//}
+//class Config : ModelConfiguration
+//{
+//	public Config()
+//	{
+//		AddPartitions(new Y(), new X());
+//	}
+//}
+//";
+//			Transform(csharpCode, "Config");
+//			_configuration.Partitions.Should().HaveCount(2);
 
-		[Test]
-		public void Test2()
-		{
-			var csharpCode = @"
-class X : Component
-{
-	private int _field;		
+//			var componentConfiguration = _configuration.Partitions[1].Component;
+//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+//			componentConfiguration.FieldValues.Should().HaveCount(1);
+//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+//			componentConfiguration.SubComponents.Should().HaveCount(0);
 
-	public X()
-	{
-		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
-	}
-}
-class Y : Component
-{
-	private X _x = new X();
-}
-class Config : ModelConfiguration
-{
-	public Config()
-	{
-		AddPartitions(new Y(), new X());
-	}
-}
-";
-			Transform(csharpCode, "Config");
-			_configuration.Partitions.Should().HaveCount(2);
+//			componentConfiguration = _configuration.Partitions[0].Component;
+//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+//			componentConfiguration.FieldValues.Should().HaveCount(0);
+//			componentConfiguration.SubComponents.Should().HaveCount(1);
 
-			var componentConfiguration = _configuration.Partitions[1].Component;
-			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-			componentConfiguration.SubComponents.Should().HaveCount(0);
+//			componentConfiguration = componentConfiguration.SubComponents[0];
+//			componentConfiguration.FieldValues.Should().HaveCount(1);
+//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+//			componentConfiguration.SubComponents.Should().HaveCount(0);
+//		}
 
-			componentConfiguration = _configuration.Partitions[0].Component;
-			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-			componentConfiguration.FieldValues.Should().HaveCount(0);
-			componentConfiguration.SubComponents.Should().HaveCount(1);
+//		[Test]
+//		public void Test3()
+//		{
+//			var csharpCode = @"
+//class X : Component, Z
+//{
+//	private int _field;		
+//
+//	public X()
+//	{
+//		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
+//	}
+//}
+//interface Z : IComponent {}
+//class Y : Component
+//{
+//	private Z _x = new X();
+//}
+//class Config : ModelConfiguration
+//{
+//	public Config()
+//	{
+//		AddPartitions(new Y(), new X());
+//	}
+//}
+//";
+//			Transform(csharpCode, "Config");
+//			_configuration.Partitions.Should().HaveCount(2);
 
-			componentConfiguration = componentConfiguration.SubComponents[0];
-			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-			componentConfiguration.SubComponents.Should().HaveCount(0);
-		}
+//			var componentConfiguration = _configuration.Partitions[1].Component;
+//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+//			componentConfiguration.FieldValues.Should().HaveCount(1);
+//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+//			componentConfiguration.SubComponents.Should().HaveCount(0);
 
-		[Test]
-		public void Test3()
-		{
-			var csharpCode = @"
-class X : Component, Z
-{
-	private int _field;		
+//			componentConfiguration = _configuration.Partitions[0].Component;
+//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
+//			componentConfiguration.FieldValues.Should().HaveCount(0);
+//			componentConfiguration.SubComponents.Should().HaveCount(1);
 
-	public X()
-	{
-		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
-	}
-}
-interface Z : IComponent {}
-class Y : Component
-{
-	private Z _x = new X();
-}
-class Config : ModelConfiguration
-{
-	public Config()
-	{
-		AddPartitions(new Y(), new X());
-	}
-}
-";
-			Transform(csharpCode, "Config");
-			_configuration.Partitions.Should().HaveCount(2);
+//			componentConfiguration = componentConfiguration.SubComponents[0];
+//			componentConfiguration.FieldValues.Should().HaveCount(1);
+//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
+//			componentConfiguration.SubComponents.Should().HaveCount(0);
 
-			var componentConfiguration = _configuration.Partitions[1].Component;
-			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-			componentConfiguration.SubComponents.Should().HaveCount(0);
-
-			componentConfiguration = _configuration.Partitions[0].Component;
-			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-			componentConfiguration.FieldValues.Should().HaveCount(0);
-			componentConfiguration.SubComponents.Should().HaveCount(1);
-
-			componentConfiguration = componentConfiguration.SubComponents[0];
-			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-			componentConfiguration.SubComponents.Should().HaveCount(0);
-
-			_compilation.Interfaces.Should().HaveCount(1);
-			_compilation.Components[1].SubComponents.Should().HaveCount(1);
-			_compilation.Components[1].SubComponents[0].Type.Should().BeOfType<MetamodelReference<InterfaceDeclaration>>();
-		}
+//			_compilation.Interfaces.Should().HaveCount(1);
+//			_compilation.Components[1].SubComponents.Should().HaveCount(1);
+//			_compilation.Components[1].SubComponents[0].Type.Should().BeOfType<MetamodelReference<InterfaceDeclaration>>();
+//		}
 	}
 }
 

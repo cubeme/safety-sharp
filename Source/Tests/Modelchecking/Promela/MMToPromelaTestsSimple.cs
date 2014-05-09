@@ -31,7 +31,7 @@ namespace Tests.Modelchecking.Promela
     using MMStatements = SafetySharp.Metamodel.Statements;
     using MMTypes = SafetySharp.Metamodel.Types;
     using MMDeclarations = SafetySharp.Metamodel.Declarations;
-    using MMInstances = SafetySharp.Metamodel.Instantiation;
+    using MMInstances = SafetySharp.Metamodel.Configurations;
     using PrExpressions = SafetySharp.Modelchecking.Promela.Expressions;
     using PrStatements = SafetySharp.Modelchecking.Promela.Statements;
 

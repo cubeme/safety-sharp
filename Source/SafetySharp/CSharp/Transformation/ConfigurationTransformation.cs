@@ -107,7 +107,7 @@ namespace SafetySharp.CSharp.Transformation
 				func: (current, field) =>
 				{
 					var values = component.GetInitialValuesOfField(field.Identifier.Name);
-					var initialValues = values.Select(value => new InitialValue(value)).ToImmutableArray();
+					var initialValues = values.Select(value => new UntypedValue(value)).ToImmutableArray();
 					return current.Add(new InitialFieldValues(initialValues));
 				});
 

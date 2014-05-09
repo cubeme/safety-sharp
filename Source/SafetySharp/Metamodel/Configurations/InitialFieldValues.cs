@@ -20,9 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Instantiation
+namespace SafetySharp.Metamodel.Configurations
 {
 	using System;
+	using System.Linq;
 	using Declarations;
 
 	/// <summary>
@@ -30,5 +31,12 @@ namespace SafetySharp.Metamodel.Instantiation
 	/// </summary>
 	partial class InitialFieldValues
 	{
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return String.Join(", ", Values.Select(value => value.ToString()));
+		}
 	}
 }
