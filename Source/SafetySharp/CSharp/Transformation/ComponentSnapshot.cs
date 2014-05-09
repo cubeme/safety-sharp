@@ -29,7 +29,8 @@ namespace SafetySharp.CSharp.Transformation
 	using Utilities;
 
 	/// <summary>
-	///     Represents a snapshot of the state of a <see cref="Component" /> instance that is required during model transformation.
+	///     During model transformation, a <see cref="ComponentSnapshot" /> instance stores an immutable snapshot of the mutable
+	///     state of a <see cref="Component" /> instance.
 	/// </summary>
 	internal class ComponentSnapshot
 	{

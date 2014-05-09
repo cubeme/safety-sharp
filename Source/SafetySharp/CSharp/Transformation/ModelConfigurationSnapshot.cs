@@ -29,8 +29,8 @@ namespace SafetySharp.CSharp.Transformation
 	using Modeling;
 
 	/// <summary>
-	///     Represents a snapshot of the state of a <see cref="ModelConfiguration" /> instance that is required during model
-	///     transformation.
+	///     During model transformation, a <see cref="ModelConfigurationSnapshot" /> instance stores an immutable snapshot of the
+	///     mutable state of a <see cref="ModelConfiguration" /> instance.
 	/// </summary>
 	internal class ModelConfigurationSnapshot
 	{
