@@ -23,278 +23,258 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.Immutable;
-	using System.Linq;
-	using System.Reflection;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.CSharp.Transformation;
-	using SafetySharp.Metamodel;
-	using SafetySharp.Metamodel.Configurations;
-	using SafetySharp.Metamodel.Declarations;
-	using SafetySharp.Metamodel.Types;
-	using SafetySharp.Modeling;
 
-	[TestFixture]
-	internal class ConfigurationTransformationTests
+	namespace ConfigurationTransformationTests
 	{
-		private class TestComponent<T> : Component
-		{
-			private readonly T _field = default(T);
+		using System.Collections.Immutable;
+		using System.Linq;
+		using System.Reflection;
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Transformation;
+		using SafetySharp.Metamodel;
+		using SafetySharp.Metamodel.Configurations;
+		using SafetySharp.Metamodel.Declarations;
+		using SafetySharp.Metamodel.Types;
+		using SafetySharp.Modeling;
+		using SafetySharp.Utilities;
 
-			public TestComponent(params T[] values)
+		internal class ConfigurationTransformationTests
+		{
+			private ComponentResolver _componentResolver;
+			private MetamodelResolver _metamodelResolver;
+
+			private IMetamodelReference<ComponentDeclaration> CreateComponentDeclaration(IComponent component)
 			{
-				SetInitialValues(() => _field, values);
-			}
-		}
+				var fields = ImmutableArray<FieldDeclaration>.Empty;
+				var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
 
-		private class NestedComponent<T> : Component
-		{
-			private TestComponent<T> _test;
-
-			public NestedComponent(TestComponent<T> test)
-			{
-				_test = test;
-			}
-		}
-
-		private class TwoNestedComponent<T1, T2> : Component
-		{
-			private TestComponent<T1> _test1;
-			private TestComponent<T2> _test2;
-
-			public TwoNestedComponent(TestComponent<T1> test1, TestComponent<T2> test2)
-			{
-				_test1 = test1;
-				_test2 = test2;
-			}
-		}
-
-		private interface IDeeplyNestedComponent : IComponent
-		{
-		}
-
-		private class DeeplyNestedLeafComponent : Component, IDeeplyNestedComponent
-		{
-		}
-
-		private class DeeplyNestedComponent : Component, IDeeplyNestedComponent
-		{
-			private IDeeplyNestedComponent _test1;
-			private IDeeplyNestedComponent _test2;
-
-			public DeeplyNestedComponent(IDeeplyNestedComponent test1, IDeeplyNestedComponent test2)
-			{
-				_test1 = test1;
-				_test2 = test2;
-			}
-		}
-
-		private class TestConfiguration : ModelConfiguration
-		{
-			public TestConfiguration(params Component[] components)
-			{
-				AddPartitions(components);
-			}
-		}
-
-		private ComponentResolver _componentResolver;
-		private MetamodelResolver _metamodelResolver;
-
-		private MetamodelReference<ComponentDeclaration> CreateComponentDeclaration(IComponent component)
-		{
-			var fields = ImmutableArray<FieldDeclaration>.Empty;
-			var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
-
-			foreach (var field in component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
-			{
-				if (typeof(IComponent).IsAssignableFrom(field.FieldType))
+				foreach (var field in component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
 				{
-					var subComponent = CreateComponentDeclaration((IComponent)field.GetValue(component));
-					subComponents = subComponents.Add(new SubComponentDeclaration(new Identifier(field.Name), subComponent));
+					if (typeof(IComponent).IsAssignableFrom(field.FieldType))
+					{
+						var subComponent = CreateComponentDeclaration((IComponent)field.GetValue(component));
+						subComponents = subComponents.Add(new SubComponentDeclaration(new Identifier(field.Name), subComponent));
+					}
+					else
+					{
+						var fieldType = field.FieldType == typeof(bool) ? (TypeSymbol)TypeSymbol.Boolean : TypeSymbol.Integer;
+						fields = fields.Add(new FieldDeclaration(new Identifier(field.Name), fieldType));
+					}
 				}
-				else
+
+				var componentDeclaration = ComponentDeclaration
+					.Empty
+					.WithIdentifier(new Identifier(component.GetType().FullName))
+					.WithFields(fields)
+					.WithSubComponents(subComponents);
+
+				var reference = new MetamodelReference<ComponentDeclaration>(component);
+				_componentResolver = _componentResolver.With(component, reference);
+				_metamodelResolver = _metamodelResolver.With(reference, componentDeclaration);
+
+				return reference;
+			}
+
+			protected MetamodelConfiguration TransformConfiguration(params Component[] rootComponents)
+			{
+				var configuration = new TestConfiguration(rootComponents);
+				_componentResolver = ComponentResolver.Empty;
+				_metamodelResolver = MetamodelResolver.Empty;
+
+				foreach (var component in configuration.PartitionRoots)
+					CreateComponentDeclaration(component);
+
+				var configurationTransformation = new ConfigurationTransformation(configuration, _metamodelResolver, _componentResolver);
+				return configurationTransformation.Transform();
+			}
+
+			protected ComponentConfiguration CreateComponentConfigurationHierarchy(Component component)
+			{
+				return new ComponentConfiguration(
+					Identifier.Unknown,
+					_componentResolver.Resolve(component),
+					ImmutableArray<ValueArray>.Empty,
+					component.SubComponents.Select(CreateComponentConfigurationHierarchy).ToImmutableArray());
+			}
+
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			protected class ComponentWithOneChild : Component
+			{
+				private Component _test;
+
+				public ComponentWithOneChild(Component test)
 				{
-					var fieldType = field.FieldType == typeof(bool) ? (TypeSymbol)TypeSymbol.Boolean : TypeSymbol.Integer;
-					fields = fields.Add(new FieldDeclaration(new Identifier(field.Name), fieldType));
+					_test = test;
 				}
 			}
 
-			var componentDeclaration = new ComponentDeclaration(
-				new Identifier(component.GetType().FullName),
-				MethodDeclaration.UpdateMethod,
-				ImmutableArray<MethodDeclaration>.Empty,
-				fields,
-				subComponents);
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			protected class ComponentWithTwoChildren : Component
+			{
+				private Component _test1;
+				private Component _test2;
 
-			var reference = new MetamodelReference<ComponentDeclaration>(component);
-			_componentResolver = _componentResolver.With(component, reference);
-			_metamodelResolver = _metamodelResolver.With(reference, componentDeclaration);
+				public ComponentWithTwoChildren(Component test1, Component test2)
+				{
+					_test1 = test1;
+					_test2 = test2;
+				}
+			}
 
-			return reference;
+			protected class TestComponent : Component
+			{
+			}
+
+			private class TestConfiguration : ModelConfiguration
+			{
+				public TestConfiguration(Component[] components)
+				{
+					AddPartitions(components);
+				}
+			}
 		}
 
-		private MetamodelConfiguration TransformConfiguration(ModelConfiguration configuration, params Component[] rootComponents)
+		[TestFixture]
+		internal class InitialValues : ConfigurationTransformationTests
 		{
-			_componentResolver = ComponentResolver.Empty;
-			_metamodelResolver = MetamodelResolver.Empty;
+			private class ValueComponent<T> : Component
+			{
+				private readonly T _field = default(T);
 
-			foreach (var component in rootComponents)
-				CreateComponentDeclaration(component);
+				public ValueComponent(T[] values)
+				{
+					SetInitialValues(() => _field, values);
+				}
+			}
 
-			var configurationTransformation = new ConfigurationTransformation(configuration, _metamodelResolver, _componentResolver);
-			return configurationTransformation.Transform();
+			private void CheckInitialValues<T>(params T[] values)
+			{
+				var metamodelConfiguration = TransformConfiguration(new ValueComponent<T>(values));
+				var componentConfiguration = metamodelConfiguration.Partitions[0].Component;
+
+				componentConfiguration.FieldValues[0].Values.Select(value => value.Object).ShouldBeEquivalentTo(values);
+			}
+
+			[Test]
+			public void MultipleInitialValues()
+			{
+				CheckInitialValues(true, false);
+				CheckInitialValues(1, 0);
+				CheckInitialValues(-17, 77, -1);
+				CheckInitialValues(427, 23, 412, 43, 20, 987453);
+			}
+
+			[Test]
+			public void SingleInitialValue()
+			{
+				CheckInitialValues(true);
+				CheckInitialValues(false);
+				CheckInitialValues(0);
+				CheckInitialValues(-17);
+				CheckInitialValues(987453);
+			}
 		}
 
-		private void CheckComponentTypes(IEnumerable<IMetamodelReference<ComponentDeclaration>> declarations, params Component[] components)
+		[TestFixture]
+		internal class Partitions : ConfigurationTransformationTests
 		{
-			declarations.Should().BeEquivalentTo(components.Select(_componentResolver.Resolve));
+			[Test]
+			public void MultiplePartitions()
+			{
+				var component1 = new TestComponent();
+				var component2 = new TestComponent();
+
+				TransformConfiguration(component1, component2)
+					.Partitions.Should().BeEquivalentTo(
+						new Partition(CreateComponentConfigurationHierarchy(component1)),
+						new Partition(CreateComponentConfigurationHierarchy(component2)));
+			}
+
+			[Test]
+			public void SinglePartition()
+			{
+				var component = new TestComponent();
+				TransformConfiguration(component)
+					.Partitions.Should().BeEquivalentTo(new Partition(CreateComponentConfigurationHierarchy(component)));
+			}
+
+			[Test]
+			public void SubComponentIsNotPartitionRoot()
+			{
+				var component1 = new TestComponent();
+				var component2 = new ComponentWithOneChild(component1);
+
+				TransformConfiguration(component2)
+					.Partitions.Should().BeEquivalentTo(new Partition(CreateComponentConfigurationHierarchy(component2)));
+			}
 		}
 
-		private void CheckComponentType(IMetamodelReference<ComponentDeclaration> declaration, Component component)
+		[TestFixture]
+		internal class SubComponents : ConfigurationTransformationTests
 		{
-			declaration.Should().Be(_componentResolver.Resolve(component));
-		}
+			[Test]
+			public void DeeplyNestedComponents()
+			{
+				var component1 = new TestComponent();
+				var component2 = new TestComponent();
+				var component3 = new TestComponent();
+				var component4 = new TestComponent();
+				var component5 = new ComponentWithTwoChildren(component2, component1);
+				var component6 = new ComponentWithTwoChildren(component5, component3);
+				var component7 = new ComponentWithTwoChildren(component6, component4);
+				var component8 = new ComponentWithOneChild(component7);
 
-		private void ShouldHaveInitialValues<T>(params T[] values)
-		{
-			var initialValues = values.Select(value => new Value(value));
-			var component = new TestComponent<T>(values);
-			var configuration = new TestConfiguration(component);
+				TransformConfiguration(component8)
+					.Partitions[0].Component.Should().Be(CreateComponentConfigurationHierarchy(component8));
+			}
 
-			var metamodelConfiguration = TransformConfiguration(configuration, component);
-			var componentConfiguration = metamodelConfiguration.Partitions[0].Component;
-			componentConfiguration.FieldValues.Should().HaveCount(1);
-			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(initialValues);
-		}
+			[Test]
+			public void DeeplyNestedComponentsInMultiplePartitions()
+			{
+				var component1 = new TestComponent();
+				var component2 = new TestComponent();
+				var component3 = new TestComponent();
+				var component4 = new TestComponent();
+				var component5 = new ComponentWithTwoChildren(component2, component1);
+				var component6 = new ComponentWithTwoChildren(component5, component3);
+				var component7 = new ComponentWithTwoChildren(component6, component4);
+				var component8 = new ComponentWithOneChild(component7);
+				var component9 = new TestComponent();
+				var component10 = new TestComponent();
+				var component11 = new TestComponent();
+				var component12 = new TestComponent();
+				var component13 = new ComponentWithOneChild(component9);
+				var component14 = new ComponentWithTwoChildren(component10, component11);
+				var component15 = new ComponentWithTwoChildren(component12, component13);
 
-		[Test]
-		public void MultipleInitialValues_Bool()
-		{
-			ShouldHaveInitialValues(true, false);
-		}
+				TransformConfiguration(component8, component14, component15)
+					.Partitions.Should().BeEquivalentTo(
+						new Partition(CreateComponentConfigurationHierarchy(component8)),
+						new Partition(CreateComponentConfigurationHierarchy(component14)),
+						new Partition(CreateComponentConfigurationHierarchy(component15)));
+			}
 
-		[Test]
-		public void MultipleInitialValues_Int()
-		{
-			ShouldHaveInitialValues(1, 0);
-			ShouldHaveInitialValues(-17, 77, -1);
-			ShouldHaveInitialValues(427, 23, 412, 43, 20, 987453);
-		}
+			[Test]
+			public void SingleSubComponent()
+			{
+				var component1 = new TestComponent();
+				var component2 = new ComponentWithOneChild(component1);
 
-		[Test]
-		public void DeeplyNestedComponents()
-		{
-			var component1 = new DeeplyNestedLeafComponent();
-			var component2 = new DeeplyNestedLeafComponent();
-			var component3 = new DeeplyNestedLeafComponent();
-			var component4 = new DeeplyNestedLeafComponent();
-			var component5 = new DeeplyNestedComponent(component2, component1);
-			var component6 = new DeeplyNestedComponent(component5, component3);
-			var component7 = new DeeplyNestedComponent(component6, component4);
-			var configuration = new TestConfiguration(component7);
+				TransformConfiguration(component2)
+					.Partitions[0].Component.Should().Be(CreateComponentConfigurationHierarchy(component2));
+			}
 
-			var metamodelConfiguration = TransformConfiguration(configuration, component7);
+			[Test]
+			public void TwoSubComponents()
+			{
+				var component1 = new TestComponent();
+				var component2 = new TestComponent();
+				var component3 = new ComponentWithTwoChildren(component1, component2);
 
-			var c7 = metamodelConfiguration.Partitions[0].Component;
-			CheckComponentType(c7.Type, component7);
-
-			c7.SubComponents.Should().HaveCount(2);
-			CheckComponentType(c7.SubComponents[0].Type, component6);
-			CheckComponentType(c7.SubComponents[1].Type, component4);
-
-			var c6 = c7.SubComponents[0];
-			var c4 = c7.SubComponents[1];
-
-			c4.SubComponents.Should().HaveCount(0);
-			c6.SubComponents.Should().HaveCount(2);
-			CheckComponentType(c6.SubComponents[0].Type, component5);
-			CheckComponentType(c6.SubComponents[1].Type, component3);
-
-			var c5 = c6.SubComponents[0];
-			var c3 = c6.SubComponents[1];
-
-			c3.SubComponents.Should().HaveCount(0);
-			c5.SubComponents.Should().HaveCount(2);
-			CheckComponentType(c5.SubComponents[0].Type, component2);
-			CheckComponentType(c5.SubComponents[1].Type, component1);
-
-			var c2 = c5.SubComponents[0];
-			var c1 = c5.SubComponents[1];
-
-			c1.SubComponents.Should().HaveCount(0);
-			c2.SubComponents.Should().HaveCount(0);
-		}
-
-		[Test]
-		public void OnePartition()
-		{
-			var component = new TestComponent<int>(0);
-			var configuration = new TestConfiguration(component);
-
-			var metamodelConfiguration = TransformConfiguration(configuration, component);
-			metamodelConfiguration.Partitions.Should().HaveCount(1);
-			CheckComponentTypes(metamodelConfiguration.Partitions.Select(p => p.Component.Type), component);
-		}
-
-		[Test]
-		public void SingleInitialValue_Bool()
-		{
-			ShouldHaveInitialValues(false);
-			ShouldHaveInitialValues(true);
-		}
-
-		[Test]
-		public void SingleInitialValue_Int()
-		{
-			ShouldHaveInitialValues(1);
-			ShouldHaveInitialValues(-17);
-			ShouldHaveInitialValues(427);
-		}
-
-		[Test]
-		public void SingleSubComponent()
-		{
-			var component1 = new TestComponent<int>(24, 12);
-			var component2 = new NestedComponent<int>(component1);
-			var configuration = new TestConfiguration(component2);
-
-			var metamodelConfiguration = TransformConfiguration(configuration, component2);
-			var component = metamodelConfiguration.Partitions[0].Component;
-			CheckComponentType(component.Type, component2);
-
-			component.SubComponents.Should().HaveCount(1);
-			CheckComponentType(component.SubComponents[0].Type, component1);
-		}
-
-		[Test]
-		public void TwoPartitions()
-		{
-			var component1 = new TestComponent<int>(0);
-			var component2 = new TestComponent<int>(0);
-			var configuration = new TestConfiguration(component1, component2);
-
-			var metamodelConfiguration = TransformConfiguration(configuration, component1, component2);
-			metamodelConfiguration.Partitions.Should().HaveCount(2);
-			CheckComponentTypes(metamodelConfiguration.Partitions.Select(p => p.Component.Type), component1, component2);
-		}
-
-		[Test]
-		public void TwoSubComponents()
-		{
-			var component1 = new TestComponent<int>(24, 12);
-			var component2 = new TestComponent<bool>(false);
-			var component3 = new TwoNestedComponent<int, bool>(component1, component2);
-			var configuration = new TestConfiguration(component3);
-
-			var metamodelConfiguration = TransformConfiguration(configuration, component3);
-			var component = metamodelConfiguration.Partitions[0].Component;
-			CheckComponentType(component.Type, component3);
-
-			component.SubComponents.Should().HaveCount(2);
-			CheckComponentType(component.SubComponents[0].Type, component1);
-			CheckComponentType(component.SubComponents[1].Type, component2);
+				TransformConfiguration(component3)
+					.Partitions[0].Component.Should().Be(CreateComponentConfigurationHierarchy(component3));
+			}
 		}
 	}
 }

@@ -30,6 +30,11 @@ namespace SafetySharp.Metamodel
 	partial class Identifier
 	{
 		/// <summary>
+		///     Represents an unknown identifier.
+		/// </summary>
+		public static readonly Identifier Unknown = new Identifier("<unknown>");
+
+		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()

@@ -97,7 +97,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="component">The component that should be transformed.</param>
 		private ComponentConfiguration TransformComponent(Component component)
 		{
-			var identifier = new Identifier(component.Name ?? "<unknown>");
+			var identifier = component.Name == null ? Identifier.Unknown : new Identifier(component.Name);
 			var componentDeclarationReference = _componentResolver.Resolve(component);
 
 			var componentDeclaration = _metamodelResolver.Resolve(componentDeclarationReference);

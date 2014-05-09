@@ -84,6 +84,7 @@
     <Compile Include="Generator\Test.Generated.cs" />
     <Compile Include="Modelchecking\Promela\MMToPromelaTestsSimple.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTests.cs" />
+    <Compile Include="Modeling\ComponentTests.cs" />
     <Compile Include="Modeling\ModelConfigurationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

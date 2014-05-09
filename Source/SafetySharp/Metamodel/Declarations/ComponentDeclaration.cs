@@ -31,11 +31,11 @@ namespace SafetySharp.Metamodel.Declarations
 	partial class ComponentDeclaration
 	{
 		/// <summary>
-		///     Gets an unnamed <see cref="ComponentDeclaration" /> without any members or sub components.
+		///     Represents a <see cref="ComponentDeclaration" /> without any members or sub components.
 		/// </summary>
 		public static readonly ComponentDeclaration Empty =
 			new ComponentDeclaration(
-				new Identifier("<unnamed>"),
+				Identifier.Unknown,
 				MethodDeclaration.UpdateMethod,
 				ImmutableArray<MethodDeclaration>.Empty,
 				ImmutableArray<FieldDeclaration>.Empty,

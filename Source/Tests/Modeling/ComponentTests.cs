@@ -1,0 +1,275 @@
+﻿// The MIT License (MIT)
+// 
+// Copyright (c) 2014, Institute for Software & Systems Engineering
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+namespace Tests.Modeling
+{
+	using System;
+
+	namespace ComponentTests
+	{
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.Modeling;
+		using SafetySharp.Utilities;
+
+		internal class ComponentTests
+		{
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			protected class FieldComponent : Component
+			{
+				private int _field;
+
+				public FieldComponent(int field = 0)
+				{
+					_field = field;
+				}
+			}
+
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			protected class OneSubComponent : Component
+			{
+				private Component _component;
+
+				public OneSubComponent(Component component)
+				{
+					_component = component;
+				}
+			}
+
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			protected class TwoSubComponent : Component
+			{
+				private Component _component1;
+				private Component _component2;
+
+				public TwoSubComponent(Component component1, Component component2)
+				{
+					_component1 = component1;
+					_component2 = component2;
+				}
+			}
+		}
+
+		[TestFixture]
+		internal class GetInitialValuesOfFieldMethod : ComponentTests
+		{
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			private class TestComponent<T> : Component
+			{
+				private T _field;
+
+				public TestComponent(params T[] values)
+				{
+					_field = values[0];
+					SetInitialValues(() => _field, values);
+				}
+			}
+
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			private class TestComponent<T1, T2> : Component
+			{
+				private T1 _field1;
+				private T2 _field2;
+
+				public TestComponent(T1[] values1, T2[] values2)
+				{
+					_field1 = values1[0];
+					_field2 = values2[0];
+
+					SetInitialValues(() => _field1, values1);
+					SetInitialValues(() => _field2, values2);
+				}
+			}
+
+			[Test]
+			public void ReturnsInitialValuesOfSingleKnownField()
+			{
+				var integerComponent = new TestComponent<int>(17);
+				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17);
+
+				integerComponent = new TestComponent<int>(17, 0, -33);
+				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17, 0, -33);
+
+				var booleanComponent = new TestComponent<bool>(true);
+				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true);
+
+				booleanComponent = new TestComponent<bool>(true, false);
+				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true, false);
+			}
+
+			[Test]
+			public void ReturnsInitialValuesofMultipleKnownFields()
+			{
+				var intValues = new[] { 142, 874, 11 };
+				var boolValues = new[] { true, false };
+				var component = new TestComponent<int, bool>(intValues, boolValues);
+
+				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(intValues);
+				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(boolValues);
+			}
+
+			[Test]
+			public void ThrowsForSubComponentField()
+			{
+				var component = new OneSubComponent(new FieldComponent());
+
+				Action action = () => component.GetInitialValuesOfField("_component");
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsForUnknownField()
+			{
+				var component = new TestComponent<int>(0);
+
+				Action action = () => component.GetInitialValuesOfField("x");
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsWhenEmptyStringIsPassed()
+			{
+				var component = new TestComponent<int>(0);
+
+				Action action = () => component.GetInitialValuesOfField(String.Empty);
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsWhenNullIsPassed()
+			{
+				var component = new TestComponent<int>(0);
+
+				Action action = () => component.GetInitialValuesOfField(null);
+				action.ShouldThrow<ArgumentNullException>();
+			}
+		}
+
+		[TestFixture]
+		internal class GetSubComponentMethod : ComponentTests
+		{
+			[Test]
+			public void ReturnsMultipleSubComponents()
+			{
+				var subComponent1 = new FieldComponent();
+				var subComponent2 = new FieldComponent();
+				var component = new TwoSubComponent(subComponent1, subComponent2);
+
+				component.GetSubComponent("_component1").Should().Be(subComponent1);
+				component.GetSubComponent("_component2").Should().Be(subComponent2);
+			}
+
+			[Test]
+			public void ReturnsSingleSubComponent()
+			{
+				var subComponent = new FieldComponent();
+				var component = new OneSubComponent(subComponent);
+
+				component.GetSubComponent("_component").Should().Be(subComponent);
+			}
+
+			[Test]
+			public void ThrowsForNonComponentField()
+			{
+				var component = new FieldComponent();
+
+				Action action = () => component.GetSubComponent("_field");
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsForUnknownComponentField()
+			{
+				var component = new OneSubComponent(new FieldComponent());
+
+				Action action = () => component.GetSubComponent("_field");
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsWhenEmptyStringIsPassed()
+			{
+				var component = new OneSubComponent(new FieldComponent());
+
+				Action action = () => component.GetSubComponent(String.Empty);
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsWhenNullIsPassed()
+			{
+				var component = new OneSubComponent(new FieldComponent());
+
+				Action action = () => component.GetSubComponent(null);
+				action.ShouldThrow<ArgumentNullException>();
+			}
+		}
+
+		[TestFixture]
+		internal class SubComponentsProperty : ComponentTests
+		{
+			private class TestComponent : Component
+			{
+			}
+
+			[Test]
+			public void IgnoresNonSubComponentFields()
+			{
+				var component = new FieldComponent();
+				component.SubComponents.Should().BeEmpty();
+			}
+
+			[Test]
+			public void ReturnsMultipleSubComponents()
+			{
+				var subComponent1 = new TestComponent();
+				var subComponent2 = new FieldComponent();
+				var component = new TwoSubComponent(subComponent1, subComponent2);
+
+				component.SubComponents.Should().BeEquivalentTo(subComponent1, subComponent2);
+			}
+
+			[Test]
+			public void ReturnsNoneIfComponentHasNoSubComponents()
+			{
+				var component = new TestComponent();
+				component.SubComponents.Should().BeEmpty();
+			}
+
+			[Test]
+			public void ReturnsSingleSubComponent()
+			{
+				var subComponent = new TestComponent();
+				var component = new OneSubComponent(subComponent);
+
+				component.SubComponents.Should().BeEquivalentTo(subComponent);
+			}
+
+			[Test]
+			public void IgnoresNullSubComponents()
+			{
+				var component = new OneSubComponent(null);
+				component.SubComponents.Should().BeEmpty();
+			}
+		}
+	}
+}

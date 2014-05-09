@@ -43,7 +43,7 @@ namespace SafetySharp.Modeling
 		internal string Name { get; private set; }
 
 		/// <summary>
-		///     Gets the <see cref="Component" /> instances that are sub components of the current instance.
+		///     Gets the <see cref="Component" /> instances that are direct sub components of the current instance.
 		/// </summary>
 		internal IEnumerable<Component> SubComponents
 		{
@@ -51,8 +51,9 @@ namespace SafetySharp.Modeling
 			{
 				return GetType()
 					.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-					.Select(field => field.GetValue(this))
-					.OfType<Component>();
+					.Where(field => typeof(IComponent).IsAssignableFrom(field.FieldType))
+					.Select(field => field.GetValue(this) as Component)
+					.Where(component => component != null);
 			}
 		}
 
@@ -67,6 +68,9 @@ namespace SafetySharp.Modeling
 			var field = GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			Argument.Satisfies(field != null, () => name, "A sub component with name '{0}' does not exist.", name);
 
+			if (!typeof(IComponent).IsAssignableFrom(field.FieldType))
+				Argument.Satisfies(false, () => name, "The field with name '{0}' is not a sub component.", name);
+
 			var component = field.GetValue(this) as Component;
 			Assert.NotNull(component);
 			return component;
@@ -78,11 +82,11 @@ namespace SafetySharp.Modeling
 		/// <param name="fieldName">The name of the field the initial values should be returned for.</param>
 		internal ImmutableArray<object> GetInitialValuesOfField(string fieldName)
 		{
-			Argument.NotNull(fieldName, () => fieldName);
+			Argument.NotNullOrWhitespace(fieldName, () => fieldName);
 
 			ImmutableArray<object> initialValues;
 			if (!_fields.TryGetValue(fieldName, out initialValues))
-				Assert.NotReached("Attempted to get initial values of unknown field '{0}'.", fieldName);
+				Argument.Satisfies(false, () => fieldName, "A field with name '{0}' does not exist.", fieldName);
 
 			return initialValues;
 		}
