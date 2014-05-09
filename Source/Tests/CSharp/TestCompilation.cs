@@ -32,6 +32,7 @@ namespace Tests.CSharp
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using SafetySharp.CSharp;
 	using SafetySharp.CSharp.Extensions;
+	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
 
 	/// <summary>
@@ -56,17 +57,19 @@ namespace Tests.CSharp
 				.AddSyntaxTrees(SyntaxTree)
 				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
+			var diagnostics = CSharpCompilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+			if (diagnostics.Length != 0)
+			{
+				foreach (var diagnostic in diagnostics)
+					Console.WriteLine("{0}", diagnostic);
+
+				throw new InvalidOperationException("Failed to create compilation.");
+			}
+
 			SemanticModel = CSharpCompilation.GetSemanticModel(SyntaxTree);
 			SyntaxRoot = SyntaxTree.GetRoot();
-
-			var diagnostics = CSharpCompilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
-			if (diagnostics.Length == 0)
-				return;
-
-			foreach (var diagnostic in diagnostics)
-				Console.WriteLine("{0}", diagnostic);
-
-			throw new InvalidOperationException("Failed to create compilation.");
+			SymbolMap = new SymbolMap(CSharpCompilation);
+			ModelingCompilation = new ModelingCompilation(CSharpCompilation);
 		}
 
 		/// <summary>
@@ -77,10 +80,12 @@ namespace Tests.CSharp
 		/// <summary>
 		///     Gets the <see cref="ModelingCompilation" /> corresponding to the current instance.
 		/// </summary>
-		public ModelingCompilation ModelingCompilation
-		{
-			get { return new ModelingCompilation(CSharpCompilation); }
-		}
+		public ModelingCompilation ModelingCompilation { get; private set; }
+
+		/// <summary>
+		///     Gets the <see cref="SymbolMap" /> corresponding to the current instance.
+		/// </summary>
+		public SymbolMap SymbolMap { get; private set; }
 
 		/// <summary>
 		///     Gets the syntax tree of the compilation.

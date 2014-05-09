@@ -23,12 +23,25 @@
 namespace SafetySharp.Metamodel.Declarations
 {
 	using System;
+	using System.Collections.Immutable;
 
 	/// <summary>
 	///     Represents the declaration of a component type.
 	/// </summary>
 	partial class ComponentDeclaration
 	{
+		/// <summary>
+		///     Gets an unnamed <see cref="ComponentDeclaration" /> without any members or sub components.
+		/// </summary>
+		public static readonly ComponentDeclaration Empty =
+			new ComponentDeclaration(
+				new Identifier("<unnamed>"),
+				MethodDeclaration.UpdateMethod,
+				ImmutableArray<MethodDeclaration>.Empty,
+				ImmutableArray<FieldDeclaration>.Empty,
+				ImmutableArray<SubComponentDeclaration>.Empty
+				);
+
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>

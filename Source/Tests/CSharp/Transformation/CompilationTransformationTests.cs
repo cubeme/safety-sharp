@@ -23,293 +23,264 @@
 namespace Tests.CSharp.Transformation
 {
 	using System;
-	using System.Collections.Immutable;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.CSharp;
-	using SafetySharp.CSharp.Transformation;
-	using SafetySharp.Metamodel;
-	using SafetySharp.Metamodel.Declarations;
-	using SafetySharp.Metamodel.Expressions;
-	using SafetySharp.Metamodel.Statements;
-	using SafetySharp.Metamodel.Types;
 
-	[TestFixture]
-	public class CompilationTransformationTests
+	namespace CompilationTransformationTests
 	{
-		private TestCompilation _compilation;
-		private MetamodelCompilation _metamodelCompilation;
-		private SymbolMap _symbolMap;
+		using System.Collections.Immutable;
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.CSharp.Transformation;
+		using SafetySharp.Metamodel;
+		using SafetySharp.Metamodel.Declarations;
+		using SafetySharp.Metamodel.Expressions;
+		using SafetySharp.Metamodel.Statements;
+		using SafetySharp.Metamodel.Types;
 
-		private void Transform(string csharpCode)
+		internal class CompilationTransformationTests
 		{
-			_compilation = new TestCompilation(csharpCode);
-			var transformation = new CompilationTransformation(new ModelingCompilation(_compilation.CSharpCompilation));
+			private TestCompilation _compilation;
+			private MetamodelCompilation _metamodelCompilation;
+			private SymbolMap _symbolMap;
 
-			_metamodelCompilation = transformation.Transform();
-			_symbolMap = transformation.SymbolMap;
+			protected MetamodelCompilation TransformCode(string csharpCode)
+			{
+				_compilation = new TestCompilation(csharpCode);
+				var transformation = new CompilationTransformation(_compilation.ModelingCompilation);
+
+				_metamodelCompilation = transformation.Transform();
+				_symbolMap = transformation.SymbolMap;
+
+				return _metamodelCompilation;
+			}
+
+			protected ComponentDeclaration Transform(string csharpCode)
+			{
+				return TransformCode(csharpCode).Components[0];
+			}
+
+			protected IMetamodelReference<ComponentDeclaration> GetComponentReference(string className)
+			{
+				var componentSymbol = _compilation.FindClassSymbol(className);
+				return _symbolMap.GetComponentReference(componentSymbol);
+			}
+
+			protected IMetamodelReference<InterfaceDeclaration> GetInterfaceReference(string interfaceName)
+			{
+				var interfaceSymbol = _compilation.FindInterfaceSymbol(interfaceName);
+				return _symbolMap.GetInterfaceReference(interfaceSymbol);
+			}
+
+			protected IMetamodelReference<FieldDeclaration> GetFieldReference(string className, string fieldName)
+			{
+				var fieldSymbol = _compilation.FindFieldSymbol(className, fieldName);
+				return _symbolMap.GetFieldReference(fieldSymbol);
+			}
 		}
 
-		private ComponentDeclaration TransformComponent(string csharpCode)
+		[TestFixture]
+		internal class TransformComponentInterfaces : CompilationTransformationTests
 		{
-			Transform(csharpCode);
-			return _metamodelCompilation.Components[0];
+			private ImmutableArray<InterfaceDeclaration> TransformAllInterfaces(string csharpCode)
+			{
+				return TransformCode(csharpCode).Interfaces;
+			}
+
+			[Test]
+			public void MultipleEmptyComponentInterface()
+			{
+				TransformAllInterfaces("interface IMyComponent1 : IComponent { } interface IMyComponent2 : IComponent { }")
+					.Should().BeEquivalentTo(
+						new InterfaceDeclaration(new Identifier("IMyComponent1")),
+						new InterfaceDeclaration(new Identifier("IMyComponent2")));
+			}
+
+			[Test]
+			public void SingleEmptyComponentInterface()
+			{
+				TransformAllInterfaces("interface IMyComponent : IComponent { }")
+					.Should().BeEquivalentTo(new InterfaceDeclaration(new Identifier("IMyComponent")));
+			}
 		}
 
-		private InterfaceDeclaration TransformInterface(string csharpCode)
+		[TestFixture]
+		internal class TransformComponents : CompilationTransformationTests
 		{
-			Transform(csharpCode);
-			return _metamodelCompilation.Interfaces[0];
+			private ImmutableArray<ComponentDeclaration> TransformAllComponents(string csharpCode)
+			{
+				return TransformCode(csharpCode).Components;
+			}
+
+			[Test]
+			public void EmptyComponent()
+			{
+				TransformAllComponents("class MyComponent : Component { }")
+					.Should().BeEquivalentTo(ComponentDeclaration.Empty.WithIdentifier(new Identifier("MyComponent")));
+
+				TransformAllComponents("namespace X.Y.Z { class MyComponent : Component { }}")
+					.Should().BeEquivalentTo(ComponentDeclaration.Empty.WithIdentifier(new Identifier("X.Y.Z.MyComponent")));
+			}
+
+			[Test]
+			public void NondeterministicBooleanComponent()
+			{
+				var actual = Transform(@"
+					class BooleanComponent : Component
+					{
+						private bool _value;
+
+						protected override void Update()
+						{
+							Choose(out _value, true, false);
+						}
+					}");
+
+				var fieldReference = GetFieldReference("BooleanComponent", "_value");
+				var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
+
+				var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
+				var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);
+
+				var clause1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
+				var clause2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
+
+				var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
+				var updateMethod = MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
+
+				var expected = ComponentDeclaration
+					.Empty
+					.WithIdentifier(new Identifier("BooleanComponent"))
+					.WithUpdateMethod(updateMethod)
+					.WithFields(ImmutableArray.Create(field));
+
+				actual.Should().Be(expected);
+			}
 		}
 
-		private T GetAndCheckSubComponentDeclaration<T>(IMetamodelReference<TypeDeclaration> typeDeclaration)
-			where T : TypeDeclaration
+		[TestFixture]
+		internal class TransformMethods : CompilationTransformationTests
 		{
-			var component = _metamodelCompilation.Resolver.Resolve(typeDeclaration);
-			component.Should().BeOfType<T>();
-			return (T)component;
+			[Test]
+			public void MultipleNonUpdateMethods()
+			{
+				var component = Transform("class X : Component { bool M() { return true; } void N(int i, bool b) { return; } }");
+				component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod);
+
+				var methodM = new MethodDeclaration(new Identifier("M"),
+													TypeSymbol.Boolean,
+													ImmutableArray<ParameterDeclaration>.Empty,
+													ReturnStatement.ReturnTrue.AsBlockStatement());
+
+				var methodN = new MethodDeclaration(new Identifier("N"),
+													TypeSymbol.Void,
+													ImmutableArray.Create(new ParameterDeclaration(new Identifier("i"), TypeSymbol.Integer),
+																		  new ParameterDeclaration(new Identifier("b"), TypeSymbol.Boolean)),
+													ReturnStatement.ReturnVoid.AsBlockStatement());
+
+				component.Methods.Should().BeEquivalentTo(methodM, methodN);
+			}
+
+			[Test]
+			public void UpdateMethod()
+			{
+				var component = Transform("class X : Component { protected override void Update() { ; } }");
+
+				component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod.WithBody(EmptyStatement.Default.AsBlockStatement()));
+				component.Methods.Should().BeEmpty();
+			}
+
+			[Test]
+			public void UpdateMethodAndOtherMethods()
+			{
+				var component = Transform("class X : Component { protected override void Update() { ; } public void M() {} }");
+
+				component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod.WithBody(EmptyStatement.Default.AsBlockStatement()));
+				component.Methods.Should().BeEquivalentTo(
+					new MethodDeclaration(new Identifier("M"), TypeSymbol.Void, ImmutableArray<ParameterDeclaration>.Empty, BlockStatement.Empty));
+			}
 		}
 
-		[Test]
-		public void ShouldNotReportSubComponentsAsField()
+		[TestFixture]
+		internal class TransformSubComponents : CompilationTransformationTests
 		{
-			var component = TransformComponent(@"
-				interface MyInterface : IComponent {} 
-				class MyComponent2 : Component {}
-				class MyComponent : Component { private MyComponent2 c; private MyInterface ic; }");
-			component.Fields.Should().HaveCount(0);
+			[Test]
+			public void IgnoreNonComponentFields()
+			{
+				var component = Transform("class MyComponent : Component { bool value; }");
+				component.SubComponents.Should().BeEmpty();
+			}
+
+			[Test]
+			public void MixedInterfaceAndClassSubComponents()
+			{
+				var component = Transform(@"
+					class MyComponent : Component { SubComponent1 c1; SubComponent2 c2; ISubComponent1 c3; ISubComponent2 c4; }
+					class SubComponent1 : Component {} 
+					class SubComponent2 : Component {}
+					interface ISubComponent1 : IComponent {} 
+					interface ISubComponent2 : IComponent {}");
+
+				component.SubComponents.Should().BeEquivalentTo(
+					new SubComponentDeclaration(new Identifier("c1"), GetComponentReference("SubComponent1")),
+					new SubComponentDeclaration(new Identifier("c2"), GetComponentReference("SubComponent2")),
+					new SubComponentDeclaration(new Identifier("c3"), GetInterfaceReference("ISubComponent1")),
+					new SubComponentDeclaration(new Identifier("c4"), GetInterfaceReference("ISubComponent2")));
+			}
+
+			[Test]
+			public void RecursiveSubComponentType()
+			{
+				var component = Transform("class MyComponent : Component { MyComponent c; }");
+
+				component.SubComponents.Should().BeEquivalentTo(
+					new SubComponentDeclaration(new Identifier("c"), GetComponentReference("MyComponent")));
+			}
+
+			[Test]
+			public void SingleSubComponent()
+			{
+				var component = Transform("class MyComponent : Component { SubComponent c; } class SubComponent : Component {}");
+				component.SubComponents.Should().BeEquivalentTo(
+					new SubComponentDeclaration(new Identifier("c"), GetComponentReference("SubComponent")));
+
+				component = Transform("interface ISubComponent : IComponent {} class MyComponent : Component { ISubComponent c; }");
+				component.SubComponents.Should().BeEquivalentTo(
+					new SubComponentDeclaration(new Identifier("c"), GetInterfaceReference("ISubComponent")));
+			}
 		}
 
-		[Test]
-		public void ShouldNotTransformSubComponents()
+		[TestFixture]
+		internal class TransformFields : CompilationTransformationTests
 		{
-			var component = TransformComponent("class MyComponent : Component { private bool value; }");
-			component.SubComponents.Should().HaveCount(0);
-		}
+			[Test]
+			public void IgnoreComponentFields()
+			{
+				var component = Transform(@"
+					interface MyInterface : IComponent {} 
+					class MyComponent2 : Component {}
+					class MyComponent : Component { MyComponent2 c1; MyInterface c2; }");
 
-		[Test]
-		public void ShouldTransformComponentInterface()
-		{
-			var componentInterface = TransformInterface("interface IMyComponent : IComponent { }");
-			componentInterface.Identifier.Name.Should().Be("IMyComponent");
-		}
+				component.Fields.Should().BeEmpty();
+			}
 
-		[Test]
-		public void ShouldTransformMethodsWithParameters()
-		{
-			var component = TransformComponent("class X : Component { bool M() { return true; } void N(int i, bool b) { return; } }");
-			component.UpdateMethod.Should().Be(MethodDeclaration.UpdateMethod);
+			[Test]
+			public void MultipleFields()
+			{
+				var component = Transform("class X : Component { bool value; int test; decimal other; }");
 
-			component.Methods.Should().HaveCount(2);
-			component.Methods[0].Identifier.Name.Should().Be("M");
-			component.Methods[0].Body.Should().Be(ReturnStatement.ReturnTrue.AsBlockStatement());
-			component.Methods[0].ReturnType.Should().Be(TypeSymbol.Boolean);
-			component.Methods[0].Parameters.Should().BeEmpty();
+				component.Fields.Should().BeEquivalentTo(
+					new FieldDeclaration(new Identifier("value"), TypeSymbol.Boolean),
+					new FieldDeclaration(new Identifier("test"), TypeSymbol.Integer),
+					new FieldDeclaration(new Identifier("other"), TypeSymbol.Decimal));
+			}
 
-			component.Methods[1].Identifier.Name.Should().Be("N");
-			component.Methods[1].Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
-			component.Methods[1].ReturnType.Should().Be(TypeSymbol.Void);
-			component.Methods[1].Parameters.Should().HaveCount(2);
+			[Test]
+			public void SingleField()
+			{
+				var component = Transform("class X : Component { bool value; }");
 
-			component.Methods[1].Parameters[0].Identifier.Name.Should().Be("i");
-			component.Methods[1].Parameters[0].Type.Should().Be(TypeSymbol.Integer);
-			component.Methods[1].Parameters[1].Identifier.Name.Should().Be("b");
-			component.Methods[1].Parameters[1].Type.Should().Be(TypeSymbol.Boolean);
-		}
-
-		[Test]
-		public void ShouldTransformMultipleFields()
-		{
-			var component = TransformComponent("class X : Component { private bool value; private int test; private decimal other; }");
-			component.Fields.Length.Should().Be(3);
-
-			var field1 = component.Fields[0];
-			var field2 = component.Fields[1];
-			var field3 = component.Fields[2];
-
-			field1.Identifier.Name.Should().Be("value");
-			field2.Identifier.Name.Should().Be("test");
-			field3.Identifier.Name.Should().Be("other");
-
-			field1.Type.Should().Be(TypeSymbol.Boolean);
-			field2.Type.Should().Be(TypeSymbol.Integer);
-			field3.Type.Should().Be(TypeSymbol.Decimal);
-		}
-
-		[Test]
-		public void ShouldTransformNamespacedComponentName()
-		{
-			var component = TransformComponent("namespace Tests.Components { class MyComponent : Component {} }");
-			component.Identifier.Name.Should().Be("Tests.Components.MyComponent");
-		}
-
-		[Test]
-		public void ShouldTransformNoUpdateMethodButOtherMethods()
-		{
-			var component = TransformComponent("class X : Component { public bool Method() { return false; } }");
-			component.UpdateMethod.Body.Should().Be(BlockStatement.Empty);
-			component.Methods.Length.Should().Be(1);
-			component.Methods[0].Identifier.Name.Should().Be("Method");
-			component.Methods[0].Body.Should().Be(ReturnStatement.ReturnFalse.AsBlockStatement());
-			component.Methods[0].ReturnType.Should().Be(TypeSymbol.Boolean);
-			component.Methods[0].Parameters.Should().BeEmpty();
-		}
-
-		[Test]
-		public void ShouldTransformOneComponentWithoutAnyMembers()
-		{
-			Transform("class MyComponent : Component {}");
-			_metamodelCompilation.Components.Length.Should().Be(1);
-
-			var component = _metamodelCompilation.Components[0];
-			component.Methods.Should().BeEmpty();
-			component.Fields.Should().BeEmpty();
-		}
-
-		[Test]
-		public void ShouldTransformSimpleComponentName()
-		{
-			var component = TransformComponent("class MyComponent : Component {}");
-			component.Identifier.Name.Should().Be("MyComponent");
-		}
-
-		[Test]
-		public void ShouldTransformSingleField()
-		{
-			var component = TransformComponent("class X : Component { private bool value; }");
-			component.Fields.Length.Should().Be(1);
-
-			var field = component.Fields[0];
-			field.Identifier.Name.Should().Be("value");
-			field.Type.Should().Be(TypeSymbol.Boolean);
-		}
-
-		[Test]
-		public void ShouldTransformSubComponent_OfParentComponentType()
-		{
-			var component = TransformComponent("class MyComponent : Component { private MyComponent c; }");
-
-			component.SubComponents.Should().HaveCount(1);
-			component.SubComponents[0].Identifier.Name.Should().Be("c");
-
-			var sub = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[0].Type);
-			sub.Should().Be(_metamodelCompilation.Components[0]);
-		}
-
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfComponentInterface()
-		{
-			var component = TransformComponent(@"
-				interface MyComponent3 : IComponent {} 
-				interface MyComponent2 : IComponent {}
-				class MyComponent : Component { private MyComponent2 c1; private MyComponent3 c2; }");
-
-			component.SubComponents.Should().HaveCount(2);
-			component.SubComponents[0].Identifier.Name.Should().Be("c1");
-			component.SubComponents[1].Identifier.Name.Should().Be("c2");
-
-			var sub1 = GetAndCheckSubComponentDeclaration<InterfaceDeclaration>(component.SubComponents[0].Type);
-			var sub2 = GetAndCheckSubComponentDeclaration<InterfaceDeclaration>(component.SubComponents[1].Type);
-
-			sub1.Should().Be(_metamodelCompilation.Interfaces[1]);
-			sub2.Should().Be(_metamodelCompilation.Interfaces[0]);
-		}
-
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfComponentType()
-		{
-			Transform(@"
-				class MyComponent3 : Component {} 
-				class MyComponent2 : Component {}
-				class MyComponent : Component { private MyComponent2 c1; private MyComponent3 c2; }");
-
-			var component = _metamodelCompilation.Components[2];
-			component.SubComponents.Should().HaveCount(2);
-			component.SubComponents[0].Identifier.Name.Should().Be("c1");
-			component.SubComponents[1].Identifier.Name.Should().Be("c2");
-
-			var sub1 = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[0].Type);
-			var sub2 = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[1].Type);
-
-			sub1.Should().Be(_metamodelCompilation.Components[1]);
-			sub2.Should().Be(_metamodelCompilation.Components[0]);
-		}
-
-		[Test]
-		public void ShouldTransformTwoSubComponents_OfMixedTypes()
-		{
-			Transform(@"
-				interface MyInterface : IComponent {} 
-				class MyComponent2 : Component {}
-				class MyComponent : Component { private MyComponent2 c1; private MyInterface c2; }");
-
-			var component = _metamodelCompilation.Components[1];
-			component.SubComponents.Should().HaveCount(2);
-			component.SubComponents[0].Identifier.Name.Should().Be("c1");
-			component.SubComponents[1].Identifier.Name.Should().Be("c2");
-
-			var sub1 = GetAndCheckSubComponentDeclaration<ComponentDeclaration>(component.SubComponents[0].Type);
-			var sub2 = GetAndCheckSubComponentDeclaration<InterfaceDeclaration>(component.SubComponents[1].Type);
-
-			sub1.Should().Be(_metamodelCompilation.Components[0]);
-			sub2.Should().Be(_metamodelCompilation.Interfaces[0]);
-		}
-
-		[Test]
-		public void ShouldTransformUpdateMethod()
-		{
-			var component = TransformComponent("class X : Component { protected override void Update() { return; } }");
-			component.UpdateMethod.Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
-			component.UpdateMethod.Identifier.Name.Should().Be("Update");
-			component.UpdateMethod.ReturnType.Should().Be(TypeSymbol.Void);
-			component.UpdateMethod.Parameters.Should().BeEmpty();
-
-			component.Methods.Should().BeEmpty();
-		}
-
-		[Test]
-		public void ShouldTransformUpdateMethodAndOtherMethods()
-		{
-			var component = TransformComponent("class X : Component { protected override void Update() { return; } public void M() {} }");
-			component.UpdateMethod.Body.Should().Be(ReturnStatement.ReturnVoid.AsBlockStatement());
-			component.Methods.Length.Should().Be(1);
-			component.Methods[0].Body.Should().Be(BlockStatement.Empty);
-		}
-
-		[Test]
-		public void SimpleNondeterministicBooleanComponent()
-		{
-			var actual = TransformComponent(@"
-class BooleanComponent : SafetySharp.Modeling.Component
-{
-	private bool _value;
-
-	protected override void Update()
-	{
-		Choose(out _value, true, false);
-	}
-}");
-
-			var fieldSymbol = _compilation.FindFieldSymbol("BooleanComponent", "_value");
-			var fieldReference = _symbolMap.GetFieldReference(fieldSymbol);
-			var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
-
-			var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
-			var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);
-
-			var clause1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
-			var clause2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
-
-			var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
-			var updateMethod = MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
-
-			var expected = new ComponentDeclaration(new Identifier("BooleanComponent"),
-													updateMethod,
-													ImmutableArray<MethodDeclaration>.Empty,
-													ImmutableArray.Create(field),
-													ImmutableArray<SubComponentDeclaration>.Empty);
-
-			actual.Should().Be(expected);
+				component.Fields.Should().BeEquivalentTo(
+					new FieldDeclaration(new Identifier("value"), TypeSymbol.Boolean));
+			}
 		}
 	}
 }

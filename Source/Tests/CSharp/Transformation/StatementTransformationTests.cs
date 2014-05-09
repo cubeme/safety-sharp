@@ -36,7 +36,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
-	internal class MethodTransformationStatementTests
+	internal class StatementTransformationTests
 	{
 		private IMetamodelReference<FieldDeclaration> _boolFieldReference;
 		private IMetamodelReference<FieldDeclaration> _intFieldReference;
@@ -44,7 +44,7 @@ namespace Tests.CSharp.Transformation
 		private MetamodelElement Transform(string csharpCode, string returnType = "void")
 		{
 			csharpCode = @"
-class C : SafetySharp.Modeling.Component 
+class C : Component 
 {
 	private bool boolField; 
     private int intField;
@@ -56,26 +56,11 @@ class C : SafetySharp.Modeling.Component
 			var compilation = new TestCompilation(csharpCode);
 			var expression = compilation.SyntaxRoot.DescendantNodes<BlockSyntax>().Single().Statements[0];
 
-			var symbolMap = new SymbolMap(compilation.CSharpCompilation);
-			_boolFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
-			_intFieldReference = symbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
+			_boolFieldReference = compilation.SymbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
+			_intFieldReference = compilation.SymbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "intField"));
 
-			var visitor = new MethodTransformation(compilation.SemanticModel, symbolMap);
+			var visitor = new MethodTransformation(compilation.SemanticModel, compilation.SymbolMap);
 			return visitor.Visit(expression);
-		}
-
-		private void Test(Statement expectedStatement, string csharpStatement, string returnType = "void")
-		{
-			var actualStatement = Transform(csharpStatement, returnType);
-			actualStatement.Should().Be(expectedStatement);
-		}
-
-		[Test]
-		public void AssignmentStatement_SimpleExpression()
-		{
-			var actual = Transform("boolField = true;");
-			var expected = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True);
-			actual.Should().Be(expected);
 		}
 
 		[Test]
@@ -84,22 +69,15 @@ class C : SafetySharp.Modeling.Component
 			var actual = Transform("boolField = true || false;");
 			var expression = new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False);
 			var expected = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), expression);
+
 			actual.Should().Be(expected);
 		}
 
 		[Test]
-		public void ChooseFromValues_TwoValues()
+		public void AssignmentStatement_SimpleExpression()
 		{
-			var actual = Transform("Choose(out boolField, true, false);");
-
-			var assignment1 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True);
-			var assignment2 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.False);
-
-			var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
-			var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
-
-			var expected = new GuardedCommandStatement(ImmutableArray.Create(case1, case2));
-			actual.Should().Be(expected);
+			Transform("boolField = true;")
+				.Should().Be(new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True));
 		}
 
 		[Test]
@@ -123,17 +101,24 @@ class C : SafetySharp.Modeling.Component
 		}
 
 		[Test]
-		public void EmptyStatement()
+		public void ChooseFromValues_TwoValues()
 		{
-			Test(new EmptyStatement(), ";");
+			var actual = Transform("Choose(out boolField, true, false);");
+
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.False);
+
+			var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
+			var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
+
+			var expected = new GuardedCommandStatement(ImmutableArray.Create(case1, case2));
+			actual.Should().Be(expected);
 		}
 
 		[Test]
-		public void ReturnStatements()
+		public void EmptyStatement()
 		{
-			Test(new ReturnStatement(null), "return;");
-			Test(new ReturnStatement(new IntegerLiteral(1)), "return 1;", "int");
-			Test(new ReturnStatement(BooleanLiteral.False), "return false;", "bool");
+			Transform(";").Should().Be(new EmptyStatement());
 		}
 
 		[Test]
@@ -142,8 +127,18 @@ class C : SafetySharp.Modeling.Component
 			var ifClause = new GuardedCommandClause(BooleanLiteral.True, new EmptyStatement());
 			var elseClause = new GuardedCommandClause(new UnaryExpression(BooleanLiteral.True, UnaryOperator.LogicalNot), new ReturnStatement(null));
 
-			Test(new GuardedCommandStatement(ImmutableArray.Create(ifClause)), "if (true) ;");
-			Test(new GuardedCommandStatement(ImmutableArray.Create(ifClause, elseClause)), "if (true) ; else return;");
+			Transform("if (true) ;")
+				.Should().Be(new GuardedCommandStatement(ImmutableArray.Create(ifClause)));
+			Transform("if (true) ; else return;")
+				.Should().Be(new GuardedCommandStatement(ImmutableArray.Create(ifClause, elseClause)));
+		}
+
+		[Test]
+		public void ReturnStatements()
+		{
+			Transform("return;").Should().Be(new ReturnStatement(null));
+			Transform("return 1;", "int").Should().Be(new ReturnStatement(new IntegerLiteral(1)));
+			Transform("return false;", "bool").Should().Be(new ReturnStatement(BooleanLiteral.False));
 		}
 	}
 }
