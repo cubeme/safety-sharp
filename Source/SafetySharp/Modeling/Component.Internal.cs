@@ -28,19 +28,15 @@ namespace SafetySharp.Modeling
 	using System.Linq;
 	using System.Linq.Expressions;
 	using System.Reflection;
+	using CSharp.Transformation;
 	using Utilities;
 
-	public partial class Component : IFreezable
+	public partial class Component
 	{
 		/// <summary>
 		///     Maps a field of the current component instance to its set of initial values.
 		/// </summary>
 		private readonly Dictionary<string, ImmutableArray<object>> _fields = new Dictionary<string, ImmutableArray<object>>();
-
-		/// <summary>
-		///     Gets the name of the component instance or <c>null</c> if no name could be determined.
-		/// </summary>
-		internal string Name { get; private set; }
 
 		/// <summary>
 		///     Gets the <see cref="Component" /> instances that are direct sub components of the current instance.
@@ -49,7 +45,6 @@ namespace SafetySharp.Modeling
 		{
 			get
 			{
-				Assert.IsFrozen(this);
 				return GetType()
 					.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 					.Where(field => typeof(IComponent).IsAssignableFrom(field.FieldType))
@@ -59,54 +54,37 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether the current instance is frozen, indicating that the instance does not allow any further
-		///     state modifications.
+		///     Gets a snapshot of the current component state.
 		/// </summary>
-		public bool IsFrozen { get; private set; }
-
-		/// <summary>
-		///     Marks the current instance as frozen, disallowing any further state modifications.
-		/// </summary>
-		public void Freeze()
+		/// <param name="componentName">The name of the component or <c>null</c> if no name can be determined.</param>
+		internal ComponentSnapshot GetSnapshot(string componentName = null)
 		{
-			Assert.IsNotFrozen(this);
-			IsFrozen = true;
+			var subComponents =
+				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+				where typeof(IComponent).IsAssignableFrom(field.FieldType)
+				let component = field.GetValue(this) as Component
+				where component != null
+				select component.GetSnapshot(field.Name);
+
+			return new ComponentSnapshot(this, componentName, subComponents.ToImmutableArray(), _fields.ToImmutableDictionary());
 		}
 
 		/// <summary>
-		///     Gets the sub component with the given name.
+		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
 		/// </summary>
-		/// <param name="name">The name of the sub component that should be returned.</param>
-		internal Component GetSubComponent(string name)
+		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
+		/// <param name="initialValues">The initial values of the field.</param>
+		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
 		{
-			Argument.NotNullOrWhitespace(name, () => name);
-			Assert.IsFrozen(this);
+			Argument.NotNull(field, () => field);
+			Argument.NotNull(initialValues, () => initialValues);
+			Argument.Satisfies(initialValues.Length > 0, () => initialValues, "At least one value must be provided.");
+			Argument.OfType<MemberExpression>(field.Body, () => field, "Expected a lambda expression of the form '() => field'.");
 
-			var field = GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-			Argument.Satisfies(field != null, () => name, "A sub component with name '{0}' does not exist.", name);
+			var fieldInfo = ((MemberExpression)field.Body).Member as FieldInfo;
+			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
 
-			if (!typeof(IComponent).IsAssignableFrom(field.FieldType))
-				Argument.Satisfies(false, () => name, "The field with name '{0}' is not a sub component.", name);
-
-			var component = field.GetValue(this) as Component;
-			Assert.NotNull(component);
-			return component;
-		}
-
-		/// <summary>
-		///     Gets the initial values of the field with name <paramref name="fieldName" />.
-		/// </summary>
-		/// <param name="fieldName">The name of the field the initial values should be returned for.</param>
-		internal ImmutableArray<object> GetInitialValuesOfField(string fieldName)
-		{
-			Argument.NotNullOrWhitespace(fieldName, () => fieldName);
-			Assert.IsFrozen(this);
-
-			ImmutableArray<object> initialValues;
-			if (!_fields.TryGetValue(fieldName, out initialValues))
-				Argument.Satisfies(false, () => fieldName, "A field with name '{0}' does not exist.", fieldName);
-
-			return initialValues;
+			_fields[fieldInfo.Name] = initialValues.Cast<object>().ToImmutableArray();
 		}
 
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
@@ -122,25 +100,6 @@ namespace SafetySharp.Modeling
 		protected static void ChooseFromRange(out decimal result, decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
 			result = 0;
-		}
-
-		/// <summary>
-		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
-		/// </summary>
-		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
-		/// <param name="initialValues">The initial values of the field.</param>
-		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
-		{
-			Argument.NotNull(field, () => field);
-			Argument.NotNull(initialValues, () => initialValues);
-			Argument.Satisfies(initialValues.Length > 0, () => initialValues, "At least one value must be provided.");
-			Argument.OfType<MemberExpression>(field.Body, () => field, "Expected a lambda expression of the form '() => field'.");
-			Assert.IsNotFrozen(this);
-
-			var fieldInfo = ((MemberExpression)field.Body).Member as FieldInfo;
-			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
-
-			_fields[fieldInfo.Name] = initialValues.Cast<object>().ToImmutableArray();
 		}
 	}
 }

@@ -42,14 +42,14 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     The model configuration that is being transformed.
 		/// </summary>
-		private readonly ModelConfiguration _modelConfiguration;
+		private readonly ModelConfigurationSnapshot _modelConfiguration;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="MetamodelTransformation" /> type.
 		/// </summary>
 		/// <param name="compilation">The modeling compilation that should be transformed.</param>
 		/// <param name="modelConfiguration">The model configuration that should be transformed.</param>
-		internal MetamodelTransformation(ModelingCompilation compilation, ModelConfiguration modelConfiguration)
+		internal MetamodelTransformation(ModelingCompilation compilation, ModelConfigurationSnapshot modelConfiguration)
 		{
 			Argument.NotNull(compilation, () => compilation);
 			Argument.NotNull(modelConfiguration, () => modelConfiguration);
@@ -58,7 +58,6 @@ namespace SafetySharp.CSharp.Transformation
 			_modelConfiguration = modelConfiguration;
 
 			ComponentResolver = ComponentResolver.Empty;
-			modelConfiguration.Freeze();
 		}
 
 		/// <summary>

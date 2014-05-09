@@ -63,7 +63,7 @@ namespace Tests.CSharp
 				foreach (var diagnostic in diagnostics)
 					Console.WriteLine("{0}", diagnostic);
 
-				throw new InvalidOperationException("Failed to create compilation.");
+				throw new CompilationException("Failed to create compilation.");
 			}
 
 			SemanticModel = CSharpCompilation.GetSemanticModel(SyntaxTree);
@@ -116,7 +116,7 @@ namespace Tests.CSharp
 				foreach (var diagnostic in emitResult.Diagnostics)
 					Console.WriteLine(diagnostic);
 
-				throw new InvalidOperationException("Assembly compilation failed.");
+				throw new CompilationException("Assembly compilation failed.");
 			}
 		}
 
@@ -140,10 +140,10 @@ namespace Tests.CSharp
 				.ToArray();
 
 			if (types.Length == 0)
-				throw new InvalidOperationException(String.Format("Found no type with name '{0}'.", typeName));
+				throw new CompilationException(String.Format("Found no type with name '{0}'.", typeName));
 
 			if (types.Length > 1)
-				throw new InvalidOperationException(String.Format("Found more than one type with name '{0}'.", typeName));
+				throw new CompilationException(String.Format("Found more than one type with name '{0}'.", typeName));
 
 			return types[0].TypeDeclaration;
 		}
@@ -160,7 +160,7 @@ namespace Tests.CSharp
 			var classDeclaration = FindTypeDeclaration(className) as ClassDeclarationSyntax;
 
 			if (classDeclaration == null)
-				throw new InvalidOperationException(String.Format("Found no class with name '{0}'.", className));
+				throw new CompilationException(String.Format("Found no class with name '{0}'.", className));
 
 			return classDeclaration;
 		}
@@ -177,7 +177,7 @@ namespace Tests.CSharp
 			var interfaceDeclaration = FindTypeDeclaration(interfaceName) as InterfaceDeclarationSyntax;
 
 			if (interfaceDeclaration == null)
-				throw new InvalidOperationException(String.Format("Found no interface with name '{0}'.", interfaceName));
+				throw new CompilationException(String.Format("Found no interface with name '{0}'.", interfaceName));
 
 			return interfaceDeclaration;
 		}
@@ -200,10 +200,10 @@ namespace Tests.CSharp
 				.ToArray();
 
 			if (methods.Length == 0)
-				throw new InvalidOperationException(String.Format("Found no methods with name '{0}' in '{1}'.", methodName, className));
+				throw new CompilationException(String.Format("Found no methods with name '{0}' in '{1}'.", methodName, className));
 
 			if (methods.Length > 1)
-				throw new InvalidOperationException(String.Format("Found more than one method with name '{0}' in '{1}'.", methodName, className));
+				throw new CompilationException(String.Format("Found more than one method with name '{0}' in '{1}'.", methodName, className));
 
 			return methods[0];
 		}
@@ -227,10 +227,10 @@ namespace Tests.CSharp
 				.ToArray();
 
 			if (fields.Length == 0)
-				throw new InvalidOperationException(String.Format("Found no fields with name '{0}' in '{1}'.", fieldName, className));
+				throw new CompilationException(String.Format("Found no fields with name '{0}' in '{1}'.", fieldName, className));
 
 			if (fields.Length > 1)
-				throw new InvalidOperationException(String.Format("Found more than one field with name '{0}' in '{1}'.", fieldName, className));
+				throw new CompilationException(String.Format("Found more than one field with name '{0}' in '{1}'.", fieldName, className));
 
 			return fields[0];
 		}
@@ -292,6 +292,21 @@ namespace Tests.CSharp
 		internal IFieldSymbol FindFieldSymbol(string className, string fieldName)
 		{
 			return (IFieldSymbol)SemanticModel.GetDeclaredSymbol(FindFieldDeclaration(className, fieldName));
+		}
+
+		/// <summary>
+		///     Thrown when an error condition occurs within the <see cref="TestCompilation" /> class.
+		/// </summary>
+		private class CompilationException : Exception
+		{
+			/// <summary>
+			///     Initializes a new instance of the <see cref="CompilationException" /> type.
+			/// </summary>
+			/// <param name="message">A message providing further details about the exception.</param>
+			public CompilationException(string message)
+				: base(message)
+			{
+			}
 		}
 	}
 }

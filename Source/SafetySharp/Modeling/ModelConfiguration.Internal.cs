@@ -25,62 +25,31 @@ namespace SafetySharp.Modeling
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
+	using System.Linq;
+	using CSharp.Transformation;
 	using Utilities;
 
-	partial class ModelConfiguration : IFreezable
+	partial class ModelConfiguration
 	{
 		/// <summary>
-		///     The <see cref="Component" /> instances contained in the model configuration.
+		///     The partition root components of the configuration.
 		/// </summary>
-		private ImmutableArray<Component> _components;
+		private readonly List<Component> _partitionRoots = new List<Component>();
 
 		/// <summary>
-		///     Initializes a new instance of the <see cref="ModelConfiguration" /> type.
+		///     Gets a snapshot of the current model configuration state.
 		/// </summary>
-		protected ModelConfiguration()
+		internal ModelConfigurationSnapshot GetSnapshot()
 		{
-			PartitionRoots = ImmutableArray<Component>.Empty;
-		}
-
-		/// <summary>
-		///     Gets the partition root components of the configuration.
-		/// </summary>
-		internal ImmutableArray<Component> PartitionRoots { get; private set; }
-
-		/// <summary>
-		///     Gets all <see cref="Component" /> instances contained in the model configuration.
-		/// </summary>
-		internal ImmutableArray<Component> Components
-		{
-			get
-			{
-				Assert.IsFrozen(this);
-				return _components;
-			}
-		}
-
-		/// <summary>
-		///     Gets a value indicating whether the current instance is frozen, indicating that the instance does not allow any further
-		///     state modifications.
-		/// </summary>
-		public bool IsFrozen { get; private set; }
-
-		/// <summary>
-		///     Marks the current instance as frozen, disallowing any further state modifications.
-		/// </summary>
-		public void Freeze()
-		{
-			Assert.IsNotFrozen(this);
-			IsFrozen = true;
-
-			if (PartitionRoots.IsEmpty)
+			if (_partitionRoots.Count == 0)
 				throw new InvalidOperationException("No partition roots have been set for the model configuration.");
 
+			// Ensure that there are no shared components
 			var hashSet = new HashSet<Component>();
-			foreach (var component in PartitionRoots)
+			foreach (var component in _partitionRoots)
 				CollectComponents(hashSet, component);
 
-			_components = hashSet.ToImmutableArray();
+			return new ModelConfigurationSnapshot(_partitionRoots.Select(root => root.GetSnapshot()).ToImmutableArray());
 		}
 
 		/// <summary>
@@ -90,9 +59,7 @@ namespace SafetySharp.Modeling
 		partial void AddPartitionRoots(Component[] components)
 		{
 			Argument.NotNull(components, () => components);
-			Assert.IsNotFrozen(this);
-
-			PartitionRoots = PartitionRoots.AddRange(components);
+			_partitionRoots.AddRange(components);
 		}
 
 		/// <summary>
@@ -107,7 +74,6 @@ namespace SafetySharp.Modeling
 			if (!components.Add(component))
 				throw new InvalidOperationException(String.Format(message, component.GetType().FullName));
 
-			component.Freeze();
 			foreach (var subComponent in component.SubComponents)
 				CollectComponents(components, subComponent);
 		}

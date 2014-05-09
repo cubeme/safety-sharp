@@ -28,6 +28,7 @@ namespace Tests.CSharp
 	{
 		using FluentAssertions;
 		using NUnit.Framework;
+		using SafetySharp.CSharp.Transformation;
 		using SafetySharp.Modeling;
 
 		[TestFixture]
@@ -47,7 +48,7 @@ namespace Tests.CSharp
 					component = (Component)Activator.CreateInstance(assembly.GetType("Tests.CSharp.TestComponent"));
 				}
 
-				var actual = compilation.ModelingCompilation.GetClassDeclaration(component);
+				var actual = compilation.ModelingCompilation.GetClassDeclaration(component.GetSnapshot());
 				var expected = compilation.FindClassDeclaration(component.GetType().FullName);
 
 				actual.Should().Be(expected);
@@ -63,10 +64,7 @@ namespace Tests.CSharp
 			[Test]
 			public void ThrowsIfComponentIsUnknown()
 			{
-				Action action = () => GetClassDeclaration("class TestComponent : Component {} class TestComponent : Component {}");
-				action.ShouldThrow<InvalidOperationException>();
-
-				action = () => GetClassDeclaration("namespace Nested { class TestComponent : Component {}");
+				Action action = () => GetClassDeclaration("namespace Nested { class TestComponent : Component {} }", new TestComponent());
 				action.ShouldThrow<InvalidOperationException>();
 
 				action = () => GetClassDeclaration("class Test : Component {}", new TestComponent());

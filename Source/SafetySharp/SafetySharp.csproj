@@ -80,7 +80,9 @@
     <Compile Include="CSharp\Normalization\MetadataNormalizer.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
     <Compile Include="CSharp\Transformation\ComponentResolver.cs" />
+    <Compile Include="CSharp\Transformation\ComponentSnapshot.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
+    <Compile Include="CSharp\Transformation\ModelConfigurationSnapshot.cs" />
     <Compile Include="Metamodel\Configurations\Value.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
@@ -150,7 +152,6 @@
     <Compile Include="Modelchecking\Promela\Promela.Generated.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Assert.cs" />
-    <Compile Include="Utilities\IFreezable.cs" />
     <Compile Include="Utilities\Log.cs" />
     <Compile Include="Utilities\LogEntry.cs" />
     <Compile Include="Utilities\LogType.cs" />

@@ -48,20 +48,20 @@ namespace Tests.CSharp.Transformation
 		{
 			var compilation = new TestCompilation(csharpCode);
 			_configuration = (ModelConfiguration)Activator.CreateInstance(compilation.Compile().GetType(configurationName));
-			var transformation = new MetamodelTransformation(compilation.ModelingCompilation, _configuration);
+			var transformation = new MetamodelTransformation(compilation.ModelingCompilation, _configuration.GetSnapshot());
 
 			transformation.TryTransform(out _metamodelCompilation, out _metamodelConfiguration).Should().BeTrue();
 			_componentResolver = transformation.ComponentResolver;
 		}
 
-		private ComponentConfiguration CreateComponentConfiguration(Component component)
-		{
-			return new ComponentConfiguration(
-				Identifier.Unknown,
-				_componentResolver.Resolve(component),
-				ImmutableArray<ValueArray>.Empty,
-				ImmutableArray<ComponentConfiguration>.Empty);
-		}
+		//private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component)
+		//{
+		//	return new ComponentConfiguration(
+		//		Identifier.Unknown,
+		//		_componentResolver.Resolve(component),
+		//		ImmutableArray<ValueArray>.Empty,
+		//		ImmutableArray<ComponentConfiguration>.Empty);
+		//}
 
 		//protected IMetamodelReference<ComponentDeclaration> GetComponentReference(string className)
 		//{

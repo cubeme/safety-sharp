@@ -26,6 +26,7 @@ namespace Tests.Modeling
 
 	namespace ComponentTests
 	{
+		using System.Linq;
 		using FluentAssertions;
 		using NUnit.Framework;
 		using SafetySharp.Modeling;
@@ -103,20 +104,16 @@ namespace Tests.Modeling
 			[Test]
 			public void ReturnsInitialValuesOfSingleKnownField()
 			{
-				var integerComponent = new TestComponent<int>(17);
-				integerComponent.Freeze();
+				var integerComponent = new TestComponent<int>(17).GetSnapshot();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17);
 
-				integerComponent = new TestComponent<int>(17, 0, -33);
-				integerComponent.Freeze();
+				integerComponent = new TestComponent<int>(17, 0, -33).GetSnapshot();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17, 0, -33);
 
-				var booleanComponent = new TestComponent<bool>(true);
-				booleanComponent.Freeze();
+				var booleanComponent = new TestComponent<bool>(true).GetSnapshot();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true);
 
-				booleanComponent = new TestComponent<bool>(true, false);
-				booleanComponent.Freeze();
+				booleanComponent = new TestComponent<bool>(true, false).GetSnapshot();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true, false);
 			}
 
@@ -125,9 +122,8 @@ namespace Tests.Modeling
 			{
 				var intValues = new[] { 142, 874, 11 };
 				var boolValues = new[] { true, false };
-				var component = new TestComponent<int, bool>(intValues, boolValues);
+				var component = new TestComponent<int, bool>(intValues, boolValues).GetSnapshot();
 
-				component.Freeze();
 				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(intValues);
 				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(boolValues);
 			}
@@ -135,8 +131,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsForSubComponentField()
 			{
-				var component = new OneSubComponent(new FieldComponent());
-				component.Freeze();
+				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
 
 				Action action = () => component.GetInitialValuesOfField("_component");
 				action.ShouldThrow<ArgumentException>();
@@ -145,8 +140,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsForUnknownField()
 			{
-				var component = new TestComponent<int>(0);
-				component.Freeze();
+				var component = new TestComponent<int>(0).GetSnapshot();
 
 				Action action = () => component.GetInitialValuesOfField("x");
 				action.ShouldThrow<ArgumentException>();
@@ -155,8 +149,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenEmptyStringIsPassed()
 			{
-				var component = new TestComponent<int>(0);
-				component.Freeze();
+				var component = new TestComponent<int>(0).GetSnapshot();
 
 				Action action = () => component.GetInitialValuesOfField(String.Empty);
 				action.ShouldThrow<ArgumentException>();
@@ -165,8 +158,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenNullIsPassed()
 			{
-				var component = new TestComponent<int>(0);
-				component.Freeze();
+				var component = new TestComponent<int>(0).GetSnapshot();
 
 				Action action = () => component.GetInitialValuesOfField(null);
 				action.ShouldThrow<ArgumentNullException>();
@@ -181,28 +173,25 @@ namespace Tests.Modeling
 			{
 				var subComponent1 = new FieldComponent();
 				var subComponent2 = new FieldComponent();
-				var component = new TwoSubComponent(subComponent1, subComponent2);
+				var component = new TwoSubComponent(subComponent1, subComponent2).GetSnapshot();
 
-				component.Freeze();
-				component.GetSubComponent("_component1").Should().Be(subComponent1);
-				component.GetSubComponent("_component2").Should().Be(subComponent2);
+				component.GetSubComponent("_component1").Component.Should().Be(subComponent1);
+				component.GetSubComponent("_component2").Component.Should().Be(subComponent2);
 			}
 
 			[Test]
 			public void ReturnsSingleSubComponent()
 			{
 				var subComponent = new FieldComponent();
-				var component = new OneSubComponent(subComponent);
+				var component = new OneSubComponent(subComponent).GetSnapshot();
 
-				component.Freeze();
-				component.GetSubComponent("_component").Should().Be(subComponent);
+				component.GetSubComponent("_component").Component.Should().Be(subComponent);
 			}
 
 			[Test]
 			public void ThrowsForNonComponentField()
 			{
-				var component = new FieldComponent();
-				component.Freeze();
+				var component = new FieldComponent().GetSnapshot();
 
 				Action action = () => component.GetSubComponent("_field");
 				action.ShouldThrow<ArgumentException>();
@@ -211,8 +200,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsForUnknownComponentField()
 			{
-				var component = new OneSubComponent(new FieldComponent());
-				component.Freeze();
+				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
 
 				Action action = () => component.GetSubComponent("_field");
 				action.ShouldThrow<ArgumentException>();
@@ -221,8 +209,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenEmptyStringIsPassed()
 			{
-				var component = new OneSubComponent(new FieldComponent());
-				component.Freeze();
+				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
 
 				Action action = () => component.GetSubComponent(String.Empty);
 				action.ShouldThrow<ArgumentException>();
@@ -231,8 +218,7 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenNullIsPassed()
 			{
-				var component = new OneSubComponent(new FieldComponent());
-				component.Freeze();
+				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
 
 				Action action = () => component.GetSubComponent(null);
 				action.ShouldThrow<ArgumentNullException>();
@@ -250,8 +236,20 @@ namespace Tests.Modeling
 			public void IgnoresNonSubComponentFields()
 			{
 				var component = new FieldComponent();
-				component.Freeze();
 				component.SubComponents.Should().BeEmpty();
+
+				var snapshot = component.GetSnapshot();
+				snapshot.SubComponents.Should().BeEmpty();
+			}
+
+			[Test]
+			public void IgnoresNullSubComponents()
+			{
+				var component = new OneSubComponent(null);
+				component.SubComponents.Should().BeEmpty();
+
+				var snapshot = component.GetSnapshot();
+				snapshot.SubComponents.Should().BeEmpty();
 			}
 
 			[Test]
@@ -261,16 +259,20 @@ namespace Tests.Modeling
 				var subComponent2 = new FieldComponent();
 				var component = new TwoSubComponent(subComponent1, subComponent2);
 
-				component.Freeze();
 				component.SubComponents.Should().BeEquivalentTo(subComponent1, subComponent2);
+
+				var snapshot = component.GetSnapshot();
+				snapshot.SubComponents.Select(c => c.Component).Should().BeEquivalentTo(subComponent1, subComponent2);
 			}
 
 			[Test]
 			public void ReturnsNoneIfComponentHasNoSubComponents()
 			{
 				var component = new TestComponent();
-				component.Freeze();
 				component.SubComponents.Should().BeEmpty();
+
+				var snapshot = component.GetSnapshot();
+				snapshot.SubComponents.Should().BeEmpty();
 			}
 
 			[Test]
@@ -279,16 +281,10 @@ namespace Tests.Modeling
 				var subComponent = new TestComponent();
 				var component = new OneSubComponent(subComponent);
 
-				component.Freeze();
 				component.SubComponents.Should().BeEquivalentTo(subComponent);
-			}
 
-			[Test]
-			public void IgnoresNullSubComponents()
-			{
-				var component = new OneSubComponent(null);
-				component.Freeze();
-				component.SubComponents.Should().BeEmpty();
+				var snapshot = component.GetSnapshot();
+				snapshot.SubComponents.Select(c => c.Component).Should().BeEquivalentTo(subComponent);
 			}
 		}
 	}

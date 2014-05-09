@@ -42,24 +42,24 @@ namespace Tests.CSharp.Transformation
 
 		internal class ConfigurationTransformationTests
 		{
-			private ComponentResolver _componentResolver;
-			private Dictionary<Component, IMetamodelReference<ComponentDeclaration>> _mappedComponents;
+			private Dictionary<Component, IMetamodelReference<ComponentDeclaration>> _componentReferences;
 			private MetamodelResolver _metamodelResolver;
+			private ComponentResolver _componentResolver;
 
-			private IMetamodelReference<ComponentDeclaration> CreateComponentDeclaration(Component component)
+			private IMetamodelReference<ComponentDeclaration> CreateComponentDeclaration(ComponentSnapshot component)
 			{
 				IMetamodelReference<ComponentDeclaration> reference;
-				if (_mappedComponents.TryGetValue(component, out reference))
+				if (_componentReferences.TryGetValue(component.Component, out reference))
 					return reference;
 
 				var fields = ImmutableArray<FieldDeclaration>.Empty;
 				var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
 
-				foreach (var field in component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+				foreach (var field in component.Component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
 				{
 					if (typeof(IComponent).IsAssignableFrom(field.FieldType))
 					{
-						var subComponent = CreateComponentDeclaration((Component)field.GetValue(component));
+						var subComponent = CreateComponentDeclaration(component.GetSubComponent(field.Name));
 						subComponents = subComponents.Add(new SubComponentDeclaration(new Identifier(field.Name), subComponent));
 					}
 					else
@@ -76,32 +76,32 @@ namespace Tests.CSharp.Transformation
 					.WithSubComponents(subComponents);
 
 				reference = new MetamodelReference<ComponentDeclaration>(component);
-				_componentResolver = _componentResolver.With(component, reference);
 				_metamodelResolver = _metamodelResolver.With(reference, componentDeclaration);
+				_componentResolver = _componentResolver.With(component, reference);
 
-				_mappedComponents.Add(component, reference);
+				_componentReferences.Add(component.Component, reference);
 				return reference;
 			}
 
 			protected MetamodelConfiguration TransformConfiguration(params Component[] partitionRoots)
 			{
-				var configuration = new TestConfiguration(partitionRoots);
-				_componentResolver = ComponentResolver.Empty;
+				var configuration = new TestConfiguration(partitionRoots).GetSnapshot();
 				_metamodelResolver = MetamodelResolver.Empty;
+				_componentResolver = ComponentResolver.Empty;
 
-				_mappedComponents = new Dictionary<Component, IMetamodelReference<ComponentDeclaration>>();
-				foreach (var component in partitionRoots)
+				_componentReferences = new Dictionary<Component, IMetamodelReference<ComponentDeclaration>>();
+				foreach (var component in configuration.PartitionRoots)
 					CreateComponentDeclaration(component);
-
+				
 				var configurationTransformation = new ConfigurationTransformation(configuration, _metamodelResolver, _componentResolver);
 				return configurationTransformation.Transform();
 			}
 
-			protected ComponentConfiguration CreateComponentConfiguration(Component component)
+			protected ComponentConfiguration CreateComponentConfiguration(Component component, string name = null)
 			{
 				return new ComponentConfiguration(
-					Identifier.Unknown,
-					_componentResolver.Resolve(component),
+					name == null ? Identifier.Unknown : new Identifier(name),
+					_componentReferences[component],
 					ImmutableArray<ValueArray>.Empty,
 					ImmutableArray<ComponentConfiguration>.Empty);
 			}
@@ -134,9 +134,9 @@ namespace Tests.CSharp.Transformation
 			{
 			}
 
-			private class TestConfiguration : ModelConfiguration
+			protected class TestConfiguration : ModelConfiguration
 			{
-				public TestConfiguration(Component[] components)
+				public TestConfiguration(params Component[] components)
 				{
 					AddPartitions(components);
 				}
@@ -216,7 +216,7 @@ namespace Tests.CSharp.Transformation
 				TransformConfiguration(component2)
 					.Partitions.Should().BeEquivalentTo(
 						new Partition(CreateComponentConfiguration(component2)
-										  .WithSubComponents(ImmutableArray.Create(CreateComponentConfiguration(component1)))));
+										  .WithSubComponents(ImmutableArray.Create(CreateComponentConfiguration(component1, "_test")))));
 			}
 
 			[Test]
@@ -247,16 +247,16 @@ namespace Tests.CSharp.Transformation
 				TransformConfiguration(component8).Partitions.Should().BeEquivalentTo(
 					new Partition(CreateComponentConfiguration(component8)
 									  .WithSubComponents(ImmutableArray.Create(
-										  CreateComponentConfiguration(component7)
+										  CreateComponentConfiguration(component7, "_test")
 											  .WithSubComponents(ImmutableArray.Create(
-												  CreateComponentConfiguration(component6)
+												  CreateComponentConfiguration(component6, "_test1")
 													  .WithSubComponents(ImmutableArray.Create(
-														  CreateComponentConfiguration(component5)
+														  CreateComponentConfiguration(component5, "_test1")
 															  .WithSubComponents(ImmutableArray.Create(
-																  CreateComponentConfiguration(component2),
-																  CreateComponentConfiguration(component1))),
-														  CreateComponentConfiguration(component3))),
-												  CreateComponentConfiguration(component4)))))));
+																  CreateComponentConfiguration(component2, "_test1"),
+																  CreateComponentConfiguration(component1, "_test2"))),
+														  CreateComponentConfiguration(component3, "_test2"))),
+												  CreateComponentConfiguration(component4, "_test2")))))));
 			}
 
 			[Test]
@@ -281,27 +281,27 @@ namespace Tests.CSharp.Transformation
 				TransformConfiguration(component8, component14, component15)
 					.Partitions.Should().BeEquivalentTo(
 						new Partition(CreateComponentConfiguration(component8)
-										  .WithSubComponents(ImmutableArray.Create(
-											  CreateComponentConfiguration(component7)
-												  .WithSubComponents(ImmutableArray.Create(
-													  CreateComponentConfiguration(component6)
-														  .WithSubComponents(ImmutableArray.Create(
-															  CreateComponentConfiguration(component5)
-																  .WithSubComponents(ImmutableArray.Create(
-																	  CreateComponentConfiguration(component2),
-																	  CreateComponentConfiguration(component1))),
-															  CreateComponentConfiguration(component3))),
-													  CreateComponentConfiguration(component4)))))),
+									  .WithSubComponents(ImmutableArray.Create(
+										  CreateComponentConfiguration(component7, "_test")
+											  .WithSubComponents(ImmutableArray.Create(
+												  CreateComponentConfiguration(component6, "_test1")
+													  .WithSubComponents(ImmutableArray.Create(
+														  CreateComponentConfiguration(component5, "_test1")
+															  .WithSubComponents(ImmutableArray.Create(
+																  CreateComponentConfiguration(component2, "_test1"),
+																  CreateComponentConfiguration(component1, "_test2"))),
+														  CreateComponentConfiguration(component3, "_test2"))),
+												  CreateComponentConfiguration(component4, "_test2")))))),
 						new Partition(CreateComponentConfiguration(component14)
 										  .WithSubComponents(ImmutableArray.Create(
-											  CreateComponentConfiguration(component10),
-											  CreateComponentConfiguration(component11)))),
+											  CreateComponentConfiguration(component10, "_test1"),
+											  CreateComponentConfiguration(component11, "_test2")))),
 						new Partition(CreateComponentConfiguration(component15)
 										  .WithSubComponents(ImmutableArray.Create(
-											  CreateComponentConfiguration(component12),
-											  CreateComponentConfiguration(component13)
+											  CreateComponentConfiguration(component12, "_test1"),
+											  CreateComponentConfiguration(component13, "_test2")
 												  .WithSubComponents(ImmutableArray.Create(
-													  CreateComponentConfiguration(component9)))))));
+													  CreateComponentConfiguration(component9, "_test")))))));
 			}
 
 			[Test]
@@ -313,7 +313,7 @@ namespace Tests.CSharp.Transformation
 				TransformConfiguration(component2)
 					.Partitions[0].Component.Should().Be(
 						CreateComponentConfiguration(component2)
-							.WithSubComponents(ImmutableArray.Create(CreateComponentConfiguration(component1))));
+							.WithSubComponents(ImmutableArray.Create(CreateComponentConfiguration(component1, "_test"))));
 			}
 
 			[Test]
@@ -350,8 +350,8 @@ namespace Tests.CSharp.Transformation
 					.Partitions[0].Component.Should().Be(
 						CreateComponentConfiguration(component3)
 							.WithSubComponents(ImmutableArray.Create(
-								CreateComponentConfiguration(component1),
-								CreateComponentConfiguration(component2))));
+								CreateComponentConfiguration(component1, "_test1"),
+								CreateComponentConfiguration(component2, "_test2"))));
 			}
 		}
 	}

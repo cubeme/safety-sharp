@@ -26,6 +26,7 @@ namespace Tests.Modeling
 
 	namespace ModelConfigurationTests
 	{
+		using System.Linq;
 		using FluentAssertions;
 		using NUnit.Framework;
 		using SafetySharp.Modeling;
@@ -81,10 +82,9 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new ComplexComponent(component1, component2, null);
-				var configuration = new TestModelConfiguration(component3);
+				var configuration = new TestModelConfiguration(component3).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component1, component2, component3);
+				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
@@ -93,20 +93,18 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new ComplexComponent(component1, component2, new object());
-				var configuration = new TestModelConfiguration(component3);
+				var configuration = new TestModelConfiguration(component3).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component1, component2, component3);
+				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
 			public void IgnoresNullComponents()
 			{
 				var component = new NestedComponent(null);
-				var configuration = new TestModelConfiguration(component);
+				var configuration = new TestModelConfiguration(component).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component);
+				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component);
 			}
 
 			[Test]
@@ -118,10 +116,11 @@ namespace Tests.Modeling
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new EmptyComponent();
 				var component6 = new ComplexComponent(component4, component5, new object());
-				var configuration = new TestModelConfiguration(component6);
+				var configuration = new TestModelConfiguration(component6).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component1, component2, component3, component4, component5, component6);
+				configuration.Components.Select(c => c.Component)
+							 .Should()
+							 .BeEquivalentTo(component1, component2, component3, component4, component5, component6);
 			}
 
 			[Test]
@@ -131,10 +130,9 @@ namespace Tests.Modeling
 				var component2 = new NestedComponent(component1);
 				var component3 = new NestedComponent(component2);
 				var component4 = new NestedComponent(component3);
-				var configuration = new TestModelConfiguration(component4);
+				var configuration = new TestModelConfiguration(component4).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component1, component2, component3, component4);
+				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3, component4);
 			}
 
 			[Test]
@@ -142,10 +140,9 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new NestedComponent(component1);
-				var configuration = new TestModelConfiguration(component2);
+				var configuration = new TestModelConfiguration(component2).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component1, component2);
+				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2);
 			}
 
 			[Test]
@@ -153,48 +150,14 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
-				var configuration = new TestModelConfiguration(component1, component2);
+				var configuration = new TestModelConfiguration(component1, component2).GetSnapshot();
 
-				configuration.Freeze();
-				configuration.Components.Should().BeEquivalentTo(component1, component2);
-			}
-
-			[Test]
-			public void ThrowsWhenConfigurationIsNotSealed()
-			{
-				var configuration = new TestModelConfiguration(new EmptyComponent());
-
-				Action action = () => configuration.Components.Should().BeEmpty();
-				action.ShouldThrow<InvalidOperationException>();
+				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2);
 			}
 		}
 
 		[TestFixture]
-		internal class AddPartitionRootsMethod : ModelConfigurationTests
-		{
-			private class FrozenConfiguration : ModelConfiguration
-			{
-				public FrozenConfiguration()
-				{
-					Freeze();
-					AddPartitions(new TestComponent());
-				}
-
-				private class TestComponent : Component
-				{
-				}
-			}
-
-			[Test]
-			public void ThrowsIfConfigurationIsFrozen()
-			{
-				Action action = () => new FrozenConfiguration();
-				action.ShouldThrow<InvalidOperationException>();
-			}
-		}
-
-		[TestFixture]
-		internal class SealMethod : ModelConfigurationTests
+		internal class GetSnapshot : ModelConfigurationTests
 		{
 			[Test]
 			public void ThrowsWhenComponentsAreSharedBetweenDifferentRoots()
@@ -207,7 +170,7 @@ namespace Tests.Modeling
 				var component6 = new ComplexComponent(component5, component2, new object());
 				var configuration = new TestModelConfiguration(component4, component6);
 
-				Action action = configuration.Freeze;
+				Action action = () => configuration.GetSnapshot();
 				action.ShouldThrow<InvalidOperationException>();
 			}
 
@@ -221,7 +184,7 @@ namespace Tests.Modeling
 				var component5 = new ComplexComponent(component4, component2, new object());
 				var configuration = new TestModelConfiguration(component5);
 
-				Action action = configuration.Freeze;
+				Action action = () => configuration.GetSnapshot();
 				action.ShouldThrow<InvalidOperationException>();
 			}
 
@@ -232,7 +195,7 @@ namespace Tests.Modeling
 				var component2 = new ComplexComponent(component1, component1, null);
 				var configuration = new TestModelConfiguration(component2);
 
-				Action action = configuration.Freeze;
+				Action action = () => configuration.GetSnapshot();
 				action.ShouldThrow<InvalidOperationException>();
 			}
 
@@ -241,7 +204,7 @@ namespace Tests.Modeling
 			{
 				var configuration = new TestModelConfiguration();
 
-				Action action = configuration.Freeze;
+				Action action = () => configuration.GetSnapshot();
 				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
@@ -255,18 +218,18 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new EmptyComponent();
-				var configuration = new TestModelConfiguration(component1, component2, component3);
+				var configuration = new TestModelConfiguration(component1, component2, component3).GetSnapshot();
 
-				configuration.PartitionRoots.Should().BeEquivalentTo(component1, component2, component3);
+				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
 			public void ContainsSingleTopLevelComponent()
 			{
 				var component = new EmptyComponent();
-				var configuration = new TestModelConfiguration(component);
+				var configuration = new TestModelConfiguration(component).GetSnapshot();
 
-				configuration.PartitionRoots.Should().BeEquivalentTo(component);
+				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component);
 			}
 
 			[Test]
@@ -274,9 +237,9 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new NestedComponent(component1);
-				var configuration = new TestModelConfiguration(component2);
+				var configuration = new TestModelConfiguration(component2).GetSnapshot();
 
-				configuration.PartitionRoots.Should().BeEquivalentTo(component2);
+				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component2);
 			}
 		}
 	}

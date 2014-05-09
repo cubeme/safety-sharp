@@ -29,6 +29,7 @@ namespace SafetySharp.CSharp
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
+	using Transformation;
 	using Utilities;
 
 	/// <summary>
@@ -70,11 +71,11 @@ namespace SafetySharp.CSharp
 		///     Gets the <see cref="ClassDeclarationSyntax" /> corresponding to the <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component the class declaration should be returned for.</param>
-		internal ClassDeclarationSyntax GetClassDeclaration(Component component)
+		internal ClassDeclarationSyntax GetClassDeclaration(ComponentSnapshot component)
 		{
 			Argument.NotNull(component, () => component);
 
-			var componentType = component.GetType();
+			var componentType = component.Component.GetType();
 			var componentClasses = (from syntaxTree in CSharpCompilation.SyntaxTrees
 									let semanticModel = CSharpCompilation.GetSemanticModel(syntaxTree)
 									from classDeclaration in syntaxTree.DescendantNodesAndSelf<ClassDeclarationSyntax>()

@@ -209,35 +209,5 @@ namespace SafetySharp.Utilities
 
 			throw new InvalidCastException(message);
 		}
-
-		/// <summary>
-		///     Checks whether <paramref name="freezable" /> has already been frozen, throwing an
-		///     <see cref="InvalidOperationException" /> if <paramref name="freezable" /> is still mutable.
-		/// </summary>
-		/// <param name="freezable">The object that should be checked.</param>
-		/// <exception cref="InvalidOperationException">Thrown if <paramref name="freezable" /> has not yet been frozen.</exception>
-		[DebuggerHidden]
-		internal static void IsFrozen(IFreezable freezable)
-		{
-			Argument.NotNull(freezable, () => freezable);
-
-			if (!freezable.IsFrozen)
-				throw new InvalidOperationException("This operation is only supported after the object's Freeze() method has been called.");
-		}
-
-		/// <summary>
-		///     Checks whether <paramref name="freezable" /> has been frozen, throwing an
-		///     <see cref="InvalidOperationException" /> if <paramref name="freezable" /> is in an immutable frozen state.
-		/// </summary>
-		/// <param name="freezable">The object that should be checked.</param>
-		/// <exception cref="InvalidOperationException">Thrown if <paramref name="freezable" /> has already been frozen.</exception>
-		[DebuggerHidden]
-		internal static void IsNotFrozen(IFreezable freezable)
-		{
-			Argument.NotNull(freezable, () => freezable);
-
-			if (freezable.IsFrozen)
-				throw new InvalidOperationException("This operation is not supported once the object's Freeze() method has been called.");
-		}
 	}
 }

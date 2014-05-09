@@ -48,7 +48,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     The <see cref="ModelConfiguration" /> instance that is being transformed.
 		/// </summary>
-		private readonly ModelConfiguration _modelConfiguration;
+		private readonly ModelConfigurationSnapshot _modelConfiguration;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="ConfigurationTransformation" /> type.
@@ -56,7 +56,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="modelConfiguration">The model configuration that should be transformed.</param>
 		/// <param name="metamodelResolver">The <see cref="MetamodelResolver" /> that should be used to resolve metamodel references.</param>
 		/// <param name="componentResolver">The <see cref="ComponentResolver" /> that should be used to resolve components.</param>
-		internal ConfigurationTransformation(ModelConfiguration modelConfiguration,
+		internal ConfigurationTransformation(ModelConfigurationSnapshot modelConfiguration,
 											 MetamodelResolver metamodelResolver,
 											 ComponentResolver componentResolver)
 		{
@@ -67,9 +67,6 @@ namespace SafetySharp.CSharp.Transformation
 			_modelConfiguration = modelConfiguration;
 			_metamodelResolver = metamodelResolver;
 			_componentResolver = componentResolver;
-
-			if (!modelConfiguration.IsFrozen)
-				modelConfiguration.Freeze();
 		}
 
 		/// <summary>
@@ -86,7 +83,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Transforms the partition represented by the <paramref name="partitionRoot" /> component.
 		/// </summary>
 		/// <param name="partitionRoot">The partition root component that should be transformed.</param>
-		private Partition TransformPartition(Component partitionRoot)
+		private Partition TransformPartition(ComponentSnapshot partitionRoot)
 		{
 			return new Partition(TransformComponent(partitionRoot));
 		}
@@ -95,7 +92,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Transforms the <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component that should be transformed.</param>
-		private ComponentConfiguration TransformComponent(Component component)
+		private ComponentConfiguration TransformComponent(ComponentSnapshot component)
 		{
 			var identifier = component.Name == null ? Identifier.Unknown : new Identifier(component.Name);
 			var componentDeclarationReference = _componentResolver.Resolve(component);
