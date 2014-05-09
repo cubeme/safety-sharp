@@ -29,9 +29,11 @@ namespace Tests.Modeling
 		using FluentAssertions;
 		using NUnit.Framework;
 		using SafetySharp.Modeling;
+		using SafetySharp.Utilities;
 
 		internal class ModelConfigurationTests
 		{
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
 			protected class ComplexComponent : Component
 			{
 				private Component _nested1;
@@ -50,6 +52,7 @@ namespace Tests.Modeling
 			{
 			}
 
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
 			protected class NestedComponent : Component
 			{
 				private Component _nested;
@@ -72,29 +75,15 @@ namespace Tests.Modeling
 		[TestFixture]
 		internal class GetComponentsMethod : ModelConfigurationTests
 		{
-			private static void CheckComponents(ModelConfiguration configuration, params Component[] expectedComponents)
-			{
-				var actualComponents = configuration.GetComponents();
-
-				actualComponents.Should().HaveCount(expectedComponents.Length);
-				actualComponents.Should().BeEquivalentTo(expectedComponents);
-			}
-
-			private static void CheckThrows(ModelConfiguration configuration)
-			{
-				Action action = () => configuration.GetComponents();
-				action.ShouldThrow<InvalidOperationException>();
-			}
-
 			[Test]
 			public void IgnoresNonComponentNullObjects()
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new ComplexComponent(component1, component2, null);
-				var config = new TestModelConfiguration(component3);
+				var configuration = new TestModelConfiguration(component3);
 
-				CheckComponents(config, component1, component2, component3);
+				configuration.GetComponents().Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
@@ -103,18 +92,18 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new ComplexComponent(component1, component2, new object());
-				var config = new TestModelConfiguration(component3);
+				var configuration = new TestModelConfiguration(component3);
 
-				CheckComponents(config, component1, component2, component3);
+				configuration.GetComponents().Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
 			public void IgnoresNullComponents()
 			{
 				var component = new NestedComponent(null);
-				var config = new TestModelConfiguration(component);
+				var configuration = new TestModelConfiguration(component);
 
-				CheckComponents(config, component);
+				configuration.GetComponents().Should().BeEquivalentTo(component);
 			}
 
 			[Test]
@@ -126,9 +115,9 @@ namespace Tests.Modeling
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new EmptyComponent();
 				var component6 = new ComplexComponent(component4, component5, new object());
-				var config = new TestModelConfiguration(component6);
+				var configuration = new TestModelConfiguration(component6);
 
-				CheckComponents(config, component1, component2, component3, component4, component5, component6);
+				configuration.GetComponents().Should().BeEquivalentTo(component1, component2, component3, component4, component5, component6);
 			}
 
 			[Test]
@@ -138,9 +127,9 @@ namespace Tests.Modeling
 				var component2 = new NestedComponent(component1);
 				var component3 = new NestedComponent(component2);
 				var component4 = new NestedComponent(component3);
-				var config = new TestModelConfiguration(component4);
+				var configuration = new TestModelConfiguration(component4);
 
-				CheckComponents(config, component1, component2, component3, component4);
+				configuration.GetComponents().Should().BeEquivalentTo(component1, component2, component3, component4);
 			}
 
 			[Test]
@@ -148,9 +137,9 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new NestedComponent(component1);
-				var config = new TestModelConfiguration(component2);
+				var configuration = new TestModelConfiguration(component2);
 
-				CheckComponents(config, component1, component2);
+				configuration.GetComponents().Should().BeEquivalentTo(component1, component2);
 			}
 
 			[Test]
@@ -158,9 +147,9 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
-				var config = new TestModelConfiguration(component1, component2);
+				var configuration = new TestModelConfiguration(component1, component2);
 
-				CheckComponents(config, component1, component2);
+				configuration.GetComponents().Should().BeEquivalentTo(component1, component2);
 			}
 
 			[Test]
@@ -172,8 +161,10 @@ namespace Tests.Modeling
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new EmptyComponent();
 				var component6 = new ComplexComponent(component5, component2, new object());
+				var configuration = new TestModelConfiguration(component4, component6);
 
-				CheckThrows(new TestModelConfiguration(component4, component6));
+				Action action = () => configuration.GetComponents();
+				action.ShouldThrow<InvalidOperationException>();
 			}
 
 			[Test]
@@ -184,8 +175,10 @@ namespace Tests.Modeling
 				var component3 = new NestedComponent(component2);
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new ComplexComponent(component4, component2, new object());
+				var configuration = new TestModelConfiguration(component5);
 
-				CheckThrows(new TestModelConfiguration(component5));
+				Action action = () => configuration.GetComponents();
+				action.ShouldThrow<InvalidOperationException>();
 			}
 
 			[Test]
@@ -193,44 +186,43 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new ComplexComponent(component1, component1, null);
+				var configuration = new TestModelConfiguration(component2);
 
-				CheckThrows(new TestModelConfiguration(component2));
+				Action action = () => configuration.GetComponents();
+				action.ShouldThrow<InvalidOperationException>();
 			}
 
 			[Test]
 			public void ThrowsWhenNoPartitionRootIsSet()
 			{
-				CheckThrows(new TestModelConfiguration());
+				var configuration = new TestModelConfiguration();
+
+				Action action = () => configuration.GetComponents();
+				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
 
 		[TestFixture]
 		internal class PartitionRootsProperty : ModelConfigurationTests
 		{
-			private static void CheckRoots(ModelConfiguration configuration, params Component[] expectedRoots)
-			{
-				configuration.PartitionRoots.Should().HaveCount(expectedRoots.Length);
-				configuration.PartitionRoots.Should().BeEquivalentTo(expectedRoots);
-			}
-
 			[Test]
 			public void ContainsAllTopLevelComponents()
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new EmptyComponent();
-				var config = new TestModelConfiguration(component1, component2, component3);
+				var configuration = new TestModelConfiguration(component1, component2, component3);
 
-				CheckRoots(config, component1, component2, component3);
+				configuration.PartitionRoots.Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
 			public void ContainsSingleTopLevelComponent()
 			{
 				var component = new EmptyComponent();
-				var config = new TestModelConfiguration(component);
+				var configuration = new TestModelConfiguration(component);
 
-				CheckRoots(config, component);
+				configuration.PartitionRoots.Should().BeEquivalentTo(component);
 			}
 
 			[Test]
@@ -238,9 +230,9 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new NestedComponent(component1);
-				var config = new TestModelConfiguration(component2);
+				var configuration = new TestModelConfiguration(component2);
 
-				CheckRoots(config, component2);
+				configuration.PartitionRoots.Should().BeEquivalentTo(component2);
 			}
 		}
 	}

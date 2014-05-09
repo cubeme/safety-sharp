@@ -133,6 +133,26 @@ namespace SafetySharp.Utilities
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
+		/// <param name="targetFlags">Specifies whether only the marked symbol or all of its members are considered used.</param>
+		[UsedImplicitly]
+		public UsedImplicitlyAttribute(ImplicitUseTargetFlags targetFlags)
+			: this(ImplicitUseKindFlags.Default, targetFlags)
+		{
+		}
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="useKindFlags">Specifies how the symbol is used implicitly.</param>
+		[UsedImplicitly]
+		public UsedImplicitlyAttribute(ImplicitUseKindFlags useKindFlags)
+			: this(useKindFlags, ImplicitUseTargetFlags.Default)
+		{
+		}
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
 		/// <param name="useKindFlags">Specifies how the symbol is used implicitly.</param>
 		/// <param name="targetFlags">Specifies whether only the marked symbol or all of its members are considered used.</param>
 		[UsedImplicitly]
