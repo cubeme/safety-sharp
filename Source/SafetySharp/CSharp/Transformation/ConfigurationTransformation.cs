@@ -103,12 +103,12 @@ namespace SafetySharp.CSharp.Transformation
 			var componentDeclaration = _metamodelResolver.Resolve(componentDeclarationReference);
 
 			var fieldValues = componentDeclaration.Fields.Aggregate(
-				seed: ImmutableArray<InitialFieldValues>.Empty,
+				seed: ImmutableArray<ValueArray>.Empty,
 				func: (current, field) =>
 				{
 					var values = component.GetInitialValuesOfField(field.Identifier.Name);
-					var initialValues = values.Select(value => new UntypedValue(value)).ToImmutableArray();
-					return current.Add(new InitialFieldValues(initialValues));
+					var initialValues = values.Select(value => new Value(value)).ToImmutableArray();
+					return current.Add(new ValueArray(initialValues));
 				});
 
 			var subComponents = componentDeclaration.SubComponents.Aggregate(

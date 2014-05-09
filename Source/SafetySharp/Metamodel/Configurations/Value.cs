@@ -25,16 +25,16 @@ namespace SafetySharp.Metamodel.Configurations
 	using System;
 
 	/// <summary>
-	///     Represents an untyped value within the tree of metamodel elements.
+	///     Represents a value within the tree of metamodel elements.
 	/// </summary>
-	partial class UntypedValue
+	partial class Value
 	{
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return Value.ToString();
+			return Object.ToString();
 		}
 	}
 }

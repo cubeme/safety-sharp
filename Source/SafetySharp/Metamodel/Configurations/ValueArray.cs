@@ -24,12 +24,11 @@ namespace SafetySharp.Metamodel.Configurations
 {
 	using System;
 	using System.Linq;
-	using Declarations;
 
 	/// <summary>
-	///     Represents the initial values of a <see cref="FieldDeclaration" />.
+	///     Represents an array of <see cref="Value" />s.
 	/// </summary>
-	partial class InitialFieldValues
+	partial class ValueArray
 	{
 		/// <summary>
 		///     Returns a string that represents the current object.

@@ -159,7 +159,7 @@ namespace Tests.CSharp.Transformation
 
 		private void ShouldHaveInitialValues<T>(params T[] values)
 		{
-			var initialValues = values.Select(value => new UntypedValue(value));
+			var initialValues = values.Select(value => new Value(value));
 			var component = new TestComponent<T>(values);
 			var configuration = new TestConfiguration(component);
 

@@ -628,7 +628,7 @@ let elements = [
                     }
                     {
                         Name = "FieldValues"
-                        Type = "InitialFieldValues"
+                        Type = "ValueArray"
                         CollectionType = Array
                         Validation = None
                         Comment = "The initial values for the component's fields. The values are specified in the same order as the corresponding field declarations of the component configuration's declaration."
@@ -645,33 +645,33 @@ let elements = [
                 ]
             }
             {   
-                Name = "InitialFieldValues"
+                Name = "ValueArray"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Values"
-                        Type = "UntypedValue"
+                        Type = "Value"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The initial values of the field. The type of the values matches the type of the field."
+                        Comment = "The values."
                         CanBeNull = false
                     }
                 ]
             }
             {   
-                Name = "UntypedValue"
+                Name = "Value"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Value"
+                        Name = "Object"
                         Type = "object"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The initial value."
+                        Comment = "The value."
                         CanBeNull = false
                     }
                 ]
