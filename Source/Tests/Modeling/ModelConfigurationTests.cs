@@ -23,226 +23,225 @@
 namespace Tests.Modeling
 {
 	using System;
-	using FluentAssertions;
-	using NUnit.Framework;
-	using SafetySharp.Modeling;
 
-	[TestFixture]
-	internal class ModelConfigurationTests
+	namespace ModelConfigurationTests
 	{
-		private class EmptyComponent : Component
-		{
-		}
+		using FluentAssertions;
+		using NUnit.Framework;
+		using SafetySharp.Modeling;
 
-		private class NestedComponent : Component
+		internal class ModelConfigurationTests
 		{
-			private Component _nested;
-
-			public NestedComponent(Component nested)
+			protected class ComplexComponent : Component
 			{
-				_nested = nested;
+				private Component _nested1;
+				private Component _nested2;
+				private object _other;
+
+				public ComplexComponent(Component nested1, Component nested2, object other)
+				{
+					_nested1 = nested1;
+					_nested2 = nested2;
+					_other = other;
+				}
+			}
+
+			protected class EmptyComponent : Component
+			{
+			}
+
+			protected class NestedComponent : Component
+			{
+				private Component _nested;
+
+				public NestedComponent(Component nested)
+				{
+					_nested = nested;
+				}
+			}
+
+			protected class TestModelConfiguration : ModelConfiguration
+			{
+				public TestModelConfiguration(params Component[] rootComponents)
+				{
+					AddPartitions(rootComponents);
+				}
 			}
 		}
 
-		private class ComplexComponent : Component
+		[TestFixture]
+		internal class GetComponentsMethod : ModelConfigurationTests
 		{
-			private Component _nested1;
-			private Component _nested2;
-			private object _other;
-
-			public ComplexComponent(Component nested1, Component nested2, object other)
+			private static void CheckComponents(ModelConfiguration configuration, params Component[] expectedComponents)
 			{
-				_nested1 = nested1;
-				_nested2 = nested2;
-				_other = other;
+				var actualComponents = configuration.GetComponents();
+
+				actualComponents.Should().HaveCount(expectedComponents.Length);
+				actualComponents.Should().BeEquivalentTo(expectedComponents);
+			}
+
+			private static void CheckThrows(ModelConfiguration configuration)
+			{
+				Action action = () => configuration.GetComponents();
+				action.ShouldThrow<InvalidOperationException>();
+			}
+
+			[Test]
+			public void IgnoresNonComponentNullObjects()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var component3 = new ComplexComponent(component1, component2, null);
+				var config = new TestModelConfiguration(component3);
+
+				CheckComponents(config, component1, component2, component3);
+			}
+
+			[Test]
+			public void IgnoresNonComponentObjects()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var component3 = new ComplexComponent(component1, component2, new object());
+				var config = new TestModelConfiguration(component3);
+
+				CheckComponents(config, component1, component2, component3);
+			}
+
+			[Test]
+			public void IgnoresNullComponents()
+			{
+				var component = new NestedComponent(null);
+				var config = new TestModelConfiguration(component);
+
+				CheckComponents(config, component);
+			}
+
+			[Test]
+			public void ReturnsAllComponentsOfComplexHierarchy()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var component3 = new NestedComponent(component2);
+				var component4 = new ComplexComponent(component1, component3, new object());
+				var component5 = new EmptyComponent();
+				var component6 = new ComplexComponent(component4, component5, new object());
+				var config = new TestModelConfiguration(component6);
+
+				CheckComponents(config, component1, component2, component3, component4, component5, component6);
+			}
+
+			[Test]
+			public void ReturnsAllComponentsOfLinearHierarchyWithFourLevels()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new NestedComponent(component1);
+				var component3 = new NestedComponent(component2);
+				var component4 = new NestedComponent(component3);
+				var config = new TestModelConfiguration(component4);
+
+				CheckComponents(config, component1, component2, component3, component4);
+			}
+
+			[Test]
+			public void ReturnsAllComponentsOfLinearHierarchyWithTwoLevels()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new NestedComponent(component1);
+				var config = new TestModelConfiguration(component2);
+
+				CheckComponents(config, component1, component2);
+			}
+
+			[Test]
+			public void ReturnsPartitionRoots()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var config = new TestModelConfiguration(component1, component2);
+
+				CheckComponents(config, component1, component2);
+			}
+
+			[Test]
+			public void ThrowsWhenComponentsAreSharedBetweenDifferentRoots()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var component3 = new NestedComponent(component2);
+				var component4 = new ComplexComponent(component1, component3, new object());
+				var component5 = new EmptyComponent();
+				var component6 = new ComplexComponent(component5, component2, new object());
+
+				CheckThrows(new TestModelConfiguration(component4, component6));
+			}
+
+			[Test]
+			public void ThrowsWhenComponentsAreSharedWithinSameRootAtDifferentLevels()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var component3 = new NestedComponent(component2);
+				var component4 = new ComplexComponent(component1, component3, new object());
+				var component5 = new ComplexComponent(component4, component2, new object());
+
+				CheckThrows(new TestModelConfiguration(component5));
+			}
+
+			[Test]
+			public void ThrowsWhenComponentsAreSharedWithinSameRootAtSameLevel()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new ComplexComponent(component1, component1, null);
+
+				CheckThrows(new TestModelConfiguration(component2));
+			}
+
+			[Test]
+			public void ThrowsWhenNoPartitionRootIsSet()
+			{
+				CheckThrows(new TestModelConfiguration());
 			}
 		}
 
-		private class TestModelConfiguration : ModelConfiguration
+		[TestFixture]
+		internal class PartitionRootsProperty : ModelConfigurationTests
 		{
-			public TestModelConfiguration(params Component[] rootComponents)
+			private static void CheckRoots(ModelConfiguration configuration, params Component[] expectedRoots)
 			{
-				AddPartitions(rootComponents);
+				configuration.PartitionRoots.Should().HaveCount(expectedRoots.Length);
+				configuration.PartitionRoots.Should().BeEquivalentTo(expectedRoots);
 			}
-		}
 
-		[Test]
-		public void ComponentsProperty_ShouldContain_AllComponentsOfComplexHierarchy()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var component3 = new NestedComponent(component2);
-			var component4 = new ComplexComponent(component1, component3, new object());
-			var component5 = new EmptyComponent();
-			var component6 = new ComplexComponent(component4, component5, new object());
-			var config = new TestModelConfiguration(component6);
-			var components = config.GetComponents();
+			[Test]
+			public void ContainsAllTopLevelComponents()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new EmptyComponent();
+				var component3 = new EmptyComponent();
+				var config = new TestModelConfiguration(component1, component2, component3);
 
-			components.Should().HaveCount(6);
-			components.Should().Contain(component1);
-			components.Should().Contain(component2);
-			components.Should().Contain(component3);
-			components.Should().Contain(component4);
-			components.Should().Contain(component5);
-			components.Should().Contain(component6);
-		}
+				CheckRoots(config, component1, component2, component3);
+			}
 
-		[Test]
-		public void ComponentsProperty_ShouldContain_MultipleNestedComponents_NullOtherObject()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var component3 = new ComplexComponent(component1, component2, null);
-			var config = new TestModelConfiguration(component3);
-			var components = config.GetComponents();
+			[Test]
+			public void ContainsSingleTopLevelComponent()
+			{
+				var component = new EmptyComponent();
+				var config = new TestModelConfiguration(component);
 
-			components.Should().HaveCount(3);
-			components.Should().Contain(component1);
-			components.Should().Contain(component2);
-			components.Should().Contain(component3);
-		}
+				CheckRoots(config, component);
+			}
 
-		[Test]
-		public void ComponentsProperty_ShouldContain_NestedComponents_FourLevels()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new NestedComponent(component1);
-			var component3 = new NestedComponent(component2);
-			var component4 = new NestedComponent(component3);
-			var config = new TestModelConfiguration(component4);
-			var components = config.GetComponents();
+			[Test]
+			public void DoesNotContainNestedComponents()
+			{
+				var component1 = new EmptyComponent();
+				var component2 = new NestedComponent(component1);
+				var config = new TestModelConfiguration(component2);
 
-			components.Should().HaveCount(4);
-			components.Should().Contain(component1);
-			components.Should().Contain(component2);
-			components.Should().Contain(component3);
-			components.Should().Contain(component4);
-		}
-
-		[Test]
-		public void ComponentsProperty_ShouldContain_NestedComponents_TwoLevels()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new NestedComponent(component1);
-			var config = new TestModelConfiguration(component2);
-			var components = config.GetComponents();
-
-			components.Should().HaveCount(2);
-			components.Should().Contain(component1);
-			components.Should().Contain(component2);
-		}
-
-		[Test]
-		public void ComponentsProperty_ShouldContain_PartitionRoots()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var config = new TestModelConfiguration(component1, component2);
-			var components = config.GetComponents();
-
-			components.Should().HaveCount(2);
-			components[0].Should().Be(component1);
-			components[1].Should().Be(component2);
-		}
-
-		[Test]
-		public void ComponentsProperty_ShouldNotContain_NestedNullComponents()
-		{
-			var component = new NestedComponent(null);
-			var config = new TestModelConfiguration(component);
-			var components = config.GetComponents();
-
-			components.Should().HaveCount(1);
-			components.Should().Contain(component);
-		}
-
-		[Test]
-		public void ComponentsProperty_ShouldNotContain_OtherObject()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var component3 = new ComplexComponent(component1, component2, new object());
-			var config = new TestModelConfiguration(component3);
-			var components = config.GetComponents();
-
-			components.Should().HaveCount(3);
-			components.Should().Contain(component1);
-			components.Should().Contain(component2);
-			components.Should().Contain(component3);
-		}
-
-		[Test]
-		public void PartitionRootsProperty_ShouldContain_TopLevelComponents()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var component3 = new EmptyComponent();
-			var config = new TestModelConfiguration(component1, component2, component3);
-
-			config.PartitionRoots.Should().HaveCount(3);
-			config.PartitionRoots[0].Should().Be(component1);
-			config.PartitionRoots[1].Should().Be(component2);
-			config.PartitionRoots[2].Should().Be(component3);
-		}
-
-		[Test]
-		public void PartitionRootsProperty_ShouldNotContain_NestedComponents()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new NestedComponent(component1);
-			var config = new TestModelConfiguration(component2);
-
-			config.PartitionRoots.Should().HaveCount(1);
-			config.PartitionRoots[0].Should().Be(component2);
-		}
-
-		[Test]
-		public void Transform_ShouldThrow_NoPartitions()
-		{
-			var config = new TestModelConfiguration();
-			Action action = () => config.GetComponents();
-
-			action.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void Transform_ShouldThrow_SharedComponent_DifferentLevels()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var component3 = new NestedComponent(component2);
-			var component4 = new ComplexComponent(component1, component3, new object());
-			var component5 = new ComplexComponent(component4, component2, new object());
-			var config = new TestModelConfiguration(component5);
-
-			Action action = () => config.GetComponents();
-			action.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void Transform_ShouldThrow_SharedComponent_DifferentRoots()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new EmptyComponent();
-			var component3 = new NestedComponent(component2);
-			var component4 = new ComplexComponent(component1, component3, new object());
-			var component5 = new EmptyComponent();
-			var component6 = new ComplexComponent(component5, component2, new object());
-			var config = new TestModelConfiguration(component4, component6);
-
-			Action action = () => config.GetComponents();
-			action.ShouldThrow<InvalidOperationException>();
-		}
-
-		[Test]
-		public void Transform_ShouldThrow_SharedComponent_SameLevel()
-		{
-			var component1 = new EmptyComponent();
-			var component2 = new ComplexComponent(component1, component1, null);
-			var config = new TestModelConfiguration(component2);
-
-			Action action = () => config.GetComponents();
-			action.ShouldThrow<InvalidOperationException>();
+				CheckRoots(config, component2);
+			}
 		}
 	}
 }
