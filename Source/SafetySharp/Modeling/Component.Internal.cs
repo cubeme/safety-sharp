@@ -30,7 +30,7 @@ namespace SafetySharp.Modeling
 	using System.Reflection;
 	using Utilities;
 
-	public partial class Component
+	public partial class Component : IFreezable
 	{
 		/// <summary>
 		///     Maps a field of the current component instance to its set of initial values.
@@ -49,6 +49,7 @@ namespace SafetySharp.Modeling
 		{
 			get
 			{
+				Assert.IsFrozen(this);
 				return GetType()
 					.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 					.Where(field => typeof(IComponent).IsAssignableFrom(field.FieldType))
@@ -58,12 +59,28 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
+		///     Gets a value indicating whether the current instance is frozen, indicating that the instance does not allow any further
+		///     state modifications.
+		/// </summary>
+		public bool IsFrozen { get; private set; }
+
+		/// <summary>
+		///     Marks the current instance as frozen, disallowing any further state modifications.
+		/// </summary>
+		public void Freeze()
+		{
+			Assert.IsNotFrozen(this);
+			IsFrozen = true;
+		}
+
+		/// <summary>
 		///     Gets the sub component with the given name.
 		/// </summary>
 		/// <param name="name">The name of the sub component that should be returned.</param>
 		internal Component GetSubComponent(string name)
 		{
 			Argument.NotNullOrWhitespace(name, () => name);
+			Assert.IsFrozen(this);
 
 			var field = GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 			Argument.Satisfies(field != null, () => name, "A sub component with name '{0}' does not exist.", name);
@@ -83,6 +100,7 @@ namespace SafetySharp.Modeling
 		internal ImmutableArray<object> GetInitialValuesOfField(string fieldName)
 		{
 			Argument.NotNullOrWhitespace(fieldName, () => fieldName);
+			Assert.IsFrozen(this);
 
 			ImmutableArray<object> initialValues;
 			if (!_fields.TryGetValue(fieldName, out initialValues))
@@ -117,6 +135,7 @@ namespace SafetySharp.Modeling
 			Argument.NotNull(initialValues, () => initialValues);
 			Argument.Satisfies(initialValues.Length > 0, () => initialValues, "At least one value must be provided.");
 			Argument.OfType<MemberExpression>(field.Body, () => field, "Expected a lambda expression of the form '() => field'.");
+			Assert.IsNotFrozen(this);
 
 			var fieldInfo = ((MemberExpression)field.Body).Member as FieldInfo;
 			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");

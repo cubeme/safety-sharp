@@ -56,7 +56,9 @@ namespace SafetySharp.CSharp.Transformation
 
 			_compilation = compilation;
 			_modelConfiguration = modelConfiguration;
+
 			ComponentResolver = ComponentResolver.Empty;
+			modelConfiguration.Freeze();
 		}
 
 		/// <summary>
@@ -75,7 +77,7 @@ namespace SafetySharp.CSharp.Transformation
 			// We're keeping a mutable array around that is used to map all component instances of the model configuration 
 			// to their corresponding class declarations within the modeling compilation. The mapping is performed implicitly 
 			// via the array indices of the two arrays below.
-			var components = _modelConfiguration.GetComponents();
+			var components = _modelConfiguration.Components;
 			var classDeclarations = new ClassDeclarationSyntax[components.Length];
 
 			for (var i = 0; i < components.Length; ++i)

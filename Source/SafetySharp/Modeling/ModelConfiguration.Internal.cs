@@ -27,8 +27,13 @@ namespace SafetySharp.Modeling
 	using System.Collections.Immutable;
 	using Utilities;
 
-	partial class ModelConfiguration
+	partial class ModelConfiguration : IFreezable
 	{
+		/// <summary>
+		///     The <see cref="Component" /> instances contained in the model configuration.
+		/// </summary>
+		private ImmutableArray<Component> _components;
+
 		/// <summary>
 		///     Initializes a new instance of the <see cref="ModelConfiguration" /> type.
 		/// </summary>
@@ -45,8 +50,29 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		///     Gets all <see cref="Component" /> instances contained in the model configuration.
 		/// </summary>
-		internal ImmutableArray<Component> GetComponents()
+		internal ImmutableArray<Component> Components
 		{
+			get
+			{
+				Assert.IsFrozen(this);
+				return _components;
+			}
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the current instance is frozen, indicating that the instance does not allow any further
+		///     state modifications.
+		/// </summary>
+		public bool IsFrozen { get; private set; }
+
+		/// <summary>
+		///     Marks the current instance as frozen, disallowing any further state modifications.
+		/// </summary>
+		public void Freeze()
+		{
+			Assert.IsNotFrozen(this);
+			IsFrozen = true;
+
 			if (PartitionRoots.IsEmpty)
 				throw new InvalidOperationException("No partition roots have been set for the model configuration.");
 
@@ -54,7 +80,7 @@ namespace SafetySharp.Modeling
 			foreach (var component in PartitionRoots)
 				CollectComponents(hashSet, component);
 
-			return hashSet.ToImmutableArray();
+			_components = hashSet.ToImmutableArray();
 		}
 
 		/// <summary>
@@ -64,6 +90,8 @@ namespace SafetySharp.Modeling
 		partial void AddPartitionRoots(Component[] components)
 		{
 			Argument.NotNull(components, () => components);
+			Assert.IsNotFrozen(this);
+
 			PartitionRoots = PartitionRoots.AddRange(components);
 		}
 
@@ -79,6 +107,7 @@ namespace SafetySharp.Modeling
 			if (!components.Add(component))
 				throw new InvalidOperationException(String.Format(message, component.GetType().FullName));
 
+			component.Freeze();
 			foreach (var subComponent in component.SubComponents)
 				CollectComponents(components, subComponent);
 		}

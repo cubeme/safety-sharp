@@ -27,7 +27,7 @@ namespace SafetySharp.Utilities
 	using System.Diagnostics;
 
 	/// <summary>
-	///     Defines a set of helper functions that should be used for assertions that should only be included in debug builds.
+	///     Defines a set of helper functions for assertions
 	/// </summary>
 	public static class Assert
 	{
@@ -39,7 +39,7 @@ namespace SafetySharp.Utilities
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
 		/// <exception cref="InvalidOperationException">Thrown if <paramref name="obj" /> is not <c>null</c>.</exception>
-		[Conditional("DEBUG"), DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message")]
 		public static void IsNull<T>(T obj, string message = null, params object[] parameters)
 			where T : class
 		{
@@ -58,7 +58,7 @@ namespace SafetySharp.Utilities
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
 		/// <exception cref="NullReferenceException">Thrown if <paramref name="obj" /> is <c>null</c>.</exception>
-		[Conditional("DEBUG"), DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message")]
 		public static void NotNull<T>(T obj, string message = null, params object[] parameters)
 			where T : class
 		{
@@ -76,7 +76,7 @@ namespace SafetySharp.Utilities
 		/// <param name="s">The string that should be checked.</param>
 		/// <exception cref="NullReferenceException">Thrown if <paramref name="s" /> is <c>null</c>.</exception>
 		/// <exception cref="InvalidOperationException">Thrown if <paramref name="s" /> is empty or consists of whitespace only.</exception>
-		[Conditional("DEBUG"), DebuggerHidden]
+		[DebuggerHidden]
 		public static void NotNullOrWhitespace(string s)
 		{
 			if (s == null)
@@ -92,7 +92,7 @@ namespace SafetySharp.Utilities
 		/// <param name="condition">The condition that, if <c>false</c>, causes the exception to be raised.</param>
 		/// <param name="message">A message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[Conditional("DEBUG"), DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message")]
 		public static void That(bool condition, string message, params object[] parameters)
 		{
 			Argument.NotNullOrWhitespace(message, () => message);
@@ -108,7 +108,7 @@ namespace SafetySharp.Utilities
 		/// </summary>
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[DebuggerHidden, StringFormatMethod("message")]
+		[StringFormatMethod("message")]
 		public static void NotReached(string message = null, params object[] parameters)
 		{
 			message = message == null ? "Control flow should not have reached this point." : String.Format(message, parameters);
@@ -126,7 +126,7 @@ namespace SafetySharp.Utilities
 		///     Thrown if <typeparamref name="TEnum" /> is not an enumeration type or if the value of <paramref name="value" /> is
 		///     outside the range of valid enumeration literals.
 		/// </exception>
-		[Conditional("DEBUG"), DebuggerHidden]
+		[DebuggerHidden]
 		public static void InRange<TEnum>(TEnum value)
 			where TEnum : struct
 		{
@@ -153,7 +153,7 @@ namespace SafetySharp.Utilities
 		///     Thrown if the value of <paramref name="value" /> precedes <paramref name="lowerBound" /> or is
 		///     the same as or exceeds <paramref name="upperBound" />.
 		/// </exception>
-		[Conditional("DEBUG"), DebuggerHidden]
+		[DebuggerHidden]
 		public static void InRange<T>(T value, T lowerBound, T upperBound)
 			where T : IComparable<T>
 		{
@@ -179,7 +179,7 @@ namespace SafetySharp.Utilities
 		/// <exception cref="InvalidOperationException">
 		///     Thrown if the value of <paramref name="index" /> is smaller than 0 or exceeds <c>collection.Count</c>.
 		/// </exception>
-		[Conditional("DEBUG"), DebuggerHidden]
+		[DebuggerHidden]
 		public static void InRange(int index, ICollection collection)
 		{
 			Argument.NotNull(collection, () => collection);
@@ -195,7 +195,7 @@ namespace SafetySharp.Utilities
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
 		/// <exception cref="InvalidCastException">Thrown if <paramref name="obj" /> is not of type <typeparamref name="T" />.</exception>
-		[Conditional("DEBUG"), DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message")]
 		public static void OfType<T>(object obj, string message = null, params object[] parameters)
 			where T : class
 		{
@@ -208,6 +208,36 @@ namespace SafetySharp.Utilities
 				: String.Format(message, parameters);
 
 			throw new InvalidCastException(message);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="freezable" /> has already been frozen, throwing an
+		///     <see cref="InvalidOperationException" /> if <paramref name="freezable" /> is still mutable.
+		/// </summary>
+		/// <param name="freezable">The object that should be checked.</param>
+		/// <exception cref="InvalidOperationException">Thrown if <paramref name="freezable" /> has not yet been frozen.</exception>
+		[DebuggerHidden]
+		internal static void IsFrozen(IFreezable freezable)
+		{
+			Argument.NotNull(freezable, () => freezable);
+
+			if (!freezable.IsFrozen)
+				throw new InvalidOperationException("This operation is only supported after the object's Freeze() method has been called.");
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="freezable" /> has been frozen, throwing an
+		///     <see cref="InvalidOperationException" /> if <paramref name="freezable" /> is in an immutable frozen state.
+		/// </summary>
+		/// <param name="freezable">The object that should be checked.</param>
+		/// <exception cref="InvalidOperationException">Thrown if <paramref name="freezable" /> has already been frozen.</exception>
+		[DebuggerHidden]
+		internal static void IsNotFrozen(IFreezable freezable)
+		{
+			Argument.NotNull(freezable, () => freezable);
+
+			if (freezable.IsFrozen)
+				throw new InvalidOperationException("This operation is not supported once the object's Freeze() method has been called.");
 		}
 	}
 }

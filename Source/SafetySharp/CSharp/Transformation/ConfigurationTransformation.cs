@@ -31,7 +31,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Utilities;
 
 	/// <summary>
-	///     Transforms a <see cref="ModelConfiguration" /> instance into a <see cref="MetamodelConfiguration"/>.
+	///     Transforms a <see cref="ModelConfiguration" /> instance into a <see cref="MetamodelConfiguration" />.
 	/// </summary>
 	internal class ConfigurationTransformation
 	{
@@ -67,6 +67,9 @@ namespace SafetySharp.CSharp.Transformation
 			_modelConfiguration = modelConfiguration;
 			_metamodelResolver = metamodelResolver;
 			_componentResolver = componentResolver;
+
+			if (!modelConfiguration.IsFrozen)
+				modelConfiguration.Freeze();
 		}
 
 		/// <summary>
@@ -75,10 +78,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		internal MetamodelConfiguration Transform()
 		{
-			var partitions = _modelConfiguration.PartitionRoots.Aggregate(
-				seed: ImmutableArray<Partition>.Empty,
-				func: (current, rootComponent) => current.Add(TransformPartition(rootComponent)));
-
+			var partitions = _modelConfiguration.PartitionRoots.Select(TransformPartition).ToImmutableArray();
 			return new MetamodelConfiguration(partitions);
 		}
 
@@ -102,18 +102,17 @@ namespace SafetySharp.CSharp.Transformation
 
 			var componentDeclaration = _metamodelResolver.Resolve(componentDeclarationReference);
 
-			var fieldValues = componentDeclaration.Fields.Aggregate(
-				seed: ImmutableArray<ValueArray>.Empty,
-				func: (current, field) =>
-				{
-					var values = component.GetInitialValuesOfField(field.Identifier.Name);
-					var initialValues = values.Select(value => new Value(value)).ToImmutableArray();
-					return current.Add(new ValueArray(initialValues));
-				});
+			var fieldValues = componentDeclaration.Fields.Select(field =>
+			{
+				var values = component.GetInitialValuesOfField(field.Identifier.Name);
+				var initialValues = values.Select(value => new Value(value)).ToImmutableArray();
+				return new ValueArray(initialValues);
+			}).ToImmutableArray();
 
-			var subComponents = componentDeclaration.SubComponents.Aggregate(
-				seed: ImmutableArray<ComponentConfiguration>.Empty,
-				func: (current, subComponent) => current.Add(TransformComponent(component.GetSubComponent(subComponent.Identifier.Name))));
+			var subComponents = componentDeclaration
+				.SubComponents
+				.Select(subComponent => TransformComponent(component.GetSubComponent(subComponent.Identifier.Name)))
+				.ToImmutableArray();
 
 			return new ComponentConfiguration(identifier, componentDeclarationReference, fieldValues, subComponents);
 		}

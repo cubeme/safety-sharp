@@ -150,6 +150,7 @@
     <Compile Include="Modelchecking\Promela\Promela.Generated.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Assert.cs" />
+    <Compile Include="Utilities\IFreezable.cs" />
     <Compile Include="Utilities\Log.cs" />
     <Compile Include="Utilities\LogEntry.cs" />
     <Compile Include="Utilities\LogType.cs" />
