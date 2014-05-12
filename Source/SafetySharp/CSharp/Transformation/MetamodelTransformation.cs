@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using Metamodel;
+	using Metamodel.Declarations;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
 	using Utilities;
@@ -61,10 +62,10 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
-		///     Gets the component resolver that can be used to resolve the transformed components to their corresponding metamodel
-		///     component declarations.
+		///     Gets the component resolver that can be used to resolve the <see cref="ComponentDeclaration" /> corresponding to a
+		///     <see cref="ComponentSnapshot" />.
 		/// </summary>
-		internal ComponentResolver ComponentResolver { get; private set; }
+		private ComponentResolver ComponentResolver { get;  set; }
 
 		/// <summary>
 		///     Performs the transformation to the metamodel, returning the resulting <see cref="MetamodelCompilation" /> and

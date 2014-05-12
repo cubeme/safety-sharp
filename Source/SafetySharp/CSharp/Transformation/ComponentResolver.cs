@@ -30,7 +30,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Utilities;
 
 	/// <summary>
-	///     Resolves component declaration references for <see cref="Component" /> instances.
+	///     Resolves component declaration references for <see cref="ComponentSnapshot" /> instances.
 	/// </summary>
 	internal class ComponentResolver
 	{

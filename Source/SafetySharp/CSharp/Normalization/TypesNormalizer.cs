@@ -59,7 +59,5 @@ namespace SafetySharp.CSharp.Normalization
 		{
 			return null;
 		}
-
-
 	}
 }

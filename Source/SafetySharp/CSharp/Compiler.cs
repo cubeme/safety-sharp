@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -165,6 +166,8 @@ namespace SafetySharp.CSharp
 			ApplyCommonNormalizations();
 			ApplyMetadataNormalizations();
 			ApplySimulationNormalizations();
+
+			OutputCode(_compilation, "obj/NormalizedCode");
 		}
 
 		/// <summary>
@@ -183,8 +186,8 @@ namespace SafetySharp.CSharp
 			var metadataCompilation = _compilation;
 
 			metadataCompilation = ApplyNormalizer<TypesNormalizer>(metadataCompilation);
-			metadataCompilation = ApplyNormalizer<TriviaNormalizer>(metadataCompilation);
 
+			OutputCode(metadataCompilation, "obj/MetadataCode");
 			AddMetadata(metadataCompilation);
 		}
 
@@ -296,6 +299,28 @@ namespace SafetySharp.CSharp
 				isWarningAsError: false));
 
 			return -1;
+		}
+
+		/// <summary>
+		///     Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by <paramref name="path" />
+		///     .
+		/// </summary>
+		/// <param name="compilation">The compilation containing the C# code that should be output.</param>
+		/// <param name="path">The path to the directory that should contain the output.</param>
+		[Conditional("DEBUG")]
+		private static void OutputCode(Compilation compilation, string path)
+		{
+			if (!Directory.Exists(path))
+				Directory.CreateDirectory(path);
+
+			var i = 0;
+			foreach (var syntaxTree in compilation.SyntaxTrees)
+			{
+				var fileName = Path.GetFileNameWithoutExtension(syntaxTree.FilePath ?? String.Empty);
+				var filePath = Path.Combine(path, String.Format("{0}{1}.cs", fileName, i++));
+
+				File.WriteAllText(filePath, syntaxTree.GetText().ToString());
+			}
 		}
 	}
 }

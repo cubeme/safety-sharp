@@ -41,7 +41,7 @@ namespace Tests.CSharp.Transformation
 	{
 		private MetamodelCompilation _metamodelCompilation;
 		private MetamodelConfiguration _metamodelConfiguration;
-		private ComponentResolver _componentResolver;
+		//private ComponentResolver _componentResolver;
 		private ModelConfiguration _configuration;
 
 		private void Transform(string csharpCode, string configurationName)
@@ -51,7 +51,7 @@ namespace Tests.CSharp.Transformation
 			var transformation = new MetamodelTransformation(compilation.ModelingCompilation, _configuration.GetSnapshot());
 
 			transformation.TryTransform(out _metamodelCompilation, out _metamodelConfiguration).Should().BeTrue();
-			_componentResolver = transformation.ComponentResolver;
+			//_componentResolver = transformation.ComponentResolver;
 		}
 
 		//private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component)
@@ -113,7 +113,7 @@ namespace Tests.CSharp.Transformation
 			//	);
 
 			//var fieldReference = GetFieldReference("BooleanComponent", "_value");
-			var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
+			//var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
 
 			//var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
 			//var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);
@@ -130,7 +130,7 @@ namespace Tests.CSharp.Transformation
 			//	.WithUpdateMethod(updateMethod)
 			//	.WithFields(ImmutableArray.Create(field));
 
-			//_metamodelCompilation.Should().Be(expected);
+			//actual.Should().Be(expected);
 		}
 
 //		[Test]
