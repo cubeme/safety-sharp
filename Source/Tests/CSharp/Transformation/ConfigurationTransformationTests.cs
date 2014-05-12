@@ -75,7 +75,7 @@ namespace Tests.CSharp.Transformation
 					.WithFields(fields)
 					.WithSubComponents(subComponents);
 
-				reference = new MetamodelReference<ComponentDeclaration>(component);
+				reference = new MetamodelReference<ComponentDeclaration>();
 				_metamodelResolver = _metamodelResolver.With(reference, componentDeclaration);
 				_componentResolver = _componentResolver.With(component, reference);
 
@@ -134,9 +134,9 @@ namespace Tests.CSharp.Transformation
 			{
 			}
 
-			protected class TestConfiguration : ModelConfiguration
+			private class TestConfiguration : ModelConfiguration
 			{
-				public TestConfiguration(params Component[] components)
+				public TestConfiguration(Component[] components)
 				{
 					AddPartitions(components);
 				}

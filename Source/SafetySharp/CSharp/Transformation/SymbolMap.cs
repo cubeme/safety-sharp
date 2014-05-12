@@ -24,7 +24,6 @@ namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.Immutable;
 	using System.Linq;
 	using Extensions;
 	using Metamodel;
@@ -41,7 +40,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Maps a C# symbol to a metamodel reference.
 		/// </summary>
-		private readonly ImmutableDictionary<ISymbol, IMetamodelReference> _symbolMap;
+		private readonly Dictionary<ISymbol, IMetamodelReference> _symbolMap = new Dictionary<ISymbol, IMetamodelReference>();
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
@@ -49,17 +48,9 @@ namespace SafetySharp.CSharp.Transformation
 		internal SymbolMap(Compilation compilation)
 		{
 			Argument.NotNull(compilation, () => compilation);
-			var map = ImmutableDictionary<ISymbol, IMetamodelReference>.Empty.ToBuilder();
 
-			var references = compilation
-				.SyntaxTrees
-				.Select(compilation.GetSemanticModel)
-				.SelectMany(ResolveSymbols);
-
-			foreach (var reference in references)
-				map.Add((ISymbol)reference.SourceSymbol, reference);
-
-			_symbolMap = map.ToImmutable();
+			foreach (var syntaxTree in compilation.SyntaxTrees)
+				ResolveSymbols(compilation.GetSemanticModel(syntaxTree));
 		}
 
 		/// <summary>
@@ -137,68 +128,41 @@ namespace SafetySharp.CSharp.Transformation
 		///     Resolves all relevant symbols found within the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model for the syntax tree that should be used to resolve the C# symbols.</param>
-		private static IEnumerable<IMetamodelReference> ResolveSymbols(SemanticModel semanticModel)
+		private void ResolveSymbols(SemanticModel semanticModel)
 		{
-			var components = semanticModel
-				.GetDeclaredComponents()
-				.Select(classDeclaration =>
-							new
-							{
-								Reference = CreateMetamodelReference<ComponentDeclaration>(semanticModel, classDeclaration),
-								Declaration = classDeclaration
-							})
-				.ToArray();
-
-			foreach (var component in components)
+			foreach (var component in semanticModel.GetDeclaredComponents())
 			{
-				yield return component.Reference;
+				AddReference<ComponentDeclaration>(semanticModel, component);
 
-				var methods = component
-					.Declaration
-					.DescendantNodes<MethodDeclarationSyntax>()
-					.Select(methodDeclaration => CreateMetamodelReference<MethodDeclaration>(semanticModel, methodDeclaration));
-
-				foreach (var method in methods)
-					yield return method;
+				foreach (var method in component.DescendantNodes<MethodDeclarationSyntax>())
+					AddReference<MethodDeclaration>(semanticModel, method);
 
 				var fields = component
-					.Declaration
 					.DescendantNodes<FieldDeclarationSyntax>()
 					.Where(fieldDeclaration => !fieldDeclaration.IsComponentField(semanticModel))
-					.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
-					.Select(fieldDeclaration => CreateMetamodelReference<FieldDeclaration>(semanticModel, fieldDeclaration));
+					.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables);
 
 				foreach (var field in fields)
-					yield return field;
+					AddReference<FieldDeclaration>(semanticModel, field);
 			}
 
-			var interfaces = semanticModel
-				.GetDeclaredComponentInterfaces()
-				.Select(interfaceDeclaration =>
-							new
-							{
-								Reference = CreateMetamodelReference<InterfaceDeclaration>(semanticModel, interfaceDeclaration),
-								Declaration = interfaceDeclaration
-							})
-				.ToArray();
-
-			foreach (var componentInterface in interfaces)
-				yield return componentInterface.Reference;
+			foreach (var componentInterface in semanticModel.GetDeclaredComponentInterfaces())
+				AddReference<InterfaceDeclaration>(semanticModel, componentInterface);
 		}
 
 		/// <summary>
-		///     Creates a new <see cref="IMetamodelReference" /> instance.
+		///     Adds a <see cref="IMetamodelReference" /> instance for <paramref name="syntaxNode" /> to the symbol map.
 		/// </summary>
 		/// <typeparam name="T">The type of the metamodel element corresponding to the resolved symbol.</typeparam>
 		/// <param name="semanticModel">The semantic model that should be used to resolve the C# symbol.</param>
 		/// <param name="syntaxNode">The C# syntax node that should be resolved.</param>
-		private static IMetamodelReference CreateMetamodelReference<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
+		private void AddReference<T>(SemanticModel semanticModel, SyntaxNode syntaxNode)
 			where T : MetamodelElement
 		{
 			var symbol = semanticModel.GetDeclaredSymbol(syntaxNode);
 			Assert.NotNull(symbol, "The semantic model could not find a symbol for '{0}' '{1}'.", syntaxNode.GetType().FullName, syntaxNode);
 
-			return new MetamodelReference<T>(symbol);
+			_symbolMap.Add(symbol, new MetamodelReference<T>());
 		}
 	}
 }

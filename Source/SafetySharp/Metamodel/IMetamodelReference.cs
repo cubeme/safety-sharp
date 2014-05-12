@@ -29,9 +29,5 @@ namespace SafetySharp.Metamodel
 	/// </summary>
 	public interface IMetamodelReference
 	{
-		/// <summary>
-		///     Gets the source symbol corresponding to the reference.
-		/// </summary>
-		object SourceSymbol { get; }
 	}
 }

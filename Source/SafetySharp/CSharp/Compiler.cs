@@ -26,9 +26,13 @@ namespace SafetySharp.CSharp
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Text;
 	using System.Threading;
 	using Diagnostics;
+	using Extensions;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.Emit;
 	using Microsoft.CodeAnalysis.MSBuild;
@@ -149,27 +153,83 @@ namespace SafetySharp.CSharp
 		private void Normalize()
 		{
 			// We swap out the referenced SafetySharp.Modeling assembly with the Safety Sharp core assembly behind the
-			// modelers back. This enables a couple of C# normalizations required for debugging, simulation and model
+			// modeler's back. This enables a couple of C# normalizations required for debugging, simulation and model
 			// transformations while only surfacing a minimal and convenient API for model creation.
 			var safetySharpAssembly = new MetadataFileReference(typeof(Component).Assembly.Location);
 			_compilation = _compilation.ReplaceReference(_modelingAssembly, safetySharpAssembly);
 
 			// Now that we've replaced SafetySharp.Modeling, we can safely perform the compile-time normalizations of the C# modeling code.
-			//ApplyNormalizer<TypesNormalizer>();
-			//ApplyNormalizer<TriviaNormalizer>();
-			ApplyNormalizer<ChooseNormalizer>();
-			ApplyNormalizer<MetadataNormalizer>();
+			// We'll first apply some common normalizations before the compilation is split into the metadata code and the simulation code.
+			// The metadata code is added as metadata to the generated assembly and is used at runtime for model transformations. The
+			// simulation code is compiled to regular MSIL and executed during simulation.
+			ApplyCommonNormalizations();
+			ApplyMetadataNormalizations();
+			ApplySimulationNormalizations();
 		}
 
 		/// <summary>
-		///     Applies the normalizer of type <typeparamref name="TNormalizer" /> to the current C# compilation.
+		///     Applies normalizations for both the metadata code and the simulation code.
+		/// </summary>
+		private void ApplyCommonNormalizations()
+		{
+			_compilation = ApplyNormalizer<ChooseNormalizer>(_compilation);
+		}
+
+		/// <summary>
+		///     Applies normalizations to the metadata code and adds the normalized metadata code to the assembly.
+		/// </summary>
+		private void ApplyMetadataNormalizations()
+		{
+			var metadataCompilation = _compilation;
+
+			metadataCompilation = ApplyNormalizer<TypesNormalizer>(metadataCompilation);
+			metadataCompilation = ApplyNormalizer<TriviaNormalizer>(metadataCompilation);
+
+			AddMetadata(metadataCompilation);
+		}
+
+		/// <summary>
+		///     Applies normalizations to the simulation code.
+		/// </summary>
+		private void ApplySimulationNormalizations()
+		{
+			// TODO
+		}
+
+		/// <summary>
+		///     Adds the metadata from the <paramref name="metadataCompilation" /> to the generated assembly.
+		/// </summary>
+		/// <param name="metadataCompilation">The metadata code that should be added.</param>
+		private void AddMetadata(Compilation metadataCompilation)
+		{
+			var csharpCode = new StringBuilder();
+			var compilationUnits = metadataCompilation
+				.SyntaxTrees
+				.SelectMany(syntaxTree => syntaxTree.DescendantNodesAndSelf<CompilationUnitSyntax>());
+
+			foreach (var compilationUnit in compilationUnits)
+			{
+				var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
+				var content = compilationUnit.ToString().Trim().Replace("\"", "\"\"");
+				var fileName = compilationUnit.SyntaxTree.FilePath.Replace("\\", "\\\\");
+
+				csharpCode.AppendLine(String.Format("[assembly: {0}(@\"{1}\", \"{2}\")]", attributeName, content, fileName));
+			}
+
+			csharpCode.AppendLine(String.Format("[assembly: {0}(\"{1}\")]", typeof(ModelingAssemblyAttribute).FullName, Version));
+			_compilation = _compilation.AddSyntaxTrees(SyntaxFactory.ParseSyntaxTree(csharpCode.ToString()));
+		}
+
+		/// <summary>
+		///     Applies the normalizer of type <typeparamref name="TNormalizer" /> to the C# <paramref name="compilation" />.
 		/// </summary>
 		/// <typeparam name="TNormalizer">The type of the normalizer that should be applied.</typeparam>
-		private void ApplyNormalizer<TNormalizer>()
+		/// <param name="compilation">The compilation that should be normalized.</param>
+		private static Compilation ApplyNormalizer<TNormalizer>(Compilation compilation)
 			where TNormalizer : CSharpNormalizer, new()
 		{
 			var normalizer = new TNormalizer();
-			_compilation = normalizer.Normalize(_compilation);
+			return normalizer.Normalize(compilation);
 		}
 
 		/// <summary>

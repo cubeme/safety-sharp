@@ -177,7 +177,7 @@ namespace SafetySharp.Modelchecking.Promela
         public PrExpressions.VariableReferenceExpression ConvertFieldAccessExpression (MMExpressions.FieldAccessExpression fieldAccessExpression)
         {
             Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
-            var refName = CommonKnowledge.GetUniqueName(fieldAccessExpression.Field.SourceSymbol);
+            var refName = CommonKnowledge.GetUniqueName(null/* TODO: fieldAccessExpression.Field.SourceSymbol*/);
             return new PrExpressions.VariableReferenceExpression(refName, null, null);
         }
 

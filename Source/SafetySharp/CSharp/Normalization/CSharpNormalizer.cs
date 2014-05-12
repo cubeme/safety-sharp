@@ -25,7 +25,6 @@ namespace SafetySharp.CSharp.Normalization
 	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Utilities;
 
 	/// <summary>
 	///     A base class for C# normalizers that normalize certain C# features to equivalent ones that are easier to transform to
@@ -42,7 +41,7 @@ namespace SafetySharp.CSharp.Normalization
 		///     Normalizes the C# code contained in <paramref name="compilation." />
 		/// </summary>
 		/// <param name="compilation">The C# compilation that should be normalized.</param>
-		public virtual Compilation Normalize(Compilation compilation)
+		public Compilation Normalize(Compilation compilation)
 		{
 			foreach (var syntaxTree in compilation.SyntaxTrees)
 			{
@@ -60,7 +59,5 @@ namespace SafetySharp.CSharp.Normalization
 
 			return compilation;
 		}
-
-	
 	}
 }

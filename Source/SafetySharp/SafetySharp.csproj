@@ -77,7 +77,7 @@
     <Compile Include="CSharp\ModelingCompilation.cs" />
     <Compile Include="CSharp\Normalization\ChooseNormalizer.cs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.cs" />
-    <Compile Include="CSharp\Normalization\MetadataNormalizer.cs" />
+    <Compile Include="CSharp\Normalization\TriviaNormalizer.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
     <Compile Include="CSharp\Transformation\ComponentResolver.cs" />
     <Compile Include="CSharp\Transformation\ComponentSnapshot.cs" />

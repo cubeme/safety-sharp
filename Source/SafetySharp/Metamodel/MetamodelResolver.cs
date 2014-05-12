@@ -76,7 +76,7 @@ namespace SafetySharp.Metamodel
 		/// </summary>
 		/// <param name="reference">The reference that should be added to the resolver.</param>
 		/// <param name="referencedElement">The referenced metamodel element that <paramref name="reference" /> refers to.</param>
-		public MetamodelResolver With(IMetamodelReference reference, MetamodelElement referencedElement)
+		internal MetamodelResolver With(IMetamodelReference reference, MetamodelElement referencedElement)
 		{
 			Argument.NotNull(reference, () => reference);
 			Argument.NotNull(referencedElement, () => referencedElement);

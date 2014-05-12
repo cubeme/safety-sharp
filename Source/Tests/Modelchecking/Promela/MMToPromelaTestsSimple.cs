@@ -43,9 +43,7 @@ namespace Tests.Modelchecking.Promela
         [Test]
         public void Test()
         {
-            var fieldSymbol = new Object();
-
-            var fieldReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>(fieldSymbol);
+            var fieldReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
             var field = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
 
             var fieldAccessExpr = new MMExpressions.FieldAccessExpression(fieldReference);
