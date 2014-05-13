@@ -34,52 +34,11 @@ namespace Tests.Modelchecking.Promela
     [TestFixture]
     public class EnumTests
     {
-        public enum SpinResult
-        {
-            Success,
-            Failed
-        }
-
-        public SpinResult ExecuteSpin(string arguments)
-        {
-            var stdoutOutputBuffer = new System.Text.StringBuilder();
-            var stderrOutputBuffer = new System.Text.StringBuilder();
-            var proc = new Process();
-            proc.StartInfo.Arguments = arguments;
-            proc.StartInfo.FileName = "Modelchecking\\Promela\\spin627.exe";
-            proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            proc.StartInfo.CreateNoWindow = true;
-            proc.StartInfo.UseShellExecute = false;
-            proc.StartInfo.RedirectStandardOutput = true;
-            proc.StartInfo.RedirectStandardError = true;
-            proc.StartInfo.RedirectStandardInput = true;
-
-            DataReceivedEventHandler addToStdErr = (sendingProcess, dataReceivedEvArgs) => stderrOutputBuffer.Append(dataReceivedEvArgs.Data);
-            DataReceivedEventHandler addToStdOut = (sendingProcess, dataReceivedEvArgs) => stdoutOutputBuffer.Append(dataReceivedEvArgs.Data);
-
-            proc.ErrorDataReceived += addToStdErr;
-            proc.OutputDataReceived += addToStdOut;
-
-            proc.Start();
-
-            proc.BeginErrorReadLine();
-            proc.BeginOutputReadLine();
-
-            proc.WaitForExit();
-
-            switch (proc.ExitCode)
-            {
-                case 0:
-                    return SpinResult.Success;
-                default:
-                    return SpinResult.Failed;
-            }
-        }
 
         [Test]
         public void SpinFound()
         {
-            ExecuteSpin("-V").Should().Be(SpinResult.Success);
+            Spin.ExecuteSpin("-V").Should().Be(Spin.SpinResult.Success);
         }
 
         [Test]
@@ -102,9 +61,9 @@ namespace Tests.Modelchecking.Promela
             var fileWriter = new PromelaModelWriter();
             fileWriter.Visit(testProcType);
 
-            fileWriter.CodeWriter.WriteToFile("Modelchecking\\Promela\\test1.pml");
+            fileWriter.CodeWriter.WriteToFile(filename);
 
-            ExecuteSpin("-a "+filename).Should().Be(SpinResult.Success);
+            Spin.ExecuteSpin("-a "+filename).Should().Be(Spin.SpinResult.Success);
         }
 
     }

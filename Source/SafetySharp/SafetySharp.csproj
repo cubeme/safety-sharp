@@ -85,6 +85,7 @@
     <Compile Include="Metamodel\Configurations\Value.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
+    <Compile Include="Modelchecking\Promela\Spin.cs" />
     <Compile Include="Modeling\IComponent.cs" />
     <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\ModelingCompilationUnitAttribute.cs" />

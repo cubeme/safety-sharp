@@ -26,10 +26,15 @@ namespace SafetySharp.Modelchecking.Promela
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
-    using Metamodel;
+    using System.Text;
+    using Metamodel.Types;
+    using Microsoft.CodeAnalysis;
     using Utilities;
+    using MM = Metamodel;
     using MMExpressions = Metamodel.Expressions;
     using MMStatements = Metamodel.Statements;
+    using MMConfigurations = Metamodel.Configurations;
+    using MMDeclarations = Metamodel.Declarations;
     using PrExpression = Expressions.Expression;
     using PrStatement = Statements.Statement;
     using PrExpressions = Expressions;
@@ -37,45 +42,250 @@ namespace SafetySharp.Modelchecking.Promela
 
     #region Expressions
 
-    internal class MetamodelToPromela
+    internal struct ComponentInstanceScope
     {
-        public MetamodelToPromela()
+        public ImmutableArray<MM.Identifier> Identifiers { get; set; }
+    };
+
+    internal struct FieldInfo
+    {
+        internal ImmutableArray<MM.Identifier> ComponentInstanceNames;
+        internal MMDeclarations.FieldDeclaration FieldDeclaration;
+        internal MM.Identifier Fieldname;
+        internal MMConfigurations.ValueArray InitialValues;
+
+        internal string GetName()
         {
-            ExpressionVisitor = new MetamodelExpressionToPromelaExpression(this);
-            StatementVisitor = new MetamodelStatementToPromelaStatement(this);
-
-        }
-        public MetamodelExpressionToPromelaExpression ExpressionVisitor { get; private set; }
-        public MetamodelStatementToPromelaStatement StatementVisitor { get; private set; }
-
-        readonly object _objectToUniqueNameLocker = new object();
-
-        private int _objectToUniqueNameIterator = 0;
-
-        private readonly Dictionary<object,string> _objectToUniqueName = new Dictionary<object, string>();
-
-        public string GetUniqueName(object input)
-        {
-            lock (_objectToUniqueNameLocker)
-            {
-                string value;
-                if (_objectToUniqueName.TryGetValue(input, out value))
-                    return value;
-                _objectToUniqueNameIterator++;
-                value = "variable_" + _objectToUniqueNameIterator.ToString();
-                _objectToUniqueName.Add(input,value);
-                return value;
-            }
+            var namestring = new StringBuilder();
+            ComponentInstanceNames.ForEach(identifier => namestring.Append(identifier.Name + "_"));
+            namestring.Append(Fieldname.Name);
+            return namestring.ToString();
         }
     }
 
-    internal class MetamodelExpressionToPromelaExpression : MetamodelVisitor<PrExpression>
+    internal static class PromelaHelpers
     {
-        private MetamodelToPromela CommonKnowledge { get; set; }
-        public MetamodelExpressionToPromelaExpression(MetamodelToPromela commonKnowledge)
+        public static PrExpressions.BooleanLiteral ConstTrueExpression()
+        {
+            return new PrExpressions.BooleanLiteral(true);
+        }
+
+        public static PrExpressions.BooleanLiteral ConstFalseExpression()
+        {
+            return new PrExpressions.BooleanLiteral(false);
+        }
+
+        public static PrStatement CoverStatementInEndlessLoop(PrStatement statement)
+        {
+            var trueGuard = new PrExpressions.BooleanLiteral(true);
+            var clause = new PrStatements.GuardedCommandExpressionClause(trueGuard, statement);
+            return new PrStatements.GuardedCommandRepetitionStatement(
+                new ImmutableArray<PrStatements.GuardedCommandClause>().Add(clause));
+        }
+
+        public static PrStatement SimpleFieldAssignment(string fieldName, PrExpression expr)
+        {
+            return new PrStatements.AssignmentStatement(new PrExpressions.VariableReferenceExpression(fieldName, null, null), expr);
+        }
+    }
+
+    internal class MetamodelToPromela
+    {
+        public readonly MM.MetamodelConfiguration Mm;
+        public readonly MM.MetamodelResolver MmAccessTypeToConcreteTypeDictionary;
+
+        public readonly ImmutableArray<FieldInfo> MmFieldList;
+
+        public IImmutableDictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>> MmFieldDictionary;
+        //MmComponentInstanceHierarchieAndFieldIdentifierToFieldInfoDictionary;
+
+        public MetamodelToPromela(MM.MetamodelConfiguration mm, MM.MetamodelResolver metamodelResolver)
+        {
+            Mm = mm;
+            MmAccessTypeToConcreteTypeDictionary = metamodelResolver;
+            var extractedFields = ExtractFields(Mm, MmAccessTypeToConcreteTypeDictionary);
+            MmFieldList = extractedFields.MmFieldList;
+            MmFieldDictionary = extractedFields.MmFieldDictionary;
+        }
+
+        public MetamodelExpressionToPromelaExpression GetExpressionVisitor(ComponentInstanceScope currentComponent)
+        {
+            return new MetamodelExpressionToPromelaExpression(this, currentComponent);
+        }
+
+        public MetamodelStatementToPromelaStatement GetStatementVisitor(ComponentInstanceScope currentComponent)
+        {
+            return new MetamodelStatementToPromelaStatement(this, currentComponent);
+        }
+
+        //this is the top level element of a meta model
+        public Proctype ConvertMetaModelConfiguration()
+        {
+            var fieldDeclarations = GenerateFieldDeclarations();
+
+            var systemSteps = Mm.Partitions.SelectMany(partition => new ImmutableArray<PrStatement>()
+                                                           .Add(GenerateUpdateStatements(partition, MmFieldList))
+                                                           .Add(GenerateBindingExecutionStatements(partition, MmFieldList)));
+            var systemStepsBlock = new PrStatements.SimpleBlockStatement(systemSteps.AsImmutable());
+
+            var systemLoop = PromelaHelpers.CoverStatementInEndlessLoop(systemStepsBlock);
+
+            var code = fieldDeclarations.Add(systemLoop);
+            var systemProctype = new Proctype(true, "System", code);
+
+            return systemProctype;
+        }
+
+        public PromelaTypeName ConvertType(TypeSymbol type)
+        {
+            if (type is VoidType)
+                throw new NotImplementedException();
+            if (type is BooleanType)
+                return PromelaTypeName.Bool;
+            if (type is IntegerType)
+                return PromelaTypeName.Int;
+            if (type is DecimalType)
+                throw new NotImplementedException();
+            if (type is InterfaceType)
+                throw new NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public PrExpressions.ConstExpression ConvertObject(MMConfigurations.Value mmValue, TypeSymbol type)
+        {
+            if (type is VoidType)
+                throw new NotImplementedException();
+            if (type is BooleanType)
+            {
+                var value = (bool)mmValue.Object;
+                return new PrExpressions.BooleanLiteral(value);
+            }
+            if (type is IntegerType)
+            {
+                var value = (int)mmValue.Object;
+                return new PrExpressions.NumberLiteral(value);
+            }
+            if (type is DecimalType)
+                throw new NotImplementedException();
+            if (type is InterfaceType)
+                throw new NotImplementedException();
+            throw new NotImplementedException();
+        }
+
+        public ImmutableArray<PrStatement> GenerateFieldDeclarations()
+        {
+            var statements = MmFieldList.SelectMany(field =>
+            {
+                var type = field.FieldDeclaration.Type;
+                var name = field.GetName();
+                var declStatement = new PrStatements.DeclarationStatement(ConvertType(type), name, 1, null);
+                var initialvalueClauses = field.InitialValues.Values.Select(
+                    value =>
+                    {
+                        var prValue = ConvertObject(value, type);
+                        var clause = new PrStatements.GuardedCommandExpressionClause(PromelaHelpers.ConstTrueExpression(),
+                                                                                     PromelaHelpers.SimpleFieldAssignment(name, prValue));
+                        return (PrStatements.GuardedCommandClause)clause;
+                    });
+                var initialValueStatement = new PrStatements.GuardedCommandSelectionStatement(initialvalueClauses.ToImmutableArray());
+                return (new PrStatement[] { declStatement, initialValueStatement });
+            });
+            return statements.ToImmutableArray();
+        }
+
+        public PrStatement GenerateUpdateStatements(MMConfigurations.Partition partition, ImmutableArray<FieldInfo> fields)
+        {
+            throw new NotImplementedException();
+        }
+
+        public PrStatement GenerateBindingExecutionStatements(MMConfigurations.Partition partition, ImmutableArray<FieldInfo> fields)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static ExtractFieldsTuple ExtractFields(MMConfigurations.ComponentConfiguration comp,
+                                                       ImmutableArray<MM.Identifier> hierarchie,
+                                                       MM.MetamodelResolver mmAccessTypeToConcreteTypeDictionary)
+        {
+            var myHierarchie = hierarchie.Add(comp.Identifier);
+            var myFieldList = new List<FieldInfo>();
+            var myLocalFieldDictionary = new Dictionary<MM.Identifier, FieldInfo>();
+            var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
+
+            var type = mmAccessTypeToConcreteTypeDictionary.Resolve(comp.Type);
+
+            var fieldWithValue = type.Fields.Zip(comp.FieldValues, (field, initialValue)
+                                                                       =>
+                                                                       new Tuple
+                                                                       <MMDeclarations.FieldDeclaration, MMConfigurations.ValueArray>(
+                                                                       field, initialValue));
+            fieldWithValue.ForEach(tuple =>
+            {
+                var fieldDecl = tuple.Item1;
+                var fieldInitialValue = tuple.Item2;
+                var fieldInfo = new FieldInfo
+                {
+                    Fieldname = fieldDecl.Identifier,
+                    ComponentInstanceNames = myHierarchie,
+                    InitialValues = fieldInitialValue,
+                    FieldDeclaration = fieldDecl
+                };
+                myFieldList.Add(fieldInfo);
+                myLocalFieldDictionary.Add(fieldDecl.Identifier, fieldInfo);
+            });
+
+            myFieldDictionary.Add(new ComponentInstanceScope { Identifiers = hierarchie }, myLocalFieldDictionary.ToImmutableDictionary());
+
+            comp.SubComponents.ForEach(subcomp =>
+            {
+                var newTuple = ExtractFields(subcomp, myHierarchie, mmAccessTypeToConcreteTypeDictionary);
+                myFieldList.AddRange(newTuple.MmFieldList);
+                foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
+                    myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
+            });
+            return new ExtractFieldsTuple
+            {
+                MmFieldList = myFieldList.ToImmutableArray(),
+                MmFieldDictionary = myFieldDictionary.ToImmutableDictionary()
+            };
+        }
+
+        public static ExtractFieldsTuple ExtractFields(MM.MetamodelConfiguration mm,
+                                                       MM.MetamodelResolver mmAccessTypeToConcreteTypeDictionary)
+        {
+            var myFieldList = new List<FieldInfo>();
+            var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
+            foreach (MMConfigurations.Partition part in mm.Partitions)
+            {
+                var newTuple = ExtractFields(part.Component, new ImmutableArray<MM.Identifier>(), mmAccessTypeToConcreteTypeDictionary);
+                myFieldList.AddRange(newTuple.MmFieldList);
+                foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
+                    myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
+            }
+            return new ExtractFieldsTuple
+            {
+                MmFieldList = myFieldList.ToImmutableArray(),
+                MmFieldDictionary = myFieldDictionary.ToImmutableDictionary()
+            };
+        }
+
+        internal struct ExtractFieldsTuple
+        {
+            public ImmutableDictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>> MmFieldDictionary;
+            public ImmutableArray<FieldInfo> MmFieldList;
+        }
+    }
+
+    internal class MetamodelExpressionToPromelaExpression : MM.MetamodelVisitor<PrExpression>
+    {
+        public MetamodelExpressionToPromelaExpression(MetamodelToPromela commonKnowledge, ComponentInstanceScope currentComponent)
         {
             CommonKnowledge = commonKnowledge;
+            CurrentComponent = currentComponent;
         }
+
+        private MetamodelToPromela CommonKnowledge { get; set; }
+        private ComponentInstanceScope CurrentComponent { get; set; }
 
         /// <summary>
         ///   Visits an element of type <see cref="MMExpressions.BooleanLiteral" />.
@@ -174,21 +384,24 @@ namespace SafetySharp.Modelchecking.Promela
             }
         }
 
-        public PrExpressions.VariableReferenceExpression ConvertFieldAccessExpression (MMExpressions.FieldAccessExpression fieldAccessExpression)
+        public PrExpressions.VariableReferenceExpression ConvertFieldAccessExpression(
+            MMExpressions.FieldAccessExpression fieldAccessExpression)
         {
             Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
-            var refName = CommonKnowledge.GetUniqueName(null/* TODO: fieldAccessExpression.Field.SourceSymbol*/);
+            var fieldDeclaration = CommonKnowledge.MmAccessTypeToConcreteTypeDictionary.Resolve(fieldAccessExpression.Field);
+            var fieldInfo = CommonKnowledge.MmFieldDictionary[CurrentComponent][fieldDeclaration.Identifier];
+            var refName = fieldInfo.GetName();
             return new PrExpressions.VariableReferenceExpression(refName, null, null);
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="MMExpressions.FieldAccessExpression" />.
+        ///   Visits an element of type <see cref="MMExpressions.FieldAccessExpression" />.
         /// </summary>
         /// <param name="fieldAccessExpression">The <see cref="MMExpressions.FieldAccessExpression" /> instance that should be visited.</param>
         public override PrExpression VisitFieldAccessExpression(MMExpressions.FieldAccessExpression fieldAccessExpression)
         {
             Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
-            return this.ConvertFieldAccessExpression(fieldAccessExpression);
+            return ConvertFieldAccessExpression(fieldAccessExpression);
         }
     }
 
@@ -196,13 +409,16 @@ namespace SafetySharp.Modelchecking.Promela
 
     #region Statements
 
-    internal class MetamodelStatementToPromelaStatement : MetamodelVisitor<PrStatement>
+    internal class MetamodelStatementToPromelaStatement : MM.MetamodelVisitor<PrStatement>
     {
-        private MetamodelToPromela CommonKnowledge { get; set; }
-        public MetamodelStatementToPromelaStatement(MetamodelToPromela commonKnowledge)
+        public MetamodelStatementToPromelaStatement(MetamodelToPromela commonKnowledge, ComponentInstanceScope currentComponent)
         {
             CommonKnowledge = commonKnowledge;
+            CurrentComponent = currentComponent;
         }
+
+        private MetamodelToPromela CommonKnowledge { get; set; }
+        private ComponentInstanceScope CurrentComponent { get; set; }
 
         /// <summary>
         ///   Visits an element of type <see cref="MMStatements.EmptyStatement" />.
@@ -242,7 +458,7 @@ namespace SafetySharp.Modelchecking.Promela
         public PrStatements.GuardedCommandClause ConvertGuardedCommandClause(MMStatements.GuardedCommandClause guardedCommandClause)
         {
             Argument.NotNull(guardedCommandClause, () => guardedCommandClause);
-            var guard = guardedCommandClause.Guard.Accept(CommonKnowledge.ExpressionVisitor);
+            var guard = guardedCommandClause.Guard.Accept(CommonKnowledge.GetExpressionVisitor(CurrentComponent));
             var statement = guardedCommandClause.Statement.Accept(this);
             return new PrStatements.GuardedCommandExpressionClause(guard, statement);
         }
@@ -276,9 +492,10 @@ namespace SafetySharp.Modelchecking.Promela
                 //setter is called or variable is somewhere in the hierarchie.
                 throw new NotImplementedException();
             }
-            var newVarRef = CommonKnowledge.ExpressionVisitor.ConvertFieldAccessExpression(stateVar);
-            var rightExpression = assignmentStatement.Right.Accept(CommonKnowledge.ExpressionVisitor);
-            
+            var newVarRef = CommonKnowledge.GetExpressionVisitor(CurrentComponent).ConvertFieldAccessExpression(stateVar);
+
+            var rightExpression = assignmentStatement.Right.Accept(CommonKnowledge.GetExpressionVisitor(CurrentComponent));
+
             return new PrStatements.AssignmentStatement(newVarRef, rightExpression);
         }
     }
