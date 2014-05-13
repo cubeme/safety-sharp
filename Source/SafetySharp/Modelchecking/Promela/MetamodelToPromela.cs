@@ -57,7 +57,7 @@ namespace SafetySharp.Modelchecking.Promela
         internal string GetName()
         {
             var namestring = new StringBuilder();
-            ComponentInstanceNames.ForEach(identifier => namestring.Append(identifier.Name + "_"));
+            foreach(var identifier in ComponentInstanceNames) namestring.Append(identifier.Name + "_");
             namestring.Append(Fieldname.Name);
             return namestring.ToString();
         }
@@ -80,7 +80,7 @@ namespace SafetySharp.Modelchecking.Promela
             var trueGuard = new PrExpressions.BooleanLiteral(true);
             var clause = new PrStatements.GuardedCommandExpressionClause(trueGuard, statement);
             return new PrStatements.GuardedCommandRepetitionStatement(
-                new ImmutableArray<PrStatements.GuardedCommandClause>().Add(clause));
+                ImmutableArray<PrStatements.GuardedCommandClause>.Empty.Add(clause));
         }
 
         public static PrStatement SimpleFieldAssignment(string fieldName, PrExpression expr)
@@ -123,7 +123,7 @@ namespace SafetySharp.Modelchecking.Promela
         {
             var fieldDeclarations = GenerateFieldDeclarations();
 
-            var systemSteps = Mm.Partitions.SelectMany(partition => new ImmutableArray<PrStatement>()
+            var systemSteps = Mm.Partitions.SelectMany(partition => ImmutableArray<PrStatement>.Empty
                                                            .Add(GenerateUpdateStatements(partition, MmFieldList))
                                                            .Add(GenerateBindingExecutionStatements(partition, MmFieldList)));
             var systemStepsBlock = new PrStatements.SimpleBlockStatement(systemSteps.AsImmutable());
@@ -219,7 +219,7 @@ namespace SafetySharp.Modelchecking.Promela
                                                                        new Tuple
                                                                        <MMDeclarations.FieldDeclaration, MMConfigurations.ValueArray>(
                                                                        field, initialValue));
-            fieldWithValue.ForEach(tuple =>
+            foreach (var tuple in fieldWithValue)
             {
                 var fieldDecl = tuple.Item1;
                 var fieldInitialValue = tuple.Item2;
@@ -232,17 +232,17 @@ namespace SafetySharp.Modelchecking.Promela
                 };
                 myFieldList.Add(fieldInfo);
                 myLocalFieldDictionary.Add(fieldDecl.Identifier, fieldInfo);
-            });
+            };
 
             myFieldDictionary.Add(new ComponentInstanceScope { Identifiers = hierarchie }, myLocalFieldDictionary.ToImmutableDictionary());
 
-            comp.SubComponents.ForEach(subcomp =>
+            foreach (var subcomp in comp.SubComponents)
             {
                 var newTuple = ExtractFields(subcomp, myHierarchie, mmAccessTypeToConcreteTypeDictionary);
                 myFieldList.AddRange(newTuple.MmFieldList);
                 foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
                     myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
-            });
+            };
             return new ExtractFieldsTuple
             {
                 MmFieldList = myFieldList.ToImmutableArray(),
@@ -257,7 +257,7 @@ namespace SafetySharp.Modelchecking.Promela
             var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
             foreach (MMConfigurations.Partition part in mm.Partitions)
             {
-                var newTuple = ExtractFields(part.Component, new ImmutableArray<MM.Identifier>(), mmAccessTypeToConcreteTypeDictionary);
+                var newTuple = ExtractFields(part.Component, ImmutableArray<MM.Identifier>.Empty, mmAccessTypeToConcreteTypeDictionary);
                 myFieldList.AddRange(newTuple.MmFieldList);
                 foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
                     myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);

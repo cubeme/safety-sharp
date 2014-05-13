@@ -69,14 +69,15 @@ namespace Tests.Modelchecking.Promela
                 ImmutableArray.Create(fieldDecl),
                 ImmutableArray<MMDeclarations.SubComponentDeclaration>.Empty);
 
+            var trueAndFalseValues = ImmutableArray<MMConfigurations.Value>.Empty
+                .Add(new MMConfigurations.Value(true))
+                .Add(new MMConfigurations.Value(false));
+            var trueAndFalsePossible =  new MMConfigurations.ValueArray(trueAndFalseValues);
             // a component has a list of fields which themselves may have more possible start values
-            var initialValues = new ImmutableArray<MMConfigurations.ValueArray>()
-                .Add(new MMConfigurations.ValueArray(new ImmutableArray<MMConfigurations.Value>()
-                    .Add(new MMConfigurations.Value(true))
-                    .Add(new MMConfigurations.Value(false))
-                ));
+            var initialValues = ImmutableArray<MMConfigurations.ValueArray>.Empty
+                    .Add(trueAndFalsePossible);
 
-            var subcomponentInstances = new ImmutableArray<MMConfigurations.ComponentConfiguration>();
+            var subcomponentInstances = ImmutableArray<MMConfigurations.ComponentConfiguration>.Empty;
 
             var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>(unusedInternFieldSymbol2);
             var mmsimpleComponentInstance = new MMConfigurations.ComponentConfiguration(
@@ -87,7 +88,7 @@ namespace Tests.Modelchecking.Promela
 
             var partition = new MMConfigurations.Partition(mmsimpleComponentInstance);
 
-            var completeMetamodel = new MM.MetamodelConfiguration(new ImmutableArray<MMConfigurations.Partition>().Add(partition));
+            var completeMetamodel = new MM.MetamodelConfiguration(ImmutableArray<MMConfigurations.Partition>.Empty.Add(partition));
 
             var mmAccessTypeToConcreteTypeDictionary = MM.MetamodelResolver.Empty;
             mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(fieldDeclReference, fieldDecl);
