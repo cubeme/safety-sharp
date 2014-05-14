@@ -41,50 +41,61 @@ namespace Tests.CSharp.Transformation
 	{
 		private MetamodelCompilation _metamodelCompilation;
 		private MetamodelConfiguration _metamodelConfiguration;
-		//private ComponentResolver _componentResolver;
-		private ModelConfiguration _configuration;
+		private ComponentResolver _componentResolver;
+		private SymbolMap _symbolMap;
+		private ModelConfigurationSnapshot _configuration;
+		private TestCompilation _compilation;
 
-		private void Transform(string csharpCode, string configurationName)
+		private bool Transform(string csharpCode, string configurationName)
 		{
-			var compilation = new TestCompilation(csharpCode);
-			_configuration = (ModelConfiguration)Activator.CreateInstance(compilation.Compile().GetType(configurationName));
-			var transformation = new MetamodelTransformation(compilation.ModelingCompilation, _configuration.GetSnapshot());
+			_compilation = new TestCompilation(csharpCode);
+			_configuration = ((ModelConfiguration)Activator.CreateInstance(_compilation.Compile().GetType(configurationName))).GetSnapshot();
 
-			transformation.TryTransform(out _metamodelCompilation, out _metamodelConfiguration).Should().BeTrue();
-			//_componentResolver = transformation.ComponentResolver;
+			var transformation = new MetamodelTransformation(_compilation.ModelingCompilation, _configuration);
+			return transformation.TryTransform(out _metamodelCompilation, out _metamodelConfiguration, out _symbolMap, out _componentResolver);
 		}
 
-		//private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component)
-		//{
-		//	return new ComponentConfiguration(
-		//		Identifier.Unknown,
-		//		_componentResolver.Resolve(component),
-		//		ImmutableArray<ValueArray>.Empty,
-		//		ImmutableArray<ComponentConfiguration>.Empty);
-		//}
+		private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component, string name = null)
+		{
+			return new ComponentConfiguration(
+				name == null ? Identifier.Unknown : new Identifier(name),
+				_componentResolver.Resolve(component),
+				ImmutableArray<ValueArray>.Empty,
+				ImmutableArray<ComponentConfiguration>.Empty);
+		}
 
-		//protected IMetamodelReference<ComponentDeclaration> GetComponentReference(string className)
-		//{
-		//	var componentSymbol = _compilation.FindClassSymbol(className);
-		//	return _symbolMap.GetComponentReference(componentSymbol);
-		//}
+		private IMetamodelReference<ComponentDeclaration> GetComponentReference(string className)
+		{
+			var componentSymbol = _compilation.FindClassSymbol(className);
+			return _symbolMap.GetComponentReference(componentSymbol);
+		}
 
-		//protected IMetamodelReference<InterfaceDeclaration> GetInterfaceReference(string interfaceName)
-		//{
-		//	var interfaceSymbol = _compilation.FindInterfaceSymbol(interfaceName);
-		//	return _symbolMap.GetInterfaceReference(interfaceSymbol);
-		//}
+		private IMetamodelReference<InterfaceDeclaration> GetInterfaceReference(string interfaceName)
+		{
+			var interfaceSymbol = _compilation.FindInterfaceSymbol(interfaceName);
+			return _symbolMap.GetInterfaceReference(interfaceSymbol);
+		}
 
-		//protected IMetamodelReference<FieldDeclaration> GetFieldReference(string className, string fieldName)
-		//{
-		//	var fieldSymbol = _compilation.FindFieldSymbol(className, fieldName);
-		//	return _symbolMap.GetFieldReference(fieldSymbol);
-		//}
+		private IMetamodelReference<FieldDeclaration> GetFieldReference(string className, string fieldName)
+		{
+			var fieldSymbol = _compilation.FindFieldSymbol(className, fieldName);
+			return _symbolMap.GetFieldReference(fieldSymbol);
+		}
+
+		private static ImmutableArray<Value> ToValues(params object[] values)
+		{
+			return values.Select(value => new Value(value)).ToImmutableArray();
+		}
+
+		private static ImmutableArray<ValueArray> ToValueArray(params ImmutableArray<Value>[] valueArrays)
+		{
+			return ImmutableArray.CreateRange(valueArrays.Select(values => new ValueArray(values)));
+		}
 
 		[Test]
 		public void ModelOfSimpleNondeterministicBooleanSystem()
 		{
-			var csharpCode = @"
+			const string csharpCode = @"
 				class BooleanComponent : Component
 				{
 					private bool _value;
@@ -107,125 +118,108 @@ namespace Tests.CSharp.Transformation
 					}
 				}";
 
-			Transform(csharpCode, "BooleanConfiguration");
-			//_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
-			//	new Partition(CreateComponentConfiguration())
-			//	);
+			Transform(csharpCode, "BooleanConfiguration").Should().BeTrue();
 
-			//var fieldReference = GetFieldReference("BooleanComponent", "_value");
-			//var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
+			var fieldReference = GetFieldReference("BooleanComponent", "_value");
+			var field = new FieldDeclaration(new Identifier("_value"), TypeSymbol.Boolean);
 
-			//var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
-			//var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);
+			var assignment1 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.True);
+			var assignment2 = new AssignmentStatement(new FieldAccessExpression(fieldReference), BooleanLiteral.False);
 
-			//var clause1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
-			//var clause2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
+			var clause1 = new GuardedCommandClause(BooleanLiteral.True, assignment1);
+			var clause2 = new GuardedCommandClause(BooleanLiteral.True, assignment2);
 
-			//var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
-			//var updateMethod = MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
+			var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
+			var updateMethod = MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
 
-			//var expected = ComponentDeclaration
-			//	.Empty
-			//	.WithIdentifier(new Identifier("BooleanComponent"))
-			//	.WithUpdateMethod(updateMethod)
-			//	.WithFields(ImmutableArray.Create(field));
+			var expected = ComponentDeclaration
+				.Empty
+				.WithIdentifier(new Identifier("BooleanComponent"))
+				.WithUpdateMethod(updateMethod)
+				.WithFields(ImmutableArray.Create(field));
 
-			//actual.Should().Be(expected);
+			_metamodelCompilation.Components.Should().BeEquivalentTo(expected);
+			_metamodelCompilation.Interfaces.Should().BeEmpty();
+
+			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0])
+								  .WithFieldValues(ToValueArray(ToValues(true, false)))));
 		}
 
-//		[Test]
-//		public void Test2()
-//		{
-//			var csharpCode = @"
-//class X : Component
-//{
-//	private int _field;		
-//
-//	public X()
-//	{
-//		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
-//	}
-//}
-//class Y : Component
-//{
-//	private X _x = new X();
-//}
-//class Config : ModelConfiguration
-//{
-//	public Config()
-//	{
-//		AddPartitions(new Y(), new X());
-//	}
-//}
-//";
-//			Transform(csharpCode, "Config");
-//			_configuration.Partitions.Should().HaveCount(2);
+		[Test]
+		public void ModelWithInterfaceSubComponent()
+		{
+			const string csharpCode = @"
+				interface ITestComponent : IComponent {}
+				class X : Component, ITestComponent
+				{
+				}
+				class Y : Component
+				{
+					private ITestComponent _x = new X();
+				}
+				class Configuration : ModelConfiguration
+				{
+					public Configuration()
+					{
+						AddPartitions(new Y());
+					}
+				}";
 
-//			var componentConfiguration = _configuration.Partitions[1].Component;
-//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-//			componentConfiguration.FieldValues.Should().HaveCount(1);
-//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-//			componentConfiguration.SubComponents.Should().HaveCount(0);
+			Transform(csharpCode, "Configuration").Should().BeTrue();
 
-//			componentConfiguration = _configuration.Partitions[0].Component;
-//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-//			componentConfiguration.FieldValues.Should().HaveCount(0);
-//			componentConfiguration.SubComponents.Should().HaveCount(1);
+			var componentInterface = new InterfaceDeclaration(new Identifier("ITestComponent"));
+			var component1 = ComponentDeclaration.Empty.WithIdentifier(new Identifier("X"));
+			var component2 = ComponentDeclaration
+				.Empty
+				.WithIdentifier(new Identifier("Y"))
+				.WithSubComponents(ImmutableArray.Create(
+					new SubComponentDeclaration(new Identifier("_x"), GetInterfaceReference("ITestComponent"))));
 
-//			componentConfiguration = componentConfiguration.SubComponents[0];
-//			componentConfiguration.FieldValues.Should().HaveCount(1);
-//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-//			componentConfiguration.SubComponents.Should().HaveCount(0);
-//		}
+			_metamodelCompilation.Components.Should().BeEquivalentTo(component1, component2);
+			_metamodelCompilation.Interfaces.Should().BeEquivalentTo(componentInterface);
 
-//		[Test]
-//		public void Test3()
-//		{
-//			var csharpCode = @"
-//class X : Component, Z
-//{
-//	private int _field;		
-//
-//	public X()
-//	{
-//		SetInitialValues(() => _field, 1, 2, 3, 4, 5, 6);
-//	}
-//}
-//interface Z : IComponent {}
-//class Y : Component
-//{
-//	private Z _x = new X();
-//}
-//class Config : ModelConfiguration
-//{
-//	public Config()
-//	{
-//		AddPartitions(new Y(), new X());
-//	}
-//}
-//";
-//			Transform(csharpCode, "Config");
-//			_configuration.Partitions.Should().HaveCount(2);
+			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0])
+								  .WithSubComponents(ImmutableArray.Create(
+									  CreateComponentConfiguration(_configuration.PartitionRoots[0].SubComponents[0], "_x")))));
+		}
 
-//			var componentConfiguration = _configuration.Partitions[1].Component;
-//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-//			componentConfiguration.FieldValues.Should().HaveCount(1);
-//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-//			componentConfiguration.SubComponents.Should().HaveCount(0);
+		[Test]
+		public void ModelWithNonInterfaceSubComponentsAndTwoPartitions()
+		{
+			const string csharpCode = @"
+				class X : Component
+				{
+				}
+				class Y : Component
+				{
+					private X _x = new X();
+				}
+				class Configuration : ModelConfiguration
+				{
+					public Configuration()
+					{
+						AddPartitions(new X(), new Y());
+					}
+				}";
 
-//			componentConfiguration = _configuration.Partitions[0].Component;
-//			//componentConfiguration.Type.Should().Be(_componentResolver.Resolve(_components["X"]));
-//			componentConfiguration.FieldValues.Should().HaveCount(0);
-//			componentConfiguration.SubComponents.Should().HaveCount(1);
+			Transform(csharpCode, "Configuration").Should().BeTrue();
 
-//			componentConfiguration = componentConfiguration.SubComponents[0];
-//			componentConfiguration.FieldValues.Should().HaveCount(1);
-//			componentConfiguration.FieldValues[0].Values.Should().BeEquivalentTo(1, 2, 3, 4, 5, 6);
-//			componentConfiguration.SubComponents.Should().HaveCount(0);
+			var component1 = ComponentDeclaration.Empty.WithIdentifier(new Identifier("X"));
+			var component2 = ComponentDeclaration
+				.Empty
+				.WithIdentifier(new Identifier("Y"))
+				.WithSubComponents(ImmutableArray.Create(new SubComponentDeclaration(new Identifier("_x"), GetComponentReference("X"))));
 
-//			_compilation.Interfaces.Should().HaveCount(1);
-//			_compilation.Components[1].SubComponents.Should().HaveCount(1);
-//			_compilation.Components[1].SubComponents[0].Type.Should().BeOfType<MetamodelReference<InterfaceDeclaration>>();
-//		}
+			_metamodelCompilation.Components.Should().BeEquivalentTo(component1, component2);
+			_metamodelCompilation.Interfaces.Should().BeEmpty();
+
+			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0])),
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[1])
+								  .WithSubComponents(ImmutableArray.Create(
+									  CreateComponentConfiguration(_configuration.PartitionRoots[1].SubComponents[0], "_x")))));
+		}
 	}
 }

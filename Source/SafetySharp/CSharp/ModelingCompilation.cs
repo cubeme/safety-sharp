@@ -28,7 +28,6 @@ namespace SafetySharp.CSharp
 	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling;
 	using Transformation;
 	using Utilities;
 

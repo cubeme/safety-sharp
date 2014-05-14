@@ -57,23 +57,50 @@ namespace SafetySharp.CSharp.Transformation
 
 			_compilation = compilation;
 			_modelConfiguration = modelConfiguration;
-
-			ComponentResolver = ComponentResolver.Empty;
 		}
-
-		/// <summary>
-		///     Gets the component resolver that can be used to resolve the <see cref="ComponentDeclaration" /> corresponding to a
-		///     <see cref="ComponentSnapshot" />.
-		/// </summary>
-		private ComponentResolver ComponentResolver { get;  set; }
 
 		/// <summary>
 		///     Performs the transformation to the metamodel, returning the resulting <see cref="MetamodelCompilation" /> and
 		///     <see cref="MetamodelConfiguration" /> instances on success. If any errors were encountered during the transformation,
 		///     <c>false</c> is returned.
 		/// </summary>
+		/// <param name="compilation">When this method successfully returns, contains the transformed metamodel compilation.</param>
+		/// <param name="configuration">When this method successfully returns, contains the transformed metamodel configuration.</param>
 		internal bool TryTransform(out MetamodelCompilation compilation, out MetamodelConfiguration configuration)
 		{
+			SymbolMap symbolMap;
+			ComponentResolver componentResolver;
+
+			return TryTransform(out compilation, out configuration, out symbolMap, out componentResolver);
+		}
+
+		/// <summary>
+		///     Performs the transformation to the metamodel, returning the resulting <see cref="MetamodelCompilation" /> and
+		///     <see cref="MetamodelConfiguration" /> instances on success. If any errors were encountered during the transformation,
+		///     <c>false</c> is returned.
+		/// </summary>
+		/// <param name="compilation">When this method successfully returns, contains the transformed metamodel compilation.</param>
+		/// <param name="configuration">When this method successfully returns, contains the transformed metamodel configuration.</param>
+		/// <param name="symbolMap">
+		///     When this method successfully returns, contains the component resolver that can be used to resolve the
+		///     <see cref="ComponentDeclaration" /> corresponding to a <see cref="ComponentSnapshot" /> of the
+		///     <see cref="MetamodelConfiguration" /> instance passed to the constructor.
+		/// </param>
+		/// <param name="componentResolver">
+		///     When this method successfully returns, contains the component resolver that can be used to resolve the
+		///     <see cref="ComponentDeclaration" /> corresponding to a <see cref="ComponentSnapshot" /> of the
+		///     <see cref="MetamodelConfiguration" /> instance passed to the constructor.
+		/// </param>
+		internal bool TryTransform(out MetamodelCompilation compilation,
+								   out MetamodelConfiguration configuration,
+								   out SymbolMap symbolMap,
+								   out ComponentResolver componentResolver)
+		{
+			compilation = null;
+			configuration = null;
+			symbolMap = null;
+			componentResolver = null;
+
 			// We're keeping a mutable array around that is used to map all component instances of the model configuration 
 			// to their corresponding class declarations within the modeling compilation. The mapping is performed implicitly 
 			// via the array indices of the two arrays below.
@@ -95,15 +122,17 @@ namespace SafetySharp.CSharp.Transformation
 			// Transform the compilation 
 			var compilationTransformation = new CompilationTransformation(_compilation);
 			compilation = compilationTransformation.Transform();
+			symbolMap = compilationTransformation.SymbolMap;
 
 			// Build up the required component resolver and transform the configuration
+			componentResolver = ComponentResolver.Empty;
 			for (var i = 0; i < components.Length; ++i)
 			{
 				var reference = compilationTransformation.GetComponentDeclarationReference(classDeclarations[i]);
-				ComponentResolver = ComponentResolver.With(components[i], reference);
+				componentResolver = componentResolver.With(components[i], reference);
 			}
 
-			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration, compilation.Resolver, ComponentResolver);
+			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration, compilation.Resolver, componentResolver);
 			configuration = configurationTransformation.Transform();
 
 			return true;
