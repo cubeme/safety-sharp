@@ -27,6 +27,7 @@ namespace Tests.Modeling
 	namespace ComponentTests
 	{
 		using System.Linq;
+		using System.Linq.Expressions;
 		using FluentAssertions;
 		using NUnit.Framework;
 		using SafetySharp.Modeling;
@@ -67,6 +68,61 @@ namespace Tests.Modeling
 					_component1 = component1;
 					_component2 = component2;
 				}
+			}
+		}
+
+		[TestFixture]
+		internal class SetInitialValuesMethod
+		{
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			private class TestComponent<T> : Component
+			{
+				private T _field = default(T);
+
+				public TestComponent(params T[] values)
+				{
+					SetInitialValues(() => _field, values);
+				}
+			}
+
+			private class ExpressionComponent : Component
+			{
+				public ExpressionComponent(Expression<Func<int>> expression)
+				{
+					SetInitialValues(expression, 1);
+				}
+			}
+
+			[Test]
+			public void ThrowsWhenExpressionDoesNotReferenceField()
+			{
+				Action action = () => new ExpressionComponent(() => 1 + 1);
+				action.ShouldThrow<ArgumentException>();
+
+				const int i = 0;
+				action = () => new ExpressionComponent(() => i);
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsWhenFieldExpressionIsNull()
+			{
+				Action action = () => new ExpressionComponent(null);
+				action.ShouldThrow<ArgumentNullException>();
+			}
+
+			[Test]
+			public void ThrowsWhenInitialValuesIsEmpty()
+			{
+				Action action = () => new TestComponent<int>();
+				action.ShouldThrow<ArgumentException>();
+			}
+
+			[Test]
+			public void ThrowsWhenInitialValuesIsNull()
+			{
+				Action action = () => new TestComponent<int>(null);
+				action.ShouldThrow<ArgumentNullException>();
 			}
 		}
 
