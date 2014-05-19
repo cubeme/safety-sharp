@@ -29,6 +29,7 @@ namespace SafetySharp.Modelchecking.Promela
     using System.Text;
     using Metamodel.Types;
     using Microsoft.CodeAnalysis;
+    using Modeling;
     using Utilities;
     using MM = Metamodel;
     using MMExpressions = Metamodel.Expressions;
@@ -49,7 +50,8 @@ namespace SafetySharp.Modelchecking.Promela
 
     internal struct FieldInfo
     {
-        internal ImmutableArray<MM.Identifier> ComponentInstanceNames;
+        //internal ImmutableArray<MM.Identifier> ComponentInstanceNames;
+        internal ComponentInstanceScope AffectedComponentScope;
         internal MMDeclarations.FieldDeclaration FieldDeclaration;
         internal MM.Identifier Fieldname;
         internal MMConfigurations.ValueArray InitialValues;
@@ -57,10 +59,17 @@ namespace SafetySharp.Modelchecking.Promela
         internal string GetName()
         {
             var namestring = new StringBuilder();
-            foreach(var identifier in ComponentInstanceNames) namestring.Append(identifier.Name + "_");
+            foreach(var identifier in AffectedComponentScope.Identifiers) namestring.Append(identifier.Name + "_");
             namestring.Append(Fieldname.Name);
             return namestring.ToString();
         }
+    }
+
+    internal struct ComponentConfigurationUpdateMethod
+    {
+        internal MMConfigurations.ComponentConfiguration AffectedComponentConfiguration;
+        internal ComponentInstanceScope AffectedComponentScope;
+        internal MMStatements.Statement UpdateMethod;
     }
 
     internal static class PromelaHelpers
@@ -193,9 +202,42 @@ namespace SafetySharp.Modelchecking.Promela
             return statements.ToImmutableArray();
         }
 
+        public ImmutableArray<ComponentConfigurationUpdateMethod> CollectUpdateMethodsInOrder(MMConfigurations.Partition partition)
+        {
+            var scope = new ComponentInstanceScope() { Identifiers = ImmutableArray<MM.Identifier>.Empty };
+            return CollectUpdateMethodsInOrder(partition.Component, scope);
+        }
+        public ImmutableArray<ComponentConfigurationUpdateMethod> CollectUpdateMethodsInOrder(MMConfigurations.ComponentConfiguration component, ComponentInstanceScope parentScope )
+        {
+            var updateMethods = new List<ComponentConfigurationUpdateMethod>();
+            var scope = new ComponentInstanceScope() {Identifiers = parentScope.Identifiers.Add(component.Identifier) };
+            var componentDeclaration = this.MmAccessTypeToConcreteTypeDictionary.Resolve(component.Type);
+            var updateMethod = new ComponentConfigurationUpdateMethod
+            {
+                AffectedComponentScope = scope,
+                AffectedComponentConfiguration = component,
+                UpdateMethod = componentDeclaration.UpdateMethod.Body
+            };
+            updateMethods.Add(updateMethod);
+            
+            foreach (var componentConfiguration in component.SubComponents)
+            {
+                updateMethods.AddRange(CollectUpdateMethodsInOrder(componentConfiguration, scope));
+            }
+            return updateMethods.ToImmutableArray();
+        }
+
         public PrStatement GenerateUpdateStatements(MMConfigurations.Partition partition, ImmutableArray<FieldInfo> fields)
         {
-            throw new NotImplementedException();
+            var promelaUpdateStatements = new List<PrStatement>();
+            var updateMethods = CollectUpdateMethodsInOrder(partition);
+            foreach (var componentConfigurationUpdateMethod in updateMethods)
+            {
+                var visitor= this.GetStatementVisitor(componentConfigurationUpdateMethod.AffectedComponentScope);
+                var promelaUpdateStatement = componentConfigurationUpdateMethod.UpdateMethod.Accept(visitor);
+                promelaUpdateStatements.Add(promelaUpdateStatement);
+            }
+            return new PrStatements.SimpleBlockStatement(promelaUpdateStatements.AsImmutable());
         }
 
         public PrStatement GenerateBindingExecutionStatements(MMConfigurations.Partition partition, ImmutableArray<FieldInfo> fields)
@@ -204,10 +246,10 @@ namespace SafetySharp.Modelchecking.Promela
         }
 
         public static ExtractFieldsTuple ExtractFields(MMConfigurations.ComponentConfiguration comp,
-                                                       ImmutableArray<MM.Identifier> hierarchie,
+                                                       ComponentInstanceScope parentScope,
                                                        MM.MetamodelResolver mmAccessTypeToConcreteTypeDictionary)
         {
-            var myHierarchie = hierarchie.Add(comp.Identifier);
+            var myScope = new ComponentInstanceScope() { Identifiers = parentScope.Identifiers.Add(comp.Identifier) };
             var myFieldList = new List<FieldInfo>();
             var myLocalFieldDictionary = new Dictionary<MM.Identifier, FieldInfo>();
             var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
@@ -226,7 +268,7 @@ namespace SafetySharp.Modelchecking.Promela
                 var fieldInfo = new FieldInfo
                 {
                     Fieldname = fieldDecl.Identifier,
-                    ComponentInstanceNames = myHierarchie,
+                    AffectedComponentScope = myScope,
                     InitialValues = fieldInitialValue,
                     FieldDeclaration = fieldDecl
                 };
@@ -234,11 +276,11 @@ namespace SafetySharp.Modelchecking.Promela
                 myLocalFieldDictionary.Add(fieldDecl.Identifier, fieldInfo);
             };
 
-            myFieldDictionary.Add(new ComponentInstanceScope { Identifiers = hierarchie }, myLocalFieldDictionary.ToImmutableDictionary());
+            myFieldDictionary.Add(myScope, myLocalFieldDictionary.ToImmutableDictionary());
 
             foreach (var subcomp in comp.SubComponents)
             {
-                var newTuple = ExtractFields(subcomp, myHierarchie, mmAccessTypeToConcreteTypeDictionary);
+                var newTuple = ExtractFields(subcomp, myScope, mmAccessTypeToConcreteTypeDictionary);
                 myFieldList.AddRange(newTuple.MmFieldList);
                 foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
                     myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
@@ -257,7 +299,8 @@ namespace SafetySharp.Modelchecking.Promela
             var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
             foreach (MMConfigurations.Partition part in mm.Partitions)
             {
-                var newTuple = ExtractFields(part.Component, ImmutableArray<MM.Identifier>.Empty, mmAccessTypeToConcreteTypeDictionary);
+                var scope = new ComponentInstanceScope() { Identifiers = ImmutableArray<MM.Identifier>.Empty };
+                var newTuple = ExtractFields(part.Component, scope, mmAccessTypeToConcreteTypeDictionary);
                 myFieldList.AddRange(newTuple.MmFieldList);
                 foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
                     myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
