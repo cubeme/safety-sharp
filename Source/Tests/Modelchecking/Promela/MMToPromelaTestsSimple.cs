@@ -104,7 +104,7 @@ namespace Tests.Modelchecking.Promela
             var modelWriter = new PromelaModelWriter();
             modelWriter.Visit(convertedMetamodel);
 
-            modelWriter.CodeWriter.WriteToFile("Modelchecking\\Promela\\test1.pml");
+            modelWriter.CodeWriter.WriteToFile(filename);
 
             Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);
         }

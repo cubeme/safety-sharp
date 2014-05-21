@@ -20,6 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+
+// Note: http://spinroot.com/spin/Man/separators.html
+//       http://spinroot.com/spin/Man/grammar.html
+//       semicolon ";" and arrow "->" are statement separators and not statement terminators!
+
 namespace SafetySharp.Modelchecking.Promela
 {
     using System;
@@ -39,7 +44,23 @@ namespace SafetySharp.Modelchecking.Promela
 
     internal class PromelaModelWriter : PromelaVisitor
     {
-        public readonly CodeWriter CodeWriter = new CodeWriter();
+        public PromelaModelWriter()
+        {
+            CodeWriter = new CodeWriter();
+        }
+        public PromelaModelWriter(bool skipHeader)
+        {
+            if (skipHeader)
+            {
+                CodeWriter = new CodeWriter(null);
+            }
+            else
+            {
+                CodeWriter = new CodeWriter();
+            }
+        }
+
+        public readonly CodeWriter CodeWriter;
 
         #region Proctype
 

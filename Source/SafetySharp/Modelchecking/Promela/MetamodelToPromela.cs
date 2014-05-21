@@ -138,32 +138,6 @@ namespace SafetySharp.Modelchecking.Promela
         }
     }
 
-    internal static class PromelaHelpers
-    {
-        public static PrExpressions.BooleanLiteral ConstTrueExpression()
-        {
-            return new PrExpressions.BooleanLiteral(true);
-        }
-
-        public static PrExpressions.BooleanLiteral ConstFalseExpression()
-        {
-            return new PrExpressions.BooleanLiteral(false);
-        }
-
-        public static PrStatement CoverStatementInEndlessLoop(PrStatement statement)
-        {
-            var trueGuard = new PrExpressions.BooleanLiteral(true);
-            var clause = new PrStatements.GuardedCommandExpressionClause(trueGuard, statement);
-            return new PrStatements.GuardedCommandRepetitionStatement(
-                ImmutableArray<PrStatements.GuardedCommandClause>.Empty.Add(clause));
-        }
-
-        public static PrStatement SimpleFieldAssignment(string fieldName, PrExpression expr)
-        {
-            return new PrStatements.AssignmentStatement(new PrExpressions.VariableReferenceExpression(fieldName, null, null), expr);
-        }
-    }
-
     internal class MetamodelToPromela
     {
         public readonly MM.MetamodelConfiguration Mm;

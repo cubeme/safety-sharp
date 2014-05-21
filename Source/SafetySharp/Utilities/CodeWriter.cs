@@ -56,12 +56,21 @@ namespace SafetySharp.Utilities
 			WriterHeader();
 		}
 
-		/// <summary>
-		///     Appends the given format string to the current line.
+        /// <summary>
+		///     Initializes a new instance of the <see cref="CodeWriter" /> type and use a custom writeHeaderAction.
 		/// </summary>
-		/// <param name="format">The format string that should be appended.</param>
-		/// <param name="arguments">The arguments that should be copied into the format string.</param>
-		[StringFormatMethod("format")]
+		public CodeWriter(Action writeHeaderAction)
+        {
+            if (writeHeaderAction!=null)
+                writeHeaderAction();
+        }
+
+        /// <summary>
+        ///     Appends the given format string to the current line.
+        /// </summary>
+        /// <param name="format">The format string that should be appended.</param>
+        /// <param name="arguments">The arguments that should be copied into the format string.</param>
+        [StringFormatMethod("format")]
 		public void Append(string format, params object[] arguments)
 		{
 			Argument.NotNull(format, () => format);
