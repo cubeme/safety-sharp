@@ -46,6 +46,29 @@ namespace SafetySharp.Modelchecking.Promela
     internal struct ComponentInstanceScope
     {
         public ImmutableArray<MM.Identifier> Identifiers { get; set; }
+
+
+        public override bool Equals(Object obj)
+        {
+            return obj is ComponentInstanceScope && this == (ComponentInstanceScope)obj;
+        }
+        public override int GetHashCode()
+        {
+            var hashCode = 1;
+            foreach (var identifier in Identifiers)
+            {
+                hashCode = 31 * hashCode + (identifier.GetHashCode());
+            }
+            return hashCode;
+        }
+        public static bool operator ==(ComponentInstanceScope x, ComponentInstanceScope y)
+        {
+            return x.Identifiers.SequenceEqual(y.Identifiers);
+        }
+        public static bool operator !=(ComponentInstanceScope x, ComponentInstanceScope y)
+        {
+            return !(x == y);
+        }
     };
 
     internal struct FieldInfo
@@ -63,6 +86,28 @@ namespace SafetySharp.Modelchecking.Promela
             namestring.Append(Fieldname.Name);
             return namestring.ToString();
         }
+        public override bool Equals(Object obj)
+        {
+            return obj is FieldInfo && this == (FieldInfo)obj;
+        }
+        public override int GetHashCode()
+        {
+            return AffectedComponentScope.GetHashCode()
+                   ^ FieldDeclaration.GetHashCode()
+                   ^ Fieldname.GetHashCode()
+                   ^ InitialValues.GetHashCode();
+        }
+        public static bool operator ==(FieldInfo x, FieldInfo y)
+        {
+            return x.AffectedComponentScope == y.AffectedComponentScope
+                && x.FieldDeclaration == y.FieldDeclaration
+                && x.Fieldname == y.Fieldname
+                && x.InitialValues==y.InitialValues;
+        }
+        public static bool operator !=(FieldInfo x, FieldInfo y)
+        {
+            return !(x == y);
+        }
     }
 
     internal struct ComponentConfigurationUpdateMethod
@@ -70,6 +115,27 @@ namespace SafetySharp.Modelchecking.Promela
         internal MMConfigurations.ComponentConfiguration AffectedComponentConfiguration;
         internal ComponentInstanceScope AffectedComponentScope;
         internal MMStatements.Statement UpdateMethod;
+
+        public override bool Equals(Object obj)
+        {
+            return obj is ComponentConfigurationUpdateMethod && this == (ComponentConfigurationUpdateMethod)obj;
+        }
+        public override int GetHashCode()
+        {
+            return AffectedComponentConfiguration.GetHashCode()
+                   ^ AffectedComponentScope.GetHashCode()
+                   ^ UpdateMethod.GetHashCode();
+        }
+        public static bool operator ==(ComponentConfigurationUpdateMethod x, ComponentConfigurationUpdateMethod y)
+        {
+            return x.AffectedComponentConfiguration == y.AffectedComponentConfiguration
+                && x.AffectedComponentScope == y.AffectedComponentScope
+                && x.UpdateMethod == y.UpdateMethod;
+        }
+        public static bool operator !=(ComponentConfigurationUpdateMethod x, ComponentConfigurationUpdateMethod y)
+        {
+            return !(x == y);
+        }
     }
 
     internal static class PromelaHelpers
@@ -227,6 +293,7 @@ namespace SafetySharp.Modelchecking.Promela
             return updateMethods.ToImmutableArray();
         }
 
+        //TODO: Bring the Update Statements in the correct order
         public PrStatement GenerateUpdateStatements(MMConfigurations.Partition partition, ImmutableArray<FieldInfo> fields)
         {
             var promelaUpdateStatements = new List<PrStatement>();
@@ -242,7 +309,9 @@ namespace SafetySharp.Modelchecking.Promela
 
         public PrStatement GenerateBindingExecutionStatements(MMConfigurations.Partition partition, ImmutableArray<FieldInfo> fields)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            //TODO: Bindings
+            return new PrStatements.SkipStatement();
         }
 
         public static ExtractFieldsTuple ExtractFields(MMConfigurations.ComponentConfiguration comp,
