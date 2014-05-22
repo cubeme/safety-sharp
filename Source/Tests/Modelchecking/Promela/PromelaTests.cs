@@ -84,7 +84,7 @@ namespace Tests.Modelchecking.Promela
             fileWriter.Visit(guardedCommandElseClause);
             var output = fileWriter.CodeWriter.ToString().Trim();
 
-            var arrowInTheMiddle = (output.IndexOf(';') > 0) && (output.IndexOf(';') < output.Length);
+            var arrowInTheMiddle = (output.IndexOf("->", System.StringComparison.Ordinal) > 0) && (output.IndexOf("->", System.StringComparison.Ordinal) < output.Length);
 
             arrowInTheMiddle.Should().BeTrue();
         }

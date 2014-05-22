@@ -78,7 +78,14 @@ namespace SafetySharp.Modelchecking.Promela
 
             CodeWriter.AppendLine("active proctype " + proctype.Name + "() {{");
             CodeWriter.IncreaseIndent();
-            proctype.Code.ForEach(stmnt => stmnt.Accept(this));
+            var first = true;
+            foreach (var statement in proctype.Code)
+            {
+                if (!first)
+                    CodeWriter.AppendLine(";");
+                statement.Accept(this);
+                first = false;
+            }
             CodeWriter.DecreaseIndent();
             CodeWriter.AppendLine("}}");
         }
@@ -248,7 +255,14 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(simpleBlockStatement, () => simpleBlockStatement);
             CodeWriter.AppendLine("{{");
             CodeWriter.IncreaseIndent();
-            simpleBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
+            var first = true;
+            foreach (var statement in simpleBlockStatement.Statements)
+            {
+                if (!first)
+                    CodeWriter.AppendLine(";");
+                statement.Accept(this);
+                first = false;
+            }
             CodeWriter.DecreaseIndent();
             CodeWriter.AppendLine("}}");
         }
@@ -262,7 +276,14 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(atomicBlockStatement, () => atomicBlockStatement);
             CodeWriter.AppendLine("atomic {{");
             CodeWriter.IncreaseIndent();
-            atomicBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
+            var first = true;
+            foreach (var statement in atomicBlockStatement.Statements)
+            {
+                if (!first)
+                    CodeWriter.AppendLine(";");
+                statement.Accept(this);
+                first = false;
+            }
             CodeWriter.DecreaseIndent();
             CodeWriter.AppendLine("}}");
         }
@@ -276,7 +297,14 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(dStepBlockStatement, () => dStepBlockStatement);
             CodeWriter.AppendLine("d_step {{");
             CodeWriter.IncreaseIndent();
-            dStepBlockStatement.Statements.ForEach(stmnt => stmnt.Accept(this));
+            var first = true;
+            foreach (var statement in dStepBlockStatement.Statements)
+            {
+                if (!first)
+                    CodeWriter.AppendLine(";");
+                statement.Accept(this);
+                first = false;
+            }
             CodeWriter.DecreaseIndent();
             CodeWriter.AppendLine("}}");
         }
@@ -290,7 +318,6 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(returnStatement, () => returnStatement);
             CodeWriter.Append("return ");
             returnStatement.Expression.Accept(this);
-            CodeWriter.Append(";");
             CodeWriter.NewLine();
         }
 
@@ -301,9 +328,9 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitExpressionStatement(ExpressionStatement expressionStatement)
         {
             Argument.NotNull(expressionStatement, () => expressionStatement);
+            CodeWriter.Append("(");
             expressionStatement.Expression.Accept(this);
-            CodeWriter.Append(";");
-            CodeWriter.NewLine();
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -343,7 +370,7 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
             CodeWriter.AppendLine("if");
             guardedCommandSelectionStatement.Clauses.ForEach(clause => clause.Accept(this));
-            CodeWriter.AppendLine("fi");
+            CodeWriter.Append("fi");
         }
 
         /// <summary>
@@ -362,6 +389,8 @@ namespace SafetySharp.Modelchecking.Promela
             CodeWriter.IncreaseIndent();
             CodeWriter.NewLine();
             guardedCommandExpressionClause.Statement.Accept(this);
+
+            CodeWriter.NewLine();
             CodeWriter.DecreaseIndent();
         }
 
@@ -387,7 +416,6 @@ namespace SafetySharp.Modelchecking.Promela
             assignmentStatement.Left.Accept(this);
             CodeWriter.Append(" = ");
             assignmentStatement.Right.Accept(this);
-            CodeWriter.AppendLine(";");
         }
 
         /// <summary>
@@ -439,7 +467,6 @@ namespace SafetySharp.Modelchecking.Promela
                 CodeWriter.Append(" = ");
                 declarationStatement.InitialValue.Accept(this);
             }
-            CodeWriter.AppendLine(";");
         }
 
         #endregion
