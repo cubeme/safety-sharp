@@ -24,6 +24,7 @@
 namespace Elbtunnel
 {
 	using System;
+	using System.Diagnostics;
 	using SafetySharp.Modeling;
 
 	public class LightBarrier : Component
@@ -43,18 +44,38 @@ namespace Elbtunnel
 
 	internal class BooleanComponent : Component
 	{
-		private bool _value;//= Choose(true, false);
+		private bool _value;
 
 		public BooleanComponent(int i)
 		{
 			if (i == 0)
-				_value = Choose(true, false); // AddFieldInfo("_value", false, true, false);
+				ChooseInitialValue(out _value, true, false);
 			else
 				_value = false; // AddFieldInfo("_value", false, false);
 
 			Update();
 			return;
 
+			// _value = Choose(true, false);
+			// <->
+			// var x = Choose(true, false); _value = x;
+
+			// Choose(out x, true, false);
+			// ChooseInitialValue(() => _value, true, false);
+
+			// SetInitialValues(() => _value, true, false);
+			// SetInitialValues(() => _value, false);
+			// Initialize(() => 
+			// {
+			//		_value = Choose(true, false);
+			//		Bind(portIn, portOut);
+			//		x.portIn = y.PortOut;
+			// });
+		}
+
+		void SetInitialValues(bool b)
+		{
+			Console.WriteLine("{0}", _value == true ? _value = false : _value = true);
 		}
 
 		protected override void Update()

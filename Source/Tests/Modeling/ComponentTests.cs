@@ -81,7 +81,18 @@ namespace Tests.Modeling
 
 				public TestComponent(params T[] values)
 				{
-					SetInitialValues(() => _field, values);
+					SetInitialValues(() => _field, false, values);
+				}
+			}
+
+			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+			private class TestComponent : Component
+			{
+				public int Field = 17;
+
+				public TestComponent(bool setValue, params int[] values)
+				{
+					SetInitialValues(() => Field, setValue, values);
 				}
 			}
 
@@ -89,8 +100,25 @@ namespace Tests.Modeling
 			{
 				public ExpressionComponent(Expression<Func<int>> expression)
 				{
-					SetInitialValues(expression, 1);
+					SetInitialValues(expression, false, 1);
 				}
+			}
+
+			[Test]
+			public void ShouldNotSetFieldValueIfNotRequested()
+			{
+				var component = new TestComponent(false, 1, 2);
+				component.Field.Should().Be(17);
+			}
+
+			[Test]
+			public void ShouldSetFieldValueIfRequested()
+			{
+				var component = new TestComponent(true, 3);
+				component.Field.Should().Be(3);
+
+				component = new TestComponent(true, 3, 182);
+				(component.Field == 3 || component.Field == 182).Should().BeTrue();
 			}
 
 			[Test]
@@ -137,7 +165,7 @@ namespace Tests.Modeling
 				public TestComponent(params T[] values)
 				{
 					_field = values[0];
-					SetInitialValues(() => _field, values);
+					SetInitialValues(() => _field, false, values);
 				}
 			}
 
@@ -152,8 +180,8 @@ namespace Tests.Modeling
 					_field1 = values1[0];
 					_field2 = values2[0];
 
-					SetInitialValues(() => _field1, values1);
-					SetInitialValues(() => _field2, values2);
+					SetInitialValues(() => _field1, false, values1);
+					SetInitialValues(() => _field2, false, values2);
 				}
 			}
 

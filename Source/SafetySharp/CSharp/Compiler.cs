@@ -175,7 +175,7 @@ namespace SafetySharp.CSharp
 		/// </summary>
 		private void ApplyCommonNormalizations()
 		{
-			_compilation = ApplyNormalizer<ChooseNormalizer>(_compilation);
+			// TODO
 		}
 
 		/// <summary>
@@ -186,9 +186,11 @@ namespace SafetySharp.CSharp
 			var metadataCompilation = _compilation;
 
 			metadataCompilation = ApplyNormalizer<TypesNormalizer>(metadataCompilation);
+			metadataCompilation = ApplyNormalizer<SetInitialValuesNormalization>(metadataCompilation);
+			metadataCompilation = ApplyNormalizer<ChooseNormalizer>(metadataCompilation);
 
 			OutputCode(metadataCompilation, "obj/MetadataCode");
-			AddMetadata(metadataCompilation);
+			7AddMetadata(metadataCompilation);
 		}
 
 		/// <summary>

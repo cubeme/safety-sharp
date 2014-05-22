@@ -152,7 +152,7 @@ namespace Tests.CSharp.Transformation
 
 				public ValueComponent(T[] values)
 				{
-					SetInitialValues(() => _field, values);
+					SetInitialValues(() => _field, false, values);
 				}
 			}
 

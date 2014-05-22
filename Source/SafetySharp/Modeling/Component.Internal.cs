@@ -33,14 +33,10 @@ namespace SafetySharp.Modeling
 
 	public partial class Component
 	{
-		/// <summary>
-		///     Maps a field of the current component instance to its set of initial values.
-		/// </summary>
+		/// <summary>Maps a field of the current component instance to its set of initial values.</summary>
 		private readonly Dictionary<string, ImmutableArray<object>> _fields = new Dictionary<string, ImmutableArray<object>>();
 
-		/// <summary>
-		///     Gets the <see cref="Component" /> instances that are direct sub components of the current instance.
-		/// </summary>
+		/// <summary>Gets the <see cref="Component" /> instances that are direct sub components of the current instance.</summary>
 		internal IEnumerable<Component> SubComponents
 		{
 			get
@@ -53,9 +49,7 @@ namespace SafetySharp.Modeling
 			}
 		}
 
-		/// <summary>
-		///     Gets a snapshot of the current component state.
-		/// </summary>
+		/// <summary>Gets a snapshot of the current component state.</summary>
 		/// <param name="componentName">The name of the component or <c>null</c> if no name can be determined.</param>
 		internal ComponentSnapshot GetSnapshot(string componentName = null)
 		{
@@ -69,12 +63,11 @@ namespace SafetySharp.Modeling
 			return new ComponentSnapshot(this, componentName, subComponents.ToImmutableArray(), _fields.ToImmutableDictionary());
 		}
 
-		/// <summary>
-		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
-		/// </summary>
+		/// <summary>Adds metadata about a field of the component to the <see cref="Component" /> instance.</summary>
 		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
+		/// <param name="setFieldValue">If <c>true</c>, the fields is set to one of the <paramref name="initialValues" />.</param>
 		/// <param name="initialValues">The initial values of the field.</param>
-		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
+		protected void SetInitialValues<T>(Expression<Func<T>> field, bool setFieldValue, params T[] initialValues)
 		{
 			Argument.NotNull(field, () => field);
 			Argument.NotNull(initialValues, () => initialValues);
@@ -85,6 +78,12 @@ namespace SafetySharp.Modeling
 			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
 
 			_fields[fieldInfo.Name] = initialValues.Cast<object>().ToImmutableArray();
+
+			if (!setFieldValue)
+				return;
+
+			var random = new Random();
+			fieldInfo.SetValue(this, initialValues[random.Next(0, initialValues.Length)]);
 		}
 
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
