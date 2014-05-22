@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 open System
+open NuXmvGenerator
 
 [<EntryPoint>]
 let main argv = 
@@ -38,6 +39,7 @@ let main argv =
     MetamodelGenerator.Generate "../../Source/SafetySharp/Metamodel/Metamodel.Generated.cs"
     FormulaeGenerator.Generate "../../Source/SafetySharp/Formulae/Formulae.Generated.cs"
     PromelaGenerator.Generate "../../Source/SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
+    NuXmvGenerator.Generate "../../Source/SafetySharp/Modelchecking/NuXmv/NuXmv.Generated.cs"
 
     printfn " %s" Environment.NewLine
     0
