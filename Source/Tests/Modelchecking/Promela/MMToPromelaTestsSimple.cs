@@ -39,9 +39,6 @@ namespace Tests.Modelchecking.Promela
     [TestFixture]
     public class MmToPromelaTestsSimple
     {
-        // https://bitbucket.org/Axel777/safetysharp/src/2e0a77c3a9088567a878698a50c0f563eb58eb25/Source/Tests/Tests.cs?at=master
-
-
         [Test]
         public void Test()
         {
