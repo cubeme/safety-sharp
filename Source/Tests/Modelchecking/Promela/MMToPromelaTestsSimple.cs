@@ -45,10 +45,7 @@ namespace Tests.Modelchecking.Promela
         [Test]
         public void Test()
         {
-            var unusedInternFieldSymbol1 = new Object();
-            var unusedInternFieldSymbol2 = new Object();
-
-            var fieldDeclReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>(unusedInternFieldSymbol1);
+            var fieldDeclReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
             var fieldDecl = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
 
             var fieldAccessExpr = new MMExpressions.FieldAccessExpression(fieldDeclReference);
@@ -79,7 +76,7 @@ namespace Tests.Modelchecking.Promela
 
             var subcomponentInstances = ImmutableArray<MMConfigurations.ComponentConfiguration>.Empty;
 
-            var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>(unusedInternFieldSymbol2);
+            var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>();
             var mmsimpleComponentInstance = new MMConfigurations.ComponentConfiguration(
                 new MM.Identifier("BooleanComponentConfiguration"),
                 componentDeclReference,
