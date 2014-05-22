@@ -263,8 +263,9 @@ namespace SafetySharp.Modelchecking.Promela
                 statement.Accept(this);
                 first = false;
             }
+            CodeWriter.NewLine();
             CodeWriter.DecreaseIndent();
-            CodeWriter.AppendLine("}}");
+            CodeWriter.Append("}}");
         }
 
         /// <summary>
@@ -284,8 +285,9 @@ namespace SafetySharp.Modelchecking.Promela
                 statement.Accept(this);
                 first = false;
             }
+            CodeWriter.NewLine();
             CodeWriter.DecreaseIndent();
-            CodeWriter.AppendLine("}}");
+            CodeWriter.Append("}}");
         }
 
         /// <summary>
@@ -305,8 +307,9 @@ namespace SafetySharp.Modelchecking.Promela
                 statement.Accept(this);
                 first = false;
             }
+            CodeWriter.NewLine();
             CodeWriter.DecreaseIndent();
-            CodeWriter.AppendLine("}}");
+            CodeWriter.Append("}}");
         }
 
         /// <summary>
