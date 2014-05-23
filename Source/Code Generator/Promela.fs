@@ -47,7 +47,7 @@ let elements = [
         [
             {   
                 Name = "Proctype"
-                Base = "Expression"
+                Base = "PromelaElement"
                 IsAbstract = false
                 Properties = 
                 [
