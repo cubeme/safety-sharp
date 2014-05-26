@@ -303,16 +303,15 @@ namespace SafetySharp.CSharp
 		}
 
 		/// <summary>
-		///     Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by <paramref name="path" />
-		///     .
+		///     Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by
+		///     <paramref name="path" />.
 		/// </summary>
 		/// <param name="compilation">The compilation containing the C# code that should be output.</param>
 		/// <param name="path">The path to the directory that should contain the output.</param>
 		[Conditional("DEBUG")]
 		private static void OutputCode(Compilation compilation, string path)
 		{
-			if (!Directory.Exists(path))
-				Directory.CreateDirectory(path);
+			Directory.CreateDirectory(path);
 
 			var i = 0;
 			foreach (var syntaxTree in compilation.SyntaxTrees)
