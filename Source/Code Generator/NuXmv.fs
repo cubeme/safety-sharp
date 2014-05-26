@@ -581,6 +581,28 @@ let elements = [
         ]
     }
     // Chapter 2.3 Definition of the FSM p 22-35
+    // Chapter 2.3.1 Variable Declarations p 23-26
+    // TODO: Declarations may include numbers for their definition,
+    //       Should these integers be written down directly as a number
+    //       or by expressions, which can be evaluated statically to a number?
+    // Chapter 2.3.2 DEFINE Declarations p 26
+    // Chapter 2.3.3 Array Define Declarations p 26-27
+    // Chapter 2.3.4 CONSTANTS Declarations p 27
+    // Chapter 2.3.5 INIT Constraint p 27
+    // Chapter 2.3.6 INVAR Constraint p 27
+    // Chapter 2.3.7 TRANS Constraint p 28
+    // Chapter 2.3.8 ASSIGN Constraint p 28-29
+    // Chapter 2.3.9 FAIRNESS Constraints p 30
+    // Chapter 2.3.10 MODULE Declarations p 30-31
+    // Chapter 2.3.11 MODULE Instantiations p 31
+    // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
+    // Chapter 2.3.13 A Program and the main Module p 33
+    // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
+    // Chapter 2.3.15 Context p 34
+    // Chapter 2.3.16 ISA Declarations p 34
+    // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35
+
+
     // Chapter 2.4.1 CTL Specifications p 35-36
     // Chapter 2.4.2 Invariant Specifications p 36
     // Chapter 2.4.3 LTL Specifications p 36-38
