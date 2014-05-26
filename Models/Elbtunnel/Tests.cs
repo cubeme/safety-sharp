@@ -7,22 +7,6 @@
 	[TestFixture]
 	public class Tests
 	{
-		private class Q
-		{
-			private int i = 47;
-
-			public Q()
-			{
-				Console.WriteLine(i);
-			}
-
-			public Q(int x)
-				: this()
-			{
-				Console.WriteLine(i);
-			}
-		}
-
 		private class Configuration : ModelConfiguration
 		{
 			public Configuration(bool nondeterministicInitialValue)

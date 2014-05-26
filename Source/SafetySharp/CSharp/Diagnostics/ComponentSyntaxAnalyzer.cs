@@ -36,14 +36,14 @@ namespace SafetySharp.CSharp.Diagnostics
 	/// </summary>
 	[DiagnosticAnalyzer]
 	[ExportDiagnosticAnalyzer(DiagnosticIdentifier, LanguageNames.CSharp)]
-	internal class ComponentCSharpSyntaxAnalyzer : CSharpAnalyzer, ISemanticModelAnalyzer
+	internal class ComponentSyntaxAnalyzer : CSharpAnalyzer, ISemanticModelAnalyzer
 	{
 		private const string DiagnosticIdentifier = Compiler.DiagnosticsPrefix + "1000";
 
 		/// <summary>
-		///     Initializes a new instance of the <see cref="ComponentCSharpSyntaxAnalyzer" /> type.
+		///     Initializes a new instance of the <see cref="ComponentSyntaxAnalyzer" /> type.
 		/// </summary>
-		public ComponentCSharpSyntaxAnalyzer()
+		public ComponentSyntaxAnalyzer()
 		{
 			Error(DiagnosticIdentifier,
 				  "A model component uses an unsupported C# syntax element.",

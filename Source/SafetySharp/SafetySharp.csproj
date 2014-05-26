@@ -65,7 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharp\Diagnostics\ComponentCSharpSyntaxAnalyzer.cs" />
+    <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.cs" />
     <Compile Include="CSharp\Extensions\FieldDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\SyntaxKindExtensions.cs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.cs" />
