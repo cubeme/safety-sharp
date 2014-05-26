@@ -241,6 +241,16 @@ namespace Tests.Modeling
 
 				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component2);
 			}
+
+			[Test]
+			public void AssignsNamesToRootComponents()
+			{
+				var configuration = new TestModelConfiguration(new EmptyComponent());
+				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0");
+
+				configuration = new TestModelConfiguration(new EmptyComponent(), new EmptyComponent(), new EmptyComponent());
+				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0", "Root1", "Root2");
+			}
 		}
 	}
 }

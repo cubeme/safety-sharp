@@ -49,14 +49,16 @@ namespace SafetySharp.Modeling
 			foreach (var component in _partitionRoots)
 				CollectComponents(hashSet, component);
 
-			return new ModelConfigurationSnapshot(_partitionRoots.Select(root => root.GetSnapshot()).ToImmutableArray());
+			return new ModelConfigurationSnapshot(_partitionRoots
+				.Select((root, index) => root.GetSnapshot("Root" + index))
+				.ToImmutableArray());
 		}
 
 		/// <summary>
 		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
 		/// </summary>
 		/// <param name="components">The components that should be added as root components of partitions.</param>
-		partial void AddPartitionRoots(Component[] components)
+		partial void AddPartitionsInternal(Component[] components)
 		{
 			Argument.NotNull(components, () => components);
 			_partitionRoots.AddRange(components);

@@ -186,11 +186,10 @@ namespace SafetySharp.CSharp
 			var metadataCompilation = _compilation;
 
 			metadataCompilation = ApplyNormalizer<TypesNormalizer>(metadataCompilation);
-			metadataCompilation = ApplyNormalizer<SetInitialValuesNormalization>(metadataCompilation);
 			metadataCompilation = ApplyNormalizer<ChooseNormalizer>(metadataCompilation);
 
 			OutputCode(metadataCompilation, "obj/MetadataCode");
-			7AddMetadata(metadataCompilation);
+			AddMetadata(metadataCompilation);
 		}
 
 		/// <summary>

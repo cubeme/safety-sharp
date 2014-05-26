@@ -55,10 +55,10 @@ namespace Tests.CSharp.Transformation
 			return transformation.TryTransform(out _metamodelCompilation, out _metamodelConfiguration, out _symbolMap, out _componentResolver);
 		}
 
-		private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component, string name = null)
+		private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component, string name)
 		{
 			return new ComponentConfiguration(
-				name == null ? Identifier.Unknown : new Identifier(name),
+				new Identifier(name),
 				_componentResolver.Resolve(component),
 				ImmutableArray<ValueArray>.Empty,
 				ImmutableArray<ComponentConfiguration>.Empty);
@@ -142,7 +142,7 @@ namespace Tests.CSharp.Transformation
 			_metamodelCompilation.Interfaces.Should().BeEmpty();
 
 			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
-				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0])
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0], "Root0")
 								  .WithFieldValues(ToValueArray(ToValues(true, false)))));
 		}
 
@@ -180,7 +180,7 @@ namespace Tests.CSharp.Transformation
 			_metamodelCompilation.Interfaces.Should().BeEquivalentTo(componentInterface);
 
 			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
-				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0])
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0], "Root0")
 								  .WithSubComponents(ImmutableArray.Create(
 									  CreateComponentConfiguration(_configuration.PartitionRoots[0].SubComponents[0], "_x")))));
 		}
@@ -216,8 +216,8 @@ namespace Tests.CSharp.Transformation
 			_metamodelCompilation.Interfaces.Should().BeEmpty();
 
 			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
-				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0])),
-				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[1])
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0], "Root0")),
+				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[1], "Root1")
 								  .WithSubComponents(ImmutableArray.Create(
 									  CreateComponentConfiguration(_configuration.PartitionRoots[1].SubComponents[0], "_x")))));
 		}

@@ -23,13 +23,33 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.IO;
+	using CSharp;
+	using CSharp.Transformation;
+	using Metamodel;
+	using Modelchecking.Promela;
 
 	partial class SpinModelChecker
 	{
 		partial void CreateModel(ModelConfiguration modelConfiguration)
 		{
-			//modelConfiguration.Transform();
-			//var model = modelConfiguration.Model;
+			var modelingAssembly = new ModelingAssembly(modelConfiguration.GetType().Assembly);
+			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration.GetSnapshot());
+
+			MetamodelCompilation compilation;
+			MetamodelConfiguration configuration;
+			transformation.TryTransform(out compilation, out configuration);
+
+			var promelaTransformation = new MetamodelToPromela(configuration, compilation.Resolver);
+			var promelaModel = promelaTransformation.ConvertMetaModelConfiguration();
+
+			var promelaWriter = new PromelaModelWriter();
+			promelaWriter.Visit(promelaModel);
+
+			var fileName = modelConfiguration.GetType().Name + ".pml";
+			File.WriteAllText(fileName, promelaWriter.CodeWriter.ToString());
+
+			var result = Spin.ExecuteSpin("-a " + fileName);
 
 			return;
 		}

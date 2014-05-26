@@ -23,6 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.Linq.Expressions;
 
 	public abstract partial class Component : IComponent
 	{
@@ -54,5 +55,17 @@ namespace SafetySharp.Modeling
 		protected virtual void Update()
 		{
 		}
+
+		/// <summary>
+		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
+		/// </summary>
+		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
+		/// <param name="initialValues">The initial values of the field.</param>
+		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
+		{
+			SetInitialValuesInternal(field, initialValues);
+		}
+
+		partial void SetInitialValuesInternal<T>(Expression<Func<T>> field, params T[] initialValues);
 	}
 }

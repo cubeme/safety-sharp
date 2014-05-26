@@ -28,7 +28,6 @@ namespace Tests.CSharp
 	{
 		using FluentAssertions;
 		using NUnit.Framework;
-		using SafetySharp.CSharp.Transformation;
 		using SafetySharp.Modeling;
 
 		[TestFixture]

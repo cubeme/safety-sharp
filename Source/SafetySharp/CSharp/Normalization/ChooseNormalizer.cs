@@ -50,10 +50,10 @@ namespace SafetySharp.CSharp.Normalization
 				return node;
 
 			// TODO: What if node.Left is not a valid expression for an out parameter, i.e. variable declaration, etc.?
-			var outExpression = SyntaxFactory.Argument(null, SyntaxFactory.Token(SyntaxKind.OutKeyword).WithTrailingTrivia(SyntaxFactory.Space), node.Left);
-			var arguments = invocation.ArgumentList.Arguments.Insert(0, outExpression);
-			var argumentList = SyntaxFactory.ArgumentList(arguments);
-			return SyntaxFactory.InvocationExpression(SyntaxFactory.IdentifierName("Choose"), argumentList);
+			var arguments = String.Join(", ", invocation.ArgumentList.Arguments);
+			return SyntaxFactory.ParseExpression(String.Format("Choose(out {0}, {1})", node.Left, arguments))
+								.WithLeadingTrivia(node.GetLeadingTrivia())
+								.WithTrailingTrivia(node.GetTrailingTrivia());
 		}
 
 		public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax node)

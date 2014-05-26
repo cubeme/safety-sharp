@@ -32,9 +32,9 @@ namespace SafetySharp.Modeling
 		/// <param name="components">The components that should be added as root components of partitions.</param>
 		protected void AddPartitions(params Component[] components)
 		{
-			AddPartitionRoots(components);
+			AddPartitionsInternal(components);
 		}
 
-		partial void AddPartitionRoots(Component[] components);
+		partial void AddPartitionsInternal(Component[] components);
 	}
 }

@@ -58,12 +58,12 @@ namespace Tests.Modeling
 			}
 
 			[UsedImplicitly(ImplicitUseTargetFlags.Members)]
-			protected class TwoSubComponent : Component
+			protected class TwoSubComponents : Component
 			{
 				private Component _component1;
 				private Component _component2;
 
-				public TwoSubComponent(Component component1, Component component2)
+				public TwoSubComponents(Component component1, Component component2)
 				{
 					_component1 = component1;
 					_component2 = component2;
@@ -81,7 +81,7 @@ namespace Tests.Modeling
 
 				public TestComponent(params T[] values)
 				{
-					SetInitialValues(() => _field, false, values);
+					SetInitialValues(() => _field, values);
 				}
 			}
 
@@ -90,9 +90,9 @@ namespace Tests.Modeling
 			{
 				public int Field = 17;
 
-				public TestComponent(bool setValue, params int[] values)
+				public TestComponent(params int[] values)
 				{
-					SetInitialValues(() => Field, setValue, values);
+					SetInitialValues(() => Field, values);
 				}
 			}
 
@@ -100,24 +100,17 @@ namespace Tests.Modeling
 			{
 				public ExpressionComponent(Expression<Func<int>> expression)
 				{
-					SetInitialValues(expression, false, 1);
+					SetInitialValues(expression, 1);
 				}
 			}
 
 			[Test]
-			public void ShouldNotSetFieldValueIfNotRequested()
+			public void ShouldSetFieldValue()
 			{
-				var component = new TestComponent(false, 1, 2);
-				component.Field.Should().Be(17);
-			}
-
-			[Test]
-			public void ShouldSetFieldValueIfRequested()
-			{
-				var component = new TestComponent(true, 3);
+				var component = new TestComponent(3);
 				component.Field.Should().Be(3);
 
-				component = new TestComponent(true, 3, 182);
+				component = new TestComponent(3, 182);
 				(component.Field == 3 || component.Field == 182).Should().BeTrue();
 			}
 
@@ -162,10 +155,19 @@ namespace Tests.Modeling
 			{
 				private T _field;
 
-				public TestComponent(params T[] values)
+				public TestComponent(T[] values)
 				{
 					_field = values[0];
-					SetInitialValues(() => _field, false, values);
+					SetInitialValues(() => _field, values);
+				}
+
+				public TestComponent(T value)
+				{
+					_field = value;
+				}
+
+				public TestComponent()
+				{
 				}
 			}
 
@@ -180,29 +182,51 @@ namespace Tests.Modeling
 					_field1 = values1[0];
 					_field2 = values2[0];
 
-					SetInitialValues(() => _field1, false, values1);
-					SetInitialValues(() => _field2, false, values2);
+					SetInitialValues(() => _field1, values1);
+					SetInitialValues(() => _field2, values2);
+				}
+
+				public TestComponent(T1 value1, T2 value2)
+				{
+					_field1 = value1;
+					_field2 = value2;
+				}
+
+				public TestComponent()
+				{
 				}
 			}
 
 			[Test]
-			public void ReturnsInitialValuesOfSingleKnownField()
+			public void ReturnsInitialValueOfMultipleKnownFields()
+			{
+				var component = new TestComponent<int, bool>(33, true).GetSnapshot();
+				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(33);
+				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(true);
+
+				component = new TestComponent<int, bool>().GetSnapshot();
+				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(0);
+				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(false);
+			}
+
+			[Test]
+			public void ReturnsInitialValueOfSingleKnownField()
 			{
 				var integerComponent = new TestComponent<int>(17).GetSnapshot();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17);
 
-				integerComponent = new TestComponent<int>(17, 0, -33).GetSnapshot();
-				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17, 0, -33);
+				integerComponent = new TestComponent<int>().GetSnapshot();
+				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(0);
 
 				var booleanComponent = new TestComponent<bool>(true).GetSnapshot();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true);
 
-				booleanComponent = new TestComponent<bool>(true, false).GetSnapshot();
-				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true, false);
+				booleanComponent = new TestComponent<bool>().GetSnapshot();
+				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(false);
 			}
 
 			[Test]
-			public void ReturnsInitialValuesofMultipleKnownFields()
+			public void ReturnsNondeterministicInitialValuesOfMultipleKnownFields()
 			{
 				var intValues = new[] { 142, 874, 11 };
 				var boolValues = new[] { true, false };
@@ -210,6 +234,27 @@ namespace Tests.Modeling
 
 				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(intValues);
 				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(boolValues);
+			}
+
+			[Test]
+			public void ReturnsNondeterministicInitialValuesOfSingleKnownField()
+			{
+				var singleIntValue = new[] { 17 };
+				var multipleIntValues = new[] { 17, 0, -33 };
+				var singleBoolValue = new[] { true };
+				var multipleBoolValues = new[] { true, false };
+
+				var integerComponent = new TestComponent<int>(singleIntValue).GetSnapshot();
+				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(singleIntValue);
+
+				integerComponent = new TestComponent<int>(multipleIntValues).GetSnapshot();
+				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(multipleIntValues);
+
+				var booleanComponent = new TestComponent<bool>(singleBoolValue).GetSnapshot();
+				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(singleBoolValue);
+
+				booleanComponent = new TestComponent<bool>(multipleBoolValues).GetSnapshot();
+				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(multipleBoolValues);
 			}
 
 			[Test]
@@ -257,7 +302,7 @@ namespace Tests.Modeling
 			{
 				var subComponent1 = new FieldComponent();
 				var subComponent2 = new FieldComponent();
-				var component = new TwoSubComponent(subComponent1, subComponent2).GetSnapshot();
+				var component = new TwoSubComponents(subComponent1, subComponent2).GetSnapshot();
 
 				component.GetSubComponent("_component1").Component.Should().Be(subComponent1);
 				component.GetSubComponent("_component2").Component.Should().Be(subComponent2);
@@ -341,12 +386,22 @@ namespace Tests.Modeling
 			{
 				var subComponent1 = new TestComponent();
 				var subComponent2 = new FieldComponent();
-				var component = new TwoSubComponent(subComponent1, subComponent2);
+				var component = new TwoSubComponents(subComponent1, subComponent2);
 
 				component.SubComponents.Should().BeEquivalentTo(subComponent1, subComponent2);
 
 				var snapshot = component.GetSnapshot();
 				snapshot.SubComponents.Select(c => c.Component).Should().BeEquivalentTo(subComponent1, subComponent2);
+			}
+
+			[Test]
+			public void ReturnsNamedSubComponents()
+			{
+				var component1 = new TestComponent();
+				var component2 = new TestComponent();
+				var component3 = new TwoSubComponents(component1, component2);
+
+				component3.GetSnapshot().SubComponents.Select(c => c.Name).Should().BeEquivalentTo("_component1", "_component2");
 			}
 
 			[Test]
