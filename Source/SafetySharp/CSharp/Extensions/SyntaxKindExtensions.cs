@@ -20,58 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel
+namespace SafetySharp.CSharp.Extensions
 {
 	using System;
-	using SafetySharp.Modeling;
-
-	public class LightBarrier : Component
-	{
-		public int Do()
-		{
-			return 1;
-		}
-	}
+	using System.Linq;
+	using System.Text;
+	using Microsoft.CodeAnalysis.CSharp;
 
 	/// <summary>
-	///     This is a great interface.
+	///     Provides extension methods for working with <see cref="SyntaxKind" /> instances.
 	/// </summary>
-	internal interface MyInterface
+	internal static class SyntaxKindExtensions
 	{
-	}
-
-	internal class BooleanComponent : Component
-	{
-		private bool _value;
-		
-		public BooleanComponent(bool nondeterministicInitialValue)
+		/// <summary>
+		///     Generates a user-friendly description for <paramref name="syntaxKind" />.
+		/// </summary>
+		/// <param name="syntaxKind">The syntax kind the description should be generated for.</param>
+		internal static string ToDescription(this SyntaxKind syntaxKind)
 		{
-			if (nondeterministicInitialValue)
-				SetInitialValues(() => _value, true, false);
-			else
-				_value = false;
+			var nodeKind = syntaxKind.ToString();
+			var name = new StringBuilder();
 
-			sbyte i = 0;
-			i++;
-		}
+			name.Append(Char.ToLower(nodeKind[0]));
+			foreach (var c in nodeKind.Skip(1))
+			{
+				if (Char.IsUpper(c))
+					name.AppendFormat(" {0}", Char.ToLower(c));
+				else
+					name.Append(c);
+			}
 
-		protected override void Update()
-		{
-			_value = Choose(true, false);
+			return name.ToString();
 		}
 	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
 }

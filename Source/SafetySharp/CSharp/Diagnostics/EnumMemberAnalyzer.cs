@@ -48,15 +48,15 @@ namespace SafetySharp.CSharp.Diagnostics
 		}
 
 		/// <summary>
-		///     Analyzes a syntax node.
+		///     Analyzes the <paramref name="syntaxNode"/>.
 		/// </summary>
-		/// <param name="node">The syntax node that should be analyzed.</param>
+		/// <param name="syntaxNode">The syntax node that should be analyzed.</param>
 		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
-		protected override void Analyze(EnumMemberDeclarationSyntax node, DiagnosticCallback addDiagnostic, CancellationToken cancellationToken)
+		protected override void Analyze(EnumMemberDeclarationSyntax syntaxNode, DiagnosticCallback addDiagnostic, CancellationToken cancellationToken)
 		{
-			if (node.EqualsValue != null)
-				addDiagnostic(node.EqualsValue.Value, node.Identifier.ValueText);
+			if (syntaxNode.EqualsValue != null)
+				addDiagnostic(syntaxNode.EqualsValue.Value, syntaxNode.Identifier.ValueText);
 		}
 	}
 }

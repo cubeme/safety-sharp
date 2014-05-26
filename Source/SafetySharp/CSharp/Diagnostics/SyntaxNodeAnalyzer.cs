@@ -23,7 +23,6 @@
 namespace SafetySharp.CSharp.Diagnostics
 {
 	using System;
-	using System.Linq;
 	using System.Threading;
 	using Extensions;
 	using Microsoft.CodeAnalysis;
@@ -38,36 +37,36 @@ namespace SafetySharp.CSharp.Diagnostics
 		where T : CSharpSyntaxNode
 	{
 		/// <summary>
-		///     Analyzes a syntax tree of a compilation.
+		///     Analyzes the <paramref name="syntaxTree"/>.
 		/// </summary>
-		/// <param name="tree">The tree that should be analyzed.</param>
+		/// <param name="syntaxTree">The syntaxTree that should be analyzed.</param>
 		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
-		public void AnalyzeSyntaxTree(SyntaxTree tree, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
+		public void AnalyzeSyntaxTree(SyntaxTree syntaxTree, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
 		{
-			Argument.NotNull(tree, () => tree);
+			Argument.NotNull(syntaxTree, () => syntaxTree);
 			Argument.NotNull(addDiagnostic, () => addDiagnostic);
 
 			DiagnosticCallback diagnosticCallback =
 				(locationNode, args) => addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args));
 
-			foreach (var node in tree.DescendantNodesAndSelf<T>())
+			foreach (var node in syntaxTree.DescendantNodesAndSelf<T>())
 				Analyze(node, diagnosticCallback, cancellationToken);
 		}
 
 		/// <summary>
-		///     Analyzes a syntax node.
+		///     Analyzes the <paramref name="syntaxNode"/>.
 		/// </summary>
-		/// <param name="node">The syntax node that should be analyzed.</param>
+		/// <param name="syntaxNode">The syntax node that should be analyzed.</param>
 		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
-		protected abstract void Analyze(T node, DiagnosticCallback addDiagnostic, CancellationToken cancellationToken);
+		protected abstract void Analyze(T syntaxNode, DiagnosticCallback addDiagnostic, CancellationToken cancellationToken);
 
 		/// <summary>
 		///     Represents a callback that emits a diagnostic.
 		/// </summary>
 		/// <param name="locationNode">The node that causes the diagnostic to be emitted.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected delegate void DiagnosticCallback(CSharpSyntaxNode locationNode, params object[] messageArgs);
+		protected delegate void DiagnosticCallback(SyntaxNode locationNode, params object[] messageArgs);
 	}
 }

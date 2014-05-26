@@ -65,7 +65,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\Diagnostics\ComponentCSharpSyntaxAnalyzer.cs" />
     <Compile Include="CSharp\Extensions\FieldDeclarationExtensions.cs" />
+    <Compile Include="CSharp\Extensions\SyntaxKindExtensions.cs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodSymbolExtensions.cs" />
