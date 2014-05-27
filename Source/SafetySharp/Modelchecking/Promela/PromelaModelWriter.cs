@@ -567,10 +567,13 @@ namespace SafetySharp.Modelchecking.Promela
             switch (unaryFormula.Operator)
             {
                 case PromelaUnaryFormulaOperator.Not:
+                    CodeWriter.Append(" ! ");
                     break;
                 case PromelaUnaryFormulaOperator.Always:
+                    CodeWriter.Append(" [] ");
                     break;
                 case PromelaUnaryFormulaOperator.Eventually:
+                    CodeWriter.Append(" <> ");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

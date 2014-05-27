@@ -26,6 +26,8 @@ namespace Tests.Modelchecking.Promela
     using System.Collections.Immutable;
     using FluentAssertions;
     using NUnit.Framework;
+    using NUnit.Framework.Constraints;
+    using SafetySharp.Formulae;
     using SafetySharp.Modelchecking.Promela;
     using MM = SafetySharp.Metamodel;
     using MMExpressions = SafetySharp.Metamodel.Expressions;
@@ -42,9 +44,11 @@ namespace Tests.Modelchecking.Promela
         [Test]
         public void Test()
         {
-            var fieldDeclReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
-            var fieldDecl = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
+            var mmAccessTypeToConcreteTypeDictionary = MM.MetamodelResolver.Empty;
 
+            var fieldDecl = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
+            var fieldDeclReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
+            mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(fieldDeclReference, fieldDecl);
             var fieldAccessExpr = new MMExpressions.FieldAccessExpression(fieldDeclReference);
 
             var assignment1 = new MMStatements.AssignmentStatement(fieldAccessExpr, MMExpressions.BooleanLiteral.True);
@@ -62,18 +66,19 @@ namespace Tests.Modelchecking.Promela
                 ImmutableArray<MMDeclarations.MethodDeclaration>.Empty,
                 ImmutableArray.Create(fieldDecl),
                 ImmutableArray<MMDeclarations.SubComponentDeclaration>.Empty);
+            var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>();
+            mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(componentDeclReference, mmsimpleComponentDecl);
 
-            var trueAndFalseValues = ImmutableArray<MMConfigurations.Value>.Empty
-                .Add(new MMConfigurations.Value(true))
-                .Add(new MMConfigurations.Value(false));
+            var trueAndFalseValues = ImmutableArray.Create<MMConfigurations.Value>(
+                new MMConfigurations.Value(true),
+                new MMConfigurations.Value(false));
+
             var trueAndFalsePossible =  new MMConfigurations.ValueArray(trueAndFalseValues);
             // a component has a list of fields which themselves may have more possible start values
-            var initialValues = ImmutableArray<MMConfigurations.ValueArray>.Empty
-                    .Add(trueAndFalsePossible);
+            var initialValues = ImmutableArray.Create<MMConfigurations.ValueArray>(trueAndFalsePossible);
 
             var subcomponentInstances = ImmutableArray<MMConfigurations.ComponentConfiguration>.Empty;
 
-            var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>();
             var mmsimpleComponentInstance = new MMConfigurations.ComponentConfiguration(
                 new MM.Identifier("BooleanComponentConfiguration"),
                 componentDeclReference,
@@ -84,23 +89,38 @@ namespace Tests.Modelchecking.Promela
 
             var completeMetamodel = new MM.MetamodelConfiguration(ImmutableArray<MMConfigurations.Partition>.Empty.Add(partition));
 
-            var mmAccessTypeToConcreteTypeDictionary = MM.MetamodelResolver.Empty;
-            mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(fieldDeclReference, fieldDecl);
-            mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(componentDeclReference, mmsimpleComponentDecl);
 
 
             var metamodelToPromela = new MetamodelToPromela(completeMetamodel, mmAccessTypeToConcreteTypeDictionary);
 
-            var convertedMetamodel = metamodelToPromela.ConvertMetaModelConfiguration();
-
-            var filename = "Modelchecking\\Promela\\test2.pml";
 
             var modelWriter = new PromelaModelWriter();
+
+            var filename = "Modelchecking\\Promela\\test2a.pml";
+            var convertedMetamodel = metamodelToPromela.ConvertMetaModelConfiguration();
             modelWriter.Visit(convertedMetamodel);
-
             modelWriter.CodeWriter.WriteToFile(filename);
-
             Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);
+
+            var formulaExpression1 = new MMExpressions.BinaryExpression(fieldAccessExpr, MMExpressions.BinaryOperator.Equals,
+                                                                        MMExpressions.BooleanLiteral.True);
+            var formulaExpression2 = new MMExpressions.BinaryExpression(fieldAccessExpr, MMExpressions.BinaryOperator.Equals,
+                                                                        MMExpressions.BooleanLiteral.False);
+            var formulaExpression1or2 = new MMExpressions.BinaryExpression(formulaExpression1, MMExpressions.BinaryOperator.LogicalOr,
+                                                                           formulaExpression2);
+            var formula1 = new ExpressionFormula(formulaExpression1or2, mmsimpleComponentInstance);
+            var formula2 = new UnaryFormula(formula1,UnaryTemporalOperator.Globally, PathQuantifier.None);
+            
+            var convertedFormula = formula2.Accept(metamodelToPromela.GetFormulaVisitor());
+            var convertedltlformula = new LtlFormula(null, convertedFormula);
+
+            modelWriter.CodeWriter.NewLine();
+            modelWriter.CodeWriter.NewLine();
+            filename = "Modelchecking\\Promela\\test2b.pml";
+            modelWriter.Visit(convertedltlformula);
+            modelWriter.CodeWriter.WriteToFile(filename);
+            Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);
+
         }
     }
 }
