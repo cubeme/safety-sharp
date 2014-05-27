@@ -4,23 +4,12 @@ namespace SafetySharp.Modelchecking.Promela
 {
     internal enum PromelaBinaryFormulaOperator
     {
-        And,  // &&
-        Or,   // ||
-        Add,  // +
-        Min,  // -
-        Mul,  // *
-        Div,  // /
-        Mod,  // %
-        BAnd, // & (Bitwise And)
-        Xor,  // ^
-        BOr,  // | (Bitwise Or)
-        Gt,   // >
-        Lt,   // >
-        Ge,   // >=
-        Le,   // <=
-        Eq,   // ==
-        Neq,  // !=
-        Bls,  // << (Bitwise left shift)
-        Brs   // >> (Bitwise left shift)
+        Equals,     // == <->
+        Until,      // U
+        WeakUntil,  // W
+        Release,    // V (the dual of U): (p V q) means !(!p U !q))
+        And,        // && /\
+        Or,         // || \/
+        Implies     // maybe equivalent to <=
     }
 }
