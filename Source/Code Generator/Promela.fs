@@ -76,6 +76,30 @@ let elements = [
                         CanBeNull = false
                     }
                 ]
+            }          
+            {   
+                Name = "LtlFormula"
+                Base = "PromelaElement"
+                IsAbstract = true
+                Properties = 
+                [
+                    {
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The name of the formula (optional)."
+                        CanBeNull = true
+                    }
+                    {
+                        Name = "Formula"
+                        Type = "PromelaFormula"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The formula."
+                        CanBeNull = false
+                    }
+                ]
             }
         ]
     }    
@@ -442,6 +466,91 @@ let elements = [
                     }
                 ]
             }
+        ]
+    }
+    {
+        Name = "SafetySharp.Modelchecking.Promela.Formula"
+        Classes = 
+        [
+            {   
+                Name = "PromelaFormula"
+                Base = "PromelaElement"
+                IsAbstract = true
+                Properties = []
+            }            
+            {
+                Name = "PropositionalStateFormula"
+                Base = "PromelaFormula"
+                IsAbstract = false
+                Properties =
+                [
+                    { 
+                        Name = "Expression"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression used as a non-temporal Boolean formula."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "BinaryFormula"
+                Base = "PromelaFormula"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Left"
+                        Type = "PromelaFormula"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The formula on the left-hand side of the binary operator."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "PromelaBinaryFormulaOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the binary formula."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Right"
+                        Type = "PromelaFormula"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The formula on the right-hand side of the binary operator."
+                        CanBeNull = false
+                    }
+                ]
+            }                       
+            {   
+                Name = "UnaryFormula"
+                Base = "PromelaFormula"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Operand"
+                        Type = "PromelaFormula"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The operand of the unary formula."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "PromelaUnaryFormulaOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the unary formula."
+                        CanBeNull = false
+                    }
+                ]
+            }
+
         ]
     }
 ]
