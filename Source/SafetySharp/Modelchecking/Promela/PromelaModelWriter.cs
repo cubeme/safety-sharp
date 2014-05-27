@@ -30,6 +30,8 @@ namespace SafetySharp.Modelchecking.Promela
     using System;
     using System.Collections.Generic;
     using Expressions;
+    using Formula;
+    using Modeling;
     using Statements;
     using Utilities;
 
@@ -48,6 +50,7 @@ namespace SafetySharp.Modelchecking.Promela
         {
             CodeWriter = new CodeWriter();
         }
+
         public PromelaModelWriter(bool skipHeader)
         {
             if (skipHeader)
@@ -62,7 +65,7 @@ namespace SafetySharp.Modelchecking.Promela
 
         public readonly CodeWriter CodeWriter;
 
-        #region Proctype
+        #region Proctype and LtlFormula
 
         /// <summary>
         ///   Visits an element of type <see cref="Proctype" />.
@@ -88,6 +91,25 @@ namespace SafetySharp.Modelchecking.Promela
             }
             CodeWriter.DecreaseIndent();
             CodeWriter.AppendLine("}}");
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="LtlFormula" />.
+        /// </summary>
+        /// <param name="ltlFormula">The <see cref="LtlFormula" /> instance that should be visited.</param>
+        // http://spinroot.com/spin/Man/ltl.html
+        public override void VisitLtlFormula(LtlFormula ltlFormula)
+        {
+            Argument.NotNull(ltlFormula, () => ltlFormula);
+
+            CodeWriter.Append("ltl ");
+            if (ltlFormula.Name!=null)
+                CodeWriter.Append("{0} ",ltlFormula.Name);
+
+            CodeWriter.Append("{{ ");
+            ltlFormula.Formula.Accept(this);
+            CodeWriter.Append(" }}");
+            CodeWriter.NewLine();
         }
 
         #endregion
@@ -470,6 +492,93 @@ namespace SafetySharp.Modelchecking.Promela
                 CodeWriter.Append(" = ");
                 declarationStatement.InitialValue.Accept(this);
             }
+        }
+
+        #endregion
+
+        #region Formula
+
+        /// <summary>
+        ///     Visits an element of type <see cref="PropositionalStateFormula" />.
+        /// </summary>
+        /// <param name="propositionalStateFormula">The <see cref="PropositionalStateFormula" /> instance that should be visited.</param>
+        public override void VisitPropositionalStateFormula(PropositionalStateFormula propositionalStateFormula)
+        {
+            Argument.NotNull(propositionalStateFormula, () => propositionalStateFormula);
+
+            CodeWriter.Append("( ");
+            propositionalStateFormula.Expression.Accept(this);
+            CodeWriter.Append(" )");
+
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="BinaryFormula" />.
+        /// </summary>
+        /// <param name="binaryFormula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
+        public override void VisitBinaryFormula(BinaryFormula binaryFormula)
+        {
+            Argument.NotNull(binaryFormula, () => binaryFormula);
+
+            CodeWriter.Append("( ");
+            binaryFormula.Left.Accept(this);
+
+            switch (binaryFormula.Operator)
+            {
+                case PromelaBinaryFormulaOperator.Equals:
+                    CodeWriter.Append(" <-> ");
+                    break;
+                case PromelaBinaryFormulaOperator.Until:
+                    CodeWriter.Append(" U ");
+                    break;
+                case PromelaBinaryFormulaOperator.WeakUntil:
+                    CodeWriter.Append(" W ");
+                    break;
+                case PromelaBinaryFormulaOperator.Release:
+                    CodeWriter.Append(" release ");
+                    break;
+                case PromelaBinaryFormulaOperator.And:
+                    CodeWriter.Append(" /\\ ");
+                    break;
+                case PromelaBinaryFormulaOperator.Or:
+                    CodeWriter.Append(" \\/ ");
+                    break;
+                case PromelaBinaryFormulaOperator.Implies:
+                    CodeWriter.Append(" -> ");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            binaryFormula.Right.Accept(this);
+            CodeWriter.Append(" )");
+
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="UnaryFormula" />.
+        /// </summary>
+        /// <param name="unaryFormula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
+        public override void VisitUnaryFormula(UnaryFormula unaryFormula)
+        {
+            Argument.NotNull(unaryFormula, () => unaryFormula);
+            CodeWriter.Append("( ");
+
+            switch (unaryFormula.Operator)
+            {
+                case PromelaUnaryFormulaOperator.Not:
+                    break;
+                case PromelaUnaryFormulaOperator.Always:
+                    break;
+                case PromelaUnaryFormulaOperator.Eventually:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            unaryFormula.Operand.Accept(this);
+
+            CodeWriter.Append(" )");
         }
 
         #endregion
