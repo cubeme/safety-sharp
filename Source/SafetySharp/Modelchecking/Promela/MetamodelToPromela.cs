@@ -432,7 +432,19 @@ namespace SafetySharp.Modelchecking.Promela
             switch (binaryFormula.Operator)
             {
                 case MMFormulae.BinaryTemporalOperator.And:
-                    @operator = PromelaBinaryFormulaOperator.Add;
+                    @operator = PromelaBinaryFormulaOperator.And;
+                    break;
+                case MMFormulae.BinaryTemporalOperator.Or:
+                    @operator = PromelaBinaryFormulaOperator.Or;
+                    break;
+                case MMFormulae.BinaryTemporalOperator.Implies:
+                    @operator = PromelaBinaryFormulaOperator.Implies;
+                    break;
+                case MMFormulae.BinaryTemporalOperator.Equivalent:
+                    @operator = PromelaBinaryFormulaOperator.Equals;
+                    break;
+                case MMFormulae.BinaryTemporalOperator.Until:
+                    @operator = PromelaBinaryFormulaOperator.Until;
                     break;
                 default:
                     throw new NotImplementedException();
@@ -451,12 +463,21 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(unaryFormula, () => unaryFormula);
             var operand = unaryFormula.Operand.Accept(this);
             PromelaUnaryFormulaOperator @operator;
-
+            
             switch (unaryFormula.Operator)
             {
                 case MMFormulae.UnaryTemporalOperator.Not:
                     @operator = PromelaUnaryFormulaOperator.Not;
                     break;
+                case MMFormulae.UnaryTemporalOperator.Next:
+                    throw new NotImplementedException("UnaryTemporalOperator.Next not yet implemented in Promela. There are diverse problems with it. Read http://spinroot.com/spin/Man/ltl.html");
+                case MMFormulae.UnaryTemporalOperator.Finally:
+                    @operator = PromelaUnaryFormulaOperator.Eventually;
+                    break;
+                case MMFormulae.UnaryTemporalOperator.Globally:
+                    @operator = PromelaUnaryFormulaOperator.Always;
+                    break;
+
                 default:
                     throw new NotImplementedException();
             }
