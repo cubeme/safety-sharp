@@ -301,6 +301,8 @@ namespace SafetySharp.Modelchecking.Promela
             return new PrStatements.SkipStatement();
         }
 
+
+        //TODO: Export in own class (something like augmented model, information collector, model walker, model navigation information,...)
         public static ExtractionTuple ExtractFieldsAndConfiguration(MMConfigurations.ComponentConfiguration comp,
                                                        ComponentInstanceScope parentScope,
                                                        MM.MetamodelResolver mmAccessTypeToConcreteTypeDictionary)
@@ -426,6 +428,16 @@ namespace SafetySharp.Modelchecking.Promela
             var left = binaryFormula.Left.Accept(this);
             var right = binaryFormula.Right.Accept(this);
             PromelaBinaryFormulaOperator @operator;
+
+            switch (binaryFormula.Operator)
+            {
+                case MMFormulae.BinaryTemporalOperator.And:
+                    @operator = PromelaBinaryFormulaOperator.Add;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
             return new PrFormula.BinaryFormula(left,@operator,right);
 
         }
@@ -439,6 +451,16 @@ namespace SafetySharp.Modelchecking.Promela
             Argument.NotNull(unaryFormula, () => unaryFormula);
             var operand = unaryFormula.Operand.Accept(this);
             PromelaUnaryFormulaOperator @operator;
+
+            switch (unaryFormula.Operator)
+            {
+                case MMFormulae.UnaryTemporalOperator.Not:
+                    @operator = PromelaUnaryFormulaOperator.Not;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+
             return new PrFormula.UnaryFormula(operand, @operator);
         }
 
