@@ -95,7 +95,9 @@
     <Compile Include="Metamodel\Configurations\Value.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
+    <Compile Include="Modelchecking\Promela\PromelaBinaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaHelpers.cs" />
+    <Compile Include="Modelchecking\Promela\PromelaUnaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\Spin.cs" />
     <Compile Include="Modeling\IComponent.cs" />
     <Compile Include="Modeling\ModelConfiguration.cs" />
@@ -171,7 +173,9 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Modelchecking\NuXmv\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

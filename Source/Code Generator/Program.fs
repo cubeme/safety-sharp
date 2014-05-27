@@ -21,7 +21,6 @@
 // THE SOFTWARE.
 
 open System
-open NuXmvGenerator
 
 [<EntryPoint>]
 let main argv = 

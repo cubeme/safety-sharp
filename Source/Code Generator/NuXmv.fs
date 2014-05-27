@@ -149,7 +149,7 @@ let elements = [
         [
             {   
                 Name = "NuXmvType"
-                Base = "PromelaElement"
+                Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
             }
@@ -839,7 +839,7 @@ let elements = [
     }*)
 ]
 
-let generateNuXmv outputFile =
+let Generate outputFile =
     generateCode {
         Elements = elements
         OutputFile = outputFile
