@@ -80,7 +80,7 @@ let elements = [
             {   
                 Name = "LtlFormula"
                 Base = "PromelaElement"
-                IsAbstract = true
+                IsAbstract = false
                 Properties = 
                 [
                     {

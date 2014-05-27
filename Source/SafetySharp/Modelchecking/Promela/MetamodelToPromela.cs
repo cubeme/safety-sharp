@@ -26,6 +26,8 @@ namespace SafetySharp.Modelchecking.Promela
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
+    using PrFormula = SafetySharp.Modelchecking.Promela.Formula;
+    using MMFormulae = SafetySharp.Formulae;
     using Metamodel.Types;
     using Microsoft.CodeAnalysis;
     using Utilities;
@@ -82,7 +84,7 @@ namespace SafetySharp.Modelchecking.Promela
         internal string GetName()
         {
 			//TODO: Add C in the name for component and V for variables to omit clashes
-			return String.Format("{0}_{1}", String.Join("_c", AffectedComponentScope.Identifiers), Fieldname.Name);
+			return String.Format("C{0}_V{1}", String.Join("_C", AffectedComponentScope.Identifiers), Fieldname.Name);
         }
 
         public override bool Equals(Object obj)
@@ -142,7 +144,7 @@ namespace SafetySharp.Modelchecking.Promela
             return !(x == y);
         }
     }
-
+    
     internal class MetamodelToPromela
     {
         public readonly MM.MetamodelConfiguration Mm;
@@ -150,18 +152,20 @@ namespace SafetySharp.Modelchecking.Promela
 
         public readonly ImmutableArray<FieldInfo> MmFieldList;
 
-        public IImmutableDictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>> MmFieldDictionary;
-        //MmComponentInstanceHierarchieAndFieldIdentifierToFieldInfoDictionary;
+        public readonly IImmutableDictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>> MmFieldDictionary;
+
+        public readonly IImmutableDictionary<MMConfigurations.ComponentConfiguration, ComponentInstanceScope> MmConfigurationToScope;
 
         public MetamodelToPromela(MM.MetamodelConfiguration mm, MM.MetamodelResolver metamodelResolver)
         {
             Mm = mm;
             MmAccessTypeToConcreteTypeDictionary = metamodelResolver;
-            var extractedFields = ExtractFields(Mm, MmAccessTypeToConcreteTypeDictionary);
+            var extractedFields = ExtractFieldsAndConfiguration(Mm, MmAccessTypeToConcreteTypeDictionary);
             MmFieldList = extractedFields.MmFieldList;
             MmFieldDictionary = extractedFields.MmFieldDictionary;
+            MmConfigurationToScope = extractedFields.MmConfigurationToScope;
         }
-
+        
         public MetamodelExpressionToPromelaExpression GetExpressionVisitor(ComponentInstanceScope currentComponent)
         {
             return new MetamodelExpressionToPromelaExpression(this, currentComponent);
@@ -170,6 +174,10 @@ namespace SafetySharp.Modelchecking.Promela
         public MetamodelStatementToPromelaStatement GetStatementVisitor(ComponentInstanceScope currentComponent)
         {
             return new MetamodelStatementToPromelaStatement(this, currentComponent);
+        }
+        public MetamodelFormulaToPromelaFormula GetFormulaVisitor()
+        {
+            return new MetamodelFormulaToPromelaFormula(this);
         }
 
         //this is the top level element of a meta model
@@ -249,7 +257,7 @@ namespace SafetySharp.Modelchecking.Promela
 
         public ImmutableArray<ComponentConfigurationUpdateMethod> CollectUpdateMethodsInOrder(MMConfigurations.Partition partition)
         {
-            var scope = new ComponentInstanceScope() { Identifiers = ImmutableArray<MM.Identifier>.Empty };
+            var scope = new ComponentInstanceScope { Identifiers = ImmutableArray<MM.Identifier>.Empty };
             return CollectUpdateMethodsInOrder(partition.Component, scope);
         }
 
@@ -257,8 +265,8 @@ namespace SafetySharp.Modelchecking.Promela
 																							  ComponentInstanceScope parentScope)
         {
 			var updateMethods = ImmutableArray.CreateBuilder<ComponentConfigurationUpdateMethod>(32);
-			var scope = new ComponentInstanceScope() { Identifiers = parentScope.Identifiers.Add(component.Identifier) };
-            var componentDeclaration = this.MmAccessTypeToConcreteTypeDictionary.Resolve(component.Type);
+			var scope = new ComponentInstanceScope { Identifiers = parentScope.Identifiers.Add(component.Identifier) };
+            var componentDeclaration = MmAccessTypeToConcreteTypeDictionary.Resolve(component.Type);
             var updateMethod = new ComponentConfigurationUpdateMethod
             {
                 AffectedComponentScope = scope,
@@ -279,7 +287,7 @@ namespace SafetySharp.Modelchecking.Promela
             var updateMethods = CollectUpdateMethodsInOrder(partition);
             foreach (var componentConfigurationUpdateMethod in updateMethods)
             {
-				var visitor = this.GetStatementVisitor(componentConfigurationUpdateMethod.AffectedComponentScope);
+				var visitor = GetStatementVisitor(componentConfigurationUpdateMethod.AffectedComponentScope);
                 var promelaUpdateStatement = componentConfigurationUpdateMethod.UpdateMethod.Accept(visitor);
                 promelaUpdateStatements.Add(promelaUpdateStatement);
             }
@@ -293,14 +301,16 @@ namespace SafetySharp.Modelchecking.Promela
             return new PrStatements.SkipStatement();
         }
 
-        public static ExtractFieldsTuple ExtractFields(MMConfigurations.ComponentConfiguration comp,
+        public static ExtractionTuple ExtractFieldsAndConfiguration(MMConfigurations.ComponentConfiguration comp,
                                                        ComponentInstanceScope parentScope,
                                                        MM.MetamodelResolver mmAccessTypeToConcreteTypeDictionary)
         {
 			var myScope = new ComponentInstanceScope { Identifiers = parentScope.Identifiers.Add(comp.Identifier) };
 			var myFieldList = ImmutableArray.CreateBuilder<FieldInfo>();
 			var myLocalFieldDictionary = ImmutableDictionary.CreateBuilder<MM.Identifier, FieldInfo>();
-            var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
+            var myFieldDictionary = ImmutableDictionary.CreateBuilder<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
+            var myComponentConfigurationDictionary =
+                ImmutableDictionary.CreateBuilder<MMConfigurations.ComponentConfiguration, ComponentInstanceScope>();
 
             var type = mmAccessTypeToConcreteTypeDictionary.Resolve(comp.Type);
 
@@ -320,47 +330,119 @@ namespace SafetySharp.Modelchecking.Promela
 			}
 
             myFieldDictionary.Add(myScope, myLocalFieldDictionary.ToImmutableDictionary());
+            myComponentConfigurationDictionary.Add(comp, myScope);
 
             foreach (var subcomp in comp.SubComponents)
             {
-                var newTuple = ExtractFields(subcomp, myScope, mmAccessTypeToConcreteTypeDictionary);
+                var newTuple = ExtractFieldsAndConfiguration(subcomp, myScope, mmAccessTypeToConcreteTypeDictionary);
                 myFieldList.AddRange(newTuple.MmFieldList);
                 foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
                     myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
-			}
-			;
-            return new ExtractFieldsTuple
+                foreach (var dictionaryEntry in newTuple.MmConfigurationToScope)
+                    myComponentConfigurationDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
+
+
+            }
+            return new ExtractionTuple
             {
                 MmFieldList = myFieldList.ToImmutableArray(),
-                MmFieldDictionary = myFieldDictionary.ToImmutableDictionary()
+                MmFieldDictionary = myFieldDictionary.ToImmutableDictionary(),
+                MmConfigurationToScope = myComponentConfigurationDictionary.ToImmutableDictionary()
             };
         }
 
-        public static ExtractFieldsTuple ExtractFields(MM.MetamodelConfiguration mm,
+        public static ExtractionTuple ExtractFieldsAndConfiguration(MM.MetamodelConfiguration mm,
                                                        MM.MetamodelResolver mmAccessTypeToConcreteTypeDictionary)
         {
-            var myFieldList = new List<FieldInfo>();
-            var myFieldDictionary = new Dictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
+            var myFieldList = ImmutableArray.CreateBuilder<FieldInfo>();
+            var myFieldDictionary = ImmutableDictionary.CreateBuilder<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>>();
+            var myComponentConfigurationDictionary =
+                ImmutableDictionary.CreateBuilder<MMConfigurations.ComponentConfiguration, ComponentInstanceScope>();
             foreach (MMConfigurations.Partition part in mm.Partitions)
             {
-                var scope = new ComponentInstanceScope() { Identifiers = ImmutableArray<MM.Identifier>.Empty };
-                var newTuple = ExtractFields(part.Component, scope, mmAccessTypeToConcreteTypeDictionary);
+                var scope = new ComponentInstanceScope { Identifiers = ImmutableArray<MM.Identifier>.Empty };
+                var newTuple = ExtractFieldsAndConfiguration(part.Component, scope, mmAccessTypeToConcreteTypeDictionary);
                 myFieldList.AddRange(newTuple.MmFieldList);
                 foreach (var dictionaryEntry in newTuple.MmFieldDictionary)
                     myFieldDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
+                foreach (var dictionaryEntry in newTuple.MmConfigurationToScope)
+                    myComponentConfigurationDictionary.Add(dictionaryEntry.Key, dictionaryEntry.Value);
             }
-            return new ExtractFieldsTuple
+            return new ExtractionTuple
             {
                 MmFieldList = myFieldList.ToImmutableArray(),
-                MmFieldDictionary = myFieldDictionary.ToImmutableDictionary()
+                MmFieldDictionary = myFieldDictionary.ToImmutableDictionary(),
+                MmConfigurationToScope = myComponentConfigurationDictionary.ToImmutableDictionary()
             };
         }
 
-        internal struct ExtractFieldsTuple
+
+        internal struct ExtractionTuple
         {
             public ImmutableDictionary<ComponentInstanceScope, ImmutableDictionary<MM.Identifier, FieldInfo>> MmFieldDictionary;
+            public ImmutableDictionary<MMConfigurations.ComponentConfiguration, ComponentInstanceScope> MmConfigurationToScope;
             public ImmutableArray<FieldInfo> MmFieldList;
         }
+
+        internal LtlFormula ConvertFormula(MMFormulae.Formula forumula)
+        {
+            var formulaVistior = GetFormulaVisitor();
+            var promelaformula = forumula.Accept(formulaVistior);
+            return new LtlFormula(null, promelaformula);
+        }
+    }
+
+    internal class MetamodelFormulaToPromelaFormula : MMFormulae.FormulaVisitor<PrFormula.PromelaFormula>
+    {
+        private readonly MetamodelToPromela _commonKnowledge;
+
+        public MetamodelFormulaToPromelaFormula(MetamodelToPromela commonKnowledge)
+        {
+            _commonKnowledge = commonKnowledge;
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="MMFormulae.ExpressionFormula" />.
+        /// </summary>
+        /// <param name="expressionFormula">The <see cref="MMFormulae.ExpressionFormula" /> instance that should be visited.</param>
+        public override PrFormula.PromelaFormula VisitExpressionFormula(MMFormulae.ExpressionFormula expressionFormula)
+        {
+            Argument.NotNull(expressionFormula, () => expressionFormula);
+
+            var scope = _commonKnowledge.MmConfigurationToScope[expressionFormula.AssociatedComponent];
+            var expressionVisitor = _commonKnowledge.GetExpressionVisitor(scope);
+            var promelaFormula = expressionFormula.Expression.Accept(expressionVisitor);
+            return new PrFormula.PropositionalStateFormula(promelaFormula);
+
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="MMFormulae.BinaryFormula" />.
+        /// </summary>
+        /// <param name="binaryFormula">The <see cref="MMFormulae.BinaryFormula" /> instance that should be visited.</param>
+        public override PrFormula.PromelaFormula VisitBinaryFormula(MMFormulae.BinaryFormula binaryFormula)
+        {
+            Argument.NotNull(binaryFormula, () => binaryFormula);
+            var left = binaryFormula.Left.Accept(this);
+            var right = binaryFormula.Right.Accept(this);
+            PromelaBinaryFormulaOperator @operator;
+            return new PrFormula.BinaryFormula(left,@operator,right);
+
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="MMFormulae.UnaryFormula" />.
+        /// </summary>
+        /// <param name="unaryFormula">The <see cref="MMFormulae.UnaryFormula" /> instance that should be visited.</param>
+        public override PrFormula.PromelaFormula VisitUnaryFormula(MMFormulae.UnaryFormula unaryFormula)
+        {
+            Argument.NotNull(unaryFormula, () => unaryFormula);
+            var operand = unaryFormula.Operand.Accept(this);
+            PromelaUnaryFormulaOperator @operator;
+            return new PrFormula.UnaryFormula(operand, @operator);
+        }
+
+
     }
 
     internal class MetamodelExpressionToPromelaExpression : MM.MetamodelVisitor<PrExpression>

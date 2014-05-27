@@ -48,6 +48,14 @@ let elements = [
                         Comment = "The metamodel expression used as a non-temporal Boolean formula."
                         CanBeNull = false
                     }
+                    { 
+                        Name = "AssociatedComponent"
+                        Type = "SafetySharp.Metamodel.Configurations.ComponentConfiguration"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The associated component is the scope in which the expression is evaluated."
+                        CanBeNull = false
+                    }
                 ]
             }
             {   
