@@ -23,6 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.Linq.Expressions;
 
 	public abstract partial class ModelConfiguration
 	{
@@ -36,5 +37,53 @@ namespace SafetySharp.Modeling
 		}
 
 		partial void AddPartitionsInternal(Component[] components);
+	}
+
+	public abstract class Formula
+	{
+	}
+
+	public static class Ltl
+	{
+		public static Formula Globally(Formula f)
+		{
+			return null;
+		}
+
+		public static Formula Globally(Expression<Func<Formula>> f)
+		{
+			return null;
+		}
+
+		public static Formula Globally(Expression<Func<bool>> f)
+		{
+			return null;
+		}
+
+		public static Formula Globally(bool f)
+		{
+			return null;
+		}
+
+		public static Formula StateFormula(bool f)
+		{
+			return null;
+		}
+
+		public static Formula Finally(Formula f)
+		{
+			return null;
+		}
+
+		public static dynamic AccessInternalsOf(Component c)
+		{
+			return c;
+		}
+
+		public static T AccessInternal<T>(this Component c, Func<dynamic, dynamic> val)
+		{
+			object o = val(c);
+			return (T)o;
+		}
 	}
 }

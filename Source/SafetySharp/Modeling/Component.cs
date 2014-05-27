@@ -23,6 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.Dynamic;
 	using System.Linq.Expressions;
 
 	public abstract partial class Component : IComponent

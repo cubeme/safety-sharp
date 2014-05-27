@@ -27,7 +27,7 @@ namespace SafetySharp.Metamodel.Expressions
 	/// <summary>
 	///     Represents the operator in an unary expression.
 	/// </summary>
-	public enum UnaryOperator
+	internal enum UnaryOperator
 	{
 		Minus = 1,
 		LogicalNot

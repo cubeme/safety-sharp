@@ -27,6 +27,8 @@ namespace Elbtunnel
 
 	public class LightBarrier : Component
 	{
+		//public bool Triggered { get; private set; }
+
 		public int Do()
 		{
 			return 1;
@@ -40,10 +42,22 @@ namespace Elbtunnel
 	{
 	}
 
+	internal class Test2 : Component
+	{
+		private BooleanComponent boolean1 ;
+		private BooleanComponent boolean2 ;
+
+		public Test2()
+		{
+			boolean1 = new BooleanComponent(true);
+			boolean2 = new BooleanComponent(false);
+		}
+	}
+
 	internal class BooleanComponent : Component
 	{
 		private bool _value;
-		
+
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
 			if (nondeterministicInitialValue)

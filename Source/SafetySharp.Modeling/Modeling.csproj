@@ -51,6 +51,9 @@
     <Compile Include="..\SafetySharp\Modeling\SpinModelChecker.cs">
       <Link>SpinModelChecker.cs</Link>
     </Compile>
+    <Compile Include="..\SafetySharp\Utilities\ResharperAttributes.cs">
+      <Link>ResharperAttributes.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

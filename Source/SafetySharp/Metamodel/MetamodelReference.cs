@@ -28,7 +28,7 @@ namespace SafetySharp.Metamodel
 	///     Represents a reference to a metamodel element that can be resolved by a <see cref="MetamodelResolver" />.
 	/// </summary>
 	/// <typeparam name="T">The type of the referenced metamodel element.</typeparam>
-	public class MetamodelReference<T> : IMetamodelReference<T>
+	internal class MetamodelReference<T> : IMetamodelReference<T>
 		where T : MetamodelElement
 	{
 	}

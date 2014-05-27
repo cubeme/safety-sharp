@@ -203,7 +203,6 @@ namespace SafetySharp.Utilities
 		/// <param name="formatParameterName">The name of the format string parameter.</param>
 		public StringFormatMethodAttribute(string formatParameterName)
 		{
-			Argument.NotNullOrWhitespace(formatParameterName, () => formatParameterName);
 			FormatParameterName = formatParameterName;
 		}
 

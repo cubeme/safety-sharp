@@ -680,7 +680,7 @@ let elements = [
     }
 ]
 
-let generateMetamodel outputFile =
+let Generate outputFile =
     generateCode {
         Elements = elements
         OutputFile = outputFile
@@ -688,5 +688,5 @@ let generateMetamodel outputFile =
         VisitorName = "MetamodelVisitor"
         RewriterName = "MetamodelRewriter"
         Namespace = "SafetySharp.Metamodel"
-        Public = true
+        Public = false
     } 

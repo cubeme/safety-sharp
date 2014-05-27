@@ -218,6 +218,11 @@ namespace SafetySharp.CSharp.Diagnostics
 			{
 				VisitDescendantNodes(node);
 			}
+
+			public override void VisitEqualsValueClause(EqualsValueClauseSyntax node)
+			{
+				VisitDescendantNodes(node);
+			}
 		}
 	}
 }

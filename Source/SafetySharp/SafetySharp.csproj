@@ -84,6 +84,14 @@
     <Compile Include="CSharp\Transformation\ComponentSnapshot.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="CSharp\Transformation\ModelConfigurationSnapshot.cs" />
+    <Compile Include="Formulae\BinaryFormula.cs" />
+    <Compile Include="Formulae\BinaryTemporalOperator.cs" />
+    <Compile Include="Formulae\ExpressionFormula.cs" />
+    <Compile Include="Formulae\Formula.cs" />
+    <Compile Include="Formulae\Formulae.Generated.cs" />
+    <Compile Include="Formulae\PathQuantifier.cs" />
+    <Compile Include="Formulae\UnaryFormula.cs" />
+    <Compile Include="Formulae\UnaryTemporalOperator.cs" />
     <Compile Include="Metamodel\Configurations\Value.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />

@@ -32,5 +32,10 @@ namespace SafetySharp.Modeling
 		}
 
 		partial void CreateModel(ModelConfiguration modelConfiguration);
+
+		public bool Check(Formula formula)
+		{
+			return true;
+		}
 	}
 }

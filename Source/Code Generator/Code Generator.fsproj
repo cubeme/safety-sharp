@@ -53,6 +53,7 @@
     <Compile Include="Generator.fs" />
     <Compile Include="Test.fs" />
     <Compile Include="Metamodel.fs" />
+    <Compile Include="Formulae.fs" />
     <Compile Include="Promela.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

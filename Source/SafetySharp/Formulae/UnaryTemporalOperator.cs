@@ -20,24 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-open System
+namespace SafetySharp.Formulae
+{
+	using System;
 
-[<EntryPoint>]
-let main argv = 
-    printfn " %s" Environment.NewLine
-     
-    printfn "SafetySharp Code Generator"
-    printfn "Copyright (c) 2014 Institute for Software & Systems Engineering"
-     
-    printfn " %s" Environment.NewLine
-    printfn "This is free software. You may redistribute copies of it under the terms of"
-    printfn "the MIT license (see http://opensource.org/licenses/MIT)."
-    printfn " %s" Environment.NewLine
+	/// <summary>
+	///     Represents the operator of an unary temporal formula.
+	/// </summary>
+	internal enum UnaryTemporalOperator
+	{
+		// Non-temporal operators
+		Not,
 
-    TestGenerator.Generate "../../Source/Tests/Generator/Test.Generated.cs"
-    MetamodelGenerator.Generate "../../Source/SafetySharp/Metamodel/Metamodel.Generated.cs"
-    FormulaeGenerator.Generate "../../Source/SafetySharp/Formulae/Formulae.Generated.cs"
-    PromelaGenerator.Generate "../../Source/SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
-
-    printfn " %s" Environment.NewLine
-    0
+		// Temporal operators
+		Next,
+		Finally,
+		Globally
+	}
+}

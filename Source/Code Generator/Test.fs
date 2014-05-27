@@ -182,7 +182,7 @@ let elements = [
     }
 ]
 
-let generateTest outputFile =
+let Generate outputFile =
     generateCode {
         Elements = elements
         OutputFile = outputFile

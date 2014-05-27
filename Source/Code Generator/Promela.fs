@@ -446,7 +446,7 @@ let elements = [
     }
 ]
 
-let generatePromela outputFile =
+let Generate outputFile =
     generateCode {
         Elements = elements
         OutputFile = outputFile

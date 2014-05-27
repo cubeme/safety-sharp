@@ -365,7 +365,7 @@ let generateCode context =
     /// <summary>
     ///     The list of all non-abstract classes defined by the metadata.
     /// </summary>
-    let nonIsAbstractClasses = classes |> List.filter (fun c -> not c.IsAbstract)
+    let nonAbstractClasses = classes |> List.filter (fun c -> not c.IsAbstract)
 
     /// <summary>
     ///     Gets all properties that the given class transitively inherits from its base classes. The properties are ordered
@@ -394,6 +394,12 @@ let generateCode context =
     /// </summary>
     let isRewriteable typeName = 
         classes |> List.exists (fun c -> c.Name = typeName)
+
+    /// <summary>
+    ///     Checks whether any classes defined in the metadata derive from the given type.
+    /// </summary>
+    let isInherited typeName =
+        classes |> List.exists (fun c -> c.Base = typeName)
 
     /// <summary>
     ///     Generates the read-only declaration for the given property.
@@ -724,8 +730,15 @@ let generateCode context =
     /// </summary>
     let generateClass (c : Class) =
         // Generate the class declaration
-        let IsAbstractKeyword = if c.IsAbstract then " abstract " else " "
-        output.AppendLine(sprintf "%s%spartial class %s : %s" visibility IsAbstractKeyword c.Name c.Base)
+        let keyword = 
+            if c.IsAbstract then 
+                " abstract "
+            else if not c.IsAbstract && not <| isInherited c.Name then
+                " sealed "
+            else
+                " "
+        let sealedKeyword = if isInherited c.Name then "" else " sealed"
+        output.AppendLine(sprintf "%s%spartial class %s : %s" visibility keyword c.Name c.Base)
 
         // Sanity check of property values
         for p in c.Properties do
@@ -854,7 +867,7 @@ let generateCode context =
             // Generate a Visit...() method for each non-abstract class
             output.NewLine()
             let mutable first = true
-            for c in nonIsAbstractClasses do
+            for c in nonAbstractClasses do
                 if not first then
                     output.NewLine()
 
@@ -911,7 +924,7 @@ let generateCode context =
             // Generate a Visit...() method with the rewriting logic for each non-abstract class
             output.NewLine()
             let mutable first = true
-            for c in nonIsAbstractClasses do
+            for c in nonAbstractClasses do
                 if not first then
                     output.NewLine()
 

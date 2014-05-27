@@ -33,7 +33,7 @@ namespace SafetySharp.Metamodel
 	///     <see cref="IMetamodelReference{ComponentDeclaration}" /> instances to
 	///     <see cref="IMetamodelReference{TypeDelcaration}" /> variables or parameters, for instance.
 	/// </remarks>
-	public interface IMetamodelReference<out T> : IMetamodelReference
+	internal interface IMetamodelReference<out T> : IMetamodelReference
 		where T : MetamodelElement
 	{
 	}

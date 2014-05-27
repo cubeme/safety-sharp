@@ -30,7 +30,7 @@ namespace SafetySharp.Metamodel
 	/// <summary>
 	///     Resolves metamodel element references.
 	/// </summary>
-	public class MetamodelResolver
+	internal class MetamodelResolver
 	{
 		/// <summary>
 		///     The empty metamodel resolver that cannot resolve any references.

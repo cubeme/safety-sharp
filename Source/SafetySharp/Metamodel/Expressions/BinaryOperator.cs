@@ -27,7 +27,7 @@ namespace SafetySharp.Metamodel.Expressions
 	/// <summary>
 	///     Represents the operator in a binary expression.
 	/// </summary>
-	public enum BinaryOperator
+	internal enum BinaryOperator
 	{
 		// Arithmetic operators
 		Add = 1,
