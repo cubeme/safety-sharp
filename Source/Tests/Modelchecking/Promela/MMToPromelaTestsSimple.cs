@@ -108,16 +108,20 @@ namespace Tests.Modelchecking.Promela
                                                                         MMExpressions.BooleanLiteral.False);
             var formulaExpression1Or2 = new MMExpressions.BinaryExpression(formulaExpression1, MMExpressions.BinaryOperator.LogicalOr,
                                                                            formulaExpression2);
-            var formula1 = new ExpressionFormula(formulaExpression1Or2, mmsimpleComponentInstance);
-            var formula2 = new UnaryFormula(formula1,UnaryTemporalOperator.Globally, PathQuantifier.None);
-            
-            var convertedFormula = formula2.Accept(metamodelToPromela.GetFormulaVisitor());
-            var convertedltlformula = new LtlFormula(null, convertedFormula);
+            var partitialFormula1 = new ExpressionFormula(formulaExpression1Or2, mmsimpleComponentInstance);
+            var partitialFormula2 = new ExpressionFormula(formulaExpression1, mmsimpleComponentInstance);
+            var formulaSatisfiedByModel = new UnaryFormula(partitialFormula1, UnaryTemporalOperator.Globally, PathQuantifier.None);
+            var formulaNotSatisfiedByModel = new UnaryFormula(partitialFormula2, UnaryTemporalOperator.Globally, PathQuantifier.None);
+
+            var convertedFormulaSatisfiedByModel = formulaSatisfiedByModel.Accept(metamodelToPromela.GetFormulaVisitor());
+            var convertedFormulaNotSatisfiedByModel = formulaNotSatisfiedByModel.Accept(metamodelToPromela.GetFormulaVisitor());
+
+            var convertedLtlFormulaModule = new LtlFormulaModule(null, convertedFormulaNotSatisfiedByModel);
 
             modelWriter.CodeWriter.NewLine();
             modelWriter.CodeWriter.NewLine();
             filename = "Modelchecking\\Promela\\test2b.pml";
-            modelWriter.Visit(convertedltlformula);
+            modelWriter.Visit(convertedLtlFormulaModule);
             modelWriter.CodeWriter.WriteToFile(filename);
             Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);
 

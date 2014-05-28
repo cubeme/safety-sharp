@@ -116,7 +116,7 @@ let elements = [
                 ]
             }          
             {   
-                Name = "LtlFormula"
+                Name = "LtlFormulaModule"
                 Base = "PromelaModule"
                 IsAbstract = false
                 Properties = 

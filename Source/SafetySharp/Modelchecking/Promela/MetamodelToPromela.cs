@@ -400,11 +400,11 @@ namespace SafetySharp.Modelchecking.Promela
             public ImmutableArray<FieldInfo> MmFieldList;
         }
 
-        internal LtlFormula ConvertFormula(MMFormulae.Formula forumula)
+        internal LtlFormulaModule ConvertFormula(MMFormulae.Formula forumula)
         {
             var formulaVistior = GetFormulaVisitor();
             var promelaformula = forumula.Accept(formulaVistior);
-            return new LtlFormula(null, promelaformula);
+            return new LtlFormulaModule(null, promelaformula);
         }
     }
 
