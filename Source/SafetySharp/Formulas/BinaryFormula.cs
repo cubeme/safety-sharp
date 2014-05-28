@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulae
+namespace SafetySharp.Formulas
 {
 	using System;
 	using Utilities;
@@ -38,8 +38,8 @@ namespace SafetySharp.Formulae
 				{
 					case BinaryTemporalOperator.And:
 					case BinaryTemporalOperator.Or:
-					case BinaryTemporalOperator.Implies:
-					case BinaryTemporalOperator.Equivalent:
+					case BinaryTemporalOperator.Implication:
+					case BinaryTemporalOperator.Equivalence:
 						return Left.IsTemporal || Right.IsTemporal;
 					case BinaryTemporalOperator.Until:
 						return true;
@@ -92,10 +92,10 @@ namespace SafetySharp.Formulae
 				case BinaryTemporalOperator.Or:
 					operatorSymbol = "||";
 					break;
-				case BinaryTemporalOperator.Implies:
+				case BinaryTemporalOperator.Implication:
 					operatorSymbol = "=>";
 					break;
-				case BinaryTemporalOperator.Equivalent:
+				case BinaryTemporalOperator.Equivalence:
 					operatorSymbol = "<=>";
 					break;
 				case BinaryTemporalOperator.Until:

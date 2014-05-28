@@ -80,6 +80,7 @@
     <Compile Include="CSharp\Transformation\CompilationTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\StatementTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformationTests.cs" />
+    <Compile Include="Formulas\FormulaParserTests.cs" />
     <Compile Include="Generator\GeneratorTests.cs" />
     <Compile Include="Generator\Test.Generated.cs" />
     <Compile Include="Modelchecking\Promela\MMToPromelaTestsSimple.cs" />
@@ -93,12 +94,17 @@
       <Project>{4d7f1b7f-cbf1-4236-bfe4-de7bd3d36196}</Project>
       <Name>Compiler</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SafetySharp.FSharp\FSharp.fsproj">
+      <Project>{927a03f6-3a7c-406b-8e84-8ece543f1870}</Project>
+      <Name>FSharp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SafetySharp\SafetySharp.csproj">
       <Project>{d9cad497-f647-42d8-be13-6406de53331d}</Project>
       <Name>SafetySharp</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

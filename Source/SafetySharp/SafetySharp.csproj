@@ -84,14 +84,14 @@
     <Compile Include="CSharp\Transformation\ComponentSnapshot.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="CSharp\Transformation\ModelConfigurationSnapshot.cs" />
-    <Compile Include="Formulae\BinaryFormula.cs" />
-    <Compile Include="Formulae\BinaryTemporalOperator.cs" />
-    <Compile Include="Formulae\ExpressionFormula.cs" />
-    <Compile Include="Formulae\Formula.cs" />
-    <Compile Include="Formulae\Formulae.Generated.cs" />
-    <Compile Include="Formulae\PathQuantifier.cs" />
-    <Compile Include="Formulae\UnaryFormula.cs" />
-    <Compile Include="Formulae\UnaryTemporalOperator.cs" />
+    <Compile Include="Formulas\BinaryFormula.cs" />
+    <Compile Include="Formulas\BinaryTemporalOperator.cs" />
+    <Compile Include="Formulas\ExpressionFormula.cs" />
+    <Compile Include="Formulas\Formula.cs" />
+    <Compile Include="Formulas\Formulas.Generated.cs" />
+    <Compile Include="Formulas\PathQuantifier.cs" />
+    <Compile Include="Formulas\UnaryFormula.cs" />
+    <Compile Include="Formulas\UnaryTemporalOperator.cs" />
     <Compile Include="Metamodel\Configurations\Value.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
@@ -169,9 +169,15 @@
     <Compile Include="Utilities\ResharperAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\SafetySharp.FSharp\FSharp.fsproj">
+      <Project>{927a03f6-3a7c-406b-8e84-8ece543f1870}</Project>
+      <Name>FSharp</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

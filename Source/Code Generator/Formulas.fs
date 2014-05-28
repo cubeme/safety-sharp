@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module FormulaeGenerator
+module FormulasGenerator
 
 open System
 open System.Globalization
@@ -31,7 +31,7 @@ open Generator
 
 let elements = [
     {
-        Name = "SafetySharp.Formulae"
+        Name = "SafetySharp.Formulas"
         Classes =
         [
             {
@@ -133,6 +133,6 @@ let Generate outputFile =
         BaseClass = "Formula"
         VisitorName = "FormulaVisitor"
         RewriterName = "FormulaRewriter"
-        Namespace = "SafetySharp.Formulae"
+        Namespace = "SafetySharp.Formulas"
         Public = false
     } 

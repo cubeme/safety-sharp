@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulae
+namespace SafetySharp.Formulas
 {
 	using System;
 
@@ -32,8 +32,8 @@ namespace SafetySharp.Formulae
 		// Non-temporal operators
 		And,
 		Or,
-		Implies,
-		Equivalent,
+		Implication,
+		Equivalence,
 
 		// Temporal operators
 		Until

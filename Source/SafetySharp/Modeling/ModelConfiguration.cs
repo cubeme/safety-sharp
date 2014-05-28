@@ -37,10 +37,39 @@ namespace SafetySharp.Modeling
 		}
 
 		partial void AddPartitionsInternal(Component[] components);
+
+		public Formula LTL(string s)
+		{
+			return null;
+		}
 	}
 
-	public abstract class Formula
+	public class Formula
 	{
+		public static implicit operator Formula(bool value)
+		{
+			return null;
+		}
+
+		public Formula Implies(Formula f)
+		{
+			return f;
+		}
+
+		public Formula Implies(bool f)
+		{
+			return null;
+		}
+
+		public Formula AllowAccessTo(Component c, Func<dynamic, dynamic> f)
+		{
+			return this;
+		}
+
+		public Formula Ltl(string f)
+		{
+			return this;
+		}
 	}
 
 	public static class Ltl
@@ -84,6 +113,24 @@ namespace SafetySharp.Modeling
 		{
 			object o = val(c);
 			return (T)o;
+		}
+
+		public static InternalAccess<T> AccessInternal<T>(this Component c, string val)
+		{
+			return default(InternalAccess<T>);
+		}
+
+		public static dynamic AllowAccessToInternals(this Component c)
+		{
+			return default(InternalAccess<bool>);
+		}
+	}
+
+	public class InternalAccess<T>
+	{
+		public static implicit operator bool(InternalAccess<T> access)
+		{
+			return false;
 		}
 	}
 }

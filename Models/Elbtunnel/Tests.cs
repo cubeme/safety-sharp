@@ -13,12 +13,23 @@
 			protected Formula Formula;
 		}
 
-		private class GloballyProperty : PropertyPattern
+		private class MyPattern : PropertyPattern
 		{
-			public GloballyProperty(Expression<Func<bool>> expr)
+			public MyPattern()
 			{
-				Formula = Ltl.Globally(expr);
+				
 			}
+			public MyPattern(Expression<Func<bool>> left, Expression<Func<bool>> right)
+			{
+				//left.Implies(right);
+			}
+
+			public MyPattern(bool left, bool right)
+			{
+				//left.Implies(right);
+			}
+
+			public Formula Left { get; set; }
 		}
 
 		private class Configuration : ModelConfiguration
@@ -48,7 +59,30 @@
 				//Hazard = Ltl.Globally(c1.AccessInternal<bool>("_value") == false);
 				//Hazard = Ltl.Globally(lb.Triggered);
 
-				Hazard = new GloballyProperty(() => c1.AccessInternal<bool>(c => c._value) == false);
+				//Hazard = new MyPattern(c1.AccessInternal<bool>("_value"), c1.AccessInternal<bool>("_value"));
+
+				//Hazard = Ltl.Globally(c1.AccessInternal<bool>("_value")).Implies(Ltl.Globally(!c1.AccessInternal<bool>("_value")));
+
+				Hazard = LTL("(G {c1._value}) => (G !{c1._value})");
+				Hazard = LTL("(G {c1._value}) => (G {c1._value != false && true}) || G false");
+
+				var value = c1.AccessInternal<bool>("value");
+				Hazard = LTL("(G {value}) => (G !{value})"); // for internal fields when C# doesn't allow method calls in holes?
+
+				Hazard = new Formula().AllowAccessTo(c1, c => c._value).Ltl("G {c._value} => (G !{c._value");
+
+				Hazard = new MyPattern(lb.Triggered, lb.Triggered);
+
+				Hazard = Ltl.Globally(value).Implies(Ltl.Globally(!value));
+				Hazard = Ltl.Globally(lb.Triggered).Implies(Ltl.Globally(!lb.Triggered));
+
+				Hazard = LTL("(G {lb.Triggered}) => (G !{lb.Triggered})");
+
+				Ltl.SafetyProperty(lb.Triggered,)
+				Hazard = new MyPattern
+				{
+					Left = lb.Triggered
+				};
 			}
 
 			public Formula Hazard { get; private set; }

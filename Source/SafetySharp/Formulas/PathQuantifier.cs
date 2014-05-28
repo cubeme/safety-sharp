@@ -20,21 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulae
+namespace SafetySharp.Formulas
 {
 	using System;
 
 	/// <summary>
-	///     Represents the operator of an unary temporal formula.
+	///     Represents the path quantifier of a unary or binary temporal formula.
 	/// </summary>
-	internal enum UnaryTemporalOperator
+	internal enum PathQuantifier
 	{
-		// Non-temporal operators
-		Not,
-
-		// Temporal operators
-		Next,
-		Finally,
-		Globally
+		None,
+		All,
+		Exists
 	}
 }

@@ -20,17 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulae
+namespace SafetySharp.Formulas
 {
 	using System;
 
-	/// <summary>
-	///     Represents the path quantifier of a unary or binary temporal formula.
-	/// </summary>
-	internal enum PathQuantifier
+	partial class Formula
 	{
-		None,
-		All,
-		Exists
+		/// <summary>
+		///     Gets a value indicating whether the formula contains any temporal operators.
+		/// </summary>
+		public abstract bool IsTemporal { get; }
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
+		/// </summary>
+		public abstract bool IsLinearFormula { get; }
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
+		/// </summary>
+		public abstract bool IsTreeFormula { get; }
 	}
 }

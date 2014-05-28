@@ -20,25 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulae
+namespace SafetySharp.Formulas
 {
 	using System;
 
-	partial class Formula
+	/// <summary>
+	///     Represents the operator of an unary temporal formula.
+	/// </summary>
+	internal enum UnaryTemporalOperator
 	{
-		/// <summary>
-		///     Gets a value indicating whether the formula contains any temporal operators.
-		/// </summary>
-		public abstract bool IsTemporal { get; }
+		// Non-temporal operators
+		Not,
 
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
-		/// </summary>
-		public abstract bool IsLinearFormula { get; }
-
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
-		/// </summary>
-		public abstract bool IsTreeFormula { get; }
+		// Temporal operators
+		Next,
+		Finally,
+		Globally
 	}
 }

@@ -20,72 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel
+namespace SafetySharp.Formulas
 {
 	using System;
-	using SafetySharp.Modeling;
 
-	public class LightBarrier : Component
+	partial class ExpressionFormula
 	{
-		public bool Triggered { get; private set; }
-
-		public int Do()
+		/// <summary>
+		///     Gets a value indicating whether the formula contains any temporal operators.
+		/// </summary>
+		public override bool IsTemporal
 		{
-			return 1;
-		}
-	}
-
-	/// <summary>
-	///     This is a great interface.
-	/// </summary>
-	internal interface MyInterface
-	{
-	}
-
-	internal class Test2 : Component
-	{
-		private BooleanComponent boolean1 ;
-		private BooleanComponent boolean2 ;
-
-		public Test2()
-		{
-			boolean1 = new BooleanComponent(true);
-			boolean2 = new BooleanComponent(false);
-		}
-	}
-
-	internal class BooleanComponent : Component
-	{
-		private bool _value;
-
-		public BooleanComponent(bool nondeterministicInitialValue)
-		{
-			if (nondeterministicInitialValue)
-				SetInitialValues(() => _value, true, false);
-			else
-				_value = false;
-
-			sbyte i = 0;
-			i++;
+			get { return false; }
 		}
 
-		protected override void Update()
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
+		/// </summary>
+		public override bool IsLinearFormula
 		{
-			_value = Choose(true, false);
+			get { return true; }
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
+		/// </summary>
+		public override bool IsTreeFormula
+		{
+			get { return true; }
 		}
 	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
 }

@@ -20,34 +20,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulae
+namespace Tests.Formulas
 {
 	using System;
+	using FluentAssertions;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using NUnit.Framework;
+	using SafetySharp.FSharp.Formulas;
 
-	partial class ExpressionFormula
+	class T : FormulaVisitor
 	{
-		/// <summary>
-		///     Gets a value indicating whether the formula contains any temporal operators.
-		/// </summary>
-		public override bool IsTemporal
+		public override void VisitBinaryFormula(Formula leftOperand, BinaryOperator @operator, Formula rightOperand)
 		{
-			get { return false; }
+			Visit(leftOperand);
+			Visit(rightOperand);
 		}
 
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
-		/// </summary>
-		public override bool IsLinearFormula
+		public override void VisitExpressionFormula(ExpressionSyntax expression)
 		{
-			get { return true; }
+			
 		}
 
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
-		/// </summary>
-		public override bool IsTreeFormula
+		public override void VisitUnaryFormula(UnaryOperator @operator, Formula operand)
 		{
-			get { return true; }
+			Visit(operand);
+		}
+	}
+
+	[TestFixture]
+	internal class FormulaParserTests
+	{
+		[Test]
+		public void Test()
+		{
+			Formula formula;
+			FormulaParser.TryParse("G {v.x == true} || !({true} U {false})", s => { }, out formula).Should().BeTrue();
+
+			var t = new T();
+			t.Visit(formula);
+
+			FormulaParser.TryParse("G {v.x == true} || !(true U {false})", Console.WriteLine, out formula).Should().BeFalse();
+			FormulaParser.TryParse("G {v.x == true} || !({true} U (X {false}))", Console.WriteLine, out formula).Should().BeFalse();
+
+			Console.WriteLine(formula.ToString());
 		}
 	}
 }
