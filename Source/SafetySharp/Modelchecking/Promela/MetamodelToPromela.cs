@@ -181,21 +181,25 @@ namespace SafetySharp.Modelchecking.Promela
         }
 
         //this is the top level element of a meta model
-        public Proctype ConvertMetaModelConfiguration()
+        public PromelaFile ConvertMetaModelConfiguration()
         {
             var fieldDeclarations = GenerateFieldDeclarations();
+            var globalFieldModule = new PromelaGlobalVarsAndChans(fieldDeclarations);
 
-			var systemSteps = Mm.Partitions.SelectMany(partition =>
+            var fieldInitialisations = GenerateFieldInitialisations();
+            var systemSteps = Mm.Partitions.SelectMany(partition =>
 														   ImmutableArray.Create(GenerateUpdateStatements(partition, MmFieldList),
 																				 GenerateBindingExecutionStatements(partition, MmFieldList)));
             var systemStepsBlock = new PrStatements.SimpleBlockStatement(systemSteps.AsImmutable());
 
             var systemLoop = PromelaHelpers.CoverStatementInEndlessLoop(systemStepsBlock);
 
-            var code = fieldDeclarations.Add(systemLoop);
+            var code = fieldInitialisations.Add(systemLoop);
             var systemProctype = new Proctype(true, "System", code);
 
-            return systemProctype;
+            var promelaFile = new PromelaFile(ImmutableArray.Create<PromelaModule>(globalFieldModule, systemProctype));
+
+            return promelaFile;
         }
 
         public PromelaTypeName ConvertType(TypeSymbol type)
@@ -234,13 +238,23 @@ namespace SafetySharp.Modelchecking.Promela
             throw new NotImplementedException();
         }
 
-        public ImmutableArray<PrStatement> GenerateFieldDeclarations()
+        public ImmutableArray<PrStatements.DeclarationStatement> GenerateFieldDeclarations()
         {
-            var statements = MmFieldList.SelectMany(field =>
+            var statements = MmFieldList.Select(field =>
             {
                 var type = field.FieldDeclaration.Type;
                 var name = field.GetName();
                 var declStatement = new PrStatements.DeclarationStatement(ConvertType(type), name, 1, null);
+                return  declStatement;
+            });
+            return statements.ToImmutableArray();
+        }
+        public ImmutableArray<PrStatement> GenerateFieldInitialisations()
+        {
+            var statements = MmFieldList.Select(field =>
+            {
+                var type = field.FieldDeclaration.Type;
+                var name = field.GetName();
                 var initialvalueClauses = field.InitialValues.Values.Select(
                     value =>
                     {
@@ -250,7 +264,7 @@ namespace SafetySharp.Modelchecking.Promela
                         return (PrStatements.GuardedCommandClause)clause;
                     });
                 var initialValueStatement = new PrStatements.GuardedCommandSelectionStatement(initialvalueClauses.ToImmutableArray());
-                return (new PrStatement[] { declStatement, initialValueStatement });
+                return (PrStatement) initialValueStatement ;
             });
             return statements.ToImmutableArray();
         }
