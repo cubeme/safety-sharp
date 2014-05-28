@@ -27,7 +27,7 @@ namespace SafetySharp.Modelchecking.Promela
     using System.Collections.Immutable;
     using System.Linq;
     using PrFormula = SafetySharp.Modelchecking.Promela.Formula;
-    using MMFormulae = SafetySharp.Formulae;
+    using MMFormulae = SafetySharp.Formulas;
     using Metamodel.Types;
     using Microsoft.CodeAnalysis;
     using Utilities;
@@ -451,10 +451,10 @@ namespace SafetySharp.Modelchecking.Promela
                 case MMFormulae.BinaryTemporalOperator.Or:
                     @operator = PromelaBinaryFormulaOperator.Or;
                     break;
-                case MMFormulae.BinaryTemporalOperator.Implies:
+                case MMFormulae.BinaryTemporalOperator.Implication:
                     @operator = PromelaBinaryFormulaOperator.Implies;
                     break;
-                case MMFormulae.BinaryTemporalOperator.Equivalent:
+                case MMFormulae.BinaryTemporalOperator.Equivalence:
                     @operator = PromelaBinaryFormulaOperator.Equals;
                     break;
                 case MMFormulae.BinaryTemporalOperator.Until:

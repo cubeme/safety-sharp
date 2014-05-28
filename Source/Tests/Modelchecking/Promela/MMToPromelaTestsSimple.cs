@@ -27,7 +27,7 @@ namespace Tests.Modelchecking.Promela
     using FluentAssertions;
     using NUnit.Framework;
     using NUnit.Framework.Constraints;
-    using SafetySharp.Formulae;
+    using SafetySharp.Formulas;
     using SafetySharp.Modelchecking.Promela;
     using MM = SafetySharp.Metamodel;
     using MMExpressions = SafetySharp.Metamodel.Expressions;
