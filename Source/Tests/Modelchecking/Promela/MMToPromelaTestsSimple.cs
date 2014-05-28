@@ -106,9 +106,9 @@ namespace Tests.Modelchecking.Promela
                                                                         MMExpressions.BooleanLiteral.True);
             var formulaExpression2 = new MMExpressions.BinaryExpression(fieldAccessExpr, MMExpressions.BinaryOperator.Equals,
                                                                         MMExpressions.BooleanLiteral.False);
-            var formulaExpression1or2 = new MMExpressions.BinaryExpression(formulaExpression1, MMExpressions.BinaryOperator.LogicalOr,
+            var formulaExpression1Or2 = new MMExpressions.BinaryExpression(formulaExpression1, MMExpressions.BinaryOperator.LogicalOr,
                                                                            formulaExpression2);
-            var formula1 = new ExpressionFormula(formulaExpression1or2, mmsimpleComponentInstance);
+            var formula1 = new ExpressionFormula(formulaExpression1Or2, mmsimpleComponentInstance);
             var formula2 = new UnaryFormula(formula1,UnaryTemporalOperator.Globally, PathQuantifier.None);
             
             var convertedFormula = formula2.Accept(metamodelToPromela.GetFormulaVisitor());
