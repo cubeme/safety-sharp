@@ -39,15 +39,53 @@ open System.Threading
 open Generator
 
 let elements = [
-    {
-        // proctype: [ active ] PROCTYPE name '(' [ decl_lst ]')'
-        // 	         [ priority ] [ enabler ] '{' sequence '}'
+    {        
         Name = "SafetySharp.Modelchecking.Promela"
         Classes =
         [
             {   
-                Name = "Proctype"
+                Name = "PromelaFile"
+                Base = "PromelaModule"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Modules"
+                        Type = "PromelaModule"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Modules (global vars, proctypes and formulas."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "PromelaModule"
                 Base = "PromelaElement"
+                IsAbstract = true
+                Properties = []
+            }
+            {   
+                Name = "PromelaGlobalVarsAndChans"
+                Base = "PromelaModule"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Declarations"
+                        Type = "DeclarationStatement"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Global declarations."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                // proctype: [ active ] PROCTYPE name '(' [ decl_lst ]')'
+                // 	         [ priority ] [ enabler ] '{' sequence '}'
+                Name = "Proctype"
+                Base = "PromelaModule"
                 IsAbstract = false
                 Properties = 
                 [
@@ -79,7 +117,7 @@ let elements = [
             }          
             {   
                 Name = "LtlFormula"
-                Base = "PromelaElement"
+                Base = "PromelaModule"
                 IsAbstract = false
                 Properties = 
                 [

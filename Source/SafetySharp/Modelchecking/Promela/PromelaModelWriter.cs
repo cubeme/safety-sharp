@@ -65,7 +65,36 @@ namespace SafetySharp.Modelchecking.Promela
 
         public readonly CodeWriter CodeWriter;
 
-        #region Proctype and LtlFormula
+        #region PromelaFile and Modules (Global Declarations, Proctype and LtlFormula)
+
+        /// <summary>
+        ///     Visits an element of type <see cref="PromelaFile" />.
+        /// </summary>
+        /// <param name="promelaFile">The <see cref="PromelaFile" /> instance that should be visited.</param>
+        public override void VisitPromelaFile(PromelaFile promelaFile)
+        {
+            Argument.NotNull(promelaFile, () => promelaFile);
+            //doesn't need a separator between modules
+            foreach (var module in promelaFile.Modules)
+            {
+                module.Accept(this);
+                CodeWriter.NewLine();
+            }
+        }
+
+        /// <summary>
+        ///     Visits an element of type <see cref="PromelaGlobalVarsAndChans" />.
+        /// </summary>
+        /// <param name="promelaGlobalVarsAndChans">The <see cref="PromelaGlobalVarsAndChans" /> instance that should be visited.</param>
+        public override void VisitPromelaGlobalVarsAndChans(PromelaGlobalVarsAndChans promelaGlobalVarsAndChans)
+        {
+            Argument.NotNull(promelaGlobalVarsAndChans, () => promelaGlobalVarsAndChans);
+
+            foreach (var declaration in promelaGlobalVarsAndChans.Declarations)
+            {
+                declaration.Accept(this);
+            }
+        }
 
         /// <summary>
         ///   Visits an element of type <see cref="Proctype" />.
