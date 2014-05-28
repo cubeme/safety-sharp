@@ -123,20 +123,20 @@ namespace SafetySharp.Modelchecking.Promela
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="LtlFormula" />.
+        ///     Visits an element of type <see cref="LtlFormulaModule" />.
         /// </summary>
-        /// <param name="ltlFormula">The <see cref="LtlFormula" /> instance that should be visited.</param>
+        /// <param name="ltlFormulaModule">The <see cref="LtlFormulaModule" /> instance that should be visited.</param>
         // http://spinroot.com/spin/Man/ltl.html
-        public override void VisitLtlFormula(LtlFormula ltlFormula)
+        public override void VisitLtlFormulaModule(LtlFormulaModule ltlFormulaModule)
         {
-            Argument.NotNull(ltlFormula, () => ltlFormula);
+            Argument.NotNull(ltlFormulaModule, () => ltlFormulaModule);
 
             CodeWriter.Append("ltl ");
-            if (ltlFormula.Name!=null)
-                CodeWriter.Append("{0} ",ltlFormula.Name);
+            if (ltlFormulaModule.Name!=null)
+                CodeWriter.Append("{0} ", ltlFormulaModule.Name);
 
             CodeWriter.Append("{{ ");
-            ltlFormula.Formula.Accept(this);
+            ltlFormulaModule.Formula.Accept(this);
             CodeWriter.Append(" }}");
             CodeWriter.NewLine();
         }
