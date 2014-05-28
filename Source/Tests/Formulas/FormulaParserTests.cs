@@ -22,47 +22,5 @@
 
 namespace Tests.Formulas
 {
-	using System;
-	using FluentAssertions;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using NUnit.Framework;
-	using SafetySharp.FSharp.Formulas;
-
-	class T : FormulaVisitor
-	{
-		public override void VisitBinaryFormula(Formula leftOperand, BinaryOperator @operator, Formula rightOperand)
-		{
-			Visit(leftOperand);
-			Visit(rightOperand);
-		}
-
-		public override void VisitExpressionFormula(ExpressionSyntax expression)
-		{
-			
-		}
-
-		public override void VisitUnaryFormula(UnaryOperator @operator, Formula operand)
-		{
-			Visit(operand);
-		}
-	}
-
-	[TestFixture]
-	internal class FormulaParserTests
-	{
-		[Test]
-		public void Test()
-		{
-			Formula formula;
-			FormulaParser.TryParse("G {v.x == true} || !({true} U {false})", s => { }, out formula).Should().BeTrue();
-
-			var t = new T();
-			t.Visit(formula);
-
-			FormulaParser.TryParse("G {v.x == true} || !(true U {false})", Console.WriteLine, out formula).Should().BeFalse();
-			FormulaParser.TryParse("G {v.x == true} || !({true} U (X {false}))", Console.WriteLine, out formula).Should().BeFalse();
-
-			Console.WriteLine(formula.ToString());
-		}
-	}
+	
 }

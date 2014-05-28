@@ -169,14 +169,7 @@
     <Compile Include="Utilities\ResharperAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SafetySharp.FSharp\FSharp.fsproj">
-      <Project>{927a03f6-3a7c-406b-8e84-8ece543f1870}</Project>
-      <Name>FSharp</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
