@@ -85,6 +85,7 @@ namespace SafetySharp.Modeling
 		/// <param name="values">The non-literal values referenced by <paramref name="expression" />.</param>
 		public static Formula StateFormula(string expression, params object[] values)
 		{
+			Argument.NotNullOrWhitespace(expression, () => expression);
 			return new UntransformedStateFormula(expression, values.ToImmutableArray());
 		}
 	}
