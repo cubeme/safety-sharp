@@ -20,25 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
-namespace SafetySharp.Modeling
+namespace SafetySharp.Formulas
 {
 	using System;
 
-	/// <summary>
-	/// 
-	/// </summary>
-	public abstract class Formula
+	partial class Formula
 	{
 		/// <summary>
-		/// 
+		///     Gets a value indicating whether the formula contains any temporal operators.
 		/// </summary>
-		/// <param name="f"></param>
-		/// <returns></returns>
-		public Formula Implies(Formula f)
-		{
-			return f;
-		}
+		public abstract bool IsTemporal { get; }
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
+		/// </summary>
+		public abstract bool IsLinearFormula { get; }
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
+		/// </summary>
+		public abstract bool IsTreeFormula { get; }
 	}
 }

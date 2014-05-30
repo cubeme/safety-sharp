@@ -30,99 +30,99 @@ namespace SafetySharp.Modeling
 	public static class Ltl
 	{
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'next' operator to <paramref name="operand" />.
+		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static Formula Next(Formula operand)
+		public static LtlFormula Next(LtlFormula operand)
 		{
-			return default(Formula);
+			return default(LtlFormula);
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'finally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static Formula Finally(Formula operand)
+		public static LtlFormula Finally(LtlFormula operand)
 		{
-			return default(Formula);
+			return default(LtlFormula);
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'globally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static Formula Globally(Formula operand)
+		public static LtlFormula Globally(LtlFormula operand)
 		{
-			return default(Formula);
+			return default(LtlFormula);
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static Formula Until(Formula leftOperand, Formula rightOperand)
+		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
 		{
-			return default(Formula);
+			return default(LtlFormula);
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'next' operator to <paramref name="operand" />.
+		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static Formula Next(bool operand)
+		public static LtlFormula Next(bool operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'finally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static Formula Finally(bool operand)
+		public static LtlFormula Finally(bool operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'globally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static Formula Globally(bool operand)
+		public static LtlFormula Globally(bool operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static Formula Until(bool leftOperand, Formula rightOperand)
+		public static LtlFormula Until(bool leftOperand, LtlFormula rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static Formula Until(Formula leftOperand, bool rightOperand)
+		public static LtlFormula Until(LtlFormula leftOperand, bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static Formula Until(bool leftOperand, bool rightOperand)
+		public static LtlFormula Until(bool leftOperand, bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}

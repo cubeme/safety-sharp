@@ -36,7 +36,7 @@ let main argv =
 
     TestGenerator.Generate "../../Source/Tests/Generator/Test.Generated.cs"
     MetamodelGenerator.Generate "../../Source/SafetySharp/Metamodel/Metamodel.Generated.cs"
-    FormulasGenerator.Generate "../../Source/SafetySharp/Formulas/Formulas.Generated.cs"
+    FormulaGenerator.Generate "../../Source/SafetySharp/Formulas/Formulas.Generated.cs"
     PromelaGenerator.Generate "../../Source/SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
     NuXmvGenerator.Generate "../../Source/SafetySharp/Modelchecking/NuXmv/NuXmv.Generated.cs"
 

@@ -34,9 +34,10 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
 	using Utilities;
+	using Formula = Formulas.Formula;
 
 	/// <summary>
-	///     Transforms all <see cref="UntransformedStateFormula" />s contained in a <see cref="Formula" /> to the
+	///     Transforms all <see cref="UntransformedStateFormula" />s contained in a <see cref="LtlFormula" /> to the
 	///     corresponding transformed <see cref="StateFormula" />s.
 	/// </summary>
 	internal class FormulaTransformation : FormulaRewriter
@@ -87,7 +88,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Rewrites an element of type <see cref="UntransformedStateFormula" />.
 		/// </summary>
 		/// <param name="untransformedStateFormula">The <see cref="UntransformedStateFormula" /> instance that should be rewritten.</param>
-		public override TemporalLogicFormula VisitUntransformedStateFormula(UntransformedStateFormula untransformedStateFormula)
+		public override Formula VisitUntransformedStateFormula(UntransformedStateFormula untransformedStateFormula)
 		{
 			Argument.NotNull(untransformedStateFormula, () => untransformedStateFormula);
 

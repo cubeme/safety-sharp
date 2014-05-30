@@ -29,29 +29,29 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	/// 
 	/// </summary>
-	public class Formula
+	public class LtlFormula
 	{
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="formula"></param>
-		internal Formula(TemporalLogicFormula formula)
+		internal LtlFormula(Formula formula)
 		{
 			Argument.NotNull(formula, () => formula);
-			WrappedFormula = formula;
+			Formula = formula;
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		internal TemporalLogicFormula WrappedFormula { get; private set; }
+		internal Formula Formula { get; private set; }
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="f"></param>
 		/// <returns></returns>
-		public Formula Implies(Formula f)
+		public LtlFormula Implies(LtlFormula f)
 		{
 			throw new NotImplementedException();
 		}

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module FormulasGenerator
+module FormulaGenerator
 
 open System
 open System.Globalization
@@ -36,7 +36,7 @@ let elements = [
         [
             {
                 Name = "StateFormula"
-                Base = "TemporalLogicFormula"
+                Base = "Formula"
                 IsAbstract = false
                 Properties =
                 [
@@ -60,7 +60,7 @@ let elements = [
             }
             {
                 Name = "UntransformedStateFormula"
-                Base = "TemporalLogicFormula"
+                Base = "Formula"
                 IsAbstract = false
                 Properties =
                 [
@@ -84,13 +84,13 @@ let elements = [
             }
             {   
                 Name = "BinaryFormula"
-                Base = "TemporalLogicFormula"
+                Base = "Formula"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Left"
-                        Type = "TemporalLogicFormula"
+                        Type = "Formula"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The formula on the left-hand side of the binary operator."
@@ -114,7 +114,7 @@ let elements = [
                     }
                     {
                         Name = "Right"
-                        Type = "TemporalLogicFormula"
+                        Type = "Formula"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The formula on the right-hand side of the binary operator."
@@ -124,13 +124,13 @@ let elements = [
             }            
             {   
                 Name = "UnaryFormula"
-                Base = "TemporalLogicFormula"
+                Base = "Formula"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Operand"
-                        Type = "TemporalLogicFormula"
+                        Type = "Formula"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The operand of the unary formula."
@@ -162,7 +162,7 @@ let Generate outputFile =
     generateCode {
         Elements = elements
         OutputFile = outputFile
-        BaseClass = "TemporalLogicFormula"
+        BaseClass = "Formula"
         VisitorName = "FormulaVisitor"
         RewriterName = "FormulaRewriter"
         Namespace = "SafetySharp.Formulas"

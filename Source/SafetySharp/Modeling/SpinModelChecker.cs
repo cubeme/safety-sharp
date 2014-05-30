@@ -67,7 +67,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <param name="formula"></param>
 		/// <returns></returns>
-		public bool Check(Formula formula)
+		public bool Check(LtlFormula formula)
 		{
 			throw new NotImplementedException();
 		}

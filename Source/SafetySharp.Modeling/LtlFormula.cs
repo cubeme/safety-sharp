@@ -20,25 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulas
+using System;
+
+namespace SafetySharp.Modeling
 {
 	using System;
 
-	partial class TemporalLogicFormula
+	/// <summary>
+	/// 
+	/// </summary>
+	public abstract class LtlFormula
 	{
 		/// <summary>
-		///     Gets a value indicating whether the formula contains any temporal operators.
+		/// 
 		/// </summary>
-		public abstract bool IsTemporal { get; }
-
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
-		/// </summary>
-		public abstract bool IsLinearFormula { get; }
-
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
-		/// </summary>
-		public abstract bool IsTreeFormula { get; }
+		/// <param name="f"></param>
+		/// <returns></returns>
+		public LtlFormula Implies(LtlFormula f)
+		{
+			return f;
+		}
 	}
 }

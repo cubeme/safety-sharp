@@ -42,7 +42,7 @@
     <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
       <Link>OverflowBehavior.cs</Link>
     </Compile>
-    <Compile Include="Formula.cs" />
+    <Compile Include="LtlFormula.cs" />
     <Compile Include="Ltl.cs" />
     <Compile Include="Component.cs" />
     <Compile Include="InternalAccess.cs" />

@@ -34,7 +34,7 @@ namespace Tests.Modeling
 
 		internal class LtlTests
 		{
-			protected readonly Formula Operand = new Formula(new UntransformedStateFormula(String.Empty, ImmutableArray<object>.Empty));
+			protected readonly LtlFormula Operand = new LtlFormula(new UntransformedStateFormula(String.Empty, ImmutableArray<object>.Empty));
 		}
 
 		[TestFixture]
@@ -44,7 +44,7 @@ namespace Tests.Modeling
 			public void ReturnsUnaryNextFormula()
 			{
 				var formula = Ltl.Next(Operand);
-				formula.WrappedFormula.Should().Be(new UnaryFormula(Operand.WrappedFormula, UnaryTemporalOperator.Next, PathQuantifier.None));
+				formula.Formula.Should().Be(new UnaryFormula(Operand.Formula, UnaryTemporalOperator.Next, PathQuantifier.None));
 			}
 
 			[Test]
@@ -62,7 +62,7 @@ namespace Tests.Modeling
 			public void ReturnsUnaryFinallyFormula()
 			{
 				var formula = Ltl.Finally(Operand);
-				formula.WrappedFormula.Should().Be(new UnaryFormula(Operand.WrappedFormula, UnaryTemporalOperator.Finally, PathQuantifier.None));
+				formula.Formula.Should().Be(new UnaryFormula(Operand.Formula, UnaryTemporalOperator.Finally, PathQuantifier.None));
 			}
 
 			[Test]
@@ -80,7 +80,7 @@ namespace Tests.Modeling
 			public void ReturnsUnaryGloballyFormula()
 			{
 				var formula = Ltl.Globally(Operand);
-				formula.WrappedFormula.Should().Be(new UnaryFormula(Operand.WrappedFormula, UnaryTemporalOperator.Globally, PathQuantifier.None));
+				formula.Formula.Should().Be(new UnaryFormula(Operand.Formula, UnaryTemporalOperator.Globally, PathQuantifier.None));
 			}
 
 			[Test]
@@ -98,9 +98,7 @@ namespace Tests.Modeling
 			public void ReturnsBinaryUntilFormula()
 			{
 				var formula = Ltl.Until(Operand, Operand);
-
-				var operand = Operand.WrappedFormula;
-				formula.WrappedFormula.Should().Be(new BinaryFormula(operand, BinaryTemporalOperator.Until, PathQuantifier.None, operand));
+				formula.Formula.Should().Be(new BinaryFormula(Operand.Formula, BinaryTemporalOperator.Until, PathQuantifier.None, Operand.Formula));
 			}
 
 			[Test]
@@ -123,11 +121,11 @@ namespace Tests.Modeling
 			[Test]
 			public void ReturnsUntrasformedStateFormula()
 			{
-				const string expression = "abc";
+				const string expression = "hello";
 				var values = new object[] { true, 1, "test" };
 
 				var formula = Ltl.StateFormula(expression, values);
-				formula.WrappedFormula.Should().Be(new UntransformedStateFormula(expression, values.ToImmutableArray()));
+				formula.Formula.Should().Be(new UntransformedStateFormula(expression, values.ToImmutableArray()));
 			}
 
 			[Test]

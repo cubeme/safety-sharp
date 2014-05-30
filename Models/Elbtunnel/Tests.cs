@@ -9,7 +9,7 @@
 	{
 		private static class MyPatterns
 		{
-			public static Formula MyPattern(bool left, bool right)
+			public static LtlFormula MyPattern(bool left, bool right)
 			{
 				return null;
 			}
@@ -38,7 +38,7 @@
 					right: !value);
 			}
 
-			public Formula Hazard { get; private set; }
+			public LtlFormula Hazard { get; private set; }
 		}
 
 		private static void Main(string[] args)
