@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Transformation
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Collections.Immutable;
 	using System.Linq;
 	using Extensions;
@@ -30,6 +31,7 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -39,14 +41,20 @@ namespace SafetySharp.CSharp.Transformation
 	internal class FormulaTransformation : FormulaRewriter
 	{
 		/// <summary>
+		///     The prefix used for generated names to ensure their uniqueness.
+		/// </summary>
+		private const string GeneratedNamePrefix = "CD160172C5924ED387C2B31D7C4EA3DE";
+
+		/// <summary>
 		///     The code template that is used to parse the C# expressions of the state formulas.
 		/// </summary>
 		private const string CodeTemplate = @"
-			class X 
+			class CD160172C5924ED387C2B31D7C4EA3DE
 			{{
 				bool M()
 				{{
-					return {0};
+					{0}
+					return {1};
 				}}
 			}}";
 
@@ -82,22 +90,68 @@ namespace SafetySharp.CSharp.Transformation
 		{
 			Argument.NotNull(untransformedStateFormula, () => untransformedStateFormula);
 
-			var code = String.Format(CodeTemplate, untransformedStateFormula.Expression);
+			var declarations = String.Join(";", GetDeclarations(untransformedStateFormula.Values));
+			var formattedExpression = String.Format(untransformedStateFormula.Expression,
+													GetExpressionFormatArguments(untransformedStateFormula.Values).ToArray());
+			var code = String.Format(CodeTemplate, declarations, formattedExpression);
+
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
+			var expression = syntaxTree.DescendantNodes<ReturnStatementSyntax>().Single().Expression;
 
 			var compilation = _compilation.CSharpCompilation.AddSyntaxTrees(syntaxTree);
-			var diagnostics = compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToImmutableArray();
+			var diagnostics = compilation
+				.GetDiagnostics()
+				.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+				.Select(diagnostic => diagnostic.GetMessage())
+				.ToImmutableArray();
+
 			if (diagnostics.Length != 0)
-				throw new InvalidOperationException(String.Format("Malformed state formula:{0}{1}",
+				throw new InvalidOperationException(String.Format("Malformed state formula '{0}':{1}{2}", expression,
 																  Environment.NewLine, String.Join(Environment.NewLine, diagnostics)));
 
-			var expression = syntaxTree.DescendantNodes<ReturnStatementSyntax>().Single().Expression;
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
 			var expressionTransformation = new ExpressionTransformation(semanticModel, _symbolMap);
 
 			var transformedExpression = expressionTransformation.Transform(expression);
-
 			return new StateFormula(transformedExpression, null);
+		}
+
+		/// <summary>
+		///     Gets the required declarations for <paramref name="values" /> that are required to compile the C# expression.
+		/// </summary>
+		/// <param name="values">The values that are referenced by the C# expression.</param>
+		private static IEnumerable<string> GetDeclarations(ImmutableArray<object> values)
+		{
+			var index = 0;
+			foreach (var value in values)
+			{
+				if (value is Component)
+					yield return String.Format("{0} {1}{2} = null;", value.GetType().FullName, GeneratedNamePrefix, index);
+
+				++index;
+			}
+		}
+
+		/// <summary>
+		///     Gets the arguments for <paramref name="values" /> that are required to format the C# expression.
+		/// </summary>
+		/// <param name="values">The values that are referenced by the C# expression.</param>
+		private static IEnumerable<object> GetExpressionFormatArguments(ImmutableArray<object> values)
+		{
+			var index = 0;
+			foreach (var value in values)
+			{
+				if (value is Component)
+					yield return String.Format("{0}{1}", GeneratedNamePrefix, index);
+				else if (value is bool)
+					yield return (bool)value ? "true" : "false";
+				else if (value is int || value is decimal)
+					yield return value.ToString();
+				else
+					throw new InvalidOperationException(String.Format("State formula references unsupported type '{0}'.", value.GetType().FullName));
+
+				++index;
+			}
 		}
 	}
 }

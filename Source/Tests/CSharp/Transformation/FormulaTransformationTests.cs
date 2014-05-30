@@ -24,31 +24,71 @@ namespace Tests.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Reflection;
 	using FluentAssertions;
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Formulas;
 	using SafetySharp.Metamodel.Expressions;
+	using SafetySharp.Modeling;
 
 	[TestFixture]
 	internal class FormulaTransformationTests
 	{
-		private static StateFormula TransformStateFormula(string csharpCode, string csharpExpression, params object[] values)
+		[SetUp]
+		public void Setup()
 		{
-			var compilation = new TestCompilation(csharpCode);
-			var transformation = new FormulaTransformation(compilation.ModelingCompilation, new SymbolMap(compilation.CSharpCompilation));
+			const string csharpCode = @"
+				class X : Component
+				{
+					public int IntField;
+					public bool BooleanField;
+				}";
+
+			_compilation = new TestCompilation(csharpCode);
+			_assembly = _compilation.Compile();
+		}
+
+		private Assembly _assembly;
+		private TestCompilation _compilation;
+
+		private StateFormula TransformStateFormula(string csharpExpression, params object[] values)
+		{
+			var transformation = new FormulaTransformation(_compilation.ModelingCompilation, new SymbolMap(_compilation.CSharpCompilation));
 
 			var untransformed = new UntransformedStateFormula(csharpExpression, values.ToImmutableArray());
 			return (StateFormula)transformation.Visit(untransformed);
 		}
 
+		private Component CreateComponentInstance(string componentName)
+		{
+			return (Component)Activator.CreateInstance(_assembly.GetType(componentName));
+		}
+
+		[Test]
+		public void TransformComponentAccess()
+		{
+			TransformStateFormula("{0}.BooleanField", CreateComponentInstance("X"))
+				.Should().Be(null);
+		}
+
+		[Test]
+		public void TransformValueAccess()
+		{
+			TransformStateFormula("{0}", true).Should().Be(new StateFormula(BooleanLiteral.True, null));
+			TransformStateFormula("{1} == {0}", 2, 1)
+				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2)), null));
+			TransformStateFormula("{0} || {1}", true, false)
+				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
+		}
+
 		[Test]
 		public void TransformLiteralExpressions()
 		{
-			TransformStateFormula(String.Empty, "true").Should().Be(new StateFormula(BooleanLiteral.True, null));
-			TransformStateFormula(String.Empty, "1 == 2")
+			TransformStateFormula("true").Should().Be(new StateFormula(BooleanLiteral.True, null));
+			TransformStateFormula("1 == 2")
 				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2)), null));
-			TransformStateFormula(String.Empty, "true || false")
+			TransformStateFormula("true || false")
 				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
 		}
 	}
