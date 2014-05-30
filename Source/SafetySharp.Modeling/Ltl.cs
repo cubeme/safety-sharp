@@ -35,7 +35,7 @@ namespace SafetySharp.Modeling
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
 		public static LtlFormula Next(LtlFormula operand)
 		{
-			return default(LtlFormula);
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -44,7 +44,7 @@ namespace SafetySharp.Modeling
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
 		public static LtlFormula Finally(LtlFormula operand)
 		{
-			return default(LtlFormula);
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -53,7 +53,7 @@ namespace SafetySharp.Modeling
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
 		public static LtlFormula Globally(LtlFormula operand)
 		{
-			return default(LtlFormula);
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -64,7 +64,7 @@ namespace SafetySharp.Modeling
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
 		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
 		{
-			return default(LtlFormula);
+			throw new NotSupportedException();
 		}
 
 		/// <summary>

@@ -37,7 +37,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		public static implicit operator T(InternalAccess<T> access)
 		{
-			return default(T);
+			throw new NotSupportedException();
 		}
 	}
 }
