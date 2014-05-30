@@ -65,7 +65,7 @@ namespace Tests.CSharp.Transformation
 			return (Component)Activator.CreateInstance(_assembly.GetType(componentName));
 		}
 
-		[Test]
+		[Test, Ignore]
 		public void TransformComponentAccess()
 		{
 			TransformStateFormula("{0}.BooleanField", CreateComponentInstance("X"))

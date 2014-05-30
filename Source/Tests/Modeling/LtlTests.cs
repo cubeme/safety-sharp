@@ -34,7 +34,7 @@ namespace Tests.Modeling
 
 		internal class LtlTests
 		{
-			protected readonly Formula Operand = new UntransformedStateFormula(String.Empty, ImmutableArray<object>.Empty);
+			protected readonly Formula Operand = new Formula(new UntransformedStateFormula(String.Empty, ImmutableArray<object>.Empty));
 		}
 
 		[TestFixture]
@@ -44,7 +44,7 @@ namespace Tests.Modeling
 			public void ReturnsUnaryNextFormula()
 			{
 				var formula = Ltl.Next(Operand);
-				formula.Should().Be(new UnaryFormula(Operand, UnaryTemporalOperator.Next, PathQuantifier.None));
+				formula.WrappedFormula.Should().Be(new UnaryFormula(Operand.WrappedFormula, UnaryTemporalOperator.Next, PathQuantifier.None));
 			}
 
 			[Test]
@@ -62,7 +62,7 @@ namespace Tests.Modeling
 			public void ReturnsUnaryFinallyFormula()
 			{
 				var formula = Ltl.Finally(Operand);
-				formula.Should().Be(new UnaryFormula(Operand, UnaryTemporalOperator.Finally, PathQuantifier.None));
+				formula.WrappedFormula.Should().Be(new UnaryFormula(Operand.WrappedFormula, UnaryTemporalOperator.Finally, PathQuantifier.None));
 			}
 
 			[Test]
@@ -80,7 +80,7 @@ namespace Tests.Modeling
 			public void ReturnsUnaryGloballyFormula()
 			{
 				var formula = Ltl.Globally(Operand);
-				formula.Should().Be(new UnaryFormula(Operand, UnaryTemporalOperator.Globally, PathQuantifier.None));
+				formula.WrappedFormula.Should().Be(new UnaryFormula(Operand.WrappedFormula, UnaryTemporalOperator.Globally, PathQuantifier.None));
 			}
 
 			[Test]
@@ -98,7 +98,9 @@ namespace Tests.Modeling
 			public void ReturnsBinaryUntilFormula()
 			{
 				var formula = Ltl.Until(Operand, Operand);
-				formula.Should().Be(new BinaryFormula(Operand, BinaryTemporalOperator.Until, PathQuantifier.None, Operand));
+
+				var operand = Operand.WrappedFormula;
+				formula.WrappedFormula.Should().Be(new BinaryFormula(operand, BinaryTemporalOperator.Until, PathQuantifier.None, operand));
 			}
 
 			[Test]
@@ -125,7 +127,7 @@ namespace Tests.Modeling
 				var values = new object[] { true, 1, "test" };
 
 				var formula = Ltl.StateFormula(expression, values);
-				formula.Should().Be(new UntransformedStateFormula(expression, values.ToImmutableArray()));
+				formula.WrappedFormula.Should().Be(new UntransformedStateFormula(expression, values.ToImmutableArray()));
 			}
 
 			[Test]

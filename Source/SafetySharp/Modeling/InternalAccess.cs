@@ -20,33 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulas
+namespace SafetySharp.Modeling
 {
 	using System;
+	using Utilities;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public abstract class Formula
+	/// <typeparam name="T"></typeparam>
+	public sealed class InternalAccess<T>
 	{
 		/// <summary>
-		/// 
+		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
 		/// </summary>
-		/// <param name="value"></param>
-		/// <returns></returns>
-		public static implicit operator Formula(bool value)
+		internal InternalAccess(IComponent component, string memberName)
 		{
-			return null;
+			Argument.NotNull(component, () => component);
+			Argument.NotNull(memberName, () => memberName);
+
+			Component = component;
+			MemberName = memberName;
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="f"></param>
-		/// <returns></returns>
-		public Formula Implies(Formula f)
-		{
-			return f;
-		}
+		internal IComponent Component { get; private set; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		internal string MemberName { get; private set; }
 	}
 }

@@ -20,32 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+
 namespace SafetySharp.Modeling
 {
 	using System;
-	using Formulas;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public sealed class SpinModelChecker
+	public abstract class Formula
 	{
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="modelConfiguration"></param>
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
-		{
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="formula"></param>
+		/// <param name="f"></param>
 		/// <returns></returns>
-		public bool Check(Formula formula)
+		public Formula Implies(Formula f)
 		{
-			return default(bool);
+			return f;
 		}
 	}
 }

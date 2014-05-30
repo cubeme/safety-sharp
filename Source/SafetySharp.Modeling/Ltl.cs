@@ -23,7 +23,6 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using Formulas;
 
 	/// <summary>
 	///     Provides factory methods for the construction of linear temporal logic formulas.
@@ -66,6 +65,66 @@ namespace SafetySharp.Modeling
 		public static Formula Until(Formula leftOperand, Formula rightOperand)
 		{
 			return default(Formula);
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that applies the 'next' operator to <paramref name="operand" />.
+		/// </summary>
+		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
+		public static Formula Next(bool operand)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that applies the 'finally' operator to <paramref name="operand" />.
+		/// </summary>
+		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
+		public static Formula Finally(bool operand)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that applies the 'globally' operator to <paramref name="operand" />.
+		/// </summary>
+		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
+		public static Formula Globally(bool operand)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     <paramref name="rightOperand" />.
+		/// </summary>
+		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+		public static Formula Until(bool leftOperand, Formula rightOperand)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     <paramref name="rightOperand" />.
+		/// </summary>
+		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+		public static Formula Until(Formula leftOperand, bool rightOperand)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     <paramref name="rightOperand" />.
+		/// </summary>
+		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+		public static Formula Until(bool leftOperand, bool rightOperand)
+		{
+			throw new NotSupportedException();
 		}
 	}
 }

@@ -36,7 +36,7 @@ let elements = [
         [
             {
                 Name = "StateFormula"
-                Base = "Formula"
+                Base = "TemporalLogicFormula"
                 IsAbstract = false
                 Properties =
                 [
@@ -60,7 +60,7 @@ let elements = [
             }
             {
                 Name = "UntransformedStateFormula"
-                Base = "Formula"
+                Base = "TemporalLogicFormula"
                 IsAbstract = false
                 Properties =
                 [
@@ -84,13 +84,13 @@ let elements = [
             }
             {   
                 Name = "BinaryFormula"
-                Base = "Formula"
+                Base = "TemporalLogicFormula"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Left"
-                        Type = "Formula"
+                        Type = "TemporalLogicFormula"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The formula on the left-hand side of the binary operator."
@@ -114,7 +114,7 @@ let elements = [
                     }
                     {
                         Name = "Right"
-                        Type = "Formula"
+                        Type = "TemporalLogicFormula"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The formula on the right-hand side of the binary operator."
@@ -124,13 +124,13 @@ let elements = [
             }            
             {   
                 Name = "UnaryFormula"
-                Base = "Formula"
+                Base = "TemporalLogicFormula"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Operand"
-                        Type = "Formula"
+                        Type = "TemporalLogicFormula"
                         CollectionType = Singleton
                         Validation = NotNull
                         Comment = "The operand of the unary formula."
@@ -162,9 +162,9 @@ let Generate outputFile =
     generateCode {
         Elements = elements
         OutputFile = outputFile
-        BaseClass = "Formula"
+        BaseClass = "TemporalLogicFormula"
         VisitorName = "FormulaVisitor"
         RewriterName = "FormulaRewriter"
         Namespace = "SafetySharp.Formulas"
-        Visibility = PublicBase
+        Visibility = Internal
     } 

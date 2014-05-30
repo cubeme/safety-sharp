@@ -23,24 +23,22 @@
 namespace SafetySharp.Formulas
 {
 	using System;
-	using Modeling;
 
-	/// <summary>
-	///     Provides extension methods for working with <see cref="IComponent" /> types when creating <see cref="Formula" />
-	///     instances.
-	/// </summary>
-	public static class ComponentExtensions
+	partial class TemporalLogicFormula
 	{
 		/// <summary>
-		///     Allows access to a non-public member of an <see cref="IComponent" /> instance.
+		///     Gets a value indicating whether the formula contains any temporal operators.
 		/// </summary>
-		/// <typeparam name="T">The type of the accessed member.</typeparam>
-		/// <param name="component">The <see cref="IComponent" /> instance whose non-public member should be accessed.</param>
-		/// <param name="memberName">The name of the member that should be accessed.</param>
-		/// <returns>Returns an <see cref="InternalAccess{T}" /> instance that can be used to access the non-public member.</returns>
-		public static InternalAccess<T> AccessInternal<T>(this IComponent component, string memberName)
-		{
-			return default(InternalAccess<T>);
-		}
+		public abstract bool IsTemporal { get; }
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
+		/// </summary>
+		public abstract bool IsLinearFormula { get; }
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
+		/// </summary>
+		public abstract bool IsTreeFormula { get; }
 	}
 }

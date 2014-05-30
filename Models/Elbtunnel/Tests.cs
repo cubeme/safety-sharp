@@ -1,9 +1,7 @@
 ﻿namespace Elbtunnel
 {
 	using System;
-	using System.Collections.Generic;
 	using NUnit.Framework;
-	using SafetySharp.Formulas;
 	using SafetySharp.Modeling;
 
 	[TestFixture]
@@ -35,7 +33,6 @@
 				//	.Implies(Ltl.Globally("!{0} == false || {1} == 5 || {2}.Triggered", value, value2, lb));
 
 				//Hazard = Ltl.Globally(lb.Triggered).Implies(Ltl.Globally(!lb.Triggered));
-
 				Hazard = MyPatterns.MyPattern(
 					left: value,
 					right: !value);

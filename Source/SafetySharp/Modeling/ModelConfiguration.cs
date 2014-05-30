@@ -29,12 +29,25 @@ namespace SafetySharp.Modeling
 	using CSharp.Transformation;
 	using Utilities;
 
+	/// <summary>
+	/// 
+	/// </summary>
 	public abstract class ModelConfiguration
 	{
 		/// <summary>
 		///     The partition root components of the configuration.
 		/// </summary>
 		private readonly List<Component> _partitionRoots = new List<Component>();
+
+		/// <summary>
+		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
+		/// </summary>
+		/// <param name="components">The components that should be added as root components of partitions.</param>
+		protected void AddPartitions(params Component[] components)
+		{
+			Argument.NotNull(components, () => components);
+			_partitionRoots.AddRange(components);
+		}
 
 		/// <summary>
 		///     Gets a snapshot of the current model configuration state.
@@ -50,18 +63,8 @@ namespace SafetySharp.Modeling
 				CollectComponents(hashSet, component);
 
 			return new ModelConfigurationSnapshot(_partitionRoots
-				.Select((root, index) => root.GetSnapshot("Root" + index))
-				.ToImmutableArray());
-		}
-
-		/// <summary>
-		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
-		/// </summary>
-		/// <param name="components">The components that should be added as root components of partitions.</param>
-		protected void AddPartitions(params Component[] components)
-		{
-			Argument.NotNull(components, () => components);
-			_partitionRoots.AddRange(components);
+													  .Select((root, index) => root.GetSnapshot("Root" + index))
+													  .ToImmutableArray());
 		}
 
 		/// <summary>

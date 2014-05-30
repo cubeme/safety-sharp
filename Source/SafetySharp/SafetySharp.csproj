@@ -88,7 +88,7 @@
     <Compile Include="Formulas\BinaryFormula.cs" />
     <Compile Include="Formulas\BinaryTemporalOperator.cs" />
     <Compile Include="Formulas\StateFormula.cs" />
-    <Compile Include="Formulas\Formula.cs" />
+    <Compile Include="Formulas\TemporalLogicFormula.cs" />
     <Compile Include="Formulas\Formulas.Generated.cs" />
     <Compile Include="Formulas\PathQuantifier.cs" />
     <Compile Include="Formulas\UnaryFormula.cs" />
@@ -100,7 +100,10 @@
     <Compile Include="Modelchecking\Promela\PromelaHelpers.cs" />
     <Compile Include="Modelchecking\Promela\PromelaUnaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\Spin.cs" />
+    <Compile Include="Modeling\Component.cs" />
+    <Compile Include="Modeling\Formula.cs" />
     <Compile Include="Modeling\IComponent.cs" />
+    <Compile Include="Modeling\InternalAccess.cs" />
     <Compile Include="Modeling\Ltl.cs" />
     <Compile Include="Modeling\ModelingCompilationUnitAttribute.cs" />
     <Compile Include="Modeling\ModelingAssemblyReferenceAttribute.cs" />
@@ -135,7 +138,6 @@
     <Compile Include="Metamodel\Types\TypeSymbol.cs" />
     <Compile Include="Metamodel\Types\VoidType.cs" />
     <Compile Include="Modelchecking\Promela\MetamodelToPromela.cs" />
-    <Compile Include="Modeling\Component.cs" />
     <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\SpinModelChecker.cs" />

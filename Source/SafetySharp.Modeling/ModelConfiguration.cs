@@ -20,25 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulas
+namespace SafetySharp.Modeling
 {
 	using System;
 
-	partial class Formula
+	/// <summary>
+	/// 
+	/// </summary>
+	public abstract class ModelConfiguration
 	{
 		/// <summary>
-		///     Gets a value indicating whether the formula contains any temporal operators.
+		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
 		/// </summary>
-		public abstract bool IsTemporal { get; }
-
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
-		/// </summary>
-		public abstract bool IsLinearFormula { get; }
-
-		/// <summary>
-		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
-		/// </summary>
-		public abstract bool IsTreeFormula { get; }
+		/// <param name="components">The components that should be added as root components of partitions.</param>
+		protected void AddPartitions(params Component[] components)
+		{
+			throw new NotSupportedException();
+		}
 	}
 }

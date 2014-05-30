@@ -54,26 +54,14 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets a snapshot of the current component state.
+		///     Allows access to a non-public member of the component.
 		/// </summary>
-		/// <param name="componentName">The name of the component or <c>null</c> if no name can be determined.</param>
-		internal ComponentSnapshot GetSnapshot(string componentName = null)
+		/// <typeparam name="T">The type of the accessed member.</typeparam>
+		/// <param name="memberName">The name of the member that should be accessed.</param>
+		/// <returns>Returns an <see cref="InternalAccess{T}" /> instance that can be used to access the non-public member.</returns>
+		public InternalAccess<T> AccessInternal<T>(string memberName)
 		{
-			var subComponents =
-				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-				where typeof(IComponent).IsAssignableFrom(field.FieldType)
-				let component = field.GetValue(this) as Component
-				where component != null
-				select component.GetSnapshot(field.Name);
-
-			var fieldsWithDeterministicInitialValue =
-				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-				where !typeof(IComponent).IsAssignableFrom(field.FieldType) && !_fields.ContainsKey(field.Name)
-				let value = field.GetValue(this)
-				select new KeyValuePair<string, ImmutableArray<object> >(field.Name, ImmutableArray.Create(value));
-
-			var fields = _fields.ToImmutableDictionary().AddRange(fieldsWithDeterministicInitialValue);
-			return new ComponentSnapshot(this, componentName, subComponents.ToImmutableArray(), fields);
+			return new InternalAccess<T>(this, memberName);
 		}
 
 		/// <summary>
@@ -97,44 +85,68 @@ namespace SafetySharp.Modeling
 			fieldInfo.SetValue(this, initialValues[random.Next(0, initialValues.Length)]);
 		}
 
+		/// <summary>
+		///     Gets a snapshot of the current component state.
+		/// </summary>
+		/// <param name="componentName">The name of the component or <c>null</c> if no name can be determined.</param>
+		internal ComponentSnapshot GetSnapshot(string componentName = null)
+		{
+			var subComponents =
+				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+				where typeof(IComponent).IsAssignableFrom(field.FieldType)
+				let component = field.GetValue(this) as Component
+				where component != null
+				select component.GetSnapshot(field.Name);
+
+			var fieldsWithDeterministicInitialValue =
+				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+				where !typeof(IComponent).IsAssignableFrom(field.FieldType) && !_fields.ContainsKey(field.Name)
+				let value = field.GetValue(this)
+				select new KeyValuePair<string, ImmutableArray<object>>(field.Name, ImmutableArray.Create(value));
+
+			var fields = _fields.ToImmutableDictionary().AddRange(fieldsWithDeterministicInitialValue);
+			return new ComponentSnapshot(this, componentName, subComponents.ToImmutableArray(), fields);
+		}
+
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)
 		{
-			result = default(T);
+			throw new NotImplementedException();
 		}
 
 		protected static void ChooseFromRange(out int result, int inclusiveLowerBound, int inclusiveUpperBound)
 		{
-			result = 0;
+			throw new NotImplementedException();
 		}
 
 		protected static void ChooseFromRange(out decimal result, decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
-			result = 0;
+			throw new NotImplementedException();
 		}
 
 		protected static T Choose<T>()
 			where T : struct
 		{
-			return default(T);
+			throw new NotSupportedException();
 		}
 
 		protected static T Choose<T>(T value1, T value2, params T[] values)
 		{
-			return default(T);
+			throw new NotSupportedException();
 		}
 
 		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
 		{
-			return 0;
+			throw new NotSupportedException();
 		}
 
 		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
-			return 0;
+			throw new NotSupportedException();
 		}
 
 		protected virtual void Update()
 		{
+			throw new NotSupportedException();
 		}
 	}
 }

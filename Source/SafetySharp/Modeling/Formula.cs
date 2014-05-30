@@ -20,34 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulas
+namespace SafetySharp.Modeling
 {
 	using System;
+	using Formulas;
+	using Utilities;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public class InternalAccess<T>
+	public class Formula
 	{
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="access"></param>
-		/// <returns></returns>
-		public static implicit operator T(InternalAccess<T> access)
+		/// <param name="formula"></param>
+		internal Formula(TemporalLogicFormula formula)
 		{
-			return default(T);
+			Argument.NotNull(formula, () => formula);
+			WrappedFormula = formula;
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="access"></param>
+		internal TemporalLogicFormula WrappedFormula { get; private set; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="f"></param>
 		/// <returns></returns>
-		public static implicit operator Formula(InternalAccess<T> access)
+		public Formula Implies(Formula f)
 		{
-			return default(Formula);
+			return f;
 		}
 	}
 }

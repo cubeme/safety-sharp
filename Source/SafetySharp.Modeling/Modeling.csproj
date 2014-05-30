@@ -7,7 +7,7 @@
     <ProjectGuid>{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SafetySharp</RootNamespace>
+    <RootNamespace>SafetySharp.Modeling</RootNamespace>
     <AssemblyName>SafetySharp.Modeling</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\Binaries\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\..\Binaries\Debug\SafetySharp.Modeling.xml</DocumentationFile>
@@ -37,19 +37,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SafetySharp\Modeling\IComponent.cs">
-      <Link>Modeling\IComponent.cs</Link>
+      <Link>IComponent.cs</Link>
     </Compile>
     <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
-      <Link>Modeling\OverflowBehavior.cs</Link>
+      <Link>OverflowBehavior.cs</Link>
     </Compile>
-    <Compile Include="Formulas\ComponentExtensions.cs" />
-    <Compile Include="Modeling\Component.cs" />
-    <Compile Include="Formulas\Formula.cs" />
-    <Compile Include="Formulas\InternalAccess.cs" />
-    <Compile Include="Modeling\Ltl.cs" />
-    <Compile Include="Modeling\ModelConfiguration.cs" />
+    <Compile Include="Formula.cs" />
+    <Compile Include="Ltl.cs" />
+    <Compile Include="Component.cs" />
+    <Compile Include="InternalAccess.cs" />
+    <Compile Include="ModelConfiguration.cs" />
+    <Compile Include="SpinModelChecker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Modeling\SpinModelChecker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

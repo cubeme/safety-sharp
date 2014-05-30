@@ -23,53 +23,21 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.IO;
-	using CSharp;
-	using CSharp.Transformation;
-	using Formulas;
-	using Metamodel;
-	using Modelchecking.Promela;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public sealed class SpinModelChecker
+	/// <typeparam name="T"></typeparam>
+	public sealed class InternalAccess<T>
 	{
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="modelConfiguration"></param>
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
-		{
-			var modelingAssembly = new ModelingAssembly(modelConfiguration.GetType().Assembly);
-			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration.GetSnapshot());
-
-			MetamodelCompilation compilation;
-			MetamodelConfiguration configuration;
-			transformation.TryTransform(out compilation, out configuration);
-
-			var promelaTransformation = new MetamodelToPromela(configuration, compilation.Resolver);
-			var promelaModel = promelaTransformation.ConvertMetaModelConfiguration();
-
-			var promelaWriter = new PromelaModelWriter();
-			promelaWriter.Visit(promelaModel);
-
-			var fileName = modelConfiguration.GetType().Name + ".pml";
-			File.WriteAllText(fileName, promelaWriter.CodeWriter.ToString());
-
-			var result = Spin.ExecuteSpin("-a " + fileName);
-
-			return;
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="formula"></param>
+		/// <param name="access"></param>
 		/// <returns></returns>
-		public bool Check(Formula formula)
+		public static implicit operator T(InternalAccess<T> access)
 		{
-			throw new NotImplementedException();
+			return default(T);
 		}
 	}
 }

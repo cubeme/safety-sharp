@@ -23,6 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.ComponentModel;
 	using System.Linq.Expressions;
 
 	/// <summary>
@@ -33,19 +34,12 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		/// 
 		/// </summary>
-		protected Component()
-		{
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
 		protected static T Choose<T>()
 			where T : struct
 		{
-			return default(T);
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -58,7 +52,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		protected static T Choose<T>(T value1, T value2, params T[] values)
 		{
-			return default(T);
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -69,7 +63,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
 		{
-			return 0;
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -80,7 +74,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
-			return 0;
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -88,6 +82,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		protected virtual void Update()
 		{
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -97,6 +92,18 @@ namespace SafetySharp.Modeling
 		/// <param name="initialValues">The initial values of the field.</param>
 		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
 		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Allows access to a non-public member of the component.
+		/// </summary>
+		/// <typeparam name="T">The type of the accessed member.</typeparam>
+		/// <param name="memberName">The name of the member that should be accessed.</param>
+		/// <returns>Returns an <see cref="InternalAccess{T}" /> instance that can be used to access the non-public member.</returns>
+		public InternalAccess<T> AccessInternal<T>(string memberName)
+		{
+			throw new NotSupportedException();
 		}
 	}
 }

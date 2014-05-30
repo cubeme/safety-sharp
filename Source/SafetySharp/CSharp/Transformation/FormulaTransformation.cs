@@ -87,7 +87,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Rewrites an element of type <see cref="UntransformedStateFormula" />.
 		/// </summary>
 		/// <param name="untransformedStateFormula">The <see cref="UntransformedStateFormula" /> instance that should be rewritten.</param>
-		public override Formula VisitUntransformedStateFormula(UntransformedStateFormula untransformedStateFormula)
+		public override TemporalLogicFormula VisitUntransformedStateFormula(UntransformedStateFormula untransformedStateFormula)
 		{
 			Argument.NotNull(untransformedStateFormula, () => untransformedStateFormula);
 
