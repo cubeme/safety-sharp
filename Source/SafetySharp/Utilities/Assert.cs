@@ -108,7 +108,7 @@ namespace SafetySharp.Utilities
 		/// </summary>
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message")]
 		public static void NotReached(string message = null, params object[] parameters)
 		{
 			message = message == null ? "Control flow should not have reached this point." : String.Format(message, parameters);

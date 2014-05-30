@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Transformation
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
+	using System.Globalization;
 	using System.Linq;
 	using Extensions;
 	using Formulas;
@@ -126,7 +127,7 @@ namespace SafetySharp.CSharp.Transformation
 			foreach (var value in values)
 			{
 				if (value is Component)
-					yield return String.Format("{0} {1}{2} = null;", value.GetType().FullName, GeneratedNamePrefix, index);
+					yield return String.Format("{0} {1}_{2} = null;", value.GetType().FullName, GeneratedNamePrefix, index);
 
 				++index;
 			}
@@ -142,11 +143,13 @@ namespace SafetySharp.CSharp.Transformation
 			foreach (var value in values)
 			{
 				if (value is Component)
-					yield return String.Format("{0}{1}", GeneratedNamePrefix, index);
+					yield return String.Format("{0}_{1}", GeneratedNamePrefix, index);
 				else if (value is bool)
 					yield return (bool)value ? "true" : "false";
-				else if (value is int || value is decimal)
-					yield return value.ToString();
+				else if (value is int)
+					yield return ((int)value).ToString(CultureInfo.InvariantCulture);
+				else if (value is decimal)
+					yield return ((decimal)value).ToString(CultureInfo.InvariantCulture) + "m";
 				else
 					throw new InvalidOperationException(String.Format("State formula references unsupported type '{0}'.", value.GetType().FullName));
 

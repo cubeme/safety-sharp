@@ -78,6 +78,8 @@ namespace Tests.CSharp.Transformation
 			TransformStateFormula("{0}", true).Should().Be(new StateFormula(BooleanLiteral.True, null));
 			TransformStateFormula("{1} == {0}", 2, 1)
 				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2)), null));
+			TransformStateFormula("{1} == {0}", 2m, 1.5m)
+				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1.5m), BinaryOperator.Equals, new DecimalLiteral(2)), null));
 			TransformStateFormula("{0} || {1}", true, false)
 				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
 		}
@@ -88,6 +90,8 @@ namespace Tests.CSharp.Transformation
 			TransformStateFormula("true").Should().Be(new StateFormula(BooleanLiteral.True, null));
 			TransformStateFormula("1 == 2")
 				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2)), null));
+			TransformStateFormula("1m == 2.5m")
+				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1), BinaryOperator.Equals, new DecimalLiteral(2.5m)), null));
 			TransformStateFormula("true || false")
 				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
 		}
