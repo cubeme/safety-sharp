@@ -72,6 +72,13 @@ namespace Tests.CSharp.Transformation
 				.Should().Be(null);
 		}
 
+		[Test, Ignore]
+		public void TransformInternalAccess()
+		{
+			TransformStateFormula("{0} == 2", CreateComponentInstance("X").AccessInternal<int>("IntField"))
+				.Should().Be(null);
+		}
+
 		[Test]
 		public void TransformValueAccess()
 		{

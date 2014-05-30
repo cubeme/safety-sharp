@@ -28,8 +28,7 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	/// 
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public sealed class InternalAccess<T>
+	public sealed class InternalAccess
 	{
 		/// <summary>
 		///     Initializes a new instance of the <see cref="T:System.Object" /> class.

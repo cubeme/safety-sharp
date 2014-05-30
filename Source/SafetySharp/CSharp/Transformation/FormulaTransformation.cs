@@ -34,7 +34,6 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
 	using Utilities;
-	using Formula = Formulas.Formula;
 
 	/// <summary>
 	///     Transforms all <see cref="UntransformedStateFormula" />s contained in a <see cref="LtlFormula" /> to the
@@ -129,6 +128,8 @@ namespace SafetySharp.CSharp.Transformation
 			{
 				if (value is Component)
 					yield return String.Format("{0} {1}_{2} = null;", value.GetType().FullName, GeneratedNamePrefix, index);
+				else if (value is InternalAccess)
+					yield return String.Format("{0} {1}_{2} = null;", ((InternalAccess)value).Component.GetType().FullName, GeneratedNamePrefix, index);
 
 				++index;
 			}
@@ -145,6 +146,8 @@ namespace SafetySharp.CSharp.Transformation
 			{
 				if (value is Component)
 					yield return String.Format("{0}_{1}", GeneratedNamePrefix, index);
+				else if (value is InternalAccess)
+					yield return String.Format("{0}_{1}.{2}", GeneratedNamePrefix, index, ((InternalAccess)value).MemberName);
 				else if (value is bool)
 					yield return (bool)value ? "true" : "false";
 				else if (value is int)

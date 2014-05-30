@@ -26,7 +26,6 @@ namespace SafetySharp.Modeling
 	using System.IO;
 	using CSharp;
 	using CSharp.Transformation;
-	using Formulas;
 	using Metamodel;
 	using Modelchecking.Promela;
 
