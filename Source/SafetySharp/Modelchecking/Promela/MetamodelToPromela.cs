@@ -217,18 +217,18 @@ namespace SafetySharp.Modelchecking.Promela
             throw new NotImplementedException();
         }
 
-        public PrExpressions.ConstExpression ConvertObject(MMConfigurations.Value mmValue, TypeSymbol type)
+        public PrExpressions.ConstExpression ConvertObject(object mmValue, TypeSymbol type)
         {
             if (type is VoidType)
                 throw new NotImplementedException();
             if (type is BooleanType)
             {
-                var value = (bool)mmValue.Object;
+                var value = (bool)mmValue;
                 return new PrExpressions.BooleanLiteral(value);
             }
             if (type is IntegerType)
             {
-                var value = (int)mmValue.Object;
+                var value = (int)mmValue;
                 return new PrExpressions.NumberLiteral(value);
             }
             if (type is DecimalType)
@@ -421,7 +421,7 @@ namespace SafetySharp.Modelchecking.Promela
         ///     Visits an element of type <see cref="MMFormulae.ExpressionFormula" />.
         /// </summary>
         /// <param name="expressionFormula">The <see cref="MMFormulae.ExpressionFormula" /> instance that should be visited.</param>
-        public override PrFormula.PromelaFormula VisitExpressionFormula(MMFormulae.ExpressionFormula expressionFormula)
+        public override PrFormula.PromelaFormula VisitStateFormula(MMFormulae.StateFormula expressionFormula)
         {
             Argument.NotNull(expressionFormula, () => expressionFormula);
 

@@ -20,21 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Configurations
+namespace SafetySharp.Formulas
 {
 	using System;
 
-	/// <summary>
-	///     Represents a value within the tree of metamodel elements.
-	/// </summary>
-	partial class Value
+	partial class StateFormula
 	{
 		/// <summary>
-		///     Returns a string that represents the current object.
+		///     Gets a value indicating whether the formula contains any temporal operators.
 		/// </summary>
-		public override string ToString()
+		public override bool IsTemporal
 		{
-			return Object.ToString();
+			get { return false; }
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
+		/// </summary>
+		public override bool IsLinearFormula
+		{
+			get { return true; }
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
+		/// </summary>
+		public override bool IsTreeFormula
+		{
+			get { return true; }
 		}
 	}
 }

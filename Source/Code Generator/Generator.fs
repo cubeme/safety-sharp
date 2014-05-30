@@ -972,7 +972,7 @@ let generateCode context =
 
                         // Generate a local variable for each property that holds the result of rewrite
                         for p in properties do
-                            if isRewriteable p.Type || p.CollectionType <> Singleton then
+                            if isRewriteable p.Type then
                                 // Call Visit() recursively for rewriteable types, casting the types back to the original type
                                 // Collection types do not require casts as a special overload of the Visit() method is called
                                 let cast = if p.CollectionType <> Singleton then "" else sprintf "(%s)" p.Type

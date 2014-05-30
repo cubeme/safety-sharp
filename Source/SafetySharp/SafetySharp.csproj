@@ -86,13 +86,13 @@
     <Compile Include="CSharp\Transformation\ModelConfigurationSnapshot.cs" />
     <Compile Include="Formulas\BinaryFormula.cs" />
     <Compile Include="Formulas\BinaryTemporalOperator.cs" />
-    <Compile Include="Formulas\ExpressionFormula.cs" />
+    <Compile Include="Formulas\StateFormula.cs" />
     <Compile Include="Formulas\Formula.cs" />
     <Compile Include="Formulas\Formulas.Generated.cs" />
     <Compile Include="Formulas\PathQuantifier.cs" />
     <Compile Include="Formulas\UnaryFormula.cs" />
     <Compile Include="Formulas\UnaryTemporalOperator.cs" />
-    <Compile Include="Metamodel\Configurations\Value.cs" />
+    <Compile Include="Formulas\UntransformedStateFormula.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
     <Compile Include="Modelchecking\Promela\PromelaBinaryFormulaOperator.cs" />

@@ -24,14 +24,14 @@ namespace SafetySharp.Formulas
 {
 	using System;
 
-	partial class ExpressionFormula
+	partial class UntransformedStateFormula
 	{
 		/// <summary>
 		///     Gets a value indicating whether the formula contains any temporal operators.
 		/// </summary>
 		public override bool IsTemporal
 		{
-			get { return false; }
+			get { throw new NotSupportedException(); }
 		}
 
 		/// <summary>
@@ -39,7 +39,7 @@ namespace SafetySharp.Formulas
 		/// </summary>
 		public override bool IsLinearFormula
 		{
-			get { return true; }
+			get { throw new NotSupportedException(); }
 		}
 
 		/// <summary>
@@ -47,7 +47,7 @@ namespace SafetySharp.Formulas
 		/// </summary>
 		public override bool IsTreeFormula
 		{
-			get { return true; }
+			get { throw new NotSupportedException(); }
 		}
 	}
 }

@@ -23,6 +23,7 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using System.Collections.Immutable;
 	using Formulas;
 	using Utilities;
 
@@ -73,6 +74,18 @@ namespace SafetySharp.Modeling
 			Argument.NotNull(rightOperand, () => rightOperand);
 
 			return new BinaryFormula(leftOperand, BinaryTemporalOperator.Until, PathQuantifier.None, rightOperand);
+		}
+
+		/// <summary>
+		///     Returns a <see cref="Formula" /> that represents the C# <paramref name="expression" />. All non-literal values accessed
+		///     by <paramref name="expression" /> must be passed in the <paramref name="values" /> array, with the
+		///     <paramref name="expression" /> referencing the objects in a <see cref="String.Format(string, object[])" /> like fashion.
+		/// </summary>
+		/// <param name="expression">The C# expression representing the state formula.</param>
+		/// <param name="values">The non-literal values referenced by <paramref name="expression" />.</param>
+		public static Formula StateFormula(string expression, params object[] values)
+		{
+			return new UntransformedStateFormula(expression, values.ToImmutableArray());
 		}
 	}
 }

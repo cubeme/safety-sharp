@@ -652,26 +652,10 @@ let elements = [
                 [
                     {
                         Name = "Values"
-                        Type = "Value"
+                        Type = "object"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The values."
-                        CanBeNull = false
-                    }
-                ]
-            }
-            {   
-                Name = "Value"
-                Base = "MetamodelElement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Object"
-                        Type = "object"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The value."
+                        Comment = "The values contained in the value array."
                         CanBeNull = false
                     }
                 ]

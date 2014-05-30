@@ -35,7 +35,7 @@ let elements = [
         Classes =
         [
             {
-                Name = "ExpressionFormula"
+                Name = "StateFormula"
                 Base = "Formula"
                 IsAbstract = false
                 Properties =
@@ -45,15 +45,39 @@ let elements = [
                         Type = "SafetySharp.Metamodel.Expressions.Expression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The metamodel expression used as a non-temporal Boolean formula."
+                        Comment = "The metamodel expression that represents the state formula."
                         CanBeNull = false
                     }
                     { 
                         Name = "AssociatedComponent"
                         Type = "SafetySharp.Metamodel.Configurations.ComponentConfiguration"
                         CollectionType = Singleton
-                        Validation = NotNull
+                        Validation = None
                         Comment = "The associated component is the scope in which the expression is evaluated."
+                        CanBeNull = true
+                    }
+                ]
+            }
+            {
+                Name = "UntransformedStateFormula"
+                Base = "Formula"
+                IsAbstract = false
+                Properties =
+                [
+                    { 
+                        Name = "Expression"
+                        Type = "string"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The untransformed C# expression as a string that represents the state formula."
+                        CanBeNull = false
+                    }
+                    { 
+                        Name = "Values"
+                        Type = "object"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The non-literal values referenced by the C# expression."
                         CanBeNull = false
                     }
                 ]

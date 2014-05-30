@@ -102,8 +102,7 @@ namespace SafetySharp.CSharp.Transformation
 			var fieldValues = componentDeclaration.Fields.Select(field =>
 			{
 				var values = component.GetInitialValuesOfField(field.Identifier.Name);
-				var initialValues = values.Select(value => new Value(value)).ToImmutableArray();
-				return new ValueArray(initialValues);
+				return new ValueArray(values.ToImmutableArray());
 			}).ToImmutableArray();
 
 			var subComponents = componentDeclaration
