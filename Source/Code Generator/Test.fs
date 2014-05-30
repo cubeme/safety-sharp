@@ -190,5 +190,5 @@ let Generate outputFile =
         VisitorName = "TestVisitor"
         RewriterName = "TestRewriter"
         Namespace = "Tests.Generator"
-        Public = false
+        Visibility = Internal
     } 

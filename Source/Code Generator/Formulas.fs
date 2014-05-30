@@ -142,5 +142,5 @@ let Generate outputFile =
         VisitorName = "FormulaVisitor"
         RewriterName = "FormulaRewriter"
         Namespace = "SafetySharp.Formulas"
-        Public = false
+        Visibility = PublicBase
     } 

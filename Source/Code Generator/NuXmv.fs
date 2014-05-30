@@ -847,6 +847,6 @@ let Generate outputFile =
         VisitorName = "NuXmvVisitor"
         RewriterName = "NuXmvRewriter"
         Namespace = "SafetySharp.Modelchecking.NuXmv"
-        Public = false
+        Visibility = Internal
     }
 

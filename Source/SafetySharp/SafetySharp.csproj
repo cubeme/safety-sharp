@@ -100,6 +100,7 @@
     <Compile Include="Modelchecking\Promela\PromelaUnaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\Spin.cs" />
     <Compile Include="Modeling\IComponent.cs" />
+    <Compile Include="Modeling\Ltl.cs" />
     <Compile Include="Modeling\ModelingCompilationUnitAttribute.cs" />
     <Compile Include="Modeling\ModelingAssemblyReferenceAttribute.cs" />
     <Compile Include="Modeling\ModelingAssemblyAttribute.cs" />

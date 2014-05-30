@@ -688,5 +688,5 @@ let Generate outputFile =
         VisitorName = "MetamodelVisitor"
         RewriterName = "MetamodelRewriter"
         Namespace = "SafetySharp.Metamodel"
-        Public = false
+        Visibility = Internal
     } 

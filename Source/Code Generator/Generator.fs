@@ -120,6 +120,14 @@ type VisitorType = {
 }
 
 /// <summary>
+///     Describes the visibility of the generated classes.
+/// </summary>
+type Visibility =
+    | Internal
+    | Public
+    | PublicBase
+
+/// <summary>
 ///     Provides context information for the code generator.
 /// </summary>
 type Context = {
@@ -129,7 +137,7 @@ type Context = {
     VisitorName : string
     RewriterName : string
     Namespace : string
-    Public : bool
+    Visibility : Visibility
 }
 
 //====================================================================================================================
@@ -258,10 +266,21 @@ let generateCode context =
     /// </summary>
     let output = new CodeWriter()
 
-     /// <summary>
+    /// <summary>
     ///     The visibility modifier that should be used for the generated classes.
     /// </summary>
-    let visibility = if context.Public then "public" else "internal"
+    let visibility =
+        match context.Visibility with
+        | Public -> "public"
+        | Internal | PublicBase -> "internal"
+
+    /// <summary>
+    ///     The visibility modifier that should be used for the generated base class.
+    /// </summary>
+    let baesClassVisibility = 
+        match context.Visibility with
+        | Public | PublicBase -> "public"
+        | Internal -> "internal"
 
     /// <summary>
     ///     Ensures that the first character of the given string is lower case.
@@ -408,7 +427,7 @@ let generateCode context =
         output.AppendLine("/// <summary>")
         output.AppendLine(sprintf "///     Gets %s" <| startWithLowerCase p.Comment)
         output.AppendLine("/// </summary>")
-        output.AppendLine(sprintf "public %s %s { get; private set; }" <| getType p <| p.Name)
+        output.AppendLine(sprintf "%s %s %s { get; private set; }" visibility <| getType p <| p.Name)
 
     /// <summary>
     ///     Generates the assertion statements for the validation of the given property.
@@ -492,7 +511,7 @@ let generateCode context =
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
             // Generate the method signature
-            output.AppendLine(sprintf "public %s With%s(%s %s)" c.Name p.Name <| getType p <| getValidCSharpIdentifier p.Name)
+            output.AppendLine(sprintf "%s %s With%s(%s %s)" visibility c.Name p.Name <| getType p <| getValidCSharpIdentifier p.Name)
 
             // Generate the method body
             output.AppendBlockStatement <| fun () ->
@@ -521,7 +540,7 @@ let generateCode context =
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
             // Generate the method signature
-            output.AppendLine(sprintf "public %s Add%s(params %s[] %s)" c.Name p.Name p.Type <| getValidCSharpIdentifier p.Name)
+            output.AppendLine(sprintf "%s %s Add%s(params %s[] %s)" visibility c.Name p.Name p.Type <| getValidCSharpIdentifier p.Name)
 
             // Generate the method body; we're reusing the corresponding With...() method here
             output.AppendBlockStatement <| fun () ->
@@ -544,7 +563,7 @@ let generateCode context =
 
         // Generate the method signature
         let parameters = allProperties c |> joinProperties ", " (fun p' -> sprintf "%s %s" <| getType p' <| getValidCSharpIdentifier p'.Name)
-        output.AppendLine(sprintf "public %s Update(%s)" c.Name parameters)
+        output.AppendLine(sprintf "%s %s Update(%s)" visibility c.Name parameters)
 
         // Generate the method body
         output.AppendBlockStatement <| fun () ->
@@ -577,7 +596,7 @@ let generateCode context =
         output.AppendLine("/// <param name=\"visitor\">The visitor the type-specific visit method should be invoked on.</param>")
 
         // Generate the method signature
-        output.AppendLine(sprintf "public override %s Accept%s(%s%s visitor)" visitorType.ReturnType visitorType.ParamTypeSpecifier context.VisitorName visitorType.ParamTypeSpecifier)
+        output.AppendLine(sprintf "%s override %s Accept%s(%s%s visitor)" visibility visitorType.ReturnType visitorType.ParamTypeSpecifier context.VisitorName visitorType.ParamTypeSpecifier)
 
         // Generate the method body
         output.AppendBlockStatement <| fun () ->
@@ -634,7 +653,7 @@ let generateCode context =
         output.AppendLine("/// </returns>")
 
         // Generate the method signature of the typed Equals method
-        output.AppendLine(sprintf "public override bool Equals(%s other)" context.BaseClass)
+        output.AppendLine(sprintf "%s override bool Equals(%s other)" visibility context.BaseClass)
 
         // Generate the method body of the typed Equals method
         output.AppendBlockStatement <| fun () ->
@@ -801,13 +820,13 @@ let generateCode context =
             output.NewLine()
 
             // Generate the base class
-            output.AppendLine(sprintf "%s abstract partial class %s" visibility context.BaseClass)
+            output.AppendLine(sprintf "%s abstract partial class %s" baesClassVisibility context.BaseClass)
             output.AppendBlockStatement <| fun () ->
                 output.AppendLine("/// <summary>")
                 output.AppendLine("///     Accepts <paramref name=\"visitor\" />, calling the type-specific visit method.")
                 output.AppendLine("/// </summary>")
                 output.AppendLine("/// <param name=\"visitor\">The visitor the type-specific visit method should be invoked on.</param>")
-                output.AppendLine(sprintf "public abstract void Accept(%s visitor);" context.VisitorName)
+                output.AppendLine(sprintf "%s abstract void Accept(%s visitor);" visibility context.VisitorName)
                 output.NewLine()
 
                 output.AppendLine("/// <summary>")
@@ -815,7 +834,7 @@ let generateCode context =
                 output.AppendLine("/// </summary>")
                 output.AppendLine("/// <typeparam name=\"TResult\">The type of the value returned by <paramref name=\"visitor\" />.</typeparam>")
                 output.AppendLine("/// <param name=\"visitor\">The visitor the type-specific visit method should be invoked on.</param>")
-                output.AppendLine(sprintf "public abstract TResult Accept<TResult>(%s<TResult> visitor);" context.VisitorName)
+                output.AppendLine(sprintf "%s abstract TResult Accept<TResult>(%s<TResult> visitor);" visibility context.VisitorName)
                 output.NewLine()
 
                 output.AppendLine("/// <summary>")
@@ -825,7 +844,7 @@ let generateCode context =
                 output.AppendLine("/// <returns>")
                 output.AppendLine("///     <c>true</c> if <paramref name=\"other\" /> is equal to the current instance; otherwise, <c>false</c>.")
                 output.AppendLine("/// </returns>")
-                output.AppendLine(sprintf "public abstract bool Equals(%s other);" context.BaseClass)
+                output.AppendLine(sprintf "%s abstract bool Equals(%s other);" visibility context.BaseClass)
 
     /// <summary>
     ///     Generates the C# code for the given namespace metadata.
