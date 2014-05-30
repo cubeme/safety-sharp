@@ -31,7 +31,8 @@
 				var value2 = c1.AccessInternal<int>("value");
 
 				Hazard = Ltl.Globally(value).Implies(Ltl.Globally(!value == false || value2 == 5 || lb.Triggered));
-				//Hazard = Ltl.Globally(Ltl.StateExpression("__0.value", value)).Implies(Ltl.Globally("!__0.value == false || __1.value == 5", value, value2));
+				//Hazard = Ltl.Globally(Ltl.StateExpression("{0}", value))
+				//	.Implies(Ltl.Globally("!{0} == false || {1} == 5 || {2}.Triggered", value, value2, lb));
 
 				//Hazard = Ltl.Globally(lb.Triggered).Implies(Ltl.Globally(!lb.Triggered));
 

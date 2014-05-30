@@ -30,22 +30,68 @@ namespace SafetySharp.CSharp.Transformation
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
-	internal partial class MethodTransformation
+	/// <summary>
+	///     Transforms a lowered C# syntax tree of an expression into a corresponding metamodel expression tree.
+	/// </summary>
+	internal class ExpressionTransformation : CSharpSyntaxVisitor<MetamodelElement>
 	{
+		/// <summary>
+		///     Initializes a new instance of the <see cref="ExpressionTransformation" /> type.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model that should be used to retrieve semantic information about the C# program.</param>
+		/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
+		internal ExpressionTransformation(SemanticModel semanticModel, SymbolMap symbolMap)
+		{
+			Argument.NotNull(semanticModel, () => semanticModel);
+			Argument.NotNull(symbolMap, () => symbolMap);
+
+			SemanticModel = semanticModel;
+			SymbolMap = symbolMap;
+		}
+
+		/// <summary>
+		///     Gets the semantic model that can be used to retrieve semantic information about the C# program.
+		/// </summary>
+		protected SemanticModel SemanticModel { get; private set; }
+
+		/// <summary>
+		///     Gets the symbol map that can be used to look up metamodel element references for C# symbols.
+		/// </summary>
+		protected SymbolMap SymbolMap { get; private set; }
+
+		/// <summary>
+		///     Transforms the C# <paramref name="expression" /> to a metamodel <see cref="Expression" />.
+		/// </summary>
+		/// <param name="expression">The C# expression that should be transformed.</param>
+		public Expression Transform(ExpressionSyntax expression)
+		{
+			return (Expression)Visit(expression);
+		}
+
+		/// <summary>
+		///     Raises an exception for all unsupported C# features found in the lowered C# syntax tree.
+		/// </summary>
+		/// <param name="node">The syntax node of the unsupported C# feature.</param>
+		public override MetamodelElement DefaultVisit(SyntaxNode node)
+		{
+			Assert.NotReached("Encountered an unexpected C# syntax node: '{0}'.", node.CSharpKind());
+			return null;
+		}
+
 		/// <summary>
 		///     Transforms a C# identifier name to the corresponding metamodel expression.
 		/// </summary>
 		/// <param name="node">The C# identifier name that should be transformed.</param>
 		public override MetamodelElement VisitIdentifierName(IdentifierNameSyntax node)
 		{
-			var symbolInfo = _semanticModel.GetSymbolInfo(node);
+			var symbolInfo = SemanticModel.GetSymbolInfo(node);
 			var symbol = symbolInfo.Symbol;
 
 			Assert.NotNull(symbol, "Unable to determine symbol for identifier '{0}'.", node);
 
 			var fieldSymbol = symbol as IFieldSymbol;
 			if (fieldSymbol != null)
-				return new FieldAccessExpression(_symbolMap.GetFieldReference(fieldSymbol));
+				return new FieldAccessExpression(SymbolMap.GetFieldReference(fieldSymbol));
 
 			Assert.NotReached("Unexpected C# symbol type: '{0}'", symbol.GetType().FullName);
 			return null;

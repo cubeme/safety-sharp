@@ -82,6 +82,7 @@
     <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
     <Compile Include="CSharp\Transformation\ComponentResolver.cs" />
     <Compile Include="CSharp\Transformation\ComponentSnapshot.cs" />
+    <Compile Include="CSharp\Transformation\FormulaTransformation.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformation.cs" />
     <Compile Include="CSharp\Transformation\ModelConfigurationSnapshot.cs" />
     <Compile Include="Formulas\BinaryFormula.cs" />
@@ -121,8 +122,8 @@
     <Compile Include="Metamodel\MetamodelReference.cs" />
     <Compile Include="Metamodel\MetamodelResolver.cs" />
     <Compile Include="CSharp\Transformation\SymbolMap.cs" />
-    <Compile Include="CSharp\Transformation\MethodTransformation.Statements.cs" />
-    <Compile Include="CSharp\Transformation\MethodTransformation.Expressions.cs" />
+    <Compile Include="CSharp\Transformation\MethodTransformation.cs" />
+    <Compile Include="CSharp\Transformation\ExpressionTransformation.cs" />
     <Compile Include="Metamodel\Statements\AssignmentStatement.cs" />
     <Compile Include="Metamodel\Statements\EmptyStatement.cs" />
     <Compile Include="Metamodel\Statements\GuardedCommandClause.cs" />
@@ -144,7 +145,6 @@
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.cs" />
-    <Compile Include="CSharp\Transformation\MethodTransformation.cs" />
     <Compile Include="Metamodel\Expressions\BinaryOperator.cs" />
     <Compile Include="Metamodel\Expressions\BooleanLiteral.cs" />
     <Compile Include="Metamodel\Expressions\UnaryOperator.cs" />
