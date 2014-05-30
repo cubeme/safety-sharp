@@ -53,7 +53,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		public Formula Implies(Formula f)
 		{
-			return f;
+			throw new NotImplementedException();
 		}
 	}
 }

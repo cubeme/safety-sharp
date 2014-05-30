@@ -25,14 +25,12 @@ namespace SafetySharp.Compiler
 	using System;
 	using System.Linq;
 	using CommandLine;
-	using CommandLine.Text;
-	using CSharp;
 	using Utilities;
 
 	/// <summary>
 	///     Represents the entry point to the compiler.
 	/// </summary>
-	internal static class Program
+	internal static class Compiler
 	{
 		/// <summary>
 		///     The command line arguments that have been used to invoke the compiler.
@@ -80,7 +78,7 @@ namespace SafetySharp.Compiler
 			// Start the compilation process.
 			try
 			{
-				var compiler = new Compiler();
+				var compiler = new CSharp.Compiler();
 				var resultCode = compiler.Compile(Arguments.ProjectFile, Arguments.Configuration, Arguments.Platform);
 
 				if (resultCode == 0)
@@ -141,52 +139,6 @@ namespace SafetySharp.Compiler
 			Console.ForegroundColor = color;
 			Console.WriteLine(message);
 			Console.ForegroundColor = currentColor;
-		}
-
-		/// <summary>
-		///     Provides access to the command line arguments that have been provided to the compiler.
-		/// </summary>
-		private class CommandLineArguments
-		{
-			/// <summary>
-			///     Gets or sets the name of the configuration that should be used to compile the project.
-			/// </summary>
-			[Option("configuration", Required = true, HelpText = "The name of the configuration that should be used to compile the project.")]
-			public string Configuration { get; set; }
-
-			/// <summary>
-			///     Gets or sets the name of the platform that should be used to compile the project.
-			/// </summary>
-			[Option("platform", Required = true, HelpText = "The name of the platform that should be used to compile the project.")]
-			public string Platform { get; set; }
-
-			/// <summary>
-			///     Gets or sets the path to the C# project file that should be compiled.
-			/// </summary>
-			[Option("project", Required = true, HelpText = "The path to the C# project file that should be compiled.")]
-			public string ProjectFile { get; set; }
-
-			/// <summary>
-			///     Gets or sets a value indicating whether all compiler output should be suppressed.
-			/// </summary>
-			[Option("silent", Required = false, HelpText = "Suppresses all compiler output except for errors and warnings.")]
-			public bool Silent { get; set; }
-
-			/// <summary>
-			///     Generates a help message about the correct usage of the compiler's command line arguments.
-			/// </summary>
-			[HelpOption('h', "help")]
-			public string GenerateHelpMessage()
-			{
-				var help = new HelpText
-				{
-					AdditionalNewLineAfterOption = true,
-					AddDashesToOption = true
-				};
-
-				help.AddOptions(this);
-				return help.ToString();
-			}
 		}
 	}
 }
