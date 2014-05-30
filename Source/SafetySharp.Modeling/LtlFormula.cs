@@ -20,8 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-
 namespace SafetySharp.Modeling
 {
 	using System;
@@ -38,7 +36,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		public LtlFormula Implies(LtlFormula f)
 		{
-			return f;
+			throw new NotSupportedException();
 		}
 	}
 }

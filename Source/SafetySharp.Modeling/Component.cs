@@ -23,7 +23,6 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.ComponentModel;
 	using System.Linq.Expressions;
 
 	/// <summary>
