@@ -23,35 +23,15 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.IO;
-	using CSharp;
-	using CSharp.Transformation;
-	using Metamodel;
-	using Modelchecking.Promela;
 
-	public sealed class SpinModelChecker
+	public abstract class ModelConfiguration
 	{
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
+		/// <summary>
+		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
+		/// </summary>
+		/// <param name="components">The components that should be added as root components of partitions.</param>
+		protected void AddPartitions(params Component[] components)
 		{
-			var modelingAssembly = new ModelingAssembly(modelConfiguration.GetType().Assembly);
-			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration.GetSnapshot());
-
-			MetamodelCompilation compilation;
-			MetamodelConfiguration configuration;
-			transformation.TryTransform(out compilation, out configuration);
-
-			var promelaTransformation = new MetamodelToPromela(configuration, compilation.Resolver);
-			var promelaModel = promelaTransformation.ConvertMetaModelConfiguration();
-
-			var promelaWriter = new PromelaModelWriter();
-			promelaWriter.Visit(promelaModel);
-
-			var fileName = modelConfiguration.GetType().Name + ".pml";
-			File.WriteAllText(fileName, promelaWriter.CodeWriter.ToString());
-
-			var result = Spin.ExecuteSpin("-a " + fileName);
-
-			return;
 		}
 	}
 }

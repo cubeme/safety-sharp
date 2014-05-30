@@ -100,7 +100,6 @@
     <Compile Include="Modelchecking\Promela\PromelaUnaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\Spin.cs" />
     <Compile Include="Modeling\IComponent.cs" />
-    <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\ModelingCompilationUnitAttribute.cs" />
     <Compile Include="Modeling\ModelingAssemblyReferenceAttribute.cs" />
     <Compile Include="Modeling\ModelingAssemblyAttribute.cs" />
@@ -135,11 +134,9 @@
     <Compile Include="Metamodel\Types\VoidType.cs" />
     <Compile Include="Modelchecking\Promela\MetamodelToPromela.cs" />
     <Compile Include="Modeling\Component.cs" />
-    <Compile Include="Modeling\Component.Internal.cs" />
-    <Compile Include="Modeling\ModelConfiguration.Internal.cs" />
+    <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\SpinModelChecker.cs" />
-    <Compile Include="Modeling\SpinModelChecker.Internal.cs" />
     <Compile Include="Utilities\Argument.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />

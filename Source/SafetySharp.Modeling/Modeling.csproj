@@ -36,25 +36,19 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SafetySharp\Modeling\Component.cs">
-      <Link>Component.cs</Link>
-    </Compile>
     <Compile Include="..\SafetySharp\Modeling\IComponent.cs">
       <Link>IComponent.cs</Link>
-    </Compile>
-    <Compile Include="..\SafetySharp\Modeling\ModelConfiguration.cs">
-      <Link>ModelConfiguration.cs</Link>
     </Compile>
     <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
       <Link>OverflowBehavior.cs</Link>
     </Compile>
-    <Compile Include="..\SafetySharp\Modeling\SpinModelChecker.cs">
-      <Link>SpinModelChecker.cs</Link>
-    </Compile>
-    <Compile Include="..\SafetySharp\Utilities\ResharperAttributes.cs">
-      <Link>ResharperAttributes.cs</Link>
-    </Compile>
+    <Compile Include="Component.cs" />
+    <Compile Include="Formula.cs" />
+    <Compile Include="InternalAccess.cs" />
+    <Compile Include="Ltl.cs" />
+    <Compile Include="ModelConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpinModelChecker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -23,35 +23,51 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.IO;
-	using CSharp;
-	using CSharp.Transformation;
-	using Metamodel;
-	using Modelchecking.Promela;
+	using System.Linq.Expressions;
 
-	public sealed class SpinModelChecker
+	public abstract class Component : IComponent
 	{
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
+		protected Component()
 		{
-			var modelingAssembly = new ModelingAssembly(modelConfiguration.GetType().Assembly);
-			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration.GetSnapshot());
+		}
 
-			MetamodelCompilation compilation;
-			MetamodelConfiguration configuration;
-			transformation.TryTransform(out compilation, out configuration);
+		protected static T Choose<T>()
+			where T : struct
+		{
+			return default(T);
+		}
 
-			var promelaTransformation = new MetamodelToPromela(configuration, compilation.Resolver);
-			var promelaModel = promelaTransformation.ConvertMetaModelConfiguration();
+		protected static T Choose<T>(T value1, T value2, params T[] values)
+		{
+			return default(T);
+		}
 
-			var promelaWriter = new PromelaModelWriter();
-			promelaWriter.Visit(promelaModel);
+		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
+		{
+			return 0;
+		}
 
-			var fileName = modelConfiguration.GetType().Name + ".pml";
-			File.WriteAllText(fileName, promelaWriter.CodeWriter.ToString());
+		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
+		{
+			return 0;
+		}
 
-			var result = Spin.ExecuteSpin("-a " + fileName);
+		protected virtual void Update()
+		{
+		}
 
-			return;
+		public InternalAccess<T> AccessInternal<T>(string memberName)
+		{
+			return default(InternalAccess<T>);
+		}
+
+		/// <summary>
+		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
+		/// </summary>
+		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
+		/// <param name="initialValues">The initial values of the field.</param>
+		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
+		{
 		}
 	}
 }
