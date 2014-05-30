@@ -7,7 +7,7 @@
     <ProjectGuid>{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SafetySharp.Modeling</RootNamespace>
+    <RootNamespace>SafetySharp</RootNamespace>
     <AssemblyName>SafetySharp.Modeling</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\Binaries\Debug\SafetySharp.Modeling.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,8 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>..\..\Binaries\Release\SafetySharp.Modeling.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -37,18 +37,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SafetySharp\Modeling\IComponent.cs">
-      <Link>IComponent.cs</Link>
+      <Link>Modeling\IComponent.cs</Link>
     </Compile>
     <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
-      <Link>OverflowBehavior.cs</Link>
+      <Link>Modeling\OverflowBehavior.cs</Link>
     </Compile>
-    <Compile Include="Component.cs" />
-    <Compile Include="Formula.cs" />
-    <Compile Include="InternalAccess.cs" />
-    <Compile Include="Ltl.cs" />
-    <Compile Include="ModelConfiguration.cs" />
+    <Compile Include="Formulas\ComponentExtensions.cs" />
+    <Compile Include="Modeling\Component.cs" />
+    <Compile Include="Formulas\Formula.cs" />
+    <Compile Include="Formulas\InternalAccess.cs" />
+    <Compile Include="Modeling\Ltl.cs" />
+    <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SpinModelChecker.cs" />
+    <Compile Include="Modeling\SpinModelChecker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

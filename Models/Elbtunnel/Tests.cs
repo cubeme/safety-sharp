@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using NUnit.Framework;
+	using SafetySharp.Formulas;
 	using SafetySharp.Modeling;
 
 	[TestFixture]

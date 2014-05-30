@@ -20,17 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Formulas
 {
 	using System;
 
+	/// <summary>
+	/// 
+	/// </summary>
 	public abstract class Formula
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
 		public static implicit operator Formula(bool value)
 		{
 			return null;
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="f"></param>
+		/// <returns></returns>
 		public Formula Implies(Formula f)
 		{
 			return f;

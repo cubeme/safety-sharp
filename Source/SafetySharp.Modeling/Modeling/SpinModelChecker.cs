@@ -23,17 +23,29 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using Formulas;
 
-	public class InternalAccess<T>
+	/// <summary>
+	/// 
+	/// </summary>
+	public sealed class SpinModelChecker
 	{
-		public static implicit operator T(InternalAccess<T> access)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="modelConfiguration"></param>
+		public SpinModelChecker(ModelConfiguration modelConfiguration)
 		{
-			return default(T);
 		}
 
-		public static implicit operator Formula(InternalAccess<T> access)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="formula"></param>
+		/// <returns></returns>
+		public bool Check(Formula formula)
 		{
-			return default(Formula);
+			return default(bool);
 		}
 	}
 }

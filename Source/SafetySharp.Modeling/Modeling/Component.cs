@@ -25,40 +25,69 @@ namespace SafetySharp.Modeling
 	using System;
 	using System.Linq.Expressions;
 
+	/// <summary>
+	/// 
+	/// </summary>
 	public abstract class Component : IComponent
 	{
+		/// <summary>
+		/// 
+		/// </summary>
 		protected Component()
 		{
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
 		protected static T Choose<T>()
 			where T : struct
 		{
 			return default(T);
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="value1"></param>
+		/// <param name="value2"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
 		protected static T Choose<T>(T value1, T value2, params T[] values)
 		{
 			return default(T);
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="inclusiveLowerBound"></param>
+		/// <param name="inclusiveUpperBound"></param>
+		/// <returns></returns>
 		protected static int ChooseFromRange(int inclusiveLowerBound, int inclusiveUpperBound)
 		{
 			return 0;
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="inclusiveLowerBound"></param>
+		/// <param name="inclusiveUpperBound"></param>
+		/// <returns></returns>
 		protected static decimal ChooseFromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
 			return 0;
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		protected virtual void Update()
 		{
-		}
-
-		public InternalAccess<T> AccessInternal<T>(string memberName)
-		{
-			return default(InternalAccess<T>);
 		}
 
 		/// <summary>

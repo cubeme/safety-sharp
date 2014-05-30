@@ -24,15 +24,17 @@ namespace SafetySharp.Modeling
 {
 	using System;
 
-	public sealed class SpinModelChecker
+	/// <summary>
+	/// 
+	/// </summary>
+	public abstract class ModelConfiguration
 	{
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
+		/// <summary>
+		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
+		/// </summary>
+		/// <param name="components">The components that should be added as root components of partitions.</param>
+		protected void AddPartitions(params Component[] components)
 		{
-		}
-
-		public bool Check(Formula formula)
-		{
-			return default(bool);
 		}
 	}
 }

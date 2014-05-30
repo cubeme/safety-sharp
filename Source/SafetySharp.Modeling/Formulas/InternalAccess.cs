@@ -20,14 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Formulas
 {
 	using System;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public interface IComponent
+	/// <typeparam name="T"></typeparam>
+	public class InternalAccess<T>
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="access"></param>
+		/// <returns></returns>
+		public static implicit operator T(InternalAccess<T> access)
+		{
+			return default(T);
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="access"></param>
+		/// <returns></returns>
+		public static implicit operator Formula(InternalAccess<T> access)
+		{
+			return default(Formula);
+		}
 	}
 }

@@ -20,18 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Formulas
 {
 	using System;
+	using Modeling;
 
-	public abstract class ModelConfiguration
+	/// <summary>
+	///     Provides extension methods for working with <see cref="IComponent" /> types when creating <see cref="Formula" />
+	///     instances.
+	/// </summary>
+	public static class ComponentExtensions
 	{
 		/// <summary>
-		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
+		///     Allows access to a non-public member of an <see cref="IComponent" /> instance.
 		/// </summary>
-		/// <param name="components">The components that should be added as root components of partitions.</param>
-		protected void AddPartitions(params Component[] components)
+		/// <typeparam name="T">The type of the accessed member.</typeparam>
+		/// <param name="component">The <see cref="IComponent" /> instance whose non-public member should be accessed.</param>
+		/// <param name="memberName">The name of the member that should be accessed.</param>
+		/// <returns>Returns an <see cref="InternalAccess{T}" /> instance that can be used to access the non-public member.</returns>
+		public static InternalAccess<T> AccessInternal<T>(this IComponent component, string memberName)
 		{
+			return default(InternalAccess<T>);
 		}
 	}
 }
