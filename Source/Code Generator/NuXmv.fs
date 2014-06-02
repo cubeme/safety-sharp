@@ -599,7 +599,7 @@ let elements = [
     // Chapter 2.3.13 A Program and the main Module p 33
     // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
     // Chapter 2.3.15 Context p 34
-    // Chapter 2.3.16 ISA Declarations p 34
+    // Chapter 2.3.16 ISA Declarations p 34 (depreciated)
     // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35
 
 
