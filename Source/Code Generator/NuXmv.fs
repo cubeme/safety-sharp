@@ -87,54 +87,18 @@ let elements = [
                     }
                 ]
             }
-            //TODO: Move into own enum
-            {
-                Name = "SignSpecifier"
+            {   
+                Name = "NuXmvType"
                 Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
             }
-            {
-                Name = "UnsignedSpecifier"
-                Base = "SignSpecifier"
-                IsAbstract = false
-                Properties = []
-            }
-            {
-                Name = "SignedSpecifier"
-                Base = "SignSpecifier"
-                IsAbstract = false
-                Properties = []
-            }
-            {
-                //Radix of numeral system
-                Name = "Radix"
+            {   
+                //seems to be a duplication of NuXmvType, but isn't:
+                //The type isn't determined yet. It depends on expressions, which can be contained in a specifier.
+                Name = "NuXmvTypeSpecifier"
                 Base = "NuXmvElement"
                 IsAbstract = true
-                Properties = []
-            }
-            {
-                Name = "BinaryRadix"
-                Base = "Radix"
-                IsAbstract = false
-                Properties = []
-            }
-            {
-                Name = "OctalRadix"
-                Base = "Radix"
-                IsAbstract = false
-                Properties = []
-            }
-            {
-                Name = "DecimalRadix"
-                Base = "Radix"
-                IsAbstract = false
-                Properties = []
-            }
-            {
-                Name = "HexadecimalRadix"
-                Base = "Radix"
-                IsAbstract = false
                 Properties = []
             }
         ]
@@ -147,12 +111,6 @@ let elements = [
         Name = "SafetySharp.Modelchecking.NuXmv.Types"
         Classes = 
         [
-            {   
-                Name = "NuXmvType"
-                Base = "NuXmvElement"
-                IsAbstract = true
-                Properties = []
-            }
             {
                 Name = "BooleanType"
                 Base = "NuXmvType"
@@ -167,7 +125,7 @@ let elements = [
                 [
                     {
                         Name = "Domain"
-                        Type = "Literal"
+                        Type = "ConstExpression"
                         CollectionType = Array
                         Validation = None
                         Comment = "Possible values of the Enumeration Type."
@@ -262,18 +220,164 @@ let elements = [
         ]
     }
     {
+        // Chapter 2.3.1 Variable Declarations -> Type Specifiers p 23
+        Name = "SafetySharp.Modelchecking.NuXmv.SimpleTypeSpecifier"
+        Classes = 
+        [
+                  
+            {   
+                Name = "SimpleTypeSpecifier"
+                Base = "TypeSpecifier"
+                IsAbstract = true
+                Properties = 
+                [
+                    //TODO
+                    (*{
+                        Name = "Type"
+                        Type = "NuXmvType"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "Type of SimpleTypeSpecifier. No data. Should be evaluated."
+                        CanBeNull = false
+                    }*)
+                ]
+            }
+            {
+                Name = "BooleanTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = []
+            }
+            {   
+                Name = "WordTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = true
+                Properties = 
+                [
+                    {
+                        Name = "Length"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Length of the word."
+                        CanBeNull = false
+                    }
+                ]
+            }          
+            {   
+                Name = "UnsignedWordTypeSpecifier"
+                Base = "WordTypeSpecifier"
+                IsAbstract = false
+                Properties = []
+            }          
+            {   
+                Name = "SignedWordTypeSpecifier"
+                Base = "WordTypeSpecifier"
+                IsAbstract = false
+                Properties = []
+            } //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement            
+            {
+                Name = "RealTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = []
+            }
+            {
+                Name = "IntegerTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = []
+            }            
+            {
+                Name = "EnumerationTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Domain"
+                        Type = "ConstExpression"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Possible values of the Enumeration Type."
+                        CanBeNull = false
+                    }
+                    //    TODO: "HasSymbolicConstants" and "HasIntegerNumbers" as methods in partial class
+                    //          Method "GetEnumerationType -> {SymbolicEnum, Integer-And-Symbolic-Enum,Integer-Enum}
+                ]
+            }            
+            {
+                Name = "ArrayTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Lower"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Lower bound of the array."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Upper"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Upper bound of the array."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "ElementTypeSpecifier"
+                        Type = "SimpleTypeSpecifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Type of the elements of the array."
+                        CanBeNull = false
+                    }
+                ]
+            }             
+            {
+                Name = "IntegerRangeTypeSpecifier"
+                Base = "SimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Lower"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Lower bound of the array."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Upper"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Upper bound of the array."
+                        CanBeNull = false
+                    }
+                ]
+            }
+
+        ]
+    }
+    {
         // Chapter 2.2 Expressions p 10-22
         Name = "SafetySharp.Modelchecking.NuXmv.Expressions"
         Classes = 
         [
             {   
-                Name = "Expression"
+                Name = "Expression" //inherited by BasicExpression (also called next expression) and SimpleExpression (which nests BasicExpression and dynamically forbids NextExpressions)
                 Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
             }
             {   
-                Name = "BasicExpression"
+                Name = "BasicExpression" //also called next expression
                 Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
@@ -372,7 +476,7 @@ let elements = [
                     }
                     {
                         Name = "Radix"
-                        Type = "Radix"
+                        Type = "NuXmvRadix"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Radix of Numeral System (binary, octal, decimal or hexadecimal)."
@@ -380,7 +484,7 @@ let elements = [
                     }
                     {
                         Name = "SignSpecifier"
-                        Type = "SignSpecifier"
+                        Type = "NuXmvSignSpecifier"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Specifies, whether signed or unsigned."
@@ -580,27 +684,403 @@ let elements = [
             }      
         ]
     }
-    // Chapter 2.3 Definition of the FSM p 22-35
-    // Chapter 2.3.1 Variable Declarations p 23-26
-    // TODO: Declarations may include numbers for their definition,
-    //       Should these integers be written down directly as a number
-    //       or by expressions, which can be evaluated statically to a number?
-    // Chapter 2.3.2 DEFINE Declarations p 26
-    // Chapter 2.3.3 Array Define Declarations p 26-27
-    // Chapter 2.3.4 CONSTANTS Declarations p 27
-    // Chapter 2.3.5 INIT Constraint p 27
-    // Chapter 2.3.6 INVAR Constraint p 27
-    // Chapter 2.3.7 TRANS Constraint p 28
-    // Chapter 2.3.8 ASSIGN Constraint p 28-29
-    // Chapter 2.3.9 FAIRNESS Constraints p 30
-    // Chapter 2.3.10 MODULE Declarations p 30-31
-    // Chapter 2.3.11 MODULE Instantiations p 31
-    // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
-    // Chapter 2.3.13 A Program and the main Module p 33
-    // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
-    // Chapter 2.3.15 Context p 34
-    // Chapter 2.3.16 ISA Declarations p 34 (depreciated)
-    // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35
+    {
+        // Chapter 2.3 Definition of the FSM p 22-35
+        Name = "SafetySharp.Modelchecking.NuXmv.FSM" //or maybe better Module
+        Classes =
+        [
+            {
+                Name = "ModuleElement"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = []
+            }                    
+
+            // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.
+            {
+                Name = "TypedIdentifier"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "TypeSpecifier"
+                        Type = "TypeSpecifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The typespecifier of the tuple which is mainly used in the variable declaration part of a module."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The identifier of the tuple which is mainly used in the variable declaration part of a module."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "SimpleTypedIdentifier"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "TypeSpecifier"
+                        Type = "SimpleTypeSpecifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The typespecifier of the tuple which is mainly used in the variable declaration part of a module."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "The identifier of the tuple which is mainly used in the variable declaration part of a module."
+                        CanBeNull = false
+                    }
+                ]
+            }  
+            {
+                Name = "VarDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Variables"
+                        Type = "TypedIdentifier"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Array of variable declarations"
+                        CanBeNull = false
+                    }                    
+                ]
+            }    
+            {
+                Name = "IvarDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "InputVariables"
+                        Type = "SimpleTypedIdentifier"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Array of input variable declarations"
+                        CanBeNull = false
+                    }                    
+                ]
+            }      
+            {
+                Name = "FrozenVarDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "FrozenVariables"
+                        Type = "SimpleTypedIdentifier"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Array of frozen variable declarations (readonly, nondeterministic initialization)"
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.2 DEFINE Declarations p 26
+            {
+                Name = "IdentifierExpressionTuple"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Expression"
+                        Type = "BasicExpression" //Next allowed
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "DefineDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Defines"
+                        Type = "IdentifierExpressionTuple"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Array of variable declarations"
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.3 Array Define Declarations p 26-27
+            // TODO
+            // Chapter 2.3.4 CONSTANTS Declarations p 27
+            {
+                Name = "ConstantsDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Constants"
+                        Type = "Identifier"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Array of identifiers of constants."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.5 INIT Constraint p 27
+            {
+                Name = "InitConstraint"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "SimpleExpression" //next forbidden
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Initial Condition which must evaluate to true. next-Statement is forbidden inside."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.6 INVAR Constraint p 27
+            {
+                Name = "InvarConstraint"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "SimpleExpression" //next forbidden
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Invariant which must evaluate to true. next-Statement is forbidden inside."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.7 TRANS Constraint p 28
+            {
+                Name = "TransConstraint"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "BasicExpression" //next allowed
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Invariant which must evaluate to true. next-Statement is allowed inside."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.8 ASSIGN Constraint p 28-29
+            {
+                Name = "SingleAssignConstraint"
+                Base = "NuXmvElement"
+                IsAbstract = true
+                Properties =  
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "CurrentStateAssignConstraint"
+                Base = "SingleAssignConstraint"
+                IsAbstract = false
+                Properties =  
+                [
+                    {
+                        Name = "Expression"
+                        Type = "SimpleExpression" //next forbidden
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Invariant which must evaluate to true. next-Statement is forbidden inside."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "InitialStateAssignConstraint"
+                Base = "SingleAssignConstraint"
+                IsAbstract = false
+                Properties =  
+                [
+                    {
+                        Name = "Expression"
+                        Type = "SimpleExpression" //next forbidden
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Invariant which must evaluate to true. next-Statement is forbidden inside."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "NextStateAssignConstraint"
+                Base = "SingleAssignConstraint"
+                IsAbstract = false
+                Properties =  
+                [
+                    {
+                        Name = "Expression"
+                        Type = "BasicExpression" //next allowed
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Invariant which must evaluate to true. next-Statement is allowed inside."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            {
+                Name = "AssignConstraint"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Assigns"
+                        Type = "SingleAssignConstraint"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = ""
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            // Chapter 2.3.9 FAIRNESS Constraints p 30
+            // TODO
+            // Chapter 2.3.10 MODULE Declarations p 30-31            
+            {   
+                Name = "ModuleDeclaration"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "ModuleParameters"
+                        Type = "Identifier"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "ModuleElements"
+                        Type = "ModuleElement"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = ""
+                        CanBeNull = false
+                    }
+                ]
+            }
+            // Chapter 2.3.11 MODULE Instantiations p 31. TODO: Maybe move into Type-Namespace or make a TypeSpecifier-Namespace
+            {   
+                Name = "ModuleTypeSpecifier"
+                Base = "TypeSpecifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "ModuleParameters"
+                        Type = "BasicExpression" //next allowed
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
+            // Chapter 2.3.13 A Program and the main Module p 33
+            // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
+            // Chapter 2.3.15 Context p 34
+            // Chapter 2.3.16 ISA Declarations p 34 (depreciated)
+            // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35
+        ]
+    }
+    {
+        // Chapter 2.4.1 CTL Specifications p 35-42
+        Name = "SafetySharp.Modelchecking.NuXmv.Specification"
+        Classes =
+        [
+            // Chapter 2.4.1 CTL Specifications p 35-36
+            (*{   
+                Name = "Identifier"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Name"
+                        Type = "string"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The name of the identifier."
+                        CanBeNull = false
+                    }
+                ]
+            }*)
+        ]
+    }
+
+
+
+
 
 
     // Chapter 2.4.1 CTL Specifications p 35-36
