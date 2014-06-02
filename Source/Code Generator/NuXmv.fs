@@ -87,6 +87,84 @@ let elements = [
                     }
                 ]
             }
+            // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
+            // moved it here, because it belongs to the identifier
+            {   
+                Name = "ComplexIdentifier"
+                Base = "NuXmvElement"
+                IsAbstract = true
+                Properties = []
+            }
+            {   
+                Name = "IdentifierComplexIdentifier" // NestedComplexIdentifier	: Identifier
+                Base = "ComplexIdentifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The identifier which references a variable or the name of a container/self."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "NestedComplexIdentifier" // NestedComplexIdentifier	: [ Container '.' ] Identifier
+                Base = "ComplexIdentifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Container"
+                        Type = "ComplexIdentifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
+                        CanBeNull = true
+                    }
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The identifier which definitively references a variable."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "ArrayAccessComplexIdentifier" // NestedComplexIdentifier	:  Container [ '[' Index ']' ]
+                Base = "ComplexIdentifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Container"
+                        Type = "ComplexIdentifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
+                        CanBeNull = true
+                    }
+                    {
+                        Name = "Index"
+                        Type = "Expression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Container references an array. This is the index of a specific element in this array."
+                        CanBeNull = true
+                    }
+                ]
+            }
+            {   
+                Name = "SelfComplexIdentifier"
+                Base = "ComplexIdentifier"
+                IsAbstract = false
+                Properties = []
+            }
             {   
                 Name = "NuXmvType"
                 Base = "NuXmvElement"
@@ -1046,7 +1124,25 @@ let elements = [
                 ]
             }
             // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
+            // moved to the namespace SafetySharp.Modelchecking.NuXmv, because there is also identifier
+
             // Chapter 2.3.13 A Program and the main Module p 33
+            {   
+                Name = "NuXmvProgram"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Modules"
+                        Type = "ModuleDeclaration"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }
+                ]
+            }
             // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
             // Chapter 2.3.15 Context p 34
             // Chapter 2.3.16 ISA Declarations p 34 (depreciated)
