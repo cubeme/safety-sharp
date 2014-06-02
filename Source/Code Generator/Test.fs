@@ -178,6 +178,38 @@ let elements = [
                     }
                 ]
             }
+            {   
+                Name = "DictionaryTestElement"
+                Base = "TestElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Dictionary"
+                        Type = "SimpleTestElement"
+                        CollectionType = Dictionary "string"
+                        Validation = NotNull
+                        Comment = "The dictionary that cannot be null."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "NullDictionaryTestElement"
+                Base = "TestElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Dictionary"
+                        Type = "SimpleTestElement"
+                        CollectionType = Dictionary "string"
+                        Validation = None
+                        Comment = "The dictionary that cannot be null."
+                        CanBeNull = true
+                    }
+                ]
+            }
         ]
     }
 ]

@@ -60,12 +60,13 @@ Thread.CurrentThread.CurrentUICulture <- CultureInfo.InvariantCulture;
 
 /// <summary>
 ///     Indicates whether a property is a collection type, wrapping the property's type in one of the 
-///     System.Collections.Immutable, if necessary. 
+///     System.Collections.Immutable collections, if necessary. 
 /// </summary>
 type CollectionType = 
     | Singleton
     | Array
     | List
+    | Dictionary of KeyType : string
 
 /// <summary>
 ///     Indicates the kind of parameter validation that should be performed by the generated constructors before 
@@ -338,6 +339,7 @@ let generateCode context =
         | Singleton -> p.Type
         | Array -> sprintf "ImmutableArray<%s>" p.Type
         | List -> sprintf "ImmutableList<%s>" p.Type
+        | Dictionary keyType -> sprintf "ImmutableDictionary<%s, %s>" keyType p.Type
 
     /// <summary>
     ///     Writes the given message to the console using the given color.
@@ -432,7 +434,7 @@ let generateCode context =
     /// <summary>
     ///     Generates the assertion statements for the validation of the given property.
     /// </summary>
-    let generateValidation (p : Property) =
+    let generatePropertyValidation (p : Property) =
         let parameterName = getValidCSharpIdentifier p.Name
         match p.Validation with
         | None ->
@@ -443,7 +445,37 @@ let generateCode context =
             output.AppendLine(sprintf "Argument.NotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
         | InRange ->
             output.AppendLine(sprintf "Argument.InRange(%s, () => %s);" parameterName parameterName)
-        
+
+    /// <summary>
+    ///     Generates an expression that returns true if the value of any property does not match.
+    /// </summary>
+    let propertyEqualityComparison (c : Class) comparisonTargetSelector =
+        if allProperties c |> List.length = 0 then
+            "true"
+        else
+            allProperties c 
+            |> joinProperties " && " (fun p' -> 
+                let comparisonTarget = comparisonTargetSelector p'
+                if p'.CanBeNull then
+                    if p'.CollectionType <> Singleton then
+                        sprintf "((%s == null && %s == null) || (%s != null && %s != null && %s.SequenceEqual(%s)))" p'.Name comparisonTarget p'.Name comparisonTarget p'.Name comparisonTarget
+                    else
+                        sprintf "Object.Equals(%s, %s)" p'.Name comparisonTarget
+                else
+                    let equalsMethod = if p'.CollectionType <> Singleton then "SequenceEqual" else "Equals"
+                    sprintf "%s.%s(%s)" p'.Name equalsMethod comparisonTarget)
+
+    /// <summary>
+    ///     Generates the assertion statements for the validation of properties of the given class.
+    /// </summary>
+    let generateValidation (c : Class) =
+        // Generate the parameter validation assertions
+        let validatedProperties = c.Properties |> List.filter (fun p -> p.Validation <> None)
+        if validatedProperties |> List.length > 0 then
+            for p in validatedProperties do
+                generatePropertyValidation p
+            output.NewLine()
+
     /// <summary>
     ///     Generates the constructor for the given class, having parameters for all inherited and non-inherited properties.
     /// </summary>
@@ -468,12 +500,7 @@ let generateCode context =
 
         // Generate the constructor body
         output.AppendBlockStatement <| fun () ->
-            // Generate the parameter validation assertions
-            let validatedProperties = c.Properties |> List.filter (fun p -> p.Validation <> None)
-            if validatedProperties |> List.length > 0 then
-                for p in validatedProperties do
-                    generateValidation p
-                output.NewLine()
+            generateValidation c
 
             // Generate the property assignments
             for p in c.Properties do
@@ -511,6 +538,7 @@ let generateCode context =
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
             // Generate the method signature
+            output.AppendLine("[Pure]")
             output.AppendLine(sprintf "%s %s With%s(%s %s)" visibility c.Name p.Name <| getType p <| getValidCSharpIdentifier p.Name)
 
             // Generate the method body
@@ -540,10 +568,30 @@ let generateCode context =
             output.AppendLine(sprintf "/// <param name=\"%s\">%s</param>" <| startWithLowerCase p.Name <| p.Comment)
 
             // Generate the method signature
-            output.AppendLine(sprintf "%s %s Add%s(params %s[] %s)" visibility c.Name p.Name p.Type <| getValidCSharpIdentifier p.Name)
+            output.AppendLine("[Pure]")
+            match p.CollectionType with
+            | Array | List ->
+                output.AppendLine(sprintf "%s %s Add%s(params %s[] %s)" visibility c.Name p.Name p.Type <| getValidCSharpIdentifier p.Name)
+            | Dictionary keyType ->
+                output.AppendLine(sprintf "%s %s Add%s(%s %s)" visibility c.Name p.Name <| getType p <| getValidCSharpIdentifier p.Name)
+            | _ ->
+                failwith "Unexpected collection type."
 
             // Generate the method body; we're reusing the corresponding With...() method here
             output.AppendBlockStatement <| fun () ->
+                output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" <| getValidCSharpIdentifier p.Name <| getValidCSharpIdentifier p.Name)
+
+                if p.CollectionType <> Array && p.CanBeNull then
+                    output.NewLine()
+                    output.AppendLine(sprintf "if (%s == null)" p.Name)
+                    output.IncreaseIndent()
+                    if p.CollectionType = List then
+                        output.AppendLine(sprintf "return With%s(ImmutableList.Create(%s));" p.Name <| getValidCSharpIdentifier p.Name)
+                    else
+                        output.AppendLine(sprintf "return With%s(%s);" p.Name <| getValidCSharpIdentifier p.Name)
+                    output.DecreaseIndent()
+                    output.NewLine()
+
                 output.AppendLine(sprintf "return With%s(%s.AddRange(%s));" p.Name p.Name <| getValidCSharpIdentifier p.Name)
 
             output.NewLine()
@@ -563,24 +611,26 @@ let generateCode context =
 
         // Generate the method signature
         let parameters = allProperties c |> joinProperties ", " (fun p' -> sprintf "%s %s" <| getType p' <| getValidCSharpIdentifier p'.Name)
+        output.AppendLine("[Pure]")
         output.AppendLine(sprintf "%s %s Update(%s)" visibility c.Name parameters)
 
         // Generate the method body
         output.AppendBlockStatement <| fun () ->
-            // Optimization: We're only creating a new instance if at least one property has actually changed
-            // Generate the condition that checks for property changes
-            let checkModification = allProperties c |> joinProperties " || " (fun p' -> sprintf "%s != %s" p'.Name <| getValidCSharpIdentifier p'.Name)
-            output.AppendLine(sprintf "if (%s)" checkModification)
+            generateValidation c
 
-            // Generate the body of the if statement, creating a new instance of the type
-            output.IncreaseIndent()
-            let parameters = allProperties c |> joinProperties ", " (fun p' -> getValidCSharpIdentifier p'.Name)
-            output.AppendLine(sprintf "return new %s(%s);" c.Name parameters)
-            output.DecreaseIndent()
+            // Optimization: We're only creating a new instance if at least one property has actually changed
+            output.AppendLine(sprintf "if (%s)" <| propertyEqualityComparison c (fun p -> getValidCSharpIdentifier p.Name))
 
             // Generate the return statement that returns the original instance
-            output.NewLine()
+            output.IncreaseIndent()
             output.AppendLine("return this;")
+            output.DecreaseIndent()
+
+            // Generate the return statement that returns a new instance of the type
+            output.NewLine()
+            let parameters = allProperties c |> joinProperties ", " (fun p' -> getValidCSharpIdentifier p'.Name)
+            output.AppendLine(sprintf "return new %s(%s);" c.Name parameters)
+           
 
     /// <summary>
     ///     Generates the generic or the non-generic version of the Accept() method, depending on the given visitor type.
@@ -667,21 +717,7 @@ let generateCode context =
             output.DecreaseIndent()
             output.NewLine()
 
-            if allProperties c |> List.length = 0 then
-                output.AppendLine("return true;")
-            else
-                let properties = 
-                    allProperties c 
-                    |> joinProperties " && " (fun p' -> 
-                        if p'.CanBeNull then
-                            if p'.CollectionType <> Singleton then
-                                sprintf "((%s == null && element.%s == null) || (%s != null && element.%s != null && %s.SequenceEqual(element.%s)))" p'.Name p'.Name p'.Name p'.Name p'.Name p'.Name
-                            else
-                                sprintf "Object.Equals(%s, element.%s)" p'.Name p'.Name
-                        else
-                            let equalsMethod = if p'.CollectionType <> Singleton then "SequenceEqual" else "Equals"
-                            sprintf "%s.%s(element.%s)" p'.Name equalsMethod p'.Name)
-                output.AppendLine(sprintf "return %s;" properties)
+            output.AppendLine(sprintf "return %s;" <| propertyEqualityComparison c (fun p -> sprintf "element.%s" p.Name))
 
     /// <summary>
     ///     Generates the GetHashCode method for the given class.
@@ -920,7 +956,7 @@ let generateCode context =
             output.AppendLine("/// <summary>")
             output.AppendLine("///     Visits elements of type <typeparamref name=\"TElement\" /> stored in an <see cref=\"ImmutableArray{TElement}\" />.")
             output.AppendLine("/// </summary>")
-            output.AppendLine("/// <typeparam name=\"TElement\">The types of the elements in the array that should be visited.</typeparam>")
+            output.AppendLine("/// <typeparam name=\"TElement\">The type of the elements in the array that should be visited.</typeparam>")
             output.AppendLine("/// <param name=\"elements\">The <see cref=\"ImmutableArray{TElement}\" /> instance that should be visited.</param>")
             output.AppendLine("public virtual ImmutableArray<TElement> Visit<TElement>(ImmutableArray<TElement> elements)")
             output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
@@ -932,13 +968,27 @@ let generateCode context =
             output.AppendLine("/// <summary>")
             output.AppendLine("///     Visits elements of type <typeparamref name=\"TElement\" /> stored in a <see cref=\"ImmutableList{TElement}\" />.")
             output.AppendLine("/// </summary>")
-            output.AppendLine("/// <typeparam name=\"TElement\">The types of the elements in the list that should be visited.</typeparam>")
+            output.AppendLine("/// <typeparam name=\"TElement\">The type of the elements in the list that should be visited.</typeparam>")
             output.AppendLine("/// <param name=\"elements\">The <see cref=\"ImmutableList{TElement}\" /> instance that should be visited.</param>")
             output.AppendLine("public virtual ImmutableList<TElement> Visit<TElement>(ImmutableList<TElement> elements)")
             output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
             output.AppendBlockStatement <| fun () ->
                 output.AppendLine("Argument.NotNull(elements, () => elements);")
                 output.AppendLine("return elements.Aggregate(ImmutableList<TElement>.Empty, (current, element) => current.Add((TElement)element.Accept(this)));")
+
+            // Generate the default Visit method for dictionaries
+            output.NewLine()
+            output.AppendLine("/// <summary>")
+            output.AppendLine("///     Visits elements of type <typeparamref name=\"TElement\" /> stored in an <see cref=\"ImmutableDictionary{TKey, TElement}\" />.")
+            output.AppendLine("/// </summary>")
+            output.AppendLine("/// <typeparam name=\"TKey\">The type of the keys stored in the dictionary.</typeparam>")
+            output.AppendLine("/// <typeparam name=\"TElement\">The type of the elements in the dictionary that should be visited.</typeparam>")
+            output.AppendLine("/// <param name=\"elements\">The <see cref=\"ImmutableDictionary{TKey, TElement}\" /> instance that should be visited.</param>")
+            output.AppendLine("public virtual ImmutableDictionary<TKey, TElement> Visit<TKey, TElement>(ImmutableDictionary<TKey, TElement> elements)")
+            output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
+            output.AppendBlockStatement <| fun () ->
+                output.AppendLine("Argument.NotNull(elements, () => elements);")
+                output.AppendLine("return elements.Aggregate(ImmutableDictionary<TKey, TElement>.Empty, (current, element) => current.Add(element.Key, (TElement)element.Value.Accept(this)));")
 
             // Generate a Visit...() method with the rewriting logic for each non-abstract class
             output.NewLine()

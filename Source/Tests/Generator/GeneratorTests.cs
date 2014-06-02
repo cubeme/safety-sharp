@@ -71,6 +71,84 @@ namespace Tests.Generator
 			return values.Aggregate(ImmutableList<SimpleTestElement>.Empty, (current, value) => current.Add(new SimpleTestElement(value)));
 		}
 
+		private static ImmutableDictionary<string, SimpleTestElement> CreateDictionary(params Tuple<string, int>[] values)
+		{
+			return values.ToImmutableDictionary(value => value.Item1, value => new SimpleTestElement(value.Item2));
+		}
+
+		[Test]
+		public void AddElementsToArray()
+		{
+			var element = new ArrayTestElement(CreateArray(1, 2, 3));
+			element = element.AddArray(CreateArray(4, 5, 6).ToArray());
+
+			element.Should().Be(new ArrayTestElement(CreateArray(1, 2, 3, 4, 5, 6)));
+		}
+
+		[Test]
+		public void AddElementsToArray_ShouldThrowWhenNullIsPassed()
+		{
+			var element = new ArrayTestElement(CreateArray(1, 2, 3));
+			Action action = () => element.AddArray(null);
+
+			action.ShouldThrow<ArgumentNullException>();
+		}
+
+		[Test]
+		public void AddElementsToDictionary()
+		{
+			var element = new DictionaryTestElement(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3)));
+			element = element.AddDictionary(CreateDictionary(Tuple.Create("D", 4), Tuple.Create("E", 5), Tuple.Create("F", 6)));
+
+			element.Should().Be(new DictionaryTestElement(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3),
+																		   Tuple.Create("D", 4), Tuple.Create("E", 5), Tuple.Create("F", 6))));
+		}
+
+		[Test]
+		public void AddElementsToDictionary_ShouldThrowWhenNullIsPassed()
+		{
+			var element = new DictionaryTestElement(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3)));
+			Action action = () => element.AddDictionary(null);
+
+			action.ShouldThrow<ArgumentNullException>();
+		}
+
+		[Test]
+		public void AddElementsToList()
+		{
+			var element = new ListTestElement(CreateList(1, 2, 3));
+			element = element.AddList(CreateList(4, 5, 6).ToArray());
+
+			element.Should().Be(new ListTestElement(CreateList(1, 2, 3, 4, 5, 6)));
+		}
+
+		[Test]
+		public void AddElementsToList_ShouldThrowWhenNullIsPassed()
+		{
+			var element = new ListTestElement(CreateList(1, 2, 3));
+			Action action = () => element.AddList(null);
+
+			action.ShouldThrow<ArgumentNullException>();
+		}
+
+		[Test]
+		public void AddElementsToNullDictionary()
+		{
+			var element = new NullDictionaryTestElement(null);
+			element = element.AddDictionary(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2)));
+
+			element.Should().Be(new NullDictionaryTestElement(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2))));
+		}
+
+		[Test]
+		public void AddElementsToNullList()
+		{
+			var element = new NullListTestElement(null);
+			element = element.AddList(CreateList(1).ToArray());
+
+			element.Should().Be(new NullListTestElement(CreateList(1)));
+		}
+
 		[Test]
 		public void ArrayEquality()
 		{
@@ -105,6 +183,24 @@ namespace Tests.Generator
 
 			element2 = new ArrayTestElement(ImmutableArray<SimpleTestElement>.Empty);
 			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
+		public void ArrayUpdateShouldReturnNewObject()
+		{
+			var element = new ArrayTestElement(CreateArray(1, 2, 3));
+			var updatedElement = element.Update(CreateArray(4, 5, 6));
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+		}
+
+		[Test]
+		public void ArrayUpdateShouldReturnSameObject()
+		{
+			var element = new ArrayTestElement(CreateArray(1, 2, 3));
+			var updatedElement = element.Update(CreateArray(1, 2, 3));
+
+			ReferenceEquals(element, updatedElement).Should().BeTrue();
 		}
 
 		[Test]
@@ -202,6 +298,65 @@ namespace Tests.Generator
 		}
 
 		[Test]
+		public void DictionaryEquality()
+		{
+			var dictionary1 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3));
+			var dictionary2 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3));
+
+			var element1 = new DictionaryTestElement(dictionary1);
+			var element2 = new DictionaryTestElement(dictionary2);
+			(element1 == element2).Should().BeTrue();
+
+			element2 = new DictionaryTestElement(dictionary1);
+			(element1 == element2).Should().BeTrue();
+
+			element1 = new DictionaryTestElement(ImmutableDictionary<string, SimpleTestElement>.Empty);
+			element2 = new DictionaryTestElement(ImmutableDictionary<string, SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeTrue();
+
+			// Order should not matter
+			element1 = new DictionaryTestElement(CreateDictionary(Tuple.Create("B", 2), Tuple.Create("C", 3), Tuple.Create("A", 1)));
+			element2 = new DictionaryTestElement(dictionary1);
+			(element1 == element2).Should().BeTrue();
+		}
+
+		[Test]
+		public void DictionaryInequality()
+		{
+			var dictionary1 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3));
+			var dictionary2 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("C", 3));
+			var dictionary3 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("D", 4));
+
+			var element1 = new DictionaryTestElement(dictionary1);
+			var element2 = new DictionaryTestElement(dictionary2);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new DictionaryTestElement(dictionary3);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new DictionaryTestElement(ImmutableDictionary<string, SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
+		public void DictionaryUpdateShouldReturnNewObject()
+		{
+			var element = new DictionaryTestElement(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3)));
+			var updatedElement = element.Update(CreateDictionary(Tuple.Create("D", 3)));
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+		}
+
+		[Test]
+		public void DictionaryUpdateShouldReturnSameObject()
+		{
+			var element = new DictionaryTestElement(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3)));
+			var updatedElement = element.Update(CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3)));
+
+			ReferenceEquals(element, updatedElement).Should().BeTrue();
+		}
+
+		[Test]
 		public void GetHashCodeShouldNeverThrow()
 		{
 			var nullObject = new object();
@@ -262,6 +417,94 @@ namespace Tests.Generator
 		}
 
 		[Test]
+		public void ListUpdateShouldReturnNewObject()
+		{
+			var element = new ListTestElement(CreateList(1, 2, 3));
+			var updatedElement = element.Update(CreateList(4, 5, 6));
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+		}
+
+		[Test]
+		public void ListUpdateShouldReturnSameObject()
+		{
+			var element = new ListTestElement(CreateList(1, 2, 3));
+			var updatedElement = element.Update(CreateList(1, 2, 3));
+
+			ReferenceEquals(element, updatedElement).Should().BeTrue();
+		}
+
+		[Test]
+		public void NullDictionaryEquality()
+		{
+			var dictionary1 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3));
+			var dictionary2 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3));
+
+			var element1 = new NullDictionaryTestElement(dictionary1);
+			var element2 = new NullDictionaryTestElement(dictionary2);
+			(element1 == element2).Should().BeTrue();
+
+			element2 = new NullDictionaryTestElement(dictionary1);
+			(element1 == element2).Should().BeTrue();
+
+			element1 = new NullDictionaryTestElement(ImmutableDictionary<string, SimpleTestElement>.Empty);
+			element2 = new NullDictionaryTestElement(ImmutableDictionary<string, SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeTrue();
+
+			element1 = new NullDictionaryTestElement(null);
+			element2 = new NullDictionaryTestElement(null);
+			(element1 == element2).Should().BeTrue();
+		}
+
+		[Test]
+		public void NullDictionaryUpdateShouldReturnNewObject()
+		{
+			var element = new NullDictionaryTestElement(null);
+			var updatedElement = element.Update(CreateDictionary(Tuple.Create("D", 3)));
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+
+			element = new NullDictionaryTestElement(CreateDictionary(Tuple.Create("D", 3)));
+			updatedElement = element.Update(null);
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+		}
+
+		[Test]
+		public void NullDictionaryUpdateShouldReturnSameObject()
+		{
+			var element = new NullDictionaryTestElement(null);
+			var updatedElement = element.Update(null);
+
+			ReferenceEquals(element, updatedElement).Should().BeTrue();
+		}
+
+		[Test]
+		public void NullDictionarytInequality()
+		{
+			var dictionary1 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("C", 3));
+			var dictionary2 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("C", 3));
+			var dictionary3 = CreateDictionary(Tuple.Create("A", 1), Tuple.Create("B", 2), Tuple.Create("D", 4));
+
+			var element1 = new NullDictionaryTestElement(dictionary1);
+			var element2 = new NullDictionaryTestElement(dictionary2);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new NullDictionaryTestElement(dictionary3);
+			(element1 == element2).Should().BeFalse();
+
+			element2 = new NullDictionaryTestElement(ImmutableDictionary<string, SimpleTestElement>.Empty);
+			(element1 == element2).Should().BeFalse();
+
+			element1 = new NullDictionaryTestElement(null);
+			(element1 == element2).Should().BeFalse();
+
+			element1 = new NullDictionaryTestElement(dictionary1);
+			element2 = new NullDictionaryTestElement(null);
+			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
 		public void NullListEquality()
 		{
 			var list1 = CreateList(1, 2, 3);
@@ -306,6 +549,29 @@ namespace Tests.Generator
 			element1 = new NullListTestElement(list1);
 			element2 = new NullListTestElement(null);
 			(element1 == element2).Should().BeFalse();
+		}
+
+		[Test]
+		public void NullListUpdateShouldReturnNewObject()
+		{
+			var element = new NullListTestElement(null);
+			var updatedElement = element.Update(CreateList(4, 5, 6));
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+
+			element = new NullListTestElement(CreateList(1, 2, 3));
+			updatedElement = element.Update(null);
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+		}
+
+		[Test]
+		public void NullListUpdateShouldReturnSameObject()
+		{
+			var element = new NullListTestElement(null);
+			var updatedElement = element.Update(null);
+
+			ReferenceEquals(element, updatedElement).Should().BeTrue();
 		}
 
 		[Test]
@@ -360,6 +626,24 @@ namespace Tests.Generator
 			element.NullObject.Should().Be(null);
 			element.NotNullObject.Should().Be(notNullObject);
 			element.NotEmpty.Should().Be(notEmptyString);
+		}
+
+		[Test]
+		public void UpdateShouldReturnNewObject()
+		{
+			var element = new SimpleTestElement(1);
+			var updatedElement = element.Update(2);
+
+			ReferenceEquals(element, updatedElement).Should().BeFalse();
+		}
+
+		[Test]
+		public void UpdateShouldReturnSameObject()
+		{
+			var element = new SimpleTestElement(1);
+			var updatedElement = element.Update(1);
+
+			ReferenceEquals(element, updatedElement).Should().BeTrue();
 		}
 
 		[Test]
