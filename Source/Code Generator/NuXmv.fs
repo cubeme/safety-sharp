@@ -79,8 +79,7 @@ let elements = [
                 [
                     {
                         Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the identifier."
                         CanBeNull = false
@@ -167,8 +166,7 @@ let elements = [
                 [
                     {
                         Name = "Domain"
-                        Type = "Literal"
-                        CollectionType = Array
+                        Type = Array "Literal"
                         Validation = None
                         Comment = "Possible values of the Enumeration Type."
                         CanBeNull = false
@@ -185,8 +183,7 @@ let elements = [
                 [
                     {
                         Name = "Length"
-                        Type = "int32"
-                        CollectionType = Singleton
+                        Type = Singleton "int32"
                         Validation = None
                         Comment = "Length of the word."
                         CanBeNull = false
@@ -225,24 +222,21 @@ let elements = [
                 [
                     {
                         Name = "Lower"
-                        Type = "int32"
-                        CollectionType = Singleton
+                        Type = Singleton "int32"
                         Validation = None
                         Comment = "Lower bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "Upper"
-                        Type = "int32"
-                        CollectionType = Singleton
+                        Type = Singleton "int32"
                         Validation = None
                         Comment = "Upper bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "ElementType"
-                        Type = "NuXmvType"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvType"
                         Validation = None
                         Comment = "Type of the elements of the array."
                         CanBeNull = false
@@ -292,8 +286,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "The Boolean value of the expression."
                         CanBeNull = false
@@ -308,8 +301,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = None
                         Comment = "The string containing the element name of an enum."
                         CanBeNull = false
@@ -324,8 +316,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "BigInteger"
-                        CollectionType = Singleton
+                        Type = Singleton "BigInteger"
                         Validation = None
                         Comment = "The integer value of an expression."
                         CanBeNull = false
@@ -340,8 +331,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "float"
-                        CollectionType = Singleton
+                        Type = Singleton "float"
                         Validation = None
                         Comment = "The float value of an expression."
                         CanBeNull = false
@@ -356,40 +346,35 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "BitArray"
-                        CollectionType = Singleton
+                        Type = Singleton "BitArray"
                         Validation = None
                         Comment = "The bit value of a word expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Type"
-                        Type = "WordType"
-                        CollectionType = Singleton
+                        Type = Singleton "WordType"
                         Validation = None
                         Comment = "The float value of an expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Radix"
-                        Type = "Radix"
-                        CollectionType = Singleton
+                        Type = Singleton "Radix"
                         Validation = None
                         Comment = "Radix of Numeral System (binary, octal, decimal or hexadecimal)."
                         CanBeNull = false
                     }
                     {
                         Name = "SignSpecifier"
-                        Type = "SignSpecifier"
-                        CollectionType = Singleton
+                        Type = Singleton "SignSpecifier"
                         Validation = None
                         Comment = "Specifies, whether signed or unsigned."
                         CanBeNull = false
                     }                    
                     {
                         Name = "ImproveReadability"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "If true underscore is placed every 3 digits to improve readability."
                         CanBeNull = false
@@ -404,16 +389,14 @@ let elements = [
                 [
                     {
                         Name = "From"
-                        Type = "BigInteger"
-                        CollectionType = Singleton
+                        Type = Singleton "BigInteger"
                         Validation = None
                         Comment = "The value the range starts with (inclusive)."
                         CanBeNull = false
                     }
                     {
                         Name = "To"
-                        Type = "BigInteger"
-                        CollectionType = Singleton
+                        Type = Singleton "BigInteger"
                         Validation = None
                         Comment = "The value the range ends with (inclusive)."
                         CanBeNull = false
@@ -438,8 +421,7 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the identifier which references a variable."
                         CanBeNull = false
@@ -455,8 +437,7 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the identifier which references a variable."
                         CanBeNull = false
@@ -471,24 +452,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvBinaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvBinaryOperator"
                         Validation = InRange
                         Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -503,16 +481,14 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvUnaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvUnaryOperator"
                         Validation = InRange
                         Comment = "The operator of the unary expression."
                         CanBeNull = false
@@ -527,8 +503,7 @@ let elements = [
                 [
                     {
                         Name = "ExpressionLeadingToArray"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = None
                         Comment = "The expression leading to the array we index."
                         CanBeNull = false
@@ -536,8 +511,7 @@ let elements = [
                     {
                         //TODO:
                         Name = "Index"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = None
                         Comment = "The index"
                         CanBeNull = false
@@ -570,8 +544,7 @@ let elements = [
                 [
                     {
                         Name = "NestedExpression"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = None
                         Comment = "The actual expression"
                         CanBeNull = false

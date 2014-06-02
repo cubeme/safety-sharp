@@ -62,11 +62,11 @@ Thread.CurrentThread.CurrentUICulture <- CultureInfo.InvariantCulture;
 ///     Indicates whether a property is a collection type, wrapping the property's type in one of the 
 ///     System.Collections.Immutable collections, if necessary. 
 /// </summary>
-type CollectionType = 
-    | Singleton
-    | Array
-    | List
-    | Dictionary of KeyType : string
+type Type = 
+    | Singleton of Type : string
+    | Array of Type : string
+    | List of Type : string
+    | Dictionary of KeyType : string * ValueType : string
 
 /// <summary>
 ///     Indicates the kind of parameter validation that should be performed by the generated constructors before 
@@ -83,8 +83,7 @@ type Validation =
 /// </summary>
 type Property = { 
     Name : string
-    Type : string
-    CollectionType : CollectionType
+    Type : Type
     Validation : Validation
     Comment : string
     CanBeNull : bool
@@ -290,6 +289,30 @@ let generateCode context =
         sprintf "%c%s" <| Char.ToLower(s.[0]) <| s.Substring(1)
 
     /// <summary>
+    ///     Checks whether the property is a singleton.
+    /// </summary>
+    let isSingleton (p : Property) = 
+        match p.Type with
+        | Singleton _ -> true
+        | _ -> false
+
+    /// <summary>
+    ///     Checks whether the property is an array.
+    /// </summary>
+    let isArray (p : Property) = 
+        match p.Type with
+        | Array _ -> true
+        | _ -> false
+
+    /// <summary>
+    ///     Checks whether the property is a list.
+    /// </summary>
+    let isList (p : Property) = 
+        match p.Type with
+        | List _ -> true
+        | _ -> false
+
+    /// <summary>
     ///     Ensures that the given string is a valid C# identifier, prefixing the name with '@' to escape reserved C# keywords.
     /// </summary>
     let getValidCSharpIdentifier (s : string) = 
@@ -335,11 +358,18 @@ let generateCode context =
     ///     Gets the C# type of the property, depending on whether the property is a collection.
     /// </summary>
     let getType (p : Property) =
-        match p.CollectionType with
-        | Singleton -> p.Type
-        | Array -> sprintf "ImmutableArray<%s>" p.Type
-        | List -> sprintf "ImmutableList<%s>" p.Type
-        | Dictionary keyType -> sprintf "ImmutableDictionary<%s, %s>" keyType p.Type
+        match p.Type with
+        | Singleton t -> t
+        | Array t -> sprintf "ImmutableArray<%s>" t
+        | List t -> sprintf "ImmutableList<%s>" t
+        | Dictionary(keyType, valueType) -> sprintf "ImmutableDictionary<%s, %s>" keyType valueType
+
+    /// <summary>
+    ///     Gets the underlying C# type of the property, depending on whether the property is a collection.
+    /// </summary>
+    let getUnderlyingType (p : Property) =
+        match p.Type with
+        | Singleton t | Array t | List t | Dictionary(_, t) -> t
 
     /// <summary>
     ///     Writes the given message to the console using the given color.
@@ -411,9 +441,10 @@ let generateCode context =
         getInheritedProperties c @ c.Properties
 
     /// <summary>
-    ///     Checks whether the given type name refers to a rewriteable type, i.e., a type defined by the metadata.
+    ///     Checks whether the property's type is rewriteable, i.e., whether it is a type defined by the metadata.
     /// </summary>
-    let isRewriteable typeName = 
+    let isRewriteable (p : Property) = 
+        let typeName = getUnderlyingType p
         classes |> List.exists (fun c -> c.Name = typeName)
 
     /// <summary>
@@ -457,12 +488,12 @@ let generateCode context =
             |> joinProperties " && " (fun p' -> 
                 let comparisonTarget = comparisonTargetSelector p'
                 if p'.CanBeNull then
-                    if p'.CollectionType <> Singleton then
+                    if not <| isSingleton p' then
                         sprintf "((%s == null && %s == null) || (%s != null && %s != null && %s.SequenceEqual(%s)))" p'.Name comparisonTarget p'.Name comparisonTarget p'.Name comparisonTarget
                     else
                         sprintf "Object.Equals(%s, %s)" p'.Name comparisonTarget
                 else
-                    let equalsMethod = if p'.CollectionType <> Singleton then "SequenceEqual" else "Equals"
+                    let equalsMethod = if not <| isSingleton p' then "SequenceEqual" else "Equals"
                     sprintf "%s.%s(%s)" p'.Name equalsMethod comparisonTarget)
 
     /// <summary>
@@ -557,7 +588,7 @@ let generateCode context =
     ///     Generates the Add...() methods, one for each inherited and non-inherited collection property.
     /// </summary>
     let generateAddMethods (c : Class) =
-        let collectionProperties = allProperties c |> List.filter (fun p -> p.CollectionType <> Singleton)
+        let collectionProperties = allProperties c |> List.filter (fun p -> not <| isSingleton p)
         for p in collectionProperties do
             // Generate the doc comment
             output.AppendLine("/// <summary>")
@@ -569,10 +600,10 @@ let generateCode context =
 
             // Generate the method signature
             output.AppendLine("[Pure]")
-            match p.CollectionType with
-            | Array | List ->
-                output.AppendLine(sprintf "%s %s Add%s(params %s[] %s)" visibility c.Name p.Name p.Type <| getValidCSharpIdentifier p.Name)
-            | Dictionary keyType ->
+            match p.Type with
+            | Array t | List t ->
+                output.AppendLine(sprintf "%s %s Add%s(params %s[] %s)" visibility c.Name p.Name t <| getValidCSharpIdentifier p.Name)
+            | Dictionary _ ->
                 output.AppendLine(sprintf "%s %s Add%s(%s %s)" visibility c.Name p.Name <| getType p <| getValidCSharpIdentifier p.Name)
             | _ ->
                 failwith "Unexpected collection type."
@@ -581,11 +612,11 @@ let generateCode context =
             output.AppendBlockStatement <| fun () ->
                 output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" <| getValidCSharpIdentifier p.Name <| getValidCSharpIdentifier p.Name)
 
-                if p.CollectionType <> Array && p.CanBeNull then
+                if not <| isArray p && p.CanBeNull then
                     output.NewLine()
                     output.AppendLine(sprintf "if (%s == null)" p.Name)
                     output.IncreaseIndent()
-                    if p.CollectionType = List then
+                    if isList p then
                         output.AppendLine(sprintf "return With%s(ImmutableList.Create(%s));" p.Name <| getValidCSharpIdentifier p.Name)
                     else
                         output.AppendLine(sprintf "return With%s(%s);" p.Name <| getValidCSharpIdentifier p.Name)
@@ -797,11 +828,11 @@ let generateCode context =
 
         // Sanity check of property values
         for p in c.Properties do
-            if p.CanBeNull && p.CollectionType = Array then
+            if p.CanBeNull && isArray p then
                 failwithf "Sanity check failed for '%s.%s': Arrays cannot be null." c.Name p.Name
             if p.CanBeNull && (p.Validation = NotNull || p.Validation = NotNullOrWhitespace) then
                 failwithf "Sanity check failed for '%s.%s': Property can be null but not-null validation is enabled." c.Name p.Name
-            if not p.CanBeNull && p.Validation = None && p.CollectionType = List then
+            if not p.CanBeNull && p.Validation = None && isList p then
                 failwithf "Sanity check failed for '%s.%s': List cannot be null but value is never validated." c.Name p.Name
 
         // Generate the class members
@@ -1022,10 +1053,10 @@ let generateCode context =
 
                         // Generate a local variable for each property that holds the result of rewrite
                         for p in properties do
-                            if isRewriteable p.Type then
+                            if isRewriteable p then
                                 // Call Visit() recursively for rewriteable types, casting the types back to the original type
                                 // Collection types do not require casts as a special overload of the Visit() method is called
-                                let cast = if p.CollectionType <> Singleton then "" else sprintf "(%s)" p.Type
+                                let cast = if not <| isSingleton p then "" else sprintf "(%s)" <| getUnderlyingType p
                                 output.AppendLine(sprintf "var %s = %sVisit(%s.%s);" <| getValidCSharpIdentifier p.Name <| cast <| parameterName <| p.Name)
                             else
                                 // To handle non-rewriteable types uniformly, we're generating local variables for them as well

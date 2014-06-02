@@ -42,24 +42,21 @@ let elements = [
                 [
                     {
                         Name = "NullObject"
-                        Type = "object"
-                        CollectionType = Singleton
+                        Type = Singleton "object"
                         Validation = None
                         Comment = "The object that can be null."
                         CanBeNull = true
                     }
                     {
                         Name = "NotNullObject"
-                        Type = "object"
-                        CollectionType = Singleton
+                        Type = Singleton "object"
                         Validation = NotNull
                         Comment = "The not-null object."
                         CanBeNull = false
                     }
                     {
                         Name = "NotEmpty"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNullOrWhitespace
                         Comment = "The non-empty string."
                         CanBeNull = false
@@ -74,8 +71,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None
                         Comment = "The integer value."
                         CanBeNull = false
@@ -90,24 +86,21 @@ let elements = [
                 [
                     {
                         Name = "NullObject"
-                        Type = "object"
-                        CollectionType = Singleton
+                        Type = Singleton "object"
                         Validation = None
                         Comment = "The object that can be null."
                         CanBeNull = true
                     }
                     {
                         Name = "NotNullObject"
-                        Type = "object"
-                        CollectionType = Singleton
+                        Type = Singleton "object"
                         Validation = NotNull
                         Comment = "The not-null object."
                         CanBeNull = false
                     }
                     {
                         Name = "NotEmpty"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNullOrWhitespace
                         Comment = "The non-empty string."
                         CanBeNull = false
@@ -122,8 +115,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None
                         Comment = "The value."
                         CanBeNull = false
@@ -138,8 +130,7 @@ let elements = [
                 [
                     {
                         Name = "Array"
-                        Type = "SimpleTestElement"
-                        CollectionType = Array
+                        Type = Array "SimpleTestElement"
                         Validation = None
                         Comment = "The test array."
                         CanBeNull = false
@@ -154,8 +145,7 @@ let elements = [
                 [
                     {
                         Name = "List"
-                        Type = "SimpleTestElement"
-                        CollectionType = List
+                        Type = List "SimpleTestElement"
                         Validation = NotNull
                         Comment = "The list that cannot be null."
                         CanBeNull = false
@@ -170,8 +160,7 @@ let elements = [
                 [
                     {
                         Name = "List"
-                        Type = "SimpleTestElement"
-                        CollectionType = List
+                        Type = List "SimpleTestElement"
                         Validation = None
                         Comment = "The list that cannot be null."
                         CanBeNull = true
@@ -186,8 +175,7 @@ let elements = [
                 [
                     {
                         Name = "Dictionary"
-                        Type = "SimpleTestElement"
-                        CollectionType = Dictionary "string"
+                        Type = Dictionary ("string", "SimpleTestElement")
                         Validation = NotNull
                         Comment = "The dictionary that cannot be null."
                         CanBeNull = false
@@ -202,8 +190,7 @@ let elements = [
                 [
                     {
                         Name = "Dictionary"
-                        Type = "SimpleTestElement"
-                        CollectionType = Dictionary "string"
+                        Type = Dictionary ("string", "SimpleTestElement")
                         Validation = None
                         Comment = "The dictionary that cannot be null."
                         CanBeNull = true
