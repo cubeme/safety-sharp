@@ -86,7 +86,7 @@ namespace Tests.CSharp.Transformation
 			}
 
 			[Test]
-			public void MultipleEmptyComponentInterface()
+			public void MultipleEmptyComponentInterfaces()
 			{
 				TransformAllInterfaces("interface IMyComponent1 : IComponent { } interface IMyComponent2 : IComponent { }")
 					.Should().BeEquivalentTo(

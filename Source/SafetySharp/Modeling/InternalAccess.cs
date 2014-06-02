@@ -31,7 +31,7 @@ namespace SafetySharp.Modeling
 	public sealed class InternalAccess
 	{
 		/// <summary>
-		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
+		///     Initializes a new instance of the <see cref="InternalAccess"/> type.
 		/// </summary>
 		internal InternalAccess(IComponent component, string memberName)
 		{
