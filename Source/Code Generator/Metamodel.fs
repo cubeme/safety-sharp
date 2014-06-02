@@ -619,19 +619,19 @@ let elements = [
                         CanBeNull = false
                     }
                     {
-                        Name = "Type"
-                        Type = "IMetamodelReference<ComponentDeclaration>"
+                        Name = "Declaration"
+                        Type = "ComponentDeclaration"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The type of the component configuration."
+                        Comment = "The declaration of the component configuration."
                         CanBeNull = false
                     }
                     {
-                        Name = "FieldValues"
-                        Type = "ValueArray"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "The initial values for the component's fields. The values are specified in the same order as the corresponding field declarations of the component configuration's declaration."
+                        Name = "Fields"
+                        Type = "FieldConfiguration"
+                        CollectionType = Dictionary "FieldDeclaration"
+                        Validation = NotNull
+                        Comment = "The field configurations for the fields declared by the component."
                         CanBeNull = false
                     }
                     {
@@ -645,17 +645,17 @@ let elements = [
                 ]
             }
             {   
-                Name = "ValueArray"
+                Name = "FieldConfiguration"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Values"
+                        Name = "InitialValues"
                         Type = "object"
                         CollectionType = Array
                         Validation = None
-                        Comment = "The values contained in the value array."
+                        Comment = "The initial values of the field."
                         CanBeNull = false
                     }
                 ]

@@ -99,18 +99,18 @@ namespace SafetySharp.CSharp.Transformation
 
 			var componentDeclaration = _metamodelResolver.Resolve(componentDeclarationReference);
 
-			var fieldValues = componentDeclaration.Fields.Select(field =>
+			var fields = componentDeclaration.Fields.Select(field =>
 			{
 				var values = component.GetInitialValuesOfField(field.Identifier.Name);
-				return new ValueArray(values.ToImmutableArray());
-			}).ToImmutableArray();
+				return new { Field = field, Configuration = new FieldConfiguration(values.ToImmutableArray()) };
+			}).ToImmutableDictionary(field => field.Field, field => field.Configuration);
 
 			var subComponents = componentDeclaration
 				.SubComponents
 				.Select(subComponent => TransformComponent(component.GetSubComponent(subComponent.Identifier.Name)))
 				.ToImmutableArray();
 
-			return new ComponentConfiguration(identifier, componentDeclarationReference, fieldValues, subComponents);
+			return new ComponentConfiguration(identifier, componentDeclaration, fields, subComponents);
 		}
 	}
 }

@@ -25,17 +25,14 @@ namespace SafetySharp.Metamodel.Configurations
 	using System;
 	using System.Linq;
 
-	/// <summary>
-	///     Represents an array of <see cref="Value" />s.
-	/// </summary>
-	partial class ValueArray
+	partial class FieldConfiguration
 	{
 		/// <summary>
 		///     Returns a string that represents the current object.
 		/// </summary>
 		public override string ToString()
 		{
-			return String.Join(", ", Values.Select(value => value.ToString()));
+			return String.Join(", ", InitialValues.Select(value => value.ToString()));
 		}
 	}
 }

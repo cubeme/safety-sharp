@@ -27,7 +27,7 @@ namespace Elbtunnel
 
 	public class LightBarrier : Component
 	{
-		public bool Triggered { get; private set; }
+		//public bool Triggered { get; private set; }
 
 		public int Do()
 		{

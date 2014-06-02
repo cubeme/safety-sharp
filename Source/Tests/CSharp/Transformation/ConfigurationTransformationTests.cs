@@ -28,6 +28,7 @@ namespace Tests.CSharp.Transformation
 	{
 		using System.Collections.Generic;
 		using System.Collections.Immutable;
+		using System.Linq;
 		using System.Reflection;
 		using FluentAssertions;
 		using NUnit.Framework;
@@ -42,6 +43,7 @@ namespace Tests.CSharp.Transformation
 		internal class ConfigurationTransformationTests
 		{
 			private Dictionary<Component, IMetamodelReference<ComponentDeclaration>> _componentReferences;
+			private Dictionary<Component, ComponentDeclaration> _componentDeclarations;
 			private ComponentResolver _componentResolver;
 			private MetamodelResolver _metamodelResolver;
 
@@ -78,6 +80,7 @@ namespace Tests.CSharp.Transformation
 				_metamodelResolver = _metamodelResolver.With(reference, componentDeclaration);
 				_componentResolver = _componentResolver.With(component, reference);
 
+				_componentDeclarations.Add(component.Component, componentDeclaration);
 				_componentReferences.Add(component.Component, reference);
 				return reference;
 			}
@@ -88,6 +91,7 @@ namespace Tests.CSharp.Transformation
 				_metamodelResolver = MetamodelResolver.Empty;
 				_componentResolver = ComponentResolver.Empty;
 
+				_componentDeclarations = new Dictionary<Component, ComponentDeclaration>();
 				_componentReferences = new Dictionary<Component, IMetamodelReference<ComponentDeclaration>>();
 				foreach (var component in configuration.PartitionRoots)
 					CreateComponentDeclaration(component);
@@ -100,8 +104,8 @@ namespace Tests.CSharp.Transformation
 			{
 				return new ComponentConfiguration(
 					new Identifier(name),
-					_componentReferences[component],
-					ImmutableArray<ValueArray>.Empty,
+					_componentDeclarations[component],
+					ImmutableDictionary<FieldDeclaration,FieldConfiguration>.Empty,
 					ImmutableArray<ComponentConfiguration>.Empty);
 			}
 
@@ -160,7 +164,7 @@ namespace Tests.CSharp.Transformation
 				var metamodelConfiguration = TransformConfiguration(new ValueComponent<T>(values));
 				var componentConfiguration = metamodelConfiguration.Partitions[0].Component;
 
-				componentConfiguration.FieldValues[0].Values.ShouldBeEquivalentTo(values);
+				componentConfiguration.Fields.First().Value.InitialValues.ShouldBeEquivalentTo(values);
 			}
 
 			[Test]
