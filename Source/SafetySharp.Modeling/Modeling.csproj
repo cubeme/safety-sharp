@@ -17,9 +17,10 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\Binaries\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\Binaries\Debug\SafetySharp.Modeling.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,32 +29,25 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>..\..\Binaries\Release\SafetySharp.Modeling.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SafetySharp\Modeling\Component.cs">
-      <Link>Component.cs</Link>
-    </Compile>
     <Compile Include="..\SafetySharp\Modeling\IComponent.cs">
       <Link>IComponent.cs</Link>
-    </Compile>
-    <Compile Include="..\SafetySharp\Modeling\ModelConfiguration.cs">
-      <Link>ModelConfiguration.cs</Link>
     </Compile>
     <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
       <Link>OverflowBehavior.cs</Link>
     </Compile>
-    <Compile Include="..\SafetySharp\Modeling\SpinModelChecker.cs">
-      <Link>SpinModelChecker.cs</Link>
-    </Compile>
-    <Compile Include="..\SafetySharp\Utilities\ResharperAttributes.cs">
-      <Link>ResharperAttributes.cs</Link>
-    </Compile>
+    <Compile Include="LtlFormula.cs" />
+    <Compile Include="Ltl.cs" />
+    <Compile Include="Component.cs" />
+    <Compile Include="InternalAccess.cs" />
+    <Compile Include="ModelConfiguration.cs" />
+    <Compile Include="SpinModelChecker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

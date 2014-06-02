@@ -20,7 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.Formulas
+namespace SafetySharp.Modeling
 {
-	
+	using System;
+
+	/// <summary>
+	/// 
+	/// </summary>
+	public abstract class ModelConfiguration
+	{
+		/// <summary>
+		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
+		/// </summary>
+		/// <param name="components">The components that should be added as root components of partitions.</param>
+		protected void AddPartitions(params Component[] components)
+		{
+			throw new NotSupportedException();
+		}
+	}
 }

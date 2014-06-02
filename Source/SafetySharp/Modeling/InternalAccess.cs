@@ -23,11 +23,33 @@
 namespace SafetySharp.Modeling
 {
 	using System;
+	using Utilities;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public interface IComponent
+	public sealed class InternalAccess
 	{
+		/// <summary>
+		///     Initializes a new instance of the <see cref="T:System.Object" /> class.
+		/// </summary>
+		internal InternalAccess(IComponent component, string memberName)
+		{
+			Argument.NotNull(component, () => component);
+			Argument.NotNull(memberName, () => memberName);
+
+			Component = component;
+			MemberName = memberName;
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		internal IComponent Component { get; private set; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		internal string MemberName { get; private set; }
 	}
 }

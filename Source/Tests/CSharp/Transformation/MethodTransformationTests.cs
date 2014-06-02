@@ -36,7 +36,7 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.Metamodel.Statements;
 
 	[TestFixture]
-	internal class StatementTransformationTests
+	internal class MethodTransformationTests
 	{
 		private IMetamodelReference<FieldDeclaration> _boolFieldReference;
 		private IMetamodelReference<FieldDeclaration> _intFieldReference;
@@ -44,15 +44,15 @@ namespace Tests.CSharp.Transformation
 		private MetamodelElement Transform(string csharpCode, string returnType = "void")
 		{
 			csharpCode = @"
-class C : Component 
-{
-	private bool boolField; 
-    private int intField;
-	" + returnType + @" M()
-	{
-		" + csharpCode + @";
-	}
-}";
+				class C : Component 
+				{
+					private bool boolField; 
+					private int intField;
+					" + returnType + @" M()
+					{
+						" + csharpCode + @";
+					}
+				}";
 			var compilation = new TestCompilation(csharpCode);
 			var expression = compilation.SyntaxRoot.DescendantNodes<BlockSyntax>().Single().Statements[0];
 

@@ -69,9 +69,7 @@ namespace Tests.Modelchecking.Promela
             var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>();
             mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(componentDeclReference, mmsimpleComponentDecl);
 
-            var trueAndFalseValues = ImmutableArray.Create<MMConfigurations.Value>(
-                new MMConfigurations.Value(true),
-                new MMConfigurations.Value(false));
+	        var trueAndFalseValues = ImmutableArray.Create<object>(true, false);
 
             var trueAndFalsePossible =  new MMConfigurations.ValueArray(trueAndFalseValues);
             // a component has a list of fields which themselves may have more possible start values
@@ -108,8 +106,8 @@ namespace Tests.Modelchecking.Promela
                                                                         MMExpressions.BooleanLiteral.False);
             var formulaExpression1Or2 = new MMExpressions.BinaryExpression(formulaExpression1, MMExpressions.BinaryOperator.LogicalOr,
                                                                            formulaExpression2);
-            var partitialFormula1 = new ExpressionFormula(formulaExpression1Or2, mmsimpleComponentInstance);
-            var partitialFormula2 = new ExpressionFormula(formulaExpression1, mmsimpleComponentInstance);
+            var partitialFormula1 = new StateFormula(formulaExpression1Or2, mmsimpleComponentInstance);
+            var partitialFormula2 = new StateFormula(formulaExpression1, mmsimpleComponentInstance);
             var formulaSatisfiedByModel = new UnaryFormula(partitialFormula1, UnaryTemporalOperator.Globally, PathQuantifier.None);
             var formulaNotSatisfiedByModel = new UnaryFormula(partitialFormula2, UnaryTemporalOperator.Globally, PathQuantifier.None);
 

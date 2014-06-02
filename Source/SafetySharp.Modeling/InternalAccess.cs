@@ -27,7 +27,17 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	/// 
 	/// </summary>
-	public interface IComponent
+	/// <typeparam name="T"></typeparam>
+	public sealed class InternalAccess<T>
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="access"></param>
+		/// <returns></returns>
+		public static implicit operator T(InternalAccess<T> access)
+		{
+			throw new NotSupportedException();
+		}
 	}
 }

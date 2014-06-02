@@ -23,114 +23,64 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Linq.Expressions;
+	using System.Collections.Generic;
+	using System.Collections.Immutable;
+	using System.Linq;
+	using CSharp.Transformation;
+	using Utilities;
 
-	public abstract partial class ModelConfiguration
+	/// <summary>
+	/// 
+	/// </summary>
+	public abstract class ModelConfiguration
 	{
+		/// <summary>
+		///     The partition root components of the configuration.
+		/// </summary>
+		private readonly List<Component> _partitionRoots = new List<Component>();
+
 		/// <summary>
 		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
 		/// </summary>
 		/// <param name="components">The components that should be added as root components of partitions.</param>
 		protected void AddPartitions(params Component[] components)
 		{
-			AddPartitionsInternal(components);
+			Argument.NotNull(components, () => components);
+			_partitionRoots.AddRange(components);
 		}
 
-		partial void AddPartitionsInternal(Component[] components);
-
-		public Formula LTL(string s)
+		/// <summary>
+		///     Gets a snapshot of the current model configuration state.
+		/// </summary>
+		internal ModelConfigurationSnapshot GetSnapshot()
 		{
-			return null;
-		}
-	}
+			if (_partitionRoots.Count == 0)
+				throw new InvalidOperationException("No partition roots have been set for the model configuration.");
 
-	public class Formula
-	{
-		public static implicit operator Formula(bool value)
-		{
-			return null;
-		}
+			// Ensure that there are no shared components
+			var hashSet = new HashSet<Component>();
+			foreach (var component in _partitionRoots)
+				CollectComponents(hashSet, component);
 
-		public Formula Implies(Formula f)
-		{
-			return f;
+			return new ModelConfigurationSnapshot(_partitionRoots
+													  .Select((root, index) => root.GetSnapshot("Root" + index))
+													  .ToImmutableArray());
 		}
 
-		public Formula Implies(bool f)
+		/// <summary>
+		///     Recursively analyzes the object tree of <see cref="Component" /> instances and returns <paramref name="component" /> and
+		///     all of its sub components.
+		/// </summary>
+		/// <param name="components">The hash set the components are collected into that is used to check if a component is shared.</param>
+		/// <param name="component">The root component from which all sub components should be collected.</param>
+		private static void CollectComponents(HashSet<Component> components, Component component)
 		{
-			return null;
-		}
+			const string message = "A component instance of type '{0}' has been found in multiple locations of the component tree.";
+			if (!components.Add(component))
+				throw new InvalidOperationException(String.Format(message, component.GetType().FullName));
 
-		public Formula AllowAccessTo(Component c, Func<dynamic, dynamic> f)
-		{
-			return this;
-		}
-
-		public Formula Ltl(string f)
-		{
-			return this;
-		}
-	}
-
-	public static class Ltl
-	{
-		public static Formula Globally(Formula f)
-		{
-			return null;
-		}
-
-		public static Formula Globally(Expression<Func<Formula>> f)
-		{
-			return null;
-		}
-
-		public static Formula Globally(Expression<Func<bool>> f)
-		{
-			return null;
-		}
-
-		public static Formula Globally(bool f)
-		{
-			return null;
-		}
-
-		public static Formula StateFormula(bool f)
-		{
-			return null;
-		}
-
-		public static Formula Finally(Formula f)
-		{
-			return null;
-		}
-
-		public static dynamic AccessInternalsOf(Component c)
-		{
-			return c;
-		}
-
-		public static T AccessInternal<T>(this Component c, Func<dynamic, dynamic> val)
-		{
-			object o = val(c);
-			return (T)o;
-		}
-
-		public static InternalAccess<T> AccessInternal<T>(this Component c, string val)
-		{
-			return default(InternalAccess<T>);
-		}
-
-		public static dynamic AllowAccessToInternals(this Component c)
-		{
-			return default(InternalAccess<bool>);
-		}
-	}
-
-	public class InternalAccess<T>
-	{
-		public static implicit operator bool(InternalAccess<T> access)
-		{
-			return false;
+			foreach (var subComponent in component.SubComponents)
+				CollectComponents(components, subComponent);
 		}
 	}
 }

@@ -601,7 +601,7 @@ let Generate outputFile =
         VisitorName = "PromelaVisitor"
         RewriterName = "PromelaRewriter"
         Namespace = "SafetySharp.Modelchecking.Promela"
-        Public = false
+        Visibility = Internal
     }
 
 

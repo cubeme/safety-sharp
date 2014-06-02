@@ -20,34 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Formulas
+namespace SafetySharp.Modeling
 {
 	using System;
+	using Formulas;
+	using Utilities;
 
-	partial class ExpressionFormula
+	/// <summary>
+	/// 
+	/// </summary>
+	public class LtlFormula
 	{
 		/// <summary>
-		///     Gets a value indicating whether the formula contains any temporal operators.
+		/// 
 		/// </summary>
-		public override bool IsTemporal
+		/// <param name="formula"></param>
+		internal LtlFormula(Formula formula)
 		{
-			get { return false; }
+			Argument.NotNull(formula, () => formula);
+			Formula = formula;
 		}
 
 		/// <summary>
-		///     Gets a value indicating whether the formula is a valid linear temporal logic formula.
+		/// 
 		/// </summary>
-		public override bool IsLinearFormula
-		{
-			get { return true; }
-		}
+		internal Formula Formula { get; private set; }
 
 		/// <summary>
-		///     Gets a value indicating whether the formula is a valid computation tree logic formula.
+		/// 
 		/// </summary>
-		public override bool IsTreeFormula
+		/// <param name="f"></param>
+		/// <returns></returns>
+		public LtlFormula Implies(LtlFormula f)
 		{
-			get { return true; }
+			throw new NotImplementedException();
 		}
 	}
 }

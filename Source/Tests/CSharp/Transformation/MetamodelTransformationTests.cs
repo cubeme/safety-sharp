@@ -82,14 +82,9 @@ namespace Tests.CSharp.Transformation
 			return _symbolMap.GetFieldReference(fieldSymbol);
 		}
 
-		private static ImmutableArray<Value> ToValues(params object[] values)
+		private static ImmutableArray<ValueArray> ToValueArray(params object[][] valueArrays)
 		{
-			return values.Select(value => new Value(value)).ToImmutableArray();
-		}
-
-		private static ImmutableArray<ValueArray> ToValueArray(params ImmutableArray<Value>[] valueArrays)
-		{
-			return ImmutableArray.CreateRange(valueArrays.Select(values => new ValueArray(values)));
+			return ImmutableArray.CreateRange(valueArrays.Select(values => new ValueArray(values.ToImmutableArray())));
 		}
 
 		[Test]
@@ -143,7 +138,7 @@ namespace Tests.CSharp.Transformation
 
 			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
 				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0], "Root0")
-								  .WithFieldValues(ToValueArray(ToValues(true, false)))));
+								  .WithFieldValues(ToValueArray(new object[] { true, false }))));
 		}
 
 		[Test]

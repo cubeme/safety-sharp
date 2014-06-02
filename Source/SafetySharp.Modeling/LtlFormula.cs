@@ -20,21 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Configurations
+namespace SafetySharp.Modeling
 {
 	using System;
 
 	/// <summary>
-	///     Represents a value within the tree of metamodel elements.
+	/// 
 	/// </summary>
-	partial class Value
+	public abstract class LtlFormula
 	{
 		/// <summary>
-		///     Returns a string that represents the current object.
+		/// 
 		/// </summary>
-		public override string ToString()
+		/// <param name="f"></param>
+		/// <returns></returns>
+		public LtlFormula Implies(LtlFormula f)
 		{
-			return Object.ToString();
+			throw new NotSupportedException();
 		}
 	}
 }

@@ -41,20 +41,20 @@ namespace Tests.CSharp.Transformation
 		private MetamodelElement Transform(string csharpCode)
 		{
 			csharpCode = @"
-class C : Component 
-{
-	private bool boolField; 
-    private int intField;
-	void M()
-	{
-		var x = " + csharpCode + @";
-	}
-}";
+				class C : Component 
+				{
+					private bool boolField; 
+					private int intField;
+					void M()
+					{
+						var x = " + csharpCode + @";
+					}
+				}";
 			var compilation = new TestCompilation(csharpCode);
 			var expression = compilation.SyntaxRoot.DescendantNodes<EqualsValueClauseSyntax>().Single().Value;
 			_fieldReference = compilation.SymbolMap.GetFieldReference(compilation.FindFieldSymbol("C", "boolField"));
 
-			var visitor = new MethodTransformation(compilation.SemanticModel, compilation.SymbolMap);
+			var visitor = new ExpressionTransformation(compilation.SemanticModel, compilation.SymbolMap);
 			return visitor.Visit(expression);
 		}
 

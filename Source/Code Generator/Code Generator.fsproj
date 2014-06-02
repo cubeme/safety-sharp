@@ -53,7 +53,7 @@
     <Compile Include="Generator.fs" />
     <Compile Include="Test.fs" />
     <Compile Include="Metamodel.fs" />
-    <Compile Include="Formulas.fs" />
+    <Compile Include="Formula.fs" />
     <Compile Include="Promela.fs" />
     <Compile Include="NuXmv.fs" />
     <Compile Include="Program.fs" />
