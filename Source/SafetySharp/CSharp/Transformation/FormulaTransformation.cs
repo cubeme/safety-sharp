@@ -148,7 +148,7 @@ namespace SafetySharp.CSharp.Transformation
 			var transformedExpression = expressionTransformation.Transform(expression);
 			FormulaResolver = expressionTransformation.FormulaResolver;
 
-			return new StateFormula(transformedExpression, null);
+			return new StateFormula(transformedExpression);
 		}
 
 		/// <summary>

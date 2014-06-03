@@ -47,13 +47,6 @@ let elements = [
                         Comment = "The metamodel expression that represents the state formula."
                         CanBeNull = false
                     }
-                    { 
-                        Name = "AssociatedComponent"
-                        Type = Singleton "SafetySharp.Metamodel.Configurations.ComponentConfiguration"
-                        Validation = None
-                        Comment = "The associated component is the scope in which the expression is evaluated."
-                        CanBeNull = true
-                    }
                 ]
             }
             {

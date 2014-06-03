@@ -417,14 +417,14 @@ namespace SafetySharp.Modelchecking.Promela
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="MMFormulae.ExpressionFormula" />.
+        ///     Visits an element of type <see cref="MMFormulae.StateFormula" />.
         /// </summary>
-        /// <param name="expressionFormula">The <see cref="MMFormulae.ExpressionFormula" /> instance that should be visited.</param>
+        /// <param name="expressionFormula">The <see cref="MMFormulae.StateFormula" /> instance that should be visited.</param>
         public override PrFormula.PromelaFormula VisitStateFormula(MMFormulae.StateFormula expressionFormula)
         {
             Argument.NotNull(expressionFormula, () => expressionFormula);
 
-            var scope = _commonKnowledge.MmConfigurationToScope[expressionFormula.AssociatedComponent];
+            var scope = _commonKnowledge.MmConfigurationToScope[/* TODO: REMOVED ASSOCIATED COMPONENT */null];
             var expressionVisitor = _commonKnowledge.GetExpressionVisitor(scope);
             var promelaFormula = expressionFormula.Expression.Accept(expressionVisitor);
             return new PrFormula.PropositionalStateFormula(promelaFormula);

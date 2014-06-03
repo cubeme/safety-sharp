@@ -103,8 +103,8 @@ namespace Tests.Modelchecking.Promela
 																		MMExpressions.BooleanLiteral.False);
 			var formulaExpression1Or2 = new MMExpressions.BinaryExpression(formulaExpression1, MMExpressions.BinaryOperator.LogicalOr,
 																		   formulaExpression2);
-			var partitialFormula1 = new StateFormula(formulaExpression1Or2, mmsimpleComponentInstance);
-			var partitialFormula2 = new StateFormula(formulaExpression1, mmsimpleComponentInstance);
+			var partitialFormula1 = new StateFormula(formulaExpression1Or2);
+			var partitialFormula2 = new StateFormula(formulaExpression1);
 			var formulaSatisfiedByModel = new UnaryFormula(partitialFormula1, UnaryTemporalOperator.Globally, PathQuantifier.None);
 			var formulaNotSatisfiedByModel = new UnaryFormula(partitialFormula2, UnaryTemporalOperator.Globally, PathQuantifier.None);
 

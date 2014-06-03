@@ -128,18 +128,18 @@ namespace Tests.CSharp.Transformation
 			var fieldAccess = new FieldAccessExpression(_booleanFieldReference);
 
 			TransformStateFormula("{0}.BooleanField", component1)
-				.Should().Be(new StateFormula(fieldAccess, null));
+				.Should().Be(new StateFormula(fieldAccess));
 
 			CheckResolvedField(((StateFormula)_transformedFormula).Expression, _booleanFieldConfiguration1);
 
 			TransformStateFormula("{0}.BooleanField == {1}.BooleanField", component1, component1)
-				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, fieldAccess), null));
+				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, fieldAccess)));
 
 			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Left, _booleanFieldConfiguration1);
 			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Right, _booleanFieldConfiguration1);
 			
 			TransformStateFormula("{0}.BooleanField == {1}.BooleanField", component1, component2)
-				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, fieldAccess), null));
+				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, fieldAccess)));
 
 			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Left, _booleanFieldConfiguration1);
 			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Right, _booleanFieldConfiguration2);
@@ -150,7 +150,7 @@ namespace Tests.CSharp.Transformation
 		{
 			var fieldAccess = new FieldAccessExpression(_intFieldReference);
 			TransformStateFormula("{0} == 2", CreateComponentInstance("X").AccessInternal<int>("IntField"))
-				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, new IntegerLiteral(2)), null));
+				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, new IntegerLiteral(2))));
 
 			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Left, _intFieldConfiguration1);
 		}
@@ -158,17 +158,17 @@ namespace Tests.CSharp.Transformation
 		[Test]
 		public void TransformLiteralExpressions()
 		{
-			TransformStateFormula("true").Should().Be(new StateFormula(BooleanLiteral.True, null));
+			TransformStateFormula("true").Should().Be(new StateFormula(BooleanLiteral.True));
 			TransformStateFormula("1 == 2")
-				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2)), null));
+				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2))));
 			TransformStateFormula("1m == 2.5m")
-				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1), BinaryOperator.Equals, new DecimalLiteral(2.5m)), null));
+				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1), BinaryOperator.Equals, new DecimalLiteral(2.5m))));
 			TransformStateFormula("true || false")
-				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
+				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False)));
 		}
 
 		[Test]
-		public void TransformNestedFormula()
+		public void TransformNestedFormulaSameComponent()
 		{
 			var booleanFieldAccess = new FieldAccessExpression(_booleanFieldReference);
 			var intFieldAccess = new FieldAccessExpression(_intFieldReference);
@@ -176,8 +176,8 @@ namespace Tests.CSharp.Transformation
 			var fieldIsTrue = new UntransformedStateFormula("{0}.BooleanField", ImmutableArray.Create<object>(CreateComponentInstance("X")));
 			var fieldIsTwo = new UntransformedStateFormula("{0}.IntField == 2", ImmutableArray.Create<object>(CreateComponentInstance("X")));
 
-			var transformedFieldIsTrue = new StateFormula(booleanFieldAccess, null);
-			var transformedfieldIsTwo = new StateFormula(new BinaryExpression(intFieldAccess, BinaryOperator.Equals, new IntegerLiteral(2)), null);
+			var transformedFieldIsTrue = new StateFormula(booleanFieldAccess);
+			var transformedfieldIsTwo = new StateFormula(new BinaryExpression(intFieldAccess, BinaryOperator.Equals, new IntegerLiteral(2)));
 
 			Transform(new BinaryFormula(fieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, fieldIsTwo)).Should().Be(
 				new BinaryFormula(transformedFieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, transformedfieldIsTwo));
@@ -190,15 +190,40 @@ namespace Tests.CSharp.Transformation
 		}
 
 		[Test]
+		public void TransformNestedFormulaDifferentComponents()
+		{
+			var component1 = CreateComponentInstance("X", _intFieldConfiguration1, _booleanFieldConfiguration1);
+			var component2 = CreateComponentInstance("X", _intFieldConfiguration2, _booleanFieldConfiguration2);
+
+			var booleanFieldAccess = new FieldAccessExpression(_booleanFieldReference);
+			var intFieldAccess = new FieldAccessExpression(_intFieldReference);
+
+			var fieldIsTrue = new UntransformedStateFormula("{0}.BooleanField", ImmutableArray.Create<object>(component2));
+			var fieldIsTwo = new UntransformedStateFormula("{0}.IntField == 2", ImmutableArray.Create<object>(component1));
+
+			var transformedFieldIsTrue = new StateFormula(booleanFieldAccess);
+			var transformedfieldIsTwo = new StateFormula(new BinaryExpression(intFieldAccess, BinaryOperator.Equals, new IntegerLiteral(2)));
+
+			Transform(new BinaryFormula(fieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, fieldIsTwo)).Should().Be(
+				new BinaryFormula(transformedFieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, transformedfieldIsTwo));
+
+			var leftExpression = ((StateFormula)((BinaryFormula)_transformedFormula).Left).Expression;
+			var rightExpression = (BinaryExpression)((StateFormula)((BinaryFormula)_transformedFormula).Right).Expression;
+
+			CheckResolvedField(leftExpression, _booleanFieldConfiguration2);
+			CheckResolvedField(rightExpression.Left, _intFieldConfiguration1);
+		}
+
+		[Test]
 		public void TransformValueAccess()
 		{
-			TransformStateFormula("{0}", true).Should().Be(new StateFormula(BooleanLiteral.True, null));
+			TransformStateFormula("{0}", true).Should().Be(new StateFormula(BooleanLiteral.True));
 			TransformStateFormula("{1} == {0}", 2, 1)
-				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2)), null));
+				.Should().Be(new StateFormula(new BinaryExpression(new IntegerLiteral(1), BinaryOperator.Equals, new IntegerLiteral(2))));
 			TransformStateFormula("{1} == {0}", 2m, 1.5m)
-				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1.5m), BinaryOperator.Equals, new DecimalLiteral(2)), null));
+				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1.5m), BinaryOperator.Equals, new DecimalLiteral(2))));
 			TransformStateFormula("{0} || {1}", true, false)
-				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
+				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False)));
 		}
 	}
 }
