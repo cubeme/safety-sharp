@@ -39,38 +39,6 @@ let elements = [
         Name = "SafetySharp.Modelchecking.NuXmv"
         Classes =
         [
-            (*{   
-                Name = "Proctype"
-                Base = "Expression"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "IsActive"
-                        Type = "bool"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "If true then Proctype gets automatically executed at startup."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The name of the Proctype."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Code"
-                        Type = "Statement"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "A list of statements with the code of the Proctype."
-                        CanBeNull = false
-                    }
-                ]
-            }*)
             {   
                 Name = "Identifier"
                 Base = "NuXmvElement"
@@ -299,7 +267,7 @@ let elements = [
     }
     {
         // Chapter 2.3.1 Variable Declarations -> Type Specifiers p 23
-        Name = "SafetySharp.Modelchecking.NuXmv.SimpleTypeSpecifier"
+        Name = "SafetySharp.Modelchecking.NuXmv.SimpleTypeSpecifiers"
         Classes = 
         [
                   
