@@ -36,7 +36,7 @@ namespace Tests.CSharp.Extensions
 		[TestFixture]
 		internal class GetFullNameMethod
 		{
-			private static string GetFullName(string csharpCode)
+			private static string GetClassName(string csharpCode)
 			{
 				var compilation = new TestCompilation(csharpCode);
 
@@ -51,27 +51,124 @@ namespace Tests.CSharp.Extensions
 				return classSymbol.GetFullName();
 			}
 
+			private static string GetInterfaceName(string csharpCode)
+			{
+				var compilation = new TestCompilation(csharpCode);
+
+				// We can't use compilation.FindInterfaceDeclaration() here as the implementation of that helper method
+				// depends on the GetFullName() extension method which we're currently testing...
+				var interfaceDeclaration = compilation
+					.SyntaxRoot
+					.DescendantNodesAndSelf<InterfaceDeclarationSyntax>()
+					.Single(c => c.Identifier.ValueText == "X");
+
+				var interfaceSymbol = compilation.SemanticModel.GetDeclaredSymbol(interfaceDeclaration);
+				return interfaceSymbol.GetFullName();
+			}
+
+			private static string GetStructName(string csharpCode)
+			{
+				var compilation = new TestCompilation(csharpCode);
+
+				// We can't use compilation.FindStructDeclaration() here as the implementation of that helper method
+				// depends on the GetFullName() extension method which we're currently testing...
+				var structDeclaration = compilation
+					.SyntaxRoot
+					.DescendantNodesAndSelf<StructDeclarationSyntax>()
+					.Single(c => c.Identifier.ValueText == "X");
+
+				var structSymbol = compilation.SemanticModel.GetDeclaredSymbol(structDeclaration);
+				return structSymbol.GetFullName();
+			}
+
 			[Test]
 			public void ReturnsClassNameForClassInGlobalNamespace()
 			{
-				GetFullName("class X {}").Should().Be("X");
+				GetClassName("class X {}").Should().Be("X");
 			}
 
 			[Test]
-			public void ReturnsNamespacedClassNameForClassInNamespace()
+			public void ReturnsClassNameForClassInNamespace()
 			{
-				GetFullName("namespace Test { class X {} }").Should().Be("Test.X");
-				GetFullName("namespace Test.Other { class X {} }").Should().Be("Test.Other.X");
-				GetFullName("namespace Test { namespace Other { class X {} }}").Should().Be("Test.Other.X");
+				GetClassName("namespace Test { class X {} }").Should().Be("Test.X");
+				GetClassName("namespace Test.Other { class X {} }").Should().Be("Test.Other.X");
+				GetClassName("namespace Test { namespace Other { class X {} }}").Should().Be("Test.Other.X");
 			}
 
 			[Test]
-			public void ReturnsNestedClassNameForNestedClass()
+			public void ReturnsClassNameForGenericClass()
 			{
-				GetFullName("class Y { class X {}}").Should().Be("Y+X");
-				GetFullName("namespace Test.Other { class Y { class X {}} }").Should().Be("Test.Other.Y+X");
-				GetFullName("namespace Test { namespace Other { class Y { class X {}} }}").Should().Be("Test.Other.Y+X");
-				GetFullName("namespace Test { class Y { class X {}} }").Should().Be("Test.Y+X");
+				GetClassName("class X<T1, T2> {}").Should().Be("X<T1, T2>");
+			}
+
+			[Test]
+			public void ReturnsClassNameForNestedClass()
+			{
+				GetClassName("class Y { class X {}}").Should().Be("Y+X");
+				GetClassName("namespace Test.Other { class Y { class X {}} }").Should().Be("Test.Other.Y+X");
+				GetClassName("namespace Test.Other { struct Y { class X {}} }").Should().Be("Test.Other.Y+X");
+				GetClassName("namespace Test { namespace Other { class Y { class X {}} }}").Should().Be("Test.Other.Y+X");
+				GetClassName("namespace Test { class Y { class X {}} }").Should().Be("Test.Y+X");
+			}
+
+			[Test]
+			public void ReturnsInterfaceNameForInterfaceInGlobalNamespace()
+			{
+				GetInterfaceName("interface X {}").Should().Be("X");
+			}
+
+			[Test]
+			public void ReturnsInterfaceNameForInterfaceInNamespace()
+			{
+				GetInterfaceName("namespace Test { interface X {} }").Should().Be("Test.X");
+				GetInterfaceName("namespace Test.Other { interface X {} }").Should().Be("Test.Other.X");
+				GetInterfaceName("namespace Test { namespace Other { interface X {} }}").Should().Be("Test.Other.X");
+			}
+
+			[Test]
+			public void ReturnsInterfaceNameForGenericInterface()
+			{
+				GetInterfaceName("interface X<T1, T2> {}").Should().Be("X<T1, T2>");
+			}
+
+			[Test]
+			public void ReturnsInterfaceNameForNestedInterface()
+			{
+				GetInterfaceName("class Y { interface X {}}").Should().Be("Y+X");
+				GetInterfaceName("namespace Test.Other { class Y { interface X {}} }").Should().Be("Test.Other.Y+X");
+				GetInterfaceName("namespace Test.Other { struct Y { interface X {}} }").Should().Be("Test.Other.Y+X");
+				GetInterfaceName("namespace Test { namespace Other { class Y { interface X {}} }}").Should().Be("Test.Other.Y+X");
+				GetInterfaceName("namespace Test { class Y { interface X {}} }").Should().Be("Test.Y+X");
+			}
+
+			[Test]
+			public void ReturnsStructNameForStructInGlobalNamespace()
+			{
+				GetStructName("struct X {}").Should().Be("X");
+			}
+
+			[Test]
+			public void ReturnsStructNameForStructInNamespace()
+			{
+				GetStructName("namespace Test { struct X {} }").Should().Be("Test.X");
+				GetStructName("namespace Test.Other { struct X {} }").Should().Be("Test.Other.X");
+				GetStructName("namespace Test { namespace Other { struct X {} }}").Should().Be("Test.Other.X");
+			}
+
+			[Test]
+			public void ReturnsStructNameForGenericStruct()
+			{
+				GetStructName("struct X<T1, T2> {}").Should().Be("X<T1, T2>");
+			}
+
+			[Test]
+			public void ReturnsStructNameForNestedStruct()
+			{
+				GetStructName("class Y { struct X {}}").Should().Be("Y+X");
+				GetStructName("namespace Test.Other { class Y { struct X {}} }").Should().Be("Test.Other.Y+X");
+				GetStructName("namespace Test.Other { struct Y { struct X {}} }").Should().Be("Test.Other.Y+X");
+				GetStructName("namespace Test { namespace Other { class Y { struct X {}} }}").Should().Be("Test.Other.Y+X");
+				GetStructName("namespace Test { class Y { struct X {}} }").Should().Be("Test.Y+X");
 			}
 		}
 	}

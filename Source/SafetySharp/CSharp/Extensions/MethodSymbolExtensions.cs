@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Extensions
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
 
@@ -48,6 +49,48 @@ namespace SafetySharp.CSharp.Extensions
 				return true;
 
 			return Overrides(methodSymbol.OverriddenMethod, overriddenMethod);
+		}
+
+		/// <summary>
+		///     Gets the full name of <paramref name="symbol" /> in the form of
+		///     'Namespace1.Namespace2.ClassName+InnerClass.MethodName(Namespace1.ClassName1, Namespace2.ClassName2, ...)'.
+		/// </summary>
+		/// <param name="symbol">The symbol the full name should be returned for.</param>
+		internal static string GetFullName(this IMethodSymbol symbol)
+		{
+			Argument.NotNull(symbol, () => symbol);
+
+			var typeParameters = String.Empty;
+			if (symbol.Arity > 0)
+				typeParameters = String.Format("<{0}>", String.Join(", ", symbol.TypeArguments.Select(type => type.GetFullName())));
+
+			return String.Format("{3} {0}.{1}{4}({2})", ((ITypeSymbol)symbol.ContainingSymbol).GetFullName(), symbol.Name,
+								 String.Join(", ", symbol.Parameters.Select(GetParameterTypeString)), symbol.ReturnType.GetFullName(), typeParameters);
+		}
+
+		/// <summary>
+		///     Gets the type display string for the <paramref name="parameter" />.
+		/// </summary>
+		/// <param name="parameter">The parameter the type string should be returned for.</param>
+		private static string GetParameterTypeString(IParameterSymbol parameter)
+		{
+			var refKind = String.Empty;
+			switch (parameter.RefKind)
+			{
+				case RefKind.None:
+					break;
+				case RefKind.Out:
+					refKind = "out ";
+					break;
+				case RefKind.Ref:
+					refKind = "ref ";
+					break;
+				default:
+					Assert.NotReached("Unknown ref kind.");
+					break;
+			}
+
+			return String.Format("{0}{1}", refKind, parameter.Type.GetFullName());
 		}
 	}
 }

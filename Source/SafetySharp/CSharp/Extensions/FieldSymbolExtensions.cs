@@ -23,44 +23,22 @@
 namespace SafetySharp.CSharp.Extensions
 {
 	using System;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for working with <see cref="INamespaceOrTypeSymbol" /> instances.
+	///     Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
 	/// </summary>
-	internal static class NamespaceOrTypeSymbolExtensions
+	internal static class FieldSymbolExtensions
 	{
 		/// <summary>
-		///     Gets the full name of <paramref name="symbol" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
+		///     Gets the full name of <paramref name="symbol" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass.FieldName'.
 		/// </summary>
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
-		internal static string GetFullName(this INamespaceOrTypeSymbol symbol)
+		internal static string GetFullName(this IFieldSymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
-
-			var arraySymbol = symbol as IArrayTypeSymbol;
-			if (arraySymbol != null)
-				return String.Format("{0}[{1}]", arraySymbol.ElementType.GetFullName(),
-									 String.Join(",", Enumerable.Range(0, arraySymbol.Rank).Select(r => String.Empty)));
-
-			var typePrefix = String.Empty;
-			if (!symbol.ContainingNamespace.IsGlobalNamespace)
-					typePrefix = symbol.ContainingNamespace.GetFullName() + ".";
-
-			var namedTypeSymbol = symbol as INamedTypeSymbol;
-			if (namedTypeSymbol == null)
-				return String.Format("{0}{1}", typePrefix, symbol.Name);
-
-			if (symbol.ContainingType != null)
-				typePrefix = symbol.ContainingType.GetFullName() + "+";
-
-			var typeParameters = String.Empty;
-			if (namedTypeSymbol.Arity > 0)
-				typeParameters = String.Format("<{0}>", String.Join(", ", namedTypeSymbol.TypeArguments.Select(type => type.GetFullName())));
-
-			return String.Format("{0}{1}{2}", typePrefix, namedTypeSymbol.Name, typeParameters);
+			return String.Format("{0}.{1}", ((ITypeSymbol)symbol.ContainingSymbol).GetFullName(), symbol.Name);
 		}
 	}
 }

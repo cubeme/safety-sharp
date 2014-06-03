@@ -29,6 +29,8 @@ namespace SafetySharp.CSharp.Transformation
 	using System.Linq;
 	using Extensions;
 	using Formulas;
+	using Metamodel;
+	using Metamodel.Expressions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -91,14 +93,14 @@ namespace SafetySharp.CSharp.Transformation
 		{
 			Argument.NotNull(untransformedStateFormula, () => untransformedStateFormula);
 
-			var declarations = String.Join(";", GetDeclarations(untransformedStateFormula.Values));
+			var declarations = String.Join(String.Empty, GetDeclarations(untransformedStateFormula.Values));
 			var formattedExpression = String.Format(untransformedStateFormula.Expression,
 													GetExpressionFormatArguments(untransformedStateFormula.Values).ToArray());
 			var code = String.Format(CodeTemplate, declarations, formattedExpression);
 
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
 			var expression = syntaxTree.DescendantNodes<ReturnStatementSyntax>().Single().Expression;
-
+			
 			var compilation = _compilation.CSharpCompilation.AddSyntaxTrees(syntaxTree);
 			var diagnostics = compilation
 				.GetDiagnostics()
@@ -111,7 +113,7 @@ namespace SafetySharp.CSharp.Transformation
 																  Environment.NewLine, String.Join(Environment.NewLine, diagnostics)));
 
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-			var expressionTransformation = new ExpressionTransformation(semanticModel, _symbolMap);
+			var expressionTransformation = new Transformation(semanticModel, _symbolMap, untransformedStateFormula.Values);
 
 			var transformedExpression = expressionTransformation.Transform(expression);
 			return new StateFormula(transformedExpression, null);
@@ -158,6 +160,43 @@ namespace SafetySharp.CSharp.Transformation
 					throw new InvalidOperationException(String.Format("State formula references unsupported type '{0}'.", value.GetType().FullName));
 
 				++index;
+			}
+		}
+
+		/// <summary>
+		///     Transforms a lowered C# syntax tree of an expression into a corresponding formula expression tree.
+		/// </summary>
+		internal class Transformation : ExpressionTransformation
+		{
+			/// <summary>
+			///     The values provided to the formula.
+			/// </summary>
+			private ImmutableArray<object> _formulaValues;
+
+			/// <summary>
+			///     Initializes a new instance of the <see cref="ExpressionTransformation" /> type.
+			/// </summary>
+			/// <param name="semanticModel">The semantic model that should be used to retrieve semantic information about the C# program.</param>
+			/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
+			/// <param name="formulaValues">The values provided to the formula.</param>
+			internal Transformation(SemanticModel semanticModel, SymbolMap symbolMap, ImmutableArray<object> formulaValues)
+				: base(semanticModel, symbolMap)
+			{
+				_formulaValues = formulaValues;
+			}
+
+			/// <summary>
+			///     Transforms a <see cref="MemberAccessExpressionSyntax" /> to the corresponding component field access.
+			/// </summary>
+			/// <param name="node"></param>
+			/// <returns></returns>
+			public override MetamodelElement VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+			{
+				Assert.That(SemanticModel.GetSymbolInfo(node.Name).Symbol as IFieldSymbol != null, "Expected a field member.");
+				Assert.That(!(node.Expression is MemberAccessExpressionSyntax), "Nested member accesses are not supported.");
+
+				var fieldAccess = (FieldAccessExpression)Visit(node.Name);
+				return fieldAccess;
 			}
 		}
 	}

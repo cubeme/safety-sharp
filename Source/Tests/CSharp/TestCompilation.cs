@@ -34,7 +34,6 @@ namespace Tests.CSharp
 	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
-	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Represents a compiled C# compilation unit with a single syntax tree.
@@ -185,53 +184,53 @@ namespace Tests.CSharp
 
 		/// <summary>
 		///     Finds the <see cref="MethodDeclarationSyntax" /> for the method named <paramref name="methodName" /> in the class named
-		///     <paramref name="className" /> within the compilation. Throws an exception if more than one class or method with the
+		///     <paramref name="typeName" /> within the compilation. Throws an exception if more than one class or method with the
 		///     given name was found.
 		/// </summary>
-		/// <param name="className">
+		/// <param name="typeName">
 		///     The name of the class that contains the method that should be found in the format
 		///     'Namespace1.Namespace2.ClassName+NestedClass'.
 		/// </param>
 		/// <param name="methodName">The name of the method that should be found.</param>
-		internal MethodDeclarationSyntax FindMethodDeclaration(string className, string methodName)
+		internal MethodDeclarationSyntax FindMethodDeclaration(string typeName, string methodName)
 		{
-			var methods = FindClassDeclaration(className)
+			var methods = FindTypeDeclaration(typeName)
 				.DescendantNodesAndSelf<MethodDeclarationSyntax>()
 				.Where(methodDeclaration => methodDeclaration.Identifier.ValueText == methodName)
 				.ToArray();
 
 			if (methods.Length == 0)
-				throw new CompilationException(String.Format("Found no methods with name '{0}' in '{1}'.", methodName, className));
+				throw new CompilationException(String.Format("Found no methods with name '{0}' in '{1}'.", methodName, typeName));
 
 			if (methods.Length > 1)
-				throw new CompilationException(String.Format("Found more than one method with name '{0}' in '{1}'.", methodName, className));
+				throw new CompilationException(String.Format("Found more than one method with name '{0}' in '{1}'.", methodName, typeName));
 
 			return methods[0];
 		}
 
 		/// <summary>
 		///     Finds the <see cref="VariableDeclaratorSyntax" /> for the field named <paramref name="fieldName" /> in the class named
-		///     <paramref name="className" /> within the compilation. Throws an exception if more than one class or field with the
+		///     <paramref name="typeName" /> within the compilation. Throws an exception if more than one class or field with the
 		///     given name was found.
 		/// </summary>
-		/// <param name="className">
+		/// <param name="typeName">
 		///     The name of the class that contains the field that should be found in the format
 		///     'Namespace1.Namespace2.ClassName+NestedClass'.
 		/// </param>
 		/// <param name="fieldName">The name of the field that should be found.</param>
-		internal VariableDeclaratorSyntax FindFieldDeclaration(string className, string fieldName)
+		internal VariableDeclaratorSyntax FindFieldDeclaration(string typeName, string fieldName)
 		{
-			var fields = FindClassDeclaration(className)
+			var fields = FindTypeDeclaration(typeName)
 				.DescendantNodesAndSelf<FieldDeclarationSyntax>()
 				.SelectMany(fieldDeclaration => fieldDeclaration.Declaration.Variables)
 				.Where(variableDeclaration => variableDeclaration.Identifier.ValueText == fieldName)
 				.ToArray();
 
 			if (fields.Length == 0)
-				throw new CompilationException(String.Format("Found no fields with name '{0}' in '{1}'.", fieldName, className));
+				throw new CompilationException(String.Format("Found no fields with name '{0}' in '{1}'.", fieldName, typeName));
 
 			if (fields.Length > 1)
-				throw new CompilationException(String.Format("Found more than one field with name '{0}' in '{1}'.", fieldName, className));
+				throw new CompilationException(String.Format("Found more than one field with name '{0}' in '{1}'.", fieldName, typeName));
 
 			return fields[0];
 		}

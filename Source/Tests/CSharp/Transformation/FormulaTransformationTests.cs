@@ -65,14 +65,19 @@ namespace Tests.CSharp.Transformation
 			return (Component)Activator.CreateInstance(_assembly.GetType(componentName));
 		}
 
-		[Test, Ignore]
+		[Test]
 		public void TransformComponentAccess()
 		{
-			TransformStateFormula("{0}.BooleanField", CreateComponentInstance("X"))
+			var component = CreateComponentInstance("X");
+
+			TransformStateFormula("{0}.BooleanField", component)
+				.Should().Be(null);
+
+			TransformStateFormula("{0}.BooleanField == {1}.BooleanField", component, component)
 				.Should().Be(null);
 		}
 
-		[Test, Ignore]
+		[Test]
 		public void TransformInternalAccess()
 		{
 			TransformStateFormula("{0} == 2", CreateComponentInstance("X").AccessInternal<int>("IntField"))

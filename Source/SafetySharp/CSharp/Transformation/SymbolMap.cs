@@ -38,9 +38,9 @@ namespace SafetySharp.CSharp.Transformation
 	internal class SymbolMap
 	{
 		/// <summary>
-		///     Maps a C# symbol to a metamodel reference.
+		///     Maps a C# symbol by its name to a metamodel reference.
 		/// </summary>
-		private readonly Dictionary<ISymbol, IMetamodelReference> _symbolMap = new Dictionary<ISymbol, IMetamodelReference>();
+		private readonly Dictionary<string, IMetamodelReference> _symbolMap = new Dictionary<string, IMetamodelReference>();
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
@@ -105,7 +105,7 @@ namespace SafetySharp.CSharp.Transformation
 			where T : MetamodelElement
 		{
 			IMetamodelReference reference;
-			if (!_symbolMap.TryGetValue(symbol, out reference))
+			if (!_symbolMap.TryGetValue(symbol.GetFullName(), out reference))
 				throw new InvalidOperationException("The given C# symbol is unknown.");
 
 			Assert.OfType<MetamodelReference<T>>(reference, "Expected a metamodel reference of type '{0}' but found '{1}'.",
@@ -121,7 +121,7 @@ namespace SafetySharp.CSharp.Transformation
 		internal bool IsMapped(ISymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
-			return _symbolMap.ContainsKey(symbol);
+			return _symbolMap.ContainsKey(symbol.GetFullName());
 		}
 
 		/// <summary>
@@ -162,7 +162,7 @@ namespace SafetySharp.CSharp.Transformation
 			var symbol = semanticModel.GetDeclaredSymbol(syntaxNode);
 			Assert.NotNull(symbol, "The semantic model could not find a symbol for '{0}' '{1}'.", syntaxNode.GetType().FullName, syntaxNode);
 
-			_symbolMap.Add(symbol, new MetamodelReference<T>());
+			_symbolMap.Add(symbol.GetFullName(), new MetamodelReference<T>());
 		}
 	}
 }

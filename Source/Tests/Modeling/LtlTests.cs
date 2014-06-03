@@ -131,14 +131,14 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenEmptyExpressionIsPassed()
 			{
-				Action action = () => Ltl.StateFormula("   ", new object[] { });
+				Action action = () => Ltl.StateFormula("   ");
 				action.ShouldThrow<ArgumentException>();
 			}
 
 			[Test]
 			public void ThrowsWhenNullExpressionIsPassed()
 			{
-				Action action = () => Ltl.StateFormula(null, new object[] { });
+				Action action = () => Ltl.StateFormula(null);
 				action.ShouldThrow<ArgumentNullException>();
 			}
 		}

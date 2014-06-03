@@ -68,6 +68,8 @@
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.cs" />
     <Compile Include="CSharp\Extensions\ArgumentExtensions.cs" />
     <Compile Include="CSharp\Extensions\FieldDeclarationExtensions.cs" />
+    <Compile Include="CSharp\Extensions\FieldSymbolExtensions.cs" />
+    <Compile Include="CSharp\Extensions\SymbolExtensions.cs" />
     <Compile Include="CSharp\Extensions\SyntaxKindExtensions.cs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.cs" />
@@ -89,6 +91,7 @@
     <Compile Include="CSharp\Transformation\ModelConfigurationSnapshot.cs" />
     <Compile Include="Formulas\BinaryFormula.cs" />
     <Compile Include="Formulas\BinaryTemporalOperator.cs" />
+    <Compile Include="Formulas\FormulaResolver.cs" />
     <Compile Include="Formulas\StateFormula.cs" />
     <Compile Include="Formulas\Formula.cs" />
     <Compile Include="Formulas\Formulas.Generated.cs" />
