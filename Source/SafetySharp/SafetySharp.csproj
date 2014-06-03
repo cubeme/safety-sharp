@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.cs" />
+    <Compile Include="CSharp\Extensions\ArgumentExtensions.cs" />
     <Compile Include="CSharp\Extensions\FieldDeclarationExtensions.cs" />
     <Compile Include="CSharp\Extensions\SyntaxKindExtensions.cs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="CSharp\ModelingCompilation.cs" />
     <Compile Include="CSharp\Normalization\ChooseNormalizer.cs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.cs" />
+    <Compile Include="CSharp\Normalization\StateFormulaNormalizer.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizer.cs" />
     <Compile Include="CSharp\Transformation\ComponentResolver.cs" />
     <Compile Include="CSharp\Transformation\ComponentSnapshot.cs" />
@@ -101,6 +103,7 @@
     <Compile Include="Modelchecking\Promela\PromelaUnaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\Spin.cs" />
     <Compile Include="Modeling\Component.cs" />
+    <Compile Include="Modeling\IInternalAccess.cs" />
     <Compile Include="Modeling\LtlFormula.cs" />
     <Compile Include="Modeling\IComponent.cs" />
     <Compile Include="Modeling\InternalAccess.cs" />
@@ -141,6 +144,7 @@
     <Compile Include="Modeling\ModelConfiguration.cs" />
     <Compile Include="Modeling\OverflowBehavior.cs" />
     <Compile Include="Modeling\SpinModelChecker.cs" />
+    <Compile Include="Modeling\StateFormulaAttribute.cs" />
     <Compile Include="Utilities\Argument.cs" />
     <Compile Include="Utilities\CodeWriter.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.cs" />

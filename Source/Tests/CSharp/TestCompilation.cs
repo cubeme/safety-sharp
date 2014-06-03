@@ -50,7 +50,7 @@ namespace Tests.CSharp
 			SyntaxTree = compilationUnit.SyntaxTree;
 
 			CSharpCompilation = CSharpCompilation
-				.Create("Test")
+				.Create("TestCompilation")
 				.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
 				.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location))
 				.AddReferences(new MetadataFileReference(typeof(Expression<>).Assembly.Location))

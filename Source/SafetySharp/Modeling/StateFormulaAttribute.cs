@@ -20,72 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel
+namespace SafetySharp.Modeling
 {
 	using System;
-	using SafetySharp.Modeling;
-
-	public class LightBarrier : Component
-	{
-		public bool Triggered;
-
-		public int Do()
-		{
-			return 1;
-		}
-	}
 
 	/// <summary>
-	///     This is a great interface.
+	///     When applied to a Boolean parameter of a formula method, enables the state formula normalization at compile time.
 	/// </summary>
-	internal interface MyInterface
+	[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+	internal class StateFormulaAttribute : Attribute
 	{
 	}
-
-	internal class Test2 : Component
-	{
-		private BooleanComponent boolean1 ;
-		private BooleanComponent boolean2 ;
-
-		public Test2()
-		{
-			boolean1 = new BooleanComponent(true);
-			boolean2 = new BooleanComponent(false);
-		}
-	}
-
-	internal class BooleanComponent : Component
-	{
-		private bool _value;
-
-		public BooleanComponent(bool nondeterministicInitialValue)
-		{
-			if (nondeterministicInitialValue)
-				SetInitialValues(() => _value, true, false);
-			else
-				_value = false;
-
-			sbyte i = 0;
-			i++;
-		}
-
-		protected override void Update()
-		{
-			_value = Choose(true, false);
-		}
-	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
 }

@@ -61,6 +61,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\Extensions\ArgumentExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\FieldDeclarationExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensionsTests.cs" />

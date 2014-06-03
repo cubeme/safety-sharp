@@ -28,28 +28,48 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	/// 
 	/// </summary>
-	public sealed class InternalAccess
+	/// <typeparam name="T"></typeparam>
+	public sealed class InternalAccess<T> : IInternalAccess
 	{
+		private readonly IComponent _component;
+		private readonly string _memberName;
+
 		/// <summary>
-		///     Initializes a new instance of the <see cref="InternalAccess"/> type.
+		///     Initializes a new instance of the <see cref="InternalAccess{T}" /> type.
 		/// </summary>
 		internal InternalAccess(IComponent component, string memberName)
 		{
 			Argument.NotNull(component, () => component);
 			Argument.NotNull(memberName, () => memberName);
 
-			Component = component;
-			MemberName = memberName;
+			_component = component;
+			_memberName = memberName;
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		internal IComponent Component { get; private set; }
+		IComponent IInternalAccess.Component
+		{
+			get { return _component; }
+		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		internal string MemberName { get; private set; }
+		string IInternalAccess.MemberName
+		{
+			get { return _memberName; }
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="access"></param>
+		/// <returns></returns>
+		public static implicit operator T(InternalAccess<T> access)
+		{
+			throw new NotSupportedException();
+		}
 	}
 }

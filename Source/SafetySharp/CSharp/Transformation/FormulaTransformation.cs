@@ -128,8 +128,8 @@ namespace SafetySharp.CSharp.Transformation
 			{
 				if (value is Component)
 					yield return String.Format("{0} {1}_{2} = null;", value.GetType().FullName, GeneratedNamePrefix, index);
-				else if (value is InternalAccess)
-					yield return String.Format("{0} {1}_{2} = null;", ((InternalAccess)value).Component.GetType().FullName, GeneratedNamePrefix, index);
+				else if (value is IInternalAccess)
+					yield return String.Format("{0} {1}_{2} = null;", ((IInternalAccess)value).Component.GetType().FullName, GeneratedNamePrefix, index);
 
 				++index;
 			}
@@ -146,8 +146,8 @@ namespace SafetySharp.CSharp.Transformation
 			{
 				if (value is Component)
 					yield return String.Format("{0}_{1}", GeneratedNamePrefix, index);
-				else if (value is InternalAccess)
-					yield return String.Format("{0}_{1}.{2}", GeneratedNamePrefix, index, ((InternalAccess)value).MemberName);
+				else if (value is IInternalAccess)
+					yield return String.Format("{0}_{1}.{2}", GeneratedNamePrefix, index, ((IInternalAccess)value).MemberName);
 				else if (value is bool)
 					yield return (bool)value ? "true" : "false";
 				else if (value is int)
