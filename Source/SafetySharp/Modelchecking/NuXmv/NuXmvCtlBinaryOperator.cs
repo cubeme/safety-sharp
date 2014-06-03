@@ -19,16 +19,17 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 namespace SafetySharp.Modelchecking.NuXmv
 {
-    using System;
-
-    public enum NuXmvRadix
+    public enum NuXmvCtlBinaryOperator
     {
-        BinaryRadix,
-        OctalRadix,
-        DecimalRadix,
-        HexadecimalRadix
+        LogicalAnd,
+        LogicalOr,
+        LogicalXor,
+        LogicalNxor,
+        LogicalImplies,
+        LogicalEquivalence,
+        ExistsUntil,
+        ForallUntil
     }
 }

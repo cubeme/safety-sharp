@@ -221,7 +221,7 @@ let elements = [
                 [
                     {
                         Name = "Length"
-                        Type = "int32"
+                        Type = "int"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Length of the word."
@@ -261,7 +261,7 @@ let elements = [
                 [
                     {
                         Name = "Lower"
-                        Type = "int32"
+                        Type = "int"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Lower bound of the array."
@@ -269,7 +269,7 @@ let elements = [
                     }
                     {
                         Name = "Upper"
-                        Type = "int32"
+                        Type = "int"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Upper bound of the array."
@@ -304,8 +304,8 @@ let elements = [
         [
                   
             {   
-                Name = "SimpleTypeSpecifier"
-                Base = "TypeSpecifier"
+                Name = "NuXmvSimpleTypeSpecifier"
+                Base = "NuXmvTypeSpecifier"
                 IsAbstract = true
                 Properties = 
                 [
@@ -322,13 +322,13 @@ let elements = [
             }
             {
                 Name = "BooleanTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = false
                 Properties = []
             }
             {   
                 Name = "WordTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = true
                 Properties = 
                 [
@@ -356,19 +356,19 @@ let elements = [
             } //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement            
             {
                 Name = "RealTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = false
                 Properties = []
             }
             {
                 Name = "IntegerTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = false
                 Properties = []
             }            
             {
                 Name = "EnumerationTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = false
                 Properties = 
                 [
@@ -386,7 +386,7 @@ let elements = [
             }            
             {
                 Name = "ArrayTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = false
                 Properties = 
                 [
@@ -408,7 +408,7 @@ let elements = [
                     }
                     {
                         Name = "ElementTypeSpecifier"
-                        Type = "SimpleTypeSpecifier"
+                        Type = "NuXmvSimpleTypeSpecifier"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Type of the elements of the array."
@@ -418,7 +418,7 @@ let elements = [
             }             
             {
                 Name = "IntegerRangeTypeSpecifier"
-                Base = "SimpleTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
                 IsAbstract = false
                 Properties = 
                 [
@@ -506,7 +506,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "BigInteger"
+                        Type = "System.Numerics.BigInteger"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The integer value of an expression."
@@ -538,7 +538,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "BitArray"
+                        Type = "System.Collections.BitArray"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The bit value of a word expression."
@@ -586,7 +586,7 @@ let elements = [
                 [
                     {
                         Name = "From"
-                        Type = "BigInteger"
+                        Type = "System.Numerics.BigInteger"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The value the range starts with (inclusive)."
@@ -594,7 +594,7 @@ let elements = [
                     }
                     {
                         Name = "To"
-                        Type = "BigInteger"
+                        Type = "System.Numerics.BigInteger"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The value the range ends with (inclusive)."
@@ -783,7 +783,7 @@ let elements = [
                 [
                     {
                         Name = "TypeSpecifier"
-                        Type = "TypeSpecifier"
+                        Type = "NuXmvTypeSpecifier"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The typespecifier of the tuple which is mainly used in the variable declaration part of a module."
@@ -807,7 +807,7 @@ let elements = [
                 [
                     {
                         Name = "TypeSpecifier"
-                        Type = "SimpleTypeSpecifier"
+                        Type = "NuXmvSimpleTypeSpecifier"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The typespecifier of the tuple which is mainly used in the variable declaration part of a module."
@@ -1058,7 +1058,7 @@ let elements = [
                         Type = "SingleAssignConstraint"
                         CollectionType = Array
                         Validation = None
-                        Comment = ""
+                        Comment = "."
                         CanBeNull = false
                     }                    
                 ]
@@ -1093,20 +1093,20 @@ let elements = [
                         Type = "ModuleElement"
                         CollectionType = Array
                         Validation = None
-                        Comment = ""
+                        Comment = "."
                         CanBeNull = false
                     }
                 ]
             }
             // Chapter 2.3.11 MODULE Instantiations p 31. TODO: Maybe move into Type-Namespace or make a TypeSpecifier-Namespace
             {   
-                Name = "ModuleTypeSpecifier"
-                Base = "TypeSpecifier"
+                Name = "NuXmvModuleTypeSpecifier"
+                Base = "NuXmvTypeSpecifier"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Identifier"
+                        Name = "ModuleName"
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = None
@@ -1144,17 +1144,139 @@ let elements = [
                 ]
             }
             // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
+            // just description
             // Chapter 2.3.15 Context p 34
+            // just description
             // Chapter 2.3.16 ISA Declarations p 34 (depreciated)
+            // don't implement as it is depreciated
             // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35
+            //TODO: Useful for debugging and CEGAR (Counterexample Guided Abstraction Refinement)
+            {
+                Name = "PredDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Identifier"
+                        Type = "Identifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = true
+                    }    
+                    {
+                        Name = "Expression"
+                        Type = "SimpleExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
+            {
+                Name = "MirrorDeclaration"
+                Base = "ModuleElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "VariableIdentifier"
+                        Type = "ComplexIdentifier"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "."
+                        CanBeNull = false
+                    }                    
+                ]
+            }
         ]
     }
     {
-        // Chapter 2.4.1 CTL Specifications p 35-42
+        // Chapter 2.4 Specifications p 35-42
         Name = "SafetySharp.Modelchecking.NuXmv.Specification"
         Classes =
         [
             // Chapter 2.4.1 CTL Specifications p 35-36
+            {   
+                Name = "CtlExpression"
+                Base = "NuXmvElement"
+                IsAbstract = true
+                Properties = []
+            }
+            {   
+                Name = "CtlSimpleExpression"
+                Base = "CtlExpression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "SimpleExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The simple expression without a next."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {   
+                Name = "CtlBinaryExpression"
+                Base = "CtlExpression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Left"
+                        Type = "CtlExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the left-hand side of the binary operator."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "NuXmvCtlBinaryOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the binary expression."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Right"
+                        Type = "CtlExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the right-hand side of the binary operator."
+                        CanBeNull = false
+                    }
+                ]
+            }            
+            {   
+                Name = "CtlUnaryExpression"
+                Base = "CtlExpression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "CtlExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression of the unary expression."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "NuXmvCtlUnaryOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the unary expression."
+                        CanBeNull = false
+                    }
+                ]
+            }
             (*{   
                 Name = "Identifier"
                 Base = "NuXmvElement"
@@ -1171,248 +1293,98 @@ let elements = [
                     }
                 ]
             }*)
-        ]
-    }
-
-
-
-
-
-
-    // Chapter 2.4.1 CTL Specifications p 35-36
-    // Chapter 2.4.2 Invariant Specifications p 36
-    // Chapter 2.4.3 LTL Specifications p 36-38
-    // Chapter 2.4.4 Real Time CTL Specifications and Computations p 38-39
-    // Chapter 2.4.5 PSL Specifications p 39-42
-    // Chapter 2.5 Variable Order Input p 42-44
-    
-    (*
-    {
-        Name = "SafetySharp.Modelchecking.NuXmv.Statements"
-        Classes = 
-        [
+            // Chapter 2.4.2 Invariant Specifications p 36
+            //TODO
+            // Chapter 2.4.3 LTL Specifications p 36-38
             {   
-                Name = "Statement"
-                Base = "PromelaElement"
+                Name = "LtlExpression"
+                Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
             }
             {   
-                Name = "BlockStatement"
-                Base = "Statement"
-                IsAbstract = true
-                Properties = 
-                [
-                    {
-                        Name = "Statements"
-                        Type = "Statement"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "A list of statements."
-                        CanBeNull = false
-                    }
-                ]
-            }
-            {   
-                Name = "SimpleBlockStatement"
-                Base = "BlockStatement"
-                IsAbstract = false
-                Properties = []
-            }
-            {   
-                Name = "AtomicBlockStatement"
-                Base = "BlockStatement"
-                IsAbstract = false
-                Properties = []
-            }
-            {   
-                Name = "DStepBlockStatement"
-                Base = "BlockStatement"
-                IsAbstract = false
-                Properties = []
-            }
-            {   
-                Name = "ReturnStatement"
-                Base = "Statement"
+                Name = "LtlSimpleExpression"
+                Base = "LtlExpression"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Expression"
-                        Type = "Expression"
+                        Type = "SimpleExpression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The expression that should be evaluated and returned."
+                        Comment = "The simple expression without a next."
                         CanBeNull = false
                     }
                 ]
             }
             {   
-                Name = "ExpressionStatement"
-                Base = "Statement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The expression that should be evaluated."
-                        CanBeNull = false
-                    }
-                ]
-            }
-            {
-                Name = "SkipStatement" //Convenience and generated code gets prettier. In Promela it is equivalent to a ExpressionStatement with the Boolean Literal True
-                Base = "Statement"
-                IsAbstract = false
-                Properties = []
-            }
-            {   
-                Name = "GuardedCommandRepetitionStatement"  //do :: od
-                Base = "Statement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Clauses"
-                        Type = "GuardedCommandClause"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
-                        CanBeNull = false
-                    }
-                ]
-            }
-            {   
-                Name = "GuardedCommandSelectionStatement" //if :: fi
-                Base = "Statement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Clauses"
-                        Type = "GuardedCommandClause"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
-                        CanBeNull = false
-                    }
-                ]
-            }
-            {   
-                Name = "GuardedCommandClause"
-                Base = "PromelaElement"
-                IsAbstract = true
-                Properties = []
-            }          
-            {   
-                Name = "GuardedCommandExpressionClause"
-                Base = "GuardedCommandClause"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Guard"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The guard of the clause that determines whether the statement can be executed."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Statement"
-                        Type = "Statement"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The statement of the clause that can only be executed if the guard holds."
-                        CanBeNull = false
-                    }
-                ]
-            }          
-            {   
-                Name = "GuardedCommandElseClause"
-                Base = "GuardedCommandClause"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Statement"
-                        Type = "Statement"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The statement of the clause that can only be executed if no other clause holds."
-                        CanBeNull = false
-                    }
-                ]
-            }          
-            {   
-                Name = "AssignmentStatement"
-                Base = "Statement"
+                Name = "LtlBinaryExpression"
+                Base = "LtlExpression"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Left"
-                        Type = "VariableReferenceExpression"
+                        Type = "LtlExpression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The reference to the variable on the left-hand side of the assignment operator."
+                        Comment = "The expression on the left-hand side of the binary operator."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "NuXmvLtlBinaryOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "Expression"
+                        Type = "LtlExpression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The expression on the right-hand side of the assignment operator."
+                        Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
                     }
                 ]
-            }
+            }            
             {   
-                Name = "DeclarationStatement"
-                Base = "Statement"
+                Name = "LtlUnaryExpression"
+                Base = "LtlExpression"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Type"
-                        Type = "PromelaTypeName"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "The type of the declared variable."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Identifier"
-                        Type = "string"
+                        Name = "Expression"
+                        Type = "LtlExpression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The name of the declared variable."
+                        Comment = "The expression of the unary expression."
                         CanBeNull = false
                     }
                     {
-                        Name = "ArraySize"
-                        Type = "Int32"
+                        Name = "Operator"
+                        Type = "NuXmvLtlUnaryOperator"
                         CollectionType = Singleton
-                        Validation = None
-                        Comment = "The size of the array, if declared variable is an array. Otherwise 0."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "InitialValue"
-                        Type = "Expression"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "An expression, which determines the initial value of the declared variable."
+                        Validation = InRange
+                        Comment = "The operator of the unary expression."
                         CanBeNull = false
                     }
                 ]
             }
+            // Chapter 2.4.4 Real Time CTL Specifications and Computations p 38-39
+            //TODO
+            // Chapter 2.4.5 PSL Specifications p 39-42
+            //TODO
         ]
-    }*)
+    }
+
+    
+    // Chapter 2.5 Variable Order Input p 42-44
+    
+    
 ]
 
 let Generate outputFile =

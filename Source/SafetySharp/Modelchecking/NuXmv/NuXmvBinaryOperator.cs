@@ -19,16 +19,36 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 namespace SafetySharp.Modelchecking.NuXmv
 {
-    using System;
-
-    public enum NuXmvRadix
+    public enum NuXmvBinaryOperator
     {
-        BinaryRadix,
-        OctalRadix,
-        DecimalRadix,
-        HexadecimalRadix
+        LogicalAnd,
+        LogicalOr,
+        LogicalXor,
+        LogicalNxor,
+        LogicalImplies,
+        LogicalEquivalence,
+        Equality,
+        Inequality,
+        LessThan,
+        GreaterThan,
+        LessEqual,
+        GreaterEqual,
+        IntegerAddition,
+        IntegerSubtraction,
+        IntegerMultiplication,
+        IntegerDivision,
+        IntegerRemainder,
+        BitShiftRight,
+        BitShiftLeft,
+        //IndexSubscript,
+        //WordBitsSelection (Tenary)
+        //WordConcatenation
+        //WordWidthExtension
+        //WordWidthResize
+        //Union
+        //Inclusion
+        //IfThenElse (Tenary)
     }
 }

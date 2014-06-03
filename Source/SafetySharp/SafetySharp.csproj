@@ -58,6 +58,7 @@
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Reflection.Metadata, Version=1.0.9.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Bcl.Metadata.1.0.9-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
@@ -96,8 +97,15 @@
     <Compile Include="Formulas\UntransformedStateFormula.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmv.Generated.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvBinaryOperator.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvCtlBinaryOperator.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvCtlUnaryOperator.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvLtlBinaryOperator.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvLtlUnaryOperator.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvRadix.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvSignSpecifier.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvUnaryOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaBinaryFormulaOperator.cs" />
     <Compile Include="Modelchecking\Promela\PromelaHelpers.cs" />
     <Compile Include="Modelchecking\Promela\PromelaUnaryFormulaOperator.cs" />

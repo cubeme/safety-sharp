@@ -19,29 +19,14 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 namespace SafetySharp.Modelchecking.NuXmv
 {
+    using System;
+
     public enum NuXmvSignSpecifier
     {
-        
-            //TODO: Move into own enum
-            {
-                Name = "SignSpecifier"
-                Base = "NuXmvElement"
-                IsAbstract = true
-                Properties = []
-    }
-            {
-                Name = "UnsignedSpecifier"
-                Base = "SignSpecifier"
-                IsAbstract = false
-                Properties = []
-}
-            {
-                Name = "SignedSpecifier"
-                Base = "SignSpecifier"
-                IsAbstract = false
-                Properties = []
-            }
+        UnsignedSpecifier,
+        SignedSpecifier
     }
 }
