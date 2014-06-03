@@ -36,47 +36,40 @@ namespace SafetySharp.CSharp.Transformation
 	internal class ConfigurationTransformation
 	{
 		/// <summary>
-		///     The <see cref="ComponentResolver" /> that is used to resolve components.
-		/// </summary>
-		private readonly ComponentResolver _componentResolver;
-
-		/// <summary>
-		///     The <see cref="MetamodelResolver" /> that is used to resolve metamodel references.
-		/// </summary>
-		private readonly MetamodelResolver _metamodelResolver;
-
-		/// <summary>
 		///     The <see cref="ModelConfiguration" /> instance that is being transformed.
 		/// </summary>
 		private readonly ModelConfigurationSnapshot _modelConfiguration;
 
 		/// <summary>
+		///     The <see cref="ComponentResolver" /> that is used to resolve components.
+		/// </summary>
+		private ComponentResolver _componentResolver;
+
+		/// <summary>
 		///     Initializes a new instance of the <see cref="ConfigurationTransformation" /> type.
 		/// </summary>
 		/// <param name="modelConfiguration">The model configuration that should be transformed.</param>
-		/// <param name="metamodelResolver">The <see cref="MetamodelResolver" /> that should be used to resolve metamodel references.</param>
-		/// <param name="componentResolver">The <see cref="ComponentResolver" /> that should be used to resolve components.</param>
-		internal ConfigurationTransformation(ModelConfigurationSnapshot modelConfiguration,
-											 MetamodelResolver metamodelResolver,
-											 ComponentResolver componentResolver)
+		internal ConfigurationTransformation(ModelConfigurationSnapshot modelConfiguration)
 		{
 			Argument.NotNull(modelConfiguration, () => modelConfiguration);
-			Argument.NotNull(metamodelResolver, () => metamodelResolver);
-			Argument.NotNull(componentResolver, () => componentResolver);
-
 			_modelConfiguration = modelConfiguration;
-			_metamodelResolver = metamodelResolver;
-			_componentResolver = componentResolver;
 		}
 
 		/// <summary>
 		///     Transforms the the <see cref="ModelConfiguration" /> instance passed to the constructor into a
 		///     <see cref="MetamodelConfiguration" /> instance.
 		/// </summary>
-		internal MetamodelConfiguration Transform()
+		/// <param name="componentResolver">The <see cref="ComponentResolver" /> that should be used to resolve components.</param>
+		internal MetamodelConfiguration Transform(ref ComponentResolver componentResolver)
 		{
+			Assert.NotNull(componentResolver, "Argument 'componentResolver' cannot be null.");
+
+			_componentResolver = componentResolver;
 			var partitions = _modelConfiguration.PartitionRoots.Select(TransformPartition).ToImmutableArray();
-			return new MetamodelConfiguration(partitions);
+			var configuration = new MetamodelConfiguration(partitions);
+
+			componentResolver = _componentResolver;
+			return configuration;
 		}
 
 		/// <summary>
@@ -95,22 +88,23 @@ namespace SafetySharp.CSharp.Transformation
 		private ComponentConfiguration TransformComponent(ComponentSnapshot component)
 		{
 			var identifier = component.Name == null ? Identifier.Unknown : new Identifier(component.Name);
-			var componentDeclarationReference = _componentResolver.Resolve(component);
+			var componentDeclaration = _componentResolver.ResolveDeclaration(component);
 
-			var componentDeclaration = _metamodelResolver.Resolve(componentDeclarationReference);
-
-			var fieldValues = componentDeclaration.Fields.Select(field =>
+			var fields = componentDeclaration.Fields.Select(field =>
 			{
 				var values = component.GetInitialValuesOfField(field.Identifier.Name);
-				return new ValueArray(values.ToImmutableArray());
-			}).ToImmutableArray();
+				return new { Field = field, Configuration = new FieldConfiguration(values.ToImmutableArray()) };
+			}).ToImmutableDictionary(field => field.Field, field => field.Configuration);
 
 			var subComponents = componentDeclaration
 				.SubComponents
 				.Select(subComponent => TransformComponent(component.GetSubComponent(subComponent.Identifier.Name)))
 				.ToImmutableArray();
 
-			return new ComponentConfiguration(identifier, componentDeclarationReference, fieldValues, subComponents);
+			var configuration = new ComponentConfiguration(identifier, componentDeclaration, fields, subComponents);
+			_componentResolver = _componentResolver.With(component, configuration);
+
+			return configuration;
 		}
 	}
 }

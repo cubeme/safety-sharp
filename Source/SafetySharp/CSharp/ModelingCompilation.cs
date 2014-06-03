@@ -74,7 +74,7 @@ namespace SafetySharp.CSharp
 		{
 			Argument.NotNull(component, () => component);
 
-			var componentType = component.Component.GetType();
+			var componentType = component.Type;
 			var componentClasses = (from syntaxTree in CSharpCompilation.SyntaxTrees
 									let semanticModel = CSharpCompilation.GetSemanticModel(syntaxTree)
 									from classDeclaration in syntaxTree.DescendantNodesAndSelf<ClassDeclarationSyntax>()

@@ -59,8 +59,8 @@ namespace Tests.CSharp.Transformation
 		{
 			return new ComponentConfiguration(
 				new Identifier(name),
-				_componentResolver.Resolve(component),
-				ImmutableArray<ValueArray>.Empty,
+				_componentResolver.ResolveDeclaration(component),
+				ImmutableDictionary<FieldDeclaration, FieldConfiguration>.Empty,
 				ImmutableArray<ComponentConfiguration>.Empty);
 		}
 
@@ -82,9 +82,14 @@ namespace Tests.CSharp.Transformation
 			return _symbolMap.GetFieldReference(fieldSymbol);
 		}
 
-		private static ImmutableArray<ValueArray> ToValueArray(params object[][] valueArrays)
+		private static ImmutableDictionary<FieldDeclaration, FieldConfiguration> CreateFieldConfigurations(ComponentDeclaration component,
+																										   params object[][] valueArrays)
 		{
-			return ImmutableArray.CreateRange(valueArrays.Select(values => new ValueArray(values.ToImmutableArray())));
+			return valueArrays.Select((values, index) => new
+			{
+				Field = component.Fields[index],
+				Configuration = new FieldConfiguration(values.ToImmutableArray())
+			}).ToImmutableDictionary(field => field.Field, field => field.Configuration);
 		}
 
 		[Test]
@@ -127,18 +132,18 @@ namespace Tests.CSharp.Transformation
 			var updateBody = new GuardedCommandStatement(ImmutableArray.Create(clause1, clause2));
 			var updateMethod = MethodDeclaration.UpdateMethod.WithBody(updateBody.AsBlockStatement());
 
-			var expected = ComponentDeclaration
+			var expectedComponent = ComponentDeclaration
 				.Empty
 				.WithIdentifier(new Identifier("BooleanComponent"))
 				.WithUpdateMethod(updateMethod)
 				.WithFields(ImmutableArray.Create(field));
 
-			_metamodelCompilation.Components.Should().BeEquivalentTo(expected);
+			_metamodelCompilation.Components.Should().BeEquivalentTo(expectedComponent);
 			_metamodelCompilation.Interfaces.Should().BeEmpty();
 
 			_metamodelConfiguration.Partitions.Should().BeEquivalentTo(
 				new Partition(CreateComponentConfiguration(_configuration.PartitionRoots[0], "Root0")
-								  .WithFieldValues(ToValueArray(new object[] { true, false }))));
+								  .WithFields(CreateFieldConfigurations(expectedComponent, new object[] { true, false }))));
 		}
 
 		[Test]

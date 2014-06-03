@@ -79,7 +79,7 @@ namespace SafetySharp.Modelchecking.Promela
         internal ComponentInstanceScope AffectedComponentScope;
         internal MMDeclarations.FieldDeclaration FieldDeclaration;
         internal MM.Identifier Fieldname;
-        internal MMConfigurations.ValueArray InitialValues;
+        internal MMConfigurations.FieldConfiguration InitialValues; // TODO DICTIONARY REFACTORING
 
         internal string GetName()
         {
@@ -255,7 +255,7 @@ namespace SafetySharp.Modelchecking.Promela
             {
                 var type = field.FieldDeclaration.Type;
                 var name = field.GetName();
-                var initialvalueClauses = field.InitialValues.Values.Select(
+                var initialvalueClauses = field.InitialValues.InitialValues.Select(// TODO DICTIONARY REFACTORING
                     value =>
                     {
                         var prValue = ConvertObject(value, type);
@@ -280,12 +280,11 @@ namespace SafetySharp.Modelchecking.Promela
         {
 			var updateMethods = ImmutableArray.CreateBuilder<ComponentConfigurationUpdateMethod>(32);
 			var scope = new ComponentInstanceScope { Identifiers = parentScope.Identifiers.Add(component.Identifier) };
-            var componentDeclaration = MmAccessTypeToConcreteTypeDictionary.Resolve(component.Type);
             var updateMethod = new ComponentConfigurationUpdateMethod
             {
                 AffectedComponentScope = scope,
                 AffectedComponentConfiguration = component,
-                UpdateMethod = componentDeclaration.UpdateMethod.Body
+                UpdateMethod = component.Declaration.UpdateMethod.Body
             };
 
             updateMethods.Add(updateMethod);
@@ -328,12 +327,12 @@ namespace SafetySharp.Modelchecking.Promela
             var myComponentConfigurationDictionary =
                 ImmutableDictionary.CreateBuilder<MMConfigurations.ComponentConfiguration, ComponentInstanceScope>();
 
-            var type = mmAccessTypeToConcreteTypeDictionary.Resolve(comp.Type);
+            var type = comp.Declaration;
 
 			for (var i = 0; i < type.Fields.Length; ++i)
             {
 				var fieldDecl = type.Fields[i];
-				var fieldInitialValue = comp.FieldValues[i];
+				var fieldInitialValue = comp.Fields.Skip(i).Single().Value; // TODO DICTIONARY REFACTORING
                 var fieldInfo = new FieldInfo
                 {
                     Fieldname = fieldDecl.Identifier,
@@ -418,14 +417,14 @@ namespace SafetySharp.Modelchecking.Promela
         }
 
         /// <summary>
-        ///     Visits an element of type <see cref="MMFormulae.ExpressionFormula" />.
+        ///     Visits an element of type <see cref="MMFormulae.StateFormula" />.
         /// </summary>
-        /// <param name="expressionFormula">The <see cref="MMFormulae.ExpressionFormula" /> instance that should be visited.</param>
+        /// <param name="expressionFormula">The <see cref="MMFormulae.StateFormula" /> instance that should be visited.</param>
         public override PrFormula.PromelaFormula VisitStateFormula(MMFormulae.StateFormula expressionFormula)
         {
             Argument.NotNull(expressionFormula, () => expressionFormula);
 
-            var scope = _commonKnowledge.MmConfigurationToScope[expressionFormula.AssociatedComponent];
+            var scope = _commonKnowledge.MmConfigurationToScope[/* TODO: REMOVED ASSOCIATED COMPONENT */null];
             var expressionVisitor = _commonKnowledge.GetExpressionVisitor(scope);
             var promelaFormula = expressionFormula.Expression.Accept(expressionVisitor);
             return new PrFormula.PropositionalStateFormula(promelaFormula);

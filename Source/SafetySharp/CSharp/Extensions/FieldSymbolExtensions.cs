@@ -20,22 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Tests.CSharp.Normalization
+namespace SafetySharp.CSharp.Extensions
 {
 	using System;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
-	using SafetySharp.CSharp.Normalization;
+	using Utilities;
 
-	internal class CSharpNormalizerTests<TNormalizer>
-		where TNormalizer : CSharpNormalizer, new()
+	/// <summary>
+	///     Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
+	/// </summary>
+	internal static class FieldSymbolExtensions
 	{
-		protected static SyntaxNode Normalize(string csharpCode)
+		/// <summary>
+		///     Gets the full name of <paramref name="symbol" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass.FieldName'.
+		/// </summary>
+		/// <param name="symbol">The symbol the full name should be returned for.</param>
+		internal static string GetFullName(this IFieldSymbol symbol)
 		{
-			var compilation = new TestCompilation(csharpCode);
-
-			var normalizer = new TNormalizer();
-			return normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single().GetRoot();
+			Argument.NotNull(symbol, () => symbol);
+			return String.Format("{0}.{1}", ((ITypeSymbol)symbol.ContainingSymbol).GetFullName(), symbol.Name);
 		}
 	}
 }

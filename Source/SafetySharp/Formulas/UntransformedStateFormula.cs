@@ -49,5 +49,13 @@ namespace SafetySharp.Formulas
 		{
 			get { throw new NotSupportedException(); }
 		}
+
+		/// <summary>
+		///     Returns a string that represents the current object.
+		/// </summary>
+		public override string ToString()
+		{
+			return Expression;
+		}
 	}
 }

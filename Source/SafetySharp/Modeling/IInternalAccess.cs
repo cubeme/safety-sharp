@@ -20,72 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel
+namespace SafetySharp.Modeling
 {
 	using System;
-	using SafetySharp.Modeling;
-
-	public class LightBarrier : Component
-	{
-		public bool Triggered;
-
-		public int Do()
-		{
-			return 1;
-		}
-	}
 
 	/// <summary>
-	///     This is a great interface.
+	/// 
 	/// </summary>
-	internal interface MyInterface
+	internal interface IInternalAccess
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		Component Component { get; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		string MemberName { get; }
 	}
-
-	internal class Test2 : Component
-	{
-		private BooleanComponent boolean1;
-		public BooleanComponent boolean2;
-
-		public Test2()
-		{
-			boolean1 = new BooleanComponent(true);
-			boolean2 = new BooleanComponent(false);
-		}
-	}
-
-	internal class BooleanComponent : Component
-	{
-		public bool _value;
-
-		public BooleanComponent(bool nondeterministicInitialValue)
-		{
-			if (nondeterministicInitialValue)
-				SetInitialValues(() => _value, true, false);
-			else
-				_value = false;
-
-			sbyte i = 0;
-			i++;
-		}
-
-		protected override void Update()
-		{
-			_value = Choose(true, false);
-		}
-	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
 }

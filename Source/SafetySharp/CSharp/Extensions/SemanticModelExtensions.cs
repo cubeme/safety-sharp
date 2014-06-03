@@ -74,6 +74,17 @@ namespace SafetySharp.CSharp.Extensions
 		}
 
 		/// <summary>
+		///     Gets the <see cref="ITypeSymbol" /> representing the type <typeparamref name="T"/> within the context of
+		///     the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model the type symbol should be returned for.</param>
+		internal static ITypeSymbol GetTypeSymbol<T>(this SemanticModel semanticModel)
+		{
+			Argument.NotNull(semanticModel, () => semanticModel);
+			return semanticModel.Compilation.GetTypeByMetadataName(typeof(T).FullName);
+		}
+
+		/// <summary>
 		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}()" />
 		///     method within the context of the <paramref name="semanticModel" />.
 		/// </summary>

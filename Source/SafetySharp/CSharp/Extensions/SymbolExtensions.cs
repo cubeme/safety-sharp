@@ -23,44 +23,37 @@
 namespace SafetySharp.CSharp.Extensions
 {
 	using System;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
 
 	/// <summary>
-	///     Provides extension methods for working with <see cref="INamespaceOrTypeSymbol" /> instances.
+	///     Provides extension methods for working with <see cref="ISymbol" /> instances.
 	/// </summary>
-	internal static class NamespaceOrTypeSymbolExtensions
+	internal static class SymbolExtensions
 	{
 		/// <summary>
-		///     Gets the full name of <paramref name="symbol" /> in the form of 'Namespace1.Namespace2.ClassName+InnerClass'.
+		///     Gets the full name of <paramref name="symbol" />.
 		/// </summary>
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
-		internal static string GetFullName(this INamespaceOrTypeSymbol symbol)
+		internal static string GetFullName(this ISymbol symbol)
 		{
 			Argument.NotNull(symbol, () => symbol);
 
-			var arraySymbol = symbol as IArrayTypeSymbol;
-			if (arraySymbol != null)
-				return String.Format("{0}[{1}]", arraySymbol.ElementType.GetFullName(),
-									 String.Join(",", Enumerable.Range(0, arraySymbol.Rank).Select(r => String.Empty)));
+			var symbolName = String.Empty;
+			var typeSymbol = symbol as INamespaceOrTypeSymbol;
+			var fieldSymbol = symbol as IFieldSymbol;
+			var methodSymbol = symbol as IMethodSymbol;
 
-			var typePrefix = String.Empty;
-			if (!symbol.ContainingNamespace.IsGlobalNamespace)
-					typePrefix = symbol.ContainingNamespace.GetFullName() + ".";
+			if (typeSymbol != null)
+				symbolName = typeSymbol.GetFullName();
+			else if (fieldSymbol != null)
+				symbolName = fieldSymbol.GetFullName();
+			else if (methodSymbol != null)
+				symbolName = methodSymbol.GetFullName();
+			else
+				Argument.Satisfies(false, () => symbol, "The given symbol is of an unsupported type.");
 
-			var namedTypeSymbol = symbol as INamedTypeSymbol;
-			if (namedTypeSymbol == null)
-				return String.Format("{0}{1}", typePrefix, symbol.Name);
-
-			if (symbol.ContainingType != null)
-				typePrefix = symbol.ContainingType.GetFullName() + "+";
-
-			var typeParameters = String.Empty;
-			if (namedTypeSymbol.Arity > 0)
-				typeParameters = String.Format("<{0}>", String.Join(", ", namedTypeSymbol.TypeArguments.Select(type => type.GetFullName())));
-
-			return String.Format("{0}{1}{2}", typePrefix, namedTypeSymbol.Name, typeParameters);
+			return symbolName;
 		}
 	}
 }

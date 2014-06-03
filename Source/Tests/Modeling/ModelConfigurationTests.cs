@@ -84,7 +84,7 @@ namespace Tests.Modeling
 				var component3 = new ComplexComponent(component1, component2, null);
 				var configuration = new TestModelConfiguration(component3).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3);
+				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot());
 			}
 
 			[Test]
@@ -95,7 +95,7 @@ namespace Tests.Modeling
 				var component3 = new ComplexComponent(component1, component2, new object());
 				var configuration = new TestModelConfiguration(component3).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3);
+				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot());
 			}
 
 			[Test]
@@ -104,7 +104,7 @@ namespace Tests.Modeling
 				var component = new NestedComponent(null);
 				var configuration = new TestModelConfiguration(component).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component);
+				configuration.Components.Should().BeEquivalentTo(component.GetSnapshot());
 			}
 
 			[Test]
@@ -118,9 +118,9 @@ namespace Tests.Modeling
 				var component6 = new ComplexComponent(component4, component5, new object());
 				var configuration = new TestModelConfiguration(component6).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component)
-							 .Should()
-							 .BeEquivalentTo(component1, component2, component3, component4, component5, component6);
+				configuration.Components.Should()
+							 .BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot(), component4.GetSnapshot(),
+											 component5.GetSnapshot(), component6.GetSnapshot());
 			}
 
 			[Test]
@@ -132,7 +132,8 @@ namespace Tests.Modeling
 				var component4 = new NestedComponent(component3);
 				var configuration = new TestModelConfiguration(component4).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3, component4);
+				configuration.Components.Should()
+							 .BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot(), component4.GetSnapshot());
 			}
 
 			[Test]
@@ -142,7 +143,7 @@ namespace Tests.Modeling
 				var component2 = new NestedComponent(component1);
 				var configuration = new TestModelConfiguration(component2).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2);
+				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot());
 			}
 
 			[Test]
@@ -152,7 +153,7 @@ namespace Tests.Modeling
 				var component2 = new EmptyComponent();
 				var configuration = new TestModelConfiguration(component1, component2).GetSnapshot();
 
-				configuration.Components.Select(c => c.Component).Should().BeEquivalentTo(component1, component2);
+				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot());
 			}
 		}
 
@@ -213,6 +214,16 @@ namespace Tests.Modeling
 		internal class PartitionRootsProperty : ModelConfigurationTests
 		{
 			[Test]
+			public void AssignsNamesToRootComponents()
+			{
+				var configuration = new TestModelConfiguration(new EmptyComponent());
+				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0");
+
+				configuration = new TestModelConfiguration(new EmptyComponent(), new EmptyComponent(), new EmptyComponent());
+				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0", "Root1", "Root2");
+			}
+
+			[Test]
 			public void ContainsAllTopLevelComponents()
 			{
 				var component1 = new EmptyComponent();
@@ -220,7 +231,7 @@ namespace Tests.Modeling
 				var component3 = new EmptyComponent();
 				var configuration = new TestModelConfiguration(component1, component2, component3).GetSnapshot();
 
-				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component1, component2, component3);
+				configuration.PartitionRoots.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot());
 			}
 
 			[Test]
@@ -229,7 +240,7 @@ namespace Tests.Modeling
 				var component = new EmptyComponent();
 				var configuration = new TestModelConfiguration(component).GetSnapshot();
 
-				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component);
+				configuration.PartitionRoots.Should().BeEquivalentTo(component.GetSnapshot());
 			}
 
 			[Test]
@@ -239,17 +250,7 @@ namespace Tests.Modeling
 				var component2 = new NestedComponent(component1);
 				var configuration = new TestModelConfiguration(component2).GetSnapshot();
 
-				configuration.PartitionRoots.Select(c => c.Component).Should().BeEquivalentTo(component2);
-			}
-
-			[Test]
-			public void AssignsNamesToRootComponents()
-			{
-				var configuration = new TestModelConfiguration(new EmptyComponent());
-				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0");
-
-				configuration = new TestModelConfiguration(new EmptyComponent(), new EmptyComponent(), new EmptyComponent());
-				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0", "Root1", "Root2");
+				configuration.PartitionRoots.Should().BeEquivalentTo(component2.GetSnapshot());
 			}
 		}
 	}

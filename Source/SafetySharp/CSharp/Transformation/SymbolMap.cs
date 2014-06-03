@@ -38,9 +38,9 @@ namespace SafetySharp.CSharp.Transformation
 	internal class SymbolMap
 	{
 		/// <summary>
-		///     Maps a C# symbol to a metamodel reference.
+		///     Maps a C# symbol by its name to a metamodel reference.
 		/// </summary>
-		private readonly Dictionary<ISymbol, IMetamodelReference> _symbolMap = new Dictionary<ISymbol, IMetamodelReference>();
+		private readonly Dictionary<ISymbol, IMetamodelReference> _symbolMap = new Dictionary<ISymbol, IMetamodelReference>(new SymbolComparer());
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="SymbolMap" /> type.
@@ -163,6 +163,42 @@ namespace SafetySharp.CSharp.Transformation
 			Assert.NotNull(symbol, "The semantic model could not find a symbol for '{0}' '{1}'.", syntaxNode.GetType().FullName, syntaxNode);
 
 			_symbolMap.Add(symbol, new MetamodelReference<T>());
+		}
+
+		/// <summary>
+		///     We cannot rely on reference equality or Equals() equality for C# symbols if the same symbol is obtained from different
+		///     compilations. We therefore have to define "our own notion of symbol equality", for which we use the GetFullName() of
+		///     the symbol as well as the name of the symbol's assembly.
+		/// </summary>
+		private class SymbolComparer : IEqualityComparer<ISymbol>
+		{
+			/// <summary>
+			///     Checks whether <paramref name="left" /> and <paramref name="right" /> are equal.
+			/// </summary>
+			/// <param name="left">The element on the left hand side of the equality operator.</param>
+			/// <param name="right">The element on the right hand side of the equality operator.</param>
+			public bool Equals(ISymbol left, ISymbol right)
+			{
+				return left.GetType() == right.GetType() && GetSymbolName(left) == GetSymbolName(right);
+			}
+
+			/// <summary>
+			///     Gets the hash code of <paramref name="symbol" /> for our notion of symbol equality.
+			/// </summary>
+			/// <param name="symbol">The symbol the hash code should be returned for.</param>
+			public int GetHashCode(ISymbol symbol)
+			{
+				return GetSymbolName(symbol).GetHashCode();
+			}
+
+			/// <summary>
+			///     Gets the full name of <paramref name="symbol" />, also taking the defining assembly into account.
+			/// </summary>
+			/// <param name="symbol">The symbol the name should be returned for.</param>
+			private static string GetSymbolName(ISymbol symbol)
+			{
+				return String.Format("{1}[{0}]", symbol.ContainingAssembly.Identity, symbol.GetFullName());
+			}
 		}
 	}
 }

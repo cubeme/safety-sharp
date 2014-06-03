@@ -51,8 +51,7 @@ let elements = [
                 [
                     {
                         Name = "Modules"
-                        Type = "PromelaModule"
-                        CollectionType = Array
+                        Type = Array "PromelaModule"
                         Validation = None
                         Comment = "Modules (global vars, proctypes and formulas."
                         CanBeNull = false
@@ -73,8 +72,7 @@ let elements = [
                 [
                     {
                         Name = "Declarations"
-                        Type = "DeclarationStatement"
-                        CollectionType = Array
+                        Type = Array "DeclarationStatement"
                         Validation = None
                         Comment = "Global declarations."
                         CanBeNull = false
@@ -91,24 +89,21 @@ let elements = [
                 [
                     {
                         Name = "IsActive"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "If true then Proctype gets automatically executed at startup."
                         CanBeNull = false
                     }
                     {
                         Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the Proctype."
                         CanBeNull = false
                     }
                     {
                         Name = "Code"
-                        Type = "Statement"
-                        CollectionType = Array
+                        Type = Array "Statement"
                         Validation = None
                         Comment = "A list of statements with the code of the Proctype."
                         CanBeNull = false
@@ -123,16 +118,14 @@ let elements = [
                 [
                     {
                         Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = None
                         Comment = "The name of the formula (optional)."
                         CanBeNull = true
                     }
                     {
                         Name = "Formula"
-                        Type = "PromelaFormula"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaFormula"
                         Validation = NotNull
                         Comment = "The formula."
                         CanBeNull = false
@@ -165,8 +158,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "The Boolean value of the expression."
                         CanBeNull = false
@@ -181,8 +173,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None
                         Comment = "The Boolean value of the expression."
                         CanBeNull = false
@@ -197,24 +188,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "PromelaBinaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaBinaryOperator"
                         Validation = InRange
                         Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -229,16 +217,14 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "PromelaUnaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaUnaryOperator"
                         Validation = InRange
                         Comment = "The operator of the unary expression."
                         CanBeNull = false
@@ -254,24 +240,21 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the identifier which references a variable."
                         CanBeNull = false
                     }
                     {
                         Name = "Index"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = None
                         Comment = "Identifier references an array. This is the index of a specific element in this array."
                         CanBeNull = true
                     }
                     {
                         Name = "Member"
-                        Type = "VariableReferenceExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "VariableReferenceExpression"
                         Validation = None
                         Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
                         CanBeNull = true
@@ -298,8 +281,7 @@ let elements = [
                 [
                     {
                         Name = "Statements"
-                        Type = "Statement"
-                        CollectionType = Array
+                        Type = Array "Statement"
                         Validation = None
                         Comment = "A list of statements."
                         CanBeNull = false
@@ -332,8 +314,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression that should be evaluated and returned."
                         CanBeNull = false
@@ -348,8 +329,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton  "Expression"
                         Validation = NotNull
                         Comment = "The expression that should be evaluated."
                         CanBeNull = false
@@ -370,8 +350,7 @@ let elements = [
                 [
                     {
                         Name = "Clauses"
-                        Type = "GuardedCommandClause"
-                        CollectionType = Array
+                        Type = Array "GuardedCommandClause"
                         Validation = None
                         Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
                         CanBeNull = false
@@ -386,8 +365,7 @@ let elements = [
                 [
                     {
                         Name = "Clauses"
-                        Type = "GuardedCommandClause"
-                        CollectionType = Array
+                        Type = Array "GuardedCommandClause"
                         Validation = None
                         Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
                         CanBeNull = false
@@ -408,16 +386,14 @@ let elements = [
                 [
                     {
                         Name = "Guard"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The guard of the clause that determines whether the statement can be executed."
                         CanBeNull = false
                     }
                     {
                         Name = "Statement"
-                        Type = "Statement"
-                        CollectionType = Singleton
+                        Type = Singleton "Statement"
                         Validation = NotNull
                         Comment = "The statement of the clause that can only be executed if the guard holds."
                         CanBeNull = false
@@ -432,8 +408,7 @@ let elements = [
                 [
                     {
                         Name = "Statement"
-                        Type = "Statement"
-                        CollectionType = Singleton
+                        Type = Singleton "Statement"
                         Validation = NotNull
                         Comment = "The statement of the clause that can only be executed if no other clause holds."
                         CanBeNull = false
@@ -448,16 +423,14 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "VariableReferenceExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "VariableReferenceExpression"
                         Validation = NotNull
                         Comment = "The reference to the variable on the left-hand side of the assignment operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the assignment operator."
                         CanBeNull = false
@@ -472,32 +445,28 @@ let elements = [
                 [
                     {
                         Name = "Type"
-                        Type = "PromelaTypeName"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaTypeName"
                         Validation = None
                         Comment = "The type of the declared variable."
                         CanBeNull = false
                     }
                     {
                         Name = "Identifier"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the declared variable."
                         CanBeNull = false
                     }
                     {
                         Name = "ArraySize"
-                        Type = "Int32"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None
                         Comment = "The size of the array, if declared variable is an array. Otherwise 0."
                         CanBeNull = false
                     }
                     {
                         Name = "InitialValue"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = None
                         Comment = "An expression, which determines the initial value of the declared variable."
                         CanBeNull = false
@@ -524,8 +493,7 @@ let elements = [
                 [
                     { 
                         Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression used as a non-temporal Boolean formula."
                         CanBeNull = false
@@ -540,24 +508,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "PromelaFormula"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaFormula"
                         Validation = NotNull
                         Comment = "The formula on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "PromelaBinaryFormulaOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaBinaryFormulaOperator"
                         Validation = InRange
                         Comment = "The operator of the binary formula."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "PromelaFormula"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaFormula"
                         Validation = NotNull
                         Comment = "The formula on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -572,16 +537,14 @@ let elements = [
                 [
                     {
                         Name = "Operand"
-                        Type = "PromelaFormula"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaFormula"
                         Validation = NotNull
                         Comment = "The operand of the unary formula."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "PromelaUnaryFormulaOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "PromelaUnaryFormulaOperator"
                         Validation = InRange
                         Comment = "The operator of the unary formula."
                         CanBeNull = false

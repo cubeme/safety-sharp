@@ -42,19 +42,10 @@ let elements = [
                 [
                     { 
                         Name = "Expression"
-                        Type = "SafetySharp.Metamodel.Expressions.Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "SafetySharp.Metamodel.Expressions.Expression"
                         Validation = NotNull
                         Comment = "The metamodel expression that represents the state formula."
                         CanBeNull = false
-                    }
-                    { 
-                        Name = "AssociatedComponent"
-                        Type = "SafetySharp.Metamodel.Configurations.ComponentConfiguration"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "The associated component is the scope in which the expression is evaluated."
-                        CanBeNull = true
                     }
                 ]
             }
@@ -66,16 +57,14 @@ let elements = [
                 [
                     { 
                         Name = "Expression"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The untransformed C# expression as a string that represents the state formula."
                         CanBeNull = false
                     }
                     { 
                         Name = "Values"
-                        Type = "object"
-                        CollectionType = Array
+                        Type = Array "object"
                         Validation = None
                         Comment = "The non-literal values referenced by the C# expression."
                         CanBeNull = false
@@ -90,32 +79,28 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "Formula"
-                        CollectionType = Singleton
+                        Type = Singleton "Formula"
                         Validation = NotNull
                         Comment = "The formula on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "BinaryTemporalOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "BinaryTemporalOperator"
                         Validation = InRange
                         Comment = "The operator of the binary formula."
                         CanBeNull = false
                     }
                     {
                         Name = "PathQuantifier"
-                        Type = "PathQuantifier"
-                        CollectionType = Singleton
+                        Type = Singleton "PathQuantifier"
                         Validation = InRange
                         Comment = "The path quantifier of the binary formula."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "Formula"
-                        CollectionType = Singleton
+                        Type = Singleton "Formula"
                         Validation = NotNull
                         Comment = "The formula on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -130,24 +115,21 @@ let elements = [
                 [
                     {
                         Name = "Operand"
-                        Type = "Formula"
-                        CollectionType = Singleton
+                        Type = Singleton "Formula"
                         Validation = NotNull
                         Comment = "The operand of the unary formula."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "UnaryTemporalOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "UnaryTemporalOperator"
                         Validation = InRange
                         Comment = "The operator of the unary formula."
                         CanBeNull = false
                     }
                     {
                         Name = "PathQuantifier"
-                        Type = "PathQuantifier"
-                        CollectionType = Singleton
+                        Type = Singleton "PathQuantifier"
                         Validation = InRange
                         Comment = "The path quantifier of the unary formula."
                         CanBeNull = false

@@ -61,19 +61,22 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\Extensions\ArgumentExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\FieldDeclarationExtensionsTests.cs" />
+    <Compile Include="CSharp\Extensions\FieldSymbolExtensions.cs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\MethodSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\ModelingCompilationTests.cs" />
-    <Compile Include="CSharp\Normalization\CSharpNormalizerTests.cs" />
+    <Compile Include="CSharp\Normalization\StateFormulaNormalizerTests.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizerTests.cs" />
     <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
+    <Compile Include="CSharp\Transformation\ComponentSnapshotTests.cs" />
     <Compile Include="CSharp\Transformation\FormulaTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\ConfigurationTransformationTests.cs" />

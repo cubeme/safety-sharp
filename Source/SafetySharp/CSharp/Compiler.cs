@@ -197,7 +197,7 @@ namespace SafetySharp.CSharp
 		/// </summary>
 		private void ApplySimulationNormalizations()
 		{
-			// TODO
+			_compilation = ApplyNormalizer<StateFormulaNormalizer>(_compilation);
 		}
 
 		/// <summary>

@@ -42,8 +42,7 @@ let elements = [
                 [
                     { 
                         Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNullOrWhitespace
                         Comment = "The name of the identifier."
                         CanBeNull = false
@@ -58,24 +57,21 @@ let elements = [
                 [
                     {
                         Name = "Resolver"
-                        Type = "MetamodelResolver"
-                        CollectionType = Singleton
+                        Type = Singleton "MetamodelResolver"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The resolver that can be used to resolve <cref see=\"IMetamodelReference\" />s within the model."
                     }
                     {
                         Name = "Components"
-                        Type = "ComponentDeclaration"
-                        CollectionType = Array
+                        Type = Array "ComponentDeclaration"
                         Validation = None
                         CanBeNull = false
                         Comment = "The components declared in the model."
                     }  
                     {
                         Name = "Interfaces"
-                        Type = "InterfaceDeclaration"
-                        CollectionType = Array
+                        Type = Array "InterfaceDeclaration"
                         Validation = None
                         CanBeNull = false
                         Comment = "The component interfaces declared in the model."
@@ -90,8 +86,7 @@ let elements = [
                 [
                     {
                         Name = "Partitions"
-                        Type = "Partition"
-                        CollectionType = Array
+                        Type = Array "Partition"
                         Validation = None
                         CanBeNull = false
                         Comment = "The partitions declared in the model."
@@ -112,8 +107,7 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The name of the declared type."
                         CanBeNull = false
@@ -128,32 +122,28 @@ let elements = [
                 [
                     {
                         Name = "UpdateMethod"
-                        Type = "MethodDeclaration"
-                        CollectionType = Singleton
+                        Type = Singleton "MethodDeclaration"
                         Validation = NotNull
                         Comment = "The Update method of the component."
                         CanBeNull = false
                     }
                     {
                         Name = "Methods"
-                        Type = "MethodDeclaration"
-                        CollectionType = Array
+                        Type = Array "MethodDeclaration"
                         Validation = None
                         Comment = "The methods declared by the component. The method overriding <see cref=\"SafetySharp.Modeling.Component.Update()\" /> is never contained in this set."
                         CanBeNull = false
                     }
                     {
                         Name = "Fields"
-                        Type = "FieldDeclaration"
-                        CollectionType = Array
+                        Type = Array "FieldDeclaration"
                         Validation = None
                         Comment = "The fields declared by the component."
                         CanBeNull = false
                     }
                     {
                         Name = "SubComponents"
-                        Type = "SubComponentDeclaration"
-                        CollectionType = Array
+                        Type = Array "SubComponentDeclaration"
                         Validation = None
                         Comment = "The sub components declared by the component."
                         CanBeNull = false
@@ -174,16 +164,14 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The name of the sub component."
                     }
                     {
                         Name = "Type"
-                        Type = "IMetamodelReference<TypeDeclaration>"
-                        CollectionType = Singleton
+                        Type = Singleton "IMetamodelReference<TypeDeclaration>"
                         Validation = NotNull
                         Comment = "The type of the sub component."
                         CanBeNull = false
@@ -198,32 +186,28 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The name of the method."
                     }
                     {
                         Name = "ReturnType"
-                        Type = "TypeSymbol"
-                        CollectionType = Singleton
+                        Type = Singleton "TypeSymbol"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The return type of the method."
                     }
                     {
                         Name = "Parameters"
-                        Type = "ParameterDeclaration"
-                        CollectionType = Array
+                        Type = Array "ParameterDeclaration"
                         Validation = None
                         CanBeNull = false
                         Comment = "The parameters of the method."
                     }
                     {
                         Name = "Body"
-                        Type = "Statement"
-                        CollectionType = Singleton
+                        Type = Singleton "Statement"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The body of the method."
@@ -238,16 +222,14 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The name of the field."
                         CanBeNull = false
                     }
                     {
                         Name = "Type"
-                        Type = "TypeSymbol"
-                        CollectionType = Singleton
+                        Type = Singleton "TypeSymbol"
                         Validation = NotNull
                         Comment = "The type of the field."
                         CanBeNull = false
@@ -262,16 +244,14 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The name of the parameter."
                         CanBeNull = false
                     }
                     {
                         Name = "Type"
-                        Type = "TypeSymbol"
-                        CollectionType = Singleton
+                        Type = Singleton "TypeSymbol"
                         Validation = NotNull
                         Comment = "The type of the parameter."
                         CanBeNull = false
@@ -304,8 +284,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "The Boolean value of the literal."
                         CanBeNull = false
@@ -320,8 +299,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None
                         Comment = "The signed integer value of the literal."
                         CanBeNull = false
@@ -336,8 +314,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "decimal"
-                        CollectionType = Singleton
+                        Type = Singleton "decimal"
                         Validation = None
                         Comment = "The decimal value of the literal."
                         CanBeNull = false
@@ -352,24 +329,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "BinaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "BinaryOperator"
                         Validation = InRange
                         Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -384,16 +358,14 @@ let elements = [
                 [
                     {
                         Name = "Operand"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The operand of the unary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "UnaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "UnaryOperator"
                         Validation = InRange
                         Comment = "The operator of the unary expression."
                         CanBeNull = false
@@ -408,8 +380,7 @@ let elements = [
                 [
                     {
                         Name = "Field"
-                        Type = "IMetamodelReference<FieldDeclaration>"
-                        CollectionType = Singleton
+                        Type = Singleton "IMetamodelReference<FieldDeclaration>"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The reference to the <see cref=\"FieldDeclaration\" /> that is accessed by this expression."
@@ -442,8 +413,7 @@ let elements = [
                 [
                     {
                         Name = "Statements"
-                        Type = "Statement"
-                        CollectionType = Array
+                        Type = Array "Statement"
                         Validation = None
                         Comment = "The ordered list of statements the statement block consists of."
                         CanBeNull = false
@@ -458,8 +428,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = None
                         Comment = "The expression that should be evaluated and returned or <c>null</c> if the enclosing method returns <c>void</c>."
                         CanBeNull = true
@@ -474,8 +443,7 @@ let elements = [
                 [
                     {
                         Name = "Clauses"
-                        Type = "GuardedCommandClause"
-                        CollectionType = Array
+                        Type = Array "GuardedCommandClause"
                         Validation = None
                         Comment = "The clauses of the guarded command, one of which is chosen nondeterministically during execution if multiple guards hold."
                         CanBeNull = false
@@ -490,16 +458,14 @@ let elements = [
                 [
                     {
                         Name = "Guard"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The guard of the clause that determines whether the statement can be executed."
                         CanBeNull = false
                     }
                     {
                         Name = "Statement"
-                        Type = "Statement"
-                        CollectionType = Singleton
+                        Type = Singleton "Statement"
                         Validation = NotNull
                         Comment = "The statement of the clause that can only be executed if the guard holds."
                         CanBeNull = false
@@ -514,16 +480,14 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the assignment operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "Expression"
-                        CollectionType = Singleton
+                        Type = Singleton "Expression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the assignment operator."
                         CanBeNull = false
@@ -574,8 +538,7 @@ let elements = [
                 [
                     {
                         Name = "InterfaceDeclaration"
-                        Type = "IMetamodelReference<InterfaceDeclaration>"
-                        CollectionType = Singleton
+                        Type = Singleton "IMetamodelReference<InterfaceDeclaration>"
                         Validation = NotNull
                         Comment = "The reference to the declaration of the interface."
                         CanBeNull = false
@@ -596,8 +559,7 @@ let elements = [
                 [
                     {
                         Name = "Component"
-                        Type = "ComponentConfiguration"
-                        CollectionType = Singleton
+                        Type = Singleton "ComponentConfiguration"
                         Validation = NotNull
                         CanBeNull = false
                         Comment = "The root component configuration of the partition."
@@ -612,32 +574,28 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The name of the component configuration."
                         CanBeNull = false
                     }
                     {
-                        Name = "Type"
-                        Type = "IMetamodelReference<ComponentDeclaration>"
-                        CollectionType = Singleton
+                        Name = "Declaration"
+                        Type = Singleton "ComponentDeclaration"
                         Validation = NotNull
-                        Comment = "The type of the component configuration."
+                        Comment = "The declaration of the component configuration."
                         CanBeNull = false
                     }
                     {
-                        Name = "FieldValues"
-                        Type = "ValueArray"
-                        CollectionType = Array
-                        Validation = None
-                        Comment = "The initial values for the component's fields. The values are specified in the same order as the corresponding field declarations of the component configuration's declaration."
+                        Name = "Fields"
+                        Type = Dictionary ("FieldDeclaration", "FieldConfiguration")
+                        Validation = NotNull
+                        Comment = "The field configurations for the fields declared by the component."
                         CanBeNull = false
                     }
                     {
                         Name = "SubComponents"
-                        Type = "ComponentConfiguration"
-                        CollectionType = Array
+                        Type = Array "ComponentConfiguration"
                         Validation = None
                         Comment = "The sub component configurations of the component. The instances are specified in the same order as the corresponding sub component declarations of the component configuration's declaration."
                         CanBeNull = false
@@ -645,17 +603,16 @@ let elements = [
                 ]
             }
             {   
-                Name = "ValueArray"
+                Name = "FieldConfiguration"
                 Base = "MetamodelElement"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Values"
-                        Type = "object"
-                        CollectionType = Array
+                        Name = "InitialValues"
+                        Type = Array "object"
                         Validation = None
-                        Comment = "The values contained in the value array."
+                        Comment = "The initial values of the field."
                         CanBeNull = false
                     }
                 ]

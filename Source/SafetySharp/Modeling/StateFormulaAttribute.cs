@@ -20,22 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel.Configurations
+namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Linq;
 
 	/// <summary>
-	///     Represents an array of <see cref="Value" />s.
+	///     When applied to a Boolean parameter of a formula method, enables the state formula normalization at compile time.
 	/// </summary>
-	partial class ValueArray
+	[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+	internal class StateFormulaAttribute : Attribute
 	{
-		/// <summary>
-		///     Returns a string that represents the current object.
-		/// </summary>
-		public override string ToString()
-		{
-			return String.Join(", ", Values.Select(value => value.ToString()));
-		}
 	}
 }
