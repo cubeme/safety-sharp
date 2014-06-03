@@ -67,6 +67,16 @@ namespace SafetySharp.CSharp.Transformation
 		private readonly ModelingCompilation _compilation;
 
 		/// <summary>
+		///     The component resolver that is used to resolve components to their configurations.
+		/// </summary>
+		private readonly ComponentResolver _componentResolver;
+
+		/// <summary>
+		///     The resolver that is used to resolve metamodel references.
+		/// </summary>
+		private readonly MetamodelResolver _metamodelResolver;
+
+		/// <summary>
 		///     The symbol map that can be used to look up metamodel element references for C# symbols.
 		/// </summary>
 		private readonly SymbolMap _symbolMap;
@@ -76,14 +86,28 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		/// <param name="compilation">The modeling compilation that defines the types referenced by the formula.</param>
 		/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
-		public FormulaTransformation(ModelingCompilation compilation, SymbolMap symbolMap)
+		/// <param name="componentResolver">The component resolver that should be used to resolve components to their configurations.</param>
+		/// <param name="metamodelResolver">The resolver that should be used to resolve metamodel references.</param>
+		public FormulaTransformation(ModelingCompilation compilation, SymbolMap symbolMap,
+									 ComponentResolver componentResolver, MetamodelResolver metamodelResolver)
 		{
 			Argument.NotNull(compilation, () => compilation);
 			Argument.NotNull(symbolMap, () => symbolMap);
+			Argument.NotNull(componentResolver, () => componentResolver);
+			Argument.NotNull(metamodelResolver, () => metamodelResolver);
 
 			_compilation = compilation;
 			_symbolMap = symbolMap;
+			_componentResolver = componentResolver;
+			_metamodelResolver = metamodelResolver;
+
+			FormulaResolver = FormulaResolver.Empty;
 		}
+
+		/// <summary>
+		///     Gets or sets the <see cref="FormulaResolver" /> that is updated during the transformation.
+		/// </summary>
+		internal FormulaResolver FormulaResolver { get; private set; }
 
 		/// <summary>
 		///     Rewrites an element of type <see cref="UntransformedStateFormula" />.
@@ -100,7 +124,7 @@ namespace SafetySharp.CSharp.Transformation
 
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
 			var expression = syntaxTree.DescendantNodes<ReturnStatementSyntax>().Single().Expression;
-			
+
 			var compilation = _compilation.CSharpCompilation.AddSyntaxTrees(syntaxTree);
 			var diagnostics = compilation
 				.GetDiagnostics()
@@ -113,9 +137,17 @@ namespace SafetySharp.CSharp.Transformation
 																  Environment.NewLine, String.Join(Environment.NewLine, diagnostics)));
 
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
-			var expressionTransformation = new Transformation(semanticModel, _symbolMap, untransformedStateFormula.Values);
+			var expressionTransformation = new Transformation(semanticModel, _symbolMap)
+			{
+				ComponentResolver = _componentResolver,
+				FormulaResolver = FormulaResolver,
+				FormulaValues = untransformedStateFormula.Values,
+				MetamodelResolver = _metamodelResolver
+			};
 
 			var transformedExpression = expressionTransformation.Transform(expression);
+			FormulaResolver = expressionTransformation.FormulaResolver;
+
 			return new StateFormula(transformedExpression, null);
 		}
 
@@ -166,36 +198,65 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     Transforms a lowered C# syntax tree of an expression into a corresponding formula expression tree.
 		/// </summary>
-		internal class Transformation : ExpressionTransformation
+		private class Transformation : ExpressionTransformation
 		{
 			/// <summary>
-			///     The values provided to the formula.
-			/// </summary>
-			private ImmutableArray<object> _formulaValues;
-
-			/// <summary>
-			///     Initializes a new instance of the <see cref="ExpressionTransformation" /> type.
+			///     Initializes a new instance of the <see cref="Transformation" /> type.
 			/// </summary>
 			/// <param name="semanticModel">The semantic model that should be used to retrieve semantic information about the C# program.</param>
 			/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
-			/// <param name="formulaValues">The values provided to the formula.</param>
-			internal Transformation(SemanticModel semanticModel, SymbolMap symbolMap, ImmutableArray<object> formulaValues)
+			internal Transformation(SemanticModel semanticModel, SymbolMap symbolMap)
 				: base(semanticModel, symbolMap)
 			{
-				_formulaValues = formulaValues;
 			}
+
+			/// <summary>
+			///     Gets or sets the component resolver that is used to resolve components to their configurations.
+			/// </summary>
+			public ComponentResolver ComponentResolver { get; set; }
+
+			/// <summary>
+			///     Gets or sets the resolver that is used to resolve metamodel references.
+			/// </summary>
+			public MetamodelResolver MetamodelResolver { get; set; }
+
+			/// <summary>
+			///     Gets or sets the values provided to the formula.
+			/// </summary>
+			public ImmutableArray<object> FormulaValues { get; set; }
+
+			/// <summary>
+			///     Gets or sets the <see cref="FormulaResolver" /> that is updated during the transformation.
+			/// </summary>
+			public FormulaResolver FormulaResolver { get; set; }
 
 			/// <summary>
 			///     Transforms a <see cref="MemberAccessExpressionSyntax" /> to the corresponding component field access.
 			/// </summary>
-			/// <param name="node"></param>
-			/// <returns></returns>
+			/// <param name="node">The member access expression that should be transformed.</param>
 			public override MetamodelElement VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
 			{
 				Assert.That(SemanticModel.GetSymbolInfo(node.Name).Symbol as IFieldSymbol != null, "Expected a field member.");
 				Assert.That(!(node.Expression is MemberAccessExpressionSyntax), "Nested member accesses are not supported.");
 
 				var fieldAccess = (FieldAccessExpression)Visit(node.Name);
+				var objectIndex = Int32.Parse(node.Expression.ToString().Split(new[] { "_" }, StringSplitOptions.RemoveEmptyEntries)[1]);
+				Assert.InRange(objectIndex, FormulaValues);
+
+				var component = FormulaValues[objectIndex] as Component;
+				var internalAccess = FormulaValues[objectIndex] as IInternalAccess;
+				if (internalAccess != null)
+					component = internalAccess.Component;
+
+				Assert.NotNull(component, "Unable to determine component instance.");
+
+				var snapshot = component.GetSnapshot();
+				var fieldDeclaration = MetamodelResolver.Resolve(fieldAccess.Field);
+				var componentConfiguration = ComponentResolver.ResolveConfiguration(snapshot);
+				var fieldConfiguration = componentConfiguration.Fields[fieldDeclaration];
+
+				FormulaResolver = FormulaResolver.With(fieldAccess, fieldConfiguration);
+
 				return fieldAccess;
 			}
 		}

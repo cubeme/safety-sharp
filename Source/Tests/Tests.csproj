@@ -76,6 +76,7 @@
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.cs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.cs" />
+    <Compile Include="CSharp\Transformation\ComponentSnapshotTests.cs" />
     <Compile Include="CSharp\Transformation\FormulaTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\MetamodelTransformationTests.cs" />
     <Compile Include="CSharp\Transformation\ConfigurationTransformationTests.cs" />

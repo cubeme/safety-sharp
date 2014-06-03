@@ -32,7 +32,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		/// 
 		/// </summary>
-		IComponent Component { get; }
+		Component Component { get; }
 
 		/// <summary>
 		/// 

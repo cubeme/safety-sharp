@@ -59,7 +59,7 @@ namespace Tests.CSharp.Transformation
 		{
 			return new ComponentConfiguration(
 				new Identifier(name),
-				_metamodelCompilation.Resolver.Resolve(_componentResolver.Resolve(component)),
+				_componentResolver.ResolveDeclaration(component),
 				ImmutableDictionary<FieldDeclaration, FieldConfiguration>.Empty,
 				ImmutableArray<ComponentConfiguration>.Empty);
 		}

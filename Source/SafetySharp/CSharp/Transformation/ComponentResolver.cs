@@ -24,13 +24,13 @@ namespace SafetySharp.CSharp.Transformation
 {
 	using System;
 	using System.Collections.Immutable;
-	using Metamodel;
+	using Metamodel.Configurations;
 	using Metamodel.Declarations;
-	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Resolves component declaration references for <see cref="ComponentSnapshot" /> instances.
+	///     Maps <see cref="ComponentSnapshot" />s to their corresponding <see cref="ComponentDeclaration" />s and
+	///     <see cref="ComponentConfiguration" />s.
 	/// </summary>
 	internal class ComponentResolver
 	{
@@ -39,13 +39,19 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		internal static readonly ComponentResolver Empty = new ComponentResolver
 		{
-			_map = ImmutableDictionary<ComponentSnapshot, IMetamodelReference<ComponentDeclaration>>.Empty
+			_declarationMap = ImmutableDictionary<ComponentSnapshot, ComponentDeclaration>.Empty,
+			_configurationMap = ImmutableDictionary<ComponentSnapshot, ComponentConfiguration>.Empty
 		};
 
 		/// <summary>
-		///     Maps <see cref="Component" /> instances to <see cref="MetamodelReference{ComponentDeclaration}" /> instances.
+		///     Maps <see cref="ComponentSnapshot" />s to <see cref="ComponentConfiguration" />s.
 		/// </summary>
-		private ImmutableDictionary<ComponentSnapshot, IMetamodelReference<ComponentDeclaration>> _map;
+		private ImmutableDictionary<ComponentSnapshot, ComponentConfiguration> _configurationMap;
+
+		/// <summary>
+		///     Maps <see cref="ComponentSnapshot" />s to <see cref="ComponentDeclaration" />s.
+		/// </summary>
+		private ImmutableDictionary<ComponentSnapshot, ComponentDeclaration> _declarationMap;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="ComponentResolver" /> type.
@@ -55,31 +61,67 @@ namespace SafetySharp.CSharp.Transformation
 		}
 
 		/// <summary>
-		///     Resolves the <see cref="MetamodelReference{ComponentDeclaration}" /> for the <paramref name="component" />.
+		///     Resolves the <see cref="ComponentDeclaration" /> for <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component that should be resolved.</param>
-		public IMetamodelReference<ComponentDeclaration> Resolve(ComponentSnapshot component)
+		public ComponentDeclaration ResolveDeclaration(ComponentSnapshot component)
 		{
 			Argument.NotNull(component, () => component);
-			Argument.Satisfies(_map.ContainsKey(component), () => component, "The given component is unknown.");
+			Argument.Satisfies(_declarationMap.ContainsKey(component), () => component, "The given component is unknown.");
 
-			return _map[component];
+			return _declarationMap[component];
+		}
+
+		/// <summary>
+		///     Resolves the <see cref="ComponentConfiguration" /> for <paramref name="component" />.
+		/// </summary>
+		/// <param name="component">The component that should be resolved.</param>
+		public ComponentConfiguration ResolveConfiguration(ComponentSnapshot component)
+		{
+			Argument.NotNull(component, () => component);
+			Argument.Satisfies(_configurationMap.ContainsKey(component), () => component, "The given component is unknown.");
+
+			return _configurationMap[component];
 		}
 
 		/// <summary>
 		///     Creates a copy of the <see cref="ComponentResolver" /> that can resolve <paramref name="component" /> to
-		///     <paramref name="reference" />.
+		///     <paramref name="declaration" />.
 		/// </summary>
 		/// <param name="component">The component that should be added to the resolver.</param>
-		/// <param name="reference">The referenced compnent declaration.</param>
-		public ComponentResolver With(ComponentSnapshot component, IMetamodelReference<ComponentDeclaration> reference)
+		/// <param name="declaration">The component declaration that should be resolved.</param>
+		public ComponentResolver With(ComponentSnapshot component, ComponentDeclaration declaration)
 		{
 			Argument.NotNull(component, () => component);
-			Argument.NotNull(reference, () => reference);
-			Argument.Satisfies(!_map.ContainsKey(component), () => reference,
-							   "The given reference has already been added to the resolver.");
+			Argument.NotNull(declaration, () => declaration);
+			Argument.Satisfies(!_declarationMap.ContainsKey(component), () => declaration,
+							   "The given declaration has already been added to the resolver.");
 
-			return new ComponentResolver { _map = _map.Add(component, reference) };
+			return new ComponentResolver
+			{
+				_declarationMap = _declarationMap.Add(component, declaration),
+				_configurationMap = _configurationMap
+			};
+		}
+
+		/// <summary>
+		///     Creates a copy of the <see cref="ComponentResolver" /> that can resolve <paramref name="component" /> to
+		///     <paramref name="configuration" />.
+		/// </summary>
+		/// <param name="component">The component that should be added to the resolver.</param>
+		/// <param name="configuration">The component configuration that should be resolved.</param>
+		public ComponentResolver With(ComponentSnapshot component, ComponentConfiguration configuration)
+		{
+			Argument.NotNull(component, () => component);
+			Argument.NotNull(configuration, () => configuration);
+			Argument.Satisfies(!_configurationMap.ContainsKey(component), () => configuration,
+							   "The given configuration has already been added to the resolver.");
+
+			return new ComponentResolver
+			{
+				_declarationMap = _declarationMap,
+				_configurationMap = _configurationMap.Add(component, configuration)
+			};
 		}
 	}
 }

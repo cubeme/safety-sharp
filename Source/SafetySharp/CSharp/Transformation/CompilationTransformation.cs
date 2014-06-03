@@ -68,6 +68,16 @@ namespace SafetySharp.CSharp.Transformation
 		internal SymbolMap SymbolMap { get; private set; }
 
 		/// <summary>
+		///     Gets the <see cref="ComponentDeclaration" /> instance corresponding to the <paramref name="classDeclaration" />.
+		/// </summary>
+		/// <param name="classDeclaration">The class declaration the corresponding metamodel reference should be returned for.</param>
+		internal ComponentDeclaration GetComponentDeclaration(ClassDeclarationSyntax classDeclaration)
+		{
+			Argument.NotNull(classDeclaration, () => classDeclaration);
+			return _resolver.Resolve(GetComponentDeclarationReference(classDeclaration));
+		}
+
+		/// <summary>
 		///     Gets the <see cref="MetamodelReference{ComponentDeclaration}" /> instance corresponding to the
 		///     <paramref name="classDeclaration" />.
 		/// </summary>

@@ -30,8 +30,10 @@ namespace Tests.CSharp.Transformation
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Formulas;
 	using SafetySharp.Metamodel;
+	using SafetySharp.Metamodel.Configurations;
 	using SafetySharp.Metamodel.Declarations;
 	using SafetySharp.Metamodel.Expressions;
+	using SafetySharp.Metamodel.Types;
 	using SafetySharp.Modeling;
 
 	[TestFixture]
@@ -53,6 +55,15 @@ namespace Tests.CSharp.Transformation
 			_symbolMap = new SymbolMap(_compilation.CSharpCompilation);
 			_intFieldReference = _symbolMap.GetFieldReference(_compilation.FindFieldSymbol("X", "IntField"));
 			_booleanFieldReference = _symbolMap.GetFieldReference(_compilation.FindFieldSymbol("X", "BooleanField"));
+
+			_intFieldDeclaration = new FieldDeclaration(new Identifier("IntField"), TypeSymbol.Integer);
+			_booleanFieldDeclaration = new FieldDeclaration(new Identifier("BooleanField"), TypeSymbol.Boolean);
+
+			_componentResolver = ComponentResolver.Empty;
+			_metamodelResolver = MetamodelResolver
+				.Empty
+				.With(_intFieldReference, _intFieldDeclaration)
+				.With(_booleanFieldReference, _booleanFieldDeclaration);
 		}
 
 		private SymbolMap _symbolMap;
@@ -60,41 +71,78 @@ namespace Tests.CSharp.Transformation
 		private TestCompilation _compilation;
 		private IMetamodelReference<FieldDeclaration> _intFieldReference;
 		private IMetamodelReference<FieldDeclaration> _booleanFieldReference;
+		private FieldDeclaration _intFieldDeclaration;
+		private FieldDeclaration _booleanFieldDeclaration;
+		private readonly FieldConfiguration _intFieldConfiguration1 = new FieldConfiguration(ImmutableArray.Create<object>(1, 2, 3));
+		private readonly FieldConfiguration _booleanFieldConfiguration1 = new FieldConfiguration(ImmutableArray.Create<object>(true, false));
+		private readonly FieldConfiguration _intFieldConfiguration2 = new FieldConfiguration(ImmutableArray.Create<object>(1, 2, 3));
+		private readonly FieldConfiguration _booleanFieldConfiguration2 = new FieldConfiguration(ImmutableArray.Create<object>(true, false));
+		private ComponentResolver _componentResolver;
+		private MetamodelResolver _metamodelResolver;
+		private FormulaResolver _formulaResolver;
+		private Formula _transformedFormula;
 
 		private Formula Transform(Formula formula)
 		{
-			var transformation = new FormulaTransformation(_compilation.ModelingCompilation, _symbolMap);
-			return transformation.Visit(formula);
+			var transformation = new FormulaTransformation(_compilation.ModelingCompilation, _symbolMap, _componentResolver, _metamodelResolver);
+			_transformedFormula = transformation.Visit(formula);
+
+			_formulaResolver = transformation.FormulaResolver;
+			return _transformedFormula;
 		}
 
 		private StateFormula TransformStateFormula(string csharpExpression, params object[] values)
 		{
-			var transformation = new FormulaTransformation(_compilation.ModelingCompilation, _symbolMap);
-
 			var untransformed = new UntransformedStateFormula(csharpExpression, values.ToImmutableArray());
-			return (StateFormula)transformation.Visit(untransformed);
+			return (StateFormula)Transform(untransformed);
 		}
 
-		private Component CreateComponentInstance(string componentName)
+		private Component CreateComponentInstance(string componentName, FieldConfiguration intField = null, FieldConfiguration booleanField = null)
 		{
-			return (Component)Activator.CreateInstance(_assembly.GetType(componentName));
+			intField = intField ?? _intFieldConfiguration1;
+			booleanField = booleanField ?? _booleanFieldConfiguration1;
+			var component = (Component)Activator.CreateInstance(_assembly.GetType(componentName));
+
+			var fields = ImmutableDictionary<FieldDeclaration, FieldConfiguration>
+				.Empty
+				.Add(_intFieldDeclaration, intField)
+				.Add(_booleanFieldDeclaration, booleanField);
+
+			var configuration = new ComponentConfiguration(new Identifier("None"), ComponentDeclaration.Empty, fields,
+														   ImmutableArray<ComponentConfiguration>.Empty);
+
+			_componentResolver = _componentResolver.With(component.GetSnapshot(), configuration);
+			return component;
+		}
+
+		private void CheckResolvedField(Expression fieldAccessExpression, FieldConfiguration fieldConfiguration)
+		{
+			ReferenceEquals(_formulaResolver.Resolve((FieldAccessExpression)fieldAccessExpression), fieldConfiguration).Should().BeTrue();
 		}
 
 		[Test]
 		public void TransformComponentAccess()
 		{
-			var component1 = CreateComponentInstance("X");
-			var component2 = CreateComponentInstance("X");
+			var component1 = CreateComponentInstance("X", _intFieldConfiguration1, _booleanFieldConfiguration1);
+			var component2 = CreateComponentInstance("X", _intFieldConfiguration2, _booleanFieldConfiguration2);
 			var fieldAccess = new FieldAccessExpression(_booleanFieldReference);
 
 			TransformStateFormula("{0}.BooleanField", component1)
 				.Should().Be(new StateFormula(fieldAccess, null));
 
+			CheckResolvedField(((StateFormula)_transformedFormula).Expression, _booleanFieldConfiguration1);
+
 			TransformStateFormula("{0}.BooleanField == {1}.BooleanField", component1, component1)
 				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, fieldAccess), null));
 
+			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Left, _booleanFieldConfiguration1);
+			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Right, _booleanFieldConfiguration1);
+			
 			TransformStateFormula("{0}.BooleanField == {1}.BooleanField", component1, component2)
 				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, fieldAccess), null));
+
+			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Left, _booleanFieldConfiguration1);
+			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Right, _booleanFieldConfiguration2);
 		}
 
 		[Test]
@@ -103,6 +151,8 @@ namespace Tests.CSharp.Transformation
 			var fieldAccess = new FieldAccessExpression(_intFieldReference);
 			TransformStateFormula("{0} == 2", CreateComponentInstance("X").AccessInternal<int>("IntField"))
 				.Should().Be(new StateFormula(new BinaryExpression(fieldAccess, BinaryOperator.Equals, new IntegerLiteral(2)), null));
+
+			CheckResolvedField(((BinaryExpression)((StateFormula)_transformedFormula).Expression).Left, _intFieldConfiguration1);
 		}
 
 		[Test]
@@ -131,6 +181,12 @@ namespace Tests.CSharp.Transformation
 
 			Transform(new BinaryFormula(fieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, fieldIsTwo)).Should().Be(
 				new BinaryFormula(transformedFieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, transformedfieldIsTwo));
+
+			var leftExpression = ((StateFormula)((BinaryFormula)_transformedFormula).Left).Expression;
+			var rightExpression = (BinaryExpression)((StateFormula)((BinaryFormula)_transformedFormula).Right).Expression;
+
+			CheckResolvedField(leftExpression, _booleanFieldConfiguration1);
+			CheckResolvedField(rightExpression.Left, _intFieldConfiguration1);
 		}
 
 		[Test]

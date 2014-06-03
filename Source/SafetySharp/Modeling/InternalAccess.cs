@@ -31,13 +31,13 @@ namespace SafetySharp.Modeling
 	/// <typeparam name="T"></typeparam>
 	public sealed class InternalAccess<T> : IInternalAccess
 	{
-		private readonly IComponent _component;
+		private readonly Component _component;
 		private readonly string _memberName;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="InternalAccess{T}" /> type.
 		/// </summary>
-		internal InternalAccess(IComponent component, string memberName)
+		internal InternalAccess(Component component, string memberName)
 		{
 			Argument.NotNull(component, () => component);
 			Argument.NotNull(memberName, () => memberName);
@@ -49,7 +49,7 @@ namespace SafetySharp.Modeling
 		/// <summary>
 		/// 
 		/// </summary>
-		IComponent IInternalAccess.Component
+		Component IInternalAccess.Component
 		{
 			get { return _component; }
 		}

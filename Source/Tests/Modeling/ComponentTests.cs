@@ -304,8 +304,8 @@ namespace Tests.Modeling
 				var subComponent2 = new FieldComponent();
 				var component = new TwoSubComponents(subComponent1, subComponent2).GetSnapshot();
 
-				component.GetSubComponent("_component1").Component.Should().Be(subComponent1);
-				component.GetSubComponent("_component2").Component.Should().Be(subComponent2);
+				component.GetSubComponent("_component1").Should().Be(subComponent1.GetSnapshot());
+				component.GetSubComponent("_component2").Should().Be(subComponent2.GetSnapshot());
 			}
 
 			[Test]
@@ -314,7 +314,7 @@ namespace Tests.Modeling
 				var subComponent = new FieldComponent();
 				var component = new OneSubComponent(subComponent).GetSnapshot();
 
-				component.GetSubComponent("_component").Component.Should().Be(subComponent);
+				component.GetSubComponent("_component").Should().Be(subComponent.GetSnapshot());
 			}
 
 			[Test]
@@ -391,7 +391,7 @@ namespace Tests.Modeling
 				component.SubComponents.Should().BeEquivalentTo(subComponent1, subComponent2);
 
 				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Select(c => c.Component).Should().BeEquivalentTo(subComponent1, subComponent2);
+				snapshot.SubComponents.Should().BeEquivalentTo(subComponent1.GetSnapshot(), subComponent2.GetSnapshot());
 			}
 
 			[Test]
@@ -423,7 +423,7 @@ namespace Tests.Modeling
 				component.SubComponents.Should().BeEquivalentTo(subComponent);
 
 				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Select(c => c.Component).Should().BeEquivalentTo(subComponent);
+				snapshot.SubComponents.Should().BeEquivalentTo(subComponent.GetSnapshot());
 			}
 		}
 	}

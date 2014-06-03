@@ -42,21 +42,21 @@ namespace Tests.CSharp.Transformation
 
 		internal class ConfigurationTransformationTests
 		{
-			private Dictionary<Component, IMetamodelReference<ComponentDeclaration>> _componentReferences;
-			private Dictionary<Component, ComponentDeclaration> _componentDeclarations;
+			private Dictionary<ComponentSnapshot, IMetamodelReference<ComponentDeclaration>> _componentReferences;
+			private Dictionary<ComponentSnapshot, ComponentDeclaration> _componentDeclarations;
 			private ComponentResolver _componentResolver;
 			private MetamodelResolver _metamodelResolver;
 
 			private IMetamodelReference<ComponentDeclaration> CreateComponentDeclaration(ComponentSnapshot component)
 			{
 				IMetamodelReference<ComponentDeclaration> reference;
-				if (_componentReferences.TryGetValue(component.Component, out reference))
+				if (_componentReferences.TryGetValue(component, out reference))
 					return reference;
 
 				var fields = ImmutableArray<FieldDeclaration>.Empty;
 				var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
 
-				foreach (var field in component.Component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+				foreach (var field in component.Type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
 				{
 					if (typeof(IComponent).IsAssignableFrom(field.FieldType))
 					{
@@ -78,10 +78,10 @@ namespace Tests.CSharp.Transformation
 
 				reference = new MetamodelReference<ComponentDeclaration>();
 				_metamodelResolver = _metamodelResolver.With(reference, componentDeclaration);
-				_componentResolver = _componentResolver.With(component, reference);
+				_componentResolver = _componentResolver.With(component, componentDeclaration);
 
-				_componentDeclarations.Add(component.Component, componentDeclaration);
-				_componentReferences.Add(component.Component, reference);
+				_componentDeclarations.Add(component, componentDeclaration);
+				_componentReferences.Add(component, reference);
 				return reference;
 			}
 
@@ -91,20 +91,20 @@ namespace Tests.CSharp.Transformation
 				_metamodelResolver = MetamodelResolver.Empty;
 				_componentResolver = ComponentResolver.Empty;
 
-				_componentDeclarations = new Dictionary<Component, ComponentDeclaration>();
-				_componentReferences = new Dictionary<Component, IMetamodelReference<ComponentDeclaration>>();
+				_componentDeclarations = new Dictionary<ComponentSnapshot, ComponentDeclaration>();
+				_componentReferences = new Dictionary<ComponentSnapshot, IMetamodelReference<ComponentDeclaration>>();
 				foreach (var component in configuration.PartitionRoots)
 					CreateComponentDeclaration(component);
 
-				var configurationTransformation = new ConfigurationTransformation(configuration, _metamodelResolver, _componentResolver);
-				return configurationTransformation.Transform();
+				var configurationTransformation = new ConfigurationTransformation(configuration);
+				return configurationTransformation.Transform(ref _componentResolver);
 			}
 
 			protected ComponentConfiguration CreateComponentConfiguration(Component component, string name)
 			{
 				return new ComponentConfiguration(
 					new Identifier(name),
-					_componentDeclarations[component],
+					_componentDeclarations[component.GetSnapshot()],
 					ImmutableDictionary<FieldDeclaration,FieldConfiguration>.Empty,
 					ImmutableArray<ComponentConfiguration>.Empty);
 			}

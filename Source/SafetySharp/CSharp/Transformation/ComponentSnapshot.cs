@@ -35,6 +35,11 @@ namespace SafetySharp.CSharp.Transformation
 	internal class ComponentSnapshot
 	{
 		/// <summary>
+		///     The <see cref="Component" /> instance the snapshot was created from.
+		/// </summary>
+		private readonly Component _component;
+
+		/// <summary>
 		///     Maps a field of the current component instance to its set of initial values.
 		/// </summary>
 		private readonly ImmutableDictionary<string, ImmutableArray<object>> _fieldValues;
@@ -54,16 +59,19 @@ namespace SafetySharp.CSharp.Transformation
 			Argument.NotNull(component, () => component);
 			Argument.NotNull(fieldValues, () => fieldValues);
 
-			Component = component;
+			_component = component;
 			Name = name;
 			SubComponents = subComponents;
 			_fieldValues = fieldValues;
 		}
 
 		/// <summary>
-		///     Gets the <see cref="Component" /> instance the snapshot was created from.
+		///     Gets the type of the component.
 		/// </summary>
-		internal Component Component { get; private set; }
+		internal Type Type
+		{
+			get { return _component.GetType(); }
+		}
 
 		/// <summary>
 		///     Gets the name of the component instance or <c>null</c> if no name could be determined.
@@ -102,6 +110,80 @@ namespace SafetySharp.CSharp.Transformation
 				Argument.Satisfies(false, () => fieldName, "A field with name '{0}' does not exist.", fieldName);
 
 			return initialValues;
+		}
+
+		/// <summary>
+		///     Determines whether <paramref name="obj" /> is equal to the current instance.
+		/// </summary>
+		/// <param name="obj">The object to compare with the current instance.</param>
+		/// <returns>
+		///     <c>true</c> if <paramref name="obj" /> is equal to the current instance; otherwise, <c>false</c>.
+		/// </returns>
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(null, obj))
+				return false;
+
+			if (ReferenceEquals(this, obj))
+				return true;
+
+			if (obj.GetType() != GetType())
+				return false;
+
+			return Equals((ComponentSnapshot)obj);
+		}
+
+		/// <summary>
+		///     Determines whether <paramref name="other" /> is equal to the current instance.
+		/// </summary>
+		/// <param name="other">The <see cref="ComponentSnapshot" /> to compare with the current instance.</param>
+		/// <returns>
+		///     <c>true</c> if <paramref name="other" /> is equal to the current instance; otherwise, <c>false</c>.
+		/// </returns>
+		[UsedImplicitly]
+		internal bool Equals(ComponentSnapshot other)
+		{
+			Argument.NotNull(other, () => other);
+
+			if (_component != other._component)
+				return false;
+
+			foreach (var values in _fieldValues)
+			{
+				ImmutableArray<object> otherValues;
+				if (!other._fieldValues.TryGetValue(values.Key, out otherValues) || !values.Value.SequenceEqual(otherValues))
+					return false;
+			}
+
+			return SubComponents.SequenceEqual(other.SubComponents);
+		}
+
+		/// <summary>
+		///     Gets the hash code for the current instance.
+		/// </summary>
+		public override int GetHashCode()
+		{
+			return _component.GetHashCode();
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="left" /> and <paramref name="right" /> are equal.
+		/// </summary>
+		/// <param name="left">The snapshot on the left hand side of the equality operator.</param>
+		/// <param name="right">The snapshot on the right hand side of the equality operator.</param>
+		public static bool operator ==(ComponentSnapshot left, ComponentSnapshot right)
+		{
+			return Equals(left, right);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="left" /> and <paramref name="right" /> are not equal.
+		/// </summary>
+		/// <param name="left">The snapshot on the left hand side of the inequality operator.</param>
+		/// <param name="right">The snapshot on the right hand side of the inequality operator.</param>
+		public static bool operator !=(ComponentSnapshot left, ComponentSnapshot right)
+		{
+			return !Equals(left, right);
 		}
 	}
 }

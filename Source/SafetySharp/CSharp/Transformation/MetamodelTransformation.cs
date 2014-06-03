@@ -128,12 +128,12 @@ namespace SafetySharp.CSharp.Transformation
 			componentResolver = ComponentResolver.Empty;
 			for (var i = 0; i < components.Length; ++i)
 			{
-				var reference = compilationTransformation.GetComponentDeclarationReference(classDeclarations[i]);
+				var reference = compilationTransformation.GetComponentDeclaration(classDeclarations[i]);
 				componentResolver = componentResolver.With(components[i], reference);
 			}
 
-			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration, compilation.Resolver, componentResolver);
-			configuration = configurationTransformation.Transform();
+			var configurationTransformation = new ConfigurationTransformation(_modelConfiguration);
+			configuration = configurationTransformation.Transform(ref componentResolver);
 
 			return true;
 		}
