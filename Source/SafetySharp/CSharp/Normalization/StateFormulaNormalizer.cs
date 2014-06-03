@@ -62,5 +62,10 @@ namespace SafetySharp.CSharp.Normalization
 
 			return SyntaxFactory.Argument(expression);
 		}
+
+		private void GetAccessedVariables(ArgumentSyntax node)
+		{
+			
+		}
 	}
 }
