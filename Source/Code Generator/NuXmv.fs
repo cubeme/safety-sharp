@@ -27,6 +27,7 @@
 //TODO: Check validations
 
 //TODO: Maybe remove SimpleExpression and Replace every use by a custom validation
+//      Maybe add NotImplementedYet-Exception to generated Visitor
 
 module NuXmvGenerator
 
