@@ -79,71 +79,93 @@ namespace Tests.CSharp.Normalization
 		public void RewritesComponentNonStaticFieldAccess()
 		{
 			Normalize("Ltl.Next(c1.value == false)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0}.value == false\"), c1)");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0}.value == false\", new object[] { c1 }))");
 		}
 
 		[Test]
 		public void RewritesConstants()
 		{
 			Normalize("Ltl.Next((1 == 2) != false)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"(1 == 2) != false\"))");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"(1 == 2) != false\", new object[] {  }))");
 		}
 
 		[Test]
 		public void RewritesEnumerationLiteralsStateFormula()
 		{
 			Normalize("Ltl.Next(TestEnum.A == TestEnum.A)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == {1}\", TestEnum.A, TestEnum.A))");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula" +
+							 "(\"{0} == {1}\", new object[] { TestEnum.A, TestEnum.A }))");
+		}
+
+		[Test]
+		public void RewritesFormulaWithManyAccesses()
+		{
+			Normalize("Ltl.Next(value == c1.c2.value && value && value && value && X._staticValue && " +
+					  "value && value && value && _nonStaticValue && value && value)")
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == {1}.value && {2} && {3} && " +
+							 "{4} && {5} && {6} && {7} && {8} && {9} && {10} && {11}\", " +
+							 "new object[] { value, c1.c2, value, value, value, X._staticValue, value, value, value, _nonStaticValue, value, value }))");
 		}
 
 		[Test]
 		public void RewritesLocalVariableAccesses()
 		{
 			Normalize("Ltl.Next(value == false)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\"), value)");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\", new object[] { value }))");
 
 			Normalize("Ltl.Next(accessInternal == false)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\"), accessInternal)");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\", new object[] { accessInternal }))");
 		}
 
 		[Test]
 		public void RewritesNestedStateFormulas()
 		{
 			Normalize("Ltl.Next(Ltl.Globally((1 == 2) != false))")
-				.Should().Be("Ltl.Next(Ltl.Globally(global::SafetySharp.Modeling.Ltl.StateFormula(\"(1 == 2) != false\")))");
+				.Should().Be("Ltl.Next(Ltl.Globally(global::SafetySharp.Modeling.Ltl.StateFormula" +
+							 "(\"(1 == 2) != false\", new object[] {  })))");
 
-			Normalize("Ltl.Until(true, Ltl.Globally(false)")
-				.Should().Be("Ltl.Until(global::SafetySharp.Modeling.Ltl.StateFormula(\"true\"), " +
-							 "Ltl.Globally(global::SafetySharp.Modeling.Ltl.StateFormula(\"false\")))");
+			Normalize("Ltl.Until(true, Ltl.Globally(false))")
+				.Should().Be("Ltl.Until(global::SafetySharp.Modeling.Ltl.StateFormula(\"true\", new object[] {  }), " +
+							 "Ltl.Globally(global::SafetySharp.Modeling.Ltl.StateFormula(\"false\", new object[] {  })))");
 		}
 
 		[Test]
 		public void RewritesNonComponentNonStaticFieldAccess()
 		{
 			Normalize("Ltl.Next(x._nonStaticValue == false)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\"), x._nonStaticValue)");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\", " +
+							 "new object[] { x._nonStaticValue }))");
+
+			Normalize("Ltl.Next(_nonStaticValue == false)")
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\", " +
+							 "new object[] { _nonStaticValue }))");
+
+			Normalize("Ltl.Next(this._nonStaticValue == false)")
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == false\", " +
+							 "new object[] { this._nonStaticValue }))");
 		}
 
 		[Test]
 		public void RewritesStaticAccesses()
 		{
 			Normalize("Ltl.Next(_staticValue == X._staticValue)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == {1}\", _staticValue, X._staticValue))");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0} == {1}\", " +
+							 "new object[] { _staticValue, X._staticValue }))");
 		}
 
 		[Test]
 		public void RewritesSubComponentFieldAccess()
 		{
 			Normalize("Ltl.Next(c1.c2.value == false)")
-				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0}.value == false\"), c1.c2)");
+				.Should().Be("Ltl.Next(global::SafetySharp.Modeling.Ltl.StateFormula(\"{0}.value == false\", new object[] { c1.c2 }))");
 		}
 
 		[Test]
 		public void RewritesUntilFormula()
 		{
 			Normalize("Ltl.Until(true, false)")
-				.Should().Be("Ltl.Until(global::SafetySharp.Modeling.Ltl.StateFormula(\"true\"), " +
-							 "global::SafetySharp.Modeling.Ltl.StateFormula(\"false\"))");
+				.Should().Be("Ltl.Until(global::SafetySharp.Modeling.Ltl.StateFormula(\"true\", new object[] {  }), " +
+							 "global::SafetySharp.Modeling.Ltl.StateFormula(\"false\", new object[] {  }))");
 		}
 	}
 }

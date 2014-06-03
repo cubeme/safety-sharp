@@ -84,7 +84,7 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <param name="expression">The C# expression representing the state formula.</param>
 		/// <param name="values">The non-literal values referenced by <paramref name="expression" />.</param>
-		public static LtlFormula StateFormula(string expression, params object[] values)
+		public static LtlFormula StateFormula(string expression, object[] values)
 		{
 			Argument.NotNullOrWhitespace(expression, () => expression);
 			return new LtlFormula(new UntransformedStateFormula(expression, values.ToImmutableArray()));

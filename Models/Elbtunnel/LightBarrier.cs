@@ -44,8 +44,8 @@ namespace Elbtunnel
 
 	internal class Test2 : Component
 	{
-		private BooleanComponent boolean1 ;
-		private BooleanComponent boolean2 ;
+		private BooleanComponent boolean1;
+		public BooleanComponent boolean2;
 
 		public Test2()
 		{
@@ -56,7 +56,7 @@ namespace Elbtunnel
 
 	internal class BooleanComponent : Component
 	{
-		private bool _value;
+		public bool _value;
 
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{

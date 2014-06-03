@@ -22,13 +22,14 @@
 				var c1 = new BooleanComponent(nondeterministicInitialValue);
 				var c2 = new BooleanComponent(false);
 				var lb = new LightBarrier();
+				var t = new Test2();
 
-				AddPartitions(c1, c2, new Test2());
+				AddPartitions(c1, c2, t);
 
 				var value = c1.AccessInternal<bool>("value");
 				var value2 = c1.AccessInternal<int>("value");
 
-				Hazard = Ltl.Globally(value).Implies(Ltl.Globally(!value == false || value2 == 5 || lb.Triggered));
+				Hazard = Ltl.Globally(value).Implies(Ltl.Globally(!value == false || value2 == 5 || lb.Triggered && t.boolean2._value));
 				//Hazard = Ltl.Globally(Ltl.StateExpression("{0}", value))
 				//	.Implies(Ltl.Globally("!{0} == false || {1} == 5 || {2}.Triggered", value, value2, lb));
 

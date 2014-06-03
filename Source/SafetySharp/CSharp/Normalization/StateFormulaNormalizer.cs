@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Normalization
 {
 	using System;
+	using System.Collections.Generic;
 	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -56,16 +57,111 @@ namespace SafetySharp.CSharp.Normalization
 			if (!requiresRewrite)
 				return node;
 
+			var memberAccesses = GetMemberAccesses(node);
+			var formatString = ToFormatString(node, memberAccesses);
+			var formatArguments = String.Join(", ", memberAccesses);
+
 			var className = node.GetMethodSymbol(SemanticModel).ContainingSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-			var expressionString = String.Format("{0}.StateFormula(\"{1}\", {2})", className, node, "null");
+			var expressionString = String.Format("{0}.StateFormula(\"{1}\", new object[] {{ {2} }})", className, formatString, formatArguments);
 			var expression = SyntaxFactory.ParseExpression(expressionString);
 
 			return SyntaxFactory.Argument(expression);
 		}
 
-		private void GetAccessedVariables(ArgumentSyntax node)
+		/// <summary>
+		///     Generates the format string for the state formula denoted by <paramref name="argument" />.
+		/// </summary>
+		/// <param name="argument">The argument representing the state formula.</param>
+		/// <param name="memberAccesses">The member accesses within <paramref name="argument" />.</param>
+		private static string ToFormatString(ArgumentSyntax argument, IEnumerable<ExpressionSyntax> memberAccesses)
 		{
-			
+			var offset = argument.FullSpan.Start;
+			var argumentString = argument.ToFullString();
+
+			var index = 0;
+			foreach (var memberAccess in memberAccesses)
+			{
+				var start = memberAccess.Span.Start - offset;
+				var end = memberAccess.Span.End - offset;
+				var length = end - start;
+				var formatArg = String.Format("{{{0}}}", index);
+
+				offset += length - formatArg.Length;
+				++index;
+
+				argumentString = argumentString.Remove(start, end - start);
+				argumentString = argumentString.Insert(start, formatArg);
+			}
+
+			return argumentString;
+		}
+
+		/// <summary>
+		///     Gets the members accessed by the state formula <paramref name="argument" />.
+		/// </summary>
+		/// <param name="argument">The argument representing the state formula.</param>
+		private IEnumerable<ExpressionSyntax> GetMemberAccesses(ArgumentSyntax argument)
+		{
+			var walker = new MemberAccessCollector(SemanticModel);
+			walker.Visit(argument);
+
+			return walker.MemberAccesses;
+		}
+
+		/// <summary>
+		///     Collects member accesses of a C# expression.
+		/// </summary>
+		private class MemberAccessCollector : CSharpSyntaxWalker
+		{
+			/// <summary>
+			///     The cached symbol of the <see cref="IComponent" /> interface.
+			/// </summary>
+			private readonly ITypeSymbol _componentInterfaceSymbol;
+
+			/// <summary>
+			///     The semantic model that is used to resolve types.
+			/// </summary>
+			private readonly SemanticModel _semanticModel;
+
+			/// <summary>
+			///     Initializes a new instance of the <see cref="MemberAccessCollector" /> type.
+			/// </summary>
+			/// <param name="semanticModel">The semantic model that should be used to resolve types.</param>
+			public MemberAccessCollector(SemanticModel semanticModel)
+			{
+				MemberAccesses = new List<ExpressionSyntax>();
+
+				_semanticModel = semanticModel;
+				_componentInterfaceSymbol = _semanticModel.GetComponentInterfaceSymbol();
+			}
+
+			/// <summary>
+			///     Gets the expression representing members accessed by the state formula.
+			/// </summary>
+			public List<ExpressionSyntax> MemberAccesses { get; private set; }
+
+			/// <summary>
+			///     Collects a member access that is accessed with a <see cref="MemberAccessExpressionSyntax" />. If the accessed object is
+			///     a <see cref="IComponent" /> instance, the last member access is not reported as it should remain in the state formula.
+			/// </summary>
+			/// <param name="node">The member access that should be collected</param>
+			public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+			{
+				var typeInfo = _semanticModel.GetTypeInfo(node.Expression);
+				if (typeInfo.ConvertedType.IsDerivedFrom(_componentInterfaceSymbol))
+					MemberAccesses.Add(node.Expression);
+				else
+					MemberAccesses.Add(node);
+			}
+
+			/// <summary>
+			///     Collects a member access that is not part of a <see cref="MemberAccessExpressionSyntax" />.
+			/// </summary>
+			/// <param name="node">The identifier that should be collected.</param>
+			public override void VisitIdentifierName(IdentifierNameSyntax node)
+			{
+				MemberAccesses.Add(node);
+			}
 		}
 	}
 }
