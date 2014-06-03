@@ -34,6 +34,7 @@ namespace Tests.CSharp
 	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Transformation;
 	using SafetySharp.Metamodel;
+	using SafetySharp.Utilities;
 
 	/// <summary>
 	///     Represents a compiled C# compilation unit with a single syntax tree.

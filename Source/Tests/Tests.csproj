@@ -69,7 +69,7 @@
     <Compile Include="CSharp\Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\Extensions\NamespaceOrTypeSymbolExtensionsTests.cs" />
     <Compile Include="CSharp\ModelingCompilationTests.cs" />
-    <Compile Include="CSharp\Normalization\CSharpNormalizerTests.cs" />
+    <Compile Include="CSharp\Normalization\StateFormulaNormalizerTests.cs" />
     <Compile Include="CSharp\Normalization\TypesNormalizerTests.cs" />
     <Compile Include="CSharp\TestCompilation.cs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzerTests.cs" />

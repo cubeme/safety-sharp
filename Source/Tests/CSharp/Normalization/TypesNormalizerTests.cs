@@ -25,14 +25,23 @@ namespace Tests.CSharp.Normalization
 	using System;
 	using System.Linq;
 	using FluentAssertions;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using NUnit.Framework;
 	using SafetySharp.CSharp.Extensions;
 	using SafetySharp.CSharp.Normalization;
 
 	[TestFixture]
-	internal class TypesNormalizerTests : CSharpNormalizerTests<TypesNormalizer>
+	internal class TypesNormalizerTests
 	{
+		private static SyntaxNode Normalize(string csharpCode)
+		{
+			var compilation = new TestCompilation(csharpCode);
+
+			var normalizer = new TypesNormalizer();
+			return normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single().GetRoot();
+		}
+
 		private static void Test<T>(string csharpCode, Func<T, string> identifier, bool shouldContain, string[] typeNames)
 			where T : MemberDeclarationSyntax
 		{
