@@ -61,6 +61,12 @@ namespace Tests.CSharp.Transformation
 		private IMetamodelReference<FieldDeclaration> _intFieldReference;
 		private IMetamodelReference<FieldDeclaration> _booleanFieldReference;
 
+		private Formula Transform(Formula formula)
+		{
+			var transformation = new FormulaTransformation(_compilation.ModelingCompilation, _symbolMap);
+			return transformation.Visit(formula);
+		}
+
 		private StateFormula TransformStateFormula(string csharpExpression, params object[] values)
 		{
 			var transformation = new FormulaTransformation(_compilation.ModelingCompilation, _symbolMap);
@@ -109,6 +115,22 @@ namespace Tests.CSharp.Transformation
 				.Should().Be(new StateFormula(new BinaryExpression(new DecimalLiteral(1), BinaryOperator.Equals, new DecimalLiteral(2.5m)), null));
 			TransformStateFormula("true || false")
 				.Should().Be(new StateFormula(new BinaryExpression(BooleanLiteral.True, BinaryOperator.LogicalOr, BooleanLiteral.False), null));
+		}
+
+		[Test]
+		public void TransformNestedFormula()
+		{
+			var booleanFieldAccess = new FieldAccessExpression(_booleanFieldReference);
+			var intFieldAccess = new FieldAccessExpression(_intFieldReference);
+
+			var fieldIsTrue = new UntransformedStateFormula("{0}.BooleanField", ImmutableArray.Create<object>(CreateComponentInstance("X")));
+			var fieldIsTwo = new UntransformedStateFormula("{0}.IntField == 2", ImmutableArray.Create<object>(CreateComponentInstance("X")));
+
+			var transformedFieldIsTrue = new StateFormula(booleanFieldAccess, null);
+			var transformedfieldIsTwo = new StateFormula(new BinaryExpression(intFieldAccess, BinaryOperator.Equals, new IntegerLiteral(2)), null);
+
+			Transform(new BinaryFormula(fieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, fieldIsTwo)).Should().Be(
+				new BinaryFormula(transformedFieldIsTrue, BinaryTemporalOperator.Until, PathQuantifier.All, transformedfieldIsTwo));
 		}
 
 		[Test]

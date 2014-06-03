@@ -445,7 +445,7 @@ let generateCode context =
     /// </summary>
     let isRewriteable (p : Property) = 
         let typeName = getUnderlyingType p
-        classes |> List.exists (fun c -> c.Name = typeName)
+        typeName = context.BaseClass || classes |> List.exists (fun c -> c.Name = typeName)
 
     /// <summary>
     ///     Checks whether any classes defined in the metadata derive from the given type.
