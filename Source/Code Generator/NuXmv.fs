@@ -54,8 +54,7 @@ let elements = [
                 [
                     {
                         Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
+                        Type = Singleton "string"
                         Validation = NotNull
                         Comment = "The name of the identifier."
                         CanBeNull = false
@@ -78,8 +77,7 @@ let elements = [
                 [
                     {
                         Name = "NameIdentifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The identifier which references a variable or the name of a container (if part of a nested identifier)."
                         CanBeNull = false
@@ -94,16 +92,14 @@ let elements = [
                 [
                     {
                         Name = "Container"
-                        Type = "ComplexIdentifier"
-                        CollectionType = Singleton
+                        Type = Singleton "ComplexIdentifier"
                         Validation = NotNull
                         Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in a module. (Syntax: Container '.' NameIdentifier)"
                         CanBeNull = false
                     }
                     {
                         Name = "NameIdentifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The identifier which references a specific member in a module.  (Syntax: Container '.' NameIdentifier)"
                         CanBeNull = false
@@ -118,16 +114,14 @@ let elements = [
                 [
                     {
                         Name = "Container"
-                        Type = "ComplexIdentifier"
-                        CollectionType = Singleton
+                        Type = Singleton "ComplexIdentifier"
                         Validation = NotNull
                         Comment = "This references a specific member in this struct."
                         CanBeNull = false
                     }
                     {
                         Name = "Index"
-                        Type = "SimpleExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression"
                         Validation = NotNull
                         Comment = "Container references an array. This is the index of a specific element in this array."
                         CanBeNull = false
@@ -178,8 +172,7 @@ let elements = [
                 [
                     {
                         Name = "Domain"
-                        Type = "ConstExpression"
-                        CollectionType = Array
+                        Type = Array "ConstExpression"
                         Validation = None
                         Comment = "Possible values of the Enumeration Type."
                         CanBeNull = false
@@ -196,8 +189,7 @@ let elements = [
                 [
                     {
                         Name = "Length"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None
                         Comment = "Length of the word."
                         CanBeNull = false
@@ -236,24 +228,21 @@ let elements = [
                 [
                     {
                         Name = "Lower"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None //No validation because of value type int
                         Comment = "Lower bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "Upper"
-                        Type = "int"
-                        CollectionType = Singleton
+                        Type = Singleton "int"
                         Validation = None //No validation because of value type int
                         Comment = "Upper bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "ElementType"
-                        Type = "NuXmvType"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvType"
                         Validation = NotNull
                         Comment = "Type of the elements of the array."
                         CanBeNull = false
@@ -299,8 +288,7 @@ let elements = [
                 [
                     {
                         Name = "Length"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "Length of the word."
                         CanBeNull = false
@@ -339,8 +327,7 @@ let elements = [
                 [
                     {
                         Name = "Domain"
-                        Type = "ConstExpression"
-                        CollectionType = Array
+                        Type = Array "ConstExpression"
                         Validation = None //ImmutableArrays aren't validated
                         Comment = "Possible values of the Enumeration Type."
                         CanBeNull = false
@@ -357,16 +344,14 @@ let elements = [
                 [
                     {
                         Name = "Lower"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "Lower bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "Upper"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "Upper bound of the array."
                         CanBeNull = false
@@ -381,24 +366,21 @@ let elements = [
                 [
                     {
                         Name = "Lower"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "Lower bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "Upper"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "Upper bound of the array."
                         CanBeNull = false
                     }
                     {
                         Name = "ElementTypeSpecifier"
-                        Type = "NuXmvSimpleTypeSpecifier"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvSimpleTypeSpecifier"
                         Validation = NotNull
                         Comment = "Type of the elements of the array."
                         CanBeNull = false
@@ -439,8 +421,7 @@ let elements = [
                 [
                     {
                         Name = "Value"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "The Boolean value of the expression."
                         CanBeNull = false
@@ -455,8 +436,7 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "An identifier containing the element name of an enum."
                         CanBeNull = false
@@ -472,8 +452,7 @@ let elements = [
                     //TODO: Additional constructor for int
                     {
                         Name = "Value"
-                        Type = "System.Numerics.BigInteger" //is value type => no validation
-                        CollectionType = Singleton
+                        Type = Singleton "System.Numerics.BigInteger" //is value type => no validation
                         Validation = None
                         Comment = "The integer value of an expression."
                         CanBeNull = false
@@ -489,8 +468,7 @@ let elements = [
                     //TODO: Member: Representation (float, fractional or exponential)
                     {
                         Name = "Value"
-                        Type = "float"
-                        CollectionType = Singleton
+                        Type = Singleton "float"
                         Validation = None
                         Comment = "The float value of an expression."
                         CanBeNull = false
@@ -507,32 +485,28 @@ let elements = [
                     //TODO: Write additional constructors, which allow to enter a value and the width of the BitArray
                     {
                         Name = "Value"
-                        Type = "System.Collections.BitArray" // I am quite surprised: is a reference type
-                        CollectionType = Singleton
+                        Type = Singleton "System.Collections.BitArray" // I am quite surprised: is a reference type
                         Validation = NotNull
                         Comment = "The bit value of a word expression."
                         CanBeNull = false
                     }
                     {
                         Name = "SignSpecifier"
-                        Type = "NuXmvSignSpecifier"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvSignSpecifier"
                         Validation = InRange
                         Comment = "Specifies, whether signed or unsigned."
                         CanBeNull = false
                     }        
                     {
                         Name = "Base"
-                        Type = "NuXmvRadix"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvRadix"
                         Validation = InRange
                         Comment = "Radix of Numeral System (binary, octal, decimal or hexadecimal)."
                         CanBeNull = false
                     }       
                     {
                         Name = "ImproveReadability"
-                        Type = "bool"
-                        CollectionType = Singleton
+                        Type = Singleton "bool"
                         Validation = None
                         Comment = "If true underscore is placed every 3 digits to improve readability."
                         CanBeNull = false
@@ -548,16 +522,14 @@ let elements = [
                     // write additional constructor, which allows to enter int-Values
                     {
                         Name = "From"
-                        Type = "System.Numerics.BigInteger"
-                        CollectionType = Singleton
+                        Type = Singleton "System.Numerics.BigInteger"
                         Validation = None
                         Comment = "The value the range starts with (inclusive)."
                         CanBeNull = false
                     }
                     {
                         Name = "To"
-                        Type = "System.Numerics.BigInteger"
-                        CollectionType = Singleton
+                        Type = Singleton "System.Numerics.BigInteger"
                         Validation = None
                         Comment = "The value the range ends with (inclusive)."
                         CanBeNull = false
@@ -574,8 +546,7 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "ComplexIdentifier"
-                        CollectionType = Singleton
+                        Type = Singleton "ComplexIdentifier"
                         Validation = NotNull
                         Comment = "The reference to a variable or a define. Might be hierarchical."
                         CanBeNull = false
@@ -590,16 +561,14 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvUnaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvUnaryOperator"
                         Validation = InRange
                         Comment = "The operator of the unary expression."
                         CanBeNull = false
@@ -614,24 +583,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvBinaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvBinaryOperator"
                         Validation = InRange
                         Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -679,8 +645,7 @@ let elements = [
                 [
                     {
                         Name = "ExpressionLeadingToArray"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression leading to the array we index."
                         CanBeNull = false
@@ -688,8 +653,7 @@ let elements = [
                     {
                         //TODO: Validation: Index has to be word or integer
                         Name = "Index"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The index"
                         CanBeNull = false
@@ -706,8 +670,7 @@ let elements = [
                 [
                     {
                         Name = "SetBodyExpression"
-                        Type = "BasicExpression"
-                        CollectionType = Array
+                        Type = Array "BasicExpression"
                         Validation = None
                         Comment = "The members in the set expression."
                         CanBeNull = false
@@ -722,16 +685,14 @@ let elements = [
                 [
                     {
                         Name = "CaseCondition"
-                        Type = "BasicExpression"
-                        CollectionType = Array
+                        Type = Array "BasicExpression"
                         Validation = None
                         Comment = "Left side of the ':' in a case expression."
                         CanBeNull = false
                     }
                     {
                         Name = "CaseEffect"
-                        Type = "BasicExpression"
-                        CollectionType = Array
+                        Type = Array "BasicExpression"
                         Validation = None
                         Comment = "Right side of the ':' in a case expression."
                         CanBeNull = false
@@ -746,8 +707,7 @@ let elements = [
                 [
                     {
                         Name = "CaseBody"
-                        Type = "CaseConditionAndEffect"
-                        CollectionType = Array
+                        Type = Array "CaseConditionAndEffect"
                         Validation = None
                         Comment = "The members in the case expression."
                         CanBeNull = false
@@ -764,8 +724,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The expression of the basic next expression."
                         CanBeNull = false
@@ -782,8 +741,7 @@ let elements = [
                 [
                     {
                         Name = "NestedExpression"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression"
                         Validation = NotNull
                         Comment = "The actual expression"
                         CanBeNull = false
@@ -813,16 +771,14 @@ let elements = [
                 [
                     {
                         Name = "TypeSpecifier"
-                        Type = "NuXmvTypeSpecifier"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvTypeSpecifier"
                         Validation = NotNull
                         Comment = "The typespecifier of the tuple which is mainly used in the variable declaration part of a module."
                         CanBeNull = false
                     }
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The identifier of the tuple which is mainly used in the variable declaration part of a module."
                         CanBeNull = false
@@ -837,16 +793,14 @@ let elements = [
                 [
                     {
                         Name = "TypeSpecifier"
-                        Type = "NuXmvSimpleTypeSpecifier"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvSimpleTypeSpecifier"
                         Validation = NotNull
                         Comment = "The typespecifier of the tuple which is mainly used in the variable declaration part of a module."
                         CanBeNull = false
                     }
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "The identifier of the tuple which is mainly used in the variable declaration part of a module."
                         CanBeNull = false
@@ -861,8 +815,7 @@ let elements = [
                 [
                     {
                         Name = "Variables"
-                        Type = "TypedIdentifier"
-                        CollectionType = Array
+                        Type = Array "TypedIdentifier"
                         Validation = None
                         Comment = "Array of variable declarations"
                         CanBeNull = false
@@ -877,8 +830,7 @@ let elements = [
                 [
                     {
                         Name = "InputVariables"
-                        Type = "SimpleTypedIdentifier"
-                        CollectionType = Array
+                        Type = Array "SimpleTypedIdentifier"
                         Validation = None
                         Comment = "Array of input variable declarations"
                         CanBeNull = false
@@ -893,8 +845,7 @@ let elements = [
                 [
                     {
                         Name = "FrozenVariables"
-                        Type = "SimpleTypedIdentifier"
-                        CollectionType = Array
+                        Type = Array "SimpleTypedIdentifier"
                         Validation = None
                         Comment = "Array of frozen variable declarations (readonly, nondeterministic initialization)"
                         CanBeNull = false
@@ -910,16 +861,14 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
                     }
                     {
                         Name = "Expression"
-                        Type = "BasicExpression" //Next allowed
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression" //Next allowed
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
@@ -934,8 +883,7 @@ let elements = [
                 [
                     {
                         Name = "Defines"
-                        Type = "IdentifierExpressionTuple"
-                        CollectionType = Array
+                        Type = Array "IdentifierExpressionTuple"
                         Validation = None
                         Comment = "Array of variable declarations"
                         CanBeNull = false
@@ -953,8 +901,7 @@ let elements = [
                 [
                     {
                         Name = "Constants"
-                        Type = "Identifier"
-                        CollectionType = Array
+                        Type = Array "Identifier"
                         Validation = None
                         Comment = "Array of identifiers of constants."
                         CanBeNull = false
@@ -970,8 +917,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression" //next forbidden
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression" //next forbidden
                         Validation = NotNull
                         Comment = "Initial Condition which must evaluate to true. next-Statement is forbidden inside."
                         CanBeNull = false
@@ -987,8 +933,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression" //next forbidden
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression" //next forbidden
                         Validation = NotNull
                         Comment = "Invariant which must evaluate to true. next-Statement is forbidden inside."
                         CanBeNull = false
@@ -1004,8 +949,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "BasicExpression" //next allowed
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression" //next allowed
                         Validation = NotNull
                         Comment = "Invariant which must evaluate to true. next-Statement is allowed inside."
                         CanBeNull = false
@@ -1021,8 +965,7 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
@@ -1037,8 +980,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression" //next forbidden
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression" //next forbidden
                         Validation = NotNull
                         Comment = "Invariant which must evaluate to true. next-Statement is forbidden inside."
                         CanBeNull = false
@@ -1053,8 +995,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression" //next forbidden
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression" //next forbidden
                         Validation = NotNull
                         Comment = "Invariant which must evaluate to true. next-Statement is forbidden inside."
                         CanBeNull = false
@@ -1069,8 +1010,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "BasicExpression" //next allowed
-                        CollectionType = Singleton
+                        Type = Singleton "BasicExpression" //next allowed
                         Validation = NotNull
                         Comment = "Invariant which must evaluate to true. next-Statement is allowed inside."
                         CanBeNull = false
@@ -1085,8 +1025,7 @@ let elements = [
                 [
                     {
                         Name = "Assigns"
-                        Type = "SingleAssignConstraint"
-                        CollectionType = Array
+                        Type = Array "SingleAssignConstraint"
                         Validation = None
                         Comment = "."
                         CanBeNull = false
@@ -1104,24 +1043,21 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
                     }
                     {
                         Name = "ModuleParameters"
-                        Type = "Identifier"
-                        CollectionType = Array
+                        Type = Array "Identifier"
                         Validation = None
                         Comment = "."
                         CanBeNull = false
                     }
                     {
                         Name = "ModuleElements"
-                        Type = "ModuleElement"
-                        CollectionType = Array
+                        Type = Array "ModuleElement"
                         Validation = None
                         Comment = "."
                         CanBeNull = false
@@ -1137,16 +1073,14 @@ let elements = [
                 [
                     {
                         Name = "ModuleName"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton"Identifier"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
                     }
                     {
                         Name = "ModuleParameters"
-                        Type = "BasicExpression" //next allowed
-                        CollectionType = Array
+                        Type = Array "BasicExpression" //next allowed
                         Validation = None
                         Comment = "."
                         CanBeNull = false
@@ -1165,8 +1099,7 @@ let elements = [
                 [
                     {
                         Name = "Modules"
-                        Type = "ModuleDeclaration"
-                        CollectionType = Array
+                        Type = Array "ModuleDeclaration"
                         Validation = None
                         Comment = "."
                         CanBeNull = false
@@ -1189,16 +1122,14 @@ let elements = [
                 [
                     {
                         Name = "Identifier"
-                        Type = "Identifier"
-                        CollectionType = Singleton
+                        Type = Singleton "Identifier"
                         Validation = None //no name necessary
                         Comment = "."
                         CanBeNull = true
                     }    
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
@@ -1213,8 +1144,7 @@ let elements = [
                 [
                     {
                         Name = "VariableIdentifier"
-                        Type = "ComplexIdentifier"
-                        CollectionType = Singleton
+                        Type = Singleton "ComplexIdentifier"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
@@ -1244,8 +1174,7 @@ let elements = [
                 [
                     {
                         Name = "CtlExpression"
-                        Type = "CtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "CtlExpression"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
@@ -1267,8 +1196,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression"
                         Validation = NotNull
                         Comment = "The simple expression without a next."
                         CanBeNull = false
@@ -1283,24 +1211,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "CtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "CtlExpression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvCtlBinaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvCtlBinaryOperator"
                         Validation = InRange
                         Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "CtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "CtlExpression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -1315,16 +1240,14 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "CtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "CtlExpression"
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvCtlUnaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvCtlUnaryOperator"
                         Validation = InRange
                         Comment = "The operator of the unary expression."
                         CanBeNull = false
@@ -1342,8 +1265,7 @@ let elements = [
                 [
                     {
                         Name = "LtlExpression"
-                        Type = "LtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "LtlExpression"
                         Validation = NotNull
                         Comment = "."
                         CanBeNull = false
@@ -1364,8 +1286,7 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "SimpleExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "SimpleExpression"
                         Validation = NotNull
                         Comment = "The simple expression without a next."
                         CanBeNull = false
@@ -1380,24 +1301,21 @@ let elements = [
                 [
                     {
                         Name = "Left"
-                        Type = "LtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "LtlExpression"
                         Validation = NotNull
                         Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvLtlBinaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvLtlBinaryOperator"
                         Validation = InRange
                         Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Right"
-                        Type = "LtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "LtlExpression"
                         Validation = NotNull
                         Comment = "The expression on the right-hand side of the binary operator."
                         CanBeNull = false
@@ -1412,16 +1330,14 @@ let elements = [
                 [
                     {
                         Name = "Expression"
-                        Type = "LtlExpression"
-                        CollectionType = Singleton
+                        Type = Singleton "LtlExpression"
                         Validation = NotNull
                         Comment = "The expression of the unary expression."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvLtlUnaryOperator"
-                        CollectionType = Singleton
+                        Type = Singleton "NuXmvLtlUnaryOperator"
                         Validation = InRange
                         Comment = "The operator of the unary expression."
                         CanBeNull = false
