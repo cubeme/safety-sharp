@@ -24,6 +24,10 @@
 // AST of a subset of NuXmv. NuXmv syntax is a superset of NuSMV syntax
 // Source of AST: NuXmv User Manual V. 1.0
 
+//TODO: Check validations
+
+//TODO: Maybe remove SimpleExpression and Replace every use by a custom validation
+
 module NuXmvGenerator
 
 open System
@@ -39,6 +43,8 @@ let elements = [
         Name = "SafetySharp.Modelchecking.NuXmv"
         Classes =
         [
+            // TODO: Write validator, which checks, if string is not a keyword and follows all rules
+            // TODO: Alow Generator to define custom validation functions
             {   
                 Name = "Identifier"
                 Base = "NuXmvElement"
@@ -64,23 +70,23 @@ let elements = [
                 Properties = []
             }
             {   
-                Name = "IdentifierComplexIdentifier" // NestedComplexIdentifier	: Identifier
+                Name = "NameComplexIdentifier" // NestedComplexIdentifier : Identifier
                 Base = "ComplexIdentifier"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Identifier"
+                        Name = "NameIdentifier"
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The identifier which references a variable or the name of a container/self."
+                        Comment = "The identifier which references a variable or the name of a container (if part of a nested identifier)."
                         CanBeNull = false
                     }
                 ]
             }
             {   
-                Name = "NestedComplexIdentifier" // NestedComplexIdentifier	: [ Container '.' ] Identifier
+                Name = "NestedComplexIdentifier" // NestedComplexIdentifier : Container '.' NameIdentifier
                 Base = "ComplexIdentifier"
                 IsAbstract = false
                 Properties = 
@@ -89,22 +95,22 @@ let elements = [
                         Name = "Container"
                         Type = "ComplexIdentifier"
                         CollectionType = Singleton
-                        Validation = None
-                        Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
-                        CanBeNull = true
+                        Validation = NotNull
+                        Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in a module. (Syntax: Container '.' NameIdentifier)"
+                        CanBeNull = false
                     }
                     {
-                        Name = "Identifier"
+                        Name = "NameIdentifier"
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The identifier which definitively references a variable."
+                        Comment = "The identifier which references a specific member in a module.  (Syntax: Container '.' NameIdentifier)"
                         CanBeNull = false
                     }
                 ]
             }
             {   
-                Name = "ArrayAccessComplexIdentifier" // NestedComplexIdentifier	:  Container [ '[' Index ']' ]
+                Name = "ArrayAccessComplexIdentifier" // NestedComplexIdentifier : Container '[' Index ']'
                 Base = "ComplexIdentifier"
                 IsAbstract = false
                 Properties = 
@@ -113,17 +119,17 @@ let elements = [
                         Name = "Container"
                         Type = "ComplexIdentifier"
                         CollectionType = Singleton
-                        Validation = None
-                        Comment = "Identifier (and maybe the Index) reference a struct. This references a specific member in this struct."
-                        CanBeNull = true
+                        Validation = NotNull
+                        Comment = "This references a specific member in this struct."
+                        CanBeNull = false
                     }
                     {
                         Name = "Index"
-                        Type = "Expression"
+                        Type = "SimpleExpression"
                         CollectionType = Singleton
-                        Validation = None
+                        Validation = NotNull
                         Comment = "Container references an array. This is the index of a specific element in this array."
-                        CanBeNull = true
+                        CanBeNull = false
                     }
                 ]
             }
@@ -134,7 +140,7 @@ let elements = [
                 Properties = []
             }
             {   
-                Name = "NuXmvType"
+                Name = "NuXmvType" //can't be renamed to Type because System.Type exists
                 Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
@@ -142,7 +148,7 @@ let elements = [
             {   
                 //seems to be a duplication of NuXmvType, but isn't:
                 //The type isn't determined yet. It depends on expressions, which can be contained in a specifier.
-                Name = "NuXmvTypeSpecifier"
+                Name = "NuXmvTypeSpecifier" //called NuXmvTypeSpecifier to be consistent with NuXmvType
                 Base = "NuXmvElement"
                 IsAbstract = true
                 Properties = []
@@ -178,7 +184,7 @@ let elements = [
                         CanBeNull = false
                     }
                     //    TODO: "HasSymbolicConstants" and "HasIntegerNumbers" as methods in partial class
-                    //          Method "GetEnumerationType -> {SymbolicEnum, Integer-And-Symbolic-Enum,Integer-Enum}
+                    //          Method "GetEnumerationType -> {SymbolicEnum, Integer-And-Symbolic-Enum)} (No Integer-Enum, because "In the NUXMV type system an expression of the type integer enum is always converted to the type integer")
                 ]
             }            
             {   
@@ -270,23 +276,13 @@ let elements = [
         Name = "SafetySharp.Modelchecking.NuXmv.SimpleTypeSpecifiers"
         Classes = 
         [
-                  
+            //TODO: Change following: In the documentation on page 23 only basic_expr is used. But simple_expr would make more sense (no next).
             {   
+                // TODO: Write member GetNuXmvType, which derives the NuXmvType of the TypeSpecifier
                 Name = "NuXmvSimpleTypeSpecifier"
                 Base = "NuXmvTypeSpecifier"
                 IsAbstract = true
-                Properties = 
-                [
-                    //TODO
-                    (*{
-                        Name = "Type"
-                        Type = "NuXmvType"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "Type of SimpleTypeSpecifier. No data. Should be evaluated."
-                        CanBeNull = false
-                    }*)
-                ]
+                Properties = []
             }
             {
                 Name = "BooleanTypeSpecifier"
@@ -351,7 +347,31 @@ let elements = [
                     //    TODO: "HasSymbolicConstants" and "HasIntegerNumbers" as methods in partial class
                     //          Method "GetEnumerationType -> {SymbolicEnum, Integer-And-Symbolic-Enum,Integer-Enum}
                 ]
-            }            
+            }             
+            {
+                Name = "IntegerRangeTypeSpecifier"
+                Base = "NuXmvSimpleTypeSpecifier"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "Lower"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Lower bound of the array."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Upper"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Upper bound of the array."
+                        CanBeNull = false
+                    }
+                ]
+            }           
             {
                 Name = "ArrayTypeSpecifier"
                 Base = "NuXmvSimpleTypeSpecifier"
@@ -383,31 +403,7 @@ let elements = [
                         CanBeNull = false
                     }
                 ]
-            }             
-            {
-                Name = "IntegerRangeTypeSpecifier"
-                Base = "NuXmvSimpleTypeSpecifier"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Lower"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "Lower bound of the array."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Upper"
-                        Type = "BasicExpression"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "Upper bound of the array."
-                        CanBeNull = false
-                    }
-                ]
-            }
+            } 
 
         ]
     }
@@ -435,7 +431,7 @@ let elements = [
                 Properties = []
             }
             {
-                Name = "BooleanLiteral"
+                Name = "BooleanConstant"
                 Base = "ConstExpression"
                 IsAbstract = false
                 Properties =
@@ -451,27 +447,28 @@ let elements = [
                 ]
             }
             {
-                Name = "SymbolicLiteral"
+                Name = "SymbolicConstant"
                 Base = "ConstExpression"
                 IsAbstract = false
                 Properties =
                 [
                     {
-                        Name = "Value"
+                        Name = "Identifier"
                         Type = "Identifier"
                         CollectionType = Singleton
                         Validation = None
-                        Comment = "The string containing the element name of an enum."
+                        Comment = "An identifier containing the element name of an enum."
                         CanBeNull = false
                     }
                 ]
             }
             {
-                Name = "IntegerLiteral"
+                Name = "IntegerConstant"
                 Base = "ConstExpression"
                 IsAbstract = false
                 Properties =
                 [
+                    //TODO: Additional constructor for int
                     {
                         Name = "Value"
                         Type = "System.Numerics.BigInteger"
@@ -483,11 +480,12 @@ let elements = [
                 ]
             }
             {
-                Name = "RealLiteral"
+                Name = "RealConstant"
                 Base = "ConstExpression"
                 IsAbstract = false
                 Properties =
                 [
+                    //TODO: Member: Representation (float, fractional or exponential)
                     {
                         Name = "Value"
                         Type = "float"
@@ -499,11 +497,13 @@ let elements = [
                 ]
             }
             {
-                Name = "WordLiteral"
+                Name = "WordConstant"
                 Base = "ConstExpression"
                 IsAbstract = false
                 Properties =
                 [
+                    //TODO: Write Member-Function, which extracts the word with (which is defined in "Value" inside the BitArray)
+                    //TODO: Write additional constructors, which allow to enter a value and the width of the BitArray
                     {
                         Name = "Value"
                         Type = "System.Collections.BitArray"
@@ -513,29 +513,21 @@ let elements = [
                         CanBeNull = false
                     }
                     {
-                        Name = "Type"
-                        Type = "WordType"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "The float value of an expression."
-                        CanBeNull = false
-                    }
-                    {
-                        Name = "Radix"
-                        Type = "NuXmvRadix"
-                        CollectionType = Singleton
-                        Validation = None
-                        Comment = "Radix of Numeral System (binary, octal, decimal or hexadecimal)."
-                        CanBeNull = false
-                    }
-                    {
                         Name = "SignSpecifier"
                         Type = "NuXmvSignSpecifier"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "Specifies, whether signed or unsigned."
                         CanBeNull = false
-                    }                    
+                    }        
+                    {
+                        Name = "Base"
+                        Type = "NuXmvRadix"
+                        CollectionType = Singleton
+                        Validation = None
+                        Comment = "Radix of Numeral System (binary, octal, decimal or hexadecimal)."
+                        CanBeNull = false
+                    }       
                     {
                         Name = "ImproveReadability"
                         Type = "bool"
@@ -547,11 +539,12 @@ let elements = [
                 ]
             }            
             {
-                Name = "RangeLiteral"
+                Name = "RangeConstant"
                 Base = "ConstExpression"
                 IsAbstract = false
                 Properties =
                 [
+                    // write additional constructor, which allows to enter int-Values
                     {
                         Name = "From"
                         Type = "System.Numerics.BigInteger"
@@ -569,46 +562,45 @@ let elements = [
                         CanBeNull = false
                     }
                 ]
-            }
-            (*
+            }         
             {   
-                Name = "BasicExpression" //TODO
-                Base = "Expression"
-                IsAbstract = true
-                Properties = []
-            }
-            *)                    
-            {   
-                // The expression which references a variable.
+                // The expression which references a variable or a define.
                 // Note: All identifiers (variables, defines, symbolic constants, etc) can be used prior to their definition
-                Name = "VariableIdentifier" //TODO
+                Name = "ComplexIdentifierExpression"
                 Base = "BasicExpression"
                 IsAbstract = false
                 Properties = 
                 [
                     {
                         Name = "Identifier"
-                        Type = "string"
+                        Type = "ComplexIdentifier"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The name of the identifier which references a variable."
+                        Comment = "The reference to a variable or a define. Might be hierarchical."
                         CanBeNull = false
                     }
                 ]
-            }                   
+            }            
             {   
-                //The expression which references a Define.
-                Name = "DefineIdentifier" //TODO
+                Name = "UnaryExpression"
                 Base = "BasicExpression"
                 IsAbstract = false
                 Properties = 
                 [
                     {
-                        Name = "Identifier"
-                        Type = "string"
+                        Name = "Expression"
+                        Type = "BasicExpression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The name of the identifier which references a variable."
+                        Comment = "The expression of the unary expression."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "Operator"
+                        Type = "NuXmvUnaryOperator"
+                        CollectionType = Singleton
+                        Validation = InRange
+                        Comment = "The operator of the unary expression."
                         CanBeNull = false
                     }
                 ]
@@ -646,29 +638,38 @@ let elements = [
                 ]
             }            
             {   
-                Name = "UnaryExpression"
+                //TODO
+                Name = "TenaryExpression"
                 Base = "BasicExpression"
                 IsAbstract = false
                 Properties = 
                 [
-                    {
-                        Name = "Expression"
+                    (*{
+                        Name = "Left"
                         Type = "BasicExpression"
                         CollectionType = Singleton
                         Validation = NotNull
-                        Comment = "The expression of the unary expression."
+                        Comment = "The expression on the left-hand side of the binary operator."
                         CanBeNull = false
                     }
                     {
                         Name = "Operator"
-                        Type = "NuXmvUnaryOperator"
+                        Type = "NuXmvBinaryOperator"
                         CollectionType = Singleton
                         Validation = InRange
-                        Comment = "The operator of the unary expression."
+                        Comment = "The operator of the binary expression."
                         CanBeNull = false
                     }
+                    {
+                        Name = "Right"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression on the right-hand side of the binary operator."
+                        CanBeNull = false
+                    }*)
                 ]
-            }                     
+            }
             {
                 Name = "IndexSubscriptExpression"
                 Base = "BasicExpression"
@@ -677,14 +678,14 @@ let elements = [
                 [
                     {
                         Name = "ExpressionLeadingToArray"
-                        Type = "Expression"
+                        Type = "BasicExpression"
                         CollectionType = Singleton
                         Validation = None
                         Comment = "The expression leading to the array we index."
                         CanBeNull = false
                     }
                     {
-                        //TODO:
+                        //TODO: Validation: Index has to be word or integer
                         Name = "Index"
                         Type = "BasicExpression"
                         CollectionType = Singleton
@@ -695,23 +696,83 @@ let elements = [
                 ]
             }
             {
-                Name = "SetExpression" //TODO            
+                // TODO there is another way to gain set-expressions by the union-operator. See page 19:
+                // Here we use the way by enumerating every possible value
+                Name = "SetExpression"             
                 Base = "BasicExpression"
                 IsAbstract = false
-                Properties = []
+                Properties = 
+                [
+                    {
+                        Name = "SetBodyExpression"
+                        Type = "BasicExpression"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The members in the set expression."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "CaseConditionAndEffect"
+                Base = "NuXmvElement"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "CaseCondition"
+                        Type = "BasicExpression"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Left side of the ':' in a case expression."
+                        CanBeNull = false
+                    }
+                    {
+                        Name = "CaseEffect"
+                        Type = "BasicExpression"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "Right side of the ':' in a case expression."
+                        CanBeNull = false
+                    }
+                ]
+            }
+            {
+                Name = "CaseExpression"
+                Base = "BasicExpression"
+                IsAbstract = false
+                Properties = 
+                [
+                    {
+                        Name = "CaseBody"
+                        Type = "CaseConditionAndEffect"
+                        CollectionType = Array
+                        Validation = None
+                        Comment = "The members in the case expression."
+                        CanBeNull = false
+                    }
+                ]
             }       
             {
-                Name = "CaseExpression" //TODO            
+                // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression.
+                // basically it is also a unary operator, but with different validations
+                Name = "BasicNextExpression" 
                 Base = "BasicExpression"
                 IsAbstract = false
-                Properties = []
-            }       
-            {
-                Name = "BasicNextExpression" //TODO            
-                Base = "BasicExpression"
-                IsAbstract = false
-                Properties = []
-            }      
+                Properties = 
+                [
+                    {
+                        Name = "Expression"
+                        Type = "BasicExpression"
+                        CollectionType = Singleton
+                        Validation = NotNull
+                        Comment = "The expression of the basic next expression."
+                        CanBeNull = false
+                    }
+                ]
+            }
+
+            //TODO: Maybe remove and replace by a validation everywhere
             {
                 Name = "SimpleExpression" //TODO: Define implicit and explicit convertions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
                 Base = "Expression"
@@ -1245,22 +1306,6 @@ let elements = [
                     }
                 ]
             }
-            (*{   
-                Name = "Identifier"
-                Base = "NuXmvElement"
-                IsAbstract = false
-                Properties = 
-                [
-                    {
-                        Name = "Name"
-                        Type = "string"
-                        CollectionType = Singleton
-                        Validation = NotNull
-                        Comment = "The name of the identifier."
-                        CanBeNull = false
-                    }
-                ]
-            }*)
             // Chapter 2.4.2 Invariant Specifications p 36
             //TODO
             // Chapter 2.4.3 LTL Specifications p 36-38

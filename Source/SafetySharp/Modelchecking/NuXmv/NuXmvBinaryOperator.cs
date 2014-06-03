@@ -42,9 +42,10 @@ namespace SafetySharp.Modelchecking.NuXmv
         IntegerRemainder,
         BitShiftRight,
         BitShiftLeft,
-        //IndexSubscript,
         //WordBitsSelection (Tenary)
         //WordConcatenation
+        //SwConst
+        //UwConst
         //WordWidthExtension
         //WordWidthResize
         //Union

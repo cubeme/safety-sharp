@@ -24,7 +24,9 @@ namespace SafetySharp.Modelchecking.NuXmv
     public enum NuXmvUnaryOperator
     {
         LogicalNot,
-        IntegerUnaryMinus,   //maybe unnecessary
+        //IntegerUnaryMinus,   //maybe unnecessary
+        
+        //TODO:
         //BooleanToWord,
         //ToBoolean,
         //ToInt,
@@ -33,5 +35,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         //ToUnsigned,
         //SizeOf,
         //Floor,
+        
+        //next is also a unary operator, but we threat it as a special case
     }
 }
