@@ -1,0 +1,62 @@
+Decicions:
+Structure of NuXmv-Model
+[ ] Flatten all: Destructure partitions and components by putting everything into one big MODULE (Components and Partitions).
+	- Not really human readable
+	+ Promela-Way (alternatives are technically not possible there)
+	+ Counterexample-Traces are really easy reconstructable
+[x] Flatten only components: Destructure Components and put the code inside the ASSIGN-Constraint of its Partition in the correct processing order (sequence), but keep Partitions seperate and structured. ASSIGN-Constraints are written down in the order, in which they appear in the progam code (program sequence).
+	+ Good tradeoff. Comments in the ASSIGN-section after a change of a component may help to guide throw the NuXmv-Code. Reason: Program sequences between different Components may interleave.
+[ ] Keep all: Don't destructure anything. ASSIGN-Constraints are written down per Component in the order how they are processed inside the component. It is assured, these constraints can be solved by a topological sorting by NuXmv.
+	+ NuXmv-Model fits really good to C# model
+	- But the real processing order of constraints is hidden. Reason: Program sequences between different Components may interleave.
+How to threat structures which are used as parameters (TODO)
+[ ] Keep: Introduce a MODULE-Definition for every structure type. For every call of a method with a structure-parameter instanciate this structure.
+[ ] Flatten: For every function call: Get the basic variables and use them as variables
+
+To think about:
+When to introduce a real variable and when is a define enought?
+- When a variable is introduced inside a method, a define should be enought (one define for every "(re-)assignment in c#"). Except: Non deterministic choices.
+- For state-variables: Only on non deterministic choices and the last time a variable is written to a real variable has to be introduced
+- (For now: only use real variables are used. We optimize later)
+
+====================================
+		Generic:
+------------------------------------
+
+MODULE partdef_x(partref_y,partref_z)
+	// VAR-Section
+	
+	//values of compinstance of the root of the partition
+	VAR value_a : bla
+	//values of compinstance of root.x
+	//values of compinstance of root.x.y
+	//values of compinstance of root.y
+	/...
+	
+	// ASSIGN-Section
+	//comp root	
+	//comp root.x
+	//comp root.x.y
+	//comp root.x
+	//comp root
+	
+
+MODULE partdef_y(partref_x,partref_z)
+
+MODULE partdef_z(partref_x,partref_y)
+
+MODULE main
+	VAR
+		part_x : partdef_x(part_y,part_z);
+		part_y : partdef_x(part_x,part_z);
+		part_z : partdef_x(part_x,part_y);
+
+	ASSIGN
+		
+}
+
+
+====================================
+		Example:
+------------------------------------
+
