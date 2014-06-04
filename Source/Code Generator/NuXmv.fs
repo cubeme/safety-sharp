@@ -485,7 +485,7 @@ let elements = [
                     //TODO: Write additional constructors, which allow to enter a value and the width of the BitArray
                     {
                         Name = "Value"
-                        Type = Singleton "System.Collections.BitArray" // I am quite surprised: is a reference type
+                        Type = Singleton "bool[]" // I am quite surprised: is a reference type
                         Validation = NotNull
                         Comment = "The bit value of a word expression."
                         CanBeNull = false
@@ -508,7 +508,7 @@ let elements = [
                         Name = "ImproveReadability"
                         Type = Singleton "bool"
                         Validation = None
-                        Comment = "If true underscore is placed every 3 digits to improve readability."
+                        Comment = "If true underscore is placed every 3 or 4 digits to improve readability."
                         CanBeNull = false
                     }
                 ]
@@ -685,14 +685,14 @@ let elements = [
                 [
                     {
                         Name = "CaseCondition"
-                        Type = Array "BasicExpression"
+                        Type = Singleton "BasicExpression"
                         Validation = None
                         Comment = "Left side of the ':' in a case expression."
                         CanBeNull = false
                     }
                     {
                         Name = "CaseEffect"
-                        Type = Array "BasicExpression"
+                        Type = Singleton "BasicExpression"
                         Validation = None
                         Comment = "Right side of the ':' in a case expression."
                         CanBeNull = false

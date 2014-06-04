@@ -19,7 +19,7 @@ When to introduce a real variable and when is a define enought?
 - For state-variables: Only on non deterministic choices and the last time a variable is written to a real variable has to be introduced. (Are these the next(var)-constraints?)
 - (For now: only use real variables are used. We optimize later)
 - Intuition: Better to use INVARS than next-Contraints (a:= xxx better than next(a)). Especially for non-deterministic choices which do not depend on an assignment to the next state. Next must exist, because it joins the current state with the previous state. But when is it possible to "prepone" assignments to the current state? Or is it possible to always use next(x):=next(y); I think latter should work when topological sortable, but removes the possibility to replace by a define. Use next(x):=next(y) and postpone decisions about optimizability to later. Thus: Every current value is "defined" and the result of the previous step. Every value which is set in a step is only the result of a next.
-- Consider: "ASSIGN a := exp;" is equivalent to "INVAR a in exp;"
+- Consider: "ASSIGN a := exp;" is equivalent to "INVAR a in exp;". (F#: let-semantics?!?) 
 
 ====================================
 		Generic:

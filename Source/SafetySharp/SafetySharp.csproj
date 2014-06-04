@@ -100,12 +100,14 @@
     <Compile Include="Formulas\UntransformedStateFormula.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
+    <Compile Include="Modelchecking\NuXmv\MetamodelToNuXmv.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmv.Generated.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvBinaryOperator.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvCtlBinaryOperator.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvCtlUnaryOperator.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvLtlBinaryOperator.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvLtlUnaryOperator.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvModelWriter.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvRadix.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvSignSpecifier.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvUnaryOperator.cs" />

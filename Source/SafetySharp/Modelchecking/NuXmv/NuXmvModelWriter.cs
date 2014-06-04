@@ -22,6 +22,7 @@
 namespace SafetySharp.Modelchecking.NuXmv
 {
     using System;
+    using System.Text;
     using SafetySharp.Modelchecking.NuXmv.Expressions;
     using SafetySharp.Modelchecking.NuXmv.FSM;
     using SafetySharp.Modelchecking.NuXmv.SimpleTypeSpecifiers;
@@ -51,6 +52,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public readonly CodeWriter CodeWriter;
 
 
+        #region Identifier
         /// <summary>
         ///     Visits an element of type <see cref="Identifier" />.
         /// </summary>
@@ -58,7 +60,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIdentifier(Identifier identifier)
         {
             Argument.NotNull(identifier, () => identifier);
-            throw new NotImplementedException();
+            CodeWriter.Append(identifier.Name);
         }
 
         /// <summary>
@@ -68,7 +70,8 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitNameComplexIdentifier(NameComplexIdentifier nameComplexIdentifier)
         {
             Argument.NotNull(nameComplexIdentifier, () => nameComplexIdentifier);
-            throw new NotImplementedException();
+            // NestedComplexIdentifier : Identifier
+            nameComplexIdentifier.NameIdentifier.Accept(this);
         }
 
         /// <summary>
@@ -78,7 +81,11 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitNestedComplexIdentifier(NestedComplexIdentifier nestedComplexIdentifier)
         {
             Argument.NotNull(nestedComplexIdentifier, () => nestedComplexIdentifier);
-            throw new NotImplementedException();
+            // NestedComplexIdentifier : Container '.' NameIdentifier
+            nestedComplexIdentifier.Container.Accept(this);
+            CodeWriter.Append(".");
+            nestedComplexIdentifier.NameIdentifier.Accept(this);
+
         }
 
         /// <summary>
@@ -88,7 +95,11 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitArrayAccessComplexIdentifier(ArrayAccessComplexIdentifier arrayAccessComplexIdentifier)
         {
             Argument.NotNull(arrayAccessComplexIdentifier, () => arrayAccessComplexIdentifier);
-            throw new NotImplementedException();
+            // NestedComplexIdentifier : Container '[' Index ']'
+            arrayAccessComplexIdentifier.Container.Accept(this);
+            CodeWriter.Append("[");
+            arrayAccessComplexIdentifier.Index.Accept(this);
+            CodeWriter.Append("]");
         }
 
         /// <summary>
@@ -98,19 +109,11 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitSelfComplexIdentifier(SelfComplexIdentifier selfComplexIdentifier)
         {
             Argument.NotNull(selfComplexIdentifier, () => selfComplexIdentifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("self");
         }
+        #endregion
 
-
-
-
-
-
-
-
-
-
-
+        #region Type
         /// <summary>
         ///     Visits an element of type <see cref="BooleanType" />.
         /// </summary>
@@ -180,16 +183,9 @@ namespace SafetySharp.Modelchecking.NuXmv
             Argument.NotNull(arrayType, () => arrayType);
             throw new NotImplementedException();
         }
+        #endregion
 
-
-
-
-
-
-
-
-
-
+        #region TypeSpecifier
 
         /// <summary>
         ///     Visits an element of type <see cref="BooleanTypeSpecifier" />.
@@ -198,7 +194,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitBooleanTypeSpecifier(BooleanTypeSpecifier booleanTypeSpecifier)
         {
             Argument.NotNull(booleanTypeSpecifier, () => booleanTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("boolean");
         }
 
         /// <summary>
@@ -208,7 +204,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitUnsignedWordTypeSpecifier(UnsignedWordTypeSpecifier unsignedWordTypeSpecifier)
         {
             Argument.NotNull(unsignedWordTypeSpecifier, () => unsignedWordTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("unsigned word [");
+            unsignedWordTypeSpecifier.Length.Accept(this);
+            CodeWriter.Append("]");
         }
 
         /// <summary>
@@ -218,7 +216,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitSignedWordTypeSpecifier(SignedWordTypeSpecifier signedWordTypeSpecifier)
         {
             Argument.NotNull(signedWordTypeSpecifier, () => signedWordTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("signed word [");
+            signedWordTypeSpecifier.Length.Accept(this);
+            CodeWriter.Append("]");
         }
 
         /// <summary>
@@ -228,7 +228,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitRealTypeSpecifier(RealTypeSpecifier realTypeSpecifier)
         {
             Argument.NotNull(realTypeSpecifier, () => realTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("real");
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIntegerTypeSpecifier(IntegerTypeSpecifier integerTypeSpecifier)
         {
             Argument.NotNull(integerTypeSpecifier, () => integerTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("integer");
         }
 
         /// <summary>
@@ -248,7 +248,20 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitEnumerationTypeSpecifier(EnumerationTypeSpecifier enumerationTypeSpecifier)
         {
             Argument.NotNull(enumerationTypeSpecifier, () => enumerationTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("{{ ");
+            var first = true;
+            foreach (var constExpression in enumerationTypeSpecifier.Domain)
+            {
+                //constExpression is a Literal which may be a symbolic_constant or an integer
+                //TODO: Put this check into a validation
+                if (!(constExpression is SymbolicConstant || constExpression is IntegerConstant))
+                    throw new Exception("enumerationType can only be an integer or a symbolic constant (no real,boolean...) ");
+                if (!first)
+                    CodeWriter.AppendLine(", ");
+                first = false;
+                constExpression.Accept(this);
+            }
+            CodeWriter.Append(" }}");
         }
 
         /// <summary>
@@ -258,7 +271,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIntegerRangeTypeSpecifier(IntegerRangeTypeSpecifier integerRangeTypeSpecifier)
         {
             Argument.NotNull(integerRangeTypeSpecifier, () => integerRangeTypeSpecifier);
-            throw new NotImplementedException();
+            integerRangeTypeSpecifier.Lower.Accept(this);
+            CodeWriter.Append(" .. ");
+            integerRangeTypeSpecifier.Upper.Accept(this);
         }
 
         /// <summary>
@@ -268,14 +283,19 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitArrayTypeSpecifier(ArrayTypeSpecifier arrayTypeSpecifier)
         {
             Argument.NotNull(arrayTypeSpecifier, () => arrayTypeSpecifier);
-            throw new NotImplementedException();
+            CodeWriter.Append("array ");
+            arrayTypeSpecifier.Lower.Accept(this);
+            CodeWriter.Append(" .. ");
+            arrayTypeSpecifier.Upper.Accept(this);
+            CodeWriter.Append(" of ");
+            arrayTypeSpecifier.ElementTypeSpecifier.Accept(this);
+
         }
+        #endregion
 
+        #region Expressions
 
-
-
-
-
+        #region Constant Expressions
         /// <summary>
         ///     Visits an element of type <see cref="BooleanConstant" />.
         /// </summary>
@@ -283,7 +303,10 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitBooleanConstant(BooleanConstant booleanConstant)
         {
             Argument.NotNull(booleanConstant, () => booleanConstant);
-            throw new NotImplementedException();
+            if (booleanConstant.Value)
+                CodeWriter.Append("TRUE");
+            else
+                CodeWriter.Append("FALSE");
         }
 
         /// <summary>
@@ -293,7 +316,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitSymbolicConstant(SymbolicConstant symbolicConstant)
         {
             Argument.NotNull(symbolicConstant, () => symbolicConstant);
-            throw new NotImplementedException();
+            symbolicConstant.Identifier.Accept(this);
         }
 
         /// <summary>
@@ -303,7 +326,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIntegerConstant(IntegerConstant integerConstant)
         {
             Argument.NotNull(integerConstant, () => integerConstant);
-            throw new NotImplementedException();
+            CodeWriter.Append(integerConstant.Value.ToString());
         }
 
         /// <summary>
@@ -313,17 +336,113 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitRealConstant(RealConstant realConstant)
         {
             Argument.NotNull(realConstant, () => realConstant);
-            throw new NotImplementedException();
+            CodeWriter.Append(realConstant.Value.ToString());
         }
 
         /// <summary>
         ///     Visits an element of type <see cref="WordConstant" />.
         /// </summary>
         /// <param name="wordConstant">The <see cref="WordConstant" /> instance that should be visited.</param>
+        //TODO:  Extract to own function. And: Write Tests, many Tests!
+        //TODO:  Add ImproveReadability to every case
         public override void VisitWordConstant(WordConstant wordConstant)
         {
             Argument.NotNull(wordConstant, () => wordConstant);
-            throw new NotImplementedException();
+            string sign;
+            string radix;
+            var number=new StringBuilder();
+            switch (wordConstant.SignSpecifier)
+            {
+                case NuXmvSignSpecifier.SignedSpecifier:
+                    sign = "s";
+                    break;
+                case NuXmvSignSpecifier.UnsignedSpecifier:
+                    sign = "u";
+                    break;
+                default:
+                    sign = "u";
+                    break;
+            }
+            switch (wordConstant.Base)
+            {
+                case NuXmvRadix.BinaryRadix:
+                    radix = "b";
+                    for (int i=0; i<wordConstant.Value.Length; i++)
+                    {
+                        if (wordConstant.Value[i])
+                            number.Append("1");
+                        if (!wordConstant.Value[i])
+                            number.Append("0");
+                    }
+                    break;
+                case NuXmvRadix.OctalRadix:
+                    radix = "o";
+                    if ((wordConstant.Value.Length % 3) != 0)
+                        throw new Exception("Not convertable, because radix not mod 3");
+                    for (int i = 0; i < (wordConstant.Value.Length / 3); i++)
+                    {
+                        int n4 = wordConstant.Value[i]     ? 4 : 0;
+                        int n2 = wordConstant.Value[i + 1] ? 2 : 0;
+                        int n1 = wordConstant.Value[i + 2] ? 1 : 0;
+                        number.Append((n4 + n2 + n1).ToString("X"));
+                    }
+                    break;
+                case NuXmvRadix.DecimalRadix:
+                    radix = "d";
+                    if (wordConstant.SignSpecifier == NuXmvSignSpecifier.UnsignedSpecifier)
+                    {
+                        int acc = 0;
+                        int pot = 1;
+
+                        for (int i = wordConstant.Value.Length - 1; i >= 0; i--, pot *= 2)
+                        {
+                            if (wordConstant.Value[i])
+                                acc += pot;
+                        }
+                        number.Append(acc.ToString());
+                    }
+                    if (wordConstant.SignSpecifier == NuXmvSignSpecifier.SignedSpecifier)
+                    {
+                        var isPositive = wordConstant.Value[0];
+                        int acc = 0;
+                        int pot = 1;
+                        //negative 2-complement: negate every bit and add 1 afterwards
+                        for (int i = wordConstant.Value.Length - 1; i >= 1; i--, pot *= 2)
+                        {
+                            if (wordConstant.Value[i] && isPositive)
+                                acc += pot;
+                            if (!wordConstant.Value[i] && !isPositive) //negate every bit
+                                acc += pot;
+                        }
+                        if (!isPositive)
+                        {
+                            acc++; //add 1
+                            number.Append("-"); //Alternative: negate by acc *= -1; 
+                        }
+                        number.Append(acc.ToString());
+
+                    }
+                    break;
+                case NuXmvRadix.HexadecimalRadix:
+                    radix = "h";
+                    if ((wordConstant.Value.Length % 4) != 0)
+                        throw new Exception("Not convertable, because radix not mod 4");
+                    for (int i = 0; i < (wordConstant.Value.Length / 4); i++)
+                    {
+                        int n8 = wordConstant.Value[i    ] ? 8 : 0;
+                        int n4 = wordConstant.Value[i + 1] ? 4 : 0;
+                        int n2 = wordConstant.Value[i + 2] ? 2 : 0;
+                        int n1 = wordConstant.Value[i + 3] ? 1 : 0;
+                        number.Append((n8 + n4 + n2 + n1).ToString("X"));
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            //if (wordConstant.ImproveReadability && (i+1)%3==0 && i + 1 < wordConstant.Value.Length)
+            //          number.Append("_");
+
+            CodeWriter.Append("0{0}{1}{2}_{3}",sign,radix, wordConstant.Value.Length,number);
         }
 
         /// <summary>
@@ -333,8 +452,11 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitRangeConstant(RangeConstant rangeConstant)
         {
             Argument.NotNull(rangeConstant, () => rangeConstant);
-            throw new NotImplementedException();
+            CodeWriter.Append("{0}..{1}", rangeConstant.From.ToString(), rangeConstant.To.ToString());
         }
+        #endregion
+
+        #region Basic Expression
 
         /// <summary>
         ///     Visits an element of type <see cref="ComplexIdentifierExpression" />.
@@ -343,7 +465,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitComplexIdentifierExpression(ComplexIdentifierExpression complexIdentifierExpression)
         {
             Argument.NotNull(complexIdentifierExpression, () => complexIdentifierExpression);
-            throw new NotImplementedException();
+            complexIdentifierExpression.Identifier.Accept(this);
         }
 
         /// <summary>
@@ -353,7 +475,16 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
             Argument.NotNull(unaryExpression, () => unaryExpression);
-            throw new NotImplementedException();
+            switch (unaryExpression.Operator)
+            {
+                case NuXmvUnaryOperator.LogicalNot:
+                    CodeWriter.Append("! (");
+                    unaryExpression.Expression.Accept(this);
+                    CodeWriter.Append(")");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         /// <summary>
@@ -363,7 +494,109 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
             Argument.NotNull(binaryExpression, () => binaryExpression);
-            throw new NotImplementedException();
+            CodeWriter.Append("(");
+            switch (binaryExpression.Operator)
+            {
+                case NuXmvBinaryOperator.LogicalAnd:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("&");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LogicalOr:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("|");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LogicalXor:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("xor");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LogicalNxor:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("nxor");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LogicalImplies:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("->");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LogicalEquivalence:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("<->");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.Equality:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("=");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.Inequality:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("!=");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LessThan:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("<");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.GreaterThan:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append(">");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.LessEqual:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("<=");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.GreaterEqual:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append(">=");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.IntegerAddition:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("+");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.IntegerSubtraction:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("-");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.IntegerMultiplication:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("*");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.IntegerDivision:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("/");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.IntegerRemainder:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("mod");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.BitShiftRight:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append(">>");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvBinaryOperator.BitShiftLeft:
+                    binaryExpression.Left.Accept(this);
+                    CodeWriter.Append("<<");
+                    binaryExpression.Right.Accept(this);
+                    break;
+                //TODO: Other BinaryExpressions like word1, bool, which have a prefix-operator
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -383,7 +616,10 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIndexSubscriptExpression(IndexSubscriptExpression indexSubscriptExpression)
         {
             Argument.NotNull(indexSubscriptExpression, () => indexSubscriptExpression);
-            throw new NotImplementedException();
+            indexSubscriptExpression.ExpressionLeadingToArray.Accept(this);
+            CodeWriter.Append("[");
+            indexSubscriptExpression.Index.Accept(this);
+            CodeWriter.Append("]");
         }
 
         /// <summary>
@@ -393,7 +629,17 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitSetExpression(SetExpression setExpression)
         {
             Argument.NotNull(setExpression, () => setExpression);
-            throw new NotImplementedException();
+
+            CodeWriter.Append("{{ ");
+            var first = true;
+            foreach (var expression in setExpression.SetBodyExpression)
+            {
+                if (!first)
+                    CodeWriter.AppendLine(", ");
+                first = false;
+                expression.Accept(this);
+            }
+            CodeWriter.Append(" }}");
         }
 
         /// <summary>
@@ -403,7 +649,11 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCaseConditionAndEffect(CaseConditionAndEffect caseConditionAndEffect)
         {
             Argument.NotNull(caseConditionAndEffect, () => caseConditionAndEffect);
-            throw new NotImplementedException();
+
+            caseConditionAndEffect.CaseCondition.Accept(this);
+            CodeWriter.Append(" : ");
+            caseConditionAndEffect.CaseEffect.Accept(this);
+            CodeWriter.AppendLine(" ;");
         }
 
         /// <summary>
@@ -413,7 +663,14 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCaseExpression(CaseExpression caseExpression)
         {
             Argument.NotNull(caseExpression, () => caseExpression);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("case");
+            CodeWriter.IncreaseIndent();
+            foreach (var caseConditionAndEffect in caseExpression.CaseBody)
+            {
+                caseConditionAndEffect.Accept(this);
+            }
+            CodeWriter.DecreaseIndent();;
+            CodeWriter.AppendLine("esac");
         }
 
         /// <summary>
@@ -423,7 +680,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitBasicNextExpression(BasicNextExpression basicNextExpression)
         {
             Argument.NotNull(basicNextExpression, () => basicNextExpression);
-            throw new NotImplementedException();
+            CodeWriter.Append("next(");
+            basicNextExpression.Expression.Accept(this);
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -433,11 +692,13 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitSimpleExpression(SimpleExpression simpleExpression)
         {
             Argument.NotNull(simpleExpression, () => simpleExpression);
-            throw new NotImplementedException();
+
+            //TODO: Validation: Check if no next() is included
+            simpleExpression.NestedExpression.Accept(this);
         }
+        #endregion
 
-
-
+        #endregion
 
 
 
