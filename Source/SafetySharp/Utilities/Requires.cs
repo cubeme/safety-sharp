@@ -26,11 +26,12 @@ namespace SafetySharp.Utilities
 	using System.Collections;
 	using System.Diagnostics;
 	using System.Linq.Expressions;
+	using System.Runtime.CompilerServices;
 
 	/// <summary>
 	///     Defines a set of helper functions that should be used to assert preconditions of functions.
 	/// </summary>
-	public static class Argument
+	public static class Requires
 	{
 		/// <summary>
 		///     Throws an <see cref="ArgumentNullException" /> if <paramref name="argument" /> of reference type
@@ -138,8 +139,8 @@ namespace SafetySharp.Utilities
 			where T : IComparable<T>
 		{
 			NotNull(argumentName, () => argumentName);
-			Satisfies(lowerBound.CompareTo(upperBound) <= 0, () => lowerBound,
-					  "lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
+			ArgumentSatisfies(lowerBound.CompareTo(upperBound) <= 0, () => lowerBound,
+							  "lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
 
 			if (argument.CompareTo(lowerBound) < 0)
 				throw new ArgumentOutOfRangeException(GetArgumentName(argumentName), argument, "Lower bound range violation.");
@@ -186,8 +187,8 @@ namespace SafetySharp.Utilities
 		/// <exception cref="ArgumentNullException">Thrown if <paramref name="argumentName" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">Thrown if <paramref name="condition" /> is <c>false</c>.</exception>
 		[DebuggerHidden, StringFormatMethod("message")]
-		public static void Satisfies<T>(bool condition, Expression<Func<T>> argumentName,
-										string message = null, params object[] parameters)
+		public static void ArgumentSatisfies<T>(bool condition, Expression<Func<T>> argumentName,
+												string message = null, params object[] parameters)
 		{
 			NotNull(argumentName, () => argumentName);
 
@@ -231,6 +232,57 @@ namespace SafetySharp.Utilities
 				: String.Format(message, parameters);
 
 			throw new ArgumentException(message, GetArgumentName(argumentName));
+		}
+
+		/// <summary>
+		///     Throws an <see cref="InvalidOperationException" /> if <paramref name="obj" /> is still mutable.
+		/// </summary>
+		/// <param name="obj">The object that should be checked.</param>
+		/// <param name="memberName">The name of the member that cannot be called when <paramref name="obj" /> is still mutable.</param>
+		[DebuggerHidden]
+		internal static void IsImmutable(IIsImmutable obj, [CallerMemberName] string memberName = null)
+		{
+			NotNull(obj, () => obj);
+			NotNullOrWhitespace(memberName, () => memberName);
+
+			if (obj.IsImmutable)
+				return;
+
+			const string formatMessage = "Property or method '{0}' can only be called once the object is immutable.";
+			throw new InvalidOperationException(String.Format(formatMessage, memberName));
+		}
+
+		/// <summary>
+		///     Throws an <see cref="InvalidOperationException" /> if <paramref name="obj" /> is immutable.
+		/// </summary>
+		/// <param name="obj">The object that should be checked.</param>
+		/// <param name="memberName">The name of the member that can only be called when <paramref name="obj" /> is mutable.</param>
+		[DebuggerHidden]
+		internal static void NotImmutable(IIsImmutable obj, [CallerMemberName] string memberName = null)
+		{
+			NotNull(obj, () => obj);
+			NotNullOrWhitespace(memberName, () => memberName);
+
+			if (!obj.IsImmutable)
+				return;
+
+			const string formatMessage = "Property or method '{0}' can only be called as long as the object is still mutable.";
+			throw new InvalidOperationException(String.Format(formatMessage, memberName));
+		}
+
+		/// <summary>
+		///     Throws an <see cref="InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
+		/// </summary>
+		/// <param name="condition">The condition that, if <c>false</c>, causes the exception to be raised.</param>
+		/// <param name="message">A message providing further details about the assertion.</param>
+		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
+		[DebuggerHidden, StringFormatMethod("message")]
+		public static void That(bool condition, string message, params object[] parameters)
+		{
+			NotNullOrWhitespace(message, () => message);
+
+			if (!condition)
+				throw new InvalidOperationException(String.Format(message, parameters));
 		}
 
 		/// <summary>

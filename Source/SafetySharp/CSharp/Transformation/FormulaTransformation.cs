@@ -91,10 +91,10 @@ namespace SafetySharp.CSharp.Transformation
 		public FormulaTransformation(ModelingCompilation compilation, SymbolMap symbolMap,
 									 ComponentResolver componentResolver, MetamodelResolver metamodelResolver)
 		{
-			Argument.NotNull(compilation, () => compilation);
-			Argument.NotNull(symbolMap, () => symbolMap);
-			Argument.NotNull(componentResolver, () => componentResolver);
-			Argument.NotNull(metamodelResolver, () => metamodelResolver);
+			Requires.NotNull(compilation, () => compilation);
+			Requires.NotNull(symbolMap, () => symbolMap);
+			Requires.NotNull(componentResolver, () => componentResolver);
+			Requires.NotNull(metamodelResolver, () => metamodelResolver);
 
 			_compilation = compilation;
 			_symbolMap = symbolMap;
@@ -115,7 +115,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="untransformedStateFormula">The <see cref="UntransformedStateFormula" /> instance that should be rewritten.</param>
 		public override Formula VisitUntransformedStateFormula(UntransformedStateFormula untransformedStateFormula)
 		{
-			Argument.NotNull(untransformedStateFormula, () => untransformedStateFormula);
+			Requires.NotNull(untransformedStateFormula, () => untransformedStateFormula);
 
 			var declarations = String.Join(String.Empty, GetDeclarations(untransformedStateFormula.Values));
 			var formattedExpression = String.Format(untransformedStateFormula.Expression,
@@ -130,15 +130,12 @@ namespace SafetySharp.CSharp.Transformation
 				.AddSyntaxTrees(syntaxTree)
 				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-			var diagnostics = compilation
-				.GetDiagnostics()
-				.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-				.Select(diagnostic => diagnostic.GetMessage())
-				.ToImmutableArray();
+			var diagnostics = compilation.GetDiagnostics();
+			var errors = diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToImmutableArray();
 
-			if (diagnostics.Length != 0)
+			if (errors.Length != 0)
 				throw new InvalidOperationException(String.Format("Malformed state formula '{0}':{1}{2}", expression,
-																  Environment.NewLine, String.Join(Environment.NewLine, diagnostics)));
+																  Environment.NewLine, String.Join(Environment.NewLine, errors)));
 
 			var semanticModel = compilation.GetSemanticModel(syntaxTree);
 			var expressionTransformation = new Transformation(semanticModel, _symbolMap)
@@ -217,17 +214,17 @@ namespace SafetySharp.CSharp.Transformation
 			/// <summary>
 			///     Gets or sets the component resolver that is used to resolve components to their configurations.
 			/// </summary>
-			public ComponentResolver ComponentResolver { get; set; }
+			public ComponentResolver ComponentResolver { private get; set; }
 
 			/// <summary>
 			///     Gets or sets the resolver that is used to resolve metamodel references.
 			/// </summary>
-			public MetamodelResolver MetamodelResolver { get; set; }
+			public MetamodelResolver MetamodelResolver { private get; set; }
 
 			/// <summary>
 			///     Gets or sets the values provided to the formula.
 			/// </summary>
-			public ImmutableArray<object> FormulaValues { get; set; }
+			public ImmutableArray<object> FormulaValues { private get; set; }
 
 			/// <summary>
 			///     Gets or sets the <see cref="FormulaResolver" /> that is updated during the transformation.
@@ -254,9 +251,8 @@ namespace SafetySharp.CSharp.Transformation
 
 				Assert.NotNull(component, "Unable to determine component instance.");
 
-				var snapshot = component.GetSnapshot();
 				var fieldDeclaration = MetamodelResolver.Resolve(fieldAccess.Field);
-				var componentConfiguration = ComponentResolver.ResolveConfiguration(snapshot);
+				var componentConfiguration = ComponentResolver.ResolveConfiguration(component);
 				var fieldConfiguration = componentConfiguration.Fields[fieldDeclaration];
 
 				FormulaResolver = FormulaResolver.With(fieldAccess, fieldConfiguration);

@@ -48,11 +48,11 @@ namespace SafetySharp.CSharp
 		/// <param name="modelingAssembly">The C# assembly representing the modeling assembly.</param>
 		internal ModelingAssembly(Assembly modelingAssembly)
 		{
-			Argument.NotNull(modelingAssembly, () => modelingAssembly);
+			Requires.NotNull(modelingAssembly, () => modelingAssembly);
 			_assembly = modelingAssembly;
 
 			var assemblyMetadata = modelingAssembly.GetCustomAttribute<ModelingAssemblyAttribute>();
-			Argument.Satisfies(assemblyMetadata != null, () => modelingAssembly, "Expected a Safety Sharp modeling assembly.");
+			Requires.ArgumentSatisfies(assemblyMetadata != null, () => modelingAssembly, "Expected a Safety Sharp modeling assembly.");
 
 			CompilerVersion = assemblyMetadata.CompilerVersion;
 			if (CompilerVersion != Compiler.Version)

@@ -60,8 +60,8 @@ namespace SafetySharp.Metamodel
 		public T Resolve<T>(IMetamodelReference<T> reference)
 			where T : MetamodelElement
 		{
-			Argument.NotNull(reference, () => reference);
-			Argument.Satisfies(_referenceMap.ContainsKey(reference), () => reference, "The given reference is unknown.");
+			Requires.NotNull(reference, () => reference);
+			Requires.ArgumentSatisfies(_referenceMap.ContainsKey(reference), () => reference, "The given reference is unknown.");
 
 			var element = _referenceMap[reference];
 			Assert.OfType<T>(element, "Metamodel reference of type '{0}' refers to a metamodel element of type '{1}'.",
@@ -78,11 +78,11 @@ namespace SafetySharp.Metamodel
 		/// <param name="referencedElement">The referenced metamodel element that <paramref name="reference" /> refers to.</param>
 		internal MetamodelResolver With(IMetamodelReference reference, MetamodelElement referencedElement)
 		{
-			Argument.NotNull(reference, () => reference);
-			Argument.NotNull(referencedElement, () => referencedElement);
-			Argument.Satisfies(!_referenceMap.ContainsKey(reference), () => reference,
+			Requires.NotNull(reference, () => reference);
+			Requires.NotNull(referencedElement, () => referencedElement);
+			Requires.ArgumentSatisfies(!_referenceMap.ContainsKey(reference), () => reference,
 							   "The given reference has already been added to the resolver.");
-			Argument.Satisfies(reference.GetType().GetGenericTypeDefinition() == typeof(MetamodelReference<>) &&
+			Requires.ArgumentSatisfies(reference.GetType().GetGenericTypeDefinition() == typeof(MetamodelReference<>) &&
 							   reference.GetType().GetGenericArguments().Count() == 1 &&
 							   reference.GetType().GetGenericArguments().Single() == referencedElement.GetType(),
 							   () => reference,

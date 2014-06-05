@@ -46,7 +46,7 @@ namespace SafetySharp.Modeling
 		public SpinModelChecker(ModelConfiguration modelConfiguration)
 		{
 			var modelingAssembly = new ModelingAssembly(modelConfiguration.GetType().Assembly);
-			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration.GetSnapshot());
+			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration);
 
 			MetamodelCompilation compilation;
 			MetamodelConfiguration configuration;

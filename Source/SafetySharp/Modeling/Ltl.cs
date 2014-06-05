@@ -38,7 +38,7 @@ namespace SafetySharp.Modeling
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
 		public static LtlFormula Next(LtlFormula operand)
 		{
-			Argument.NotNull(operand, () => operand);
+			Requires.NotNull(operand, () => operand);
 			return new LtlFormula(new UnaryFormula(operand.Formula, UnaryTemporalOperator.Next, PathQuantifier.None));
 		}
 
@@ -48,7 +48,7 @@ namespace SafetySharp.Modeling
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
 		public static LtlFormula Finally(LtlFormula operand)
 		{
-			Argument.NotNull(operand, () => operand);
+			Requires.NotNull(operand, () => operand);
 			return new LtlFormula(new UnaryFormula(operand.Formula, UnaryTemporalOperator.Finally, PathQuantifier.None));
 		}
 
@@ -58,7 +58,7 @@ namespace SafetySharp.Modeling
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
 		public static LtlFormula Globally(LtlFormula operand)
 		{
-			Argument.NotNull(operand, () => operand);
+			Requires.NotNull(operand, () => operand);
 			return new LtlFormula(new UnaryFormula(operand.Formula, UnaryTemporalOperator.Globally, PathQuantifier.None));
 		}
 
@@ -70,8 +70,8 @@ namespace SafetySharp.Modeling
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
 		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
 		{
-			Argument.NotNull(leftOperand, () => leftOperand);
-			Argument.NotNull(rightOperand, () => rightOperand);
+			Requires.NotNull(leftOperand, () => leftOperand);
+			Requires.NotNull(rightOperand, () => rightOperand);
 
 			return new LtlFormula(new BinaryFormula(leftOperand.Formula, BinaryTemporalOperator.Until, PathQuantifier.None, rightOperand.Formula));
 		}
@@ -86,7 +86,7 @@ namespace SafetySharp.Modeling
 		/// <param name="values">The non-literal values referenced by <paramref name="expression" />.</param>
 		public static LtlFormula StateFormula(string expression, params object[] values)
 		{
-			Argument.NotNullOrWhitespace(expression, () => expression);
+			Requires.NotNullOrWhitespace(expression, () => expression);
 			return new LtlFormula(new UntransformedStateFormula(expression, values.ToImmutableArray()));
 		}
 

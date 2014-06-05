@@ -41,8 +41,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to resolve the symbol.</param>
 		internal static IMethodSymbol GetMethodSymbol(this ArgumentSyntax argument, SemanticModel semanticModel)
 		{
-			Argument.NotNull(argument, () => argument);
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(argument, () => argument);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var invocationExpression = argument.GetInvocationExpression();
 			var methodSymbol = semanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol;
@@ -59,8 +59,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used for symbol resolution.</param>
 		internal static bool ParameterHasAttribute<T>(this ArgumentSyntax argument, SemanticModel semanticModel)
 		{
-			Argument.NotNull(argument, () => argument);
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(argument, () => argument);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var attributeSymbol = semanticModel.GetTypeSymbol<T>();
 			return argument.GetParameterSymbol(semanticModel).GetAttributes().Any(attribute => attribute.AttributeClass.Equals(attributeSymbol));
@@ -72,7 +72,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="argument">The argument the <see cref="InvocationExpressionSyntax" /> should be returned for.</param>
 		private static InvocationExpressionSyntax GetInvocationExpression(this ArgumentSyntax argument)
 		{
-			Argument.NotNull(argument, () => argument);
+			Requires.NotNull(argument, () => argument);
 
 			var parent = argument.Parent;
 			while (!(parent is InvocationExpressionSyntax))
@@ -94,8 +94,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to resolve the symbol.</param>
 		private static IParameterSymbol GetParameterSymbol(this ArgumentSyntax argument, SemanticModel semanticModel)
 		{
-			Argument.NotNull(argument, () => argument);
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(argument, () => argument);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var invocationExpression = argument.GetInvocationExpression();
 			var methodSymbol = argument.GetMethodSymbol(semanticModel);

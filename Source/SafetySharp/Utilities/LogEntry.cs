@@ -39,7 +39,7 @@ namespace SafetySharp.Utilities
 			: this()
 		{
 			Assert.InRange(logType);
-			Argument.NotNull(message, () => message);
+			Requires.NotNull(message, () => message);
 
 			LogType = logType;
 			Message = message;

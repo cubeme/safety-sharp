@@ -56,7 +56,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="compilation">The compilation that should be transformed.</param>
 		internal CompilationTransformation(ModelingCompilation compilation)
 		{
-			Argument.NotNull(compilation, () => compilation);
+			Requires.NotNull(compilation, () => compilation);
 
 			_compilation = compilation;
 			SymbolMap = new SymbolMap(compilation.CSharpCompilation);
@@ -73,7 +73,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="classDeclaration">The class declaration the corresponding metamodel reference should be returned for.</param>
 		internal ComponentDeclaration GetComponentDeclaration(ClassDeclarationSyntax classDeclaration)
 		{
-			Argument.NotNull(classDeclaration, () => classDeclaration);
+			Requires.NotNull(classDeclaration, () => classDeclaration);
 			return _resolver.Resolve(GetComponentDeclarationReference(classDeclaration));
 		}
 
@@ -84,7 +84,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="classDeclaration">The class declaration the corresponding metamodel reference should be returned for.</param>
 		internal IMetamodelReference<ComponentDeclaration> GetComponentDeclarationReference(ClassDeclarationSyntax classDeclaration)
 		{
-			Argument.NotNull(classDeclaration, () => classDeclaration);
+			Requires.NotNull(classDeclaration, () => classDeclaration);
 
 			var componentSymbol = _compilation.GetClassSymbol(classDeclaration);
 			var componentReference = SymbolMap.GetComponentReference(componentSymbol);

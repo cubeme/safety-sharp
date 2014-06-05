@@ -44,8 +44,8 @@ namespace SafetySharp.CSharp.Diagnostics
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
 		public void AnalyzeSyntaxTree(SyntaxTree syntaxTree, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
-			Argument.NotNull(addDiagnostic, () => addDiagnostic);
+			Requires.NotNull(syntaxTree, () => syntaxTree);
+			Requires.NotNull(addDiagnostic, () => addDiagnostic);
 
 			DiagnosticCallback diagnosticCallback =
 				(locationNode, args) => addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args));

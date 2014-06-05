@@ -200,11 +200,15 @@ namespace Tests.Modeling
 			[Test]
 			public void ReturnsInitialValueOfMultipleKnownFields()
 			{
-				var component = new TestComponent<int, bool>(33, true).GetSnapshot();
+				var component = new TestComponent<int, bool>(33, true);
+				component.ToImmutable();
+
 				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(33);
 				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(true);
 
-				component = new TestComponent<int, bool>().GetSnapshot();
+				component = new TestComponent<int, bool>();
+				component.ToImmutable();
+
 				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(0);
 				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(false);
 			}
@@ -212,16 +216,20 @@ namespace Tests.Modeling
 			[Test]
 			public void ReturnsInitialValueOfSingleKnownField()
 			{
-				var integerComponent = new TestComponent<int>(17).GetSnapshot();
+				var integerComponent = new TestComponent<int>(17);
+				integerComponent.ToImmutable();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(17);
 
-				integerComponent = new TestComponent<int>().GetSnapshot();
+				integerComponent = new TestComponent<int>();
+				integerComponent.ToImmutable();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(0);
 
-				var booleanComponent = new TestComponent<bool>(true).GetSnapshot();
+				var booleanComponent = new TestComponent<bool>(true);
+				booleanComponent.ToImmutable();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(true);
 
-				booleanComponent = new TestComponent<bool>().GetSnapshot();
+				booleanComponent = new TestComponent<bool>();
+				booleanComponent.ToImmutable();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(false);
 			}
 
@@ -230,7 +238,8 @@ namespace Tests.Modeling
 			{
 				var intValues = new[] { 142, 874, 11 };
 				var boolValues = new[] { true, false };
-				var component = new TestComponent<int, bool>(intValues, boolValues).GetSnapshot();
+				var component = new TestComponent<int, bool>(intValues, boolValues);
+				component.ToImmutable();
 
 				component.GetInitialValuesOfField("_field1").Should().BeEquivalentTo(intValues);
 				component.GetInitialValuesOfField("_field2").Should().BeEquivalentTo(boolValues);
@@ -244,23 +253,28 @@ namespace Tests.Modeling
 				var singleBoolValue = new[] { true };
 				var multipleBoolValues = new[] { true, false };
 
-				var integerComponent = new TestComponent<int>(singleIntValue).GetSnapshot();
+				var integerComponent = new TestComponent<int>(singleIntValue);
+				integerComponent.ToImmutable();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(singleIntValue);
 
-				integerComponent = new TestComponent<int>(multipleIntValues).GetSnapshot();
+				integerComponent = new TestComponent<int>(multipleIntValues);
+				integerComponent.ToImmutable();
 				integerComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(multipleIntValues);
 
-				var booleanComponent = new TestComponent<bool>(singleBoolValue).GetSnapshot();
+				var booleanComponent = new TestComponent<bool>(singleBoolValue);
+				booleanComponent.ToImmutable();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(singleBoolValue);
 
-				booleanComponent = new TestComponent<bool>(multipleBoolValues).GetSnapshot();
+				booleanComponent = new TestComponent<bool>(multipleBoolValues);
+				booleanComponent.ToImmutable();
 				booleanComponent.GetInitialValuesOfField("_field").Should().BeEquivalentTo(multipleBoolValues);
 			}
 
 			[Test]
 			public void ThrowsForSubComponentField()
 			{
-				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
+				var component = new OneSubComponent(new FieldComponent());
+				component.ToImmutable();
 
 				Action action = () => component.GetInitialValuesOfField("_component");
 				action.ShouldThrow<ArgumentException>();
@@ -269,7 +283,8 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsForUnknownField()
 			{
-				var component = new TestComponent<int>(0).GetSnapshot();
+				var component = new TestComponent<int>(0);
+				component.ToImmutable();
 
 				Action action = () => component.GetInitialValuesOfField("x");
 				action.ShouldThrow<ArgumentException>();
@@ -278,7 +293,8 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenEmptyStringIsPassed()
 			{
-				var component = new TestComponent<int>(0).GetSnapshot();
+				var component = new TestComponent<int>(0);
+				component.ToImmutable();
 
 				Action action = () => component.GetInitialValuesOfField(String.Empty);
 				action.ShouldThrow<ArgumentException>();
@@ -287,10 +303,20 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenNullIsPassed()
 			{
-				var component = new TestComponent<int>(0).GetSnapshot();
+				var component = new TestComponent<int>(0);
+				component.ToImmutable();
 
 				Action action = () => component.GetInitialValuesOfField(null);
 				action.ShouldThrow<ArgumentNullException>();
+			}
+
+			[Test]
+			public void ThrowsWhenNotSealed()
+			{
+				var component = new TestComponent<int>(0);
+
+				Action action=() => component.GetInitialValuesOfField("_field");
+				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
 
@@ -302,25 +328,28 @@ namespace Tests.Modeling
 			{
 				var subComponent1 = new FieldComponent();
 				var subComponent2 = new FieldComponent();
-				var component = new TwoSubComponents(subComponent1, subComponent2).GetSnapshot();
+				var component = new TwoSubComponents(subComponent1, subComponent2);
+				component.ToImmutable();
 
-				component.GetSubComponent("_component1").Should().Be(subComponent1.GetSnapshot());
-				component.GetSubComponent("_component2").Should().Be(subComponent2.GetSnapshot());
+				component.GetSubComponent("_component1").Should().Be(subComponent1);
+				component.GetSubComponent("_component2").Should().Be(subComponent2);
 			}
 
 			[Test]
 			public void ReturnsSingleSubComponent()
 			{
 				var subComponent = new FieldComponent();
-				var component = new OneSubComponent(subComponent).GetSnapshot();
+				var component = new OneSubComponent(subComponent);
+				component.ToImmutable();
 
-				component.GetSubComponent("_component").Should().Be(subComponent.GetSnapshot());
+				component.GetSubComponent("_component").Should().Be(subComponent);
 			}
 
 			[Test]
 			public void ThrowsForNonComponentField()
 			{
-				var component = new FieldComponent().GetSnapshot();
+				var component = new FieldComponent();
+				component.ToImmutable();
 
 				Action action = () => component.GetSubComponent("_field");
 				action.ShouldThrow<ArgumentException>();
@@ -329,16 +358,18 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsForUnknownComponentField()
 			{
-				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
+				var component = new OneSubComponent(new FieldComponent());
+				component.ToImmutable();
 
-				Action action = () => component.GetSubComponent("_field");
+				Action action = () => component.GetSubComponent("x");
 				action.ShouldThrow<ArgumentException>();
 			}
 
 			[Test]
 			public void ThrowsWhenEmptyStringIsPassed()
 			{
-				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
+				var component = new OneSubComponent(new FieldComponent());
+				component.ToImmutable();
 
 				Action action = () => component.GetSubComponent(String.Empty);
 				action.ShouldThrow<ArgumentException>();
@@ -347,10 +378,20 @@ namespace Tests.Modeling
 			[Test]
 			public void ThrowsWhenNullIsPassed()
 			{
-				var component = new OneSubComponent(new FieldComponent()).GetSnapshot();
+				var component = new OneSubComponent(new FieldComponent());
+				component.ToImmutable();
 
 				Action action = () => component.GetSubComponent(null);
 				action.ShouldThrow<ArgumentNullException>();
+			}
+
+			[Test]
+			public void ThrowsWhenNotSealed()
+			{
+				var component = new OneSubComponent(new FieldComponent());
+
+				Action action = () => component.GetSubComponent("_component");
+				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
 
@@ -362,23 +403,30 @@ namespace Tests.Modeling
 			}
 
 			[Test]
+			public void ThrowsWhenNotSealed()
+			{
+				var component = new OneSubComponent(new FieldComponent());
+
+				Action action = () => { var components = component.SubComponents; };
+				action.ShouldThrow<InvalidOperationException>();
+			}
+
+			[Test]
 			public void IgnoresNonSubComponentFields()
 			{
 				var component = new FieldComponent();
-				component.SubComponents.Should().BeEmpty();
+				component.ToImmutable();
 
-				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Should().BeEmpty();
+				component.SubComponents.Should().BeEmpty();
 			}
 
 			[Test]
 			public void IgnoresNullSubComponents()
 			{
 				var component = new OneSubComponent(null);
-				component.SubComponents.Should().BeEmpty();
+				component.ToImmutable();
 
-				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Should().BeEmpty();
+				component.SubComponents.Should().BeEmpty();
 			}
 
 			[Test]
@@ -387,11 +435,9 @@ namespace Tests.Modeling
 				var subComponent1 = new TestComponent();
 				var subComponent2 = new FieldComponent();
 				var component = new TwoSubComponents(subComponent1, subComponent2);
+				component.ToImmutable();
 
 				component.SubComponents.Should().BeEquivalentTo(subComponent1, subComponent2);
-
-				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Should().BeEquivalentTo(subComponent1.GetSnapshot(), subComponent2.GetSnapshot());
 			}
 
 			[Test]
@@ -400,18 +446,18 @@ namespace Tests.Modeling
 				var component1 = new TestComponent();
 				var component2 = new TestComponent();
 				var component3 = new TwoSubComponents(component1, component2);
+				component3.ToImmutable();
 
-				component3.GetSnapshot().SubComponents.Select(c => c.Name).Should().BeEquivalentTo("_component1", "_component2");
+				component3.SubComponents.Select(c => c.Name).Should().BeEquivalentTo("_component1", "_component2");
 			}
 
 			[Test]
 			public void ReturnsNoneIfComponentHasNoSubComponents()
 			{
 				var component = new TestComponent();
-				component.SubComponents.Should().BeEmpty();
+				component.ToImmutable();
 
-				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Should().BeEmpty();
+				component.SubComponents.Should().BeEmpty();
 			}
 
 			[Test]
@@ -419,11 +465,9 @@ namespace Tests.Modeling
 			{
 				var subComponent = new TestComponent();
 				var component = new OneSubComponent(subComponent);
+				component.ToImmutable();
 
 				component.SubComponents.Should().BeEquivalentTo(subComponent);
-
-				var snapshot = component.GetSnapshot();
-				snapshot.SubComponents.Should().BeEquivalentTo(subComponent.GetSnapshot());
 			}
 		}
 	}

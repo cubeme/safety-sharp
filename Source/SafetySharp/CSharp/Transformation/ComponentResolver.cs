@@ -26,10 +26,11 @@ namespace SafetySharp.CSharp.Transformation
 	using System.Collections.Immutable;
 	using Metamodel.Configurations;
 	using Metamodel.Declarations;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
-	///     Maps <see cref="ComponentSnapshot" />s to their corresponding <see cref="ComponentDeclaration" />s and
+	///     Maps <see cref="Component" />s to their corresponding <see cref="ComponentDeclaration" />s and
 	///     <see cref="ComponentConfiguration" />s.
 	/// </summary>
 	internal class ComponentResolver
@@ -39,19 +40,19 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		internal static readonly ComponentResolver Empty = new ComponentResolver
 		{
-			_declarationMap = ImmutableDictionary<ComponentSnapshot, ComponentDeclaration>.Empty,
-			_configurationMap = ImmutableDictionary<ComponentSnapshot, ComponentConfiguration>.Empty
+			_declarationMap = ImmutableDictionary<Component, ComponentDeclaration>.Empty,
+			_configurationMap = ImmutableDictionary<Component, ComponentConfiguration>.Empty
 		};
 
 		/// <summary>
-		///     Maps <see cref="ComponentSnapshot" />s to <see cref="ComponentConfiguration" />s.
+		///     Maps <see cref="Component" />s to <see cref="ComponentConfiguration" />s.
 		/// </summary>
-		private ImmutableDictionary<ComponentSnapshot, ComponentConfiguration> _configurationMap;
+		private ImmutableDictionary<Component, ComponentConfiguration> _configurationMap;
 
 		/// <summary>
-		///     Maps <see cref="ComponentSnapshot" />s to <see cref="ComponentDeclaration" />s.
+		///     Maps <see cref="Component" />s to <see cref="ComponentDeclaration" />s.
 		/// </summary>
-		private ImmutableDictionary<ComponentSnapshot, ComponentDeclaration> _declarationMap;
+		private ImmutableDictionary<Component, ComponentDeclaration> _declarationMap;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="ComponentResolver" /> type.
@@ -64,10 +65,10 @@ namespace SafetySharp.CSharp.Transformation
 		///     Resolves the <see cref="ComponentDeclaration" /> for <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component that should be resolved.</param>
-		public ComponentDeclaration ResolveDeclaration(ComponentSnapshot component)
+		public ComponentDeclaration ResolveDeclaration(Component component)
 		{
-			Argument.NotNull(component, () => component);
-			Argument.Satisfies(_declarationMap.ContainsKey(component), () => component, "The given component is unknown.");
+			Requires.NotNull(component, () => component);
+			Requires.ArgumentSatisfies(_declarationMap.ContainsKey(component), () => component, "The given component is unknown.");
 
 			return _declarationMap[component];
 		}
@@ -76,10 +77,10 @@ namespace SafetySharp.CSharp.Transformation
 		///     Resolves the <see cref="ComponentConfiguration" /> for <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component that should be resolved.</param>
-		public ComponentConfiguration ResolveConfiguration(ComponentSnapshot component)
+		public ComponentConfiguration ResolveConfiguration(Component component)
 		{
-			Argument.NotNull(component, () => component);
-			Argument.Satisfies(_configurationMap.ContainsKey(component), () => component, "The given component is unknown.");
+			Requires.NotNull(component, () => component);
+			Requires.ArgumentSatisfies(_configurationMap.ContainsKey(component), () => component, "The given component is unknown.");
 
 			return _configurationMap[component];
 		}
@@ -90,11 +91,11 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		/// <param name="component">The component that should be added to the resolver.</param>
 		/// <param name="declaration">The component declaration that should be resolved.</param>
-		public ComponentResolver With(ComponentSnapshot component, ComponentDeclaration declaration)
+		public ComponentResolver With(Component component, ComponentDeclaration declaration)
 		{
-			Argument.NotNull(component, () => component);
-			Argument.NotNull(declaration, () => declaration);
-			Argument.Satisfies(!_declarationMap.ContainsKey(component), () => declaration,
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(declaration, () => declaration);
+			Requires.ArgumentSatisfies(!_declarationMap.ContainsKey(component), () => declaration,
 							   "The given declaration has already been added to the resolver.");
 
 			return new ComponentResolver
@@ -110,11 +111,11 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		/// <param name="component">The component that should be added to the resolver.</param>
 		/// <param name="configuration">The component configuration that should be resolved.</param>
-		public ComponentResolver With(ComponentSnapshot component, ComponentConfiguration configuration)
+		public ComponentResolver With(Component component, ComponentConfiguration configuration)
 		{
-			Argument.NotNull(component, () => component);
-			Argument.NotNull(configuration, () => configuration);
-			Argument.Satisfies(!_configurationMap.ContainsKey(component), () => configuration,
+			Requires.NotNull(component, () => component);
+			Requires.NotNull(configuration, () => configuration);
+			Requires.ArgumentSatisfies(!_configurationMap.ContainsKey(component), () => configuration,
 							   "The given configuration has already been added to the resolver.");
 
 			return new ComponentResolver

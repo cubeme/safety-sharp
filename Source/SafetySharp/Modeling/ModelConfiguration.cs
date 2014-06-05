@@ -26,61 +26,102 @@ namespace SafetySharp.Modeling
 	using System.Collections.Generic;
 	using System.Collections.Immutable;
 	using System.Linq;
-	using CSharp.Transformation;
 	using Utilities;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public abstract class ModelConfiguration
+	public abstract class ModelConfiguration : IIsImmutable
 	{
+		/// <summary>
+		///     All of the components contained in the model configuration.
+		/// </summary>
+		private ImmutableArray<Component> _components = ImmutableArray<Component>.Empty;
+
 		/// <summary>
 		///     The partition root components of the configuration.
 		/// </summary>
-		private readonly List<Component> _partitionRoots = new List<Component>();
+		private ImmutableArray<Component> _partitionRoots = ImmutableArray<Component>.Empty;
 
 		/// <summary>
-		///     Adds each component in <paramref name="components" /> as the root component of a partition to the model configuration.
+		///     Gets the partition root <see cref="Component" />s of the configuration.
 		/// </summary>
-		/// <param name="components">The components that should be added as root components of partitions.</param>
-		protected void AddPartitions(params Component[] components)
+		internal ImmutableArray<Component> PartitionRoots
 		{
-			Argument.NotNull(components, () => components);
-			_partitionRoots.AddRange(components);
+			get
+			{
+				Requires.IsImmutable(this);
+				return _partitionRoots;
+			}
 		}
 
 		/// <summary>
-		///     Gets a snapshot of the current model configuration state.
+		///     Gets all <see cref="Component" />s contained in the model configuration.
 		/// </summary>
-		internal ModelConfigurationSnapshot GetSnapshot()
+		internal ImmutableArray<Component> Components
 		{
-			if (_partitionRoots.Count == 0)
-				throw new InvalidOperationException("No partition roots have been set for the model configuration.");
+			get
+			{
+				Requires.IsImmutable(this);
+				return _components;
+			}
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the model configuration is sealed and can no longer be modified.
+		/// </summary>
+		public bool IsImmutable { get; private set; }
+
+		/// <summary>
+		///     Sets the <paramref name="components" /> as the root components of the partitions of the model configuration.
+		/// </summary>
+		/// <param name="components">The components that should be set as root components of partitions.</param>
+		protected void SetPartitions(params Component[] components)
+		{
+			Requires.NotNull(components, () => components);
+			Requires.ArgumentSatisfies(components.Length > 0, () => components, "No partition roots have been set for the model configuration.");
+			Requires.NotImmutable(this);
+			Requires.That(_components.IsEmpty, "This method can only be called once on any given model configuration.");
+
+			// Disallow future modifications of the components
+			for (var i = 0; i < components.Length; ++i)
+				components[i].ToImmutable("Root" + i);
+
+			// Store the partition roots and collect all components of the model configuration
+			_partitionRoots = components.ToImmutableArray();
+			_components = _partitionRoots.SelectMany(GetAllComponents).ToImmutableArray();
 
 			// Ensure that there are no shared components
 			var hashSet = new HashSet<Component>();
-			foreach (var component in _partitionRoots)
-				CollectComponents(hashSet, component);
+			var sharedComponent = _components.FirstOrDefault(component => !hashSet.Add(component));
 
-			return new ModelConfigurationSnapshot(_partitionRoots
-													  .Select((root, index) => root.GetSnapshot("Root" + index))
-													  .ToImmutableArray());
+			if (sharedComponent == null)
+				return;
+
+			const string message = "A component instance of type '{0}' has been found in multiple locations of the component tree.";
+			throw new InvalidOperationException(String.Format(message, sharedComponent.GetType().FullName));
 		}
 
 		/// <summary>
-		///     Recursively analyzes the object tree of <see cref="Component" /> instances and returns <paramref name="component" /> and
-		///     all of its sub components.
+		///     Marks the model configuration as immutable, disallowing any future state modifications.
 		/// </summary>
-		/// <param name="components">The hash set the components are collected into that is used to check if a component is shared.</param>
-		/// <param name="component">The root component from which all sub components should be collected.</param>
-		private static void CollectComponents(HashSet<Component> components, Component component)
+		internal void ToImmutable()
 		{
-			const string message = "A component instance of type '{0}' has been found in multiple locations of the component tree.";
-			if (!components.Add(component))
-				throw new InvalidOperationException(String.Format(message, component.GetType().FullName));
+			Requires.That(_components.Length > 0, "No partition roots have been set for the model configuration.");
+			Requires.NotImmutable(this);
 
-			foreach (var subComponent in component.SubComponents)
-				CollectComponents(components, subComponent);
+			IsImmutable = true;
+		}
+
+		/// <summary>
+		///     Returns <paramref name="component " /> and all of its subcomponents.
+		/// </summary>
+		private static IEnumerable<Component> GetAllComponents(Component component)
+		{
+			yield return component;
+
+			foreach (var c in component.SubComponents.SelectMany(GetAllComponents))
+				yield return c;
 		}
 	}
 }

@@ -47,7 +47,7 @@ namespace Tests.CSharp
 					component = (Component)Activator.CreateInstance(assembly.GetType("Tests.CSharp.TestComponent"));
 				}
 
-				var actual = compilation.ModelingCompilation.GetClassDeclaration(component.GetSnapshot());
+				var actual = compilation.ModelingCompilation.GetClassDeclaration(component);
 				var expected = compilation.FindClassDeclaration(component.GetType().FullName);
 
 				actual.Should().Be(expected);

@@ -41,8 +41,8 @@ namespace SafetySharp.Modeling
 		/// <param name="filePath">The path of the file the C# code for the compilation unit is stored in.</param>
 		public ModelingCompilationUnitAttribute(string syntaxTree, string filePath)
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
-			Argument.NotNull(filePath, () => filePath);
+			Requires.NotNull(syntaxTree, () => syntaxTree);
+			Requires.NotNull(filePath, () => filePath);
 
 			SyntaxTree = SyntaxFactory.ParseSyntaxTree(syntaxTree, filePath);
 		}

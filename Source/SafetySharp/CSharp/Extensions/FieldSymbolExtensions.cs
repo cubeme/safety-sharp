@@ -37,7 +37,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
 		internal static string GetFullName(this IFieldSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 			return String.Format("{0}.{1}", ((ITypeSymbol)symbol.ContainingSymbol).GetFullName(), symbol.Name);
 		}
 	}

@@ -47,7 +47,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// </summary>
 		internal SymbolMap(Compilation compilation)
 		{
-			Argument.NotNull(compilation, () => compilation);
+			Requires.NotNull(compilation, () => compilation);
 
 			foreach (var syntaxTree in compilation.SyntaxTrees)
 				ResolveSymbols(compilation.GetSemanticModel(syntaxTree));
@@ -59,8 +59,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
 		internal IMetamodelReference<ComponentDeclaration> GetComponentReference(ITypeSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
-			Argument.Satisfies(symbol.TypeKind == TypeKind.Class, () => symbol, "Expected a type symbol for a class.");
+			Requires.NotNull(symbol, () => symbol);
+			Requires.ArgumentSatisfies(symbol.TypeKind == TypeKind.Class, () => symbol, "Expected a type symbol for a class.");
 
 			return GetReference<ComponentDeclaration>(symbol);
 		}
@@ -71,8 +71,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
 		internal IMetamodelReference<InterfaceDeclaration> GetInterfaceReference(ITypeSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
-			Argument.Satisfies(symbol.TypeKind == TypeKind.Interface, () => symbol, "Expected a type symbol for an interface.");
+			Requires.NotNull(symbol, () => symbol);
+			Requires.ArgumentSatisfies(symbol.TypeKind == TypeKind.Interface, () => symbol, "Expected a type symbol for an interface.");
 
 			return GetReference<InterfaceDeclaration>(symbol);
 		}
@@ -83,7 +83,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
 		internal IMetamodelReference<MethodDeclaration> GetMethodReference(IMethodSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 			return GetReference<MethodDeclaration>(symbol);
 		}
 
@@ -93,7 +93,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The C# symbol the reference should be returned for.</param>
 		internal IMetamodelReference<FieldDeclaration> GetFieldReference(IFieldSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 			return GetReference<FieldDeclaration>(symbol);
 		}
 
@@ -120,7 +120,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbol">The symbol that should be checked.</param>
 		internal bool IsMapped(ISymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 			return _symbolMap.ContainsKey(symbol);
 		}
 

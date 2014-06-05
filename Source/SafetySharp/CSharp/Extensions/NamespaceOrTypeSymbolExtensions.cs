@@ -38,7 +38,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
 		internal static string GetFullName(this INamespaceOrTypeSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 
 			var arraySymbol = symbol as IArrayTypeSymbol;
 			if (arraySymbol != null)

@@ -42,7 +42,7 @@ namespace SafetySharp.CSharp.Extensions
 		internal static IEnumerable<T> DescendantNodes<T>(this SyntaxTree syntaxTree)
 			where T : SyntaxNode
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
+			Requires.NotNull(syntaxTree, () => syntaxTree);
 			return syntaxTree.GetRoot().DescendantNodes().OfType<T>();
 		}
 
@@ -55,7 +55,7 @@ namespace SafetySharp.CSharp.Extensions
 		internal static IEnumerable<T> DescendantNodesAndSelf<T>(this SyntaxTree syntaxTree)
 			where T : SyntaxNode
 		{
-			Argument.NotNull(syntaxTree, () => syntaxTree);
+			Requires.NotNull(syntaxTree, () => syntaxTree);
 			return syntaxTree.GetRoot().DescendantNodesAndSelf().OfType<T>();
 		}
 	}

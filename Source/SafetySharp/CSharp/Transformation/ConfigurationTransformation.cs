@@ -38,7 +38,7 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     The <see cref="ModelConfiguration" /> instance that is being transformed.
 		/// </summary>
-		private readonly ModelConfigurationSnapshot _modelConfiguration;
+		private readonly ModelConfiguration _modelConfiguration;
 
 		/// <summary>
 		///     The <see cref="ComponentResolver" /> that is used to resolve components.
@@ -49,9 +49,9 @@ namespace SafetySharp.CSharp.Transformation
 		///     Initializes a new instance of the <see cref="ConfigurationTransformation" /> type.
 		/// </summary>
 		/// <param name="modelConfiguration">The model configuration that should be transformed.</param>
-		internal ConfigurationTransformation(ModelConfigurationSnapshot modelConfiguration)
+		internal ConfigurationTransformation(ModelConfiguration modelConfiguration)
 		{
-			Argument.NotNull(modelConfiguration, () => modelConfiguration);
+			Requires.NotNull(modelConfiguration, () => modelConfiguration);
 			_modelConfiguration = modelConfiguration;
 		}
 
@@ -76,7 +76,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Transforms the partition represented by the <paramref name="partitionRoot" /> component.
 		/// </summary>
 		/// <param name="partitionRoot">The partition root component that should be transformed.</param>
-		private Partition TransformPartition(ComponentSnapshot partitionRoot)
+		private Partition TransformPartition(Component partitionRoot)
 		{
 			return new Partition(TransformComponent(partitionRoot));
 		}
@@ -85,7 +85,7 @@ namespace SafetySharp.CSharp.Transformation
 		///     Transforms the <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component that should be transformed.</param>
-		private ComponentConfiguration TransformComponent(ComponentSnapshot component)
+		private ComponentConfiguration TransformComponent(Component component)
 		{
 			var identifier = component.Name == null ? Identifier.Unknown : new Identifier(component.Name);
 			var componentDeclaration = _componentResolver.ResolveDeclaration(component);

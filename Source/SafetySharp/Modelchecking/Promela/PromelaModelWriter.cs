@@ -73,7 +73,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="promelaFile">The <see cref="PromelaFile" /> instance that should be visited.</param>
         public override void VisitPromelaFile(PromelaFile promelaFile)
         {
-            Argument.NotNull(promelaFile, () => promelaFile);
+            Requires.NotNull(promelaFile, () => promelaFile);
             //doesn't need a separator between modules
             foreach (var module in promelaFile.Modules)
             {
@@ -88,7 +88,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="promelaGlobalVarsAndChans">The <see cref="PromelaGlobalVarsAndChans" /> instance that should be visited.</param>
         public override void VisitPromelaGlobalVarsAndChans(PromelaGlobalVarsAndChans promelaGlobalVarsAndChans)
         {
-            Argument.NotNull(promelaGlobalVarsAndChans, () => promelaGlobalVarsAndChans);
+            Requires.NotNull(promelaGlobalVarsAndChans, () => promelaGlobalVarsAndChans);
 
             foreach (var declaration in promelaGlobalVarsAndChans.Declarations)
             {
@@ -106,7 +106,7 @@ namespace SafetySharp.Modelchecking.Promela
             //      sequence
             // '}'
 
-            Argument.NotNull(proctype, () => proctype);
+            Requires.NotNull(proctype, () => proctype);
 
             CodeWriter.AppendLine("active proctype " + proctype.Name + "() {{");
             CodeWriter.IncreaseIndent();
@@ -129,7 +129,7 @@ namespace SafetySharp.Modelchecking.Promela
         // http://spinroot.com/spin/Man/ltl.html
         public override void VisitLtlFormulaModule(LtlFormulaModule ltlFormulaModule)
         {
-            Argument.NotNull(ltlFormulaModule, () => ltlFormulaModule);
+            Requires.NotNull(ltlFormulaModule, () => ltlFormulaModule);
 
             CodeWriter.Append("ltl ");
             if (ltlFormulaModule.Name!=null)
@@ -151,7 +151,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="booleanLiteral">The <see cref="BooleanLiteral" /> instance that should be visited.</param>
         public override void VisitBooleanLiteral(BooleanLiteral booleanLiteral)
         {
-            Argument.NotNull(booleanLiteral, () => booleanLiteral);
+            Requires.NotNull(booleanLiteral, () => booleanLiteral);
 
             switch (booleanLiteral.Value)
             {
@@ -170,7 +170,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="numberLiteral">The <see cref="NumberLiteral" /> instance that should be visited.</param>
         public override void VisitNumberLiteral(NumberLiteral numberLiteral)
         {
-            Argument.NotNull(numberLiteral, () => numberLiteral);
+            Requires.NotNull(numberLiteral, () => numberLiteral);
             CodeWriter.Append(numberLiteral.Value.ToString());
         }
 
@@ -180,7 +180,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryExpression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
         public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
-            Argument.NotNull(binaryExpression, () => binaryExpression);
+            Requires.NotNull(binaryExpression, () => binaryExpression);
             CodeWriter.Append("(");
             binaryExpression.Left.Accept(this);
 
@@ -252,7 +252,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryExpression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
         public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
-            Argument.NotNull(unaryExpression, () => unaryExpression);
+            Requires.NotNull(unaryExpression, () => unaryExpression);
             CodeWriter.Append("(");
             switch (unaryExpression.Operator)
             {
@@ -277,7 +277,7 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitVariableReferenceExpression(VariableReferenceExpression variableReferenceExpression)
         {
             // varref : name [ '[' any_expr ']' ] [ '.' varref ]
-            Argument.NotNull(variableReferenceExpression, () => variableReferenceExpression);
+            Requires.NotNull(variableReferenceExpression, () => variableReferenceExpression);
 
             CodeWriter.Append(variableReferenceExpression.Identifier);
             if (variableReferenceExpression.Index != null)
@@ -303,7 +303,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="simpleBlockStatement">The <see cref="SimpleBlockStatement" /> instance that should be visited.</param>
         public override void VisitSimpleBlockStatement(SimpleBlockStatement simpleBlockStatement)
         {
-            Argument.NotNull(simpleBlockStatement, () => simpleBlockStatement);
+            Requires.NotNull(simpleBlockStatement, () => simpleBlockStatement);
             CodeWriter.AppendLine("{{");
             CodeWriter.IncreaseIndent();
             var first = true;
@@ -325,7 +325,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="atomicBlockStatement">The <see cref="AtomicBlockStatement" /> instance that should be visited.</param>
         public override void VisitAtomicBlockStatement(AtomicBlockStatement atomicBlockStatement)
         {
-            Argument.NotNull(atomicBlockStatement, () => atomicBlockStatement);
+            Requires.NotNull(atomicBlockStatement, () => atomicBlockStatement);
             CodeWriter.AppendLine("atomic {{");
             CodeWriter.IncreaseIndent();
             var first = true;
@@ -347,7 +347,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="dStepBlockStatement">The <see cref="DStepBlockStatement" /> instance that should be visited.</param>
         public override void VisitDStepBlockStatement(DStepBlockStatement dStepBlockStatement)
         {
-            Argument.NotNull(dStepBlockStatement, () => dStepBlockStatement);
+            Requires.NotNull(dStepBlockStatement, () => dStepBlockStatement);
             CodeWriter.AppendLine("d_step {{");
             CodeWriter.IncreaseIndent();
             var first = true;
@@ -369,7 +369,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="returnStatement">The <see cref="ReturnStatement" /> instance that should be visited.</param>
         public override void VisitReturnStatement(ReturnStatement returnStatement)
         {
-            Argument.NotNull(returnStatement, () => returnStatement);
+            Requires.NotNull(returnStatement, () => returnStatement);
             CodeWriter.Append("return ");
             returnStatement.Expression.Accept(this);
             CodeWriter.NewLine();
@@ -381,7 +381,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="expressionStatement">The <see cref="ExpressionStatement" /> instance that should be visited.</param>
         public override void VisitExpressionStatement(ExpressionStatement expressionStatement)
         {
-            Argument.NotNull(expressionStatement, () => expressionStatement);
+            Requires.NotNull(expressionStatement, () => expressionStatement);
             CodeWriter.Append("(");
             expressionStatement.Expression.Accept(this);
             CodeWriter.Append(")");
@@ -393,7 +393,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="skipStatement">The <see cref="SkipStatement" /> instance that should be visited.</param>
         public override void VisitSkipStatement(SkipStatement skipStatement)
         {
-            Argument.NotNull(skipStatement, () => skipStatement);
+            Requires.NotNull(skipStatement, () => skipStatement);
             CodeWriter.Append("skip");
         }
 
@@ -406,7 +406,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandRepetitionStatement(GuardedCommandRepetitionStatement guardedCommandRepetitionStatement)
         {
-            Argument.NotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
+            Requires.NotNull(guardedCommandRepetitionStatement, () => guardedCommandRepetitionStatement);
             CodeWriter.AppendLine("do");
             guardedCommandRepetitionStatement.Clauses.ForEach(clause => clause.Accept(this));
             CodeWriter.AppendLine("od");
@@ -421,7 +421,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandSelectionStatement(GuardedCommandSelectionStatement guardedCommandSelectionStatement)
         {
-            Argument.NotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
+            Requires.NotNull(guardedCommandSelectionStatement, () => guardedCommandSelectionStatement);
             CodeWriter.AppendLine("if");
             guardedCommandSelectionStatement.Clauses.ForEach(clause => clause.Accept(this));
             CodeWriter.Append("fi");
@@ -436,7 +436,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override void VisitGuardedCommandExpressionClause(GuardedCommandExpressionClause guardedCommandExpressionClause)
         {
-            Argument.NotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
+            Requires.NotNull(guardedCommandExpressionClause, () => guardedCommandExpressionClause);
             CodeWriter.Append("::\t");
             guardedCommandExpressionClause.Guard.Accept(this);
             CodeWriter.Append(" ->");
@@ -454,7 +454,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="guardedCommandElseClause">The <see cref="GuardedCommandElseClause" /> instance that should be visited.</param>
         public override void VisitGuardedCommandElseClause(GuardedCommandElseClause guardedCommandElseClause)
         {
-            Argument.NotNull(guardedCommandElseClause, () => guardedCommandElseClause);
+            Requires.NotNull(guardedCommandElseClause, () => guardedCommandElseClause);
             CodeWriter.AppendLine("::\telse ->");
             guardedCommandElseClause.Statement.Accept(this);
             CodeWriter.DecreaseIndent();
@@ -466,7 +466,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="assignmentStatement">The <see cref="AssignmentStatement" /> instance that should be visited.</param>
         public override void VisitAssignmentStatement(AssignmentStatement assignmentStatement)
         {
-            Argument.NotNull(assignmentStatement, () => assignmentStatement);
+            Requires.NotNull(assignmentStatement, () => assignmentStatement);
             assignmentStatement.Left.Accept(this);
             CodeWriter.Append(" = ");
             assignmentStatement.Right.Accept(this);
@@ -479,7 +479,7 @@ namespace SafetySharp.Modelchecking.Promela
         public override void VisitDeclarationStatement(DeclarationStatement declarationStatement)
         {
             // one_decl : typename name [ '[' const ']' ] [ '=' any_expr ]
-            Argument.NotNull(declarationStatement, () => declarationStatement);
+            Requires.NotNull(declarationStatement, () => declarationStatement);
             switch (declarationStatement.Type)
             {
                 case PromelaTypeName.Bit:
@@ -533,7 +533,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="propositionalStateFormula">The <see cref="PropositionalStateFormula" /> instance that should be visited.</param>
         public override void VisitPropositionalStateFormula(PropositionalStateFormula propositionalStateFormula)
         {
-            Argument.NotNull(propositionalStateFormula, () => propositionalStateFormula);
+            Requires.NotNull(propositionalStateFormula, () => propositionalStateFormula);
 
             CodeWriter.Append("( ");
             propositionalStateFormula.Expression.Accept(this);
@@ -547,7 +547,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryFormula">The <see cref="BinaryFormula" /> instance that should be visited.</param>
         public override void VisitBinaryFormula(BinaryFormula binaryFormula)
         {
-            Argument.NotNull(binaryFormula, () => binaryFormula);
+            Requires.NotNull(binaryFormula, () => binaryFormula);
 
             CodeWriter.Append("( ");
             binaryFormula.Left.Accept(this);
@@ -590,7 +590,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryFormula">The <see cref="UnaryFormula" /> instance that should be visited.</param>
         public override void VisitUnaryFormula(UnaryFormula unaryFormula)
         {
-            Argument.NotNull(unaryFormula, () => unaryFormula);
+            Requires.NotNull(unaryFormula, () => unaryFormula);
             CodeWriter.Append("( ");
 
             switch (unaryFormula.Operator)

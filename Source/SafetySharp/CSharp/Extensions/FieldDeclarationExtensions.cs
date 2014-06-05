@@ -41,9 +41,9 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used for the check.</param>
 		internal static bool IsComponentField(this FieldDeclarationSyntax fieldDeclaration, SemanticModel semanticModel)
 		{
-			Argument.NotNull(fieldDeclaration, () => fieldDeclaration);
-			Argument.NotNull(semanticModel, () => semanticModel);
-			Argument.Satisfies(fieldDeclaration.Declaration.Variables.Count == 1, () => fieldDeclaration,
+			Requires.NotNull(fieldDeclaration, () => fieldDeclaration);
+			Requires.NotNull(semanticModel, () => semanticModel);
+			Requires.ArgumentSatisfies(fieldDeclaration.Declaration.Variables.Count == 1, () => fieldDeclaration,
 							   "Field declaration declares more than one variable.");
 
 			var variable = fieldDeclaration.Declaration.Variables[0];

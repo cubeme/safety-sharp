@@ -471,11 +471,11 @@ let generateCode context =
         | None ->
             ()
         | NotNull -> 
-            output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Requires.NotNull(%s, () => %s);" parameterName parameterName)
         | NotNullOrWhitespace -> 
-            output.AppendLine(sprintf "Argument.NotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Requires.NotNullOrWhitespace(%s, () => %s);" parameterName parameterName)
         | InRange ->
-            output.AppendLine(sprintf "Argument.InRange(%s, () => %s);" parameterName parameterName)
+            output.AppendLine(sprintf "Requires.InRange(%s, () => %s);" parameterName parameterName)
 
     /// <summary>
     ///     Generates an expression that returns true if the value of any property does not match.
@@ -610,7 +610,7 @@ let generateCode context =
 
             // Generate the method body; we're reusing the corresponding With...() method here
             output.AppendBlockStatement <| fun () ->
-                output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" <| getValidCSharpIdentifier p.Name <| getValidCSharpIdentifier p.Name)
+                output.AppendLine(sprintf "Requires.NotNull(%s, () => %s);" <| getValidCSharpIdentifier p.Name <| getValidCSharpIdentifier p.Name)
 
                 if not <| isArray p && p.CanBeNull then
                     output.NewLine()
@@ -682,7 +682,7 @@ let generateCode context =
         // Generate the method body
         output.AppendBlockStatement <| fun () ->
             let returnKeyword = if visitorType.IsGeneric then "return " else ""
-            output.AppendLine("Argument.NotNull(visitor, () => visitor);")
+            output.AppendLine("Requires.NotNull(visitor, () => visitor);")
             output.AppendLine(sprintf "%svisitor.Visit%s(this);" returnKeyword c.Name)
 
     /// <summary>
@@ -738,7 +738,7 @@ let generateCode context =
 
         // Generate the method body of the typed Equals method
         output.AppendBlockStatement <| fun () ->
-            output.AppendLine("Argument.NotNull(other, () => other);")
+            output.AppendLine("Requires.NotNull(other, () => other);")
             output.NewLine()
 
             output.AppendLine(sprintf "var element = other as %s;" c.Name)
@@ -947,7 +947,7 @@ let generateCode context =
             output.AppendLine(sprintf "/// <param name=\"element\">The <see cref=\"%s\" /> instance that should be visited.</param>" context.BaseClass)
             output.AppendLine(sprintf "public virtual %s Visit(%s element)" visitorType.ReturnType context.BaseClass)
             output.AppendBlockStatement <| fun () ->
-                output.AppendLine("Argument.NotNull(element, () => element);")
+                output.AppendLine("Requires.NotNull(element, () => element);")
                 output.AppendLine(sprintf "%selement.Accept(this);" <| if visitorType.IsGeneric then "return " else "")
 
             // Generate a Visit...() method for each non-abstract class
@@ -971,7 +971,7 @@ let generateCode context =
 
                 // Generate the method body
                 output.AppendBlockStatement <| fun () ->
-                    output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" parameterName parameterName)
+                    output.AppendLine(sprintf "Requires.NotNull(%s, () => %s);" parameterName parameterName)
                     if visitorType.IsGeneric then
                         output.AppendLine(sprintf "return default(%s);" visitorType.ParamType)
 
@@ -1004,7 +1004,7 @@ let generateCode context =
             output.AppendLine("public virtual ImmutableList<TElement> Visit<TElement>(ImmutableList<TElement> elements)")
             output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
             output.AppendBlockStatement <| fun () ->
-                output.AppendLine("Argument.NotNull(elements, () => elements);")
+                output.AppendLine("Requires.NotNull(elements, () => elements);")
                 output.AppendLine("return elements.Aggregate(ImmutableList<TElement>.Empty, (current, element) => current.Add((TElement)element.Accept(this)));")
 
             // Generate the default Visit method for dictionaries
@@ -1018,7 +1018,7 @@ let generateCode context =
             output.AppendLine("public virtual ImmutableDictionary<TKey, TElement> Visit<TKey, TElement>(ImmutableDictionary<TKey, TElement> elements)")
             output.AppendLine(sprintf "\twhere TElement : %s" context.BaseClass)
             output.AppendBlockStatement <| fun () ->
-                output.AppendLine("Argument.NotNull(elements, () => elements);")
+                output.AppendLine("Requires.NotNull(elements, () => elements);")
                 output.AppendLine("return elements.Aggregate(ImmutableDictionary<TKey, TElement>.Empty, (current, element) => current.Add(element.Key, (TElement)element.Value.Accept(this)));")
 
             // Generate a Visit...() method with the rewriting logic for each non-abstract class
@@ -1042,7 +1042,7 @@ let generateCode context =
 
                 // Generate the method body
                 output.AppendBlockStatement <| fun () ->
-                    output.AppendLine(sprintf "Argument.NotNull(%s, () => %s);" parameterName parameterName)
+                    output.AppendLine(sprintf "Requires.NotNull(%s, () => %s);" parameterName parameterName)
 
                     // If the class has no properties, just return the same instance; there's nothing to rewrite
                     let properties = allProperties c

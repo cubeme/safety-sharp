@@ -28,7 +28,7 @@ namespace SafetySharp.CSharp
 	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Transformation;
+	using Modeling;
 	using Utilities;
 
 	/// <summary>
@@ -42,7 +42,7 @@ namespace SafetySharp.CSharp
 		/// <param name="compilation">The C# compilation that represents the modeling compilation.</param>
 		internal ModelingCompilation(Compilation compilation)
 		{
-			Argument.NotNull(compilation, () => compilation);
+			Requires.NotNull(compilation, () => compilation);
 			CSharpCompilation = compilation;
 		}
 
@@ -70,11 +70,11 @@ namespace SafetySharp.CSharp
 		///     Gets the <see cref="ClassDeclarationSyntax" /> corresponding to the <paramref name="component" />.
 		/// </summary>
 		/// <param name="component">The component the class declaration should be returned for.</param>
-		internal ClassDeclarationSyntax GetClassDeclaration(ComponentSnapshot component)
+		internal ClassDeclarationSyntax GetClassDeclaration(Component component)
 		{
-			Argument.NotNull(component, () => component);
+			Requires.NotNull(component, () => component);
 
-			var componentType = component.Type;
+			var componentType = component.GetType();
 			var componentClasses = (from syntaxTree in CSharpCompilation.SyntaxTrees
 									let semanticModel = CSharpCompilation.GetSemanticModel(syntaxTree)
 									from classDeclaration in syntaxTree.DescendantNodesAndSelf<ClassDeclarationSyntax>()
@@ -99,7 +99,7 @@ namespace SafetySharp.CSharp
 		/// <param name="classDeclaration">The class declaration the type symbol should be returned for.</param>
 		internal ITypeSymbol GetClassSymbol(ClassDeclarationSyntax classDeclaration)
 		{
-			Argument.NotNull(classDeclaration, () => classDeclaration);
+			Requires.NotNull(classDeclaration, () => classDeclaration);
 
 			var semanticModel = CSharpCompilation.GetSemanticModel(classDeclaration.SyntaxTree);
 			return (ITypeSymbol)semanticModel.GetDeclaredSymbol(classDeclaration);

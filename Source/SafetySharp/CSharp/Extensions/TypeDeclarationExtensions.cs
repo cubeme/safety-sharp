@@ -62,8 +62,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="baseType">The base type <paramref name="typeDeclaration" /> should be derived from.</param>
 		internal static bool IsDerivedFrom(this TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
 		{
-			Argument.NotNull(typeDeclaration, () => typeDeclaration);
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(typeDeclaration, () => typeDeclaration);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var symbol = (ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration);
 			return symbol.IsDerivedFrom(baseType);
@@ -76,7 +76,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to determine the full name.</param>
 		internal static string GetFullName(this TypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
 		{
-			Argument.NotNull(typeDeclaration, () => typeDeclaration);
+			Requires.NotNull(typeDeclaration, () => typeDeclaration);
 			return ((ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDeclaration)).GetFullName();
 		}
 	}

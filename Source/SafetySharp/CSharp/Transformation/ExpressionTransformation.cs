@@ -42,8 +42,8 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="symbolMap">The symbol map that should be used to look up metamodel element references for C# symbols.</param>
 		internal ExpressionTransformation(SemanticModel semanticModel, SymbolMap symbolMap)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
-			Argument.NotNull(symbolMap, () => symbolMap);
+			Requires.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(symbolMap, () => symbolMap);
 
 			SemanticModel = semanticModel;
 			SymbolMap = symbolMap;

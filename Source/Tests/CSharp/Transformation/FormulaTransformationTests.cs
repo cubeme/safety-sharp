@@ -111,7 +111,7 @@ namespace Tests.CSharp.Transformation
 			var configuration = new ComponentConfiguration(new Identifier("None"), ComponentDeclaration.Empty, fields,
 														   ImmutableArray<ComponentConfiguration>.Empty);
 
-			_componentResolver = _componentResolver.With(component.GetSnapshot(), configuration);
+			_componentResolver = _componentResolver.With(component, configuration);
 			return component;
 		}
 

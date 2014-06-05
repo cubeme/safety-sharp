@@ -40,7 +40,7 @@ namespace SafetySharp.Modeling
 		/// </param>
 		public ModelingAssemblyAttribute(string compilerVersion)
 		{
-			Argument.NotNullOrWhitespace(compilerVersion, () => compilerVersion);
+			Requires.NotNullOrWhitespace(compilerVersion, () => compilerVersion);
 			CompilerVersion = compilerVersion;
 		}
 

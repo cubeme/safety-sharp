@@ -73,7 +73,7 @@ namespace SafetySharp.Utilities
         [StringFormatMethod("format")]
 		public void Append(string format, params object[] arguments)
 		{
-			Argument.NotNull(format, () => format);
+			Requires.NotNull(format, () => format);
 
 			AddIndentation();
 			_buffer.AppendFormat(format, arguments);
@@ -87,7 +87,7 @@ namespace SafetySharp.Utilities
 		[StringFormatMethod("format")]
 		public void AppendLine(string format, params object[] arguments)
 		{
-			Argument.NotNull(format, () => format);
+			Requires.NotNull(format, () => format);
 
 			AddIndentation();
 			_buffer.AppendFormat(format, arguments);
@@ -151,7 +151,7 @@ namespace SafetySharp.Utilities
 		/// </param>
 		public void AppendBlockStatement(Action content)
 		{
-			Argument.NotNull(content, () => content);
+			Requires.NotNull(content, () => content);
 
 			EnsureNewLine();
 			AppendLine("{{");
@@ -177,9 +177,9 @@ namespace SafetySharp.Utilities
 		/// </param>
 		public void AppendSeparated<T>(IEnumerable<T> values, string separator, Action<T> content)
 		{
-			Argument.NotNull(values, () => values);
-			Argument.NotNull(separator, () => separator);
-			Argument.NotNull(content, () => content);
+			Requires.NotNull(values, () => values);
+			Requires.NotNull(separator, () => separator);
+			Requires.NotNull(content, () => content);
 
 			AppendSeparated(values, () => Append(separator), content);
 		}
@@ -198,9 +198,9 @@ namespace SafetySharp.Utilities
 		/// </param>
 		public void AppendSeparated<T>(IEnumerable<T> source, Action separator, Action<T> content)
 		{
-			Argument.NotNull(source, () => source);
-			Argument.NotNull(separator, () => separator);
-			Argument.NotNull(content, () => content);
+			Requires.NotNull(source, () => source);
+			Requires.NotNull(separator, () => separator);
+			Requires.NotNull(content, () => content);
 
 			var count = source.Count();
 			var i = 0;
@@ -237,7 +237,7 @@ namespace SafetySharp.Utilities
 		/// <param name="path">The path of the file that should be generated.</param>
 		public void WriteToFile(string path)
 		{
-			Argument.NotNullOrWhitespace(path, () => path);
+			Requires.NotNullOrWhitespace(path, () => path);
 			File.WriteAllText(path, _buffer.ToString());
 		}
 

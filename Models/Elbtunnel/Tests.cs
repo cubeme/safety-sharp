@@ -24,7 +24,7 @@
 				var lb = new LightBarrier();
 				var t = new Test2();
 
-				AddPartitions(c1, c2, t, lb);
+				SetPartitions(c1, c2, t, lb);
 
 				var value = c1.AccessInternal<bool>("_value");
 				var value2 = c1.AccessInternal<int>("_value");

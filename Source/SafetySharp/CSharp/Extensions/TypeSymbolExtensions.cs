@@ -41,8 +41,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="baseType">The class or interface base type that <paramref name="typeSymbol" /> should be derived from.</param>
 		internal static bool IsDerivedFrom(this ITypeSymbol typeSymbol, ITypeSymbol baseType)
 		{
-			Argument.NotNull(typeSymbol, () => typeSymbol);
-			Argument.NotNull(baseType, () => baseType);
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(baseType, () => baseType);
 
 			// Check whether any of the interfaces or their bases match baseType
 			if (baseType.TypeKind == TypeKind.Interface && (typeSymbol.Interfaces.Any(i => i.Equals(baseType) || IsDerivedFrom(i, baseType))))
@@ -67,8 +67,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used for the conversion.</param>
 		internal static TypeSymbol ToTypeSymbol(this ITypeSymbol symbol, SemanticModel semanticModel)
 		{
-			Argument.NotNull(symbol, () => symbol);
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(symbol, () => symbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			switch (symbol.SpecialType)
 			{

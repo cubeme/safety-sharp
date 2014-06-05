@@ -39,8 +39,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="overriddenMethod">The method <paramref name="methodSymbol" /> should override.</param>
 		internal static bool Overrides(this IMethodSymbol methodSymbol, IMethodSymbol overriddenMethod)
 		{
-			Argument.NotNull(methodSymbol, () => methodSymbol);
-			Argument.NotNull(overriddenMethod, () => overriddenMethod);
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(overriddenMethod, () => overriddenMethod);
 
 			if (!methodSymbol.IsOverride)
 				return false;
@@ -58,7 +58,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
 		internal static string GetFullName(this IMethodSymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 
 			var typeParameters = String.Empty;
 			if (symbol.Arity > 0)

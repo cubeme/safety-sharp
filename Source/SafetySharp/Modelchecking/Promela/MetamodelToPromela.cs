@@ -422,7 +422,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="expressionFormula">The <see cref="MMFormulae.StateFormula" /> instance that should be visited.</param>
         public override PrFormula.PromelaFormula VisitStateFormula(MMFormulae.StateFormula expressionFormula)
         {
-            Argument.NotNull(expressionFormula, () => expressionFormula);
+            Requires.NotNull(expressionFormula, () => expressionFormula);
 
             var scope = _commonKnowledge.MmConfigurationToScope[/* TODO: REMOVED ASSOCIATED COMPONENT */null];
             var expressionVisitor = _commonKnowledge.GetExpressionVisitor(scope);
@@ -437,7 +437,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryFormula">The <see cref="MMFormulae.BinaryFormula" /> instance that should be visited.</param>
         public override PrFormula.PromelaFormula VisitBinaryFormula(MMFormulae.BinaryFormula binaryFormula)
         {
-            Argument.NotNull(binaryFormula, () => binaryFormula);
+            Requires.NotNull(binaryFormula, () => binaryFormula);
             var left = binaryFormula.Left.Accept(this);
             var right = binaryFormula.Right.Accept(this);
             PromelaBinaryFormulaOperator @operator;
@@ -473,7 +473,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryFormula">The <see cref="MMFormulae.UnaryFormula" /> instance that should be visited.</param>
         public override PrFormula.PromelaFormula VisitUnaryFormula(MMFormulae.UnaryFormula unaryFormula)
         {
-            Argument.NotNull(unaryFormula, () => unaryFormula);
+            Requires.NotNull(unaryFormula, () => unaryFormula);
             var operand = unaryFormula.Operand.Accept(this);
             PromelaUnaryFormulaOperator @operator;
             
@@ -518,7 +518,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="booleanLiteral">The <see cref="MMExpressions.BooleanLiteral" /> instance that should be visited.</param>
         public override PrExpression VisitBooleanLiteral(MMExpressions.BooleanLiteral booleanLiteral)
         {
-            Argument.NotNull(booleanLiteral, () => booleanLiteral);
+            Requires.NotNull(booleanLiteral, () => booleanLiteral);
             return new PrExpressions.BooleanLiteral(booleanLiteral.Value);
         }
 
@@ -528,7 +528,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="integerLiteral">The <see cref="MMExpressions.IntegerLiteral" /> instance that should be visited.</param>
         public override PrExpression VisitIntegerLiteral(MMExpressions.IntegerLiteral integerLiteral)
         {
-            Argument.NotNull(integerLiteral, () => integerLiteral);
+            Requires.NotNull(integerLiteral, () => integerLiteral);
             return new PrExpressions.NumberLiteral(integerLiteral.Value);
         }
 
@@ -538,7 +538,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="decimalLiteral">The <see cref="MMExpressions.DecimalLiteral" /> instance that should be visited.</param>
         public override PrExpression VisitDecimalLiteral(MMExpressions.DecimalLiteral decimalLiteral)
         {
-            Argument.NotNull(decimalLiteral, () => decimalLiteral);
+            Requires.NotNull(decimalLiteral, () => decimalLiteral);
             throw new NotImplementedException();
         }
 
@@ -583,7 +583,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="binaryExpression">The <see cref="MMExpressions.BinaryExpression" /> instance that should be visited.</param>
         public override PrExpression VisitBinaryExpression(MMExpressions.BinaryExpression binaryExpression)
         {
-            Argument.NotNull(binaryExpression, () => binaryExpression);
+            Requires.NotNull(binaryExpression, () => binaryExpression);
             var left = binaryExpression.Left.Accept(this);
             var @operator = MmBinOperatorToPrBinOperator(binaryExpression.Operator);
             var right = binaryExpression.Right.Accept(this);
@@ -596,7 +596,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="unaryExpression">The <see cref="MMExpressions.UnaryExpression" /> instance that should be visited.</param>
         public override PrExpression VisitUnaryExpression(MMExpressions.UnaryExpression unaryExpression)
         {
-            Argument.NotNull(unaryExpression, () => unaryExpression);
+            Requires.NotNull(unaryExpression, () => unaryExpression);
             var operand = unaryExpression.Operand.Accept(this);
             switch (unaryExpression.Operator)
             {
@@ -612,7 +612,7 @@ namespace SafetySharp.Modelchecking.Promela
         public PrExpressions.VariableReferenceExpression ConvertFieldAccessExpression(
             MMExpressions.FieldAccessExpression fieldAccessExpression)
         {
-            Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
+            Requires.NotNull(fieldAccessExpression, () => fieldAccessExpression);
             var fieldDeclaration = CommonKnowledge.MmAccessTypeToConcreteTypeDictionary.Resolve(fieldAccessExpression.Field);
             var fieldInfo = CommonKnowledge.MmFieldDictionary[CurrentComponent][fieldDeclaration.Identifier];
             var refName = fieldInfo.GetName();
@@ -625,7 +625,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="fieldAccessExpression">The <see cref="MMExpressions.FieldAccessExpression" /> instance that should be visited.</param>
         public override PrExpression VisitFieldAccessExpression(MMExpressions.FieldAccessExpression fieldAccessExpression)
         {
-            Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
+            Requires.NotNull(fieldAccessExpression, () => fieldAccessExpression);
             return ConvertFieldAccessExpression(fieldAccessExpression);
         }
     }
@@ -651,7 +651,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="emptyStatement">The <see cref="MMStatements.EmptyStatement" /> instance that should be visited.</param>
         public override PrStatement VisitEmptyStatement(MMStatements.EmptyStatement emptyStatement)
         {
-            Argument.NotNull(emptyStatement, () => emptyStatement);
+            Requires.NotNull(emptyStatement, () => emptyStatement);
             return new PrStatements.SkipStatement();
         }
 
@@ -661,7 +661,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="blockStatement">The <see cref="MMStatements.BlockStatement" /> instance that should be visited.</param>
         public override PrStatement VisitBlockStatement(MMStatements.BlockStatement blockStatement)
         {
-            Argument.NotNull(blockStatement, () => blockStatement);
+            Requires.NotNull(blockStatement, () => blockStatement);
             var substatements = blockStatement.Statements.Select(statement => statement.Accept(this)).ToImmutableArray();
             return new PrStatements.SimpleBlockStatement(substatements);
         }
@@ -672,7 +672,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="returnStatement">The <see cref="MMStatements.ReturnStatement" /> instance that should be visited.</param>
         public override PrStatement VisitReturnStatement(MMStatements.ReturnStatement returnStatement)
         {
-            Argument.NotNull(returnStatement, () => returnStatement);
+            Requires.NotNull(returnStatement, () => returnStatement);
             throw new NotImplementedException();
         }
 
@@ -682,7 +682,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="guardedCommandClause">The <see cref="MMStatements.GuardedCommandClause" /> instance that should be converted.</param>
         public PrStatements.GuardedCommandClause ConvertGuardedCommandClause(MMStatements.GuardedCommandClause guardedCommandClause)
         {
-            Argument.NotNull(guardedCommandClause, () => guardedCommandClause);
+            Requires.NotNull(guardedCommandClause, () => guardedCommandClause);
             var guard = guardedCommandClause.Guard.Accept(CommonKnowledge.GetExpressionVisitor(CurrentComponent));
             var statement = guardedCommandClause.Statement.Accept(this);
             return new PrStatements.GuardedCommandExpressionClause(guard, statement);
@@ -697,7 +697,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// </param>
         public override PrStatement VisitGuardedCommandStatement(MMStatements.GuardedCommandStatement guardedCommandStatement)
         {
-            Argument.NotNull(guardedCommandStatement, () => guardedCommandStatement);
+            Requires.NotNull(guardedCommandStatement, () => guardedCommandStatement);
             var clauses = guardedCommandStatement.Clauses.Select(ConvertGuardedCommandClause).ToImmutableArray();
             return new PrStatements.GuardedCommandSelectionStatement(clauses);
         }
@@ -708,7 +708,7 @@ namespace SafetySharp.Modelchecking.Promela
         /// <param name="assignmentStatement">The <see cref="MMStatements.AssignmentStatement" /> instance that should be visited.</param>
         public override PrStatement VisitAssignmentStatement(MMStatements.AssignmentStatement assignmentStatement)
         {
-            Argument.NotNull(assignmentStatement, () => assignmentStatement);
+            Requires.NotNull(assignmentStatement, () => assignmentStatement);
             // Be careful: http://stackoverflow.com/questions/983030/type-checking-typeof-gettype-or-is
             var stateVar = assignmentStatement.Left as MMExpressions.FieldAccessExpression;
 

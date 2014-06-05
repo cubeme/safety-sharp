@@ -63,8 +63,8 @@ namespace SafetySharp.Formulas
 		/// <param name="fieldAccessExpression">The field access expression that should be resolved.</param>
 		public FieldConfiguration Resolve(FieldAccessExpression fieldAccessExpression)
 		{
-			Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
-			Argument.Satisfies(_map.ContainsKey(fieldAccessExpression), () => fieldAccessExpression, "The given expression is unknown.");
+			Requires.NotNull(fieldAccessExpression, () => fieldAccessExpression);
+			Requires.ArgumentSatisfies(_map.ContainsKey(fieldAccessExpression), () => fieldAccessExpression, "The given expression is unknown.");
 
 			return _map[fieldAccessExpression];
 		}
@@ -77,9 +77,9 @@ namespace SafetySharp.Formulas
 		/// <param name="fieldConfiguration">The field configuration that <paramref name="fieldAccessExpression" /> refers to.</param>
 		internal FormulaResolver With(FieldAccessExpression fieldAccessExpression, FieldConfiguration fieldConfiguration)
 		{
-			Argument.NotNull(fieldAccessExpression, () => fieldAccessExpression);
-			Argument.NotNull(fieldConfiguration, () => fieldConfiguration);
-			Argument.Satisfies(!_map.ContainsKey(fieldAccessExpression), () => fieldAccessExpression,
+			Requires.NotNull(fieldAccessExpression, () => fieldAccessExpression);
+			Requires.NotNull(fieldConfiguration, () => fieldConfiguration);
+			Requires.ArgumentSatisfies(!_map.ContainsKey(fieldAccessExpression), () => fieldAccessExpression,
 							   "The given reference has already been added to the resolver.");
 
 			return new FormulaResolver { _map = _map.Add(fieldAccessExpression, fieldConfiguration) };

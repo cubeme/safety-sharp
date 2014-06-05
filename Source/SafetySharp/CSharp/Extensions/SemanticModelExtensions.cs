@@ -41,7 +41,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model containing the declared components.</param>
 		internal static IEnumerable<ClassDeclarationSyntax> GetDeclaredComponents(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			return semanticModel
 				.SyntaxTree
@@ -55,7 +55,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model containing the declared component interfaces.</param>
 		internal static IEnumerable<InterfaceDeclarationSyntax> GetDeclaredComponentInterfaces(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			return semanticModel
 				.SyntaxTree
@@ -69,7 +69,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model the syntax root should be returned for.</param>
 		internal static SyntaxNode GetSyntaxRoot(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.SyntaxTree.GetRoot();
 		}
 
@@ -80,7 +80,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model the type symbol should be returned for.</param>
 		internal static ITypeSymbol GetTypeSymbol<T>(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetTypeByMetadataName(typeof(T).FullName);
 		}
 
@@ -91,7 +91,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to retrieve the symbol.</param>
 		internal static IMethodSymbol GetChooseEnumerationLiteralMethodSymbol(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return GetChooseMethodSymbol(semanticModel, 0);
 		}
 
@@ -103,7 +103,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="normalizedMethod">If <c>true</c>, returns the symbol for the normalized method.</param>
 		internal static IMethodSymbol GetChooseFromValuesMethodSymbol(this SemanticModel semanticModel, bool normalizedMethod)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return GetChooseMethodSymbol(semanticModel, normalizedMethod ? 4 : 3);
 		}
 
@@ -115,7 +115,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="normalizedMethod">If <c>true</c>, returns the symbol for the normalized method.</param>
 		internal static IMethodSymbol GetChooseFromIntegerRangeMethodSymbol(this SemanticModel semanticModel, bool normalizedMethod)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return GetChooseRangeMethodSymbol(semanticModel, SpecialType.System_Int32, normalizedMethod ? 3 : 2);
 		}
 
@@ -128,7 +128,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="normalizedMethod">If <c>true</c>, returns the symbol for the normalized method.</param>
 		internal static IMethodSymbol GetChooseFromDecimalRangeMethodSymbol(this SemanticModel semanticModel, bool normalizedMethod)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return GetChooseRangeMethodSymbol(semanticModel, SpecialType.System_Decimal, normalizedMethod ? 3 : 2);
 		}
 
@@ -139,7 +139,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to retrieve the symbol.</param>
 		internal static ITypeSymbol GetComponentClassSymbol(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetTypeByMetadataName(typeof(Component).FullName);
 		}
 
@@ -150,7 +150,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to retrieve the symbol.</param>
 		internal static ITypeSymbol GetComponentInterfaceSymbol(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetTypeByMetadataName(typeof(IComponent).FullName);
 		}
 
@@ -161,7 +161,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="semanticModel">The semantic model that should be used to retrieve the symbol.</param>
 		internal static IMethodSymbol GetUpdateMethodSymbol(this SemanticModel semanticModel)
 		{
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.GetComponentClassSymbol().GetMembers("Update").OfType<IMethodSymbol>().Single();
 		}
 

@@ -68,7 +68,7 @@ namespace Tests.Modeling
 			{
 				public TestModelConfiguration(params Component[] rootComponents)
 				{
-					AddPartitions(rootComponents);
+					SetPartitions(rootComponents);
 				}
 			}
 		}
@@ -82,9 +82,10 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new ComplexComponent(component1, component2, null);
-				var configuration = new TestModelConfiguration(component3).GetSnapshot();
+				var configuration = new TestModelConfiguration(component3);
+				configuration.ToImmutable();
 
-				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
@@ -93,18 +94,20 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new ComplexComponent(component1, component2, new object());
-				var configuration = new TestModelConfiguration(component3).GetSnapshot();
+				var configuration = new TestModelConfiguration(component3);
+				configuration.ToImmutable();
 
-				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
 			public void IgnoresNullComponents()
 			{
 				var component = new NestedComponent(null);
-				var configuration = new TestModelConfiguration(component).GetSnapshot();
+				var configuration = new TestModelConfiguration(component);
+				configuration.ToImmutable();
 
-				configuration.Components.Should().BeEquivalentTo(component.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component);
 			}
 
 			[Test]
@@ -116,11 +119,10 @@ namespace Tests.Modeling
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new EmptyComponent();
 				var component6 = new ComplexComponent(component4, component5, new object());
-				var configuration = new TestModelConfiguration(component6).GetSnapshot();
+				var configuration = new TestModelConfiguration(component6);
+				configuration.ToImmutable();
 
-				configuration.Components.Should()
-							 .BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot(), component4.GetSnapshot(),
-											 component5.GetSnapshot(), component6.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component1, component2, component3, component4, component5, component6);
 			}
 
 			[Test]
@@ -130,10 +132,10 @@ namespace Tests.Modeling
 				var component2 = new NestedComponent(component1);
 				var component3 = new NestedComponent(component2);
 				var component4 = new NestedComponent(component3);
-				var configuration = new TestModelConfiguration(component4).GetSnapshot();
+				var configuration = new TestModelConfiguration(component4);
+				configuration.ToImmutable();
 
-				configuration.Components.Should()
-							 .BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot(), component4.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component1, component2, component3, component4);
 			}
 
 			[Test]
@@ -141,9 +143,10 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new NestedComponent(component1);
-				var configuration = new TestModelConfiguration(component2).GetSnapshot();
+				var configuration = new TestModelConfiguration(component2);
+				configuration.ToImmutable();
 
-				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component1, component2);
 			}
 
 			[Test]
@@ -151,14 +154,24 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
-				var configuration = new TestModelConfiguration(component1, component2).GetSnapshot();
+				var configuration = new TestModelConfiguration(component1, component2);
+				configuration.ToImmutable();
 
-				configuration.Components.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot());
+				configuration.Components.Should().BeEquivalentTo(component1, component2);
+			}
+
+			[Test]
+			public void ThrowsWhenNotSealed()
+			{
+				var configuration = new TestModelConfiguration(new EmptyComponent());
+
+				Action action = () => { var components = configuration.Components; };
+				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
 
 		[TestFixture]
-		internal class GetSnapshot : ModelConfigurationTests
+		internal class SetPartitionRootsMethod : ModelConfigurationTests
 		{
 			[Test]
 			public void ThrowsWhenComponentsAreSharedBetweenDifferentRoots()
@@ -169,9 +182,8 @@ namespace Tests.Modeling
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new EmptyComponent();
 				var component6 = new ComplexComponent(component5, component2, new object());
-				var configuration = new TestModelConfiguration(component4, component6);
 
-				Action action = () => configuration.GetSnapshot();
+				Action action = () => new TestModelConfiguration(component4, component6);
 				action.ShouldThrow<InvalidOperationException>();
 			}
 
@@ -183,9 +195,8 @@ namespace Tests.Modeling
 				var component3 = new NestedComponent(component2);
 				var component4 = new ComplexComponent(component1, component3, new object());
 				var component5 = new ComplexComponent(component4, component2, new object());
-				var configuration = new TestModelConfiguration(component5);
 
-				Action action = () => configuration.GetSnapshot();
+				Action action = () => new TestModelConfiguration(component5);
 				action.ShouldThrow<InvalidOperationException>();
 			}
 
@@ -194,18 +205,35 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new ComplexComponent(component1, component1, null);
-				var configuration = new TestModelConfiguration(component2);
 
-				Action action = () => configuration.GetSnapshot();
+				Action action = () => new TestModelConfiguration(component2);
+				action.ShouldThrow<InvalidOperationException>();
+			}
+		}
+
+		[TestFixture]
+		internal class SealMethod : ModelConfigurationTests
+		{
+			private class EmptyConfiguration : ModelConfiguration
+			{
+			}
+
+			[Test]
+			public void ThrowsWhenCalledTwice()
+			{
+				var configuration = new TestModelConfiguration(new EmptyComponent());
+				configuration.ToImmutable();
+
+				Action action = configuration.ToImmutable;
 				action.ShouldThrow<InvalidOperationException>();
 			}
 
 			[Test]
 			public void ThrowsWhenNoPartitionRootIsSet()
 			{
-				var configuration = new TestModelConfiguration();
+				var configuration = new EmptyConfiguration();
 
-				Action action = () => configuration.GetSnapshot();
+				Action action = configuration.ToImmutable;
 				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
@@ -217,10 +245,12 @@ namespace Tests.Modeling
 			public void AssignsNamesToRootComponents()
 			{
 				var configuration = new TestModelConfiguration(new EmptyComponent());
-				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0");
+				configuration.ToImmutable();
+				configuration.PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0");
 
 				configuration = new TestModelConfiguration(new EmptyComponent(), new EmptyComponent(), new EmptyComponent());
-				configuration.GetSnapshot().PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0", "Root1", "Root2");
+				configuration.ToImmutable();
+				configuration.PartitionRoots.Select(r => r.Name).Should().BeEquivalentTo("Root0", "Root1", "Root2");
 			}
 
 			[Test]
@@ -229,18 +259,20 @@ namespace Tests.Modeling
 				var component1 = new EmptyComponent();
 				var component2 = new EmptyComponent();
 				var component3 = new EmptyComponent();
-				var configuration = new TestModelConfiguration(component1, component2, component3).GetSnapshot();
+				var configuration = new TestModelConfiguration(component1, component2, component3);
+				configuration.ToImmutable();
 
-				configuration.PartitionRoots.Should().BeEquivalentTo(component1.GetSnapshot(), component2.GetSnapshot(), component3.GetSnapshot());
+				configuration.PartitionRoots.Should().BeEquivalentTo(component1, component2, component3);
 			}
 
 			[Test]
 			public void ContainsSingleTopLevelComponent()
 			{
 				var component = new EmptyComponent();
-				var configuration = new TestModelConfiguration(component).GetSnapshot();
+				var configuration = new TestModelConfiguration(component);
+				configuration.ToImmutable();
 
-				configuration.PartitionRoots.Should().BeEquivalentTo(component.GetSnapshot());
+				configuration.PartitionRoots.Should().BeEquivalentTo(component);
 			}
 
 			[Test]
@@ -248,9 +280,19 @@ namespace Tests.Modeling
 			{
 				var component1 = new EmptyComponent();
 				var component2 = new NestedComponent(component1);
-				var configuration = new TestModelConfiguration(component2).GetSnapshot();
+				var configuration = new TestModelConfiguration(component2);
+				configuration.ToImmutable();
 
-				configuration.PartitionRoots.Should().BeEquivalentTo(component2.GetSnapshot());
+				configuration.PartitionRoots.Should().BeEquivalentTo(component2);
+			}
+
+			[Test]
+			public void ThrowsWhenNotSealed()
+			{
+				var configuration = new TestModelConfiguration(new EmptyComponent());
+
+				Action action = () => { var components = configuration.PartitionRoots; };
+				action.ShouldThrow<InvalidOperationException>();
 			}
 		}
 	}

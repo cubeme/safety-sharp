@@ -55,7 +55,7 @@ namespace SafetySharp.Utilities
 		[DebuggerHidden, StringFormatMethod("message")]
 		public static void Die(string message, params object[] arguments)
 		{
-			Argument.NotNull(message, () => message);
+			Requires.NotNull(message, () => message);
 
 			RaiseLoggedEvent(LogType.Fatal, String.Format(message, arguments));
 			Environment.Exit(-1);
@@ -69,7 +69,7 @@ namespace SafetySharp.Utilities
 		[StringFormatMethod("message")]
 		public static void Error(string message, params object[] arguments)
 		{
-			Argument.NotNull(message, () => message);
+			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Error, String.Format(message, arguments));
 		}
 
@@ -81,7 +81,7 @@ namespace SafetySharp.Utilities
 		[StringFormatMethod("message")]
 		public static void Warn(string message, params object[] arguments)
 		{
-			Argument.NotNull(message, () => message);
+			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Warning, String.Format(message, arguments));
 		}
 
@@ -93,7 +93,7 @@ namespace SafetySharp.Utilities
 		[StringFormatMethod("message")]
 		public static void Info(string message, params object[] arguments)
 		{
-			Argument.NotNull(message, () => message);
+			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Info, String.Format(message, arguments));
 		}
 
@@ -105,7 +105,7 @@ namespace SafetySharp.Utilities
 		[Conditional("DEBUG"), StringFormatMethod("message")]
 		public static void Debug(string message, params object[] arguments)
 		{
-			Argument.NotNull(message, () => message);
+			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Debug, String.Format(message, arguments));
 		}
 

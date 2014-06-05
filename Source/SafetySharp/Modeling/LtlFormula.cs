@@ -37,7 +37,7 @@ namespace SafetySharp.Modeling
 		/// <param name="formula"></param>
 		internal LtlFormula(Formula formula)
 		{
-			Argument.NotNull(formula, () => formula);
+			Requires.NotNull(formula, () => formula);
 			Formula = formula;
 		}
 

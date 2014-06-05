@@ -43,20 +43,21 @@ namespace SafetySharp.CSharp.Transformation
 		/// <summary>
 		///     The model configuration that is being transformed.
 		/// </summary>
-		private readonly ModelConfigurationSnapshot _modelConfiguration;
+		private readonly ModelConfiguration _modelConfiguration;
 
 		/// <summary>
 		///     Initializes a new instance of the <see cref="MetamodelTransformation" /> type.
 		/// </summary>
 		/// <param name="compilation">The modeling compilation that should be transformed.</param>
 		/// <param name="modelConfiguration">The model configuration that should be transformed.</param>
-		internal MetamodelTransformation(ModelingCompilation compilation, ModelConfigurationSnapshot modelConfiguration)
+		internal MetamodelTransformation(ModelingCompilation compilation, ModelConfiguration modelConfiguration)
 		{
-			Argument.NotNull(compilation, () => compilation);
-			Argument.NotNull(modelConfiguration, () => modelConfiguration);
+			Requires.NotNull(compilation, () => compilation);
+			Requires.NotNull(modelConfiguration, () => modelConfiguration);
 
 			_compilation = compilation;
 			_modelConfiguration = modelConfiguration;
+			_modelConfiguration.ToImmutable();
 		}
 
 		/// <summary>
@@ -83,12 +84,12 @@ namespace SafetySharp.CSharp.Transformation
 		/// <param name="configuration">When this method successfully returns, contains the transformed metamodel configuration.</param>
 		/// <param name="symbolMap">
 		///     When this method successfully returns, contains the component resolver that can be used to resolve the
-		///     <see cref="ComponentDeclaration" /> corresponding to a <see cref="ComponentSnapshot" /> of the
+		///     <see cref="ComponentDeclaration" /> corresponding to a <see cref="Component" /> of the
 		///     <see cref="MetamodelConfiguration" /> instance passed to the constructor.
 		/// </param>
 		/// <param name="componentResolver">
 		///     When this method successfully returns, contains the component resolver that can be used to resolve the
-		///     <see cref="ComponentDeclaration" /> corresponding to a <see cref="ComponentSnapshot" /> of the
+		///     <see cref="ComponentDeclaration" /> corresponding to a <see cref="Component" /> of the
 		///     <see cref="MetamodelConfiguration" /> instance passed to the constructor.
 		/// </param>
 		internal bool TryTransform(out MetamodelCompilation compilation,

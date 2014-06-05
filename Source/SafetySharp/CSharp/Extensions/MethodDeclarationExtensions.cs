@@ -44,8 +44,8 @@ namespace SafetySharp.CSharp.Extensions
 		/// </param>
 		internal static bool IsUpdateMethod(this MethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
 		{
-			Argument.NotNull(methodDeclaration, () => methodDeclaration);
-			Argument.NotNull(semanticModel, () => semanticModel);
+			Requires.NotNull(methodDeclaration, () => methodDeclaration);
+			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var methodSymbol = (IMethodSymbol)semanticModel.GetDeclaredSymbol(methodDeclaration);
 			return methodSymbol.Overrides(semanticModel.GetUpdateMethodSymbol());

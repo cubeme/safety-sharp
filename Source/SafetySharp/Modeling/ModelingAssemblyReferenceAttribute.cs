@@ -38,7 +38,7 @@ namespace SafetySharp.Modeling
 		/// <param name="assemblyName">The fully qualified name of the referenced modeling assembly.</param>
 		public ModelingAssemblyReferenceAttribute(string assemblyName)
 		{
-			Argument.NotNull(assemblyName, () => assemblyName);
+			Requires.NotNull(assemblyName, () => assemblyName);
 			AssemblyName = assemblyName;
 		}
 

@@ -42,12 +42,12 @@ namespace Tests.CSharp.Transformation
 
 		internal class ConfigurationTransformationTests
 		{
-			private Dictionary<ComponentSnapshot, IMetamodelReference<ComponentDeclaration>> _componentReferences;
-			private Dictionary<ComponentSnapshot, ComponentDeclaration> _componentDeclarations;
+			private Dictionary<Component, IMetamodelReference<ComponentDeclaration>> _componentReferences;
+			private Dictionary<Component, ComponentDeclaration> _componentDeclarations;
 			private ComponentResolver _componentResolver;
 			private MetamodelResolver _metamodelResolver;
 
-			private IMetamodelReference<ComponentDeclaration> CreateComponentDeclaration(ComponentSnapshot component)
+			private IMetamodelReference<ComponentDeclaration> CreateComponentDeclaration(Component component)
 			{
 				IMetamodelReference<ComponentDeclaration> reference;
 				if (_componentReferences.TryGetValue(component, out reference))
@@ -56,7 +56,7 @@ namespace Tests.CSharp.Transformation
 				var fields = ImmutableArray<FieldDeclaration>.Empty;
 				var subComponents = ImmutableArray<SubComponentDeclaration>.Empty;
 
-				foreach (var field in component.Type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+				foreach (var field in component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
 				{
 					if (typeof(IComponent).IsAssignableFrom(field.FieldType))
 					{
@@ -87,12 +87,14 @@ namespace Tests.CSharp.Transformation
 
 			protected MetamodelConfiguration TransformConfiguration(params Component[] partitionRoots)
 			{
-				var configuration = new TestConfiguration(partitionRoots).GetSnapshot();
+				var configuration = new TestConfiguration(partitionRoots);
+				configuration.ToImmutable();
+
 				_metamodelResolver = MetamodelResolver.Empty;
 				_componentResolver = ComponentResolver.Empty;
 
-				_componentDeclarations = new Dictionary<ComponentSnapshot, ComponentDeclaration>();
-				_componentReferences = new Dictionary<ComponentSnapshot, IMetamodelReference<ComponentDeclaration>>();
+				_componentDeclarations = new Dictionary<Component, ComponentDeclaration>();
+				_componentReferences = new Dictionary<Component, IMetamodelReference<ComponentDeclaration>>();
 				foreach (var component in configuration.PartitionRoots)
 					CreateComponentDeclaration(component);
 
@@ -104,7 +106,7 @@ namespace Tests.CSharp.Transformation
 			{
 				return new ComponentConfiguration(
 					new Identifier(name),
-					_componentDeclarations[component.GetSnapshot()],
+					_componentDeclarations[component],
 					ImmutableDictionary<FieldDeclaration,FieldConfiguration>.Empty,
 					ImmutableArray<ComponentConfiguration>.Empty);
 			}
@@ -141,7 +143,7 @@ namespace Tests.CSharp.Transformation
 			{
 				public TestConfiguration(Component[] components)
 				{
-					AddPartitions(components);
+					SetPartitions(components);
 				}
 			}
 		}

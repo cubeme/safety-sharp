@@ -37,7 +37,7 @@ namespace SafetySharp.CSharp.Extensions
 		/// <param name="symbol">The symbol the full name should be returned for.</param>
 		internal static string GetFullName(this ISymbol symbol)
 		{
-			Argument.NotNull(symbol, () => symbol);
+			Requires.NotNull(symbol, () => symbol);
 
 			var symbolName = String.Empty;
 			var typeSymbol = symbol as INamespaceOrTypeSymbol;
@@ -51,7 +51,7 @@ namespace SafetySharp.CSharp.Extensions
 			else if (methodSymbol != null)
 				symbolName = methodSymbol.GetFullName();
 			else
-				Argument.Satisfies(false, () => symbol, "The given symbol is of an unsupported type.");
+				Requires.ArgumentSatisfies(false, () => symbol, "The given symbol is of an unsupported type.");
 
 			return symbolName;
 		}

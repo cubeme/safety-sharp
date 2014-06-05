@@ -90,14 +90,14 @@ namespace SafetySharp.CSharp.Diagnostics
 		private void SetDescriptor(string identifier, string description, string messageFormat, DiagnosticSeverity severity)
 		{
 			Assert.That(Descriptor == null, "A descriptor has already been set.");
-			Argument.NotNullOrWhitespace(identifier, () => identifier);
-			Argument.NotNullOrWhitespace(description, () => description);
-			Argument.NotNullOrWhitespace(messageFormat, () => messageFormat);
-			Argument.InRange(severity, () => severity);
-			Argument.Satisfies(identifier.StartsWith(Compiler.DiagnosticsPrefix), () => identifier,
+			Requires.NotNullOrWhitespace(identifier, () => identifier);
+			Requires.NotNullOrWhitespace(description, () => description);
+			Requires.NotNullOrWhitespace(messageFormat, () => messageFormat);
+			Requires.InRange(severity, () => severity);
+			Requires.ArgumentSatisfies(identifier.StartsWith(Compiler.DiagnosticsPrefix), () => identifier,
 							   "Diagnostic identifier does not start with prefix '{0}'.", Compiler.DiagnosticsPrefix);
 
-			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Compiler.DiagnosticsCategory, severity);
+			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Compiler.DiagnosticsCategory, severity, true);
 			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
 		}
 	}

@@ -28,10 +28,9 @@ namespace SafetySharp.Modeling
 	using System.Linq;
 	using System.Linq.Expressions;
 	using System.Reflection;
-	using CSharp.Transformation;
 	using Utilities;
 
-	public abstract class Component : IComponent
+	public abstract class Component : IComponent, IIsImmutable
 	{
 		/// <summary>
 		///     Maps a field of the current component instance to its set of initial values.
@@ -39,19 +38,43 @@ namespace SafetySharp.Modeling
 		private readonly Dictionary<string, ImmutableArray<object>> _fields = new Dictionary<string, ImmutableArray<object>>();
 
 		/// <summary>
-		///     Gets the <see cref="Component" /> instances that are direct sub components of the current instance.
+		///     The name of the component instance.
 		/// </summary>
-		internal IEnumerable<Component> SubComponents
+		private string _name;
+
+		/// <summary>
+		///     The sub components of the component.
+		/// </summary>
+		private ImmutableArray<Component> _subComponents;
+
+		/// <summary>
+		///     Gets or sets the name of the component instance. Returns <c>null</c> if no component name could be determined.
+		/// </summary>
+		internal string Name
 		{
 			get
 			{
-				return GetType()
-					.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-					.Where(field => typeof(IComponent).IsAssignableFrom(field.FieldType))
-					.Select(field => field.GetValue(this) as Component)
-					.Where(component => component != null);
+				Requires.IsImmutable(this);
+				return _name;
 			}
 		}
+
+		/// <summary>
+		///     Gets the <see cref="Component" /> instances that are direct sub components of the current instance.
+		/// </summary>
+		internal ImmutableArray<Component> SubComponents
+		{
+			get
+			{
+				Requires.IsImmutable(this);
+				return _subComponents;
+			}
+		}
+
+		/// <summary>
+		///     Gets a value indicating whether the component is sealed and can no longer be modified.
+		/// </summary>
+		public bool IsImmutable { get; private set; }
 
 		/// <summary>
 		///     Allows access to a non-public member of the component.
@@ -71,13 +94,14 @@ namespace SafetySharp.Modeling
 		/// <param name="initialValues">The initial values of the field.</param>
 		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
 		{
-			Argument.NotNull(field, () => field);
-			Argument.NotNull(initialValues, () => initialValues);
-			Argument.Satisfies(initialValues.Length > 0, () => initialValues, "At least one value must be provided.");
-			Argument.OfType<MemberExpression>(field.Body, () => field, "Expected a lambda expression of the form '() => field'.");
+			Requires.NotNull(field, () => field);
+			Requires.NotNull(initialValues, () => initialValues);
+			Requires.ArgumentSatisfies(initialValues.Length > 0, () => initialValues, "At least one value must be provided.");
+			Requires.OfType<MemberExpression>(field.Body, () => field, "Expected a lambda expression of the form '() => field'.");
+			Requires.NotImmutable(this);
 
 			var fieldInfo = ((MemberExpression)field.Body).Member as FieldInfo;
-			Argument.Satisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
+			Requires.ArgumentSatisfies(fieldInfo != null, () => field, "Expected a lambda expression of the form '() => field'.");
 
 			_fields[fieldInfo.Name] = initialValues.Cast<object>().ToImmutableArray();
 
@@ -86,26 +110,67 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Gets a snapshot of the current component state.
+		///     Gets the initial values of the field with name <paramref name="fieldName" />.
+		/// </summary>
+		/// <param name="fieldName">The name of the field the initial values should be returned for.</param>
+		internal ImmutableArray<object> GetInitialValuesOfField(string fieldName)
+		{
+			Requires.NotNullOrWhitespace(fieldName, () => fieldName);
+			Requires.IsImmutable(this);
+
+			ImmutableArray<object> initialValues;
+			if (!_fields.TryGetValue(fieldName, out initialValues))
+				Requires.ArgumentSatisfies(false, () => fieldName, "A field with name '{0}' does not exist.", fieldName);
+
+			return initialValues;
+		}
+
+		/// <summary>
+		///     Gets the sub component with the given name.
+		/// </summary>
+		/// <param name="name">The name of the sub component that should be returned.</param>
+		internal Component GetSubComponent(string name)
+		{
+			Requires.NotNullOrWhitespace(name, () => name);
+			Requires.IsImmutable(this);
+
+			var subComponent = SubComponents.SingleOrDefault(c => c.Name == name);
+			Requires.ArgumentSatisfies(subComponent != null, () => name, "A sub component with name '{0}' does not exist.", name);
+
+			return subComponent;
+		}
+
+		/// <summary>
+		///     Marks the component as immutable, disallowing any future state modifications.
 		/// </summary>
 		/// <param name="componentName">The name of the component or <c>null</c> if no name can be determined.</param>
-		internal ComponentSnapshot GetSnapshot(string componentName = null)
+		internal void ToImmutable(string componentName = null)
 		{
+			Requires.NotImmutable(this);
+
 			var subComponents =
 				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 				where typeof(IComponent).IsAssignableFrom(field.FieldType)
 				let component = field.GetValue(this) as Component
 				where component != null
-				select component.GetSnapshot(field.Name);
+				select new { field.Name, Component = component };
 
 			var fieldsWithDeterministicInitialValue =
 				from field in GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
 				where !typeof(IComponent).IsAssignableFrom(field.FieldType) && !_fields.ContainsKey(field.Name)
 				let value = field.GetValue(this)
-				select new KeyValuePair<string, ImmutableArray<object>>(field.Name, ImmutableArray.Create(value));
+				select new { field.Name, Values = ImmutableArray.Create(value) };
 
-			var fields = _fields.ToImmutableDictionary().AddRange(fieldsWithDeterministicInitialValue);
-			return new ComponentSnapshot(this, componentName, subComponents.ToImmutableArray(), fields);
+			foreach (var field in fieldsWithDeterministicInitialValue)
+				_fields.Add(field.Name, field.Values);
+
+			IsImmutable = true;
+			_name = componentName;
+			_subComponents = subComponents.Select(subComponent =>
+			{
+				subComponent.Component.ToImmutable(subComponent.Name);
+				return subComponent.Component;
+			}).ToImmutableArray();
 		}
 
 		protected static void Choose<T>(out T result, T value1, T value2, params T[] values)

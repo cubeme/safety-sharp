@@ -94,9 +94,9 @@ namespace SafetySharp.CSharp
 		/// <param name="platform">The name of the project platform that should be the target of the compilation.</param>
 		public int Compile(string projectFile, string configuration, string platform)
 		{
-			Argument.NotNull(projectFile, () => projectFile);
-			Argument.NotNull(configuration, () => configuration);
-			Argument.NotNull(platform, () => platform);
+			Requires.NotNull(projectFile, () => projectFile);
+			Requires.NotNull(configuration, () => configuration);
+			Requires.NotNull(platform, () => platform);
 
 			if (!File.Exists(projectFile))
 				return LogError("0001", "Project file '{0}' could not be found.", projectFile);
@@ -107,11 +107,7 @@ namespace SafetySharp.CSharp
 			if (String.IsNullOrWhiteSpace(platform))
 				return LogError("0003", "Invalid compilation platform: Platform name cannot be the empty string.");
 
-			var msBuildProperties = new[]
-			{
-				new KeyValuePair<string, string>("Configuration", configuration),
-				new KeyValuePair<string, string>("Platform", platform)
-			};
+			var msBuildProperties = new Dictionary<string, string> { { "Configuration", configuration }, { "Platform", platform } };
 
 			var workspace = MSBuildWorkspace.Create(msBuildProperties);
 			var project = workspace.OpenProjectAsync(projectFile).Result;
@@ -185,7 +181,7 @@ namespace SafetySharp.CSharp
 		{
 			var metadataCompilation = _compilation;
 
-			metadataCompilation = ApplyNormalizer<TypesNormalizer>(metadataCompilation);
+			//metadataCompilation = ApplyNormalizer<TypesNormalizer>(metadataCompilation);
 			metadataCompilation = ApplyNormalizer<ChooseNormalizer>(metadataCompilation);
 
 			OutputCode(metadataCompilation, "obj/MetadataCode");
@@ -206,16 +202,13 @@ namespace SafetySharp.CSharp
 		/// <param name="metadataCompilation">The metadata code that should be added.</param>
 		private void AddMetadata(Compilation metadataCompilation)
 		{
+			var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
 			var csharpCode = new StringBuilder();
-			var compilationUnits = metadataCompilation
-				.SyntaxTrees
-				.SelectMany(syntaxTree => syntaxTree.DescendantNodesAndSelf<CompilationUnitSyntax>());
 
-			foreach (var compilationUnit in compilationUnits)
+			foreach (var syntaxTree in metadataCompilation.SyntaxTrees)
 			{
-				var attributeName = typeof(ModelingCompilationUnitAttribute).FullName;
-				var content = compilationUnit.ToString().Trim().Replace("\"", "\"\"");
-				var fileName = compilationUnit.SyntaxTree.FilePath.Replace("\\", "\\\\");
+				var content = syntaxTree.GetText().ToString().Trim().Replace("\"", "\"\"");
+				var fileName = syntaxTree.FilePath.Replace("\\", "\\\\");
 
 				csharpCode.AppendLine(String.Format("[assembly: {0}(@\"{1}\", \"{2}\")]", attributeName, content, fileName));
 			}
@@ -273,7 +266,7 @@ namespace SafetySharp.CSharp
 				case DiagnosticSeverity.Info:
 					Log.Info("{0}", diagnostic);
 					break;
-				case DiagnosticSeverity.None:
+				case DiagnosticSeverity.Hidden:
 					Log.Debug("{0}", diagnostic);
 					break;
 				default:
@@ -297,7 +290,8 @@ namespace SafetySharp.CSharp
 				message: String.Format(message, formatArgs),
 				severity: DiagnosticSeverity.Error,
 				warningLevel: 0,
-				isWarningAsError: false));
+				isWarningAsError: false,
+				isEnabledByDefault: true));
 
 			return -1;
 		}

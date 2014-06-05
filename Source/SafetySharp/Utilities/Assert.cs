@@ -95,7 +95,7 @@ namespace SafetySharp.Utilities
 		[DebuggerHidden, StringFormatMethod("message")]
 		public static void That(bool condition, string message, params object[] parameters)
 		{
-			Argument.NotNullOrWhitespace(message, () => message);
+			Requires.NotNullOrWhitespace(message, () => message);
 
 			if (!condition)
 				throw new InvalidOperationException(String.Format(message, parameters));
@@ -157,7 +157,7 @@ namespace SafetySharp.Utilities
 		public static void InRange<T>(T value, T lowerBound, T upperBound)
 			where T : IComparable<T>
 		{
-			Argument.Satisfies(lowerBound.CompareTo(upperBound) <= 0, () => lowerBound,
+			Requires.ArgumentSatisfies(lowerBound.CompareTo(upperBound) <= 0, () => lowerBound,
 							   "lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
 
 			if (value.CompareTo(lowerBound) < 0)
@@ -182,7 +182,7 @@ namespace SafetySharp.Utilities
 		[DebuggerHidden]
 		public static void InRange(int index, ICollection collection)
 		{
-			Argument.NotNull(collection, () => collection);
+			Requires.NotNull(collection, () => collection);
 			InRange(index, 0, collection.Count);
 		}
 

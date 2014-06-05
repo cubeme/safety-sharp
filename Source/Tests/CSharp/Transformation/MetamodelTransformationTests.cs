@@ -43,19 +43,19 @@ namespace Tests.CSharp.Transformation
 		private MetamodelConfiguration _metamodelConfiguration;
 		private ComponentResolver _componentResolver;
 		private SymbolMap _symbolMap;
-		private ModelConfigurationSnapshot _configuration;
+		private ModelConfiguration _configuration;
 		private TestCompilation _compilation;
 
 		private bool Transform(string csharpCode, string configurationName)
 		{
 			_compilation = new TestCompilation(csharpCode);
-			_configuration = ((ModelConfiguration)Activator.CreateInstance(_compilation.Compile().GetType(configurationName))).GetSnapshot();
+			_configuration = ((ModelConfiguration)Activator.CreateInstance(_compilation.Compile().GetType(configurationName)));
 
 			var transformation = new MetamodelTransformation(_compilation.ModelingCompilation, _configuration);
 			return transformation.TryTransform(out _metamodelCompilation, out _metamodelConfiguration, out _symbolMap, out _componentResolver);
 		}
 
-		private ComponentConfiguration CreateComponentConfiguration(ComponentSnapshot component, string name)
+		private ComponentConfiguration CreateComponentConfiguration(Component component, string name)
 		{
 			return new ComponentConfiguration(
 				new Identifier(name),
@@ -114,7 +114,7 @@ namespace Tests.CSharp.Transformation
 				{
 					public BooleanConfiguration()
 					{
-						AddPartitions(new BooleanComponent());
+						SetPartitions(new BooleanComponent());
 					}
 				}";
 
@@ -162,7 +162,7 @@ namespace Tests.CSharp.Transformation
 				{
 					public Configuration()
 					{
-						AddPartitions(new Y());
+						SetPartitions(new Y());
 					}
 				}";
 
@@ -200,7 +200,7 @@ namespace Tests.CSharp.Transformation
 				{
 					public Configuration()
 					{
-						AddPartitions(new X(), new Y());
+						SetPartitions(new X(), new Y());
 					}
 				}";
 

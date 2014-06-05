@@ -20,56 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Utilities
 {
 	using System;
-	using Utilities;
 
 	/// <summary>
-	/// 
+	///     Represents an object that can become immutable, preventing any future modification of the object's state.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public sealed class InternalAccess<T> : IInternalAccess
+	internal interface IIsImmutable
 	{
-		private readonly Component _component;
-		private readonly string _memberName;
-
 		/// <summary>
-		///     Initializes a new instance of the <see cref="InternalAccess{T}" /> type.
+		///     Gets a value indicating whether the object is immutable and can no longer be modified.
 		/// </summary>
-		internal InternalAccess(Component component, string memberName)
-		{
-			Requires.NotNull(component, () => component);
-			Requires.NotNull(memberName, () => memberName);
-
-			_component = component;
-			_memberName = memberName;
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		Component IInternalAccess.Component
-		{
-			get { return _component; }
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		string IInternalAccess.MemberName
-		{
-			get { return _memberName; }
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="access"></param>
-		/// <returns></returns>
-		public static implicit operator T(InternalAccess<T> access)
-		{
-			throw new NotSupportedException();
-		}
+		bool IsImmutable { get; }
 	}
 }
