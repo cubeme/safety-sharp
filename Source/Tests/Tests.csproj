@@ -95,6 +95,7 @@
     <Compile Include="CSharp\Transformation\ExpressionTransformationTests.cs" />
     <Compile Include="Generator\GeneratorTests.cs" />
     <Compile Include="Generator\Test.Generated.cs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvTests.cs" />
     <Compile Include="Modelchecking\Promela\MMToPromelaTestsSimple.cs" />
     <Compile Include="Modelchecking\Promela\PromelaTests.cs" />
     <Compile Include="Modeling\ComponentTests.cs" />
