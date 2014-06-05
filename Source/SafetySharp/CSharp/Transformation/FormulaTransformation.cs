@@ -125,7 +125,11 @@ namespace SafetySharp.CSharp.Transformation
 			var syntaxTree = SyntaxFactory.ParseSyntaxTree(code);
 			var expression = syntaxTree.DescendantNodes<ReturnStatementSyntax>().Single().Expression;
 
-			var compilation = _compilation.CSharpCompilation.AddSyntaxTrees(syntaxTree);
+			var compilation = _compilation
+				.CSharpCompilation
+				.AddSyntaxTrees(syntaxTree)
+				.WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
 			var diagnostics = compilation
 				.GetDiagnostics()
 				.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)

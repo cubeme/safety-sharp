@@ -24,10 +24,10 @@
 				var lb = new LightBarrier();
 				var t = new Test2();
 
-				AddPartitions(c1, c2, t);
+				AddPartitions(c1, c2, t, lb);
 
-				var value = c1.AccessInternal<bool>("value");
-				var value2 = c1.AccessInternal<int>("value");
+				var value = c1.AccessInternal<bool>("_value");
+				var value2 = c1.AccessInternal<int>("_value");
 
 				Hazard = Ltl.Globally(value).Implies(Ltl.Globally(!value == false || value2 == 5 || lb.Triggered && t.boolean2._value));
 				var f = Ltl.Next(true);
@@ -45,7 +45,10 @@
 
 		private static void Main(string[] args)
 		{
-			var spin = new SpinModelChecker(new Configuration(true));
+			var configuration = new Configuration(true);
+			var spin = new SpinModelChecker(configuration);
+
+			spin.Check(configuration.Hazard);
 		}
 
 		[Test]

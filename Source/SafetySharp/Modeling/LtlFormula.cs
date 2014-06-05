@@ -53,7 +53,7 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		public LtlFormula Implies(LtlFormula f)
 		{
-			throw new NotImplementedException();
+			return new LtlFormula(new BinaryFormula(Formula, BinaryTemporalOperator.Implication, PathQuantifier.None, f.Formula));
 		}
 	}
 }

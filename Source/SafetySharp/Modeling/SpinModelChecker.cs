@@ -34,6 +34,11 @@ namespace SafetySharp.Modeling
 	/// </summary>
 	public sealed class SpinModelChecker
 	{
+		private readonly ModelingCompilation _compilation;
+		private readonly ComponentResolver _componentResolver;
+		private readonly MetamodelResolver _metamodelResolver;
+		private readonly SymbolMap _symbolMap;
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -45,7 +50,10 @@ namespace SafetySharp.Modeling
 
 			MetamodelCompilation compilation;
 			MetamodelConfiguration configuration;
-			transformation.TryTransform(out compilation, out configuration);
+			transformation.TryTransform(out compilation, out configuration, out _symbolMap, out _componentResolver);
+
+			_compilation = modelingAssembly.Compilation;
+			_metamodelResolver = compilation.Resolver;
 
 			var promelaTransformation = new MetamodelToPromela(configuration, compilation.Resolver);
 			var promelaModel = promelaTransformation.ConvertMetaModelConfiguration();
@@ -68,7 +76,10 @@ namespace SafetySharp.Modeling
 		/// <returns></returns>
 		public bool Check(LtlFormula formula)
 		{
-			throw new NotImplementedException();
+			var formulaTransformation = new FormulaTransformation(_compilation, _symbolMap, _componentResolver, _metamodelResolver);
+			var transformedFormula = formulaTransformation.Visit(formula.Formula);
+
+			return true;
 		}
 	}
 }
