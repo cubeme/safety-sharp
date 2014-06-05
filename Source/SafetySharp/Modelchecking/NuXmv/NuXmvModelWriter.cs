@@ -699,12 +699,10 @@ namespace SafetySharp.Modelchecking.NuXmv
         #endregion
 
         #endregion
+        
+        #region Finite State Machine
 
-
-
-
-
-
+        // Chapter 2.3.1 Variable Declarations p 23-26.
 
         /// <summary>
         ///     Visits an element of type <see cref="TypedIdentifier" />.
@@ -713,7 +711,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitTypedIdentifier(TypedIdentifier typedIdentifier)
         {
             Argument.NotNull(typedIdentifier, () => typedIdentifier);
-            throw new NotImplementedException();
+            typedIdentifier.Identifier.Accept(this);
+            CodeWriter.Append(" : ");
+            typedIdentifier.TypeSpecifier.Accept(this);
         }
 
         /// <summary>
@@ -723,7 +723,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitSimpleTypedIdentifier(SimpleTypedIdentifier simpleTypedIdentifier)
         {
             Argument.NotNull(simpleTypedIdentifier, () => simpleTypedIdentifier);
-            throw new NotImplementedException();
+            simpleTypedIdentifier.Identifier.Accept(this);
+            CodeWriter.Append(" : ");
+            simpleTypedIdentifier.TypeSpecifier.Accept(this);
         }
 
         /// <summary>
@@ -733,7 +735,14 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitVarDeclaration(VarDeclaration varDeclaration)
         {
             Argument.NotNull(varDeclaration, () => varDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("VAR");
+            CodeWriter.IncreaseIndent();
+            foreach (var typedIdentifier in varDeclaration.Variables)
+            {
+                typedIdentifier.Accept(this);
+                CodeWriter.AppendLine(";");
+            }
+            CodeWriter.DecreaseIndent();
         }
 
         /// <summary>
@@ -743,7 +752,14 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIvarDeclaration(IvarDeclaration ivarDeclaration)
         {
             Argument.NotNull(ivarDeclaration, () => ivarDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("IVAR");
+            CodeWriter.IncreaseIndent();
+            foreach (var typedIdentifier in ivarDeclaration.InputVariables)
+            {
+                typedIdentifier.Accept(this);
+                CodeWriter.AppendLine(";");
+            }
+            CodeWriter.DecreaseIndent();
         }
 
         /// <summary>
@@ -753,8 +769,18 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitFrozenVarDeclaration(FrozenVarDeclaration frozenVarDeclaration)
         {
             Argument.NotNull(frozenVarDeclaration, () => frozenVarDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("FROZENVAR");
+            CodeWriter.IncreaseIndent();
+            foreach (var typedIdentifier in frozenVarDeclaration.FrozenVariables)
+            {
+                typedIdentifier.Accept(this);
+                CodeWriter.AppendLine(";");
+            }
+            CodeWriter.DecreaseIndent();
         }
+
+
+        // Chapter 2.3.2 DEFINE Declarations p 26
 
         /// <summary>
         ///     Visits an element of type <see cref="IdentifierExpressionTuple" />.
@@ -763,7 +789,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitIdentifierExpressionTuple(IdentifierExpressionTuple identifierExpressionTuple)
         {
             Argument.NotNull(identifierExpressionTuple, () => identifierExpressionTuple);
-            throw new NotImplementedException();
+            identifierExpressionTuple.Identifier.Accept(this);
+            CodeWriter.Append(" := ");
+            identifierExpressionTuple.Expression.Accept(this);
         }
 
         /// <summary>
@@ -773,8 +801,17 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitDefineDeclaration(DefineDeclaration defineDeclaration)
         {
             Argument.NotNull(defineDeclaration, () => defineDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("DEFINE");
+            CodeWriter.IncreaseIndent();
+            foreach (var identifierExpressionTuple in defineDeclaration.Defines)
+            {
+                identifierExpressionTuple.Accept(this);
+                CodeWriter.AppendLine(";");
+            }
+            CodeWriter.DecreaseIndent();
         }
+
+        // Chapter 2.3.4 CONSTANTS Declarations p 27
 
         /// <summary>
         ///     Visits an element of type <see cref="ConstantsDeclaration" />.
@@ -783,8 +820,20 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitConstantsDeclaration(ConstantsDeclaration constantsDeclaration)
         {
             Argument.NotNull(constantsDeclaration, () => constantsDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("CONSTANTS");
+            CodeWriter.IncreaseIndent();
+            var first = true;
+            foreach (var identifier in constantsDeclaration.Constants)
+            {
+                if (!first)
+                    CodeWriter.AppendLine(", ");
+                first = false;
+                identifier.Accept(this);
+            }
+            CodeWriter.DecreaseIndent();
         }
+
+        // Chapter 2.3.5 INIT Constraint p 27
 
         /// <summary>
         ///     Visits an element of type <see cref="InitConstraint" />.
@@ -793,8 +842,13 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitInitConstraint(InitConstraint initConstraint)
         {
             Argument.NotNull(initConstraint, () => initConstraint);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("INIT");
+            CodeWriter.IncreaseIndent();
+            initConstraint.Expression.Accept(this);
+            CodeWriter.DecreaseIndent();
         }
+
+        // Chapter 2.3.6 INVAR Constraint p 27
 
         /// <summary>
         ///     Visits an element of type <see cref="InvarConstraint" />.
@@ -803,8 +857,13 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitInvarConstraint(InvarConstraint invarConstraint)
         {
             Argument.NotNull(invarConstraint, () => invarConstraint);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("INVAR");
+            CodeWriter.IncreaseIndent();
+            invarConstraint.Expression.Accept(this);
+            CodeWriter.DecreaseIndent();
         }
+
+        // Chapter 2.3.7 TRANS Constraint p 28
 
         /// <summary>
         ///     Visits an element of type <see cref="TransConstraint" />.
@@ -813,8 +872,13 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitTransConstraint(TransConstraint transConstraint)
         {
             Argument.NotNull(transConstraint, () => transConstraint);
-            throw new NotImplementedException();
+            CodeWriter.AppendLine("TRANS");
+            CodeWriter.IncreaseIndent();
+            transConstraint.Expression.Accept(this);
+            CodeWriter.DecreaseIndent();
         }
+
+        // Chapter 2.3.8 ASSIGN Constraint p 28-29
 
         /// <summary>
         ///     Visits an element of type <see cref="CurrentStateAssignConstraint" />.
@@ -823,7 +887,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCurrentStateAssignConstraint(CurrentStateAssignConstraint currentStateAssignConstraint)
         {
             Argument.NotNull(currentStateAssignConstraint, () => currentStateAssignConstraint);
-            throw new NotImplementedException();
+            currentStateAssignConstraint.Identifier.Accept(this);
+            CodeWriter.Append(" := ");
+            currentStateAssignConstraint.Expression.Accept(this);
         }
 
         /// <summary>
@@ -833,7 +899,10 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitInitialStateAssignConstraint(InitialStateAssignConstraint initialStateAssignConstraint)
         {
             Argument.NotNull(initialStateAssignConstraint, () => initialStateAssignConstraint);
-            throw new NotImplementedException();
+            CodeWriter.Append("init (");
+            initialStateAssignConstraint.Identifier.Accept(this);
+            CodeWriter.Append(") := ");
+            initialStateAssignConstraint.Expression.Accept(this);
         }
 
         /// <summary>
@@ -843,7 +912,10 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitNextStateAssignConstraint(NextStateAssignConstraint nextStateAssignConstraint)
         {
             Argument.NotNull(nextStateAssignConstraint, () => nextStateAssignConstraint);
-            throw new NotImplementedException();
+            CodeWriter.Append("next (");
+            nextStateAssignConstraint.Identifier.Accept(this);
+            CodeWriter.Append(") := ");
+            nextStateAssignConstraint.Expression.Accept(this);
         }
 
         /// <summary>
@@ -853,8 +925,21 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitAssignConstraint(AssignConstraint assignConstraint)
         {
             Argument.NotNull(assignConstraint, () => assignConstraint);
-            throw new NotImplementedException();
+
+            CodeWriter.AppendLine("ASSIGN");
+            CodeWriter.IncreaseIndent();
+            foreach (var singleAssignConstraint in assignConstraint.Assigns)
+            {
+                singleAssignConstraint.Accept(this);
+                CodeWriter.AppendLine(";");
+            }
+            CodeWriter.DecreaseIndent();
         }
+
+
+        // Chapter 2.3.9 FAIRNESS Constraints p 30
+        // TODO
+        // Chapter 2.3.10 MODULE Declarations p 30-31  
 
         /// <summary>
         ///     Visits an element of type <see cref="ModuleDeclaration" />.
@@ -863,8 +948,35 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitModuleDeclaration(ModuleDeclaration moduleDeclaration)
         {
             Argument.NotNull(moduleDeclaration, () => moduleDeclaration);
-            throw new NotImplementedException();
+
+            CodeWriter.Append("MODULE ");
+            moduleDeclaration.Identifier.Accept(this);
+            if (moduleDeclaration.ModuleParameters.Length > 0)
+            {
+                CodeWriter.Append("(");
+                var first = true;
+                foreach (var moduleParameter in moduleDeclaration.ModuleParameters)
+                {
+                    if (!first)
+                        CodeWriter.AppendLine(", ");
+                    first = false;
+                    moduleParameter.Accept(this);
+                }
+                CodeWriter.Append(")");
+            }
+            CodeWriter.NewLine();
+            CodeWriter.IncreaseIndent();
+
+            foreach (var moduleElement in moduleDeclaration.ModuleElements)
+            {
+                moduleElement.Accept(this);
+                CodeWriter.NewLine();
+            }
+            CodeWriter.DecreaseIndent();
+            CodeWriter.NewLine();
         }
+
+        // Chapter 2.3.11 MODULE Instantiations p 31.
 
         /// <summary>
         ///     Visits an element of type <see cref="NuXmvModuleTypeSpecifier" />.
@@ -873,8 +985,27 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitNuXmvModuleTypeSpecifier(NuXmvModuleTypeSpecifier nuXmvModuleTypeSpecifier)
         {
             Argument.NotNull(nuXmvModuleTypeSpecifier, () => nuXmvModuleTypeSpecifier);
-            throw new NotImplementedException();
+            nuXmvModuleTypeSpecifier.ModuleName.Accept(this);
+            if (nuXmvModuleTypeSpecifier.ModuleParameters.Length > 0)
+            {
+                CodeWriter.Append("(");
+                var first = true;
+                foreach (var moduleParameter in nuXmvModuleTypeSpecifier.ModuleParameters)
+                {
+                    if (!first)
+                        CodeWriter.AppendLine(", ");
+                    first = false;
+                    moduleParameter.Accept(this);
+                }
+                CodeWriter.Append(")");
+            }
+            //semicolon and newline written by visitor of VAR-Section
         }
+
+        // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
+        // moved to the namespace SafetySharp.Modelchecking.NuXmv, because there is also identifier
+
+        // Chapter 2.3.13 A Program and the main Module p 33
 
         /// <summary>
         ///     Visits an element of type <see cref="NuXmvProgram" />.
@@ -883,8 +1014,22 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitNuXmvProgram(NuXmvProgram nuXmvProgram)
         {
             Argument.NotNull(nuXmvProgram, () => nuXmvProgram);
-            throw new NotImplementedException();
+
+            foreach (var module in nuXmvProgram.Modules)
+            {
+                module.Accept(this);
+            }
         }
+
+
+        // Chapter 2.3.14 Namespaces and Constraints on Declarations p 33
+        // just description
+        // Chapter 2.3.15 Context p 34
+        // just description
+        // Chapter 2.3.16 ISA Declarations p 34 (depreciated)
+        // don't implement as it is depreciated
+        // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35
+        //TODO: Useful for debugging and CEGAR (Counterexample Guided Abstraction Refinement)
 
         /// <summary>
         ///     Visits an element of type <see cref="PredDeclaration" />.
@@ -893,7 +1038,15 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitPredDeclaration(PredDeclaration predDeclaration)
         {
             Argument.NotNull(predDeclaration, () => predDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.Append("PRED ");
+            if (predDeclaration.Identifier != null)
+            {
+                CodeWriter.Append(" < ");
+                predDeclaration.Identifier.Accept(this);
+                CodeWriter.Append(" > := ");
+            }
+            predDeclaration.Expression.Accept(this);
+            CodeWriter.NewLine();
         }
 
         /// <summary>
@@ -903,14 +1056,13 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitMirrorDeclaration(MirrorDeclaration mirrorDeclaration)
         {
             Argument.NotNull(mirrorDeclaration, () => mirrorDeclaration);
-            throw new NotImplementedException();
+            CodeWriter.Append("MIRROR ");
+            mirrorDeclaration.VariableIdentifier.Accept(this);
+            CodeWriter.NewLine();
         }
+        #endregion
 
-
-
-
-
-
+        #region Specification
 
         /// <summary>
         ///     Visits an element of type <see cref="CtlSpecification" />.
@@ -919,7 +1071,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCtlSpecification(CtlSpecification ctlSpecification)
         {
             Argument.NotNull(ctlSpecification, () => ctlSpecification);
-            throw new NotImplementedException();
+            //TODO allow named specifications
+            CodeWriter.Append("CTLSPEC ");
+            ctlSpecification.CtlExpression.Accept(this);
         }
 
         /// <summary>
@@ -929,7 +1083,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCtlSimpleExpression(CtlSimpleExpression ctlSimpleExpression)
         {
             Argument.NotNull(ctlSimpleExpression, () => ctlSimpleExpression);
-            throw new NotImplementedException();
+            ctlSimpleExpression.Expression.Accept(this);
         }
 
         /// <summary>
@@ -939,7 +1093,57 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCtlBinaryExpression(CtlBinaryExpression ctlBinaryExpression)
         {
             Argument.NotNull(ctlBinaryExpression, () => ctlBinaryExpression);
-            throw new NotImplementedException();
+            CodeWriter.Append("(");
+            switch (ctlBinaryExpression.Operator)
+            {
+                case NuXmvCtlBinaryOperator.LogicalAnd:
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("&");
+                    ctlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvCtlBinaryOperator.LogicalOr:
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("|");
+                    ctlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvCtlBinaryOperator.LogicalXor:
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("xor");
+                    ctlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvCtlBinaryOperator.LogicalNxor:
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("nxor");
+                    ctlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvCtlBinaryOperator.LogicalImplies:
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("->");
+                    ctlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvCtlBinaryOperator.LogicalEquivalence:
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("<->");
+                    ctlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvCtlBinaryOperator.ExistsUntil:
+                    CodeWriter.Append("E [");
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append(" U ");
+                    ctlBinaryExpression.Right.Accept(this);
+                    CodeWriter.Append(" ] ");
+                    break;
+                case NuXmvCtlBinaryOperator.ForallUntil:
+                    CodeWriter.Append("A [");
+                    ctlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append(" U ");
+                    ctlBinaryExpression.Right.Accept(this);
+                    CodeWriter.Append(" ] ");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -949,7 +1153,35 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitCtlUnaryExpression(CtlUnaryExpression ctlUnaryExpression)
         {
             Argument.NotNull(ctlUnaryExpression, () => ctlUnaryExpression);
-            throw new NotImplementedException();
+            switch (ctlUnaryExpression.Operator)
+            {
+                case NuXmvCtlUnaryOperator.LogicalNot:
+                    CodeWriter.Append("!");
+                    break;
+                case NuXmvCtlUnaryOperator.ExistsGlobally:
+                    CodeWriter.Append("EG");
+                    break;
+                case NuXmvCtlUnaryOperator.ExistsNextState:
+                    CodeWriter.Append("EX");
+                    break;
+                case NuXmvCtlUnaryOperator.ExistsFinally:
+                    CodeWriter.Append("EF");
+                    break;
+                case NuXmvCtlUnaryOperator.ForallGlobally:
+                    CodeWriter.Append("AG");
+                    break;
+                case NuXmvCtlUnaryOperator.ForallNext:
+                    CodeWriter.Append("AX");
+                    break;
+                case NuXmvCtlUnaryOperator.ForallFinally:
+                    CodeWriter.Append("AF");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            CodeWriter.Append("(");
+            ctlUnaryExpression.Expression.Accept(this);
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -959,7 +1191,9 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitLtlSpecification(LtlSpecification ltlSpecification)
         {
             Argument.NotNull(ltlSpecification, () => ltlSpecification);
-            throw new NotImplementedException();
+            //TODO allow named specifications
+            CodeWriter.Append("LTLSPEC ");
+            ltlSpecification.LtlExpression.Accept(this);
         }
 
         /// <summary>
@@ -969,7 +1203,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitLtlSimpleExpression(LtlSimpleExpression ltlSimpleExpression)
         {
             Argument.NotNull(ltlSimpleExpression, () => ltlSimpleExpression);
-            throw new NotImplementedException();
+            ltlSimpleExpression.Expression.Accept(this);
         }
 
         /// <summary>
@@ -979,7 +1213,64 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitLtlBinaryExpression(LtlBinaryExpression ltlBinaryExpression)
         {
             Argument.NotNull(ltlBinaryExpression, () => ltlBinaryExpression);
-            throw new NotImplementedException();
+            
+            CodeWriter.Append("(");
+            switch (ltlBinaryExpression.Operator)
+            {
+                case NuXmvLtlBinaryOperator.LogicalAnd:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("&");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.LogicalOr:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("|");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.LogicalXor:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("xor");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.LogicalNxor:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("nxor");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.LogicalImplies:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("->");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.LogicalEquivalence:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append("<->");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.FutureUntil:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append(" U ");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.FutureReleases:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append(" R ");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.PastSince:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append(" S ");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                case NuXmvLtlBinaryOperator.PastTriggered:
+                    ltlBinaryExpression.Left.Accept(this);
+                    CodeWriter.Append(" T ");
+                    ltlBinaryExpression.Right.Accept(this);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            CodeWriter.Append(")");
         }
 
         /// <summary>
@@ -989,8 +1280,41 @@ namespace SafetySharp.Modelchecking.NuXmv
         public override void VisitLtlUnaryExpression(LtlUnaryExpression ltlUnaryExpression)
         {
             Argument.NotNull(ltlUnaryExpression, () => ltlUnaryExpression);
-            throw new NotImplementedException();
+            switch (ltlUnaryExpression.Operator)
+            {
+                case NuXmvLtlUnaryOperator.LogicalNot:
+                    CodeWriter.Append(" ! ");
+                    break;
+                case NuXmvLtlUnaryOperator.FutureNext:
+                    CodeWriter.Append(" X ");
+                    break;
+                case NuXmvLtlUnaryOperator.FutureGlobally:
+                    CodeWriter.Append(" G ");
+                    break;
+                case NuXmvLtlUnaryOperator.FutureFinally:
+                    CodeWriter.Append(" F ");
+                    break;
+                case NuXmvLtlUnaryOperator.PastPrevious:
+                    CodeWriter.Append(" Y ");
+                    break;
+                case NuXmvLtlUnaryOperator.PastNotPreviousStateNot:
+                    CodeWriter.Append(" Z ");
+                    break;
+                case NuXmvLtlUnaryOperator.PastHistorically:
+                    CodeWriter.Append(" H ");
+                    break;
+                case NuXmvLtlUnaryOperator.PastOnce:
+                    CodeWriter.Append(" O ");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            CodeWriter.Append("(");
+            ltlUnaryExpression.Expression.Accept(this);
+            CodeWriter.Append(")");
         }
 
     }
+
+    #endregion
 }

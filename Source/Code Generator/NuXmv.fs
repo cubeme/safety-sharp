@@ -1064,7 +1064,7 @@ let elements = [
                     }
                 ]
             }
-            // Chapter 2.3.11 MODULE Instantiations p 31. TODO: Maybe move into Type-Namespace or make a TypeSpecifier-Namespace
+            // Chapter 2.3.11 MODULE Instantiations p 31.
             {   
                 Name = "NuXmvModuleTypeSpecifier"
                 Base = "NuXmvTypeSpecifier"
@@ -1172,6 +1172,7 @@ let elements = [
                 IsAbstract = false
                 Properties = 
                 [
+                    //TODO: Add otpional name
                     {
                         Name = "CtlExpression"
                         Type = Singleton "CtlExpression"
