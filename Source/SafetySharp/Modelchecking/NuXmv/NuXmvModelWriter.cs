@@ -59,7 +59,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="identifier">The <see cref="Identifier" /> instance that should be visited.</param>
         public override void VisitIdentifier(Identifier identifier)
         {
-            Argument.NotNull(identifier, () => identifier);
+            Requires.NotNull(identifier, () => identifier);
             CodeWriter.Append(identifier.Name);
         }
 
@@ -69,7 +69,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="nameComplexIdentifier">The <see cref="NameComplexIdentifier" /> instance that should be visited.</param>
         public override void VisitNameComplexIdentifier(NameComplexIdentifier nameComplexIdentifier)
         {
-            Argument.NotNull(nameComplexIdentifier, () => nameComplexIdentifier);
+            Requires.NotNull(nameComplexIdentifier, () => nameComplexIdentifier);
             // NestedComplexIdentifier : Identifier
             nameComplexIdentifier.NameIdentifier.Accept(this);
         }
@@ -80,7 +80,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="nestedComplexIdentifier">The <see cref="NestedComplexIdentifier" /> instance that should be visited.</param>
         public override void VisitNestedComplexIdentifier(NestedComplexIdentifier nestedComplexIdentifier)
         {
-            Argument.NotNull(nestedComplexIdentifier, () => nestedComplexIdentifier);
+            Requires.NotNull(nestedComplexIdentifier, () => nestedComplexIdentifier);
             // NestedComplexIdentifier : Container '.' NameIdentifier
             nestedComplexIdentifier.Container.Accept(this);
             CodeWriter.Append(".");
@@ -94,7 +94,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="arrayAccessComplexIdentifier">The <see cref="ArrayAccessComplexIdentifier" /> instance that should be visited.</param>
         public override void VisitArrayAccessComplexIdentifier(ArrayAccessComplexIdentifier arrayAccessComplexIdentifier)
         {
-            Argument.NotNull(arrayAccessComplexIdentifier, () => arrayAccessComplexIdentifier);
+            Requires.NotNull(arrayAccessComplexIdentifier, () => arrayAccessComplexIdentifier);
             // NestedComplexIdentifier : Container '[' Index ']'
             arrayAccessComplexIdentifier.Container.Accept(this);
             CodeWriter.Append("[");
@@ -108,7 +108,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="selfComplexIdentifier">The <see cref="SelfComplexIdentifier" /> instance that should be visited.</param>
         public override void VisitSelfComplexIdentifier(SelfComplexIdentifier selfComplexIdentifier)
         {
-            Argument.NotNull(selfComplexIdentifier, () => selfComplexIdentifier);
+            Requires.NotNull(selfComplexIdentifier, () => selfComplexIdentifier);
             CodeWriter.Append("self");
         }
         #endregion
@@ -120,7 +120,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="booleanType">The <see cref="BooleanType" /> instance that should be visited.</param>
         public override void VisitBooleanType(BooleanType booleanType)
         {
-            Argument.NotNull(booleanType, () => booleanType);
+            Requires.NotNull(booleanType, () => booleanType);
             throw new NotImplementedException();
         }
 
@@ -130,7 +130,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="enumerationType">The <see cref="EnumerationType" /> instance that should be visited.</param>
         public override void VisitEnumerationType(EnumerationType enumerationType)
         {
-            Argument.NotNull(enumerationType, () => enumerationType);
+            Requires.NotNull(enumerationType, () => enumerationType);
             throw new NotImplementedException();
         }
 
@@ -140,7 +140,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="unsignedWordType">The <see cref="UnsignedWordType" /> instance that should be visited.</param>
         public override void VisitUnsignedWordType(UnsignedWordType unsignedWordType)
         {
-            Argument.NotNull(unsignedWordType, () => unsignedWordType);
+            Requires.NotNull(unsignedWordType, () => unsignedWordType);
             throw new NotImplementedException();
         }
 
@@ -150,7 +150,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="signedWordType">The <see cref="SignedWordType" /> instance that should be visited.</param>
         public override void VisitSignedWordType(SignedWordType signedWordType)
         {
-            Argument.NotNull(signedWordType, () => signedWordType);
+            Requires.NotNull(signedWordType, () => signedWordType);
             throw new NotImplementedException();
         }
 
@@ -160,7 +160,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="integerType">The <see cref="IntegerType" /> instance that should be visited.</param>
         public override void VisitIntegerType(IntegerType integerType)
         {
-            Argument.NotNull(integerType, () => integerType);
+            Requires.NotNull(integerType, () => integerType);
             throw new NotImplementedException();
         }
 
@@ -170,7 +170,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="realType">The <see cref="RealType" /> instance that should be visited.</param>
         public override void VisitRealType(RealType realType)
         {
-            Argument.NotNull(realType, () => realType);
+            Requires.NotNull(realType, () => realType);
             throw new NotImplementedException();
         }
 
@@ -180,7 +180,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="arrayType">The <see cref="ArrayType" /> instance that should be visited.</param>
         public override void VisitArrayType(ArrayType arrayType)
         {
-            Argument.NotNull(arrayType, () => arrayType);
+            Requires.NotNull(arrayType, () => arrayType);
             throw new NotImplementedException();
         }
         #endregion
@@ -193,7 +193,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="booleanTypeSpecifier">The <see cref="BooleanTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitBooleanTypeSpecifier(BooleanTypeSpecifier booleanTypeSpecifier)
         {
-            Argument.NotNull(booleanTypeSpecifier, () => booleanTypeSpecifier);
+            Requires.NotNull(booleanTypeSpecifier, () => booleanTypeSpecifier);
             CodeWriter.Append("boolean");
         }
 
@@ -203,7 +203,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="unsignedWordTypeSpecifier">The <see cref="UnsignedWordTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitUnsignedWordTypeSpecifier(UnsignedWordTypeSpecifier unsignedWordTypeSpecifier)
         {
-            Argument.NotNull(unsignedWordTypeSpecifier, () => unsignedWordTypeSpecifier);
+            Requires.NotNull(unsignedWordTypeSpecifier, () => unsignedWordTypeSpecifier);
             CodeWriter.Append("unsigned word [");
             unsignedWordTypeSpecifier.Length.Accept(this);
             CodeWriter.Append("]");
@@ -215,7 +215,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="signedWordTypeSpecifier">The <see cref="SignedWordTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitSignedWordTypeSpecifier(SignedWordTypeSpecifier signedWordTypeSpecifier)
         {
-            Argument.NotNull(signedWordTypeSpecifier, () => signedWordTypeSpecifier);
+            Requires.NotNull(signedWordTypeSpecifier, () => signedWordTypeSpecifier);
             CodeWriter.Append("signed word [");
             signedWordTypeSpecifier.Length.Accept(this);
             CodeWriter.Append("]");
@@ -227,7 +227,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="realTypeSpecifier">The <see cref="RealTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitRealTypeSpecifier(RealTypeSpecifier realTypeSpecifier)
         {
-            Argument.NotNull(realTypeSpecifier, () => realTypeSpecifier);
+            Requires.NotNull(realTypeSpecifier, () => realTypeSpecifier);
             CodeWriter.Append("real");
         }
 
@@ -237,7 +237,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="integerTypeSpecifier">The <see cref="IntegerTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitIntegerTypeSpecifier(IntegerTypeSpecifier integerTypeSpecifier)
         {
-            Argument.NotNull(integerTypeSpecifier, () => integerTypeSpecifier);
+            Requires.NotNull(integerTypeSpecifier, () => integerTypeSpecifier);
             CodeWriter.Append("integer");
         }
 
@@ -247,7 +247,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="enumerationTypeSpecifier">The <see cref="EnumerationTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitEnumerationTypeSpecifier(EnumerationTypeSpecifier enumerationTypeSpecifier)
         {
-            Argument.NotNull(enumerationTypeSpecifier, () => enumerationTypeSpecifier);
+            Requires.NotNull(enumerationTypeSpecifier, () => enumerationTypeSpecifier);
             CodeWriter.Append("{{ ");
             var first = true;
             foreach (var constExpression in enumerationTypeSpecifier.Domain)
@@ -270,7 +270,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="integerRangeTypeSpecifier">The <see cref="IntegerRangeTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitIntegerRangeTypeSpecifier(IntegerRangeTypeSpecifier integerRangeTypeSpecifier)
         {
-            Argument.NotNull(integerRangeTypeSpecifier, () => integerRangeTypeSpecifier);
+            Requires.NotNull(integerRangeTypeSpecifier, () => integerRangeTypeSpecifier);
             integerRangeTypeSpecifier.Lower.Accept(this);
             CodeWriter.Append(" .. ");
             integerRangeTypeSpecifier.Upper.Accept(this);
@@ -282,7 +282,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="arrayTypeSpecifier">The <see cref="ArrayTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitArrayTypeSpecifier(ArrayTypeSpecifier arrayTypeSpecifier)
         {
-            Argument.NotNull(arrayTypeSpecifier, () => arrayTypeSpecifier);
+            Requires.NotNull(arrayTypeSpecifier, () => arrayTypeSpecifier);
             CodeWriter.Append("array ");
             arrayTypeSpecifier.Lower.Accept(this);
             CodeWriter.Append(" .. ");
@@ -302,7 +302,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="booleanConstant">The <see cref="BooleanConstant" /> instance that should be visited.</param>
         public override void VisitBooleanConstant(BooleanConstant booleanConstant)
         {
-            Argument.NotNull(booleanConstant, () => booleanConstant);
+            Requires.NotNull(booleanConstant, () => booleanConstant);
             if (booleanConstant.Value)
                 CodeWriter.Append("TRUE");
             else
@@ -315,7 +315,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="symbolicConstant">The <see cref="SymbolicConstant" /> instance that should be visited.</param>
         public override void VisitSymbolicConstant(SymbolicConstant symbolicConstant)
         {
-            Argument.NotNull(symbolicConstant, () => symbolicConstant);
+            Requires.NotNull(symbolicConstant, () => symbolicConstant);
             symbolicConstant.Identifier.Accept(this);
         }
 
@@ -325,7 +325,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="integerConstant">The <see cref="IntegerConstant" /> instance that should be visited.</param>
         public override void VisitIntegerConstant(IntegerConstant integerConstant)
         {
-            Argument.NotNull(integerConstant, () => integerConstant);
+            Requires.NotNull(integerConstant, () => integerConstant);
             CodeWriter.Append(integerConstant.Value.ToString());
         }
 
@@ -335,7 +335,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="realConstant">The <see cref="RealConstant" /> instance that should be visited.</param>
         public override void VisitRealConstant(RealConstant realConstant)
         {
-            Argument.NotNull(realConstant, () => realConstant);
+            Requires.NotNull(realConstant, () => realConstant);
             CodeWriter.Append(realConstant.Value.ToString());
         }
 
@@ -347,7 +347,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         //TODO:  Add ImproveReadability to every case
         public override void VisitWordConstant(WordConstant wordConstant)
         {
-            Argument.NotNull(wordConstant, () => wordConstant);
+            Requires.NotNull(wordConstant, () => wordConstant);
             string sign;
             string radix;
             var number=new StringBuilder();
@@ -451,7 +451,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="rangeConstant">The <see cref="RangeConstant" /> instance that should be visited.</param>
         public override void VisitRangeConstant(RangeConstant rangeConstant)
         {
-            Argument.NotNull(rangeConstant, () => rangeConstant);
+            Requires.NotNull(rangeConstant, () => rangeConstant);
             CodeWriter.Append("{0}..{1}", rangeConstant.From.ToString(), rangeConstant.To.ToString());
         }
         #endregion
@@ -464,7 +464,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="complexIdentifierExpression">The <see cref="ComplexIdentifierExpression" /> instance that should be visited.</param>
         public override void VisitComplexIdentifierExpression(ComplexIdentifierExpression complexIdentifierExpression)
         {
-            Argument.NotNull(complexIdentifierExpression, () => complexIdentifierExpression);
+            Requires.NotNull(complexIdentifierExpression, () => complexIdentifierExpression);
             complexIdentifierExpression.Identifier.Accept(this);
         }
 
@@ -474,7 +474,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="unaryExpression">The <see cref="UnaryExpression" /> instance that should be visited.</param>
         public override void VisitUnaryExpression(UnaryExpression unaryExpression)
         {
-            Argument.NotNull(unaryExpression, () => unaryExpression);
+            Requires.NotNull(unaryExpression, () => unaryExpression);
             switch (unaryExpression.Operator)
             {
                 case NuXmvUnaryOperator.LogicalNot:
@@ -493,7 +493,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="binaryExpression">The <see cref="BinaryExpression" /> instance that should be visited.</param>
         public override void VisitBinaryExpression(BinaryExpression binaryExpression)
         {
-            Argument.NotNull(binaryExpression, () => binaryExpression);
+            Requires.NotNull(binaryExpression, () => binaryExpression);
             CodeWriter.Append("(");
             switch (binaryExpression.Operator)
             {
@@ -605,7 +605,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="tenaryExpression">The <see cref="TenaryExpression" /> instance that should be visited.</param>
         public override void VisitTenaryExpression(TenaryExpression tenaryExpression)
         {
-            Argument.NotNull(tenaryExpression, () => tenaryExpression);
+            Requires.NotNull(tenaryExpression, () => tenaryExpression);
             throw new NotImplementedException();
         }
 
@@ -615,7 +615,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="indexSubscriptExpression">The <see cref="IndexSubscriptExpression" /> instance that should be visited.</param>
         public override void VisitIndexSubscriptExpression(IndexSubscriptExpression indexSubscriptExpression)
         {
-            Argument.NotNull(indexSubscriptExpression, () => indexSubscriptExpression);
+            Requires.NotNull(indexSubscriptExpression, () => indexSubscriptExpression);
             indexSubscriptExpression.ExpressionLeadingToArray.Accept(this);
             CodeWriter.Append("[");
             indexSubscriptExpression.Index.Accept(this);
@@ -628,7 +628,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="setExpression">The <see cref="SetExpression" /> instance that should be visited.</param>
         public override void VisitSetExpression(SetExpression setExpression)
         {
-            Argument.NotNull(setExpression, () => setExpression);
+            Requires.NotNull(setExpression, () => setExpression);
 
             CodeWriter.Append("{{ ");
             var first = true;
@@ -648,7 +648,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="caseConditionAndEffect">The <see cref="CaseConditionAndEffect" /> instance that should be visited.</param>
         public override void VisitCaseConditionAndEffect(CaseConditionAndEffect caseConditionAndEffect)
         {
-            Argument.NotNull(caseConditionAndEffect, () => caseConditionAndEffect);
+            Requires.NotNull(caseConditionAndEffect, () => caseConditionAndEffect);
 
             caseConditionAndEffect.CaseCondition.Accept(this);
             CodeWriter.Append(" : ");
@@ -662,7 +662,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="caseExpression">The <see cref="CaseExpression" /> instance that should be visited.</param>
         public override void VisitCaseExpression(CaseExpression caseExpression)
         {
-            Argument.NotNull(caseExpression, () => caseExpression);
+            Requires.NotNull(caseExpression, () => caseExpression);
             CodeWriter.AppendLine("case");
             CodeWriter.IncreaseIndent();
             foreach (var caseConditionAndEffect in caseExpression.CaseBody)
@@ -679,7 +679,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="basicNextExpression">The <see cref="BasicNextExpression" /> instance that should be visited.</param>
         public override void VisitBasicNextExpression(BasicNextExpression basicNextExpression)
         {
-            Argument.NotNull(basicNextExpression, () => basicNextExpression);
+            Requires.NotNull(basicNextExpression, () => basicNextExpression);
             CodeWriter.Append("next(");
             basicNextExpression.Expression.Accept(this);
             CodeWriter.Append(")");
@@ -691,7 +691,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="simpleExpression">The <see cref="SimpleExpression" /> instance that should be visited.</param>
         public override void VisitSimpleExpression(SimpleExpression simpleExpression)
         {
-            Argument.NotNull(simpleExpression, () => simpleExpression);
+            Requires.NotNull(simpleExpression, () => simpleExpression);
 
             //TODO: Validation: Check if no next() is included
             simpleExpression.NestedExpression.Accept(this);
@@ -710,7 +710,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="typedIdentifier">The <see cref="TypedIdentifier" /> instance that should be visited.</param>
         public override void VisitTypedIdentifier(TypedIdentifier typedIdentifier)
         {
-            Argument.NotNull(typedIdentifier, () => typedIdentifier);
+            Requires.NotNull(typedIdentifier, () => typedIdentifier);
             typedIdentifier.Identifier.Accept(this);
             CodeWriter.Append(" : ");
             typedIdentifier.TypeSpecifier.Accept(this);
@@ -722,7 +722,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="simpleTypedIdentifier">The <see cref="SimpleTypedIdentifier" /> instance that should be visited.</param>
         public override void VisitSimpleTypedIdentifier(SimpleTypedIdentifier simpleTypedIdentifier)
         {
-            Argument.NotNull(simpleTypedIdentifier, () => simpleTypedIdentifier);
+            Requires.NotNull(simpleTypedIdentifier, () => simpleTypedIdentifier);
             simpleTypedIdentifier.Identifier.Accept(this);
             CodeWriter.Append(" : ");
             simpleTypedIdentifier.TypeSpecifier.Accept(this);
@@ -734,7 +734,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="varDeclaration">The <see cref="VarDeclaration" /> instance that should be visited.</param>
         public override void VisitVarDeclaration(VarDeclaration varDeclaration)
         {
-            Argument.NotNull(varDeclaration, () => varDeclaration);
+            Requires.NotNull(varDeclaration, () => varDeclaration);
             CodeWriter.AppendLine("VAR");
             CodeWriter.IncreaseIndent();
             foreach (var typedIdentifier in varDeclaration.Variables)
@@ -751,7 +751,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ivarDeclaration">The <see cref="IvarDeclaration" /> instance that should be visited.</param>
         public override void VisitIvarDeclaration(IvarDeclaration ivarDeclaration)
         {
-            Argument.NotNull(ivarDeclaration, () => ivarDeclaration);
+            Requires.NotNull(ivarDeclaration, () => ivarDeclaration);
             CodeWriter.AppendLine("IVAR");
             CodeWriter.IncreaseIndent();
             foreach (var typedIdentifier in ivarDeclaration.InputVariables)
@@ -768,7 +768,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="frozenVarDeclaration">The <see cref="FrozenVarDeclaration" /> instance that should be visited.</param>
         public override void VisitFrozenVarDeclaration(FrozenVarDeclaration frozenVarDeclaration)
         {
-            Argument.NotNull(frozenVarDeclaration, () => frozenVarDeclaration);
+            Requires.NotNull(frozenVarDeclaration, () => frozenVarDeclaration);
             CodeWriter.AppendLine("FROZENVAR");
             CodeWriter.IncreaseIndent();
             foreach (var typedIdentifier in frozenVarDeclaration.FrozenVariables)
@@ -788,7 +788,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="identifierExpressionTuple">The <see cref="IdentifierExpressionTuple" /> instance that should be visited.</param>
         public override void VisitIdentifierExpressionTuple(IdentifierExpressionTuple identifierExpressionTuple)
         {
-            Argument.NotNull(identifierExpressionTuple, () => identifierExpressionTuple);
+            Requires.NotNull(identifierExpressionTuple, () => identifierExpressionTuple);
             identifierExpressionTuple.Identifier.Accept(this);
             CodeWriter.Append(" := ");
             identifierExpressionTuple.Expression.Accept(this);
@@ -800,7 +800,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="defineDeclaration">The <see cref="DefineDeclaration" /> instance that should be visited.</param>
         public override void VisitDefineDeclaration(DefineDeclaration defineDeclaration)
         {
-            Argument.NotNull(defineDeclaration, () => defineDeclaration);
+            Requires.NotNull(defineDeclaration, () => defineDeclaration);
             CodeWriter.AppendLine("DEFINE");
             CodeWriter.IncreaseIndent();
             foreach (var identifierExpressionTuple in defineDeclaration.Defines)
@@ -819,7 +819,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="constantsDeclaration">The <see cref="ConstantsDeclaration" /> instance that should be visited.</param>
         public override void VisitConstantsDeclaration(ConstantsDeclaration constantsDeclaration)
         {
-            Argument.NotNull(constantsDeclaration, () => constantsDeclaration);
+            Requires.NotNull(constantsDeclaration, () => constantsDeclaration);
             CodeWriter.AppendLine("CONSTANTS");
             CodeWriter.IncreaseIndent();
             var first = true;
@@ -841,7 +841,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="initConstraint">The <see cref="InitConstraint" /> instance that should be visited.</param>
         public override void VisitInitConstraint(InitConstraint initConstraint)
         {
-            Argument.NotNull(initConstraint, () => initConstraint);
+            Requires.NotNull(initConstraint, () => initConstraint);
             CodeWriter.AppendLine("INIT");
             CodeWriter.IncreaseIndent();
             initConstraint.Expression.Accept(this);
@@ -856,7 +856,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="invarConstraint">The <see cref="InvarConstraint" /> instance that should be visited.</param>
         public override void VisitInvarConstraint(InvarConstraint invarConstraint)
         {
-            Argument.NotNull(invarConstraint, () => invarConstraint);
+            Requires.NotNull(invarConstraint, () => invarConstraint);
             CodeWriter.AppendLine("INVAR");
             CodeWriter.IncreaseIndent();
             invarConstraint.Expression.Accept(this);
@@ -871,7 +871,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="transConstraint">The <see cref="TransConstraint" /> instance that should be visited.</param>
         public override void VisitTransConstraint(TransConstraint transConstraint)
         {
-            Argument.NotNull(transConstraint, () => transConstraint);
+            Requires.NotNull(transConstraint, () => transConstraint);
             CodeWriter.AppendLine("TRANS");
             CodeWriter.IncreaseIndent();
             transConstraint.Expression.Accept(this);
@@ -886,7 +886,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="currentStateAssignConstraint">The <see cref="CurrentStateAssignConstraint" /> instance that should be visited.</param>
         public override void VisitCurrentStateAssignConstraint(CurrentStateAssignConstraint currentStateAssignConstraint)
         {
-            Argument.NotNull(currentStateAssignConstraint, () => currentStateAssignConstraint);
+            Requires.NotNull(currentStateAssignConstraint, () => currentStateAssignConstraint);
             currentStateAssignConstraint.Identifier.Accept(this);
             CodeWriter.Append(" := ");
             currentStateAssignConstraint.Expression.Accept(this);
@@ -898,7 +898,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="initialStateAssignConstraint">The <see cref="InitialStateAssignConstraint" /> instance that should be visited.</param>
         public override void VisitInitialStateAssignConstraint(InitialStateAssignConstraint initialStateAssignConstraint)
         {
-            Argument.NotNull(initialStateAssignConstraint, () => initialStateAssignConstraint);
+            Requires.NotNull(initialStateAssignConstraint, () => initialStateAssignConstraint);
             CodeWriter.Append("init (");
             initialStateAssignConstraint.Identifier.Accept(this);
             CodeWriter.Append(") := ");
@@ -911,7 +911,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="nextStateAssignConstraint">The <see cref="NextStateAssignConstraint" /> instance that should be visited.</param>
         public override void VisitNextStateAssignConstraint(NextStateAssignConstraint nextStateAssignConstraint)
         {
-            Argument.NotNull(nextStateAssignConstraint, () => nextStateAssignConstraint);
+            Requires.NotNull(nextStateAssignConstraint, () => nextStateAssignConstraint);
             CodeWriter.Append("next (");
             nextStateAssignConstraint.Identifier.Accept(this);
             CodeWriter.Append(") := ");
@@ -924,7 +924,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="assignConstraint">The <see cref="AssignConstraint" /> instance that should be visited.</param>
         public override void VisitAssignConstraint(AssignConstraint assignConstraint)
         {
-            Argument.NotNull(assignConstraint, () => assignConstraint);
+            Requires.NotNull(assignConstraint, () => assignConstraint);
 
             CodeWriter.AppendLine("ASSIGN");
             CodeWriter.IncreaseIndent();
@@ -947,7 +947,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="moduleDeclaration">The <see cref="ModuleDeclaration" /> instance that should be visited.</param>
         public override void VisitModuleDeclaration(ModuleDeclaration moduleDeclaration)
         {
-            Argument.NotNull(moduleDeclaration, () => moduleDeclaration);
+            Requires.NotNull(moduleDeclaration, () => moduleDeclaration);
 
             CodeWriter.Append("MODULE ");
             moduleDeclaration.Identifier.Accept(this);
@@ -984,7 +984,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="nuXmvModuleTypeSpecifier">The <see cref="NuXmvModuleTypeSpecifier" /> instance that should be visited.</param>
         public override void VisitNuXmvModuleTypeSpecifier(NuXmvModuleTypeSpecifier nuXmvModuleTypeSpecifier)
         {
-            Argument.NotNull(nuXmvModuleTypeSpecifier, () => nuXmvModuleTypeSpecifier);
+            Requires.NotNull(nuXmvModuleTypeSpecifier, () => nuXmvModuleTypeSpecifier);
             nuXmvModuleTypeSpecifier.ModuleName.Accept(this);
             if (nuXmvModuleTypeSpecifier.ModuleParameters.Length > 0)
             {
@@ -1013,7 +1013,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="nuXmvProgram">The <see cref="NuXmvProgram" /> instance that should be visited.</param>
         public override void VisitNuXmvProgram(NuXmvProgram nuXmvProgram)
         {
-            Argument.NotNull(nuXmvProgram, () => nuXmvProgram);
+            Requires.NotNull(nuXmvProgram, () => nuXmvProgram);
 
             foreach (var module in nuXmvProgram.Modules)
             {
@@ -1037,7 +1037,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="predDeclaration">The <see cref="PredDeclaration" /> instance that should be visited.</param>
         public override void VisitPredDeclaration(PredDeclaration predDeclaration)
         {
-            Argument.NotNull(predDeclaration, () => predDeclaration);
+            Requires.NotNull(predDeclaration, () => predDeclaration);
             CodeWriter.Append("PRED ");
             if (predDeclaration.Identifier != null)
             {
@@ -1055,7 +1055,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="mirrorDeclaration">The <see cref="MirrorDeclaration" /> instance that should be visited.</param>
         public override void VisitMirrorDeclaration(MirrorDeclaration mirrorDeclaration)
         {
-            Argument.NotNull(mirrorDeclaration, () => mirrorDeclaration);
+            Requires.NotNull(mirrorDeclaration, () => mirrorDeclaration);
             CodeWriter.Append("MIRROR ");
             mirrorDeclaration.VariableIdentifier.Accept(this);
             CodeWriter.NewLine();
@@ -1070,7 +1070,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ctlSpecification">The <see cref="CtlSpecification" /> instance that should be visited.</param>
         public override void VisitCtlSpecification(CtlSpecification ctlSpecification)
         {
-            Argument.NotNull(ctlSpecification, () => ctlSpecification);
+            Requires.NotNull(ctlSpecification, () => ctlSpecification);
             //TODO allow named specifications
             CodeWriter.Append("CTLSPEC ");
             ctlSpecification.CtlExpression.Accept(this);
@@ -1082,7 +1082,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ctlSimpleExpression">The <see cref="CtlSimpleExpression" /> instance that should be visited.</param>
         public override void VisitCtlSimpleExpression(CtlSimpleExpression ctlSimpleExpression)
         {
-            Argument.NotNull(ctlSimpleExpression, () => ctlSimpleExpression);
+            Requires.NotNull(ctlSimpleExpression, () => ctlSimpleExpression);
             ctlSimpleExpression.Expression.Accept(this);
         }
 
@@ -1092,7 +1092,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ctlBinaryExpression">The <see cref="CtlBinaryExpression" /> instance that should be visited.</param>
         public override void VisitCtlBinaryExpression(CtlBinaryExpression ctlBinaryExpression)
         {
-            Argument.NotNull(ctlBinaryExpression, () => ctlBinaryExpression);
+            Requires.NotNull(ctlBinaryExpression, () => ctlBinaryExpression);
             CodeWriter.Append("(");
             switch (ctlBinaryExpression.Operator)
             {
@@ -1152,7 +1152,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ctlUnaryExpression">The <see cref="CtlUnaryExpression" /> instance that should be visited.</param>
         public override void VisitCtlUnaryExpression(CtlUnaryExpression ctlUnaryExpression)
         {
-            Argument.NotNull(ctlUnaryExpression, () => ctlUnaryExpression);
+            Requires.NotNull(ctlUnaryExpression, () => ctlUnaryExpression);
             switch (ctlUnaryExpression.Operator)
             {
                 case NuXmvCtlUnaryOperator.LogicalNot:
@@ -1190,7 +1190,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ltlSpecification">The <see cref="LtlSpecification" /> instance that should be visited.</param>
         public override void VisitLtlSpecification(LtlSpecification ltlSpecification)
         {
-            Argument.NotNull(ltlSpecification, () => ltlSpecification);
+            Requires.NotNull(ltlSpecification, () => ltlSpecification);
             //TODO allow named specifications
             CodeWriter.Append("LTLSPEC ");
             ltlSpecification.LtlExpression.Accept(this);
@@ -1202,7 +1202,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ltlSimpleExpression">The <see cref="LtlSimpleExpression" /> instance that should be visited.</param>
         public override void VisitLtlSimpleExpression(LtlSimpleExpression ltlSimpleExpression)
         {
-            Argument.NotNull(ltlSimpleExpression, () => ltlSimpleExpression);
+            Requires.NotNull(ltlSimpleExpression, () => ltlSimpleExpression);
             ltlSimpleExpression.Expression.Accept(this);
         }
 
@@ -1212,7 +1212,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ltlBinaryExpression">The <see cref="LtlBinaryExpression" /> instance that should be visited.</param>
         public override void VisitLtlBinaryExpression(LtlBinaryExpression ltlBinaryExpression)
         {
-            Argument.NotNull(ltlBinaryExpression, () => ltlBinaryExpression);
+            Requires.NotNull(ltlBinaryExpression, () => ltlBinaryExpression);
             
             CodeWriter.Append("(");
             switch (ltlBinaryExpression.Operator)
@@ -1279,7 +1279,7 @@ namespace SafetySharp.Modelchecking.NuXmv
         /// <param name="ltlUnaryExpression">The <see cref="LtlUnaryExpression" /> instance that should be visited.</param>
         public override void VisitLtlUnaryExpression(LtlUnaryExpression ltlUnaryExpression)
         {
-            Argument.NotNull(ltlUnaryExpression, () => ltlUnaryExpression);
+            Requires.NotNull(ltlUnaryExpression, () => ltlUnaryExpression);
             switch (ltlUnaryExpression.Operator)
             {
                 case NuXmvLtlUnaryOperator.LogicalNot:
