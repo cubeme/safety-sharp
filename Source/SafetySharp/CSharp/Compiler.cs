@@ -30,10 +30,8 @@ namespace SafetySharp.CSharp
 	using System.Text;
 	using System.Threading;
 	using Diagnostics;
-	using Extensions;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.Emit;
 	using Microsoft.CodeAnalysis.MSBuild;

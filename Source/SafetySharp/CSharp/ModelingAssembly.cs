@@ -26,7 +26,6 @@ namespace SafetySharp.CSharp
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Reflection;
-	using Metamodel;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Modeling;
@@ -72,10 +71,11 @@ namespace SafetySharp.CSharp
 		{
 			get
 			{
-				var compilation = CSharpCompilation
-					.Create("ModelingAssemblyMetadata")
-					.AddReferences(new MetadataFileReference(typeof(object).Assembly.Location))
-					.AddReferences(new MetadataFileReference(typeof(MetamodelElement).Assembly.Location));
+				var compilation = CSharpCompilation.Create("ModelingAssemblyMetadata",
+														   options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+				foreach (var assembly in _assembly.GetReferencedAssemblies().Select(Assembly.Load))
+					compilation = compilation.AddReferences(new MetadataFileReference(assembly.Location));
 
 				return new ModelingCompilation(AddCompilationUnits(compilation));
 			}
