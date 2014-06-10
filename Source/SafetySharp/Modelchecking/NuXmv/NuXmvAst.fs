@@ -4,19 +4,6 @@
 // interface for validation. 
 
 
-
-type Radix = 
-    | BinaryRadix
-    | OctalRadix
-    | DecimalRadix
-    | HexadecimalRadix
-
-    
-type SignSpecifier =
-    | UnsignedSpecifier
-    | SignedSpecifier
-
-
 // Identifier and TypeSpecifier
 // Chapter 2 Input Language of NUXMV p 7-8
 type Identifier = {
@@ -34,7 +21,7 @@ type ComplexIdentifier =
     
 //seems to be a duplication of NuXmvType, but isn't:
 //The type isn't determined yet. It depends on expressions, which can be contained in a specifier.
-type TypeSpecifier =
+and TypeSpecifier =
     | SimpleTypeSpecifier of Specifier:SimpleTypeSpecifier
     | ModuleTypeSpecifier of Specifier:ModuleTypeSpecifier
 
@@ -44,7 +31,7 @@ type TypeSpecifier =
         // in the smv-file may use expression to define e.g. the lower and upper bound 
         // of an array, the number of bytes of a word, etc...
 
-type Type =
+and Type =
     | BooleanType
     | EnumerationType of Domain:(ConstExpression list)
     | UnsignedWordType of Length:int  //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
@@ -64,7 +51,7 @@ type Type =
 // Note: //TODO: Change following: In the documentation on page 23 only basic_expr is used. But simple_expr would make more sense (no next).
 // TODO: Write member GetType, which derives the Type of the TypeSpecifier
 
-type SimpleTypeSpecifier =
+and SimpleTypeSpecifier =
     | BooleanTypeSpecifier
     | UnsignedWordTypeSpecifier of Length:BasicExpression  //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
     | SignedWordTypeSpecifier of Length:BasicExpression    //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
@@ -78,15 +65,24 @@ type SimpleTypeSpecifier =
 // Chapter 2.2 Expressions p 10-22
 // Expressions
 
-type CaseConditionAndEffect = {
+and CaseConditionAndEffect = {
     CaseCondition:BasicExpression;
     CaseEffect:BasicExpression;
 }
 
-type Expression =
-    interface end
+and Radix = 
+    | BinaryRadix
+    | OctalRadix
+    | DecimalRadix
+    | HexadecimalRadix
 
-type ConstExpression =
+    
+and SignSpecifier =
+    | UnsignedSpecifier
+    | SignedSpecifier
+
+
+and ConstExpression =
     | BooleanConstant of Value:bool
     | SymbolicConstant of SymbolName:Identifier
     | IntegerConstant of Value:System.Numerics.BigInteger
@@ -94,7 +90,7 @@ type ConstExpression =
     | WordConstant of Value:(bool list) * Sign:SignSpecifier * Base:Radix * ImproveReadability:bool
     | RangeConstant of From:System.Numerics.BigInteger * To:System.Numerics.BigInteger
 
-type BasicExpression =
+and BasicExpression =
     | ConstExpression of ConstExpression
     | ComplexIdentifierExpression of Identifier:ComplexIdentifier //Identifier is the reference to a variable or a define. Might be hierarchical.
     | UnaryExpression of Operator:UnaryOperator * Operand:BasicExpression
@@ -105,35 +101,35 @@ type BasicExpression =
     | CaseExpression of CaseBody:(CaseConditionAndEffect list)
     | BasicNextExpression of Expression:BasicExpression // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
 
-type SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit convertions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
-type NextExpression = BasicExpression //validation: next allowed
+and SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit convertions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
+and NextExpression = BasicExpression //validation: next allowed
 
 
 // Chapter 2.3 Definition of the FSM p 22-35
 // FSM
 
 
-type TypedIdentifier = {
+and TypedIdentifier = {
     TypeSpecifier:TypeSpecifier;
     Identifier:Identifier;
 }
 
-type SimpleTypedIdentifier = {
+and SimpleTypedIdentifier = {
     TypeSpecifier:SimpleTypeSpecifier;
     Identifier:Identifier;
 }
 
-type IdentifierNextExpressionTuple = {
+and IdentifierNextExpressionTuple = {
     Identifier:Identifier;
     Expression:NextExpression;
 }
 
-type SingleAssignConstraint = // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
+and SingleAssignConstraint = // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
     | CurrentStateAssignConstraint of Identifier:Identifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
     | InitialStateAssignConstraint of Identifier:Identifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
     | NextStateAssignConstraint of Identifier:Identifier * Expression:NextExpression
 
-type ModuleElement =
+and ModuleElement =
     | VarDeclaration of Variables:(TypedIdentifier list) // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.
     | IVarDeclaration of InputVariables:(SimpleTypedIdentifier list)
     | FrozenVarDeclaration of FrozenVariables:(SimpleTypedIdentifier list) //Array of frozen variable declarations (readonly, nondeterministic initialization
@@ -151,14 +147,14 @@ type ModuleElement =
     | MirrorDeclaration of VariableIdentifier:ComplexIdentifier
 
 
-type ModuleDeclaration = { // Chapter 2.3.10 MODULE Declarations p 30-31
+and ModuleDeclaration = { // Chapter 2.3.10 MODULE Declarations p 30-31
     Identifier:Identifier;
     ModuleParameters:Identifier list;
     ModuleElements:ModuleElement list;
  }
 
 
-type ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31.
+and ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31.
     ModuleName:Identifier;
     ModuleParameters:BasicExpression list;
 }
@@ -166,7 +162,7 @@ type ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31.
 // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
 // moved to the namespace SafetySharp.Modelchecking.NuXmv, because there is also identifier
 
-type NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
+and NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
     Modules:ModuleDeclaration list;
     Specifications:Specification list;
 }
@@ -182,7 +178,7 @@ type NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
 // Specification
             
 // Chapter 2.4.1 CTL Specifications p 35-36
-type CtlExpression =
+and CtlExpression =
     | CtlSimpleExpression of Expression:SimpleExpression
     | CtlUnaryExpression of Operator:CtlUnaryOperator *  Operand:CtlExpression
     | CtlBinaryExpression of Left:CtlExpression * Operator:CtlBinaryOperator * Right:CtlExpression
@@ -190,7 +186,7 @@ type CtlExpression =
 //TODO // Chapter 2.4.2 Invariant Specifications p 36
             
 // Chapter 2.4.3 LTL Specifications p 36-38
-type LtlExpression =
+and LtlExpression =
     | LtlSimpleExpression of Expression:SimpleExpression
     | LtlUnaryExpression of Operator:LtlUnaryOperator *  Operand:LtlExpression
     | LtlBinaryExpression of Left:LtlExpression * Operator:LtlBinaryOperator * Right:LtlExpression
@@ -200,7 +196,7 @@ type LtlExpression =
 //TODO // Chapter 2.4.5 PSL Specifications p 39-42
 
 
-type Specification =
+and Specification =
     | CtlSpecification of CtlExpression:CtlExpression
     //TODO: | InvariantSpecification
     | LtlSpecification of LtlExpression:LtlExpression
