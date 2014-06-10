@@ -28,6 +28,6 @@ open System
 module Assert =
 
     /// Throws a <see cref="System.NullReferenceException"/> if the given object is <c>null</c>.
-    let NotNull<'a when 'a : null and 'a : equality> (obj : 'a) description =
+    let inline NotNull<'a when 'a : null and 'a : equality> (obj : 'a) description =
         if obj = null then 
             NullReferenceException description |> raise

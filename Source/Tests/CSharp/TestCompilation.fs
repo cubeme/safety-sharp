@@ -38,7 +38,7 @@ type CompilationException (message : string) =
 
 [<AutoOpen>]
 module private Exception =
-    let failed message = new CompilationException(message) |> raise
+    let inline failed message = new CompilationException(message) |> raise
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 type TestCompilation (csharpCode : string) =

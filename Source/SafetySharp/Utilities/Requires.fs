@@ -28,13 +28,13 @@ open System
 module Requires =
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
-    let NotNull<'a when 'a : null and 'a : equality> (argument : 'a) argumentName =
+    let inline NotNull<'a when 'a : null and 'a : equality> (argument : 'a) argumentName =
         if argument = null then 
             nullArg argumentName
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given string is <c>null</c> or a
     /// <see cref="System.ArgumentException"/> if the given string consists of whitespace only.
-    let NotNullOrWhitespace argument argumentName =
+    let inline NotNullOrWhitespace argument argumentName =
         if argument = null then 
             nullArg argumentName
 
@@ -42,11 +42,11 @@ module Requires =
             invalidArg argumentName "The given string cannot consist of whitespace only."
 
     /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>false</c>.
-    let ArgumentSatisfies condition argumentName description =
+    let inline ArgumentSatisfies condition argumentName description =
         if not condition then
             invalidArg argumentName description
 
     /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
-    let That condition description =
+    let inline That condition description =
         if not condition then
             invalidOp description
