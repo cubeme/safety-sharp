@@ -40,8 +40,7 @@ type FieldSymbol = {
     /// with subcomponent or method names.
     Name : string
     Type : TypeSymbol
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
@@ -54,8 +53,7 @@ type ParameterSymbol = {
 
     /// The type of the method parameter.
     Type : TypeSymbol
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
@@ -72,8 +70,7 @@ type MethodSymbol = {
 
     /// The parameters, if any, of the method.
     Parameters : ParameterSymbol list
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
@@ -84,8 +81,7 @@ type SubcomponentSymbol = {
     /// The name of the subcomponent. Subcomponent names are unique within a single component and do
     /// not overlap with field or method names.
     Name : string
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
@@ -107,8 +103,7 @@ type ComponentSymbol = {
 
     /// The subcomponents declared by the component.
     Subcomponents : SubcomponentSymbol list
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =

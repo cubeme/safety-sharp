@@ -29,8 +29,7 @@ type FieldObject = {
 
     /// The list of initial values for the field. Each field is guaranteed to have at least one initial value.
     InitialValues : obj list
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
@@ -49,8 +48,7 @@ type ComponentObject = {
 
     /// Maps each subcomponent declared by the component type to a component instantiation.
     Subcomponents : Map<SubcomponentSymbol, ComponentObject>
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
@@ -59,8 +57,7 @@ type ComponentObject = {
 // Todo
 type [<ReferenceEquality>] ModelObject = {
     X: int
-}
-    with
+}   with
 
     /// Returns a structured string representation for the current instance.
     override this.ToString () =
