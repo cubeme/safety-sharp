@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.IFieldSymbolTests
+namespace SafetySharp.Tests.CSharp.IFieldSymbolTests
 
 open System.Linq
 open NUnit.Framework
@@ -28,7 +28,7 @@ open FsUnit
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
-open SafetySharp.Tests
+open SafetySharp.Tests.CSharp
 
 [<TestFixture>]
 module IsSubcomponentFieldMethod =

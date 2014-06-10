@@ -41,15 +41,20 @@ module TypeSymbolExtensions =
             // Check whether any of the interfaces or their bases match baseType
             if baseType.TypeKind = TypeKind.Interface && (this.Interfaces.Any(fun i -> i.Equals(baseType) || i.IsDerivedFrom(baseType))) then
                 true
-
             // We've reached the top of the inheritance chain without finding baseType
             else if this.BaseType = null then
                 false
-
             // Check whether the base matches baseType
             else if baseType.TypeKind = TypeKind.Class && this.BaseType.Equals(baseType) then
                 true
-
-            // Recursively check whether the base
+            // Recursively check the base
             else
                 this.BaseType.IsDerivedFrom(baseType);
+
+        /// Checks whether the type symbol is directly or indirectly derived from the <see cref="SafetySharp.Modeling.Component"/> class.
+        member this.IsDerivedFromComponent (semanticModel : SemanticModel) =
+            semanticModel.GetComponentClassSymbol () |> this.IsDerivedFrom
+
+        /// Checks whether the type symbol directly or indirectly implements the <see cref="SafetySharp.Modeling.IComponent"/> interface.
+        member this.ImplementsIComponent (semanticModel : SemanticModel) =
+            semanticModel.GetComponentInterfaceSymbol () |> this.IsDerivedFrom

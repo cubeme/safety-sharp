@@ -26,6 +26,7 @@ open System.Collections.Immutable
 
 open SafetySharp.Utilities
 open SafetySharp.Metamodel
+open SafetySharp.Modeling
 open SafetySharp.CSharp.Roslyn
 
 open Microsoft.CodeAnalysis
@@ -58,6 +59,9 @@ type SymbolMap (compilation : CSharpCompilation, componentTypes : string list) =
         let semanticModel = compilation.GetSemanticModel syntaxTree
         for componentType in componentTypes do
             let csharpComponent = semanticModel.GetTypeSymbol componentType
+            if not <| csharpComponent.IsDerivedFromComponent semanticModel then
+                sprintf "Type '%s' is not derived from '%s'." componentType typeof<Component>.FullName |> invalidOp
+
             let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>()
             let methods = csharpComponent.GetMembers().OfType<IMethodSymbol>()
 

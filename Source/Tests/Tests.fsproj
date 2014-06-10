@@ -52,13 +52,13 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="CSharp\TestCompilation.fs" />
-    <Compile Include="CSharp\ExpressionTransformationTests.fs" />
     <Compile Include="CSharp\Extensions\IFieldSymbolTests.fs" />
     <Compile Include="CSharp\Extensions\ITypeSymbolTests.fs" />
     <Compile Include="CSharp\Extensions\IMethodSymbolTests.fs" />
-    <Compile Include="CSharp\StatementTransformationTests.fs" />
     <None Include="app.config" />
     <None Include="packages.config" />
+    <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsUnit.NUnit">
