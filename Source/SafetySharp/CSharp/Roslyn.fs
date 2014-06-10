@@ -52,3 +52,33 @@ module Roslyn =
     /// Matches a binary expression.
     let (|BinaryExpression|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (expression : BinaryExpressionSyntax) -> (expression.Left, expression.CSharpKind (), expression.Right)
+
+    /// Matches an assignment expression.
+    let (|AssignmentExpression|_|) (expression : ExpressionSyntax) =
+        match projectNode expression <| fun (expression : BinaryExpressionSyntax) -> (expression.Left, expression.CSharpKind (), expression.Right) with
+        | Some (left, operator, right) when operator = SyntaxKind.SimpleAssignmentExpression ->
+            Some (left, right)
+        | _ -> None
+
+    /// Matches an empty statement.
+    let (|EmptyStatement|_|) (statement : StatementSyntax) =
+        projectNode statement <| fun (statement : EmptyStatementSyntax) -> ()
+
+    /// Matches a block statement.
+    let (|BlockStatement|_|) (statement : StatementSyntax) =
+        projectNode statement <| fun (statement : BlockSyntax) -> statement.Statements
+
+    /// Matches an expression statement.
+    let (|ExpressionStatement|_|) (statement : StatementSyntax) =
+        projectNode statement <| fun (statement : ExpressionStatementSyntax) -> statement.Expression
+
+    /// Matches a return statement.
+    let (|ReturnStatement|_|) (statement : StatementSyntax) =
+        projectNode statement <| fun (statement : ReturnStatementSyntax) -> 
+            match statement.Expression with null -> None | expression -> Some expression
+
+    /// Matches an if-then-else statement.
+    let (|IfStatement|_|) (statement : StatementSyntax) =
+        projectNode statement <| fun (statement : IfStatementSyntax) -> 
+            let elseStatement = match statement.Else with null -> None | elseClause -> Some elseClause.Statement
+            (statement.Condition, statement.Statement, elseStatement)

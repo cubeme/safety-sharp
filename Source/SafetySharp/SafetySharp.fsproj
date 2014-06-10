@@ -65,7 +65,8 @@
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensions.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\SymbolMap.fs" />
-    <Compile Include="CSharp\Transformation.fs" />
+    <Compile Include="CSharp\ExpressionTransformation.fs" />
+    <Compile Include="CSharp\StatementTransformation.fs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

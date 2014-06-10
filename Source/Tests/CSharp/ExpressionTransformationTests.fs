@@ -36,19 +36,19 @@ module ExpressionTransformationTests =
         let csharpCode = "
             class C : Component 
             {
-                private bool boolField; 
+                private bool boolField;
                 void M()
                 {
                     var x = " + csharpCode + ";
                 }
             }"
 
-        let compilation = new TestCompilation(csharpCode);
-        let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value;
+        let compilation = TestCompilation csharpCode
+        let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value
         let symbolMap = SymbolMap (compilation.CSharpCompilation, [ "C" ])
         fieldSymbol <- symbolMap.Components.[0].Fields.[0]
 
-        Transformation.TransformExpression symbolMap compilation.SemanticModel expression
+        ExpressionTransformation.Transform symbolMap compilation.SemanticModel expression
 
     [<Test>]
     let ``boolean literals`` () =
@@ -71,27 +71,27 @@ module ExpressionTransformationTests =
 
     [<Test>]
     let ``minus expressions`` () =
-        transform "-.50m" |> should equal (UnaryExpression(DecimalLiteral(0.50m), UnaryOperator.Minus));
-        transform "-10m" |> should equal (UnaryExpression(DecimalLiteral(10m), UnaryOperator.Minus));
-        transform "-4" |> should equal (UnaryExpression(IntegerLiteral(4), UnaryOperator.Minus));
-        transform "-0" |> should equal (UnaryExpression(IntegerLiteral(0), UnaryOperator.Minus));
+        transform "-.50m" |> should equal (UnaryExpression(DecimalLiteral(0.50m), UnaryOperator.Minus))
+        transform "-10m" |> should equal (UnaryExpression(DecimalLiteral(10m), UnaryOperator.Minus))
+        transform "-4" |> should equal (UnaryExpression(IntegerLiteral(4), UnaryOperator.Minus))
+        transform "-0" |> should equal (UnaryExpression(IntegerLiteral(0), UnaryOperator.Minus))
 
     [<Test>]
     let ``not expressions`` () =
-        transform "!true" |> should equal (UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot));
-        transform "!false" |> should equal (UnaryExpression(BooleanLiteral false, UnaryOperator.LogicalNot));
+        transform "!true" |> should equal (UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot))
+        transform "!false" |> should equal (UnaryExpression(BooleanLiteral false, UnaryOperator.LogicalNot))
 
     [<Test>]
     let ``nested unary expressions`` () =
-        transform "-+1" |> should equal (UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus));
+        transform "-+1" |> should equal (UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus))
         transform "!!true" |> should equal (UnaryExpression(UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), UnaryOperator.LogicalNot))
 
     [<Test>]
     let ``plus expressions`` () =
-        transform "+.50m" |> should equal (DecimalLiteral(0.50m));
-        transform "+10m" |> should equal (DecimalLiteral(10m));
-        transform "+4" |> should equal (IntegerLiteral(4));
-        transform "+0" |> should equal (IntegerLiteral(0));
+        transform "+.50m" |> should equal (DecimalLiteral(0.50m))
+        transform "+10m" |> should equal (DecimalLiteral(10m))
+        transform "+4" |> should equal (IntegerLiteral(4))
+        transform "+0" |> should equal (IntegerLiteral(0))
 
     [<Test>]
     let ``add expressions`` () =
@@ -160,32 +160,32 @@ module ExpressionTransformationTests =
 
     [<Test>]
     let ``field access expressions`` () =
-        transform "boolField" |> should equal (FieldAccessExpression(fieldSymbol));
+        transform "boolField" |> should equal (FieldAccessExpression(fieldSymbol))
 
     [<Test>]
     let ``field access in binary expression`` () =
-        transform "boolField == false" |> should equal (BinaryExpression(FieldAccessExpression(fieldSymbol), BinaryOperator.Equals, BooleanLiteral false));
+        transform "boolField == false" |> should equal (BinaryExpression(FieldAccessExpression(fieldSymbol), BinaryOperator.Equals, BooleanLiteral false))
 
     [<Test>]
     let ``nested binary expressions`` () =
-        let add = BinaryExpression(IntegerLiteral(1), BinaryOperator.Add, IntegerLiteral(2));
-        let multiply = BinaryExpression(add, BinaryOperator.Multiply, IntegerLiteral(10));
+        let add = BinaryExpression(IntegerLiteral(1), BinaryOperator.Add, IntegerLiteral(2))
+        let multiply = BinaryExpression(add, BinaryOperator.Multiply, IntegerLiteral(10))
         transform "(1 + 2) * 10" |> should equal multiply
 
-        let multiply = BinaryExpression(IntegerLiteral(1), BinaryOperator.Multiply, IntegerLiteral(10));
-        let add = BinaryExpression(multiply, BinaryOperator.Add, IntegerLiteral(2));
+        let multiply = BinaryExpression(IntegerLiteral(1), BinaryOperator.Multiply, IntegerLiteral(10))
+        let add = BinaryExpression(multiply, BinaryOperator.Add, IntegerLiteral(2))
         transform "1 * 10 + 2" |> should equal add
 
-        let left = BinaryExpression(IntegerLiteral(1), BinaryOperator.Add, IntegerLiteral(2));
-        let right = BinaryExpression(IntegerLiteral(4), BinaryOperator.Add, IntegerLiteral(5));
-        let multiply = BinaryExpression(left, BinaryOperator.Multiply, right);
+        let left = BinaryExpression(IntegerLiteral(1), BinaryOperator.Add, IntegerLiteral(2))
+        let right = BinaryExpression(IntegerLiteral(4), BinaryOperator.Add, IntegerLiteral(5))
+        let multiply = BinaryExpression(left, BinaryOperator.Multiply, right)
         transform "(1 + 2) * (4 + 5)" |> should equal multiply
 
     [<Test>]
     let ``nested unary and binary expressions`` () =
-        let minusOne = UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus);
-        let left = BinaryExpression(minusOne, BinaryOperator.Add, IntegerLiteral(2));
-        let right = BinaryExpression(IntegerLiteral(4), BinaryOperator.Add, IntegerLiteral(5));
-        let multiply = BinaryExpression(UnaryExpression(left, UnaryOperator.Minus), BinaryOperator.Multiply, right);
+        let minusOne = UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus)
+        let left = BinaryExpression(minusOne, BinaryOperator.Add, IntegerLiteral(2))
+        let right = BinaryExpression(IntegerLiteral(4), BinaryOperator.Add, IntegerLiteral(5))
+        let multiply = BinaryExpression(UnaryExpression(left, UnaryOperator.Minus), BinaryOperator.Multiply, right)
 
         transform "-(-1 + 2) * (4 + +5)" |> should equal multiply

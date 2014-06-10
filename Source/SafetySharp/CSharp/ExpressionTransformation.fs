@@ -31,8 +31,10 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module Transformation =
-    let TransformExpression (symbolMap : SymbolMap) (semanticModel : SemanticModel) (expression : ExpressionSyntax) =
+module ExpressionTransformation =
+
+    /// Transforms a C# expression to a metamodel expression.
+    let Transform (symbolMap : SymbolMap) (semanticModel : SemanticModel) (expression : ExpressionSyntax) =
         let rec transform = function
         | LiteralExpression (kind, value) ->
             match kind with

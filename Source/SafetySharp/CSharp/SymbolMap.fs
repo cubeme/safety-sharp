@@ -37,7 +37,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 type SymbolMap (compilation : CSharpCompilation, componentTypes : string list) =
     do Requires.NotNull compilation "compilation"
 
-    // Optimization: We're using the builder pattern to initialize the dictionaries
+    // We're using the builder pattern to initialize the dictionaries
     let componentMapBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ComponentSymbol> ()
     let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
     let subComponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
