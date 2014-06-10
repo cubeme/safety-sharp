@@ -28,7 +28,7 @@ type BinaryOperator =
     | GreaterThan
     | GreaterThanOrEqual
 
-/// Represents side-effect free expressions within modeling programs.
+/// Represents side-effect free expressions within a model.
 type Expression =
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
     | BooleanLiteral of Value : bool
@@ -46,4 +46,4 @@ type Expression =
     | BinaryExpression of LeftExpression : Expression * Operator : BinaryOperator * RightExpression : Expression
 
     /// Represents a field access, either for reading or writing.
-    | FieldAccessExpression of Field : FieldSymbol
+    | FieldAccessExpression of Component : ComponentSymbol * Field : FieldSymbol

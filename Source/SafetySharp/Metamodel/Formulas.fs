@@ -30,8 +30,8 @@ type BinaryFormulaOperator =
     | Until
 
     // CTL temporal operators
-    | AllUntil
-    | ExistsUntil
+    | AllPathsUntil
+    | ExistsPathUntil
 
 /// Represents a formula that can be modelchecked, for instance.
 type Formula =
@@ -43,3 +43,25 @@ type Formula =
 
     /// Represents the application of a binary formula operator to two subformulas.
     | BinaryFormula of LeftFormula : Formula * Operator : BinaryFormulaOperator * RightFormula : Formula
+
+    with 
+
+    /// Gets a value indicating whether the formula is a valid linear temporal logic formula.
+    member this.IsLtl () = 
+        match this with
+        | StateFormula _ -> 
+            true
+        | UnaryFormula (operand, operator) ->
+            (operator = Not || operator = Next || operator = Finally || operator = Globally) && operand.IsLtl ()
+        | BinaryFormula (left, operator, right) ->
+            operator <> AllPathsUntil && operator <> ExistsPathUntil && left.IsLtl () && right.IsLtl ()
+
+    /// Gets a value indicating whether the formula is a valid computation tree logic formula.
+    member this.IsCtl () = 
+        match this with
+        | StateFormula _ -> 
+            true
+        | UnaryFormula (operand, operator) ->
+            operator <> Next && operator <> Finally && operator <> Globally && operand.IsCtl ()
+        | BinaryFormula (left, operator, right) ->
+            operator <> Until && left.IsCtl () && right.IsCtl ()

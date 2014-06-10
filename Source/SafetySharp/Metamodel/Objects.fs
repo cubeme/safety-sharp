@@ -1,9 +1,7 @@
 ﻿namespace SafetySharp.Metamodel
 
-open SafetySharp.Utilities
-
 /// Represents an instantiation of a component field.
-type [<ReferenceEquality>] FieldObject = {
+type FieldObject = {
     /// The instantiated field.
     Field : FieldSymbol
 
@@ -12,18 +10,20 @@ type [<ReferenceEquality>] FieldObject = {
 }
 
 /// Represents the instantiation of a component.
-type [<ReferenceEquality>] ComponentObject = {
+type ComponentObject = {
     /// The instantiated component type.
     Component : ComponentSymbol
 
+    Name : string list
+
     /// Maps each field declared by the component type to a field instantiation.
-    Fields : Dictionary<FieldSymbol, FieldObject>
+    Fields : Map<FieldSymbol, FieldObject>
 
     /// Maps each subcomponent declared by the component type to a component instantiation.
-    Subcomponents : Dictionary<SubcomponentSymbol, ComponentObject>
+    Subcomponents : Map<SubcomponentSymbol, ComponentObject>
 }
 
 // Todo
-type [<ReferenceEquality>] ModelConfigurationObject = {
+type [<ReferenceEquality>] ModelObject = {
     X: int
 }

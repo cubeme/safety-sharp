@@ -13,7 +13,7 @@ type TypeSymbol =
     | Decimal
 
 /// Represents the definition of a field within a component.
-type [<ReferenceEquality>] FieldSymbol = {
+type FieldSymbol = {
     /// The name of the field. Field names are unique within a single component and do not overlap
     /// with subcomponent or method names.
     Name : string
@@ -21,7 +21,7 @@ type [<ReferenceEquality>] FieldSymbol = {
 }
 
 /// Represents the definition of a method parameter.
-type [<ReferenceEquality>] ParameterSymbol = {
+type ParameterSymbol = {
     /// The name of the method parameter. Parameter names are unique within a single method.
     Name : string
 
@@ -30,7 +30,7 @@ type [<ReferenceEquality>] ParameterSymbol = {
 }
 
 /// Represents the definition of a method within a component.
-type [<ReferenceEquality>] MethodSymbol = {
+type MethodSymbol = {
     /// The name of the method. Method names are unique within a single component and do not overlap
     /// with subcomponent or field names.
     Name : string
@@ -43,7 +43,7 @@ type [<ReferenceEquality>] MethodSymbol = {
 }
 
 /// Represents the definition of a subcomponent within a parent component.
-type [<ReferenceEquality>] SubcomponentSymbol = {
+type SubcomponentSymbol = {
     /// The name of the subcomponent. Subcomponent names are unique within a single component and do
     /// not overlap with field or method names.
     Name : string
@@ -53,7 +53,7 @@ type [<ReferenceEquality>] SubcomponentSymbol = {
 }
 
 /// Represents the type definition of a component within a model.
-and [<ReferenceEquality>] ComponentSymbol = { 
+and ComponentSymbol = { 
     /// The name of the component. Component names are unique within a single model.
     Name : string
 
@@ -71,6 +71,6 @@ and [<ReferenceEquality>] ComponentSymbol = {
 }
 
 // TODO
-and [<ReferenceEquality>] ModelSymbol = { 
+and ModelSymbol = { 
     Fields : FieldSymbol list
 }
