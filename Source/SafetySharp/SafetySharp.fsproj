@@ -57,6 +57,7 @@
     <Compile Include="Metamodel\Objects.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\Transformation.fs" />
+    <Compile Include="Modeling\Component.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">

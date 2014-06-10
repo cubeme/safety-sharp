@@ -20,5 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module TestCompilation
+namespace SafetySharp.Tests
 
+open SafetySharp.Metamodel
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+
+exception CompilationException of string
+
+/// Represents a compiled C# compilation unit with a single syntax tree.
+type TestCompilation (csharpCode : string) =
+    let compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode)
+    let syntaxTree = compilationUnit.SyntaxTree
+
+    let csharpCompilation = 
+        CSharpCompilation
+            .Create("TestCompilation")
+            .AddReferences(new MetadataFileReference(typeof<obj>.Assembly.Location))
+            .AddReferences(new MetadataFileReference(typeof<ComponentSymbol>.Assembly.Location))
+            .AddSyntaxTrees(syntaxTree)
+            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+
+    let diagnostics = csharpCompilation.GetDiagnostics() |> Seq.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
+    do diagnostics |> Seq.iter (fun d -> printfn "%A" d)
+
+    do if not <| Seq.isEmpty diagnostics then
+        CompilationException "Failed to create compilation." |> raise
+
+    /// Gets the syntax tree of the compilation.
+    member this.SyntaxTree with get () = syntaxTree
+
+    /// Gets the <see cref="CSharpCompilation" /> corresponding to the current instance.
+    member this.CSharpCompilation with get () = csharpCompilation
+
+    /// Gets the root syntax node of the syntax tree.
+    member this.SyntaxRoot with get () = syntaxTree.GetRoot ()
+
+    /// Gets the semantic model for the compilation's syntax tree.
+    member this.SemanticModel with get () = csharpCompilation.GetSemanticModel syntaxTree

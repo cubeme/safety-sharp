@@ -41,5 +41,11 @@ type Statement =
     /// Represents the assignment of a value to an assignment target, i.e., a field, for instance.
     | AssignmentStatement of Target : Expression * Expression : Expression
 
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
+
 /// Maps a method symbol to its method body.
 type MethodBodyResolver = Map<MethodSymbol, Statement>

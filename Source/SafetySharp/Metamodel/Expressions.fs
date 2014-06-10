@@ -69,3 +69,9 @@ type Expression =
 
     /// Represents a field access, either for reading or writing.
     | FieldAccessExpression of Component : ComponentSymbol * Field : FieldSymbol
+
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
