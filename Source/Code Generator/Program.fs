@@ -34,11 +34,11 @@ let main argv =
     printfn "the MIT license (see http://opensource.org/licenses/MIT)."
     printfn " %s" Environment.NewLine
 
-    TestGenerator.Generate "../../Source/Tests/Generator/Test.Generated.cs"
-    MetamodelGenerator.Generate "../../Source/SafetySharp/Metamodel/Metamodel.Generated.cs"
-    FormulaGenerator.Generate "../../Source/SafetySharp/Formulas/Formulas.Generated.cs"
-    PromelaGenerator.Generate "../../Source/SafetySharp/Modelchecking/Promela/Promela.Generated.cs"
-    NuXmvGenerator.Generate "../../Source/SafetySharp/Modelchecking/NuXmv/NuXmv.Generated.cs"
+    TestGenerator.Generate "../../Source/Tests.CSharp/Generator/Test.Generated.cs"
+    MetamodelGenerator.Generate "../../Source/SafetySharp.CSharp/Metamodel/Metamodel.Generated.cs"
+    FormulaGenerator.Generate "../../Source/SafetySharp.CSharp/Formulas/Formulas.Generated.cs"
+    PromelaGenerator.Generate "../../Source/SafetySharp.CSharp/Modelchecking/Promela/Promela.Generated.cs"
+    NuXmvGenerator.Generate "../../Source/SafetySharp.CSharp/Modelchecking/NuXmv/NuXmv.Generated.cs"
 
     printfn " %s" Environment.NewLine
     0

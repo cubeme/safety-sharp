@@ -1,16 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30110.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "SafetySharp.Compiler\Compiler.csproj", "{4D7F1B7F-CBF1-4236-BFE4-DE7BD3D36196}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafetySharp", "SafetySharp\SafetySharp.csproj", "{D9CAD497-F647-42D8-BE13-6406DE53331D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafetySharp.CSharp", "SafetySharp.CSharp\SafetySharp.CSharp.csproj", "{D9CAD497-F647-42D8-BE13-6406DE53331D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0A9DEBF8-9E1A-4517-9510-8238807CB41A} = {0A9DEBF8-9E1A-4517-9510-8238807CB41A}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.CSharp", "Tests.CSharp\Tests.CSharp.csproj", "{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0A9DEBF8-9E1A-4517-9510-8238807CB41A} = {0A9DEBF8-9E1A-4517-9510-8238807CB41A}
 	EndProjectSection

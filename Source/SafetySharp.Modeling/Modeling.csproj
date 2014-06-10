@@ -36,10 +36,10 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SafetySharp\Modeling\IComponent.cs">
+    <Compile Include="..\SafetySharp.CSharp\Modeling\IComponent.cs">
       <Link>IComponent.cs</Link>
     </Compile>
-    <Compile Include="..\SafetySharp\Modeling\OverflowBehavior.cs">
+    <Compile Include="..\SafetySharp.CSharp\Modeling\OverflowBehavior.cs">
       <Link>OverflowBehavior.cs</Link>
     </Compile>
     <Compile Include="LtlFormula.cs" />

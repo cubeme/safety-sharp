@@ -79,9 +79,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SafetySharp\SafetySharp.csproj">
+    <ProjectReference Include="..\SafetySharp.CSharp\SafetySharp.CSharp.csproj">
       <Project>{d9cad497-f647-42d8-be13-6406de53331d}</Project>
-      <Name>SafetySharp</Name>
+      <Name>SafetySharp.CSharp</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
