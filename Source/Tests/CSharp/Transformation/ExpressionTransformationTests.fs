@@ -45,7 +45,7 @@ module ExpressionTransformationTests =
 
         let compilation = TestCompilation csharpCode
         let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value
-        let symbolMap = SymbolMap (compilation.CSharpCompilation, [ "C" ])
+        let symbolMap = SymbolMap (compilation.SemanticModel, [ "C" ])
         fieldSymbol <- symbolMap.Components.[0].Fields.[0]
 
         ExpressionTransformation.Transform symbolMap compilation.SemanticModel expression

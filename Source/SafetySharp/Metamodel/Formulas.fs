@@ -87,3 +87,7 @@ type Formula =
             operator <> Next && operator <> Finally && operator <> Globally && operand.IsCtl ()
         | BinaryFormula (left, operator, right) ->
             operator <> Until && left.IsCtl () && right.IsCtl ()
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this

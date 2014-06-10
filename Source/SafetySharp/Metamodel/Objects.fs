@@ -30,6 +30,11 @@ type FieldObject = {
     /// The list of initial values for the field. Each field is guaranteed to have at least one initial value.
     InitialValues : obj list
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 /// Represents the instantiation of a component.
 type ComponentObject = {
@@ -45,8 +50,18 @@ type ComponentObject = {
     /// Maps each subcomponent declared by the component type to a component instantiation.
     Subcomponents : Map<SubcomponentSymbol, ComponentObject>
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 // Todo
 type [<ReferenceEquality>] ModelObject = {
     X: int
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this

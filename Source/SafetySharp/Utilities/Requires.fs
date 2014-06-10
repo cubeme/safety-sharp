@@ -41,7 +41,12 @@ module Requires =
         if String.IsNullOrWhiteSpace argument then 
             invalidArg argumentName "The given string cannot consist of whitespace only."
 
-    /// Throws an <see cref="InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
+    /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>false</c>.
+    let ArgumentSatisfies condition argumentName description =
+        if not condition then
+            invalidArg argumentName description
+
+    /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
     let That condition description =
         if not condition then
             invalidOp description

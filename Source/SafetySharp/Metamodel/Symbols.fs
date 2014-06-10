@@ -41,6 +41,11 @@ type FieldSymbol = {
     Name : string
     Type : TypeSymbol
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 /// Represents the definition of a method parameter.
 type ParameterSymbol = {
@@ -50,6 +55,11 @@ type ParameterSymbol = {
     /// The type of the method parameter.
     Type : TypeSymbol
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 /// Represents the definition of a method within a component.
 type MethodSymbol = {
@@ -63,6 +73,11 @@ type MethodSymbol = {
     /// The parameters, if any, of the method.
     Parameters : ParameterSymbol list
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 /// Represents the definition of a subcomponent within a parent component.
 type SubcomponentSymbol = {
@@ -70,6 +85,11 @@ type SubcomponentSymbol = {
     /// not overlap with field or method names.
     Name : string
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 /// Represents the type definition of a component within a model.
 type ComponentSymbol = { 
@@ -88,8 +108,18 @@ type ComponentSymbol = {
     /// The subcomponents declared by the component.
     Subcomponents : SubcomponentSymbol list
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this
 
 // TODO
 and ModelSymbol = { 
     Fields : FieldSymbol list
 }
+    with
+
+    /// Returns a structured string representation for the current instance.
+    override this.ToString () =
+        sprintf "%A" this

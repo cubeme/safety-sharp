@@ -22,7 +22,9 @@
 
 namespace SafetySharp.CSharp
 
+open System.Collections.Generic
 open System.Collections.Immutable
+open System.Runtime.CompilerServices
 
 open SafetySharp.Utilities
 open SafetySharp.Metamodel
@@ -35,15 +37,26 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 
 /// Constructs symbols for the given component types and creates a mapping between the original C# symbols and the
 /// created metamodel symbols.
-type SymbolMap (compilation : CSharpCompilation, componentTypes : string list) =
-    do Requires.NotNull compilation "compilation"
+type SymbolMap (semanticModel : SemanticModel, componentTypes : string list) =
+    do Requires.NotNull semanticModel "semanticModel"
+    do Requires.ArgumentSatisfies (componentTypes |> List.length > 0) "componentTypes" "At least one component type must be provided."
 
-    // We're using the builder pattern to initialize the dictionaries
+    // An equality comparer for method symbols that implements reference equality
+    let comparer = { 
+        new IEqualityComparer<MethodSymbol> with
+            member this.Equals (symbol1, symbol2) = 
+                obj.ReferenceEquals(symbol1, symbol2)
+            member this.GetHashCode (symbol) =
+                RuntimeHelpers.GetHashCode(symbol)
+    }
+
+    // We're using the builder pattern to initialize the dictionaries and the component list
+    let componentListBuilder = ImmutableList.CreateBuilder<ComponentSymbol> ()
     let componentMapBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ComponentSymbol> ()
     let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
     let subComponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
     let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
-    let methodMapBackBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> ()
+    let methodMapBackBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
 
     // Converts a C# type symbol to one of the supported metamodel type symbols
     let toTypeSymbol (csharpSymbol : ITypeSymbol) =
@@ -55,71 +68,73 @@ type SymbolMap (compilation : CSharpCompilation, componentTypes : string list) =
         | _ -> sprintf "Unsupported C# type: '%A'." csharpSymbol.SpecialType |> invalidOp
 
     // Create the symbols for all components
-    do for syntaxTree in compilation.SyntaxTrees do
-        let semanticModel = compilation.GetSemanticModel syntaxTree
-        for componentType in componentTypes do
-            let csharpComponent = semanticModel.GetTypeSymbol componentType
-            if not <| csharpComponent.IsDerivedFromComponent semanticModel then
-                sprintf "Type '%s' is not derived from '%s'." componentType typeof<Component>.FullName |> invalidOp
+    do for componentType in componentTypes |> Seq.distinct do
+        let csharpComponent = semanticModel.GetTypeSymbol componentType
+        if not <| csharpComponent.IsDerivedFromComponent semanticModel then
+            sprintf "Type '%s' is not derived from '%s'." componentType typeof<Component>.FullName |> invalidOp
 
-            let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>()
-            let methods = csharpComponent.GetMembers().OfType<IMethodSymbol>()
+        let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>()
+        let methods = csharpComponent.GetMembers().OfType<IMethodSymbol>()
+        let assemblyName = csharpComponent.ContainingAssembly.Identity.Name
+        let componentName = csharpComponent.ToDisplayString SymbolDisplayFormat.MinimallyQualifiedFormat
 
-            let componentSymbol = {
-                // The name of a component corresponds to the fully qualified name of the C# class the symbol was generated from.
-                Name = csharpComponent.ToDisplayString SymbolDisplayFormat.FullyQualifiedFormat
+        let componentSymbol = {
+            // We're encoding the assembly and all parent namespaces in the component name to ensure the uniqueness of the name.
+            Name = sprintf "%s::%s" assemblyName componentName
 
-                // Creates the symbols and optional mapping information for the Update method of the component.
-                UpdateMethod = 
-                    let updateMethods = methods |> Seq.filter (fun method' -> method'.IsUpdateMethod semanticModel)
-                    let updateMethodCount = updateMethods |> Seq.length
-                    let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
+            // Creates the symbols and optional mapping information for the Update method of the component.
+            UpdateMethod = 
+                let updateMethods = methods |> Seq.filter (fun method' -> method'.IsUpdateMethod semanticModel)
+                let updateMethodCount = updateMethods |> Seq.length
+                let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
 
-                    if updateMethodCount > 1 then 
-                        sprintf "Component of type '%A' defines more than one Update() method." componentType |> invalidOp
-                    else if updateMethodCount = 1 then
-                        let updateMethod = updateMethods |> Seq.head
-                        methodMapBuilder.Add (updateMethod, methodSymbol)
-                        methodMapBackBuilder.Add (methodSymbol, updateMethod)
-                    methodSymbol
+                if updateMethodCount > 1 then 
+                    sprintf "Component of type '%A' defines more than one Update() method." componentType |> invalidOp
+                else if updateMethodCount = 1 then
+                    let updateMethod = updateMethods |> Seq.head
+                    methodMapBuilder.Add (updateMethod, methodSymbol)
+                    methodMapBackBuilder.Add (methodSymbol, updateMethod)
+                methodSymbol
 
-                // Create the symbols and mapping information for all methods of the component. We'll also build up a 
-                // dictionary that allows us to retrieve the original C# method symbol again.
-                Methods = 
-                    [
-                        let methods = methods |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod semanticModel)
-                        for csharpMethod in methods ->
-                            let methodSymbol = { Name = csharpMethod.Name; ReturnType = None; Parameters = []}
-                            methodMapBuilder.Add (csharpMethod, methodSymbol)
-                            methodMapBackBuilder.Add (methodSymbol, csharpMethod)
-                            methodSymbol
-                    ]
+            // Create the symbols and mapping information for all methods of the component. We'll also build up a 
+            // dictionary that allows us to retrieve the original C# method symbol again.
+            Methods = 
+                [
+                    let methods = methods |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod semanticModel && method'.MethodKind = MethodKind.Ordinary)
+                    for csharpMethod in methods ->
+                        let methodSymbol = { Name = csharpMethod.Name; ReturnType = None; Parameters = []}
+                        methodMapBuilder.Add (csharpMethod, methodSymbol)
+                        methodMapBackBuilder.Add (methodSymbol, csharpMethod)
+                        methodSymbol
+                ]
 
-                // Creates the symbols and mapping information for all fields of the component.
-                Fields = 
-                    [
-                        let fields = fields |> Seq.filter (fun field -> not <| field.IsSubcomponentField semanticModel)
-                        for csharpField in fields -> 
-                            let fieldSymbol = { FieldSymbol.Name = csharpField.Name; Type = toTypeSymbol csharpField.Type }
-                            fieldMapBuilder.Add (csharpField, fieldSymbol)
-                            fieldSymbol
-                    ]
+            // Creates the symbols and mapping information for all fields of the component.
+            Fields = 
+                [
+                    let fields = fields |> Seq.filter (fun field -> not <| field.IsSubcomponentField semanticModel)
+                    for csharpField in fields -> 
+                        let fieldSymbol = { FieldSymbol.Name = csharpField.Name; Type = toTypeSymbol csharpField.Type }
+                        fieldMapBuilder.Add (csharpField, fieldSymbol)
+                        fieldSymbol
+                ]
 
-                // Creates the symbols and mapping information for all subcomponents of the component.
-                Subcomponents = 
-                    [
-                        let fields = fields |> Seq.filter (fun field -> field.IsSubcomponentField semanticModel)
-                        for csharpField in fields -> 
-                            let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name }
-                            subComponentMapBuilder.Add (csharpField, subComponentSymbol)
-                            subComponentSymbol
-                    ]
-            }
+            // Creates the symbols and mapping information for all subcomponents of the component.
+            Subcomponents = 
+                [
+                    let fields = fields |> Seq.filter (fun field -> field.IsSubcomponentField semanticModel)
+                    for csharpField in fields -> 
+                        let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name }
+                        subComponentMapBuilder.Add (csharpField, subComponentSymbol)
+                        subComponentSymbol
+                ]
+        }
 
-            componentMapBuilder.Add (csharpComponent, componentSymbol)
+        componentListBuilder.Add componentSymbol
+        componentMapBuilder.Add (csharpComponent, componentSymbol)
 
-    // Create the dictionaries that we'll later use to resolve C# symbols to metamodel symbols.
+    // Create the dictionaries and the component list that we'll later use to resolve C# symbols to metamodel symbols.
     let componentMap = componentMapBuilder.ToImmutable ()
+    let componentList = componentListBuilder |> List.ofSeq
     let fieldMap = fieldMapBuilder.ToImmutable ()
     let subComponentMap = subComponentMapBuilder.ToImmutable ()
     let methodMap = methodMapBuilder.ToImmutable ()
@@ -155,4 +170,4 @@ type SymbolMap (compilation : CSharpCompilation, componentTypes : string list) =
         methodMapBack.[methodSymbol]
 
     /// Gets a list of all component symbols.
-    member this.Components = componentMap.Values |> List.ofSeq
+    member this.Components = componentList
