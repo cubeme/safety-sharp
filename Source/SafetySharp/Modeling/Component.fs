@@ -22,9 +22,11 @@
 
 namespace SafetySharp.Modeling
 
+type IComponent = interface end
+
 [<AbstractClass>]
 type Component () =
     abstract member Update : unit -> unit
     default this.Update () = ()
 
-type IComponent = interface end
+    interface IComponent

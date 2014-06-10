@@ -37,7 +37,6 @@ module ExpressionTransformationTests =
             class C : Component 
             {
                 private bool boolField; 
-                private int intField;
                 void M()
                 {
                     var x = " + csharpCode + ";
