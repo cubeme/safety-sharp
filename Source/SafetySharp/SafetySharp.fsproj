@@ -82,6 +82,16 @@
     <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
+    <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
+    <Compile Include="Modelchecking\PromelaSpin\PromelaAstToFile.fs" />
+    <Compile Include="Modelchecking\PromelaSpin\PromelaExecute.fs" />
+    <Compile Include="Modelchecking\PromelaSpin\PromelaTransformMetamodel.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvOperators.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvAst.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvAstToFile.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvExecute.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodel.fs" />
     <None Include="packages.config" />
     <Compile Include="Verification\SpinModelChecker.fs" />
   </ItemGroup>

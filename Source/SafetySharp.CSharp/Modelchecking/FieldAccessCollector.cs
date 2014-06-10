@@ -30,7 +30,7 @@ namespace SafetySharp.Modelchecking
 
     internal class FieldAccessCollector : MM.MetamodelVisitor
     {
-        private asdsadsdsda ;
+        //private asdsadsdsda ;
         public ImmutableDictionary<Metamodel.Expressions.FieldAccessExpression, Metamodel.Configurations.FieldConfiguration>.Builder MmFieldAccessExpressionToFieldConfiguration;
 
         private MetamodelConfiguration mm;
@@ -82,7 +82,7 @@ namespace SafetySharp.Modelchecking
         /// <param name="fieldAccessExpression">The <see cref="FieldAccessExpression" /> instance that should be visited.</param>
         public override void VisitFieldAccessExpression(FieldAccessExpression fieldAccessExpression)
         {
-            CurrentFieldConfiguration = fieldAccessExpression.Field;
+            //CurrentFieldConfiguration = fieldAccessExpression.Field;
             base.VisitFieldAccessExpression(fieldAccessExpression);
         }
 
@@ -146,7 +146,7 @@ namespace SafetySharp.Modelchecking
         /// <param name="componentConfiguration">The <see cref="ComponentConfiguration" /> instance that should be visited.</param>
         public override void VisitComponentConfiguration(ComponentConfiguration componentConfiguration)
         {
-            this.CurrentFieldConfiguration
+            //this.CurrentFieldConfiguration
         }
     }
 

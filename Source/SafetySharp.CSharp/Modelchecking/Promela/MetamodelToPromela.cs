@@ -162,7 +162,7 @@ namespace SafetySharp.Modelchecking.Promela
         {
             Mm = mm;
             var fieldAccessCollector = new FieldAccessCollector(Mm); ;
-            MmFieldAccessExpressionToFieldConfiguration = fieldAccessCollector.MmFieldAccessExpressionToFieldConfiguration;
+            //TODO: MmFieldAccessExpressionToFieldConfiguration = fieldAccessCollector.MmFieldAccessExpressionToFieldConfiguration;
             var extractedFields = ExtractFieldsAndConfiguration(Mm);
             MmFieldList = extractedFields.MmFieldList;
             MmFieldDictionary = extractedFields.MmFieldDictionary;

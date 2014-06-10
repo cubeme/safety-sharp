@@ -39,11 +39,12 @@ namespace SafetySharp.Modeling
 		private readonly MetamodelResolver _metamodelResolver;
 		private readonly SymbolMap _symbolMap;
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="modelConfiguration"></param>
-		public SpinModelChecker(ModelConfiguration modelConfiguration)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="modelConfiguration"></param>
+        /*
+        public SpinModelChecker(ModelConfiguration modelConfiguration)
 		{
 			var modelingAssembly = new ModelingAssembly(modelConfiguration.GetType().Assembly);
 			var transformation = new MetamodelTransformation(modelingAssembly.Compilation, modelConfiguration);
@@ -68,6 +69,7 @@ namespace SafetySharp.Modeling
 
 			return;
 		}
+        */
 
 		/// <summary>
 		/// 

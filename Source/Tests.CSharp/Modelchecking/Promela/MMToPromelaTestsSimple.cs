@@ -40,6 +40,7 @@ namespace Tests.Modelchecking.Promela
 	[TestFixture]
 	public class MmToPromelaTestsSimple
 	{
+        /*
 		[Test]
 		public void Test()
 		{
@@ -120,6 +121,6 @@ namespace Tests.Modelchecking.Promela
 			modelWriter.Visit(convertedLtlFormulaModule);
 			modelWriter.CodeWriter.WriteToFile(filename);
 			Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);
-		}
+		}*/
 	}
 }
