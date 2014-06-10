@@ -19,6 +19,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "SafetySharp.Mod
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Code Generator", "Code Generator\Code Generator.fsproj", "{0A9DEBF8-9E1A-4517-9510-8238807CB41A}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACDBA456-3B21-480D-B739-DCC7EAE6D233}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACDBA456-3B21-480D-B739-DCC7EAE6D233}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACDBA456-3B21-480D-B739-DCC7EAE6D233}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACDBA456-3B21-480D-B739-DCC7EAE6D233}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
