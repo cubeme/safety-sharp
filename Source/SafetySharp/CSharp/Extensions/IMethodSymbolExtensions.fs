@@ -20,11 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp
 
-[<AbstractClass>]
-type Component () =
-    abstract member Update : unit -> unit
-    default this.Update () = ()
+open System.Linq
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.Utilities
 
-type IComponent = interface end
+/// Provides extension methods for working with <see cref="IMethodSymbol" /> instances.
+[<AutoOpen>]
+module MethodSymbolExtensions =
+    type IMethodSymbol with
+
+        /// Checks whether the method symbol overrides the given method.
+        member this.Overrides (overriddenMethod : IMethodSymbol) =
+            Requires.NotNull this "this"
+            Requires.NotNull overriddenMethod "overriddenMethod"
+
+            if not this.IsOverride then
+                false
+            else if this.OverriddenMethod.Equals overriddenMethod then
+                true
+            else
+                this.OverriddenMethod.Overrides overriddenMethod
+
+        /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
+        member this.IsUpdateMethod (semanticModel : SemanticModel) =
+            Requires.NotNull this "this"
+            this.Overrides <| semanticModel.GetUpdateMethodSymbol ()

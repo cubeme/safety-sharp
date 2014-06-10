@@ -68,7 +68,7 @@ type Expression =
     | BinaryExpression of LeftExpression : Expression * Operator : BinaryOperator * RightExpression : Expression
 
     /// Represents a field access, either for reading or writing.
-    | FieldAccessExpression of Component : ComponentSymbol * Field : FieldSymbol
+    | FieldAccessExpression of Field : FieldSymbol
 
     with
 

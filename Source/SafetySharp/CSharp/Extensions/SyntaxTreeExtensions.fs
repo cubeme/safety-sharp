@@ -20,11 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp
 
-[<AbstractClass>]
-type Component () =
-    abstract member Update : unit -> unit
-    default this.Update () = ()
+open System.Linq
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.Utilities
 
-type IComponent = interface end
+/// Provides extension methods for working with <see cref="SyntaxTree" /> instances.
+[<AutoOpen>]
+module SyntaxTreeExtensions =
+    type SyntaxTree with
+
+        /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node of the given type
+        /// in prefix document order.
+        member this.Descendants<'a when 'a :> SyntaxNode> () =
+            Requires.NotNull this "this"
+            this.GetRoot().Descendants<'a>()
+
+        /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node (including the root node) of
+        /// the given type in prefix document order.
+        member this.DescendantsAndSelf<'a when 'a :> SyntaxNode> () =
+            Requires.NotNull this "this"
+            this.GetRoot().DescendantsAndSelf<'a>()

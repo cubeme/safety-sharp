@@ -20,11 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp
 
-[<AbstractClass>]
-type Component () =
-    abstract member Update : unit -> unit
-    default this.Update () = ()
+open System.Linq
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.Utilities
 
-type IComponent = interface end
+/// Provides extension methods for working with <see cref="SyntaxNode" /> instances.
+[<AutoOpen>]
+module SyntaxNodeExtensions =
+    type SyntaxNode with
+
+        /// Gets a list of descendant syntax nodes of the given type in prefix document order.
+        member this.Descendants<'a when 'a :> SyntaxNode> () =
+            Requires.NotNull this "this"
+            this.DescendantNodes().OfType<'a>()
+
+        /// Gets a list of descendant syntax nodes (including the root node) of the given type 
+        /// in prefix document order.
+        member this.DescendantsAndSelf<'a when 'a :> SyntaxNode> () =
+            Requires.NotNull this "this"
+            this.DescendantNodesAndSelf().OfType<'a>()

@@ -30,6 +30,8 @@ module ExpressionTransformationTests =
     open SafetySharp.Metamodel
     open Microsoft.CodeAnalysis.CSharp.Syntax
 
+    let mutable fieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Boolean }
+
     let transform csharpCode =
         let csharpCode = "
             class C : Component 
@@ -43,9 +45,11 @@ module ExpressionTransformationTests =
             }"
 
         let compilation = new TestCompilation(csharpCode);
-        let expression = compilation.SyntaxRoot.DescendantNodes().OfType<EqualsValueClauseSyntax>().Single().Value;
+        let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value;
+        let symbolMap = SymbolMap (compilation.CSharpCompilation, [ "C" ])
+        fieldSymbol <- symbolMap.Components.[0].Fields.[0]
 
-        Transformation.TransformExpression expression
+        Transformation.TransformExpression symbolMap compilation.SemanticModel expression
 
     [<Test>]
     let ``boolean literals`` () =
@@ -155,14 +159,13 @@ module ExpressionTransformationTests =
         transform "false || true" |> should equal (BinaryExpression (BooleanLiteral false, BinaryOperator.LogicalOr, BooleanLiteral true))
         transform "true || true" |> should equal (BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral true))
 
-//    [<Test>]
-//    let ``field access expressions`` () =
-//        transform "boolField").Should () =.Be(new FieldAccessExpression(_fieldReference));
+    [<Test>]
+    let ``field access expressions`` () =
+        transform "boolField" |> should equal (FieldAccessExpression(fieldSymbol));
 
-//    [<Test>]
-//    let ``field access in binary expression`` () =
-//    transform "boolField == false")
-//    .Should () =.Be(new BinaryExpression(new FieldAccessExpression(_fieldReference), BinaryOperator.Equals, BooleanLiteral.False));
+    [<Test>]
+    let ``field access in binary expression`` () =
+        transform "boolField == false" |> should equal (BinaryExpression(FieldAccessExpression(fieldSymbol), BinaryOperator.Equals, BooleanLiteral false));
 
     [<Test>]
     let ``nested binary expressions`` () =

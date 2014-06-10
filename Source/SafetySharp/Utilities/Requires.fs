@@ -20,11 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Utilities
+open System
 
-[<AbstractClass>]
-type Component () =
-    abstract member Update : unit -> unit
-    default this.Update () = ()
+/// Defines a set of helper functions that should be used to assert preconditions of functions.
+[<RequireQualifiedAccess>]
+module Requires =
 
-type IComponent = interface end
+    /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
+    let NotNull<'a when 'a : null and 'a : equality> (argument : 'a) argumentName =
+        if argument = null then 
+            nullArg argumentName
+
+    /// Throws a <see cref="System.ArgumentNullException"/> if the given string is <c>null</c> or a
+    /// <see cref="System.ArgumentException"/> if the given string consists of whitespace only.
+    let NotNullOrWhitespace argument argumentName =
+        if argument = null then 
+            nullArg argumentName
+
+        if String.IsNullOrWhiteSpace argument then 
+            invalidArg argumentName "The given string cannot consist of whitespace only."
+
+    /// Throws an <see cref="InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
+    let That condition description =
+        if not condition then
+            invalidOp description

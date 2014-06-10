@@ -69,17 +69,14 @@ type SubcomponentSymbol = {
     /// The name of the subcomponent. Subcomponent names are unique within a single component and do
     /// not overlap with field or method names.
     Name : string
-
-    /// The component type of the subcomponent.
-    Type : ComponentSymbol
 }
 
 /// Represents the type definition of a component within a model.
-and ComponentSymbol = { 
+type ComponentSymbol = { 
     /// The name of the component. Component names are unique within a single model.
     Name : string
 
-    /// The update method of the component, overriding <see cref=\"SafetySharp.Modeling.Component.Update()\" />.
+    /// The update method of the component, overriding <see cref="SafetySharp.Modeling.Component.Update()" />.
     UpdateMethod : MethodSymbol
 
     /// The methods declared by the component. The <see cref="UpdateMethod" /> is never contained in this list.

@@ -20,11 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Utilities
+open System
 
-[<AbstractClass>]
-type Component () =
-    abstract member Update : unit -> unit
-    default this.Update () = ()
+/// Defines a set of helper functions for assertions.
+[<RequireQualifiedAccess>]
+module Assert =
 
-type IComponent = interface end
+    /// Throws a <see cref="System.NullReferenceException"/> if the given object is <c>null</c>.
+    let NotNull<'a when 'a : null and 'a : equality> (obj : 'a) description =
+        if obj = null then 
+            NullReferenceException description |> raise

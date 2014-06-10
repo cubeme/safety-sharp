@@ -49,15 +49,24 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <None Include="packages.config" />
+    <Compile Include="Utilities\Requires.fs" />
+    <Compile Include="Utilities\Assert.fs" />
     <Compile Include="Metamodel\Symbols.fs" />
     <Compile Include="Metamodel\Expressions.fs" />
     <Compile Include="Metamodel\Formulas.fs" />
     <Compile Include="Metamodel\Statements.fs" />
     <Compile Include="Metamodel\Objects.fs" />
-    <Compile Include="CSharp\Roslyn.fs" />
-    <Compile Include="CSharp\Transformation.fs" />
     <Compile Include="Modeling\Component.fs" />
+    <Compile Include="CSharp\Extensions\SyntaxNodeExtensions.fs" />
+    <Compile Include="CSharp\Extensions\SyntaxTreeExtensions.fs" />
+    <Compile Include="CSharp\Extensions\SemanticModelExtensions.fs" />
+    <Compile Include="CSharp\Extensions\ITypeSymbolExtensions.fs" />
+    <Compile Include="CSharp\Extensions\IFieldSymbolExtensions.fs" />
+    <Compile Include="CSharp\Extensions\IMethodSymbolExtensions.fs" />
+    <Compile Include="CSharp\Roslyn.fs" />
+    <Compile Include="CSharp\SymbolMap.fs" />
+    <Compile Include="CSharp\Transformation.fs" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">

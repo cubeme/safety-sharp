@@ -20,11 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp
 
-[<AbstractClass>]
-type Component () =
-    abstract member Update : unit -> unit
-    default this.Update () = ()
+open System.Linq
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.Utilities
 
-type IComponent = interface end
+/// Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
+[<AutoOpen>]
+module FieldSymbolExtensions =
+    type IFieldSymbol with
+
+        /// Checks whether the field symbol is a subcomponent field.
+        member this.IsSubcomponentField (semanticModel : SemanticModel) =
+            Requires.NotNull this "this"
+
+            // It is sufficient to check whether the type implements IComponent, as all Component derived classes
+            // implement IComponent as well
+            let componentInterface = semanticModel.GetComponentInterfaceSymbol ();
+            this.Type.IsDerivedFrom(componentInterface) || this.Type.Equals(componentInterface);
