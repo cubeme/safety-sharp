@@ -100,6 +100,7 @@
     <Compile Include="Formulas\UntransformedStateFormula.cs" />
     <Compile Include="Metamodel\Declarations\InterfaceDeclaration.cs" />
     <Compile Include="Metamodel\IMetamodelReference`1.cs" />
+    <Compile Include="Modelchecking\FieldAccessCollector.cs" />
     <Compile Include="Modelchecking\NuXmv\MetamodelToNuXmv.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmv.Generated.cs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvBinaryOperator.cs" />

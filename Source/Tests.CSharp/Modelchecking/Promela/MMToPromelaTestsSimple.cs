@@ -43,14 +43,14 @@ namespace Tests.Modelchecking.Promela
 		[Test]
 		public void Test()
 		{
-			var mmAccessTypeToConcreteTypeDictionary = MM.MetamodelResolver.Empty;
+		    var mmFieldAccessExpressionToFieldConfiguration = FormulaResolver.Empty;
 
-			var fieldDecl = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
+            var fieldDecl = new MMDeclarations.FieldDeclaration(new MM.Identifier("_value"), MMTypes.TypeSymbol.Boolean);
 			var fieldDeclReference = new MM.MetamodelReference<MMDeclarations.FieldDeclaration>();
-			mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(fieldDeclReference, fieldDecl);
-			var fieldAccessExpr = new MMExpressions.FieldAccessExpression(fieldDeclReference);
+            var fieldAccessExpr = new MMExpressions.FieldAccessExpression(fieldDeclReference);
 
-			var assignment1 = new MMStatements.AssignmentStatement(fieldAccessExpr, MMExpressions.BooleanLiteral.True);
+
+            var assignment1 = new MMStatements.AssignmentStatement(fieldAccessExpr, MMExpressions.BooleanLiteral.True);
 			var assignment2 = new MMStatements.AssignmentStatement(fieldAccessExpr, MMExpressions.BooleanLiteral.False);
 
 			var clause1 = new MMStatements.GuardedCommandClause(MMExpressions.BooleanLiteral.True, assignment1);
@@ -65,17 +65,18 @@ namespace Tests.Modelchecking.Promela
 				ImmutableArray<MMDeclarations.MethodDeclaration>.Empty,
 				ImmutableArray.Create(fieldDecl),
 				ImmutableArray<MMDeclarations.SubComponentDeclaration>.Empty);
-			var componentDeclReference = new MM.MetamodelReference<MMDeclarations.ComponentDeclaration>();
-			mmAccessTypeToConcreteTypeDictionary = mmAccessTypeToConcreteTypeDictionary.With(componentDeclReference, mmsimpleComponentDecl);
 
 			var trueAndFalseValues = ImmutableArray.Create<object>(true, false);
 
-			var trueAndFalsePossible = new MMConfigurations.FieldConfiguration(trueAndFalseValues);
+			var fieldConfiguration = new MMConfigurations.FieldConfiguration(trueAndFalseValues);
 			// a component has a list of fields which themselves may have more possible start values
-			var initialValues = ImmutableDictionary<MMDeclarations.FieldDeclaration, MMConfigurations.FieldConfiguration>
-				.Empty.Add(fieldDecl, trueAndFalsePossible);
+			var initialValues = ImmutableDictionary<MMDeclarations.FieldDeclaration, MMConfigurations.FieldConfiguration>.Empty;
+            initialValues = initialValues.Add(fieldDecl, fieldConfiguration);
 
-			var subcomponentInstances = ImmutableArray<MMConfigurations.ComponentConfiguration>.Empty;
+            // connect a expression to the componentconfiguration it belongs to
+		    mmFieldAccessExpressionToFieldConfiguration = mmFieldAccessExpressionToFieldConfiguration.With(fieldAccessExpr, fieldConfiguration);
+
+            var subcomponentInstances = ImmutableArray<MMConfigurations.ComponentConfiguration>.Empty;
 
 			var mmsimpleComponentInstance = new MMConfigurations.ComponentConfiguration(
 				new MM.Identifier("BooleanComponentConfiguration"),
@@ -83,11 +84,11 @@ namespace Tests.Modelchecking.Promela
 				initialValues,
 				subcomponentInstances);
 
-			var partition = new MMConfigurations.Partition(mmsimpleComponentInstance);
+            var partition = new MMConfigurations.Partition(mmsimpleComponentInstance);
 
 			var completeMetamodel = new MM.MetamodelConfiguration(ImmutableArray<MMConfigurations.Partition>.Empty.Add(partition));
 
-			var metamodelToPromela = new MetamodelToPromela(completeMetamodel, mmAccessTypeToConcreteTypeDictionary);
+			var metamodelToPromela = new MetamodelToPromela(completeMetamodel, mmFieldAccessExpressionToFieldConfiguration);
 
 			var modelWriter = new PromelaModelWriter();
 
