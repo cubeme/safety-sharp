@@ -356,20 +356,62 @@ type ExportNuXmvAstToFile() =
 
     member this.ExportCtlExpression (ctlExpression:CtlExpression) =
         match ctlExpression with
-            | CtlSimpleExpression (expression:SimpleExpression) -> ""
-            | CtlUnaryExpression (operator:CtlUnaryOperator, operand:CtlExpression) -> ""
-            | CtlBinaryExpression (left:CtlExpression, operator:CtlBinaryOperator, right:CtlExpression) -> ""
+            | CtlSimpleExpression (expression:SimpleExpression) ->
+                this.ExportSimpleExpression expression
+            | CtlUnaryExpression (operator:CtlUnaryOperator, operand:CtlExpression) ->
+                let opStr = match operator with
+                                | CtlUnaryOperator.LogicalNot      -> "!"
+                                | CtlUnaryOperator.ExistsGlobally  -> "EG"
+                                | CtlUnaryOperator.ExistsNextState -> "EX"
+                                | CtlUnaryOperator.ExistsFinally   -> "EF"
+                                | CtlUnaryOperator.ForallGlobally  -> "AG"
+                                | CtlUnaryOperator.ForallNext      -> "AX"
+                                | CtlUnaryOperator.ForallFinally   -> "AF"
+                sprintf "(%s %s)" opStr (this.ExportCtlExpression operand)
+            | CtlBinaryExpression (left:CtlExpression, operator:CtlBinaryOperator, right:CtlExpression) ->
+                match operator with
+                    | CtlBinaryOperator.LogicalAnd         -> sprintf "(%s & %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.LogicalOr          -> sprintf "(%s | %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.LogicalXor         -> sprintf "(%s xor %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.LogicalNxor        -> sprintf "(%s nxor %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.LogicalImplies     -> sprintf "(%s -> %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.LogicalEquivalence -> sprintf "(%s <-> %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.ExistsUntil        -> sprintf "(E [%s U %s])" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                    | CtlBinaryOperator.ForallUntil        -> sprintf "(A [%s U %s])" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
+                        
             
     member this.ExportLtlExpression (ltlExpression:LtlExpression) =
         match ltlExpression with
-            | LtlSimpleExpression (expression:SimpleExpression) -> ""
-            | LtlUnaryExpression (operator:LtlUnaryOperator,  operand:LtlExpression) -> ""
-            | LtlBinaryExpression (left:LtlExpression, operator:LtlBinaryOperator, right:LtlExpression) -> ""
+            | LtlSimpleExpression (expression:SimpleExpression) ->
+                this.ExportSimpleExpression expression
+            | LtlUnaryExpression (operator:LtlUnaryOperator,  operand:LtlExpression) ->
+                let opStr = match operator with
+                                | LtlUnaryOperator.LogicalNot              -> "!"
+                                | LtlUnaryOperator.FutureNext              -> "X"
+                                | LtlUnaryOperator.FutureGlobally          -> "G"
+                                | LtlUnaryOperator.FutureFinally           -> "F"
+                                | LtlUnaryOperator.PastPrevious            -> "Y"
+                                | LtlUnaryOperator.PastNotPreviousStateNot -> "Z"
+                                | LtlUnaryOperator.PastHistorically        -> "H"
+                                | LtlUnaryOperator.PastOnce                -> "O"
+                sprintf "(%s %s)" opStr (this.ExportLtlExpression operand)
+            | LtlBinaryExpression (left:LtlExpression, operator:LtlBinaryOperator, right:LtlExpression) ->
+                match operator with
+                    | LtlBinaryOperator.LogicalAnd         -> sprintf "(%s & %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.LogicalOr          -> sprintf "(%s | %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.LogicalXor         -> sprintf "(%s xor %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.LogicalNxor        -> sprintf "(%s nxor %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.LogicalImplies     -> sprintf "(%s -> %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.LogicalEquivalence -> sprintf "(%s <-> %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.FutureUntil        -> sprintf "(%s U %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.FutureReleases     -> sprintf "(%s R %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.PastSince          -> sprintf "(%s S %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
+                    | LtlBinaryOperator.PastTriggered      -> sprintf "(%s T %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
 
     member this.ExportSpecification (specification:Specification) =
         match specification with
-            | CtlSpecification (ctlExpression:CtlExpression) -> ""
-            | LtlSpecification (ltlExpression:LtlExpression) -> ""
+            | CtlSpecification (ctlExpression:CtlExpression) -> "CTLSPEC " + this.ExportCtlExpression ctlExpression
+            | LtlSpecification (ltlExpression:LtlExpression) -> "LTLSPEC " + this.ExportLtlExpression ltlExpression
         
 
     (*
