@@ -23,16 +23,15 @@
 namespace SafetySharp.Metamodel
 
 /// Represents an instantiation of a component field.
-type internal FieldObject = {
+type FieldObject = {
     /// The instantiated field.
     Field : FieldSymbol
     /// The list of initial values for the field. Each field is guaranteed to have at least one initial value.
     InitialValues : obj list
 } 
-with override this.ToString () = sprintf "%A" this
 
 /// Represents the instantiation of a component.
-type internal ComponentObject = {
+type ComponentObject = {
     /// The name of the component object. Component object names are unique within a single model object.
     Name : string list
     /// The instantiated component type.
@@ -42,10 +41,8 @@ type internal ComponentObject = {
     /// Maps each subcomponent declared by the component type to a component instantiation.
     Subcomponents : Map<SubcomponentSymbol, ComponentObject>
 } 
-with override this.ToString () = sprintf "%A" this
 
 // Todo
-type internal ModelObject = {
+type ModelObject = {
     X: int
 } 
-with override this.ToString () = sprintf "%A" this

@@ -24,7 +24,7 @@ namespace SafetySharp.Tests.CSharp
 
 open System.Linq
 open NUnit.Framework
-open FsUnit
+open Swensen.Unquote
 open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open Microsoft.CodeAnalysis.CSharp.Syntax
@@ -61,7 +61,7 @@ module StatementTransformationTests =
 
     [<Test>]
     let ``empty statement`` () =
-        transform "" |> should equal (EmptyStatement)
+        transform "" =? EmptyStatement
 
     [<Test>]
     let ``statement block`` () =
@@ -70,11 +70,11 @@ module StatementTransformationTests =
         let assignment2 = (AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 2))
         let expected = BlockStatement [ assignment1; assignment2 ]
 
-        actual |> should equal expected
+        actual =? expected
 
     [<Test>]
     let ``stand-alone assignment statement`` () =
-        transform "boolField = true" |> should equal (AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral true))
+        transform "boolField = true" =? AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral true)
 
     [<Test>]
     let ``assignment statement in binary expression`` () =
@@ -82,21 +82,21 @@ module StatementTransformationTests =
         let expression = BinaryExpression(BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral false)
         let expected = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), expression)
 
-        actual |> should equal expected
+        actual =? expected
 
     [<Test>]
     let ``return statement`` () = 
-        transform "return" |> should equal (ReturnStatement None)
-        transformWithReturnType "return 1" "int" |> should equal (IntegerLiteral 1 |> Some |> ReturnStatement)
-        transformWithReturnType "return false" "bool" |> should equal (BooleanLiteral false |> Some |> ReturnStatement)
+        transform "return" =? ReturnStatement None
+        transformWithReturnType "return 1" "int" =? (IntegerLiteral 1 |> Some |> ReturnStatement)
+        transformWithReturnType "return false" "bool" =? (BooleanLiteral false |> Some |> ReturnStatement)
 
     [<Test>]
     let ``guarded commands`` () =
         let ifClause = (BooleanLiteral true, EmptyStatement)
         let elseClause = (UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), ReturnStatement(None))
 
-        transform "if (true) " |> should equal (GuardedCommandStatement [ ifClause ])
-        transform "if (true) ; else return" |> should equal (GuardedCommandStatement [ ifClause; elseClause ])
+        transform "if (true) " =? GuardedCommandStatement [ ifClause ]
+        transform "if (true) ; else return" =? GuardedCommandStatement [ ifClause; elseClause ]
 
 //    [<Test>]
 //    let ``ChooseFromValues_FourValues()

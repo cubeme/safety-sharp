@@ -23,7 +23,7 @@
 namespace SafetySharp.Metamodel
 
 /// Represents the operator of an unary temporal formula.
-type internal UnaryFormulaOperator =
+type UnaryFormulaOperator =
     // Non-temporal operators
     | Not
 
@@ -41,7 +41,7 @@ type internal UnaryFormulaOperator =
     | ExistsPathGlobally
 
 /// Represents the operator of a binary formula.
-type internal BinaryFormulaOperator =
+type BinaryFormulaOperator =
     // Non-temporal operators
     | And
     | Or
@@ -56,7 +56,7 @@ type internal BinaryFormulaOperator =
     | ExistsPathUntil
 
 /// Represents a formula that can be modelchecked, for instance.
-type internal Formula =
+type Formula =
     /// Represents a state formula that is evaluated in a single model state.
     | StateFormula of StateExpression : Expression
 
@@ -87,7 +87,3 @@ type internal Formula =
             operator <> Next && operator <> Finally && operator <> Globally && operand.IsCtl ()
         | BinaryFormula (left, operator, right) ->
             operator <> Until && left.IsCtl () && right.IsCtl ()
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this

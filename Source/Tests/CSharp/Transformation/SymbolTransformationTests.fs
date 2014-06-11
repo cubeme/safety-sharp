@@ -25,7 +25,7 @@ namespace SafetySharp.Tests.CSharp.SymbolTransformationTests
 open System
 open System.Linq
 open NUnit.Framework
-open FsUnit
+open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
@@ -49,25 +49,25 @@ module private SymbolTransformationTestsHelper =
 module TransformMethod =
     [<Test>]
     let ``throws when no components are provided`` () =
-        (fun () -> compile "class C : Component {}" [] |> ignore) |> should throw typeof<ArgumentException>
+        raises<ArgumentException> <@ compile "class C : Component {}" [] @>
 
     [<Test>]
     let ``throws when non-component is provided`` () =
-        (fun () -> compile "class C {}" [ "C" ] |> ignore) |> should throw typeof<InvalidOperationException>
+        raises<InvalidOperationException> <@ compile "class C {}" [ "C" ] @>
 
 [<TestFixture>]
 module ComponentsProperty =
     [<Test>]
     let ``contains all components`` () =
         components "class A : Component {} class B : Component {} class C : Component {}" [ "A"; "B"; "C" ]
-        |> should equal [ emptyComponent "A"; emptyComponent "B"; emptyComponent "C" ]
+        =? [ emptyComponent "A"; emptyComponent "B"; emptyComponent "C" ]
 
     [<Test>]
     let ``does not contain ignored components`` () =
         components "class A : Component {} class B : Component {} class C : Component {}" [ "A"; "C" ]
-        |> should equal [ emptyComponent "A"; emptyComponent "C" ]
+        =? [ emptyComponent "A"; emptyComponent "C" ]
 
     [<Test>]
     let ``contains components that are provided multiple times only once`` () =
         components "class A : Component {} class B : Component {} class C : Component {}" [ "C"; "A"; "C" ]
-        |> should equal [ emptyComponent "C"; emptyComponent "A" ]
+        =? [ emptyComponent "C"; emptyComponent "A" ]

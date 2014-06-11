@@ -24,7 +24,7 @@ namespace SafetySharp.Tests.CSharp.IMethodSymbolTests
 
 open System.Linq
 open NUnit.Framework
-open FsUnit
+open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
@@ -41,13 +41,13 @@ module OverridesMethod =
 
     [<Test>]
     let ``returns false for non-overriding method`` () =
-        overrides "class X : Y { public new void M() {} }" |> should be False
-        overrides "class X : Y { public virtual new void M() {} }" |> should be False
-        overrides "class X { public virtual void M() {} }" |> should be False
+        overrides "class X : Y { public new void M() {} }" =? false
+        overrides "class X : Y { public virtual new void M() {} }" =? false
+        overrides "class X { public virtual void M() {} }" =? false
 
     [<Test>]
     let ``returns true fro overriding method`` () =
-        overrides "class X : Y { public override void M() {} }" |> should be True
-        overrides "class X : Y { public sealed override void M() {} }" |> should be True
-        overrides "class Z : Y {} class X : Z { public override void M () {} }" |> should be True
-        overrides "class Z : Y { public override void M() {} } class X : Z { public override void M () {} }" |> should be True
+        overrides "class X : Y { public override void M() {} }" =? true
+        overrides "class X : Y { public sealed override void M() {} }" =? true
+        overrides "class Z : Y {} class X : Z { public override void M () {} }" =? true
+        overrides "class Z : Y { public override void M() {} } class X : Z { public override void M () {} }" =? true

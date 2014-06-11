@@ -23,12 +23,12 @@
 namespace SafetySharp.Metamodel
 
 /// Represents the operator in an unary expression.
-type internal UnaryOperator =
+type UnaryOperator =
     | Minus
     | LogicalNot
 
 /// Represents the operator in a binary expression.
-type internal BinaryOperator =
+type BinaryOperator =
     // Arithmetic operators
     | Add
     | Subtract
@@ -51,7 +51,7 @@ type internal BinaryOperator =
     | GreaterThanOrEqual
 
 /// Represents side-effect free expressions within a model.
-type internal Expression =
+type Expression =
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
     | BooleanLiteral of Value : bool
 
@@ -69,9 +69,3 @@ type internal Expression =
 
     /// Represents a field access, either for reading or writing.
     | FieldAccessExpression of Field : FieldSymbol
-
-    with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this

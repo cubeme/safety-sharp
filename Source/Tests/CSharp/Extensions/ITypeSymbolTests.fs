@@ -24,7 +24,7 @@ namespace SafetySharp.Tests.CSharp.ITypeSymbolTests
 
 open System.Linq
 open NUnit.Framework
-open FsUnit
+open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
@@ -42,41 +42,41 @@ module IsDerivedFromMethod =
 
     [<Test>]
     let ``returns false for self checks`` () =
-        isDerivedFrom "interface X {}" "X" |> should be False
-        isDerivedFrom "class X {}" "X" |> should be False
+        isDerivedFrom "interface X {}" "X" =? false
+        isDerivedFrom "class X {}" "X" =? false
 
     [<Test>]
     let ``returns false when class does not derive from given base class`` () =
-        isDerivedFrom "class Q {} class X {}" "Q" |> should be False
-        isDerivedFrom "class Q {} class Y {} class X : Y {}" "Q" |> should be False
-        isDerivedFrom "class Q {} class Z {} class Y : Z {} class X : Y {}" "Q" |> should be False
+        isDerivedFrom "class Q {} class X {}" "Q" =? false
+        isDerivedFrom "class Q {} class Y {} class X : Y {}" "Q" =? false
+        isDerivedFrom "class Q {} class Z {} class Y : Z {} class X : Y {}" "Q" =? false
 
     [<Test>]
     let ``returns false when interface does not derive from given base interface`` () =
-        isDerivedFrom "interface Q {} interface X {}" "Q" |> should be False
-        isDerivedFrom "interface Q {} interface Y {} interface X : Y {}" "Q" |> should be False
-        isDerivedFrom "interface Q {} interface Z {} interface Y : Z {} interface X : Y {}" "Q" |> should be False
+        isDerivedFrom "interface Q {} interface X {}" "Q" =? false
+        isDerivedFrom "interface Q {} interface Y {} interface X : Y {}" "Q" =? false
+        isDerivedFrom "interface Q {} interface Z {} interface Y : Z {} interface X : Y {}" "Q" =? false
 
     [<Test>]
     let ``returns true when class derives from given base class`` () =
-        isDerivedFrom "class Y {} class X : Y {}" "Y" |> should be True
-        isDerivedFrom "class Z {} class Y : Z {} class X : Y {}" "Y" |> should be True
-        isDerivedFrom "class Z {} class Y : Z {} class X : Y {}" "Z" |> should be True
+        isDerivedFrom "class Y {} class X : Y {}" "Y" =? true
+        isDerivedFrom "class Z {} class Y : Z {} class X : Y {}" "Y" =? true
+        isDerivedFrom "class Z {} class Y : Z {} class X : Y {}" "Z" =? true
 
     [<Test>]
     let ``returns true when class has base class that derives from the given base interface`` () =
-        isDerivedFrom "interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}" "Q" |> should be True
-        isDerivedFrom "interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}" "Z" |> should be True
-        isDerivedFrom "interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}" "Q" |> should be True
-        isDerivedFrom "interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}" "S" |> should be True
+        isDerivedFrom "interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}" "Q" =? true
+        isDerivedFrom "interface Q {} interface Z {} class Y : Z, Q {} class X : Y {}" "Z" =? true
+        isDerivedFrom "interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}" "Q" =? true
+        isDerivedFrom "interface S {} interface Q {} class Z : Q, S {} class Y : Z, Q {} class X : Y {}" "S" =? true
 
     [<Test>]
     let ``returns true when interface derives from given base interface`` () =
-        isDerivedFrom "interface Y {} interface X : Y {}" "Y" |> should be True
-        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y {}" "Y" |> should be True
-        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y {}" "Z" |> should be True
-        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y, Z {}" "Y" |> should be True
-        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y, Z {}" "Z" |> should be True
-        isDerivedFrom "interface Z {} interface Y {} interface X : Y, Z {}" "Y" |> should be True
-        isDerivedFrom "interface Z {} interface Y {} interface X : Y, Z {}" "Z" |> should be True
-        isDerivedFrom "interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}" "Q" |> should be True
+        isDerivedFrom "interface Y {} interface X : Y {}" "Y" =? true
+        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y {}" "Y" =? true
+        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y {}" "Z" =? true
+        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y, Z {}" "Y" =? true
+        isDerivedFrom "interface Z {} interface Y : Z {} interface X : Y, Z {}" "Z" =? true
+        isDerivedFrom "interface Z {} interface Y {} interface X : Y, Z {}" "Y" =? true
+        isDerivedFrom "interface Z {} interface Y {} interface X : Y, Z {}" "Z" =? true
+        isDerivedFrom "interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}" "Q" =? true

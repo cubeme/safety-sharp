@@ -24,7 +24,7 @@ namespace SafetySharp.Tests.CSharp.IFieldSymbolTests
 
 open System.Linq
 open NUnit.Framework
-open FsUnit
+open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
@@ -42,13 +42,13 @@ module IsSubcomponentFieldMethod =
 
     [<Test>]
     let ``returns false for non-component fields`` () =
-        isComponentField "class X : Component { int x; }" |> should be False
-        isComponentField "class X : Component { bool x; }" |> should be False
-        isComponentField "class X : Component { decimal x; }" |> should be False
+        isComponentField "class X : Component { int x; }" =? false
+        isComponentField "class X : Component { bool x; }" =? false
+        isComponentField "class X : Component { decimal x; }" =? false
 
     [<Test>]
     let ``returns true for component fields`` () =
-        isComponentField "class X : Component { Component x; }" |> should be True
-        isComponentField "class X : Component { IComponent x; }" |> should be True
-        isComponentField "class Y : Component {} class X : Component { Y x; }" |> should be True
-        isComponentField "interface Y : IComponent {} class X : Component { Y x; }" |> should be True
+        isComponentField "class X : Component { Component x; }" =? true
+        isComponentField "class X : Component { IComponent x; }" =? true
+        isComponentField "class Y : Component {} class X : Component { Y x; }" =? true
+        isComponentField "interface Y : IComponent {} class X : Component { Y x; }" =? true
