@@ -87,7 +87,7 @@ and ConstExpression =
     | SymbolicConstant of SymbolName:Identifier
     | IntegerConstant of Value:System.Numerics.BigInteger
     | RealConstant of Value:float
-    | WordConstant of Value:(bool list) * Sign:SignSpecifier * Base:Radix * ImproveReadability:bool
+    | WordConstant of Value:(bool[]) * Sign:SignSpecifier * Base:Radix * ImproveReadability:bool
     | RangeConstant of From:System.Numerics.BigInteger * To:System.Numerics.BigInteger
 
 and BasicExpression =

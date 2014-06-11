@@ -381,9 +381,9 @@ namespace SafetySharp.Modelchecking.NuXmv
                         throw new Exception("Not convertable, because radix not mod 3");
                     for (int i = 0; i < (wordConstant.Value.Length / 3); i++)
                     {
-                        int n4 = wordConstant.Value[i]     ? 4 : 0;
-                        int n2 = wordConstant.Value[i + 1] ? 2 : 0;
-                        int n1 = wordConstant.Value[i + 2] ? 1 : 0;
+                        int n4 = wordConstant.Value[i*3]     ? 4 : 0;
+                        int n2 = wordConstant.Value[i*3 + 1] ? 2 : 0;
+                        int n1 = wordConstant.Value[i*3 + 2] ? 1 : 0;
                         number.Append((n4 + n2 + n1).ToString("X"));
                     }
                     break;
@@ -429,10 +429,10 @@ namespace SafetySharp.Modelchecking.NuXmv
                         throw new Exception("Not convertable, because radix not mod 4");
                     for (int i = 0; i < (wordConstant.Value.Length / 4); i++)
                     {
-                        int n8 = wordConstant.Value[i    ] ? 8 : 0;
-                        int n4 = wordConstant.Value[i + 1] ? 4 : 0;
-                        int n2 = wordConstant.Value[i + 2] ? 2 : 0;
-                        int n1 = wordConstant.Value[i + 3] ? 1 : 0;
+                        int n8 = wordConstant.Value[i*4    ] ? 8 : 0;
+                        int n4 = wordConstant.Value[i*4 + 1] ? 4 : 0;
+                        int n2 = wordConstant.Value[i*4 + 2] ? 2 : 0;
+                        int n1 = wordConstant.Value[i*4 + 3] ? 1 : 0;
                         number.Append((n8 + n4 + n2 + n1).ToString("X"));
                     }
                     break;
