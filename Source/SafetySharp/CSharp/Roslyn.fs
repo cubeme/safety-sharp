@@ -29,7 +29,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 module internal Roslyn =
     let private projectNode (node : SyntaxNode) projection =
         match node with
-        | :? 'a as node -> Some <| projection node
+        | :? 'T as node -> Some <| projection node
         | _ -> None
 
     let (|LiteralExpression|_|) (expression : ExpressionSyntax) =

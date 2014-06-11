@@ -34,12 +34,12 @@ module SyntaxNodeExtensions =
     type SyntaxNode with
 
         /// Gets a list of descendant syntax nodes of the given type in prefix document order.
-        member this.Descendants<'a when 'a :> SyntaxNode> () =
+        member this.Descendants<'T when 'T :> SyntaxNode> () =
             Requires.NotNull this "this"
-            this.DescendantNodes().OfType<'a>()
+            this.DescendantNodes().OfType<'T>()
 
         /// Gets a list of descendant syntax nodes (including the root node) of the given type 
         /// in prefix document order.
-        member this.DescendantsAndSelf<'a when 'a :> SyntaxNode> () =
+        member this.DescendantsAndSelf<'T when 'T :> SyntaxNode> () =
             Requires.NotNull this "this"
-            this.DescendantNodesAndSelf().OfType<'a>()
+            this.DescendantNodesAndSelf().OfType<'T>()

@@ -35,9 +35,9 @@ module CompilationExtensions =
     type Compilation with
 
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of the compilation.
-        member this.GetTypeSymbol<'a> () =
+        member this.GetTypeSymbol<'T> () =
             Requires.NotNull this "this"
-            this.GetTypeSymbol typeof<'a>.FullName;
+            this.GetTypeSymbol typeof<'T>.FullName;
 
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of the compilation.
         member this.GetTypeSymbol name =
