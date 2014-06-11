@@ -55,6 +55,7 @@
     <Compile Include="Metamodel\Formulas.fs" />
     <Compile Include="Metamodel\Statements.fs" />
     <Compile Include="Metamodel\Objects.fs" />
+    <Compile Include="Modeling\IComponent.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\Extensions\SyntaxNodeExtensions.fs" />
