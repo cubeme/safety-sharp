@@ -115,7 +115,8 @@ module internal SymbolTransformation =
         /// Encodes the assembly name and all parent namespaces in the component name to ensure the uniqueness of the name.
         let transformComponentName (csharpComponent : ITypeSymbol) = 
             let assemblyName = csharpComponent.ContainingAssembly.Identity.Name
-            let componentName = csharpComponent.ToDisplayString SymbolDisplayFormat.MinimallyQualifiedFormat
+            let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
+            let componentName = csharpComponent.ToDisplayString displayFormat
             sprintf "%s::%s" assemblyName componentName
 
         /// Creates the symbols and optional mapping information for the Update method of the component.
@@ -135,13 +136,26 @@ module internal SymbolTransformation =
         /// Create the symbols and mapping information for all methods of the component. We'll also build up a 
         /// dictionary that allows us to retrieve the original C# method symbol again.
         let transformMethods (csharpComponent : ITypeSymbol) =
+            let transformReturnType (returnType : ITypeSymbol) =
+                if returnType.SpecialType = SpecialType.System_Void then 
+                    None 
+                else 
+                    Some <| toTypeSymbol returnType
+
+            let transformParameter (parameter : IParameterSymbol) =
+                { ParameterSymbol.Name = parameter.Name; Type = toTypeSymbol parameter.Type }
+
             let methods = 
                 csharpComponent.GetMembers().OfType<IMethodSymbol>() 
                 |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod compilation && method'.MethodKind = MethodKind.Ordinary)
 
             [
                 for csharpMethod in methods ->
-                    let methodSymbol = { Name = csharpMethod.Name; ReturnType = None; Parameters = []}
+                    let methodSymbol = { 
+                        Name = csharpMethod.Name
+                        ReturnType = transformReturnType csharpMethod.ReturnType
+                        Parameters = [ for parameter in csharpMethod.Parameters -> transformParameter parameter ]
+                    }
                     methodMapBuilder.Add (csharpMethod, methodSymbol)
                     methodMapBackBuilder.Add (methodSymbol, csharpMethod)
                     methodSymbol
@@ -170,6 +184,10 @@ module internal SymbolTransformation =
         /// Creates the symbols and mapping information for a component with the given type.
         let transformComponent componentType =
             let csharpComponent = compilation.GetTypeByMetadataName componentType
+
+            if csharpComponent = null then
+                sprintf "Type '%s' could not be found." componentType |> invalidOp
+
             if not <| csharpComponent.IsDerivedFromComponent compilation then
                 sprintf "Type '%s' is not derived from '%s'." componentType typeof<Component>.FullName |> invalidOp
 

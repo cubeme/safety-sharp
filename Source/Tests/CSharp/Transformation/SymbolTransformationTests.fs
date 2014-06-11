@@ -53,7 +53,11 @@ module TransformMethod =
 
     [<Test>]
     let ``throws when non-component is provided`` () =
-        raises<InvalidOperationException> <@ compile "class C {}" [ "C" ] @>
+        raises<InvalidOperationException> <@ compile "class C {}" ["C"] @>
+
+    [<Test>]
+    let ``throws when provided component cannot be found`` () =
+        raises<InvalidOperationException> <@ compile "class C : Component {}" ["A"] @>
 
 [<TestFixture>]
 module ComponentsProperty =
@@ -71,6 +75,79 @@ module ComponentsProperty =
     let ``contains components that are provided multiple times only once`` () =
         components "class A : Component {} class B : Component {} class C : Component {}" ["C"; "A"; "C"]
         =? [ emptyComponent "C"; emptyComponent "A" ]
+
+    [<Test>]
+    let ``component name contains namespaces and nested types`` () =
+        let transformedComponents = components "namespace Test { class A : Component { } }" ["Test.A"]
+        transformedComponents.[0] =? emptyComponent "Test.A"
+
+        let transformedComponents = components "namespace Test1 { namespace Test2 { class A : Component { } }}" ["Test1.Test2.A"]
+        transformedComponents.[0] =? emptyComponent "Test1.Test2.A"
+
+        let transformedComponents = components "namespace Test1.Test2 { class A : Component { } }" ["Test1.Test2.A"]
+        transformedComponents.[0] =? emptyComponent "Test1.Test2.A"
+
+        let transformedComponents = components "namespace Test { class Nested { class A : Component { } }}" ["Test.Nested+A"]
+        transformedComponents.[0] =? emptyComponent "Test.Nested.A"
+
+    [<Test>]
+    let ``component symbol contains all fields`` () =
+        let components = components "class A : Component { int i; bool b; decimal d; }" ["A"]
+        components.[0] =? { 
+            emptyComponent "A" with 
+                Fields = 
+                [ 
+                    { FieldSymbol.Name = "i"; Type = TypeSymbol.Integer }
+                    { FieldSymbol.Name = "b"; Type = TypeSymbol.Boolean }
+                    { FieldSymbol.Name = "d"; Type = TypeSymbol.Decimal }
+                ] 
+        }
+
+    [<Test>]
+    let ``component symbol contains all subcomponents`` () =
+        let components = components "class A : Component { Component c; B b; IComponent i; } class B : Component {}" ["A"; "B"]
+        components.[0] =? { 
+            emptyComponent "A" with 
+                Subcomponents = 
+                [ 
+                    { SubcomponentSymbol.Name = "c" }
+                    { SubcomponentSymbol.Name = "b" }
+                    { SubcomponentSymbol.Name = "i" }
+                ] 
+        }
+
+    [<Test>]
+    let ``component symbol contains all non-update methods`` () =
+        let components = components "class A : Component { int M(int i, decimal d) { return 0; } void N(bool b) {} bool O() { return false; } }" ["A"]
+        components.[0] =? { 
+            emptyComponent "A" with 
+                Methods = 
+                [ 
+                    { 
+                        MethodSymbol.Name = "M"
+                        ReturnType = Some TypeSymbol.Integer 
+                        Parameters = [{ ParameterSymbol.Name = "i"; Type = TypeSymbol.Integer }; { ParameterSymbol.Name = "d"; Type = TypeSymbol.Decimal }]
+                    }
+                    { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [{ ParameterSymbol.Name = "b"; Type = TypeSymbol.Boolean }] }
+                    { MethodSymbol.Name = "O"; ReturnType = Some TypeSymbol.Boolean; Parameters = [] }
+                ] 
+        }
+
+    [<Test>]
+    let ``component symbol contains update methods`` () =
+        let components = components "class A : Component { public override void Update() {} }" ["A"]
+        components.[0] =? { emptyComponent "A" with UpdateMethod = { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] } }
+
+    [<Test>]
+    let ``component symbol contains all data`` () =
+        let components = components "class C : Component { bool N(int x) { return false; } public override void Update() {} int f; IComponent c; }" ["C"]
+        components.[0] =? {
+            emptyComponent "C" with
+                Methods = [{ MethodSymbol.Name = "N"; ReturnType = Some TypeSymbol.Boolean; Parameters = [{ ParameterSymbol.Name = "x"; Type = TypeSymbol.Integer }] }]
+                Fields = [{ FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }]
+                Subcomponents = [{ SubcomponentSymbol.Name = "c" }]
+                UpdateMethod = { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+        }
 
 [<TestFixture>]
 module ResolveComponentMethod =
@@ -300,6 +377,13 @@ module ResolveCSharpMethodMethod =
         let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation ["A"]
 
         raises<InvalidOperationException> <@ symbolMap.ResolveCSharpMethod <| symbolMap.ResolveMethod methodSymbol @>
+
+    [<Test>]
+    let ``throws for update method of component that doesn't override it`` () =
+        let compilation = TestCompilation "class A : Component {}"
+        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation ["A"]
+
+        raises<InvalidOperationException> <@ symbolMap.ResolveCSharpMethod <| symbolMap.Components.[0].UpdateMethod @>
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
