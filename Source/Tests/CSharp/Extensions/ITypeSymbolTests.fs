@@ -31,7 +31,7 @@ open SafetySharp.CSharp
 open SafetySharp.Tests.CSharp
 
 [<TestFixture>]
-module IsDerivedFromMethod =
+module ``IsDerivedFrom method`` =
     let isDerivedFrom csharpCode baseName =
         let compilation = TestCompilation csharpCode
 

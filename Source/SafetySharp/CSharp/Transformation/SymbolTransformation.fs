@@ -35,8 +35,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-/// Constructs symbols for the given component types and creates a mapping between the original C# symbols and the
-/// created metamodel symbols.
+/// Represents a mapping between the original C# symbols and the created metamodel symbols.
 type internal SymbolMap = private {
     ComponentList : ComponentSymbol list
     ComponentMap : ImmutableDictionary<INamedTypeSymbol, ComponentSymbol>

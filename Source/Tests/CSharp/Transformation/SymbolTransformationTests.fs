@@ -46,7 +46,7 @@ module private SymbolTransformationTestsHelper =
     let emptyComponent name = { Name = "TestCompilation::" + name; UpdateMethod = emptyUpdate; Fields = []; Methods = []; Subcomponents = [] } 
 
 [<TestFixture>]
-module TransformMethod =
+module ``Transform method`` =
     [<Test>]
     let ``throws when no components are provided`` () =
         raises<ArgumentException> <@ compile "class C : Component {}" [] @>
@@ -60,7 +60,7 @@ module TransformMethod =
         raises<InvalidOperationException> <@ compile "class C : Component {}" ["A"] @>
 
 [<TestFixture>]
-module ComponentsProperty =
+module ``Components property`` =
     [<Test>]
     let ``contains all components`` () =
         components "class A : Component {} class B : Component {} class C : Component {}" ["A"; "B"; "C"]
@@ -150,7 +150,7 @@ module ComponentsProperty =
         }
 
 [<TestFixture>]
-module ResolveComponentMethod =
+module ``ResolveComponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}" ["A"]
@@ -184,7 +184,7 @@ module ResolveComponentMethod =
         symbolMap.ResolveComponent classA <>? symbolMap.ResolveComponent classB
 
 [<TestFixture>]
-module ResolveFieldMethod =
+module ``ResolveField method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}" ["A"]
@@ -241,7 +241,7 @@ module ResolveFieldMethod =
         test <@ not <| obj.ReferenceEquals(symbolMap.ResolveField field1, symbolMap.ResolveField field2) @>
 
 [<TestFixture>]
-module ResolveSubcomponentMethod =
+module ``ResolveSubcomponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}" ["A"]
@@ -298,7 +298,7 @@ module ResolveSubcomponentMethod =
         test <@ not <| obj.ReferenceEquals(symbolMap.ResolveSubcomponent field1, symbolMap.ResolveSubcomponent field2) @>
 
 [<TestFixture>]
-module ResolveMethodMethod =
+module ``ResolveMethod method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}" ["A"]
@@ -369,7 +369,7 @@ module ResolveMethodMethod =
         test <@ not <| obj.ReferenceEquals(symbolMap.ResolveMethod method1, symbolMap.ResolveMethod method2) @>
 
 [<TestFixture>]
-module ResolveCSharpMethodMethod =
+module ``ResolveCSharpMethod method`` =
     [<Test>]
     let ``throws when method of non-transformed component is passed`` () =
         let compilation = TestCompilation "class A : Component {} class B : Component { void M() {} }"

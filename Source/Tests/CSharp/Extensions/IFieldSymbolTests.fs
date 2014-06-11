@@ -31,7 +31,7 @@ open SafetySharp.CSharp
 open SafetySharp.Tests.CSharp
 
 [<TestFixture>]
-module IsSubcomponentFieldMethod =
+module ``IsSubcomponentField method`` =
     let isComponentField csharpCode =
         let compilation = TestCompilation csharpCode
 

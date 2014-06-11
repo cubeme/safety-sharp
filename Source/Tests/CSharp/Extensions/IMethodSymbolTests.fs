@@ -31,7 +31,7 @@ open SafetySharp.CSharp
 open SafetySharp.Tests.CSharp
 
 [<TestFixture>]
-module OverridesMethod =
+module ``Overrides method`` =
     let overrides csharpCode =
         let compilation = TestCompilation ("class Y { public virtual void M() {} }" + csharpCode)
         let methodSymbol = compilation.FindMethodSymbol "X" "M"
