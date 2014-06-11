@@ -193,4 +193,4 @@ type internal TestCompilation (csharpCode : string) =
     /// the given name.
     /// </summary>
     member this.FindFieldSymbol className fieldName =
-        this.FindFieldDeclaration className fieldName |> this.SemanticModel.GetDeclaredSymbol
+        this.FindFieldDeclaration className fieldName |> this.SemanticModel.GetDeclaredSymbol :?> IFieldSymbol

@@ -48,7 +48,7 @@ type internal SymbolMap = private {
     with
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given C# component symbol.
-    member this.Resolve (componentSymbol : INamedTypeSymbol) =
+    member this.ResolveComponent (componentSymbol : INamedTypeSymbol) =
         Requires.NotNull componentSymbol "componentSymbol"
         Requires.That (this.ComponentMap.ContainsKey componentSymbol) "The given C# component symbol is unknown."
         this.ComponentMap.[componentSymbol]
@@ -66,13 +66,13 @@ type internal SymbolMap = private {
         this.SubComponentMap.[subcomponentSymbol]
 
     /// Resolves the <see cref="MethodSymbol"/> corresponding to the given C# method symbol.
-    member this.Resolve (methodSymbol : IMethodSymbol) =
+    member this.ResolveMethod (methodSymbol : IMethodSymbol) =
         Requires.NotNull methodSymbol "methodSymbol"
         Requires.That (this.MethodMap.ContainsKey methodSymbol) "The given C# method symbol is unknown."
         this.MethodMap.[methodSymbol]
 
     /// Resolves the C# method symbol corresponding to the given metamodel <see cref="MethodSymbol"/>.
-    member this.Resolve (methodSymbol : MethodSymbol) =
+    member this.ResolveCSharpMethod (methodSymbol : MethodSymbol) =
         Requires.That (this.MethodMapBack.ContainsKey methodSymbol) "The given method symbol is unknown."
         this.MethodMapBack.[methodSymbol]
 
