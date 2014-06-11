@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.SymbolMapTests
+namespace SafetySharp.Tests.CSharp.SymbolTransformationTests
 
 open System
 open System.Linq
@@ -33,10 +33,10 @@ open SafetySharp.Metamodel
 open SafetySharp.Tests.CSharp
 
 [<AutoOpen>]
-module private SymbolMapTestsHelper =
+module private SymbolTransformationTestsHelper =
     let compile csharpCode components =
         let compilation = TestCompilation csharpCode
-        SymbolMap (compilation.CSharpCompilation, components)
+        SymbolTransformation.Transform compilation.CSharpCompilation components
 
     let components csharpCode components =
         let symbolMap = compile csharpCode components
@@ -46,7 +46,7 @@ module private SymbolMapTestsHelper =
     let emptyComponent name = { Name = "TestCompilation::" + name; UpdateMethod = emptyUpdate; Fields = []; Methods = []; Subcomponents = [] } 
 
 [<TestFixture>]
-module Constructor =
+module TransformMethod =
     [<Test>]
     let ``throws when no components are provided`` () =
         (fun () -> compile "class C : Component {}" [] |> ignore) |> should throw typeof<ArgumentException>
