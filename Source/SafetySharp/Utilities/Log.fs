@@ -77,7 +77,7 @@ type Log () =
     /// event have been executed.
     static member Die message = 
         Log.RaiseEvent Fatal message
-        Environment.Exit(-1);
+        Environment.Exit -1
 
     /// Logs an application error.
     static member Error = Log.RaiseEvent Error

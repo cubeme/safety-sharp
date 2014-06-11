@@ -50,6 +50,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="Utilities\Requires.fs" />
+    <Compile Include="Utilities\Log.fs" />
     <Compile Include="Metamodel\Symbols.fs" />
     <Compile Include="Metamodel\Expressions.fs" />
     <Compile Include="Metamodel\Formulas.fs" />
