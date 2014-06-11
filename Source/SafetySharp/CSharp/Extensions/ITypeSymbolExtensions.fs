@@ -67,10 +67,10 @@ module TypeSymbolExtensions =
         member this.IsDerivedFromComponent (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
-            semanticModel.GetComponentClassSymbol () |> this.IsDerivedFrom
+            this.IsDerivedFromComponent semanticModel.Compilation
 
         /// Checks whether the type symbol directly or indirectly implements the <see cref="SafetySharp.Modeling.IComponent"/> interface.
         member this.ImplementsIComponent (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
-            semanticModel.GetComponentInterfaceSymbol () |> this.IsDerivedFrom
+            this.ImplementsIComponent semanticModel.Compilation

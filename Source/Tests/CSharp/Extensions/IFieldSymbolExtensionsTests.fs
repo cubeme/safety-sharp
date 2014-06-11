@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.IFieldSymbolTests
+namespace SafetySharp.Tests.CSharp.IFieldSymbolExtensionsTests
 
 open System.Linq
 open NUnit.Framework
@@ -35,7 +35,7 @@ module ``IsSubcomponentField method`` =
     let isComponentField csharpCode =
         let compilation = TestCompilation csharpCode
 
-        let classSymbol = compilation.SemanticModel.GetTypeSymbol "X"
+        let classSymbol = compilation.CSharpCompilation.GetTypeSymbol "X"
         let fieldSymbol = classSymbol.GetMembers().OfType<IFieldSymbol>().Single()
             
         fieldSymbol.IsSubcomponentField compilation.SemanticModel

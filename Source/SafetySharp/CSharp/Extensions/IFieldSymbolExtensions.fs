@@ -50,4 +50,4 @@ module FieldSymbolExtensions =
         member this.IsSubcomponentField (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
-            semanticModel.GetComponentInterfaceSymbol () |> isSubcomponentField this
+            semanticModel.Compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this

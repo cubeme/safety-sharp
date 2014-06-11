@@ -89,12 +89,13 @@ type internal TestCompilation (csharpCode : string) =
     /// Throws an exception if more than one type with the given name was found.
     /// </summary>
     member this.FindTypeDeclaration typeName =
+        let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
         let types = 
             this.SyntaxRoot
-                .DescendantsAndSelf<TypeDeclarationSyntax>()
+                .DescendantsAndSelf<BaseTypeDeclarationSyntax>()
                 .Where(fun typeDeclaration -> 
                     let symbol = this.SemanticModel.GetDeclaredSymbol typeDeclaration
-                    symbol.ToDisplayString SymbolDisplayFormat.MinimallyQualifiedFormat = typeName
+                    symbol.ToDisplayString displayFormat = typeName
                 )
                 .ToArray();
 

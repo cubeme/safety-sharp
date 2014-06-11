@@ -55,4 +55,4 @@ module MethodSymbolExtensions =
         member this.IsUpdateMethod (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
-            semanticModel.GetUpdateMethodSymbol () |> this.Overrides
+            semanticModel.Compilation.GetUpdateMethodSymbol () |> this.Overrides

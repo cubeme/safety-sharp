@@ -63,3 +63,23 @@ module CompilationExtensions =
         member this.GetUpdateMethodSymbol () =
             Requires.NotNull this "this"
             this.GetComponentClassSymbol().GetMembers("Update").OfType<IMethodSymbol>().Single()
+
+        /// Gets the symbols for all types contained in the compilation except for types defined in mscorlib or in SafetySharp.dll.
+        member this.GetTypeSymbols () =
+            let mscorlib = this.ObjectType.ContainingAssembly
+            let safetySharp = this.GetComponentClassSymbol().ContainingAssembly
+
+            let rec enumerateSymbols (symbol : ISymbol) = seq {
+                if symbol.ContainingAssembly = mscorlib || symbol.ContainingAssembly = safetySharp then
+                    ()
+                else
+                    match symbol with
+                    | :? ITypeSymbol as typeSymbol -> 
+                        yield typeSymbol
+                        for symbol in typeSymbol.GetMembers () |> Seq.map enumerateSymbols do yield! symbol
+                    | :? INamespaceSymbol as namespaceSymbol -> 
+                        for symbol in namespaceSymbol.GetMembers () |> Seq.map enumerateSymbols do yield! symbol
+                    | _ -> ()
+            }
+
+            enumerateSymbols this.GlobalNamespace

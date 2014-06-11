@@ -49,7 +49,7 @@ module private StatementTransformationTestsHelper =
 
         let compilation = TestCompilation csharpCode
         let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[0]
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation [ "C" ]
+        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
         booleanFieldSymbol <- symbolMap.Components.[0].Fields.[0]
         integerFieldSymbol <- symbolMap.Components.[0].Fields.[1]
 

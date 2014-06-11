@@ -52,39 +52,7 @@ module SemanticModelExtensions =
             .Single(fun method' -> method'.Parameters.[0].Type.SpecialType = specialType && method'.Parameters.Length = parameterCount);
 
     type SemanticModel with
-        
-        /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
-        /// the semantic model.
-        member this.GetTypeSymbol<'a> () =
-            Requires.NotNull this "this"
-            this.GetTypeSymbol typeof<'a>.FullName;
-
-        /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
-        /// the semantic model.
-        member this.GetTypeSymbol name =
-            Requires.NotNull this "this"
-            Requires.NotNullOrWhitespace name "name"
-
-            this.Compilation.GetTypeByMetadataName name;
-
-        /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="Component" /> class within the
-        /// context of the semantic model.
-        member this.GetComponentClassSymbol () =
-            Requires.NotNull this "this"
-            this.Compilation.GetTypeByMetadataName(typeof<Component>.FullName)
-
-        /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="IComponent" /> interface within the
-        /// context of the semantic model.
-        member this.GetComponentInterfaceSymbol () =
-            Requires.NotNull this "this"
-            this.Compilation.GetTypeByMetadataName(typeof<IComponent>.FullName)
-
-        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
-        /// within the context of the semantic model.
-        member this.GetUpdateMethodSymbol () =
-            Requires.NotNull this "this"
-            this.GetComponentClassSymbol().GetMembers("Update").OfType<IMethodSymbol>().Single()
-
+       
         /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}()" />
         /// method within the context of the <paramref name="semanticModel" />.
         member this.GetChooseEnumerationLiteralMethodSymbol () =

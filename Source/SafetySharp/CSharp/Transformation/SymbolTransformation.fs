@@ -38,7 +38,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 /// Represents a mapping between the original C# symbols and the created metamodel symbols.
 type SymbolMap = private {
     ComponentList : ComponentSymbol list
-    ComponentMap : ImmutableDictionary<INamedTypeSymbol, ComponentSymbol>
+    ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
     SubComponentMap : ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>
     MethodMap : ImmutableDictionary<IMethodSymbol, MethodSymbol>
@@ -81,9 +81,8 @@ type SymbolMap = private {
 module SymbolTransformation =
 
     /// Transforms the given component types of the compilation to a symbol map.
-    let Transform (compilation : Compilation) componentTypes =
+    let Transform (compilation : Compilation) =
         Requires.NotNull compilation "compilation"
-        Requires.ArgumentSatisfies (componentTypes |> List.length > 0) "componentTypes" "At least one component type must be provided."
 
         // An equality comparer for method symbols that implements reference equality
         let comparer = { 
@@ -96,7 +95,7 @@ module SymbolTransformation =
 
         // We're using the builder pattern to initialize the dictionaries and the component list
         let componentListBuilder = ImmutableList.CreateBuilder<ComponentSymbol> ()
-        let componentMapBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ComponentSymbol> ()
+        let componentMapBuilder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ComponentSymbol> ()
         let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
         let subComponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
@@ -119,13 +118,13 @@ module SymbolTransformation =
             sprintf "%s::%s" assemblyName componentName
 
         /// Creates the symbols and optional mapping information for the Update method of the component.
-        let transformUpdateMethod (csharpComponent : ITypeSymbol) componentType =
+        let transformUpdateMethod (csharpComponent : ITypeSymbol) =
             let updateMethods = csharpComponent.GetMembers().OfType<IMethodSymbol>() |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
             let updateMethodCount = updateMethods |> Seq.length
             let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
 
             if updateMethodCount > 1 then 
-                sprintf "Component of type '%A' defines more than one Update() method." componentType |> invalidOp
+                csharpComponent.ToDisplayString () |> sprintf "Component of type '%A' defines more than one Update() method." |> invalidOp
             else if updateMethodCount = 1 then
                 let updateMethod = updateMethods |> Seq.head
                 methodMapBuilder.Add (updateMethod, methodSymbol)
@@ -181,18 +180,10 @@ module SymbolTransformation =
             ]
 
         /// Creates the symbols and mapping information for a component with the given type.
-        let transformComponent componentType =
-            let csharpComponent = compilation.GetTypeByMetadataName componentType
-
-            if csharpComponent = null then
-                sprintf "Type '%s' could not be found." componentType |> invalidOp
-
-            if not <| csharpComponent.IsDerivedFromComponent compilation then
-                sprintf "Type '%s' is not derived from '%s'." componentType typeof<Component>.FullName |> invalidOp
-
+        let transformComponent (csharpComponent : ITypeSymbol) =
             let componentSymbol = {
                 Name = transformComponentName csharpComponent
-                UpdateMethod = transformUpdateMethod csharpComponent componentType
+                UpdateMethod = transformUpdateMethod csharpComponent
                 Methods = transformMethods csharpComponent
                 Fields = transformFields csharpComponent
                 Subcomponents = transformSubcomponents csharpComponent
@@ -202,7 +193,8 @@ module SymbolTransformation =
             componentMapBuilder.Add (csharpComponent, componentSymbol)
 
         // Create the symbols for all components
-        componentTypes |> Seq.distinct |> Seq.iter transformComponent
+        let csharpComponents = compilation.GetTypeSymbols () |> Seq.filter (fun csharpComponent -> csharpComponent.IsDerivedFromComponent compilation)
+        csharpComponents |> Seq.iter transformComponent
 
         // Create and return the symbol map
         {
