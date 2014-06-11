@@ -31,7 +31,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module internal StatementTransformation =
+module StatementTransformation =
 
     /// Transforms C# statements to metamodel statements.
     let Transform (symbolMap : SymbolMap) (semanticModel : SemanticModel) (statement : StatementSyntax) =
@@ -52,14 +52,14 @@ module internal StatementTransformation =
         | IfStatement (condition, ifStatement, None) ->
             let condition = transformExpression condition
             let ifStatement = transform ifStatement
-            GuardedCommandStatement [ (condition, ifStatement) ]
+            GuardedCommandStatement [(condition, ifStatement)]
 
         | IfStatement (condition, ifStatement, Some elseStatement) ->
             let ifCondition = transformExpression condition
             let ifStatement = transform ifStatement
             let elseCondition = UnaryExpression (ifCondition, UnaryOperator.LogicalNot)
             let elseStatement = transform elseStatement
-            GuardedCommandStatement [ (ifCondition, ifStatement); (elseCondition, elseStatement) ]
+            GuardedCommandStatement [(ifCondition, ifStatement); (elseCondition, elseStatement)]
 
         | ExpressionStatement expression ->
 

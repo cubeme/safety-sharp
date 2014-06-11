@@ -27,62 +27,47 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
 module internal Roslyn =
-    /// Tries to cast the given syntax node to the parameter type expected by the projection and returns the projected value.
     let private projectNode (node : SyntaxNode) projection =
         match node with
         | :? 'a as node -> Some <| projection node
         | _ -> None
 
-    /// Matches a literal expression.
     let (|LiteralExpression|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (literal : LiteralExpressionSyntax) -> (literal.Token.CSharpKind (), literal.Token.Value)
 
-    /// Matches a literal expression.
     let (|IdentifierName|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (identifier : IdentifierNameSyntax) -> identifier
 
-    /// Matches a parenthesized expression.
     let (|ParenthesizedExpression|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (expression : ParenthesizedExpressionSyntax) -> expression.Expression
 
-    /// Matches an unary expression.
     let (|UnaryExpression|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (expression : PrefixUnaryExpressionSyntax) -> (expression.Operand, expression.CSharpKind ())
 
-    /// Matches a binary expression.
     let (|BinaryExpression|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (expression : BinaryExpressionSyntax) -> (expression.Left, expression.CSharpKind (), expression.Right)
 
-    /// Matches an assignment expression.
     let (|AssignmentExpression|_|) (expression : ExpressionSyntax) =
-        match projectNode expression <| fun (expression : BinaryExpressionSyntax) -> (expression.Left, expression.CSharpKind (), expression.Right) with
-        | Some (left, operator, right) when operator = SyntaxKind.SimpleAssignmentExpression ->
-            Some (left, right)
+        match expression with
+        | BinaryExpression (left, operator, right) when operator = SyntaxKind.SimpleAssignmentExpression -> Some (left, right)
         | _ -> None
 
-    /// Matches an invocation expression.
     let (|InvocationExpression|_|) (expression : ExpressionSyntax) =
         projectNode expression <| fun (expression : InvocationExpressionSyntax) -> expression
 
-    /// Matches an empty statement.
     let (|EmptyStatement|_|) (statement : StatementSyntax) =
         projectNode statement <| fun (statement : EmptyStatementSyntax) -> ()
 
-    /// Matches a block statement.
     let (|BlockStatement|_|) (statement : StatementSyntax) =
         projectNode statement <| fun (statement : BlockSyntax) -> statement.Statements
 
-    /// Matches an expression statement.
     let (|ExpressionStatement|_|) (statement : StatementSyntax) =
         projectNode statement <| fun (statement : ExpressionStatementSyntax) -> statement.Expression
 
-    /// Matches a return statement.
     let (|ReturnStatement|_|) (statement : StatementSyntax) =
-        projectNode statement <| fun (statement : ReturnStatementSyntax) -> 
-            match statement.Expression with null -> None | expression -> Some expression
+        projectNode statement <| fun (statement : ReturnStatementSyntax) -> if statement.Expression = null then None else Some statement.Expression
 
-    /// Matches an if-then-else statement.
     let (|IfStatement|_|) (statement : StatementSyntax) =
         projectNode statement <| fun (statement : IfStatementSyntax) -> 
-            let elseStatement = match statement.Else with null -> None | elseClause -> Some elseClause.Statement
+            let elseStatement = if statement.Else = null then None else Some statement.Else.Statement
             (statement.Condition, statement.Statement, elseStatement)

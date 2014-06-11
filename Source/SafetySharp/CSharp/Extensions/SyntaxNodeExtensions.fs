@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="SyntaxNode" /> instances.
 [<AutoOpen>]
-module internal SyntaxNodeExtensions =
+module SyntaxNodeExtensions =
     type SyntaxNode with
 
         /// Gets a list of descendant syntax nodes of the given type in prefix document order.

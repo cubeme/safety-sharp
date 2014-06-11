@@ -36,7 +36,7 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
 /// Represents a mapping between the original C# symbols and the created metamodel symbols.
-type internal SymbolMap = private {
+type SymbolMap = private {
     ComponentList : ComponentSymbol list
     ComponentMap : ImmutableDictionary<INamedTypeSymbol, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
@@ -78,7 +78,7 @@ type internal SymbolMap = private {
     /// Gets a list of all component symbols.
     member this.Components = this.ComponentList
 
-module internal SymbolTransformation =
+module SymbolTransformation =
 
     /// Transforms the given component types of the compilation to a symbol map.
     let Transform (compilation : Compilation) componentTypes =

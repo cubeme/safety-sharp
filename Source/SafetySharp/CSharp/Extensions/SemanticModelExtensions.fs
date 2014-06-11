@@ -31,7 +31,7 @@ open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="SemanticModel" /> instances.
 [<AutoOpen>]
-module internal SemanticModelExtensions =
+module SemanticModelExtensions =
     
     /// Gets the <see cref="IMethodSymbol" /> corresponding to the one of the 'Component.Choose' methods.
     let private getChooseMethodSymbol (semanticModel : SemanticModel) parameterCount =

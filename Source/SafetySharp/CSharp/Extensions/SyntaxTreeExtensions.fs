@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="SyntaxTree" /> instances.
 [<AutoOpen>]
-module internal SyntaxTreeExtensions =
+module SyntaxTreeExtensions =
     type SyntaxTree with
 
         /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node of the given type

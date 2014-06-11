@@ -31,7 +31,7 @@ open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="Compilation" /> instances.
 [<AutoOpen>]
-module internal CompilationExtensions =
+module CompilationExtensions =
     type Compilation with
 
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of the compilation.
