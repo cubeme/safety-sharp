@@ -41,7 +41,7 @@ type Component () =
     let mutable isSealed = false
     let mutable name = String.Empty
     let mutable (subcomponents : Component list) = []
-    let fields = Dictionary<string, obj seq> ()
+    let fields = Dictionary<string, obj list> ()
 
     let requiresNotSealed () = Requires.That (not isSealed) "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = Requires.That isSealed "Cannot access the component metadata as it might not yet be complete."
@@ -70,7 +70,7 @@ type Component () =
 
         match (field.Body :?> MemberExpression).Member with
         | :? FieldInfo as fieldInfo ->
-            fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj>
+            fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
 
             let random = new Random();
             fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
@@ -85,13 +85,14 @@ type Component () =
 
         this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
         |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field.Name))
-        |> Seq.iter (fun field -> fields.Add (field.Name, field.GetValue this |> Seq.singleton))
+        |> Seq.iter (fun field -> fields.Add (field.Name, [field.GetValue this]))
 
         let subcomponentMetadata = 
             this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
-            |> Seq.map (fun field -> (field, field.GetValue(this) :?> Component))
+            |> Seq.map (fun field -> (field, field.GetValue(this)))
             |> Seq.where (fun (field, component') -> not <| obj.ReferenceEquals(component', null))
+            |> Seq.map (fun (field, component') -> (field, component' :?> Component))
             |> List.ofSeq
 
         subcomponents <- subcomponentMetadata |> List.map snd
@@ -114,7 +115,7 @@ type Component () =
     /// <summary>
     /// Gets the subcomponent with the given name.
     /// </summary>
-    member this.GetSubComponent name =
+    member this.GetSubcomponent name =
         Requires.NotNullOrWhitespace name "name"
         requiresIsSealed ()
 
@@ -122,7 +123,7 @@ type Component () =
         match subcomponent with
         | Some subcomponent -> subcomponent
         | None ->
-            Requires.ArgumentSatisfies (subcomponent = None) "name" (sprintf "A sub component with name '%s' does not exist." name)
+            Requires.ArgumentSatisfies false "name" (sprintf "A sub component with name '%s' does not exist." name)
             subcomponent.Value // Required, but cannot be reached
 
     /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.
