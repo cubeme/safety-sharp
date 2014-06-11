@@ -60,6 +60,10 @@ module internal Roslyn =
             Some (left, right)
         | _ -> None
 
+    /// Matches an invocation expression.
+    let (|InvocationExpression|_|) (expression : ExpressionSyntax) =
+        projectNode expression <| fun (expression : InvocationExpressionSyntax) -> expression
+
     /// Matches an empty statement.
     let (|EmptyStatement|_|) (statement : StatementSyntax) =
         projectNode statement <| fun (statement : EmptyStatementSyntax) -> ()

@@ -98,33 +98,32 @@ module StatementTransformationTests =
         transform "if (true) " =? GuardedCommandStatement [ ifClause ]
         transform "if (true) ; else return" =? GuardedCommandStatement [ ifClause; elseClause ]
 
-//    [<Test>]
-//    let ``ChooseFromValues_FourValues()
-//    var actual = Transform("Choose(out intField, -17, 0, 33, 127)")
-//
-//    var minusSeventeen = new UnaryExpression(new IntegerLiteral(17), UnaryOperator.Minus)
-//    var assignment1 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), minusSeventeen)
-//    var assignment2 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), new IntegerLiteral(0))
-//    var assignment3 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), new IntegerLiteral(33))
-//    var assignment4 = new AssignmentStatement(new FieldAccessExpression(_intFieldReference), new IntegerLiteral(127))
-//
-//    var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1)
-//    var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2)
-//    var case3 = new GuardedCommandClause(BooleanLiteral.True, assignment3)
-//    var case4 = new GuardedCommandClause(BooleanLiteral.True, assignment4)
-//
-//    var expected = new GuardedCommandStatement(ImmutableArray.Create(case1, case2, case3, case4))
-//    actual.Should().Be(expected)
-//
-//    [<Test>]
-//    let ``ChooseFromValues_TwoValues()
-//    var actual = Transform("Choose(out boolField, true, false)")
-//
-//    var assignment1 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.True)
-//    var assignment2 = new AssignmentStatement(new FieldAccessExpression(_boolFieldReference), BooleanLiteral.False)
-//
-//    var case1 = new GuardedCommandClause(BooleanLiteral.True, assignment1)
-//    var case2 = new GuardedCommandClause(BooleanLiteral.True, assignment2)
-//
-//    var expected = new GuardedCommandStatement(ImmutableArray.Create(case1, case2))
-//    actual.Should().Be(expected)
+    [<Test>]
+    let ``choose from two values`` () =
+        let actual = transform "Choose(out boolField, true, false)"
+
+        let assignment1 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral true)
+        let assignment2 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral false)
+
+        let expected = GuardedCommandStatement [(BooleanLiteral true, assignment1); (BooleanLiteral true, assignment2)]
+        actual =? expected
+
+    [<Test>]
+    let ``choose from four values`` () =
+        let actual = transform "Choose(out intField, -17, 0, 33, 127)"
+
+        let minusSeventeen = UnaryExpression(IntegerLiteral 17, UnaryOperator.Minus)
+        let assignment1 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), minusSeventeen)
+        let assignment2 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 0)
+        let assignment3 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 33)
+        let assignment4 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 127)
+
+        let expected = 
+            GuardedCommandStatement [
+                (BooleanLiteral true, assignment1)
+                (BooleanLiteral true, assignment2)
+                (BooleanLiteral true, assignment3)
+                (BooleanLiteral true, assignment4) 
+            ]
+
+        actual =? expected

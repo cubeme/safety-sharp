@@ -22,6 +22,9 @@
 
 namespace SafetySharp.Modeling
 
+open System
+open System.Runtime.InteropServices
+
 type IComponent = interface end
 
 [<AbstractClass>]
@@ -30,3 +33,24 @@ type Component () =
     default this.Update () = ()
 
     interface IComponent
+
+    static member Choose<'T> ([<Out>] result : 'T byref, [<ParamArray>] values: 'T array) : 'T =
+        raise <| NotImplementedException ()
+
+    static member ChooseFromRange ([<Out>] result : int byref, inclusiveLowerBound : int, inclusiveUpperBound : int) : int =
+        raise <| NotImplementedException ()
+
+    static member ChooseFromRange ([<Out>] result : decimal byref, inclusiveLowerBound : decimal, inclusiveUpperBound : decimal) : decimal =
+        raise <| NotImplementedException ()
+
+    static member Choose<'T when 'T : struct> () : 'T =
+        raise <| NotSupportedException ()
+
+    static member Choose<'T> ([<ParamArray>] values : 'T array) : 'T =
+        raise <| NotSupportedException ()
+
+    static member ChooseFromRange (inclusiveLowerBound : int, inclusiveUpperBound : int) : int =
+        raise <| NotSupportedException ()
+
+    static member ChooseFromRange (inclusiveLowerBound : decimal, inclusiveUpperBound : decimal) : decimal =
+        raise <| NotSupportedException ()

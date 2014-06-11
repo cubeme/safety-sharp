@@ -32,8 +32,27 @@ open SafetySharp.Modeling
 /// Provides extension methods for working with <see cref="SemanticModel" /> instances.
 [<AutoOpen>]
 module internal SemanticModelExtensions =
-    type SemanticModel with
+    
+    /// Gets the <see cref="IMethodSymbol" /> corresponding to the one of the 'Component.Choose' methods.
+    let private getChooseMethodSymbol (semanticModel : SemanticModel) parameterCount =
+        semanticModel
+            .Compilation
+            .GetTypeByMetadataName(typeof<Component>.FullName)
+            .GetMembers("Choose")
+            .OfType<IMethodSymbol>()
+            .Single(fun method' -> method'.Parameters.Length = parameterCount);
 
+    /// Gets the <see cref="IMethodSymbol" /> corresponding to the one of the 'Component.ChooseFromRange' methods.
+    let private getChooseRangeMethodSymbol (semanticModel : SemanticModel) specialType parameterCount =
+        semanticModel
+            .Compilation
+            .GetTypeByMetadataName(typeof<Component>.FullName)
+            .GetMembers("ChooseFromRange")
+            .OfType<IMethodSymbol>()
+            .Single(fun method' -> method'.Parameters.[0].Type.SpecialType = specialType && method'.Parameters.Length = parameterCount);
+
+    type SemanticModel with
+        
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
         /// the semantic model.
         member this.GetTypeSymbol<'a> () =
@@ -52,16 +71,41 @@ module internal SemanticModelExtensions =
         /// context of the semantic model.
         member this.GetComponentClassSymbol () =
             Requires.NotNull this "this"
-            this.Compilation.GetTypeByMetadataName(typeof<Component>.FullName);
+            this.Compilation.GetTypeByMetadataName(typeof<Component>.FullName)
 
         /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="IComponent" /> interface within the
         /// context of the semantic model.
         member this.GetComponentInterfaceSymbol () =
             Requires.NotNull this "this"
-            this.Compilation.GetTypeByMetadataName(typeof<IComponent>.FullName);
+            this.Compilation.GetTypeByMetadataName(typeof<IComponent>.FullName)
 
         /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
         /// within the context of the semantic model.
         member this.GetUpdateMethodSymbol () =
             Requires.NotNull this "this"
             this.GetComponentClassSymbol().GetMembers("Update").OfType<IMethodSymbol>().Single()
+
+        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}()" />
+        /// method within the context of the <paramref name="semanticModel" />.
+        member this.GetChooseEnumerationLiteralMethodSymbol () =
+            Requires.NotNull this "this"
+            getChooseMethodSymbol this 0
+
+        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}(T, T, T[])" /> method within the
+        /// context of the <paramref name="semanticModel" />.
+        member this.GetChooseFromValuesMethodSymbol normalizedMethod =
+            Requires.NotNull this "this"
+            getChooseMethodSymbol this (if normalizedMethod then 2 else 3)
+
+        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.ChooseFromRange(int, int)" /> method within
+        /// the context of the <paramref name="semanticModel" />.
+        member this.GetChooseFromIntegerRangeMethodSymbol normalizedMethod =
+            Requires.NotNull this "this"
+            getChooseRangeMethodSymbol this SpecialType.System_Int32 (if normalizedMethod then 3 else 2)
+
+        /// Gets the <see cref="IMethodSymbol " /> representing the
+        /// <see cref="Component.ChooseFromRange(out decimal, decimal, decimal)" /> method within the context
+        /// of the <paramref name="semanticModel" />.
+        member this.GetChooseFromDecimalRangeMethodSymbol normalizedMethod =
+            Requires.NotNull this "this"
+            getChooseRangeMethodSymbol this SpecialType.System_Decimal (if normalizedMethod then 3 else 2)

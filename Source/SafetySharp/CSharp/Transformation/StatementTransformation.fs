@@ -62,9 +62,28 @@ module internal StatementTransformation =
             GuardedCommandStatement [ (ifCondition, ifStatement); (elseCondition, elseStatement) ]
 
         | ExpressionStatement expression ->
+
             match expression with
             | AssignmentExpression (left, right) ->
                 AssignmentStatement (transformExpression left, transformExpression right)
+
+            | InvocationExpression invocation ->
+                let symbolInfo = semanticModel.GetSymbolInfo invocation
+                match symbolInfo.Symbol with
+                | :? IMethodSymbol as methodSymbol ->
+                    let arguments = invocation.ArgumentList.Arguments
+                   
+                    if (semanticModel.GetChooseFromValuesMethodSymbol(true).Equals(methodSymbol.OriginalDefinition)) then
+                        let assignmentTarget = transformExpression arguments.[0].Expression
+                        let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
+                        let statements = expressions |> Seq.map (fun expression -> AssignmentStatement(assignmentTarget, expression))
+                        let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
+                        clauses |> List.ofSeq |> GuardedCommandStatement
+                    else
+                        sprintf "Unsupported C# Choose call: '%A'." invocation |> invalidOp
+                | null -> sprintf "Unable to determine symbol for invocation expression '%A'." invocation |> invalidOp
+                | _ -> sprintf "Unsupported C# method call: '%A'." invocation |> invalidOp
+
             | _ -> statement.CSharpKind () |> sprintf "Encountered an unexpected C# syntax node: '%A'." |> invalidOp
 
         | _ ->
