@@ -24,6 +24,9 @@ type ExportNuXmvAstToFile() =
     
     let joinWithNewLine (lst:string list) : string =
         String.Join("\n", lst)
+        
+    let joinWith (operator:string) (lst:string list) : string =
+        String.Join(operator, lst)
     
     // NuXmv is Two complement and Highest Bit in front (binary 10000 is decimal 16 not decimal 1)
     let BinaryArrayToBin (value:bool[]) : string =
@@ -244,55 +247,112 @@ type ExportNuXmvAstToFile() =
 
     member this.ExportNextExpression (basicExpression:BasicExpression) =
         this.ExportBasicExpression basicExpression
-
-    member this.ExportSingleAssignConstraint (singleAssignConstraint:SingleAssignConstraint) = // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
-        match singleAssignConstraint with
-            | CurrentStateAssignConstraint (identifier:Identifier, expression:SimpleExpression) -> "" //Invariant which must evaluate to true. next-Statement is forbidden inside
-            | InitialStateAssignConstraint (identifier:Identifier, expression:SimpleExpression) -> "" //Invariant which must evaluate to true. next-Statement is forbidden inside
-            | NextStateAssignConstraint (identifier:Identifier, expression:NextExpression) -> ""
-
+            
     member this.ExportModuleElement (moduleElement:ModuleElement) =
+        let ExportVariable (variable:TypedIdentifier) =
+            sprintf "%s : %s;" (this.ExportIdentifier variable.Identifier) (this.ExportTypeSpecifier variable.TypeSpecifier)
+        let ExportVariableSimple (variable:SimpleTypedIdentifier) =
+            sprintf "%s : %s;" (this.ExportIdentifier variable.Identifier) (this.ExportSimpleTypeSpecifier variable.TypeSpecifier)
+        let ExportIdentifierNextExpressionTuple (identifierNextExpressionTuple:IdentifierNextExpressionTuple) =
+            sprintf "%s := %s;" (this.ExportIdentifier identifierNextExpressionTuple.Identifier) (this.ExportNextExpression identifierNextExpressionTuple.Expression)
         match moduleElement with
-            | VarDeclaration (variables:(TypedIdentifier list)) -> "" // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.
-            | IVarDeclaration (inputVariables:(SimpleTypedIdentifier list)) -> ""
-            | FrozenVarDeclaration (frozenVariables:(SimpleTypedIdentifier list)) -> "" //Array (frozen variable declarations (readonly, nondeterministic initialization
-            | DefineDeclaration (defines:(IdentifierNextExpressionTuple list)) -> "" // Chapter 2.3.2 DEFINE Declarations p 26
+            | VarDeclaration (variables:(TypedIdentifier list)) -> 
+                // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.                
+                let content = variables |> List.map ExportVariable
+                                        |> joinWithNewLine
+                sprintf "VAR\n%s" content
+            | IVarDeclaration (inputVariables:(SimpleTypedIdentifier list)) ->                
+                let content = inputVariables |> List.map ExportVariableSimple
+                                             |> joinWithNewLine
+                sprintf "IVAR\n%s" content
+            | FrozenVarDeclaration (frozenVariables:(SimpleTypedIdentifier list)) ->
+                let content = frozenVariables |> List.map ExportVariableSimple
+                                              |> joinWithNewLine
+                sprintf "FROZENVAR\n%s" content
+            | DefineDeclaration (defines:(IdentifierNextExpressionTuple list)) -> 
+                //Chapter 2.3.2 DEFINE Declarations p 26
+                let content = defines |> List.map ExportIdentifierNextExpressionTuple
+                                      |> joinWithNewLine
+                sprintf "DEFINE\n%s" content
             // TODO | ArrayDefineDeclaration // Chapter 2.3.3 Array Define Declarations p 26-27
-            | ConstantsDeclaration (constants:(Identifier list)) -> "" // Chapter 2.3.4 CONSTANTS Declarations p 27
-            | InitConstraint (expression:SimpleExpression) -> "" // Chapter 2.3.5 INIT Constraint p 27
-            | InvarConstraint (expression:SimpleExpression) -> "" // Chapter 2.3.6 INVAR Constraint p 27
-            | TransConstraint (expression:NextExpression) -> "" // Chapter 2.3.7 TRANS Constraint p 28
-            | AssignConstraint (assigns:(SingleAssignConstraint list)) -> "" // Chapter 2.3.8 ASSIGN Constraint p 28-29
+            | ConstantsDeclaration (constants:(Identifier list)) ->
+                // Chapter 2.3.4 CONSTANTS Declarations p 27
+                let content = constants |> List.map this.ExportIdentifier
+                                        |> joinWithComma
+                sprintf "CONSTANTS\n%s" content
+            | InitConstraint (expression:SimpleExpression) ->
+                // Chapter 2.3.5 INIT Constraint p 27
+                let content = this.ExportSimpleExpression expression
+                sprintf "INIT\n%s" content
+            | InvarConstraint (expression:SimpleExpression) ->
+                // Chapter 2.3.6 INVAR Constraint p 27
+                let content = this.ExportSimpleExpression expression
+                sprintf "INVAR\n%s" content
+            | TransConstraint (expression:NextExpression) ->
+                // Chapter 2.3.7 TRANS Constraint p 28                
+                let content = this.ExportSimpleExpression expression
+                sprintf "TRANS\n%s" content
+            | AssignConstraint (assigns:(SingleAssignConstraint list)) ->
+                let ExportSingleAssignConstraint (singleAssignConstraint:SingleAssignConstraint) = 
+                    // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
+                    match singleAssignConstraint with
+                        | CurrentStateAssignConstraint (identifier:Identifier, expression:SimpleExpression) -> 
+                            sprintf "%s := %s;" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+                        | InitialStateAssignConstraint (identifier:Identifier, expression:SimpleExpression) ->
+                            sprintf "init(%s) := %s;" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+                        | NextStateAssignConstraint (identifier:Identifier, expression:NextExpression) ->
+                            sprintf "next(%s) := %s;" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+                // Chapter 2.3.8 ASSIGN Constraint p 28-29
+                let content = assigns |> List.map ExportSingleAssignConstraint
+                                      |> joinWithNewLine
+                sprintf "ASSIGN\n%s" content
             // TODO | FairnessConstraint // Chapter 2.3.9 FAIRNESS Constraints p 30
-            | SpecificationInModule (specification) -> ""
+            | SpecificationInModule (specification) -> 
+                this.ExportSpecification specification
             // // Chapter 2.3.16 ISA Declarations p 34 (depreciated).Ddon't implement as it is depreciated
-            | PredDeclaration (identifier:Identifier, expression:SimpleExpression) -> ""// Chapter 2.3.17 PRED and MIRROR Declarations p 34-35. Useful for debugging and CEGAR (Counterexample Guided Abstraction Refinement)
-            | MirrorDeclaration (variableIdentifier:ComplexIdentifier) -> ""
+            | PredDeclaration (identifier:Identifier, expression:SimpleExpression) -> 
+                // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35. Useful for debugging and CEGAR (Counterexample Guided Abstraction Refinement)
+                //TODO: optional
+                sprintf "PRED <%s> :=  %s" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+            | MirrorDeclaration (variableIdentifier:ComplexIdentifier) -> 
+                sprintf "MIRROR %s" (this.ExportComplexIdentifier variableIdentifier)
 
 
     member this.ExportModuleDeclaration (moduleDeclaration:ModuleDeclaration) = 
-        ""
-    (*{ // Chapter 2.3.10 MODULE Declarations p 30-31
-        Identifier:Identifier;
-        ModuleParameters:Identifier list;
-        ModuleElements:ModuleElement list;
- }*)
+         // Chapter 2.3.10 MODULE Declarations p 30-31
+        let name = this.ExportIdentifier moduleDeclaration.Identifier
+        let parameterString =
+            let parameterStringContent =
+                moduleDeclaration.ModuleParameters |> List.map this.ExportIdentifier
+                                                   |> joinWithComma
+            if moduleDeclaration.ModuleParameters.Length > 0 then (sprintf "(%s)" parameterStringContent) else " "
+        let content =
+            moduleDeclaration.ModuleElements |> List.map this.ExportModuleElement
+                                             |> joinWithNewLine
+        sprintf "MODULE %s%s%s" name parameterString content
+    
 
 
     member this.ExportModuleTypeSpecifier (moduleTypeSpecifier:ModuleTypeSpecifier) = 
-        ""
-    (*{// Chapter 2.3.11 MODULE Instantiations p 31.
-        ModuleName:Identifier;
-        ModuleParameters:BasicExpression list;
-}*)
+        // Chapter 2.3.11 MODULE Instantiations p 31.
+        let name = this.ExportIdentifier moduleTypeSpecifier.ModuleName
+        let parameterString =
+            let parameterStringContent =
+                moduleTypeSpecifier.ModuleParameters |> List.map this.ExportBasicExpression
+                                                     |> joinWithComma
+            if moduleTypeSpecifier.ModuleParameters.Length > 0 then (sprintf "(%s)" parameterStringContent) else " "
+        sprintf "%s%s" name parameterString
 
 
     member this.ExportNuXmvProgram (nuXmvProgram:NuXmvProgram) = 
-        ""
-    (*{ // Chapter 2.3.13 A Program and the main Module p 33
-    Modules:ModuleDeclaration list;
-    Specifications:Specification list;
-}*)
+        // Chapter 2.3.13 A Program and the main Module p 33
+        let modules =
+            nuXmvProgram.Modules |> List.map this.ExportModuleDeclaration
+                                 |> joinWithNewLine
+        let specifications =
+            nuXmvProgram.Specifications |> List.map this.ExportSpecification
+                                        |> joinWithNewLine
+        sprintf "%s\n\n%s" modules specifications
 
     member this.ExportCtlExpression (ctlExpression:CtlExpression) =
         match ctlExpression with
