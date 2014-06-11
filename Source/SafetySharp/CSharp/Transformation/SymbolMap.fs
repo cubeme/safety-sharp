@@ -37,8 +37,8 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 
 /// Constructs symbols for the given component types and creates a mapping between the original C# symbols and the
 /// created metamodel symbols.
-type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string list) =
-    do Requires.NotNull semanticModel "semanticModel"
+type internal SymbolMap (compilation : Compilation, componentTypes : string list) =
+    do Requires.NotNull compilation "compilation"
     do Requires.ArgumentSatisfies (componentTypes |> List.length > 0) "componentTypes" "At least one component type must be provided."
 
     // An equality comparer for method symbols that implements reference equality
@@ -69,8 +69,8 @@ type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string 
 
     // Create the symbols for all components
     do for componentType in componentTypes |> Seq.distinct do
-        let csharpComponent = semanticModel.GetTypeSymbol componentType
-        if not <| csharpComponent.IsDerivedFromComponent semanticModel then
+        let csharpComponent = compilation.GetTypeByMetadataName componentType
+        if not <| csharpComponent.IsDerivedFromComponent compilation then
             sprintf "Type '%s' is not derived from '%s'." componentType typeof<Component>.FullName |> invalidOp
 
         let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>()
@@ -84,7 +84,7 @@ type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string 
 
             // Creates the symbols and optional mapping information for the Update method of the component.
             UpdateMethod = 
-                let updateMethods = methods |> Seq.filter (fun method' -> method'.IsUpdateMethod semanticModel)
+                let updateMethods = methods |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
                 let updateMethodCount = updateMethods |> Seq.length
                 let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
 
@@ -100,7 +100,7 @@ type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string 
             // dictionary that allows us to retrieve the original C# method symbol again.
             Methods = 
                 [
-                    let methods = methods |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod semanticModel && method'.MethodKind = MethodKind.Ordinary)
+                    let methods = methods |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod compilation && method'.MethodKind = MethodKind.Ordinary)
                     for csharpMethod in methods ->
                         let methodSymbol = { Name = csharpMethod.Name; ReturnType = None; Parameters = []}
                         methodMapBuilder.Add (csharpMethod, methodSymbol)
@@ -111,7 +111,7 @@ type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string 
             // Creates the symbols and mapping information for all fields of the component.
             Fields = 
                 [
-                    let fields = fields |> Seq.filter (fun field -> not <| field.IsSubcomponentField semanticModel)
+                    let fields = fields |> Seq.filter (fun field -> not <| field.IsSubcomponentField compilation)
                     for csharpField in fields -> 
                         let fieldSymbol = { FieldSymbol.Name = csharpField.Name; Type = toTypeSymbol csharpField.Type }
                         fieldMapBuilder.Add (csharpField, fieldSymbol)
@@ -121,7 +121,7 @@ type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string 
             // Creates the symbols and mapping information for all subcomponents of the component.
             Subcomponents = 
                 [
-                    let fields = fields |> Seq.filter (fun field -> field.IsSubcomponentField semanticModel)
+                    let fields = fields |> Seq.filter (fun field -> field.IsSubcomponentField compilation)
                     for csharpField in fields -> 
                         let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name }
                         subComponentMapBuilder.Add (csharpField, subComponentSymbol)

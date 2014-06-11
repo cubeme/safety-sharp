@@ -60,6 +60,7 @@
     <Compile Include="CSharp\Extensions\SyntaxNodeExtensions.fs" />
     <Compile Include="CSharp\Extensions\SyntaxTreeExtensions.fs" />
     <Compile Include="CSharp\Extensions\SemanticModelExtensions.fs" />
+    <Compile Include="CSharp\Extensions\CompilationExtensions.fs" />
     <Compile Include="CSharp\Extensions\ITypeSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\IFieldSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensions.fs" />

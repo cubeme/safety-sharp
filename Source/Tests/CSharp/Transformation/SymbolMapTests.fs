@@ -36,7 +36,7 @@ open SafetySharp.Tests.CSharp
 module private SymbolMapTestsHelper =
     let compile csharpCode components =
         let compilation = TestCompilation csharpCode
-        SymbolMap (compilation.SemanticModel, components)
+        SymbolMap (compilation.CSharpCompilation, components)
 
     let components csharpCode components =
         let symbolMap = compile csharpCode components

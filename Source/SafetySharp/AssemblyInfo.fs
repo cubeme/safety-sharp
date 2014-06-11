@@ -26,8 +26,8 @@ open System.Reflection
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
-[<assembly: AssemblyTitle("SafetySharp Base Library")>]
-[<assembly: AssemblyDescription("SafetySharp Base Library")>]
+[<assembly: AssemblyTitle("SafetySharp Library")>]
+[<assembly: AssemblyDescription("SafetySharp Library")>]
 [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
 [<assembly: AssemblyProduct("SafetySharp")>]
 [<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]

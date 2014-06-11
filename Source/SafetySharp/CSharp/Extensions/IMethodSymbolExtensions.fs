@@ -46,6 +46,13 @@ module internal MethodSymbolExtensions =
                 this.OverriddenMethod.Overrides overriddenMethod
 
         /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
+        member this.IsUpdateMethod (compilation : Compilation) =
+            Requires.NotNull this "this"
+            Requires.NotNull compilation "compilation"
+            compilation.GetUpdateMethodSymbol () |> this.Overrides
+
+        /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
         member this.IsUpdateMethod (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
-            this.Overrides <| semanticModel.GetUpdateMethodSymbol ()
+            Requires.NotNull semanticModel "semanticModel"
+            semanticModel.GetUpdateMethodSymbol () |> this.Overrides

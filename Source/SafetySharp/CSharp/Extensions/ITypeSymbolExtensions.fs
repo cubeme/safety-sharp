@@ -52,9 +52,25 @@ module internal TypeSymbolExtensions =
                 this.BaseType.IsDerivedFrom(baseType);
 
         /// Checks whether the type symbol is directly or indirectly derived from the <see cref="SafetySharp.Modeling.Component"/> class.
+        member this.IsDerivedFromComponent (compilation : Compilation) =
+            Requires.NotNull this "this"
+            Requires.NotNull compilation "compilation"
+            compilation.GetComponentClassSymbol () |> this.IsDerivedFrom
+
+        /// Checks whether the type symbol directly or indirectly implements the <see cref="SafetySharp.Modeling.IComponent"/> interface.
+        member this.ImplementsIComponent (compilation : Compilation) =
+            Requires.NotNull this "this"
+            Requires.NotNull compilation "compilation"
+            compilation.GetComponentInterfaceSymbol () |> this.IsDerivedFrom
+
+        /// Checks whether the type symbol is directly or indirectly derived from the <see cref="SafetySharp.Modeling.Component"/> class.
         member this.IsDerivedFromComponent (semanticModel : SemanticModel) =
+            Requires.NotNull this "this"
+            Requires.NotNull semanticModel "semanticModel"
             semanticModel.GetComponentClassSymbol () |> this.IsDerivedFrom
 
         /// Checks whether the type symbol directly or indirectly implements the <see cref="SafetySharp.Modeling.IComponent"/> interface.
         member this.ImplementsIComponent (semanticModel : SemanticModel) =
+            Requires.NotNull this "this"
+            Requires.NotNull semanticModel "semanticModel"
             semanticModel.GetComponentInterfaceSymbol () |> this.IsDerivedFrom
