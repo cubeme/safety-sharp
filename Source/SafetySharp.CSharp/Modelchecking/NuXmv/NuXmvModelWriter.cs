@@ -478,7 +478,7 @@ namespace SafetySharp.Modelchecking.NuXmv
             switch (unaryExpression.Operator)
             {
                 case NuXmvUnaryOperator.LogicalNot:
-                    CodeWriter.Append("! (");
+                    CodeWriter.Append("(! ");
                     unaryExpression.Expression.Accept(this);
                     CodeWriter.Append(")");
                     break;
@@ -499,97 +499,97 @@ namespace SafetySharp.Modelchecking.NuXmv
             {
                 case NuXmvBinaryOperator.LogicalAnd:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("&");
+                    CodeWriter.Append(" & ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LogicalOr:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("|");
+                    CodeWriter.Append(" | ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LogicalXor:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("xor");
+                    CodeWriter.Append(" xor ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LogicalNxor:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("nxor");
+                    CodeWriter.Append(" nxor ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LogicalImplies:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("->");
+                    CodeWriter.Append(" -> ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LogicalEquivalence:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("<->");
+                    CodeWriter.Append(" <-> ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.Equality:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("=");
+                    CodeWriter.Append(" = ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.Inequality:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("!=");
+                    CodeWriter.Append(" != ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LessThan:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("<");
+                    CodeWriter.Append(" < ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.GreaterThan:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append(">");
+                    CodeWriter.Append(" > ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.LessEqual:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("<=");
+                    CodeWriter.Append(" <= ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.GreaterEqual:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append(">=");
+                    CodeWriter.Append(" >= ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.IntegerAddition:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("+");
+                    CodeWriter.Append(" + ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.IntegerSubtraction:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("-");
+                    CodeWriter.Append(" - ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.IntegerMultiplication:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("*");
+                    CodeWriter.Append(" * ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.IntegerDivision:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("/");
+                    CodeWriter.Append(" / ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.IntegerRemainder:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("mod");
+                    CodeWriter.Append(" mod ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.BitShiftRight:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append(">>");
+                    CodeWriter.Append(" >> ");
                     binaryExpression.Right.Accept(this);
                     break;
                 case NuXmvBinaryOperator.BitShiftLeft:
                     binaryExpression.Left.Accept(this);
-                    CodeWriter.Append("<<");
+                    CodeWriter.Append(" << ");
                     binaryExpression.Right.Accept(this);
                     break;
                 //TODO: Other BinaryExpressions like word1, bool, which have a prefix-operator

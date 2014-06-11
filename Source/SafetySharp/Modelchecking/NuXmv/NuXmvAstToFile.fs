@@ -15,10 +15,15 @@ type ExportNuXmvAstToFile() =
     
     let nli (i:int) =
         nl + (indent i)
-
+        
     let joinWithWhitespace (lst:string list) : string =
-        String.Join(" ", lst) 
+        String.Join(" ", lst)
+
+    let joinWithComma (lst:string list) : string =
+        String.Join(", ", lst)
     
+    let joinWithNewLine (lst:string list) : string =
+        String.Join("\n", lst)
     
     // NuXmv is Two complement and Highest Bit in front (binary 10000 is decimal 16 not decimal 1)
     let BinaryArrayToBin (value:bool[]) : string =
@@ -182,18 +187,57 @@ type ExportNuXmvAstToFile() =
 
     member this.ExportBasicExpression (basicExpression:BasicExpression) =
         match basicExpression with
-            | ConstExpression (constExpression) -> ""
-            | ComplexIdentifierExpression (identifier:ComplexIdentifier) -> "" //Identifier is the reference to a variable or a define. Might be hierarchical.
-            | UnaryExpression (operator:UnaryOperator, operand:BasicExpression) -> ""
-            | BinaryExpression (left:BasicExpression, operator:BinaryOperator, right:BasicExpression) -> ""
-            | TenaryExpression -> "" //TODO
-            | IndexSubscriptExpression (expressionLeadingToArray:BasicExpression, index:BasicExpression) -> "" //TODO: Validation, Index has to be word or integer
-            | SetExpression (setBodyExpressions:(BasicExpression list)) -> "" // TODO there is another way to gain set-expressions by the union-operator. See page 19. Here we use the way by enumerating every possible value
-            | CaseExpression (caseBody:(CaseConditionAndEffect list)) -> ""
-                (*let ExportCaseConditionAndEffect (caseConditionAndEffect:CaseConditionAndEffect)) -> "" = {
-                    CaseCondition:BasicExpression;
-                    CaseEffect:BasicExpression; *)
-            | BasicNextExpression (expression:BasicExpression) -> "" // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
+            | ConstExpression (constExpression) ->
+                this.ExportConstExpression constExpression
+            | ComplexIdentifierExpression (identifier:ComplexIdentifier) ->
+                //Identifier is the reference to a variable or a define. Might be hierarchical.
+                this.ExportComplexIdentifier identifier
+            | UnaryExpression (operator:UnaryOperator, operand:BasicExpression) ->
+                match operator with
+                    | UnaryOperator.LogicalNot -> sprintf "(! %s)" (this.ExportBasicExpression operand)
+            | BinaryExpression (left:BasicExpression, operator:BinaryOperator, right:BasicExpression) ->
+                let left = this.ExportBasicExpression left
+                let right = this.ExportBasicExpression right
+                let opStr = match operator with
+                                | BinaryOperator.LogicalAnd             -> "&"
+                                | BinaryOperator.LogicalOr              -> "|"
+                                | BinaryOperator.LogicalXor             -> "xor"
+                                | BinaryOperator.LogicalNxor            -> "nxor"
+                                | BinaryOperator.LogicalImplies         -> "->"
+                                | BinaryOperator.LogicalEquivalence     -> "<->"
+                                | BinaryOperator.Equality               -> "="
+                                | BinaryOperator.Inequality             -> "!="
+                                | BinaryOperator.LessThan               -> "<"
+                                | BinaryOperator.GreaterThan            -> ">"
+                                | BinaryOperator.LessEqual              -> "<="
+                                | BinaryOperator.GreaterEqual           -> ">="
+                                | BinaryOperator.IntegerAddition        -> "+"
+                                | BinaryOperator.IntegerSubtraction     -> "-|"
+                                | BinaryOperator.IntegerMultiplication  -> "*"
+                                | BinaryOperator.IntegerDivision        -> "/"
+                                | BinaryOperator.IntegerRemainder       -> "mod"
+                                | BinaryOperator.BitShiftRight          -> ">>"
+                                | BinaryOperator.BitShiftLeft           -> "<<"
+                sprintf "( %s %s %s )" left opStr right
+            | TenaryExpression -> 
+                "" //TODO
+            | IndexSubscriptExpression (expressionLeadingToArray:BasicExpression, index:BasicExpression) -> 
+                //TODO: Validation, Index has to be word or integer
+                sprintf "%s[%s]" (this.ExportBasicExpression expressionLeadingToArray) (this.ExportBasicExpression index)
+            | SetExpression (setBodyExpressions:(BasicExpression list)) -> 
+                // TODO there is another way to gain set-expressions by the union-operator. See page 19. Here we use the way by enumerating every possible value
+                let content = setBodyExpressions |> List.map (fun elem -> this.ExportBasicExpression elem)
+                                                 |> joinWithComma
+                sprintf "{ %s }" content
+            | CaseExpression (caseBody:(CaseConditionAndEffect list)) ->
+                let ExportCaseConditionAndEffect (caseConditionAndEffect:CaseConditionAndEffect) =
+                    sprintf "%s : %s;" (this.ExportBasicExpression caseConditionAndEffect.CaseCondition) (this.ExportBasicExpression caseConditionAndEffect.CaseEffect)
+                let content = caseBody |> List.map ExportCaseConditionAndEffect
+                                       |> joinWithNewLine
+                sprintf "\ncase\n%s\nesac" content
+            | BasicNextExpression (expression:BasicExpression) ->
+                // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
+                sprintf "next(%s)" (this.ExportBasicExpression expression)
 
     member this.ExportSimpleExpression (basicExpression:BasicExpression) =
         this.ExportBasicExpression basicExpression
