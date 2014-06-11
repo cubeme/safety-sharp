@@ -31,7 +31,7 @@ open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="SemanticModel" /> instances.
 [<AutoOpen>]
-module SemanticModelExtensions =
+module internal SemanticModelExtensions =
     type SemanticModel with
 
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of

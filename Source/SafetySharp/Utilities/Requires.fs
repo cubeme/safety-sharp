@@ -25,7 +25,7 @@ open System
 
 /// Defines a set of helper functions that should be used to assert preconditions of functions.
 [<RequireQualifiedAccess>]
-module Requires =
+module internal Requires =
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
     let inline NotNull<'a when 'a : null and 'a : equality> (argument : 'a) argumentName =

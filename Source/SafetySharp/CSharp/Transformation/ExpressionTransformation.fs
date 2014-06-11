@@ -31,7 +31,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module ExpressionTransformation =
+module internal ExpressionTransformation =
 
     /// Transforms a C# expression to a metamodel expression.
     let Transform (symbolMap : SymbolMap) (semanticModel : SemanticModel) (expression : ExpressionSyntax) =

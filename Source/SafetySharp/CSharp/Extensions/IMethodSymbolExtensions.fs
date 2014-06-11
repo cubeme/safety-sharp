@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="IMethodSymbol" /> instances.
 [<AutoOpen>]
-module MethodSymbolExtensions =
+module internal MethodSymbolExtensions =
     type IMethodSymbol with
 
         /// Checks whether the method symbol overrides the given method.

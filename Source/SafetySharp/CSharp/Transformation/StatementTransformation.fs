@@ -31,7 +31,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module StatementTransformation =
+module internal StatementTransformation =
 
     /// Transforms C# statements to metamodel statements.
     let Transform (symbolMap : SymbolMap) (semanticModel : SemanticModel) (statement : StatementSyntax) =

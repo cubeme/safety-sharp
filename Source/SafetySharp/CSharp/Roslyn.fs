@@ -26,7 +26,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module Roslyn =
+module internal Roslyn =
     /// Tries to cast the given syntax node to the parameter type expected by the projection and returns the projected value.
     let private projectNode (node : SyntaxNode) projection =
         match node with

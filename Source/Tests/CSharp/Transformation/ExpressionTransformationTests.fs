@@ -21,15 +21,16 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Tests.CSharp
-module ExpressionTransformationTests =
 
-    open System.Linq
-    open NUnit.Framework
-    open FsUnit
-    open SafetySharp.CSharp
-    open SafetySharp.Metamodel
-    open Microsoft.CodeAnalysis.CSharp.Syntax
+open System.Linq
+open NUnit.Framework
+open FsUnit
+open SafetySharp.CSharp
+open SafetySharp.Metamodel
+open Microsoft.CodeAnalysis.CSharp.Syntax
 
+[<AutoOpen>]
+module private ExpressionTransformationTestsHelper = 
     let mutable fieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Boolean }
 
     let transform csharpCode =
@@ -49,6 +50,8 @@ module ExpressionTransformationTests =
         fieldSymbol <- symbolMap.Components.[0].Fields.[0]
 
         ExpressionTransformation.Transform symbolMap compilation.SemanticModel expression
+
+module ExpressionTransformationTests =
 
     [<Test>]
     let ``boolean literals`` () =

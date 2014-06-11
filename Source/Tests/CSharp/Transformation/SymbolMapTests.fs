@@ -33,7 +33,7 @@ open SafetySharp.Metamodel
 open SafetySharp.Tests.CSharp
 
 [<AutoOpen>]
-module Helper =
+module private SymbolMapTestsHelper =
     let compile csharpCode components =
         let compilation = TestCompilation csharpCode
         SymbolMap (compilation.SemanticModel, components)

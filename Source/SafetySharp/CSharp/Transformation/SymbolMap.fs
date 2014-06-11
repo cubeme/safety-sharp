@@ -37,7 +37,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 
 /// Constructs symbols for the given component types and creates a mapping between the original C# symbols and the
 /// created metamodel symbols.
-type SymbolMap (semanticModel : SemanticModel, componentTypes : string list) =
+type internal SymbolMap (semanticModel : SemanticModel, componentTypes : string list) =
     do Requires.NotNull semanticModel "semanticModel"
     do Requires.ArgumentSatisfies (componentTypes |> List.length > 0) "componentTypes" "At least one component type must be provided."
 

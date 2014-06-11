@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel
 
 /// Represents the definition of a type.
 [<RequireQualifiedAccess>]
-type TypeSymbol = 
+type internal TypeSymbol = 
     /// Represents the type of Boolean values <c>true</c> and <c>false</c>.
     | Boolean
 
@@ -35,32 +35,26 @@ type TypeSymbol =
     | Decimal
 
 /// Represents the definition of a field within a component.
-type FieldSymbol = {
+type internal FieldSymbol = {
     /// The name of the field. Field names are unique within a single component and do not overlap
     /// with subcomponent or method names.
     Name : string
     Type : TypeSymbol
-}   with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this
+} 
+with override this.ToString () = sprintf "%A" this
 
 /// Represents the definition of a method parameter.
-type ParameterSymbol = {
+type internal ParameterSymbol = {
     /// The name of the method parameter. Parameter names are unique within a single method.
     Name : string
 
     /// The type of the method parameter.
     Type : TypeSymbol
-}   with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this
+} 
+with override this.ToString () = sprintf "%A" this
 
 /// Represents the definition of a method within a component.
-type MethodSymbol = {
+type internal MethodSymbol = {
     /// The name of the method. Method names are unique within a single component and do not overlap
     /// with subcomponent or field names.
     Name : string
@@ -70,25 +64,19 @@ type MethodSymbol = {
 
     /// The parameters, if any, of the method.
     Parameters : ParameterSymbol list
-}   with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this
+} 
+with override this.ToString () = sprintf "%A" this
 
 /// Represents the definition of a subcomponent within a parent component.
-type SubcomponentSymbol = {
+type internal SubcomponentSymbol = {
     /// The name of the subcomponent. Subcomponent names are unique within a single component and do
     /// not overlap with field or method names.
     Name : string
-}   with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this
+} 
+with override this.ToString () = sprintf "%A" this
 
 /// Represents the type definition of a component within a model.
-type ComponentSymbol = { 
+type internal ComponentSymbol = { 
     /// The name of the component. Component names are unique within a single model.
     Name : string
 
@@ -103,18 +91,11 @@ type ComponentSymbol = {
 
     /// The subcomponents declared by the component.
     Subcomponents : SubcomponentSymbol list
-}   with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this
+} 
+with override this.ToString () = sprintf "%A" this
 
 // TODO
-and ModelSymbol = { 
+type internal ModelSymbol = { 
     Fields : FieldSymbol list
-}
-    with
-
-    /// Returns a structured string representation for the current instance.
-    override this.ToString () =
-        sprintf "%A" this
+} 
+with override this.ToString () = sprintf "%A" this

@@ -23,7 +23,7 @@
 namespace SafetySharp.Metamodel
 
 /// Represents statements contained within method bodies.
-type Statement =
+type internal Statement =
     /// Represents the empty statement that does nothing.
     | EmptyStatement
 
@@ -48,4 +48,4 @@ type Statement =
         sprintf "%A" this
 
 /// Maps a method symbol to its method body.
-type MethodBodyResolver = Map<MethodSymbol, Statement>
+type internal MethodBodyResolver = Map<MethodSymbol, Statement>

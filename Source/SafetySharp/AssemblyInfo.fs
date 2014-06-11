@@ -20,14 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Utilities
-open System
+module internal AssemblyInfo
 
-/// Defines a set of helper functions for assertions.
-[<RequireQualifiedAccess>]
-module Assert =
+open System.Reflection
+open System.Runtime.CompilerServices
+open System.Runtime.InteropServices
 
-    /// Throws a <see cref="System.NullReferenceException"/> if the given object is <c>null</c>.
-    let inline NotNull<'a when 'a : null and 'a : equality> (obj : 'a) description =
-        if obj = null then 
-            NullReferenceException description |> raise
+[<assembly: AssemblyTitle("SafetySharp Base Library")>]
+[<assembly: AssemblyDescription("SafetySharp Base Library")>]
+[<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
+[<assembly: AssemblyProduct("SafetySharp")>]
+[<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
+[<assembly: AssemblyCulture("")>]
+[<assembly: AssemblyVersion("0.1.0.0")>]
+[<assembly: AssemblyFileVersion("0.1.0.0")>]
+[<assembly: ComVisible(false)>]
+[<assembly: InternalsVisibleTo("Tests")>]
+[<assembly: InternalsVisibleTo("TestCompilation")>]
+
+do ()

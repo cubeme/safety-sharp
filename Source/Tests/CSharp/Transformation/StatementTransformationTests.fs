@@ -21,15 +21,16 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Tests.CSharp
-module StatementTransformationTests =
 
-    open System.Linq
-    open NUnit.Framework
-    open FsUnit
-    open SafetySharp.CSharp
-    open SafetySharp.Metamodel
-    open Microsoft.CodeAnalysis.CSharp.Syntax
+open System.Linq
+open NUnit.Framework
+open FsUnit
+open SafetySharp.CSharp
+open SafetySharp.Metamodel
+open Microsoft.CodeAnalysis.CSharp.Syntax
 
+[<AutoOpen>]
+module private StatementTransformationTestsHelper =
     let mutable booleanFieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Boolean }
     let mutable integerFieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Integer }
 
@@ -55,6 +56,8 @@ module StatementTransformationTests =
         StatementTransformation.Transform symbolMap compilation.SemanticModel statement
 
     let transform csharpCode = transformWithReturnType csharpCode "void"
+
+module StatementTransformationTests =
 
     [<Test>]
     let ``empty statement`` () =

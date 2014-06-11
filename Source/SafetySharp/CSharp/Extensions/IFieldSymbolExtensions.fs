@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
 [<AutoOpen>]
-module FieldSymbolExtensions =
+module internal FieldSymbolExtensions =
     type IFieldSymbol with
 
         /// Checks whether the field symbol is a subcomponent field.

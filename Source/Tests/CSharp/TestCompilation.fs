@@ -41,7 +41,7 @@ module private Exception =
     let inline failed message = new CompilationException(message) |> raise
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
-type TestCompilation (csharpCode : string) =
+type internal TestCompilation (csharpCode : string) =
     let compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
