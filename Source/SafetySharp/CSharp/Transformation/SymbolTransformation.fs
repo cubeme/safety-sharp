@@ -53,6 +53,17 @@ type SymbolResolver = private {
         | (result, symbol) when result -> symbol
         | _ -> invalidArg "componentSymbol" "The given C# component symbol is unknown."
 
+    /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
+    member this.ResolveComponent (componentObject : Component) =
+        Requires.NotNull componentObject "componentObject"
+        let typeName = componentObject.GetType().FullName.Replace("+", ".")
+        let assemblyName = componentObject.GetType().Assembly.GetName().Name
+        let name = sprintf "%s::%s" assemblyName typeName
+
+        match this.ComponentList |> List.tryFind (fun symbol -> symbol.Name = name) with
+        | Some symbol -> symbol
+        | None -> invalidArg "componentObject" "The type of the given .NET component instance is unknown."
+
     /// Resolves the <see cref="FieldSymbol"/> corresponding to the given C# field symbol.
     member this.ResolveField (fieldSymbol : IFieldSymbol) =
         Requires.NotNull fieldSymbol "fieldSymbol"
@@ -106,7 +117,7 @@ module SymbolTransformation =
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
         let methodMapBackBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
 
-        /// Converts a C# type symbol to one of the supported metamodel type symbols
+        // Converts a C# type symbol to one of the supported metamodel type symbols
         let toTypeSymbol (csharpSymbol : ITypeSymbol) =
             match csharpSymbol.SpecialType with
             | SpecialType.None -> csharpSymbol.ToDisplayString SymbolDisplayFormat.FullyQualifiedFormat |> sprintf "Type '%s' is not supported." |> invalidOp
@@ -115,14 +126,14 @@ module SymbolTransformation =
             | SpecialType.System_Decimal -> TypeSymbol.Decimal
             | _ -> sprintf "Unsupported C# special type: '%A'." csharpSymbol.SpecialType |> invalidOp
 
-        /// Encodes the assembly name and all parent namespaces in the component name to ensure the uniqueness of the name.
+        // Encodes the assembly name and all parent namespaces in the component name to ensure the uniqueness of the name.
         let transformComponentName (csharpComponent : ITypeSymbol) = 
             let assemblyName = csharpComponent.ContainingAssembly.Identity.Name
             let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
             let componentName = csharpComponent.ToDisplayString displayFormat
             sprintf "%s::%s" assemblyName componentName
 
-        /// Creates the symbols and optional mapping information for the Update method of the component.
+        // Creates the symbols and optional mapping information for the Update method of the component.
         let transformUpdateMethod (csharpComponent : ITypeSymbol) =
             let updateMethods = csharpComponent.GetMembers().OfType<IMethodSymbol>() |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
             let updateMethodCount = updateMethods |> Seq.length
@@ -136,8 +147,8 @@ module SymbolTransformation =
                 methodMapBackBuilder.Add (methodSymbol, updateMethod)
             methodSymbol
 
-        /// Create the symbols and mapping information for all methods of the component. We'll also build up a 
-        /// dictionary that allows us to retrieve the original C# method symbol again.
+        // Create the symbols and mapping information for all methods of the component. We'll also build up a 
+        // dictionary that allows us to retrieve the original C# method symbol again.
         let transformMethods (csharpComponent : ITypeSymbol) =
             let transformReturnType (returnType : ITypeSymbol) =
                 if returnType.SpecialType = SpecialType.System_Void then 
@@ -164,7 +175,7 @@ module SymbolTransformation =
                     methodSymbol
             ]
 
-        /// Creates the symbols and mapping information for all fields of the component.
+        // Creates the symbols and mapping information for all fields of the component.
         let transformFields (csharpComponent : ITypeSymbol) =
             let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>() |> Seq.filter (fun field -> not <| field.IsSubcomponentField compilation)
             [
@@ -174,7 +185,7 @@ module SymbolTransformation =
                     fieldSymbol
             ]
 
-        /// Creates the symbols and mapping information for all subcomponents of the component.
+        // Creates the symbols and mapping information for all subcomponents of the component.
         let transformSubcomponents (csharpComponent : ITypeSymbol) =
             let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>() |> Seq.filter (fun field -> field.IsSubcomponentField compilation)
             [
@@ -184,7 +195,7 @@ module SymbolTransformation =
                     subComponentSymbol
             ]
 
-        /// Creates the symbols and mapping information for a component with the given type.
+        // Creates the symbols and mapping information for a component with the given type.
         let transformComponent (csharpComponent : ITypeSymbol) =
             let componentSymbol = {
                 Name = transformComponentName csharpComponent
@@ -201,7 +212,7 @@ module SymbolTransformation =
         let csharpComponents = compilation.GetTypeSymbols () |> Seq.filter (fun csharpComponent -> csharpComponent.IsDerivedFromComponent compilation)
         csharpComponents |> Seq.iter transformComponent
 
-        // Create and return the symbol map
+        // Create and return the symbol resolver
         {
             ComponentMap = componentMapBuilder.ToImmutable ()
             ComponentList = componentListBuilder |> List.ofSeq

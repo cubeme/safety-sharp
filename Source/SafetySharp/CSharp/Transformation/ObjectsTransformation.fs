@@ -31,31 +31,54 @@ open SafetySharp.Utilities
 type ObjectResolver = private {
     ComponentSymbolMap : ImmutableDictionary<Component, ComponentSymbol>
     ComponentObjectMap : ImmutableDictionary<Component, ComponentObject>
+    Model : ModelObject
 }
     with
 
-    member private this.Resolve (map : ImmutableDictionary<_,_>) key =
-        match map.TryGetValue key with
-        | (result, value) when result -> value
-        | _ -> Requires.ArgumentSatisfies false "The given component is unknown."
-
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
-    member this.ResolveSymbol (dotNetComponent : Component) =
-        Requires.NotNull dotNetComponent "dotNetComponent'"
-        match this.ComponentSymbolMap.TryGetValue dotNetComponent with
+    member this.ResolveSymbol (componentObject : Component) =
+        Requires.NotNull componentObject "componentObject'"
+        match this.ComponentSymbolMap.TryGetValue componentObject with
         | (result, symbol) when result -> symbol
-        | _ -> invalidArg "dotNetComponent" "The given component is unknown."
+        | _ -> invalidArg "componentObject" "The given component is unknown."
 
     /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
-    member this.ResolveObject (dotNetComponent : Component) =
-        Requires.NotNull dotNetComponent "dotNetComponent'"
-        match this.ComponentObjectMap.TryGetValue dotNetComponent with
+    member this.ResolveObject (componentObject : Component) =
+        Requires.NotNull componentObject "componentObject'"
+        match this.ComponentObjectMap.TryGetValue componentObject with
         | (result, symbol) when result -> symbol
-        | _ -> invalidArg "dotNetComponent" "The given component is unknown."
+        | _ -> invalidArg "componentObject" "The given component is unknown."
+
+    /// Gets the model object that contains all of the resolver's component and partition objects.
+    member this.ModelObject = this.Model
 
 module ObjectsTransformation =
 
     /// Transforms C# objects to metamodel objects.
-    let Transform (model : Model) =
+    let Transform (model : Model) (symbolResolver : SymbolResolver) =
         Requires.NotNull model "model"
         Requires.ArgumentSatisfies model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+
+        // We're using the builder pattern to initialize the dictionaries
+        let componentSymbolMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentSymbol> ()
+        let componentObjectMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentObject> ()
+
+        // Creates the objects and mapping information for the .NET component instance.
+        let transformComponent (component' : Component) =
+            {
+                Name = component'.Name
+                ComponentSymbol = symbolResolver.ResolveComponent component'
+                Fields = Map.empty
+                Subcomponents = Map.empty
+            }
+
+        // Creates the objects and mapping information for the .NET partition root component instance.
+        let transformPartition (rootComponent : Component) =
+            { RootComponent = transformComponent rootComponent }
+
+        // Create and return the object resolver
+        {
+            ComponentSymbolMap = componentSymbolMapBuilder.ToImmutable ()
+            ComponentObjectMap = componentObjectMapBuilder.ToImmutable ()
+            Model = { Partitions = model.PartitionRoots |> List.map transformPartition }
+        }

@@ -30,6 +30,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
 open SafetySharp.Metamodel
+open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
 
 [<AutoOpen>]
@@ -135,11 +136,11 @@ module ``ComponentSymbols property`` =
         }
 
 [<TestFixture>]
-module ``ResolveComponent method`` =
+module ``ResolveComponent(INamedTypeSymbol) method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let resolver = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ resolver.ResolveComponent null @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
+        raisesWith<ArgumentNullException> <@ resolver.ResolveComponent (null : INamedTypeSymbol) @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
 
     [<Test>]
     let ``throws when non-component is passed`` () =
@@ -167,6 +168,62 @@ module ``ResolveComponent method`` =
         resolver.ResolveComponent classA =? emptyComponent "A"
         resolver.ResolveComponent classB =? emptyComponent "B"
         resolver.ResolveComponent classA <>? resolver.ResolveComponent classB
+
+[<TestFixture>]
+module ``ResolveComponent(Component) method`` =
+    [<Test>]
+    let ``throws when null is passed`` () =
+        let resolver = compile "class A : Component {} class B : Component {}"
+        raisesWith<ArgumentNullException> <@ resolver.ResolveComponent (null : Component) @> (fun e -> <@ e.ParamName = "componentObject" @>)
+
+    [<Test>]
+    let ``throws when component object with unknown type is passed`` () =
+        let compilation = TestCompilation "class A : Component {}"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+
+        let component' = { new Component () with member this.Update() = () }
+        raisesWith<ArgumentException> <@ resolver.ResolveComponent component' @> (fun e -> <@ e.ParamName = "componentObject" @>)
+
+    [<Test>]
+    let ``returns symbol for component object of transformed type`` () =
+        let compilation = TestCompilation "class A : Component {}"
+        let componentA = compilation.CreateObject<Component> "A"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+
+        resolver.ResolveComponent componentA =? emptyComponent "A"
+
+    [<Test>]
+    let ``returns symbol for component object of deeply nested transformed type`` () =
+        let compilation = TestCompilation "namespace X.Y { struct Z { class A : Component {} }}"
+        let componentA = compilation.CreateObject<Component> "X.Y.Z+A"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+
+        resolver.ResolveComponent componentA =? emptyComponent "X.Y.Z.A"
+
+    [<Test>]
+    let ``returns different symbols for different component objects with different transformed types`` () =
+        let compilation = TestCompilation "class A : Component {} class B : Component {}"
+        let componentA = compilation.CreateObject<Component> "A"
+        let componentB = compilation.CreateObject<Component> "B"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+
+        resolver.ResolveComponent componentA =? emptyComponent "A"
+        resolver.ResolveComponent componentB =? emptyComponent "B"
+        resolver.ResolveComponent componentA <>? resolver.ResolveComponent componentB
+
+    [<Test>]
+    let ``returns same symbols for different component objects with same transformed types`` () =
+        let compilation = TestCompilation "class A : Component {}"
+        let componentA = compilation.CreateObject<Component> "A"
+        let componentB = compilation.CreateObject<Component> "A"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+
+        componentA <>? componentB
+        resolver.ResolveComponent componentA =? emptyComponent "A"
+        resolver.ResolveComponent componentB =? emptyComponent "A"
+
+        // We have to check for reference equality here
+        test <@ obj.ReferenceEquals(resolver.ResolveComponent componentA, resolver.ResolveComponent componentB) @>
 
 [<TestFixture>]
 module ``ResolveField method`` =

@@ -42,6 +42,7 @@ module private Exception =
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 type internal TestCompilation (csharpCode : string) =
+    let mutable (assembly : Assembly) = null
     let compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
@@ -73,19 +74,20 @@ type internal TestCompilation (csharpCode : string) =
 
     /// Emits an in-memory assembly for the compilation and loads the assembly into the app domain.
     member this.Compile () =
-        use stream = new MemoryStream ()
-        let emitResult = csharpCompilation.Emit stream
+        if assembly = null then
+            use stream = new MemoryStream ()
+            let emitResult = csharpCompilation.Emit stream
 
-        if (emitResult.Success) then
-            stream.ToArray () |> Assembly.Load
-        else
-            emitResult.Diagnostics |> Seq.iter (fun diagnostic -> printf "%A" diagnostic)
-            failed "Assembly compilation failed."
+            if (emitResult.Success) then
+                assembly <- stream.ToArray () |> Assembly.Load
+            else
+                emitResult.Diagnostics |> Seq.iter (fun diagnostic -> printf "%A" diagnostic)
+                failed "Assembly compilation failed."
 
-    /// <summary>
+        assembly
+
     /// Finds the <see cref="TypeDeclarationSyntax" /> for the type with the given name in the compilation.
     /// Throws an exception if more than one type with the given name was found.
-    /// </summary>
     member this.FindTypeDeclaration typeName =
         let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
         let types = 
@@ -105,28 +107,22 @@ type internal TestCompilation (csharpCode : string) =
 
         types.[0]
 
-    /// <summary>
     /// Finds the <see cref="ClassDeclarationSyntax" /> for the class with the given name in the compilation.
     /// Throws an exception if more than one class with the given name was found.
-    /// </summary>
     member this.FindClassDeclaration className =
         match this.FindTypeDeclaration(className) with
         | :? ClassDeclarationSyntax as classDeclaration -> classDeclaration
         | _ -> sprintf "Found no class with name '%s'." className |> failed
 
-    /// <summary>
     /// Finds the <see cref="InterfaceDeclarationSyntax" /> for the interface with the given name in the
     /// compilation. Throws an exception if more than one interface with the given name was found.
-    /// </summary>
     member this.FindInterfaceDeclaration interfaceName =
         match this.FindTypeDeclaration(interfaceName) with
         | :? InterfaceDeclarationSyntax as interfaceDeclaration -> interfaceDeclaration
         | _ -> sprintf "Found no interface with name '%s'." interfaceName |> failed
 
-    /// <summary>
     /// Finds the <see cref="MethodDeclarationSyntax" /> for the method with the given name in the type with the given name
     /// within the compilation. Throws an exception if more than one type or method with the given name was found.
-    /// </summary>
     member this.FindMethodDeclaration typeName methodName =
         let methods = 
             this.FindTypeDeclaration(typeName)
@@ -142,10 +138,8 @@ type internal TestCompilation (csharpCode : string) =
 
         methods.[0]
 
-    /// <summary>
     /// Finds the <see cref="VariableDeclaratorSyntax" /> for the field with the given name in the type with the given name
     /// within the compilation. Throws an exception if more than one type or field with the given name was found.
-    /// </summary>
     member this.FindFieldDeclaration typeName fieldName =
         let fields = 
             this.FindTypeDeclaration(typeName)
@@ -162,34 +156,31 @@ type internal TestCompilation (csharpCode : string) =
 
         fields.[0]
 
-    /// <summary>
     /// Gets the <see cref="ITypeSymbol" /> representing the type with the given name.
-    /// </summary>
     member this.FindTypeSymbol typeName =
         this.FindTypeDeclaration typeName |> this.SemanticModel.GetDeclaredSymbol
 
-    /// <summary>
     /// Gets the <see cref="ITypeSymbol" /> representing the class with given name.
-    /// </summary>
     member this.FindClassSymbol className =
         this.FindClassDeclaration className |> this.SemanticModel.GetDeclaredSymbol
 
-    /// <summary>
     /// Gets the <see cref="ITypeSymbol" /> representing the interface with the given name.
-    /// </summary>
     member this.FindInterfaceSymbol interfaceName =
         this.FindInterfaceDeclaration interfaceName |> this.SemanticModel.GetDeclaredSymbol
 
-    /// <summary>
     /// Gets the <see cref="IMethodSymbol" /> representing the method with the given name in the type with
     /// with the given name.
-    /// </summary>
     member this.FindMethodSymbol className methodName =
         this.FindMethodDeclaration className methodName |> this.SemanticModel.GetDeclaredSymbol
 
-    /// <summary>
     /// Gets the <see cref="IFieldSymbol" /> representing the field with the given name in the type with
     /// the given name.
-    /// </summary>
     member this.FindFieldSymbol className fieldName =
         this.FindFieldDeclaration className fieldName |> this.SemanticModel.GetDeclaredSymbol :?> IFieldSymbol
+
+    /// If necessary, compiles the compilation and loads the resulting assembly into the app domain, then searches for
+    /// a type with the given name and returns a new instance of the type by invoking the type's default constructor.
+    member this.CreateObject<'T> typeName =
+        match this.Compile().GetType(typeName) with
+        | null -> sprintf "Unable to find a type with name '%s' in the compiled assembly." typeName |> failed
+        | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T

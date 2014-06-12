@@ -87,7 +87,12 @@ type ComponentSymbol = {
 
     /// The subcomponents declared by the component.
     Subcomponents : SubcomponentSymbol list
-} 
+}
+
+// TODO
+type PartitionSymbol = {
+    RootComponent : ComponentSymbol
+}
 
 // TODO
 type ModelSymbol = { 

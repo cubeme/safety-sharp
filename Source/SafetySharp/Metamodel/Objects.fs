@@ -25,7 +25,8 @@ namespace SafetySharp.Metamodel
 /// Represents an instantiation of a component field.
 type FieldObject = {
     /// The instantiated field.
-    Field : FieldSymbol
+    FieldSymbol : FieldSymbol
+
     /// The list of initial values for the field. Each field is guaranteed to have at least one initial value.
     InitialValues : obj list
 } 
@@ -33,16 +34,26 @@ type FieldObject = {
 /// Represents the instantiation of a component.
 type ComponentObject = {
     /// The name of the component object. Component object names are unique within a single model object.
-    Name : string list
+    Name : string
+
     /// The instantiated component type.
-    Component : ComponentSymbol
+    ComponentSymbol : ComponentSymbol
+
     /// Maps each field declared by the component type to a field instantiation.
     Fields : Map<FieldSymbol, FieldObject>
+
     /// Maps each subcomponent declared by the component type to a component instantiation.
     Subcomponents : Map<SubcomponentSymbol, ComponentObject>
 } 
 
-// Todo
+/// Represents the instantiation of a partition.
+type PartitionObject = {
+    /// The root component object of the partition.
+    RootComponent : ComponentObject
+}
+
+/// Represents the instantiation of a model.
 type ModelObject = {
-    X: int
+    /// The partitions the model consists of.
+    Partitions : PartitionObject list
 } 
