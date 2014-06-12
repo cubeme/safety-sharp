@@ -34,64 +34,7 @@ open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
-
-[<AutoOpen>]
-module private ComponentTestsHelper =
-    // This code depends on the F# compiler creating an internal field called 'fieldName@' for a 'val fieldName' expression
-    let fieldName field = field + "@"
-
-    let createExpression<'T> (component' : Component) field = 
-        let fieldInfo = component'.GetType().GetField(fieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
-        if fieldInfo = null then
-            sprintf "Unable to find field '%s' in '%s'." field (component'.GetType().FullName) |> invalidOp
-        Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(component'), fieldInfo))
-
-    type FieldComponent<'T> =
-        inherit Component 
-    
-        val _field : 'T
-
-        new () = { _field = Unchecked.defaultof<'T> }
-
-        new (value : 'T) as this = { _field = Unchecked.defaultof<'T> } then
-            this.SetInitialValues (createExpression<'T> this "_field", value)
-
-        new (value1 : 'T, value2 : 'T) as this = { _field = Unchecked.defaultof<'T> } then
-            this.SetInitialValues (createExpression<'T> this "_field", value1, value2)
-
-    type FieldComponent<'T1, 'T2> =
-        inherit Component 
-    
-        val _field1 : 'T1
-        val _field2 : 'T2
-
-        new () = { _field1 = Unchecked.defaultof<'T1>; _field2 = Unchecked.defaultof<'T2> }
-
-        new (value1 : 'T1, value2 : 'T2) as this = 
-            { _field1 = Unchecked.defaultof<'T1>; _field2 = Unchecked.defaultof<'T2> } then
-            this.SetInitialValues (createExpression<'T1> this "_field1", value1)
-            this.SetInitialValues (createExpression<'T2> this "_field2", value2)
-
-        new (value1a : 'T1, value1b : 'T1, value2a : 'T2, value2b : 'T2) as this = 
-            { _field1 = Unchecked.defaultof<'T1>; _field2 = Unchecked.defaultof<'T2> } then
-            this.SetInitialValues (createExpression<'T1> this "_field1", value1a, value1b)
-            this.SetInitialValues (createExpression<'T2> this "_field2", value2a, value2b)
-        
-    type OneSubcomponent =
-        inherit Component
-
-        val _component : Component
-
-        new () = { _component = Unchecked.defaultof<Component> }
-        new component' = { _component = component' }
-
-    type TwoSubcomponents =
-        inherit Component
-
-        val _component1 : Component
-        val _component2 : Component
-
-        new (component1, component2) = { _component1 = component1; _component2 = component2 }
+open SafetySharp.Tests.Modeling
 
 [<TestFixture>]
 module ``SetInitialValues method`` =
@@ -142,7 +85,7 @@ module ``GetInitialValuesOfField method`` =
         raises<ArgumentException> <@ component'.GetInitialValuesOfField "abcd" @>
 
     [<Test>]
-    let ``throws when metadata has not been finalized`` () =
+    let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> 3
         raises<InvalidOperationException> <@ component'.GetInitialValuesOfField <| fieldName "_field" @>
 
@@ -228,7 +171,7 @@ module ``GetSubcomponent method`` =
         raises<ArgumentException> <@ component'.GetSubcomponent "" @>
 
     [<Test>]
-    let ``throws when metadata has not been finalized`` () =
+    let ``throws when metadata has not yet been finalized`` () =
         let component' = new FieldComponent<int> ()
         raises<InvalidOperationException> <@ component'.GetSubcomponent (fieldName "_field") @>
 
@@ -267,7 +210,7 @@ module ``GetSubcomponent method`` =
 [<TestFixture>]
 module ``Subcomponents property`` =
     [<Test>]
-    let ``throws when metadata has not been finalized`` () =
+    let ``throws when metadata has not yet been finalized`` () =
         let component' = new OneSubcomponent (new FieldComponent<int> 3)
         raises<InvalidOperationException> <@ component'.Subcomponents @>
 

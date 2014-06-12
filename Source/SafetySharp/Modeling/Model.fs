@@ -30,139 +30,73 @@ open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
-/// Represents a base class for all components.
+/// Represents a base class for all models.
 [<AbstractClass>]
-type Component () =
+type Model () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
-    // Component state and metadata
+    // Model state and metadata
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
+    let mutable (partitionRoots : Component list) = []
+    let mutable (components : Component list) = []
     let mutable isSealed = false
-    let mutable name = String.Empty
-    let mutable (subcomponents : Component list) = []
-    let fields = Dictionary<string, obj list> ()
 
-    let requiresNotSealed () = Requires.That (not isSealed) "Modifications of the component metadata are only allowed during object construction."
-    let requiresIsSealed () = Requires.That isSealed "Cannot access the component metadata as it might not yet be complete."
+    let requiresNotSealed () = Requires.That (not isSealed) "Modifications of the model metadata are only allowed during object construction."
+    let requiresIsSealed () = Requires.That isSealed "Cannot access the model metadata as it might not yet be complete."
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // Update method and interface implementation
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-
-    /// Invoked exactly once during each system step.
-    abstract member Update : unit -> unit
-    default this.Update () = ()
-
-    interface IComponent
+    let rec getAllComponents (component' : Component) =
+        seq {
+            yield component'
+            yield! component'.Subcomponents |> Seq.collect getAllComponents
+        }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Adds metadata about a field of the component to the <see cref="Component" /> instance.
-    member this.SetInitialValues<'T> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
-        Requires.NotNull field "field"
-        Requires.NotNull initialValues "initialValues"
-        Requires.ArgumentSatisfies (initialValues.Length > 0) "initialValues" "At least one value must be provided."
-        Requires.OfType<MemberExpression> field.Body "field" "Expected a lambda expression of the form '() => field'."
+    /// Sets the <paramref name="rootComponents" /> of the model's partitions.
+    member this.SetPartitions ([<ParamArray>] rootComponents : Component array) =
+        Requires.NotNull rootComponents "rootComponents"
+        Requires.ArgumentSatisfies (rootComponents.Length > 0) "rootComponents" "There must be at least one partition root."
+        Requires.That (components = []) "This method can only be called once on any given model instance."
         requiresNotSealed ()
 
-        match (field.Body :?> MemberExpression).Member with
-        | :? FieldInfo as fieldInfo ->
-            fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
+        // Disallow future modifications of the components' metadata
+        rootComponents |> Seq.iteri (fun index component' -> component'.FinalizeMetadata ("Root" + index.ToString()))
 
-            let random = new Random();
-            fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
-        | _ -> Requires.ArgumentSatisfies false "field" "Expected a lambda expression of the form '() => field'."
+        // Store the partition roots and collect all components of the model
+        partitionRoots <- rootComponents |> List.ofSeq
+        components <- partitionRoots |> Seq.collect getAllComponents |> List.ofSeq
 
-    /// Finalizes the component's metadata, disallowing any future metadata modifications.
-    member this.FinalizeMetadata (?componentName : string) =
+        // Ensure that there are no shared components
+        let hashSet = new HashSet<Component> ()
+        match components |> List.tryFind (fun component' -> not <| hashSet.Add component') with
+        | Some sharedComponent ->
+            sharedComponent.GetType().FullName
+            |> sprintf "A component instance of type '%s' has been found in multiple locations of the component tree."
+            |> invalidOp
+        | None -> ()
+
+    /// Finalizes the models's metadata, disallowing any future metadata modifications.
+    member this.FinalizeMetadata () =
+        Requires.That (components <> []) "No partition roots have been set for the model."
         requiresNotSealed ()
 
         isSealed <- true
-        name <- defaultArg componentName String.Empty
-
-        this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-        |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field.Name))
-        |> Seq.iter (fun field -> fields.Add (field.Name, [field.GetValue this]))
-
-        let subcomponentMetadata = 
-            this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-            |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
-            |> Seq.map (fun field -> (field, field.GetValue(this)))
-            |> Seq.where (fun (field, component') -> not <| obj.ReferenceEquals(component', null))
-            |> Seq.map (fun (field, component') -> (field, component' :?> Component))
-            |> List.ofSeq
-
-        subcomponents <- subcomponentMetadata |> List.map snd
-        subcomponentMetadata |> List.iter (fun (field, component') -> component'.FinalizeMetadata field.Name)
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called after metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Gets the initial values of the field with name <paramref name="fieldName" />.
-    member this.GetInitialValuesOfField fieldName =
-        Requires.NotNullOrWhitespace fieldName "fieldName"
-        requiresIsSealed ()
-
-        let (result, initialValues) = fields.TryGetValue fieldName
-        Requires.ArgumentSatisfies result "fieldName" (sprintf "A field with name '%s' does not exist." fieldName)
-
-        initialValues
-
-    /// <summary>
-    /// Gets the subcomponent with the given name.
-    /// </summary>
-    member this.GetSubcomponent name =
-        Requires.NotNullOrWhitespace name "name"
-        requiresIsSealed ()
-
-        let subcomponent = subcomponents |> List.tryFind (fun component' -> component'.Name = name)
-        match subcomponent with
-        | Some subcomponent -> subcomponent
-        | None ->
-            Requires.ArgumentSatisfies false "name" (sprintf "A sub component with name '%s' does not exist." name)
-            subcomponent.Value // Required, but cannot be reached
-
-    /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.
-    member this.Name 
+    /// Gets the partition root <see cref="Component" />s of the configuration.
+    member this.PartitionRoots 
         with get () = 
             requiresIsSealed ()
-            name
+            partitionRoots
 
-    /// Gets the <see cref="Component" /> instances that are direct subcomponents of the current instance.
-    member this.Subcomponents 
+    /// Gets all <see cref="Component" />s contained in the model configuration.
+    member this.Components 
         with get () = 
             requiresIsSealed ()
-            subcomponents
-
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // Choose methods
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-   
-    static member Choose<'T> ([<Out>] result : 'T byref, [<ParamArray>] values: 'T array) : 'T =
-        raise <| NotImplementedException ()
-
-    static member ChooseFromRange ([<Out>] result : int byref, inclusiveLowerBound : int, inclusiveUpperBound : int) : int =
-        raise <| NotImplementedException ()
-
-    static member ChooseFromRange ([<Out>] result : decimal byref, inclusiveLowerBound : decimal, inclusiveUpperBound : decimal) : decimal =
-        raise <| NotImplementedException ()
-
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // The following methods are never invoked at runtime but their definition is required during transformation.                  
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    
-    static member Choose<'T when 'T : struct> () : 'T =
-        raise <| NotSupportedException ()
-
-    static member Choose<'T> ([<ParamArray>] values : 'T array) : 'T =
-        raise <| NotSupportedException ()
-
-    static member ChooseFromRange (inclusiveLowerBound : int, inclusiveUpperBound : int) : int =
-        raise <| NotSupportedException ()
-
-    static member ChooseFromRange (inclusiveLowerBound : decimal, inclusiveUpperBound : decimal) : decimal =
-        raise <| NotSupportedException ()
+            components
