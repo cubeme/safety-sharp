@@ -46,7 +46,7 @@ module ``Overrides method`` =
         overrides "class X { public virtual void M() {} }" =? false
 
     [<Test>]
-    let ``returns true fro overriding method`` () =
+    let ``returns true for overriding method`` () =
         overrides "class X : Y { public override void M() {} }" =? true
         overrides "class X : Y { public sealed override void M() {} }" =? true
         overrides "class Z : Y {} class X : Z { public override void M () {} }" =? true

@@ -79,9 +79,7 @@ type internal TestCompilation (csharpCode : string) =
         if (emitResult.Success) then
             stream.ToArray () |> Assembly.Load
         else
-            for diagnostic in emitResult.Diagnostics do
-                printf "%A" diagnostic
-
+            emitResult.Diagnostics |> Seq.iter (fun diagnostic -> printf "%A" diagnostic)
             failed "Assembly compilation failed."
 
     /// <summary>

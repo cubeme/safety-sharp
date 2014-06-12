@@ -76,9 +76,9 @@ module CompilationExtensions =
                     match symbol with
                     | :? ITypeSymbol as typeSymbol -> 
                         yield typeSymbol
-                        for symbol in typeSymbol.GetMembers () |> Seq.map enumerateSymbols do yield! symbol
+                        yield! typeSymbol.GetMembers () |> Seq.collect enumerateSymbols
                     | :? INamespaceSymbol as namespaceSymbol -> 
-                        for symbol in namespaceSymbol.GetMembers () |> Seq.map enumerateSymbols do yield! symbol
+                        yield! namespaceSymbol.GetMembers () |> Seq.collect enumerateSymbols
                     | _ -> ()
             }
 
