@@ -145,32 +145,3 @@ type Component () =
         with get () = 
             requiresIsSealed ()
             subcomponents
-
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // Choose methods
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-   
-    static member Choose<'T> ([<Out>] result : 'T byref, [<ParamArray>] values: 'T array) : 'T =
-        raise <| NotImplementedException ()
-
-    static member ChooseFromRange ([<Out>] result : int byref, inclusiveLowerBound : int, inclusiveUpperBound : int) : int =
-        raise <| NotImplementedException ()
-
-    static member ChooseFromRange ([<Out>] result : decimal byref, inclusiveLowerBound : decimal, inclusiveUpperBound : decimal) : decimal =
-        raise <| NotImplementedException ()
-
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // The following methods are never invoked at runtime but their definition is required during transformation.                  
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    
-    static member Choose<'T when 'T : struct> () : 'T =
-        raise <| NotSupportedException ()
-
-    static member Choose<'T> ([<ParamArray>] values : 'T array) : 'T =
-        raise <| NotSupportedException ()
-
-    static member ChooseFromRange (inclusiveLowerBound : int, inclusiveUpperBound : int) : int =
-        raise <| NotSupportedException ()
-
-    static member ChooseFromRange (inclusiveLowerBound : decimal, inclusiveUpperBound : decimal) : decimal =
-        raise <| NotSupportedException ()

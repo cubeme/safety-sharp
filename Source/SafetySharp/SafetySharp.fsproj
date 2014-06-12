@@ -59,6 +59,7 @@
     <Compile Include="Modeling\IComponent.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
+    <Compile Include="Modeling\Choose.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\Extensions\SyntaxNodeExtensions.fs" />
     <Compile Include="CSharp\Extensions\SyntaxTreeExtensions.fs" />

@@ -33,47 +33,44 @@ open SafetySharp.Modeling
 [<AutoOpen>]
 module SemanticModelExtensions =
     
-    /// Gets the <see cref="IMethodSymbol" /> corresponding to the one of the 'Component.Choose' methods.
-    let private getChooseMethodSymbol (semanticModel : SemanticModel) parameterCount =
-        semanticModel
-            .Compilation
-            .GetTypeByMetadataName(typeof<Component>.FullName)
-            .GetMembers("Choose")
-            .OfType<IMethodSymbol>()
-            .Single(fun method' -> method'.Parameters.Length = parameterCount);
+    /// Gets the <see cref="IMethodSymbol" /> corresponding to the one of the methods of the <see cref="Choose"/> class.
+    let private getChooseMethodSymbol (semanticModel : SemanticModel) methodName specialType parameterCount =
+        let methods = 
+            semanticModel.Compilation.GetTypeByMetadataName(typeof<Choose>.FullName).GetMembers(methodName).OfType<IMethodSymbol>()
+            |> Seq.where (fun method' -> method'.Parameters.Length = parameterCount && method'.Parameters.[0].Type.SpecialType = specialType)
+            |> List.ofSeq
 
-    /// Gets the <see cref="IMethodSymbol" /> corresponding to the one of the 'Component.ChooseFromRange' methods.
-    let private getChooseRangeMethodSymbol (semanticModel : SemanticModel) specialType parameterCount =
-        semanticModel
-            .Compilation
-            .GetTypeByMetadataName(typeof<Component>.FullName)
-            .GetMembers("ChooseFromRange")
-            .OfType<IMethodSymbol>()
-            .Single(fun method' -> method'.Parameters.[0].Type.SpecialType = specialType && method'.Parameters.Length = parameterCount);
+        let raiseException prefix =
+            sprintf "%s Choose method with name = '%s', parameter count = %i, parameter type = '%A'." prefix methodName parameterCount specialType 
+            |> invalidOp
+
+        match methods with
+        | method' :: [] -> method'
+        | [] -> raiseException "Unable to find"
+        | _ -> raiseException "Found more than one"
 
     type SemanticModel with
        
-        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}()" />
+        /// Gets the <see cref="IMethodSymbol" /> representing the <see cref="Component.Literal{T}()" />
         /// method within the context of the <paramref name="semanticModel" />.
-        member this.GetChooseEnumerationLiteralMethodSymbol () =
+        member this.GetChooseLiteralMethodSymbol normalizedVersion =
             Requires.NotNull this "this"
-            getChooseMethodSymbol this 0
+            getChooseMethodSymbol this "Literal" SpecialType.None (if normalizedVersion then 1 else 0)
 
-        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Choose{T}(T, T, T[])" /> method within the
+        /// Gets the <see cref="IMethodSymbol" /> representing the <see cref="Choose.Boolean()" />
+        /// method within the context of the <paramref name="semanticModel" />.
+        member this.GetChooseBooleanMethodSymbol normalizedVersion =
+            Requires.NotNull this "this"
+            getChooseMethodSymbol this "Boolean" SpecialType.System_Boolean (if normalizedVersion then 1 else 0)
+
+        /// Gets the <see cref="IMethodSymbol" /> representing one of the 'Choose.Value()' methods within the
         /// context of the <paramref name="semanticModel" />.
-        member this.GetChooseFromValuesMethodSymbol normalizedMethod =
+        member this.GetChooseValueMethodSymbol normalizedVersion specialType =
             Requires.NotNull this "this"
-            getChooseMethodSymbol this (if normalizedMethod then 2 else 3)
+            getChooseMethodSymbol this "Value" specialType (if normalizedVersion then 2 else 3)
 
-        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.ChooseFromRange(int, int)" /> method within
+        /// Gets the <see cref="IMethodSymbol " /> representing one of the 'Choose.FromRange()' methods within
         /// the context of the <paramref name="semanticModel" />.
-        member this.GetChooseFromIntegerRangeMethodSymbol normalizedMethod =
+        member this.GetChooseFromRangeMethodSymbol normalizedVersion specialType =
             Requires.NotNull this "this"
-            getChooseRangeMethodSymbol this SpecialType.System_Int32 (if normalizedMethod then 3 else 2)
-
-        /// Gets the <see cref="IMethodSymbol " /> representing the
-        /// <see cref="Component.ChooseFromRange(out decimal, decimal, decimal)" /> method within the context
-        /// of the <paramref name="semanticModel" />.
-        member this.GetChooseFromDecimalRangeMethodSymbol normalizedMethod =
-            Requires.NotNull this "this"
-            getChooseRangeMethodSymbol this SpecialType.System_Decimal (if normalizedMethod then 3 else 2)
+            getChooseMethodSymbol this "FromRange" specialType (if normalizedVersion then 3 else 2)

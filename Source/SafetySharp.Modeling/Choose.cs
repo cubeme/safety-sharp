@@ -23,38 +23,74 @@
 namespace SafetySharp.Modeling
 {
 	using System;
-	using System.Linq.Expressions;
 
 	/// <summary>
 	/// 
 	/// </summary>
-	public abstract class Component : IComponent
+	public static class Choose
 	{
 		/// <summary>
 		/// 
 		/// </summary>
-		protected virtual void Update()
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public static T Literal<T>()
+			where T : struct, IComparable, IFormattable, IConvertible
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
+		/// 
 		/// </summary>
-		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
-		/// <param name="initialValues">The initial values of the field.</param>
-		protected void SetInitialValues<T>(Expression<Func<T>> field, params T[] initialValues)
+		/// <returns></returns>
+		public static bool Boolean()
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Allows access to a non-public member of the component.
+		/// 
 		/// </summary>
-		/// <typeparam name="T">The type of the accessed member.</typeparam>
-		/// <param name="memberName">The name of the member that should be accessed.</param>
-		/// <returns>Returns an <see cref="InternalAccess{T}" /> instance that can be used to access the non-public member.</returns>
-		public InternalAccess<T> AccessInternal<T>(string memberName)
+		/// <param name="value1"></param>
+		/// <param name="value2"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public static int Value(int value1, int value2, params int[] values)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="value1"></param>
+		/// <param name="value2"></param>
+		/// <param name="values"></param>
+		/// <returns></returns>
+		public static decimal Value(decimal value1, decimal value2, params decimal[] values)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="inclusiveLowerBound"></param>
+		/// <param name="inclusiveUpperBound"></param>
+		/// <returns></returns>
+		public static int FromRange(int inclusiveLowerBound, int inclusiveUpperBound)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="inclusiveLowerBound"></param>
+		/// <param name="inclusiveUpperBound"></param>
+		/// <returns></returns>
+		public static decimal FromRange(decimal inclusiveLowerBound, decimal inclusiveUpperBound)
 		{
 			throw new NotSupportedException();
 		}

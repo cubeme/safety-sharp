@@ -73,7 +73,18 @@ module StatementTransformation =
                 | :? IMethodSymbol as methodSymbol ->
                     let arguments = invocation.ArgumentList.Arguments
                    
-                    if (semanticModel.GetChooseFromValuesMethodSymbol(true).Equals(methodSymbol.OriginalDefinition)) then
+                    let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
+                    let chooseIntegerValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Int32
+                    let chooseDecimalValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Decimal
+
+                    if chooseBooleanValueMethodSymbol.Equals methodSymbol then
+                        let assignmentTarget = transformExpression arguments.[0].Expression
+                        GuardedCommandStatement [
+                            (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral true))
+                            (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral false))
+                        ]
+
+                    else if chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
                         let assignmentTarget = transformExpression arguments.[0].Expression
                         let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
                         let statements = expressions |> Seq.map (fun expression -> AssignmentStatement(assignmentTarget, expression))
