@@ -27,23 +27,13 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	/// 
 	/// </summary>
-	public sealed class SpinModelChecker
+	public abstract class Model
 	{
 		/// <summary>
-		/// 
+		///     Sets the <paramref name="components" /> as the root components of the partitions of the model configuration.
 		/// </summary>
-		/// <param name="modelConfiguration"></param>
-		public SpinModelChecker(Model modelConfiguration)
-		{
-			throw new NotSupportedException();
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="formula"></param>
-		/// <returns></returns>
-		public bool Check(LtlFormula formula)
+		/// <param name="components">The components that should be set as root components of partitions.</param>
+		protected void SetPartitions(params Component[] components)
 		{
 			throw new NotSupportedException();
 		}

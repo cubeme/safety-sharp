@@ -27,15 +27,7 @@ namespace SafetySharp.Modeling
 	/// <summary>
 	/// 
 	/// </summary>
-	public abstract class ModelConfiguration
+	public interface IComponent
 	{
-		/// <summary>
-		///     Sets the <paramref name="components" /> as the root components of the partitions of the model configuration.
-		/// </summary>
-		/// <param name="components">The components that should be set as root components of partitions.</param>
-		protected void SetPartitions(params Component[] components)
-		{
-			throw new NotSupportedException();
-		}
 	}
 }

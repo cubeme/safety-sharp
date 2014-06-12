@@ -36,17 +36,13 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\SafetySharp.CSharp\Modeling\IComponent.cs">
-      <Link>IComponent.cs</Link>
-    </Compile>
-    <Compile Include="..\SafetySharp.CSharp\Modeling\OverflowBehavior.cs">
-      <Link>OverflowBehavior.cs</Link>
-    </Compile>
+    <Compile Include="IComponent.cs" />
     <Compile Include="LtlFormula.cs" />
     <Compile Include="Ltl.cs" />
     <Compile Include="Component.cs" />
     <Compile Include="InternalAccess.cs" />
-    <Compile Include="ModelConfiguration.cs" />
+    <Compile Include="Model.cs" />
+    <Compile Include="OverflowBehavior.cs" />
     <Compile Include="SpinModelChecker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

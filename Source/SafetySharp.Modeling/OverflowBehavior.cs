@@ -25,27 +25,24 @@ namespace SafetySharp.Modeling
 	using System;
 
 	/// <summary>
-	/// 
+	///     Controls the semantics of the assignment operator when the assigned value lies outside the variable's range.
 	/// </summary>
-	public sealed class SpinModelChecker
+	public enum OverflowBehavior
 	{
 		/// <summary>
-		/// 
+		///     Indicates the assigned value is clamped to the variable's minimum or maximum value.
 		/// </summary>
-		/// <param name="modelConfiguration"></param>
-		public SpinModelChecker(Model modelConfiguration)
-		{
-			throw new NotSupportedException();
-		}
+		Clamp,
 
 		/// <summary>
-		/// 
+		///     Indicates the assigned value wraps around if it underflows or overflows the variable's range.
 		/// </summary>
-		/// <param name="formula"></param>
-		/// <returns></returns>
-		public bool Check(LtlFormula formula)
-		{
-			throw new NotSupportedException();
-		}
+		WrapAround,
+
+		/// <summary>
+		///     Indicates that an exception is thrown when a value outside the range of the variable is assigned during
+		///     simulation. During model-checking, however, the precise behavior of this overflow behavior is undefined.
+		/// </summary>
+		Error
 	}
 }
