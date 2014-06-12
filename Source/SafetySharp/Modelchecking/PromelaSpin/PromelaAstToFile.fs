@@ -257,6 +257,29 @@ type ExportPromelaAstToFile() =
                 modules |> List.map (this.ExportModule lvl)
                         |> List.reduce (fun acc r -> acc + ";"  + (nli lvl) + (nli lvl) + r ) //after first element no ";". So we use reduce instead of fold. 1st element of list is initial accumulator
                         //|> List.fold (fun acc r -> acc + r + (nli lvl) ) ""
-
+    
+    member this.ExportFormula (lvl:int) (formula : Formula) : string =
+        match formula with
+            | PropositionalStateFormula ( expression : AnyExpr) ->
+                this.ExportAnyExpr expression
+            | BinaryFormula of (left : Formula, operator : BinaryFormulaOperator, right : Formula) ->
+                let ExportLeft = this.ExportFormula lvl left
+                let ExportRight = this.ExportFormula lvl right
+                let ExportOperator = match operator with
+                                        | Equals     -> "<->"
+                                        | Until      -> "U"
+                                        | WeakUntil  -> "W"
+                                        | Release    -> "V"
+                                        | And        -> "/\\"
+                                        | Or         -> "\\/"
+                                        | Implies    -> "->"
+                sprintf "( %s %s %s )" ExportLeft ExportOperator ExportRight
+            | UnaryFormula of (operator : UnaryFormulaOperator, operand : Formula) ->
+                let ExportOperand = this.ExportFormula lvl operand
+                let ExportOperator = match operator with
+                                         | Not        -> "!"
+                                         | Always     -> "[]"
+                                         | Eventually -> "<>"
+                sprintf "( %s %s )" ExportOperator ExportOperand
 
     member this.Export = this.ExportSpec 0

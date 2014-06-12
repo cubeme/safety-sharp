@@ -84,6 +84,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
+    <Compile Include="Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAstToFile.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaExecute.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaTransformMetamodel.fs" />
