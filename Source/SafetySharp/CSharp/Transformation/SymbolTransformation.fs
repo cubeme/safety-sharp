@@ -49,31 +49,36 @@ type SymbolResolver = private {
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given C# component symbol.
     member this.ResolveComponent (componentSymbol : INamedTypeSymbol) =
         Requires.NotNull componentSymbol "componentSymbol"
-        Requires.That (this.ComponentMap.ContainsKey componentSymbol) "The given C# component symbol is unknown."
-        this.ComponentMap.[componentSymbol]
+        match this.ComponentMap.TryGetValue componentSymbol with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "componentSymbol" "The given C# component symbol is unknown."
 
     /// Resolves the <see cref="FieldSymbol"/> corresponding to the given C# field symbol.
     member this.ResolveField (fieldSymbol : IFieldSymbol) =
         Requires.NotNull fieldSymbol "fieldSymbol"
-        Requires.That (this.FieldMap.ContainsKey fieldSymbol) "The given C# field symbol is unknown."
-        this.FieldMap.[fieldSymbol]
+        match this.FieldMap.TryGetValue fieldSymbol with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "fieldSymbol" "The given C# field symbol is unknown."
 
     /// Resolves the <see cref="SubcomponentSymbol"/> corresponding to the given C# subcomponent symbol.
     member this.ResolveSubcomponent (subcomponentSymbol : IFieldSymbol) =
         Requires.NotNull subcomponentSymbol "subcomponentSymbol"
-        Requires.That (this.SubComponentMap.ContainsKey subcomponentSymbol) "The given C# subcomponent symbol is unknown."
-        this.SubComponentMap.[subcomponentSymbol]
+        match this.SubComponentMap.TryGetValue subcomponentSymbol with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "subcomponentSymbol" "The given C# subcomponent symbol is unknown."
 
     /// Resolves the <see cref="MethodSymbol"/> corresponding to the given C# method symbol.
     member this.ResolveMethod (methodSymbol : IMethodSymbol) =
         Requires.NotNull methodSymbol "methodSymbol"
-        Requires.That (this.MethodMap.ContainsKey methodSymbol) "The given C# method symbol is unknown."
-        this.MethodMap.[methodSymbol]
+        match this.MethodMap.TryGetValue methodSymbol with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "methodSymbol" "The given C# method symbol is unknown."
 
     /// Resolves the C# method symbol corresponding to the given metamodel <see cref="MethodSymbol"/>.
     member this.ResolveCSharpMethod (methodSymbol : MethodSymbol) =
-        Requires.That (this.MethodMapBack.ContainsKey methodSymbol) "The given method symbol is unknown."
-        this.MethodMapBack.[methodSymbol]
+        match this.MethodMapBack.TryGetValue methodSymbol with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "methodSymbol" "The given method symbol is unknown."
 
     /// Gets a list of all component symbols.
     member this.ComponentSymbols = this.ComponentList

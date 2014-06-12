@@ -34,17 +34,24 @@ type ObjectResolver = private {
 }
     with
 
+    member private this.Resolve (map : ImmutableDictionary<_,_>) key =
+        match map.TryGetValue key with
+        | (result, value) when result -> value
+        | _ -> Requires.ArgumentSatisfies false "The given component is unknown."
+
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
     member this.ResolveSymbol (dotNetComponent : Component) =
         Requires.NotNull dotNetComponent "dotNetComponent'"
-        Requires.That (this.ComponentSymbolMap.ContainsKey dotNetComponent) "The given component is unknown."
-        this.ComponentSymbolMap.[dotNetComponent]
+        match this.ComponentSymbolMap.TryGetValue dotNetComponent with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "dotNetComponent" "The given component is unknown."
 
     /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
     member this.ResolveObject (dotNetComponent : Component) =
         Requires.NotNull dotNetComponent "dotNetComponent'"
-        Requires.That (this.ComponentObjectMap.ContainsKey dotNetComponent) "The given component is unknown."
-        this.ComponentObjectMap.[dotNetComponent]
+        match this.ComponentObjectMap.TryGetValue dotNetComponent with
+        | (result, symbol) when result -> symbol
+        | _ -> invalidArg "dotNetComponent" "The given component is unknown."
 
 module ObjectsTransformation =
 

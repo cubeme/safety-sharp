@@ -147,7 +147,7 @@ module ``ResolveComponent method`` =
         let classB = compilation.FindClassSymbol "B"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveComponent classB @>
+        raisesWith<ArgumentException> <@ resolver.ResolveComponent classB @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
 
     [<Test>]
     let ``returns symbol for transformed component`` () =
@@ -181,7 +181,7 @@ module ``ResolveField method`` =
         let field = compilation.FindFieldSymbol "B" "f"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveField field @>
+        raisesWith<ArgumentException> <@ resolver.ResolveField field @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
 
     [<Test>]
     let ``throws when subcomponent field is passed`` () =
@@ -189,7 +189,7 @@ module ``ResolveField method`` =
         let field = compilation.FindFieldSymbol "A" "b"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveField field @>
+        raisesWith<ArgumentException> <@ resolver.ResolveField field @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
 
     [<Test>]
     let ``returns symbol for field of transformed component`` () =
@@ -238,7 +238,7 @@ module ``ResolveSubcomponent method`` =
         let field = compilation.FindFieldSymbol "B" "f"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveSubcomponent field @>
+        raisesWith<ArgumentException> <@ resolver.ResolveSubcomponent field @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
 
     [<Test>]
     let ``throws when non-subcomponent field is passed`` () =
@@ -246,7 +246,7 @@ module ``ResolveSubcomponent method`` =
         let field = compilation.FindFieldSymbol "A" "b"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveSubcomponent field @>
+        raisesWith<ArgumentException> <@ resolver.ResolveSubcomponent field @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
 
     [<Test>]
     let ``returns symbol for subcomponent of transformed component`` () =
@@ -295,7 +295,7 @@ module ``ResolveMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveMethod methodSymbol @>
+        raisesWith<ArgumentException> <@ resolver.ResolveMethod methodSymbol @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
 
     [<Test>]
     let ``throws when constructor is passed`` () =
@@ -304,7 +304,7 @@ module ``ResolveMethod method`` =
         let constructorSymbol = classSymbol.GetMembers().OfType<IMethodSymbol>().Single(fun method' -> method'.MethodKind = MethodKind.Constructor)
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveMethod constructorSymbol @>
+        raisesWith<ArgumentException> <@ resolver.ResolveMethod constructorSymbol @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
@@ -361,14 +361,16 @@ module ``ResolveCSharpMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveCSharpMethod <| resolver.ResolveMethod methodSymbol @>
+        raisesWith<ArgumentException> <@ resolver.ResolveCSharpMethod <| resolver.ResolveMethod methodSymbol @> 
+            (fun e -> <@ e.ParamName = "methodSymbol" @>)
 
     [<Test>]
     let ``throws for update method of component that doesn't override it`` () =
         let compilation = TestCompilation "class A : Component {}"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveCSharpMethod <| resolver.ComponentSymbols.[0].UpdateMethod @>
+        raisesWith<ArgumentException> <@ resolver.ResolveCSharpMethod <| resolver.ComponentSymbols.[0].UpdateMethod @> 
+            (fun e -> <@ e.ParamName = "methodSymbol" @>)
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
