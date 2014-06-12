@@ -211,6 +211,24 @@ module ``Components property`` =
 
         model.Components |> List.iter (fun component' -> component'.IsMetadataFinalized =? true)
 
+    [<Test>]
+    let ``all contained components have their tree path encoded in their name`` () =
+        let component1 = EmptyComponent ()
+        let component2 = EmptyComponent ()
+        let component3 = EmptyComponent ()
+        let component4 = OneSubcomponent component1
+        let component5 = OneSubcomponent component3
+        let component6 = TwoSubcomponents (component2, component5)
+        let model = TestModel (component4, component6)
+        model.FinalizeMetadata ()
+
+        let name root = function
+            | [] -> sprintf "Root%i" root
+            | fields -> sprintf "Root%i.%s" root <| String.Join (".", fields |> List.map fieldName)
+        
+        model.Components |> List.map (fun component' -> component'.Name) =?
+        [name 0 []; name 0 ["_component"]; name 1 []; name 1 ["_component1"]; name 1 ["_component2"]; name 1 ["_component2"; "_component"]] 
+
 [<TestFixture>]
 module ``PartitionRoots property`` =
     [<Test>]

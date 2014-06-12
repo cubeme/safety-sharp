@@ -71,6 +71,7 @@
     <Compile Include="CSharp\Transformation\SymbolTransformation.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformation.fs" />
     <Compile Include="CSharp\Transformation\StatementTransformation.fs" />
+    <Compile Include="CSharp\Transformation\ObjectsTransformation.fs" />
     <None Include="packages.config" />
     <Compile Include="AssemblyInfo.fs" />
   </ItemGroup>

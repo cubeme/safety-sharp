@@ -186,14 +186,14 @@ module ``GetSubcomponent method`` =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesWith<ArgumentException> <@ component'.GetSubcomponent null @> (fun e -> <@ e.ParamName = "name" @>)
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent null @> (fun e -> <@ e.ParamName = "subcomponentName" @>)
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesWith<ArgumentException> <@ component'.GetSubcomponent "" @> (fun e -> <@ e.ParamName = "name" @>)
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent "" @> (fun e -> <@ e.ParamName = "subcomponentName" @>)
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
@@ -205,14 +205,14 @@ module ``GetSubcomponent method`` =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesWith<ArgumentException> <@ component'.GetSubcomponent (fieldName "_field") @> (fun e -> <@ e.ParamName = "name" @>)
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent (fieldName "_field") @> (fun e -> <@ e.ParamName = "subcomponentName" @>)
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesWith<ArgumentException> <@ component'.GetSubcomponent (fieldName "abcd") @> (fun e -> <@ e.ParamName = "name" @>)
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent (fieldName "abcd") @> (fun e -> <@ e.ParamName = "subcomponentName" @>)
 
     [<Test>]
     let ``returns single subcomponent`` () =
@@ -282,7 +282,7 @@ module ``Subcomponents property`` =
         let subcomponent1 = FieldComponent<int> 3
         let subcomponent2 = FieldComponent<bool> true
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
-        component'.FinalizeMetadata ()
+        component'.FinalizeMetadata "Root"
 
-        component'.Subcomponents.[0].Name =? fieldName "_component1"
-        component'.Subcomponents.[1].Name =? fieldName "_component2"
+        component'.Subcomponents.[0].Name =? fieldName "Root._component1"
+        component'.Subcomponents.[1].Name =? fieldName "Root._component2"

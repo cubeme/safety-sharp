@@ -103,7 +103,7 @@ type Component () =
         |> List.iter (fun (field, component') -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata field.Name
+                component'.FinalizeMetadata (sprintf "%s.%s" name field.Name)
         )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -123,20 +123,20 @@ type Component () =
     /// <summary>
     /// Gets the subcomponent with the given name.
     /// </summary>
-    member internal this.GetSubcomponent name =
-        Requires.NotNullOrWhitespace name "name"
+    member internal this.GetSubcomponent subcomponentName =
+        Requires.NotNullOrWhitespace subcomponentName "subcomponentName"
         requiresIsSealed ()
 
-        let subcomponent = subcomponents |> List.tryFind (fun component' -> component'.Name = name)
+        let subcomponent = subcomponents |> List.tryFind (fun component' -> component'.Name.EndsWith subcomponentName)
         match subcomponent with
         | Some subcomponent -> subcomponent
         | None ->
-            Requires.ArgumentSatisfies false "name" (sprintf "A sub component with name '%s' does not exist." name)
+            Requires.ArgumentSatisfies false "subcomponentName" (sprintf "A subcomponent with name '%s' does not exist." subcomponentName)
             subcomponent.Value // Required, but cannot be reached
 
     /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.
-    member internal this.Name 
-        with get () = 
+    member internal this.Name
+        with get () : string = 
             requiresIsSealed ()
             name
 
