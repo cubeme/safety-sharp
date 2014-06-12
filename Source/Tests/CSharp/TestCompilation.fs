@@ -38,7 +38,7 @@ type CompilationException (message : string) =
 
 [<AutoOpen>]
 module private Exception =
-    let inline failed message = new CompilationException(message) |> raise
+    let inline failed message = CompilationException(message) |> raise
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 type internal TestCompilation (csharpCode : string) =
@@ -48,10 +48,10 @@ type internal TestCompilation (csharpCode : string) =
     let csharpCompilation = 
         CSharpCompilation
             .Create("TestCompilation")
-            .AddReferences(new MetadataFileReference(typeof<obj>.Assembly.Location))
-            .AddReferences(new MetadataFileReference(typeof<ComponentSymbol>.Assembly.Location))
+            .AddReferences(MetadataFileReference(typeof<obj>.Assembly.Location))
+            .AddReferences(MetadataFileReference(typeof<ComponentSymbol>.Assembly.Location))
             .AddSyntaxTrees(syntaxTree)
-            .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
     let diagnostics = csharpCompilation.GetDiagnostics() |> Seq.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
     do diagnostics |> Seq.iter (fun d -> printfn "%A" d)

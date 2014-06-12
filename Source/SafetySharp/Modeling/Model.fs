@@ -30,6 +30,13 @@ open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
+/// Raised when a component is found in multiple locations of a component tree.
+type SharedComponentsException (components : Component list) =
+    inherit Exception ("One or more components have been found in multiple locations of the component tree.")
+
+    /// Gets the component instances that was found in multiple locations of a component tree.
+    member this.Components = components
+
 /// Represents a base class for all models.
 [<AbstractClass>]
 type Model () =
@@ -51,6 +58,9 @@ type Model () =
             yield! component'.Subcomponents |> Seq.collect getAllComponents
         }
 
+    /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
+    member this.IsMetadataFinalized = isSealed
+
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -63,20 +73,26 @@ type Model () =
         requiresNotSealed ()
 
         // Disallow future modifications of the components' metadata
-        rootComponents |> Seq.iteri (fun index component' -> component'.FinalizeMetadata ("Root" + index.ToString()))
+        rootComponents |> Seq.iteri (fun index component' -> 
+            // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
+            if not component'.IsMetadataFinalized then
+                component'.FinalizeMetadata ("Root" + index.ToString())
+        )
 
         // Store the partition roots and collect all components of the model
         partitionRoots <- rootComponents |> List.ofSeq
         components <- partitionRoots |> Seq.collect getAllComponents |> List.ofSeq
 
         // Ensure that there are no shared components
-        let hashSet = new HashSet<Component> ()
-        match components |> List.tryFind (fun component' -> not <| hashSet.Add component') with
-        | Some sharedComponent ->
-            sharedComponent.GetType().FullName
-            |> sprintf "A component instance of type '%s' has been found in multiple locations of the component tree."
-            |> invalidOp
-        | None -> ()
+        let sharedComponents =
+            components 
+            |> Seq.groupBy id
+            |> Seq.filter (fun (key, values) -> values |> Seq.length > 1)
+            |> Seq.map fst
+            |> List.ofSeq
+
+        if sharedComponents |> List.length > 0 then
+            SharedComponentsException sharedComponents |> raise
 
     /// Finalizes the models's metadata, disallowing any future metadata modifications.
     member this.FinalizeMetadata () =

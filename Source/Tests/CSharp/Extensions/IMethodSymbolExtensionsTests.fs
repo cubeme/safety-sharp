@@ -41,8 +41,8 @@ module ``Overrides method`` =
 
     [<Test>]
     let ``returns false for non-overriding method`` () =
-        overrides "class X : Y { public new void M() {} }" =? false
-        overrides "class X : Y { public virtual new void M() {} }" =? false
+        overrides "class X : Y { public void M() {} }" =? false
+        overrides "class X : Y { public virtual void M() {} }" =? false
         overrides "class X { public virtual void M() {} }" =? false
 
     [<Test>]

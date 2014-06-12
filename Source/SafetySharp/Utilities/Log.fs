@@ -50,7 +50,7 @@ type Log () =
     [<DefaultValue>] static val mutable private logged : Event<LogEntry>
 
     static do
-        Log.logged <- new Event<LogEntry> ()
+        Log.logged <- Event<LogEntry> ()
         Log.Logged.Add Log.PrintToDebugOutput
 
     /// Raises the <see cref="LogEntry" /> event with the given log entry type and message.

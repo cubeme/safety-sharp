@@ -46,6 +46,9 @@ type Component () =
     let requiresNotSealed () = Requires.That (not isSealed) "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = Requires.That isSealed "Cannot access the component metadata as it might not yet be complete."
 
+    /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
+    member this.IsMetadataFinalized = isSealed
+
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Update method and interface implementation
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -72,7 +75,7 @@ type Component () =
         | :? FieldInfo as fieldInfo ->
             fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
 
-            let random = new Random();
+            let random = Random();
             fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
         | _ -> Requires.ArgumentSatisfies false "field" "Expected a lambda expression of the form '() => field'."
 
@@ -96,7 +99,12 @@ type Component () =
             |> List.ofSeq
 
         subcomponents <- subcomponentMetadata |> List.map snd
-        subcomponentMetadata |> List.iter (fun (field, component') -> component'.FinalizeMetadata field.Name)
+        subcomponentMetadata
+        |> List.iter (fun (field, component') -> 
+            // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
+            if not component'.IsMetadataFinalized then
+                component'.FinalizeMetadata field.Name
+        )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called after metadata initialization
