@@ -59,7 +59,7 @@ type Model () =
         }
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
-    member this.IsMetadataFinalized = isSealed
+    member internal this.IsMetadataFinalized = isSealed
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called during metadata initialization
@@ -95,7 +95,7 @@ type Model () =
             SharedComponentsException sharedComponents |> raise
 
     /// Finalizes the models's metadata, disallowing any future metadata modifications.
-    member this.FinalizeMetadata () =
+    member internal this.FinalizeMetadata () =
         Requires.That (components <> []) "No partition roots have been set for the model."
         requiresNotSealed ()
 
@@ -106,13 +106,13 @@ type Model () =
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
     /// Gets the partition root <see cref="Component" />s of the configuration.
-    member this.PartitionRoots 
+    member internal this.PartitionRoots 
         with get () = 
             requiresIsSealed ()
             partitionRoots
 
     /// Gets all <see cref="Component" />s contained in the model configuration.
-    member this.Components 
+    member internal this.Components 
         with get () = 
             requiresIsSealed ()
             components

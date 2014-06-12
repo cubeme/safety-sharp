@@ -47,7 +47,7 @@ type Component () =
     let requiresIsSealed () = Requires.That isSealed "Cannot access the component metadata as it might not yet be complete."
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
-    member this.IsMetadataFinalized = isSealed
+    member internal this.IsMetadataFinalized = isSealed
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Update method and interface implementation
@@ -80,7 +80,7 @@ type Component () =
         | _ -> Requires.ArgumentSatisfies false "field" "Expected a lambda expression of the form '() => field'."
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
-    member this.FinalizeMetadata (?componentName : string) =
+    member internal this.FinalizeMetadata (?componentName : string) =
         requiresNotSealed ()
 
         isSealed <- true
@@ -111,7 +111,7 @@ type Component () =
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
     /// Gets the initial values of the field with name <paramref name="fieldName" />.
-    member this.GetInitialValuesOfField fieldName =
+    member internal this.GetInitialValuesOfField fieldName =
         Requires.NotNullOrWhitespace fieldName "fieldName"
         requiresIsSealed ()
 
@@ -123,7 +123,7 @@ type Component () =
     /// <summary>
     /// Gets the subcomponent with the given name.
     /// </summary>
-    member this.GetSubcomponent name =
+    member internal this.GetSubcomponent name =
         Requires.NotNullOrWhitespace name "name"
         requiresIsSealed ()
 
@@ -135,13 +135,13 @@ type Component () =
             subcomponent.Value // Required, but cannot be reached
 
     /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.
-    member this.Name 
+    member internal this.Name 
         with get () = 
             requiresIsSealed ()
             name
 
     /// Gets the <see cref="Component" /> instances that are direct subcomponents of the current instance.
-    member this.Subcomponents 
+    member internal this.Subcomponents 
         with get () = 
             requiresIsSealed ()
             subcomponents
