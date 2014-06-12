@@ -47,6 +47,12 @@ module private SymbolTransformationTestsHelper =
     let emptyComponent name = { Name = "TestCompilation::" + name; UpdateMethod = emptyUpdate; Fields = []; Methods = []; Subcomponents = [] } 
 
 [<TestFixture>]
+module ``Transform method`` =
+    [<Test>]
+    let ``throws when null is passed`` () =
+        raisesWith<ArgumentNullException> <@ SymbolTransformation.Transform null @> (fun e -> <@ e.ParamName = "compilation" @>)
+
+[<TestFixture>]
 module ``ComponentSymbols property`` =
     [<Test>]
     let ``empty when compilation contains no components`` () =

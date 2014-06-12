@@ -37,14 +37,14 @@ type ObjectResolver = private {
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
     member this.ResolveSymbol (componentObject : Component) =
-        Requires.NotNull componentObject "componentObject'"
+        Requires.NotNull componentObject "componentObject"
         match this.ComponentSymbolMap.TryGetValue componentObject with
         | (result, symbol) when result -> symbol
         | _ -> invalidArg "componentObject" "The given component is unknown."
 
     /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
     member this.ResolveObject (componentObject : Component) =
-        Requires.NotNull componentObject "componentObject'"
+        Requires.NotNull componentObject "componentObject"
         match this.ComponentObjectMap.TryGetValue componentObject with
         | (result, symbol) when result -> symbol
         | _ -> invalidArg "componentObject" "The given component is unknown."
@@ -52,7 +52,7 @@ type ObjectResolver = private {
     /// Gets the model object that contains all of the resolver's component and partition objects.
     member this.ModelObject = this.Model
 
-module ObjectsTransformation =
+module ObjectTransformation =
 
     /// Transforms C# objects to metamodel objects.
     let Transform (model : Model) (symbolResolver : SymbolResolver) =
@@ -65,20 +65,28 @@ module ObjectsTransformation =
 
         // Creates the objects and mapping information for the .NET component instance.
         let transformComponent (component' : Component) =
-            {
+            let componentSymbol = symbolResolver.ResolveComponent component'
+            let componentObject = {
                 Name = component'.Name
-                ComponentSymbol = symbolResolver.ResolveComponent component'
+                ComponentSymbol = componentSymbol
                 Fields = Map.empty
                 Subcomponents = Map.empty
             }
+
+            componentSymbolMapBuilder.Add (component', componentSymbol)
+            componentObjectMapBuilder.Add (component', componentObject)
+            componentObject 
 
         // Creates the objects and mapping information for the .NET partition root component instance.
         let transformPartition (rootComponent : Component) =
             { RootComponent = transformComponent rootComponent }
 
+        // Create the model object
+        let model = { Partitions = model.PartitionRoots |> List.map transformPartition }
+
         // Create and return the object resolver
         {
             ComponentSymbolMap = componentSymbolMapBuilder.ToImmutable ()
             ComponentObjectMap = componentObjectMapBuilder.ToImmutable ()
-            Model = { Partitions = model.PartitionRoots |> List.map transformPartition }
+            Model = model
         }
