@@ -51,6 +51,8 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
+    <Compile Include="Modeling.fs" />
+    <Compile Include="TestHelpers.fs" />
     <Compile Include="CSharp\TestCompilation.fs" />
     <Compile Include="CSharp\Extensions\IFieldSymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Extensions\ITypeSymbolExtensionsTests.fs" />
@@ -60,7 +62,6 @@
     <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\ObjectTransformationTests.fs" />
-    <Compile Include="Modeling\Shared.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
     <None Include="app.config" />

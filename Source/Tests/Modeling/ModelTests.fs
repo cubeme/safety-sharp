@@ -34,7 +34,7 @@ open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
-open SafetySharp.Tests.Modeling
+open SafetySharp.Tests
 
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
@@ -60,13 +60,15 @@ module ``FinalizeMetadata method`` =
 
 [<TestFixture>]
 module ``SetPartitionRoots method`` =
+    let contains components (e : SharedComponentsException) = <@ e.Components = components @>
+
     [<Test>]
     let ``throws when null is passed`` () =
-        raisesWith<ArgumentNullException> <@ TestModel null @> (fun e -> <@ e.ParamName = "rootComponents" @>)
+        raisesArgumentNullException "rootComponents" <@ TestModel null @>
 
     [<Test>]
     let ``throws when empty component array is passed`` () =
-        raisesWith<ArgumentException> <@ TestModel [||] @> (fun e -> <@ e.ParamName = "rootComponents" @>)
+        raisesArgumentException "rootComponents" <@ TestModel [||] @>
 
     [<Test>]
     let ``throws when the metadata has already been finalized`` () =
@@ -85,8 +87,7 @@ module ``SetPartitionRoots method`` =
     [<Test>]
     let ``throws when component is shared within the same partition root at the same level`` () =
         let component1 = EmptyComponent ()
-        raisesWith<SharedComponentsException> <@ TestModel (component1, component1) @>
-            (fun e -> <@ e.Components = [component1] @>)
+        raisesWith<SharedComponentsException> <@ TestModel (component1, component1) @> (contains [component1])
 
     [<Test>]
     let ``throws when component is shared within the same partition root at different levels`` () =
@@ -96,8 +97,7 @@ module ``SetPartitionRoots method`` =
         let component4 = ComplexComponent (component1, component3, obj ())
         let component5 = ComplexComponent (component4, component2, obj ())
 
-        raisesWith<SharedComponentsException> <@ TestModel component5 @>
-            (fun e -> <@ e.Components = [component2] @>)
+        raisesWith<SharedComponentsException> <@ TestModel component5 @> (contains [component2])
 
     [<Test>]
     let ``throws when component is shared between different roots at different levels`` () =
@@ -108,8 +108,7 @@ module ``SetPartitionRoots method`` =
         let component5 =  EmptyComponent ()
         let component6 =  ComplexComponent (component5, component2, obj ())
 
-        raisesWith<SharedComponentsException> <@ TestModel (component4, component6) @>
-            (fun e -> <@ e.Components = [component2] @>)
+        raisesWith<SharedComponentsException> <@ TestModel (component4, component6) @> (contains [component2])
 
     [<Test>]
     let ``throws when multiple components are shared between different roots at different levels`` () =
@@ -119,8 +118,7 @@ module ``SetPartitionRoots method`` =
         let component4 =  ComplexComponent (component1, component3, obj ())
         let component5 =  ComplexComponent (component1, component2, obj ())
 
-        raisesWith<SharedComponentsException> <@ TestModel (component4, component5) @>
-            (fun e -> <@ e.Components = [component1; component2] @>)
+        raisesWith<SharedComponentsException> <@ TestModel (component4, component5) @> (contains [component1; component2])
 
 [<TestFixture>]
 module ``Components property`` =

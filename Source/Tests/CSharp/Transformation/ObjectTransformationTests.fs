@@ -32,6 +32,7 @@ open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
+open SafetySharp.Tests
 
 [<AutoOpen>]
 module private ObjectTransformationTestsHelper =
@@ -41,19 +42,12 @@ module private ObjectTransformationTestsHelper =
     let mutable modelObject = Unchecked.defaultof<ModelObject>
     let mutable (model : Model) = null
 
-    type TestModel (components) as this =
-        inherit Model ()
-        do this.SetPartitions (components |> Array.ofSeq)
-
-    type EmptyComponent () =
-        inherit Component ()
-
     let compile csharpCode componentTypes =
         let compilation = TestCompilation csharpCode
         symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
         components <- componentTypes |> List.map compilation.CreateObject
 
-        model <- TestModel (components)
+        model <- TestModel (components |> Array.ofList)
         model.FinalizeMetadata ()
 
         objectResolver <- ObjectTransformation.Transform model symbolResolver
@@ -67,15 +61,15 @@ module ``Transform method`` =
     let ``throws when null is passed`` () =
         let compilation = TestCompilation "class A : Component {}"
         let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
-        raisesWith<ArgumentNullException> <@ ObjectTransformation.Transform null symbolResolver @> (fun e -> <@ e.ParamName = "model" @>)
+        raisesArgumentNullException "model" <@ ObjectTransformation.Transform null symbolResolver @>
 
     [<Test>]
     let ``throws when model metadata has not yet been finalized`` () =
         let compilation = TestCompilation "class A : Component {}"
         symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
-        let model = TestModel [EmptyComponent ()]
+        let model = TestModel (EmptyComponent ())
 
-        raisesWith<ArgumentException> <@ ObjectTransformation.Transform model symbolResolver @> (fun e -> <@ e.ParamName = "model" @>)
+        raisesArgumentException "model" <@ ObjectTransformation.Transform model symbolResolver @>
 
 [<TestFixture>]
 module ``ModelObject property`` =
@@ -182,12 +176,12 @@ module ``ResolveSymbol Method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesWith<ArgumentNullException> <@ objectResolver.ResolveSymbol null @> (fun e -> <@ e.ParamName = "componentObject" @>)
+        raisesArgumentNullException "componentObject" <@ objectResolver.ResolveSymbol null @>
 
     [<Test>]
     let ``throws when component of unknown type is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesWith<ArgumentException> <@ objectResolver.ResolveSymbol (EmptyComponent ()) @> (fun e -> <@ e.ParamName = "componentObject" @>)
+        raisesArgumentException "componentObject" <@ objectResolver.ResolveSymbol (EmptyComponent ()) @>
 
     [<Test>]
     let ``returns component symbol for component object of known type`` () =
@@ -215,12 +209,12 @@ module ``ResolveObject Method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesWith<ArgumentNullException> <@ objectResolver.ResolveObject null @> (fun e -> <@ e.ParamName = "componentObject" @>)
+        raisesArgumentNullException "componentObject" <@ objectResolver.ResolveObject null @>
 
     [<Test>]
     let ``throws when component of unknown type is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesWith<ArgumentException> <@ objectResolver.ResolveObject (EmptyComponent ()) @> (fun e -> <@ e.ParamName = "componentObject" @>)
+        raisesArgumentException "componentObject" <@ objectResolver.ResolveObject (EmptyComponent ()) @>
 
     [<Test>]
     let ``returns component object for component object of known type`` () =

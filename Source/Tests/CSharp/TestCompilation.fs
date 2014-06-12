@@ -36,13 +36,11 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 type CompilationException (message : string) =
     inherit Exception (message)
 
-[<AutoOpen>]
-module private Exception =
-    let inline failed message = CompilationException(message) |> raise
-
 /// Represents a compiled C# compilation unit with a single syntax tree.
 type internal TestCompilation (csharpCode : string) =
     let mutable (assembly : Assembly) = null
+    let failed message = CompilationException message |> raise
+
     let compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
@@ -59,7 +57,7 @@ type internal TestCompilation (csharpCode : string) =
     do diagnostics |> Seq.iter (fun d -> printfn "%A" d)
 
     do if not <| Seq.isEmpty diagnostics then
-        CompilationException "Failed to create compilation." |> raise
+        "Failed to create compilation." |> failed
 
     /// Gets the syntax tree of the compilation.
     member this.SyntaxTree with get () = syntaxTree

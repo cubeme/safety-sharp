@@ -32,6 +32,7 @@ open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
+open SafetySharp.Tests
 
 [<AutoOpen>]
 module private SymbolTransformationTestsHelper =
@@ -50,7 +51,7 @@ module private SymbolTransformationTestsHelper =
 module ``Transform method`` =
     [<Test>]
     let ``throws when null is passed`` () =
-        raisesWith<ArgumentNullException> <@ SymbolTransformation.Transform null @> (fun e -> <@ e.ParamName = "compilation" @>)
+        raisesArgumentNullException "compilation" <@ SymbolTransformation.Transform null @>
 
 [<TestFixture>]
 module ``ComponentSymbols property`` =
@@ -146,7 +147,7 @@ module ``ResolveComponent(INamedTypeSymbol) method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let resolver = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ resolver.ResolveComponent (null : INamedTypeSymbol) @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
+        raisesArgumentNullException "componentSymbol" <@ resolver.ResolveComponent (null : INamedTypeSymbol) @>
 
     [<Test>]
     let ``throws when non-component is passed`` () =
@@ -154,7 +155,7 @@ module ``ResolveComponent(INamedTypeSymbol) method`` =
         let classB = compilation.FindClassSymbol "B"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveComponent classB @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
+        raisesArgumentException "componentSymbol" <@ resolver.ResolveComponent classB @>
 
     [<Test>]
     let ``returns symbol for transformed component`` () =
@@ -180,15 +181,14 @@ module ``ResolveComponent(Component) method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let resolver = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ resolver.ResolveComponent (null : Component) @> (fun e -> <@ e.ParamName = "componentObject" @>)
+        raisesArgumentNullException "componentObject" <@ resolver.ResolveComponent (null : Component) @>
 
     [<Test>]
     let ``throws when component object with unknown type is passed`` () =
         let compilation = TestCompilation "class A : Component {}"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        let component' = { new Component () with member this.Update() = () }
-        raisesWith<ArgumentException> <@ resolver.ResolveComponent component' @> (fun e -> <@ e.ParamName = "componentObject" @>)
+        raisesArgumentException "componentObject" <@ resolver.ResolveComponent (EmptyComponent ()) @>
 
     [<Test>]
     let ``returns symbol for component object of transformed type`` () =
@@ -236,7 +236,7 @@ module ``ResolveField method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let resolver = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ resolver.ResolveField null @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
+        raisesArgumentNullException "fieldSymbol" <@ resolver.ResolveField null @>
 
     [<Test>]
     let ``throws when field of non-component is passed`` () =
@@ -244,7 +244,7 @@ module ``ResolveField method`` =
         let field = compilation.FindFieldSymbol "B" "f"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveField field @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
+        raisesArgumentException "fieldSymbol" <@ resolver.ResolveField field @>
 
     [<Test>]
     let ``throws when subcomponent field is passed`` () =
@@ -252,7 +252,7 @@ module ``ResolveField method`` =
         let field = compilation.FindFieldSymbol "A" "b"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveField field @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
+        raisesArgumentException "fieldSymbol" <@ resolver.ResolveField field @>
 
     [<Test>]
     let ``returns symbol for field of transformed component`` () =
@@ -293,7 +293,7 @@ module ``ResolveSubcomponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let resolver = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ resolver.ResolveSubcomponent null @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
+        raisesArgumentNullException "subcomponentSymbol" <@ resolver.ResolveSubcomponent null @>
 
     [<Test>]
     let ``throws when subcomponent of non-component is passed`` () =
@@ -301,7 +301,7 @@ module ``ResolveSubcomponent method`` =
         let field = compilation.FindFieldSymbol "B" "f"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveSubcomponent field @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
+        raisesArgumentException "subcomponentSymbol" <@ resolver.ResolveSubcomponent field @>
 
     [<Test>]
     let ``throws when non-subcomponent field is passed`` () =
@@ -309,7 +309,7 @@ module ``ResolveSubcomponent method`` =
         let field = compilation.FindFieldSymbol "A" "b"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveSubcomponent field @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
+        raisesArgumentException "subcomponentSymbol" <@ resolver.ResolveSubcomponent field @>
 
     [<Test>]
     let ``returns symbol for subcomponent of transformed component`` () =
@@ -350,7 +350,7 @@ module ``ResolveMethod method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let resolver = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ resolver.ResolveMethod null @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
+        raisesArgumentNullException "methodSymbol" <@ resolver.ResolveMethod null @>
 
     [<Test>]
     let ``throws when method of non-component is passed`` () =
@@ -358,7 +358,7 @@ module ``ResolveMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveMethod methodSymbol @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
+        raisesArgumentException "methodSymbol" <@ resolver.ResolveMethod methodSymbol @>
 
     [<Test>]
     let ``throws when constructor is passed`` () =
@@ -367,7 +367,7 @@ module ``ResolveMethod method`` =
         let constructorSymbol = classSymbol.GetMembers().OfType<IMethodSymbol>().Single(fun method' -> method'.MethodKind = MethodKind.Constructor)
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveMethod constructorSymbol @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
+        raisesArgumentException "methodSymbol" <@ resolver.ResolveMethod constructorSymbol @>
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
@@ -424,16 +424,14 @@ module ``ResolveCSharpMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveCSharpMethod <| resolver.ResolveMethod methodSymbol @> 
-            (fun e -> <@ e.ParamName = "methodSymbol" @>)
+        raisesArgumentException "methodSymbol" <@ resolver.ResolveCSharpMethod <| resolver.ResolveMethod methodSymbol @> 
 
     [<Test>]
     let ``throws for update method of component that doesn't override it`` () =
         let compilation = TestCompilation "class A : Component {}"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raisesWith<ArgumentException> <@ resolver.ResolveCSharpMethod <| resolver.ComponentSymbols.[0].UpdateMethod @> 
-            (fun e -> <@ e.ParamName = "methodSymbol" @>)
+        raisesArgumentException "methodSymbol" <@ resolver.ResolveCSharpMethod <| resolver.ComponentSymbols.[0].UpdateMethod @> 
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
