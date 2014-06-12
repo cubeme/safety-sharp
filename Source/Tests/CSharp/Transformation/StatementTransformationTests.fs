@@ -51,12 +51,12 @@ module private StatementTransformationTestsHelper =
 
         let compilation = TestCompilation csharpCode
         let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[0]
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
-        booleanFieldSymbol <- symbolMap.Components.[0].Fields.[0]
-        integerFieldSymbol <- symbolMap.Components.[0].Fields.[1]
-        decimalFieldSymbol <- symbolMap.Components.[0].Fields.[2]
+        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        booleanFieldSymbol <- symbolResolver.Components.[0].Fields.[0]
+        integerFieldSymbol <- symbolResolver.Components.[0].Fields.[1]
+        decimalFieldSymbol <- symbolResolver.Components.[0].Fields.[2]
 
-        StatementTransformation.Transform symbolMap compilation.SemanticModel statement
+        StatementTransformation.Transform symbolResolver compilation.SemanticModel statement
 
     let transform csharpCode = transformWithReturnType csharpCode "void"
 

@@ -39,8 +39,8 @@ module private SymbolTransformationTestsHelper =
         SymbolTransformation.Transform compilation.CSharpCompilation
 
     let components csharpCode =
-        let symbolMap = compile csharpCode
-        symbolMap.Components
+        let resolver = compile csharpCode
+        resolver.Components
 
     let emptyUpdate = { Name = "Update"; ReturnType = None; Parameters = [] }
     let emptyComponent name = { Name = "TestCompilation::" + name; UpdateMethod = emptyUpdate; Fields = []; Methods = []; Subcomponents = [] } 
@@ -138,77 +138,77 @@ module ``Components property`` =
 module ``ResolveComponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
-        let symbolMap = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ symbolMap.ResolveComponent null @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
+        let resolver = compile "class A : Component {} class B : Component {}"
+        raisesWith<ArgumentNullException> <@ resolver.ResolveComponent null @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
 
     [<Test>]
     let ``throws when non-component is passed`` () =
         let compilation = TestCompilation "class A : Component {} class B {}"
         let classB = compilation.FindClassSymbol "B"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveComponent classB @>
+        raises<InvalidOperationException> <@ resolver.ResolveComponent classB @>
 
     [<Test>]
     let ``returns symbol for transformed component`` () =
         let compilation = TestCompilation "class A : Component {} class B : Component {}"
         let classA = compilation.FindClassSymbol "A"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveComponent classA =? emptyComponent "A"
+        resolver.ResolveComponent classA =? emptyComponent "A"
 
     [<Test>]
     let ``returns different symbols for different transformed components`` () =
         let compilation = TestCompilation "class A : Component {} class B : Component {}"
         let classA = compilation.FindClassSymbol "A"
         let classB = compilation.FindClassSymbol "B"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveComponent classA =? emptyComponent "A"
-        symbolMap.ResolveComponent classB =? emptyComponent "B"
-        symbolMap.ResolveComponent classA <>? symbolMap.ResolveComponent classB
+        resolver.ResolveComponent classA =? emptyComponent "A"
+        resolver.ResolveComponent classB =? emptyComponent "B"
+        resolver.ResolveComponent classA <>? resolver.ResolveComponent classB
 
 [<TestFixture>]
 module ``ResolveField method`` =
     [<Test>]
     let ``throws when null is passed`` () =
-        let symbolMap = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ symbolMap.ResolveField null @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
+        let resolver = compile "class A : Component {} class B : Component {}"
+        raisesWith<ArgumentNullException> <@ resolver.ResolveField null @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
 
     [<Test>]
     let ``throws when field of non-component is passed`` () =
         let compilation = TestCompilation "class A : Component {} class B { int f; }"
         let field = compilation.FindFieldSymbol "B" "f"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveField field @>
+        raises<InvalidOperationException> <@ resolver.ResolveField field @>
 
     [<Test>]
     let ``throws when subcomponent field is passed`` () =
         let compilation = TestCompilation "class A : Component { B b; } class B : Component { }"
         let field = compilation.FindFieldSymbol "A" "b"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveField field @>
+        raises<InvalidOperationException> <@ resolver.ResolveField field @>
 
     [<Test>]
     let ``returns symbol for field of transformed component`` () =
         let compilation = TestCompilation "class A : Component { int f; } class B : Component {}"
         let field = compilation.FindFieldSymbol "A" "f"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveField field =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
+        resolver.ResolveField field =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
 
     [<Test>]
     let ``returns different symbols for different fields of same transformed component`` () =
         let compilation = TestCompilation "class A : Component { int f; bool g; } class B : Component {}"
         let field1 = compilation.FindFieldSymbol "A" "f"
         let field2 = compilation.FindFieldSymbol "A" "g"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveField field1 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
-        symbolMap.ResolveField field2 =? { FieldSymbol.Name = "g"; Type = TypeSymbol.Boolean }
-        symbolMap.ResolveField field1 <>? symbolMap.ResolveField field2
+        resolver.ResolveField field1 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
+        resolver.ResolveField field2 =? { FieldSymbol.Name = "g"; Type = TypeSymbol.Boolean }
+        resolver.ResolveField field1 <>? resolver.ResolveField field2
 
     [<Test>]
     let ``returns different symbols for different fields of different transformed components`` () =
@@ -216,56 +216,56 @@ module ``ResolveField method`` =
         let field1 = compilation.FindFieldSymbol "A" "f"
         let field2 = compilation.FindFieldSymbol "B" "f"
         let field3 = compilation.FindFieldSymbol "B" "g"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveField field1 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
-        symbolMap.ResolveField field2 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
-        symbolMap.ResolveField field3 =? { FieldSymbol.Name = "g"; Type = TypeSymbol.Integer }
+        resolver.ResolveField field1 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
+        resolver.ResolveField field2 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
+        resolver.ResolveField field3 =? { FieldSymbol.Name = "g"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolMap.ResolveField field1, symbolMap.ResolveField field2) @>
+        test <@ not <| obj.ReferenceEquals(resolver.ResolveField field1, resolver.ResolveField field2) @>
 
 [<TestFixture>]
 module ``ResolveSubcomponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
-        let symbolMap = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ symbolMap.ResolveSubcomponent null @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
+        let resolver = compile "class A : Component {} class B : Component {}"
+        raisesWith<ArgumentNullException> <@ resolver.ResolveSubcomponent null @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
 
     [<Test>]
     let ``throws when subcomponent of non-component is passed`` () =
         let compilation = TestCompilation "class A : Component {} class B { A f; }"
         let field = compilation.FindFieldSymbol "B" "f"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveSubcomponent field @>
+        raises<InvalidOperationException> <@ resolver.ResolveSubcomponent field @>
 
     [<Test>]
     let ``throws when non-subcomponent field is passed`` () =
         let compilation = TestCompilation "class A : Component { int b; } class B : Component { }"
         let field = compilation.FindFieldSymbol "A" "b"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveSubcomponent field @>
+        raises<InvalidOperationException> <@ resolver.ResolveSubcomponent field @>
 
     [<Test>]
     let ``returns symbol for subcomponent of transformed component`` () =
         let compilation = TestCompilation "class A : Component { B f; } class B : Component {}"
         let field = compilation.FindFieldSymbol "A" "f"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveSubcomponent field =? { SubcomponentSymbol.Name = "f" }
+        resolver.ResolveSubcomponent field =? { SubcomponentSymbol.Name = "f" }
 
     [<Test>]
     let ``returns different symbols for different subcomponents of same transformed component`` () =
         let compilation = TestCompilation "class A : Component { B b1; B b2; } class B : Component {}"
         let field1 = compilation.FindFieldSymbol "A" "b1"
         let field2 = compilation.FindFieldSymbol "A" "b2"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveSubcomponent field1 =? { SubcomponentSymbol.Name = "b1" }
-        symbolMap.ResolveSubcomponent field2 =? { SubcomponentSymbol.Name = "b2" }
-        symbolMap.ResolveSubcomponent field1 <>? symbolMap.ResolveSubcomponent field2
+        resolver.ResolveSubcomponent field1 =? { SubcomponentSymbol.Name = "b1" }
+        resolver.ResolveSubcomponent field2 =? { SubcomponentSymbol.Name = "b2" }
+        resolver.ResolveSubcomponent field1 <>? resolver.ResolveSubcomponent field2
 
     [<Test>]
     let ``returns different symbols for different subcomponents of different transformed components`` () =
@@ -273,70 +273,70 @@ module ``ResolveSubcomponent method`` =
         let field1 = compilation.FindFieldSymbol "A" "b"
         let field2 = compilation.FindFieldSymbol "B" "a1"
         let field3 = compilation.FindFieldSymbol "B" "a2"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveSubcomponent field1 =? { SubcomponentSymbol.Name = "b" }
-        symbolMap.ResolveSubcomponent field2 =? { SubcomponentSymbol.Name = "a1" }
-        symbolMap.ResolveSubcomponent field3 =? { SubcomponentSymbol.Name = "a2" }
+        resolver.ResolveSubcomponent field1 =? { SubcomponentSymbol.Name = "b" }
+        resolver.ResolveSubcomponent field2 =? { SubcomponentSymbol.Name = "a1" }
+        resolver.ResolveSubcomponent field3 =? { SubcomponentSymbol.Name = "a2" }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolMap.ResolveSubcomponent field1, symbolMap.ResolveSubcomponent field2) @>
+        test <@ not <| obj.ReferenceEquals(resolver.ResolveSubcomponent field1, resolver.ResolveSubcomponent field2) @>
 
 [<TestFixture>]
 module ``ResolveMethod method`` =
     [<Test>]
     let ``throws when null is passed`` () =
-        let symbolMap = compile "class A : Component {} class B : Component {}"
-        raisesWith<ArgumentNullException> <@ symbolMap.ResolveMethod null @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
+        let resolver = compile "class A : Component {} class B : Component {}"
+        raisesWith<ArgumentNullException> <@ resolver.ResolveMethod null @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
 
     [<Test>]
     let ``throws when method of non-component is passed`` () =
         let compilation = TestCompilation "class A : Component {} class B { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveMethod methodSymbol @>
+        raises<InvalidOperationException> <@ resolver.ResolveMethod methodSymbol @>
 
     [<Test>]
     let ``throws when constructor is passed`` () =
         let compilation = TestCompilation "class A : Component { int b; } class B : Component { }"
         let classSymbol = compilation.FindClassSymbol "A"
         let constructorSymbol = classSymbol.GetMembers().OfType<IMethodSymbol>().Single(fun method' -> method'.MethodKind = MethodKind.Constructor)
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveMethod constructorSymbol @>
+        raises<InvalidOperationException> <@ resolver.ResolveMethod constructorSymbol @>
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
         let compilation = TestCompilation "class A : Component { void M() {} } class B : Component {}"
         let methodSymbol = compilation.FindMethodSymbol "A" "M"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveMethod methodSymbol =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
 
     [<Test>]
     let ``returns update method symbol for update method of transformed component`` () =
         let compilation = TestCompilation "class A : Component { public override void Update() {} } class B : Component {}"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "A" "Update"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
-        let componentSymbol = symbolMap.ResolveComponent classSymbol
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let componentSymbol = resolver.ResolveComponent classSymbol
 
-        symbolMap.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
 
         // We have to check for reference equality here
-        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolMap.ResolveMethod methodSymbol) @>
+        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, resolver.ResolveMethod methodSymbol) @>
 
     [<Test>]
     let ``returns different symbols for different methods of same transformed component`` () =
         let compilation = TestCompilation "class A : Component { void M() {} void N() {} } class B : Component {}"
         let method1 = compilation.FindMethodSymbol "A" "M"
         let method2 = compilation.FindMethodSymbol "A" "N"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveMethod method1 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
-        symbolMap.ResolveMethod method2 =? { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [] }
-        symbolMap.ResolveMethod method1 <>? symbolMap.ResolveMethod method2
+        resolver.ResolveMethod method1 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod method2 =? { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod method1 <>? resolver.ResolveMethod method2
 
     [<Test>]
     let ``returns different symbols for different methods of different transformed components`` () =
@@ -344,14 +344,14 @@ module ``ResolveMethod method`` =
         let method1 = compilation.FindMethodSymbol "A" "M"
         let method2 = compilation.FindMethodSymbol "B" "M"
         let method3 = compilation.FindMethodSymbol "B" "N"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveMethod method1 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
-        symbolMap.ResolveMethod method2 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
-        symbolMap.ResolveMethod method3 =? { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod method1 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod method2 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
+        resolver.ResolveMethod method3 =? { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [] }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolMap.ResolveMethod method1, symbolMap.ResolveMethod method2) @>
+        test <@ not <| obj.ReferenceEquals(resolver.ResolveMethod method1, resolver.ResolveMethod method2) @>
 
 [<TestFixture>]
 module ``ResolveCSharpMethod method`` =
@@ -359,45 +359,45 @@ module ``ResolveCSharpMethod method`` =
     let ``throws when method of non-component is passed`` () =
         let compilation = TestCompilation "class A : Component {} class B { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveCSharpMethod <| symbolMap.ResolveMethod methodSymbol @>
+        raises<InvalidOperationException> <@ resolver.ResolveCSharpMethod <| resolver.ResolveMethod methodSymbol @>
 
     [<Test>]
     let ``throws for update method of component that doesn't override it`` () =
         let compilation = TestCompilation "class A : Component {}"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ symbolMap.ResolveCSharpMethod <| symbolMap.Components.[0].UpdateMethod @>
+        raises<InvalidOperationException> <@ resolver.ResolveCSharpMethod <| resolver.Components.[0].UpdateMethod @>
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
         let compilation = TestCompilation "class A : Component { void M() {} } class B : Component {}"
         let methodSymbol = compilation.FindMethodSymbol "A" "M"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveMethod methodSymbol |> symbolMap.ResolveCSharpMethod =? methodSymbol
+        resolver.ResolveMethod methodSymbol |> resolver.ResolveCSharpMethod =? methodSymbol
 
     [<Test>]
     let ``returns update method symbol for update method of transformed component`` () =
         let compilation = TestCompilation "class A : Component { public override void Update() {} } class B : Component {}"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "A" "Update"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
-        let componentSymbol = symbolMap.ResolveComponent classSymbol
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let componentSymbol = resolver.ResolveComponent classSymbol
 
-        symbolMap.ResolveMethod methodSymbol |> symbolMap.ResolveCSharpMethod =? methodSymbol
-        symbolMap.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
+        resolver.ResolveMethod methodSymbol |> resolver.ResolveCSharpMethod =? methodSymbol
+        resolver.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
 
     [<Test>]
     let ``returns different symbols for different methods of same transformed component`` () =
         let compilation = TestCompilation "class A : Component { void M() {} void N() {} } class B : Component {}"
         let method1 = compilation.FindMethodSymbol "A" "M"
         let method2 = compilation.FindMethodSymbol "A" "N"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveMethod method1 |> symbolMap.ResolveCSharpMethod =? method1
-        symbolMap.ResolveMethod method2 |> symbolMap.ResolveCSharpMethod =? method2
+        resolver.ResolveMethod method1 |> resolver.ResolveCSharpMethod =? method1
+        resolver.ResolveMethod method2 |> resolver.ResolveCSharpMethod =? method2
 
     [<Test>]
     let ``returns different symbols for different methods of different transformed components`` () =
@@ -405,9 +405,9 @@ module ``ResolveCSharpMethod method`` =
         let method1 = compilation.FindMethodSymbol "A" "M"
         let method2 = compilation.FindMethodSymbol "B" "M"
         let method3 = compilation.FindMethodSymbol "B" "N"
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        symbolMap.ResolveMethod method1 |> symbolMap.ResolveCSharpMethod =? method1
-        symbolMap.ResolveMethod method2 |> symbolMap.ResolveCSharpMethod =? method2
-        symbolMap.ResolveMethod method3 |> symbolMap.ResolveCSharpMethod =? method3
+        resolver.ResolveMethod method1 |> resolver.ResolveCSharpMethod =? method1
+        resolver.ResolveMethod method2 |> resolver.ResolveCSharpMethod =? method2
+        resolver.ResolveMethod method3 |> resolver.ResolveCSharpMethod =? method3
 

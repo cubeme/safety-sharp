@@ -46,10 +46,10 @@ module private ExpressionTransformationTestsHelper =
 
         let compilation = TestCompilation csharpCode
         let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value
-        let symbolMap = SymbolTransformation.Transform compilation.CSharpCompilation
-        fieldSymbol <- symbolMap.Components.[0].Fields.[0]
+        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        fieldSymbol <- symbolResolver.Components.[0].Fields.[0]
 
-        ExpressionTransformation.Transform symbolMap compilation.SemanticModel expression
+        ExpressionTransformation.Transform symbolResolver compilation.SemanticModel expression
 
 module ExpressionTransformationTests =
     type MyRecord = { A : int; B : int }

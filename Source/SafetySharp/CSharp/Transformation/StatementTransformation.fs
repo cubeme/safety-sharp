@@ -34,8 +34,8 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 module StatementTransformation =
 
     /// Transforms C# statements to metamodel statements.
-    let Transform (symbolMap : SymbolMap) (semanticModel : SemanticModel) (statement : StatementSyntax) =
-        let transformExpression = ExpressionTransformation.Transform symbolMap semanticModel
+    let Transform (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (statement : StatementSyntax) =
+        let transformExpression = ExpressionTransformation.Transform symbolResolver semanticModel
         let rec transform = function
         | EmptyStatement ->
             EmptyStatement

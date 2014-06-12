@@ -36,7 +36,7 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
 /// Represents a mapping between the original C# symbols and the created metamodel symbols.
-type SymbolMap = private {
+type SymbolResolver = private {
     ComponentList : ComponentSymbol list
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
