@@ -31,7 +31,7 @@ open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
 /// Represents a base class for all components.
-[<AbstractClass>]
+[<AbstractClass; AllowNullLiteral>]
 type Component () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ type Component () =
             this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
             |> Seq.map (fun field -> (field, field.GetValue(this)))
-            |> Seq.where (fun (field, component') -> not <| obj.ReferenceEquals(component', null))
+            |> Seq.where (fun (field, component') -> component' <> null)
             |> Seq.map (fun (field, component') -> (field, component' :?> Component))
             |> List.ofSeq
 

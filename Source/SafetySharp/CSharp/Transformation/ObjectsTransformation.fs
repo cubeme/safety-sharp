@@ -23,16 +23,32 @@
 namespace SafetySharp.CSharp
 
 open System.Collections.Immutable
-
 open SafetySharp.Metamodel
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Modeling
+open SafetySharp.Utilities
 
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
+/// Represents a mapping between the original .NET objects and the created metamodel symbols and objects.
+type ObjectResolver = private {
+    ComponentSymbolMap : ImmutableDictionary<Component, ComponentSymbol>
+    ComponentObjectMap : ImmutableDictionary<Component, ComponentObject>
+}
+    with
+
+    /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
+    member this.ResolveSymbol (dotNetComponent : Component) =
+        Requires.NotNull dotNetComponent "dotNetComponent'"
+        Requires.That (this.ComponentSymbolMap.ContainsKey dotNetComponent) "The given component is unknown."
+        this.ComponentSymbolMap.[dotNetComponent]
+
+    /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
+    member this.ResolveObject (dotNetComponent : Component) =
+        Requires.NotNull dotNetComponent "dotNetComponent'"
+        Requires.That (this.ComponentObjectMap.ContainsKey dotNetComponent) "The given component is unknown."
+        this.ComponentObjectMap.[dotNetComponent]
 
 module ObjectsTransformation =
 
     /// Transforms C# objects to metamodel objects.
-    let Transform =
-        ()
+    let Transform (model : Model) =
+        Requires.NotNull model "model"
+        Requires.ArgumentSatisfies model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."

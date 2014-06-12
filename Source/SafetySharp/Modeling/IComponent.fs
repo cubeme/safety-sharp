@@ -23,4 +23,5 @@
 namespace SafetySharp.Modeling
 
 /// Represents a marker interface for components.
+[<AllowNullLiteral>]
 type IComponent = interface end

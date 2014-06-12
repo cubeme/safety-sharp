@@ -52,9 +52,9 @@ module private StatementTransformationTestsHelper =
         let compilation = TestCompilation csharpCode
         let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[0]
         let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
-        booleanFieldSymbol <- symbolResolver.Components.[0].Fields.[0]
-        integerFieldSymbol <- symbolResolver.Components.[0].Fields.[1]
-        decimalFieldSymbol <- symbolResolver.Components.[0].Fields.[2]
+        booleanFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[0]
+        integerFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[1]
+        decimalFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[2]
 
         StatementTransformation.Transform symbolResolver compilation.SemanticModel statement
 

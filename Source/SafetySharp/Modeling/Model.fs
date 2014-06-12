@@ -38,7 +38,7 @@ type SharedComponentsException (components : Component list) =
     member this.Components = components
 
 /// Represents a base class for all models.
-[<AbstractClass>]
+[<AbstractClass; AllowNullLiteral>]
 type Model () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------

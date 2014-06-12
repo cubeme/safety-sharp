@@ -40,13 +40,13 @@ module private SymbolTransformationTestsHelper =
 
     let components csharpCode =
         let resolver = compile csharpCode
-        resolver.Components
+        resolver.ComponentSymbols
 
     let emptyUpdate = { Name = "Update"; ReturnType = None; Parameters = [] }
     let emptyComponent name = { Name = "TestCompilation::" + name; UpdateMethod = emptyUpdate; Fields = []; Methods = []; Subcomponents = [] } 
 
 [<TestFixture>]
-module ``Components property`` =
+module ``ComponentSymbols property`` =
     [<Test>]
     let ``empty when compilation contains no components`` () =
         components "class X {} class Y {}" =? []
@@ -368,7 +368,7 @@ module ``ResolveCSharpMethod method`` =
         let compilation = TestCompilation "class A : Component {}"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        raises<InvalidOperationException> <@ resolver.ResolveCSharpMethod <| resolver.Components.[0].UpdateMethod @>
+        raises<InvalidOperationException> <@ resolver.ResolveCSharpMethod <| resolver.ComponentSymbols.[0].UpdateMethod @>
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =

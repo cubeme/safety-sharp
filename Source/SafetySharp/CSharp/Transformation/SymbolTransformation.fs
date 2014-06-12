@@ -76,7 +76,7 @@ type SymbolResolver = private {
         this.MethodMapBack.[methodSymbol]
 
     /// Gets a list of all component symbols.
-    member this.Components = this.ComponentList
+    member this.ComponentSymbols = this.ComponentList
 
 module SymbolTransformation =
 
