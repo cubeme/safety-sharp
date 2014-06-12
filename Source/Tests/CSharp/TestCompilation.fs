@@ -49,8 +49,9 @@ type internal TestCompilation (csharpCode : string) =
     let csharpCompilation = 
         CSharpCompilation
             .Create("TestCompilation")
-            .AddReferences(MetadataFileReference(typeof<obj>.Assembly.Location))
-            .AddReferences(MetadataFileReference(typeof<ComponentSymbol>.Assembly.Location))
+            .AddReferences(MetadataFileReference typeof<obj>.Assembly.Location)
+            .AddReferences(MetadataFileReference typeof<ComponentSymbol>.Assembly.Location)
+            .AddReferences(MetadataFileReference typeof<System.Linq.Expressions.Expression>.Assembly.Location)
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 

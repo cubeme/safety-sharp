@@ -38,6 +38,8 @@ module private ObjectTransformationTestsHelper =
     let mutable symbolResolver = Unchecked.defaultof<SymbolResolver>
     let mutable objectResolver = Unchecked.defaultof<ObjectResolver>
     let mutable components = Unchecked.defaultof<Component list>
+    let mutable modelObject = Unchecked.defaultof<ModelObject>
+    let mutable (model : Model) = null
 
     type TestModel (components) as this =
         inherit Model ()
@@ -51,10 +53,11 @@ module private ObjectTransformationTestsHelper =
         symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
         components <- componentTypes |> List.map compilation.CreateObject
 
-        let model = TestModel (components)
+        model <- TestModel (components)
         model.FinalizeMetadata ()
 
         objectResolver <- ObjectTransformation.Transform model symbolResolver
+        modelObject <- objectResolver.ModelObject
 
     let createComponentObject name symbol = { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty }
 
@@ -77,8 +80,102 @@ module ``Transform method`` =
 [<TestFixture>]
 module ``ModelObject property`` =
     [<Test>]
-    let ``empty when compilation contains no components`` () =
-        Assert.Fail "TODO"
+    let ``contains one root partition`` () =
+        compile "class A : Component {}" ["A"]
+        modelObject.Partitions =? [{ RootComponent = objectResolver.ResolveObject components.[0] }]
+
+    [<Test>]
+    let ``contains three root partitions`` () =
+        compile "class A : Component {} class B : A {}" ["A"; "B"; "A"]
+        modelObject.Partitions =? [
+            { RootComponent = objectResolver.ResolveObject components.[0] }
+            { RootComponent = objectResolver.ResolveObject components.[1] }
+            { RootComponent = objectResolver.ResolveObject components.[2] }
+        ]
+
+    [<Test>]
+    let ``component has correct initial field values`` () =
+        compile "class A : Component { public A() { SetInitialValues(() => x, 1, 2, 3); } int x; decimal d = 77.7m; }" ["A"]
+        let componentSymbol = symbolResolver.ResolveComponent components.[0]
+        let fieldSymbol1 = componentSymbol.Fields.[0]
+        let fieldSymbol2 = componentSymbol.Fields.[1]
+
+        modelObject.Partitions.[0].RootComponent =? { 
+            createComponentObject "Root0" componentSymbol with
+                Fields = 
+                [
+                    (fieldSymbol1, { FieldSymbol = fieldSymbol1; InitialValues = [1; 2; 3] })
+                    (fieldSymbol2, { FieldSymbol = fieldSymbol2; InitialValues = [77.7m] })
+                ] |> Map.ofList
+        }
+
+    [<Test>]
+    let ``component has correct subcomponents`` () =
+        compile "class A : Component { public A() { b1 = new B(); b2 = new B(); } B b1, b2; } class B : Component {}" ["A"; "B"]
+        let componentSymbolA = symbolResolver.ResolveComponent components.[0]
+        let componentSymbolB = symbolResolver.ResolveComponent components.[1]
+        let subcomponentSymbol1 = componentSymbolA.Subcomponents.[0]
+        let subcomponentSymbol2 = componentSymbolA.Subcomponents.[1]
+
+        modelObject.Partitions.[0].RootComponent =? { 
+            createComponentObject "Root0" componentSymbolA with
+                Subcomponents = 
+                [
+                    (subcomponentSymbol1, createComponentObject "Root0.b1" componentSymbolB)
+                    (subcomponentSymbol2, createComponentObject "Root0.b2" componentSymbolB)
+                ] |> Map.ofList
+        }
+
+    [<Test>]
+    let ``reflects three-level nested hierarchy with multiple roots`` () =
+        compile "
+            class A : Component {
+                B b1, b2;
+                public A() {
+                    b1 = new B();
+                    b2 = new B();
+                }
+            }
+            class B : Component {
+                C c;
+                public B() {
+                    c = new C();
+                }
+            }
+            class C : Component {
+            }" ["A"; "B"; "C"]
+
+        let componentSymbolA = symbolResolver.ResolveComponent components.[0]
+        let componentSymbolB = symbolResolver.ResolveComponent components.[1]
+        let componentSymbolC = symbolResolver.ResolveComponent components.[2]
+        let subcomponentSymbol1 = componentSymbolA.Subcomponents.[0]
+        let subcomponentSymbol2 = componentSymbolA.Subcomponents.[1]
+        let subcomponentSymbol3 = componentSymbolB.Subcomponents.[0]
+
+        let partition0 = { 
+            createComponentObject "Root0" componentSymbolA with
+                Subcomponents =
+                [
+                    (subcomponentSymbol1, { 
+                        createComponentObject "Root0.b1" componentSymbolB with
+                            Subcomponents = [(subcomponentSymbol3, createComponentObject "Root0.b1.c" componentSymbolC)] |> Map.ofList
+                    })
+                    (subcomponentSymbol2, {
+                        createComponentObject "Root0.b2" componentSymbolB with
+                            Subcomponents = [(subcomponentSymbol3, createComponentObject "Root0.b2.c" componentSymbolC)] |> Map.ofList
+                    }) 
+                ] |> Map.ofList
+        }
+
+        let partition1 = {
+            createComponentObject "Root1" componentSymbolB with
+                Subcomponents = [(subcomponentSymbol3, createComponentObject "Root1.c" componentSymbolC)] |> Map.ofList
+        }
+
+        let partition2 = createComponentObject "Root2" componentSymbolC
+        let partitions = [partition0; partition1; partition2] |> List.map (fun component' -> { RootComponent = component' })
+
+        modelObject.Partitions =? partitions
 
 [<TestFixture>]
 module ``ResolveSymbol Method`` =

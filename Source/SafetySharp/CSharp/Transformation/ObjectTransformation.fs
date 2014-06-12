@@ -63,14 +63,28 @@ module ObjectTransformation =
         let componentSymbolMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentSymbol> ()
         let componentObjectMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentObject> ()
 
+        // Create the field objects for the .NET component instance.
+        let transformFields (component' : Component) (componentSymbol : ComponentSymbol) =
+            [
+                for fieldSymbol in componentSymbol.Fields ->
+                    (fieldSymbol, { FieldSymbol = fieldSymbol; InitialValues = component'.GetInitialValuesOfField fieldSymbol.Name })
+            ]
+
+        // Create the subcomponent objects for the .NET component instance.
+        let rec transformSubcomponents (component' : Component) (componentSymbol : ComponentSymbol) =
+            [
+                for subcomponentSymbol in componentSymbol.Subcomponents ->
+                    (subcomponentSymbol, transformComponent <| component'.GetSubcomponent subcomponentSymbol.Name)
+            ]
+
         // Creates the objects and mapping information for the .NET component instance.
-        let transformComponent (component' : Component) =
+        and transformComponent (component' : Component) =
             let componentSymbol = symbolResolver.ResolveComponent component'
             let componentObject = {
                 Name = component'.Name
                 ComponentSymbol = componentSymbol
-                Fields = Map.empty
-                Subcomponents = Map.empty
+                Fields = transformFields component' componentSymbol |> Map.ofList
+                Subcomponents = transformSubcomponents component' componentSymbol |> Map.ofList
             }
 
             componentSymbolMapBuilder.Add (component', componentSymbol)

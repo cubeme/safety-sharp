@@ -50,13 +50,13 @@ module CompilationExtensions =
         /// context of the compilation.
         member this.GetComponentClassSymbol () =
             Requires.NotNull this "this"
-            this.GetTypeByMetadataName(typeof<Component>.FullName);
+            this.GetTypeByMetadataName typeof<Component>.FullName
 
         /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="IComponent" /> interface within the
         /// context of the compilation.
         member this.GetComponentInterfaceSymbol () =
             Requires.NotNull this "this"
-            this.GetTypeByMetadataName(typeof<IComponent>.FullName);
+            this.GetTypeByMetadataName typeof<IComponent>.FullName
 
         /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
         /// within the context of the compilation.
@@ -67,10 +67,12 @@ module CompilationExtensions =
         /// Gets the symbols for all types contained in the compilation except for types defined in mscorlib or in SafetySharp.dll.
         member this.GetTypeSymbols () =
             let mscorlib = this.ObjectType.ContainingAssembly
+            let systemCore = this.GetTypeByMetadataName(typeof<System.Linq.Expressions.Expression>.FullName).ContainingAssembly
             let safetySharp = this.GetComponentClassSymbol().ContainingAssembly
 
             let rec enumerateSymbols (symbol : ISymbol) = seq {
-                if symbol.ContainingAssembly = mscorlib || symbol.ContainingAssembly = safetySharp then
+                let assembly = symbol.ContainingAssembly
+                if assembly = mscorlib || assembly = safetySharp || assembly = systemCore then
                     ()
                 else
                     match symbol with
