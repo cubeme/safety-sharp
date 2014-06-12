@@ -8,6 +8,8 @@ type MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
 type MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
 type MMStatement = SafetySharp.Metamodel.Statement
 type MMFormula = SafetySharp.Metamodel.Formula
+type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
+type MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
 
 type PrExpression = PromelaDataStructures.Ast.AnyExpr
 type PrConst = PromelaDataStructures.Ast.Const
@@ -18,6 +20,9 @@ type PrStatement = PromelaDataStructures.Ast.Stmnt
 type PrOptions = PromelaDataStructures.Ast.Options
 type PrSequence = PromelaDataStructures.Ast.Sequence
 type PrStep = PromelaDataStructures.Ast.Step
+type PrFormula = PromelaDataStructures.Ast.Formula
+type PrBinaryFormulaOperator = PromelaDataStructures.Ast.BinaryFormulaOperator
+type PrUnaryFormulaOperator =PromelaDataStructures.Ast. UnaryFormulaOperator
 
 
 type MetamodelToPromela() =
@@ -76,5 +81,26 @@ type MetamodelToPromela() =
             | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
                 failwith "NotImplementedYet"
 
-    member this.transformFormula (formula:MMFormula) : =
-    //TODO Write Operator
+    member this.transformFormula (formula:MMFormula) : PrFormula =
+        //TODO: check if LTL
+        match formula with
+             | MMFormula.StateFormula (stateExpression : MMExpression) ->
+                PrFormula.PropositionalStateFormula(this.transformExpression stateExpression)
+             | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
+                let transformedOperand = this.transformFormula operand
+                match operator with
+                    | MMUnaryFormulaOperator.Not      -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Not,transformedOperand)
+                    | MMUnaryFormulaOperator.Next     -> failwith "UnaryTemporalOperator.Next not yet implemented in Promela. There are diverse problems with it. Read http://spinroot.com/spin/Man/ltl.html"
+                    | MMUnaryFormulaOperator.Finally  -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Eventually,transformedOperand)
+                    | MMUnaryFormulaOperator.Globally -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Always,transformedOperand)
+                    | _ -> failwith "No CTL available"
+             | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
+                let transformedLeft = this.transformFormula leftFormula
+                let transformedRight = this.transformFormula rightFormula
+                match operator with
+                    | MMBinaryFormulaOperator.And         -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.And,transformedRight)
+                    | MMBinaryFormulaOperator.Or          -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Or,transformedRight)
+                    | MMBinaryFormulaOperator.Implication -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Implies,transformedRight)
+                    | MMBinaryFormulaOperator.Equivalence -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Equals,transformedRight)
+                    | MMBinaryFormulaOperator.Until       -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Until,transformedRight)
+                    | _ -> failwith "No CTL available"

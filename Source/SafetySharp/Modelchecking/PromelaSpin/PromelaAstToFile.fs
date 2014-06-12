@@ -33,14 +33,14 @@ type ExportPromelaAstToFile() =
     
     member this.ExportUnarop (unarop : Unarop) : string =
         match unarop with
-            | Tilde -> "~"
-            | Neg   -> "-"
-            | Not   -> "!"
+            | Unarop.Tilde -> "~"
+            | Unarop.Neg   -> "-"
+            | Unarop.Not   -> "!"
 
     member this.ExportAndor (andor : Andor) : string =
         match andor with
-            | And  -> "&&"
-            | Or   -> "||"
+            | Andor.And  -> "&&"
+            | Andor.Or   -> "||"
     
     member this.ExportBinarop (binarop : Binarop) : string =
         match binarop with
@@ -262,24 +262,24 @@ type ExportPromelaAstToFile() =
         match formula with
             | PropositionalStateFormula ( expression : AnyExpr) ->
                 this.ExportAnyExpr expression
-            | BinaryFormula of (left : Formula, operator : BinaryFormulaOperator, right : Formula) ->
+            | BinaryFormula (left : Formula, operator : BinaryFormulaOperator, right : Formula) ->
                 let ExportLeft = this.ExportFormula lvl left
                 let ExportRight = this.ExportFormula lvl right
                 let ExportOperator = match operator with
-                                        | Equals     -> "<->"
-                                        | Until      -> "U"
-                                        | WeakUntil  -> "W"
-                                        | Release    -> "V"
-                                        | And        -> "/\\"
-                                        | Or         -> "\\/"
-                                        | Implies    -> "->"
+                                        | BinaryFormulaOperator.Equals     -> "<->"
+                                        | BinaryFormulaOperator.Until      -> "U"
+                                        | BinaryFormulaOperator.WeakUntil  -> "W"
+                                        | BinaryFormulaOperator.Release    -> "V"
+                                        | BinaryFormulaOperator.And        -> "/\\"
+                                        | BinaryFormulaOperator.Or         -> "\\/"
+                                        | BinaryFormulaOperator.Implies    -> "->"
                 sprintf "( %s %s %s )" ExportLeft ExportOperator ExportRight
-            | UnaryFormula of (operator : UnaryFormulaOperator, operand : Formula) ->
+            | UnaryFormula (operator : UnaryFormulaOperator, operand : Formula) ->
                 let ExportOperand = this.ExportFormula lvl operand
                 let ExportOperator = match operator with
-                                         | Not        -> "!"
-                                         | Always     -> "[]"
-                                         | Eventually -> "<>"
+                                         | UnaryFormulaOperator.Not        -> "!"
+                                         | UnaryFormulaOperator.Always     -> "[]"
+                                         | UnaryFormulaOperator.Eventually -> "<>"
                 sprintf "( %s %s )" ExportOperator ExportOperand
 
     member this.Export = this.ExportSpec 0
