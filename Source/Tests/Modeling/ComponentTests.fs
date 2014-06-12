@@ -49,17 +49,19 @@ module ``SetInitialValues method`` =
     [<Test>]
     let ``throws when field expression is null`` () =
         let component' = new FieldComponent<int>()
-        raises<ArgumentNullException> <@ component'.SetInitialValues (null, 1, 2) @>
+        raisesWith<ArgumentNullException> <@ component'.SetInitialValues (null, 1, 2) @> (fun e -> <@ e.ParamName = "field" @>)
 
     [<Test>]
     let ``throws when initial values is null`` () =
         let component' = new FieldComponent<int>()
-        raises<ArgumentNullException> <@ component'.SetInitialValues (createExpression<int> component' "_field", null) @>
+        raisesWith<ArgumentNullException> <@ component'.SetInitialValues (createExpression<int> component' "_field", null) @>
+            (fun e -> <@ e.ParamName = "initialValues" @>)
 
     [<Test>]
     let ``throws when initial values is empty`` () =
         let component' = new FieldComponent<int>()
-        raises<ArgumentException> <@ component'.SetInitialValues (createExpression<int> component' "_field") @>
+        raisesWith<ArgumentException> <@ component'.SetInitialValues (createExpression<int> component' "_field") @>
+            (fun e -> <@ e.ParamName = "initialValues" @>)
 
 [<TestFixture>]
 module ``GetInitialValuesOfField method`` =
@@ -68,21 +70,21 @@ module ``GetInitialValuesOfField method`` =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetInitialValuesOfField null @>
+        raisesWith<ArgumentException> <@ component'.GetInitialValuesOfField null @> (fun e -> <@ e.ParamName = "fieldName" @>)
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetInitialValuesOfField "" @>
+        raisesWith<ArgumentException> <@ component'.GetInitialValuesOfField "" @> (fun e -> <@ e.ParamName = "fieldName" @>)
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetInitialValuesOfField "abcd" @>
+        raisesWith<ArgumentException> <@ component'.GetInitialValuesOfField "abcd" @> (fun e -> <@ e.ParamName = "fieldName" @>)
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
@@ -94,7 +96,7 @@ module ``GetInitialValuesOfField method`` =
         let component' = OneSubcomponent (FieldComponent<int> 3)
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetInitialValuesOfField <| fieldName "_component" @>
+        raisesWith<ArgumentException> <@ component'.GetInitialValuesOfField <| fieldName "_component" @> (fun e -> <@ e.ParamName = "fieldName" @>)
 
     [<Test>]
     let ``returns initial value of single field`` () =
@@ -161,14 +163,14 @@ module ``GetSubcomponent method`` =
         let component' = new FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetSubcomponent null @>
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent null @> (fun e -> <@ e.ParamName = "name" @>)
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = new FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetSubcomponent "" @>
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent "" @> (fun e -> <@ e.ParamName = "name" @>)
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
@@ -180,14 +182,14 @@ module ``GetSubcomponent method`` =
         let component' = new FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetSubcomponent (fieldName "_field") @>
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent (fieldName "_field") @> (fun e -> <@ e.ParamName = "name" @>)
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = new FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<ArgumentException> <@ component'.GetSubcomponent (fieldName "abcd") @>
+        raisesWith<ArgumentException> <@ component'.GetSubcomponent (fieldName "abcd") @> (fun e -> <@ e.ParamName = "name" @>)
 
     [<Test>]
     let ``returns single subcomponent`` () =

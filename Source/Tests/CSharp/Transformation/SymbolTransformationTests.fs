@@ -139,7 +139,7 @@ module ``ResolveComponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}"
-        raises<ArgumentNullException> <@ symbolMap.ResolveComponent null @>
+        raisesWith<ArgumentNullException> <@ symbolMap.ResolveComponent null @> (fun e -> <@ e.ParamName = "componentSymbol" @>)
 
     [<Test>]
     let ``throws when non-component is passed`` () =
@@ -173,7 +173,7 @@ module ``ResolveField method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}"
-        raises<ArgumentNullException> <@ symbolMap.ResolveField null @>
+        raisesWith<ArgumentNullException> <@ symbolMap.ResolveField null @> (fun e -> <@ e.ParamName = "fieldSymbol" @>)
 
     [<Test>]
     let ``throws when field of non-component is passed`` () =
@@ -230,7 +230,7 @@ module ``ResolveSubcomponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}"
-        raises<ArgumentNullException> <@ symbolMap.ResolveSubcomponent null @>
+        raisesWith<ArgumentNullException> <@ symbolMap.ResolveSubcomponent null @> (fun e -> <@ e.ParamName = "subcomponentSymbol" @>)
 
     [<Test>]
     let ``throws when subcomponent of non-component is passed`` () =
@@ -287,7 +287,7 @@ module ``ResolveMethod method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let symbolMap = compile "class A : Component {} class B : Component {}"
-        raises<ArgumentNullException> <@ symbolMap.ResolveMethod null @>
+        raisesWith<ArgumentNullException> <@ symbolMap.ResolveMethod null @> (fun e -> <@ e.ParamName = "methodSymbol" @>)
 
     [<Test>]
     let ``throws when method of non-component is passed`` () =

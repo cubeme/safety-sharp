@@ -35,7 +35,6 @@ module internal Requires =
     /// Throws a <see cref="System.ArgumentNullException"/> if the given string is <c>null</c> or a
     /// <see cref="System.ArgumentException"/> if the given string consists of whitespace only.
     let inline NotNullOrWhitespace argument argumentName =
-        NotNull argument "argument"
         NotNull argumentName "argumentName"
 
         if String.IsNullOrWhiteSpace "argumentName" then
