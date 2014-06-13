@@ -40,7 +40,7 @@ type UnaryFormulaOperator =
     | ExistsPathFinally
     | ExistsPathGlobally
 
-/// Represents the operator of a binary formula.
+/// Represents the operator of a binary temporal formula.
 type BinaryFormulaOperator =
     // Non-temporal operators
     | And
@@ -55,7 +55,7 @@ type BinaryFormulaOperator =
     | AllPathsUntil
     | ExistsPathUntil
 
-/// Represents a formula that can be modelchecked, for instance.
+/// Represents a temporal formula, either in computation tree logic format or linear temporal logic format.
 type Formula =
     /// Represents a state formula that is evaluated in a single model state.
     | StateFormula of StateExpression : Expression

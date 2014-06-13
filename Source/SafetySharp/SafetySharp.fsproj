@@ -56,12 +56,13 @@
     <Compile Include="Metamodel\Formulas.fs" />
     <Compile Include="Metamodel\Statements.fs" />
     <Compile Include="Metamodel\Objects.fs" />
+    <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Modeling\IComponent.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
-    <Compile Include="Modeling\ModelingAttributes.fs" />
     <Compile Include="Modeling\OverflowBehavior.fs" />
+    <Compile Include="Modeling\Ltl.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\ModelingCompilation.fs" />
     <Compile Include="CSharp\Extensions\SyntaxNodeExtensions.fs" />
