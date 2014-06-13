@@ -25,6 +25,7 @@ namespace SafetySharp.Modeling
 open System
 open SafetySharp.Utilities
 open SafetySharp.CSharp
+open SafetySharp.CSharp.Transformation
 
 [<Sealed>]
 type SpinModelChecker =

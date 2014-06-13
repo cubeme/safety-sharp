@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
@@ -30,6 +30,7 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
+open SafetySharp.CSharp.Extensions
 
 /// Represents a callback that emits a diagnostic.
 type DiagnosticCallback = delegate of locationNode : SyntaxNode * [<ParamArray>] messageArgs : obj array -> unit

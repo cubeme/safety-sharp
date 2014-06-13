@@ -20,21 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module internal AssemblyInfo
+namespace SafetySharp
 
-open System.Reflection
-open System.Runtime.CompilerServices
-open System.Runtime.InteropServices
+module internal AssemblyInfo =
 
-[<assembly: AssemblyTitle("SafetySharp Library")>]
-[<assembly: AssemblyDescription("SafetySharp Library")>]
-[<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
-[<assembly: AssemblyProduct("SafetySharp")>]
-[<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
-[<assembly: AssemblyCulture("")>]
-[<assembly: AssemblyVersion("0.1.0.0")>]
-[<assembly: AssemblyFileVersion("0.1.0.0")>]
-[<assembly: ComVisible(false)>]
-[<assembly: InternalsVisibleTo("Tests")>]
+    open System.Reflection
+    open System.Runtime.CompilerServices
+    open System.Runtime.InteropServices
 
-do ()
+    [<assembly: AssemblyTitle("SafetySharp Library")>]
+    [<assembly: AssemblyDescription("SafetySharp Library")>]
+    [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
+    [<assembly: AssemblyProduct("SafetySharp")>]
+    [<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
+    [<assembly: AssemblyCulture("")>]
+    [<assembly: AssemblyVersion("0.1.0.0")>]
+    [<assembly: AssemblyFileVersion("0.1.0.0")>]
+    [<assembly: ComVisible(false)>]
+    [<assembly: InternalsVisibleTo("Tests")>]
+
+    do ()

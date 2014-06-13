@@ -34,6 +34,8 @@ open Microsoft.CodeAnalysis.Diagnostics
 open Microsoft.CodeAnalysis.MSBuild
 open SafetySharp.Modeling
 open SafetySharp.Utilities
+open SafetySharp.CSharp.Diagnostics
+open SafetySharp.CSharp.Normalization
 
 /// The SafetySharp compiler that compiles C# code into a modeling assembly.
 module Compiler =

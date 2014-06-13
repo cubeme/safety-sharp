@@ -33,6 +33,7 @@ open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
 open SafetySharp.Tests
+open SafetySharp.CSharp.Transformation
 
 [<AutoOpen>]
 module private ObjectTransformationTestsHelper =

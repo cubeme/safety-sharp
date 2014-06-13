@@ -29,6 +29,8 @@ open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open SafetySharp.Tests
 open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Transformation
 
 [<AutoOpen>]
 module private StatementTransformationTestsHelper =

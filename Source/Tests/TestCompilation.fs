@@ -29,6 +29,7 @@ open System.IO
 open System.Reflection
 open SafetySharp.Metamodel
 open SafetySharp.CSharp
+open SafetySharp.CSharp.Extensions
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax

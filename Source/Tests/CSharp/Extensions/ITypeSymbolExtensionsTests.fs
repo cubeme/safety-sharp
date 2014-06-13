@@ -29,6 +29,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
 open SafetySharp.Tests
+open SafetySharp.CSharp.Extensions
 
 [<TestFixture>]
 module ``IsDerivedFrom method`` =

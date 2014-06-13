@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Diagnostics
 
 /// Provides the diagnostic identifiers for C# code diagnostics.
 module DiagnosticIdentifiers =

@@ -20,28 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Transformation
 
 open System.Collections.Immutable
+open SafetySharp.CSharp
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Utilities
-
-/// Represents a configuration of symbols, objects, and formulas that allows a transformation of the model
-/// to a modelchecker in order to verify the formulas.
-type Configuration = {
-    /// The method symbol of the configuration, containing all symbols used throughout the model.
-    ModelSymbol : ModelSymbol
-
-    /// The model object of the configuration, containing all partition and component objects used throughout the model.
-    ModelObject : ModelObject
-
-    /// The formulas defined over the symbols and objects that require verification.
-    Formulas : Formula list
-
-    /// Resolves the body of a component's method.
-    MethodBodyResolver : Map<ComponentSymbol * MethodSymbol, Statement>
-}
 
 module ModelTransformation =
 
