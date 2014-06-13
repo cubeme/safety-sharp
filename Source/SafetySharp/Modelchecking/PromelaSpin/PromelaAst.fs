@@ -1,24 +1,34 @@
-﻿namespace PromelaDataStructures.Ast
+﻿// The MIT License (MIT)
+// 
+// Copyright (c) 2014, Institute for Software & Systems Engineering
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+namespace SafetySharp.Modelchecking.PromelaSpin
 (*
 
-TODO: Ab F# 3.1 können die discriminated union dinger "of bla*bla" auch noch benannt werden => Klarheit. Auch in die matches mit übernehmen
-
 Grammar: http://spinroot.com/spin/Man/grammar.html
-Einfache Konstrukte: http://en.wikipedia.org/wiki/Promela
 Basic Manual: http://spinroot.com/spin/Man/Manual.html
 
-für Rekursion das Schlüsselwort "and" benutzen. Beispiel:
-
-type firstType = 
-     | T1 of secondType
-
-and secondType =
-     | T1 of firstType
 *)
 
-// Orientierung der Namen an http://spinroot.com/spin/Man/grammar.html
-// Anpassung an F#. Nur Dinge, die wir auch nutzen. Vom Aufbau fast spiegelbildlich
-
+// Names of types from: http://spinroot.com/spin/Man/grammar.html
 // Promela accepts two different statement separators: an arrow `->'and the semicolon `;'. The two statement separators are equival
 
 type Const =
@@ -35,7 +45,7 @@ type Varref =
 and AnyExpr =
     | BinaryExpr of AnyExpr * Binarop * AnyExpr
     | UnaryExpr of Unarop * AnyExpr
-    | IfThenElse of AnyExpr * AnyExpr * AnyExpr // Bedeutung geschlossen aus spin.yacc Zeile 714 (SPIN 6.2.5)
+    | IfThenElse of AnyExpr * AnyExpr * AnyExpr // Meaning concluded from spin.yacc line 714 (SPIN 6.2.5)
     | Varref of Varref
     | Const of Const
 
