@@ -22,23 +22,27 @@
 
 namespace SafetySharp.CSharp.Diagnostics
 
-/// Provides the diagnostic identifiers for C# code diagnostics.
-module DiagnosticIdentifiers =
+open System
+open System.Collections.Immutable
+open System.Threading
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open Microsoft.CodeAnalysis.Diagnostics
+open SafetySharp.Utilities
 
-    /// The prefix that is used for all diagnostic identifiers.
-    [<Literal>]
-    let Prefix = "SS"
+/// Ensures that no enumerations explicitly declare an underlying type.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalUnderlyingEnumType, LanguageNames.CSharp)>]
+type EnumUnderlyingTypeAnalyzer () as this =
+    inherit SyntaxNodeAnalyzer<EnumDeclarationSyntax> ()
 
-    /// The category that is used for all diagnostics.
-    [<Literal>]
-    let Category = "SafetySharp"
+    do this.Error DiagnosticIdentifiers.IllegalUnderlyingEnumType
+        "Enumeration declarations must not explicitly declare an underlying type."
+        "Enum '{0}' must not declare an underlying type."
 
-    [<Literal>] 
-    let IllegalCSharpSyntaxElementInComponent = Prefix + "1000"
+    override this.Analyze syntaxNode addDiagnostic cancellationToken = 
+        if syntaxNode.BaseList <> null then
+            addDiagnostic.Invoke (syntaxNode.BaseList.Types.First(), syntaxNode.Identifier.ValueText)
 
-    [<Literal>] 
-    let IllegalUnderlyingEnumType = Prefix + "1001"
-
-    [<Literal>] 
-    let IllegalEnumMemberValue = Prefix + "1002"
-
+    

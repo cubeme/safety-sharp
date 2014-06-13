@@ -72,11 +72,14 @@
     <Compile Include="CSharp\Extensions\IFieldSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.fs" />
+    <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.fs" />
     <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs">
     </Compile>
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />

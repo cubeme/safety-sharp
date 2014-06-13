@@ -42,11 +42,18 @@ module Compiler =
 
     /// The version string of the compiler.
     [<Literal>]
-    let Version = "0.0.1-beta";
+    let Version = "0.0.1-beta"
 
     /// The file name of the modeling-time SafetySharp assembly.
     [<Literal>]
-    let ModelingAssemblyFileName = "SafetySharp.Modeling.dll";
+    let ModelingAssemblyFileName = "SafetySharp.Modeling.dll"
+
+    /// The diagnostic analyzers that are used to diagnose the C# code before any normalizations.
+    let (diagnosticAnalyzers : IDiagnosticAnalyzer list) = [
+        ComponentSyntaxAnalyzer ()
+        EnumUnderlyingTypeAnalyzer ()
+        EnumMemberAnalyzer ()
+    ]
 
     /// Logs <paramref name="diagnostic" /> depending on its severity.
     let private logDiagnostic (diagnostic : Diagnostic) =
@@ -184,7 +191,7 @@ module Compiler =
 
             let compilation = project.GetCompilationAsync().Result
 
-            if not <| diagnose compilation [EnumMemberAnalyzer ()] then
+            if not <| diagnose compilation diagnosticAnalyzers then
                 -1
             else
                 compilation
