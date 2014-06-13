@@ -20,74 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Bla
-namespace Elbtunnel
-{
-	// Blub
-	using System;
-	using SafetySharp.Modeling;
+namespace SafetySharp.Modeling
 
-	public class LightBarrier : Component
-	{
-		public bool Triggered;
+open System
+open SafetySharp.Utilities
+open SafetySharp.CSharp
 
-		public int Do()
-		{
-			return 1;
-		}
-	}
+[<Sealed>]
+type SpinModelChecker =
+    new (model : Model) = {} then
+        Requires.NotNull model "model"
 
-	/// <summary>
-	///     This is a great interface.
-	/// </summary>
-	internal interface MyInterface
-	{
-	}
+        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
+        let configuration = ModelTransformation.Transform
+        ()
 
-	internal class Test2 : Component
-	{
-		private BooleanComponent boolean1;
-		public BooleanComponent boolean2;
-
-		public Test2()
-		{
-			boolean1 = new BooleanComponent(true);
-			boolean2 = new BooleanComponent(false);
-		}
-	}
-
-	internal class BooleanComponent : Component
-	{
-		public bool _value;
-
-		public BooleanComponent(bool nondeterministicInitialValue)
-		{
-			if (nondeterministicInitialValue)
-				SetInitialValues(() => _value, true, false);
-			else
-				_value = false;
-
-			sbyte i = 0;
-			i++;
-		}
-
-		protected override void Update()
-		{
-			_value = Choose.Boolean();
-		}
-	}
-
-	internal enum Test
-	{
-	}
-
-	//public enum MyEnum : short
-	//{
-	//	ValueA,
-	//	ValueB,
-	//	ValueC = 10,
-	//	ValueCQ = 104,
-	//	ValueCQ2 = ValueCQ + 1,
-	//	ValueCF
-	//}
-}
+    member this.Check () = ()

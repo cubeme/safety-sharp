@@ -80,6 +80,7 @@
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <None Include="packages.config" />
+    <Compile Include="Verification\SpinModelChecker.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
