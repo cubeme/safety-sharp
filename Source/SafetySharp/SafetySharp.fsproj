@@ -81,6 +81,7 @@
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
+    <Compile Include="Verification\SpinModelChecker.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
@@ -94,7 +95,6 @@
     <Compile Include="Modelchecking\NuXmv\NuXmvExecute.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodel.fs" />
     <None Include="packages.config" />
-    <Compile Include="Verification\SpinModelChecker.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">

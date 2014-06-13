@@ -31,8 +31,9 @@ type SpinModelChecker =
     new (model : Model) = {} then
         Requires.NotNull model "model"
 
+        model.FinalizeMetadata ()
         let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
-        let configuration = ModelTransformation.Transform
+        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model
         ()
 
     member this.Check () = ()

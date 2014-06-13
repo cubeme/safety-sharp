@@ -48,7 +48,7 @@ type ModelingAssembly (modelingAssembly : Assembly) as this=
     /// modeling assemblies.
     member this.Compilation =
         let options = CSharpCompilationOptions OutputKind.DynamicallyLinkedLibrary
-        let compilation = CSharpCompilation.Create("ModelingAssemblyMetadata").WithOptions(options)
+        let compilation = CSharpCompilation.Create(modelingAssembly.GetName().Name).WithOptions(options)
 
         let compilation = 
             modelingAssembly.GetReferencedAssemblies()
