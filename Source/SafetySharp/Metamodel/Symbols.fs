@@ -103,5 +103,5 @@ type ModelSymbol = {
     Partitions : PartitionSymbol list
 
     /// The components used throughout the model.
-    Components : ComponentSymbol list
+    Components : SubcomponentSymbol list
 } 

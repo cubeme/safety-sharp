@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp
+namespace SafetySharp.Tests.CSharp.StatementTransformationTests
 
 open System.Linq
 open NUnit.Framework
@@ -61,7 +61,7 @@ module private StatementTransformationTestsHelper =
 
     let transform csharpCode = transformWithReturnType csharpCode "void"
 
-module StatementTransformationTests =
+module ``Transform method`` =
 
     [<Test>]
     let ``empty statement`` () =
@@ -150,4 +150,92 @@ module StatementTransformationTests =
                 (BooleanLiteral true, assignment4) 
             ]
 
+        actual =? expected
+
+module ``TransformMethodBodies method`` =
+    let mutable private compilation = Unchecked.defaultof<TestCompilation>
+    let mutable private symbolResolver = Unchecked.defaultof<SymbolResolver>
+
+    let transform csharpCode =
+        compilation <- TestCompilation csharpCode
+        symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
+
+        StatementTransformation.TransformMethodBodies compilation.CSharpCompilation symbolResolver
+    
+    [<Test>]
+    let ``transforms body of single method of single component`` () =
+        let expression = BinaryExpression (BooleanLiteral true, LogicalOr, BinaryExpression (IntegerLiteral 1, Equals, IntegerLiteral 2))
+        let statement = BlockStatement [ReturnStatement <| Some expression]
+        let actual = transform "class A : Component { bool M() { return true || 1 == 2; }}"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let componentSymbol = symbolResolver.ResolveComponent classSymbol
+        let csharpMethodSymbol = compilation.FindMethodSymbol "A" "M"
+        let methodSymbol = symbolResolver.ResolveMethod csharpMethodSymbol
+        let expected = 
+            [
+                ((componentSymbol, methodSymbol), statement)
+                ((componentSymbol, componentSymbol.UpdateMethod), EmptyStatement)
+            ] |> Map.ofList
+        
+        actual =? expected
+
+    [<Test>]
+    let ``transforms body of update method of a component`` () =
+        let statement = BlockStatement [ReturnStatement None]
+        let actual = transform "class A : Component { public override void Update() { return; }}"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let componentSymbol = symbolResolver.ResolveComponent classSymbol
+        let csharpMethodSymbol = compilation.FindMethodSymbol "A" "Update"
+        let methodSymbol = symbolResolver.ResolveMethod csharpMethodSymbol
+        let expected = [((componentSymbol, methodSymbol), statement)] |> Map.ofList
+        
+        actual =? expected
+
+    [<Test>]
+    let ``transforms inherited body of update method of a component`` () =
+        let statement = BlockStatement [ReturnStatement None]
+        let actual = transform "class A : Component { public override void Update() { return; }} class B : A {}"
+        let classSymbolA = compilation.FindClassSymbol "A"
+        let classSymbolB = compilation.FindClassSymbol "B"
+        let componentSymbolA = symbolResolver.ResolveComponent classSymbolA
+        let componentSymbolB = symbolResolver.ResolveComponent classSymbolB
+        let expected = 
+            [
+                ((componentSymbolA, componentSymbolA.UpdateMethod), statement)
+                ((componentSymbolB, componentSymbolB.UpdateMethod), statement)
+            ] |> Map.ofList
+        
+        actual =? expected
+
+    [<Test>]
+    let ``transforms bodies of multiple methods of multiple components`` () =
+        let expression = BinaryExpression (BooleanLiteral true, LogicalOr, BinaryExpression (IntegerLiteral 1, Equals, IntegerLiteral 2))
+        let statement1 = BlockStatement [ReturnStatement <| Some expression]
+        let statement2 = BlockStatement []
+        let statement3 = BlockStatement [ReturnStatement None]
+
+        let actual = transform "class A : Component { public override void Update() { return; } bool M() { return true || 1 == 2; }} class B : A { void N() {}}"
+
+        let classSymbolA = compilation.FindClassSymbol "A"
+        let classSymbolB = compilation.FindClassSymbol "B"
+
+        let componentSymbolA = symbolResolver.ResolveComponent classSymbolA
+        let componentSymbolB = symbolResolver.ResolveComponent classSymbolB
+
+        let csharpMethodSymbolUpdate = compilation.FindMethodSymbol "A" "Update"
+        let csharpMethodSymbolM = compilation.FindMethodSymbol "A" "M"
+        let csharpMethodSymbolN = compilation.FindMethodSymbol "B" "N"
+
+        let methodSymbolUpdate = symbolResolver.ResolveMethod csharpMethodSymbolUpdate
+        let methodSymbolM = symbolResolver.ResolveMethod csharpMethodSymbolM
+        let methodSymbolN = symbolResolver.ResolveMethod csharpMethodSymbolN
+
+        let expected = 
+            [
+                ((componentSymbolA, methodSymbolUpdate), statement3)
+                ((componentSymbolA, methodSymbolM), statement1)
+                ((componentSymbolB, methodSymbolN), statement2)
+                ((componentSymbolB, componentSymbolB.UpdateMethod), statement3)
+            ] |> Map.ofList
+        
         actual =? expected

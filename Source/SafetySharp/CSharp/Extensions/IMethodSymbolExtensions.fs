@@ -38,7 +38,9 @@ module MethodSymbolExtensions =
             Requires.NotNull this "this"
             Requires.NotNull overriddenMethod "overriddenMethod"
 
-            if not this.IsOverride then
+            if this.Equals overriddenMethod then
+                true
+            else if not this.IsOverride then
                 false
             else if this.OverriddenMethod.Equals overriddenMethod then
                 true

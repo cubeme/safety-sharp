@@ -101,3 +101,30 @@ module StatementTransformation =
             statement.CSharpKind () |> sprintf "Encountered an unexpected C# syntax node: '%A'." |> invalidOp
 
         transform statement
+
+    /// Transforms the body of the given method symbol.
+    let private transformMethodBody (compilation : Compilation) (symbolResolver : SymbolResolver) methodSymbol =
+        let csharpMethod = symbolResolver.ResolveCSharpMethod methodSymbol
+
+        // Special case: We're trying to transform the Update method of a component that didn't override it
+        // and none of its parents did. In that case, the resolver returns the symbol for Component.Update, for
+        // which we don't have the source. Just return an empty statement in that case.
+        if csharpMethod.Equals (compilation.GetUpdateMethodSymbol ()) then
+            EmptyStatement
+        else
+            let syntaxReference = csharpMethod.DeclaringSyntaxReferences.[0]
+            let methodDeclaration = syntaxReference.GetSyntax() :?> MethodDeclarationSyntax
+            let semanticModel = compilation.GetSemanticModel syntaxReference.SyntaxTree
+
+            Transform symbolResolver semanticModel methodDeclaration.Body
+
+    /// Transforms the bodies of all of the component's methods.
+    let private transformComponentMethods compilation symbolResolver componentSymbol =
+        componentSymbol.UpdateMethod :: componentSymbol.Methods
+        |> Seq.map (fun methodSymbol -> ((componentSymbol, methodSymbol), transformMethodBody compilation symbolResolver methodSymbol))
+
+    /// Transforms the bodies of all methods declared by the components in the symbol resolver.
+    let TransformMethodBodies (compilation : Compilation) (symbolResolver : SymbolResolver) =
+        symbolResolver.ComponentSymbols 
+        |> Seq.collect (transformComponentMethods compilation symbolResolver)
+        |> Map.ofSeq

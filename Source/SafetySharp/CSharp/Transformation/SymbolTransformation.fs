@@ -134,8 +134,8 @@ module SymbolTransformation =
             let componentName = csharpComponent.ToDisplayString displayFormat
             sprintf "%s::%s" assemblyName componentName
 
-        // Creates the symbols and optional mapping information for the Update method of the component.
-        let transformUpdateMethod (csharpComponent : ITypeSymbol) =
+        // Creates the symbols mapping information for the Update method of the component.
+        let rec transformUpdateMethod (csharpComponent : ITypeSymbol) =
             let updateMethods = csharpComponent.GetMembers().OfType<IMethodSymbol>() |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
             let updateMethodCount = updateMethods |> Seq.length
             let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
@@ -146,7 +146,10 @@ module SymbolTransformation =
                 let updateMethod = updateMethods |> Seq.head
                 methodMapBuilder.Add (updateMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
-            methodSymbol
+                methodSymbol
+            else
+                // We'll map to the first overriden update method that we encounter in the hierarchy (or possible to Component.Update() itself)
+                transformUpdateMethod csharpComponent.BaseType
 
         // Create the symbols and mapping information for all methods of the component. We'll also build up a 
         // dictionary that allows us to retrieve the original C# method symbol again.

@@ -32,22 +32,30 @@ open SafetySharp.Tests
 
 [<TestFixture>]
 module ``Overrides method`` =
-    let overrides csharpCode =
-        let compilation = TestCompilation ("class Y { public virtual void M() {} }" + csharpCode)
-        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+    let overrides csharpCode methodName =
+        let compilation = TestCompilation ("class Y { public virtual void M() {} public virtual void N() {} }" + csharpCode)
+        let methodSymbol = compilation.FindMethodSymbol "X" methodName
         let overridenMethodSymbol = compilation.FindMethodSymbol "Y" "M"
 
         methodSymbol.Overrides overridenMethodSymbol
 
     [<Test>]
     let ``returns false for non-overriding method`` () =
-        overrides "class X : Y { public void M() {} }" =? false
-        overrides "class X : Y { public virtual void M() {} }" =? false
-        overrides "class X { public virtual void M() {} }" =? false
+        overrides "class X : Y { public void M() {} }" "M" =? false
+        overrides "class X : Y { public virtual void M() {} }" "M" =? false
+        overrides "class X : Y { public virtual void N() {} }" "N" =? false
+        overrides "class X { public virtual void M() {} }" "M" =? false
 
     [<Test>]
     let ``returns true for overriding method`` () =
-        overrides "class X : Y { public override void M() {} }" =? true
-        overrides "class X : Y { public sealed override void M() {} }" =? true
-        overrides "class Z : Y {} class X : Z { public override void M () {} }" =? true
-        overrides "class Z : Y { public override void M() {} } class X : Z { public override void M () {} }" =? true
+        overrides "class X : Y { public override void M() {} }" "M" =? true
+        overrides "class X : Y { public sealed override void M() {} }" "M" =? true
+        overrides "class Z : Y {} class X : Z { public override void M () {} }" "M" =? true
+        overrides "class Z : Y { public override void M() {} } class X : Z { public override void M () {} }" "M" =? true
+
+    [<Test>]
+    let ``returns true for the virtual method itself`` () =
+        let compilation = TestCompilation "class Y { public virtual void M() {} }"
+        let methodSymbol = compilation.FindMethodSymbol "Y" "M"
+
+        methodSymbol.Overrides methodSymbol =? true

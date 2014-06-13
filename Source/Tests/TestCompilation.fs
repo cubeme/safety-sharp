@@ -160,25 +160,39 @@ type internal TestCompilation (csharpCode : string) =
 
     /// Gets the <see cref="ITypeSymbol" /> representing the type with the given name.
     member this.FindTypeSymbol typeName =
-        this.FindTypeDeclaration typeName |> this.SemanticModel.GetDeclaredSymbol
+        match csharpCompilation.GetTypeByMetadataName typeName with
+        | null -> sprintf "Unable to find type with name %s" typeName |> failed
+        | symbol -> symbol
 
     /// Gets the <see cref="ITypeSymbol" /> representing the class with given name.
     member this.FindClassSymbol className =
-        this.FindClassDeclaration className |> this.SemanticModel.GetDeclaredSymbol
+        match csharpCompilation.GetTypeByMetadataName className with
+        | null -> sprintf "Unable to find class with name %s" className |> failed
+        | symbol -> symbol
 
     /// Gets the <see cref="ITypeSymbol" /> representing the interface with the given name.
     member this.FindInterfaceSymbol interfaceName =
-        this.FindInterfaceDeclaration interfaceName |> this.SemanticModel.GetDeclaredSymbol
+        match csharpCompilation.GetTypeByMetadataName interfaceName with
+        | null -> sprintf "Unable to find interface with name %s" interfaceName |> failed
+        | symbol -> symbol
 
     /// Gets the <see cref="IMethodSymbol" /> representing the method with the given name in the type with
     /// with the given name.
-    member this.FindMethodSymbol className methodName =
-        this.FindMethodDeclaration className methodName |> this.SemanticModel.GetDeclaredSymbol
+    member this.FindMethodSymbol typeName methodName =
+        let typeSymbol = this.FindTypeSymbol typeName
+        match typeSymbol.GetMembers(methodName).OfType<IMethodSymbol>() |> List.ofSeq with
+        | [] -> sprintf "Unable to find method '%s' on type '%s'." methodName typeName |> failed
+        | methodSymbol :: [] -> methodSymbol
+        | _ -> sprintf "Found more than one method '%s' on type '%s'." methodName typeName |> failed
 
     /// Gets the <see cref="IFieldSymbol" /> representing the field with the given name in the type with
     /// the given name.
-    member this.FindFieldSymbol className fieldName =
-        this.FindFieldDeclaration className fieldName |> this.SemanticModel.GetDeclaredSymbol :?> IFieldSymbol
+    member this.FindFieldSymbol typeName fieldName =
+        let typeSymbol = this.FindTypeSymbol typeName
+        match typeSymbol.GetMembers(fieldName).OfType<IFieldSymbol>() |> List.ofSeq with
+        | [] -> sprintf "Unable to find field '%s' on type '%s'." fieldName typeName |> failed
+        | methodSymbol :: [] -> methodSymbol
+        | _ -> sprintf "Found more than one field '%s' on type '%s'." fieldName typeName |> failed
 
     /// If necessary, compiles the compilation and loads the resulting assembly into the app domain, then searches for
     /// a type with the given name and returns a new instance of the type by invoking the type's default constructor.

@@ -40,6 +40,3 @@ type Statement =
 
     /// Represents the assignment of a value to an assignment target, i.e., a field, for instance.
     | AssignmentStatement of Target : Expression * Expression : Expression
-
-/// Maps a method symbol to its method body.
-type MethodBodyResolver = Map<MethodSymbol, Statement>

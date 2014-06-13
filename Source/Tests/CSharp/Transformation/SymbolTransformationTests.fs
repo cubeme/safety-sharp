@@ -388,6 +388,32 @@ module ``ResolveMethod method`` =
         test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, resolver.ResolveMethod methodSymbol) @>
 
     [<Test>]
+    let ``returns base update method symbol for transformed component that does not override update method`` () =
+        let compilation = TestCompilation "class A : Component {}"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let methodSymbol = compilation.FindMethodSymbol "SafetySharp.Modeling.Component" "Update"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let componentSymbol = resolver.ResolveComponent classSymbol
+
+        resolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+
+        // We have to check for reference equality here
+        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, resolver.ResolveMethod methodSymbol) @>
+
+    [<Test>]
+    let ``returns overriden base update method symbol for transformed component that does not override update method`` () =
+        let compilation = TestCompilation "class A : B {} class B : Component { public override void Update () {} }"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let methodSymbol = compilation.FindMethodSymbol "B" "Update"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let componentSymbol = resolver.ResolveComponent classSymbol
+
+        resolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+
+        // We have to check for reference equality here
+        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, resolver.ResolveMethod methodSymbol) @>
+
+    [<Test>]
     let ``returns different symbols for different methods of same transformed component`` () =
         let compilation = TestCompilation "class A : Component { void M() {} void N() {} } class B : Component {}"
         let method1 = compilation.FindMethodSymbol "A" "M"
@@ -424,13 +450,6 @@ module ``ResolveCSharpMethod method`` =
         raisesArgumentException "methodSymbol" <@ resolver.ResolveCSharpMethod <| resolver.ResolveMethod methodSymbol @> 
 
     [<Test>]
-    let ``throws for update method of component that doesn't override it`` () =
-        let compilation = TestCompilation "class A : Component {}"
-        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
-
-        raisesArgumentException "methodSymbol" <@ resolver.ResolveCSharpMethod <| resolver.ComponentSymbols.[0].UpdateMethod @> 
-
-    [<Test>]
     let ``returns symbol for method of transformed component`` () =
         let compilation = TestCompilation "class A : Component { void M() {} } class B : Component {}"
         let methodSymbol = compilation.FindMethodSymbol "A" "M"
@@ -440,9 +459,31 @@ module ``ResolveCSharpMethod method`` =
 
     [<Test>]
     let ``returns update method symbol for update method of transformed component`` () =
-        let compilation = TestCompilation "class A : Component { public override void Update() {} } class B : Component {}"
+        let compilation = TestCompilation "class A : Component { public override void Update() {} }"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "A" "Update"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let componentSymbol = resolver.ResolveComponent classSymbol
+
+        resolver.ResolveMethod methodSymbol |> resolver.ResolveCSharpMethod =? methodSymbol
+        resolver.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
+
+    [<Test>]
+    let ``returns base update method symbol for transformed component that does not override update method`` () =
+        let compilation = TestCompilation "class A : Component {}"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let methodSymbol = compilation.FindMethodSymbol "SafetySharp.Modeling.Component" "Update"
+        let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let componentSymbol = resolver.ResolveComponent classSymbol
+
+        resolver.ResolveMethod methodSymbol |> resolver.ResolveCSharpMethod =? methodSymbol
+        resolver.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
+
+    [<Test>]
+    let ``returns overriden base update method symbol for transformed component that does not override update method`` () =
+        let compilation = TestCompilation "class A : B {} class B : Component { public override void Update () {} }"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let methodSymbol = compilation.FindMethodSymbol "B" "Update"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
         let componentSymbol = resolver.ResolveComponent classSymbol
 
