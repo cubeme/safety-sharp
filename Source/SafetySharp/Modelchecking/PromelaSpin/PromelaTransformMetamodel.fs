@@ -46,27 +46,27 @@ type MMFormula = SafetySharp.Metamodel.Formula
 type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
 type MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
 
-type PrExpression = PromelaDataStructures.Ast.AnyExpr
-type PrConst = PromelaDataStructures.Ast.Const
-type PrUnarop = PromelaDataStructures.Ast.Unarop
-type PrBinarop = PromelaDataStructures.Ast.Binarop
-type PrAndor = PromelaDataStructures.Ast.Andor
-type PrStatement = PromelaDataStructures.Ast.Stmnt
-type PrOptions = PromelaDataStructures.Ast.Options
-type PrSequence = PromelaDataStructures.Ast.Sequence
-type PrStep = PromelaDataStructures.Ast.Step
-type PrFormula = PromelaDataStructures.Ast.Formula
-type PrBinaryFormulaOperator = PromelaDataStructures.Ast.BinaryFormulaOperator
-type PrUnaryFormulaOperator = PromelaDataStructures.Ast.UnaryFormulaOperator
-type PrVarref = PromelaDataStructures.Ast.Varref
-type PrProctype = PromelaDataStructures.Ast.Proctype
-type PrDeclLst = PromelaDataStructures.Ast.DeclLst
-type PrModule = PromelaDataStructures.Ast.Module
-type PrOneDecl = PromelaDataStructures.Ast.OneDecl
-type PrTypename = PromelaDataStructures.Ast.Typename
-type PrIvar = PromelaDataStructures.Ast.Ivar
-type PrAssign = PromelaDataStructures.Ast.Assign
-type PrSpec = PromelaDataStructures.Ast.Spec
+type PrExpression = SafetySharp.Modelchecking.PromelaSpin.AnyExpr
+type PrConst = SafetySharp.Modelchecking.PromelaSpin.Const
+type PrUnarop = SafetySharp.Modelchecking.PromelaSpin.Unarop
+type PrBinarop = SafetySharp.Modelchecking.PromelaSpin.Binarop
+type PrAndor = SafetySharp.Modelchecking.PromelaSpin.Andor
+type PrStatement = SafetySharp.Modelchecking.PromelaSpin.Stmnt
+type PrOptions = SafetySharp.Modelchecking.PromelaSpin.Options
+type PrSequence = SafetySharp.Modelchecking.PromelaSpin.Sequence
+type PrStep = SafetySharp.Modelchecking.PromelaSpin.Step
+type PrFormula = SafetySharp.Modelchecking.PromelaSpin.Formula
+type PrBinaryFormulaOperator = SafetySharp.Modelchecking.PromelaSpin.BinaryFormulaOperator
+type PrUnaryFormulaOperator = SafetySharp.Modelchecking.PromelaSpin.UnaryFormulaOperator
+type PrVarref = SafetySharp.Modelchecking.PromelaSpin.Varref
+type PrProctype = SafetySharp.Modelchecking.PromelaSpin.Proctype
+type PrDeclLst = SafetySharp.Modelchecking.PromelaSpin.DeclLst
+type PrModule = SafetySharp.Modelchecking.PromelaSpin.Module
+type PrOneDecl = SafetySharp.Modelchecking.PromelaSpin.OneDecl
+type PrTypename = SafetySharp.Modelchecking.PromelaSpin.Typename
+type PrIvar = SafetySharp.Modelchecking.PromelaSpin.Ivar
+type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
+type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
 
 type FieldInfo = {
@@ -75,30 +75,32 @@ type FieldInfo = {
     field : MMFieldObject;
 }
 
-let getSubComponentObjects (subcomponentMap : Map<MMSubcomponentSymbol, MMComponentObject>) : (MMComponentObject list) =
-    subcomponentMap |> Map.fold (fun acc key value -> value::acc) []
+       
+type MetamodelToPromela() =
+    let getSubComponentObjects (subcomponentMap : Map<MMSubcomponentSymbol, MMComponentObject>) : (MMComponentObject list) =
+        subcomponentMap |> Map.fold (fun acc key value -> value::acc) []
     
-let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
-    fieldMap |> Map.fold (fun acc key value -> value::acc) []
+    let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
+        fieldMap |> Map.fold (fun acc key value -> value::acc) []
 
 
-let collectFields (model : MMModelObject) : FieldInfo list =
-    let rec collectFromComponent (partition:MMPartitionObject) (parents:MMComponentObject list) (comp:MMComponentObject) : FieldInfo list = 
-        let collectedInSubcomponents : FieldInfo list=
-            (getSubComponentObjects comp.Subcomponents) |> List.collect (fun comp -> collectFromComponent partition (comp::parents) comp)
-        let collectFieldInThisComponent (fieldobject:MMFieldObject) =
-            {
-                FieldInfo.partition = partition;
-                FieldInfo.container = comp::parents;
-                FieldInfo.field = fieldobject;
-            }
-        let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
-        collectedInThisComponent @ collectedInSubcomponents
-    let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
-        collectFromComponent partition [] partition.RootComponent
-    model.Partitions |> List.collect collectFromPartition
+    let collectFields (model : MMModelObject) : FieldInfo list =
+        let rec collectFromComponent (partition:MMPartitionObject) (parents:MMComponentObject list) (comp:MMComponentObject) : FieldInfo list = 
+            let collectedInSubcomponents : FieldInfo list=
+                (getSubComponentObjects comp.Subcomponents) |> List.collect (fun comp -> collectFromComponent partition (comp::parents) comp)
+            let collectFieldInThisComponent (fieldobject:MMFieldObject) =
+                {
+                    FieldInfo.partition = partition;
+                    FieldInfo.container = comp::parents;
+                    FieldInfo.field = fieldobject;
+                }
+            let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
+            collectedInThisComponent @ collectedInSubcomponents
+        let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
+            collectFromComponent partition [] partition.RootComponent
+        model.Partitions |> List.collect collectFromPartition
         
-type MetamodelToPromela() =    
+
     member this.transformFieldInfoToName (fieldInfo : FieldInfo) =
         let partitionName = "pA" //partition has no name, use A as dummy. TODO: find something better
         let componentName =
