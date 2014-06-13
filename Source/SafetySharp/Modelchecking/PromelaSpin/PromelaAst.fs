@@ -136,13 +136,12 @@ type Module =
     | InitModule of Init
     | GlobalVarsAndChans of DeclLst
     
-type Spec =
-    | Spec of Module list
-
-
-//LTL-Formula
-
 type Formula =
     | PropositionalStateFormula of Expression : AnyExpr
     | BinaryFormula of Left : Formula * Operator : BinaryFormulaOperator * Right : Formula
     | UnaryFormula of Operator : UnaryFormulaOperator * Operand : Formula
+
+type Spec = {
+    Code : Module list;
+    Formulas : Formula list;
+}

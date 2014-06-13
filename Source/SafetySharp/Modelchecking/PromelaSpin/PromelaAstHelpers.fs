@@ -24,3 +24,10 @@ let exprToStep (expr:Expr) : Step =
 
 let anyExprToStep (anyExpr:AnyExpr) : Step =
     Step.StmntStep(Stmnt.ExprStmnt(Expr.AnyExpr(anyExpr)),None)
+
+let activeProctypeWithNameAndSequence name sequence =
+    Proctype.Proctype(Option.Some(Active.Active(None)),name,None,None,None,sequence)
+
+let statementsToSequence (stmnts:Stmnt list) :Sequence =
+    stmnts |> List.map (fun elem ->Step.StmntStep(elem,None))
+           |> Sequence.Sequence

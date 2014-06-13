@@ -44,6 +44,7 @@ type PrOneDecl = PromelaDataStructures.Ast.OneDecl
 type PrTypename = PromelaDataStructures.Ast.Typename
 type PrIvar = PromelaDataStructures.Ast.Ivar
 type PrAssign = PromelaDataStructures.Ast.Assign
+type PrSpec = PromelaDataStructures.Ast.Spec
 
 
 type FieldInfo = {
@@ -113,24 +114,42 @@ type MetamodelToPromela() =
                                                 | true  -> PrExpression.Const(PrConst.True)
                                                 | false -> PrExpression.Const(PrConst.False)
                         | _ -> failwith "NotImplementedYet"
-                let assignmentStep =
-                    PrStep.StmntStep(PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr)),None)
-                PrSequence.Sequence([assignmentStep])
+                //also possible to add a "true" as a guard to the returned sequence
+                statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]
+                
             field.field.InitialValues |> List.map generateSequence
                                       |> PrOptions.Options
                                       |> PrStatement.IfStmnt
         fields |> List.map generateInit
-        
+    (*
+    member this.partitionUpdateSort
 
-    member this.generatePartitionUpdateCode =
+    member this.generatePartitionUpdateCode (partition) =
         []
 
     member this.generatePartitionBindingCode =
         ""
+    *)
 
-    member this.transformModelObject (model:MMModelObject) : PrProctype =
-        ""
+    // THIS IS THE MAIN FUNCTION AND ENTRY POINT
+    member this.transformModelObject (model:MMModelObject) : PrSpec =
+        let fields = collectFields model
+        
+        let varModule = this.generateFieldDeclarations fields
+        
+        let fieldInitialisations = this.generateFieldInitialisations fields
+        //updates and bindings: Cover them in an endless loop
 
+        let systemSequence : PrSequence = statementsToSequence (fieldInitialisations)
+        let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
+        let systemModule = PrModule.ProcTypeModule(systemProctype)
+
+        {
+            PrSpec.Code = [varModule;systemModule];
+            PrSpec.Formulas = [];
+        }
+
+    
 
     member this.transformExpression (expression:MMExpression) : PrExpression =
         match expression with
@@ -176,6 +195,15 @@ type MetamodelToPromela() =
                            |> coverInSimpleBlockStatement
             | MMStatement.ReturnStatement (expression : MMExpression option) ->
                 failwith "NotImplementedYet"
+                //TODO: transformStatement needs additional new optional Argument: the value, to which
+                //      the return gets assigned to. Either a real existing value or a temporary variable
+                //      which should also be assigned to. This temporary variable needs be be declared, too.
+                //      Statement gets rewritten to an MMStatement.AssignmentStatement
+                //      and the rest of the sequence is ignored.
+                //Better solution: There is function, which brings all statements in the correct order.
+                //      (for the partition-update and every partition-binding there is exactly one flatten
+                //      order for the execution of the statements). In this function, every ReturnStatement
+                //      needs to be replaced. Thus this case should never be reached
             | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
                 let transformGuardedStmnt ((guard,stmnt):MMExpression * MMStatement) =
                     let transformedGuard = this.transformExpression guard

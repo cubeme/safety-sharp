@@ -252,11 +252,16 @@ type ExportPromelaAstToFile() =
             | GlobalVarsAndChans decllst -> (this.ExportDeclLst lvl) decllst
 
     member this.ExportSpec (lvl:int) (spec : Spec) : string =
-        match spec with
-            | Spec modules -> 
-                modules |> List.map (this.ExportModule lvl)
-                        |> List.reduce (fun acc r -> acc + ";"  + (nli lvl) + (nli lvl) + r ) //after first element no ";". So we use reduce instead of fold. 1st element of list is initial accumulator
-                        //|> List.fold (fun acc r -> acc + r + (nli lvl) ) ""
+        let transformedCode =
+            spec.Code |> List.map (this.ExportModule lvl)
+                      |> List.reduce (fun acc r -> acc + ";"  + (nli lvl) + (nli lvl) + r ) //after first element no ";". So we use reduce instead of fold. 1st element of list is initial accumulator
+                    //|> List.fold (fun acc r -> acc + r + (nli lvl) ) ""
+        let transformedFormulas =
+            spec.Formulas |> List.map (this.ExportFormula lvl)
+                          |> String.concat "\n"
+
+        sprintf "%s\n\n\n%s" transformedCode transformedFormulas
+
     
     member this.ExportFormula (lvl:int) (formula : Formula) : string =
         match formula with
