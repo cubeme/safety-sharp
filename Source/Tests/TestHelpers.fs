@@ -53,7 +53,6 @@ module TestHelpers =
         UpdateMethod = emptyUpdateMethodSymbol
         Fields = []
         Methods = []
-        Subcomponents = [] 
     } 
 
     /// Gets a component object with the given name and component symbol, with no fields or subcomponents.

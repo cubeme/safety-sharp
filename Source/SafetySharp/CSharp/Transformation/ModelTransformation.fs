@@ -44,7 +44,6 @@ type Configuration = {
 }
 
 module ModelTransformation =
-        
 
     /// Transforms a modeling compilation and a model instance to the metamodel types.
     let Transform (compilation : ModelingCompilation) (model : Model) =
@@ -55,8 +54,8 @@ module ModelTransformation =
         let objectResolver = ObjectTransformation.Transform model symbolResolver
 
         {
-            ModelSymbol = { Partitions = []; Components = [] }
-            ModelObject = objectResolver.Model
+            ModelSymbol = symbolResolver.ModelSymbol
+            ModelObject = objectResolver.ModelObject
             Formulas = []
             MethodBodyResolver = StatementTransformation.TransformMethodBodies compilation.CSharpCompilation symbolResolver
         }

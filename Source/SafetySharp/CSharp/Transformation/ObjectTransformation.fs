@@ -73,7 +73,7 @@ module ObjectTransformation =
         // Create the subcomponent objects for the .NET component instance.
         let rec transformSubcomponents (component' : Component) (componentSymbol : ComponentSymbol) =
             [
-                for subcomponentSymbol in componentSymbol.Subcomponents ->
+                for subcomponentSymbol in symbolResolver.Model.Subcomponents.[componentSymbol] ->
                     (subcomponentSymbol, transformComponent <| component'.GetSubcomponent subcomponentSymbol.Name)
             ]
 

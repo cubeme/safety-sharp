@@ -37,13 +37,15 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 
 /// Represents a mapping between the original C# symbols and the created metamodel symbols.
 type SymbolResolver = private {
-    ComponentList : ComponentSymbol list
+    Model : ModelSymbol
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
     ComponentNameMap : Map<string, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
     SubcomponentMap : ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>
     MethodMap : ImmutableDictionary<IMethodSymbol, MethodSymbol>
     MethodCSharpMap : ImmutableDictionary<MethodSymbol, IMethodSymbol>
+    IComponentTypeSymbol : ComponentSymbol
+    ComponentBaseTypeSymbol : ComponentSymbol
 }
     with
 
@@ -92,8 +94,17 @@ type SymbolResolver = private {
         | (result, symbol) when result -> symbol
         | _ -> invalidArg "methodSymbol" "The given method symbol is unknown."
 
-    /// Gets a list of all component symbols.
-    member this.ComponentSymbols = this.ComponentList
+    /// Gets the model symbol that contains all of the symbols of the symbol resolver.
+    member this.ModelSymbol = this.Model
+
+    /// Gets all component symbols contained in the symbol resolver.
+    member this.ComponentSymbols = this.Model.ComponentSymbols
+
+    /// Gets the symbol representing the <see cref="SafetySharp.Modeling.IComponent"/> interface.
+    member this.ComponentInterfaceSymbol = this.IComponentTypeSymbol
+
+    /// Gets the symbol representing the <see cref="SafetySharp.Modeling.Component"/> class.
+    member this.ComponentBaseSymbol = this.ComponentBaseTypeSymbol
 
 module SymbolTransformation =
 
@@ -117,6 +128,15 @@ module SymbolTransformation =
         let subcomponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
         let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
+
+        // Instantiate the component symbols for the Component base class and the IComponent interface
+        let createComponentSymbol name csharpSymbol = 
+            let symbol = { Name = name; UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = [] }; Methods = []; Fields = [] }
+            componentMapBuilder.Add (csharpSymbol, symbol)
+            symbol
+
+        let componentBaseSymbol = createComponentSymbol "Component" (compilation.GetComponentClassSymbol ())
+        let componentInterfaceSymbol = createComponentSymbol "IComponent" (compilation.GetComponentInterfaceSymbol ())
 
         // Converts a C# type symbol to one of the supported metamodel type symbols
         let toTypeSymbol (csharpSymbol : ITypeSymbol) =
@@ -189,16 +209,6 @@ module SymbolTransformation =
                     fieldSymbol
             ]
 
-        // Creates the symbols and mapping information for all subcomponents of the component.
-        let transformSubcomponents (csharpComponent : ITypeSymbol) =
-            let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>() |> Seq.filter (fun field -> field.IsSubcomponentField compilation)
-            [
-                for csharpField in fields -> 
-                    let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name }
-                    subcomponentMapBuilder.Add (csharpField, subComponentSymbol)
-                    subComponentSymbol
-            ]
-
         // Creates the symbols and mapping information for a component with the given type.
         let transformComponent (csharpComponent : ITypeSymbol) =
             let componentSymbol = {
@@ -206,23 +216,48 @@ module SymbolTransformation =
                 UpdateMethod = transformUpdateMethod csharpComponent
                 Methods = transformMethods csharpComponent
                 Fields = transformFields csharpComponent
-                Subcomponents = transformSubcomponents csharpComponent
             }
 
             componentListBuilder.Add componentSymbol
             componentMapBuilder.Add (csharpComponent, componentSymbol)
 
         // Create the symbols for all components
-        let csharpComponents = compilation.GetTypeSymbols () |> Seq.filter (fun csharpComponent -> csharpComponent.IsDerivedFromComponent compilation)
-        csharpComponents |> Seq.iter transformComponent
+        let csharpComponents = 
+            compilation.GetTypeSymbols () 
+            |> Seq.filter (fun csharpComponent -> csharpComponent.IsDerivedFromComponent compilation)
+            |> Array.ofSeq
+        csharpComponents |> Array.iter transformComponent
 
-        // Create and return the symbol resolver
-        {
+        // Create the first (incomplete) version of the symbol resolver
+        let symbolResolver = {
+            Model = { Partitions = []; ComponentSymbols = []; Subcomponents = Map.empty }
             ComponentMap = componentMapBuilder.ToImmutable ()
-            ComponentList = componentListBuilder |> List.ofSeq
             ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> (component'.Name, component')) |> Map.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
-            SubcomponentMap = subcomponentMapBuilder.ToImmutable ()
+            SubcomponentMap = ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>.Empty
             MethodMap = methodMapBuilder.ToImmutable ()
             MethodCSharpMap = methodCSharpMapBuilder.ToImmutable ()
+            ComponentBaseTypeSymbol = componentBaseSymbol
+            IComponentTypeSymbol = componentInterfaceSymbol
         }
+
+        // Creates the symbols and mapping information for all subcomponents of the component.
+        let transformSubcomponents (csharpComponent : ITypeSymbol) =
+            let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>() |> Seq.filter (fun field -> field.IsSubcomponentField compilation)
+            let subcomponents = [
+                for csharpField in fields -> 
+                    let componentSymbol = symbolResolver.ResolveComponent (csharpField.Type :?> INamedTypeSymbol)
+                    let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name; ComponentSymbol = componentSymbol }
+                    subcomponentMapBuilder.Add (csharpField, subComponentSymbol)
+                    subComponentSymbol
+            ]
+            (symbolResolver.ResolveComponent (csharpComponent :?> INamedTypeSymbol), subcomponents)
+
+        // Create and return the model symbol and the final version of the symbol resolver
+        let model = { 
+            Partitions = []
+            ComponentSymbols = componentListBuilder |> List.ofSeq
+            Subcomponents = csharpComponents |> Array.map transformSubcomponents |> Map.ofArray
+        }
+
+        { symbolResolver with Model = model; SubcomponentMap = subcomponentMapBuilder.ToImmutable () }

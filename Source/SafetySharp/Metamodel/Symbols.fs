@@ -64,13 +64,6 @@ type MethodSymbol = {
     Parameters : ParameterSymbol list
 } 
 
-/// Represents the definition of a subcomponent within a parent component.
-type SubcomponentSymbol = {
-    /// The name of the subcomponent. Subcomponent names are unique within a single component and do
-    /// not overlap with field or method names.
-    Name : string
-} 
-
 /// Represents the type definition of a component within a model.
 type ComponentSymbol = { 
     /// The name of the component. Component names are unique within a single model.
@@ -84,10 +77,17 @@ type ComponentSymbol = {
 
     /// The fields declared by the component.
     Fields : FieldSymbol list
-
-    /// The subcomponents declared by the component.
-    Subcomponents : SubcomponentSymbol list
 }
+
+/// Represents the definition of a subcomponent within a parent component.
+type SubcomponentSymbol = {
+    /// The name of the subcomponent. Subcomponent names are unique within a single component and do
+    /// not overlap with field or method names.
+    Name : string
+
+    /// The type of the subcomponent.
+    ComponentSymbol : ComponentSymbol
+} 
 
 /// Represents the type definition of a partition within a model.
 type PartitionSymbol = {
@@ -102,6 +102,10 @@ type ModelSymbol = {
     /// The partitions the model consists of.
     Partitions : PartitionSymbol list
 
-    /// The components used throughout the model.
-    Components : SubcomponentSymbol list
+    /// The component symbols defined in the model.
+    ComponentSymbols : ComponentSymbol list
+
+    /// Maps each component symbol to its list of subcomponents. The subcomponent relationships have to be stored
+    /// outside of the individual component symbols in order to break a cyclic dependency.
+    Subcomponents : Map<ComponentSymbol, SubcomponentSymbol list>
 } 

@@ -111,8 +111,8 @@ module ``ModelObject property`` =
         compile "class A : Component { public A() { b1 = new B(); b2 = new B(); } B b1, b2; } class B : Component {}" ["A"; "B"]
         let componentSymbolA = symbolResolver.ResolveComponent components.[0]
         let componentSymbolB = symbolResolver.ResolveComponent components.[1]
-        let subcomponentSymbol1 = componentSymbolA.Subcomponents.[0]
-        let subcomponentSymbol2 = componentSymbolA.Subcomponents.[1]
+        let subcomponentSymbol1 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[0]
+        let subcomponentSymbol2 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[1]
 
         modelObject.Partitions.[0].RootComponent =? { 
             emptyComponentObject "Root0" componentSymbolA with
@@ -145,9 +145,9 @@ module ``ModelObject property`` =
         let componentSymbolA = symbolResolver.ResolveComponent components.[0]
         let componentSymbolB = symbolResolver.ResolveComponent components.[1]
         let componentSymbolC = symbolResolver.ResolveComponent components.[2]
-        let subcomponentSymbol1 = componentSymbolA.Subcomponents.[0]
-        let subcomponentSymbol2 = componentSymbolA.Subcomponents.[1]
-        let subcomponentSymbol3 = componentSymbolB.Subcomponents.[0]
+        let subcomponentSymbol1 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[0]
+        let subcomponentSymbol2 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[1]
+        let subcomponentSymbol3 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolB].[0]
 
         let partition0 = { 
             emptyComponentObject "Root0" componentSymbolA with

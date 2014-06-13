@@ -85,10 +85,7 @@ type OneSubcomponent =
     new () = { _component = Unchecked.defaultof<Component> }
     new component' = { _component = component' }
 
-    static member Symbol =  {
-        emptyComponentSymbol "OneSubcomponent" with
-            Subcomponents = [{ Name = fsharpFieldName "_component" }]
-    }
+    static member Symbol = emptyComponentSymbol "OneSubcomponent"
 
 type TwoSubcomponents =
     inherit Component
@@ -98,10 +95,7 @@ type TwoSubcomponents =
 
     new (component1, component2) = { _component1 = component1; _component2 = component2 }
 
-    static member Symbol =  {
-        emptyComponentSymbol "OneSubcomponent" with
-            Subcomponents = [{ Name = fsharpFieldName "_component" }; { Name = fsharpFieldName "_component2" }]
-    }
+    static member Symbol = emptyComponentSymbol "TwoSubcomponents"
 
 type ComplexComponent =
     inherit Component

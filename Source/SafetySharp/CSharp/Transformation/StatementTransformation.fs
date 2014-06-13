@@ -125,6 +125,6 @@ module StatementTransformation =
 
     /// Transforms the bodies of all methods declared by the components in the symbol resolver.
     let TransformMethodBodies (compilation : Compilation) (symbolResolver : SymbolResolver) =
-        symbolResolver.ComponentSymbols 
+        symbolResolver.ModelSymbol.ComponentSymbols 
         |> Seq.collect (transformComponentMethods compilation symbolResolver)
         |> Map.ofSeq
