@@ -89,12 +89,19 @@ type ComponentSymbol = {
     Subcomponents : SubcomponentSymbol list
 }
 
-// TODO
+/// Represents the type definition of a partition within a model.
 type PartitionSymbol = {
+    /// The root component of the partition.
     RootComponent : ComponentSymbol
+
+    // TODO: Ports and port bindings
 }
 
-// TODO
+/// Represents the type definition of a model.
 type ModelSymbol = { 
-    Fields : FieldSymbol list
+    /// The partitions the model consists of.
+    Partitions : PartitionSymbol list
+
+    /// The components used throughout the model.
+    Components : ComponentSymbol list
 } 

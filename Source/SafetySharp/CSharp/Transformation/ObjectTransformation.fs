@@ -93,10 +93,13 @@ module ObjectTransformation =
 
         // Creates the objects and mapping information for the .NET partition root component instance.
         let transformPartition (rootComponent : Component) =
-            { RootComponent = transformComponent rootComponent }
+            { RootComponent = transformComponent rootComponent } //; PartitionSymbol = (* TODO *) Unchecked.defaultof<PartitionSymbol> }
 
         // Create the model object
-        let model = { Partitions = model.PartitionRoots |> List.map transformPartition }
+        let model = { 
+            //ModelSymbol = (* TODO *) Unchecked.defaultof<ModelSymbol> 
+            Partitions = model.PartitionRoots |> List.map transformPartition 
+        }
 
         // Create and return the object resolver
         {

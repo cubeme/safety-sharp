@@ -39,6 +39,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 type SymbolResolver = private {
     ComponentList : ComponentSymbol list
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
+    ComponentNameMap : Map<string, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
     SubcomponentMap : ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>
     MethodMap : ImmutableDictionary<IMethodSymbol, MethodSymbol>
@@ -60,7 +61,7 @@ type SymbolResolver = private {
         let assemblyName = componentObject.GetType().Assembly.GetName().Name
         let name = sprintf "%s::%s" assemblyName typeName
 
-        match this.ComponentList |> List.tryFind (fun symbol -> symbol.Name = name) with
+        match this.ComponentNameMap |> Map.tryFind name with
         | Some symbol -> symbol
         | None -> invalidArg "componentObject" "The type of the given .NET component instance is unknown."
 
@@ -216,6 +217,7 @@ module SymbolTransformation =
         {
             ComponentMap = componentMapBuilder.ToImmutable ()
             ComponentList = componentListBuilder |> List.ofSeq
+            ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> (component'.Name, component')) |> Map.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
             SubcomponentMap = subcomponentMapBuilder.ToImmutable ()
             MethodMap = methodMapBuilder.ToImmutable ()

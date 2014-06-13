@@ -53,6 +53,11 @@ module private ObjectTransformationTestsHelper =
         objectResolver <- ObjectTransformation.Transform model symbolResolver
         modelObject <- objectResolver.ModelObject
 
+    let createPartition rootComponent = {
+        RootComponent = rootComponent
+        //PartitionSymbol = (* TODO *) Unchecked.defaultof<PartitionSymbol>
+    }
+
 [<TestFixture>]
 module ``Transform method`` =
     [<Test>]
@@ -74,15 +79,15 @@ module ``ModelObject property`` =
     [<Test>]
     let ``contains one root partition`` () =
         compile "class A : Component {}" ["A"]
-        modelObject.Partitions =? [{ RootComponent = objectResolver.ResolveObject components.[0] }]
+        modelObject.Partitions =? [createPartition <| objectResolver.ResolveObject components.[0]]
 
     [<Test>]
     let ``contains three root partitions`` () =
         compile "class A : Component {} class B : A {}" ["A"; "B"; "A"]
         modelObject.Partitions =? [
-            { RootComponent = objectResolver.ResolveObject components.[0] }
-            { RootComponent = objectResolver.ResolveObject components.[1] }
-            { RootComponent = objectResolver.ResolveObject components.[2] }
+            createPartition <| objectResolver.ResolveObject components.[0]
+            createPartition <| objectResolver.ResolveObject components.[1]
+            createPartition <| objectResolver.ResolveObject components.[2]
         ]
 
     [<Test>]
@@ -165,7 +170,7 @@ module ``ModelObject property`` =
         }
 
         let partition2 = emptyComponentObject "Root2" componentSymbolC
-        let partitions = [partition0; partition1; partition2] |> List.map (fun component' -> { RootComponent = component' })
+        let partitions = [partition0; partition1; partition2] |> List.map createPartition
 
         modelObject.Partitions =? partitions
 
