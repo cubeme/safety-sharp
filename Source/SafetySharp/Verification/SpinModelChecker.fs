@@ -34,6 +34,14 @@ type SpinModelChecker (model : Model) =
 
     member this.Check (formula : LtlFormula) =
         let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
-        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model [formula.Formula]
+        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model
+        
+        let converter = SafetySharp.Modelchecking.PromelaSpin.MetamodelToPromela()
+        let astWriter = SafetySharp.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
+
+        let converted = converter.transformConfiguration configuration
+        let convertedString = astWriter.Export converted
+
+        ()
 
         ()

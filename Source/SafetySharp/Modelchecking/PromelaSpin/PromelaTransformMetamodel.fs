@@ -28,6 +28,7 @@ type MMModelObject = SafetySharp.Metamodel.ModelObject
 type MMPartitionObject = SafetySharp.Metamodel.PartitionObject
 type MMComponentObject = SafetySharp.Metamodel.ComponentObject
 type MMFieldObject = SafetySharp.Metamodel.FieldObject
+type MMConfiguration = SafetySharp.Metamodel.Configuration // <--------- main artifact
 
 type MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
 type MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
@@ -68,12 +69,29 @@ type PrIvar = SafetySharp.Modelchecking.PromelaSpin.Ivar
 type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
 type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
+type Context = {
+    partition : MMPartitionObject;
+    container : MMComponentObject list;
+}
 
 type FieldInfo = {
-    partition : MMPartitionObject
-    container : MMComponentObject list;
+    context : Context;
     field : MMFieldObject;
 }
+
+// An easyStatement has only assignments and guarded commands. Also Assignments are defined on fieldinfos
+type EasyStatement = 
+    | GuardedCommandStatement of (Context * MMExpression * (EasyStatement list) ) list //Context * Guard * Statements
+    | AssignmentStatement of Target : FieldInfo * Context : Context * Expression : MMExpression //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
+
+// many steps are a sequence
+type StepInfo = {
+    partition : MMPartitionObject;
+    container : MMComponentObject list;
+    statement : EasyStatement;
+}
+
+
 
        
 type MetamodelToPromela() =
@@ -90,8 +108,10 @@ type MetamodelToPromela() =
                 (getSubComponentObjects comp.Subcomponents) |> List.collect (fun comp -> collectFromComponent partition (comp::parents) comp)
             let collectFieldInThisComponent (fieldobject:MMFieldObject) =
                 {
-                    FieldInfo.partition = partition;
-                    FieldInfo.container = comp::parents;
+                    FieldInfo.context = {
+                                            Context.partition = partition;
+                                            Context.container = comp::parents;
+                                        }
                     FieldInfo.field = fieldobject;
                 }
             let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
@@ -99,14 +119,22 @@ type MetamodelToPromela() =
         let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
             collectFromComponent partition [] partition.RootComponent
         model.Partitions |> List.collect collectFromPartition
-        
+       
+    let collectPartitionUpdateSequence (partition) (MethodBodyResolver): StepInfo list=
+        // Properties of the result:
+        //   - Only updates, no bindings
+        //   - TODO: Updates are proccessed in the correct order
+        //   - TODO: Return of Statements are rewritten to Assignments of the caller function
+        //   -       Variables may be needed to be introduced (?!?)
+        []
+
 
     member this.transformFieldInfoToName (fieldInfo : FieldInfo) =
         let partitionName = "pA" //partition has no name, use A as dummy. TODO: find something better
         let componentName =
-            fieldInfo.container |> List.map (fun comp -> comp.Name)
-                                |> List.rev //the order should be root::subcomponent::leafSubcomponent
-                                |> List.fold (fun acc elem -> acc + "_c" + elem) ""
+            fieldInfo.context.container |> List.map (fun comp -> comp.Name)
+                                        |> List.rev //the order should be root::subcomponent::leafSubcomponent
+                                        |> List.fold (fun acc elem -> acc + "_c" + elem) ""
         let fieldName = "_f"+fieldInfo.field.FieldSymbol.Name
         sprintf "%s%s%s" partitionName componentName fieldName
 
@@ -145,19 +173,16 @@ type MetamodelToPromela() =
                                       |> PrOptions.Options
                                       |> PrStatement.IfStmnt
         fields |> List.map generateInit
-    (*
-    member this.partitionUpdateSort
-
+    
     member this.generatePartitionUpdateCode (partition) =
         []
 
     member this.generatePartitionBindingCode =
         ""
-    *)
-
+    
     // THIS IS THE MAIN FUNCTION AND ENTRY POINT
-    member this.transformModelObject (model:MMModelObject) : PrSpec =
-        let fields = collectFields model
+    member this.transformConfiguration (configuration:MMConfiguration) : PrSpec =
+        let fields = collectFields configuration.ModelObject
         
         let varModule = this.generateFieldDeclarations fields
         
