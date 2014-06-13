@@ -74,3 +74,35 @@ module SemanticModelExtensions =
         member this.GetChooseFromRangeMethodSymbol normalizedVersion specialType =
             Requires.NotNull this "this"
             getChooseMethodSymbol this "FromRange" specialType (if normalizedVersion then 3 else 2)
+
+        /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
+        /// the semantic model.
+        member this.GetTypeSymbol<'T> () =
+            Requires.NotNull this "this"
+            this.Compilation.GetTypeSymbol<'T> ()
+
+        /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
+        /// the semantic model.
+        member this.GetTypeSymbol name =
+            Requires.NotNull this "this"
+            Requires.NotNullOrWhitespace name "name"
+
+            this.Compilation.GetTypeSymbol name
+
+        /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="Component" /> class within the
+        /// context of the semantic model.
+        member this.GetComponentClassSymbol () =
+            Requires.NotNull this "this"
+            this.Compilation.GetComponentClassSymbol ()
+
+        /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="IComponent" /> interface within the
+        /// context of the semantic model.
+        member this.GetComponentInterfaceSymbol () =
+            Requires.NotNull this "this"
+            this.Compilation.GetComponentInterfaceSymbol ()
+
+        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
+        /// within the context of the semantic model.
+        member this.GetUpdateMethodSymbol () =
+            Requires.NotNull this "this"
+            this.Compilation.GetUpdateMethodSymbol ()
