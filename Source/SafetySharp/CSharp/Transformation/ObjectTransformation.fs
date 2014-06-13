@@ -27,31 +27,6 @@ open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Utilities
 
-/// Represents a mapping between the original .NET objects and the created metamodel symbols and objects.
-type ObjectResolver = private {
-    ComponentSymbolMap : ImmutableDictionary<Component, ComponentSymbol>
-    ComponentObjectMap : ImmutableDictionary<Component, ComponentObject>
-    Model : ModelObject
-}
-    with
-
-    /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
-    member this.ResolveSymbol (componentObject : Component) =
-        Requires.NotNull componentObject "componentObject"
-        match this.ComponentSymbolMap.TryGetValue componentObject with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "componentObject" "The given component is unknown."
-
-    /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
-    member this.ResolveObject (componentObject : Component) =
-        Requires.NotNull componentObject "componentObject"
-        match this.ComponentObjectMap.TryGetValue componentObject with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "componentObject" "The given component is unknown."
-
-    /// Gets the model object that contains all of the resolver's component and partition objects.
-    member this.ModelObject = this.Model
-
 module ObjectTransformation =
 
     /// Transforms C# objects to metamodel objects.

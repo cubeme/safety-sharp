@@ -23,10 +23,8 @@
 namespace SafetySharp.CSharp.Transformation
 
 open System.Collections.Immutable
-
 open SafetySharp.Metamodel
 open SafetySharp.CSharp.Roslyn
-
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
