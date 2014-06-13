@@ -25,6 +25,7 @@ open SafetySharp.Utilities
 open System
 open CommandLine
 open CommandLine.Text
+open SafetySharp.CSharp
 
 /// Provides access to the command line arguments that have been provided to the compiler.
 type CommandLineArguments () =
@@ -65,10 +66,10 @@ type CommandLineArguments () =
         help.ToString ()
 
 /// The command line arguments that have been used to invoke the compiler.
-let arguments = new CommandLineArguments ()
+let private arguments = new CommandLineArguments ()
 
 ///  Writes the <paramref name="message" /> to the console using the given <paramref name="color" />.
-let writeToConsole color (message : string) =
+let private writeToConsole color (message : string) =
     Console.ForegroundColor <- color
     Console.WriteLine message
     Console.ResetColor ()
@@ -121,11 +122,9 @@ let main args =
 
         // Start the compilation process.
         try
-//            let compiler = new CSharp.Compiler();
-//            let resultCode = compiler.Compile(Arguments.ProjectFile, Arguments.Configuration, Arguments.Platform);
-            let resultCode = 0
-//            if (resultCode == 0)
-            Log.Info "Compilation completed successfully."
+            let resultCode = Compiler.Compile arguments.ProjectFile arguments.Configuration arguments.Platform
+            if resultCode = 0 then
+                Log.Info "Compilation completed successfully."
 
             resultCode
         with 

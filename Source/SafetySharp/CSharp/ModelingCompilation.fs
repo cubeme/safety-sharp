@@ -21,28 +21,12 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Modeling
-{
-	using System;
 
-	/// <summary>
-	///     Controls the semantics of the assignment operator when the assigned value lies outside the variable's range.
-	/// </summary>
-	public enum OverflowBehavior
-	{
-		/// <summary>
-		///     Indicates that an exception is thrown when a value outside the range of the variable is assigned during
-		///     simulation. During model-checking, however, the precise behavior of this overflow behavior is undefined.
-		/// </summary>
-		Error = 0,
+open Microsoft.CodeAnalysis.CSharp
 
-		/// <summary>
-		///     Indicates the assigned value is clamped to the variable's minimum or maximum value.
-		/// </summary>
-		Clamp = 1,
+/// Represents a compilation of a SafetySharp modeling assembly.
+type ModelingCompilation (compilation : CSharpCompilation) = 
+    /// Gets the C# compilation that represents the modeling compilation.
+    member this.CSharpCompilation = compilation
 
-		/// <summary>
-		///     Indicates the assigned value wraps around if it underflows or overflows the variable's range.
-		/// </summary>
-		WrapAround = 2
-	}
-}
+    // TODO

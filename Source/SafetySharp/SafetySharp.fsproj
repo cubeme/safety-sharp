@@ -60,7 +60,12 @@
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
+    <Compile Include="Modeling\ModelingAttributes.fs" />
+    <Compile Include="Modeling\OverflowBehavior.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
+    <Compile Include="CSharp\Compiler.fs" />
+    <Compile Include="CSharp\ModelingCompilation.fs" />
+    <Compile Include="CSharp\ModelingAssembly.fs" />
     <Compile Include="CSharp\Extensions\SyntaxNodeExtensions.fs" />
     <Compile Include="CSharp\Extensions\SyntaxTreeExtensions.fs" />
     <Compile Include="CSharp\Extensions\SemanticModelExtensions.fs" />
@@ -72,8 +77,8 @@
     <Compile Include="CSharp\Transformation\ExpressionTransformation.fs" />
     <Compile Include="CSharp\Transformation\StatementTransformation.fs" />
     <Compile Include="CSharp\Transformation\ObjectTransformation.fs" />
-    <None Include="packages.config" />
     <Compile Include="AssemblyInfo.fs" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
