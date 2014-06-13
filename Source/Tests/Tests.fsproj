@@ -49,7 +49,6 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="TestCompilation.fs" />
     <Compile Include="TestHelpers.fs" />
@@ -58,6 +57,9 @@
     <Compile Include="CSharp\Extensions\ITypeSymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Extensions\CompilationExtensionsTests.fs" />
+    <Compile Include="CSharp\Extensions\ArgumentExtensionsTests.fs" />
+    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.fs" />
+    <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
@@ -66,9 +68,8 @@
     <Compile Include="Modeling\ModelTests.fs" />
     <None Include="app.config" />
     <None Include="packages.config" />
-    <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.fs" />
-    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.fs" />
   </ItemGroup>
+  <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>

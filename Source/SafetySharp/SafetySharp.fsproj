@@ -73,6 +73,7 @@
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.fs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.fs" />
+    <Compile Include="CSharp\Extensions\ArgumentExtensions.fs" />
     <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs">
     </Compile>
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />

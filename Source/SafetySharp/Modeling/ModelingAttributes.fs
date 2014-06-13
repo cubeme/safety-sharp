@@ -56,3 +56,9 @@ type ModelingAssemblyAttribute (compilerVersion : string) =
     member this.CompilerVersion = 
         Requires.NotNullOrWhitespace compilerVersion "compilerVersion"
         compilerVersion
+
+/// When applied to a method parameter, instructs the SafetySharp compiler to lift an expression 'expr'
+/// to a lambda function of the form '() => expr'.
+[<AttributeUsage(AttributeTargets.Parameter, AllowMultiple = true, Inherited = false)>]
+type LiftExpressionAttribute () =
+    inherit Attribute ()
