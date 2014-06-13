@@ -20,36 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Extensions.IFieldSymbolExtensionsTests
+namespace SafetySharp.Tests.CSharp.Diagnostics
 
 open System.Linq
+open System.Threading
 open NUnit.Framework
 open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
+open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.CSharp
 open SafetySharp.Tests
+open SafetySharp.CSharp.Diagnostics
 open SafetySharp.CSharp.Extensions
 
 [<TestFixture>]
-module ``IsSubcomponentField method`` =
-    let isComponentField csharpCode =
+module EnumMemberAnalyzerTests =
+
+    let validate csharpCode = 
         let compilation = TestCompilation csharpCode
-
-        let classSymbol = compilation.CSharpCompilation.GetTypeSymbol "X"
-        let fieldSymbol = classSymbol.GetMembers().OfType<IFieldSymbol>().Single()
-            
-        fieldSymbol.IsSubcomponentField compilation.SemanticModel
+        compilation.HasDiagnostics<EnumMemberAnalyzer> ()
 
     [<Test>]
-    let ``returns false for non-component fields`` () =
-        isComponentField "class X : Component { int x; }" =? false
-        isComponentField "class X : Component { bool x; }" =? false
-        isComponentField "class X : Component { decimal x; }" =? false
+    let ``enum declaration without explicit member values is valid`` () =
+        validate "enum E { A, B, C }" =? true
 
     [<Test>]
-    let ``returns true for component fields`` () =
-        isComponentField "class X : Component { Component x; }" =? true
-        isComponentField "class X : Component { IComponent x; }" =? true
-        isComponentField "class Y : Component {} class X : Component { Y x; }" =? true
-        isComponentField "interface Y : IComponent {} class X : Component { Y x; }" =? true
+    let ``enum declaration with explicit value on first member is invalid`` () =
+        validate "enum E { A = 1, B, C }" =? false
+
+    [<Test>]
+    let ``enum declaration with explicit value on second member is invalid`` () =
+        validate "enum E { A, B = 1, C }" =? false
+
+    [<Test>]
+    let ``enum declaration with explicit value on third member is invalid`` () =
+        validate "enum E { A, B, C = 3 }" =? false
+
+    [<Test>]
+    let ``enum declaration with explicit values on all members is invalid`` () =
+        validate "enum E { A = 4, B = 1, C = 3 }" =? false

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.ITypeSymbolExtensionsTests
+namespace SafetySharp.Tests.CSharp.Extensions.ITypeSymbolExtensionsTests
 
 open System.Linq
 open NUnit.Framework

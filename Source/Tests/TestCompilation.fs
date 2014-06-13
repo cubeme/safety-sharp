@@ -27,12 +27,14 @@ open System.Collections.Generic
 open System.Linq
 open System.IO
 open System.Reflection
+open System.Threading
 open SafetySharp.Metamodel
 open SafetySharp.CSharp
 open SafetySharp.CSharp.Extensions
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
+open Microsoft.CodeAnalysis.Diagnostics
 
 type CompilationException (message : string) =
     inherit Exception (message)
@@ -201,3 +203,8 @@ type internal TestCompilation (csharpCode : string) =
         match this.Compile().GetType(typeName) with
         | null -> sprintf "Unable to find a type with name '%s' in the compiled assembly." typeName |> failed
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
+
+    /// Checks whether the compilation has any diagnostics for the given diagnostic analyzer.
+    member this.HasDiagnostics<'T when 'T : (new : unit -> 'T) and 'T :> IDiagnosticAnalyzer> () = 
+        let analyzers = [| new 'T () :> IDiagnosticAnalyzer |]
+        not <| AnalyzerDriver.GetDiagnostics(csharpCompilation, analyzers, new CancellationToken()).Any()

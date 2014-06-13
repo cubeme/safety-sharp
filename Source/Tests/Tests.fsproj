@@ -66,6 +66,8 @@
     <Compile Include="Modeling\ModelTests.fs" />
     <None Include="app.config" />
     <None Include="packages.config" />
+    <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.fs" />
+    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">

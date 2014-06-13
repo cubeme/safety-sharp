@@ -20,36 +20,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Extensions.IFieldSymbolExtensionsTests
+namespace SafetySharp.Tests.CSharp.Diagnostics
 
 open System.Linq
+open System.Threading
 open NUnit.Framework
 open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
+open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.CSharp
 open SafetySharp.Tests
+open SafetySharp.CSharp.Diagnostics
 open SafetySharp.CSharp.Extensions
 
 [<TestFixture>]
-module ``IsSubcomponentField method`` =
-    let isComponentField csharpCode =
+module EnumUnderlyingTypeAnalyzerTests =
+
+    let validate csharpCode = 
         let compilation = TestCompilation csharpCode
-
-        let classSymbol = compilation.CSharpCompilation.GetTypeSymbol "X"
-        let fieldSymbol = classSymbol.GetMembers().OfType<IFieldSymbol>().Single()
-            
-        fieldSymbol.IsSubcomponentField compilation.SemanticModel
+        compilation.HasDiagnostics<EnumUnderlyingTypeAnalyzer> ()
 
     [<Test>]
-    let ``returns false for non-component fields`` () =
-        isComponentField "class X : Component { int x; }" =? false
-        isComponentField "class X : Component { bool x; }" =? false
-        isComponentField "class X : Component { decimal x; }" =? false
+    let ``implicit underlying type is valid`` () =
+        validate "enum E { A }" =? true
 
     [<Test>]
-    let ``returns true for component fields`` () =
-        isComponentField "class X : Component { Component x; }" =? true
-        isComponentField "class X : Component { IComponent x; }" =? true
-        isComponentField "class Y : Component {} class X : Component { Y x; }" =? true
-        isComponentField "interface Y : IComponent {} class X : Component { Y x; }" =? true
+    let ``byte as underlying type is invalid`` () =
+        validate "enum E : byte { A }" =? false
+
+    [<Test>]
+    let ``int as underlying type is invalid`` () =
+        validate "enum E : int { A }" =? false
+
+    [<Test>]
+    let ``long as underlying type is invalid`` () =
+        validate "enum E : long { A }" =? false
+
+    [<Test>]
+    let ``sbyte as underlying type is invalid`` () =
+        validate "enum E : sbyte { A }" =? false
+
+    [<Test>]
+    let ``short as underlying type is invalid`` () =
+        validate "enum E : short { A }" =? false
+
+    [<Test>]
+    let ``uint as underlying type is invalid`` () =
+        validate "enum E : uint { A }" =? false
+
+    [<Test>]
+    let ``ulong as underlying type is invalid`` () =
+        validate "enum E : ulong { A }" =? false
+
+    [<Test>]
+    let ``ushort as underlying type is invalid`` () =
+        validate "enum E : ushort { A }" =? false

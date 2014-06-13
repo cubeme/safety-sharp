@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp
+namespace SafetySharp.Tests.CSharpTransformation
 
 open System.Linq
 open NUnit.Framework
