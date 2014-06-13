@@ -44,9 +44,6 @@ module private SymbolTransformationTestsHelper =
         let resolver = compile csharpCode
         resolver.ComponentSymbols
 
-    let emptyUpdate = { Name = "Update"; ReturnType = None; Parameters = [] }
-    let emptyComponent name = { Name = "TestCompilation::" + name; UpdateMethod = emptyUpdate; Fields = []; Methods = []; Subcomponents = [] } 
-
 [<TestFixture>]
 module ``Transform method`` =
     [<Test>]
@@ -62,32 +59,32 @@ module ``ComponentSymbols property`` =
     [<Test>]
     let ``contains all components`` () =
         components "class A : Component {} class B : Component {} class C : Component {}"
-        =? [emptyComponent "A"; emptyComponent "B"; emptyComponent "C"]
+        =? [emptyComponentSymbol "A"; emptyComponentSymbol "B"; emptyComponentSymbol "C"]
 
     [<Test>]
     let ``does not contain non-component classes`` () =
         components "class A {} class B {} class C : Component {}"
-        =? [emptyComponent "C"]
+        =? [emptyComponentSymbol "C"]
 
     [<Test>]
     let ``component name contains namespaces and nested types`` () =
         let transformedComponents = components "namespace Test { class A : Component { } }"
-        transformedComponents.[0] =? emptyComponent "Test.A"
+        transformedComponents.[0] =? emptyComponentSymbol "Test.A"
 
         let transformedComponents = components "namespace Test1 { namespace Test2 { class A : Component { } }}"
-        transformedComponents.[0] =? emptyComponent "Test1.Test2.A"
+        transformedComponents.[0] =? emptyComponentSymbol "Test1.Test2.A"
 
         let transformedComponents = components "namespace Test1.Test2 { class A : Component { } }"
-        transformedComponents.[0] =? emptyComponent "Test1.Test2.A"
+        transformedComponents.[0] =? emptyComponentSymbol "Test1.Test2.A"
 
         let transformedComponents = components "namespace Test { class Nested { class A : Component { } }}"
-        transformedComponents.[0] =? emptyComponent "Test.Nested.A"
+        transformedComponents.[0] =? emptyComponentSymbol "Test.Nested.A"
 
     [<Test>]
     let ``component symbol contains all fields`` () =
         let components = components "class A : Component { int i; bool b; decimal d; }"
         components.[0] =? { 
-            emptyComponent "A" with 
+            emptyComponentSymbol "A" with 
                 Fields = 
                 [ 
                     { FieldSymbol.Name = "i"; Type = TypeSymbol.Integer }
@@ -100,7 +97,7 @@ module ``ComponentSymbols property`` =
     let ``component symbol contains all subcomponents`` () =
         let components = components "class A : Component { Component c; B b; IComponent i; } class B : Component {}"
         components.[0] =? { 
-            emptyComponent "A" with 
+            emptyComponentSymbol "A" with 
                 Subcomponents = 
                 [ 
                     { SubcomponentSymbol.Name = "c" }
@@ -113,7 +110,7 @@ module ``ComponentSymbols property`` =
     let ``component symbol contains all non-update methods`` () =
         let components = components "class A : Component { int M(int i, decimal d) { return 0; } void N(bool b) {} bool O() { return false; } }"
         components.[0] =? { 
-            emptyComponent "A" with 
+            emptyComponentSymbol "A" with 
                 Methods = 
                 [ 
                     { 
@@ -129,13 +126,13 @@ module ``ComponentSymbols property`` =
     [<Test>]
     let ``component symbol contains update methods`` () =
         let components = components "class A : Component { public override void Update() {} }"
-        components.[0] =? { emptyComponent "A" with UpdateMethod = { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] } }
+        components.[0] =? { emptyComponentSymbol "A" with UpdateMethod = { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] } }
 
     [<Test>]
     let ``component symbol contains all data`` () =
         let components = components "class C : Component { bool N(int x) { return false; } public override void Update() {} int f; IComponent c; }"
         components.[0] =? {
-            emptyComponent "C" with
+            emptyComponentSymbol "C" with
                 Methods = [{ MethodSymbol.Name = "N"; ReturnType = Some TypeSymbol.Boolean; Parameters = [{ ParameterSymbol.Name = "x"; Type = TypeSymbol.Integer }] }]
                 Fields = [{ FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }]
                 Subcomponents = [{ SubcomponentSymbol.Name = "c" }]
@@ -163,7 +160,7 @@ module ``ResolveComponent(INamedTypeSymbol) method`` =
         let classA = compilation.FindClassSymbol "A"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        resolver.ResolveComponent classA =? emptyComponent "A"
+        resolver.ResolveComponent classA =? emptyComponentSymbol "A"
 
     [<Test>]
     let ``returns different symbols for different transformed components`` () =
@@ -172,8 +169,8 @@ module ``ResolveComponent(INamedTypeSymbol) method`` =
         let classB = compilation.FindClassSymbol "B"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        resolver.ResolveComponent classA =? emptyComponent "A"
-        resolver.ResolveComponent classB =? emptyComponent "B"
+        resolver.ResolveComponent classA =? emptyComponentSymbol "A"
+        resolver.ResolveComponent classB =? emptyComponentSymbol "B"
         resolver.ResolveComponent classA <>? resolver.ResolveComponent classB
 
 [<TestFixture>]
@@ -196,7 +193,7 @@ module ``ResolveComponent(Component) method`` =
         let componentA = compilation.CreateObject<Component> "A"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        resolver.ResolveComponent componentA =? emptyComponent "A"
+        resolver.ResolveComponent componentA =? emptyComponentSymbol "A"
 
     [<Test>]
     let ``returns symbol for component object of deeply nested transformed type`` () =
@@ -204,7 +201,7 @@ module ``ResolveComponent(Component) method`` =
         let componentA = compilation.CreateObject<Component> "X.Y.Z+A"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        resolver.ResolveComponent componentA =? emptyComponent "X.Y.Z.A"
+        resolver.ResolveComponent componentA =? emptyComponentSymbol "X.Y.Z.A"
 
     [<Test>]
     let ``returns different symbols for different component objects with different transformed types`` () =
@@ -213,8 +210,8 @@ module ``ResolveComponent(Component) method`` =
         let componentB = compilation.CreateObject<Component> "B"
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
-        resolver.ResolveComponent componentA =? emptyComponent "A"
-        resolver.ResolveComponent componentB =? emptyComponent "B"
+        resolver.ResolveComponent componentA =? emptyComponentSymbol "A"
+        resolver.ResolveComponent componentB =? emptyComponentSymbol "B"
         resolver.ResolveComponent componentA <>? resolver.ResolveComponent componentB
 
     [<Test>]
@@ -225,8 +222,8 @@ module ``ResolveComponent(Component) method`` =
         let resolver = SymbolTransformation.Transform compilation.CSharpCompilation
 
         componentA <>? componentB
-        resolver.ResolveComponent componentA =? emptyComponent "A"
-        resolver.ResolveComponent componentB =? emptyComponent "A"
+        resolver.ResolveComponent componentA =? emptyComponentSymbol "A"
+        resolver.ResolveComponent componentB =? emptyComponentSymbol "A"
 
         // We have to check for reference equality here
         test <@ obj.ReferenceEquals(resolver.ResolveComponent componentA, resolver.ResolveComponent componentB) @>

@@ -28,11 +28,11 @@ open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
-open SafetySharp.Tests.CSharp
+open SafetySharp.Tests
 
 [<TestFixture>]
 module ``GetTypeSymbols method`` =
-    let mutable private compilation = TestCompilation ""
+    let mutable private compilation = Unchecked.defaultof<TestCompilation>
 
     let getTypeSymbols csharpCode =
         compilation <- TestCompilation csharpCode

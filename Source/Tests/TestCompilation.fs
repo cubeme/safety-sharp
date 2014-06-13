@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp
+namespace SafetySharp.Tests
 
 open System
 open System.Collections.Generic
@@ -46,7 +46,7 @@ type internal TestCompilation (csharpCode : string) =
 
     let csharpCompilation = 
         CSharpCompilation
-            .Create("TestCompilation")
+            .Create(TestCompilation.CompilationName)
             .AddReferences(MetadataFileReference typeof<obj>.Assembly.Location)
             .AddReferences(MetadataFileReference typeof<ComponentSymbol>.Assembly.Location)
             .AddReferences(MetadataFileReference typeof<System.Linq.Expressions.Expression>.Assembly.Location)
@@ -58,6 +58,9 @@ type internal TestCompilation (csharpCode : string) =
 
     do if not <| Seq.isEmpty diagnostics then
         "Failed to create compilation." |> failed
+
+    /// Gets the name of the compilation.
+    static member CompilationName = "TestCompilation"
 
     /// Gets the syntax tree of the compilation.
     member this.SyntaxTree with get () = syntaxTree

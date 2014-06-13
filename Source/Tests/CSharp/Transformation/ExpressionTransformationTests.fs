@@ -27,6 +27,7 @@ open NUnit.Framework
 open Swensen.Unquote
 open SafetySharp.CSharp
 open SafetySharp.Metamodel
+open SafetySharp.Tests
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
 [<AutoOpen>]

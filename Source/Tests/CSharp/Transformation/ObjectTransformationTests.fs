@@ -53,8 +53,6 @@ module private ObjectTransformationTestsHelper =
         objectResolver <- ObjectTransformation.Transform model symbolResolver
         modelObject <- objectResolver.ModelObject
 
-    let createComponentObject name symbol = { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty }
-
 [<TestFixture>]
 module ``Transform method`` =
     [<Test>]
@@ -95,7 +93,7 @@ module ``ModelObject property`` =
         let fieldSymbol2 = componentSymbol.Fields.[1]
 
         modelObject.Partitions.[0].RootComponent =? { 
-            createComponentObject "Root0" componentSymbol with
+            emptyComponentObject "Root0" componentSymbol with
                 Fields = 
                 [
                     (fieldSymbol1, { FieldSymbol = fieldSymbol1; InitialValues = [1; 2; 3] })
@@ -112,11 +110,11 @@ module ``ModelObject property`` =
         let subcomponentSymbol2 = componentSymbolA.Subcomponents.[1]
 
         modelObject.Partitions.[0].RootComponent =? { 
-            createComponentObject "Root0" componentSymbolA with
+            emptyComponentObject "Root0" componentSymbolA with
                 Subcomponents = 
                 [
-                    (subcomponentSymbol1, createComponentObject "Root0.b1" componentSymbolB)
-                    (subcomponentSymbol2, createComponentObject "Root0.b2" componentSymbolB)
+                    (subcomponentSymbol1, emptyComponentObject "Root0.b1" componentSymbolB)
+                    (subcomponentSymbol2, emptyComponentObject "Root0.b2" componentSymbolB)
                 ] |> Map.ofList
         }
 
@@ -147,26 +145,26 @@ module ``ModelObject property`` =
         let subcomponentSymbol3 = componentSymbolB.Subcomponents.[0]
 
         let partition0 = { 
-            createComponentObject "Root0" componentSymbolA with
+            emptyComponentObject "Root0" componentSymbolA with
                 Subcomponents =
                 [
                     (subcomponentSymbol1, { 
-                        createComponentObject "Root0.b1" componentSymbolB with
-                            Subcomponents = [(subcomponentSymbol3, createComponentObject "Root0.b1.c" componentSymbolC)] |> Map.ofList
+                        emptyComponentObject "Root0.b1" componentSymbolB with
+                            Subcomponents = [(subcomponentSymbol3, emptyComponentObject "Root0.b1.c" componentSymbolC)] |> Map.ofList
                     })
                     (subcomponentSymbol2, {
-                        createComponentObject "Root0.b2" componentSymbolB with
-                            Subcomponents = [(subcomponentSymbol3, createComponentObject "Root0.b2.c" componentSymbolC)] |> Map.ofList
+                        emptyComponentObject "Root0.b2" componentSymbolB with
+                            Subcomponents = [(subcomponentSymbol3, emptyComponentObject "Root0.b2.c" componentSymbolC)] |> Map.ofList
                     }) 
                 ] |> Map.ofList
         }
 
         let partition1 = {
-            createComponentObject "Root1" componentSymbolB with
-                Subcomponents = [(subcomponentSymbol3, createComponentObject "Root1.c" componentSymbolC)] |> Map.ofList
+            emptyComponentObject "Root1" componentSymbolB with
+                Subcomponents = [(subcomponentSymbol3, emptyComponentObject "Root1.c" componentSymbolC)] |> Map.ofList
         }
 
-        let partition2 = createComponentObject "Root2" componentSymbolC
+        let partition2 = emptyComponentObject "Root2" componentSymbolC
         let partitions = [partition0; partition1; partition2] |> List.map (fun component' -> { RootComponent = component' })
 
         modelObject.Partitions =? partitions
@@ -219,18 +217,18 @@ module ``ResolveObject Method`` =
     [<Test>]
     let ``returns component object for component object of known type`` () =
         compile "class A : Component {}" ["A"]
-        objectResolver.ResolveObject components.[0] =? createComponentObject "Root0" symbolResolver.ComponentSymbols.[0]
+        objectResolver.ResolveObject components.[0] =? emptyComponentObject "Root0" symbolResolver.ComponentSymbols.[0]
 
     [<Test>]
     let ``returns different component symbols for different component objects of different known types`` () =
         compile "class A : Component {} class B : Component {}" ["A"; "B"]
-        objectResolver.ResolveObject components.[0] =? createComponentObject "Root0" symbolResolver.ComponentSymbols.[0]
-        objectResolver.ResolveObject components.[1] =? createComponentObject "Root1" symbolResolver.ComponentSymbols.[1]
+        objectResolver.ResolveObject components.[0] =? emptyComponentObject "Root0" symbolResolver.ComponentSymbols.[0]
+        objectResolver.ResolveObject components.[1] =? emptyComponentObject "Root1" symbolResolver.ComponentSymbols.[1]
         objectResolver.ResolveObject components.[0] <>? objectResolver.ResolveObject components.[1]
 
     [<Test>]
     let ``returns different component symbols for different component objects of same known type`` () =
         compile "class A : Component {}" ["A"; "A"]
-        objectResolver.ResolveObject components.[0] =? createComponentObject "Root0" symbolResolver.ComponentSymbols.[0]
-        objectResolver.ResolveObject components.[1] =? createComponentObject "Root1" symbolResolver.ComponentSymbols.[0]
+        objectResolver.ResolveObject components.[0] =? emptyComponentObject "Root0" symbolResolver.ComponentSymbols.[0]
+        objectResolver.ResolveObject components.[1] =? emptyComponentObject "Root1" symbolResolver.ComponentSymbols.[0]
         objectResolver.ResolveObject components.[0] <>? objectResolver.ResolveObject components.[1]

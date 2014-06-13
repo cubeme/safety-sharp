@@ -110,72 +110,72 @@ module ``GetInitialValuesOfField method`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> 3
-        raises<InvalidOperationException> <@ component'.GetInitialValuesOfField <| fieldName "_field" @>
+        raises<InvalidOperationException> <@ component'.GetInitialValuesOfField <| fsharpFieldName "_field" @>
 
     [<Test>]
     let ``throws for subcomponent field`` () =
         let component' = OneSubcomponent (FieldComponent<int> 3)
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" <@ component'.GetInitialValuesOfField <| fieldName "_component" @>
+        raisesArgumentException "fieldName" <@ component'.GetInitialValuesOfField <| fsharpFieldName "_component" @>
 
     [<Test>]
     let ``returns initial value of single field`` () =
         let integerComponent = FieldComponent<int> 17
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField(fieldName "_field") =? [17]
+        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [17]
     
         let integerComponent = FieldComponent<int> ()
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField(fieldName "_field") =? [0]
+        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [0]
     
         let booleanComponent = FieldComponent<bool> true
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField(fieldName "_field") =? [true]
+        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [true]
     
         let booleanComponent = FieldComponent<bool> ()
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField(fieldName "_field") =? [false]
+        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [false]
 
     [<Test>]
     let ``returns initial value of multiple fields`` () =
         let component' = FieldComponent<int, bool> (33, true)
         component'.FinalizeMetadata ()
         
-        component'.GetInitialValuesOfField(fieldName "_field1") =? [33]
-        component'.GetInitialValuesOfField(fieldName "_field2") =? [true]
+        component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [33]
+        component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [true]
         
         let component' = FieldComponent<int, bool> ()
         component'.FinalizeMetadata ()
         
-        component'.GetInitialValuesOfField(fieldName "_field1") =? [0]
-        component'.GetInitialValuesOfField(fieldName "_field2") =? [false]
+        component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [0]
+        component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [false]
 
     [<Test>]
     let ``returns nondeterministic initial values of single field`` () =
         let integerComponent = FieldComponent<int>(17)
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField(fieldName "_field") =? [17]
+        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [17]
 
         let integerComponent = FieldComponent<int>(17, 33)
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField(fieldName "_field") =? [17; 33]
+        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [17; 33]
 
         let booleanComponent = FieldComponent<bool>(true)
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField(fieldName "_field") =? [true]
+        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [true]
 
         let booleanComponent = FieldComponent<bool>(true, false)
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField(fieldName "_field") =? [true; false]
+        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [true; false]
         
     [<Test>]
     let ``returns nondeterministic initial values of multiple fields`` () =
         let component' = FieldComponent<int, bool>(158, 392, false, true)
         component'.FinalizeMetadata ()
 
-        component'.GetInitialValuesOfField(fieldName "_field1") =? [158; 392]
-        component'.GetInitialValuesOfField(fieldName "_field2") =? [false; true]
+        component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [158; 392]
+        component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [false; true]
 
 [<TestFixture>]
 module ``GetSubcomponent method`` = 
@@ -196,21 +196,21 @@ module ``GetSubcomponent method`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> <@ component'.GetSubcomponent (fieldName "_field") @>
+        raises<InvalidOperationException> <@ component'.GetSubcomponent (fsharpFieldName "_field") @>
 
     [<Test>]
     let ``throws for non-component field`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent (fieldName "_field") @>
+        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent (fsharpFieldName "_field") @>
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent (fieldName "abcd") @>
+        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent (fsharpFieldName "abcd") @>
 
     [<Test>]
     let ``returns single subcomponent`` () =
@@ -218,7 +218,7 @@ module ``GetSubcomponent method`` =
         let component' = OneSubcomponent (subcomponent)
         component'.FinalizeMetadata ()
 
-        component'.GetSubcomponent (fieldName "_component") =? (subcomponent :> Component)
+        component'.GetSubcomponent (fsharpFieldName "_component") =? (subcomponent :> Component)
 
     [<Test>]
     let ``returns multiple subcomponents`` () =
@@ -227,8 +227,8 @@ module ``GetSubcomponent method`` =
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
         component'.FinalizeMetadata ()
 
-        component'.GetSubcomponent(fieldName "_component1") =? (subcomponent1 :> Component)
-        component'.GetSubcomponent(fieldName "_component2") =? (subcomponent2 :> Component)
+        component'.GetSubcomponent(fsharpFieldName "_component1") =? (subcomponent1 :> Component)
+        component'.GetSubcomponent(fsharpFieldName "_component2") =? (subcomponent2 :> Component)
 
 [<TestFixture>]
 module ``Subcomponents property`` =
@@ -282,5 +282,5 @@ module ``Subcomponents property`` =
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
         component'.FinalizeMetadata "Root"
 
-        component'.Subcomponents.[0].Name =? fieldName "Root._component1"
-        component'.Subcomponents.[1].Name =? fieldName "Root._component2"
+        component'.Subcomponents.[0].Name =? fsharpFieldName "Root._component1"
+        component'.Subcomponents.[1].Name =? fsharpFieldName "Root._component2"

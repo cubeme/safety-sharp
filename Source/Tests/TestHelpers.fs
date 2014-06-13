@@ -28,11 +28,34 @@ open System.Linq.Expressions
 open System.Reflection
 open SafetySharp.Modeling
 open Swensen.Unquote
+open SafetySharp.Metamodel
 
 [<AutoOpen>]
 module TestHelpers =
+    
+    /// Checks whether the given quoted expression raises an <see cref="ArgumentNullException"/> for the argument
+    /// with the given name.
     let raisesArgumentNullException argumentName quotedExpression =
         raisesWith<ArgumentNullException> quotedExpression (fun e -> <@ e.ParamName = argumentName @>)
 
+    /// Checks whether the given quoted expression raises an <see cref="ArgumentException"/> for the argument
+    /// with the given name.
     let raisesArgumentException argumentName quotedExpression =
         raisesWith<ArgumentException> quotedExpression (fun e -> <@ e.ParamName = argumentName @>)
+
+    /// Gets the symbol for the empty Update method of a component.
+    let emptyUpdateMethodSymbol = 
+        { Name = "Update"; ReturnType = None; Parameters = [] }
+
+    /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
+    let emptyComponentSymbol name = { 
+        Name = sprintf "%s::%s" TestCompilation.CompilationName name
+        UpdateMethod = emptyUpdateMethodSymbol
+        Fields = []
+        Methods = []
+        Subcomponents = [] 
+    } 
+
+    /// Gets a component object with the given name and component symbol, with no fields or subcomponents.
+    let emptyComponentObject name symbol = 
+        { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty }

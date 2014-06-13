@@ -40,9 +40,9 @@ type SymbolResolver = private {
     ComponentList : ComponentSymbol list
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
-    SubComponentMap : ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>
+    SubcomponentMap : ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>
     MethodMap : ImmutableDictionary<IMethodSymbol, MethodSymbol>
-    MethodMapBack : ImmutableDictionary<MethodSymbol, IMethodSymbol>
+    MethodCSharpMap : ImmutableDictionary<MethodSymbol, IMethodSymbol>
 }
     with
 
@@ -74,7 +74,7 @@ type SymbolResolver = private {
     /// Resolves the <see cref="SubcomponentSymbol"/> corresponding to the given C# subcomponent symbol.
     member this.ResolveSubcomponent (subcomponentSymbol : IFieldSymbol) =
         Requires.NotNull subcomponentSymbol "subcomponentSymbol"
-        match this.SubComponentMap.TryGetValue subcomponentSymbol with
+        match this.SubcomponentMap.TryGetValue subcomponentSymbol with
         | (result, symbol) when result -> symbol
         | _ -> invalidArg "subcomponentSymbol" "The given C# subcomponent symbol is unknown."
 
@@ -87,7 +87,7 @@ type SymbolResolver = private {
 
     /// Resolves the C# method symbol corresponding to the given metamodel <see cref="MethodSymbol"/>.
     member this.ResolveCSharpMethod (methodSymbol : MethodSymbol) =
-        match this.MethodMapBack.TryGetValue methodSymbol with
+        match this.MethodCSharpMap.TryGetValue methodSymbol with
         | (result, symbol) when result -> symbol
         | _ -> invalidArg "methodSymbol" "The given method symbol is unknown."
 
@@ -113,9 +113,9 @@ module SymbolTransformation =
         let componentListBuilder = ImmutableList.CreateBuilder<ComponentSymbol> ()
         let componentMapBuilder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ComponentSymbol> ()
         let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
-        let subComponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
+        let subcomponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
-        let methodMapBackBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
+        let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
 
         // Converts a C# type symbol to one of the supported metamodel type symbols
         let toTypeSymbol (csharpSymbol : ITypeSymbol) =
@@ -144,7 +144,7 @@ module SymbolTransformation =
             else if updateMethodCount = 1 then
                 let updateMethod = updateMethods |> Seq.head
                 methodMapBuilder.Add (updateMethod, methodSymbol)
-                methodMapBackBuilder.Add (methodSymbol, updateMethod)
+                methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
             methodSymbol
 
         // Create the symbols and mapping information for all methods of the component. We'll also build up a 
@@ -171,7 +171,7 @@ module SymbolTransformation =
                         Parameters = [ for parameter in csharpMethod.Parameters -> transformParameter parameter ]
                     }
                     methodMapBuilder.Add (csharpMethod, methodSymbol)
-                    methodMapBackBuilder.Add (methodSymbol, csharpMethod)
+                    methodCSharpMapBuilder.Add (methodSymbol, csharpMethod)
                     methodSymbol
             ]
 
@@ -191,7 +191,7 @@ module SymbolTransformation =
             [
                 for csharpField in fields -> 
                     let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name }
-                    subComponentMapBuilder.Add (csharpField, subComponentSymbol)
+                    subcomponentMapBuilder.Add (csharpField, subComponentSymbol)
                     subComponentSymbol
             ]
 
@@ -217,7 +217,7 @@ module SymbolTransformation =
             ComponentMap = componentMapBuilder.ToImmutable ()
             ComponentList = componentListBuilder |> List.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
-            SubComponentMap = subComponentMapBuilder.ToImmutable ()
+            SubcomponentMap = subcomponentMapBuilder.ToImmutable ()
             MethodMap = methodMapBuilder.ToImmutable ()
-            MethodMapBack = methodMapBackBuilder.ToImmutable ()
+            MethodCSharpMap = methodCSharpMapBuilder.ToImmutable ()
         }

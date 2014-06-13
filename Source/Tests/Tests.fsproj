@@ -51,9 +51,9 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <Compile Include="Modeling.fs" />
+    <Compile Include="TestCompilation.fs" />
     <Compile Include="TestHelpers.fs" />
-    <Compile Include="CSharp\TestCompilation.fs" />
+    <Compile Include="Modeling.fs" />
     <Compile Include="CSharp\Extensions\IFieldSymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Extensions\ITypeSymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensionsTests.fs" />

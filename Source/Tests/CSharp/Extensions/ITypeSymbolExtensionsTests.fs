@@ -28,7 +28,7 @@ open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
-open SafetySharp.Tests.CSharp
+open SafetySharp.Tests
 
 [<TestFixture>]
 module ``IsDerivedFrom method`` =

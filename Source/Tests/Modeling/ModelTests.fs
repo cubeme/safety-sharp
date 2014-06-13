@@ -222,7 +222,7 @@ module ``Components property`` =
 
         let name root = function
             | [] -> sprintf "Root%i" root
-            | fields -> sprintf "Root%i.%s" root <| String.Join (".", fields |> List.map fieldName)
+            | fields -> sprintf "Root%i.%s" root <| String.Join (".", fields |> List.map fsharpFieldName)
         
         model.Components |> List.map (fun component' -> component'.Name) =?
         [name 0 []; name 0 ["_component"]; name 1 []; name 1 ["_component1"]; name 1 ["_component2"]; name 1 ["_component2"; "_component"]] 
