@@ -37,7 +37,10 @@ module SemanticModelExtensions =
     let private getChooseMethodSymbol (semanticModel : SemanticModel) methodName specialType parameterCount =
         let methods = 
             semanticModel.Compilation.GetTypeByMetadataName(typeof<Choose>.FullName).GetMembers(methodName).OfType<IMethodSymbol>()
-            |> Seq.where (fun method' -> method'.Parameters.Length = parameterCount && method'.Parameters.[0].Type.SpecialType = specialType)
+            |> Seq.where (fun method' -> 
+                method'.Parameters.Length = parameterCount && 
+                (method'.Parameters.Length = 0 || method'.Parameters.[0].Type.SpecialType = specialType)
+            )
             |> List.ofSeq
 
         let raiseException prefix =

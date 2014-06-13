@@ -79,6 +79,7 @@
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
+    <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
     <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
     <Compile Include="Verification\SpinModelChecker.fs" />

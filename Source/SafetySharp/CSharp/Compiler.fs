@@ -65,7 +65,7 @@ module Compiler =
 
     /// Instantiates a <see cref="Diagnostic" /> for the error and logs it.
     let private logError identifier message =
-        Diagnostic.Create (DiagnosticsPrefix + identifier, DiagnosticsCategory, message, DiagnosticSeverity.Error, true, 0, true) 
+        Diagnostic.Create (DiagnosticsPrefix + identifier, DiagnosticsCategory, message, DiagnosticSeverity.Error, true, 0, false) 
         |> logDiagnostic 
 
     /// Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by
@@ -133,8 +133,9 @@ module Compiler =
 
     /// Generates the modeling compilation units and adds them to the compilation.
     let private generateModelingCompilationUnits (compilation : Compilation) =
-        let metadataCompilation = compilation
-        // TODO
+        let metadataCompilation = 
+            compilation
+            |> applyNormalizer<ChooseMethodNormalizer>
 
         outputCode metadataCompilation "obj/Model"
         addMetadata metadataCompilation compilation

@@ -27,19 +27,25 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-/// When the modeling-time SafetySharp assembly is replaced by the compile-time SafetySharp assembly, we have to change the 
-/// 'protected' modifier on overridden Component.Update methods to 'public', as the F# version is declared 'public'. If
-/// F# one day finally supports 'protected' visibility, this normalizer is rendered unnecessary.
-type UpdateMethodVisibilityNormalizer () =
+/// Normalizes all usages of the nondeterministic Choose methods.
+type ChooseMethodNormalizer () =
     inherit CSharpNormalizer ()
 
-    override this.VisitMethodDeclaration (declaration : MethodDeclarationSyntax) =
-        if declaration.IsUpdateMethod this.semanticModel then
-            let protectedModifier = declaration.Modifiers |> Seq.find (fun modifier -> modifier.ValueText = "protected")
-            let publicModifier = SyntaxFactory.Token (protectedModifier.LeadingTrivia, SyntaxKind.PublicKeyword, "public", 
-                                                      "public", protectedModifier.TrailingTrivia)
-
-            let modifiers = declaration.Modifiers.Replace (protectedModifier, publicModifier)
-            upcast (declaration.WithModifiers modifiers)
+    override this.VisitBinaryExpression (expression : BinaryExpressionSyntax) =
+        if expression.CSharpKind () <> SyntaxKind.SimpleAssignmentExpression then
+            upcast expression
+        else if expression.Right.CSharpKind () <> SyntaxKind.InvocationExpression then
+            upcast expression
         else
-            upcast declaration
+            let invocation = (expression.Right :?> InvocationExpressionSyntax)
+            let methodSymbol = this.semanticModel.GetSymbolInfo(invocation).Symbol :?> IMethodSymbol
+
+            if methodSymbol = null then
+                sprintf "Unable to determine symbol of invocation '%A'." invocation |> invalidOp
+
+            if methodSymbol = this.semanticModel.GetChooseBooleanMethodSymbol false then
+                upcast SyntaxFactory.ParseExpression(sprintf "Choose.Boolean(out %A)" expression.Left)
+                    .WithLeadingTrivia(expression.GetLeadingTrivia ())
+                    .WithTrailingTrivia(expression.GetTrailingTrivia ())
+            else
+                upcast expression
