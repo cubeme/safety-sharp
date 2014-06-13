@@ -38,14 +38,6 @@ open SafetySharp.Utilities
 /// The SafetySharp compiler that compiles C# code into a modeling assembly.
 module Compiler =
 
-    /// The prefix that is used for all diagnostic identifiers.
-    [<Literal>]
-    let DiagnosticsPrefix = "SS";
-
-    /// The category that is used for all diagnostics.
-    [<Literal>]
-    let DiagnosticsCategory = "SafetySharp";
-
     /// The version string of the compiler.
     [<Literal>]
     let Version = "0.0.1-beta";
@@ -65,7 +57,7 @@ module Compiler =
 
     /// Instantiates a <see cref="Diagnostic" /> for the error and logs it.
     let private logError identifier message =
-        Diagnostic.Create (DiagnosticsPrefix + identifier, DiagnosticsCategory, message, DiagnosticSeverity.Error, true, 0, false) 
+        Diagnostic.Create (DiagnosticIdentifiers.Prefix + identifier, DiagnosticIdentifiers.Category, message, DiagnosticSeverity.Error, true, 0, false) 
         |> logDiagnostic 
 
     /// Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by
@@ -190,7 +182,7 @@ module Compiler =
 
             let compilation = project.GetCompilationAsync().Result
 
-            if not <| diagnose compilation [] then
+            if not <| diagnose compilation [EnumMemberAnalyzer ()] then
                 -1
             else
                 compilation
