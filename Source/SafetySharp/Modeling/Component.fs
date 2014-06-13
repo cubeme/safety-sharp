@@ -30,6 +30,26 @@ open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
+/// Provides access to a non-public member of a component.
+type IInternalAccess =
+    /// Gets the accessed component instance.
+    abstract member Component : IComponent
+
+    /// Gets the name of the accessed member.
+    abstract member MemberName : string
+
+/// Provides access to a non-public member of a component.
+type InternalAccess<'T> internal (component' : IComponent, memberName : string) =
+    interface IInternalAccess with
+        /// Gets the accessed component instance.
+        override this.Component = component'
+
+        /// Gets the name of the accessed member.
+        override this.MemberName = memberName
+
+    static member op_Implicit (internalAccess : InternalAccess<'T>) =
+        Unchecked.defaultof<'T>
+
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>]
 type Component () =
@@ -58,6 +78,14 @@ type Component () =
     default this.Update () = ()
 
     interface IComponent
+
+    // ---------------------------------------------------------------------------------------------------------------------------------------
+    // Internal access
+    // ---------------------------------------------------------------------------------------------------------------------------------------
+
+    /// Allows access to a non-public member of the component.
+    member this.AccessInternal<'T> memberName =
+        InternalAccess<'T> (this, memberName)
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called during metadata initialization

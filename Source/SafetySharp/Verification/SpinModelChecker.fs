@@ -37,4 +37,4 @@ type SpinModelChecker =
         let configuration = ModelTransformation.Transform modelingAssembly.Compilation model
         ()
 
-    member this.Check () = ()
+    member this.Check (formula : LtlFormula) = ()

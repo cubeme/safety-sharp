@@ -64,6 +64,12 @@ module Compiler =
         | DiagnosticSeverity.Hidden -> sprintf "%A" diagnostic |> Log.Debug
         | _ -> Log.Die "Unknown C# diagnostic severity."
 
+    /// Logs all <paramref name="diagnostics" /> depending on their severities. The function returns
+    /// <c>false</c> when at least one error diagnostic has been reported.
+    let private logDiagnostics (diagnostics : Diagnostic seq) =
+        diagnostics |> Seq.iter logDiagnostic
+        diagnostics |> Seq.exists (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error) |> not
+
     /// Instantiates a <see cref="Diagnostic" /> for the error and logs it.
     let private logError identifier message =
         Diagnostic.Create (DiagnosticIdentifiers.Prefix + identifier, DiagnosticIdentifiers.Category, message, DiagnosticSeverity.Error, true, 0, false) 
@@ -99,18 +105,26 @@ module Compiler =
 
     /// Swaps out the referenced modeling-time SafetySharp assembly with the SafetySharp core assembly behind the
     /// modeler's back. This enables a couple of C# normalizations required for debugging, simulation and model
-    /// transformations while only surfacing a minimal and convenient API for model creation.
+    /// transformations while only surfacing a minimal and convenient API for model creation. The function returns
+    /// <c>None</c> when at least one error diagnostic has been reported after the assembly has been swapped.
     let private swapSafetySharpAssembly projectFile (compilation : Compilation) =
         let safetySharpAssembly = MetadataFileReference typeof<Component>.Assembly.Location
         let originalAssembly = getModelingAssemblyReference compilation projectFile
-        compilation.ReplaceReference (originalAssembly, safetySharpAssembly)
+        let compilation = compilation.ReplaceReference (originalAssembly, safetySharpAssembly)
+
+        if compilation.GetDiagnostics () |> logDiagnostics then
+            Some compilation
+        else
+            None
 
     /// Runs the given diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
     /// <c>false</c> when at least one error diagnostic has been reported.
     let private diagnose (compilation : Compilation) analyzers =
-        let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, analyzers, CancellationToken ()) |> Array.ofSeq
-        diagnostics |> Array.iter logDiagnostic
-        diagnostics |> Array.forall (fun diagnostic -> diagnostic.Severity <> DiagnosticSeverity.Error)
+        if compilation.GetDiagnostics () |> logDiagnostics then
+            let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, analyzers, CancellationToken ()) |> Array.ofSeq
+            diagnostics |> logDiagnostics
+        else
+            false
 
     /// Adds the metadata code to the simulation assembly.
     let private addMetadata (metadataCompilation : Compilation) (simulationCompilation : Compilation) =
@@ -194,9 +208,10 @@ module Compiler =
             if not <| diagnose compilation diagnosticAnalyzers then
                 -1
             else
-                compilation
-                |> normalizeBeforeSwap
-                |> swapSafetySharpAssembly projectFile
-                |> generateModelingCompilationUnits
-                |> normalizeSimulationCode
-                |> emit project.OutputFilePath
+                match compilation |> normalizeBeforeSwap |> swapSafetySharpAssembly projectFile with
+                | None -> -1
+                | Some compilation -> 
+                    compilation
+                    |> generateModelingCompilationUnits
+                    |> normalizeSimulationCode
+                    |> emit project.OutputFilePath

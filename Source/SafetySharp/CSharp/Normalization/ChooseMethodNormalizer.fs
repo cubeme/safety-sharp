@@ -39,7 +39,8 @@ type ChooseMethodNormalizer () =
             upcast expression
         else
             let invocation = (expression.Right :?> InvocationExpressionSyntax)
-            let methodSymbol = this.semanticModel.GetSymbolInfo(invocation).Symbol :?> IMethodSymbol
+            let symbolInfo = this.semanticModel.GetSymbolInfo(invocation)
+            let methodSymbol = symbolInfo.Symbol :?> IMethodSymbol
 
             if methodSymbol = null then
                 sprintf "Unable to determine symbol of invocation '%A'." invocation |> invalidOp

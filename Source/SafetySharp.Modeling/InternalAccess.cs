@@ -28,7 +28,7 @@ namespace SafetySharp.Modeling
 	/// 
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public sealed class InternalAccess<T>
+	public abstract class InternalAccess<T>
 	{
 		/// <summary>
 		/// 
