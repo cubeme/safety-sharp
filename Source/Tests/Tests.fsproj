@@ -68,6 +68,7 @@
     <Compile Include="Modeling\ModelTests.fs" />
     <None Include="app.config" />
     <None Include="packages.config" />
+    <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>

@@ -34,19 +34,18 @@ open SafetySharp.Utilities
 module ArgumentExtensions =
     type ArgumentSyntax with
 
-        /// Gets the <see cref="IMethodSymbol" /> of the <see cref="InvocationExpressionSyntax" /> that contains
-        /// <paramref name="argument" />.
+        /// Gets the <see cref="IMethodSymbol" /> of the method call expression that contains the argument.
         member this.GetMethodSymbol (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
 
-            let invocationExpression = this.GetInvocationExpression ()
-            match semanticModel.GetSymbolInfo(invocationExpression :> ExpressionSyntax).Symbol with
+            let expression = this.GetMethodCallExpression ()
+            match semanticModel.GetSymbolInfo(expression :> ExpressionSyntax).Symbol with
             | :? IMethodSymbol as methodSymbol -> methodSymbol
-            | _ -> sprintf "Unable to determine symbol of invocation '%A'." invocationExpression |> invalidOp
+            | _ -> sprintf "Unable to determine symbol of method call '%A'." expression |> invalidOp
 
-        ///  Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of an
-        ///  <see cref="InvocationExpressionSyntax" /> has the attribute of type <typeparamref name="T" /> applied.
+        ///  Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
+        ///  method call has the attribute of type <typeparamref name="T" /> applied.
         member this.ParameterHasAttribute<'T when 'T :> Attribute> (semanticModel : SemanticModel) =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
@@ -55,19 +54,20 @@ module ArgumentExtensions =
             this.GetParameterSymbol(semanticModel).GetAttributes()
             |> Seq.exists (fun attribute -> attribute.AttributeClass.Equals attributeSymbol)
 
-        /// Gets the <see cref="InvocationExpressionSyntax" /> that contains <paramref name="argument" />.
-        member private this.GetInvocationExpression () =
+        /// Gets the <see cref="InvocationExpressionSyntax" /> or the <see cref="ObjectCreationExpressionSyntax" /> 
+        /// that contains the argument.
+        member private this.GetMethodCallExpression () =
             Requires.NotNull this "this"
 
-            let rec getParentInvocationExpression (node : SyntaxNode) =
+            let rec getMethodCallExpression (node : SyntaxNode) =
                 match node with
-                | :? InvocationExpressionSyntax as parent -> Some parent
-                | :? ObjectCreationExpressionSyntax -> "The argument is part of an object creation expression." |> invalidOp
+                | :? InvocationExpressionSyntax as parent -> parent :> ExpressionSyntax |> Some
+                | :? ObjectCreationExpressionSyntax as parent -> parent :> ExpressionSyntax |> Some
                 | null -> None
-                | _ -> getParentInvocationExpression node.Parent
+                | _ -> getMethodCallExpression node.Parent
 
-            match getParentInvocationExpression this.Parent with
-            | None -> sprintf "Unable to find the invocation expression containing argument '%A'." this |> invalidOp
+            match getMethodCallExpression this.Parent with
+            | None -> sprintf "Unable to find the method call expression containing argument '%A'." this |> invalidOp
             | Some parent -> parent
 
         /// Gets the <see cref="IParameterSymbol" /> corresponding to <paramref name="argument" />.
@@ -77,7 +77,12 @@ module ArgumentExtensions =
             Requires.NotNull this "this"
             Requires.NotNull semanticModel "semanticModel"
 
-            let invocationExpression = this.GetInvocationExpression ()
+            let arguments =
+                match this.GetMethodCallExpression () with
+                | :? InvocationExpressionSyntax as invocation -> invocation.ArgumentList.Arguments
+                | :? ObjectCreationExpressionSyntax as objectCreation -> objectCreation.ArgumentList.Arguments
+                | _ -> "Unknown method call." |> invalidOp
+
             let methodSymbol = this.GetMethodSymbol semanticModel
 
             if this.NameColon <> null then
@@ -90,9 +95,9 @@ module ArgumentExtensions =
                             lastParameter
                         else
                             invalidOp "There are more arguments than parameters."
-                    else if invocationExpression.ArgumentList.Arguments.[index].Equals this then
+                    else if arguments.[index].Equals this then
                         methodSymbol.Parameters.[index]
-                    else if index >= invocationExpression.ArgumentList.Arguments.Count then
+                    else if index >= arguments.Count then
                         sprintf "Unable to determine parameter symbol for argument '%A'." this |> invalidOp
                     else
                         findParameter <| index + 1

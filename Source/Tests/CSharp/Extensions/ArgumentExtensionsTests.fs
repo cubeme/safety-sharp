@@ -38,6 +38,10 @@ module ArgumentExtentionsTestHelper =
     let private compilation = TestCompilation ("
         class X
         {
+            public X(int a, [LiftExpression] int b)
+            {
+            }
+
             public void M(int a, [LiftExpression] int b, int c)
             {
             }
@@ -51,19 +55,26 @@ module ArgumentExtentionsTestHelper =
                 M(1, 2, 3 + 4);
                 N(1, 2, 3, 4);
                 M(c: 5, a: 1, b: 3);
+                new X(3, 6);
+                new X(b: 7, a: 11);
             }
     }")
 
     let methodM = compilation.FindMethodSymbol "X" "M"
     let methodN = compilation.FindMethodSymbol "X" "N"
+    let constructorSymbol = compilation.FindClassSymbol("X").Constructors.[0]
 
     let invocations = compilation.SyntaxRoot.Descendants<InvocationExpressionSyntax>().ToArray();
+    let creations = compilation.SyntaxRoot.Descendants<ObjectCreationExpressionSyntax>().ToArray();
     let semanticModel = compilation.SemanticModel;
 
 [<TestFixture>]
 module ``ParameterHasAttribute method`` =
     let parameterHasAttribute<'T when 'T :> Attribute> invocationIndex argumentIndex =
         invocations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].ParameterHasAttribute<'T> semanticModel
+
+    let constructorParameterHasAttribute<'T when 'T :> Attribute> invocationIndex argumentIndex =
+        creations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].ParameterHasAttribute<'T> semanticModel
 
     [<Test>]
     let ``throws when semantic model is null`` () =
@@ -79,6 +90,9 @@ module ``ParameterHasAttribute method`` =
         parameterHasAttribute<LiftExpressionAttribute> 2 0 =? false
         parameterHasAttribute<LiftExpressionAttribute> 2 1 =? false
 
+        constructorParameterHasAttribute<LiftExpressionAttribute> 0 0 =? false
+        constructorParameterHasAttribute<LiftExpressionAttribute> 1 1 =? false
+
     [<Test>]
     let ``returns false when different attribute is applied`` () =
         parameterHasAttribute<SealedAttribute> 0  0 =? false
@@ -88,6 +102,9 @@ module ``ParameterHasAttribute method`` =
         
         parameterHasAttribute<SealedAttribute> 2  0 =? false
         parameterHasAttribute<SealedAttribute> 2  2 =? false
+
+        constructorParameterHasAttribute<SealedAttribute> 0 1 =? false
+        constructorParameterHasAttribute<SealedAttribute> 1 0 =? false
 
     [<Test>]
     let ``returns true when the attribute is indeed applied`` () =
@@ -99,10 +116,16 @@ module ``ParameterHasAttribute method`` =
                                                          
         parameterHasAttribute<LiftExpressionAttribute> 2  2 =? true
 
+        constructorParameterHasAttribute<LiftExpressionAttribute> 0 1 =? true
+        constructorParameterHasAttribute<LiftExpressionAttribute> 1 0 =? true
+
 [<TestFixture>]
 module ``GetMethodSymbol method`` =
-    let checkMethodSymbol invocationIndex argumentIndex =
+    let getMethodSymbol invocationIndex argumentIndex =
         invocations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].GetMethodSymbol(semanticModel)
+
+    let getConstructorSymbol invocationIndex argumentIndex =
+        creations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].GetMethodSymbol(semanticModel)
 
     [<Test>]
     let ``throws when semantic model is null`` () =
@@ -110,15 +133,20 @@ module ``GetMethodSymbol method`` =
 
     [<Test>]
     let ``returns correct method symbol`` () =
-        checkMethodSymbol 0  0 =? methodM
-        checkMethodSymbol 0  1 =? methodM
-        checkMethodSymbol 0  2 =? methodM
+        getMethodSymbol 0  0 =? methodM
+        getMethodSymbol 0  1 =? methodM
+        getMethodSymbol 0  2 =? methodM
                                
-        checkMethodSymbol 1  0 =? methodN
-        checkMethodSymbol 1  1 =? methodN
-        checkMethodSymbol 1  2 =? methodN
-        checkMethodSymbol 1  3 =? methodN
+        getMethodSymbol 1  0 =? methodN
+        getMethodSymbol 1  1 =? methodN
+        getMethodSymbol 1  2 =? methodN
+        getMethodSymbol 1  3 =? methodN
                                
-        checkMethodSymbol 2  0 =? methodM
-        checkMethodSymbol 2  1 =? methodM
-        checkMethodSymbol 2  2 =? methodM
+        getMethodSymbol 2  0 =? methodM
+        getMethodSymbol 2  1 =? methodM
+        getMethodSymbol 2  2 =? methodM
+
+        getConstructorSymbol 0 0 =? constructorSymbol
+        getConstructorSymbol 0 1 =? constructorSymbol
+        getConstructorSymbol 1 0 =? constructorSymbol
+        getConstructorSymbol 1 1 =? constructorSymbol

@@ -85,6 +85,7 @@
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
+    <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
     <Compile Include="CSharp\Transformation\SymbolResolver.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformation.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformation.fs" />
