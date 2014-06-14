@@ -31,7 +31,7 @@ open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
 /// Provides access to a non-public member of a component.
-type IInternalAccess =
+type IMemberAccess =
     /// Gets the accessed component instance.
     abstract member Component : IComponent
 
@@ -39,7 +39,7 @@ type IInternalAccess =
     abstract member MemberName : string
 
 /// Provides access to a non-public member of a component.
-type InternalAccess<'T> internal (component' : IComponent, memberName : string) =
+type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
     let componentType = component'.GetType ()
     let bindingFlags = BindingFlags.Instance ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Public ||| BindingFlags.NonPublic
     let fieldInfo = componentType.GetField (memberName, bindingFlags)
@@ -55,18 +55,18 @@ type InternalAccess<'T> internal (component' : IComponent, memberName : string) 
     do if memberType <> typeof<'T> then
         sprintf "Expected member of type '%s' but found member with type '%s'." memberType.FullName typeof<'T>.FullName |> invalidOp
 
-    interface IInternalAccess with
+    interface IMemberAccess with
         /// Gets the accessed component instance.
         override this.Component = component'
 
         /// Gets the name of the accessed member.
         override this.MemberName = memberName
 
-    /// Gets the value of the accessed member.
-    static member op_Implicit (internalAccess : InternalAccess<'T>) =
-        internalAccess.Value
+    /// Gets the current value of the accessed member.
+    static member op_Implicit (access : MemberAccess<'T>) =
+        access.Value
 
-    /// Gets the value of the accessed member.
+    /// Gets the current value of the accessed member.
     member this.Value = 
         if fieldInfo <> null then
             fieldInfo.GetValue component' :?> 'T
@@ -107,9 +107,9 @@ type Component () =
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
     /// Allows access to a non-public member of the component.
-    member this.AccessInternal<'T> memberName =
+    member this.Access<'T> memberName =
         Requires.NotNullOrWhitespace memberName "memberName"
-        InternalAccess<'T> (this, memberName)
+        MemberAccess<'T> (this, memberName)
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called during metadata initialization

@@ -26,8 +26,8 @@
 
 				SetPartitions(c1, c2, t, lb);
 
-				var value = c1.AccessInternal<bool>("_value");
-				var value2 = c1.AccessInternal<bool>("_value");
+				var value = c1.Access<bool>("_value");
+				var value2 = c1.Access<bool>("_value");
 
 				bool b = value;
 				Hazard = Ltl.Globally(value).Implies(Ltl.Globally(!value == false || value2 == true || lb.Triggered && t.boolean2._value));

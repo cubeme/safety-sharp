@@ -41,7 +41,7 @@
     <Compile Include="LtlFormula.cs" />
     <Compile Include="Ltl.cs" />
     <Compile Include="Component.cs" />
-    <Compile Include="InternalAccess.cs" />
+    <Compile Include="MemberAccess.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="OverflowBehavior.cs" />
     <Compile Include="SpinModelChecker.cs" />

@@ -53,8 +53,8 @@ namespace SafetySharp.Modeling
 		/// </summary>
 		/// <typeparam name="T">The type of the accessed member.</typeparam>
 		/// <param name="memberName">The name of the member that should be accessed.</param>
-		/// <returns>Returns an <see cref="InternalAccess{T}" /> instance that can be used to access the non-public member.</returns>
-		public InternalAccess<T> AccessInternal<T>(string memberName)
+		/// <returns>Returns an <see cref="MemberAccess{T}" /> instance that can be used to access the non-public member.</returns>
+		public MemberAccess<T> Access<T>(string memberName)
 		{
 			throw new NotSupportedException();
 		}

@@ -288,39 +288,39 @@ module ``Subcomponents property`` =
 // These tests assume that the F# compile generates a property named 'x' and a backing field with
 // some internal name for a 'val x : type' expression within a class.
 [<TestFixture>]
-module ``AccessInternal method`` =
+module ``Access method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let component' = EmptyComponent ()
-        raisesArgumentNullException "memberName" <@ component'.AccessInternal<bool> null @>
+        raisesArgumentNullException "memberName" <@ component'.Access<bool> null @>
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = EmptyComponent ()
-        raisesArgumentException "memberName" <@ component'.AccessInternal<bool> "" @>
+        raisesArgumentException "memberName" <@ component'.Access<bool> "" @>
 
     [<Test>]
     let ``throws when no member with the given name exists`` () =
         let component' = EmptyComponent ()
-        raises<InvalidOperationException> <@ component'.AccessInternal<bool> "xyz" @>
+        raises<InvalidOperationException> <@ component'.Access<bool> "xyz" @>
 
     [<Test>]
     let ``throws when field with given name exists but types differ`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> <@ component'.AccessInternal<bool> (fsharpFieldName "_field") @>
+        raises<InvalidOperationException> <@ component'.Access<bool> (fsharpFieldName "_field") @>
 
         let component' = FieldComponent<int, bool> ()
-        raises<InvalidOperationException> <@ component'.AccessInternal<bool> (fsharpFieldName "_field1") @>
-        raises<InvalidOperationException> <@ component'.AccessInternal<int> (fsharpFieldName "_field2") @>
+        raises<InvalidOperationException> <@ component'.Access<bool> (fsharpFieldName "_field1") @>
+        raises<InvalidOperationException> <@ component'.Access<int> (fsharpFieldName "_field2") @>
 
     [<Test>]
     let ``throws when property with given name exists but types differ`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> <@ component'.AccessInternal<bool> "_field" @>
+        raises<InvalidOperationException> <@ component'.Access<bool> "_field" @>
 
         let component' = FieldComponent<int, bool> ()
-        raises<InvalidOperationException> <@ component'.AccessInternal<bool> "_field1" @>
-        raises<InvalidOperationException> <@ component'.AccessInternal<int> "_field2" @>
+        raises<InvalidOperationException> <@ component'.Access<bool> "_field1" @>
+        raises<InvalidOperationException> <@ component'.Access<int> "_field2" @>
 
     type SetterOnlyComponent () =
         inherit Component ()
@@ -329,54 +329,54 @@ module ``AccessInternal method`` =
     [<Test>]
     let ``throws when property has no getter`` () =
         let component' = SetterOnlyComponent ()
-        raises<InvalidOperationException> <@ component'.AccessInternal<int> "X" @>
+        raises<InvalidOperationException> <@ component'.Access<int> "X" @>
 
     [<Test>]
     let ``gets field value when integer field with given name exists`` () =
         let component' = FieldComponent<int> 17
-        component'.AccessInternal<int>(fsharpFieldName "_field").Value =? 17
+        component'.Access<int>(fsharpFieldName "_field").Value =? 17
 
     [<Test>]
     let ``gets field value when Boolean field with given name exists`` () =
         let component' = FieldComponent<bool> true
-        component'.AccessInternal<bool>(fsharpFieldName "_field").Value =? true
+        component'.Access<bool>(fsharpFieldName "_field").Value =? true
 
     [<Test>]
     let ``gets field value when decimal field with given name exists`` () =
         let component' = FieldComponent<decimal> 17.4m
-        component'.AccessInternal<decimal>(fsharpFieldName "_field").Value =? 17.4m
+        component'.Access<decimal>(fsharpFieldName "_field").Value =? 17.4m
 
     [<Test>]
     let ``gets property value when integer field with given name exists`` () =
         let component' = FieldComponent<int> 17
-        component'.AccessInternal<int>("_field").Value =? 17
+        component'.Access<int>("_field").Value =? 17
 
     [<Test>]
     let ``gets property value when Boolean field with given name exists`` () =
         let component' = FieldComponent<bool> true
-        component'.AccessInternal<bool>("_field").Value =? true
+        component'.Access<bool>("_field").Value =? true
 
     [<Test>]
     let ``gets property value when decimal field with given name exists`` () =
         let component' = FieldComponent<decimal> 17.4m
-        component'.AccessInternal<decimal>("_field").Value =? 17.4m
+        component'.Access<decimal>("_field").Value =? 17.4m
 
     [<Test>]
     let ``gets field values when component has more than one field`` () =
         let component' = FieldComponent<int, bool> (47, true)
-        component'.AccessInternal<int>(fsharpFieldName "_field1").Value =? 47
-        component'.AccessInternal<bool>(fsharpFieldName  "_field2").Value =? true
+        component'.Access<int>(fsharpFieldName "_field1").Value =? 47
+        component'.Access<bool>(fsharpFieldName  "_field2").Value =? true
 
     [<Test>]
     let ``gets property values when component has more than one property`` () =
         let component' = FieldComponent<int, bool> (47, true)
-        component'.AccessInternal<int>("_field1").Value =? 47
-        component'.AccessInternal<bool>("_field2").Value =? true
+        component'.Access<int>("_field1").Value =? 47
+        component'.Access<bool>("_field2").Value =? true
 
     [<Test>]
     let ``gets value of public property`` () =
         let component' = FieldComponent<decimal> 17.4m
-        component'.AccessInternal<decimal>("Field").Value =? 17.4m
+        component'.Access<decimal>("Field").Value =? 17.4m
 
     type InheritedComponent =
         inherit FieldComponent<int>
@@ -386,7 +386,7 @@ module ``AccessInternal method`` =
     [<Test>]
     let ``gets value of inherited and non-inherited fields and properties`` () =
         let component' = InheritedComponent ()
-        component'.AccessInternal<int>(fsharpFieldName "_field").Value =? 44
-        component'.AccessInternal<int>(fsharpFieldName "_otherField").Value =? 15
-        component'.AccessInternal<int>("_field").Value =? 44
-        component'.AccessInternal<int>("_otherField").Value =? 15
+        component'.Access<int>(fsharpFieldName "_field").Value =? 44
+        component'.Access<int>(fsharpFieldName "_otherField").Value =? 15
+        component'.Access<int>("_field").Value =? 44
+        component'.Access<int>("_otherField").Value =? 15

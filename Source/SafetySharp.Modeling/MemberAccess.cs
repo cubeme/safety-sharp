@@ -25,17 +25,17 @@ namespace SafetySharp.Modeling
 	using System;
 
 	/// <summary>
-	/// 
+	///     Provides access to a non-public member of a component.
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public abstract class InternalAccess<T>
+	/// <typeparam name="T">The type of the accessed member.</typeparam>
+	public abstract class MemberAccess<T>
 	{
 		/// <summary>
-		/// 
+		///     Gets the current. value of the accessed member.
 		/// </summary>
-		/// <param name="access"></param>
-		/// <returns></returns>
-		public static implicit operator T(InternalAccess<T> access)
+		/// <param name="access">The member access the value should be retrieved for.</param>
+		/// <returns>Returns the current value of the accessed member.</returns>
+		public static implicit operator T(MemberAccess<T> access)
 		{
 			throw new NotSupportedException();
 		}
