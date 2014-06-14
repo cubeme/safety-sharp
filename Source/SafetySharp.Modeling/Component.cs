@@ -39,7 +39,17 @@ namespace SafetySharp.Modeling
 		}
 
 		/// <summary>
-		///     Adds metadata about a field of the component to the <see cref="Component" /> instance.
+		///     Sets the initial values of a field of the component instance.
+		/// </summary>
+		/// <param name="field">[LiftExpression] A field of the component.</param>
+		/// <param name="initialValues">The initial values of the field.</param>
+		protected void SetInitialValues<T>([LiftExpression] T field, params T[] initialValues)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Sets the initial values of a field of the component instance.
 		/// </summary>
 		/// <param name="field">An expression of the form <c>() => field</c> that referes to a field of the component.</param>
 		/// <param name="initialValues">The initial values of the field.</param>

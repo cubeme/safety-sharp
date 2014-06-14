@@ -115,7 +115,7 @@ type Component () =
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Adds metadata about a field of the component to the <see cref="Component" /> instance.
+    /// Sets the initial values of a field of the component instance.
     member this.SetInitialValues<'T> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
         Requires.NotNull field "field"
         Requires.NotNull initialValues "initialValues"

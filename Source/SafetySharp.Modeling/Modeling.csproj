@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="Choose.cs" />
     <Compile Include="IComponent.cs" />
+    <Compile Include="LiftExpressionAttribute.cs" />
     <Compile Include="LtlFormula.cs" />
     <Compile Include="Ltl.cs" />
     <Compile Include="Component.cs" />

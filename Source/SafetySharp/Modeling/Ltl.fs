@@ -97,30 +97,3 @@ type Ltl =
         Requires.NotNull rightOperand "rightOperand"
 
         LtlFormula (BinaryFormula(StateFormula leftOperand, BinaryFormulaOperator.Until, StateFormula rightOperand))
-
-    /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
-    static member Next ([<LiftExpression>] operand : bool) : LtlFormula =
-        NotSupportedException () |> raise
-
-    /// Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
-    static member Finally ([<LiftExpression>] operand : bool) : LtlFormula =
-        NotSupportedException () |> raise
-
-    /// Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
-    static member Globally ([<LiftExpression>] operand : bool) : LtlFormula =
-        NotSupportedException () |> raise
-
-    /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
-    static member Until ([<LiftExpression>] leftOperand : bool, rightOperand : Expression<Func<bool>>) : LtlFormula =
-        NotSupportedException () |> raise
-
-    /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
-    static member Until (leftOperand : Expression<Func<bool>>, [<LiftExpression>] rightOperand : bool) : LtlFormula =
-        NotSupportedException () |> raise
-
-    /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
-    static member Until ([<LiftExpression>] leftOperand : bool, [<LiftExpression>] rightOperand : bool) : LtlFormula = 
-        NotSupportedException () |> raise
