@@ -35,11 +35,11 @@ module ModelingShared =
     let fsharpFieldName name = name + "@"
 
     /// Creates a Linq expression that accesses the field with the given name within the component instance.
-    let createExpression<'T> (component' : Component) field = 
-        let fieldInfo = component'.GetType().GetField(fsharpFieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
+    let createFieldExpression<'T> (o : obj) field = 
+        let fieldInfo = o.GetType().GetField(fsharpFieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
         if fieldInfo = null then
-            sprintf "Unable to find field '%s' in '%s'." field (component'.GetType().FullName) |> invalidOp
-        Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(component'), fieldInfo))
+            sprintf "Unable to find field '%s' in '%s'." field (o.GetType().FullName) |> invalidOp
+        Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(o), fieldInfo))
 
 type EmptyComponent () =
     inherit Component ()
@@ -54,12 +54,21 @@ type FieldComponent<'T> =
     new () = { _field = Unchecked.defaultof<'T> }
 
     new (value : 'T) as this = { _field = Unchecked.defaultof<'T> } then
-        this.SetInitialValues (createExpression<'T> this "_field", value)
+        this.SetInitialValues (createFieldExpression<'T> this "_field", value)
 
     new (value1 : 'T, value2 : 'T) as this = { _field = Unchecked.defaultof<'T> } then
-        this.SetInitialValues (createExpression<'T> this "_field", value1, value2)
+        this.SetInitialValues (createFieldExpression<'T> this "_field", value1, value2)
 
     member this.Field = this._field
+
+type InheritedComponent =
+    inherit FieldComponent<int>
+    val private _otherField : int
+
+    new () = { inherit FieldComponent<int> 0; _otherField = 0 }
+    new (field, otherField) = { inherit FieldComponent<int> (field); _otherField = otherField }
+
+    member this.OtherField = this._otherField
 
 type FieldComponent<'T1, 'T2> =
     inherit Component 
@@ -71,13 +80,13 @@ type FieldComponent<'T1, 'T2> =
 
     new (value1 : 'T1, value2 : 'T2) as this = 
         { _field1 = Unchecked.defaultof<'T1>; _field2 = Unchecked.defaultof<'T2> } then
-        this.SetInitialValues (createExpression<'T1> this "_field1", value1)
-        this.SetInitialValues (createExpression<'T2> this "_field2", value2)
+        this.SetInitialValues (createFieldExpression<'T1> this "_field1", value1)
+        this.SetInitialValues (createFieldExpression<'T2> this "_field2", value2)
 
     new (value1a : 'T1, value1b : 'T1, value2a : 'T2, value2b : 'T2) as this = 
         { _field1 = Unchecked.defaultof<'T1>; _field2 = Unchecked.defaultof<'T2> } then
-        this.SetInitialValues (createExpression<'T1> this "_field1", value1a, value1b)
-        this.SetInitialValues (createExpression<'T2> this "_field2", value2a, value2b)
+        this.SetInitialValues (createFieldExpression<'T1> this "_field1", value1a, value1b)
+        this.SetInitialValues (createFieldExpression<'T2> this "_field2", value2a, value2b)
         
 type OneSubcomponent =
     inherit Component

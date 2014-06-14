@@ -120,16 +120,20 @@ type Component () =
         Requires.NotNull field "field"
         Requires.NotNull initialValues "initialValues"
         Requires.ArgumentSatisfies (initialValues.Length > 0) "initialValues" "At least one value must be provided."
-        Requires.OfType<MemberExpression> field.Body "field" "Expected a lambda expression of the form '() => field'."
+        Requires.OfType<MemberExpression> field.Body "field" "Expected a reference to a field of the component."
         requiresNotSealed ()
 
         match (field.Body :?> MemberExpression).Member with
         | :? FieldInfo as fieldInfo ->
+            // Check if the field is actually defined or inherited by the component
+            if not (fieldInfo.DeclaringType.IsAssignableFrom <| this.GetType ()) then
+                Requires.ArgumentSatisfies false "field" "Expected a reference to a field of the component."
+
             fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
 
             let random = Random();
             fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
-        | _ -> Requires.ArgumentSatisfies false "field" "Expected a lambda expression of the form '() => field'."
+        | _ -> Requires.ArgumentSatisfies false "field" "Expected a reference to a field of the component."
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata (?componentName : string) =

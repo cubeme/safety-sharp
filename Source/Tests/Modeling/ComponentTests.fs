@@ -39,12 +39,21 @@ open SafetySharp.Tests.CSharp
 [<TestFixture>]
 module ``SetInitialValues method`` =
     [<Test>]
-    let ``sets the value of the field`` () =
+    let ``sets the value of field declared by the component`` () =
         let component' = FieldComponent<int> 3
         component'.Field =? 3
 
         let component' = FieldComponent<int> (3, 182)
         (component'.Field = 3 || component'.Field = 182) =? true
+
+    [<Test>]
+    let ``sets the value of inherited and non-inherited fields`` () =
+        let component' = InheritedComponent ()
+        component'.SetInitialValues (createFieldExpression<int> component' "_field", 51)
+        component'.SetInitialValues (createFieldExpression<int> component' "_otherField", 122)
+
+        component'.Field =? 51
+        component'.OtherField =? 122
 
     [<Test>]
     let ``throws when field expression is null`` () =
@@ -54,18 +63,26 @@ module ``SetInitialValues method`` =
     [<Test>]
     let ``throws when initial values is null`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentNullException "initialValues" <@ component'.SetInitialValues (createExpression<int> component' "_field", null) @>
+        raisesArgumentNullException "initialValues" <@ component'.SetInitialValues (createFieldExpression<int> component' "_field", null) @>
 
     [<Test>]
     let ``throws when initial values is empty`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentException "initialValues" <@ component'.SetInitialValues (createExpression<int> component' "_field") @>
+        raisesArgumentException "initialValues" <@ component'.SetInitialValues (createFieldExpression<int> component' "_field") @>
 
+    [<Test>]
     let ``throws when the component metadata has already been finalized`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<InvalidOperationException> <@ component'.SetInitialValues(createExpression<int> component' "_field", 1) @>
+        raises<InvalidOperationException> <@ component'.SetInitialValues (createFieldExpression<int> component' "_field", 1) @>
+
+    [<Test>]
+    let ``throws when field does not reference a field of the component`` () =
+        let component' = InheritedComponent ()
+        let otherComponent = FieldComponent<int, int> ()
+
+        raisesArgumentException "field" <@ component'.SetInitialValues (createFieldExpression<int> otherComponent "_field1", 17)  @>
 
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
@@ -378,14 +395,9 @@ module ``Access method`` =
         let component' = FieldComponent<decimal> 17.4m
         component'.Access<decimal>("Field").Value =? 17.4m
 
-    type InheritedComponent =
-        inherit FieldComponent<int>
-        val private _otherField : int
-        new () = { inherit FieldComponent<int> 44; _otherField = 15 }
-
     [<Test>]
     let ``gets value of inherited and non-inherited fields and properties`` () =
-        let component' = InheritedComponent ()
+        let component' = InheritedComponent (44, 15)
         component'.Access<int>(fsharpFieldName "_field").Value =? 44
         component'.Access<int>(fsharpFieldName "_otherField").Value =? 15
         component'.Access<int>("_field").Value =? 44
