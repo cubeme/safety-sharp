@@ -34,7 +34,7 @@ open SafetySharp.Utilities
 open SafetySharp.CSharp.Extensions
 
 /// Checks for unsupported C# features within a component declaration.
-type internal ComponentVisitor (emitDiagnostic) =
+type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     inherit CSharpSyntaxWalker ()
 
     /// Generates a user-friendly description for <paramref name="syntaxKind" />.
@@ -104,7 +104,7 @@ type ComponentSyntaxAnalyzer () as this =
             let emitDiagnostic (node : SyntaxNode) (description : string) = 
                 addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, node.GetLocation(), description))
 
-            let componentVisitor = ComponentVisitor emitDiagnostic
+            let componentVisitor = ComponentSyntaxAnalyzerVisitor emitDiagnostic
 
             semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
             |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)

@@ -28,13 +28,11 @@ open SafetySharp.CSharp
 open SafetySharp.CSharp.Transformation
 
 [<Sealed>]
-type SpinModelChecker =
-    new (model : Model) = {} then
-        Requires.NotNull model "model"
+type SpinModelChecker (model : Model) =
+    do Requires.NotNull model "model"
 
-        model.FinalizeMetadata ()
-        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
-        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model
-        ()
+    do model.FinalizeMetadata ()
+    let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
+    let configuration = ModelTransformation.Transform modelingAssembly.Compilation model
 
     member this.Check (formula : LtlFormula) = ()

@@ -28,13 +28,13 @@ open System
 module internal Requires =
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
-    let inline NotNull<'T when 'T : null> (argument : 'T) argumentName =
+    let NotNull<'T when 'T : null> (argument : 'T) argumentName =
         if obj.ReferenceEquals(argument, null) then 
             nullArg argumentName
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given string is <c>null</c> or a
     /// <see cref="System.ArgumentException"/> if the given string consists of whitespace only.
-    let inline NotNullOrWhitespace argument argumentName =
+    let NotNullOrWhitespace argument argumentName =
         NotNull argumentName "argumentName"
 
         if String.IsNullOrWhiteSpace "argumentName" then
@@ -47,14 +47,14 @@ module internal Requires =
             invalidArg argumentName "The given string cannot consist of whitespace only."
 
     /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>false</c>.
-    let inline ArgumentSatisfies condition argumentName description =
+    let ArgumentSatisfies condition argumentName description =
         NotNullOrWhitespace argumentName "argumentName"
         NotNullOrWhitespace description "description"
         if not condition then
             invalidArg argumentName description
 
     /// Throws an <see cref="ArgumentException" /> if <paramref name="argument" /> is not of type <typeparamref name="T" />.
-    let inline OfType<'T when 'T : not struct> (argument : obj) argumentName description =
+    let OfType<'T when 'T : not struct> (argument : obj) argumentName description =
         NotNull argument "argument"
         NotNullOrWhitespace argumentName "argumentName"
         NotNullOrWhitespace description "description"
@@ -64,7 +64,7 @@ module internal Requires =
             |> invalidArg argumentName
 
     /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
-    let inline That condition description =
+    let That condition description =
         NotNullOrWhitespace description "description"
         if not condition then
             invalidOp description

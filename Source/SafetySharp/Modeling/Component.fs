@@ -30,6 +30,10 @@ open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
+/// Represents a marker interface for components.
+[<AllowNullLiteral>]
+type IComponent = interface end
+
 /// Provides access to a non-public member of a component.
 type IMemberAccess =
     /// Gets the accessed component instance.
