@@ -40,6 +40,21 @@ type IInternalAccess =
 
 /// Provides access to a non-public member of a component.
 type InternalAccess<'T> internal (component' : IComponent, memberName : string) =
+    let componentType = component'.GetType ()
+    let bindingFlags = BindingFlags.Instance ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Public ||| BindingFlags.NonPublic
+    let fieldInfo = componentType.GetField (memberName, bindingFlags)
+    let propertyInfo = componentType.GetProperty (memberName, bindingFlags)
+
+    do if fieldInfo = null && propertyInfo = null then
+        sprintf "Component of type '%s' has no member with name '%s'." componentType.FullName memberName |> invalidOp
+
+    do if propertyInfo <> null && not propertyInfo.CanRead then
+        sprintf "Property '%s.%s' is write-only." componentType.FullName memberName |> invalidOp
+
+    let memberType = if fieldInfo <> null then fieldInfo.FieldType else propertyInfo.PropertyType
+    do if memberType <> typeof<'T> then
+        sprintf "Expected member of type '%s' but found member with type '%s'." memberType.FullName typeof<'T>.FullName |> invalidOp
+
     interface IInternalAccess with
         /// Gets the accessed component instance.
         override this.Component = component'
@@ -47,8 +62,16 @@ type InternalAccess<'T> internal (component' : IComponent, memberName : string) 
         /// Gets the name of the accessed member.
         override this.MemberName = memberName
 
+    /// Gets the value of the accessed member.
     static member op_Implicit (internalAccess : InternalAccess<'T>) =
-        Unchecked.defaultof<'T>
+        internalAccess.Value
+
+    /// Gets the value of the accessed member.
+    member this.Value = 
+        if fieldInfo <> null then
+            fieldInfo.GetValue component' :?> 'T
+        else
+            propertyInfo.GetValue component' :?> 'T
 
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>]
@@ -85,6 +108,7 @@ type Component () =
 
     /// Allows access to a non-public member of the component.
     member this.AccessInternal<'T> memberName =
+        Requires.NotNullOrWhitespace memberName "memberName"
         InternalAccess<'T> (this, memberName)
 
     // ---------------------------------------------------------------------------------------------------------------------------------------

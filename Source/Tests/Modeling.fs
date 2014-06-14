@@ -49,7 +49,7 @@ type EmptyComponent () =
 type FieldComponent<'T> =
     inherit Component 
     
-    val _field : 'T
+    val private _field : 'T
 
     new () = { _field = Unchecked.defaultof<'T> }
 
@@ -59,11 +59,13 @@ type FieldComponent<'T> =
     new (value1 : 'T, value2 : 'T) as this = { _field = Unchecked.defaultof<'T> } then
         this.SetInitialValues (createExpression<'T> this "_field", value1, value2)
 
+    member this.Field = this._field
+
 type FieldComponent<'T1, 'T2> =
     inherit Component 
     
-    val _field1 : 'T1
-    val _field2 : 'T2
+    val private _field1 : 'T1
+    val private _field2 : 'T2
 
     new () = { _field1 = Unchecked.defaultof<'T1>; _field2 = Unchecked.defaultof<'T2> }
 
