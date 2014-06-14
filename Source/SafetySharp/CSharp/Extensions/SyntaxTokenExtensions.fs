@@ -20,29 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.CSharp.Extensions
 
-open System
+open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp.Extensions
-open SafetySharp.Modeling
+open SafetySharp.Utilities
 
-/// Lifts all method invocation parameter expressions 'expr' to a lambda function of the form '() => expr'.
-type ExpressionLifter () =
-    inherit CSharpNormalizer ()
+/// Provides extension methods for working with <see cref="SyntaxToken" /> instances.
+[<AutoOpen>]
+module SyntaxTokenExtensions =
+    type SyntaxToken with
 
-    override this.VisitArgument node =
-        let requiresRewrite = node.ParameterHasAttribute<LiftExpressionAttribute> this.semanticModel
-        let node = base.VisitArgument node :?> ArgumentSyntax
+        /// Removes all leading and trailing trivia from the syntax node.
+        member this.RemoveTrivia () =
+            this.WithLeadingTrivia().WithTrailingTrivia()
 
-        if not requiresRewrite then
-            upcast node
-        else
-            let expression = SyntaxFactory.ParenthesizedLambdaExpression(node.Expression.RemoveTrivia ())
-            let expression = expression.WithArrowToken(expression.ArrowToken.SurroundWithSingleSpace ())
-            let expression = expression.AddTriviaFrom node.Expression
-            
-            let node = node.WithExpression expression
-            upcast node
+        /// Adds the given leading and trailing trivia to the syntax node.
+        member this.AddTrivia (leadingTrivia : SyntaxTriviaList) (trailingTrivia : SyntaxTriviaList) =
+            this.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia)
+
+        /// Adds the trivia from the given syntax node to the current syntax node.
+        member this.AddTriviaFrom (node : SyntaxNode) =
+            this.WithLeadingTrivia(node.GetLeadingTrivia()).WithTrailingTrivia(node.GetTrailingTrivia())
+
+        /// Surrounds the syntax node with a single leading and trailing space.
+        member this.SurroundWithSingleSpace () =
+            this.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia(SyntaxFactory.Space)

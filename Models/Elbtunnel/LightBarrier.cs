@@ -63,7 +63,7 @@ namespace Elbtunnel
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
 			if (nondeterministicInitialValue)
-				SetInitialValues(() => _value, true, false);
+				SetInitialValues(_value, true, false);
 			else
 				_value = false;
 

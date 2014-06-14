@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Extensions
 
 open System.Linq
+open System.Runtime.CompilerServices
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
@@ -43,3 +44,30 @@ module SyntaxNodeExtensions =
         member this.DescendantsAndSelf<'T when 'T :> SyntaxNode> () =
             Requires.NotNull this "this"
             this.DescendantNodesAndSelf().OfType<'T>()
+
+    [<Extension>]
+    type SyntaxNodeExtensions =
+
+        /// Removes all leading and trailing trivia from the syntax node.
+        [<Extension>]
+        static member inline RemoveTrivia (syntaxNode : 'T when 'T :> SyntaxNode) =
+            Requires.NotNull syntaxNode "syntaxNode"
+            syntaxNode.WithLeadingTrivia().WithTrailingTrivia()
+
+        /// Adds the given leading and trailing trivia to the syntax node.
+        [<Extension>]
+        static member inline AddTrivia (syntaxNode : 'T when 'T :> SyntaxNode, leadingTrivia : SyntaxTriviaList, trailingTrivia : SyntaxTriviaList) =
+            Requires.NotNull syntaxNode "syntaxNode"
+            syntaxNode.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia)
+
+        /// Adds the trivia from the given syntax node to the current syntax node.
+        [<Extension>]
+        static member inline AddTriviaFrom (syntaxNode : 'T when 'T :> SyntaxNode, node : SyntaxNode) =
+            Requires.NotNull syntaxNode "syntaxNode"
+            syntaxNode.WithLeadingTrivia(node.GetLeadingTrivia()).WithTrailingTrivia(node.GetTrailingTrivia())
+
+        /// Surrounds the syntax node with a single leading and trailing space.
+        [<Extension>]
+        static member inline SurroundWithSingleSpace (syntaxNode : 'T when 'T :> SyntaxNode) =
+            Requires.NotNull syntaxNode "syntaxNode"
+            syntaxNode.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia(SyntaxFactory.Space)
