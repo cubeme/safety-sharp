@@ -28,17 +28,6 @@ open SafetySharp.Utilities
 open SafetySharp.Metamodel
 
 /// Represents a linear temporal logic formula provided by a C# model.
-type internal CSharpFormula =
-    /// Represents a state formula that is evaluated in a single model state.
-    | StateFormula of StateExpression : Expression<Func<bool>>
-
-    /// Represents the application of an unary formula operator to a formula.
-    | UnaryFormula of Operand : CSharpFormula * Operator : UnaryFormulaOperator
-
-    /// Represents the application of a binary formula operator to two subformulas.
-    | BinaryFormula of LeftFormula : CSharpFormula * Operator : BinaryFormulaOperator * RightFormula : CSharpFormula
-
-/// Represents a linear temporal logic formula provided by a C# model.
 [<AllowNullLiteral>]
 type LtlFormula internal (formula : CSharpFormula) = 
     /// Gets the wrapped C# formula.
@@ -46,7 +35,7 @@ type LtlFormula internal (formula : CSharpFormula) =
 
     /// Applies the implication operator to this instance and the given formula.
     member this.Implies (formula : LtlFormula) = 
-        LtlFormula (BinaryFormula(this.Formula, BinaryFormulaOperator.Implication, formula.Formula))
+        LtlFormula (CSharpBinaryFormula(this.Formula, BinaryFormulaOperator.Implication, formula.Formula))
 
 /// Provides factory methods for the construction of linear temporal logic formulas.
 [<AbstractClass; Sealed>]
@@ -55,32 +44,32 @@ type Ltl =
     /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
     static member Next (operand : LtlFormula) =
         Requires.NotNull operand "operand"
-        LtlFormula (UnaryFormula(operand.Formula, UnaryFormulaOperator.Next))
+        LtlFormula (CSharpUnaryFormula(operand.Formula, UnaryFormulaOperator.Next))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
     static member Next (operand : Expression<Func<bool>>) =
         Requires.NotNull operand "operand"
-        LtlFormula (UnaryFormula(StateFormula operand, UnaryFormulaOperator.Next))
+        LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Next))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
     static member Finally (operand : LtlFormula) =
         Requires.NotNull operand "operand"
-        LtlFormula (UnaryFormula(operand.Formula, UnaryFormulaOperator.Finally))
+        LtlFormula (CSharpUnaryFormula(operand.Formula, UnaryFormulaOperator.Finally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
     static member Finally (operand : Expression<Func<bool>>) =
         Requires.NotNull operand "operand"
-        LtlFormula (UnaryFormula(StateFormula operand, UnaryFormulaOperator.Finally))
+        LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Finally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
     static member Globally (operand : LtlFormula) =
         Requires.NotNull operand "operand"
-        LtlFormula (UnaryFormula(operand.Formula, UnaryFormulaOperator.Globally))
+        LtlFormula (CSharpUnaryFormula(operand.Formula, UnaryFormulaOperator.Globally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
     static member Globally (operand : Expression<Func<bool>>) =
         Requires.NotNull operand "operand"
-        LtlFormula (UnaryFormula(StateFormula operand, UnaryFormulaOperator.Globally))
+        LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Globally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
     /// <paramref name="rightOperand" />.
@@ -88,7 +77,7 @@ type Ltl =
         Requires.NotNull leftOperand "leftOperand"
         Requires.NotNull rightOperand "rightOperand"
 
-        LtlFormula (BinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, rightOperand.Formula))
+        LtlFormula (CSharpBinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, rightOperand.Formula))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
     /// <paramref name="rightOperand" />.
@@ -96,4 +85,4 @@ type Ltl =
         Requires.NotNull leftOperand "leftOperand"
         Requires.NotNull rightOperand "rightOperand"
 
-        LtlFormula (BinaryFormula(StateFormula leftOperand, BinaryFormulaOperator.Until, StateFormula rightOperand))
+        LtlFormula (CSharpBinaryFormula(CSharpStateFormula leftOperand, BinaryFormulaOperator.Until, CSharpStateFormula rightOperand))

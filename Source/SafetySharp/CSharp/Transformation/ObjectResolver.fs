@@ -28,7 +28,7 @@ open SafetySharp.Modeling
 open SafetySharp.Utilities
 
 /// Represents a mapping between the original .NET objects and the created metamodel symbols and objects.
-type ObjectResolver = private {
+type internal ObjectResolver = private {
     ComponentSymbolMap : ImmutableDictionary<Component, ComponentSymbol>
     ComponentObjectMap : ImmutableDictionary<Component, ComponentObject>
     Model : ModelObject

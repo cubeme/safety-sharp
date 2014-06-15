@@ -20,27 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Transformation
+namespace SafetySharp.Modeling
 
-open System.Collections.Immutable
-open SafetySharp.CSharp
+open System
+open System.Linq.Expressions
 open SafetySharp.Metamodel
-open SafetySharp.Modeling
-open SafetySharp.Utilities
 
-module internal ModelTransformation =
+/// Represents a linear temporal logic formula provided by a C# model.
+type internal CSharpFormula =
+    /// Represents a state formula that is evaluated in a single model state.
+    | CSharpStateFormula of StateExpression : Expression<Func<bool>>
 
-    /// Transforms a modeling compilation and a model instance to the metamodel types.
-    let Transform (compilation : ModelingCompilation) (model : Model) (formulas : CSharpFormula list) =
-        Requires.NotNull model "model"
-        Requires.ArgumentSatisfies model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+    /// Represents the application of an unary formula operator to a formula.
+    | CSharpUnaryFormula of Operand : CSharpFormula * Operator : UnaryFormulaOperator
 
-        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
-        let objectResolver = ObjectTransformation.Transform model symbolResolver
-
-        {
-            ModelSymbol = symbolResolver.ModelSymbol
-            ModelObject = objectResolver.ModelObject
-            Formulas = formulas |> List.map (FormulaTransformation.Transform symbolResolver objectResolver)
-            MethodBodyResolver = StatementTransformation.TransformMethodBodies compilation.CSharpCompilation symbolResolver
-        }
+    /// Represents the application of a binary formula operator to two subformulas.
+    | CSharpBinaryFormula of LeftFormula : CSharpFormula * Operator : BinaryFormulaOperator * RightFormula : CSharpFormula

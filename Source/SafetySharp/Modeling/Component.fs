@@ -37,13 +37,13 @@ type IComponent = interface end
 /// Provides access to a non-public member of a component.
 type IMemberAccess =
     /// Gets the accessed component instance.
-    abstract member Component : IComponent
+    abstract member Component : Component
 
     /// Gets the name of the accessed member.
     abstract member MemberName : string
 
 /// Provides access to a non-public member of a component.
-type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
+and MemberAccess<'T> internal (component' : Component, memberName : string) =
     let componentType = component'.GetType ()
     let bindingFlags = BindingFlags.Instance ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Public ||| BindingFlags.NonPublic
     let fieldInfo = componentType.GetField (memberName, bindingFlags)
@@ -78,8 +78,7 @@ type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
             propertyInfo.GetValue component' :?> 'T
 
 /// Represents a base class for all components.
-[<AbstractClass; AllowNullLiteral>]
-type Component () =
+and [<AbstractClass; AllowNullLiteral>] Component () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata

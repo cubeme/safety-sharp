@@ -27,7 +27,7 @@ open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Utilities
 
-module ObjectTransformation =
+module internal ObjectTransformation =
 
     /// Transforms C# objects to metamodel objects.
     let Transform (model : Model) (symbolResolver : SymbolResolver) =

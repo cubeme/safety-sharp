@@ -61,6 +61,7 @@
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
     <Compile Include="Modeling\OverflowBehavior.fs" />
+    <Compile Include="Modeling\CSharpFormula.fs" />
     <Compile Include="Modeling\Ltl.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\ModelingCompilation.fs" />
@@ -92,6 +93,7 @@
     <Compile Include="CSharp\Transformation\StatementTransformation.fs" />
     <Compile Include="CSharp\Transformation\ObjectResolver.fs" />
     <Compile Include="CSharp\Transformation\ObjectTransformation.fs" />
+    <Compile Include="CSharp\Transformation\FormulaTransformation.fs" />
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />

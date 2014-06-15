@@ -34,7 +34,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module SymbolTransformation =
+module internal SymbolTransformation =
 
     /// Transforms the given component types of the compilation to a symbol map.
     let Transform (compilation : Compilation) =

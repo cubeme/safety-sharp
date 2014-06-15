@@ -29,7 +29,7 @@ open SafetySharp.Modeling
 open Microsoft.CodeAnalysis
 
 /// Represents a mapping between the original C# symbols and the created metamodel symbols.
-type SymbolResolver = private {
+type internal SymbolResolver = private {
     Model : ModelSymbol
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
     ComponentNameMap : Map<string, ComponentSymbol>

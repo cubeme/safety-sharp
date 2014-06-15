@@ -30,9 +30,10 @@ open SafetySharp.CSharp.Transformation
 [<Sealed>]
 type SpinModelChecker (model : Model) =
     do Requires.NotNull model "model"
-
     do model.FinalizeMetadata ()
-    let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
-    let configuration = ModelTransformation.Transform modelingAssembly.Compilation model
 
-    member this.Check (formula : LtlFormula) = ()
+    member this.Check (formula : LtlFormula) =
+        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
+        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model [formula.Formula]
+
+        ()
