@@ -30,10 +30,11 @@ namespace Elbtunnel
 	public class LightBarrier : Component
 	{
 		public bool Triggered;
+		private int i = 1;
 
 		public int Do()
 		{
-			return 1;
+			return i;
 		}
 	}
 

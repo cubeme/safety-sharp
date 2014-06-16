@@ -57,7 +57,7 @@ and MemberAccess<'T> internal (component' : Component, memberName : string) =
 
     let memberType = if fieldInfo <> null then fieldInfo.FieldType else propertyInfo.PropertyType
     do if memberType <> typeof<'T> then
-        invalidOp "Expected member of type '%s' but found member with type '%s'." memberType.FullName typeof<'T>.FullName
+        invalidOp "Expected '%s.%s' to be of type '%s', but actual type is '%s'." componentType.FullName memberName memberType.FullName typeof<'T>.FullName
 
     interface IMemberAccess with
         /// Gets the accessed component instance.

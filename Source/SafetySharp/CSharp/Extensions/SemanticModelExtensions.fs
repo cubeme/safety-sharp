@@ -22,6 +22,7 @@
 
 namespace SafetySharp.CSharp.Extensions
 
+open System
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -85,10 +86,16 @@ module SemanticModelExtensions =
 
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
         /// the semantic model.
+        member this.GetTypeSymbol (typeInfo : Type) =
+            nullArg this "this"
+            nullArg typeInfo "typeInfo"
+            this.Compilation.GetTypeSymbol typeInfo
+
+        /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
+        /// the semantic model.
         member this.GetTypeSymbol name =
             nullArg this "this"
             nullOrWhitespaceArg name "name"
-
             this.Compilation.GetTypeSymbol name
 
         /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="Component" /> class within the

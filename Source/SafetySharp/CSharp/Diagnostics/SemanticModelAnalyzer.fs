@@ -32,17 +32,14 @@ open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
 open SafetySharp.CSharp.Extensions
 
-/// Represents a callback that emits a diagnostic.
-type DiagnosticCallback = delegate of locationNode : SyntaxNode * [<ParamArray>] messageArgs : obj array -> unit
-
 /// A base class for syntax node analyzers.
 [<AbstractClass>]
-type SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
+type SemanticModelAnalyzer () =
     inherit CSharpAnalyzer ()
 
-    interface ISyntaxTreeAnalyzer with
-        override this.AnalyzeSyntaxTree (syntaxTree, addDiagnostic, cancellationToken) =
-            nullArg syntaxTree "syntaxTree"
+    interface ISemanticModelAnalyzer with
+        override this.AnalyzeSemanticModel (semanticModel, addDiagnostic, cancellationToken) =
+            nullArg semanticModel "semanticModel"
             nullArg addDiagnostic "addDiagnostic"
 
             let diagnosticCallback = DiagnosticCallback (fun locationNode args ->
@@ -51,10 +48,9 @@ type SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
             // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
             // report them as an error.
             try
-                syntaxTree.DescendantsAndSelf<'T>()
-                |> Seq.iter (fun node -> this.Analyze node diagnosticCallback cancellationToken)
+                this.Analyze semanticModel diagnosticCallback cancellationToken
             with
             | e -> Log.Error "%s" e.Message
 
     ///  Analyzes the <paramref name="syntaxNode"/>.
-    abstract member Analyze : syntaxNode : 'T -> addDiagnostic : DiagnosticCallback -> cancellationToken : CancellationToken -> unit
+    abstract member Analyze : semanticModel : SemanticModel -> addDiagnostic : DiagnosticCallback -> cancellationToken : CancellationToken -> unit

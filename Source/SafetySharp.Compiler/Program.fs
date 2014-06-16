@@ -68,14 +68,13 @@ type CommandLineArguments () =
 /// The command line arguments that have been used to invoke the compiler.
 let private arguments = new CommandLineArguments ()
 
-///  Writes the <paramref name="message" /> to the console using the given <paramref name="color" />.
-let private writeToConsole color (message : string) =
-    Console.ForegroundColor <- color
-    Console.WriteLine message
-    Console.ResetColor ()
-
 /// Wires up the <see cref="Log.Logged" /> event to write all logged messages to the console.
 let private printToConsole logEntry =
+    let writeToConsole color message =
+        Console.ForegroundColor <- color
+        Console.WriteLine (message : string)
+        Console.ResetColor ()
+
     match logEntry.Type with
     | Debug ->
         if not <| arguments.Silent then
@@ -120,7 +119,7 @@ let main args =
 
         Log.Info ""
 
-        // Start the compilation process.
+        // We're finally ready to start the compilation process...
         try
             let resultCode = Compiler.Compile arguments.ProjectFile arguments.Configuration arguments.Platform
             if resultCode = 0 then
@@ -130,5 +129,5 @@ let main args =
         with 
         | e ->
             Log.Error "A fatal compilation error occurred: %s" e.Message
-            Log.Info "%A" e.StackTrace
+            Log.Info "%s" e.StackTrace
             -1;

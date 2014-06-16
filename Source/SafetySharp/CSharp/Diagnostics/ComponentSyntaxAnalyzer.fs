@@ -24,8 +24,7 @@ namespace SafetySharp.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
-open System.Text
-open System.Threading
+open System.Linq.Expressions
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
@@ -37,29 +36,12 @@ open SafetySharp.CSharp.Extensions
 type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     inherit CSharpSyntaxWalker ()
 
-    /// Generates a user-friendly description for <paramref name="syntaxKind" />.
-    let toDescription (syntaxKind : SyntaxKind) =
-        let nodeKind = syntaxKind.ToString()
-        let name = StringBuilder ()
-
-        name.Append(Char.ToLower nodeKind.[0]) |> ignore
-        nodeKind
-        |> Seq.skip 1
-        |> Seq.iter (fun c ->
-            if Char.IsUpper c then
-                name.AppendFormat (" {0}", Char.ToLower c) |> ignore
-            else
-                name.Append c |> ignore
-        )
-
-        name.ToString()
-
     /// Visits the descendant nodes of <paramref name="node" />.
     member private this.VisitDescendantNodes (node : SyntaxNode) =
         base.DefaultVisit node
 
     /// Reports the node as a use of an unsupported C# feature.
-    override this.DefaultVisit node                 = node.CSharpKind() |> toDescription |> emitDiagnostic node
+    override this.DefaultVisit node                 = node.CSharpKind().ToDescription () |> emitDiagnostic node
 
     /// Does nothing, as constructors support all C# features.
     override this.VisitConstructorDeclaration node  = () 
@@ -83,6 +65,7 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     override this.VisitInvocationExpression node    = this.VisitDescendantNodes node
     override this.VisitBinaryExpression node        = this.VisitDescendantNodes node
     override this.VisitPrefixUnaryExpression node   = this.VisitDescendantNodes node
+    override this.VisitPostfixUnaryExpression node  = this.VisitDescendantNodes node
     override this.VisitArgumentList node            = this.VisitDescendantNodes node
     override this.VisitArgument node                = this.VisitDescendantNodes node
     override this.VisitLiteralExpression node       = this.VisitDescendantNodes node
@@ -93,19 +76,18 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInComponent, LanguageNames.CSharp)>]
 type ComponentSyntaxAnalyzer () as this =
-    inherit CSharpAnalyzer ()
+    inherit SemanticModelAnalyzer ()
 
     do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInComponent
         "A model component uses an unsupported C# syntax element."
         "C# feature is unsupported: {0}"
 
-    interface ISemanticModelAnalyzer with
-        override this.AnalyzeSemanticModel (semanticModel, addDiagnostic, cancellationToken) =
-            let emitDiagnostic (node : SyntaxNode) (description : string) = 
-                addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, node.GetLocation(), description))
+    override this.Analyze semanticModel addDiagnostic cancellationToken =
+        let emitDiagnostic (node : SyntaxNode) (description : string) = 
+            addDiagnostic.Invoke (node, description)
 
-            let componentVisitor = ComponentSyntaxAnalyzerVisitor emitDiagnostic
+        let componentVisitor = ComponentSyntaxAnalyzerVisitor emitDiagnostic
 
-            semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
-            |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
-            |> Seq.iter componentVisitor.Visit
+        semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
+        |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
+        |> Seq.iter componentVisitor.Visit

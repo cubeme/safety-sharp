@@ -22,6 +22,7 @@
 
 namespace SafetySharp.CSharp.Extensions
 
+open System
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -39,24 +40,30 @@ module CompilationExtensions =
             nullArg this "this"
             this.GetTypeSymbol typeof<'T>.FullName
 
+        /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of
+        /// the semantic model.
+        member this.GetTypeSymbol (typeInfo : Type) =
+            nullArg this "this"
+            nullArg typeInfo "typeInfo"
+            this.GetTypeByMetadataName typeInfo.FullName
+
         /// Gets the <see cref="ITypeSymbol" /> representing the given type within the context of the compilation.
         member this.GetTypeSymbol name =
             nullArg this "this"
             nullOrWhitespaceArg name "name"
-
             this.GetTypeByMetadataName name
 
         /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="Component" /> class within the
         /// context of the compilation.
         member this.GetComponentClassSymbol () =
             nullArg this "this"
-            this.GetTypeByMetadataName typeof<Component>.FullName
+            this.GetTypeSymbol<Component> ()
 
         /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="IComponent" /> interface within the
         /// context of the compilation.
         member this.GetComponentInterfaceSymbol () =
             nullArg this "this"
-            this.GetTypeByMetadataName typeof<IComponent>.FullName
+            this.GetTypeSymbol<IComponent> ()
 
         /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
         /// within the context of the compilation.

@@ -51,6 +51,7 @@ module Compiler =
     /// The diagnostic analyzers that are used to diagnose the C# code before any normalizations.
     let (diagnosticAnalyzers : IDiagnosticAnalyzer list) = [
         ComponentSyntaxAnalyzer ()
+        FormulaSyntaxAnalyzer ()
         EnumUnderlyingTypeAnalyzer ()
         EnumMemberAnalyzer ()
     ]

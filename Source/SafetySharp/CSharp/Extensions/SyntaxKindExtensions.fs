@@ -20,28 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Diagnostics
+namespace SafetySharp.CSharp.Extensions
 
-/// Provides the diagnostic identifiers for C# code diagnostics.
-module DiagnosticIdentifiers =
+open System
+open System.Linq
+open System.Text
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.Utilities
 
-    /// The prefix that is used for all diagnostic identifiers.
-    [<Literal>]
-    let Prefix = "SS"
+/// Provides extension methods for working with <see cref="SyntaxKind" /> instances.
+[<AutoOpen>]
+module SyntaxKindExtensions =
+    type SyntaxKind with
+        /// Generates a user-friendly description for the syntax kind.
+        member this.ToDescription () =
+            let nodeKind = this.ToString()
+            let name = StringBuilder ()
 
-    /// The category that is used for all diagnostics.
-    [<Literal>]
-    let Category = "SafetySharp"
+            name.Append(Char.ToLower nodeKind.[0]) |> ignore
+            nodeKind
+            |> Seq.skip 1
+            |> Seq.iter (fun c ->
+                if Char.IsUpper c then
+                    name.AppendFormat (" {0}", Char.ToLower c) |> ignore
+                else
+                    name.Append c |> ignore
+            )
 
-    [<Literal>] 
-    let IllegalCSharpSyntaxElementInComponent = Prefix + "1000"
-
-    [<Literal>] 
-    let IllegalCSharpSyntaxElementInFormula = Prefix + "1001"
-
-    [<Literal>] 
-    let IllegalUnderlyingEnumType = Prefix + "1101"
-
-    [<Literal>] 
-    let IllegalEnumMemberValue = Prefix + "1102"
-
+            name.ToString()

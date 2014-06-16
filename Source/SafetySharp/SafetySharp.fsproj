@@ -77,13 +77,17 @@
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.fs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.fs" />
     <Compile Include="CSharp\Extensions\ArgumentExtensions.fs" />
+    <Compile Include="CSharp\Extensions\SyntaxKindExtensions.fs" />
+    <Compile Include="CSharp\Extensions\InvocationExpressionExtensions.fs" />
     <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs">
     </Compile>
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\SemanticModelAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />

@@ -44,12 +44,24 @@ module ArgumentExtensions =
             | :? IMethodSymbol as methodSymbol -> methodSymbol
             | _ -> invalidOp "Unable to determine symbol of method call '%A'." expression
 
+         /// Gets a value indicating whether the argument is of the given type.
+        member this.IsOfType (semanticModel : SemanticModel, argumentType : ITypeSymbol) =
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+            nullArg argumentType "argumentType"
+            this.GetParameterSymbol(semanticModel).Type = argumentType
+
+        /// Gets a value indicating whether the argument is of the given type.
+        member this.IsOfType<'T> (semanticModel : SemanticModel) =
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+            this.IsOfType (semanticModel, semanticModel.GetTypeSymbol<'T> ())
+
         ///  Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
         ///  method call has the attribute of type <typeparamref name="T" /> applied.
         member this.ParameterHasAttribute<'T when 'T :> Attribute> (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-
             let attributeSymbol = semanticModel.GetTypeSymbol<'T> ()
             this.GetParameterSymbol(semanticModel).GetAttributes()
             |> Seq.exists (fun attribute -> attribute.AttributeClass.Equals attributeSymbol)
