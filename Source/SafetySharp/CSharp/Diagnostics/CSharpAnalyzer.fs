@@ -54,7 +54,7 @@ type CSharpAnalyzer () =
         Requires.NotNullOrWhitespace description "description"
         Requires.NotNullOrWhitespace messageFormat "messageFormat"
         Requires.ArgumentSatisfies (identifier.StartsWith DiagnosticIdentifiers.Prefix) "identifier"
-            (sprintf "Diagnostic identifier does not start with prefix '%s'." DiagnosticIdentifiers.Prefix)
+            "Diagnostic identifier does not start with prefix '%s'." DiagnosticIdentifiers.Prefix
 
         this.descriptor <- DiagnosticDescriptor (identifier, description, messageFormat, DiagnosticIdentifiers.Category, severity, true)
         this.supportedDiagnostics <- ImmutableArray.Create this.descriptor

@@ -50,14 +50,14 @@ and MemberAccess<'T> internal (component' : Component, memberName : string) =
     let propertyInfo = componentType.GetProperty (memberName, bindingFlags)
 
     do if fieldInfo = null && propertyInfo = null then
-        sprintf "Component of type '%s' has no member with name '%s'." componentType.FullName memberName |> invalidOp
+        invalidOp "Component of type '%s' has no member with name '%s'." componentType.FullName memberName
 
     do if propertyInfo <> null && not propertyInfo.CanRead then
-        sprintf "Property '%s.%s' is write-only." componentType.FullName memberName |> invalidOp
+        invalidOp "Property '%s.%s' is write-only." componentType.FullName memberName
 
     let memberType = if fieldInfo <> null then fieldInfo.FieldType else propertyInfo.PropertyType
     do if memberType <> typeof<'T> then
-        sprintf "Expected member of type '%s' but found member with type '%s'." memberType.FullName typeof<'T>.FullName |> invalidOp
+        invalidOp "Expected member of type '%s' but found member with type '%s'." memberType.FullName typeof<'T>.FullName
 
     interface IMemberAccess with
         /// Gets the accessed component instance.
@@ -123,7 +123,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
         Requires.NotNull field "field"
         Requires.NotNull initialValues "initialValues"
         Requires.ArgumentSatisfies (initialValues.Length > 0) "initialValues" "At least one value must be provided."
-        Requires.OfType<MemberExpression> field.Body "field" "Expected a reference to a field of the component."
+        Requires.ArgumentSatisfies (field.Body :? MemberExpression) "field" "Expected a reference to a field of the component."
         requiresNotSealed ()
 
         match (field.Body :?> MemberExpression).Member with
@@ -175,7 +175,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
         requiresIsSealed ()
 
         let (result, initialValues) = fields.TryGetValue fieldName
-        Requires.ArgumentSatisfies result "fieldName" (sprintf "A field with name '%s' does not exist." fieldName)
+        Requires.ArgumentSatisfies result "fieldName" "A field with name '%s' does not exist." fieldName
 
         initialValues
 
@@ -190,7 +190,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
         match subcomponent with
         | Some subcomponent -> subcomponent
         | None ->
-            Requires.ArgumentSatisfies false "subcomponentName" (sprintf "A subcomponent with name '%s' does not exist." subcomponentName)
+            Requires.ArgumentSatisfies false "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
             subcomponent.Value // Required, but cannot be reached
 
     /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.

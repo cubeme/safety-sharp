@@ -20,24 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.Utilities
 
-open System.Linq
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Utilities
+open System
+open System.Diagnostics
 
-/// Provides extension methods for working with <see cref="MethodDeclarationSyntax" /> instances.
 [<AutoOpen>]
-module MethodDeclarationExtensions =
-    type MethodDeclarationSyntax with
+module internal Exceptions =
 
-        /// Checks whether the method declaration declares a method overriding the <see cref="Component.Update()" /> method.
-        member this.IsUpdateMethod (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
-
-            match semanticModel.GetDeclaredSymbol this with
-            | methodSymbol when methodSymbol <> null -> methodSymbol.Overrides <| semanticModel.GetUpdateMethodSymbol ()
-            | _ -> invalidOp "Unable to determine method symbol of method declaration '%A'." this
+    /// Raises an <see cref="InvalidOperationException" /> with the given message.
+    [<DebuggerHidden>]
+    let inline invalidOp message = Printf.ksprintf invalidOp message

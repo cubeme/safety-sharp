@@ -49,22 +49,15 @@ module internal Requires =
     /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>false</c>.
     let ArgumentSatisfies condition argumentName description =
         NotNullOrWhitespace argumentName "argumentName"
-        NotNullOrWhitespace description "description"
-        if not condition then
-            invalidArg argumentName description
 
-    /// Throws an <see cref="ArgumentException" /> if <paramref name="argument" /> is not of type <typeparamref name="T" />.
-    let OfType<'T when 'T : not struct> (argument : obj) argumentName description =
-        NotNull argument "argument"
-        NotNullOrWhitespace argumentName "argumentName"
-        NotNullOrWhitespace description "description"
-        
-        if not <| argument :? 'T then
-            sprintf "Expected an instance of type '%s' but found an instance of type '%s' instead." typeof<'T>.FullName <| argument.GetType().FullName
-            |> invalidArg argumentName
+        Printf.ksprintf (fun message ->
+            if not condition then
+                invalidArg argumentName message
+        ) description
 
     /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
     let That condition description =
-        NotNullOrWhitespace description "description"
-        if not condition then
-            invalidOp description
+        Printf.ksprintf (fun message ->
+            if not condition then
+                Operators.invalidOp message
+        ) description

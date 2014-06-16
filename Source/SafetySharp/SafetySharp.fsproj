@@ -49,6 +49,7 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
+    <Compile Include="Utilities\Exceptions.fs" />
     <Compile Include="Utilities\Requires.fs" />
     <Compile Include="Utilities\Log.fs" />
     <Compile Include="Metamodel\Symbols.fs" />

@@ -55,4 +55,4 @@ module TypeDeclarationExtensions =
 
             match semanticModel.GetDeclaredSymbol this with
             | typeSymbol when typeSymbol <> null -> typeSymbol.IsDerivedFrom baseType
-            | _ -> sprintf "Unable to determine type symbol of type declaration '%A'." this |> invalidOp
+            | _ -> invalidOp "Unable to determine type symbol of type declaration '%A'." this

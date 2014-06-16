@@ -69,11 +69,11 @@ module internal SymbolTransformation =
         // Converts a C# type symbol to one of the supported metamodel type symbols
         let toTypeSymbol (csharpSymbol : ITypeSymbol) =
             match csharpSymbol.SpecialType with
-            | SpecialType.None -> csharpSymbol.ToDisplayString SymbolDisplayFormat.FullyQualifiedFormat |> sprintf "Type '%s' is not supported." |> invalidOp
+            | SpecialType.None -> csharpSymbol.ToDisplayString SymbolDisplayFormat.FullyQualifiedFormat |> invalidOp "Type '%s' is not supported."
             | SpecialType.System_Boolean -> TypeSymbol.Boolean
             | SpecialType.System_Int32 -> TypeSymbol.Integer
             | SpecialType.System_Decimal -> TypeSymbol.Decimal
-            | _ -> sprintf "Unsupported C# special type: '%A'." csharpSymbol.SpecialType |> invalidOp
+            | _ -> invalidOp "Unsupported C# special type: '%A'." csharpSymbol.SpecialType
 
         // Encodes the assembly name and all parent namespaces in the component name to ensure the uniqueness of the name.
         let transformComponentName (csharpComponent : ITypeSymbol) = 
@@ -89,7 +89,7 @@ module internal SymbolTransformation =
             let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
 
             if updateMethodCount > 1 then 
-                csharpComponent.ToDisplayString () |> sprintf "Component of type '%A' defines more than one Update() method." |> invalidOp
+                csharpComponent.ToDisplayString () |> invalidOp "Component of type '%A' defines more than one Update() method."
             else if updateMethodCount = 1 then
                 let updateMethod = updateMethods |> Seq.head
                 methodMapBuilder.Add (updateMethod, methodSymbol)

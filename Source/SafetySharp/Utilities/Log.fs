@@ -75,19 +75,17 @@ type Log () =
 
     /// Logs a fatal application error and terminates the application after all event handlers of the <see cref="Logged" />
     /// event have been executed.
-    static member Die message = 
-        Log.RaiseEvent Fatal message
-        Environment.Exit -1
+    static member Die message =  Printf.ksprintf (fun message -> Log.RaiseEvent Fatal message; Environment.Exit -1) message
 
     /// Logs an application error.
-    static member Error = Log.RaiseEvent Error
+    static member Error message = Printf.ksprintf (Log.RaiseEvent Error) message
 
     /// Logs an application warning.
-    static member Warn = Log.RaiseEvent Warning
+    static member Warn message = Printf.ksprintf (Log.RaiseEvent Warning) message
 
     /// Logs an informational message.
-    static member Info = Log.RaiseEvent Info
+    static member Info message = Printf.ksprintf (Log.RaiseEvent Info) message
 
     /// In debug builds, logs debugging information.
     [<Conditional("DEBUG")>]
-    static member Debug message = Log.RaiseEvent Debug message
+    static member Debug message = Printf.ksprintf (Log.RaiseEvent Debug) message

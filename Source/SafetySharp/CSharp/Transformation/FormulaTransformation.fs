@@ -73,26 +73,25 @@ module internal FormulaTransformation =
         | :? bool as value -> BooleanLiteral value
         | :? int as value -> IntegerLiteral value
         | :? decimal as value -> DecimalLiteral value
-        | _ -> value.GetType().FullName |> sprintf "Constants of type '%s' are not supported within formulas." |> invalidOp
+        | _ -> invalidOp "Constants of type '%s' are not supported within formulas." <| value.GetType().FullName
 
     /// Gets the CLR object represented by the Linq expression.
     let rec private getValue (expression : LinqExpression) =
         match expression with
+        | ConstantExpression value -> value
         | MemberExpression (expression, memberInfo) ->
             let object' = getValue expression
             match memberInfo with
             | :? FieldInfo as fieldInfo -> fieldInfo.GetValue object'
             | :? PropertyInfo as propertyInfo when propertyInfo.CanRead -> propertyInfo.GetValue object'
-            | _ -> sprintf "Invalid member access: '%A'." expression |> invalidOp
-        | ConstantExpression value ->
-            value
-        | _ -> sprintf "Invalid expression type while trying to retrieve member value: '%A'." expression.NodeType |> invalidOp
+            | _ -> invalidOp "Invalid member access: '%A'." expression
+        | _ -> invalidOp "Invalid expression type while trying to retrieve member value: '%A'." expression.NodeType
 
     /// Transforms a component field access. 
     let private transformComponentFieldAccess (symbolResolver : SymbolResolver) (component' : Component) fieldName =
         let componentSymbol = symbolResolver.ResolveComponent component'
         match componentSymbol.Fields |> Seq.tryFind (fun fieldSymbol -> fieldSymbol.Name = fieldName) with
-        | None -> sprintf "Unable to find field '%s.%s'." (component'.GetType().FullName) fieldName |> invalidOp
+        | None -> invalidOp "Unable to find component field '%s.%s'." (component'.GetType().FullName) fieldName
         | Some fieldSymbol -> FieldAccessExpression fieldSymbol
 
     /// Checks whether the given method info represents the implicit conversion operator of <see cref="MemberAccess{T}" />.
@@ -111,7 +110,7 @@ module internal FormulaTransformation =
             | MemberExpression (objectExpression, memberInfo) ->
                 if typeof<IComponent>.IsAssignableFrom objectExpression.Type then
                     if not <| memberInfo :? FieldInfo then
-                        sprintf "Invalid component property access in formula: '%A'." expression |> invalidOp
+                        invalidOp "Invalid component property access in formula: '%A'." expression
                     let component' = (getValue objectExpression) :?> Component
                     let fieldName = memberInfo.Name
                     transformComponentFieldAccess symbolResolver component' fieldName
@@ -131,7 +130,7 @@ module internal FormulaTransformation =
                 | ExpressionType.Negate -> UnaryExpression (transformLinqExpression operand, UnaryOperator.Minus)
                 | ExpressionType.Not -> UnaryExpression (transformLinqExpression operand, UnaryOperator.LogicalNot)
                 | ExpressionType.UnaryPlus -> transformLinqExpression operand
-                | _ -> sprintf "Unsupported unary expression operator in formula: '%A'." expression.NodeType |> invalidOp
+                | _ -> invalidOp "Unsupported unary expression operator in formula: '%A'." expression.NodeType
 
             | BinaryExpression (leftOperand, operator, rightOperand) ->
                 let operator = 
@@ -149,11 +148,11 @@ module internal FormulaTransformation =
                     | ExpressionType.GreaterThanOrEqual -> BinaryOperator.GreaterThanOrEqual
                     | ExpressionType.LessThan -> BinaryOperator.LessThan
                     | ExpressionType.LessThanOrEqual -> BinaryOperator.LessThanOrEqual
-                    | _ -> sprintf "Unsupported binary expression operator in formula: '%A'." expression.NodeType |> invalidOp
+                    | _ -> invalidOp "Unsupported binary expression operator in formula: '%A'." expression.NodeType
                 BinaryExpression (transformLinqExpression leftOperand, operator, transformLinqExpression rightOperand)
  
             | _ -> 
-                sprintf "Unsupported C# expression type in formula: '%A'." expression.NodeType |> invalidOp
+                invalidOp "Unsupported C# expression type in formula: '%A'." expression.NodeType
 
         // Parses a Linq expression representing a state formula, skipping over the outer most lambda.
         let transformStateFormula (expression : LinqExpression) =

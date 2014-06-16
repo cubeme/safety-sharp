@@ -28,6 +28,8 @@ open System.Linq.Expressions
 open System.Reflection
 open SafetySharp.Modeling
 open SafetySharp.Metamodel
+open SafetySharp.Utilities
+open SafetySharp.Tests
 
 [<AutoOpen>]
 module ModelingShared =
@@ -38,7 +40,7 @@ module ModelingShared =
     let createFieldExpression<'T> (o : obj) field = 
         let fieldInfo = o.GetType().GetField(fsharpFieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
         if fieldInfo = null then
-            sprintf "Unable to find field '%s' in '%s'." field (o.GetType().FullName) |> invalidOp
+            invalidOp "Unable to find field '%s' in '%s'." field (o.GetType().FullName) 
         Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(o), fieldInfo))
 
 type EmptyComponent () =

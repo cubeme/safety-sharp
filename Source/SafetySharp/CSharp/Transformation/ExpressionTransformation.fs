@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Transformation
 
 open System.Collections.Immutable
 open SafetySharp.Metamodel
+open SafetySharp.Utilities
 open SafetySharp.CSharp.Roslyn
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -42,8 +43,8 @@ module internal ExpressionTransformation =
                 match value with
                 | :? int as value -> IntegerLiteral value
                 | :? decimal as value -> DecimalLiteral value
-                | _ -> sprintf "Numeric literals of type '%A' are not supported." kind |> invalidOp
-            | _ -> sprintf "Unsupported C# literal: '%A'" kind |> invalidOp
+                | _ -> invalidOp "Numeric literals of type '%A' are not supported." kind
+            | _ -> invalidOp "Unsupported C# literal: '%A'" kind
 
         | IdentifierName identifier ->
             let symbolInfo = semanticModel.GetSymbolInfo identifier
@@ -51,7 +52,7 @@ module internal ExpressionTransformation =
 
             match symbol with
             | :? IFieldSymbol as field -> symbolResolver.ResolveField field |> FieldAccessExpression
-            | _ -> sprintf "Unable to determine symbol for identifier '{%A}'." identifier |> invalidOp
+            | _ -> invalidOp "Unable to determine symbol for identifier '{%A}'." identifier
 
         | ParenthesizedExpression expression ->
             transform expression
@@ -61,7 +62,7 @@ module internal ExpressionTransformation =
             | SyntaxKind.UnaryPlusExpression -> transform operand
             | SyntaxKind.UnaryMinusExpression -> UnaryExpression (transform operand, UnaryOperator.Minus)
             | SyntaxKind.LogicalNotExpression -> UnaryExpression (transform operand, UnaryOperator.LogicalNot)
-            | _ -> sprintf "Unsupported unary C# operator: '%A'." operator |> invalidOp
+            | _ -> invalidOp "Unsupported unary C# operator: '%A'." operator
 
         | BinaryExpression (left, operator, right) ->
             let operator = 
@@ -79,11 +80,11 @@ module internal ExpressionTransformation =
                 | SyntaxKind.LessThanOrEqualExpression -> BinaryOperator.LessThanOrEqual;
                 | SyntaxKind.GreaterThanExpression -> BinaryOperator.GreaterThan;
                 | SyntaxKind.GreaterThanOrEqualExpression -> BinaryOperator.GreaterThanOrEqual;
-                | _ -> sprintf "Unsupported binary C# operator: '%A'." operator |> invalidOp
+                | _ -> invalidOp "Unsupported binary C# operator: '%A'." operator
             BinaryExpression (transform left, operator, transform right)
 
         | _ ->
-            expression.CSharpKind () |> sprintf "Encountered an unexpected C# syntax node: '%A'." |> invalidOp
+            invalidOp "Encountered an unexpected C# syntax node: '%A'." <| expression.CSharpKind () 
 
         transform expression
         

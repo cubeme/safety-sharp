@@ -44,8 +44,7 @@ module SemanticModelExtensions =
             |> List.ofSeq
 
         let raiseException prefix =
-            sprintf "%s Choose method with name = '%s', parameter count = %i, parameter type = '%A'." prefix methodName parameterCount specialType 
-            |> invalidOp
+            invalidOp "%s Choose method with name = '%s', parameter count = %i, parameter type = '%A'." prefix methodName parameterCount specialType 
 
         match methods with
         | method' :: [] -> method'

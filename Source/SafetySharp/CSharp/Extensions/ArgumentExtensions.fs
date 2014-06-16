@@ -42,7 +42,7 @@ module ArgumentExtensions =
             let expression = this.GetMethodCallExpression ()
             match semanticModel.GetSymbolInfo(expression :> ExpressionSyntax).Symbol with
             | :? IMethodSymbol as methodSymbol -> methodSymbol
-            | _ -> sprintf "Unable to determine symbol of method call '%A'." expression |> invalidOp
+            | _ -> invalidOp "Unable to determine symbol of method call '%A'." expression
 
         ///  Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
         ///  method call has the attribute of type <typeparamref name="T" /> applied.
@@ -67,7 +67,7 @@ module ArgumentExtensions =
                 | _ -> getMethodCallExpression node.Parent
 
             match getMethodCallExpression this.Parent with
-            | None -> sprintf "Unable to find the method call expression containing argument '%A'." this |> invalidOp
+            | None -> invalidOp "Unable to find the method call expression containing argument '%A'." this
             | Some parent -> parent
 
         /// Gets the <see cref="IParameterSymbol" /> corresponding to <paramref name="argument" />.
@@ -81,7 +81,7 @@ module ArgumentExtensions =
                 match this.GetMethodCallExpression () with
                 | :? InvocationExpressionSyntax as invocation -> invocation.ArgumentList.Arguments
                 | :? ObjectCreationExpressionSyntax as objectCreation -> objectCreation.ArgumentList.Arguments
-                | _ -> "Unknown method call." |> invalidOp
+                | _ -> invalidOp "Unknown method call."
 
             let methodSymbol = this.GetMethodSymbol semanticModel
 
@@ -98,7 +98,7 @@ module ArgumentExtensions =
                     else if arguments.[index].Equals this then
                         methodSymbol.Parameters.[index]
                     else if index >= arguments.Count then
-                        sprintf "Unable to determine parameter symbol for argument '%A'." this |> invalidOp
+                        invalidOp "Unable to determine parameter symbol for argument '%A'." this
                     else
                         findParameter <| index + 1
                     

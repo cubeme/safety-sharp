@@ -58,10 +58,10 @@ module Compiler =
     /// Logs <paramref name="diagnostic" /> depending on its severity.
     let private logDiagnostic (diagnostic : Diagnostic) =
         match diagnostic.Severity with
-        | DiagnosticSeverity.Error -> sprintf "%A" diagnostic |> Log.Error
-        | DiagnosticSeverity.Warning -> sprintf "%A" diagnostic |> Log.Warn
-        | DiagnosticSeverity.Info -> sprintf "%A" diagnostic |> Log.Info
-        | DiagnosticSeverity.Hidden -> sprintf "%A" diagnostic |> Log.Debug
+        | DiagnosticSeverity.Error -> Log.Error "%A" diagnostic
+        | DiagnosticSeverity.Warning -> Log.Warn "%A" diagnostic
+        | DiagnosticSeverity.Info -> Log.Info "%A" diagnostic
+        | DiagnosticSeverity.Hidden -> Log.Debug "%A" diagnostic
         | _ -> Log.Die "Unknown C# diagnostic severity."
 
     /// Logs all <paramref name="diagnostics" /> depending on their severities. The function returns
@@ -72,8 +72,10 @@ module Compiler =
 
     /// Instantiates a <see cref="Diagnostic" /> for the error and logs it.
     let private logError identifier message =
-        Diagnostic.Create (DiagnosticIdentifiers.Prefix + identifier, DiagnosticIdentifiers.Category, message, DiagnosticSeverity.Error, true, 0, false) 
-        |> logDiagnostic 
+        Printf.ksprintf (fun message ->
+            Diagnostic.Create (DiagnosticIdentifiers.Prefix + identifier, DiagnosticIdentifiers.Category, message, DiagnosticSeverity.Error, true, 0, false) 
+            |> logDiagnostic 
+        ) message
 
     /// Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by
     /// <paramref name="path" />.
@@ -99,7 +101,7 @@ module Compiler =
                 .SingleOrDefault(fun reference -> Path.GetFileName reference.FullPath = ModelingAssemblyFileName)
 
         if modelingAssembly = null then
-            sprintf "%s: error: Assembly '%s' is not referenced." projectFile ModelingAssemblyFileName |> Log.Die
+            Log.Die "%s: error: Assembly '%s' is not referenced." projectFile ModelingAssemblyFileName
 
         modelingAssembly
 
@@ -188,13 +190,13 @@ module Compiler =
         Requires.NotNull platform "platform"
 
         if not <| File.Exists projectFile then
-            sprintf "Project file '%s' could not be found." projectFile |> logError "0001"
+            logError "0001" "Project file '%s' could not be found." projectFile
             -1
         else if String.IsNullOrWhiteSpace configuration then
-            "Invalid project configuration: Configuration name cannot be the empty string." |> logError "0002"
+            logError "0002" "Invalid project configuration: Configuration name cannot be the empty string."
             -1
         else if String.IsNullOrWhiteSpace platform then
-            "Invalid compilation platform: Platform name cannot be the empty string." |> logError "0003"
+            logError "0003" "Invalid compilation platform: Platform name cannot be the empty string."
             -1
         else
             let msBuildProperties = Dictionary<string, string> ()

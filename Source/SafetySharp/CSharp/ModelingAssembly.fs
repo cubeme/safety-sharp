@@ -38,8 +38,7 @@ type ModelingAssembly (modelingAssembly : Assembly) as this=
     do Requires.ArgumentSatisfies (not <| obj.ReferenceEquals(assemblyMetadata, null)) "modelingAssembly" "Expected a SafetySharp modeling assembly."
 
     do if this.CompilerVersion <> Compiler.Version then
-        sprintf "Modeling assembly '%s' was compiled with a different version of the SafetySharp compiler." modelingAssembly.FullName 
-        |> invalidOp
+        invalidOp "Modeling assembly '%s' was compiled with a different version of the SafetySharp compiler." modelingAssembly.FullName 
 
     /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
     member this.CompilerVersion = assemblyMetadata.CompilerVersion

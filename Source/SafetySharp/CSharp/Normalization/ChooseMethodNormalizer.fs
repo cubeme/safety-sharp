@@ -27,6 +27,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp.Extensions
+open SafetySharp.Utilities
 
 /// Normalizes all usages of the nondeterministic Choose methods.
 type ChooseMethodNormalizer () =
@@ -43,7 +44,7 @@ type ChooseMethodNormalizer () =
             let methodSymbol = symbolInfo.Symbol :?> IMethodSymbol
 
             if methodSymbol = null then
-                sprintf "Unable to determine symbol of invocation '%A'." invocation |> invalidOp
+                invalidOp "Unable to determine symbol of invocation '%A'." invocation
 
             if methodSymbol = this.semanticModel.GetChooseBooleanMethodSymbol false then
                 upcast SyntaxFactory.ParseExpression(sprintf "Choose.Boolean(out %A)" expression.Left)

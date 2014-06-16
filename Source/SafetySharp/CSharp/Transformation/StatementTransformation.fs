@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Transformation
 
 open System.Collections.Immutable
 open SafetySharp.Metamodel
+open SafetySharp.Utilities
 open SafetySharp.CSharp.Roslyn
 open SafetySharp.CSharp.Extensions
 open Microsoft.CodeAnalysis
@@ -90,14 +91,14 @@ module internal StatementTransformation =
                         let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
                         clauses |> List.ofSeq |> GuardedCommandStatement
                     else
-                        sprintf "Unsupported C# Choose call: '%A'." invocation |> invalidOp
-                | null -> sprintf "Unable to determine symbol for invocation expression '%A'." invocation |> invalidOp
-                | _ -> sprintf "Unsupported C# method call: '%A'." invocation |> invalidOp
+                        invalidOp "Unsupported C# Choose call: '%A'." invocation
+                | null -> invalidOp "Unable to determine symbol for invocation expression '%A'." invocation
+                | _ -> invalidOp "Unsupported C# method call: '%A'." invocation
 
-            | _ -> statement.CSharpKind () |> sprintf "Encountered an unexpected C# syntax node: '%A'." |> invalidOp
+            | _ -> invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
 
         | _ ->
-            statement.CSharpKind () |> sprintf "Encountered an unexpected C# syntax node: '%A'." |> invalidOp
+             invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
 
         transform statement
 

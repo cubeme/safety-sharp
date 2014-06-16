@@ -100,12 +100,12 @@ let main args =
     // Check the arguments for '--help' or '-h' as the command line parser library handles help in a strange
     // way. If so, output the help screen and successfully terminate the application.
     if args |> Seq.exists (fun arg -> arg = "--help" || arg = "-h") then
-        Log.Info <| arguments.GenerateHelpMessage ()
+        Log.Info "%s" <| arguments.GenerateHelpMessage ()
         0
     // If there was an error parsing the command line, show the help screen and terminate the application.
     else if not <| parser.ParseArguments (args, arguments) then
         arguments.Silent <- false;
-        Log.Info <| arguments.GenerateHelpMessage ()
+        Log.Info "%s" <| arguments.GenerateHelpMessage ()
         Log.Die "Invalid command line arguments."
         -1
     else
@@ -129,6 +129,6 @@ let main args =
             resultCode
         with 
         | e ->
-            Log.Error <| sprintf "A fatal compilation error occurred: %s" e.Message
-            Log.Info <| sprintf "%A" e.StackTrace
+            Log.Error "A fatal compilation error occurred: %s" e.Message
+            Log.Info "%A" e.StackTrace
             -1;
