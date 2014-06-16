@@ -70,6 +70,8 @@ type PrIvar = SafetySharp.Modelchecking.PromelaSpin.Ivar
 type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
 type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
+type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
+
 type Context = {
     //partition : MMPartitionObject;
     container : MMComponentObject;
@@ -80,6 +82,8 @@ type FieldInfo = {
     context : Context;
     field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
 }
+
+type ResolverForFieldInfos = Map<string*string,FieldInfo>
 
 // many steps are a sequence
 type MMStepInfo = {
@@ -92,18 +96,35 @@ type EasyStatement =
     | GuardedCommandStatement of (Context * MMExpression * (EasyStatement list) ) list //Context * Guard * Statements
     | AssignmentStatement of Target : FieldInfo * Context : Context * Expression : MMExpression //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
            
-type MetamodelToPromela() =
+type MetamodelToPromela (model : MMModelObject) =    
+
     let getSubComponentObjects (subcomponentMap : Map<MMComponentReferenceSymbol, MMComponentObject>) : ((string*MMComponentObject) list) =
         subcomponentMap |> Map.fold (fun acc key value -> (key.Name,value)::acc) []
     
     let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
         fieldMap |> Map.fold (fun acc key value -> value::acc) []
 
+    let reverseComponentObjects : ReverseComponentObjectMap =
+        // string is the unique name of the ComponentObject 
+        // ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>      
+        model.ComponentObjects |> Map.toList
+                               |> List.map (fun (reference,compobject) -> (compobject.Name,reference))
+                               |> Map.ofList
 
-    let collectFields (model : MMModelObject) : FieldInfo list =
-        let rec collectFromComponent (partition:MMPartitionObject) (parentsAndMe:string list) (comp:MMComponentObject) : FieldInfo list = 
+    let rootComponentToName : Map<string,string> =
+        let counter = ref 0
+        model.Partitions |> List.map (fun elem -> elem.RootComponent)
+                         |> List.map (fun elem -> counter:=!counter+1
+                                                  let counterString = (!counter).ToString()
+                                                  (elem.Name,"root"+counterString))
+                         |> Map.ofList
+
+    let fieldInfos : FieldInfo list =
+        // This function works like this: collectFromPartition -> collectFromComponent -> collectFieldInThisComponent
+        // It traverses the model and generates a list of all fields with all necessary information about the field (FieldInfo)
+        let rec collectFromComponent (parentsAndMe:string list) (comp:MMComponentObject) : FieldInfo list =             
             let collectedInSubcomponents : FieldInfo list =
-                (getSubComponentObjects comp.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent partition (name::parentsAndMe) comp)
+                (getSubComponentObjects comp.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (name::parentsAndMe) comp)
             let collectFieldInThisComponent (fieldobject:MMFieldObject) =
                 {
                     FieldInfo.context = {
@@ -115,20 +136,25 @@ type MetamodelToPromela() =
             let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
             collectedInThisComponent @ collectedInSubcomponents
         let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
-            let nameOfRoot=
-                //TODO: Find something adequat
-                partition.RootComponent.Name
-            collectFromComponent partition [nameOfRoot] partition.RootComponent
+            let nameOfRoot= rootComponentToName.Item partition.RootComponent.Name
+            collectFromComponent [nameOfRoot] partition.RootComponent
         model.Partitions |> List.collect collectFromPartition
-    
-    let generateMapToResolveFieldAccessInsideFormulas = ""
-        // Usage: resolveFieldAccessInFormulas
-        // A ComponentReferenceSymbol of a model is always unique in a model.
-        // Caution: This is not true for ComponentReferenceSymbol of a ComponentObject. In a ComponentObject it is only unique in this specific object.
-        // In this function we transform ComponentReferenceSymbol of a model
-        // Map: (Field : FieldSymbol * Component : ComponentReferenceSymbol) -> FieldInfo
-
-    let resolveFieldAccessInsideAFormula = ""
+        
+    let resolverForFieldInfos : ResolverForFieldInfos = 
+        //type ResolverForFormulas = Map<string*string,FieldInfo> first string is the unique componentName, second string is fieldName
+        fieldInfos |> List.map (fun elem -> (elem.context.container.Name, elem.field.FieldSymbol.Name),elem)
+                   |> Map.ofList
+                   
+    let resolveFieldAccesInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : FieldInfo =
+        let componentObject = model.ComponentObjects.Item referenceSymbol
+        let componentObjectName = componentObject.Name
+        let fieldName = field.Name
+        resolverForFieldInfos.Item (componentObjectName,fieldName)
+        
+    let resolveFieldAccesInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : FieldInfo =
+        let componentObjectName = comp.Name
+        let fieldName = field.Name
+        resolverForFieldInfos.Item (componentObjectName,fieldName)
 
 
     let rec resolveFieldAccessInsideAComponent (context:Context) (expression:MMExpression) : FieldInfo =
@@ -154,7 +180,7 @@ type MetamodelToPromela() =
                         FieldInfo.context=context;
                         FieldInfo.field = (context.container.Fields.Item field);
                     }
-
+    
     let rec transformMMStepInfosToEasyStatements (methodBodyResolver:MMMethodBodyResolver) (collected:EasyStatement list) (toTransform:MMStepInfo list) : EasyStatement list =
         // Properties of the result:
         //   - TODO: Return of Statements are rewritten to Assignments of the caller function
@@ -267,11 +293,9 @@ type MetamodelToPromela() =
     
     // THIS IS THE MAIN FUNCTION AND ENTRY POINT
     member this.transformConfiguration (configuration:MMConfiguration) : PrSpec =
-        let fields = collectFields configuration.ModelObject
+        let varModule = this.generateFieldDeclarations fieldInfos
         
-        let varModule = this.generateFieldDeclarations fields
-        
-        let fieldInitialisations = this.generateFieldInitialisations fields
+        let fieldInitialisations = this.generateFieldInitialisations fieldInfos
         //updates and bindings: Cover them in an endless loop
 
         let systemSequence : PrSequence = statementsToSequence (fieldInitialisations)
@@ -321,9 +345,11 @@ type MetamodelToPromela() =
                     failwith "Use transformExpressionInsideAFormula only for expression inside formulas and not in components"
                 else
                     //called inside a formula
-                    failwith "NotImplementedYet"
+                    let fieldInfo = resolveFieldAccesInsideAFormula componentReference.Value field
+                    let varref = this.transformFieldInfoToVarref fieldInfo
+                    PrExpression.Varref varref
 
-    member this.transformExpressionInsideAComponent (expression:MMExpression) : PrExpression =
+    member this.transformExpressionInsideAComponent (comp:MMComponentObject) (expression:MMExpression) : PrExpression =
         match expression with
             | MMExpression.BooleanLiteral (value:bool) ->
                 match value with
@@ -334,13 +360,13 @@ type MetamodelToPromela() =
             | MMExpression.DecimalLiteral (value:decimal) ->
                 failwith "NotImplementedYet"
             | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
-                let transformedOperand = this.transformExpressionInsideAComponent operand
+                let transformedOperand = this.transformExpressionInsideAComponent comp operand
                 match operator with
                     | MMUnaryOperator.LogicalNot -> PrExpression.UnaryExpr(PrUnarop.Not,transformedOperand)
                     | MMUnaryOperator.Minus      -> PrExpression.UnaryExpr(PrUnarop.Neg,transformedOperand)
             | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
-                let transformedLeft = this.transformExpressionInsideAComponent leftExpression
-                let transformedRight = this.transformExpressionInsideAComponent rightExpression
+                let transformedLeft = this.transformExpressionInsideAComponent comp leftExpression
+                let transformedRight = this.transformExpressionInsideAComponent comp rightExpression
                 match operator with
                     | MMBinaryOperator.Add                -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Add,transformedRight)
                     | MMBinaryOperator.Subtract           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Min,transformedRight)
@@ -358,13 +384,16 @@ type MetamodelToPromela() =
             | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
                 if componentReference.IsNone then
                     //called inside a component
-                    failwith "NotImplementedYet"
+                    let fieldInfo = resolveFieldAccesInsideAComponent comp field
+                    let varref = this.transformFieldInfoToVarref fieldInfo
+                    PrExpression.Varref varref
                 else
                     //called inside a formula
                     failwith "Use transformExpressionInsideAComponent only for expression inside components and not in formulas"
 
 
-    member this.transformStatement (statement:MMStatement) : PrStatement =
+    //todo: actually we need a SimpleStatementTransformer here
+    (*member this.transformStatement (statement:MMStatement) : PrStatement =
         match statement with
             | MMStatement.EmptyStatement ->
                 skipStatement
@@ -383,14 +412,15 @@ type MetamodelToPromela() =
                 //      order for the execution of the statements). In this function, every ReturnStatement
                 //      needs to be replaced. Thus this case should never be reached
             | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
-                let transformGuardedStmnt ((guard,stmnt):MMExpression * MMStatement) =
+                failwith "NotImplementedYet"
+                (*let transformGuardedStmnt ((guard,stmnt):MMExpression * MMStatement) =
                     let transformedGuard = this.transformExpressionInsideAComponent guard
                     let transformedStmnt = this.transformStatement stmnt
                     PrSequence.Sequence([anyExprToStep transformedGuard;stmntToStep transformedStmnt])
                 guardedStmnts |> List.map transformGuardedStmnt
-                              |> (fun sequences -> PrStatement.IfStmnt(PrOptions.Options(sequences)))
+                              |> (fun sequences -> PrStatement.IfStmnt(PrOptions.Options(sequences)))*)
             | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
-                failwith "NotImplementedYet"
+                failwith "NotImplementedYet"*)
 
     member this.transformFormula (formula:MMFormula) : PrFormula =
         //TODO: check if LTL
