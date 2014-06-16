@@ -67,7 +67,7 @@ type Log () =
             | Error     -> "Error  "
             | Fatal     -> "Fatal  "
 
-        System.Diagnostics.Debug.WriteLine ("[{0}] {1}", logType, logEntry.Message)
+        Debug.WriteLine ("[{0}] {1}", logType, logEntry.Message)
 
     /// Raised when a <see cref="LogEntry" /> has been generated. If the <see cref="LogEntry" />'s type is
     /// <see cref="LogType.Fatal" />, the program terminates after all event handlers have been executed.
@@ -86,6 +86,10 @@ type Log () =
     /// Logs an informational message.
     static member Info message = Printf.ksprintf (Log.RaiseEvent Info) message
 
-    /// In debug builds, logs debugging information.
+    /// In debug builds, logs debugging information. We cannot apply the Condition attribute to the actual Debug method
+    /// defined below, as that would cause compiler errors in Release builds.
     [<Conditional("DEBUG")>]
-    static member Debug message = Printf.ksprintf (Log.RaiseEvent Debug) message
+    static member private Debug message = Log.RaiseEvent Debug message
+
+    /// In debug builds, logs debugging information.
+    static member Debug message = Printf.ksprintf (Log.Debug) message
