@@ -41,6 +41,11 @@ type LtlFormula internal (formula : CSharpFormula) =
 [<AbstractClass; Sealed>]
 type Ltl =
 
+    /// Returns a <see cref="LtlFormula" /> that evaluates <paramref name="expression"/> within a system state.
+    static member StateExpression (expression : Expression<Func<bool>>) =
+        nullArg expression "expression"
+        LtlFormula (CSharpStateFormula expression)
+
     /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
     static member Next (operand : LtlFormula) =
         nullArg operand "operand"
@@ -86,3 +91,19 @@ type Ltl =
         nullArg rightOperand "rightOperand"
 
         LtlFormula (CSharpBinaryFormula(CSharpStateFormula leftOperand, BinaryFormulaOperator.Until, CSharpStateFormula rightOperand))
+
+    /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    /// <paramref name="rightOperand" />.
+    static member Until (leftOperand : LtlFormula, rightOperand : Expression<Func<bool>>) =
+        nullArg leftOperand "leftOperand"
+        nullArg rightOperand "rightOperand"
+
+        LtlFormula (CSharpBinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, CSharpStateFormula rightOperand))
+
+    /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    /// <paramref name="rightOperand" />.
+    static member Until (leftOperand : Expression<Func<bool>>, rightOperand : LtlFormula) =
+        nullArg leftOperand "leftOperand"
+        nullArg rightOperand "rightOperand"
+
+        LtlFormula (CSharpBinaryFormula(CSharpStateFormula leftOperand, BinaryFormulaOperator.Until, rightOperand.Formula))

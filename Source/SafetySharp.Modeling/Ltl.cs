@@ -30,6 +30,28 @@ namespace SafetySharp.Modeling
 	/// </summary>
 	public static class Ltl
 	{
+		#region StateExpression
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that evaluates <paramref name="expression"/> within a system state.
+		/// </summary>
+		/// <param name="expression">The expression that should be evaluated.</param>
+		public static LtlFormula StateExpression(Expression<Func<bool>> expression)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that evaluates <paramref name="expression"/> within a system state.
+		/// </summary>
+		/// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
+		public static LtlFormula StateExpression([LiftExpression] bool expression)
+		{
+			throw new NotSupportedException();
+		}
+
+		#endregion
+
 		#region Next
 
 		/// <summary>
@@ -129,9 +151,9 @@ namespace SafetySharp.Modeling
 		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
-		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
+		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
+		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
+		public static LtlFormula Until([LiftExpression] bool leftOperand, [LiftExpression] bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}
@@ -143,6 +165,17 @@ namespace SafetySharp.Modeling
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
 		public static LtlFormula Until(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
+		{
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     <paramref name="rightOperand" />.
+		/// </summary>
+		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
 		{
 			throw new NotSupportedException();
 		}
@@ -187,17 +220,6 @@ namespace SafetySharp.Modeling
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
 		public static LtlFormula Until(LtlFormula leftOperand, [LiftExpression] bool rightOperand)
-		{
-			throw new NotSupportedException();
-		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-		///     <paramref name="rightOperand" />.
-		/// </summary>
-		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
-		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, [LiftExpression] bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}
