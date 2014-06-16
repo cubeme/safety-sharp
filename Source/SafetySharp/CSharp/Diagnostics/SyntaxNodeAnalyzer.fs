@@ -43,8 +43,8 @@ type SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
     interface ISyntaxTreeAnalyzer with
         /// Analyzes the <paramref name="syntaxTree"/>.
         override this.AnalyzeSyntaxTree (syntaxTree : SyntaxTree, addDiagnostic : Action<Diagnostic>, cancellationToken : CancellationToken) =
-            Requires.NotNull syntaxTree "syntaxTree"
-            Requires.NotNull addDiagnostic "addDiagnostic"
+            nullArg syntaxTree "syntaxTree"
+            nullArg addDiagnostic "addDiagnostic"
 
             let diagnosticCallback = DiagnosticCallback (fun locationNode args ->
                 addDiagnostic.Invoke(Diagnostic.Create (this.descriptor, locationNode.GetLocation(), args)))

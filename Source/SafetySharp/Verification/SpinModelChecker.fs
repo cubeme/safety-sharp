@@ -29,7 +29,7 @@ open SafetySharp.CSharp.Transformation
 
 [<Sealed>]
 type SpinModelChecker (model : Model) =
-    do Requires.NotNull model "model"
+    do nullArg model "model"
     do model.FinalizeMetadata ()
 
     member this.Check (formula : LtlFormula) =

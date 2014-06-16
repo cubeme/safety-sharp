@@ -185,9 +185,9 @@ module Compiler =
 
     /// Compiles the C# modeling project identified by the given project file in the given configuration for the given platform.
     let Compile projectFile configuration platform =
-        Requires.NotNull projectFile "projectFile"
-        Requires.NotNull configuration "configuration"
-        Requires.NotNull platform "platform"
+        nullArg projectFile "projectFile"
+        nullArg configuration "configuration"
+        nullArg platform "platform"
 
         if not <| File.Exists projectFile then
             logError "0001" "Project file '%s' could not be found." projectFile

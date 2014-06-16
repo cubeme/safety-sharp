@@ -35,8 +35,8 @@ module TypeSymbolExtensions =
 
         /// Checks whether the type symbol is directly or indirectly derived from the given base type interface or class.
         member this.IsDerivedFrom (baseType : ITypeSymbol) =
-            Requires.NotNull this "this"
-            Requires.NotNull baseType "baseType"
+            nullArg this "this"
+            nullArg baseType "baseType"
 
             // Check whether any of the interfaces or their bases match baseType
             if baseType.TypeKind = TypeKind.Interface && (this.Interfaces.Any(fun i -> i.Equals(baseType) || i.IsDerivedFrom(baseType))) then
@@ -53,24 +53,24 @@ module TypeSymbolExtensions =
 
         /// Checks whether the type symbol is directly or indirectly derived from the <see cref="SafetySharp.Modeling.Component"/> class.
         member this.IsDerivedFromComponent (compilation : Compilation) =
-            Requires.NotNull this "this"
-            Requires.NotNull compilation "compilation"
+            nullArg this "this"
+            nullArg compilation "compilation"
             compilation.GetComponentClassSymbol () |> this.IsDerivedFrom
 
         /// Checks whether the type symbol directly or indirectly implements the <see cref="SafetySharp.Modeling.IComponent"/> interface.
         member this.ImplementsIComponent (compilation : Compilation) =
-            Requires.NotNull this "this"
-            Requires.NotNull compilation "compilation"
+            nullArg this "this"
+            nullArg compilation "compilation"
             compilation.GetComponentInterfaceSymbol () |> this.IsDerivedFrom
 
         /// Checks whether the type symbol is directly or indirectly derived from the <see cref="SafetySharp.Modeling.Component"/> class.
         member this.IsDerivedFromComponent (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
             this.IsDerivedFromComponent semanticModel.Compilation
 
         /// Checks whether the type symbol directly or indirectly implements the <see cref="SafetySharp.Modeling.IComponent"/> interface.
         member this.ImplementsIComponent (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
             this.ImplementsIComponent semanticModel.Compilation

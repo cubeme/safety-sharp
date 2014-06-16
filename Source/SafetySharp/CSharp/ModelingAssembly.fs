@@ -32,10 +32,10 @@ open SafetySharp.Modeling
 /// Represents a Safety Sharp modeling assembly.
 type ModelingAssembly (modelingAssembly : Assembly) as this=
 
-    do Requires.NotNull modelingAssembly "modelingAssembly"
+    do nullArg modelingAssembly "modelingAssembly"
 
     let assemblyMetadata = modelingAssembly.GetCustomAttribute<ModelingAssemblyAttribute> ()
-    do Requires.ArgumentSatisfies (not <| obj.ReferenceEquals(assemblyMetadata, null)) "modelingAssembly" "Expected a SafetySharp modeling assembly."
+    do invalidArg (not <| obj.ReferenceEquals(assemblyMetadata, null)) "modelingAssembly" "Expected a SafetySharp modeling assembly."
 
     do if this.CompilerVersion <> Compiler.Version then
         invalidOp "Modeling assembly '%s' was compiled with a different version of the SafetySharp compiler." modelingAssembly.FullName 

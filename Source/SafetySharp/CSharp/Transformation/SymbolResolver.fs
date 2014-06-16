@@ -23,9 +23,9 @@
 namespace SafetySharp.CSharp.Transformation
 
 open System.Collections.Immutable
-open SafetySharp.Utilities
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
+open SafetySharp.Utilities
 open Microsoft.CodeAnalysis
 
 /// Represents a mapping between the original C# symbols and the created metamodel symbols.
@@ -44,48 +44,48 @@ type internal SymbolResolver = private {
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given C# component symbol.
     member this.ResolveComponent (componentSymbol : INamedTypeSymbol) =
-        Requires.NotNull componentSymbol "componentSymbol"
-        match this.ComponentMap.TryGetValue componentSymbol with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "componentSymbol" "The given C# component symbol is unknown."
+        nullArg componentSymbol "componentSymbol"
+        let (result, symbol) = this.ComponentMap.TryGetValue componentSymbol
+        invalidArg result "componentSymbol" "The given C# component symbol is unknown."
+        symbol
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
     member this.ResolveComponent (componentObject : Component) =
-        Requires.NotNull componentObject "componentObject"
+        nullArg componentObject "componentObject"
         let typeName = componentObject.GetType().FullName.Replace("+", ".")
         let assemblyName = componentObject.GetType().Assembly.GetName().Name
         let name = sprintf "%s::%s" assemblyName typeName
 
-        match this.ComponentNameMap |> Map.tryFind name with
-        | Some symbol -> symbol
-        | None -> invalidArg "componentObject" "The type of the given .NET component instance is unknown."
+        let symbol = this.ComponentNameMap |> Map.tryFind name
+        invalidArg (symbol.IsSome) "componentObject" "The type of the given .NET component instance is unknown."
+        symbol.Value
 
     /// Resolves the <see cref="FieldSymbol"/> corresponding to the given C# field symbol.
     member this.ResolveField (fieldSymbol : IFieldSymbol) =
-        Requires.NotNull fieldSymbol "fieldSymbol"
-        match this.FieldMap.TryGetValue fieldSymbol with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "fieldSymbol" "The given C# field symbol is unknown."
+        nullArg fieldSymbol "fieldSymbol"
+        let (result, symbol) = this.FieldMap.TryGetValue fieldSymbol
+        invalidArg result "fieldSymbol" "The given C# field symbol is unknown."
+        symbol
 
     /// Resolves the <see cref="SubcomponentSymbol"/> corresponding to the given C# subcomponent symbol.
     member this.ResolveSubcomponent (subcomponentSymbol : IFieldSymbol) =
-        Requires.NotNull subcomponentSymbol "subcomponentSymbol"
-        match this.SubcomponentMap.TryGetValue subcomponentSymbol with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "subcomponentSymbol" "The given C# subcomponent symbol is unknown."
+        nullArg subcomponentSymbol "subcomponentSymbol"
+        let (result, symbol) = this.SubcomponentMap.TryGetValue subcomponentSymbol
+        invalidArg result "subcomponentSymbol" "The given C# subcomponent symbol is unknown."
+        symbol
 
     /// Resolves the <see cref="MethodSymbol"/> corresponding to the given C# method symbol.
     member this.ResolveMethod (methodSymbol : IMethodSymbol) =
-        Requires.NotNull methodSymbol "methodSymbol"
-        match this.MethodMap.TryGetValue methodSymbol with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "methodSymbol" "The given C# method symbol is unknown."
+        nullArg methodSymbol "methodSymbol"
+        let (result, symbol) = this.MethodMap.TryGetValue methodSymbol
+        invalidArg result "methodSymbol" "The given C# method symbol is unknown."
+        symbol
 
     /// Resolves the C# method symbol corresponding to the given metamodel <see cref="MethodSymbol"/>.
     member this.ResolveCSharpMethod (methodSymbol : MethodSymbol) =
-        match this.MethodCSharpMap.TryGetValue methodSymbol with
-        | (result, symbol) when result -> symbol
-        | _ -> invalidArg "methodSymbol" "The given method symbol is unknown."
+        let (result, symbol) = this.MethodCSharpMap.TryGetValue methodSymbol
+        invalidArg result "methodSymbol" "The given method symbol is unknown."
+        symbol
 
     /// Gets the model symbol that contains all of the symbols of the symbol resolver.
     member this.ModelSymbol = this.Model

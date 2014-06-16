@@ -42,12 +42,12 @@ module FieldSymbolExtensions =
 
         /// Checks whether the field symbol is a subcomponent field.
         member this.IsSubcomponentField (compilation : Compilation) =
-            Requires.NotNull this "this"
-            Requires.NotNull compilation "compilation"
+            nullArg this "this"
+            nullArg compilation "compilation"
             compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this
 
         /// Checks whether the field symbol is a subcomponent field.
         member this.IsSubcomponentField (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
             semanticModel.Compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this

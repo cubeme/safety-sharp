@@ -36,8 +36,8 @@ module ArgumentExtensions =
 
         /// Gets the <see cref="IMethodSymbol" /> of the method call expression that contains the argument.
         member this.GetMethodSymbol (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
 
             let expression = this.GetMethodCallExpression ()
             match semanticModel.GetSymbolInfo(expression :> ExpressionSyntax).Symbol with
@@ -47,8 +47,8 @@ module ArgumentExtensions =
         ///  Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
         ///  method call has the attribute of type <typeparamref name="T" /> applied.
         member this.ParameterHasAttribute<'T when 'T :> Attribute> (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
 
             let attributeSymbol = semanticModel.GetTypeSymbol<'T> ()
             this.GetParameterSymbol(semanticModel).GetAttributes()
@@ -57,7 +57,7 @@ module ArgumentExtensions =
         /// Gets the <see cref="InvocationExpressionSyntax" /> or the <see cref="ObjectCreationExpressionSyntax" /> 
         /// that contains the argument.
         member private this.GetMethodCallExpression () =
-            Requires.NotNull this "this"
+            nullArg this "this"
 
             let rec getMethodCallExpression (node : SyntaxNode) =
                 match node with
@@ -74,8 +74,8 @@ module ArgumentExtensions =
         /// TODO: There might be an official Roslyn API one day that should be used to replace this method.
         /// (see also https://roslyn.codeplex.com/discussions/541303)
         member private this.GetParameterSymbol (semanticModel : SemanticModel) : IParameterSymbol =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
 
             let arguments =
                 match this.GetMethodCallExpression () with

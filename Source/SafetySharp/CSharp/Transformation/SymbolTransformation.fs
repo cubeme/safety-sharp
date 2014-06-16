@@ -38,7 +38,7 @@ module internal SymbolTransformation =
 
     /// Transforms the given component types of the compilation to a symbol map.
     let Transform (compilation : Compilation) =
-        Requires.NotNull compilation "compilation"
+        nullArg compilation "compilation"
 
         // An equality comparer for method symbols that implements reference equality
         let comparer = { 

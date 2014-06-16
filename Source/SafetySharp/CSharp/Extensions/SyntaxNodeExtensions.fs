@@ -36,13 +36,13 @@ module SyntaxNodeExtensions =
 
         /// Gets a list of descendant syntax nodes of the given type in prefix document order.
         member this.Descendants<'T when 'T :> SyntaxNode> () =
-            Requires.NotNull this "this"
+            nullArg this "this"
             this.DescendantNodes().OfType<'T>()
 
         /// Gets a list of descendant syntax nodes (including the root node) of the given type 
         /// in prefix document order.
         member this.DescendantsAndSelf<'T when 'T :> SyntaxNode> () =
-            Requires.NotNull this "this"
+            nullArg this "this"
             this.DescendantNodesAndSelf().OfType<'T>()
 
     [<Extension>]
@@ -51,23 +51,23 @@ module SyntaxNodeExtensions =
         /// Removes all leading and trailing trivia from the syntax node.
         [<Extension>]
         static member RemoveTrivia (syntaxNode : 'T when 'T :> SyntaxNode) =
-            Requires.NotNull syntaxNode "syntaxNode"
+            nullArg syntaxNode "syntaxNode"
             syntaxNode.WithLeadingTrivia().WithTrailingTrivia()
 
         /// Adds the given leading and trailing trivia to the syntax node.
         [<Extension>]
         static member AddTrivia (syntaxNode : 'T when 'T :> SyntaxNode, leadingTrivia : SyntaxTriviaList, trailingTrivia : SyntaxTriviaList) =
-            Requires.NotNull syntaxNode "syntaxNode"
+            nullArg syntaxNode "syntaxNode"
             syntaxNode.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia)
 
         /// Adds the trivia from the given syntax node to the current syntax node.
         [<Extension>]
         static member AddTriviaFrom (syntaxNode : 'T when 'T :> SyntaxNode, node : SyntaxNode) =
-            Requires.NotNull syntaxNode "syntaxNode"
+            nullArg syntaxNode "syntaxNode"
             syntaxNode.WithLeadingTrivia(node.GetLeadingTrivia()).WithTrailingTrivia(node.GetTrailingTrivia())
 
         /// Surrounds the syntax node with a single leading and trailing space.
         [<Extension>]
         static member SurroundWithSingleSpace (syntaxNode : 'T when 'T :> SyntaxNode) =
-            Requires.NotNull syntaxNode "syntaxNode"
+            nullArg syntaxNode "syntaxNode"
             syntaxNode.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia(SyntaxFactory.Space)

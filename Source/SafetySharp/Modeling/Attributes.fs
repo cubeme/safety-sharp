@@ -33,8 +33,8 @@ type ModelingCompilationUnitAttribute (syntaxTree : string, filePath : string) =
 
     /// Gets the syntax tree of the compilation unit.
     member this.SyntaxTree = 
-        Requires.NotNullOrWhitespace syntaxTree "syntaxTree"
-        Requires.NotNullOrWhitespace filePath "filePath"
+        nullOrWhitespaceArg syntaxTree "syntaxTree"
+        nullOrWhitespaceArg filePath "filePath"
         SyntaxFactory.ParseSyntaxTree (syntaxTree, filePath)
 
 /// Provides metadata about a reference of a Safety Sharp modeling assembly to another Safety Sharp modeling assembly.
@@ -44,7 +44,7 @@ type ModelingAssemblyReferenceAttribute (assemblyName : string) =
 
     /// Gets the fully qualified name of the referenced modeling assembly.
     member this.AssemblyName = 
-        Requires.NotNullOrWhitespace assemblyName "assemblyName"
+        nullOrWhitespaceArg assemblyName "assemblyName"
         assemblyName
 
 /// Provides metadata about a Safety Sharp modeling assembly.
@@ -54,7 +54,7 @@ type ModelingAssemblyAttribute (compilerVersion : string) =
 
     /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
     member this.CompilerVersion = 
-        Requires.NotNullOrWhitespace compilerVersion "compilerVersion"
+        nullOrWhitespaceArg compilerVersion "compilerVersion"
         compilerVersion
 
 /// When applied to a method parameter, instructs the SafetySharp compiler to lift an expression 'expr'

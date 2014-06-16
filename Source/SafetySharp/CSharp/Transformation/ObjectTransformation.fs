@@ -31,8 +31,8 @@ module internal ObjectTransformation =
 
     /// Transforms C# objects to metamodel objects.
     let Transform (model : Model) (symbolResolver : SymbolResolver) =
-        Requires.NotNull model "model"
-        Requires.ArgumentSatisfies model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+        nullArg model "model"
+        invalidArg model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
 
         // We're using the builder pattern to initialize the dictionaries
         let componentSymbolMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentSymbol> ()

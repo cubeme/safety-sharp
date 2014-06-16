@@ -43,46 +43,46 @@ type Ltl =
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
     static member Next (operand : LtlFormula) =
-        Requires.NotNull operand "operand"
+        nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(operand.Formula, UnaryFormulaOperator.Next))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
     static member Next (operand : Expression<Func<bool>>) =
-        Requires.NotNull operand "operand"
+        nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Next))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
     static member Finally (operand : LtlFormula) =
-        Requires.NotNull operand "operand"
+        nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(operand.Formula, UnaryFormulaOperator.Finally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
     static member Finally (operand : Expression<Func<bool>>) =
-        Requires.NotNull operand "operand"
+        nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Finally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
     static member Globally (operand : LtlFormula) =
-        Requires.NotNull operand "operand"
+        nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(operand.Formula, UnaryFormulaOperator.Globally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
     static member Globally (operand : Expression<Func<bool>>) =
-        Requires.NotNull operand "operand"
+        nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Globally))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
     /// <paramref name="rightOperand" />.
     static member Until (leftOperand : LtlFormula, rightOperand : LtlFormula) =
-        Requires.NotNull leftOperand "leftOperand"
-        Requires.NotNull rightOperand "rightOperand"
+        nullArg leftOperand "leftOperand"
+        nullArg rightOperand "rightOperand"
 
         LtlFormula (CSharpBinaryFormula(leftOperand.Formula, BinaryFormulaOperator.Until, rightOperand.Formula))
 
     /// Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
     /// <paramref name="rightOperand" />.
     static member Until (leftOperand : Expression<Func<bool>>, rightOperand : Expression<Func<bool>>) =
-        Requires.NotNull leftOperand "leftOperand"
-        Requires.NotNull rightOperand "rightOperand"
+        nullArg leftOperand "leftOperand"
+        nullArg rightOperand "rightOperand"
 
         LtlFormula (CSharpBinaryFormula(CSharpStateFormula leftOperand, BinaryFormulaOperator.Until, CSharpStateFormula rightOperand))

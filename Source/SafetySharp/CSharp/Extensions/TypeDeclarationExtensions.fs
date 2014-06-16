@@ -35,23 +35,23 @@ module TypeDeclarationExtensions =
 
         /// Checks whether the type declaration declaration is a component declaration.
         member this.IsComponentDeclaration (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
 
             this.IsDerivedFrom semanticModel <| semanticModel.GetComponentClassSymbol ()
 
         /// Checks whether type declaration is a component interface declaration.
         member this.IsComponentInterfaceDeclaration (semanticModel : SemanticModel) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
 
             this.IsDerivedFrom semanticModel <| semanticModel.GetComponentInterfaceSymbol ()
 
         /// Checks whether the type declaration is directly or indirectly derived from the <paramref name="baseType" /> interface or class.
         member this.IsDerivedFrom (semanticModel : SemanticModel) (baseType : ITypeSymbol) =
-            Requires.NotNull this "this"
-            Requires.NotNull semanticModel "semanticModel"
-            Requires.NotNull baseType "baseType"
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+            nullArg baseType "baseType"
 
             match semanticModel.GetDeclaredSymbol this with
             | typeSymbol when typeSymbol <> null -> typeSymbol.IsDerivedFrom baseType

@@ -36,11 +36,11 @@ module SyntaxTreeExtensions =
         /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node of the given type
         /// in prefix document order.
         member this.Descendants<'T when 'T :> SyntaxNode> () =
-            Requires.NotNull this "this"
+            nullArg this "this"
             this.GetRoot().Descendants<'T>()
 
         /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node (including the root node) of
         /// the given type in prefix document order.
         member this.DescendantsAndSelf<'T when 'T :> SyntaxNode> () =
-            Requires.NotNull this "this"
+            nullArg this "this"
             this.GetRoot().DescendantsAndSelf<'T>()

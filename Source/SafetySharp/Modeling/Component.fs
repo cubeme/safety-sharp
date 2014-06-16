@@ -89,8 +89,8 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
     let mutable (subcomponents : Component list) = []
     let fields = Dictionary<string, obj list> ()
 
-    let requiresNotSealed () = Requires.That (not isSealed) "Modifications of the component metadata are only allowed during object construction."
-    let requiresIsSealed () = Requires.That isSealed "Cannot access the component metadata as it might not yet be complete."
+    let requiresNotSealed () = invalidCall (not isSealed) "Modifications of the component metadata are only allowed during object construction."
+    let requiresIsSealed () = invalidCall isSealed "Cannot access the component metadata as it might not yet be complete."
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
@@ -111,7 +111,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
 
     /// Allows access to a non-public member of the component.
     member this.Access<'T> memberName =
-        Requires.NotNullOrWhitespace memberName "memberName"
+        nullOrWhitespaceArg memberName "memberName"
         MemberAccess<'T> (this, memberName)
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -120,23 +120,23 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
 
     /// Sets the initial values of a field of the component instance.
     member this.SetInitialValues<'T> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
-        Requires.NotNull field "field"
-        Requires.NotNull initialValues "initialValues"
-        Requires.ArgumentSatisfies (initialValues.Length > 0) "initialValues" "At least one value must be provided."
-        Requires.ArgumentSatisfies (field.Body :? MemberExpression) "field" "Expected a reference to a field of the component."
+        nullArg field "field"
+        nullArg initialValues "initialValues"
+        invalidArg (initialValues.Length > 0) "initialValues" "At least one value must be provided."
+        invalidArg (field.Body :? MemberExpression) "field" "Expected a reference to a field of the component."
         requiresNotSealed ()
 
         match (field.Body :?> MemberExpression).Member with
         | :? FieldInfo as fieldInfo ->
             // Check if the field is actually defined or inherited by the component
             if not (fieldInfo.DeclaringType.IsAssignableFrom <| this.GetType ()) then
-                Requires.ArgumentSatisfies false "field" "Expected a reference to a field of the component."
+                invalidArg false "field" "Expected a reference to a field of the component."
 
             fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
 
             let random = Random();
             fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
-        | _ -> Requires.ArgumentSatisfies false "field" "Expected a reference to a field of the component."
+        | _ -> invalidArg false "field" "Expected a reference to a field of the component."
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata (?componentName : string) =
@@ -171,11 +171,11 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
 
     /// Gets the initial values of the field with name <paramref name="fieldName" />.
     member internal this.GetInitialValuesOfField fieldName =
-        Requires.NotNullOrWhitespace fieldName "fieldName"
+        nullOrWhitespaceArg fieldName "fieldName"
         requiresIsSealed ()
 
         let (result, initialValues) = fields.TryGetValue fieldName
-        Requires.ArgumentSatisfies result "fieldName" "A field with name '%s' does not exist." fieldName
+        invalidArg result "fieldName" "A field with name '%s' does not exist." fieldName
 
         initialValues
 
@@ -183,14 +183,14 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
     /// Gets the subcomponent with the given name.
     /// </summary>
     member internal this.GetSubcomponent subcomponentName =
-        Requires.NotNullOrWhitespace subcomponentName "subcomponentName"
+        nullOrWhitespaceArg subcomponentName "subcomponentName"
         requiresIsSealed ()
 
         let subcomponent = subcomponents |> List.tryFind (fun component' -> component'.Name.EndsWith subcomponentName)
         match subcomponent with
         | Some subcomponent -> subcomponent
         | None ->
-            Requires.ArgumentSatisfies false "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
+            invalidArg false "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
             subcomponent.Value // Required, but cannot be reached
 
     /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.

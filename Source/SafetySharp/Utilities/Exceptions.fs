@@ -25,9 +25,45 @@ namespace SafetySharp.Utilities
 open System
 open System.Diagnostics
 
+/// Defines a set of helper functions that should be used to raise exceptions and to check preconditions of functions.
 [<AutoOpen>]
 module internal Exceptions =
 
     /// Raises an <see cref="InvalidOperationException" /> with the given message.
     [<DebuggerHidden>]
     let inline invalidOp message = Printf.ksprintf invalidOp message
+
+    /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
+    let inline nullArg<'T when 'T : null> (argument : 'T) argumentName =
+        if obj.ReferenceEquals(argument, null) then 
+            nullArg argumentName
+
+    /// Throws a <see cref="System.ArgumentNullException"/> if the given string is <c>null</c> or a
+    /// <see cref="System.ArgumentException"/> if the given string consists of whitespace only.
+    let nullOrWhitespaceArg argument argumentName =
+        nullArg argumentName "argumentName"
+
+        if String.IsNullOrWhiteSpace "argumentName" then
+            Operators.invalidArg "argumentName" "The given string cannot consist of whitespace only."
+
+        if argument = null then 
+            Operators.nullArg argumentName
+
+        if String.IsNullOrWhiteSpace argument then 
+            Operators.invalidArg argumentName "The given string cannot consist of whitespace only."
+
+    /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>false</c>.
+    let inline invalidArg condition argumentName description =
+        nullOrWhitespaceArg argumentName "argumentName"
+
+        Printf.ksprintf (fun message ->
+            if not condition then
+                Operators.invalidArg argumentName message
+        ) description
+
+    /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
+    let inline invalidCall condition description =
+        Printf.ksprintf (fun message ->
+            if not condition then
+                Operators.invalidOp message
+        ) description
