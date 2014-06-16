@@ -91,10 +91,15 @@ type MMStepInfo = {
     statement : MMStatement;
 }
 
-// An easyStatement has only assignments and guarded commands. Also Assignments are defined on fieldinfos
-type EasyStatement = 
-    | GuardedCommandStatement of (Context * MMExpression * (EasyStatement list) ) list //Context * Guard * Statements
-    | AssignmentStatement of Target : FieldInfo * Context : Context * Expression : MMExpression //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
+// A SimpleExpression knows the Context of its variables (MMExpression already offers this functionality for Formulas)
+type SimpleExpression = MMExpression 
+// A simpleStatement has only assignments and guarded commands. Also Assignments are defined on fieldinfos
+// TODO: Maybe remove Context and use expression of a formula which knows its MMComponentObject directly
+type SimpleStatement = 
+    | GuardedCommandStatement of (SimpleExpression * (SimpleStatement list) ) list //Guard (which knows its Context) * Statements
+    | AssignmentStatement of Target : FieldInfo * Expression : SimpleExpression //Expression (knows its Context). FieldInfo has its own Context (may result of a return-Statement, when context is different)
+
+
            
 type MetamodelToPromela (model : MMModelObject) =    
 
@@ -110,6 +115,9 @@ type MetamodelToPromela (model : MMModelObject) =
         model.ComponentObjects |> Map.toList
                                |> List.map (fun (reference,compobject) -> (compobject.Name,reference))
                                |> Map.ofList
+
+    let ComponentObjectToComponentReference (comp:MMComponentObject) : MMComponentReferenceSymbol =
+        reverseComponentObjects.Item comp.Name
 
     let rootComponentToName : Map<string,string> =
         let counter = ref 0
@@ -145,19 +153,19 @@ type MetamodelToPromela (model : MMModelObject) =
         fieldInfos |> List.map (fun elem -> (elem.context.container.Name, elem.field.FieldSymbol.Name),elem)
                    |> Map.ofList
                    
-    let resolveFieldAccesInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : FieldInfo =
+    let resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : FieldInfo =
         let componentObject = model.ComponentObjects.Item referenceSymbol
         let componentObjectName = componentObject.Name
         let fieldName = field.Name
         resolverForFieldInfos.Item (componentObjectName,fieldName)
         
-    let resolveFieldAccesInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : FieldInfo =
+    let resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : FieldInfo =
         let componentObjectName = comp.Name
         let fieldName = field.Name
         resolverForFieldInfos.Item (componentObjectName,fieldName)
 
 
-    let rec resolveFieldAccessInsideAComponent (context:Context) (expression:MMExpression) : FieldInfo =
+    let rec resolveTargetOfAnAssignment (context:Context) (expression:MMExpression) : FieldInfo =
         // Use resolveFieldInfoInCode only for expression inside components and not in formulas
         // Example of usage: Used on the left side of assignments
         match expression with
@@ -174,14 +182,34 @@ type MetamodelToPromela (model : MMModelObject) =
             | MMExpression.FieldAccessExpression (field:MMFieldSymbol, comp:MMComponentReferenceSymbol option) ->
                 if comp.IsSome then
                     // if comp is set, then this expression is an expression inside a formula
-                    failwith "Use resolveFieldAccessInsideAComponent only for expression inside components and not in formulas"
+                    failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
                 else
                     {
                         FieldInfo.context=context;
                         FieldInfo.field = (context.container.Fields.Item field);
                     }
-    
-    let rec transformMMStepInfosToEasyStatements (methodBodyResolver:MMMethodBodyResolver) (collected:EasyStatement list) (toTransform:MMStepInfo list) : EasyStatement list =
+        
+    let rec transformMMExpressionInsideAComponentToSimpleExpression (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
+        match expression with
+            | MMExpression.BooleanLiteral (value:bool) -> SimpleExpression.BooleanLiteral(value)
+            | MMExpression.IntegerLiteral (value:int) ->  SimpleExpression.IntegerLiteral(value)
+            | MMExpression.DecimalLiteral (value:decimal) -> failwith "NotImplementedYet"
+            | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
+                let transformedOperand = transformMMExpressionInsideAComponentToSimpleExpression comp operand
+                SimpleExpression.UnaryExpression(transformedOperand,operator)
+            | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
+                let transformedLeft = transformMMExpressionInsideAComponentToSimpleExpression comp leftExpression
+                let transformedRight = transformMMExpressionInsideAComponentToSimpleExpression comp rightExpression
+                SimpleExpression.BinaryExpression(transformedLeft,operator,transformedRight)
+            | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
+                if componentReference.IsNone then
+                    //called inside a component
+                    MMExpression.FieldAccessExpression(field,Some(ComponentObjectToComponentReference comp))
+                else
+                    //called inside a formula or already transformed
+                    failwith "Use transformExpressionInsideAComponent only for expression inside untransformed components and not in formulas"
+
+    let rec transformMMStepInfosToSimpleStatements (methodBodyResolver:MMMethodBodyResolver) (collected:SimpleStatement list) (toTransform:MMStepInfo list) : SimpleStatement list =
         // Properties of the result:
         //   - TODO: Return of Statements are rewritten to Assignments of the caller function
         //   -       Variables may be needed to be introduced (?!?)
@@ -199,7 +227,7 @@ type MetamodelToPromela (model : MMModelObject) =
             match statementToProcess with
                 | MMStatement.EmptyStatement ->
                     let newToTransform = toTransform.Tail
-                    transformMMStepInfosToEasyStatements methodBodyResolver collected newToTransform
+                    transformMMStepInfosToSimpleStatements methodBodyResolver collected newToTransform
                 | MMStatement.BlockStatement (statements : MMStatement list) ->
                     let coverStatementWithContext (statement:MMStatement) =
                         {
@@ -208,7 +236,7 @@ type MetamodelToPromela (model : MMModelObject) =
                         }
                     let expandedBlockStatement = statements |> List.map coverStatementWithContext
                     let newToTransform = expandedBlockStatement @ toTransform.Tail
-                    transformMMStepInfosToEasyStatements methodBodyResolver collected newToTransform
+                    transformMMStepInfosToSimpleStatements methodBodyResolver collected newToTransform
                 | MMStatement.ReturnStatement (expression : MMExpression option) ->
                     failwith "NotImplementedYet"
                     //TODO: transformStatement needs additional new optional Argument: the value, to which
@@ -229,6 +257,8 @@ type MetamodelToPromela (model : MMModelObject) =
                     guardedStmnts |> List.map transformGuardedStmnt
                                     |> (fun sequences -> PrStatement.IfStmnt(PrOptions.Options(sequences)))*)
                 | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
+                    //resolveTargetOfAnAssignment
+                    let target = resolveTargetOfAnAssignment target
                     failwith "NotImplementedYet"
             
     // build (toTransform:MMStepInfo list) with all updates in the correct order
@@ -342,13 +372,13 @@ type MetamodelToPromela (model : MMModelObject) =
             | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
                 if componentReference.IsNone then
                     //called inside a component
-                    failwith "Use transformExpressionInsideAFormula only for expression inside formulas and not in components"
+                    failwith "Use transformExpressionInsideAFormula only for expression inside untransformed formulas and not in components"
                 else
                     //called inside a formula
-                    let fieldInfo = resolveFieldAccesInsideAFormula componentReference.Value field
+                    let fieldInfo = resolveFieldAccessInsideAFormula componentReference.Value field
                     let varref = this.transformFieldInfoToVarref fieldInfo
                     PrExpression.Varref varref
-
+    (*
     member this.transformExpressionInsideAComponent (comp:MMComponentObject) (expression:MMExpression) : PrExpression =
         match expression with
             | MMExpression.BooleanLiteral (value:bool) ->
@@ -384,18 +414,31 @@ type MetamodelToPromela (model : MMModelObject) =
             | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
                 if componentReference.IsNone then
                     //called inside a component
-                    let fieldInfo = resolveFieldAccesInsideAComponent comp field
+                    let fieldInfo = resolveFieldAccessInsideAComponent comp field
                     let varref = this.transformFieldInfoToVarref fieldInfo
                     PrExpression.Varref varref
                 else
                     //called inside a formula
                     failwith "Use transformExpressionInsideAComponent only for expression inside components and not in formulas"
+    *)           
 
 
-    //todo: actually we need a SimpleStatementTransformer here
-    (*member this.transformStatement (statement:MMStatement) : PrStatement =
+    member this.transformExpressionInsideASimpleStatement (expression:SimpleExpression) : PrExpression =
+        this.transformExpressionInsideAFormula expression
+    
+
+    member this.transformSimpleStatement (statement:SimpleStatement) : PrStatement =
         match statement with
-            | MMStatement.EmptyStatement ->
+            | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
+                let transformOption (guard,sequence) : (SimpleExpression * (SimpleStatement list) ) =
+                    let transformedGuard = this.transformExpressionInsideASimpleStatement guard
+                    let transformedSequence = sequence |> List.map this.transformSimpleStatement
+                    let promelaSequence = statementsToSequence [transformedGuard;transformedSequence]
+                    ""
+                ""
+            | SimpleStatement.AssignmentStatement (target:FieldInfo, ContextOfExpression:Context, Expression:MMExpression) -> //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
+                ""
+            (*| MMStatement.EmptyStatement ->
                 skipStatement
             | MMStatement.BlockStatement (statements : MMStatement list) ->
                 statements |> List.map this.transformStatement
