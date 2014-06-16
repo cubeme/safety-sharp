@@ -26,57 +26,43 @@ namespace SafetySharp.Modeling
 	using System.Linq.Expressions;
 
 	/// <summary>
-	///     Provides factory methods for the construction of linear temporal logic formulas.
+	///     Provides factory methods for CTL operators.
 	/// </summary>
-	public static class Ltl
+	public class CtlOperatorFactory
 	{
-		#region StateExpression
-
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
+		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="expression">The expression that should be evaluated.</param>
-		public static LtlFormula StateExpression(Expression<Func<bool>> expression)
+		private CtlOperatorFactory()
 		{
 			throw new NotSupportedException();
 		}
-
-		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
-		/// </summary>
-		/// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
-		public static LtlFormula StateExpression([LiftExpression] bool expression)
-		{
-			throw new NotSupportedException();
-		}
-
-		#endregion
 
 		#region Next
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static LtlFormula Next(LtlFormula operand)
+		public CtlFormula Next(CtlFormula operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'next' operator should be applied to.</param>
-		public static LtlFormula Next(Expression<Func<bool>> operand)
+		public CtlFormula Next(Expression<Func<bool>> operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">[LiftExpression] The operand the 'next' operator should be applied to.</param>
-		public static LtlFormula Next([LiftExpression] bool operand)
+		public CtlFormula Next([LiftExpression] bool operand)
 		{
 			throw new NotSupportedException();
 		}
@@ -86,28 +72,28 @@ namespace SafetySharp.Modeling
 		#region Finally
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static LtlFormula Finally(LtlFormula operand)
+		public CtlFormula Finally(CtlFormula operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">[LiftExpression] The operand the 'finally' operator should be applied to.</param>
-		public static LtlFormula Finally([LiftExpression] bool operand)
+		public CtlFormula Finally([LiftExpression] bool operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'finally' operator should be applied to.</param>
-		public static LtlFormula Finally(Expression<Func<bool>> operand)
+		public CtlFormula Finally(Expression<Func<bool>> operand)
 		{
 			throw new NotSupportedException();
 		}
@@ -117,28 +103,28 @@ namespace SafetySharp.Modeling
 		#region Globally
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static LtlFormula Globally(LtlFormula operand)
+		public CtlFormula Globally(CtlFormula operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">[LiftExpression] The operand the 'globally' operator should be applied to.</param>
-		public static LtlFormula Globally([LiftExpression] bool operand)
+		public CtlFormula Globally([LiftExpression] bool operand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+		///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
 		/// </summary>
 		/// <param name="operand">The operand the 'globally' operator should be applied to.</param>
-		public static LtlFormula Globally(Expression<Func<bool>> operand)
+		public CtlFormula Globally(Expression<Func<bool>> operand)
 		{
 			throw new NotSupportedException();
 		}
@@ -148,100 +134,100 @@ namespace SafetySharp.Modeling
 		#region Until
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, [LiftExpression] bool rightOperand)
+		public CtlFormula Until([LiftExpression] bool leftOperand, [LiftExpression] bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
+		public CtlFormula Until(Expression<Func<bool>> leftOperand, Expression<Func<bool>> rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, LtlFormula rightOperand)
+		public CtlFormula Until(CtlFormula leftOperand, CtlFormula rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(Expression<Func<bool>> leftOperand, LtlFormula rightOperand)
+		public CtlFormula Until(Expression<Func<bool>> leftOperand, CtlFormula rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, Expression<Func<bool>> rightOperand)
+		public CtlFormula Until(CtlFormula leftOperand, Expression<Func<bool>> rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, LtlFormula rightOperand)
+		public CtlFormula Until([LiftExpression] bool leftOperand, CtlFormula rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(LtlFormula leftOperand, [LiftExpression] bool rightOperand)
+		public CtlFormula Until(CtlFormula leftOperand, [LiftExpression] bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until([LiftExpression] bool leftOperand, Expression<Func<bool>> rightOperand)
+		public CtlFormula Until([LiftExpression] bool leftOperand, Expression<Func<bool>> rightOperand)
 		{
 			throw new NotSupportedException();
 		}
 
 		/// <summary>
-		///     Returns a <see cref="LtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+		///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
 		///     <paramref name="rightOperand" />.
 		/// </summary>
 		/// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
 		/// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
-		public static LtlFormula Until(Expression<Func<bool>> leftOperand, [LiftExpression] bool rightOperand)
+		public CtlFormula Until(Expression<Func<bool>> leftOperand, [LiftExpression] bool rightOperand)
 		{
 			throw new NotSupportedException();
 		}

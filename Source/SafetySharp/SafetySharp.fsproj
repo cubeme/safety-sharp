@@ -62,7 +62,8 @@
     <Compile Include="Modeling\Choose.fs" />
     <Compile Include="Modeling\OverflowBehavior.fs" />
     <Compile Include="Modeling\CSharpFormula.fs" />
-    <Compile Include="Modeling\Ltl.fs" />
+    <Compile Include="Modeling\LinearTemporalLogic.fs" />
+    <Compile Include="Modeling\ComputationTreeLogic.fs" />
     <Compile Include="CSharp\Roslyn.fs" />
     <Compile Include="CSharp\ModelingCompilation.fs" />
     <Compile Include="CSharp\Extensions\SyntaxTokenExtensions.fs" />

@@ -61,7 +61,7 @@ module internal ObjectTransformation =
                 Fields = transformFields component' componentSymbol |> Map.ofList
                 Subcomponents = transformSubcomponents component' componentSymbol |> Map.ofList
             }
-
+            
             componentSymbolMapBuilder.Add (component', componentSymbol)
             componentObjectMapBuilder.Add (component', componentObject)
             componentObject 
