@@ -3,19 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafetySharp.CSharp", "SafetySharp.CSharp\SafetySharp.CSharp.csproj", "{D9CAD497-F647-42D8-BE13-6406DE53331D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{0A9DEBF8-9E1A-4517-9510-8238807CB41A} = {0A9DEBF8-9E1A-4517-9510-8238807CB41A}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.CSharp", "Tests.CSharp\Tests.CSharp.csproj", "{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}"
-	ProjectSection(ProjectDependencies) = postProject
-		{0A9DEBF8-9E1A-4517-9510-8238807CB41A} = {0A9DEBF8-9E1A-4517-9510-8238807CB41A}
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "SafetySharp.Modeling\Modeling.csproj", "{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Code Generator", "Code Generator\Code Generator.fsproj", "{0A9DEBF8-9E1A-4517-9510-8238807CB41A}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
 EndProject
@@ -29,16 +17,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D9CAD497-F647-42D8-BE13-6406DE53331D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D9CAD497-F647-42D8-BE13-6406DE53331D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3BF5FFA-E504-4C29-B998-04D1633A9DE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0A9DEBF8-9E1A-4517-9510-8238807CB41A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18DFC311-4633-4B22-AB2F-FF42901C6438}.Release|Any CPU.ActiveCfg = Release|Any CPU
