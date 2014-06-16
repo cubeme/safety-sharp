@@ -72,21 +72,21 @@ module ``Transform method`` =
     [<Test>]
     let ``statement block`` () =
         let actual = transform "{ boolField = true; intField = 2; }" 
-        let assignment1 = (AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral true))
-        let assignment2 = (AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 2))
+        let assignment1 = (AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral true))
+        let assignment2 = (AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 2))
         let expected = BlockStatement [ assignment1; assignment2 ]
 
         actual =? expected
 
     [<Test>]
     let ``stand-alone assignment statement`` () =
-        transform "boolField = true" =? AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral true)
+        transform "boolField = true" =? AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral true)
 
     [<Test>]
     let ``assignment statement in binary expression`` () =
         let actual = transform "boolField = true || false"
         let expression = BinaryExpression(BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral false)
-        let expected = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), expression)
+        let expected = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), expression)
 
         actual =? expected
 
@@ -108,8 +108,8 @@ module ``Transform method`` =
     let ``choose Boolean value`` () =
         let actual = transform "Choose.Boolean(out boolField)"
 
-        let assignment1 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral true)
-        let assignment2 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol), BooleanLiteral false)
+        let assignment1 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral true)
+        let assignment2 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral false)
 
         let expected = GuardedCommandStatement [(BooleanLiteral true, assignment1); (BooleanLiteral true, assignment2)]
         actual =? expected
@@ -119,10 +119,10 @@ module ``Transform method`` =
         let actual = transform "Choose.Value(out intField, -17, 0, 33, 127)"
 
         let minusSeventeen = UnaryExpression(IntegerLiteral 17, UnaryOperator.Minus)
-        let assignment1 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), minusSeventeen)
-        let assignment2 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 0)
-        let assignment3 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 33)
-        let assignment4 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol), IntegerLiteral 127)
+        let assignment1 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), minusSeventeen)
+        let assignment2 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 0)
+        let assignment3 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 33)
+        let assignment4 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 127)
 
         let expected = 
             GuardedCommandStatement [
@@ -139,10 +139,10 @@ module ``Transform method`` =
         let actual = transform "Choose.Value(out decimalField, -17.0m, 0.0m, 33.4m, 127.23m)"
 
         let minusSeventeen = UnaryExpression(DecimalLiteral 17.0m, UnaryOperator.Minus)
-        let assignment1 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol), minusSeventeen)
-        let assignment2 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol), DecimalLiteral 0m)
-        let assignment3 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol), DecimalLiteral 33.4m)
-        let assignment4 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol), DecimalLiteral 127.23m)
+        let assignment1 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), minusSeventeen)
+        let assignment2 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), DecimalLiteral 0m)
+        let assignment3 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), DecimalLiteral 33.4m)
+        let assignment4 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), DecimalLiteral 127.23m)
 
         let expected = 
             GuardedCommandStatement [

@@ -67,5 +67,6 @@ type Expression =
     /// Represents the application of a binary operator to two subexpressions.
     | BinaryExpression of LeftExpression : Expression * Operator : BinaryOperator * RightExpression : Expression
 
-    /// Represents a field access, either for reading or writing.
-    | FieldAccessExpression of Field : FieldSymbol
+    /// Represents a field access, either for reading or writing. The component refrence is guaranteed to be 'None' within
+    /// method bodies and guaranteed to be some valid reference in formulas.
+    | FieldAccessExpression of Field : FieldSymbol * Component : ComponentReferenceSymbol option

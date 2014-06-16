@@ -43,7 +43,7 @@ type ComponentObject = {
     Fields : Map<FieldSymbol, FieldObject>
 
     /// Maps each subcomponent declared by the component type to a component instantiation.
-    Subcomponents : Map<SubcomponentSymbol, ComponentObject>
+    Subcomponents : Map<ComponentReferenceSymbol, ComponentObject>
 } 
 
 /// Represents the instantiation of a partition.
@@ -62,6 +62,9 @@ type ModelObject = {
 
     /// The partitions the model consists of.
     Partitions : PartitionObject list
+
+    /// Maps each symbol for the component objects declared by the model to the actual component object instance.
+    ComponentObjects : Map<ComponentReferenceSymbol, ComponentObject>
 } 
 
 /// Represents a configuration of symbols, objects, and formulas that allows a transformation of the model

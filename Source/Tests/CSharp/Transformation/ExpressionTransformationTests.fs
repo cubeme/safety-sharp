@@ -170,11 +170,11 @@ module ExpressionTransformationTests =
 
     [<Test>]
     let ``field access expressions`` () =
-        transform "boolField" =? FieldAccessExpression(fieldSymbol)
+        transform "boolField" =? FieldAccessExpression(fieldSymbol, None)
 
     [<Test>]
     let ``field access in binary expression`` () =
-        transform "boolField == false" =? BinaryExpression(FieldAccessExpression(fieldSymbol), BinaryOperator.Equals, BooleanLiteral false)
+        transform "boolField == false" =? BinaryExpression(FieldAccessExpression(fieldSymbol, None), BinaryOperator.Equals, BooleanLiteral false)
 
     [<Test>]
     let ``nested binary expressions`` () =

@@ -33,7 +33,7 @@ type MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
 type MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
 type MMParameterSymbol = SafetySharp.Metamodel.ParameterSymbol
 type MMMethodSymbol = SafetySharp.Metamodel.MethodSymbol
-type MMSubcomponentSymbol = SafetySharp.Metamodel.SubcomponentSymbol
+type MMSubcomponentSymbol = SafetySharp.Metamodel.ComponentReferenceSymbol
 type MMComponentSymbol = SafetySharp.Metamodel.ComponentSymbol
 type MMPartitionSymbol = SafetySharp.Metamodel.PartitionSymbol
 type MMModelSymbol = SafetySharp.Metamodel.ModelSymbol
@@ -207,7 +207,7 @@ type MetamodelToPromela() =
                     | MMBinaryOperator.LessThanOrEqual    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
                     | MMBinaryOperator.GreaterThan        -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
                     | MMBinaryOperator.GreaterThanOrEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
-            | MMExpression.FieldAccessExpression (field:MMFieldSymbol) ->
+            | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference) ->
                 failwith "NotImplementedYet"
 
     member this.transformStatement (statement:MMStatement) : PrStatement =

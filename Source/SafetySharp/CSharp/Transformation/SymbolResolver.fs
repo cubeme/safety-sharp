@@ -34,7 +34,7 @@ type internal SymbolResolver = private {
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
     ComponentNameMap : Map<string, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
-    SubcomponentMap : ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>
+    SubcomponentMap : ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>
     MethodMap : ImmutableDictionary<IMethodSymbol, MethodSymbol>
     MethodCSharpMap : ImmutableDictionary<MethodSymbol, IMethodSymbol>
     IComponentTypeSymbol : ComponentSymbol

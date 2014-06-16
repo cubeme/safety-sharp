@@ -104,9 +104,9 @@ module ``ModelSymbol property`` =
         compile "class A : Component { Component c; B b; IComponent i; } class B : Component {}"
         model.Subcomponents.[model.ComponentSymbols.[0]] =? 
         [ 
-            { SubcomponentSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentBaseSymbol }
-            { SubcomponentSymbol.Name = "b"; ComponentSymbol = model.ComponentSymbols.[1] }
-            { SubcomponentSymbol.Name = "i"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }
+            { ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentBaseSymbol }
+            { ComponentReferenceSymbol.Name = "b"; ComponentSymbol = model.ComponentSymbols.[1] }
+            { ComponentReferenceSymbol.Name = "i"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }
         ] 
 
     [<Test>]
@@ -142,7 +142,7 @@ module ``ModelSymbol property`` =
                 UpdateMethod = { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
         }
 
-        model.Subcomponents.[componentSymbol] =? [{ SubcomponentSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }]
+        model.Subcomponents.[componentSymbol] =? [{ ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }]
 
 [<TestFixture>]
 module ``ResolveComponent(INamedTypeSymbol) method`` =
@@ -316,7 +316,7 @@ module ``ResolveSubcomponent method`` =
         compile "class A : Component { B f; } class B : Component {}"
         let field = compilation.FindFieldSymbol "A" "f"
 
-        symbolResolver.ResolveSubcomponent field =? { SubcomponentSymbol.Name = "f"; ComponentSymbol = components.[1] }
+        symbolResolver.ResolveSubcomponent field =? { ComponentReferenceSymbol.Name = "f"; ComponentSymbol = components.[1] }
 
     [<Test>]
     let ``returns different symbols for different subcomponents of same transformed component`` () =
@@ -324,8 +324,8 @@ module ``ResolveSubcomponent method`` =
         let field1 = compilation.FindFieldSymbol "A" "b1"
         let field2 = compilation.FindFieldSymbol "A" "b2"
 
-        symbolResolver.ResolveSubcomponent field1 =? { SubcomponentSymbol.Name = "b1"; ComponentSymbol = components.[1] }
-        symbolResolver.ResolveSubcomponent field2 =? { SubcomponentSymbol.Name = "b2"; ComponentSymbol = components.[1] }
+        symbolResolver.ResolveSubcomponent field1 =? { ComponentReferenceSymbol.Name = "b1"; ComponentSymbol = components.[1] }
+        symbolResolver.ResolveSubcomponent field2 =? { ComponentReferenceSymbol.Name = "b2"; ComponentSymbol = components.[1] }
         symbolResolver.ResolveSubcomponent field1 <>? symbolResolver.ResolveSubcomponent field2
 
     [<Test>]
@@ -335,9 +335,9 @@ module ``ResolveSubcomponent method`` =
         let field2 = compilation.FindFieldSymbol "B" "a1"
         let field3 = compilation.FindFieldSymbol "B" "a2"
 
-        symbolResolver.ResolveSubcomponent field1 =? { SubcomponentSymbol.Name = "b"; ComponentSymbol = components.[1]}
-        symbolResolver.ResolveSubcomponent field2 =? { SubcomponentSymbol.Name = "a1"; ComponentSymbol = components.[0] }
-        symbolResolver.ResolveSubcomponent field3 =? { SubcomponentSymbol.Name = "a2"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveSubcomponent field1 =? { ComponentReferenceSymbol.Name = "b"; ComponentSymbol = components.[1]}
+        symbolResolver.ResolveSubcomponent field2 =? { ComponentReferenceSymbol.Name = "a1"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveSubcomponent field3 =? { ComponentReferenceSymbol.Name = "a2"; ComponentSymbol = components.[0] }
 
         // We have to check for reference equality here
         test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveSubcomponent field1, symbolResolver.ResolveSubcomponent field2) @>

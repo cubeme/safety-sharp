@@ -79,13 +79,13 @@ type ComponentSymbol = {
     Fields : FieldSymbol list
 }
 
-/// Represents the definition of a subcomponent within a parent component.
-type SubcomponentSymbol = {
-    /// The name of the subcomponent. Subcomponent names are unique within a single component and do
+/// Represents the definition of a subcomponent within a parent component or model.
+type ComponentReferenceSymbol = {
+    /// The name of the component reference. Component reference names are unique within a single component or model and do
     /// not overlap with field or method names.
     Name : string
 
-    /// The type of the subcomponent.
+    /// The referenced component symbol.
     ComponentSymbol : ComponentSymbol
 } 
 
@@ -105,7 +105,11 @@ type ModelSymbol = {
     /// The component symbols defined in the model.
     ComponentSymbols : ComponentSymbol list
 
-    /// Maps each component symbol to its list of subcomponents. The subcomponent relationships have to be stored
-    /// outside of the individual component symbols in order to break a cyclic dependency.
-    Subcomponents : Map<ComponentSymbol, SubcomponentSymbol list>
+    /// Maps each component symbol to its list of subcomponent symbols. 
+    /// Note: The subcomponent relationships have to be stored outside of the individual component symbols in order to 
+    /// break a cyclic dependency during symbol construction.
+    Subcomponents : Map<ComponentSymbol, ComponentReferenceSymbol list>
+
+    /// The symbols for the component objects declared by the model.
+    ComponentObjects : ComponentReferenceSymbol list
 } 

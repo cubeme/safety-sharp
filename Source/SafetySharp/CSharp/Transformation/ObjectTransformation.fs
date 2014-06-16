@@ -73,7 +73,8 @@ module internal ObjectTransformation =
         // Create the model object
         let model = { 
             //ModelSymbol = (* TODO *) Unchecked.defaultof<ModelSymbol> 
-            Partitions = model.PartitionRoots |> List.map transformPartition 
+            Partitions = model.PartitionRoots |> List.map transformPartition
+            ComponentObjects = Map.empty 
         }
 
         // Create and return the object resolver

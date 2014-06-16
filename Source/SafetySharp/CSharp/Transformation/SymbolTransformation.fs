@@ -53,7 +53,7 @@ module internal SymbolTransformation =
         let componentListBuilder = ImmutableList.CreateBuilder<ComponentSymbol> ()
         let componentMapBuilder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ComponentSymbol> ()
         let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
-        let subcomponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, SubcomponentSymbol> ()
+        let subcomponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, ComponentReferenceSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
         let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
 
@@ -158,11 +158,11 @@ module internal SymbolTransformation =
 
         // Create the first (incomplete) version of the symbol resolver
         let symbolResolver = {
-            Model = { Partitions = []; ComponentSymbols = []; Subcomponents = Map.empty }
+            Model = { Partitions = []; ComponentSymbols = []; Subcomponents = Map.empty; ComponentObjects = [] }
             ComponentMap = componentMapBuilder.ToImmutable ()
             ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> (component'.Name, component')) |> Map.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
-            SubcomponentMap = ImmutableDictionary<IFieldSymbol, SubcomponentSymbol>.Empty
+            SubcomponentMap = ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>.Empty
             MethodMap = methodMapBuilder.ToImmutable ()
             MethodCSharpMap = methodCSharpMapBuilder.ToImmutable ()
             ComponentBaseTypeSymbol = componentBaseSymbol
@@ -175,7 +175,7 @@ module internal SymbolTransformation =
             let subcomponents = [
                 for csharpField in fields -> 
                     let componentSymbol = symbolResolver.ResolveComponent (csharpField.Type :?> INamedTypeSymbol)
-                    let subComponentSymbol = { SubcomponentSymbol.Name = csharpField.Name; ComponentSymbol = componentSymbol }
+                    let subComponentSymbol = { ComponentReferenceSymbol.Name = csharpField.Name; ComponentSymbol = componentSymbol }
                     subcomponentMapBuilder.Add (csharpField, subComponentSymbol)
                     subComponentSymbol
             ]
@@ -186,6 +186,7 @@ module internal SymbolTransformation =
             Partitions = []
             ComponentSymbols = componentListBuilder |> List.ofSeq
             Subcomponents = csharpComponents |> Array.map transformSubcomponents |> Map.ofArray
+            ComponentObjects = []
         }
 
         { symbolResolver with Model = model; SubcomponentMap = subcomponentMapBuilder.ToImmutable () }

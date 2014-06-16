@@ -51,7 +51,7 @@ module internal ExpressionTransformation =
             let symbol = symbolInfo.Symbol;
 
             match symbol with
-            | :? IFieldSymbol as field -> symbolResolver.ResolveField field |> FieldAccessExpression
+            | :? IFieldSymbol as field -> FieldAccessExpression (symbolResolver.ResolveField field, None)
             | _ -> invalidOp "Unable to determine symbol for identifier '{%A}'." identifier
 
         | ParenthesizedExpression expression ->
