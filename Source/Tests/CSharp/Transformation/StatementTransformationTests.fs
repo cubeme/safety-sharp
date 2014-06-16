@@ -54,7 +54,7 @@ module private StatementTransformationTestsHelper =
 
         let compilation = TestCompilation csharpCode
         let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[0]
-        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         booleanFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[0]
         integerFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[1]
         decimalFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[2]
@@ -160,7 +160,7 @@ module ``TransformMethodBodies method`` =
 
     let transform csharpCode =
         compilation <- TestCompilation csharpCode
-        symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
+        symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
 
         StatementTransformation.TransformMethodBodies compilation.CSharpCompilation symbolResolver
     

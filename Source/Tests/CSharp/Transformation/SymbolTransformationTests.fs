@@ -45,15 +45,48 @@ module private SymbolTransformationTestsHelper =
 
     let compile csharpCode =
         compilation <- TestCompilation csharpCode
-        symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
+        symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         components <- symbolResolver.ComponentSymbols
         model <- symbolResolver.ModelSymbol
 
+    let compileModel csharpCode modelName = 
+        compile csharpCode
+        let modelObject = compilation.CreateObject<Model> modelName
+        modelObject.FinalizeMetadata ()
+        symbolResolver <- SymbolTransformation.TransformModelSymbol symbolResolver modelObject
+        model <- symbolResolver.ModelSymbol
+
 [<TestFixture>]
-module ``Transform method`` =
+module ``TransformComponentSymbols method`` =
     [<Test>]
-    let ``throws when null is passed`` () =
-        raisesArgumentNullException "compilation" <@ SymbolTransformation.Transform null @>
+    let ``throws when null compilation is passed`` () =
+        raisesArgumentNullException "compilation" <@ SymbolTransformation.TransformComponentSymbols null @>
+
+    [<Test>]
+    let ``throws when null model is passed`` () =
+        let compilation = TestCompilation("").CSharpCompilation
+        raisesArgumentNullException "model" <@ SymbolTransformation.Transform compilation null @>
+
+    [<Test>]
+    let ``throws when non-finalized model is passed`` () =
+        let compilation = TestCompilation("").CSharpCompilation
+        let model = TestModel (EmptyComponent ())
+        raisesArgumentException "model" <@ SymbolTransformation.Transform compilation model @>
+
+[<TestFixture>]
+module ``TransformModelSymbol method`` =
+    [<Test>]
+    let ``throws when null model is passed`` () =
+        let compilation = TestCompilation("").CSharpCompilation
+        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation
+        raisesArgumentNullException "model" <@ SymbolTransformation.TransformModelSymbol symbolResolver null @>
+
+    [<Test>]
+    let ``throws when non-finalized model is passed`` () =
+        let compilation = TestCompilation("").CSharpCompilation
+        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation
+        let model = TestModel (EmptyComponent ())
+        raisesArgumentException "model" <@ SymbolTransformation.TransformModelSymbol symbolResolver model @>
 
 [<TestFixture>]
 module ``ModelSymbol property`` =
@@ -143,6 +176,24 @@ module ``ModelSymbol property`` =
         }
 
         model.Subcomponents.[componentSymbol] =? [{ ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }]
+
+    [<Test>]
+    let ``model contains partitions`` () =
+        compileModel "class C : Component {} class M : Model { public M() { SetPartitions(new C()); }}" "M"
+        model.Partitions =? [{ Name = "Root0"; RootComponent = components.[0] }]
+
+        compileModel "class C : Component {} class D : Component { } class M : Model { public M() { SetPartitions(new C(), new D()); }}" "M"
+        model.Partitions =? [{ Name = "Root0"; RootComponent = components.[0] }; { Name = "Root1"; RootComponent = components.[1] }]
+
+    [<Test>]
+    let ``model contains component objects`` () =
+        compileModel "class C : Component {} class D : Component { C c = new C(); } class M : Model { public M() { SetPartitions(new C(), new D()); }}" "M"
+        model.ComponentObjects =? 
+        [
+            { Name = "Root0"; ComponentSymbol = components.[0] }
+            { Name = "Root1"; ComponentSymbol = components.[1] }
+            { Name = "Root1.c"; ComponentSymbol = components.[0] }
+        ]
 
 [<TestFixture>]
 module ``ResolveComponent(INamedTypeSymbol) method`` =

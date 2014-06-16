@@ -91,7 +91,10 @@ type ComponentReferenceSymbol = {
 
 /// Represents the type definition of a partition within a model.
 type PartitionSymbol = {
-    /// The root component of the partition.
+    /// The name of the partition. Within a single model, the partition name is unique.
+    Name : string
+
+    /// The symbol of the partition's root component.
     RootComponent : ComponentSymbol
 
     // TODO: Ports and port bindings

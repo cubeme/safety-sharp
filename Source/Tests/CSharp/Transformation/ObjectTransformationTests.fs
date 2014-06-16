@@ -45,7 +45,7 @@ module private ObjectTransformationTestsHelper =
 
     let compile csharpCode componentTypes =
         let compilation = TestCompilation csharpCode
-        symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
+        symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         components <- componentTypes |> List.map compilation.CreateObject
 
         model <- TestModel (components |> Array.ofList)
@@ -64,13 +64,13 @@ module ``Transform method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let compilation = TestCompilation "class A : Component {}"
-        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         raisesArgumentNullException "model" <@ ObjectTransformation.Transform null symbolResolver @>
 
     [<Test>]
     let ``throws when model metadata has not yet been finalized`` () =
         let compilation = TestCompilation "class A : Component {}"
-        symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation
+        symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         let model = TestModel (EmptyComponent ())
 
         raisesArgumentException "model" <@ ObjectTransformation.Transform model symbolResolver @>

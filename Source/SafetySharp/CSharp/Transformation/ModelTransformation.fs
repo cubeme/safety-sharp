@@ -35,7 +35,7 @@ module internal ModelTransformation =
         nullArg model "model"
         invalidArg model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
 
-        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation model
         let objectResolver = ObjectTransformation.Transform model symbolResolver
 
         {

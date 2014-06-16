@@ -57,7 +57,7 @@ type internal SymbolResolver = private {
         let name = sprintf "%s::%s" assemblyName typeName
 
         let symbol = this.ComponentNameMap |> Map.tryFind name
-        invalidArg (symbol.IsSome) "componentObject" "The type of the given .NET component instance is unknown."
+        invalidArg symbol.IsSome "componentObject" "The type of the given .NET component instance is unknown."
         symbol.Value
 
     /// Resolves the <see cref="FieldSymbol"/> corresponding to the given C# field symbol.

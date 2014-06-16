@@ -63,7 +63,7 @@ type ModelObject = {
     /// The partitions the model consists of.
     Partitions : PartitionObject list
 
-    /// Maps each symbol for the component objects declared by the model to the actual component object instance.
+    /// Maps each symbol for the component objects declared by the model to the actual component object instances.
     ComponentObjects : Map<ComponentReferenceSymbol, ComponentObject>
 } 
 

@@ -36,8 +36,8 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 
 module internal SymbolTransformation =
 
-    /// Transforms the given component types of the compilation to a symbol map.
-    let Transform (compilation : Compilation) =
+    /// Transforms the component declarations within the given compilation to a symbol resolver.
+    let TransformComponentSymbols (compilation : Compilation) =
         nullArg compilation "compilation"
 
         // An equality comparer for method symbols that implements reference equality
@@ -158,7 +158,7 @@ module internal SymbolTransformation =
 
         // Create the first (incomplete) version of the symbol resolver
         let symbolResolver = {
-            Model = { Partitions = []; ComponentSymbols = []; Subcomponents = Map.empty; ComponentObjects = [] }
+            Model = { Partitions = []; ComponentSymbols = componentListBuilder |> List.ofSeq; Subcomponents = Map.empty; ComponentObjects = [] }
             ComponentMap = componentMapBuilder.ToImmutable ()
             ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> (component'.Name, component')) |> Map.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
@@ -182,11 +182,33 @@ module internal SymbolTransformation =
             (symbolResolver.ResolveComponent (csharpComponent :?> INamedTypeSymbol), subcomponents)
 
         // Create and return the model symbol and the final version of the symbol resolver
-        let model = { 
-            Partitions = []
-            ComponentSymbols = componentListBuilder |> List.ofSeq
-            Subcomponents = csharpComponents |> Array.map transformSubcomponents |> Map.ofArray
-            ComponentObjects = []
+        let modelSymbol = { symbolResolver.Model with Subcomponents = csharpComponents |> Array.map transformSubcomponents |> Map.ofArray }
+        { symbolResolver with Model = modelSymbol; SubcomponentMap = subcomponentMapBuilder.ToImmutable () }
+
+    /// Transforms the model, adding it to the given symbol resolver.
+    let TransformModelSymbol (symbolResolver : SymbolResolver) (model : Model) =
+        nullArg model "model"
+        invalidArg model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+
+        /// Creates the symbols for the partition defined by the given root component.
+        let transformPartition (rootComponent : Component) =
+            { Name = rootComponent.Name; RootComponent = symbolResolver.ResolveComponent rootComponent }
+
+        /// Creates the symbols for the component references of the model's component objects.
+        let transformComponentObjects (component' : Component) = 
+            { ComponentReferenceSymbol.Name = component'.Name; ComponentSymbol = symbolResolver.ResolveComponent component' }
+
+        // Create and return the model symbol and the final version of the symbol resolver
+        let modelSymbol = { 
+            symbolResolver.Model with 
+                Partitions = model.PartitionRoots |> List.map transformPartition
+                ComponentObjects = model.Components |> List.map transformComponentObjects
         }
 
-        { symbolResolver with Model = model; SubcomponentMap = subcomponentMapBuilder.ToImmutable () }
+        // Return the updated symbol resolver
+        { symbolResolver with Model = modelSymbol }
+
+    /// Transforms the given compilation and model to a symbol resolver.
+    let Transform (compilation : Compilation) (model : Model) =
+        let symbolResolver = TransformComponentSymbols compilation
+        TransformModelSymbol symbolResolver model

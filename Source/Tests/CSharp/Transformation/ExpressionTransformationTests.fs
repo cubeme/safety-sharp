@@ -49,7 +49,7 @@ module private ExpressionTransformationTestsHelper =
 
         let compilation = TestCompilation csharpCode
         let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value
-        let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation
+        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         fieldSymbol <- symbolResolver.ModelSymbol.ComponentSymbols.[0].Fields.[0]
 
         ExpressionTransformation.Transform symbolResolver compilation.SemanticModel expression
