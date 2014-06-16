@@ -88,7 +88,9 @@ module internal FormulaTransformation =
         | _ -> invalidOp "Invalid expression type while trying to retrieve member value: '%A'." expression.NodeType
 
     /// Transforms a component field access. 
-    let private transformComponentFieldAccess (symbolResolver : SymbolResolver) (component' : Component) fieldName =
+    let private transformComponentFieldAccess (symbolResolver : SymbolResolver) (objectResolver : ObjectResolver) (component' : Component) fieldName =
+        if not <| objectResolver.CanResolve component' then
+            UnknownComponentException component' |> raise
         let componentSymbol = symbolResolver.ResolveComponent component'
         let componentReferenceSymbol = symbolResolver.ResolveComponentReference component'
         match componentSymbol.Fields |> Seq.tryFind (fun fieldSymbol -> fieldSymbol.Name = fieldName) with
@@ -114,10 +116,10 @@ module internal FormulaTransformation =
                         invalidOp "Invalid component property access in formula: '%A'." expression
                     let component' = (getValue objectExpression) :?> Component
                     let fieldName = memberInfo.Name
-                    transformComponentFieldAccess symbolResolver component' fieldName
+                    transformComponentFieldAccess symbolResolver objectResolver component' fieldName
                 else if typeof<IMemberAccess>.IsAssignableFrom expression.Type then
                     let memberAccess = getValue expression :?> IMemberAccess
-                    transformComponentFieldAccess symbolResolver memberAccess.Component memberAccess.MemberName
+                    transformComponentFieldAccess symbolResolver objectResolver memberAccess.Component memberAccess.MemberName
                 else
                     getValue expression |> convertConstant
 

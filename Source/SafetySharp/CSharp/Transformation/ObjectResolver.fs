@@ -49,5 +49,10 @@ type internal ObjectResolver = private {
         invalidArg (not result) "componentObject" "The given component is unknown."
         symbol
 
+    /// Gets a value indicating whether the given .NET component object is a known instance that can be resolved.
+    member this.CanResolve (componentObject : Component) =
+        nullArg componentObject "componentObject"
+        this.ComponentSymbolMap.ContainsKey componentObject
+
     /// Gets the model object that contains all of the resolver's component and partition objects.
     member this.ModelObject = this.Model

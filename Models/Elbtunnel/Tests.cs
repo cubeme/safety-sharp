@@ -23,16 +23,17 @@
 				var c2 = new BooleanComponent(false);
 				var lb = new LightBarrier();
 				var t = new Test2();
-
+				var unknown = new LightBarrier();
 				SetPartitions(c1, c2, t, lb);
 
 				var value = c1.Access<bool>("_value");
 				var value2 = c1.Access<bool>("_value");
 
 				bool b = value;
-				Hazard = Ltl.Globally(value).Implies(Ltl.Finally(!value == false || value2 == true || lb.Triggered && t.boolean2._value));
+				Hazard =
+					Ltl.Globally(value || unknown.Triggered).Implies(Ltl.Finally(!value == false || value2 == true || lb.Triggered && t.boolean2._value));
 
-				Hazard2 = Ctl.AllPaths.Globally(value != false);
+				Hazard2 = Ctl.AllPaths.Globally(value != false || unknown.Triggered);
 
 				//var f = Ltl.Next(true);
 				//Hazard = Ltl.Globally(Ltl.StateExpression("{0}", value))
@@ -61,7 +62,7 @@
 		{
 			var configuration = new Configuration(true);
 			var spin = new SpinModelChecker(configuration);
-			
+
 			spin.Check(configuration.Hazard);
 		}
 	}

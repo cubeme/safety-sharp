@@ -60,15 +60,16 @@
     <Compile Include="CSharp\Extensions\ArgumentExtensionsTests.fs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.fs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.fs" />
-	  <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
-	  <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
-	  <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
-	  <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
-	  <Compile Include="CSharp\Transformation\ObjectTransformationTests.fs" />
-	  <Compile Include="Modeling\ComponentTests.fs" />
-	  <Compile Include="Modeling\ModelTests.fs" />
-	  <None Include="app.config" />
-	  <None Include="packages.config" />
+    <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
+    <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\ObjectTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\FormulaTransformationTests.fs" />
+    <Compile Include="Modeling\ComponentTests.fs" />
+    <Compile Include="Modeling\ModelTests.fs" />
+    <None Include="app.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
