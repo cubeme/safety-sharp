@@ -46,6 +46,7 @@ type MMStatement = SafetySharp.Metamodel.Statement
 type MMFormula = SafetySharp.Metamodel.Formula
 type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
 type MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
+type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 
 type PrExpression = SafetySharp.Modelchecking.PromelaSpin.AnyExpr
 type PrConst = SafetySharp.Modelchecking.PromelaSpin.Const
@@ -71,28 +72,24 @@ type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
 type Context = {
     partition : MMPartitionObject;
-    container : MMComponentObject list;
+    container : MMComponentObject list; //last object is root; head is a subComponent of its parent:  subComponent1(::parentOfSubComponent1)*::rootComponent. Construction is done in "collectFields"
 }
 
 type FieldInfo = {
     context : Context;
-    field : MMFieldObject;
+    field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
+}
+
+// many steps are a sequence
+type MMStepInfo = {
+    context : Context;
+    statement : MMStatement;
 }
 
 // An easyStatement has only assignments and guarded commands. Also Assignments are defined on fieldinfos
 type EasyStatement = 
     | GuardedCommandStatement of (Context * MMExpression * (EasyStatement list) ) list //Context * Guard * Statements
     | AssignmentStatement of Target : FieldInfo * Context : Context * Expression : MMExpression //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
-
-// many steps are a sequence
-type StepInfo = {
-    partition : MMPartitionObject;
-    container : MMComponentObject list;
-    statement : EasyStatement;
-}
-
-
-
        
 type MetamodelToPromela() =
     let getSubComponentObjects (subcomponentMap : Map<MMSubcomponentSymbol, MMComponentObject>) : (MMComponentObject list) =
@@ -119,15 +116,103 @@ type MetamodelToPromela() =
         let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
             collectFromComponent partition [] partition.RootComponent
         model.Partitions |> List.collect collectFromPartition
-       
-    let collectPartitionUpdateSequence (partition) (MethodBodyResolver): StepInfo list=
+    
+    let rec resolveFieldInfo (context:Context) (expression:MMExpression) : FieldInfo = 
+        match expression with
+            | MMExpression.BooleanLiteral (value:bool) ->
+                failwith "target of assignment cannot be a constant value"
+            | MMExpression.IntegerLiteral (value:int) ->
+                failwith "target of assignment cannot be a constant value"
+            | MMExpression.DecimalLiteral (value:decimal) ->
+                failwith "target of assignment cannot be a constant value"
+            | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
+                (*let transformedOperand = this.transformExpression operand
+                match operator with
+                    | MMUnaryOperator.LogicalNot -> PrExpression.UnaryExpr(PrUnarop.Not,transformedOperand)
+                    | MMUnaryOperator.Minus      -> PrExpression.UnaryExpr(PrUnarop.Neg,transformedOperand)
+                *)
+                failwith "NotImplementedYet"
+            | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
+                (*let transformedLeft = this.transformExpression leftExpression
+                let transformedRight = this.transformExpression rightExpression
+                match operator with
+                    | MMBinaryOperator.Add                -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Add,transformedRight)
+                    | MMBinaryOperator.Subtract           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Min,transformedRight)
+                    | MMBinaryOperator.Multiply           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mul,transformedRight)
+                    | MMBinaryOperator.Divide             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Div,transformedRight)
+                    | MMBinaryOperator.Modulo             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mod,transformedRight)
+                    | MMBinaryOperator.LogicalAnd         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.And),transformedRight)
+                    | MMBinaryOperator.LogicalOr          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.Or),transformedRight)
+                    | MMBinaryOperator.Equals             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Eq,transformedRight)
+                    | MMBinaryOperator.NotEquals          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Neq,transformedRight)
+                    | MMBinaryOperator.LessThan           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Lt,transformedRight)
+                    | MMBinaryOperator.LessThanOrEqual    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
+                    | MMBinaryOperator.GreaterThan        -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
+                    | MMBinaryOperator.GreaterThanOrEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
+                *)
+                failwith "NotImplementedYet"
+            | MMExpression.FieldAccessExpression (field:MMFieldSymbol) ->
+                {
+                    FieldInfo.context=context;
+                    FieldInfo.field = (context.container.Head.Fields.Item field);
+                }
+        
+
+    let rec transformMMStepInfosToEasyStatements (methodBodyResolver:MMMethodBodyResolver) (collected:EasyStatement list) (toTransform:MMStepInfo list) : EasyStatement list =
         // Properties of the result:
-        //   - Only updates, no bindings
-        //   - TODO: Updates are proccessed in the correct order
         //   - TODO: Return of Statements are rewritten to Assignments of the caller function
         //   -       Variables may be needed to be introduced (?!?)
-        []
+        //   -       parameter: (targetOfAssignmentStack:(Expression option) list)
+        // pattern in this function: take _first_ item of toTransform
+        //                              - either expand it and put the expanded into the _front_ of the list toTransform
+        //                              - or process it and append the result to the _end_ of collected
+        if toTransform.IsEmpty then
+            collected
+        else
+            let firstItem = toTransform.Head
+            let statementToProcess = firstItem.statement
+            let contextOfStatement = firstItem.context
 
+            match statementToProcess with
+                | MMStatement.EmptyStatement ->
+                    let newToTransform = toTransform.Tail
+                    transformMMStepInfosToEasyStatements methodBodyResolver collected newToTransform
+                | MMStatement.BlockStatement (statements : MMStatement list) ->
+                    let coverStatementWithContext (statement:MMStatement) =
+                        {
+                            MMStepInfo.context=contextOfStatement;
+                            MMStepInfo.statement=statement;
+                        }
+                    let expandedBlockStatement = statements |> List.map coverStatementWithContext
+                    let newToTransform = expandedBlockStatement @ toTransform.Tail
+                    transformMMStepInfosToEasyStatements methodBodyResolver collected newToTransform
+                | MMStatement.ReturnStatement (expression : MMExpression option) ->
+                    failwith "NotImplementedYet"
+                    //TODO: transformStatement needs additional new optional Argument: the value, to which
+                    //      the return gets assigned to. Either a real existing value or a temporary variable
+                    //      which should also be assigned to. This temporary variable needs be be declared, too.
+                    //      Statement gets rewritten to an MMStatement.AssignmentStatement
+                    //      and the rest of the sequence is ignored.
+                    //Better solution: There is function, which brings all statements in the correct order.
+                    //      (for the partition-update and every partition-binding there is exactly one flatten
+                    //      order for the execution of the statements). In this function, every ReturnStatement
+                    //      needs to be replaced. Thus this case should never be reached
+                | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
+                    failwith "NotImplementedYet"
+                    (*let transformGuardedStmnt ((guard,stmnt):MMExpression * MMStatement) =
+                        let transformedGuard = this.transformExpression guard
+                        let transformedStmnt = this.transformStatement stmnt
+                        PrSequence.Sequence([anyExprToStep transformedGuard;stmntToStep transformedStmnt])
+                    guardedStmnts |> List.map transformGuardedStmnt
+                                    |> (fun sequences -> PrStatement.IfStmnt(PrOptions.Options(sequences)))*)
+                | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
+                    failwith "NotImplementedYet"
+            
+    // build (toTransform:MMStepInfo list) with all updates in the correct order
+    // let collectPartitionUpdateSequence =
+    //      TODO
+    //   - Only updates, no bindings
+    //   - TODO: Updates are proccessed in the correct order
 
     member this.transformFieldInfoToName (fieldInfo : FieldInfo) =
         let partitionName = "pA" //partition has no name, use A as dummy. TODO: find something better
