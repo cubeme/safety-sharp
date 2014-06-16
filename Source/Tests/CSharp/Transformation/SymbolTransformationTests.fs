@@ -41,20 +41,22 @@ module private SymbolTransformationTestsHelper =
     let mutable symbolResolver = Unchecked.defaultof<SymbolResolver>
     let mutable compilation = Unchecked.defaultof<TestCompilation>
     let mutable components = Unchecked.defaultof<ComponentSymbol list>
-    let mutable model = Unchecked.defaultof<ModelSymbol>
+    let mutable modelSymbol = Unchecked.defaultof<ModelSymbol>
+    let mutable model = Unchecked.defaultof<Model>
 
     let compile csharpCode =
         compilation <- TestCompilation csharpCode
         symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         components <- symbolResolver.ComponentSymbols
-        model <- symbolResolver.ModelSymbol
+        modelSymbol <- symbolResolver.ModelSymbol
 
-    let compileModel csharpCode modelName = 
+    let compileModel csharpCode componentTypes = 
         compile csharpCode
-        let modelObject = compilation.CreateObject<Model> modelName
-        modelObject.FinalizeMetadata ()
-        symbolResolver <- SymbolTransformation.TransformModelSymbol symbolResolver modelObject
-        model <- symbolResolver.ModelSymbol
+        let components = componentTypes |> List.map compilation.CreateObject
+        model <- TestModel (components |> Array.ofList)
+        model.FinalizeMetadata ()
+        symbolResolver <- SymbolTransformation.TransformModelSymbol symbolResolver model
+        modelSymbol <- symbolResolver.ModelSymbol
 
 [<TestFixture>]
 module ``TransformComponentSymbols method`` =
@@ -135,10 +137,10 @@ module ``ModelSymbol property`` =
     [<Test>]
     let ``all subcomponents are mapped`` () =
         compile "class A : Component { Component c; B b; IComponent i; } class B : Component {}"
-        model.Subcomponents.[model.ComponentSymbols.[0]] =? 
+        modelSymbol.Subcomponents.[modelSymbol.ComponentSymbols.[0]] =? 
         [ 
             { ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentBaseSymbol }
-            { ComponentReferenceSymbol.Name = "b"; ComponentSymbol = model.ComponentSymbols.[1] }
+            { ComponentReferenceSymbol.Name = "b"; ComponentSymbol = modelSymbol.ComponentSymbols.[1] }
             { ComponentReferenceSymbol.Name = "i"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }
         ] 
 
@@ -167,7 +169,7 @@ module ``ModelSymbol property`` =
     [<Test>]
     let ``component symbol contains all data`` () =
         compile "class C : Component { bool N(int x) { return false; } public override void Update() {} int f; IComponent c; }"
-        let componentSymbol = model.ComponentSymbols.[0]
+        let componentSymbol = modelSymbol.ComponentSymbols.[0]
         componentSymbol =? {
             emptyComponentSymbol "C" with
                 Methods = [{ MethodSymbol.Name = "N"; ReturnType = Some TypeSymbol.Boolean; Parameters = [{ ParameterSymbol.Name = "x"; Type = TypeSymbol.Integer }] }]
@@ -175,20 +177,20 @@ module ``ModelSymbol property`` =
                 UpdateMethod = { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
         }
 
-        model.Subcomponents.[componentSymbol] =? [{ ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }]
+        modelSymbol.Subcomponents.[componentSymbol] =? [{ ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }]
 
     [<Test>]
     let ``model contains partitions`` () =
-        compileModel "class C : Component {} class M : Model { public M() { SetPartitions(new C()); }}" "M"
-        model.Partitions =? [{ Name = "Root0"; RootComponent = components.[0] }]
+        compileModel "class C : Component {}" ["C"]
+        modelSymbol.Partitions =? [{ Name = "Root0"; RootComponent = components.[0] }]
 
-        compileModel "class C : Component {} class D : Component { } class M : Model { public M() { SetPartitions(new C(), new D()); }}" "M"
-        model.Partitions =? [{ Name = "Root0"; RootComponent = components.[0] }; { Name = "Root1"; RootComponent = components.[1] }]
+        compileModel "class C : Component {} class D : Component { }" ["C"; "D"]
+        modelSymbol.Partitions =? [{ Name = "Root0"; RootComponent = components.[0] }; { Name = "Root1"; RootComponent = components.[1] }]
 
     [<Test>]
     let ``model contains component objects`` () =
-        compileModel "class C : Component {} class D : Component { C c = new C(); } class M : Model { public M() { SetPartitions(new C(), new D()); }}" "M"
-        model.ComponentObjects =? 
+        compileModel "class C : Component {} class D : Component { C c = new C(); }" ["C"; "D"]
+        modelSymbol.ComponentObjects =? 
         [
             { Name = "Root0"; ComponentSymbol = components.[0] }
             { Name = "Root1"; ComponentSymbol = components.[1] }
@@ -353,14 +355,14 @@ module ``ResolveSubcomponent method`` =
         compile "class A : Component { IComponent c; }"
         let field = compilation.FindFieldSymbol "A" "c"
 
-        model.Subcomponents.[components.[0]].[0].ComponentSymbol =? symbolResolver.ComponentInterfaceSymbol
+        modelSymbol.Subcomponents.[components.[0]].[0].ComponentSymbol =? symbolResolver.ComponentInterfaceSymbol
 
     [<Test>]
     let ``returns symbol for Component for subcomponent of type Component`` () =
         compile "class A : Component { Component c; }"
         let field = compilation.FindFieldSymbol "A" "c"
 
-        model.Subcomponents.[components.[0]].[0].ComponentSymbol =? symbolResolver.ComponentBaseSymbol
+        modelSymbol.Subcomponents.[components.[0]].[0].ComponentSymbol =? symbolResolver.ComponentBaseSymbol
 
     [<Test>]
     let ``returns symbol for subcomponent of transformed component`` () =
@@ -548,3 +550,85 @@ module ``ResolveCSharpMethod method`` =
         symbolResolver.ResolveMethod method2 |> symbolResolver.ResolveCSharpMethod =? method2
         symbolResolver.ResolveMethod method3 |> symbolResolver.ResolveCSharpMethod =? method3
 
+[<TestFixture>]
+module ``ResolveComponentReference method`` =
+    [<Test>]
+    let ``throws when null is passed`` () =
+        compileModel "class A : Component {}" ["A"]
+        raisesArgumentNullException "componentObject" <@ symbolResolver.ResolveComponentReference (null : Component) @>
+
+    [<Test>]
+    let ``throws when component object with unknown type is passed`` () =
+        compileModel "class A : Component {}" ["A"]
+        let component' = EmptyComponent ()
+        component'.FinalizeMetadata ()
+        raisesArgumentException "componentObject" <@ symbolResolver.ResolveComponentReference component' @>
+
+    [<Test>]
+    let ``throws when component objects have not yet been transformed`` () =
+        compile "class A : Component {}"
+        let component' = EmptyComponent ()
+        component'.FinalizeMetadata ()
+        raises<InvalidOperationException> <@ symbolResolver.ResolveComponentReference component' @>
+
+    [<Test>]
+    let ``returns symbol for partition root component reference`` () =
+        compileModel "class A : Component {}" ["A"]
+        let componentA = model.PartitionRoots.[0]
+        symbolResolver.ResolveComponentReference componentA =? { ComponentReferenceSymbol.Name = "Root0"; ComponentSymbol = components.[0] }
+
+    [<Test>]
+    let ``returns symbol for nested component reference`` () =
+        compileModel "class A : Component {} class B : A { A a = new A(); }" ["B"]
+        let componentA = model.PartitionRoots.[0].GetSubcomponent "a"
+        symbolResolver.ResolveComponentReference componentA =? { ComponentReferenceSymbol.Name = "Root0.a"; ComponentSymbol = components.[0] }
+
+    [<Test>]
+    let ``returns different symbols for different components`` () =
+        compileModel "class A : Component {} class B : A { A a = new A(); }" ["B"; "B"]
+        let componentA1 = model.PartitionRoots.[0].GetSubcomponent "a"
+        let componentA2 = model.PartitionRoots.[1].GetSubcomponent "a"
+        symbolResolver.ResolveComponentReference componentA1 =? { ComponentReferenceSymbol.Name = "Root0.a"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveComponentReference componentA2 =? { ComponentReferenceSymbol.Name = "Root1.a"; ComponentSymbol = components.[0] }
+
+        symbolResolver.ResolveComponentReference componentA1 <>? symbolResolver.ResolveComponentReference componentA2
+
+[<TestFixture>]
+module ``ResolvePartition method`` =
+    [<Test>]
+    let ``throws when null is passed`` () =
+        compileModel "class A : Component {}" ["A"]
+        raisesArgumentNullException "componentObject" <@ symbolResolver.ResolvePartition (null : Component) @>
+
+    [<Test>]
+    let ``throws when component object with unknown type is passed`` () =
+        compileModel "class A : Component {}" ["A"]
+        let component' = EmptyComponent ()
+        component'.FinalizeMetadata ()
+        raisesArgumentException "componentObject" <@ symbolResolver.ResolvePartition component' @>
+
+    [<Test>]
+    let ``throws when component objects have not yet been transformed`` () =
+        compile "class A : Component {}"
+        let component' = EmptyComponent ()
+        component'.FinalizeMetadata ()
+        raises<InvalidOperationException> <@ symbolResolver.ResolvePartition component' @>
+
+    [<Test>]
+    let ``returns symbol for single partition`` () =
+        compileModel "class A : Component {}" ["A"]
+        symbolResolver.ResolvePartition  model.PartitionRoots.[0] =? { Name = "Root0"; RootComponent = components.[0] }
+
+    [<Test>]
+    let ``returns symbols for multiple partitions of some type`` () =
+        compileModel "class A : Component {}" ["A"; "A"; "A"]
+        symbolResolver.ResolvePartition  model.PartitionRoots.[0] =? { Name = "Root0"; RootComponent = components.[0] }
+        symbolResolver.ResolvePartition  model.PartitionRoots.[1] =? { Name = "Root1"; RootComponent = components.[0] }
+        symbolResolver.ResolvePartition  model.PartitionRoots.[2] =? { Name = "Root2"; RootComponent = components.[0] }
+
+    [<Test>]
+    let ``returns symbols for multiple partitions of different types`` () =
+        compileModel "class A : Component {} class B : Component {}" ["A"; "B"; "A"]
+        symbolResolver.ResolvePartition  model.PartitionRoots.[0] =? { Name = "Root0"; RootComponent = components.[0] }
+        symbolResolver.ResolvePartition  model.PartitionRoots.[1] =? { Name = "Root1"; RootComponent = components.[1] }
+        symbolResolver.ResolvePartition  model.PartitionRoots.[2] =? { Name = "Root2"; RootComponent = components.[0] }

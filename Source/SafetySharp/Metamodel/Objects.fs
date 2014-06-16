@@ -49,7 +49,7 @@ type ComponentObject = {
 /// Represents the instantiation of a partition.
 type PartitionObject = {
     /// The instantiated partition symbol.
-    //PartitionSymbol : PartitionSymbol TODO
+    PartitionSymbol : PartitionSymbol
 
     /// The root component object of the partition.
     RootComponent : ComponentObject
@@ -58,7 +58,7 @@ type PartitionObject = {
 /// Represents the instantiation of a model.
 type ModelObject = {
     /// The instantiated model symbol.
-    //ModelSymbol : ModelSymbol TODO
+    ModelSymbol : ModelSymbol
 
     /// The partitions the model consists of.
     Partitions : PartitionObject list

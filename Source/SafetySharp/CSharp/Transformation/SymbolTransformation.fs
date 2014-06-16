@@ -99,7 +99,7 @@ module internal SymbolTransformation =
                 // We'll map to the first overriden update method that we encounter in the hierarchy (or possible to Component.Update() itself)
                 transformUpdateMethod csharpComponent.BaseType
 
-        // Create the symbols and mapping information for all methods of the component. We'll also build up a 
+        // Creates the symbols and mapping information for all methods of the component. We'll also build up a 
         // dictionary that allows us to retrieve the original C# method symbol again.
         let transformMethods (csharpComponent : ITypeSymbol) =
             let transformReturnType (returnType : ITypeSymbol) =
@@ -188,7 +188,7 @@ module internal SymbolTransformation =
     /// Transforms the model, adding it to the given symbol resolver.
     let TransformModelSymbol (symbolResolver : SymbolResolver) (model : Model) =
         nullArg model "model"
-        invalidArg model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+        invalidArg (not model.IsMetadataFinalized) "model" "The model metadata has not yet been finalized."
 
         /// Creates the symbols for the partition defined by the given root component.
         let transformPartition (rootComponent : Component) =

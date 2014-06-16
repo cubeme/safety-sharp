@@ -49,11 +49,11 @@ type CSharpAnalyzer () =
 
     /// Describes the error diagnostic of the analyzer.
     member private this.SetDescriptor identifier description messageFormat severity =
-        invalidCall (this.descriptor = null) "A descriptor has already been set."
+        invalidCall (this.descriptor <> null) "A descriptor has already been set."
         nullOrWhitespaceArg identifier "identifier"
         nullOrWhitespaceArg description "description"
         nullOrWhitespaceArg messageFormat "messageFormat"
-        invalidArg (identifier.StartsWith DiagnosticIdentifiers.Prefix) "identifier"
+        invalidArg (not <| identifier.StartsWith DiagnosticIdentifiers.Prefix) "identifier"
             "Diagnostic identifier does not start with prefix '%s'." DiagnosticIdentifiers.Prefix
 
         this.descriptor <- DiagnosticDescriptor (identifier, description, messageFormat, DiagnosticIdentifiers.Category, severity, true)

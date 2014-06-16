@@ -33,7 +33,7 @@ module internal ModelTransformation =
     /// Transforms a modeling compilation and a model instance to the metamodel types.
     let Transform (compilation : ModelingCompilation) (model : Model) (formulas : CSharpFormula list) =
         nullArg model "model"
-        invalidArg model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+        invalidArg (not model.IsMetadataFinalized) "model" "The model metadata has not yet been finalized."
 
         let symbolResolver = SymbolTransformation.Transform compilation.CSharpCompilation model
         let objectResolver = ObjectTransformation.Transform model symbolResolver

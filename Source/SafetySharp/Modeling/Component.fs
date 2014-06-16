@@ -89,8 +89,8 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
     let mutable (subcomponents : Component list) = []
     let fields = Dictionary<string, obj list> ()
 
-    let requiresNotSealed () = invalidCall (not isSealed) "Modifications of the component metadata are only allowed during object construction."
-    let requiresIsSealed () = invalidCall isSealed "Cannot access the component metadata as it might not yet be complete."
+    let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
+    let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
@@ -122,21 +122,21 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
     member this.SetInitialValues<'T> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
         nullArg field "field"
         nullArg initialValues "initialValues"
-        invalidArg (initialValues.Length > 0) "initialValues" "At least one value must be provided."
-        invalidArg (field.Body :? MemberExpression) "field" "Expected a reference to a field of the component."
+        invalidArg (initialValues.Length <= 0) "initialValues" "At least one value must be provided."
+        invalidArg (not <| field.Body :? MemberExpression) "field" "Expected a reference to a field of the component."
         requiresNotSealed ()
 
         match (field.Body :?> MemberExpression).Member with
         | :? FieldInfo as fieldInfo ->
             // Check if the field is actually defined or inherited by the component
             if not (fieldInfo.DeclaringType.IsAssignableFrom <| this.GetType ()) then
-                invalidArg false "field" "Expected a reference to a field of the component."
+                invalidArg true "field" "Expected a reference to a field of the component."
 
             fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
 
             let random = Random();
             fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
-        | _ -> invalidArg false "field" "Expected a reference to a field of the component."
+        | _ -> invalidArg true "field" "Expected a reference to a field of the component."
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata (?componentName : string) =
@@ -175,7 +175,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
         requiresIsSealed ()
 
         let (result, initialValues) = fields.TryGetValue fieldName
-        invalidArg result "fieldName" "A field with name '%s' does not exist." fieldName
+        invalidArg (not result) "fieldName" "A field with name '%s' does not exist." fieldName
 
         initialValues
 
@@ -190,7 +190,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
         match subcomponent with
         | Some subcomponent -> subcomponent
         | None ->
-            invalidArg false "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
+            invalidArg true "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
             subcomponent.Value // Required, but cannot be reached
 
     /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.

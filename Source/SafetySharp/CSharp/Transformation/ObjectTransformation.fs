@@ -32,20 +32,20 @@ module internal ObjectTransformation =
     /// Transforms C# objects to metamodel objects.
     let Transform (model : Model) (symbolResolver : SymbolResolver) =
         nullArg model "model"
-        invalidArg model.IsMetadataFinalized "model" "The model metadata has not yet been finalized."
+        invalidArg (not model.IsMetadataFinalized) "model" "The model metadata has not yet been finalized."
 
         // We're using the builder pattern to initialize the dictionaries
         let componentSymbolMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentSymbol> ()
         let componentObjectMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentObject> ()
 
-        // Create the field objects for the .NET component instance.
+        // Creates the field objects for the .NET component instance.
         let transformFields (component' : Component) (componentSymbol : ComponentSymbol) =
             [
                 for fieldSymbol in componentSymbol.Fields ->
                     (fieldSymbol, { FieldSymbol = fieldSymbol; InitialValues = component'.GetInitialValuesOfField fieldSymbol.Name })
             ]
 
-        // Create the subcomponent objects for the .NET component instance.
+        // Creates the subcomponent objects for the .NET component instance.
         let rec transformSubcomponents (component' : Component) (componentSymbol : ComponentSymbol) =
             [
                 for subcomponentSymbol in symbolResolver.Model.Subcomponents.[componentSymbol] ->
@@ -68,18 +68,24 @@ module internal ObjectTransformation =
 
         // Creates the objects and mapping information for the .NET partition root component instance.
         let transformPartition (rootComponent : Component) =
-            { RootComponent = transformComponent rootComponent } //; PartitionSymbol = (* TODO *) Unchecked.defaultof<PartitionSymbol> }
+            { RootComponent = transformComponent rootComponent; PartitionSymbol = symbolResolver.ResolvePartition rootComponent }
 
-        // Create the model object
-        let model = { 
-            //ModelSymbol = (* TODO *) Unchecked.defaultof<ModelSymbol> 
+        // Creates component reference mapping for the component
+        let transformComponentReference (component' : Component) =
+            let componentReference = symbolResolver.ResolveComponentReference component'
+            let componentObject = componentObjectMapBuilder.[component']
+            (componentReference, componentObject)
+
+        // Creates the model object
+        let modelObject = { 
+            ModelSymbol = symbolResolver.ModelSymbol
             Partitions = model.PartitionRoots |> List.map transformPartition
-            ComponentObjects = Map.empty 
+            ComponentObjects = model.Components |> List.map transformComponentReference |> Map.ofList
         }
 
         // Create and return the object resolver
         {
             ComponentSymbolMap = componentSymbolMapBuilder.ToImmutable ()
             ComponentObjectMap = componentObjectMapBuilder.ToImmutable ()
-            Model = model
+            Model = modelObject
         }

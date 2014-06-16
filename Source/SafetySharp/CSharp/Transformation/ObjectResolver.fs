@@ -39,14 +39,14 @@ type internal ObjectResolver = private {
     member this.ResolveSymbol (componentObject : Component) =
         nullArg componentObject "componentObject"
         let (result, symbol) = this.ComponentSymbolMap.TryGetValue componentObject
-        invalidArg result "componentObject" "The given component is unknown."
+        invalidArg (not result) "componentObject" "The given component is unknown."
         symbol
 
     /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
     member this.ResolveObject (componentObject : Component) =
         nullArg componentObject "componentObject"
         let (result, symbol) = this.ComponentObjectMap.TryGetValue componentObject
-        invalidArg result "componentObject" "The given component is unknown."
+        invalidArg (not result) "componentObject" "The given component is unknown."
         symbol
 
     /// Gets the model object that contains all of the resolver's component and partition objects.

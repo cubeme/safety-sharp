@@ -49,8 +49,8 @@ type Model () =
     let mutable (components : Component list) = []
     let mutable isSealed = false
 
-    let requiresNotSealed () = invalidCall (not isSealed) "Modifications of the model metadata are only allowed during object construction."
-    let requiresIsSealed () = invalidCall isSealed "Cannot access the model metadata as it might not yet be complete."
+    let requiresNotSealed () = invalidCall isSealed "Modifications of the model metadata are only allowed during object construction."
+    let requiresIsSealed () = invalidCall (not isSealed) "Cannot access the model metadata as it might not yet be complete."
 
     let rec getAllComponents (component' : Component) =
         seq {
@@ -68,8 +68,8 @@ type Model () =
     /// Sets the <paramref name="rootComponents" /> of the model's partitions.
     member this.SetPartitions ([<ParamArray>] rootComponents : Component array) =
         nullArg rootComponents "rootComponents"
-        invalidArg (rootComponents.Length > 0) "rootComponents" "There must be at least one partition root."
-        invalidCall (components = []) "This method can only be called once on any given model instance."
+        invalidArg (rootComponents.Length <= 0) "rootComponents" "There must be at least one partition root."
+        invalidCall (components <> []) "This method can only be called once on any given model instance."
         requiresNotSealed ()
 
         // Disallow future modifications of the components' metadata
@@ -96,7 +96,7 @@ type Model () =
 
     /// Finalizes the models's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata () =
-        invalidCall (components <> []) "No partition roots have been set for the model."
+        invalidCall (components = []) "No partition roots have been set for the model."
         requiresNotSealed ()
 
         isSealed <- true

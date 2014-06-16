@@ -41,22 +41,24 @@ module private ObjectTransformationTestsHelper =
     let mutable objectResolver = Unchecked.defaultof<ObjectResolver>
     let mutable components = Unchecked.defaultof<Component list>
     let mutable modelObject = Unchecked.defaultof<ModelObject>
-    let mutable (model : Model) = null
+    let mutable modelSymbol = Unchecked.defaultof<ModelSymbol>
+    let mutable model : Model = null
 
     let compile csharpCode componentTypes =
         let compilation = TestCompilation csharpCode
-        symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
-        components <- componentTypes |> List.map compilation.CreateObject
 
+        components <- componentTypes |> List.map compilation.CreateObject
         model <- TestModel (components |> Array.ofList)
         model.FinalizeMetadata ()
 
+        symbolResolver <- SymbolTransformation.Transform compilation.CSharpCompilation model
         objectResolver <- ObjectTransformation.Transform model symbolResolver
+        modelSymbol <- symbolResolver.ModelSymbol
         modelObject <- objectResolver.ModelObject
 
-    let createPartition rootComponent = {
-        RootComponent = rootComponent
-        //PartitionSymbol = (* TODO *) Unchecked.defaultof<PartitionSymbol>
+    let createPartition (rootComponent : Component) = {
+        RootComponent = objectResolver.ResolveObject rootComponent
+        PartitionSymbol = { Name = rootComponent.Name; RootComponent = symbolResolver.ResolveComponent rootComponent }
     }
 
 [<TestFixture>]
@@ -80,15 +82,15 @@ module ``ModelObject property`` =
     [<Test>]
     let ``contains one root partition`` () =
         compile "class A : Component {}" ["A"]
-        modelObject.Partitions =? [createPartition <| objectResolver.ResolveObject components.[0]]
+        modelObject.Partitions =? [createPartition components.[0]]
 
     [<Test>]
     let ``contains three root partitions`` () =
         compile "class A : Component {} class B : A {}" ["A"; "B"; "A"]
         modelObject.Partitions =? [
-            createPartition <| objectResolver.ResolveObject components.[0]
-            createPartition <| objectResolver.ResolveObject components.[1]
-            createPartition <| objectResolver.ResolveObject components.[2]
+            createPartition components.[0]
+            createPartition components.[1]
+            createPartition components.[2]
         ]
 
     [<Test>]
@@ -109,7 +111,7 @@ module ``ModelObject property`` =
 
     [<Test>]
     let ``component has correct subcomponents`` () =
-        compile "class A : Component { public A() { b1 = new B(); b2 = new B(); } B b1, b2; } class B : Component {}" ["A"; "B"]
+        compile "class A : Component { B b1 = new B(); B b2 = new B(); } class B : Component {}" ["A"; "B"]
         let componentSymbolA = symbolResolver.ResolveComponent components.[0]
         let componentSymbolB = symbolResolver.ResolveComponent components.[1]
         let subcomponentSymbol1 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[0]
@@ -125,20 +127,44 @@ module ``ModelObject property`` =
         }
 
     [<Test>]
+    let ``model maps root component objects`` () =
+        compile "class A : Component {} class B : Component {}" ["A"; "B"]
+        modelObject.ComponentObjects =? Map.ofList [
+            (modelSymbol.ComponentObjects.[0], emptyComponentObject "Root0" (symbolResolver.ResolveComponent components.[0]))
+            (modelSymbol.ComponentObjects.[1], emptyComponentObject "Root1" (symbolResolver.ResolveComponent components.[1]))
+        ]
+
+    [<Test>]
+    let ``model maps root and nested component objects`` () =
+        compile "class A : Component { B b1 = new B(); B b2 = new B(); } class B : Component {}" ["A"; "B"]
+        let componentSymbolA = symbolResolver.ResolveComponent components.[0]
+        let componentSymbolB = symbolResolver.ResolveComponent components.[1]
+        let subcomponentSymbol1 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[0]
+        let subcomponentSymbol2 = symbolResolver.ModelSymbol.Subcomponents.[componentSymbolA].[1]
+        let nestedComponent = {
+            emptyComponentObject "Root0" componentSymbolA with
+                Subcomponents =
+                [
+                    (subcomponentSymbol1, emptyComponentObject "Root0.b1" componentSymbolB)
+                    (subcomponentSymbol2, emptyComponentObject "Root0.b2" componentSymbolB)
+                ] |> Map.ofList
+        }
+        modelObject.ComponentObjects =? Map.ofList [
+            (modelSymbol.ComponentObjects.[0], nestedComponent)
+            (modelSymbol.ComponentObjects.[1], emptyComponentObject "Root0.b1" componentSymbolB)
+            (modelSymbol.ComponentObjects.[2], emptyComponentObject "Root0.b2" componentSymbolB)
+            (modelSymbol.ComponentObjects.[3], emptyComponentObject "Root1" componentSymbolB)
+        ]
+
+    [<Test>]
     let ``reflects three-level nested hierarchy with multiple roots`` () =
         compile "
             class A : Component {
-                B b1, b2;
-                public A() {
-                    b1 = new B();
-                    b2 = new B();
-                }
+                B b1 = new B();
+                B b2 = new B();
             }
             class B : Component {
-                C c;
-                public B() {
-                    c = new C();
-                }
+                C c = new C();
             }
             class C : Component {
             }" ["A"; "B"; "C"]
@@ -171,9 +197,13 @@ module ``ModelObject property`` =
         }
 
         let partition2 = emptyComponentObject "Root2" componentSymbolC
-        let partitions = [partition0; partition1; partition2] |> List.map createPartition
 
-        modelObject.Partitions =? partitions
+        modelObject.Partitions =? 
+        [
+            { PartitionSymbol = symbolResolver.ResolvePartition components.[0]; RootComponent = partition0 }
+            { PartitionSymbol = symbolResolver.ResolvePartition components.[1]; RootComponent = partition1 }
+            { PartitionSymbol = symbolResolver.ResolvePartition components.[2]; RootComponent = partition2 }
+        ]
 
 [<TestFixture>]
 module ``ResolveSymbol Method`` =

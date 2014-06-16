@@ -35,7 +35,7 @@ type ModelingAssembly (modelingAssembly : Assembly) as this=
     do nullArg modelingAssembly "modelingAssembly"
 
     let assemblyMetadata = modelingAssembly.GetCustomAttribute<ModelingAssemblyAttribute> ()
-    do invalidArg (not <| obj.ReferenceEquals(assemblyMetadata, null)) "modelingAssembly" "Expected a SafetySharp modeling assembly."
+    do invalidArg (obj.ReferenceEquals(assemblyMetadata, null)) "modelingAssembly" "Expected a SafetySharp modeling assembly."
 
     do if this.CompilerVersion <> Compiler.Version then
         invalidOp "Modeling assembly '%s' was compiled with a different version of the SafetySharp compiler." modelingAssembly.FullName 

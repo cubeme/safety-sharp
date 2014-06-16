@@ -52,18 +52,18 @@ module internal Exceptions =
         if String.IsNullOrWhiteSpace argument then 
             Operators.invalidArg argumentName "The given string cannot consist of whitespace only."
 
-    /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>false</c>.
+    /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>true</c>.
     let inline invalidArg condition argumentName description =
         nullOrWhitespaceArg argumentName "argumentName"
 
         Printf.ksprintf (fun message ->
-            if not condition then
+            if condition then
                 Operators.invalidArg argumentName message
         ) description
 
-    /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>false</c>.
+    /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>true</c>.
     let inline invalidCall condition description =
         Printf.ksprintf (fun message ->
-            if not condition then
+            if condition then
                 Operators.invalidOp message
         ) description

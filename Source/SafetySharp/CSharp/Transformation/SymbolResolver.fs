@@ -46,7 +46,7 @@ type internal SymbolResolver = private {
     member this.ResolveComponent (componentSymbol : INamedTypeSymbol) =
         nullArg componentSymbol "componentSymbol"
         let (result, symbol) = this.ComponentMap.TryGetValue componentSymbol
-        invalidArg result "componentSymbol" "The given C# component symbol is unknown."
+        invalidArg (not result) "componentSymbol" "The given C# component symbol '%s' is unknown." <| componentSymbol.ToDisplayString ()
         symbol
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
@@ -57,34 +57,50 @@ type internal SymbolResolver = private {
         let name = sprintf "%s::%s" assemblyName typeName
 
         let symbol = this.ComponentNameMap |> Map.tryFind name
-        invalidArg symbol.IsSome "componentObject" "The type of the given .NET component instance is unknown."
+        invalidArg symbol.IsNone "componentObject" "Unknown component type '%s'." <| componentObject.GetType().FullName
+        symbol.Value
+
+    /// Resolves the model's <see cref="ComponentReferenceSymbol" /> corresponding to the given C# component object.
+    member this.ResolveComponentReference (componentObject : Component) =
+        nullArg componentObject "componentObject"
+        invalidCall (List.isEmpty this.Model.ComponentObjects) "No component object symbols have been created yet for the model."
+        let symbol = this.Model.ComponentObjects |> List.tryFind (fun symbol -> symbol.Name = componentObject.Name)
+        invalidArg symbol.IsNone "componentObject" "Unknown component type '%s'." <| componentObject.GetType().FullName
+        symbol.Value
+
+    /// Resolves the <see cref="PartitionSymbol" /> corresponding to the given C# component object.
+    member this.ResolvePartition (componentObject : Component) =
+        nullArg componentObject "componentObject"
+        invalidCall (List.isEmpty this.Model.Partitions) "No partition symbols have been created yet for the model."
+        let symbol = this.Model.Partitions |> List.tryFind (fun symbol -> symbol.Name = componentObject.Name)
+        invalidArg symbol.IsNone "componentObject" "Unknown partition '%s'." <| componentObject.Name
         symbol.Value
 
     /// Resolves the <see cref="FieldSymbol"/> corresponding to the given C# field symbol.
     member this.ResolveField (fieldSymbol : IFieldSymbol) =
         nullArg fieldSymbol "fieldSymbol"
         let (result, symbol) = this.FieldMap.TryGetValue fieldSymbol
-        invalidArg result "fieldSymbol" "The given C# field symbol is unknown."
+        invalidArg (not result) "fieldSymbol" "The given C# field symbol '%s' is unknown." <| fieldSymbol.ToDisplayString ()
         symbol
 
-    /// Resolves the <see cref="SubcomponentSymbol"/> corresponding to the given C# subcomponent symbol.
+    /// Resolves the <see cref="ComponentReferenceSymbol"/> corresponding to the given C# subcomponent symbol.
     member this.ResolveSubcomponent (subcomponentSymbol : IFieldSymbol) =
         nullArg subcomponentSymbol "subcomponentSymbol"
         let (result, symbol) = this.SubcomponentMap.TryGetValue subcomponentSymbol
-        invalidArg result "subcomponentSymbol" "The given C# subcomponent symbol is unknown."
+        invalidArg (not result) "subcomponentSymbol" "The given C# subcomponent symbol '%s' is unknown." <| subcomponentSymbol.ToDisplayString ()
         symbol
 
     /// Resolves the <see cref="MethodSymbol"/> corresponding to the given C# method symbol.
     member this.ResolveMethod (methodSymbol : IMethodSymbol) =
         nullArg methodSymbol "methodSymbol"
         let (result, symbol) = this.MethodMap.TryGetValue methodSymbol
-        invalidArg result "methodSymbol" "The given C# method symbol is unknown."
+        invalidArg (not result) "methodSymbol" "The given C# method symbol '%s' is unknown." <| methodSymbol.ToDisplayString ()
         symbol
 
     /// Resolves the C# method symbol corresponding to the given metamodel <see cref="MethodSymbol"/>.
     member this.ResolveCSharpMethod (methodSymbol : MethodSymbol) =
         let (result, symbol) = this.MethodCSharpMap.TryGetValue methodSymbol
-        invalidArg result "methodSymbol" "The given method symbol is unknown."
+        invalidArg (not result) "methodSymbol" "The given method symbol '%s' is unknown." methodSymbol.Name
         symbol
 
     /// Gets the model symbol that contains all of the symbols of the symbol resolver.
