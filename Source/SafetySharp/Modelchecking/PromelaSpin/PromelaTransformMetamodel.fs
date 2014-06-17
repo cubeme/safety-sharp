@@ -105,7 +105,9 @@ type SimpleStatement =
 
 
            
-type MetamodelToPromela (model : MMModelObject) =    
+type MetamodelToPromela (configuration:MMConfiguration) =    
+
+    let model : MMModelObject = configuration.ModelObject
 
     /////////////////////////////////////////////////////
     // Metamodel to SimpleExpression/SimpleStatement part
@@ -363,7 +365,7 @@ type MetamodelToPromela (model : MMModelObject) =
         ""
     
     // THIS IS THE MAIN FUNCTION AND ENTRY POINT
-    member this.transformConfiguration (configuration:MMConfiguration) : PrSpec =
+    member this.transformConfiguration : PrSpec =
         let varModule = this.generateFieldDeclarations fieldInfos
         
         let fieldInitialisations = this.generateFieldInitialisations fieldInfos

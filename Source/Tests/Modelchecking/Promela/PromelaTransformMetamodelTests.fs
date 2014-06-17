@@ -1,8 +1,17 @@
 ﻿namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformMetamodelTests
 
-open SafetySharp.Tests.Modelchecking.TestCase1
+open NUnit.Framework
+open Swensen.Unquote
+open SafetySharp.Tests.Modelchecking
+
+open SafetySharp.Modelchecking.PromelaSpin
 
 [<TestFixture>]
 module TestCase1ToPromelaTests =
-    let x=1
+    open TestCase1
 
+    [<Test>]
+    let ``transforms model`` () =
+        let modelTransformer = MetamodelToPromela (testCase1Configuration)
+        let promelaCode = modelTransformer.transformConfiguration
+        ()

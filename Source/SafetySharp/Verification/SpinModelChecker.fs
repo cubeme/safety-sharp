@@ -37,10 +37,10 @@ type SpinModelChecker (model : Model) =
         let formulas = []
         let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
         
-        let converter = SafetySharp.Modelchecking.PromelaSpin.MetamodelToPromela(configuration.ModelObject)
+        let converter = SafetySharp.Modelchecking.PromelaSpin.MetamodelToPromela(configuration)
         let astWriter = SafetySharp.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
 
-        let converted = converter.transformConfiguration configuration
+        let converted = converter.transformConfiguration
         let convertedString = astWriter.Export converted
 
         ()
