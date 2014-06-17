@@ -77,10 +77,10 @@ let private printToConsole logEntry =
 
     match logEntry.Type with
     | Debug ->
-        if not <| arguments.Silent then
+        if not arguments.Silent then
             writeToConsole ConsoleColor.Magenta logEntry.Message
     | Info ->
-        if not <| arguments.Silent then
+        if not arguments.Silent then
             writeToConsole ConsoleColor.White logEntry.Message
     | Warning ->
         writeToConsole ConsoleColor.Yellow logEntry.Message

@@ -39,7 +39,7 @@ module EnumUnderlyingTypeAnalyzerTests =
 
     let validate csharpCode = 
         let compilation = TestCompilation csharpCode
-        compilation.HasDiagnostics<EnumUnderlyingTypeAnalyzer> ()
+        compilation.HasDiagnostics<EnumUnderlyingTypeAnalyzer> () |> not
 
     [<Test>]
     let ``implicit underlying type is valid`` () =

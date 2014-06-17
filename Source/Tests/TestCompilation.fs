@@ -66,16 +66,16 @@ type internal TestCompilation (csharpCode : string) =
     static member CompilationName = "TestCompilation"
 
     /// Gets the syntax tree of the compilation.
-    member this.SyntaxTree with get () = syntaxTree
+    member this.SyntaxTree = syntaxTree
 
     /// Gets the <see cref="CSharpCompilation" /> corresponding to the current instance.
-    member this.CSharpCompilation with get () = csharpCompilation
+    member this.CSharpCompilation = csharpCompilation
 
     /// Gets the root syntax node of the syntax tree.
-    member this.SyntaxRoot with get () = syntaxTree.GetRoot ()
+    member this.SyntaxRoot = syntaxTree.GetRoot ()
 
     /// Gets the semantic model for the compilation's syntax tree.
-    member this.SemanticModel with get () = csharpCompilation.GetSemanticModel syntaxTree
+    member this.SemanticModel = csharpCompilation.GetSemanticModel syntaxTree
 
     /// Emits an in-memory assembly for the compilation and loads the assembly into the app domain.
     member this.Compile () =
@@ -96,21 +96,17 @@ type internal TestCompilation (csharpCode : string) =
     member this.FindTypeDeclaration typeName =
         let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
         let types = 
-            this.SyntaxRoot
-                .DescendantsAndSelf<BaseTypeDeclarationSyntax>()
-                .Where(fun typeDeclaration -> 
+            this.SyntaxRoot.DescendantsAndSelf<BaseTypeDeclarationSyntax>()
+            |> Seq.where (fun typeDeclaration -> 
                     let symbol = this.SemanticModel.GetDeclaredSymbol typeDeclaration
                     symbol.ToDisplayString displayFormat = typeName
                 )
-                .ToArray();
-
-        if types.Length = 0 then
-            failed "Found no type with name '%s'." typeName
-
-        if types.Length > 1 then
-            failed "Found more than one type with name '%s'." typeName
-
-        types.[0]
+            |> List.ofSeq
+                
+        match types with
+        | typeDeclaration :: [] -> typeDeclaration
+        | [] -> failed "Found no type with name '%s'." typeName
+        | _ -> failed "Found more than one type with name '%s'." typeName
 
     /// Finds the <see cref="ClassDeclarationSyntax" /> for the class with the given name in the compilation.
     /// Throws an exception if more than one class with the given name was found.
@@ -130,36 +126,28 @@ type internal TestCompilation (csharpCode : string) =
     /// within the compilation. Throws an exception if more than one type or method with the given name was found.
     member this.FindMethodDeclaration typeName methodName =
         let methods = 
-            this.FindTypeDeclaration(typeName)
-                .DescendantsAndSelf<MethodDeclarationSyntax>()
-                .Where(fun methodDeclaration -> methodDeclaration.Identifier.ValueText = methodName)
-                .ToArray();
+            this.FindTypeDeclaration(typeName).DescendantsAndSelf<MethodDeclarationSyntax>()
+            |> Seq.where (fun methodDeclaration -> methodDeclaration.Identifier.ValueText = methodName)
+            |> List.ofSeq
 
-        if methods.Length = 0 then
-            failed "Found no methods with name '%s' in '%s'." methodName typeName
-
-        if methods.Length > 1 then
-            failed "Found more than one method with name '%s' in '%s'." methodName typeName
-
-        methods.[0]
+        match methods with
+        | methodDeclaration :: [] -> methodDeclaration
+        | [] -> failed "Found no methods with name '%s' in '%s'." methodName typeName
+        | _ -> failed "Found more than one method with name '%s' in '%s'." methodName typeName
 
     /// Finds the <see cref="VariableDeclaratorSyntax" /> for the field with the given name in the type with the given name
     /// within the compilation. Throws an exception if more than one type or field with the given name was found.
     member this.FindFieldDeclaration typeName fieldName =
         let fields = 
-            this.FindTypeDeclaration(typeName)
-                .DescendantsAndSelf<FieldDeclarationSyntax>()
-                .SelectMany(fun fieldDeclaration -> fieldDeclaration.Declaration.Variables :> IEnumerable<VariableDeclaratorSyntax>)
-                .Where(fun variableDeclaration -> variableDeclaration.Identifier.ValueText = fieldName)
-                .ToArray();
+            this.FindTypeDeclaration(typeName).DescendantsAndSelf<FieldDeclarationSyntax>()
+            |> Seq.collect (fun fieldDeclaration -> fieldDeclaration.Declaration.Variables :> IEnumerable<VariableDeclaratorSyntax>)
+            |> Seq.filter (fun variableDeclaration -> variableDeclaration.Identifier.ValueText = fieldName)
+            |> List.ofSeq
 
-        if fields.Length = 0 then
-            failed "Found no fields with name '%s' in '%s'." fieldName typeName
-
-        if fields.Length > 1 then
-            failed "Found more than one field with name '%s' in '%s'." fieldName typeName
-
-        fields.[0]
+        match fields with
+        | fieldDeclaration :: [] -> fieldDeclaration
+        | [] -> failed "Found no fields with name '%s' in '%s'." fieldName typeName
+        | _ -> failed "Found more than one field with name '%s' in '%s'." fieldName typeName
 
     /// Gets the <see cref="ITypeSymbol" /> representing the type with the given name.
     member this.FindTypeSymbol typeName =
@@ -184,8 +172,8 @@ type internal TestCompilation (csharpCode : string) =
     member this.FindMethodSymbol typeName methodName =
         let typeSymbol = this.FindTypeSymbol typeName
         match typeSymbol.GetMembers(methodName).OfType<IMethodSymbol>() |> List.ofSeq with
-        | [] -> failed "Unable to find method '%s' on type '%s'." methodName typeName
         | methodSymbol :: [] -> methodSymbol
+        | [] -> failed "Unable to find method '%s' on type '%s'." methodName typeName
         | _ -> failed "Found more than one method '%s' on type '%s'." methodName typeName
 
     /// Gets the <see cref="IFieldSymbol" /> representing the field with the given name in the type with
@@ -193,8 +181,8 @@ type internal TestCompilation (csharpCode : string) =
     member this.FindFieldSymbol typeName fieldName =
         let typeSymbol = this.FindTypeSymbol typeName
         match typeSymbol.GetMembers(fieldName).OfType<IFieldSymbol>() |> List.ofSeq with
-        | [] -> failed "Unable to find field '%s' on type '%s'." fieldName typeName
         | methodSymbol :: [] -> methodSymbol
+        | [] -> failed "Unable to find field '%s' on type '%s'." fieldName typeName
         | _ -> failed "Found more than one field '%s' on type '%s'." fieldName typeName
 
     /// If necessary, compiles the compilation and loads the resulting assembly into the app domain, then searches for
@@ -207,4 +195,4 @@ type internal TestCompilation (csharpCode : string) =
     /// Checks whether the compilation has any diagnostics for the given diagnostic analyzer.
     member this.HasDiagnostics<'T when 'T : (new : unit -> 'T) and 'T :> IDiagnosticAnalyzer> () = 
         let analyzers = [| new 'T () :> IDiagnosticAnalyzer |]
-        not <| AnalyzerDriver.GetDiagnostics(csharpCompilation, analyzers, new CancellationToken()).Any()
+        AnalyzerDriver.GetDiagnostics(csharpCompilation, analyzers, new CancellationToken()) |> Seq.isEmpty |> not

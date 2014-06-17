@@ -39,7 +39,7 @@ module EnumMemberAnalyzerTests =
 
     let validate csharpCode = 
         let compilation = TestCompilation csharpCode
-        compilation.HasDiagnostics<EnumMemberAnalyzer> ()
+        compilation.HasDiagnostics<EnumMemberAnalyzer> () |> not
 
     [<Test>]
     let ``enum declaration without explicit member values is valid`` () =
