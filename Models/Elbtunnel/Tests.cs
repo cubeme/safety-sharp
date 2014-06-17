@@ -7,9 +7,9 @@
 	[TestFixture]
 	public class Tests
 	{
-		private class Configuration : Model
+		private class Elbtunnel : Model
 		{
-			public Configuration(bool nondeterministicInitialValue)
+			public Elbtunnel(bool nondeterministicInitialValue)
 			{
 				var c1 = new BooleanComponent(nondeterministicInitialValue);
 				var c2 = new BooleanComponent(false);
@@ -35,20 +35,20 @@
 		}
 
 		private static void Main(string[] args)
-		{ 
-			var configuration = new Configuration(true);
-			var spin = new SpinModelChecker(configuration);
+		{
+			var elbtunnel = new Elbtunnel(true);
+			var spin = new SpinModelChecker(elbtunnel);
 
-			spin.Check(configuration.Hazard);
+			spin.Check(elbtunnel.Hazard);
 		}
 
 		[Test]
 		public void FirstTest()
 		{
-			var configuration = new Configuration(true);
-			var spin = new SpinModelChecker(configuration);
+			var elbtunnel = new Elbtunnel(true);
+			var spin = new SpinModelChecker(elbtunnel);
 
-			spin.Check(configuration.Hazard);
+			spin.Check(elbtunnel.Hazard);
 		}
 	}
 }

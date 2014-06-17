@@ -21,12 +21,11 @@
 // THE SOFTWARE.
 
 // Bla
+
 namespace Elbtunnel
 {
 	// Blub
 	using System;
-	using System.Diagnostics.Eventing.Reader;
-	using System.Threading.Tasks;
 	using SafetySharp.Modeling;
 
 	public class LightBarrier : Component
@@ -38,7 +37,6 @@ namespace Elbtunnel
 		{
 			return i;
 		}
-
 	}
 
 	/// <summary>
@@ -62,7 +60,7 @@ namespace Elbtunnel
 
 	internal class BooleanComponent : Component
 	{
-		public bool _value = Q();
+		public bool _value;
 
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
@@ -75,20 +73,9 @@ namespace Elbtunnel
 			i++;
 		}
 
-		void T()
-		{
-			
-		}
-
-		static bool Q()
-		{
-			return false;
-		}
 		protected override void Update()
 		{
 			_value = Choose.Boolean();
-			T();
-			_value = Q();
 			if (_value == false)
 				_value = true;
 			else if (!_value)
@@ -97,13 +84,13 @@ namespace Elbtunnel
 			{
 				_value = true || false;
 				_value = !_value;
-			} 
+			}
 		}
 	}
 
-	internal enum Test 
+	internal enum Test
 	{
-	} 
+	}
 
 	//public enum MyEnum : short
 	//{
