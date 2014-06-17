@@ -79,8 +79,7 @@
     <Compile Include="CSharp\Extensions\ArgumentExtensions.fs" />
     <Compile Include="CSharp\Extensions\SyntaxKindExtensions.fs" />
     <Compile Include="CSharp\Extensions\InvocationExpressionExtensions.fs" />
-    <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs">
-    </Compile>
+    <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs"/>
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\SemanticModelAnalyzer.fs" />
@@ -103,6 +102,7 @@
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
+    <Compile Include="Modelchecking\Common\FileWriter.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
@@ -117,7 +117,6 @@
     <Compile Include="Verification\SpinModelChecker.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <None Include="packages.config" />
-    <Compile Include="Modelchecking\Common\FileWriter.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
