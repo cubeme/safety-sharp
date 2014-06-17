@@ -40,6 +40,9 @@ module DiagnosticIdentifiers =
     let IllegalCSharpSyntaxElementInFormula = Prefix + "1001"
 
     [<Literal>] 
+    let IllegalCSharpSyntaxElementInExpression = Prefix + "1002" // TODO: Remove once expression may have side effects
+
+    [<Literal>] 
     let IllegalUnderlyingEnumType = Prefix + "1101"
 
     [<Literal>] 

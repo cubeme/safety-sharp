@@ -32,23 +32,33 @@ open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
 open SafetySharp.CSharp.Extensions
 
-/// Checks for unsupported C# features within a formula expression.
-type internal FormulaSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
+/// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
+type internal ExpressionSideEffectAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
     inherit CSharpSyntaxWalker ()
-
-    /// Visits the descendant nodes of <paramref name="node" />.
-    member private this.VisitDescendantNodes (node : SyntaxNode) =
-        base.DefaultVisit node
 
     /// Reports the node as a use of an unsupported C# feature.
     override this.DefaultVisit node                 = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
 
+    /// Constructors support all C# features, so we don't care about expression with side effects here.
+    override this.VisitConstructorDeclaration node  = () 
+
     (* Supported C# syntax elements *)
-    override this.VisitIdentifierName node          = this.VisitDescendantNodes node
-    override this.VisitQualifiedName node           = this.VisitDescendantNodes node
-    override this.VisitLiteralExpression node       = this.VisitDescendantNodes node
-    override this.VisitMemberAccessExpression node  = this.VisitDescendantNodes node
-    override this.VisitParenthesizedExpression node = this.VisitDescendantNodes node
+    override this.VisitIdentifierName node          = ()
+    override this.VisitQualifiedName node           = ()
+    override this.VisitLiteralExpression node       = ()
+    override this.VisitMemberAccessExpression node  = ()
+    override this.VisitParenthesizedExpression node = ()
+
+    // For now, allow method invocations only when the result is immediately assigned to a variable 
+    // as well as invocations of void returning methods.
+    override this.VisitInvocationExpression node =
+        match node.Parent with
+        | :? BinaryExpressionSyntax as binaryExpression 
+            when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
+                 (binaryExpression.Parent :? ExpressionStatementSyntax) ->
+            ()
+        | :? ExpressionStatementSyntax -> ()
+        | _ -> this.DefaultVisit node
 
     override this.VisitBinaryExpression node = 
         match node.CSharpKind () with
@@ -64,32 +74,32 @@ type internal FormulaSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback)
         | SyntaxKind.LessThanExpression
         | SyntaxKind.LessThanOrEqualExpression
         | SyntaxKind.GreaterThanExpression
-        | SyntaxKind.GreaterThanOrEqualExpression -> this.VisitDescendantNodes node
+        | SyntaxKind.GreaterThanOrEqualExpression -> ()
+        | SyntaxKind.SimpleAssignmentExpression when (node.Parent :? ExpressionStatementSyntax) -> ()
         | _ -> this.DefaultVisit node
 
     override this.VisitPrefixUnaryExpression node = 
         match node.CSharpKind () with
         | SyntaxKind.UnaryMinusExpression
         | SyntaxKind.UnaryPlusExpression
-        | SyntaxKind.LogicalNotExpression -> this.VisitDescendantNodes node
+        | SyntaxKind.LogicalNotExpression -> ()
         | _ -> this.DefaultVisit node
 
-/// Checks for unsupported C# features within a formula expression.
+/// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
 [<DiagnosticAnalyzer>]
-[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInFormula, LanguageNames.CSharp)>]
-type FormulaSyntaxAnalyzer () as this =
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression, LanguageNames.CSharp)>]
+type ExpressionSideEffectAnalyzer () as this =
     inherit SemanticModelAnalyzer ()
 
-    do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInFormula
-        "A formula uses an unsupported C# syntax element."
-        "State formula uses unsupported C# feature: {0}"
+    do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression
+        "For the moment, expressions may not have side effects."
+        "For the moment, expressions may not have side effects: Cannot use {0} here as it has (potential) side effects."
 
     override this.Analyze semanticModel addDiagnostic cancellationToken =
-        let formulaVisitor = FormulaSyntaxAnalyzerVisitor addDiagnostic
+        let formulaVisitor = ExpressionSideEffectAnalyzerVisitor addDiagnostic
 
-        semanticModel.SyntaxTree.Descendants<InvocationExpressionSyntax>()
-        |> Seq.where (fun invocation -> invocation.IsFormulaFunction semanticModel)
-        |> Seq.collect (fun invocation -> invocation.ArgumentList.Arguments)
-        |> Seq.where (fun argument -> argument.IsBooleanExpressionArgument semanticModel)
-        |> Seq.map (fun argument -> argument.Expression)
+        semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
+        |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
+        |> Seq.collect (fun classDeclaration -> classDeclaration.Descendants<MethodDeclarationSyntax> ())
+        |> Seq.collect (fun methodDeclaration -> methodDeclaration.Body.Descendants<ExpressionSyntax> ())
         |> Seq.iter formulaVisitor.Visit

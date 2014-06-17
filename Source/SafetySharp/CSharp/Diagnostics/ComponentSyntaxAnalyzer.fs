@@ -33,7 +33,7 @@ open SafetySharp.Utilities
 open SafetySharp.CSharp.Extensions
 
 /// Checks for unsupported C# features within a component declaration.
-type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
+type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
     inherit CSharpSyntaxWalker ()
 
     /// Visits the descendant nodes of <paramref name="node" />.
@@ -41,9 +41,9 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
         base.DefaultVisit node
 
     /// Reports the node as a use of an unsupported C# feature.
-    override this.DefaultVisit node                 = node.CSharpKind().ToDescription () |> emitDiagnostic node
+    override this.DefaultVisit node                 = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
 
-    /// Does nothing, as constructors support all C# features.
+    /// Constructors support all C# features, so we don't have to further analyze the constructor.
     override this.VisitConstructorDeclaration node  = () 
 
     (* Supported C# syntax elements *)
@@ -74,7 +74,7 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     override this.VisitMethodDeclaration node =
         // Async methods are not supported
         if node.Modifiers.Any SyntaxKind.AsyncKeyword then
-            emitDiagnostic node "async method"
+            emitDiagnostic.Invoke (node, "async method")
         else
             this.VisitDescendantNodes node
 
@@ -95,7 +95,7 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
         | SyntaxKind.LessThanOrEqualExpression
         | SyntaxKind.GreaterThanExpression
         | SyntaxKind.GreaterThanOrEqualExpression -> this.VisitDescendantNodes node
-        | _ -> node.CSharpKind().ToDescription () |> emitDiagnostic node
+        | _ -> this.DefaultVisit node
 
     // TODO: Allow more operators here and normalize later
     override this.VisitPrefixUnaryExpression node = 
@@ -109,7 +109,7 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     override this.VisitPostfixUnaryExpression node =
         this.DefaultVisit node
 
-/// Ensures that no enumeration members explicitly declare a constant value.
+/// Checks for unsupported C# features within a component declaration.
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInComponent, LanguageNames.CSharp)>]
 type ComponentSyntaxAnalyzer () as this =
@@ -120,10 +120,7 @@ type ComponentSyntaxAnalyzer () as this =
         "C# feature is unsupported: {0}"
 
     override this.Analyze semanticModel addDiagnostic cancellationToken =
-        let emitDiagnostic (node : SyntaxNode) (description : string) = 
-            addDiagnostic.Invoke (node, description)
-
-        let componentVisitor = ComponentSyntaxAnalyzerVisitor emitDiagnostic
+        let componentVisitor = ComponentSyntaxAnalyzerVisitor addDiagnostic
 
         semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
         |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)

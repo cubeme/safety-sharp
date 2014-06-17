@@ -54,6 +54,7 @@ module Compiler =
         FormulaSyntaxAnalyzer ()
         EnumUnderlyingTypeAnalyzer ()
         EnumMemberAnalyzer ()
+        ExpressionSideEffectAnalyzer () // TODO: Remove once expressions with side effects are supported
     ]
 
     /// Logs <paramref name="diagnostic" /> depending on its severity.

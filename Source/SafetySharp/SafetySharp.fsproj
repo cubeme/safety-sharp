@@ -88,6 +88,7 @@
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />

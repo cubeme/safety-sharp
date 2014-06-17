@@ -62,7 +62,7 @@ namespace Elbtunnel
 
 	internal class BooleanComponent : Component
 	{
-		public bool _value;
+		public bool _value = Q();
 
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
@@ -75,10 +75,21 @@ namespace Elbtunnel
 			i++;
 		}
 
+		void T()
+		{
+			
+		}
+
+		static bool Q()
+		{
+			return false;
+		}
 		protected override void Update()
 		{
 			_value = Choose.Boolean();
-			if (_value)
+			T();
+			_value = Q();
+			if (_value == false)
 				_value = true;
 			else if (!_value)
 				_value = false;
@@ -86,13 +97,13 @@ namespace Elbtunnel
 			{
 				_value = true || false;
 				_value = !_value;
-			}
+			} 
 		}
 	}
 
 	internal enum Test 
 	{
-	}
+	} 
 
 	//public enum MyEnum : short
 	//{
