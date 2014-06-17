@@ -46,6 +46,7 @@ module InvocationExpressionExtensions =
                 let methodClass = symbol.ContainingType
                 methodClass = semanticModel.GetTypeSymbol<Ltl> () ||
                    methodClass = semanticModel.GetTypeSymbol<Ctl> () ||
+                   methodClass = semanticModel.GetTypeSymbol<CtlOperatorFactory> () ||
                    methodClass = semanticModel.GetTypeSymbol<LtlFormula> () ||
                    methodClass = semanticModel.GetTypeSymbol<CtlFormula> ()
             | _ -> invalidOp "Unable to retrieve method symbol for invocation '%A'." this
