@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// TODO: Move "Metamodel to SimpleExpression/SimpleStatement" part into own .fs-File
+
 namespace SafetySharp.Modelchecking.PromelaSpin
 
 open PromelaAstHelpers

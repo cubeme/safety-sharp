@@ -68,14 +68,15 @@
     <Compile Include="CSharp\Transformation\FormulaTransformationTests.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
-    <None Include="app.config" />
-    <None Include="packages.config" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvExecuteTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodelTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaAstToFileTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaExecuteTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaTransformMetamodelTests.fs" />
+    <None Include="app.config" />
+    <None Include="packages.config" />
+    <Compile Include="Modelchecking\Common\SimpleExpressionTests.fs" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>

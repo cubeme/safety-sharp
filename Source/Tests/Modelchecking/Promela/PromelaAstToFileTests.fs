@@ -1,4 +1,7 @@
-﻿module PromelaTests
+﻿namespace SafetySharp.Tests.Modelchecking.Promela.PromelaAstToFileTests
+
+module PromelaTests =
+    let x=1
 
 (*
 TODO: port

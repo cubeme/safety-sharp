@@ -1,4 +1,7 @@
-﻿module NuXmvTests
+﻿namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvAstToFileTests
+
+module NuXmvTests =
+    let x=1
 
 (*
 [Test]
