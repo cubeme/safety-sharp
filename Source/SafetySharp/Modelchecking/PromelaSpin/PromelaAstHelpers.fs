@@ -47,6 +47,12 @@ module PromelaAstHelpers =
     let anyExprToStep (anyExpr:AnyExpr) : Step =
         Step.StmntStep(Stmnt.ExprStmnt(Expr.AnyExpr(anyExpr)),None)
 
+    let anyExprToStmnt (anyExpr:AnyExpr) : Stmnt =
+        Stmnt.ExprStmnt (Expr.AnyExpr anyExpr)
+
+    let createAssignmentStatement (target:Varref) (expression:AnyExpr) =
+        Assign.AssignExpr(target,expression) |> Stmnt.AssignStmnt
+
     let activeProctypeWithNameAndSequence name sequence =
         Proctype.Proctype(Option.Some(Active.Active(None)),name,None,None,None,sequence)
 

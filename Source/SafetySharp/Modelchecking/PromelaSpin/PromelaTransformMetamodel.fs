@@ -378,7 +378,11 @@ type MetamodelToPromela (model : MMModelObject) =
                     let fieldInfo = resolveFieldAccessInsideAFormula componentReference.Value field
                     let varref = this.transformFieldInfoToVarref fieldInfo
                     PrExpression.Varref varref
-    (*
+                    
+    member this.transformSimpleExpression (expression:MMExpression) : PrExpression =
+        this.transformExpressionInsideAFormula (expression)
+        
+    (* TODO: delete
     member this.transformExpressionInsideAComponent (comp:MMComponentObject) (expression:MMExpression) : PrExpression =
         match expression with
             | MMExpression.BooleanLiteral (value:bool) ->
@@ -430,40 +434,19 @@ type MetamodelToPromela (model : MMModelObject) =
     member this.transformSimpleStatement (statement:SimpleStatement) : PrStatement =
         match statement with
             | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
-                let transformOption (guard,sequence) : (SimpleExpression * (SimpleStatement list) ) =
+                let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) =
                     let transformedGuard = this.transformExpressionInsideASimpleStatement guard
+                    let transformedGuardStmnt = anyExprToStmnt transformedGuard
                     let transformedSequence = sequence |> List.map this.transformSimpleStatement
-                    let promelaSequence = statementsToSequence [transformedGuard;transformedSequence]
-                    ""
-                ""
-            | SimpleStatement.AssignmentStatement (target:FieldInfo, ContextOfExpression:Context, Expression:MMExpression) -> //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
-                ""
-            (*| MMStatement.EmptyStatement ->
-                skipStatement
-            | MMStatement.BlockStatement (statements : MMStatement list) ->
-                statements |> List.map this.transformStatement
-                           |> coverInSimpleBlockStatement
-            | MMStatement.ReturnStatement (expression : MMExpression option) ->
-                failwith "NotImplementedYet"
-                //TODO: transformStatement needs additional new optional Argument: the value, to which
-                //      the return gets assigned to. Either a real existing value or a temporary variable
-                //      which should also be assigned to. This temporary variable needs be be declared, too.
-                //      Statement gets rewritten to an MMStatement.AssignmentStatement
-                //      and the rest of the sequence is ignored.
-                //Better solution: There is function, which brings all statements in the correct order.
-                //      (for the partition-update and every partition-binding there is exactly one flatten
-                //      order for the execution of the statements). In this function, every ReturnStatement
-                //      needs to be replaced. Thus this case should never be reached
-            | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
-                failwith "NotImplementedYet"
-                (*let transformGuardedStmnt ((guard,stmnt):MMExpression * MMStatement) =
-                    let transformedGuard = this.transformExpressionInsideAComponent guard
-                    let transformedStmnt = this.transformStatement stmnt
-                    PrSequence.Sequence([anyExprToStep transformedGuard;stmntToStep transformedStmnt])
-                guardedStmnts |> List.map transformGuardedStmnt
-                              |> (fun sequences -> PrStatement.IfStmnt(PrOptions.Options(sequences)))*)
-            | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
-                failwith "NotImplementedYet"*)
+                    let promelaSequence = statementsToSequence (transformedGuardStmnt::transformedSequence)
+                    promelaSequence
+                optionsOfGuardedCommand |> List.map transformOption
+                                        |> PrOptions.Options
+                                        |> PrStatement.IfStmnt
+            | SimpleStatement.AssignmentStatement (target:FieldInfo, expression:SimpleExpression) -> //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
+                let transformedTarget = this.transformFieldInfoToVarref target
+                let transformedExpression = this.transformSimpleExpression expression
+                createAssignmentStatement transformedTarget transformedExpression
 
     member this.transformFormula (formula:MMFormula) : PrFormula =
         //TODO: check if LTL
