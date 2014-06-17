@@ -68,7 +68,9 @@ type internal ExpressionSideEffectAnalyzerVisitor (emitDiagnostic : DiagnosticCa
         | SyntaxKind.DivideExpression
         | SyntaxKind.ModuloExpression
         | SyntaxKind.LogicalAndExpression
+        | SyntaxKind.BitwiseAndExpression
         | SyntaxKind.LogicalOrExpression
+        | SyntaxKind.BitwiseOrExpression
         | SyntaxKind.EqualsExpression
         | SyntaxKind.NotEqualsExpression
         | SyntaxKind.LessThanExpression

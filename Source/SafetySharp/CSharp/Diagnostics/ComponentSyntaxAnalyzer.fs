@@ -88,7 +88,9 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallbac
         | SyntaxKind.DivideExpression
         | SyntaxKind.ModuloExpression
         | SyntaxKind.LogicalAndExpression
+        | SyntaxKind.BitwiseAndExpression
         | SyntaxKind.LogicalOrExpression
+        | SyntaxKind.BitwiseOrExpression
         | SyntaxKind.EqualsExpression
         | SyntaxKind.NotEqualsExpression
         | SyntaxKind.LessThanExpression

@@ -49,13 +49,10 @@ module Compiler =
     let ModelingAssemblyFileName = "SafetySharp.Modeling.dll"
 
     /// The diagnostic analyzers that are used to diagnose the C# code before any normalizations.
-    let (diagnosticAnalyzers : IDiagnosticAnalyzer list) = [
-        ComponentSyntaxAnalyzer ()
-        FormulaSyntaxAnalyzer ()
-        EnumUnderlyingTypeAnalyzer ()
-        EnumMemberAnalyzer ()
-        ExpressionSideEffectAnalyzer () // TODO: Remove once expressions with side effects are supported
-    ]
+    let diagnosticAnalyzers = 
+        typeof<CSharpAnalyzer>.Assembly.GetTypes()
+        |> Seq.where (fun typeInfo -> typeInfo.IsClass && not typeInfo.IsAbstract && typeof<CSharpAnalyzer>.IsAssignableFrom typeInfo)
+        |> Seq.map (fun typeInfo -> (Activator.CreateInstance typeInfo) :?> IDiagnosticAnalyzer)
 
     /// Logs <paramref name="diagnostic" /> depending on its severity.
     let private logDiagnostic (diagnostic : Diagnostic) =
@@ -121,11 +118,11 @@ module Compiler =
         else
             None
 
-    /// Runs the given diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
+    /// Runs the SafetySharp diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
     /// <c>false</c> when at least one error diagnostic has been reported.
-    let private diagnose (compilation : Compilation) analyzers =
+    let private diagnose (compilation : Compilation) =
         if compilation.GetDiagnostics () |> logDiagnostics then
-            let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, analyzers, CancellationToken ()) |> Array.ofSeq
+            let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, diagnosticAnalyzers, CancellationToken ()) |> Array.ofSeq
             diagnostics |> logDiagnostics
         else
             false
@@ -210,7 +207,7 @@ module Compiler =
 
             let compilation = project.GetCompilationAsync().Result
 
-            if not <| diagnose compilation diagnosticAnalyzers then
+            if not <| diagnose compilation then
                 -1
             else
                 match compilation |> normalizeBeforeSwap |> swapSafetySharpAssembly projectFile with

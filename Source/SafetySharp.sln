@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Compiler", "Compiler\Compiler.fsproj", "{D3C346AC-884E-43E5-8FC0-A7868BD5421B}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modeling", "Modeling\Modeling.csproj", "{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Compiler", "Compiler\Compiler.fsproj", "{D3C346AC-884E-43E5-8FC0-A7868BD5421B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
