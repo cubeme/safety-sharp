@@ -22,24 +22,23 @@
 
 namespace SafetySharp.Tests.Modelchecking.Promela.PromelaAstToFileTests
 
-module PromelaTests =
-    let x=1
+open NUnit.Framework
+open Swensen.Unquote
 
-(*
-TODO: port
-    [TestFixture]
-    public class EnumTests
-    {
-        [Test]
-        public void SpinFound()
-        {
-            Spin.ExecuteSpin("-V").Should().Be(Spin.SpinResult.Success);
-        }
+open SafetySharp.Modelchecking.PromelaSpin
+open PromelaAstHelpers
 
-        [Test]
-        public void WriteEnumModelAndCheckParseability()
-        {
-            var filename = "Modelchecking\\Promela\\test1.pml";
+[<TestFixture>]
+module EnumTests =
+
+    [<Test>]
+    let ``spin found`` () =
+        //Spin.ExecuteSpin("-V").Should().Be(Spin.SpinResult.Success);
+        ()
+
+    [<Test>]
+    let ``write enum model and check parseability`` () =
+        (*var filename = "Modelchecking\\Promela\\test1.pml";
 
             var expr_false = new BooleanLiteral(false);
             var expr_true = new BooleanLiteral(false);
@@ -57,55 +56,48 @@ TODO: port
 
             fileWriter.CodeWriter.WriteToFile(filename);
 
-            Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);
-        }
-    }
+            Spin.ExecuteSpin("-a " + filename).Should().Be(Spin.SpinResult.Success);*)
+        ()
 
-    [TestFixture]
-    public class SeparatorTests
-    {
-        // Here we test, if (I) the correct number of separators
-        // is written to a .pml-File and (II) the written file is parseable
-        // http://spinroot.com/spin/Man/separators.html
-        // http://spinroot.com/spin/Man/grammar.html
+[<TestFixture>]
+module SeparatorTests =    
+    // Here we test, if (I) the correct number of separators
+    // is written to a .pml-File and (II) the written file is parseable
+    // http://spinroot.com/spin/Man/separators.html
+    // http://spinroot.com/spin/Man/grammar.html
+    
+    let astToFile = ExportPromelaAstToFile()
+    let indent = 0
 
-        private readonly Statement _simpleStatement1 = new ExpressionStatement(PromelaHelpers.ConstTrueExpression());
-        private readonly Statement _simpleStatement2 = new SkipStatement();
-
-        [Test]
-        public void GuardedCommandClauseHasAnArrow()
-        {
-            var guardedCommandElseClause = new GuardedCommandElseClause(_simpleStatement1);
-
-            var fileWriter = new PromelaModelWriter(true);
-            fileWriter.Visit(guardedCommandElseClause);
-            var output = fileWriter.CodeWriter.ToString().Trim();
-
-            var arrowInTheMiddle = (output.IndexOf("->", System.StringComparison.Ordinal) > 0) && (output.IndexOf("->", System.StringComparison.Ordinal) < output.Length);
-
-            arrowInTheMiddle.Should().BeTrue();
-        }
-
-        [Test]
-        public void SemicolonsAreUsedCorrectlyInAGuardedCommandClause()
-        {
-            var guardedCommandElseClause = new GuardedCommandElseClause(_simpleStatement1);
-
-            var fileWriter = new PromelaModelWriter(true);
-            fileWriter.Visit(guardedCommandElseClause);
-            var output = fileWriter.CodeWriter.ToString().Trim();
-
-            var noSemicolonAtTheEnd = output.LastIndexOf(';') != output.Length;
-            var hasSemicolon = output.LastIndexOf(';') != -1;
-
-            noSemicolonAtTheEnd.Should().BeTrue();
-            hasSemicolon.Should().BeFalse();
-        }
-
-        [Test]
-        public void SemicolonsAreUsedCorrectlyInASelectionAndASimpleStatementInASimpleBlock()
-        {
-            var elseClause = new GuardedCommandElseClause(_simpleStatement1);
+    let simpleStatement1 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.True)))
+    let simpleStatement2 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
+    let elseStatement = Stmnt.ElseStmnt
+    
+    let option1Sequence = statementsToSequence [simpleStatement1;simpleStatement2]
+    let option2Sequence = statementsToSequence [elseStatement;simpleStatement2]
+    
+    let simpleGuardedCommand1 = Stmnt.IfStmnt(Options.Options([option1Sequence]))
+    let simpleGuardedCommand2 = Stmnt.IfStmnt(Options.Options([option1Sequence;option2Sequence]))
+    
+    [<Test>]
+    let ``simple guarded command clause has _one_ separator in the middle`` () =
+        let output = astToFile.ExportStmnt indent simpleGuardedCommand1
+        let hasSemicolonInTheMiddle = (output.IndexOf(";", System.StringComparison.Ordinal) > 0) && (output.IndexOf(";", System.StringComparison.Ordinal) < output.Length)
+        let noSemicolonAtTheEnd = output.LastIndexOf(';') <> output.Length
+        let onlyOneSemicolon = output.IndexOf(";", System.StringComparison.Ordinal) = output.LastIndexOf(";", System.StringComparison.Ordinal)
+        hasSemicolonInTheMiddle =? true
+        noSemicolonAtTheEnd =? true
+        onlyOneSemicolon =? true
+       
+    (*
+    To port
+    [<Test>]
+    let ``SemicolonsAreUsedCorrectlyInASelectionAndASimpleStatementInASimpleBlock`` () =
+        //var guardedCommandElseClause = new GuardedCommandElseClause(_simpleStatement1);
+        //var noSemicolonAtTheEnd = output.LastIndexOf(';') != output.Length;
+        //var hasSemicolon = output.LastIndexOf(';') != -1;
+        //noSemicolonAtTheEnd.Should().BeTrue();
+        //hasSemicolon.Should().BeFalse();var elseClause = new GuardedCommandElseClause(_simpleStatement1);
             var selection = new GuardedCommandSelectionStatement(ImmutableArray<GuardedCommandClause>.Empty.Add(elseClause));
             var sequence = ImmutableArray<Statement>.Empty.Add(selection).Add(_simpleStatement2);
             var block = new SimpleBlockStatement(sequence);
@@ -125,12 +117,11 @@ TODO: port
             onlyOneUseOfSemicolon.Should().BeTrue();
             noSemicolonBeforeBracketAtTheEnd.Should().BeTrue();
             semiColonInTheMiddle.Should().BeTrue();
-        }
+        ()
 
-        [Test]
-        public void SemicolonsAreUsedCorrectlyInOneSimpleStatementsInAProctype()
-        {
-            var simpleSequence = ImmutableArray<Statement>.Empty.Add(_simpleStatement1);
+    [<Test>]
+    let ``SemicolonsAreUsedCorrectlyInOneSimpleStatementsInAProctype`` () =
+        var simpleSequence = ImmutableArray<Statement>.Empty.Add(_simpleStatement1);
             var proctype = new Proctype(true, "System", simpleSequence);
 
             var fileWriter = new PromelaModelWriter(true);
@@ -141,11 +132,10 @@ TODO: port
 
             noSemicolonAtTheEnd.Should().BeTrue();
             hasSemicolon.Should().BeFalse();
-        }
+        ()
 
-        [Test]
-        public void SemicolonsAreUsedCorrectlyInTwoSimpleStatementsInAProctype()
-        {
+    [<Test>]
+    let ``SemicolonsAreUsedCorrectlyInTwoSimpleStatementsInAProctype`` () =
             var simpleSequence = ImmutableArray<Statement>.Empty.Add(_simpleStatement1).Add(_simpleStatement2);
             var proctype = new Proctype(true, "System", simpleSequence);
 
@@ -158,11 +148,11 @@ TODO: port
             noSemicolonAtTheEnd.Should().BeTrue();
             onlyOneUseOfSemicolon.Should().BeTrue();
             semiColonInTheMiddle.Should().BeTrue();
-        }
+        ()
 
-        [Test]
-        public void SemicolonsAreUsedCorrectlyInTwoSimpleStatementsInASimpleBlock()
-        {
+    [<Test>]
+    let ``SemicolonsAreUsedCorrectlyInTwoSimpleStatementsInASimpleBlock`` () =
+        
             var simpleSequence = ImmutableArray<Statement>.Empty.Add(_simpleStatement1).Add(_simpleStatement2);
             var block = new SimpleBlockStatement(simpleSequence);
 
@@ -181,8 +171,5 @@ TODO: port
             onlyOneUseOfSemicolon.Should().BeTrue();
             noSemicolonBeforeBracketAtTheEnd.Should().BeTrue();
             semiColonInTheMiddle.Should().BeTrue();
-        }
-    }
-}
+        ()*)
 
-*)
