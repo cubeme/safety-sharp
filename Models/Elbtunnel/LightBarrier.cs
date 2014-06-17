@@ -25,6 +25,8 @@ namespace Elbtunnel
 {
 	// Blub
 	using System;
+	using System.Diagnostics.Eventing.Reader;
+	using System.Threading.Tasks;
 	using SafetySharp.Modeling;
 
 	public class LightBarrier : Component
@@ -36,6 +38,7 @@ namespace Elbtunnel
 		{
 			return i;
 		}
+
 	}
 
 	/// <summary>
@@ -75,10 +78,19 @@ namespace Elbtunnel
 		protected override void Update()
 		{
 			_value = Choose.Boolean();
+			if (_value)
+				_value = true;
+			else if (!_value)
+				_value = false;
+			else
+			{
+				_value = true || false;
+				_value = !_value;
+			}
 		}
 	}
 
-	internal enum Test
+	internal enum Test 
 	{
 	}
 

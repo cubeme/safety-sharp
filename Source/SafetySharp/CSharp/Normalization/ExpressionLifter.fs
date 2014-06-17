@@ -34,7 +34,7 @@ type ExpressionLifter () =
     inherit CSharpNormalizer ()
 
     override this.VisitArgument node =
-        let requiresRewrite = node.ParameterHasAttribute<LiftExpressionAttribute> this.semanticModel
+        let requiresRewrite = node.HasAttribute<LiftExpressionAttribute> this.semanticModel
         let node = base.VisitArgument node :?> ArgumentSyntax
 
         if not requiresRewrite then

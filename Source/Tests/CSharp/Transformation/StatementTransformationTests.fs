@@ -97,12 +97,30 @@ module ``Transform method`` =
         transformWithReturnType "return false" "bool" =? (BooleanLiteral false |> Some |> ReturnStatement)
 
     [<Test>]
-    let ``guarded commands`` () =
+    let ``single if-then-else statement`` () =
         let ifClause = (BooleanLiteral true, EmptyStatement)
         let elseClause = (UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), ReturnStatement(None))
 
         transform "if (true) " =? GuardedCommandStatement [ ifClause ]
         transform "if (true) ; else return" =? GuardedCommandStatement [ ifClause; elseClause ]
+
+    [<Test>]
+    let ``nested if-then-else statements`` () =
+        let actual = transform "if (boolField) intField = 1; else if (intField > 2) decimalField = 3.14m; else { boolField = false; intField = 2; }"
+        let ifCondition = FieldAccessExpression (booleanFieldSymbol, None)
+        let ifStatement = AssignmentStatement (FieldAccessExpression (integerFieldSymbol, None), IntegerLiteral 1)
+        let ifClause = (ifCondition, ifStatement)
+        let elseIfCondition = BinaryExpression (FieldAccessExpression (integerFieldSymbol, None), BinaryOperator.GreaterThan, IntegerLiteral 2)
+        let elseIfStatement = AssignmentStatement (FieldAccessExpression (decimalFieldSymbol, None), DecimalLiteral 3.14m)
+        let elseIfClause = (elseIfCondition, elseIfStatement)
+        let elseStatement1 = AssignmentStatement (FieldAccessExpression (booleanFieldSymbol, None), BooleanLiteral false)
+        let elseStatement2 = AssignmentStatement (FieldAccessExpression (integerFieldSymbol, None), IntegerLiteral 2)
+        let elseStatements = BlockStatement [elseStatement1; elseStatement2]
+        let elseClause = (UnaryExpression (elseIfCondition, UnaryOperator.LogicalNot), elseStatements)
+        let nestedGuardedCommand = GuardedCommandStatement [elseIfClause; elseClause]
+        let expected = GuardedCommandStatement [ifClause; (UnaryExpression (ifCondition, UnaryOperator.LogicalNot), nestedGuardedCommand)]
+
+        actual =? expected
 
     [<Test>]
     let ``choose Boolean value`` () =

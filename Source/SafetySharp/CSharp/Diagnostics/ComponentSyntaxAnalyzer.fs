@@ -54,7 +54,6 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     override this.VisitExternAliasDirective node    = this.VisitDescendantNodes node
     override this.VisitFieldDeclaration node        = this.VisitDescendantNodes node
     override this.VisitBaseList node                = this.VisitDescendantNodes node
-    override this.VisitMethodDeclaration node       = this.VisitDescendantNodes node
     override this.VisitVariableDeclaration node     = this.VisitDescendantNodes node
     override this.VisitVariableDeclarator node      = this.VisitDescendantNodes node
     override this.VisitPredefinedType node          = this.VisitDescendantNodes node
@@ -63,14 +62,52 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic) =
     override this.VisitReturnStatement node         = this.VisitDescendantNodes node
     override this.VisitExpressionStatement node     = this.VisitDescendantNodes node
     override this.VisitInvocationExpression node    = this.VisitDescendantNodes node
-    override this.VisitBinaryExpression node        = this.VisitDescendantNodes node
-    override this.VisitPrefixUnaryExpression node   = this.VisitDescendantNodes node
-    override this.VisitPostfixUnaryExpression node  = this.VisitDescendantNodes node
     override this.VisitArgumentList node            = this.VisitDescendantNodes node
     override this.VisitArgument node                = this.VisitDescendantNodes node
     override this.VisitLiteralExpression node       = this.VisitDescendantNodes node
     override this.VisitEqualsValueClause node       = this.VisitDescendantNodes node
     override this.VisitMemberAccessExpression node  = this.VisitDescendantNodes node
+    override this.VisitParenthesizedExpression node = this.VisitDescendantNodes node
+    override this.VisitIfStatement node             = this.VisitDescendantNodes node
+    override this.VisitElseClause node              = this.VisitDescendantNodes node
+
+    override this.VisitMethodDeclaration node =
+        // Async methods are not supported
+        if node.Modifiers.Any SyntaxKind.AsyncKeyword then
+            emitDiagnostic node "async method"
+        else
+            this.VisitDescendantNodes node
+
+    // TODO: Allow more operators here and normalize later
+    override this.VisitBinaryExpression node = 
+        match node.CSharpKind () with
+        | SyntaxKind.SimpleAssignmentExpression
+        | SyntaxKind.AddExpression 
+        | SyntaxKind.SubtractExpression
+        | SyntaxKind.MultiplyExpression
+        | SyntaxKind.DivideExpression
+        | SyntaxKind.ModuloExpression
+        | SyntaxKind.LogicalAndExpression
+        | SyntaxKind.LogicalOrExpression
+        | SyntaxKind.EqualsExpression
+        | SyntaxKind.NotEqualsExpression
+        | SyntaxKind.LessThanExpression
+        | SyntaxKind.LessThanOrEqualExpression
+        | SyntaxKind.GreaterThanExpression
+        | SyntaxKind.GreaterThanOrEqualExpression -> this.VisitDescendantNodes node
+        | _ -> node.CSharpKind().ToDescription () |> emitDiagnostic node
+
+    // TODO: Allow more operators here and normalize later
+    override this.VisitPrefixUnaryExpression node = 
+        match node.CSharpKind () with
+        | SyntaxKind.UnaryMinusExpression
+        | SyntaxKind.UnaryPlusExpression
+        | SyntaxKind.LogicalNotExpression -> this.VisitDescendantNodes node
+        | _ -> this.DefaultVisit node
+
+    // TODO: Allow more operators here and normalize later
+    override this.VisitPostfixUnaryExpression node =
+        this.DefaultVisit node
 
 /// Ensures that no enumeration members explicitly declare a constant value.
 [<DiagnosticAnalyzer>]

@@ -71,14 +71,14 @@ module ArgumentExtentionsTestHelper =
 [<TestFixture>]
 module ``ParameterHasAttribute method`` =
     let parameterHasAttribute<'T when 'T :> Attribute> invocationIndex argumentIndex =
-        invocations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].ParameterHasAttribute<'T> semanticModel
+        invocations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].HasAttribute<'T> semanticModel
 
     let constructorParameterHasAttribute<'T when 'T :> Attribute> invocationIndex argumentIndex =
-        creations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].ParameterHasAttribute<'T> semanticModel
+        creations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].HasAttribute<'T> semanticModel
 
     [<Test>]
     let ``throws when semantic model is null`` () =
-        raisesArgumentNullException "semanticModel" <@ invocations.[0].ArgumentList.Arguments.[0].ParameterHasAttribute<LiftExpressionAttribute> null @>
+        raisesArgumentNullException "semanticModel" <@ invocations.[0].ArgumentList.Arguments.[0].HasAttribute<LiftExpressionAttribute> null @>
 
     [<Test>]
     let ``returns false when no attribute is applied`` () =

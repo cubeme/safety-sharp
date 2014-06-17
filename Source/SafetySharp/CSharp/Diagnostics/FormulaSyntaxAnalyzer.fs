@@ -65,14 +65,14 @@ type internal FormulaSyntaxAnalyzerVisitor (emitDiagnostic) =
         | SyntaxKind.LessThanOrEqualExpression
         | SyntaxKind.GreaterThanExpression
         | SyntaxKind.GreaterThanOrEqualExpression -> this.VisitDescendantNodes node
-        | _ -> node.CSharpKind().ToDescription () |> emitDiagnostic node
+        | _ -> this.DefaultVisit node
 
     override this.VisitPrefixUnaryExpression node = 
         match node.CSharpKind () with
         | SyntaxKind.UnaryMinusExpression
         | SyntaxKind.UnaryPlusExpression
         | SyntaxKind.LogicalNotExpression -> this.VisitDescendantNodes node
-        | _ -> node.CSharpKind().ToDescription () |> emitDiagnostic node
+        | _ -> this.DefaultVisit node
 
 /// Ensures that no enumeration members explicitly declare a constant value.
 [<DiagnosticAnalyzer>]
@@ -82,24 +82,17 @@ type FormulaSyntaxAnalyzer () as this =
 
     do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInFormula
         "A formula uses an unsupported C# syntax element."
-        "State formula uses unsupported C# feature: '{0}'."
+        "State formula uses unsupported C# feature: {0}"
 
     override this.Analyze semanticModel addDiagnostic cancellationToken =
         let emitDiagnostic (node : SyntaxNode) (description : string) = 
             addDiagnostic.Invoke (node, description)
 
         let formulaVisitor = FormulaSyntaxAnalyzerVisitor emitDiagnostic
-        let expressionType = typeof<Expression<obj>>.GetGenericTypeDefinition ()
-        let funcType = typeof<Func<obj>>.GetGenericTypeDefinition ()
-        let booleanSymbol = semanticModel.GetTypeSymbol<bool> ()
-        let expressionSymbol = semanticModel.GetTypeSymbol expressionType
-        let funcSymbol = semanticModel.GetTypeSymbol funcType
-        let funcSymbol = funcSymbol.Construct booleanSymbol
-        let expressionSymbol = expressionSymbol.Construct funcSymbol
 
         semanticModel.SyntaxTree.Descendants<InvocationExpressionSyntax>()
         |> Seq.where (fun invocation -> invocation.IsFormulaFunction semanticModel)
         |> Seq.collect (fun invocation -> invocation.ArgumentList.Arguments)
-        |> Seq.where (fun argument -> argument.IsOfType (semanticModel, booleanSymbol) || argument.IsOfType (semanticModel, expressionSymbol))
+        |> Seq.where (fun argument -> argument.IsBooleanExpressionArgument semanticModel)
         |> Seq.map (fun argument -> argument.Expression)
         |> Seq.iter formulaVisitor.Visit

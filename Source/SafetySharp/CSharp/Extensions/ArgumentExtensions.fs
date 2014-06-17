@@ -24,10 +24,12 @@ namespace SafetySharp.CSharp.Extensions
 
 open System
 open System.Linq
+open System.Linq.Expressions
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
+open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="ArgumentSyntax" /> instances.
 [<AutoOpen>]
@@ -44,6 +46,15 @@ module ArgumentExtensions =
             | :? IMethodSymbol as methodSymbol -> methodSymbol
             | _ -> invalidOp "Unable to determine symbol of method call '%A'." expression
 
+        /// Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
+        /// method call has the attribute of type <typeparamref name="T" /> applied.
+        member this.HasAttribute<'T when 'T :> Attribute> (semanticModel : SemanticModel) =
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+            let attributeSymbol = semanticModel.GetTypeSymbol<'T> ()
+            this.GetParameterSymbol(semanticModel).GetAttributes()
+            |> Seq.exists (fun attribute -> attribute.AttributeClass.Equals attributeSymbol)
+
         /// Gets a value indicating whether the argument is of the given type.
         member this.IsOfType (semanticModel : SemanticModel, argumentType : ITypeSymbol) =
             nullArg this "this"
@@ -57,14 +68,20 @@ module ArgumentExtensions =
             nullArg semanticModel "semanticModel"
             this.IsOfType (semanticModel, semanticModel.GetTypeSymbol<'T> ())
 
-        /// Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
-        /// method call has the attribute of type <typeparamref name="T" /> applied.
-        member this.ParameterHasAttribute<'T when 'T :> Attribute> (semanticModel : SemanticModel) =
+        /// Gets a value indicating whether the argument is a Boolean expression argument, i.e., is of type
+        /// Expression<Func<bool>> or of type Boolean with the [LiftExpression] attribute.
+        member this.IsBooleanExpressionArgument (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-            let attributeSymbol = semanticModel.GetTypeSymbol<'T> ()
-            this.GetParameterSymbol(semanticModel).GetAttributes()
-            |> Seq.exists (fun attribute -> attribute.AttributeClass.Equals attributeSymbol)
+            let expressionType = typeof<Expression<obj>>.GetGenericTypeDefinition ()
+            let funcType = typeof<Func<obj>>.GetGenericTypeDefinition ()
+            let booleanSymbol = semanticModel.GetTypeSymbol<bool> ()
+            let expressionSymbol = semanticModel.GetTypeSymbol expressionType
+            let funcSymbol = semanticModel.GetTypeSymbol funcType
+            let funcSymbol = funcSymbol.Construct booleanSymbol
+            let expressionSymbol = expressionSymbol.Construct funcSymbol
+            let isBoolean = this.IsOfType (semanticModel, booleanSymbol) && this.HasAttribute<LiftExpressionAttribute> semanticModel
+            isBoolean || this.IsOfType (semanticModel, expressionSymbol)
 
         /// Gets the <see cref="InvocationExpressionSyntax" /> or the <see cref="ObjectCreationExpressionSyntax" /> 
         /// that contains the argument.
