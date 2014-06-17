@@ -19,9 +19,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+namespace SafetySharp.Modelchecking
 
-namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvExecuteTests
-
-module NuXmvExecuteTests =
-    let x=1
-
+module FileWriter =
+    let writeToFile (filename:string) (text:string) =
+        if System.IO.File.Exists filename then
+            System.IO.File.Delete filename
+        use fs = System.IO.File.Create filename
+        let asciiencoding = new System.Text.ASCIIEncoding ()
+        let recodedText = asciiencoding.GetBytes text;
+        fs.Write(recodedText, 0, recodedText.Length)
+        fs.Flush ()
+        fs.Close ()

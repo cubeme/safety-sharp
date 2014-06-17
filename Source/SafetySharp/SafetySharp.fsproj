@@ -117,6 +117,7 @@
     <Compile Include="Verification\SpinModelChecker.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <None Include="packages.config" />
+    <Compile Include="Modelchecking\Common\FileWriter.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
