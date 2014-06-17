@@ -30,10 +30,11 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
+open SafetySharp.Modeling
 open SafetySharp.CSharp.Extensions
 
 /// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
-type internal ExpressionSideEffectAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
+type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback) =
     inherit CSharpSyntaxWalker ()
 
     /// Reports the node as a use of an unsupported C# feature.
@@ -52,13 +53,24 @@ type internal ExpressionSideEffectAnalyzerVisitor (emitDiagnostic : DiagnosticCa
     // For now, allow method invocations only when the result is immediately assigned to a variable 
     // as well as invocations of void returning methods.
     override this.VisitInvocationExpression node =
-        match node.Parent with
-        | :? BinaryExpressionSyntax as binaryExpression 
-            when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
-                 (binaryExpression.Parent :? ExpressionStatementSyntax) ->
-            ()
-        | :? ExpressionStatementSyntax -> ()
-        | _ -> this.DefaultVisit node
+        let symbolInfo = semanticModel.GetSymbolInfo node
+        match symbolInfo.Symbol with
+        | :? IMethodSymbol as methodSymbol ->
+            // Choose methods are always ok
+            if methodSymbol.ContainingType = semanticModel.GetTypeSymbol<Choose> () then
+                ()
+            else
+                match node.Parent with
+                // A single invocation on the right hand side of an assignment is ok
+                | :? BinaryExpressionSyntax as binaryExpression 
+                    when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
+                         (binaryExpression.Parent :? ExpressionStatementSyntax) ->
+                    ()
+                // As are invocations of void returning methods
+                | :? ExpressionStatementSyntax -> ()
+                // All other invocations are not supported at the moment
+                | _ -> this.DefaultVisit node
+        | _ -> invalidOp "Unable to determine method symbol for invocation '%A'." node
 
     override this.VisitBinaryExpression node = 
         match node.CSharpKind () with
@@ -98,7 +110,7 @@ type ExpressionSideEffectAnalyzer () as this =
         "For the moment, expressions may not have side effects: Cannot use {0} here as it has (potential) side effects."
 
     override this.Analyze semanticModel addDiagnostic cancellationToken =
-        let formulaVisitor = ExpressionSideEffectAnalyzerVisitor addDiagnostic
+        let formulaVisitor = ExpressionSideEffectAnalyzerVisitor (semanticModel, addDiagnostic)
 
         semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
         |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)

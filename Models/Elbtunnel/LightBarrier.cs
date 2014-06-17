@@ -32,9 +32,10 @@ namespace Elbtunnel
 	{
 		public bool Triggered;
 		private int i = 1;
-
+		
 		public int Do()
 		{
+			i = Choose.Value(23, 4, 23, 55);
 			return i;
 		}
 	}
