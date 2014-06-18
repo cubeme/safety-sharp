@@ -53,5 +53,5 @@ module TestCase1ToPromelaTests =
         let promelaCode = modelTransformer.transformConfiguration
         let promelaWriter = ExportPromelaAstToFile()
         let promelaCodeString = promelaWriter.Export promelaCode
-        FileWriter.writeToFile "Modelchecking/Promela/testcase1.pml" promelaCodeString
+        FileWriter.writeToFile "Modelchecking/Promela" "testcase1.pml" promelaCodeString
         ()

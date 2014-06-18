@@ -25,30 +25,8 @@
 namespace SafetySharp.Modelchecking.PromelaSpin
 
 open PromelaAstHelpers
-
-type MMModelObject = SafetySharp.Metamodel.ModelObject
-type MMPartitionObject = SafetySharp.Metamodel.PartitionObject
-type MMComponentObject = SafetySharp.Metamodel.ComponentObject
-type MMFieldObject = SafetySharp.Metamodel.FieldObject
-type MMConfiguration = SafetySharp.Metamodel.Configuration // <--------- main artifact
-
-type MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
-type MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
-type MMParameterSymbol = SafetySharp.Metamodel.ParameterSymbol
-type MMMethodSymbol = SafetySharp.Metamodel.MethodSymbol
-type MMComponentReferenceSymbol = SafetySharp.Metamodel.ComponentReferenceSymbol
-type MMComponentSymbol = SafetySharp.Metamodel.ComponentSymbol
-type MMPartitionSymbol = SafetySharp.Metamodel.PartitionSymbol
-type MMModelSymbol = SafetySharp.Metamodel.ModelSymbol
-
-type MMExpression = SafetySharp.Metamodel.Expression
-type MMUnaryOperator = SafetySharp.Metamodel.UnaryOperator
-type MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
-type MMStatement = SafetySharp.Metamodel.Statement
-type MMFormula = SafetySharp.Metamodel.Formula
-type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
-type MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
-type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
+open SafetySharp.Modelchecking
+open SafetySharp.Modelchecking.MetamodelToSimplifiedMetamodel
 
 type PrExpression = SafetySharp.Modelchecking.PromelaSpin.AnyExpr
 type PrConst = SafetySharp.Modelchecking.PromelaSpin.Const
@@ -72,227 +50,32 @@ type PrIvar = SafetySharp.Modelchecking.PromelaSpin.Ivar
 type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
 type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
-type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
-
-type Context = {
-    //TODO: Make a map Container->hierarchicalAccess and replace this type
-
-    //partition : MMPartitionObject;
-    container : MMComponentObject;
-    hierarchicalAccess : string list; //last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1(::parentOfSubComponent1)*::rootComponent. Construction is done in "collectFields"
-}
-
-type FieldInfo = {
-    context : Context;
-    field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
-}
-
-type ResolverForFieldInfos = Map<string*string,FieldInfo>
-
-// many steps are a sequence
-type MMStepInfo = {
-    context : Context;
-    statement : MMStatement;
-}
-
-// A SimpleExpression knows the Context of its variables (MMExpression already offers this functionality for Formulas)
-type SimpleExpression = MMExpression 
-// A simpleStatement has only assignments and guarded commands. Also Assignments are defined on fieldinfos
-// TODO: Maybe remove Context and use expression of a formula which knows its MMComponentObject directly
-type SimpleStatement = 
-    | GuardedCommandStatement of (SimpleExpression * (SimpleStatement list) ) list //Guard (which knows its Context) * Statements
-    | AssignmentStatement of Target : FieldInfo * Expression : SimpleExpression //Expression (knows its Context). FieldInfo has its own Context (may result of a return-Statement, when context is different)
-
-
            
-type MetamodelToPromela (configuration:MMConfiguration) =    
+type MetamodelToPromela =
 
-    let model : MMModelObject = configuration.ModelObject
-
-    /////////////////////////////////////////////////////
-    // Metamodel to SimpleExpression/SimpleStatement part
-    /////////////////////////////////////////////////////
-
-
-    let getSubComponentObjects (subcomponentMap : Map<MMComponentReferenceSymbol, MMComponentObject>) : ((string*MMComponentObject) list) =
-        subcomponentMap |> Map.fold (fun acc key value -> (key.Name,value)::acc) []
+    // To transform the metamodel to Promela, we take an intermediate step:
+    //   metamodel -> simplified metamodel -> promela code
     
-    let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
-        fieldMap |> Map.fold (fun acc key value -> value::acc) []
-
-    let reverseComponentObjects : ReverseComponentObjectMap =
-        // string is the unique name of the ComponentObject 
-        // ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>      
-        model.ComponentObjects |> Map.toList
-                               |> List.map (fun (reference,compobject) -> (compobject.Name,reference))
-                               |> Map.ofList
-
-    let ComponentObjectToComponentReference (comp:MMComponentObject) : MMComponentReferenceSymbol =
-        reverseComponentObjects.Item comp.Name
-
-    let rootComponentToName : Map<string,string> =
-        let counter = ref 0
-        model.Partitions |> List.map (fun elem -> elem.RootComponent)
-                         |> List.map (fun elem -> counter:=!counter+1
-                                                  let counterString = (!counter).ToString()
-                                                  (elem.Name,"root"+counterString))
-                         |> Map.ofList
-
-    let fieldInfos : FieldInfo list =
-        // This function works like this: collectFromPartition -> collectFromComponent -> collectFieldInThisComponent
-        // It traverses the model and generates a list of all fields with all necessary information about the field (FieldInfo)
-        let rec collectFromComponent (parentsAndMe:string list) (comp:MMComponentObject) : FieldInfo list =             
-            let collectedInSubcomponents : FieldInfo list =
-                (getSubComponentObjects comp.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (name::parentsAndMe) comp)
-            let collectFieldInThisComponent (fieldobject:MMFieldObject) =
-                {
-                    FieldInfo.context = {
-                                            Context.container = comp;
-                                            Context.hierarchicalAccess = parentsAndMe;
-                                        }
-                    FieldInfo.field = fieldobject;
-                }
-            let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
-            collectedInThisComponent @ collectedInSubcomponents
-        let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
-            let nameOfRoot= rootComponentToName.Item partition.RootComponent.Name
-            collectFromComponent [nameOfRoot] partition.RootComponent
-        model.Partitions |> List.collect collectFromPartition
+    // THIS IS THE MAIN FUNCTION AND ENTRY POINT
+    member this.transformConfiguration (configuration:MMConfiguration) : PrSpec =
+        let varModule = this.generateFieldDeclarations fieldInfos
         
-    let resolverForFieldInfos : ResolverForFieldInfos = 
-        //type ResolverForFormulas = Map<string*string,FieldInfo> first string is the unique componentName, second string is fieldName
-        fieldInfos |> List.map (fun elem -> (elem.context.container.Name, elem.field.FieldSymbol.Name),elem)
-                   |> Map.ofList
-                   
-    let resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : FieldInfo =
-        let componentObject = model.ComponentObjects.Item referenceSymbol
-        let componentObjectName = componentObject.Name
-        let fieldName = field.Name
-        resolverForFieldInfos.Item (componentObjectName,fieldName)
+        let fieldInitialisations = this.generateFieldInitialisations fieldInfos
         
-    let resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : FieldInfo =
-        let componentObjectName = comp.Name
-        let fieldName = field.Name
-        resolverForFieldInfos.Item (componentObjectName,fieldName)
-
-
-    let rec resolveTargetOfAnAssignment (context:Context) (expression:MMExpression) : FieldInfo =
-        // Use resolveFieldInfoInCode only for expression inside components and not in formulas
-        // Example of usage: Used on the left side of assignments
-        match expression with
-            | MMExpression.BooleanLiteral (value:bool) ->
-                failwith "target of field access cannot be a constant value"
-            | MMExpression.IntegerLiteral (value:int) ->
-                failwith "target of field access cannot be a constant value"
-            | MMExpression.DecimalLiteral (value:decimal) ->
-                failwith "target of field access cannot be a constant value"
-            | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
-                failwith "NotImplementedYet" //TODO: Is this even useful? Maybe for array access...
-            | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
-                failwith "NotImplementedYet" //TODO: Is this even useful? Maybe for array access...
-            | MMExpression.FieldAccessExpression (field:MMFieldSymbol, comp:MMComponentReferenceSymbol option) ->
-                if comp.IsSome then
-                    // if comp is set, then this expression is an expression inside a formula
-                    failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
-                else
-                    {
-                        FieldInfo.context=context;
-                        FieldInfo.field = (context.container.Fields.Item field);
-                    }
-        
-    let rec transformMMExpressionInsideAComponentToSimpleExpression (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
-        match expression with
-            | MMExpression.BooleanLiteral (value:bool) -> SimpleExpression.BooleanLiteral(value)
-            | MMExpression.IntegerLiteral (value:int) ->  SimpleExpression.IntegerLiteral(value)
-            | MMExpression.DecimalLiteral (value:decimal) -> failwith "NotImplementedYet"
-            | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
-                let transformedOperand = transformMMExpressionInsideAComponentToSimpleExpression comp operand
-                SimpleExpression.UnaryExpression(transformedOperand,operator)
-            | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
-                let transformedLeft = transformMMExpressionInsideAComponentToSimpleExpression comp leftExpression
-                let transformedRight = transformMMExpressionInsideAComponentToSimpleExpression comp rightExpression
-                SimpleExpression.BinaryExpression(transformedLeft,operator,transformedRight)
-            | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
-                if componentReference.IsNone then
-                    //called inside a component
-                    MMExpression.FieldAccessExpression(field,Some(ComponentObjectToComponentReference comp))
-                else
-                    //called inside a formula or already transformed
-                    failwith "Use transformExpressionInsideAComponent only for expression inside untransformed components and not in formulas"
-
-    let rec transformMMStepInfosToSimpleStatements (methodBodyResolver:MMMethodBodyResolver) (collected:SimpleStatement list) (toTransform:MMStepInfo list) : SimpleStatement list =
-        // Properties of the result:
-        //   - TODO: Return of Statements are rewritten to Assignments of the caller function
-        //   -       Variables may be needed to be introduced (?!?)
-        //   -       parameter: (targetOfAssignmentStack:(Expression option) list)
-        // pattern in this function: take _first_ item of toTransform
-        //                              - either expand it and put the expanded into the _front_ of the list toTransform
-        //                              - or process it and append the result to the _end_ of collected
-        if toTransform.IsEmpty then
-            collected
-        else
-            let firstItem = toTransform.Head
-            let statementToProcess = firstItem.statement
-            let contextOfStatement = firstItem.context            
-            let coverStatementWithContext (statement:MMStatement) =
-                {
-                    MMStepInfo.context=contextOfStatement;
-                    MMStepInfo.statement=statement;
-                }
-            match statementToProcess with
-                | MMStatement.EmptyStatement ->
-                    let newToTransform = toTransform.Tail
-                    transformMMStepInfosToSimpleStatements methodBodyResolver collected newToTransform
-                | MMStatement.BlockStatement (statements : MMStatement list) ->
-                    let expandedBlockStatement = statements |> List.map coverStatementWithContext
-                    let newToTransform = expandedBlockStatement @ toTransform.Tail
-                    transformMMStepInfosToSimpleStatements methodBodyResolver collected newToTransform
-                | MMStatement.ReturnStatement (expression : MMExpression option) ->
-                    failwith "NotImplementedYet"
-                    //TODO: transformStatement needs additional new optional Argument: the value, to which
-                    //      the return gets assigned to. Either a real existing value or a temporary variable
-                    //      which should also be assigned to. This temporary variable needs be be declared, too.
-                    //      Statement gets rewritten to an MMStatement.AssignmentStatement
-                    //      and the rest of the sequence is ignored.
-                    //Better solution: There is function, which brings all statements in the correct order.
-                    //      (for the partition-update and every partition-binding there is exactly one flatten
-                    //      order for the execution of the statements). In this function, every ReturnStatement
-                    //      needs to be replaced. Thus this case should never be reached
-                | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
-                    let transformOption ((guard,stmnt):MMExpression * MMStatement) :(SimpleExpression*(SimpleStatement list))=
-                        let transformedGuard = transformMMExpressionInsideAComponentToSimpleExpression (contextOfStatement.container) guard
-                        let coveredStmnt = coverStatementWithContext stmnt
-                        let transformedStmnts = transformMMStepInfosToSimpleStatements methodBodyResolver [] [coveredStmnt]
-                        (transformedGuard,transformedStmnts)
-                    let newToTransform = toTransform.Tail
-                    let transformedGuardedCommand = guardedStmnts |> List.map transformOption
-                                                                  |> SimpleStatement.GuardedCommandStatement
-                    transformMMStepInfosToSimpleStatements methodBodyResolver (collected @ [transformedGuardedCommand]) newToTransform
-
-                | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
-                    //resolveTargetOfAnAssignment
-                    let transformedTarget = resolveTargetOfAnAssignment contextOfStatement target
-                    let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression (contextOfStatement.container) expression
-                    let transformedAssignment = SimpleStatement.AssignmentStatement (transformedTarget,transformedExpression)
-                    let newToTransform = toTransform.Tail
-                    transformMMStepInfosToSimpleStatements methodBodyResolver (collected @ [transformedAssignment]) newToTransform
+        //updates and bindings: Cover them in an endless loop
+        let partitionStatements =
+            //TODO: Correct semantics with bindings and correct "interleaving" of bindings and partitions
+            configuration.ModelObject.Partitions |> List.collect (this.generatePartitionUpdateCode configuration.MethodBodyResolver)
+        let codeOfMetamodel = partitionStatements
             
-    // build (toTransform:MMStepInfo list) with all updates in the correct order
-    // let collectPartitionUpdateSequence =
-    //      TODO
-    //   - Only updates, no bindings
-    //   - TODO: Updates are proccessed in the correct order
+        let systemSequence : PrSequence = statementsToSequence (fieldInitialisations @ codeOfMetamodel)
+        let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
+        let systemModule = PrModule.ProcTypeModule(systemProctype)
 
-
-
-
-
-
-    
-    //////////////////////////////////////////////////////////////////////
-    // Promela specific part (SimpleExpression/SimpleStatement to Promela)
-    //////////////////////////////////////////////////////////////////////
-
+        {
+            PrSpec.Code = [varModule;systemModule];
+            PrSpec.Formulas = [];
+        }
 
 
     member this.transformFieldInfoToName (fieldInfo : FieldInfo) =
@@ -343,20 +126,9 @@ type MetamodelToPromela (configuration:MMConfiguration) =
                                       |> PrStatement.IfStmnt
         fields |> List.map generateInit
     
+
     member this.generatePartitionUpdateCode (methodBodyResolver:MMMethodBodyResolver) (partition:MMPartitionObject) : PrStatement list=
-        //TODO: sort, updateMethods of Non-Root-Components
-        //partition.RootComponent 
-        let collected = []
-        let toTransform =
-            let nameOfRoot= rootComponentToName.Item partition.RootComponent.Name
-            {
-                MMStepInfo.context= {
-                                        Context.container = partition.RootComponent;
-                                        Context.hierarchicalAccess = [nameOfRoot];
-                                    };
-                MMStepInfo.statement=(methodBodyResolver.Item (partition.RootComponent.ComponentSymbol,partition.RootComponent.ComponentSymbol.UpdateMethod));
-            }
-        let partitionUpdateInSimpleStatements = transformMMStepInfosToSimpleStatements methodBodyResolver collected [toTransform]
+        let partitionUpdateInSimpleStatements = partitionUpdateInSimpleStatements methodBodyResolver partition
         let transformedSimpleStatements = partitionUpdateInSimpleStatements |> List.map this.transformSimpleStatement
         transformedSimpleStatements
 
@@ -364,26 +136,6 @@ type MetamodelToPromela (configuration:MMConfiguration) =
     member this.generatePartitionBindingCode =
         ""
     
-    // THIS IS THE MAIN FUNCTION AND ENTRY POINT
-    member this.transformConfiguration : PrSpec =
-        let varModule = this.generateFieldDeclarations fieldInfos
-        
-        let fieldInitialisations = this.generateFieldInitialisations fieldInfos
-        
-        //updates and bindings: Cover them in an endless loop
-        let partitionStatements =
-            //TODO: Correct semantics with bindings and correct "interleaving" of bindings and partitions
-            configuration.ModelObject.Partitions |> List.collect (this.generatePartitionUpdateCode configuration.MethodBodyResolver)
-        let codeOfMetamodel = partitionStatements
-            
-        let systemSequence : PrSequence = statementsToSequence (fieldInitialisations @ codeOfMetamodel)
-        let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
-        let systemModule = PrModule.ProcTypeModule(systemProctype)
-
-        {
-            PrSpec.Code = [varModule;systemModule];
-            PrSpec.Formulas = [];
-        }
 
 
 
@@ -431,16 +183,13 @@ type MetamodelToPromela (configuration:MMConfiguration) =
                     
     member this.transformSimpleExpression (expression:MMExpression) : PrExpression =
         this.transformExpressionInsideAFormula (expression)
-        
-    member this.transformExpressionInsideASimpleStatement (expression:SimpleExpression) : PrExpression =
-        this.transformExpressionInsideAFormula expression
-    
+            
 
     member this.transformSimpleStatement (statement:SimpleStatement) : PrStatement =
         match statement with
             | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
                 let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) =
-                    let transformedGuard = this.transformExpressionInsideASimpleStatement guard
+                    let transformedGuard = this.transformSimpleExpression guard
                     let transformedGuardStmnt = anyExprToStmnt transformedGuard
                     let transformedSequence = sequence |> List.map this.transformSimpleStatement
                     let promelaSequence = statementsToSequence (transformedGuardStmnt::transformedSequence)

@@ -22,7 +22,9 @@
 namespace SafetySharp.Modelchecking
 
 module FileWriter =
-    let writeToFile (filename:string) (text:string) =
+    let writeToFile (directory:string) (filename:string) (text:string) =    
+        System.IO.Directory.CreateDirectory directory |> ignore
+        let filename = directory+"/"+filename
         if System.IO.File.Exists filename then
             System.IO.File.Delete filename
         use fs = System.IO.File.Create filename
