@@ -70,10 +70,11 @@ type Context = {
     //TODO: Make a map Container->hierarchicalAccess and replace this type
 
     //partition : MMPartitionObject;
-    container : MMComponentObject;
-    hierarchicalAccess : string list; //last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1(::parentOfSubComponent1)*::rootComponent. Construction is done in "collectFields"
+    componentObject : MMComponentObject;
+    hierarchicalAccess : string list;  // hierarchicalAccess also contains the name of container. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1(::parentOfSubComponent1)*::rootComponent. Construction is done in "collectFields"
 }
 
+// TODO: Consider renaming SimpleGlobalField to SimpleField?!? Maybe temporary fields become necessary later on.
 type SimpleGlobalField = {
     context : Context;
     field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
@@ -104,39 +105,10 @@ module MetamodelToSimplifiedMetamodel =
     // Only use in this file
     type ResolverForSimpleGlobalFields = Map<string*string,SimpleGlobalField>
 
-    type CollectedModelInformation (configuration:MMConfiguration) =
-        // this should only calculate and _cache_ information for the transformation to
-        // SimpleStatements/SimpleExpressions and not be used from outside
-        
+    
+    type ContextHelper (configuration:MMConfiguration) =
         // _once_ calculated and cached information for internal use
         let model = configuration.ModelObject
-
-
-        // _once_ calculated and cached information for external use (better write accessor functions for it)
-        
-            
-        // accessor functions
-        let ComponentObjectToComponentReference (comp:MMComponentObject) : MMComponentReferenceSymbol =
-            reverseComponentObjects.Item comp.Name
-
-
-
-
-
-
-        let getSubComponentObjects (subcomponentMap : Map<MMComponentReferenceSymbol, MMComponentObject>) : ((string*MMComponentObject) list) =
-            subcomponentMap |> Map.fold (fun acc key value -> (key.Name,value)::acc) []
-    
-        let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
-            fieldMap |> Map.fold (fun acc key value -> value::acc) []
-
-        let reverseComponentObjects : ReverseComponentObjectMap =
-            // string is the unique name of the ComponentObject 
-            // ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>      
-            model.ComponentObjects |> Map.toList
-                                   |> List.map (fun (reference,compobject) -> (compobject.Name,reference))
-                                   |> Map.ofList
-
 
         let rootComponentToName : Map<string,string> =
             let counter = ref 0
@@ -146,30 +118,83 @@ module MetamodelToSimplifiedMetamodel =
                                                       (elem.Name,"root"+counterString))
                              |> Map.ofList
 
+        // accessor and helper functions (internal use)
+        let nameOfRootComponent (rootComponent:MMComponentObject) : string =
+            rootComponentToName.Item rootComponent.Name
+            
+        // accessor and helper functions (external use)
+        let createContextOfRootComponent (partition:MMPartitionObject) : Context =
+            {
+                Context.componentObject = partition.RootComponent;
+                Context.hierarchicalAccess = [nameOfRootComponent partition.RootComponent];
+            }
+        let createContextForSubomponent (parentContext:Context) (newElementName:string) (comp:MMComponentObject) : Context =
+            {
+                Context.componentObject = comp;
+                Context.hierarchicalAccess = newElementName::parentContext.hierarchicalAccess; //parentsAndMe
+            }
+
+
+        
+    // this is extraced from ModelInformationCache, to keep the code together which belongs together
+    type SimpleGlobalFieldCache (configuration:MMConfiguration) =
+        // this should only calculate and _cache_ information for the transformation to
+        // SimpleStatements/SimpleExpressions and not be used from outside
+        
+        // _once_ calculated and cached information for internal use
+        let model = configuration.ModelObject
+        
+        let reverseComponentObjects : ReverseComponentObjectMap =
+            // string is the unique name of the ComponentObject 
+            // ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>      
+            model.ComponentObjects |> Map.toList
+                                   |> List.map (fun (reference,compobject) -> (compobject.Name,reference))
+                                   |> Map.ofList
+
+
+        // _once_ calculated and cached information for external use (better write accessor functions for it)
+        
+        // accessor and helper functions (internal use)
+        let ComponentObjectToComponentReference (comp:MMComponentObject) : MMComponentReferenceSymbol =
+            reverseComponentObjects.Item comp.Name
+
+
+        // accessor and helper functions (external use)
+        let createSimpleFieldAccessExpression (field:MMFieldSymbol) (comp:MMComponentObject): SimpleExpression =
+            SimpleExpression.FieldAccessExpression(field,Some(ComponentObjectToComponentReference comp))
+
+
+            
+
+        let getSubComponentObjects (subcomponentMap : Map<MMComponentReferenceSymbol, MMComponentObject>) : ((string*MMComponentObject) list) =
+            subcomponentMap |> Map.fold (fun acc key value -> (key.Name,value)::acc) []
+    
+        let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
+            fieldMap |> Map.fold (fun acc key value -> value::acc) []
+
+            
         let simpleGlobalFields : SimpleGlobalField list =
             // This function works like this: collectFromPartition -> collectFromComponent -> collectFieldInThisComponent
             // It traverses the model and generates a list of all fields with all necessary information about the field (SimpleGlobalField)
-            let rec collectFromComponent (parentsAndMe:string list) (comp:MMComponentObject) : SimpleGlobalField list =             
+                       
+            let rec collectFromComponent (myContext:Context) : SimpleGlobalField list =
                 let collectedInSubcomponents : SimpleGlobalField list =
-                    (getSubComponentObjects comp.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (name::parentsAndMe) comp)
+                    (getSubComponentObjects myContext.componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (createContextForSubcomponent myContext name comp) )
                 let collectFieldInThisComponent (fieldobject:MMFieldObject) =
                     {
-                        SimpleGlobalField.context = {
-                                                Context.container = comp;
-                                                Context.hierarchicalAccess = parentsAndMe;
-                                            }
+                        SimpleGlobalField.context = myContext
                         SimpleGlobalField.field = fieldobject;
                     }
-                let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
+                let collectedInThisComponent = (getFieldObjects myContext.componentObject.Fields) |> List.map collectFieldInThisComponent 
                 collectedInThisComponent @ collectedInSubcomponents
             let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
-                let nameOfRoot= rootComponentToName.Item partition.RootComponent.Name
-                collectFromComponent [nameOfRoot] partition.RootComponent
+                let contextOfCurrentPartitionRootComponent = createContextOfRootComponent partition
+                collectFromComponent contextOfCurrentPartitionRootComponent
             model.Partitions |> List.collect collectFromPartition
         
         let resolverForSimpleGlobalFields : ResolverForSimpleGlobalFields = 
             //type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
-            simpleGlobalFields |> List.map (fun elem -> (elem.context.container.Name, elem.field.FieldSymbol.Name),elem)
+            simpleGlobalFields |> List.map (fun elem -> (elem.context.componentObject.Name, elem.field.FieldSymbol.Name),elem)
                        |> Map.ofList
                    
         let resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : SimpleGlobalField =
@@ -214,7 +239,7 @@ module MetamodelToSimplifiedMetamodel =
                 else
                     {
                         SimpleGlobalField.context=context;
-                        SimpleGlobalField.field = (context.container.Fields.Item field);
+                        SimpleGlobalField.field = (context.componentObject.Fields.Item field);
                     }
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
@@ -232,7 +257,7 @@ module MetamodelToSimplifiedMetamodel =
             | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
                 if componentReference.IsNone then
                     //called inside a component
-                    MMExpression.FieldAccessExpression(field,Some(ComponentObjectToComponentReference comp))
+                    createSimpleFieldAccessExpression field comp
                 else
                     //called inside a formula or already transformed
                     failwith "Use transformExpressionInsideAComponent only for expression inside untransformed components and not in formulas"
@@ -277,7 +302,7 @@ module MetamodelToSimplifiedMetamodel =
                     //      needs to be replaced. Thus this case should never be reached
                 | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
                     let transformOption ((guard,stmnt):MMExpression * MMStatement) :(SimpleExpression*(SimpleStatement list))=
-                        let transformedGuard = transformMMExpressionInsideAComponentToSimpleExpression (contextOfStatement.container) guard
+                        let transformedGuard = transformMMExpressionInsideAComponentToSimpleExpression (contextOfStatement.componentObject) guard
                         let coveredStmnt = coverStatementWithContext stmnt
                         let transformedStmnts = transformMMStepInfosToSimpleStatements methodBodyResolver [] [coveredStmnt]
                         (transformedGuard,transformedStmnts)
@@ -289,7 +314,7 @@ module MetamodelToSimplifiedMetamodel =
                 | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
                     //resolveTargetOfAnAssignment
                     let transformedTarget = resolveTargetOfAnAssignment contextOfStatement target
-                    let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression (contextOfStatement.container) expression
+                    let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression (contextOfStatement.componentObject) expression
                     let transformedAssignment = SimpleStatement.AssignmentStatement (transformedTarget,transformedExpression)
                     let newToTransform = toTransform.Tail
                     transformMMStepInfosToSimpleStatements methodBodyResolver (collected @ [transformedAssignment]) newToTransform
@@ -297,19 +322,16 @@ module MetamodelToSimplifiedMetamodel =
     
     // module (the public part for _external_ use)
 
-    //TODO: Move to MetamodelToSimplifiedMetamodel and keep MMStepInfo internal to that file
-    //      Put methodBodyResolver into cached information and use Cached Information here
+    //TODO: Put methodBodyResolver into cached information and use Cached Information here
+    //      This function also needs the SimpleGlobalFieldCache and RootComponentCache
     let partitionUpdateInSimpleStatements (methodBodyResolver:MMMethodBodyResolver) (partition:MMPartitionObject) : SimpleStatement list=
         //TODO: sort, updateMethods of Non-Root-Components
         //partition.RootComponent 
         let collected = []
         let toTransform =
-            let nameOfRoot= rootComponentToName.Item partition.RootComponent.Name
+            let contextOfCurrentPartitionRootComponent = createContextOfRootComponent partition
             {
-                MMStepInfo.context= {
-                                        Context.container = partition.RootComponent;
-                                        Context.hierarchicalAccess = [nameOfRoot];
-                                    };
+                MMStepInfo.context= contextOfCurrentPartitionRootComponent;
                 MMStepInfo.statement=(methodBodyResolver.Item (partition.RootComponent.ComponentSymbol,partition.RootComponent.ComponentSymbol.UpdateMethod));
             }
         let partitionUpdateInSimpleStatements = transformMMStepInfosToSimpleStatements methodBodyResolver collected [toTransform]
