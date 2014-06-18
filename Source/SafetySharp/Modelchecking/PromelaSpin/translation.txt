@@ -1,0 +1,44 @@
+====================================
+		Generic:
+------------------------------------
+
+active proctype System() {	
+	for each field f in FieldsOf(metamodel):#
+		typeof(f) f; //declare
+		guarded command, which sets initial value nondeterministically
+
+	do
+		:: 
+			// for each partition p in partitions
+			{
+				execute updateStatement
+				execute bindings of partition				
+			}			
+	od		
+}
+
+
+====================================
+		Example:
+------------------------------------
+
+active proctype System() {	
+	boolean _value;
+	if
+		:: _value = true;
+		:: _value = false;
+	fi
+	
+	do
+		:: 
+			// for each partition p in partitions
+			{
+				// execute updateStatement
+				if
+					:: true; _value = true;
+					:: true; _value = false;
+				fi
+				// execute bindings of partition
+			}			
+	od		
+}
