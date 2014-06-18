@@ -58,9 +58,9 @@ type MetamodelToPromela =
     
     // THIS IS THE MAIN FUNCTION AND ENTRY POINT
     member this.transformConfiguration (configuration:MMConfiguration) : PrSpec =
-        let varModule = this.generateFieldDeclarations fieldInfos
+        let varModule = this.generateFieldDeclarations simpleGlobalFields
         
-        let fieldInitialisations = this.generateFieldInitialisations fieldInfos
+        let fieldInitialisations = this.generateFieldInitialisations simpleGlobalFields
         
         //updates and bindings: Cover them in an endless loop
         let partitionStatements =
@@ -78,39 +78,39 @@ type MetamodelToPromela =
         }
 
 
-    member this.transformFieldInfoToName (fieldInfo : FieldInfo) =
+    member this.transformSimpleGlobalFieldToName (simpleGlobalField : SimpleGlobalField) =
         //TODO: Besides compName+fieldName is something unique inside the model we cannot. But it is not guaranteed the name is readable or even supported by the model checker 
         // so write a method to find a better name.
         // this is something model checker specific, as different model checkers may have different constraints for identifier
         //let partitionName = "pA" //partition has no name, use A as dummy. TODO: find something better
         let hierarchicalAccessName =
-            fieldInfo.context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+            simpleGlobalField.context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
                                                  |> List.map (fun elem -> "c"+elem) //add c in front of every element
                                                  |> String.concat "_"
-        let fieldName = "_f"+fieldInfo.field.FieldSymbol.Name
+        let fieldName = "_f"+simpleGlobalField.field.FieldSymbol.Name
         sprintf "%s%s" hierarchicalAccessName fieldName
 
-    member this.transformFieldInfoToVarref (fieldInfo : FieldInfo) =
-        let varName = this.transformFieldInfoToName fieldInfo
+    member this.transformSimpleGlobalFieldToVarref (simpleGlobalField : SimpleGlobalField) =
+        let varName = this.transformSimpleGlobalFieldToName simpleGlobalField
         PrVarref.Varref(varName,None,None)
     
-    member this.generateFieldDeclarations (fields : FieldInfo list) : PrModule =
-        let generateDecl (field:FieldInfo) : PrOneDecl =
+    member this.generateFieldDeclarations (fields : SimpleGlobalField list) : PrModule =
+        let generateDecl (field:SimpleGlobalField) : PrOneDecl =
             let _type = match field.field.FieldSymbol.Type with
                             | MMTypeSymbol.Boolean -> PrTypename.Bool
                             | MMTypeSymbol.Integer -> PrTypename.Int
                             | MMTypeSymbol.Decimal -> failwith "NotImplementedYet"
-            let _varName = this.transformFieldInfoToName field
+            let _varName = this.transformSimpleGlobalFieldToName field
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
         fields |> List.map generateDecl
                |> PrDeclLst.DeclLst
                |> PrModule.GlobalVarsAndChans
 
-    member this.generateFieldInitialisations (fields : FieldInfo list) : PrStatement list =
-        let generateInit (field:FieldInfo) : PrStatement =
+    member this.generateFieldInitialisations (fields : SimpleGlobalField list) : PrStatement list =
+        let generateInit (field:SimpleGlobalField) : PrStatement =
             let generateSequence (initialValue : obj) : PrSequence =
-                let assignVarref = this.transformFieldInfoToVarref field
+                let assignVarref = this.transformSimpleGlobalFieldToVarref field
                 let assignExpr =
                     match initialValue with
                         | :? int as value -> PrExpression.Const(PrConst.Number(value))
@@ -177,8 +177,8 @@ type MetamodelToPromela =
                     failwith "Use transformExpressionInsideAFormula only for expression inside untransformed formulas and not in components"
                 else
                     //called inside a formula
-                    let fieldInfo = resolveFieldAccessInsideAFormula componentReference.Value field
-                    let varref = this.transformFieldInfoToVarref fieldInfo
+                    let simpleGlobalField = resolveFieldAccessInsideAFormula componentReference.Value field
+                    let varref = this.transformSimpleGlobalFieldToVarref simpleGlobalField
                     PrExpression.Varref varref
                     
     member this.transformSimpleExpression (expression:MMExpression) : PrExpression =
@@ -197,8 +197,8 @@ type MetamodelToPromela =
                 optionsOfGuardedCommand |> List.map transformOption
                                         |> PrOptions.Options
                                         |> PrStatement.IfStmnt
-            | SimpleStatement.AssignmentStatement (target:FieldInfo, expression:SimpleExpression) -> //Context is only the Context of the Expression. FieldInfo has its own Context (may result of a return-Statement, when context is different)
-                let transformedTarget = this.transformFieldInfoToVarref target
+            | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
+                let transformedTarget = this.transformSimpleGlobalFieldToVarref target
                 let transformedExpression = this.transformSimpleExpression expression
                 createAssignmentStatement transformedTarget transformedExpression
 

@@ -34,9 +34,9 @@ namespace SafetySharp.Modelchecking
 //      - One Sequence of SimpleStatements per Binding
 //  * A SimpleExpressions is an Expression, which knows its context (the component it is used in)
 //  * A SimpleStatement is either an Assignments or a Guarded Command
-//      - an Assignments = FieldInfo * SimpleExpression
+//      - an Assignments = SimpleGlobalField * SimpleExpression
 //      - a Guarded Command = List of Options, Option = Guards (Expression) and a Sequence (List of SimpleStatements)
-//  * A FieldInfo is a struct, which encapsulates all information 
+//  * A SimpleGlobalField is a struct, which encapsulates all information about a Global Field in the Simplified Metamodel
 
 
 type MMModelObject = SafetySharp.Metamodel.ModelObject
@@ -74,7 +74,7 @@ type Context = {
     hierarchicalAccess : string list; //last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1(::parentOfSubComponent1)*::rootComponent. Construction is done in "collectFields"
 }
 
-type FieldInfo = {
+type SimpleGlobalField = {
     context : Context;
     field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
 }
@@ -85,7 +85,7 @@ type SimpleExpression = MMExpression
 // TODO: Maybe remove Context and use expression of a formula which knows its MMComponentObject directly
 type SimpleStatement = 
     | GuardedCommandStatement of (SimpleExpression * (SimpleStatement list) ) list //Guard (which knows its Context) * Statements
-    | AssignmentStatement of Target : FieldInfo * Expression : SimpleExpression //Expression (knows its Context). FieldInfo has its own Context (may result of a return-Statement, when context is different)
+    | AssignmentStatement of Target : SimpleGlobalField * Expression : SimpleExpression //Expression (knows its Context). SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
 
 
 
@@ -102,7 +102,7 @@ module MetamodelToSimplifiedMetamodel =
     }
 
     // Only use in this file
-    type ResolverForFieldInfos = Map<string*string,FieldInfo>
+    type ResolverForSimpleGlobalFields = Map<string*string,SimpleGlobalField>
 
     type CollectedModelInformation (configuration:MMConfiguration) =
         // this should only calculate and _cache_ information for the transformation to
@@ -146,42 +146,42 @@ module MetamodelToSimplifiedMetamodel =
                                                       (elem.Name,"root"+counterString))
                              |> Map.ofList
 
-        let fieldInfos : FieldInfo list =
+        let simpleGlobalFields : SimpleGlobalField list =
             // This function works like this: collectFromPartition -> collectFromComponent -> collectFieldInThisComponent
-            // It traverses the model and generates a list of all fields with all necessary information about the field (FieldInfo)
-            let rec collectFromComponent (parentsAndMe:string list) (comp:MMComponentObject) : FieldInfo list =             
-                let collectedInSubcomponents : FieldInfo list =
+            // It traverses the model and generates a list of all fields with all necessary information about the field (SimpleGlobalField)
+            let rec collectFromComponent (parentsAndMe:string list) (comp:MMComponentObject) : SimpleGlobalField list =             
+                let collectedInSubcomponents : SimpleGlobalField list =
                     (getSubComponentObjects comp.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (name::parentsAndMe) comp)
                 let collectFieldInThisComponent (fieldobject:MMFieldObject) =
                     {
-                        FieldInfo.context = {
+                        SimpleGlobalField.context = {
                                                 Context.container = comp;
                                                 Context.hierarchicalAccess = parentsAndMe;
                                             }
-                        FieldInfo.field = fieldobject;
+                        SimpleGlobalField.field = fieldobject;
                     }
                 let collectedInThisComponent = (getFieldObjects comp.Fields) |> List.map collectFieldInThisComponent 
                 collectedInThisComponent @ collectedInSubcomponents
-            let collectFromPartition (partition:MMPartitionObject) : FieldInfo list  =
+            let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
                 let nameOfRoot= rootComponentToName.Item partition.RootComponent.Name
                 collectFromComponent [nameOfRoot] partition.RootComponent
             model.Partitions |> List.collect collectFromPartition
         
-        let resolverForFieldInfos : ResolverForFieldInfos = 
-            //type ResolverForFormulas = Map<string*string,FieldInfo> first string is the unique componentName, second string is fieldName
-            fieldInfos |> List.map (fun elem -> (elem.context.container.Name, elem.field.FieldSymbol.Name),elem)
+        let resolverForSimpleGlobalFields : ResolverForSimpleGlobalFields = 
+            //type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
+            simpleGlobalFields |> List.map (fun elem -> (elem.context.container.Name, elem.field.FieldSymbol.Name),elem)
                        |> Map.ofList
                    
-        let resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : FieldInfo =
+        let resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : SimpleGlobalField =
             let componentObject = model.ComponentObjects.Item referenceSymbol
             let componentObjectName = componentObject.Name
             let fieldName = field.Name
-            resolverForFieldInfos.Item (componentObjectName,fieldName)
+            resolverForSimpleGlobalFields.Item (componentObjectName,fieldName)
         
-        let resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : FieldInfo =
+        let resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : SimpleGlobalField =
             let componentObjectName = comp.Name
             let fieldName = field.Name
-            resolverForFieldInfos.Item (componentObjectName,fieldName)
+            resolverForSimpleGlobalFields.Item (componentObjectName,fieldName)
     
     
 
@@ -193,8 +193,8 @@ module MetamodelToSimplifiedMetamodel =
     // back to the module 
     // (the public part for _internal_ use)
 
-    let rec resolveTargetOfAnAssignment (context:Context) (expression:MMExpression) : FieldInfo =
-        // Use resolveFieldInfoInCode only for expression inside components and not in formulas
+    let rec resolveTargetOfAnAssignment (context:Context) (expression:MMExpression) : SimpleGlobalField =
+        // Use resolveSimpleGlobalFieldInCode only for expression inside components and not in formulas
         // Example of usage: Used on the left side of assignments
         match expression with
             | MMExpression.BooleanLiteral (value:bool) ->
@@ -213,8 +213,8 @@ module MetamodelToSimplifiedMetamodel =
                     failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
                 else
                     {
-                        FieldInfo.context=context;
-                        FieldInfo.field = (context.container.Fields.Item field);
+                        SimpleGlobalField.context=context;
+                        SimpleGlobalField.field = (context.container.Fields.Item field);
                     }
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
