@@ -51,21 +51,23 @@ type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
 type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
            
-type MetamodelToPromela =
+type MetamodelToPromela (configuration:MMConfiguration)  =
+    let contextCache = ContextCache(configuration)
+    let fieldCache = SimpleGlobalFieldCache(contextCache,configuration)
 
     // To transform the metamodel to Promela, we take an intermediate step:
     //   metamodel -> simplified metamodel -> promela code
     
     // THIS IS THE MAIN FUNCTION AND ENTRY POINT
-    member this.transformConfiguration (configuration:MMConfiguration) : PrSpec =
-        let varModule = this.generateFieldDeclarations simpleGlobalFields
+    member this.transformConfiguration  : PrSpec =
+        let varModule = this.generateFieldDeclarations fieldCache.getSimpleGlobalFields
         
-        let fieldInitialisations = this.generateFieldInitialisations simpleGlobalFields
+        let fieldInitialisations = this.generateFieldInitialisations fieldCache.getSimpleGlobalFields
         
         //updates and bindings: Cover them in an endless loop
         let partitionStatements =
             //TODO: Correct semantics with bindings and correct "interleaving" of bindings and partitions
-            configuration.ModelObject.Partitions |> List.collect (this.generatePartitionUpdateCode configuration.MethodBodyResolver)
+            configuration.ModelObject.Partitions |> List.collect this.generatePartitionUpdateCode 
         let codeOfMetamodel = partitionStatements
             
         let systemSequence : PrSequence = statementsToSequence (fieldInitialisations @ codeOfMetamodel)
@@ -127,8 +129,8 @@ type MetamodelToPromela =
         fields |> List.map generateInit
     
 
-    member this.generatePartitionUpdateCode (methodBodyResolver:MMMethodBodyResolver) (partition:MMPartitionObject) : PrStatement list=
-        let partitionUpdateInSimpleStatements = partitionUpdateInSimpleStatements methodBodyResolver partition
+    member this.generatePartitionUpdateCode (partition:MMPartitionObject) : PrStatement list=
+        let partitionUpdateInSimpleStatements = partitionUpdateInSimpleStatements configuration fieldCache contextCache partition
         let transformedSimpleStatements = partitionUpdateInSimpleStatements |> List.map this.transformSimpleStatement
         transformedSimpleStatements
 
@@ -177,7 +179,7 @@ type MetamodelToPromela =
                     failwith "Use transformExpressionInsideAFormula only for expression inside untransformed formulas and not in components"
                 else
                     //called inside a formula
-                    let simpleGlobalField = resolveFieldAccessInsideAFormula componentReference.Value field
+                    let simpleGlobalField = fieldCache.resolveFieldAccessInsideAFormula componentReference.Value field
                     let varref = this.transformSimpleGlobalFieldToVarref simpleGlobalField
                     PrExpression.Varref varref
                     
