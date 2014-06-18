@@ -93,23 +93,13 @@ type SimpleStatement =
 
 
 
-module MetamodelToSimplifiedMetamodel =
 
-    /////////////////////////////////////////////////////
-    // Metamodel to SimpleExpression/SimpleStatement part
-    /////////////////////////////////////////////////////
-    
-    // Many steps are a sequence. Only use in this file
-    type MMStepInfo = {
-        context : Context;
-        statement : MMStatement;
-    }
 
-    // Only use in this file
-    type ResolverForSimpleGlobalFields = Map<string*string,SimpleGlobalField>
+// Only use in this file
+type ResolverForSimpleGlobalFields = Map<string*string,SimpleGlobalField>
 
     
-    type ContextCache (configuration:MMConfiguration) =
+type ContextCache (configuration:MMConfiguration) =
         // _once_ calculated and cached information for internal use
         let model = configuration.ModelObject
 
@@ -145,7 +135,7 @@ module MetamodelToSimplifiedMetamodel =
     //      - _once_ calculated and cached information for external use (better write accessor functions for it)        
     //      - accessor and helper functions (internal use)
     //      - accessor and helper functions (external use)
-    type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfiguration) =
+type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfiguration) =
         // this should only calculate and _cache_ information for the transformation to
         // SimpleStatements/SimpleExpressions and not be used from outside this file
         
@@ -161,11 +151,6 @@ module MetamodelToSimplifiedMetamodel =
 
         let ComponentObjectToComponentReference (comp:MMComponentObject) : MMComponentReferenceSymbol =
             reverseComponentObjects.Item comp.Name
-
-
-
-
-            
 
         let getSubComponentObjects (subcomponentMap : Map<MMComponentReferenceSymbol, MMComponentObject>) : ((string*MMComponentObject) list) =
             subcomponentMap |> Map.fold (fun acc key value -> (key.Name,value)::acc) []
@@ -218,11 +203,28 @@ module MetamodelToSimplifiedMetamodel =
         
     
     
+    
+// Many steps are a sequence. Only use in this file
+type MMStepInfo = {
+        context : Context;
+        statement : MMStatement;
+    }
 
-    // TODO: put into a module to reduce (configuration:MMConfiguration) (fieldCache:SimpleGlobalFieldCache) (contextCache:ContextCache)
+(*
+//conversion should be done for the complete Metamodel
 
-    // back to the module 
-    // (the public part for _internal_ use)
+type SimplifiedMetamodel = 
+{
+    Partitions : (Name*(Fields, Update:(SimpleStatement list)) list);
+    Bindings : ((SimpleStatement list) list); //Or interleave Binding with Partitions. Semantic not relly defined, yet.
+    Formulas : Formulas : list
+} with
+    generate (Metamodel:MMConfiguration)
+*)
+
+type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
+    let contextCache = ContextCache(configuration)
+    let fieldCache = SimpleGlobalFieldCache(contextCache,configuration)
 
     let rec resolveTargetOfAnAssignment (context:Context) (expression:MMExpression) : SimpleGlobalField =
         // Use resolveSimpleGlobalFieldInCode only for expression inside components and not in formulas
@@ -330,7 +332,7 @@ module MetamodelToSimplifiedMetamodel =
 
     //TODO: Put methodBodyResolver into cached information and use Cached Information here
     //      This function also needs the SimpleGlobalFieldCache and RootComponentCache
-    let partitionUpdateInSimpleStatements (configuration:MMConfiguration) (fieldCache:SimpleGlobalFieldCache) (contextCache:ContextCache) (partition:MMPartitionObject) : SimpleStatement list=
+    member this.partitionUpdateInSimpleStatements (partition:MMPartitionObject) : SimpleStatement list=
         //TODO: sort, updateMethods of Non-Root-Components
         //partition.RootComponent 
         let collected = []
@@ -343,14 +345,8 @@ module MetamodelToSimplifiedMetamodel =
         let partitionUpdateInSimpleStatements = transformMMStepInfosToSimpleStatements fieldCache configuration.MethodBodyResolver collected [toTransform]
         partitionUpdateInSimpleStatements
 
-    (*
-    //conversion should be done for the complete Metamodel
-
-    type SimplifiedMetamodel = 
-    {
-        Partitions : (Name*(Fields, Update:(SimpleStatement list)) list);
-        Bindings : ((SimpleStatement list) list); //Or interleave Binding with Partitions. Semantic not relly defined, yet.
-        Formulas : Formulas : list
-    } with
-        generate (Metamodel:MMConfiguration)
-    *)
+    member this.getSimpleGlobalFields : SimpleGlobalField list =
+            fieldCache.getSimpleGlobalFields
+                           
+    member this.resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : SimpleGlobalField =
+        fieldCache.resolveFieldAccessInsideAFormula referenceSymbol field
