@@ -55,10 +55,6 @@ module private ExpressionTransformationTestsHelper =
         ExpressionTransformation.Transform symbolResolver compilation.SemanticModel expression
 
 module ExpressionTransformationTests =
-    type MyRecord = { A : int; B : int }
-    let f () = { A = 4; B = 7 }
-    type DU = | A of int | B of float
-    let g i = if i > 0 then A 77 else B 33.0
 
     [<Test>]
     let ``boolean literals`` () =
