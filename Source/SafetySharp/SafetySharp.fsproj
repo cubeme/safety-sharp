@@ -74,12 +74,13 @@
     <Compile Include="CSharp\Extensions\ITypeSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\IFieldSymbolExtensions.fs" />
     <Compile Include="CSharp\Extensions\IMethodSymbolExtensions.fs" />
+    <Compile Include="CSharp\Extensions\SyntaxTokenListExtensions.fs" />
     <Compile Include="CSharp\Extensions\MethodDeclarationExtensions.fs" />
     <Compile Include="CSharp\Extensions\TypeDeclarationExtensions.fs" />
     <Compile Include="CSharp\Extensions\ArgumentExtensions.fs" />
     <Compile Include="CSharp\Extensions\SyntaxKindExtensions.fs" />
     <Compile Include="CSharp\Extensions\InvocationExpressionExtensions.fs" />
-    <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs"/>
+    <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\SemanticModelAnalyzer.fs" />

@@ -39,19 +39,31 @@ open Microsoft.CodeAnalysis.Diagnostics
 type CompilationException (message : string) =
     inherit Exception (message)
 
-/// Represents a compiled C# compilation unit with a single syntax tree.
-type internal TestCompilation (csharpCode : string) =
+/// Indicates which SafetySharp assembly a <see cref="TestCompilation" /> references.
+[<RequireQualifiedAccess>]
+type internal SafetySharpAssembly =
+    | Modeling
+    | Runtime
+
+/// Represents a compiled C# compilation unit with a single syntax tree. By default, it references the runtime SafetySharp assembly.
+type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : SafetySharpAssembly) =
     let mutable (assembly : Assembly) = null
+    let safetySharpAssembly = defaultArg safetySharpAssembly SafetySharpAssembly.Runtime
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
     let compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
+    let safetySharpAssembly =
+        match safetySharpAssembly with
+        | SafetySharpAssembly.Modeling -> Path.Combine (Environment.CurrentDirectory, Compiler.ModelingAssemblyFileName)
+        | SafetySharpAssembly.Runtime -> typeof<ComponentSymbol>.Assembly.Location
+
     let csharpCompilation = 
         CSharpCompilation
             .Create(TestCompilation.CompilationName)
             .AddReferences(MetadataFileReference typeof<obj>.Assembly.Location)
-            .AddReferences(MetadataFileReference typeof<ComponentSymbol>.Assembly.Location)
+            .AddReferences(MetadataFileReference safetySharpAssembly)
             .AddReferences(MetadataFileReference typeof<System.Linq.Expressions.Expression>.Assembly.Location)
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
