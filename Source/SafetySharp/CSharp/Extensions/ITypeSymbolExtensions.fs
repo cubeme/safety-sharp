@@ -38,14 +38,14 @@ module TypeSymbolExtensions =
             nullArg this "this"
             nullArg baseType "baseType"
 
-            // Check whether any of the interfaces or their bases match baseType
-            if baseType.TypeKind = TypeKind.Interface && (this.Interfaces.Any(fun i -> i.Equals(baseType) || i.IsDerivedFrom(baseType))) then
+            // Check the interfaces implemented by the type
+            if baseType.TypeKind = TypeKind.Interface && this.AllInterfaces |> Seq.exists ((=) (baseType :?> INamedTypeSymbol)) then
                 true
             // We've reached the top of the inheritance chain without finding baseType
-            else if this.BaseType = null then
+            elif this.BaseType = null then
                 false
             // Check whether the base matches baseType
-            else if baseType.TypeKind = TypeKind.Class && this.BaseType.Equals(baseType) then
+            elif baseType.TypeKind = TypeKind.Class && this.BaseType.Equals(baseType) then
                 true
             // Recursively check the base
             else

@@ -90,13 +90,13 @@ module internal SymbolTransformation =
 
             if updateMethodCount > 1 then 
                 csharpComponent.ToDisplayString () |> invalidOp "Component of type '%A' defines more than one Update() method."
-            else if updateMethodCount = 1 then
+            elif updateMethodCount = 1 then
                 let updateMethod = updateMethods |> Seq.head
                 methodMapBuilder.Add (updateMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
                 methodSymbol
             else
-                // We'll map to the first overriden update method that we encounter in the hierarchy (or possible to Component.Update() itself)
+                // We'll map to the first overriden update method that we encounter in the hierarchy (or possibly to Component.Update() itself)
                 transformUpdateMethod csharpComponent.BaseType
 
         // Creates the symbols and mapping information for all methods of the component. We'll also build up a 

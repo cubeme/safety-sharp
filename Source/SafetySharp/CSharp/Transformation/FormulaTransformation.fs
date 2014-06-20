@@ -117,7 +117,7 @@ module internal FormulaTransformation =
                     let component' = (getValue objectExpression) :?> Component
                     let fieldName = memberInfo.Name
                     transformComponentFieldAccess symbolResolver objectResolver component' fieldName
-                else if typeof<IMemberAccess>.IsAssignableFrom expression.Type then
+                elif typeof<IMemberAccess>.IsAssignableFrom expression.Type then
                     let memberAccess = getValue expression :?> IMemberAccess
                     transformComponentFieldAccess symbolResolver objectResolver memberAccess.Component memberAccess.MemberName
                 else

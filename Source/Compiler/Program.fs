@@ -94,7 +94,7 @@ let private printToConsole logEntry =
 let main args = 
     Log.Logged.Add printToConsole
 
-    use parser = new Parser(fun c -> c.HelpWriter <- null)
+    use parser = new Parser (fun c -> c.HelpWriter <- null)
     
     // Check the arguments for '--help' or '-h' as the command line parser library handles help in a strange
     // way. If so, output the help screen and successfully terminate the application.
@@ -102,7 +102,7 @@ let main args =
         Log.Info "%s" <| arguments.GenerateHelpMessage ()
         0
     // If there was an error parsing the command line, show the help screen and terminate the application.
-    else if not <| parser.ParseArguments (args, arguments) then
+    elif not <| parser.ParseArguments (args, arguments) then
         arguments.Silent <- false;
         Log.Info "%s" <| arguments.GenerateHelpMessage ()
         Log.Die "Invalid command line arguments."

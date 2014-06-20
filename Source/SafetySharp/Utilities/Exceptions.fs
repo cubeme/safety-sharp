@@ -23,14 +23,12 @@
 namespace SafetySharp.Utilities
 
 open System
-open System.Diagnostics
 
 /// Defines a set of helper functions that should be used to raise exceptions and to check preconditions of functions.
 [<AutoOpen>]
 module internal Exceptions =
 
     /// Raises an <see cref="InvalidOperationException" /> with the given message.
-    [<DebuggerHidden>]
     let inline invalidOp message = Printf.ksprintf invalidOp message
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.

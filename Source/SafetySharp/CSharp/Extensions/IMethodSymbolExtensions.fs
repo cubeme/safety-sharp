@@ -40,9 +40,9 @@ module MethodSymbolExtensions =
 
             if this.Equals overriddenMethod then
                 true
-            else if not this.IsOverride then
+            elif not this.IsOverride then
                 false
-            else if this.OverriddenMethod.Equals overriddenMethod then
+            elif this.OverriddenMethod.Equals overriddenMethod then
                 true
             else
                 this.OverriddenMethod.Overrides overriddenMethod

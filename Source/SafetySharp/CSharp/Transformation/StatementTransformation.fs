@@ -84,7 +84,7 @@ module internal StatementTransformation =
                             (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral false))
                         ]
 
-                    else if chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
+                    elif chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
                         let assignmentTarget = transformExpression arguments.[0].Expression
                         let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
                         let statements = expressions |> Seq.map (fun expression -> AssignmentStatement(assignmentTarget, expression))

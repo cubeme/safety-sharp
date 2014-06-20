@@ -124,9 +124,9 @@ module ArgumentExtensions =
                             lastParameter
                         else
                             invalidOp "There are more arguments than parameters."
-                    else if arguments.[index].Equals this then
+                    elif arguments.[index].Equals this then
                         methodSymbol.Parameters.[index]
-                    else if index >= arguments.Count then
+                    elif index >= arguments.Count then
                         invalidOp "Unable to determine parameter symbol for argument '%A'." this
                     else
                         findParameter <| index + 1

@@ -34,24 +34,24 @@ open SafetySharp.Modeling
 type ChooseMethodNormalizer () =
     inherit CSharpNormalizer ()
 
-    override this.VisitBinaryExpression (expression : BinaryExpressionSyntax) =
-        if expression.CSharpKind () <> SyntaxKind.SimpleAssignmentExpression then
-            upcast expression
-        else if expression.Right.CSharpKind () <> SyntaxKind.InvocationExpression then
-            upcast expression
+    override this.VisitBinaryExpression node =
+        if node.CSharpKind () <> SyntaxKind.SimpleAssignmentExpression then
+            upcast node
+        elif node.Right.CSharpKind () <> SyntaxKind.InvocationExpression then
+            upcast node
         else
-            let invocation = (expression.Right :?> InvocationExpressionSyntax)
-            let symbolInfo = this.semanticModel.GetSymbolInfo(invocation)
+            let invocation = node.Right :?> InvocationExpressionSyntax
+            let symbolInfo = this.semanticModel.GetSymbolInfo invocation
             let methodSymbol = symbolInfo.Symbol :?> IMethodSymbol
 
             if methodSymbol = null then
                 invalidOp "Unable to determine symbol of invocation '%A'." invocation
 
             if methodSymbol.ContainingType = this.semanticModel.GetTypeSymbol<Choose> () then
-                let outToken = SyntaxFactory.Token(SyntaxKind.OutKeyword).WithTrailingTrivia (SyntaxFactory.Space)
-                let argument = SyntaxFactory.Argument(expression.Left.RemoveTrivia ()).WithRefOrOutKeyword(outToken)
-                let arguments = invocation.ArgumentList.Arguments.Insert(0, argument)
+                let outToken = SyntaxFactory.Token(SyntaxKind.OutKeyword).WithTrailingTrivia SyntaxFactory.Space
+                let argument = SyntaxFactory.Argument(node.Left.RemoveTrivia ()).WithRefOrOutKeyword outToken
+                let arguments = invocation.ArgumentList.Arguments.Insert (0, argument)
                 let argumentList = invocation.ArgumentList.WithArguments arguments
-                upcast invocation.AddTriviaFrom(expression).WithArgumentList argumentList
+                upcast invocation.AddTriviaFrom(node).WithArgumentList argumentList
             else
-                upcast expression
+                upcast node

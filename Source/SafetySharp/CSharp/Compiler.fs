@@ -191,10 +191,10 @@ module Compiler =
         if not <| File.Exists projectFile then
             logError "0001" "Project file '%s' could not be found." projectFile
             -1
-        else if String.IsNullOrWhiteSpace configuration then
+        elif String.IsNullOrWhiteSpace configuration then
             logError "0002" "Invalid project configuration: Configuration name cannot be the empty string."
             -1
-        else if String.IsNullOrWhiteSpace platform then
+        elif String.IsNullOrWhiteSpace platform then
             logError "0003" "Invalid compilation platform: Platform name cannot be the empty string."
             -1
         else
