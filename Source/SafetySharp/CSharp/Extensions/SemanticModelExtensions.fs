@@ -127,3 +127,21 @@ module SemanticModelExtensions =
             | symbol -> 
                 invalidOp "Expected a symbol of type '%s'. However, the actual symbol type for syntax node '%A' is '%s'."
                           typeof<'T>.FullName node (symbol.GetType().FullName)
+
+        /// Gets the symbol declared by the given type declaration.
+        member this.GetSymbol (node : BaseTypeDeclarationSyntax) =
+            nullArg this "this"
+            nullArg node "node"
+
+            match this.GetDeclaredSymbol node with
+            | null -> invalidOp "Unable to determine type symbol of type declaration '%A'." this
+            | symbol -> symbol
+
+        /// Gets the symbol declared by the given type declaration.
+        member this.GetSymbol (node : BaseMethodDeclarationSyntax) =
+            nullArg this "this"
+            nullArg node "node"
+
+            match this.GetDeclaredSymbol node with
+            | null -> invalidOp "Unable to determine symbol of method declaration '%A'." this
+            | symbol -> symbol

@@ -41,6 +41,12 @@ module ``Overrides method`` =
         methodSymbol.Overrides overridenMethodSymbol
 
     [<Test>]
+    let ``throws when overriden method symbol is null`` () =
+        let compilation = TestCompilation "class X { void M() {} }"
+        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+        raisesArgumentNullException "overriddenMethod" <@ methodSymbol.Overrides null @>
+
+    [<Test>]
     let ``returns false for non-overriding method`` () =
         overrides "class X : Y { public void M() {} }" "M" =? false
         overrides "class X : Y { public virtual void M() {} }" "M" =? false
@@ -60,3 +66,34 @@ module ``Overrides method`` =
         let methodSymbol = compilation.FindMethodSymbol "Y" "M"
 
         methodSymbol.Overrides methodSymbol =? true
+
+[<TestFixture>]
+module ``IsUpdateMethod method`` =
+    let isUpdateMethod csharpCode methodName =
+        let compilation = TestCompilation csharpCode
+        let methodSymbol = compilation.FindMethodSymbol "X" methodName
+        methodSymbol.IsUpdateMethod compilation.SemanticModel
+    
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        let compilation = TestCompilation "class X { void M() {} }"
+        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+        raisesArgumentNullException "semanticModel" <@ methodSymbol.IsUpdateMethod (null : SemanticModel) @>
+
+    [<Test>]
+    let ``returns true for overriden Update method of component`` () =
+        isUpdateMethod "class X : Component { public override void Update() {} }" "Update" =? true
+
+    [<Test>]
+    let ``returns true for overriden Update method of inherited component`` () =
+        isUpdateMethod "class Y : Component {} class X : Y { public override void Update() {} }" "Update" =? true
+        isUpdateMethod "class Y : Component { public override void Update() {} } class X : Y { public override void Update() {} }" "Update" =? true
+
+    [<Test>]
+    let ``returns false for non-overriding methods of component`` () =
+        isUpdateMethod "class X : Component { void M() {} }" "M" =? false
+        isUpdateMethod "class X : Component { public new void Update() {} }" "Update" =? false
+
+    [<Test>]
+    let ``returns false for Update method of non-Component class`` () =
+        isUpdateMethod "class X { public void Update() {} }" "Update" =? false

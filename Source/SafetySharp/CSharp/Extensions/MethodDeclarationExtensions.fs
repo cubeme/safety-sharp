@@ -37,10 +37,7 @@ module MethodDeclarationExtensions =
         member this.IsUpdateMethod (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-
-            match semanticModel.GetDeclaredSymbol this with
-            | methodSymbol when methodSymbol <> null -> methodSymbol.Overrides <| semanticModel.GetUpdateMethodSymbol ()
-            | _ -> invalidOp "Unable to determine method symbol of method declaration '%A'." this
+            semanticModel.GetSymbol(this).Overrides <| semanticModel.GetUpdateMethodSymbol ()
 
         /// Gets the visibility of the method.
         member this.Visibility =

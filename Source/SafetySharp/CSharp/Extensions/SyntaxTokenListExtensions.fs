@@ -36,7 +36,7 @@ type Visibility =
 
 /// Provides extension methods for working with <see cref="SyntaxTokenList" /> instances.
 [<AutoOpen>]
-module ISyntaxTokenListExtensions =
+module SyntaxTokenListExtensions =
     type SyntaxTokenList with
 
         /// Deduces the type or member visibility from the syntax token list.

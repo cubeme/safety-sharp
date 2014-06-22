@@ -81,3 +81,73 @@ module ``IsDerivedFrom method`` =
         isDerivedFrom "interface Z {} interface Y {} interface X : Y, Z {}" "Y" =? true
         isDerivedFrom "interface Z {} interface Y {} interface X : Y, Z {}" "Z" =? true
         isDerivedFrom "interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}" "Q" =? true
+
+[<TestFixture>]
+module ``IsDerivedFromComponent method`` =
+    let isDerivedFromComponent csharpCode =
+        let compilation = TestCompilation csharpCode
+        let derivedSymbol = compilation.FindTypeSymbol "X"
+
+        derivedSymbol.IsDerivedFromComponent compilation.SemanticModel
+
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
+        raisesArgumentNullException "semanticModel" <@ symbol.IsDerivedFromComponent (null : SemanticModel) @>
+
+    [<Test>]
+    let ``returns false for class with no base`` () =
+        isDerivedFromComponent "class X {}" =? false
+
+    [<Test>]
+    let ``returns false for class with non-Component base`` () =
+        isDerivedFromComponent "class Y { } class X : Y {}" =? false
+
+    [<Test>]
+    let ``returns false for class only implementing IComponent`` () =
+        isDerivedFromComponent "class X : IComponent { public string Name {get;private set;} }" =? false
+
+    [<Test>]
+    let ``returns true for class directly derived from Component`` () =
+        isDerivedFromComponent "class X : Component {}" =? true
+
+    [<Test>]
+    let ``returns true for class indirectly derived from Component`` () =
+        isDerivedFromComponent "class Y : Component {} class X : Y {}" =? true
+
+[<TestFixture>]
+module ``ImplementsIComponent method`` =
+    let implementsIComponent csharpCode =
+        let compilation = TestCompilation csharpCode
+        let derivedSymbol = compilation.FindTypeSymbol "X"
+
+        derivedSymbol.ImplementsIComponent compilation.SemanticModel
+
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
+        raisesArgumentNullException "semanticModel" <@ symbol.ImplementsIComponent (null : SemanticModel) @>
+
+    [<Test>]
+    let ``returns false for class with no base`` () =
+        implementsIComponent "class X {}" =? false
+
+    [<Test>]
+    let ``returns false for class with non-Component base`` () =
+        implementsIComponent "class Y { } class X : Y {}" =? false
+
+    [<Test>]
+    let ``returns true for class only implementing IComponent`` () =
+        implementsIComponent "class X : IComponent { public string Name {get;private set;} }" =? true
+
+    [<Test>]
+    let ``returns true for class directly derived from Component`` () =
+        implementsIComponent "class X : Component {}" =? true
+
+    [<Test>]
+    let ``returns true for class indirectly derived from Component`` () =
+        implementsIComponent "class Y : Component {} class X : Y {}" =? true
+
+    [<Test>]
+    let ``returns true for class indirectly implementing IComponent`` () =
+        implementsIComponent "class Y : IComponent { public string Name {get;private set;} } class X : Y {}" =? true

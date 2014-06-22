@@ -29,7 +29,8 @@ open System
 module internal Exceptions =
 
     /// Raises an <see cref="InvalidOperationException" /> with the given message.
-    let inline invalidOp message = Printf.ksprintf invalidOp message
+    let inline invalidOp message = 
+        Printf.ksprintf invalidOp message
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
     let inline nullArg<'T when 'T : null> (argument : 'T) argumentName =
