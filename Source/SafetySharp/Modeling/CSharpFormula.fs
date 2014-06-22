@@ -38,7 +38,7 @@ type internal CSharpFormula =
     | CSharpBinaryFormula of LeftFormula : CSharpFormula * Operator : BinaryFormulaOperator * RightFormula : CSharpFormula
 
 /// Raised when a component referenced in a formula is not contained within the model the formula is created for.
-type UnknownComponentException internal (unknownComponent : Component) =
+type UnknownComponentException internal (unknownComponent : IComponent) =
     inherit Exception ("The formula references a component that is not contained within the model the formula is created for.")
 
     /// Gets the unknown component instances that was found in the formula.

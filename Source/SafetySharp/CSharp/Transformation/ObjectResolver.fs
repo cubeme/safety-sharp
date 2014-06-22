@@ -29,28 +29,28 @@ open SafetySharp.Utilities
 
 /// Represents a mapping between the original .NET objects and the created metamodel symbols and objects.
 type internal ObjectResolver = private {
-    ComponentSymbolMap : ImmutableDictionary<Component, ComponentSymbol>
-    ComponentObjectMap : ImmutableDictionary<Component, ComponentObject>
+    ComponentSymbolMap : ImmutableDictionary<IComponent, ComponentSymbol>
+    ComponentObjectMap : ImmutableDictionary<IComponent, ComponentObject>
     Model : ModelObject
 }
     with
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
-    member this.ResolveSymbol (componentObject : Component) =
+    member this.ResolveSymbol (componentObject : IComponent) =
         nullArg componentObject "componentObject"
         let (result, symbol) = this.ComponentSymbolMap.TryGetValue componentObject
         invalidArg (not result) "componentObject" "The given component is unknown."
         symbol
 
     /// Resolves the <see cref="ComponentObject"/> corresponding to the given .NET component object.
-    member this.ResolveObject (componentObject : Component) =
+    member this.ResolveObject (componentObject : IComponent) =
         nullArg componentObject "componentObject"
         let (result, symbol) = this.ComponentObjectMap.TryGetValue componentObject
         invalidArg (not result) "componentObject" "The given component is unknown."
         symbol
 
     /// Gets a value indicating whether the given .NET component object is a known instance that can be resolved.
-    member this.CanResolve (componentObject : Component) =
+    member this.CanResolve (componentObject : IComponent) =
         nullArg componentObject "componentObject"
         this.ComponentSymbolMap.ContainsKey componentObject
 

@@ -88,7 +88,7 @@ module internal FormulaTransformation =
         | _ -> invalidOp "Invalid expression type while trying to retrieve member value: '%A'." expression.NodeType
 
     /// Transforms a component field access. 
-    let private transformComponentFieldAccess (symbolResolver : SymbolResolver) (objectResolver : ObjectResolver) (component' : Component) fieldName =
+    let private transformComponentFieldAccess (symbolResolver : SymbolResolver) (objectResolver : ObjectResolver) (component' : IComponent) fieldName =
         if not <| objectResolver.CanResolve component' then
             UnknownComponentException component' |> raise
         let componentSymbol = symbolResolver.ResolveComponent component'

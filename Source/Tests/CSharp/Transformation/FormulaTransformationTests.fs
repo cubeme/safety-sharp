@@ -37,7 +37,7 @@ open SafetySharp.CSharp.Transformation
 module private FormulaTransformationTestsHelper =
     let mutable symbolResolver = Unchecked.defaultof<SymbolResolver>
     let mutable objectResolver = Unchecked.defaultof<ObjectResolver>
-    let mutable unknownComponent : Component = null
+    let mutable unknownComponent : IComponent = null
 
     let compile formulaType csharpCode =
         let compilation = TestCompilation (@"

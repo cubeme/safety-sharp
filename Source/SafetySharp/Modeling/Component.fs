@@ -32,18 +32,20 @@ open SafetySharp.Utilities
 
 /// Represents a marker interface for components.
 [<AllowNullLiteral>]
-type IComponent = interface end
+type IComponent =
+    /// Gets the name of the component instance. Returns the empty string if no component name could be determined.
+    abstract member Name : string
 
 /// Provides access to a non-public member of a component.
 type IMemberAccess =
     /// Gets the accessed component instance.
-    abstract member Component : Component
+    abstract member Component : IComponent
 
     /// Gets the name of the accessed member.
     abstract member MemberName : string
 
 /// Provides access to a non-public member of a component.
-and MemberAccess<'T> internal (component' : Component, memberName : string) =
+type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
     let componentType = component'.GetType ()
     let bindingFlags = BindingFlags.Instance ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Public ||| BindingFlags.NonPublic
     let fieldInfo = componentType.GetField (memberName, bindingFlags)
@@ -78,7 +80,8 @@ and MemberAccess<'T> internal (component' : Component, memberName : string) =
             propertyInfo.GetValue component' :?> 'T
 
 /// Represents a base class for all components.
-and [<AbstractClass; AllowNullLiteral>] Component () =
+[<AbstractClass; AllowNullLiteral>] 
+type Component () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata
@@ -103,7 +106,8 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
     abstract member Update : unit -> unit
     default this.Update () = ()
 
-    interface IComponent
+    interface IComponent with
+        override this.Name = this.Name
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Internal access
@@ -193,7 +197,7 @@ and [<AbstractClass; AllowNullLiteral>] Component () =
             invalidArg true "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
             subcomponent.Value // Required, but cannot be reached
 
-    /// Gets or sets the name of the component instance. Returns the empty string if no component name could be determined.
+    /// Gets the name of the component instance. Returns the empty string if no component name could be determined.
     member internal this.Name
         with get () : string = 
             requiresIsSealed ()

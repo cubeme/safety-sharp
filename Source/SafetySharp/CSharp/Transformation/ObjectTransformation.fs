@@ -35,8 +35,8 @@ module internal ObjectTransformation =
         invalidArg (not model.IsMetadataFinalized) "model" "The model metadata has not yet been finalized."
 
         // We're using the builder pattern to initialize the dictionaries
-        let componentSymbolMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentSymbol> ()
-        let componentObjectMapBuilder = ImmutableDictionary.CreateBuilder<Component, ComponentObject> ()
+        let componentSymbolMapBuilder = ImmutableDictionary.CreateBuilder<IComponent, ComponentSymbol> ()
+        let componentObjectMapBuilder = ImmutableDictionary.CreateBuilder<IComponent, ComponentObject> ()
 
         // Creates the field objects for the .NET component instance.
         let transformFields (component' : Component) (componentSymbol : ComponentSymbol) =
