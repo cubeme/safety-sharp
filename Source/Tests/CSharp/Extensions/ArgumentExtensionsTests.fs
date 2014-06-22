@@ -36,6 +36,8 @@ open SafetySharp.CSharp.Extensions
 [<AutoOpen>]
 module ArgumentExtentionsTestHelper =
     let private compilation = TestCompilation ("
+        using System;
+        using System.Linq.Expressions;
         class X
         {
             public X(int a, [LiftExpression] int b)
@@ -50,6 +52,14 @@ module ArgumentExtentionsTestHelper =
             {
             }
 
+            public void O(bool x, decimal d)
+            {
+            }
+
+            public void P([LiftExpression] bool x, Expression<Func<bool>> d, Expression<Func<int>> i, bool y)
+            {
+            }
+
             public X()
             {
                 M(1, 2, 3 + 4);
@@ -57,6 +67,8 @@ module ArgumentExtentionsTestHelper =
                 M(c: 5, a: 1, b: 3);
                 new X(3, 6);
                 new X(b: 7, a: 11);
+                O(true, 3.14m);
+                P(true, () => false, () => 2, false);
             }
     }")
 
@@ -64,9 +76,11 @@ module ArgumentExtentionsTestHelper =
     let methodN = compilation.FindMethodSymbol "X" "N"
     let constructorSymbol = compilation.FindClassSymbol("X").Constructors.[0]
 
-    let invocations = compilation.SyntaxRoot.Descendants<InvocationExpressionSyntax>().ToArray();
-    let creations = compilation.SyntaxRoot.Descendants<ObjectCreationExpressionSyntax>().ToArray();
-    let semanticModel = compilation.SemanticModel;
+    let invocations = compilation.SyntaxRoot.Descendants<InvocationExpressionSyntax>().ToArray ()
+    let invokeMethodO = compilation.SyntaxRoot.Descendants<InvocationExpressionSyntax>().Skip(3).First ()
+    let invokeMethodP = compilation.SyntaxRoot.Descendants<InvocationExpressionSyntax>().Last ()
+    let creations = compilation.SyntaxRoot.Descendants<ObjectCreationExpressionSyntax>().ToArray ()
+    let semanticModel = compilation.SemanticModel
 
 [<TestFixture>]
 module ``ParameterHasAttribute method`` =
@@ -122,10 +136,10 @@ module ``ParameterHasAttribute method`` =
 [<TestFixture>]
 module ``GetMethodSymbol method`` =
     let getMethodSymbol invocationIndex argumentIndex =
-        invocations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].GetMethodSymbol(semanticModel)
+        invocations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].GetMethodSymbol semanticModel
 
     let getConstructorSymbol invocationIndex argumentIndex =
-        creations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].GetMethodSymbol(semanticModel)
+        creations.[invocationIndex].ArgumentList.Arguments.[argumentIndex].GetMethodSymbol semanticModel
 
     [<Test>]
     let ``throws when semantic model is null`` () =
@@ -150,3 +164,51 @@ module ``GetMethodSymbol method`` =
         getConstructorSymbol 0 1 =? constructorSymbol
         getConstructorSymbol 1 0 =? constructorSymbol
         getConstructorSymbol 1 1 =? constructorSymbol
+
+[<TestFixture>]
+module ``IsOfType method`` =
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        raisesArgumentNullException "semanticModel" <@ invokeMethodO.ArgumentList.Arguments.[0].IsOfType<bool> null @>
+
+    [<Test>]
+    let ``returns true for correct types`` () =
+        invokeMethodO.ArgumentList.Arguments.[0].IsOfType<bool> semanticModel =? true
+        invokeMethodO.ArgumentList.Arguments.[1].IsOfType<decimal> semanticModel =? true
+
+        invokeMethodO.ArgumentList.Arguments.[0].IsOfType (semanticModel, semanticModel.GetTypeSymbol<bool> ()) =? true
+        invokeMethodO.ArgumentList.Arguments.[1].IsOfType (semanticModel, semanticModel.GetTypeSymbol<decimal> ()) =? true
+
+    [<Test>]
+    let ``returns false for incorrect types`` () =
+        invokeMethodO.ArgumentList.Arguments.[0].IsOfType<int> semanticModel =? false
+        invokeMethodO.ArgumentList.Arguments.[1].IsOfType<bool> semanticModel =? false
+
+        invokeMethodO.ArgumentList.Arguments.[0].IsOfType (semanticModel, semanticModel.GetTypeSymbol<int> ()) =? false
+        invokeMethodO.ArgumentList.Arguments.[1].IsOfType (semanticModel, semanticModel.GetTypeSymbol<bool> ()) =? false
+
+[<TestFixture>]
+module ``IsBooleanExpressionArgument method`` =
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        raisesArgumentNullException "semanticModel" <@ invokeMethodO.ArgumentList.Arguments.[0].IsBooleanExpressionArgument null @>
+
+    [<Test>]
+    let ``returns true for Boolean arguments`` () =
+        invokeMethodP.ArgumentList.Arguments.[0].IsBooleanExpressionArgument semanticModel =? true
+
+    [<Test>]
+    let ``returns true for Expression<Func<bool>> arguments`` () =
+        invokeMethodP.ArgumentList.Arguments.[1].IsBooleanExpressionArgument semanticModel =? true
+
+    [<Test>]
+    let ``returns false for non-Boolean arguments`` () =    
+        invokeMethodO.ArgumentList.Arguments.[1].IsBooleanExpressionArgument semanticModel =? false
+
+    [<Test>]
+    let ``returns false for non-Boolean expression arguments`` () =    
+        invokeMethodP.ArgumentList.Arguments.[2].IsBooleanExpressionArgument semanticModel =? false
+
+    [<Test>]
+    let ``returns false for Boolean arguments without the [LiftExpression] attribute`` () =
+        invokeMethodP.ArgumentList.Arguments.[3].IsBooleanExpressionArgument semanticModel =? false
