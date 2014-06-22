@@ -46,7 +46,7 @@ type SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
             nullArg addDiagnostic "addDiagnostic"
 
             let diagnosticCallback = DiagnosticCallback (fun locationNode args ->
-                addDiagnostic.Invoke(Diagnostic.Create (this.descriptor, locationNode.GetLocation(), args)))
+                addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationNode.GetLocation (), args)))
     
             // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
             // report them as an error.

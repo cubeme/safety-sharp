@@ -64,10 +64,17 @@ module SyntaxNodeExtensions =
         [<Extension>]
         static member AddTriviaFrom (syntaxNode : 'T when 'T :> SyntaxNode, node : SyntaxNode) =
             nullArg syntaxNode "syntaxNode"
+            nullArg node "node"
             syntaxNode.WithLeadingTrivia(node.GetLeadingTrivia()).WithTrailingTrivia(node.GetTrailingTrivia())
+
+        /// Adds the trivia from the given syntax token to the current syntax node.
+        [<Extension>]
+        static member AddTriviaFrom (syntaxNode : 'T when 'T :> SyntaxNode, token : SyntaxToken) =
+            nullArg syntaxNode "syntaxNode"
+            syntaxNode.WithLeadingTrivia(token.LeadingTrivia).WithTrailingTrivia token.TrailingTrivia
 
         /// Surrounds the syntax node with a single leading and trailing space.
         [<Extension>]
         static member SurroundWithSingleSpace (syntaxNode : 'T when 'T :> SyntaxNode) =
             nullArg syntaxNode "syntaxNode"
-            syntaxNode.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia(SyntaxFactory.Space)
+            syntaxNode.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia SyntaxFactory.Space

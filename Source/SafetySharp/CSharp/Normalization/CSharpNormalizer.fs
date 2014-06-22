@@ -37,7 +37,7 @@ type CSharpNormalizer () =
 
     /// Normalizes the given syntax tree of the compilation.
     member private this.NormalizeSyntaxTree (compilation : Compilation) (syntaxTree : SyntaxTree) =
-        this.semanticModel <- compilation.GetSemanticModel(syntaxTree);
+        this.semanticModel <- compilation.GetSemanticModel syntaxTree
 
         let root = syntaxTree.GetRoot ()
         let normalizedRoot = this.Visit root

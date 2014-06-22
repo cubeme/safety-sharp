@@ -68,32 +68,28 @@ module internal StatementTransformation =
                 AssignmentStatement (transformExpression left, transformExpression right)
 
             | InvocationExpression invocation ->
-                let symbolInfo = semanticModel.GetSymbolInfo invocation
-                match symbolInfo.Symbol with
-                | :? IMethodSymbol as methodSymbol ->
-                    let arguments = invocation.ArgumentList.Arguments
+                let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> invocation
+                let arguments = invocation.ArgumentList.Arguments
                    
-                    let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
-                    let chooseIntegerValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Int32
-                    let chooseDecimalValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Decimal
+                let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
+                let chooseIntegerValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Int32
+                let chooseDecimalValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Decimal
 
-                    if chooseBooleanValueMethodSymbol.Equals methodSymbol then
-                        let assignmentTarget = transformExpression arguments.[0].Expression
-                        GuardedCommandStatement [
-                            (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral true))
-                            (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral false))
-                        ]
+                if chooseBooleanValueMethodSymbol.Equals methodSymbol then
+                    let assignmentTarget = transformExpression arguments.[0].Expression
+                    GuardedCommandStatement [
+                        (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral true))
+                        (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral false))
+                    ]
 
-                    elif chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
-                        let assignmentTarget = transformExpression arguments.[0].Expression
-                        let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
-                        let statements = expressions |> Seq.map (fun expression -> AssignmentStatement(assignmentTarget, expression))
-                        let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
-                        clauses |> List.ofSeq |> GuardedCommandStatement
-                    else
-                        invalidOp "Unsupported C# Choose call: '%A'." invocation
-                | null -> invalidOp "Unable to determine symbol for invocation expression '%A'." invocation
-                | _ -> invalidOp "Unsupported C# method call: '%A'." invocation
+                elif chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
+                    let assignmentTarget = transformExpression arguments.[0].Expression
+                    let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
+                    let statements = expressions |> Seq.map (fun expression -> AssignmentStatement(assignmentTarget, expression))
+                    let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
+                    clauses |> List.ofSeq |> GuardedCommandStatement
+                else
+                    invalidOp "Unsupported C# Choose call: '%A'." invocation
 
             | _ -> invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
 

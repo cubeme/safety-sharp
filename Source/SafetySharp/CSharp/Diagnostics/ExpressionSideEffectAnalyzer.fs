@@ -35,13 +35,10 @@ open SafetySharp.CSharp.Extensions
 
 /// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
 type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback) =
-    inherit CSharpSyntaxWalker ()
+    inherit CSharpSyntaxVisitor ()
 
     /// Reports the node as a use of an unsupported C# feature.
     override this.DefaultVisit node                 = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
-
-    /// Constructors support all C# features, so we don't care about expression with side effects here.
-    override this.VisitConstructorDeclaration node  = () 
 
     (* Supported C# syntax elements *)
     override this.VisitIdentifierName node          = ()
@@ -53,24 +50,22 @@ type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel
     // For now, allow method invocations only when the result is immediately assigned to a variable 
     // as well as invocations of void returning methods.
     override this.VisitInvocationExpression node =
-        let symbolInfo = semanticModel.GetSymbolInfo node
-        match symbolInfo.Symbol with
-        | :? IMethodSymbol as methodSymbol ->
-            // Choose methods are always ok
-            if methodSymbol.ContainingType = semanticModel.GetTypeSymbol<Choose> () then
+        let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> node
+            
+        // Choose methods are always ok
+        if methodSymbol.ContainingType = semanticModel.GetTypeSymbol<Choose> () then
+            ()
+        else
+            match node.Parent with
+            // A single invocation on the right hand side of an assignment is ok
+            | :? BinaryExpressionSyntax as binaryExpression 
+                when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
+                        (binaryExpression.Parent :? ExpressionStatementSyntax) ->
                 ()
-            else
-                match node.Parent with
-                // A single invocation on the right hand side of an assignment is ok
-                | :? BinaryExpressionSyntax as binaryExpression 
-                    when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
-                         (binaryExpression.Parent :? ExpressionStatementSyntax) ->
-                    ()
-                // As are invocations of void returning methods
-                | :? ExpressionStatementSyntax -> ()
-                // All other invocations are not supported at the moment
-                | _ -> this.DefaultVisit node
-        | _ -> invalidOp "Unable to determine method symbol for invocation '%A'." node
+            // Invocations of methods as a single statement are also ok
+            | :? ExpressionStatementSyntax -> ()
+            // All other invocations are not supported at the moment
+            | _ -> this.DefaultVisit node
 
     override this.VisitBinaryExpression node = 
         match node.CSharpKind () with

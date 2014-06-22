@@ -26,6 +26,7 @@ open System.Collections.Immutable
 open SafetySharp.Metamodel
 open SafetySharp.Utilities
 open SafetySharp.CSharp.Roslyn
+open SafetySharp.CSharp.Extensions
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
@@ -47,12 +48,8 @@ module internal ExpressionTransformation =
             | _ -> invalidOp "Unsupported C# literal: '%A'" kind
 
         | IdentifierName identifier ->
-            let symbolInfo = semanticModel.GetSymbolInfo identifier
-            let symbol = symbolInfo.Symbol;
-
-            match symbol with
-            | :? IFieldSymbol as field -> FieldAccessExpression (symbolResolver.ResolveField field, None)
-            | _ -> invalidOp "Unable to determine symbol for identifier '{%A}'." identifier
+            let fieldSymbol = semanticModel.GetSymbol<IFieldSymbol> identifier
+            FieldAccessExpression (symbolResolver.ResolveField fieldSymbol, None)
 
         | ParenthesizedExpression expression ->
             transform expression

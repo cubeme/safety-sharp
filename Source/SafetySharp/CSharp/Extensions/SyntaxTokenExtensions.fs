@@ -33,18 +33,23 @@ open SafetySharp.Utilities
 module SyntaxTokenExtensions =
     type SyntaxToken with
 
-        /// Removes all leading and trailing trivia from the syntax node.
+        /// Removes all leading and trailing trivia from the syntax token.
         member this.RemoveTrivia () =
             this.WithLeadingTrivia().WithTrailingTrivia()
 
-        /// Adds the given leading and trailing trivia to the syntax node.
+        /// Adds the given leading and trailing trivia to the syntax token.
         member this.AddTrivia (leadingTrivia : SyntaxTriviaList) (trailingTrivia : SyntaxTriviaList) =
             this.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia)
 
-        /// Adds the trivia from the given syntax node to the current syntax node.
+        /// Adds the trivia from the given syntax node to the current syntax token.
         member this.AddTriviaFrom (node : SyntaxNode) =
+            nullArg node "node"
             this.WithLeadingTrivia(node.GetLeadingTrivia()).WithTrailingTrivia(node.GetTrailingTrivia())
 
-        /// Surrounds the syntax node with a single leading and trailing space.
+        /// Adds the trivia from the given syntax token to the current syntax token.
+        member this.AddTriviaFrom (token : SyntaxToken) =
+            this.WithLeadingTrivia(token.LeadingTrivia).WithTrailingTrivia token.TrailingTrivia
+
+        /// Surrounds the syntax token with a single leading and trailing space.
         member this.SurroundWithSingleSpace () =
             this.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia(SyntaxFactory.Space)

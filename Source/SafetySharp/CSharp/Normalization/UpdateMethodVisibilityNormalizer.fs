@@ -37,10 +37,9 @@ type UpdateMethodVisibilityNormalizer () =
     override this.VisitMethodDeclaration (declaration : MethodDeclarationSyntax) =
         if declaration.IsUpdateMethod this.semanticModel then
             let protectedModifier = declaration.Modifiers |> Seq.find (fun modifier -> modifier.ValueText = "protected")
-            let publicModifier = SyntaxFactory.Token (protectedModifier.LeadingTrivia, SyntaxKind.PublicKeyword, "public", 
-                                                      "public", protectedModifier.TrailingTrivia)
+            let publicModifier = SyntaxFactory.Token(SyntaxKind.PublicKeyword).AddTriviaFrom protectedModifier
 
             let modifiers = declaration.Modifiers.Replace (protectedModifier, publicModifier)
-            upcast (declaration.WithModifiers modifiers)
+            upcast declaration.WithModifiers modifiers
         else
             upcast declaration

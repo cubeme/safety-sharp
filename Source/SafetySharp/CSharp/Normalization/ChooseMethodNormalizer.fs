@@ -41,11 +41,7 @@ type ChooseMethodNormalizer () =
             upcast node
         else
             let invocation = node.Right :?> InvocationExpressionSyntax
-            let symbolInfo = this.semanticModel.GetSymbolInfo invocation
-            let methodSymbol = symbolInfo.Symbol :?> IMethodSymbol
-
-            if methodSymbol = null then
-                invalidOp "Unable to determine symbol of invocation '%A'." invocation
+            let methodSymbol = this.semanticModel.GetSymbol<IMethodSymbol> invocation
 
             if methodSymbol.ContainingType = this.semanticModel.GetTypeSymbol<Choose> () then
                 let outToken = SyntaxFactory.Token(SyntaxKind.OutKeyword).WithTrailingTrivia SyntaxFactory.Space

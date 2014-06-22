@@ -40,7 +40,7 @@ type ExpressionLifter () =
         if not requiresRewrite then
             upcast node
         else
-            let expression = SyntaxFactory.ParenthesizedLambdaExpression(node.Expression.RemoveTrivia ())
-            let expression = expression.WithArrowToken(expression.ArrowToken.SurroundWithSingleSpace ())
+            let expression = SyntaxFactory.ParenthesizedLambdaExpression (node.Expression.RemoveTrivia ())
+            let expression = expression.WithArrowToken (expression.ArrowToken.SurroundWithSingleSpace ())
             let expression = expression.AddTriviaFrom node.Expression
             upcast node.WithExpression expression

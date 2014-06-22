@@ -115,3 +115,15 @@ module SemanticModelExtensions =
         member this.GetUpdateMethodSymbol () =
             nullArg this "this"
             this.Compilation.GetUpdateMethodSymbol ()
+
+        /// Gets the symbol corresponding to the given syntax node.
+        member this.GetSymbol<'T when 'T :> ISymbol> (node : SyntaxNode) =
+            nullArg this "this"
+            nullArg node "node"
+
+            match this.GetSymbolInfo(node).Symbol with
+            | :? 'T as symbol -> symbol
+            | null -> invalidOp "Unable to determine symbol for syntax node '%A'." node
+            | symbol -> 
+                invalidOp "Expected a symbol of type '%s'. However, the actual symbol type for syntax node '%A' is '%s'."
+                          typeof<'T>.FullName node (symbol.GetType().FullName)

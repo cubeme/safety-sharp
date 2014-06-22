@@ -42,9 +42,7 @@ module ArgumentExtensions =
             nullArg semanticModel "semanticModel"
 
             let expression = this.GetMethodCallExpression ()
-            match semanticModel.GetSymbolInfo(expression :> ExpressionSyntax).Symbol with
-            | :? IMethodSymbol as methodSymbol -> methodSymbol
-            | _ -> invalidOp "Unable to determine symbol of method call '%A'." expression
+            semanticModel.GetSymbol<IMethodSymbol> expression
 
         /// Checks whether the <see cref="IParameterSymbol" /> corresponding to the <paramref name="argument" /> of a
         /// method call has the attribute of type <typeparamref name="T" /> applied.
