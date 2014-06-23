@@ -36,7 +36,8 @@ type NuXmvSpecification = SafetySharp.Modelchecking.NuXmv.Specification
 type NuXmvModuleTypeSpecifier = SafetySharp.Modelchecking.NuXmv.ModuleTypeSpecifier
 type NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
 
-type WriteOnceStatement = SimpleStatement
+
+
 
 type MetamodelToNuXmv (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
@@ -196,14 +197,9 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
                     this.transformSimpleGlobalFieldToAccessExpression simpleGlobalField mainModuleIdentifier
                     
     member this.transformSimpleExpression (expression:MMExpression) : NuXmvBasicExpression =
-        this.transformExpressionInsideAFormula (expression)
-            
-    
-    member this.simpleStatementToWriteOnceStatements (stmnts:SimpleStatement list) : WriteOnceStatement list =
-        //TODO: Description and Implementation
-        stmnts
-    (*
-    member this.transformWriteOnceStatement (statement:WriteOnceStatement) : SingleAssignConstraint =
+        this.transformExpressionInsideAFormula (expression)            
+
+    (*member this.transformWriteOnceStatement (statement:WriteOnceStatement) : SingleAssignConstraint =
         match statement with
             | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
                 let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) =
@@ -218,7 +214,8 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
                 let transformedTarget = this.transformSimpleGlobalFieldToVarref target
                 let transformedExpression = this.transformSimpleExpression expression
-                createAssignmentStatement transformedTarget transformedExpression*)
+                createAssignmentStatement transformedTarget transformedExpression
+    *)
 
     member this.transFormCtlFormula (formula:MMFormula) : CtlExpression =
         match formula with

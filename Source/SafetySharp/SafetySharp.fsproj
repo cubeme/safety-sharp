@@ -105,6 +105,7 @@
     <Compile Include="CSharp\ModelingAssembly.fs" />
     <Compile Include="Modelchecking\Common\FileWriter.fs" />
     <Compile Include="Modelchecking\Common\MetamodelToSimplifiedMetamodel.fs" />
+    <Compile Include="Modelchecking\Common\WriteOnceStatement.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
