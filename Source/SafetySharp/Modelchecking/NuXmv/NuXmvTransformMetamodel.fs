@@ -25,7 +25,6 @@ namespace SafetySharp.Modelchecking.NuXmv
 
 open SafetySharp.Modelchecking
 
-type NuXmvProgram = SafetySharp.Modelchecking.NuXmv.NuXmvProgram
 type NuXmvBasicExpression = SafetySharp.Modelchecking.NuXmv.BasicExpression
 type NuXmvConstExpression = SafetySharp.Modelchecking.NuXmv.ConstExpression
 type NuXmvSignSpecifier = SafetySharp.Modelchecking.NuXmv.SignSpecifier
@@ -36,6 +35,8 @@ type NuXmvLtlExpression = SafetySharp.Modelchecking.NuXmv.LtlExpression
 type NuXmvSpecification = SafetySharp.Modelchecking.NuXmv.Specification
 type NuXmvModuleTypeSpecifier = SafetySharp.Modelchecking.NuXmv.ModuleTypeSpecifier
 type NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
+
+type WriteOnceStatement = SimpleStatement
 
 type MetamodelToNuXmv (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
@@ -101,12 +102,14 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
         let varName = this.transformSimpleGlobalFieldToComplexIdentifier simpleGlobalField accessFromPartition
         NuXmvBasicExpression.ComplexIdentifierExpression (varName)
     
-    member this.generateFieldDeclarationsOfPartition (partition:Identifier) : ModuleElement =
+    member this.getFieldsToTransform (partition:Identifier) =
         let fields = toSimplifiedMetamodel.getSimpleGlobalFields
         let filterInCurrentPartition (field:SimpleGlobalField) =
             field.context.rootComponentName = partition.Name //return the boolean value of the comparision. Recall: This is no assignment
-        let fieldsToTransform =
-            fields |> List.filter filterInCurrentPartition
+        fields |> List.filter filterInCurrentPartition
+
+    member this.generateFieldDeclarationsOfPartition (partition:Identifier) : ModuleElement =
+        let fieldsToTransform = this.getFieldsToTransform partition
         let generateDecl (field:SimpleGlobalField) : TypedIdentifier =
             let _simpleType = match field.field.FieldSymbol.Type with
                                 | MMTypeSymbol.Boolean -> SimpleTypeSpecifier.BooleanTypeSpecifier
@@ -121,40 +124,32 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
         fieldsToTransform |> List.map generateDecl
                           |> ModuleElement.VarDeclaration
 
-
-    (*
-    member this.generateFieldInitialisations : PrStatement list =
-        let fields = toSimplifiedMetamodel.getSimpleGlobalFields
-        let generateInit (field:SimpleGlobalField) : PrStatement =
-            let generateSequence (initialValue : obj) : PrSequence =
-                let assignVarref = this.transformSimpleGlobalFieldToVarref field
-                let assignExpr =
-                    match initialValue with
-                        | :? int as value -> PrExpression.Const(PrConst.Number(value))
-                        | :? bool as value -> match value with
-                                                | true  -> PrExpression.Const(PrConst.True)
-                                                | false -> PrExpression.Const(PrConst.False)
+    member this.generateInitialisations (partition:Identifier) : SingleAssignConstraint list =
+        let fieldsToTransform = this.getFieldsToTransform partition
+        let generateSingleInit (field:SimpleGlobalField) =
+            let identifier = this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier field
+            let generateInitialValueExpression (initialValue:obj): BasicExpression =
+                match initialValue with
+                        | :? int as value -> value |> (fun value -> new bigint(value))
+                                                   |> ConstExpression.IntegerConstant
+                                                   |> BasicExpression.ConstExpression
+                        | :? bool as value -> value |> ConstExpression.BooleanConstant
+                                                    |> BasicExpression.ConstExpression
                         | _ -> failwith "NotImplementedYet"
-                //also possible to add a "true" as a guard to the returned sequence
-                statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]
-                
-            field.field.InitialValues |> List.map generateSequence
-                                      |> PrOptions.Options
-                                      |> PrStatement.IfStmnt
-        fields |> List.map generateInit
-    
+            let initialValues = field.field.InitialValues |> List.map generateInitialValueExpression
+                                                          |> BasicExpression.SetExpression                
+            SingleAssignConstraint.InitialStateAssignConstraint(identifier,initialValues)
+        fieldsToTransform |> List.map generateSingleInit
 
-    member this.generatePartitionUpdateCode (partition:MMPartitionObject) : PrStatement list=
-        let partitionUpdateInSimpleStatements = toSimplifiedMetamodel.partitionUpdateInSimpleStatements partition
-        let transformedSimpleStatements = partitionUpdateInSimpleStatements |> List.map this.transformSimpleStatement
-        transformedSimpleStatements
-
-    // This is currently a TODO
-    member this.generatePartitionBindingCode =
-        ""
-    *)
-
-
+    member this.generatePartition (partition:Identifier) : ModuleDeclaration =
+        let fieldDecls = this.generateFieldDeclarationsOfPartition partition
+        let otherPartitionIdentifier = []
+        {
+            ModuleDeclaration.Identifier = partition;
+            ModuleDeclaration.ModuleParameters = otherPartitionIdentifier;
+            ModuleDeclaration.ModuleElements = [fieldDecls];
+        }
+        
 
     member this.transformExpressionInsideAFormula (expression:MMExpression) : NuXmvBasicExpression =
         match expression with
@@ -203,8 +198,12 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
     member this.transformSimpleExpression (expression:MMExpression) : NuXmvBasicExpression =
         this.transformExpressionInsideAFormula (expression)
             
+    
+    member this.simpleStatementToWriteOnceStatements (stmnts:SimpleStatement list) : WriteOnceStatement list =
+        //TODO: Description and Implementation
+        stmnts
     (*
-    member this.transformSimpleStatement (statement:SimpleStatement) : PrStatement =
+    member this.transformWriteOnceStatement (statement:WriteOnceStatement) : SingleAssignConstraint =
         match statement with
             | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
                 let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) =
@@ -219,31 +218,63 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
                 let transformedTarget = this.transformSimpleGlobalFieldToVarref target
                 let transformedExpression = this.transformSimpleExpression expression
-                createAssignmentStatement transformedTarget transformedExpression
+                createAssignmentStatement transformedTarget transformedExpression*)
 
-    member this.transformFormula (formula:MMFormula) : PrFormula =
-        //TODO: check if LTL
+    member this.transFormCtlFormula (formula:MMFormula) : CtlExpression =
         match formula with
-             | MMFormula.StateFormula (stateExpression : MMExpression) ->
-                PrFormula.PropositionalStateFormula(this.transformExpressionInsideAFormula stateExpression)
-             | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
-                let transformedOperand = this.transformFormula operand
-                match operator with
-                    | MMUnaryFormulaOperator.Not      -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Not,transformedOperand)
-                    | MMUnaryFormulaOperator.Next     -> failwith "UnaryTemporalOperator.Next not yet implemented in Promela. There are diverse problems with it. Read http://spinroot.com/spin/Man/ltl.html"
-                    | MMUnaryFormulaOperator.Finally  -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Eventually,transformedOperand)
-                    | MMUnaryFormulaOperator.Globally -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Always,transformedOperand)
-                    | _ -> failwith "No CTL available"
-             | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
-                let transformedLeft = this.transformFormula leftFormula
-                let transformedRight = this.transformFormula rightFormula
-                match operator with
-                    | MMBinaryFormulaOperator.And         -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.And,transformedRight)
-                    | MMBinaryFormulaOperator.Or          -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Or,transformedRight)
-                    | MMBinaryFormulaOperator.Implication -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Implies,transformedRight)
-                    | MMBinaryFormulaOperator.Equivalence -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Equals,transformedRight)
-                    | MMBinaryFormulaOperator.Until       -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Until,transformedRight)
-                    | _ -> failwith "No CTL available"
+                 | MMFormula.StateFormula (stateExpression : MMExpression) ->
+                    CtlExpression.CtlSimpleExpression(this.transformExpressionInsideAFormula stateExpression)
+                 | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
+                    let transformedOperand = this.transFormCtlFormula operand
+                    match operator with
+                        | MMUnaryFormulaOperator.Not                -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.LogicalNot,transformedOperand)
+                        | MMUnaryFormulaOperator.AllPathsNext       -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ForallNext,transformedOperand)
+                        | MMUnaryFormulaOperator.AllPathsFinally    -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ForallFinally,transformedOperand)
+                        | MMUnaryFormulaOperator.AllPathsGlobally   -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ForallGlobally,transformedOperand)
+                        | MMUnaryFormulaOperator.ExistsPathNext     -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ExistsNextState,transformedOperand)
+                        | MMUnaryFormulaOperator.ExistsPathFinally  -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ExistsFinally,transformedOperand)
+                        | MMUnaryFormulaOperator.ExistsPathGlobally -> CtlExpression.CtlUnaryExpression(CtlUnaryOperator.ExistsGlobally,transformedOperand)
+                        | _ -> failwith "Only CTL allowed in CTL-Mode"
+                 | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
+                    let transformedLeft = this.transFormCtlFormula leftFormula
+                    let transformedRight = this.transFormCtlFormula rightFormula
+                    match operator with
+                        | MMBinaryFormulaOperator.And             -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalAnd,transformedRight)
+                        | MMBinaryFormulaOperator.Or              -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalOr,transformedRight)
+                        | MMBinaryFormulaOperator.Implication     -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalImplies,transformedRight)
+                        | MMBinaryFormulaOperator.Equivalence     -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.LogicalEquivalence,transformedRight)
+                        | MMBinaryFormulaOperator.AllPathsUntil   -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.ForallUntil,transformedRight)
+                        | MMBinaryFormulaOperator.ExistsPathUntil -> CtlExpression.CtlBinaryExpression(transformedLeft,CtlBinaryOperator.ExistsUntil,transformedRight)
+                        | _ -> failwith "Only CTL allowed in CTL-Mode"
 
+    member this.transFormLtlFormula (formula:MMFormula) : LtlExpression =
+        match formula with
+                 | MMFormula.StateFormula (stateExpression : MMExpression) ->
+                    LtlExpression.LtlSimpleExpression(this.transformExpressionInsideAFormula stateExpression)
+                 | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
+                    let transformedOperand = this.transFormLtlFormula operand
+                    match operator with
+                        | MMUnaryFormulaOperator.Not      -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.LogicalNot,transformedOperand)
+                        | MMUnaryFormulaOperator.Next     -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.FutureNext,transformedOperand)
+                        | MMUnaryFormulaOperator.Finally  -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.FutureFinally,transformedOperand)
+                        | MMUnaryFormulaOperator.Globally -> LtlExpression.LtlUnaryExpression(LtlUnaryOperator.FutureGlobally,transformedOperand)
+                        | _ -> failwith "Only LTL allowed in LTL-Mode"
+                 | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
+                    let transformedLeft = this.transFormLtlFormula leftFormula
+                    let transformedRight = this.transFormLtlFormula rightFormula
+                    match operator with
+                        | MMBinaryFormulaOperator.And         -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalAnd,transformedRight)
+                        | MMBinaryFormulaOperator.Or          -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalOr,transformedRight)
+                        | MMBinaryFormulaOperator.Implication -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalImplies,transformedRight)
+                        | MMBinaryFormulaOperator.Equivalence -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.LogicalEquivalence,transformedRight)
+                        | MMBinaryFormulaOperator.Until       -> LtlExpression.LtlBinaryExpression(transformedLeft,LtlBinaryOperator.FutureUntil,transformedRight)
+                        | _ -> failwith "Only LTL allowed in LTL-Mode"
 
-                    *)
+    member this.transformFormula (formula:MMFormula) : Specification =
+        if formula.IsLtl() then
+            this.transFormLtlFormula formula |> Specification.LtlSpecification
+        else if formula.IsCtl() then
+            this.transFormCtlFormula formula |> Specification.CtlSpecification
+        else
+            failwith "NotImplementedYet"
+                    
