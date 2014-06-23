@@ -68,6 +68,9 @@ type MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
 type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 
 
+// TODO: Ensure reverse mapping is working for debugging purposes
+// TODO: Move much of the stuff into file SimplifiedMetamodel
+
 type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
 
 type Context = {
@@ -80,13 +83,35 @@ type Context = {
     rootComponentName : string; //only the name of the root component
 }
 
+// TODO: Divide in artificialWithLinkToMetamodel, fullyArtificial and linkedToMetamodel
 type SimpleGlobalField = {
     context : Context;
     field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
 }
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
-type SimpleExpression = MMExpression 
+type SimpleExpression = 
+    /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
+    | BooleanLiteral of Value : bool
+
+    /// Represents an integer value.
+    | IntegerLiteral of Value : int
+
+    /// Represents a decimal value.
+    | DecimalLiteral of Value : decimal
+
+    /// Represents the application of an unary operator to an expression.
+    | UnaryExpression of Operand : SimpleExpression * Operator : MMUnaryOperator
+
+    /// Represents the application of a binary operator to two subexpressions.
+    | BinaryExpression of LeftExpression : SimpleExpression * Operator : MMBinaryOperator * RightExpression : SimpleExpression
+
+    /// Represents a field access, either for reading or writing. The component refrence is guaranteed to be 'None' within
+    /// method bodies and guaranteed to be some valid reference in formulas.
+    | FieldAccessExpression of Field : SimpleGlobalField
+
+
+
 // A simpleStatement has only assignments and guarded commands. Also Assignments are defined on SimpleGlobalFields
 type SimpleStatement = 
     | GuardedCommandStatement of (SimpleExpression * (SimpleStatement list) ) list //Guard (which knows its Context) * Statements
@@ -193,7 +218,9 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
 
         
         member this.createSimpleFieldAccessExpression (field:MMFieldSymbol) (comp:MMComponentObject): SimpleExpression =
-            SimpleExpression.FieldAccessExpression(field,Some(ComponentObjectToComponentReference comp))
+            let componentReference = ComponentObjectToComponentReference comp
+            let simpleGlobalField = this.resolveFieldAccessInsideAFormula componentReference field
+            SimpleExpression.FieldAccessExpression(simpleGlobalField)
 
         member this.getSimpleGlobalFields : SimpleGlobalField list =
             simpleGlobalFields

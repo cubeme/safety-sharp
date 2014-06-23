@@ -39,6 +39,7 @@ type WriteOnceStatement = SimpleStatement
 // - 2. maybe use idea of students in a thesis. Pool of ideas: Compiler
 // - 3. different algorithm on basis of wp-calculus
 // - 4. use simplifier of z3 (also appliable on result of 3)
+// - 5. try to use many defines in model checker or exculde artificial fields from state
 
 // One cache is valid for one sequence. Thus if a partition should be transformed, keep in mind, that its update
 // needs to be transformed with one cache. Otherwise the bindings or the updates work on outdated data (the

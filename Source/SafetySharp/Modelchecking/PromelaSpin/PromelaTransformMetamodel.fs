@@ -137,7 +137,7 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     
 
 
-
+    // TODO: maybe an alternative is to transform a formula to a SimpleFormula
     member this.transformExpressionInsideAFormula (expression:MMExpression) : PrExpression =
         match expression with
             | MMExpression.BooleanLiteral (value:bool) ->
@@ -180,8 +180,41 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
                     let varref = this.transformSimpleGlobalFieldToVarref simpleGlobalField
                     PrExpression.Varref varref
                     
-    member this.transformSimpleExpression (expression:MMExpression) : PrExpression =
-        this.transformExpressionInsideAFormula (expression)
+    member this.transformSimpleExpression (expression:SimpleExpression) : PrExpression =
+        match expression with
+            | SimpleExpression.BooleanLiteral (value:bool) ->
+                match value with
+                    | true ->  PrExpression.Const(PrConst.True)
+                    | false -> PrExpression.Const(PrConst.False)
+            | SimpleExpression.IntegerLiteral (value:int) ->
+                PrExpression.Const(PrConst.Number(value))
+            | SimpleExpression.DecimalLiteral (value:decimal) ->
+                failwith "NotImplementedYet"
+            | SimpleExpression.UnaryExpression (operand:SimpleExpression, operator:MMUnaryOperator) ->
+                let transformedOperand = this.transformSimpleExpression operand
+                match operator with
+                    | MMUnaryOperator.LogicalNot -> PrExpression.UnaryExpr(PrUnarop.Not,transformedOperand)
+                    | MMUnaryOperator.Minus      -> PrExpression.UnaryExpr(PrUnarop.Neg,transformedOperand)
+            | SimpleExpression.BinaryExpression (leftExpression:SimpleExpression, operator:MMBinaryOperator, rightExpression : SimpleExpression) ->
+                let transformedLeft = this.transformSimpleExpression leftExpression
+                let transformedRight = this.transformSimpleExpression rightExpression
+                match operator with
+                    | MMBinaryOperator.Add                -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Add,transformedRight)
+                    | MMBinaryOperator.Subtract           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Min,transformedRight)
+                    | MMBinaryOperator.Multiply           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mul,transformedRight)
+                    | MMBinaryOperator.Divide             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Div,transformedRight)
+                    | MMBinaryOperator.Modulo             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mod,transformedRight)
+                    | MMBinaryOperator.LogicalAnd         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.And),transformedRight)
+                    | MMBinaryOperator.LogicalOr          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.Or),transformedRight)
+                    | MMBinaryOperator.Equals             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Eq,transformedRight)
+                    | MMBinaryOperator.NotEquals          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Neq,transformedRight)
+                    | MMBinaryOperator.LessThan           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Lt,transformedRight)
+                    | MMBinaryOperator.LessThanOrEqual    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
+                    | MMBinaryOperator.GreaterThan        -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
+                    | MMBinaryOperator.GreaterThanOrEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
+            | SimpleExpression.FieldAccessExpression (field:SimpleGlobalField) ->
+                let varref = this.transformSimpleGlobalFieldToVarref field
+                PrExpression.Varref varref
             
 
     member this.transformSimpleStatement (statement:SimpleStatement) : PrStatement =
