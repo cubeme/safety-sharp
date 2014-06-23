@@ -75,8 +75,9 @@ type Context = {
 //       and a ComponentContext for the fields in them. If this isn't necessary in the future, then remove Context by a mapping
 //       MMComponentObject->string list
 //       Also makes the simplified metamodel independent from the full metamodel
-    componentObject : MMComponentObject;
-    hierarchicalAccess : string list;  // hierarchicalAccess also contains the name of container. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1(::parentOfSubComponent1)*::rootComponent. Construction is done in "collectFields"
+    componentObject : MMComponentObject;     
+    hierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
+    rootComponentName : string; //only the name of the root component
 }
 
 type SimpleGlobalField = {
@@ -119,12 +120,14 @@ type ContextCache (configuration:MMConfiguration) =
         member this.createContextOfRootComponent (partition:MMPartitionObject) : Context =
             {
                 Context.componentObject = partition.RootComponent;
-                Context.hierarchicalAccess = [nameOfRootComponent partition.RootComponent];
+                Context.hierarchicalAccess = [];
+                Context.rootComponentName = nameOfRootComponent partition.RootComponent;
             }
         member this.createContextForSubcomponent (parentContext:Context) (newElementName:string) (comp:MMComponentObject) : Context =
             {
                 Context.componentObject = comp;
                 Context.hierarchicalAccess = newElementName::parentContext.hierarchicalAccess; //parentsAndMe
+                Context.rootComponentName = parentContext.rootComponentName;
             }
 
 

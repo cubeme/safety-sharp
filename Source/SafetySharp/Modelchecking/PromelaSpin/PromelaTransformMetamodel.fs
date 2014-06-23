@@ -57,9 +57,9 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     
     // THIS IS THE MAIN FUNCTION AND ENTRY POINT
     member this.transformConfiguration  : PrSpec =
-        let varModule = this.generateFieldDeclarations toSimplifiedMetamodel.getSimpleGlobalFields
+        let varModule = this.generateFieldDeclarations
         
-        let fieldInitialisations = this.generateFieldInitialisations toSimplifiedMetamodel.getSimpleGlobalFields
+        let fieldInitialisations = this.generateFieldInitialisations
         
         //updates and bindings: Cover them in an endless loop
         let partitionStatements =
@@ -78,22 +78,21 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
 
 
     member this.transformSimpleGlobalFieldToName (simpleGlobalField : SimpleGlobalField) =
-        //TODO: Besides compName+fieldName is something unique inside the model we cannot. But it is not guaranteed the name is readable or even supported by the model checker 
-        // so write a method to find a better name.
         // this is something model checker specific, as different model checkers may have different constraints for identifier
-        //let partitionName = "pA" //partition has no name, use A as dummy. TODO: find something better
+        let partitionName = "p" + simpleGlobalField.context.rootComponentName + "_"
         let hierarchicalAccessName =
             simpleGlobalField.context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
                                                  |> List.map (fun elem -> "c"+elem) //add c in front of every element
                                                  |> String.concat "_"
         let fieldName = "_f"+simpleGlobalField.field.FieldSymbol.Name
-        sprintf "%s%s" hierarchicalAccessName fieldName
+        sprintf "%s%s%s" partitionName hierarchicalAccessName fieldName
 
     member this.transformSimpleGlobalFieldToVarref (simpleGlobalField : SimpleGlobalField) =
         let varName = this.transformSimpleGlobalFieldToName simpleGlobalField
         PrVarref.Varref(varName,None,None)
     
-    member this.generateFieldDeclarations (fields : SimpleGlobalField list) : PrModule =
+    member this.generateFieldDeclarations : PrModule =
+        let fields = toSimplifiedMetamodel.getSimpleGlobalFields
         let generateDecl (field:SimpleGlobalField) : PrOneDecl =
             let _type = match field.field.FieldSymbol.Type with
                             | MMTypeSymbol.Boolean -> PrTypename.Bool
@@ -106,7 +105,8 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
                |> PrDeclLst.DeclLst
                |> PrModule.GlobalVarsAndChans
 
-    member this.generateFieldInitialisations (fields : SimpleGlobalField list) : PrStatement list =
+    member this.generateFieldInitialisations : PrStatement list =
+        let fields = toSimplifiedMetamodel.getSimpleGlobalFields
         let generateInit (field:SimpleGlobalField) : PrStatement =
             let generateSequence (initialValue : obj) : PrSequence =
                 let assignVarref = this.transformSimpleGlobalFieldToVarref field
