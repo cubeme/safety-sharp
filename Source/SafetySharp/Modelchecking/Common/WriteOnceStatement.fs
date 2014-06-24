@@ -28,7 +28,7 @@ open SafetySharp.Modelchecking
 type WriteOnceExpression = SimpleExpression
 type WriteOnceGlobalField = SimpleGlobalField
 
-type WriteOnceOption = {
+type WriteOncePossibleEffect = {
     TakenDecisions : WriteOnceExpression list;
     TargetEffect : WriteOnceExpression;
 } with 
@@ -42,7 +42,7 @@ type WriteOnceOption = {
 // A WriteOnceStatement is always an assignment
 type WriteOnceStatement = {
     Target : WriteOnceGlobalField;
-    Options : WriteOnceOption list;
+    PossibleEffects : WriteOncePossibleEffect list;
 } 
 
 
@@ -68,49 +68,57 @@ type WriteOnceStatement = {
 // - Solution 1: Introduce artifical fields in Simplified Metamodel, refactor SimpleExpression and SimpleStatement. WriteOnceStatement/Metamodel is only a restricted version of Statement. Simplified Metamodel could introduce a check "IsWriteOnce" and contain a "ToWriteOnce"-Member
 // - Solution 2: Let WriteOnceType be something on its own. A field could be Artificial
 
-(*
+
 type WriteOnceTypeArtificialCacheType = {
-    Cache : Map<Context,SimpleGlobalField>;
+    CurrentMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField> ref;
 } with
-    member this.makeAssignment =
-        ""
-    member this.popDecision =
-        ""
-    member this.pushDecision =
-        ""
-    member this.getCurrentAssignment =
-        ""
-    member this.getCurrentDecisionsAsSimpleExpression =
-        ""
-*)
-        (*
+    static member Initialize (fieldsOfPartition:SimpleGlobalField list) =
+        let initializeCurrentValueMap  : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
+            let createEntry (fieldOfPartition:SimpleGlobalField) : (SimpleGlobalFieldWithContext*SimpleGlobalField) =
+                ""
+            fieldsOfPartition |> List.map createEntry
+                              |> Map.ofList
+        {
+            WriteOnceTypeArtificialCacheType.CurrentMapping = ref initializeCurrentValueMap
+        }
+
+type WriteOnceStatementsTainted = SimpleGlobalFieldWithContext list
+
 type SimpleStatementsToWriteOnceStatements =
 
-    member this.simpleStatementToWriteOnceStatementsCached (stmnts:SimpleStatement list) : WriteOnceStatement list =
-        let transformSimpleStatement (statement:SimpleStatement) (map:=
+    // returns the converted Statements and a list of variables, which got touched in the conversion progress
+    member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (stmnts:SimpleStatement list) (cache:WriteOnceTypeArtificialCacheType) : (WriteOnceStatement list*WriteOnceStatementsTainted) =
+        let transformSimpleStatement (statement:SimpleStatement) =
             match statement with
                 | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
-                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) =
-                        let transformedGuard = this.transformSimpleExpression guard
-                        let transformedGuardStmnt = anyExprToStmnt transformedGuard
-                        let transformedSequence = sequence |> List.map this.transformSimpleStatement
-                        let promelaSequence = statementsToSequence (transformedGuardStmnt::transformedSequence)
-                        promelaSequence
-                    optionsOfGuardedCommand |> List.map transformOption
-                                            |> PrOptions.Options
-                                            |> PrStatement.IfStmnt
+                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : (WriteOnceStatement list*WriteOnceStatementsTainted) =
+                        let takenDecisions = guard::takenDecisions
+                        let transformedOption = this.simpleStatementToWriteOnceStatementsCached takenDecisions sequence cache
+                        (transformedOption,[])
+
+                    // Sequential Code of every Branch (flat, without any recursions)
+                    let (codeOfBranches) = optionsOfGuardedCommand |> List.collect transformOption
+                    let codeToMergeBranches = [] //TODO: Write code, which allows merging of the changed Variables on a return
+                    codeOfBranches @ codeToMergeBranches                    
+
                 | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
-                    let transformedTarget = this.transformSimpleGlobalFieldToVarref target
-                    let transformedExpression = this.transformSimpleExpression expression
-                    createAssignmentStatement transformedTarget transformedExpression
+                    
+                    let rewrittenTarget = target //TODO: Variable rewrite here
+                    let effect = {
+                            WriteOncePossibleEffect.TakenDecisions = takenDecisions;
+                            WriteOncePossibleEffect.TargetEffect = expression;
+                    }
+                    let statement = {
+                            WriteOnceStatement.PossibleEffects = [effect];
+                            WriteOnceStatement.Target = rewrittenTarget;
+                    }
+                    [statement]
         
-        let initializeMap (fields:fieldsOfPartition) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
-            Map<SimpleGlobalFieldWithContext,SimpleGlobalField>
-        let  = ref 
-        //failwith "cannot only write to field of this partition"
+                    
+        //TODO: failwith "cannot only write to field of this partition"
         []
     
     member this.simpleStatementToWriteOnceStatements (stmnts:SimpleStatement list) : WriteOnceStatement list =
-        //TODO: Description and Implementation
+        
+
         []
-        *)
