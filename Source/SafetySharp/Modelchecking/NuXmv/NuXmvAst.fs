@@ -147,9 +147,9 @@ and IdentifierNextExpressionTuple = {
 }
 
 and SingleAssignConstraint = // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
-    | CurrentStateAssignConstraint of Identifier:Identifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
-    | InitialStateAssignConstraint of Identifier:Identifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
-    | NextStateAssignConstraint of Identifier:Identifier * Expression:NextExpression
+    | CurrentStateAssignConstraint of Identifier:ComplexIdentifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
+    | InitialStateAssignConstraint of Identifier:ComplexIdentifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
+    | NextStateAssignConstraint of Identifier:ComplexIdentifier * Expression:NextExpression
 
 and ModuleElement =
     | VarDeclaration of Variables:(TypedIdentifier list) // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.

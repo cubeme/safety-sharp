@@ -38,11 +38,6 @@ namespace SafetySharp.Modelchecking
 //      - a Guarded Command = List of Options, Option = Guards (Expression) and a Sequence (List of SimpleStatements)
 //  * A SimpleGlobalField is a struct, which encapsulates all information about a Global Field in the Simplified Metamodel
 
-// Maybe TODO:
-// The Simplified Metamodel is still connected to the Full Metamodell, because it links to some of its artifacts
-// (Context uses MMComponentObject,SimpleExpression knows MMComponentObject...). If we get rid of it and replace it with a simple mapping, the Simplified
-// Metamodel is completly independent of the Full Metamodel, testing is easier. Until now we don't really need it. This keeps the code smaller and less redundancy.
-
 type MMModelObject = SafetySharp.Metamodel.ModelObject
 type MMPartitionObject = SafetySharp.Metamodel.PartitionObject
 type MMComponentObject = SafetySharp.Metamodel.ComponentObject
@@ -80,24 +75,22 @@ type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 //       - Introduce one extra case: "MMReference of MMX * SimpleX" and member-Functions "dereference" and "recursiveDereference"
 //              (I think I'll take this approach)
 
+// Maybe TODO:
+// The Simplified Metamodel is still connected to the Full Metamodel, because it links to some of its artifacts
+// (Context uses MMComponentObject,SimpleExpression knows MMComponentObject...). If we get rid of it and replace it with a simple mapping, the Simplified
+// Metamodel is completly independent of the Full Metamodel, testing is easier. Until now we don't really need it. This keeps the code smaller and less redundancy.
+
 // TODO: Move much of the stuff into file SimplifiedMetamodel
 
-// TODO: Replace
 type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
 
-//type ContextToComponentObjectMap = Map<Context,>
-
 type Context = {
-// TODO: Decided to keep after my refactoring: Maybe later we need to differentiate between a temporary Context for temporary components
-//       and a ComponentContext for the fields in them. If this isn't necessary in the future, then remove Context by a mapping
-//       MMComponentObject->string list
-//       Also makes the simplified metamodel independent from the full metamodel
     hierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
     rootComponentName : string; //only the name of the root component
 }
 
 type SimpleGlobalField =
-    | FieldLinkedToMetamodel of ComponentObject : MMComponentObject * Context : Context * Field : MMFieldObject //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
+    | FieldLinkedToMetamodel of ComponentObject : MMComponentObject * Context : Context * Field : MMFieldObject
     //| FieldArtificialWithReferenceToFieldInMetamodel of ReferencedField : SimpleGlobalField * FieldName : string //ReferencedField
  // | FieldArtifical of Context : (Context option) * FieldSymbol : MMFieldSymbol * InitialValues : (obj list)
     with

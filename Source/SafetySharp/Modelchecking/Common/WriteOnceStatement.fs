@@ -25,7 +25,26 @@ namespace SafetySharp.Modelchecking.NuXmv
 
 open SafetySharp.Modelchecking
 
-type WriteOnceStatement = SimpleStatement
+type WriteOnceExpression = SimpleExpression
+type WriteOnceGlobalField = SimpleGlobalField
+
+type WriteOnceOption = {
+    TakenDecisions : WriteOnceExpression list;
+    TargetEffect : WriteOnceExpression;
+} with 
+    member this.getTakenDecisionsAsCondition: WriteOnceExpression =
+        if this.TakenDecisions.IsEmpty then
+            WriteOnceExpression.BooleanLiteral(true)
+        else
+            // Concat every element with a logical and
+            this.TakenDecisions.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalAnd,acc)) this.TakenDecisions.Head
+
+// A WriteOnceStatement is always an assignment
+type WriteOnceStatement = {
+    Target : WriteOnceGlobalField;
+    Options : WriteOnceOption list;
+} 
+
 
 // contains information, which Decicions have already been taken in the current statement
 // - if an assignment is done, write it to a new variable (an artificial field), if it is not the last assignment to this variable

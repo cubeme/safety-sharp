@@ -317,12 +317,12 @@ type ExportNuXmvAstToFile() =
                 let ExportSingleAssignConstraint (singleAssignConstraint:SingleAssignConstraint) = 
                     // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
                     match singleAssignConstraint with
-                        | CurrentStateAssignConstraint (identifier:Identifier, expression:SimpleExpression) -> 
-                            sprintf "%s := %s;" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
-                        | InitialStateAssignConstraint (identifier:Identifier, expression:SimpleExpression) ->
-                            sprintf "init(%s) := %s;" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
-                        | NextStateAssignConstraint (identifier:Identifier, expression:NextExpression) ->
-                            sprintf "next(%s) := %s;" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+                        | CurrentStateAssignConstraint (identifier:ComplexIdentifier, expression:SimpleExpression) -> 
+                            sprintf "%s := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
+                        | InitialStateAssignConstraint (identifier:ComplexIdentifier, expression:SimpleExpression) ->
+                            sprintf "init(%s) := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
+                        | NextStateAssignConstraint (identifier:ComplexIdentifier, expression:NextExpression) ->
+                            sprintf "next(%s) := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
                 // Chapter 2.3.8 ASSIGN Constraint p 28-29
                 let content = assigns |> List.map ExportSingleAssignConstraint
                                       |> joinWithNewLine
