@@ -83,9 +83,10 @@ type Context = {
     rootComponentName : string; //only the name of the root component
 }
 
-// TODO: Divide in artificialWithLinkToMetamodel, fullyArtificial and linkedToMetamodel
 type SimpleGlobalField = 
     | FieldLinkedToMetamodel of Context : Context * Field : MMFieldObject //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
+    //| FieldArtificialWithReferenceToFieldInMetamodel of ReferencedField : SimpleGlobalField * FieldName : string //ReferencedField
+ // | FieldArtifical of Context : (Context option) * FieldSymbol : MMFieldSymbol * InitialValues : (obj list)
     with
         member this.getFieldSymbol =
             match this with
@@ -93,6 +94,14 @@ type SimpleGlobalField =
         member this.getInitialValues =
             match this with
                 | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.InitialValues
+        member this.hasContext =
+            match this with
+                | SimpleGlobalField.FieldLinkedToMetamodel _ -> true
+                | _ -> false
+        member this.getContext =
+            match this with
+                | SimpleGlobalField.FieldLinkedToMetamodel (context,_) -> context
+                | _ -> failwith "this SimpleGlobalField has no context"
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
 type SimpleExpression = 

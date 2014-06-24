@@ -80,14 +80,15 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     member this.transformSimpleGlobalFieldToName (simpleGlobalField : SimpleGlobalField) =
         // this is something model checker specific, as different model checkers may have different constraints for identifier
         match simpleGlobalField with
-                    | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
-                        let partitionName = "p" + context.rootComponentName + "_"
-                        let hierarchicalAccessName =
-                            context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
-                                                                 |> List.map (fun elem -> "c"+elem) //add c in front of every element
-                                                                 |> String.concat "_"
-                        let fieldName = "_f"+field.FieldSymbol.Name
-                        sprintf "%s%s%s" partitionName hierarchicalAccessName fieldName
+            | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
+                let partitionName = "p" + context.rootComponentName + "_"
+                let hierarchicalAccessName =
+                    context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+                                                            |> List.map (fun elem -> "c"+elem) //add c in front of every element
+                                                            |> String.concat "_"
+                let fieldName = "_f"+field.FieldSymbol.Name
+                sprintf "%s%s%s" partitionName hierarchicalAccessName fieldName
+            | _ -> failwith "The Transformation of Promela Models does currently only support SimpleGlobalField.FieldLinkedToMetamodel"
 
     member this.transformSimpleGlobalFieldToVarref (simpleGlobalField : SimpleGlobalField) =
         let varName = this.transformSimpleGlobalFieldToName simpleGlobalField

@@ -72,25 +72,28 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
     member this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier (simpleGlobalField : SimpleGlobalField) : Identifier=
         // only use, when we know that simpleGlobalField is in the partition, the method calling this function, has
         // the partition of the simpleGlobalField in mind.
-        
+        if not simpleGlobalField.hasContext then
+            failwith "SimpleGlobalFields in this function must belong to a partition"
+        let flatSubcomponentName (context:Context) : string =
+            let itemsInOrderRootToLeaf =
+                context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+            itemsInOrderRootToLeaf.Tail |> List.map (fun elem -> sprintf "c%s_" elem)
+                                        |> String.concat ""
         match simpleGlobalField with
             | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
                 let fieldName = "f"+field.FieldSymbol.Name
-                let itemsInOrderRootToLeaf =
-                    context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
-                let flatSubcomponentName  = itemsInOrderRootToLeaf.Tail |> List.map (fun elem -> sprintf "c%s_" elem)
-                                                                        |> String.concat ""
-                let flattenedNameOfField=flatSubcomponentName+fieldName;
+                let flattenedNameOfField = (flatSubcomponentName context) + fieldName;
                 {Identifier.Name=flattenedNameOfField}
 
 
     member this.transformSimpleGlobalFieldToComplexIdentifier (simpleGlobalField : SimpleGlobalField) (accessFromPartition:Identifier) : ComplexIdentifier =
-        let transformFieldLinkedToMetamodel context field =
+        if simpleGlobalField.hasContext then
             // The arbitrarily complex hierarchy in the metamodel gets transformed into a two layer hierarchy: PartitionName.FlattenedNameOfField
             // The first Item in "simpleGlobalField.context.hierarchicalAccess" is the partition.
             // We want to put every partition into one module. We can associate each instanced field to its partition.
             // If the access comes from the current partition we leave out the partition in the returned partition name
             // If partitionName is empty, associate it with the main-module.
+            let context = simpleGlobalField.getContext
             let partitionIdentifier =
                 if not (context.rootComponentName = "") then
                     {Identifier.Name=("p" + context.rootComponentName)}
@@ -102,10 +105,9 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             else
                 let partitionContainerIdentifier = ComplexIdentifier.NameComplexIdentifier(partitionIdentifier)
                 ComplexIdentifier.NestedComplexIdentifier(partitionContainerIdentifier,fieldIdentifier)
+        else
+            failwith "SimpleGlobalFields without context not supported yet"
 
-        match simpleGlobalField with
-            | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
-                transformFieldLinkedToMetamodel context field
    
     member this.transformSimpleGlobalFieldToAccessExpression (simpleGlobalField : SimpleGlobalField) (accessFromPartition:Identifier) =
         let varName = this.transformSimpleGlobalFieldToComplexIdentifier simpleGlobalField accessFromPartition
@@ -114,9 +116,11 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
     member this.getFieldsToTransform (partition:Identifier) =
         let fields = toSimplifiedMetamodel.getSimpleGlobalFields
         let filterInCurrentPartition (field:SimpleGlobalField) =
-            match field with
-                | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
-                    context.rootComponentName = partition.Name //return the boolean value of the comparision. Recall: This is no assignment
+            if field.hasContext then
+                let context = field.getContext
+                context.rootComponentName = partition.Name //return the boolean value of the comparision. Recall: This is no assignment
+            else
+                false
         fields |> List.filter filterInCurrentPartition
 
     member this.generateFieldDeclarationsOfPartition (partition:Identifier) : ModuleElement =
