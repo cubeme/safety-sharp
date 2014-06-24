@@ -80,7 +80,7 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             itemsInOrderRootToLeaf.Tail |> List.map (fun elem -> sprintf "c%s_" elem)
                                         |> String.concat ""
         match simpleGlobalField with
-            | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
+            | SimpleGlobalField.FieldLinkedToMetamodel(_,context:Context, field:MMFieldObject) ->
                 let fieldName = "f"+field.FieldSymbol.Name
                 let flattenedNameOfField = (flatSubcomponentName context) + fieldName;
                 {Identifier.Name=flattenedNameOfField}

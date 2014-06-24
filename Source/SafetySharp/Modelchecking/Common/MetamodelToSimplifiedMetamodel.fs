@@ -69,38 +69,51 @@ type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 
 
 // TODO: Ensure reverse mapping is working for debugging purposes
+//       Traceability: Introduce a element, which allows it to connect SimpleExpressions with MMExpressions. Three ways to achieve this
+//       - Duplicate every discriminated union case of SimpleStatement, SimpleExpression, SimpleGlobalField to allow the case
+//         that the field is artificial or references a MM-equivalent
+//              (contra: bloats types)
+//       - Introduce a mapping
+//              (contra: bloats recursive call parameters and return parameters)
+//       - Introduce in every discriminated union case an optional element
+//              (contra: drag along information not really necessary in many cases)
+//       - Introduce one extra case: "MMReference of MMX * SimpleX" and member-Functions "dereference" and "recursiveDereference"
+//              (I think I'll take this approach)
+
 // TODO: Move much of the stuff into file SimplifiedMetamodel
 
+// TODO: Replace
 type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
+
+//type ContextToComponentObjectMap = Map<Context,>
 
 type Context = {
 // TODO: Decided to keep after my refactoring: Maybe later we need to differentiate between a temporary Context for temporary components
 //       and a ComponentContext for the fields in them. If this isn't necessary in the future, then remove Context by a mapping
 //       MMComponentObject->string list
 //       Also makes the simplified metamodel independent from the full metamodel
-    componentObject : MMComponentObject;     
     hierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
     rootComponentName : string; //only the name of the root component
 }
 
-type SimpleGlobalField = 
-    | FieldLinkedToMetamodel of Context : Context * Field : MMFieldObject //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
+type SimpleGlobalField =
+    | FieldLinkedToMetamodel of ComponentObject : MMComponentObject * Context : Context * Field : MMFieldObject //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
     //| FieldArtificialWithReferenceToFieldInMetamodel of ReferencedField : SimpleGlobalField * FieldName : string //ReferencedField
  // | FieldArtifical of Context : (Context option) * FieldSymbol : MMFieldSymbol * InitialValues : (obj list)
     with
         member this.getFieldSymbol =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.FieldSymbol
+                | SimpleGlobalField.FieldLinkedToMetamodel (_,_,field)-> field.FieldSymbol
         member this.getInitialValues =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.InitialValues
+                | SimpleGlobalField.FieldLinkedToMetamodel (_,_,field)-> field.InitialValues
         member this.hasContext =
             match this with
                 | SimpleGlobalField.FieldLinkedToMetamodel _ -> true
                 | _ -> false
         member this.getContext =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (context,_) -> context
+                | SimpleGlobalField.FieldLinkedToMetamodel (_,context,_) -> context
                 | _ -> failwith "this SimpleGlobalField has no context"
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
@@ -158,13 +171,11 @@ type ContextCache (configuration:MMConfiguration) =
         // accessor and helper functions (external use)
         member this.createContextOfRootComponent (partition:MMPartitionObject) : Context =
             {
-                Context.componentObject = partition.RootComponent;
                 Context.hierarchicalAccess = [];
                 Context.rootComponentName = nameOfRootComponent partition.RootComponent;
             }
         member this.createContextForSubcomponent (parentContext:Context) (newElementName:string) (comp:MMComponentObject) : Context =
             {
-                Context.componentObject = comp;
                 Context.hierarchicalAccess = newElementName::parentContext.hierarchicalAccess; //parentsAndMe
                 Context.rootComponentName = parentContext.rootComponentName;
             }
@@ -204,17 +215,16 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
         let simpleGlobalFields : SimpleGlobalField list =
             // This function works like this: collectFromPartition -> collectFromComponent -> collectFieldInThisComponent
             // It traverses the model and generates a list of all fields with all necessary information about the field (SimpleGlobalField)
-                       
-            let rec collectFromComponent (myContext:Context) : SimpleGlobalField list =
+            let rec collectFromComponent (componentObject:MMComponentObject) (myContext:Context) : SimpleGlobalField list =
                 let collectedInSubcomponents : SimpleGlobalField list =
-                    (getSubComponentObjects myContext.componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (contextCache.createContextForSubcomponent myContext name comp) )
+                    (getSubComponentObjects componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent comp (contextCache.createContextForSubcomponent myContext name comp) )
                 let collectFieldInThisComponent (fieldobject:MMFieldObject) =
-                    SimpleGlobalField.FieldLinkedToMetamodel(myContext,fieldobject)
-                let collectedInThisComponent = (getFieldObjects myContext.componentObject.Fields) |> List.map collectFieldInThisComponent 
+                    SimpleGlobalField.FieldLinkedToMetamodel(componentObject,myContext,fieldobject)
+                let collectedInThisComponent = (getFieldObjects componentObject.Fields) |> List.map collectFieldInThisComponent 
                 collectedInThisComponent @ collectedInSubcomponents
             let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
                 let contextOfCurrentPartitionRootComponent = contextCache.createContextOfRootComponent partition
-                collectFromComponent contextOfCurrentPartitionRootComponent
+                collectFromComponent partition.RootComponent contextOfCurrentPartitionRootComponent
             model.Partitions |> List.collect collectFromPartition
         
         // this resolves a field access inside a component to a SimpleGlobalField.FieldLinkedToMetamodel
@@ -222,8 +232,8 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
             //type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
             let converter (elem:SimpleGlobalField) =
                 match elem with
-                    | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
-                        [((context.componentObject.Name, field.FieldSymbol.Name),elem)] //return as list to allow List.collect
+                    | SimpleGlobalField.FieldLinkedToMetamodel(componentObject:MMComponentObject, context:Context, field:MMFieldObject) ->
+                        [((componentObject.Name, field.FieldSymbol.Name),elem)] //return as list to allow List.collect
                     | _ -> []
             simpleGlobalFields |> List.collect converter
                                |> Map.ofList
@@ -254,6 +264,7 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
 // Many steps are a sequence. Only use in this file
 type MMStepInfo = {
         context : Context;
+        componentObject:MMComponentObject;
         statement : MMStatement;
     }
 
@@ -273,7 +284,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
     let contextCache = ContextCache(configuration)
     let fieldCache = SimpleGlobalFieldCache(contextCache,configuration)
 
-    let rec resolveTargetOfAnAssignment (context:Context) (expression:MMExpression) : SimpleGlobalField =
+    let rec resolveTargetOfAnAssignment (componentObject:MMComponentObject) (context:Context) (expression:MMExpression) : SimpleGlobalField =
         // Use resolveSimpleGlobalFieldInCode only for expression inside components and not in formulas
         // Example of usage: Used on the left side of assignments
         match expression with
@@ -292,7 +303,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                     // if comp is set, then this expression is an expression inside a formula
                     failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
                 else
-                    SimpleGlobalField.FieldLinkedToMetamodel(context, (context.componentObject.Fields.Item field))
+                    SimpleGlobalField.FieldLinkedToMetamodel(componentObject, context, (componentObject.Fields.Item field))
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (fieldCache:SimpleGlobalFieldCache) (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
         match expression with
@@ -327,11 +338,13 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
         else
             let firstItem = toTransform.Head
             let statementToProcess = firstItem.statement
+            let componentObject = firstItem.componentObject
             let contextOfStatement = firstItem.context            
             let coverStatementWithContext (statement:MMStatement) =
                 {
                     MMStepInfo.context=contextOfStatement;
                     MMStepInfo.statement=statement;
+                    MMStepInfo.componentObject=componentObject;
                 }
             match statementToProcess with
                 | MMStatement.EmptyStatement ->
@@ -354,7 +367,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                     //      needs to be replaced. Thus this case should never be reached
                 | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
                     let transformOption ((guard,stmnt):MMExpression * MMStatement) :(SimpleExpression*(SimpleStatement list))=
-                        let transformedGuard = transformMMExpressionInsideAComponentToSimpleExpression fieldCache (contextOfStatement.componentObject) guard
+                        let transformedGuard = transformMMExpressionInsideAComponentToSimpleExpression fieldCache componentObject guard
                         let coveredStmnt = coverStatementWithContext stmnt
                         let transformedStmnts = transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver [] [coveredStmnt]
                         (transformedGuard,transformedStmnts)
@@ -365,8 +378,8 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
 
                 | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
                     //resolveTargetOfAnAssignment
-                    let transformedTarget = resolveTargetOfAnAssignment contextOfStatement target
-                    let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression fieldCache (contextOfStatement.componentObject) expression
+                    let transformedTarget = resolveTargetOfAnAssignment componentObject contextOfStatement target
+                    let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression fieldCache componentObject expression
                     let transformedAssignment = SimpleStatement.AssignmentStatement (transformedTarget,transformedExpression)
                     let newToTransform = toTransform.Tail
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedAssignment]) newToTransform
@@ -384,6 +397,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
             let contextOfCurrentPartitionRootComponent = contextCache.createContextOfRootComponent partition
             {
                 MMStepInfo.context= contextOfCurrentPartitionRootComponent;
+                MMStepInfo.componentObject = partition.RootComponent;
                 MMStepInfo.statement=(configuration.MethodBodyResolver.Item (partition.RootComponent.ComponentSymbol,partition.RootComponent.ComponentSymbol.UpdateMethod));
             }
         let partitionUpdateInSimpleStatements = transformMMStepInfosToSimpleStatements fieldCache configuration.MethodBodyResolver collected [toTransform]

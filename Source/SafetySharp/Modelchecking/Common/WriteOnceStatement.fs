@@ -51,6 +51,7 @@ type WriteOnceStatement = SimpleStatement
 
 (*
 type WriteOnceTypeArtificialCacheType = {
+    Cache : Map<Context,SimpleGlobalField>;
 } with
     member this.makeAssignment =
         ""
