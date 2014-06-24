@@ -84,10 +84,15 @@ type Context = {
 }
 
 // TODO: Divide in artificialWithLinkToMetamodel, fullyArtificial and linkedToMetamodel
-type SimpleGlobalField = {
-    context : Context;
-    field : MMFieldObject; //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
-}
+type SimpleGlobalField = 
+    | FieldLinkedToMetamodel of Context : Context * Field : MMFieldObject //TODO: maybe switch to MMFieldSymbol. Cannot find any advantage of using MMFieldObject yet
+    with
+        member this.getFieldSymbol =
+            match this with
+                | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.FieldSymbol
+        member this.getInitialValues =
+            match this with
+                | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.InitialValues
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
 type SimpleExpression = 
@@ -195,10 +200,7 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
                 let collectedInSubcomponents : SimpleGlobalField list =
                     (getSubComponentObjects myContext.componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent (contextCache.createContextForSubcomponent myContext name comp) )
                 let collectFieldInThisComponent (fieldobject:MMFieldObject) =
-                    {
-                        SimpleGlobalField.context = myContext
-                        SimpleGlobalField.field = fieldobject;
-                    }
+                    SimpleGlobalField.FieldLinkedToMetamodel(myContext,fieldobject)
                 let collectedInThisComponent = (getFieldObjects myContext.componentObject.Fields) |> List.map collectFieldInThisComponent 
                 collectedInThisComponent @ collectedInSubcomponents
             let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
@@ -206,15 +208,21 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
                 collectFromComponent contextOfCurrentPartitionRootComponent
             model.Partitions |> List.collect collectFromPartition
         
-        let resolverForSimpleGlobalFields : ResolverForSimpleGlobalFields = 
+        // this resolves a field access inside a component to a SimpleGlobalField.FieldLinkedToMetamodel
+        let fieldAccessInACompomonentToSimpleGlobalFieldMap : ResolverForSimpleGlobalFields = 
             //type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
-            simpleGlobalFields |> List.map (fun elem -> (elem.context.componentObject.Name, elem.field.FieldSymbol.Name),elem)
+            let converter (elem:SimpleGlobalField) =
+                match elem with
+                    | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
+                        [((context.componentObject.Name, field.FieldSymbol.Name),elem)] //return as list to allow List.collect
+                    | _ -> []
+            simpleGlobalFields |> List.collect converter
                                |> Map.ofList
         
         let resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : SimpleGlobalField =
             let componentObjectName = comp.Name
             let fieldName = field.Name
-            resolverForSimpleGlobalFields.Item (componentObjectName,fieldName)
+            fieldAccessInACompomonentToSimpleGlobalFieldMap.Item (componentObjectName,fieldName)
 
         
         member this.createSimpleFieldAccessExpression (field:MMFieldSymbol) (comp:MMComponentObject): SimpleExpression =
@@ -229,7 +237,7 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
             let componentObject = model.ComponentObjects.Item referenceSymbol
             let componentObjectName = componentObject.Name
             let fieldName = field.Name
-            resolverForSimpleGlobalFields.Item (componentObjectName,fieldName)
+            fieldAccessInACompomonentToSimpleGlobalFieldMap.Item (componentObjectName,fieldName)
         
     
     
@@ -275,10 +283,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                     // if comp is set, then this expression is an expression inside a formula
                     failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
                 else
-                    {
-                        SimpleGlobalField.context=context;
-                        SimpleGlobalField.field = (context.componentObject.Fields.Item field);
-                    }
+                    SimpleGlobalField.FieldLinkedToMetamodel(context, (context.componentObject.Fields.Item field))
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (fieldCache:SimpleGlobalFieldCache) (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
         match expression with

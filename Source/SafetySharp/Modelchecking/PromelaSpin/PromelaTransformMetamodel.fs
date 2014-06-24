@@ -79,13 +79,15 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
 
     member this.transformSimpleGlobalFieldToName (simpleGlobalField : SimpleGlobalField) =
         // this is something model checker specific, as different model checkers may have different constraints for identifier
-        let partitionName = "p" + simpleGlobalField.context.rootComponentName + "_"
-        let hierarchicalAccessName =
-            simpleGlobalField.context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
-                                                 |> List.map (fun elem -> "c"+elem) //add c in front of every element
-                                                 |> String.concat "_"
-        let fieldName = "_f"+simpleGlobalField.field.FieldSymbol.Name
-        sprintf "%s%s%s" partitionName hierarchicalAccessName fieldName
+        match simpleGlobalField with
+                    | SimpleGlobalField.FieldLinkedToMetamodel(context:Context, field:MMFieldObject) ->
+                        let partitionName = "p" + context.rootComponentName + "_"
+                        let hierarchicalAccessName =
+                            context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+                                                                 |> List.map (fun elem -> "c"+elem) //add c in front of every element
+                                                                 |> String.concat "_"
+                        let fieldName = "_f"+field.FieldSymbol.Name
+                        sprintf "%s%s%s" partitionName hierarchicalAccessName fieldName
 
     member this.transformSimpleGlobalFieldToVarref (simpleGlobalField : SimpleGlobalField) =
         let varName = this.transformSimpleGlobalFieldToName simpleGlobalField
@@ -94,7 +96,7 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     member this.generateFieldDeclarations : PrModule =
         let fields = toSimplifiedMetamodel.getSimpleGlobalFields
         let generateDecl (field:SimpleGlobalField) : PrOneDecl =
-            let _type = match field.field.FieldSymbol.Type with
+            let _type = match field.getFieldSymbol.Type with
                             | MMTypeSymbol.Boolean -> PrTypename.Bool
                             | MMTypeSymbol.Integer -> PrTypename.Int
                             | MMTypeSymbol.Decimal -> failwith "NotImplementedYet"
@@ -120,7 +122,7 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
                 //also possible to add a "true" as a guard to the returned sequence
                 statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]
                 
-            field.field.InitialValues |> List.map generateSequence
+            field.getInitialValues |> List.map generateSequence
                                       |> PrOptions.Options
                                       |> PrStatement.IfStmnt
         fields |> List.map generateInit
