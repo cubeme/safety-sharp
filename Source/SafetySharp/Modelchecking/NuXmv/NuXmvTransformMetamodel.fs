@@ -80,9 +80,9 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             itemsInOrderRootToLeaf.Tail |> List.map (fun elem -> sprintf "c%s_" elem)
                                         |> String.concat ""
         match simpleGlobalField with
-            | SimpleGlobalField.FieldLinkedToMetamodel(_,context:Context, field:MMFieldObject) ->
+            | SimpleGlobalField.FieldLinkedToMetamodel(_, field:SimpleGlobalFieldWithContext) ->
                 let fieldName = "f"+field.FieldSymbol.Name
-                let flattenedNameOfField = (flatSubcomponentName context) + fieldName;
+                let flattenedNameOfField = (flatSubcomponentName field.Context) + fieldName;
                 {Identifier.Name=flattenedNameOfField}
 
 
@@ -143,14 +143,20 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
         let fieldsToTransform = this.getFieldsToTransform partition
         let generateSingleInit (field:SimpleGlobalField) =
             let identifier = this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier field |> ComplexIdentifier.NameComplexIdentifier
-            let generateInitialValueExpression (initialValue:obj): BasicExpression =
+            let generateInitialValueExpression (initialValue:SimpleConstLiteral): BasicExpression =
                 match initialValue with
-                        | :? int as value -> value |> (fun value -> new bigint(value))
-                                                   |> ConstExpression.IntegerConstant
-                                                   |> BasicExpression.ConstExpression
-                        | :? bool as value -> value |> ConstExpression.BooleanConstant
-                                                    |> BasicExpression.ConstExpression
-                        | _ -> failwith "NotImplementedYet"
+                        | SimpleConstLiteral.IntegerLiteral (value) -> 
+                            value |> (fun value -> new bigint(value))
+                                  |> ConstExpression.IntegerConstant
+                                  |> BasicExpression.ConstExpression
+                        | SimpleConstLiteral.BooleanLiteral (value) ->
+                             value |> ConstExpression.BooleanConstant
+                                   |> BasicExpression.ConstExpression
+                        | SimpleConstLiteral.DecimalLiteral (value) ->
+                            value |> System.Decimal.ToDouble
+                                  |> ConstExpression.RealConstant 
+                                  |> BasicExpression.ConstExpression
+
             let initialValues = field.getInitialValues |> List.map generateInitialValueExpression
                                                           |> BasicExpression.SetExpression                
             SingleAssignConstraint.InitialStateAssignConstraint(identifier,initialValues)

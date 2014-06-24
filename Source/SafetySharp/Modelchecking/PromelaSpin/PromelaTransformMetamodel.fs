@@ -80,12 +80,12 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     member this.transformSimpleGlobalFieldToName (simpleGlobalField : SimpleGlobalField) =
         // this is something model checker specific, as different model checkers may have different constraints for identifier
         match simpleGlobalField with
-            | SimpleGlobalField.FieldLinkedToMetamodel(_,context:Context, field:MMFieldObject) ->
-                let partitionName = "p" + context.rootComponentName + "_"
+            | SimpleGlobalField.FieldLinkedToMetamodel(_, field:SimpleGlobalFieldWithContext) ->
+                let partitionName = "p" + field.Context.rootComponentName + "_"
                 let hierarchicalAccessName =
-                    context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
-                                                            |> List.map (fun elem -> "c"+elem) //add c in front of every element
-                                                            |> String.concat "_"
+                    field.Context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+                                                     |> List.map (fun elem -> "c"+elem) //add c in front of every element
+                                                     |> String.concat "_"
                 let fieldName = "_f"+field.FieldSymbol.Name
                 sprintf "%s%s%s" partitionName hierarchicalAccessName fieldName
             | _ -> failwith "The Transformation of Promela Models does currently only support SimpleGlobalField.FieldLinkedToMetamodel"
@@ -111,14 +111,16 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     member this.generateFieldInitialisations : PrStatement list =
         let fields = toSimplifiedMetamodel.getSimpleGlobalFields
         let generateInit (field:SimpleGlobalField) : PrStatement =
-            let generateSequence (initialValue : obj) : PrSequence =
+            let generateSequence (initialValue : SimpleConstLiteral) : PrSequence =
                 let assignVarref = this.transformSimpleGlobalFieldToVarref field
                 let assignExpr =
                     match initialValue with
-                        | :? int as value -> PrExpression.Const(PrConst.Number(value))
-                        | :? bool as value -> match value with
-                                                | true  -> PrExpression.Const(PrConst.True)
-                                                | false -> PrExpression.Const(PrConst.False)
+                        | SimpleConstLiteral.IntegerLiteral(value) ->
+                             PrExpression.Const(PrConst.Number(value))
+                        | SimpleConstLiteral.BooleanLiteral(value) ->
+                            match value with
+                                | true  -> PrExpression.Const(PrConst.True)
+                                | false -> PrExpression.Const(PrConst.False)
                         | _ -> failwith "NotImplementedYet"
                 //also possible to add a "true" as a guard to the returned sequence
                 statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]
