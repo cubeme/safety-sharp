@@ -182,17 +182,22 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
                     let simpleGlobalField = toSimplifiedMetamodel.resolveFieldAccessInsideAFormula componentReference.Value field
                     let varref = this.transformSimpleGlobalFieldToVarref simpleGlobalField
                     PrExpression.Varref varref
-                    
-    member this.transformSimpleExpression (expression:SimpleExpression) : PrExpression =
-        match expression with
-            | SimpleExpression.BooleanLiteral (value:bool) ->
+          
+    member this.transformSimpleConstLiteral (literal:SimpleConstLiteral) : PrExpression =
+        match literal with
+            | SimpleConstLiteral.BooleanLiteral (value:bool) ->
                 match value with
                     | true ->  PrExpression.Const(PrConst.True)
                     | false -> PrExpression.Const(PrConst.False)
-            | SimpleExpression.IntegerLiteral (value:int) ->
+            | SimpleConstLiteral.IntegerLiteral (value:int) ->
                 PrExpression.Const(PrConst.Number(value))
-            | SimpleExpression.DecimalLiteral (value:decimal) ->
+            | SimpleConstLiteral.DecimalLiteral (value:decimal) ->
                 failwith "NotImplementedYet"
+                                
+    member this.transformSimpleExpression (expression:SimpleExpression) : PrExpression =
+        match expression with
+            | SimpleExpression.ConstLiteral (literal:SimpleConstLiteral) ->
+                this.transformSimpleConstLiteral literal
             | SimpleExpression.UnaryExpression (operand:SimpleExpression, operator:MMUnaryOperator) ->
                 let transformedOperand = this.transformSimpleExpression operand
                 match operator with

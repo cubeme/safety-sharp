@@ -209,20 +209,25 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
                     //called inside a formula
                     let simpleGlobalField = toSimplifiedMetamodel.resolveFieldAccessInsideAFormula componentReference.Value field
                     this.transformSimpleGlobalFieldToAccessExpression simpleGlobalField mainModuleIdentifier
-                    
-    member this.transformSimpleExpression (expression:SimpleExpression) : NuXmvBasicExpression =
-        match expression with
-            | SimpleExpression.BooleanLiteral (value:bool) ->
+    
+    member this.transformSimpleConstLiteral (literal:SimpleConstLiteral) : NuXmvBasicExpression =
+        match literal with
+            | SimpleConstLiteral.BooleanLiteral (value:bool) ->
                 value |> NuXmvConstExpression.BooleanConstant
                       |> NuXmvBasicExpression.ConstExpression
-            | SimpleExpression.IntegerLiteral (value:int) ->
+            | SimpleConstLiteral.IntegerLiteral (value:int) ->
                 value |> (fun value -> new bigint(value))
                       |> NuXmvConstExpression.IntegerConstant 
                       |> NuXmvBasicExpression.ConstExpression
-            | SimpleExpression.DecimalLiteral (value:decimal) ->
+            | SimpleConstLiteral.DecimalLiteral (value:decimal) ->
                 value |> System.Decimal.ToDouble
                       |> NuXmvConstExpression.RealConstant 
-                      |> NuXmvBasicExpression.ConstExpression                    
+                      |> NuXmvBasicExpression.ConstExpression
+
+    member this.transformSimpleExpression (expression:SimpleExpression) : NuXmvBasicExpression =
+        match expression with
+            | SimpleExpression.ConstLiteral (literal:SimpleConstLiteral) ->
+                this.transformSimpleConstLiteral literal
             | SimpleExpression.UnaryExpression (operand:SimpleExpression, operator:MMUnaryOperator) ->
                 let transformedOperand = this.transformSimpleExpression operand
                 match operator with

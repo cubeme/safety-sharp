@@ -89,6 +89,13 @@ type Context = {
     rootComponentName : string; //only the name of the root component
 }
 
+type SimpleGlobalFieldWithContext = {
+    Context : Context;
+    Field : MMFieldObject;
+    //TODO: Convert MMFieldObject to MMFieldSymbol. StructuralComparision should be possible afterwards
+    //InitialValues : ConstLiteral list;
+}
+
 type SimpleGlobalField =
     | FieldLinkedToMetamodel of ComponentObject : MMComponentObject * Context : Context * Field : MMFieldObject
     //| FieldArtificialWithReferenceToFieldInMetamodel of ReferencedField : SimpleGlobalField * FieldName : string //ReferencedField
@@ -109,8 +116,7 @@ type SimpleGlobalField =
                 | SimpleGlobalField.FieldLinkedToMetamodel (_,context,_) -> context
                 | _ -> failwith "this SimpleGlobalField has no context"
 
-// A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
-type SimpleExpression = 
+type SimpleConstLiteral = 
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
     | BooleanLiteral of Value : bool
 
@@ -120,6 +126,11 @@ type SimpleExpression =
     /// Represents a decimal value.
     | DecimalLiteral of Value : decimal
 
+// A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
+type SimpleExpression = 
+    /// Represents a constant value which may be e.g. a BooleanLiteral with the values true and false.
+    | ConstLiteral of Value : SimpleConstLiteral
+    
     /// Represents the application of an unary operator to an expression.
     | UnaryExpression of Operand : SimpleExpression * Operator : MMUnaryOperator
 
@@ -300,9 +311,9 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (fieldCache:SimpleGlobalFieldCache) (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
         match expression with
-            | MMExpression.BooleanLiteral (value:bool) -> SimpleExpression.BooleanLiteral(value)
-            | MMExpression.IntegerLiteral (value:int) ->  SimpleExpression.IntegerLiteral(value)
-            | MMExpression.DecimalLiteral (value:decimal) -> failwith "NotImplementedYet"
+            | MMExpression.BooleanLiteral (value:bool) -> SimpleExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(value))
+            | MMExpression.IntegerLiteral (value:int) ->  SimpleExpression.ConstLiteral(SimpleConstLiteral.IntegerLiteral(value))
+            | MMExpression.DecimalLiteral (value:decimal) -> SimpleExpression.ConstLiteral(SimpleConstLiteral.DecimalLiteral(value))
             | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
                 let transformedOperand = transformMMExpressionInsideAComponentToSimpleExpression fieldCache comp operand
                 SimpleExpression.UnaryExpression(transformedOperand,operator)

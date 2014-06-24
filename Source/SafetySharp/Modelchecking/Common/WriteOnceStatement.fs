@@ -34,7 +34,7 @@ type WriteOnceOption = {
 } with 
     member this.getTakenDecisionsAsCondition: WriteOnceExpression =
         if this.TakenDecisions.IsEmpty then
-            WriteOnceExpression.BooleanLiteral(true)
+            WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))
         else
             // Concat every element with a logical and
             this.TakenDecisions.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalAnd,acc)) this.TakenDecisions.Head
@@ -82,14 +82,35 @@ type WriteOnceTypeArtificialCacheType = {
         ""
     member this.getCurrentDecisionsAsSimpleExpression =
         ""
-
-        
+*)
+        (*
 type SimpleStatementsToWriteOnceStatements =
 
     member this.simpleStatementToWriteOnceStatementsCached (stmnts:SimpleStatement list) : WriteOnceStatement list =
-        //this
+        let transformSimpleStatement (statement:SimpleStatement) (map:=
+            match statement with
+                | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
+                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) =
+                        let transformedGuard = this.transformSimpleExpression guard
+                        let transformedGuardStmnt = anyExprToStmnt transformedGuard
+                        let transformedSequence = sequence |> List.map this.transformSimpleStatement
+                        let promelaSequence = statementsToSequence (transformedGuardStmnt::transformedSequence)
+                        promelaSequence
+                    optionsOfGuardedCommand |> List.map transformOption
+                                            |> PrOptions.Options
+                                            |> PrStatement.IfStmnt
+                | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
+                    let transformedTarget = this.transformSimpleGlobalFieldToVarref target
+                    let transformedExpression = this.transformSimpleExpression expression
+                    createAssignmentStatement transformedTarget transformedExpression
+        
+        let initializeMap (fields:fieldsOfPartition) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
+            Map<SimpleGlobalFieldWithContext,SimpleGlobalField>
+        let  = ref 
+        //failwith "cannot only write to field of this partition"
+        []
     
     member this.simpleStatementToWriteOnceStatements (stmnts:SimpleStatement list) : WriteOnceStatement list =
         //TODO: Description and Implementation
-        stmnts
-*)
+        []
+        *)
