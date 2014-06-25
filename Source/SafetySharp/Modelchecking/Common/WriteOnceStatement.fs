@@ -69,8 +69,11 @@ type WriteOnceStatement = {
 // - Solution 2: Let WriteOnceType be something on its own. A field could be Artificial
 
 
-type WriteOnceTypeArtificialCacheType = {
-    CurrentMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField> ref;
+type WriteOnceTypeFieldManager = {
+    SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>; //map to the initial SimpleGlobalField
+    SimpleFieldToCounterMapping : Map<SimpleGlobalFieldWithContext,int> ref; //every time a new artificial field is created, counter is increased. It is "ref" so its value is shared across different instances leading back to the same .Initialize
+    SimpleFieldToCurrentArtificialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>; //if an artificial field for a reference field is created, put the new field on the stack of artificial fields of this reference field
+
 } with
     static member Initialize (fieldsOfPartition:SimpleGlobalField list) =
         let initializeCurrentValueMap  : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
@@ -79,46 +82,64 @@ type WriteOnceTypeArtificialCacheType = {
             fieldsOfPartition |> List.map createEntry
                               |> Map.ofList
         {
-            WriteOnceTypeArtificialCacheType.CurrentMapping = ref initializeCurrentValueMap
+            WriteOnceTypeFieldManager.CurrentMapping = ref initializeCurrentValueMap
         }
-
-type WriteOnceStatementsTainted = SimpleGlobalFieldWithContext list
-
+    member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
+        //TODO: Take current redirections of fields in fieldManager into account
+        expression
+    member this.createNewArtificialFieldForField (field:SimpleGlobalField) : SimpleGlobalField =
+        // TODO: implement
+        field
+        
 type SimpleStatementsToWriteOnceStatements =
 
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
-    member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (stmnts:SimpleStatement list) (cache:WriteOnceTypeArtificialCacheType) : (WriteOnceStatement list*WriteOnceStatementsTainted) =
-        let transformSimpleStatement (statement:SimpleStatement) =
+    member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+        let statementsToMergeTaintedVariables (fieldManagers:WriteOnceTypeFieldManager list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+            //TODO: Write code, which allows merging of the tainted Variables on a return
+            ([],newFieldManager)
+        let transformSimpleStatement (fieldManager:WriteOnceTypeFieldManager) (statement:SimpleStatement) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             match statement with
                 | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
-                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : (WriteOnceStatement list*WriteOnceStatementsTainted) =
+                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
                         let takenDecisions = guard::takenDecisions
-                        let transformedOption = this.simpleStatementToWriteOnceStatementsCached takenDecisions sequence cache
-                        (transformedOption,[])
-
+                        let (transformedOption,newFieldManager) = this.simpleStatementToWriteOnceStatementsCached takenDecisions fieldManager sequence
+                        (transformedOption,newFieldManager)                        
+                    // BRANCH
                     // Sequential Code of every Branch (flat, without any recursions)
-                    let (codeOfBranches) = optionsOfGuardedCommand |> List.collect transformOption
-                    let codeToMergeBranches = [] //TODO: Write code, which allows merging of the changed Variables on a return
-                    codeOfBranches @ codeToMergeBranches                    
+                    let (codeOfBranches,fieldManagersAfterSplit) = optionsOfGuardedCommand |> List.map  transformOption
+                                                                                           |> List.unzip
+                    let (codeOfBranchesAggregated) = codeOfBranches |> List.concat
+                    // MERGE BRANCHES
+                    let (codeToMergeBranches,fieldManagerAfterMerge) = statementsToMergeTaintedVariables fieldManagersAfterSplit
+                    // concat Code of every BRANCH and Code to MERGE
+                    (codeOfBranchesAggregated @ codeToMergeBranches,fieldManagerAfterMerge)
 
                 | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
-                    
-                    let rewrittenTarget = target //TODO: Variable rewrite here
+                    // ASSIGN, Introduce artificial field and update fieldManager
+                    let transformedExpression = fieldManager.transformExpressionWithCurrentRedirections expression
+                    let (transformedTarget,newFieldManager) = (target,fieldManager) //TODO: Variable rewrite here, insert tainted variable
                     let effect = {
                             WriteOncePossibleEffect.TakenDecisions = takenDecisions;
-                            WriteOncePossibleEffect.TargetEffect = expression;
+                            WriteOncePossibleEffect.TargetEffect = transformedExpression;
                     }
                     let statement = {
                             WriteOnceStatement.PossibleEffects = [effect];
-                            WriteOnceStatement.Target = rewrittenTarget;
+                            WriteOnceStatement.Target = transformedTarget;
                     }
-                    [statement]
-        
-                    
-        //TODO: failwith "cannot only write to field of this partition"
-        []
+                    ([statement],newFieldManager)
+        // Here we have to transform a LIST of Statements. The fieldManager of the next Statement is the resutling fieldManager of the
+        // current statement. Thus we use a fold
+        let (transformedStatements,fieldManagerAfterSequence) =
+            stmnts |> List.fold (fun (alreadyTransformedStatements,currentFieldManager) statementToTransform ->
+                                        let (newStatements,newFieldManager) = transformSimpleStatement currentFieldManager statementToTransform
+                                        (alreadyTransformedStatements@newStatements,newFieldManager)
+                                ) ([],fieldManager)
+
+        (transformedStatements,fieldManagerAfterSequence)
     
     member this.simpleStatementToWriteOnceStatements (stmnts:SimpleStatement list) : WriteOnceStatement list =
         
+        let varFactory = WriteOnceTypeFieldManager.Initialize fields
 
         []
