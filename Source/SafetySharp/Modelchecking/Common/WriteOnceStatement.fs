@@ -121,6 +121,8 @@ type WriteOnceTypeFieldManager = {
                 SimpleFieldToNewArtificialFieldMapping = this.SimpleFieldToNewArtificialFieldMapping.Tail;
             }
         (newScope,this.SimpleFieldToNewArtificialFieldMapping.Head)
+    member this.getNewArtificialFieldMapping =
+        this.SimpleFieldToNewArtificialFieldMapping.Head
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
         //TODO: Take current redirections of fields in fieldManager into account
         expression
@@ -139,31 +141,45 @@ type SimpleStatementsToWriteOnceStatements =
     //  The fieldManager keeps the information of the current redirections and allows to introduce new unique artificial variables
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
     member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
-        let statementsToMergeTaintedVariables (fieldManagersToMerge:WriteOnceTypeFieldManager list) (takenDecisions:SimpleExpression list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+        let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersWithDecisionAfterSplitToMerge:((WriteOnceTypeFieldManager* (SimpleExpression list))) list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             //Code, which allows merging of the tainted Variables on a return
+            let addEntryToMap (map:Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>) ((actualField,artificialField): SimpleGlobalFieldWithContext*SimpleGlobalField) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list> =
+                if map.ContainsKey actualField then
+                    map.Add(actualField,[artificialField])
+                else
+                    let mapWithoutKey = map.Remove(actualField)
+                    mapWithoutKey.Add(actualField, artificialField::(map.Item actualField))
+            let fieldAndArtificialFieldPair = fieldManagersToMerge |> List.collect (fun fieldManager -> fieldManager.getNewArtificialFieldMapping |> Map.toList )
+            let fieldToArtificialFields = fieldAndArtificialFieldPair |> List.fold addEntryToMap Map.empty
+            let transformFieldToArtificialFields ((alreadyTransformed,fieldManager):(WriteOnceStatement list*WriteOnceTypeFieldManager)) (field:SimpleGlobalFieldWithContext) (fieldsInBraches:SimpleGlobalField list) =
+                let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
+                // todo: we need to get the decisions taken in every branch of fieldsInBraches and must create for it a specific effect
+                let transformFieldInBranch (fieldInBranch:SimpleGlobalField) =                    
+                    {
+                        WriteOncePossibleEffect.TakenDecisions = "";
+                        WriteOncePossibleEffect.TargetEffect = transformedExpression;
+                    }
+                let effects = fieldsInBraches |> List.map transformFieldInBranch
+                let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( transformedTarget, effects)
+
+                (alreadyTransformed@[statement],newFieldManager)
+            fieldToArtificialFields |> Map.fold transformFieldToArtificialFields ([],fieldManager)
             
-            let thingsToMerge = fieldManagers |> List.fold (fun acc fieldManager -> fieldManager.)
-            ([])
-            // new fieldManager contains newly introduced artificial field
-            // problem: every fieldManager looks like this: (fieldsOfBranch@fieldsOfContext). We are only interested in fieldsOfBranch1, fieldsOfBranch2,...
-            //          we must find a way to only get these
-            // solutions: - organize fieldManager as Stack
-            //            - new argument?!?
         let transformSimpleStatement (fieldManager:WriteOnceTypeFieldManager) (statement:SimpleStatement) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             match statement with
                 | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
-                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : ((WriteOnceStatement list )*(WriteOnceTypeFieldManager* (SimpleExpression list)))=
                         let transformedGuard = fieldManager.transformExpressionWithCurrentRedirections guard
                         let takenDecisions = transformedGuard::takenDecisions
                         let (transformedOption,newFieldManager) = this.simpleStatementToWriteOnceStatementsCached takenDecisions fieldManager sequence
-                        (transformedOption,newFieldManager)                        
+                        (transformedOption,(newFieldManager,takenDecisions))                        
                     // BRANCH
                     // Sequential Code of every Branch (flat, without any recursions)
-                    let (codeOfBranches,fieldManagersAfterSplit) = optionsOfGuardedCommand |> List.map  transformOption
-                                                                                           |> List.unzip
+                    let (codeOfBranches,fieldManagersWithDecisionAfterSplit) = optionsOfGuardedCommand |> List.map  transformOption
+                                                                                                       |> List.unzip
                     let (codeOfBranchesAggregated) = codeOfBranches |> List.concat
                     // MERGE BRANCHES
-                    let (codeToMergeBranches,fieldManagerAfterMerge) = statementsToMergeTaintedVariables fieldManagersAfterSplit takenDecisions                    
+                    let (codeToMergeBranches,fieldManagerAfterMerge) = statementsToMergeTaintedVariables fieldManager fieldManagersWithDecisionAfterSplit                    
                     // concat Code of every BRANCH and Code to MERGE
                     (codeOfBranchesAggregated @ codeToMergeBranches,fieldManagerAfterMerge)
 
