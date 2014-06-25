@@ -84,7 +84,7 @@ type WriteOnceStatement =
 // - Solution 1: Introduce artifical fields in Simplified Metamodel, refactor SimpleExpression and SimpleStatement. WriteOnceStatement/Metamodel is only a restricted version of Statement. Simplified Metamodel could introduce a check "IsWriteOnce" and contain a "ToWriteOnce"-Member
 // - Solution 2: Let WriteOnceType be something on its own. A field could be Artificial
 
-
+// TODO: Refactor: readonly-parts as "let" and "Initialize" as only constructor
 type WriteOnceTypeFieldManager = {
     // static across a model
     SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>; //map to the initial SimpleGlobalField
@@ -106,9 +106,21 @@ type WriteOnceTypeFieldManager = {
             WriteOnceTypeFieldManager.CurrentMapping = ref initializeCurrentValueMap
         }
     member this.pushScope : WriteOnceTypeFieldManager =
-        this
-    member this.popScope : WriteOnceTypeFieldManager =
-        this
+        let emptyNewMapping = Map.empty<SimpleGlobalFieldWithContext,SimpleGlobalField>
+        let currentlyKnownMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Head
+        let newScope = 
+            { this with
+                SimpleFieldToCurrentArtificialFieldMapping = currentlyKnownMapping::this.SimpleFieldToCurrentArtificialFieldMapping;
+                SimpleFieldToNewArtificialFieldMapping = emptyNewMapping::this.SimpleFieldToNewArtificialFieldMapping;
+            }
+        newScope
+    member this.popScope : WriteOnceTypeFieldManager * (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) =
+        let newScope =
+            { this with
+                SimpleFieldToCurrentArtificialFieldMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Tail;
+                SimpleFieldToNewArtificialFieldMapping = this.SimpleFieldToNewArtificialFieldMapping.Tail;
+            }
+        (newScope,this.SimpleFieldToNewArtificialFieldMapping.Head)
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
         //TODO: Take current redirections of fields in fieldManager into account
         expression
