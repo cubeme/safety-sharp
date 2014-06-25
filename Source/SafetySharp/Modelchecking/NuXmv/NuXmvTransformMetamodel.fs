@@ -260,16 +260,17 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
                 this.transformSimpleGlobalFieldToAccessExpression field mainModuleIdentifier
 
     member this.transformWriteOnceStatement (statement:WriteOnceStatement) (accessFromPartition:Identifier) : SingleAssignConstraint =        
-        let transformOption (option:WriteOnceOption) : CaseConditionAndEffect =        
+        //TODO: If Condition is true, no case-splitting is necessary        
+        let transformOption (option:WriteOncePossibleEffect) : CaseConditionAndEffect =        
             let transformedCondition = this.transformSimpleExpression option.getTakenDecisionsAsCondition
             let transformedEffect = this.transformSimpleExpression option.TargetEffect
             {
                 CaseConditionAndEffect.CaseCondition = transformedCondition;
                 CaseConditionAndEffect.CaseEffect = transformedEffect;
             }
-        let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.Target accessFromPartition
-        let effect = statement.Options |> List.map transformOption
-                                       |> BasicExpression.CaseExpression
+        let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
+        let effect = statement.getPossibleEffectsForSequentialEvaluation |> List.map transformOption
+                                                                         |> BasicExpression.CaseExpression
         SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)
     
     member this.transFormCtlFormula (formula:MMFormula) : CtlExpression =
