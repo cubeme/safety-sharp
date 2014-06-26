@@ -138,6 +138,10 @@ type SimpleGlobalField =
             match this with
                 | SimpleGlobalField.FieldLinkedToMetamodel (_,field) -> field.Context
                 | _ -> failwith "this SimpleGlobalField has no context"
+        member this.getSimpleGlobalFieldWithContext =
+            match this with
+                | SimpleGlobalField.FieldLinkedToMetamodel (_,field) -> field
+                | _ -> failwith "this is not a SimpleGlobalField which contains a field of the type SimpleGlobalFieldWithContext"
 
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)

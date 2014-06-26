@@ -47,6 +47,7 @@ type WriteOncePossibleEffect = {
 // implicitly "not guard of option1 AND guard of option2". But sometimes we do not want this behavior. We want
 // guardOfOption1 AND guardOfOption2 AND guardOfOption3 : {effectOfOption1,effectOfOption2,effectOfOption3}
 // Thus we introduce the two different interpretations and conversions between them
+// TODO: Implicitly else currentValue?
 type WriteOnceStatement = 
     | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
@@ -125,8 +126,12 @@ type WriteOnceTypeFieldManager = {
                 CurrentDecisions = this.CurrentDecisions.Tail
             }
         (newScope,this.SimpleFieldToNewArtificialFieldMapping.Head)
+    member this.getTakenDecisions =
+        this.CurrentDecisions
     member this.getNewArtificialFieldMapping =
         this.SimpleFieldToNewArtificialFieldMapping.Head
+    member this.getCurrentRedirection (field:SimpleGlobalFieldWithContext) : SimpleGlobalField =
+        this.SimpleFieldToCurrentArtificialFieldMapping.Head.Item field
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
         //TODO: Take current redirections of fields in fieldManager into account
         expression
@@ -144,8 +149,7 @@ type SimpleStatementsToWriteOnceStatements =
     //  LINEARIZE:
     //  The fieldManager keeps the information of the current redirections and allows to introduce new unique artificial variables
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
-    // TODO: Remove takenDecisions from Signature
-    member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+    member this.simpleStatementToWriteOnceStatementsCached (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
         let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersAfterSplitToMerge:WriteOnceTypeFieldManager list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             //Code, which allows merging of the tainted Variables on a return
             let addEntryToMap (map:Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>) ((actualField,artificialField): SimpleGlobalFieldWithContext*SimpleGlobalField) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list> =
@@ -158,10 +162,11 @@ type SimpleStatementsToWriteOnceStatements =
             let fieldToArtificialFields = fieldAndArtificialFieldPair |> List.fold addEntryToMap Map.empty
             let transformFieldToArtificialFields ((alreadyTransformed,fieldManager):(WriteOnceStatement list*WriteOnceTypeFieldManager)) (field:SimpleGlobalFieldWithContext) (fieldsInBraches:SimpleGlobalField list) =
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
-                // todo: we need to get the decisions taken in every branch of fieldsInBraches and must create for it a specific effect
+                // we get the decisions taken in every branch of fieldsInBraches and create for it a specific effect
                 let transformFieldInBranch (fieldInBranch:SimpleGlobalField) =                    
+                    let transformedExpression = WriteOnceExpression.FieldAccessExpression(fieldInBranch)
                     {
-                        WriteOncePossibleEffect.TakenDecisions = "";
+                        WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                         WriteOncePossibleEffect.TargetEffect = transformedExpression;
                     }
                 let effects = fieldsInBraches |> List.map transformFieldInBranch
@@ -175,14 +180,14 @@ type SimpleStatementsToWriteOnceStatements =
                 | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
                     let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : ((WriteOnceStatement list )*WriteOnceTypeFieldManager)=
                         let transformedGuard = fieldManager.transformExpressionWithCurrentRedirections guard
-                        let takenDecisions = transformedGuard::takenDecisions
-                        let (transformedOption,newFieldManager) = this.simpleStatementToWriteOnceStatementsCached takenDecisions fieldManager sequence
+                        let newScopeFieldManager = fieldManager.pushScope transformedGuard
+                        let (transformedOption,newFieldManager) = this.simpleStatementToWriteOnceStatementsCached newScopeFieldManager sequence
                         //TODO: Put takenDecisions in newFieldManager
                         (transformedOption,newFieldManager)                        
                     // BRANCH
                     // Sequential Code of every Branch (flat, without any recursions)
                     let (codeOfBranches,fieldManagersAfterSplitToMerge) = optionsOfGuardedCommand |> List.map  transformOption
-                                                                                                       |> List.unzip
+                                                                                                  |> List.unzip
                     let (codeOfBranchesAggregated) = codeOfBranches |> List.concat
                     // MERGE BRANCHES
                     let (codeToMergeBranches,fieldManagerAfterMerge) = statementsToMergeTaintedVariables fieldManager fieldManagersAfterSplitToMerge                    
@@ -192,9 +197,9 @@ type SimpleStatementsToWriteOnceStatements =
                 | SimpleStatement.AssignmentStatement (target:SimpleGlobalField, expression:SimpleExpression) -> //Context is only the Context of the Expression. SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
                     // ASSIGN, Introduce a new artificial field, and update the fieldManager to include the new field
                     let transformedExpression = fieldManager.transformExpressionWithCurrentRedirections expression
-                    let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField target
+                    let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField target.getSimpleGlobalFieldWithContext
                     let effect = {
-                            WriteOncePossibleEffect.TakenDecisions = takenDecisions;
+                            WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                             WriteOncePossibleEffect.TargetEffect = transformedExpression;
                     }
                     let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( transformedTarget, [effect])
@@ -210,9 +215,22 @@ type SimpleStatementsToWriteOnceStatements =
 
         (transformedStatements,fieldManagerAfterSequence)
     
-    member this.simpleStatementToWriteOnceStatements (stmnts:SimpleStatement list) : WriteOnceStatement list =
+    member this.simpleStatementToWriteOnceStatements (fieldsOfPartition:SimpleGlobalField list) (stmnts:SimpleStatement list) : WriteOnceStatement list =
         
-        let varFactory = WriteOnceTypeFieldManager.Initialize fields
-        // TODO: write a next() for every SimpleField in the SimpleFieldToCurrentArtificialFieldMapping.
+        let fieldManager = WriteOnceTypeFieldManager.Initialize fieldsOfPartition
+        let (transformedStatements,fieldManagerAfterSequence) = this.simpleStatementToWriteOnceStatementsCached fieldManager stmnts
+        // write an assignment for every SimpleGlobalField (get the current redirection from the fieldManagerAfterSequence)
+        let assignmentsToCurrentValuationStatements = 
+            let transformField (field:SimpleGlobalField) : WriteOnceStatement =
+                let redirectedToField = fieldManagerAfterSequence.getCurrentRedirection field.getSimpleGlobalFieldWithContext
+                let redirectedToFieldExpression = WriteOnceExpression.FieldAccessExpression(redirectedToField)
+                let effect = {
+                                WriteOncePossibleEffect.TakenDecisions = []; //always true, no decisions made, because we didn't branch here
+                                WriteOncePossibleEffect.TargetEffect = redirectedToFieldExpression;
+                             }
+                let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( field, [effect])
+                statement
+            fieldsOfPartition |> List.map transformField
+            
         // The effect is the current valuation of the artificial field in the map
-        []
+        transformedStatements @ assignmentsToCurrentValuationStatements
