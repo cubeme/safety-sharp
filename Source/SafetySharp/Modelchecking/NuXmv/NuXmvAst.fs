@@ -201,7 +201,7 @@ and NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
             
 // Chapter 2.4.1 CTL Specifications p 35-36
 and CtlExpression =
-    | CtlSimpleExpression of Expression:SimpleExpression //next not allowed
+    | CtlSimpleExpression of Expression:SimpleExpression //next not allowed 
     | CtlUnaryExpression of Operator:CtlUnaryOperator *  Operand:CtlExpression
     | CtlBinaryExpression of Left:CtlExpression * Operator:CtlBinaryOperator * Right:CtlExpression
             

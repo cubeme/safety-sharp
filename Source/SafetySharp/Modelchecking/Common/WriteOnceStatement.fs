@@ -25,8 +25,32 @@ namespace SafetySharp.Modelchecking.NuXmv
 
 open SafetySharp.Modelchecking
 
-type WriteOnceExpression = SimpleExpression
+
+//TODO: Somehow enable the use of DEFINE?!?
+
+// used to annotate, if a value referenced
+type WriteOnceTimeOfAccess =
+    | UseResultOfLastStep // for input fields
+    | UseResultOfThisStep // for artificial fields
+
+// There exists a difference between SimpleExpression and WriteOnceExpression:
+// Here we need a different FieldAccessor: Depending on if we Want to access the value of the current time step or the value of the last
+type WriteOnceExpression = 
+    /// Represents a constant value which may be e.g. a BooleanLiteral with the values true and false.
+    | ConstLiteral of Value : SimpleConstLiteral
+    
+    /// Represents the application of an unary operator to an expression.
+    | UnaryExpression of Operand : SimpleExpression * Operator : MMUnaryOperator
+
+    /// Represents the application of a binary operator to two subexpressions.
+    | BinaryExpression of LeftExpression : WriteOnceExpression * Operator : MMBinaryOperator * RightExpression : WriteOnceExpression
+
+    /// Represents a field access for reading.
+    | FieldAccessExpression of TimeOfAccess: WriteOnceTimeOfAccess * Field : SimpleGlobalField
+    
+
 type WriteOnceGlobalField = SimpleGlobalField
+
 
 type WriteOncePossibleEffect = {
     TakenDecisions : WriteOnceExpression list;
@@ -47,7 +71,8 @@ type WriteOncePossibleEffect = {
 // implicitly "not guard of option1 AND guard of option2". But sometimes we do not want this behavior. We want
 // guardOfOption1 AND guardOfOption2 AND guardOfOption3 : {effectOfOption1,effectOfOption2,effectOfOption3}
 // Thus we introduce the two different interpretations and conversions between them
-// TODO: Implicitly else currentValue?
+// Be cautious: If no option matches, the assignment doesn't change anything. (Thus the next value of target is the current value of target).
+
 type WriteOnceStatement = 
     | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
@@ -93,7 +118,7 @@ type WriteOnceTypeFieldManager = {
     // static across a scope. Changes with scopes. Organised as stacks. The head elements are the current elements. on a popScope the head elements are just thrown away
     SimpleFieldToCurrentArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //if an artificial field for a reference field is created, link the artificial fields to the field it overwrites
     SimpleFieldToNewArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //same as above, but only the fields introduced in this of the current scope. If a field is not "overwritten" in this scope, the map does not contain it.
-    CurrentDecisions : (SimpleExpression list); //A Stack will all Decisions taken to this Branch
+    CurrentDecisions : (WriteOnceExpression list); //A Stack will all Decisions taken to this Branch
     // Following items are shared across all managers with the same .Initialize. They should only be changed internally.
     SimpleFieldToArtificialCounterShared : Map<SimpleGlobalFieldWithContext,int> ref; //every time a new artificial field is created, counter is increased. It is "ref" so its value is shared across different instances leading back to the same .Initialize
     CreatedArtificialFieldsShared : (SimpleGlobalField list) ref; //every time a new artificial field is created by the manager, it is associated with this manager. It is "ref" so its value is shared across different instances leading back to the same .Initialize
@@ -108,7 +133,7 @@ type WriteOnceTypeFieldManager = {
         {
             WriteOnceTypeFieldManager.CurrentMapping = ref initializeCurrentValueMap
         }
-    member this.pushScope (newDecision:SimpleExpression) : WriteOnceTypeFieldManager =
+    member this.pushScope (newDecision:WriteOnceExpression) : WriteOnceTypeFieldManager =
         let emptyNewMapping = Map.empty<SimpleGlobalFieldWithContext,SimpleGlobalField>
         let currentlyKnownMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Head
         let newScope = 
@@ -130,7 +155,7 @@ type WriteOnceTypeFieldManager = {
         this.CurrentDecisions
     member this.getNewArtificialFieldMapping =
         this.SimpleFieldToNewArtificialFieldMapping.Head
-    member this.getCurrentRedirection (field:SimpleGlobalFieldWithContext) : SimpleGlobalField =
+    member this.getCurrentRedirection (field:SimpleGlobalFieldWithContext) : (WriteOnceTimeOfAccess*SimpleGlobalField) =
         this.SimpleFieldToCurrentArtificialFieldMapping.Head.Item field
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
         //TODO: Take current redirections of fields in fieldManager into account
@@ -159,12 +184,15 @@ type SimpleStatementsToWriteOnceStatements =
                     let mapWithoutKey = map.Remove(actualField)
                     mapWithoutKey.Add(actualField, artificialField::(map.Item actualField))
             let fieldAndArtificialFieldPair = fieldManagersAfterSplitToMerge |> List.collect (fun fieldManager -> fieldManager.getNewArtificialFieldMapping |> Map.toList )
+            //TODO: find better name for fieldToArtificialField
             let fieldToArtificialFields = fieldAndArtificialFieldPair |> List.fold addEntryToMap Map.empty
             let transformFieldToArtificialFields ((alreadyTransformed,fieldManager):(WriteOnceStatement list*WriteOnceTypeFieldManager)) (field:SimpleGlobalFieldWithContext) (fieldsInBraches:SimpleGlobalField list) =
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
                 // we get the decisions taken in every branch of fieldsInBraches and create for it a specific effect
-                let transformFieldInBranch (fieldInBranch:SimpleGlobalField) =                    
-                    let transformedExpression = WriteOnceExpression.FieldAccessExpression(fieldInBranch)
+                let transformFieldInBranch (fieldInBranch:SimpleGlobalField) =
+                    // because the value of an artificial field we are interested in was just defined in the current step we use the just defined value using "WriteOnceTimeOfAccess.UseResultOfThisStep"
+                    // TODO: Maybe move this information so we can retrieve it ffrom the fieldToArtificialFields-Map
+                    let transformedExpression = WriteOnceExpression.FieldAccessExpression(WriteOnceTimeOfAccess.UseResultOfThisStep,fieldInBranch)
                     {
                         WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                         WriteOncePossibleEffect.TargetEffect = transformedExpression;
@@ -222,8 +250,8 @@ type SimpleStatementsToWriteOnceStatements =
         // write an assignment for every SimpleGlobalField (get the current redirection from the fieldManagerAfterSequence)
         let assignmentsToCurrentValuationStatements = 
             let transformField (field:SimpleGlobalField) : WriteOnceStatement =
-                let redirectedToField = fieldManagerAfterSequence.getCurrentRedirection field.getSimpleGlobalFieldWithContext
-                let redirectedToFieldExpression = WriteOnceExpression.FieldAccessExpression(redirectedToField)
+                let (timeOfAccess,redirectedToField) = fieldManagerAfterSequence.getCurrentRedirection field.getSimpleGlobalFieldWithContext
+                let redirectedToFieldExpression = WriteOnceExpression.FieldAccessExpression(timeOfAccess,redirectedToField)
                 let effect = {
                                 WriteOncePossibleEffect.TakenDecisions = []; //always true, no decisions made, because we didn't branch here
                                 WriteOncePossibleEffect.TargetEffect = redirectedToFieldExpression;

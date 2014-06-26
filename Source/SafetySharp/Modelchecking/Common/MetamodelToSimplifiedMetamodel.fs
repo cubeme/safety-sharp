@@ -155,8 +155,7 @@ type SimpleExpression =
     /// Represents the application of a binary operator to two subexpressions.
     | BinaryExpression of LeftExpression : SimpleExpression * Operator : MMBinaryOperator * RightExpression : SimpleExpression
 
-    /// Represents a field access, either for reading or writing. The component refrence is guaranteed to be 'None' within
-    /// method bodies and guaranteed to be some valid reference in formulas.
+    /// Represents a field access, either for reading or writing.
     | FieldAccessExpression of Field : SimpleGlobalField
 
 
