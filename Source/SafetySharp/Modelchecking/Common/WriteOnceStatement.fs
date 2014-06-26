@@ -85,12 +85,15 @@ type WriteOnceStatement =
 // - Solution 2: Let WriteOnceType be something on its own. A field could be Artificial
 
 // TODO: Refactor: readonly-parts as "let" and "Initialize" as only constructor
+// TODO: include in name something like "Branch" or Decisions
 type WriteOnceTypeFieldManager = {
     // static across a model
     SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>; //map to the initial SimpleGlobalField
     // static across a scope. Changes with scopes. Organised as stacks. The head elements are the current elements. on a popScope the head elements are just thrown away
     SimpleFieldToCurrentArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //if an artificial field for a reference field is created, link the artificial fields to the field it overwrites
     SimpleFieldToNewArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //same as above, but only the fields introduced in this of the current scope. If a field is not "overwritten" in this scope, the map does not contain it.
+    CurrentDecisions : (SimpleExpression list); //A Stack will all Decisions taken to this Branch
+    //TODO: Move CurrentDecisions here
     // Following items are shared across all managers with the same .Initialize. They should only be changed internally.
     SimpleFieldToArtificialCounterShared : Map<SimpleGlobalFieldWithContext,int> ref; //every time a new artificial field is created, counter is increased. It is "ref" so its value is shared across different instances leading back to the same .Initialize
     CreatedArtificialFieldsShared : (SimpleGlobalField list) ref; //every time a new artificial field is created by the manager, it is associated with this manager. It is "ref" so its value is shared across different instances leading back to the same .Initialize
@@ -105,13 +108,14 @@ type WriteOnceTypeFieldManager = {
         {
             WriteOnceTypeFieldManager.CurrentMapping = ref initializeCurrentValueMap
         }
-    member this.pushScope : WriteOnceTypeFieldManager =
+    member this.pushScope (newDecision:SimpleExpression) : WriteOnceTypeFieldManager =
         let emptyNewMapping = Map.empty<SimpleGlobalFieldWithContext,SimpleGlobalField>
         let currentlyKnownMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Head
         let newScope = 
             { this with
                 SimpleFieldToCurrentArtificialFieldMapping = currentlyKnownMapping::this.SimpleFieldToCurrentArtificialFieldMapping;
                 SimpleFieldToNewArtificialFieldMapping = emptyNewMapping::this.SimpleFieldToNewArtificialFieldMapping;
+                CurrentDecisions = newDecision::this.CurrentDecisions
             }
         newScope
     member this.popScope : WriteOnceTypeFieldManager * (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) =
@@ -119,6 +123,7 @@ type WriteOnceTypeFieldManager = {
             { this with
                 SimpleFieldToCurrentArtificialFieldMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Tail;
                 SimpleFieldToNewArtificialFieldMapping = this.SimpleFieldToNewArtificialFieldMapping.Tail;
+                CurrentDecisions = this.CurrentDecisions.Tail
             }
         (newScope,this.SimpleFieldToNewArtificialFieldMapping.Head)
     member this.getNewArtificialFieldMapping =
@@ -141,7 +146,7 @@ type SimpleStatementsToWriteOnceStatements =
     //  The fieldManager keeps the information of the current redirections and allows to introduce new unique artificial variables
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
     member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
-        let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersWithDecisionAfterSplitToMerge:((WriteOnceTypeFieldManager* (SimpleExpression list))) list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+        let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersWithDecisionAfterSplitToMerge:WriteOnceTypeFieldManager list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             //Code, which allows merging of the tainted Variables on a return
             let addEntryToMap (map:Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>) ((actualField,artificialField): SimpleGlobalFieldWithContext*SimpleGlobalField) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list> =
                 if map.ContainsKey actualField then
@@ -168,11 +173,12 @@ type SimpleStatementsToWriteOnceStatements =
         let transformSimpleStatement (fieldManager:WriteOnceTypeFieldManager) (statement:SimpleStatement) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             match statement with
                 | SimpleStatement.GuardedCommandStatement (optionsOfGuardedCommand:(( SimpleExpression * (SimpleStatement list) ) list)) -> //Context * Guard * Statements  
-                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : ((WriteOnceStatement list )*(WriteOnceTypeFieldManager* (SimpleExpression list)))=
+                    let transformOption ((guard,sequence) : (SimpleExpression * (SimpleStatement list) )) : ((WriteOnceStatement list )*WriteOnceTypeFieldManager)=
                         let transformedGuard = fieldManager.transformExpressionWithCurrentRedirections guard
                         let takenDecisions = transformedGuard::takenDecisions
                         let (transformedOption,newFieldManager) = this.simpleStatementToWriteOnceStatementsCached takenDecisions fieldManager sequence
-                        (transformedOption,(newFieldManager,takenDecisions))                        
+                        //TODO: Put takenDecisions in newFieldManager
+                        (transformedOption,newFieldManager)                        
                     // BRANCH
                     // Sequential Code of every Branch (flat, without any recursions)
                     let (codeOfBranches,fieldManagersWithDecisionAfterSplit) = optionsOfGuardedCommand |> List.map  transformOption
