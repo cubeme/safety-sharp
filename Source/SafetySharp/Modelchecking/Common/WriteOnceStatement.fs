@@ -85,7 +85,7 @@ type WriteOnceStatement =
 // - Solution 2: Let WriteOnceType be something on its own. A field could be Artificial
 
 // TODO: Refactor: readonly-parts as "let" and "Initialize" as only constructor
-// TODO: include in name something like "Branch" or Decisions
+// TODO: include in name something like "Branch" or Decisions BranchAndFieldManager? Or TransformationManager
 type WriteOnceTypeFieldManager = {
     // static across a model
     SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>; //map to the initial SimpleGlobalField
@@ -93,7 +93,6 @@ type WriteOnceTypeFieldManager = {
     SimpleFieldToCurrentArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //if an artificial field for a reference field is created, link the artificial fields to the field it overwrites
     SimpleFieldToNewArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //same as above, but only the fields introduced in this of the current scope. If a field is not "overwritten" in this scope, the map does not contain it.
     CurrentDecisions : (SimpleExpression list); //A Stack will all Decisions taken to this Branch
-    //TODO: Move CurrentDecisions here
     // Following items are shared across all managers with the same .Initialize. They should only be changed internally.
     SimpleFieldToArtificialCounterShared : Map<SimpleGlobalFieldWithContext,int> ref; //every time a new artificial field is created, counter is increased. It is "ref" so its value is shared across different instances leading back to the same .Initialize
     CreatedArtificialFieldsShared : (SimpleGlobalField list) ref; //every time a new artificial field is created by the manager, it is associated with this manager. It is "ref" so its value is shared across different instances leading back to the same .Initialize
@@ -131,7 +130,7 @@ type WriteOnceTypeFieldManager = {
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
         //TODO: Take current redirections of fields in fieldManager into account
         expression
-    member this.createNewArtificialFieldForField ( field: SimpleGlobalField) : (SimpleGlobalField*WriteOnceTypeFieldManager) =
+    member this.createNewArtificialFieldForField ( field: SimpleGlobalFieldWithContext) : (SimpleGlobalField*WriteOnceTypeFieldManager) =
         // TODO: implement
         //TODO: Variable rewrite here, insert tainted variable
         (field,this)
@@ -145,8 +144,9 @@ type SimpleStatementsToWriteOnceStatements =
     //  LINEARIZE:
     //  The fieldManager keeps the information of the current redirections and allows to introduce new unique artificial variables
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
+    // TODO: Remove takenDecisions from Signature
     member this.simpleStatementToWriteOnceStatementsCached (takenDecisions:SimpleExpression list) (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
-        let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersWithDecisionAfterSplitToMerge:WriteOnceTypeFieldManager list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+        let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersAfterSplitToMerge:WriteOnceTypeFieldManager list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             //Code, which allows merging of the tainted Variables on a return
             let addEntryToMap (map:Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>) ((actualField,artificialField): SimpleGlobalFieldWithContext*SimpleGlobalField) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list> =
                 if map.ContainsKey actualField then
@@ -154,7 +154,7 @@ type SimpleStatementsToWriteOnceStatements =
                 else
                     let mapWithoutKey = map.Remove(actualField)
                     mapWithoutKey.Add(actualField, artificialField::(map.Item actualField))
-            let fieldAndArtificialFieldPair = fieldManagersToMerge |> List.collect (fun fieldManager -> fieldManager.getNewArtificialFieldMapping |> Map.toList )
+            let fieldAndArtificialFieldPair = fieldManagersAfterSplitToMerge |> List.collect (fun fieldManager -> fieldManager.getNewArtificialFieldMapping |> Map.toList )
             let fieldToArtificialFields = fieldAndArtificialFieldPair |> List.fold addEntryToMap Map.empty
             let transformFieldToArtificialFields ((alreadyTransformed,fieldManager):(WriteOnceStatement list*WriteOnceTypeFieldManager)) (field:SimpleGlobalFieldWithContext) (fieldsInBraches:SimpleGlobalField list) =
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
@@ -181,11 +181,11 @@ type SimpleStatementsToWriteOnceStatements =
                         (transformedOption,newFieldManager)                        
                     // BRANCH
                     // Sequential Code of every Branch (flat, without any recursions)
-                    let (codeOfBranches,fieldManagersWithDecisionAfterSplit) = optionsOfGuardedCommand |> List.map  transformOption
+                    let (codeOfBranches,fieldManagersAfterSplitToMerge) = optionsOfGuardedCommand |> List.map  transformOption
                                                                                                        |> List.unzip
                     let (codeOfBranchesAggregated) = codeOfBranches |> List.concat
                     // MERGE BRANCHES
-                    let (codeToMergeBranches,fieldManagerAfterMerge) = statementsToMergeTaintedVariables fieldManager fieldManagersWithDecisionAfterSplit                    
+                    let (codeToMergeBranches,fieldManagerAfterMerge) = statementsToMergeTaintedVariables fieldManager fieldManagersAfterSplitToMerge                    
                     // concat Code of every BRANCH and Code to MERGE
                     (codeOfBranchesAggregated @ codeToMergeBranches,fieldManagerAfterMerge)
 
