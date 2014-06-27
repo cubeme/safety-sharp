@@ -20,31 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System
-open System.Linq
-open System.Text
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Utilities
-open SafetySharp.Modeling
 
-/// Provides extension methods for working with <see cref="InvocationExpressionSyntax" /> instances.
-[<AutoOpen>]
-module InvocationExpressionExtensions =
-    type InvocationExpressionSyntax with
-
-        /// Checks whether the invocation expression invokes a CTL or LTL formula function.
-        member this.IsFormulaFunction (semanticModel : SemanticModel) =
-            nullArg this "this"
-            nullArg semanticModel "semanticModel"
-
-            let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> this
-            let methodClass = methodSymbol.ContainingType
-            methodClass = semanticModel.GetTypeSymbol<Ltl> () ||
-                methodClass = semanticModel.GetTypeSymbol<Ctl> () ||
-                methodClass = semanticModel.GetTypeSymbol<CtlOperatorFactory> () ||
-                methodClass = semanticModel.GetTypeSymbol<LtlFormula> () ||
-                methodClass = semanticModel.GetTypeSymbol<CtlFormula> ()
+/// Represents the visibility of a C# type or member.
+type Visibility = 
+    | Private
+    | Protected
+    | Internal
+    | ProtectedInternal
+    | Public

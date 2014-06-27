@@ -30,7 +30,7 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 /// Represents a callback that emits a diagnostic.
 type DiagnosticCallback = delegate of locationNode : SyntaxNode * [<ParamArray>] messageArgs : obj array -> unit

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System.Linq
 open Microsoft.CodeAnalysis
@@ -28,18 +28,33 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
 
-/// Provides extension methods for working with <see cref="MethodDeclarationSyntax" /> instances.
+/// Provides extension methods for working with <see cref="IMethodSymbol" /> instances.
 [<AutoOpen>]
-module MethodDeclarationExtensions =
-    type MethodDeclarationSyntax with
+module MethodSymbolExtensions =
+    type IMethodSymbol with
 
-        /// Checks whether the method declaration declares a method overriding the <see cref="Component.Update()" /> method.
+        /// Checks whether the method symbol overrides the given method.
+        member this.Overrides (overriddenMethod : IMethodSymbol) =
+            nullArg this "this"
+            nullArg overriddenMethod "overriddenMethod"
+
+            if this.Equals overriddenMethod then
+                true
+            elif not this.IsOverride then
+                false
+            elif this.OverriddenMethod.Equals overriddenMethod then
+                true
+            else
+                this.OverriddenMethod.Overrides overriddenMethod
+
+        /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
+        member this.IsUpdateMethod (compilation : Compilation) =
+            nullArg this "this"
+            nullArg compilation "compilation"
+            compilation.GetUpdateMethodSymbol () |> this.Overrides
+
+        /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
         member this.IsUpdateMethod (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-            semanticModel.GetSymbol(this).Overrides <| semanticModel.GetUpdateMethodSymbol ()
-
-        /// Gets the visibility of the method.
-        member this.Visibility =
-            nullArg this "this"
-            this.Modifiers.GetVisibility Private
+            semanticModel.Compilation.GetUpdateMethodSymbol () |> this.Overrides

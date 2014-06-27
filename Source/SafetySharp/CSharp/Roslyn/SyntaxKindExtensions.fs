@@ -20,13 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Roslyn
 
+open System
+open System.Linq
+open System.Text
+open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.Utilities
 
-/// Represents a compilation of a SafetySharp modeling assembly.
-type ModelingCompilation (compilation : CSharpCompilation) = 
-    /// Gets the C# compilation that represents the modeling compilation.
-    member this.CSharpCompilation = compilation
+/// Provides extension methods for working with <see cref="SyntaxKind" /> instances.
+[<AutoOpen>]
+module SyntaxKindExtensions =
+    type SyntaxKind with
+        /// Generates a user-friendly description for the syntax kind.
+        member this.ToDescription () =
+            let nodeKind = this.ToString()
+            let name = StringBuilder ()
 
-    // TODO
+            name.Append(Char.ToLower nodeKind.[0]) |> ignore
+            nodeKind
+            |> Seq.skip 1
+            |> Seq.iter (fun c ->
+                if Char.IsUpper c then
+                    name.AppendFormat (" {0}", Char.ToLower c) |> ignore
+                else
+                    name.Append c |> ignore
+            )
+
+            name.ToString()

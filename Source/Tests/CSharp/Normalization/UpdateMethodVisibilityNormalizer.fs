@@ -33,7 +33,7 @@ open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.CSharp
 open SafetySharp.Tests
 open SafetySharp.CSharp.Normalization
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 [<TestFixture>]
 module UpdateMethodVisibilityNormalizerTests =

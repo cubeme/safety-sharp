@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Extensions.ITypeSymbolExtensionsTests
+namespace SafetySharp.Tests.CSharp.Roslyn.ITypeSymbolExtensionsTests
 
 open System.Linq
 open NUnit.Framework
@@ -29,7 +29,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
 open SafetySharp.Tests
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 [<TestFixture>]
 module ``IsDerivedFrom method`` =

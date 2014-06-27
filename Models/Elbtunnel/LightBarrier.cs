@@ -26,6 +26,7 @@ namespace Elbtunnel
 {
 	// Blub
 	using System;
+	using System.Diagnostics;
 	using SafetySharp.Modeling;
 
 	public class LightBarrier : Component
@@ -45,6 +46,7 @@ namespace Elbtunnel
 	/// </summary>
 	internal interface MyInterface
 	{
+		void Test();
 	}
 
 	internal class Test2 : Component
@@ -72,9 +74,19 @@ namespace Elbtunnel
 
 			sbyte i = 0;
 			i++;
+
+			Update();
 		}
 
-		public extern void Test();
+		public extern void Test(); // ---> public Action Test { private get; set; }
+
+		protected internal extern  int Q();
+		protected internal extern  int Q2(bool f);
+
+			[DebuggerNonUserCode]
+
+		[DebuggerHidden]
+		private extern void P(int a, int b);
 
 		protected override void Update()
 		{

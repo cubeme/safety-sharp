@@ -29,7 +29,6 @@ open SafetySharp.Utilities
 open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.CSharp.Roslyn
-open SafetySharp.CSharp.Extensions
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax

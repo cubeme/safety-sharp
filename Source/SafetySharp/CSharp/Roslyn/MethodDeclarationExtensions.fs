@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System.Linq
 open Microsoft.CodeAnalysis
@@ -28,26 +28,19 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
 
-/// Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
+/// Provides extension methods for working with <see cref="MethodDeclarationSyntax" /> instances.
 [<AutoOpen>]
-module FieldSymbolExtensions =
+module MethodDeclarationExtensions =
+    type MethodDeclarationSyntax with
 
-    /// Checks whether the type of the given field implements the component interface.
-    /// Note that it is sufficient to check whether the type implements IComponent, as all 
-    /// Component derived classes implement IComponent as well.
-    let private isSubcomponentField (fieldInfo : IFieldSymbol) (componentInterfaceSymbol : ITypeSymbol) =
-        fieldInfo.Type.IsDerivedFrom(componentInterfaceSymbol) || fieldInfo.Type.Equals(componentInterfaceSymbol);
-
-    type IFieldSymbol with
-
-        /// Checks whether the field symbol is a subcomponent field.
-        member this.IsSubcomponentField (compilation : Compilation) =
-            nullArg this "this"
-            nullArg compilation "compilation"
-            compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this
-
-        /// Checks whether the field symbol is a subcomponent field.
-        member this.IsSubcomponentField (semanticModel : SemanticModel) =
+        /// Checks whether the method declaration declares a method overriding the <see cref="Component.Update()" /> method.
+        member this.IsUpdateMethod (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-            semanticModel.Compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this
+            semanticModel.GetSymbol(this).Overrides <| semanticModel.GetUpdateMethodSymbol ()
+
+        /// Gets the visibility of the method.
+        member this.Visibility =
+            nullArg this "this"
+            let defaultVisibility = if this.ExplicitInterfaceSpecifier = null then Private else Public
+            this.Modifiers.GetVisibility defaultVisibility

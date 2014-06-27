@@ -20,9 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Extensions.SyntaxTokenListExtensionsTests
+namespace SafetySharp.Tests.CSharp.Roslyn.IFieldSymbolExtensionsTests
 
-open System
 open System.Linq
 open NUnit.Framework
 open Swensen.Unquote
@@ -30,45 +29,27 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
 open SafetySharp.Tests
-open SafetySharp.Modeling
-open SafetySharp.CSharp.Extensions
-
-[<AutoOpen>]
-module SyntaxTokenListExtensionsHelper =
-    let getVisibility csharpModifiers =
-        let compilation = TestCompilation ("
-            class C {
-                " + csharpModifiers + " void M() { }
-            }
-        ")
-
-        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
-        methodDeclaration.Modifiers.GetVisibility Private
+open SafetySharp.CSharp.Roslyn
 
 [<TestFixture>]
-module ``Visibility property`` =
+module ``IsSubcomponentField method`` =
+    let isComponentField csharpCode =
+        let compilation = TestCompilation csharpCode
+
+        let classSymbol = compilation.CSharpCompilation.GetTypeSymbol "X"
+        let fieldSymbol = classSymbol.GetMembers().OfType<IFieldSymbol>().Single()
+            
+        fieldSymbol.IsSubcomponentField compilation.SemanticModel
 
     [<Test>]
-    let ``default visibility`` () =
-        getVisibility "" =? Private
+    let ``returns false for non-component fields`` () =
+        isComponentField "class X : Component { int x; }" =? false
+        isComponentField "class X : Component { bool x; }" =? false
+        isComponentField "class X : Component { decimal x; }" =? false
 
     [<Test>]
-    let ``private visibility`` () =
-        getVisibility "private" =? Private
-
-    [<Test>]
-    let ``protected visibility`` () =
-        getVisibility "protected" =? Protected
-
-    [<Test>]
-    let ``protected internal visibility`` () =
-        getVisibility "protected internal" =? ProtectedInternal
-        getVisibility "internal protected" =? ProtectedInternal
-
-    [<Test>]
-    let ``internal visibility`` () =
-        getVisibility "internal" =? Internal
-
-    [<Test>]
-    let ``public visibility`` () =
-        getVisibility "public" =? Public
+    let ``returns true for component fields`` () =
+        isComponentField "class X : Component { Component x; }" =? true
+        isComponentField "class X : Component { IComponent x; }" =? true
+        isComponentField "class Y : Component {} class X : Component { Y x; }" =? true
+        isComponentField "interface Y : IComponent {} class X : Component { Y x; }" =? true

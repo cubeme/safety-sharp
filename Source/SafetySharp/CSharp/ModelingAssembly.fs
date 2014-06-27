@@ -54,7 +54,7 @@ type ModelingAssembly (modelingAssembly : Assembly) as this=
             |> Seq.map Assembly.Load
             |> Seq.fold (fun (compilation : CSharpCompilation) assembly -> compilation.AddReferences (MetadataFileReference assembly.Location)) compilation
 
-        ModelingCompilation (this.AddCompilationUnits compilation)
+        this.AddCompilationUnits compilation
 
     /// Gets the modeling assemblies this modeling assembly depends on.
     member this.DependentAssemblies =

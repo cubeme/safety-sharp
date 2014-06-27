@@ -20,34 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
+open System
 open System.Linq
+open System.Text
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
+open SafetySharp.Modeling
 
-/// Provides extension methods for working with <see cref="TypeDeclarationSyntax" /> instances.
+/// Provides extension methods for working with <see cref="InvocationExpressionSyntax" /> instances.
 [<AutoOpen>]
-module TypeDeclarationExtensions =
-    type TypeDeclarationSyntax with
+module InvocationExpressionExtensions =
+    type InvocationExpressionSyntax with
 
-        /// Checks whether the type declaration declaration is a component declaration.
-        member this.IsComponentDeclaration (semanticModel : SemanticModel) =
+        /// Checks whether the invocation expression invokes a CTL or LTL formula function.
+        member this.IsFormulaFunction (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-            this.IsDerivedFrom semanticModel <| semanticModel.GetComponentClassSymbol ()
 
-        /// Checks whether type declaration is a component interface declaration.
-        member this.IsComponentInterfaceDeclaration (semanticModel : SemanticModel) =
-            nullArg this "this"
-            nullArg semanticModel "semanticModel"
-            this.IsDerivedFrom semanticModel <| semanticModel.GetComponentInterfaceSymbol ()
-
-        /// Checks whether the type declaration is directly or indirectly derived from the <paramref name="baseType" /> interface or class.
-        member this.IsDerivedFrom (semanticModel : SemanticModel) (baseType : ITypeSymbol) =
-            nullArg this "this"
-            nullArg semanticModel "semanticModel"
-            nullArg baseType "baseType"
-            semanticModel.GetSymbol(this).IsDerivedFrom baseType
+            let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> this
+            let methodClass = methodSymbol.ContainingType
+            methodClass = semanticModel.GetTypeSymbol<Ltl> () ||
+                methodClass = semanticModel.GetTypeSymbol<Ctl> () ||
+                methodClass = semanticModel.GetTypeSymbol<CtlOperatorFactory> () ||
+                methodClass = semanticModel.GetTypeSymbol<LtlFormula> () ||
+                methodClass = semanticModel.GetTypeSymbol<CtlFormula> ()

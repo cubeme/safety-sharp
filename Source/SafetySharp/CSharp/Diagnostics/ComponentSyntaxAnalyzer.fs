@@ -30,7 +30,7 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 /// Checks for unsupported C# features within a component declaration.
 type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
@@ -70,6 +70,11 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallbac
     override this.VisitParenthesizedExpression node = this.VisitDescendantNodes node
     override this.VisitIfStatement node             = this.VisitDescendantNodes node
     override this.VisitElseClause node              = this.VisitDescendantNodes node
+    override this.VisitParameter node               = this.VisitDescendantNodes node
+    override this.VisitAttributeList node           = this.VisitDescendantNodes node
+    override this.VisitAttribute node               = this.VisitDescendantNodes node
+    override this.VisitAttributeArgumentList node   = this.VisitDescendantNodes node
+    override this.VisitAttributeArgument node       = this.VisitDescendantNodes node
 
     override this.VisitMethodDeclaration node =
         if node.Modifiers.Any SyntaxKind.AsyncKeyword then

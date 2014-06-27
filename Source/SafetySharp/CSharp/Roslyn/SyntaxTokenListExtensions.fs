@@ -20,19 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-
-/// Represents the visibility of a C# type or member.
-type Visibility = 
-    | Private
-    | Protected
-    | Internal
-    | ProtectedInternal
-    | Public
 
 /// Provides extension methods for working with <see cref="SyntaxTokenList" /> instances.
 [<AutoOpen>]

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System.Linq
 open Microsoft.CodeAnalysis
@@ -35,11 +35,11 @@ module SyntaxTokenExtensions =
 
         /// Removes all leading and trailing trivia from the syntax token.
         member this.RemoveTrivia () =
-            this.WithLeadingTrivia().WithTrailingTrivia()
+            this.WithLeadingTrivia().WithTrailingTrivia ()
 
         /// Adds the given leading and trailing trivia to the syntax token.
         member this.AddTrivia (leadingTrivia : SyntaxTriviaList) (trailingTrivia : SyntaxTriviaList) =
-            this.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia)
+            this.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia trailingTrivia
 
         /// Adds the trivia from the given syntax node to the current syntax token.
         member this.AddTriviaFrom (node : SyntaxNode) =
@@ -52,4 +52,4 @@ module SyntaxTokenExtensions =
 
         /// Surrounds the syntax token with a single leading and trailing space.
         member this.SurroundWithSingleSpace () =
-            this.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia(SyntaxFactory.Space)
+            this.WithLeadingTrivia(SyntaxFactory.Space).WithTrailingTrivia SyntaxFactory.Space

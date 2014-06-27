@@ -20,13 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.CSharp.Roslyn
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 
-module internal Roslyn =
+[<AutoOpen>]
+module internal PatternMatching =
+
     let private projectNode (node : SyntaxNode) projection =
         match node with
         | :? 'T as node -> Some <| projection node

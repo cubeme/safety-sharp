@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System.Linq
 open Microsoft.CodeAnalysis
@@ -28,19 +28,26 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
 
-/// Provides extension methods for working with <see cref="SyntaxTree" /> instances.
+/// Provides extension methods for working with <see cref="TypeDeclarationSyntax" /> instances.
 [<AutoOpen>]
-module SyntaxTreeExtensions =
-    type SyntaxTree with
+module TypeDeclarationExtensions =
+    type TypeDeclarationSyntax with
 
-        /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node of the given type
-        /// in prefix document order.
-        member this.Descendants<'T when 'T :> SyntaxNode> () =
+        /// Checks whether the type declaration declaration is a component declaration.
+        member this.IsComponentDeclaration (semanticModel : SemanticModel) =
             nullArg this "this"
-            this.GetRoot().Descendants<'T>()
+            nullArg semanticModel "semanticModel"
+            this.IsDerivedFrom semanticModel <| semanticModel.GetComponentClassSymbol ()
 
-        /// Gets a list of descendant syntax nodes of <paramref name="syntaxTree" />'s root node (including the root node) of
-        /// the given type in prefix document order.
-        member this.DescendantsAndSelf<'T when 'T :> SyntaxNode> () =
+        /// Checks whether type declaration is a component interface declaration.
+        member this.IsComponentInterfaceDeclaration (semanticModel : SemanticModel) =
             nullArg this "this"
-            this.GetRoot().DescendantsAndSelf<'T>()
+            nullArg semanticModel "semanticModel"
+            this.IsDerivedFrom semanticModel <| semanticModel.GetComponentInterfaceSymbol ()
+
+        /// Checks whether the type declaration is directly or indirectly derived from the <paramref name="baseType" /> interface or class.
+        member this.IsDerivedFrom (semanticModel : SemanticModel) (baseType : ITypeSymbol) =
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+            nullArg baseType "baseType"
+            semanticModel.GetSymbol(this).IsDerivedFrom baseType

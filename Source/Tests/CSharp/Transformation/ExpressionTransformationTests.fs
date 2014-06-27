@@ -30,7 +30,7 @@ open SafetySharp.Metamodel
 open SafetySharp.Tests
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp.Transformation
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 [<AutoOpen>]
 module private ExpressionTransformationTestsHelper = 

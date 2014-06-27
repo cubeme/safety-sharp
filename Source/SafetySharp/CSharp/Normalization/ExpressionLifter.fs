@@ -26,12 +26,12 @@ open System
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 open SafetySharp.Modeling
 
 /// Lifts all method invocation parameter expressions 'expr' to a lambda function of the form '() => expr'.
 type ExpressionLifter () =
-    inherit CSharpNormalizer ()
+    inherit CSharpNormalizer (NormalizationScope.Global)
 
     override this.VisitArgument node =
         let requiresRewrite = node.HasAttribute<LiftExpressionAttribute> this.semanticModel
@@ -40,7 +40,6 @@ type ExpressionLifter () =
         if not requiresRewrite then
             upcast node
         else
-            let expression = SyntaxFactory.ParenthesizedLambdaExpression (node.Expression.RemoveTrivia ())
-            let expression = expression.WithArrowToken (expression.ArrowToken.SurroundWithSingleSpace ())
-            let expression = expression.AddTriviaFrom node.Expression
+            let expression = Syntax.Lambda [] node.Expression
+            let expression = expression |> Syntax.WithTriviaFromNode node.Expression
             upcast node.WithExpression expression

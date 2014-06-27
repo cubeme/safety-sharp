@@ -20,26 +20,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.Tests.CSharp.Roslyn.SyntaxTokenListExtensionsTests
 
 open System
+open System.Linq
+open NUnit.Framework
+open Swensen.Unquote
 open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
+open SafetySharp.CSharp
+open SafetySharp.Tests
+open SafetySharp.Modeling
 open SafetySharp.CSharp.Roslyn
 
-/// When the modeling-time SafetySharp assembly is replaced by the compile-time SafetySharp assembly, we have to change the 
-/// 'protected' modifier on overridden Component.Update methods to 'public', as the F# version is declared 'public'. If
-/// F# one day finally supports 'protected' visibility, this normalizer is rendered unnecessary.
-type UpdateMethodVisibilityNormalizer () =
-    inherit CSharpNormalizer (NormalizationScope.Components)
+[<TestFixture>]
+module ``Visibility method`` =
+    
+    let getVisibility csharpModifiers =
+        let compilation = TestCompilation ("
+            class C {
+                " + csharpModifiers + " void M() { }
+            }
+        ")
 
-    override this.VisitMethodDeclaration (declaration : MethodDeclarationSyntax) =
-        if declaration.IsUpdateMethod this.semanticModel then
-            let protectedModifier = declaration.Modifiers |> Seq.find (fun modifier -> modifier.ValueText = "protected")
-            let publicModifier = SyntaxFactory.Token(SyntaxKind.PublicKeyword).AddTriviaFrom protectedModifier
+        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
+        methodDeclaration.Modifiers.GetVisibility Private
 
-            let modifiers = declaration.Modifiers.Replace (protectedModifier, publicModifier)
-            upcast declaration.WithModifiers modifiers
-        else
-            upcast declaration
+    [<Test>]
+    let ``default visibility`` () =
+        getVisibility "" =? Private
+
+    [<Test>]
+    let ``private visibility`` () =
+        getVisibility "private" =? Private
+
+    [<Test>]
+    let ``protected visibility`` () =
+        getVisibility "protected" =? Protected
+
+    [<Test>]
+    let ``protected internal visibility`` () =
+        getVisibility "protected internal" =? ProtectedInternal
+        getVisibility "internal protected" =? ProtectedInternal
+
+    [<Test>]
+    let ``internal visibility`` () =
+        getVisibility "internal" =? Internal
+
+    [<Test>]
+    let ``public visibility`` () =
+        getVisibility "public" =? Public

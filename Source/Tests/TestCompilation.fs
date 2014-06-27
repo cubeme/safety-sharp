@@ -30,7 +30,7 @@ open System.Reflection
 open System.Threading
 open SafetySharp.Metamodel
 open SafetySharp.CSharp
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax

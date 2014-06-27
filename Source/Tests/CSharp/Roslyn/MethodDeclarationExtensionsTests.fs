@@ -20,8 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Extensions.IFieldSymbolExtensionsTests
+namespace SafetySharp.Tests.CSharp.Roslyn.MethodDeclarationExtensionsTests
 
+open System
 open System.Linq
 open NUnit.Framework
 open Swensen.Unquote
@@ -29,27 +30,39 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
 open SafetySharp.Tests
-open SafetySharp.CSharp.Extensions
+open SafetySharp.Modeling
+open SafetySharp.CSharp.Roslyn
 
 [<TestFixture>]
-module ``IsSubcomponentField method`` =
-    let isComponentField csharpCode =
+module ``Visibility property`` =
+
+    let getVisibility csharpCode =
         let compilation = TestCompilation csharpCode
-
-        let classSymbol = compilation.CSharpCompilation.GetTypeSymbol "X"
-        let fieldSymbol = classSymbol.GetMembers().OfType<IFieldSymbol>().Single()
-            
-        fieldSymbol.IsSubcomponentField compilation.SemanticModel
+        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
+        methodDeclaration.Visibility
 
     [<Test>]
-    let ``returns false for non-component fields`` () =
-        isComponentField "class X : Component { int x; }" =? false
-        isComponentField "class X : Component { bool x; }" =? false
-        isComponentField "class X : Component { decimal x; }" =? false
+    let ``default visibility`` () =
+        getVisibility "class C { void M() {}}" =? Private
+        getVisibility "interface I { void M(); } class C : I { void I.M() {}}" =? Public
 
     [<Test>]
-    let ``returns true for component fields`` () =
-        isComponentField "class X : Component { Component x; }" =? true
-        isComponentField "class X : Component { IComponent x; }" =? true
-        isComponentField "class Y : Component {} class X : Component { Y x; }" =? true
-        isComponentField "interface Y : IComponent {} class X : Component { Y x; }" =? true
+    let ``private visibility`` () =
+        getVisibility "class C { private void M() {}}" =? Private
+
+    [<Test>]
+    let ``protected visibility`` () =
+        getVisibility "class C { protected void M() {}}" =? Protected
+
+    [<Test>]
+    let ``protected internal visibility`` () =
+        getVisibility "class C { protected internal void M() {}}" =? ProtectedInternal
+        getVisibility "class C { internal protected void M() {}}" =? ProtectedInternal
+
+    [<Test>]
+    let ``internal visibility`` () =
+        getVisibility "class C { internal void M() {}}" =? Internal
+
+    [<Test>]
+    let ``public visibility`` () =
+        getVisibility "class C { public void M() {}}" =? Public

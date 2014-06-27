@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Extensions
+namespace SafetySharp.CSharp.Roslyn
 
 open System.Linq
 open Microsoft.CodeAnalysis
@@ -28,33 +28,26 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
 
-/// Provides extension methods for working with <see cref="IMethodSymbol" /> instances.
+/// Provides extension methods for working with <see cref="IFieldSymbol" /> instances.
 [<AutoOpen>]
-module MethodSymbolExtensions =
-    type IMethodSymbol with
+module FieldSymbolExtensions =
 
-        /// Checks whether the method symbol overrides the given method.
-        member this.Overrides (overriddenMethod : IMethodSymbol) =
-            nullArg this "this"
-            nullArg overriddenMethod "overriddenMethod"
+    /// Checks whether the type of the given field implements the component interface.
+    /// Note that it is sufficient to check whether the type implements IComponent, as all 
+    /// Component derived classes implement IComponent as well.
+    let private isSubcomponentField (fieldInfo : IFieldSymbol) (componentInterfaceSymbol : ITypeSymbol) =
+        fieldInfo.Type.IsDerivedFrom(componentInterfaceSymbol) || fieldInfo.Type.Equals(componentInterfaceSymbol);
 
-            if this.Equals overriddenMethod then
-                true
-            elif not this.IsOverride then
-                false
-            elif this.OverriddenMethod.Equals overriddenMethod then
-                true
-            else
-                this.OverriddenMethod.Overrides overriddenMethod
+    type IFieldSymbol with
 
-        /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
-        member this.IsUpdateMethod (compilation : Compilation) =
+        /// Checks whether the field symbol is a subcomponent field.
+        member this.IsSubcomponentField (compilation : Compilation) =
             nullArg this "this"
             nullArg compilation "compilation"
-            compilation.GetUpdateMethodSymbol () |> this.Overrides
+            compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this
 
-        /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
-        member this.IsUpdateMethod (semanticModel : SemanticModel) =
+        /// Checks whether the field symbol is a subcomponent field.
+        member this.IsSubcomponentField (semanticModel : SemanticModel) =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
-            semanticModel.Compilation.GetUpdateMethodSymbol () |> this.Overrides
+            semanticModel.Compilation.GetComponentInterfaceSymbol () |> isSubcomponentField this

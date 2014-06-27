@@ -32,7 +32,7 @@ open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.CSharp
 open SafetySharp.Tests
 open SafetySharp.CSharp.Normalization
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 [<TestFixture>]
 module ExpressionLifterTests =
@@ -52,13 +52,13 @@ module ExpressionLifterTests =
                 void Test() { " + csharpCode + "; }
             }")
 
-        let syntaxTree = ExpressionLifter().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single()
-        let creationInvocation = syntaxTree.Descendants<ObjectCreationExpressionSyntax>().FirstOrDefault()
+        let syntaxTree = ExpressionLifter().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        let creationInvocation = syntaxTree.Descendants<ObjectCreationExpressionSyntax>().FirstOrDefault ()
         
         if creationInvocation <> null then
             creationInvocation.ToString ()
         else
-            let methodInvocation = syntaxTree.Descendants<InvocationExpressionSyntax>().FirstOrDefault()
+            let methodInvocation = syntaxTree.Descendants<InvocationExpressionSyntax>().FirstOrDefault ()
             methodInvocation.ToString ()
 
     [<Test>]

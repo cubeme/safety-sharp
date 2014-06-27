@@ -33,7 +33,7 @@ open SafetySharp.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
 open SafetySharp.Tests
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 open SafetySharp.CSharp.Transformation
 
 [<AutoOpen>]

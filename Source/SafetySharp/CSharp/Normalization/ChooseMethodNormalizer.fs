@@ -26,13 +26,13 @@ open System
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 open SafetySharp.Utilities
 open SafetySharp.Modeling
 
 /// Normalizes all usages of the nondeterministic Choose methods.
 type ChooseMethodNormalizer () =
-    inherit CSharpNormalizer ()
+    inherit CSharpNormalizer (NormalizationScope.Components)
 
     override this.VisitBinaryExpression node =
         if node.CSharpKind () <> SyntaxKind.SimpleAssignmentExpression then
@@ -44,10 +44,11 @@ type ChooseMethodNormalizer () =
             let methodSymbol = this.semanticModel.GetSymbol<IMethodSymbol> invocation
 
             if methodSymbol.ContainingType = this.semanticModel.GetTypeSymbol<Choose> () then
-                let outToken = SyntaxFactory.Token(SyntaxKind.OutKeyword).WithTrailingTrivia SyntaxFactory.Space
-                let argument = SyntaxFactory.Argument(node.Left.RemoveTrivia ()).WithRefOrOutKeyword outToken
+                let outToken = SyntaxFactory.Token(SyntaxKind.OutKeyword)
+                let argument = SyntaxFactory.Argument(node.Left).WithRefOrOutKeyword outToken
                 let arguments = invocation.ArgumentList.Arguments.Insert (0, argument)
                 let argumentList = invocation.ArgumentList.WithArguments arguments
-                upcast invocation.AddTriviaFrom(node).WithArgumentList argumentList
+                let invocation = invocation.WithArgumentList argumentList
+                upcast (invocation.NormalizeWhitespace () |> Syntax.WithTriviaFromNode node)
             else
                 upcast node

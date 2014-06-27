@@ -25,11 +25,22 @@ namespace SafetySharp.CSharp.Normalization
 open System
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
+open SafetySharp.CSharp.Roslyn
+
+/// Indicates which parts of the code are affected by a normalizer.
+[<RequireQualifiedAccess>]
+type NormalizationScope =
+    /// Limits the scope of the normalizer to all members of a component class.
+    | Components
+    /// Limits the scope of the normalizer to all statements (excluding those of the constructors) of a component class.
+    | ComponentStatements
+    /// Does not limit the scope of the normalizer.
+    | Global
 
 /// A base class for C# normalizers that normalize certain C# features to equivalent ones that are easier to transform to
 /// the metamodel.
 [<AbstractClass>]
-type CSharpNormalizer () =
+type CSharpNormalizer (scope) =
     inherit CSharpSyntaxRewriter ()
 
     /// The semantic model that should be used for semantic analysis during normalization.
@@ -53,3 +64,17 @@ type CSharpNormalizer () =
         |> Seq.fold (fun (compilation : Compilation) syntaxTree -> 
             compilation.ReplaceSyntaxTree (syntaxTree, this.NormalizeSyntaxTree compilation syntaxTree)
         ) compilation
+
+    /// Ensures that non-component classes are only visited when the normalizer as global scope.
+    override this.VisitClassDeclaration node =
+        if scope <> NormalizationScope.Global && not <| node.IsComponentDeclaration this.semanticModel then
+            upcast node
+        else
+            base.VisitClassDeclaration node
+
+    /// Ensures that a constructor is only visited when the normalizer as global scope.
+    override this.VisitConstructorDeclaration node =
+        if scope <> NormalizationScope.Global && scope <> NormalizationScope.ComponentStatements then
+            base.VisitConstructorDeclaration node
+        else
+            upcast node

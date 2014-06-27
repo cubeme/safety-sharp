@@ -31,7 +31,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Utilities
 open SafetySharp.Modeling
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 /// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
 type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback) =

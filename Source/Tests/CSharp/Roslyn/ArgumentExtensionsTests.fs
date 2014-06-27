@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Extensions.ArgumentExtensionsTests
+namespace SafetySharp.Tests.CSharp.Roslyn.ArgumentExtensionsTests
 
 open System
 open System.Linq
@@ -31,7 +31,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp
 open SafetySharp.Tests
 open SafetySharp.Modeling
-open SafetySharp.CSharp.Extensions
+open SafetySharp.CSharp.Roslyn
 
 [<AutoOpen>]
 module ArgumentExtentionsTestHelper =
