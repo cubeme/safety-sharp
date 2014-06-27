@@ -33,6 +33,41 @@ open SafetySharp.Modeling
 
 module Syntax =
 
+    /// Replaces all end-of-line trivia contained in the syntax node by spaces.
+    let AsSingleLine (syntaxNode : #SyntaxNode) =
+        nullArg syntaxNode "syntaxNode"
+        let trivia = syntaxNode.DescendantTrivia() |> Seq.where (fun trivia -> trivia.CSharpKind() = SyntaxKind.EndOfLineTrivia)
+        syntaxNode.ReplaceTrivia (trivia, fun t1 t2 -> SyntaxFactory.Space)
+
+    /// Appends the given number of new line characters to the node's list of trailing trivia.
+    let WithTrailingNewLines newLineCount (syntaxNode : #SyntaxNode) =
+        nullArg syntaxNode "syntaxNode"
+        syntaxNode.WithTrailingTrivia (
+            seq { 
+                yield! syntaxNode.GetTrailingTrivia ()
+                for _ in 1 .. newLineCount -> SyntaxFactory.EndOfLine "\n" 
+            })
+
+    /// Ensures that the given node has the same line count as the given template node. If it has fewer lines, the appropriate
+    /// number of empty lines are added. If it has more lines, an exception is thrown.
+    let EnsureSameLineCount (templateNode : SyntaxNode) (syntaxNode : #SyntaxNode) =
+        nullArg syntaxNode "syntaxNode"
+        nullArg templateNode "templateNode"
+
+        let countLines (node : SyntaxNode) =
+            let lineSpan = node.GetLocation().GetLineSpan()
+            lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line + 1  
+
+        let actualLineCount = countLines syntaxNode
+        let desiredLineCount = countLines templateNode
+        
+        if actualLineCount = desiredLineCount then
+            syntaxNode
+        elif actualLineCount < desiredLineCount then
+            syntaxNode |> WithTrailingNewLines (desiredLineCount - actualLineCount)
+        else
+            invalidOp "The given syntax node occupies %i lines, whereas it is only allowed to occupy %i lines." actualLineCount desiredLineCount
+
     /// Removes all leading and trailing trivia from the syntax node.
     let RemoveTrivia (syntaxNode : #SyntaxNode) =
         nullArg syntaxNode "syntaxNode"
@@ -95,6 +130,15 @@ module Syntax =
     let NormalizeWhitespace (syntaxNode : #SyntaxNode) =
         nullArg syntaxNode "syntaxNode"
         syntaxNode.NormalizeWhitespace ()
+
+    let With withMethod (syntaxNode : #SyntaxNode) =
+        nullArg syntaxNode "syntaxNode"
+        withMethod syntaxNode
+
+    let ConditionalWith condition withMethod (syntaxNode : #SyntaxNode) =
+        nullArg syntaxNode "syntaxNode"
+        if condition then withMethod syntaxNode
+        else syntaxNode
 
     /// Creates a syntax token list containing the appropriate visibility modifier(s).
     let VisibilityModifier = function

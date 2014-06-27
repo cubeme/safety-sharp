@@ -86,7 +86,9 @@ namespace Elbtunnel
 			[DebuggerNonUserCode]
 
 		[DebuggerHidden]
-		private extern void P(int a, int b);
+		private extern void P(int a, 
+				
+				int b);
 
 		protected override void Update()
 		{

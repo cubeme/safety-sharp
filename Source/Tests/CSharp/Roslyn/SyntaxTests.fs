@@ -37,7 +37,61 @@ open SafetySharp.CSharp.Roslyn
 [<AutoOpen>]
 module SyntaxTestsHelpers =
     let toString (node : SyntaxNode) =
-        node.ToFullString ()
+        node.ToFullString().Replace ("\r", String.Empty)
+
+[<TestFixture>]
+module ``AsSingleLine method`` =
+    
+    let asSingleLine csharpCode =
+        SyntaxFactory.ParseStatement csharpCode |> Syntax.AsSingleLine |> toString
+
+    [<Test>]
+    let ``throws when null is passed`` () =
+        raisesArgumentNullException "syntaxNode" <@ Syntax.AsSingleLine null @>
+
+    [<Test>]
+    let ``does not modify single line statements`` () =
+        asSingleLine "var x = 1;" =? "var x = 1;"
+        asSingleLine "if (true) ; else return;" =? "if (true) ; else return;"
+
+    [<Test>]
+    let ``modifies multi-line statements`` () =
+        asSingleLine "var\nx =\n1;" =? "var x = 1;"
+        asSingleLine "if\n(true)\n; else\nreturn;" =? "if (true) ; else return;"
+
+[<TestFixture>]
+module ``EnsureSameLineCount method`` =
+
+    let ensureSameLineCount csharpCode templateCSharpCode =
+        let templateNode = SyntaxFactory.ParseStatement templateCSharpCode
+        SyntaxFactory.ParseStatement csharpCode |> Syntax.EnsureSameLineCount templateNode |> toString
+
+    [<Test>]
+    let ``throws when syntax node is null`` () =
+        raisesArgumentNullException "syntaxNode" <@ Syntax.EnsureSameLineCount (SyntaxFactory.ParseExpression "1") null @>
+
+    [<Test>]
+    let ``throws when template node is null`` () =
+        raisesArgumentNullException "templateNode" <@ Syntax.EnsureSameLineCount null (SyntaxFactory.ParseExpression "1") @>
+
+    [<Test>]
+    let ``throws when syntax node has more lines than template node`` () =
+        let syntaxNode = SyntaxFactory.ParseExpression "1 +\n 1"
+        let templateNode = SyntaxFactory.ParseExpression "1 + 1"
+        raises<InvalidOperationException> <@ Syntax.EnsureSameLineCount templateNode syntaxNode @>
+
+    [<Test>]
+    let ``does not modify syntax node when line counts match`` () =
+        ensureSameLineCount "var x = 1;" "    var x =   1;" =? "var x = 1;"
+        ensureSameLineCount "if (true) ; else return;" "var y = 1 + 1" =? "if (true) ; else return;"
+
+    [<Test>]
+    let ``adds trailing new lines when syntax node has less lines than template node`` () =
+        ensureSameLineCount "var x = 1;" " var x \n=   1;" =? "var x = 1;\n"
+        let actual = ensureSameLineCount "if (true) ; else return;" "if \n(true) \n;\n else\n return;\n"
+        let expected = "if (true) ; else return;\n\n\n\n"
+
+        actual =? expected
 
 [<TestFixture>]
 module ``AutoProperty method`` =

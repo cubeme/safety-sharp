@@ -38,10 +38,9 @@ open SafetySharp.Modeling
 type ExternMethodNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
-    // Todo: Preserve original line count when extern method is declared over multiple lines
     override this.VisitMethodDeclaration node =
         if node.Modifiers.Any SyntaxKind.ExternKeyword then
-            let typeArguments = node.ParameterList.Parameters |> Seq.map (fun parameter -> parameter.Type.ToString())
+            let typeArguments = node.ParameterList.Parameters |> Seq.map (fun parameter -> parameter.Type.ToString ())
 
             let generatePropertyType delegateType (typeArguments : string seq) =
                 if typeArguments |> Seq.isEmpty then
@@ -69,10 +68,13 @@ type ExternMethodNormalizer () =
 
             let property = 
                 if node.AttributeLists.Count <> 0 then
-                    property.WithAttributeLists(node.AttributeLists) |> Syntax.WithTrailingTriviaFromNode node
+                    property.WithAttributeLists(node.AttributeLists)
                 else
-                    property |> Syntax.WithTriviaFromNode node
+                    property
 
-            upcast property
+            upcast (property
+                |> Syntax.AsSingleLine
+                |> Syntax.WithTriviaFromNode node
+                |> Syntax.EnsureSameLineCount node)
         else
             upcast node
