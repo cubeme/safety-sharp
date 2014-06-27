@@ -26,6 +26,7 @@ open NUnit.Framework
 open Swensen.Unquote
 open SafetySharp.Tests.Modelchecking
 
+open SafetySharp.Utilities
 open SafetySharp.Modelchecking
 open SafetySharp.Modelchecking.PromelaSpin
 
@@ -53,5 +54,5 @@ module TestCase1ToPromelaTests =
         let promelaCode = modelTransformer.transformConfiguration
         let promelaWriter = ExportPromelaAstToFile()
         let promelaCodeString = promelaWriter.Export promelaCode
-        FileWriter.writeToFile "Modelchecking/Promela" "testcase1.pml" promelaCodeString
+        FileSystem.WriteToAsciiFile "Modelchecking/Promela/testcase1.pml" promelaCodeString
         ()

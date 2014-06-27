@@ -19,17 +19,22 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-namespace SafetySharp.Modelchecking
 
-module FileWriter =
-    let writeToFile (directory:string) (filename:string) (text:string) =    
-        System.IO.Directory.CreateDirectory directory |> ignore
-        let filename = directory+"/"+filename
-        if System.IO.File.Exists filename then
-            System.IO.File.Delete filename
-        use fs = System.IO.File.Create filename
-        let asciiencoding = new System.Text.ASCIIEncoding ()
-        let recodedText = asciiencoding.GetBytes text;
-        fs.Write(recodedText, 0, recodedText.Length)
-        fs.Flush ()
-        fs.Close ()
+namespace SafetySharp.Utilities
+
+open System.IO
+open System.Text
+
+/// Provides helper methods for working with the file system.
+module FileSystem =
+
+    /// Writes the given text to the file indicated by the path, using the given text encoding. If the file or some directories of
+    /// the path do not exist, they are created. Otherwise, the contents of the file are overwritten.
+    let WriteToFile path text encoding =    
+        Directory.CreateDirectory (Path.GetDirectoryName path) |> ignore
+        File.WriteAllText (path, text, encoding)
+
+    /// Writes the given text to the file indicated by the path, using the ASCII encoding. If the file or some directories of
+    /// the path do not exist, they are created. Otherwise, the contents of the file are overwritten.
+    let WriteToAsciiFile path text =
+        WriteToFile path text Encoding.ASCII
