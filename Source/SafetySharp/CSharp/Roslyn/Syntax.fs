@@ -91,6 +91,11 @@ module Syntax =
         nullArg syntaxNode "syntaxNode"
         syntaxNode.WithTrailingTrivia SyntaxFactory.Space
 
+    /// Normalizes all white space contained in the syntax node and its children.
+    let NormalizeWhitespace (syntaxNode : #SyntaxNode) =
+        nullArg syntaxNode "syntaxNode"
+        syntaxNode.NormalizeWhitespace ()
+
     /// Creates a syntax token list containing the appropriate visibility modifier(s).
     let VisibilityModifier = function
         | Private -> 
@@ -137,14 +142,14 @@ module Syntax =
     let Lambda (arguments : ParameterSyntax list) body =
         nullArg body "body"
 
-        let lambda =
-            match arguments with
-            | [] ->
-                SyntaxFactory.ParenthesizedLambdaExpression body :> ExpressionSyntax
-            | argument :: [] when argument.Type = null ->
-                SyntaxFactory.SimpleLambdaExpression (argument, body) :> ExpressionSyntax
-            | _ ->
-                let parameterList = SyntaxFactory.ParameterList (SyntaxFactory.SeparatedList arguments)
-                SyntaxFactory.ParenthesizedLambdaExpression (parameterList, body) :> ExpressionSyntax
-
-        lambda.NormalizeWhitespace ()
+        // We construct the lambda with some simple body originally and replace it later on with the real body, as we don't want 
+        // to normalize the whitespace of the lambda's body.
+        let tempBody = SyntaxFactory.ParseExpression "1"
+        match arguments with
+        | argument :: [] when argument.Type = null ->
+            let lambda = SyntaxFactory.SimpleLambdaExpression (argument, tempBody) |> NormalizeWhitespace
+            lambda.WithBody body :> ExpressionSyntax
+        | _ ->
+            let parameterList = SyntaxFactory.ParameterList (SyntaxFactory.SeparatedList arguments) 
+            let lambda = SyntaxFactory.ParenthesizedLambdaExpression (parameterList, tempBody) |> NormalizeWhitespace
+            lambda.WithBody body :> ExpressionSyntax

@@ -89,35 +89,20 @@ module ``Lambda method`` =
 
     [<Test>]
     let ``creates lambda with empty argument list`` () =
-        toString (Syntax.Lambda [] (SyntaxFactory.ParseExpression "1+1")) =? "() => 1 + 1"
-        toString (Syntax.Lambda [] (SyntaxFactory.ParseStatement "{ var i = 1; return 1+i; }")) =? 
-        "() =>
-{
-    var i = 1;
-    return 1 + i;
-}"
+        toString (Syntax.Lambda [] (SyntaxFactory.ParseExpression "1 + 1")) =? "() => 1 + 1"
+        toString (Syntax.Lambda [] (SyntaxFactory.ParseStatement "{ var i = 1; return 1 + i; }")) =? "() => { var i = 1; return 1 + i; }"
 
     [<Test>]
     let ``creates simple lambda with single argument`` () =
         let parameterSyntax = SyntaxFactory.Parameter (SyntaxFactory.Identifier "x")
-        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseExpression "x+1")) =? "x => x + 1"
-        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseStatement "{ var i = 1; return x+i; }")) =? 
-        "x =>
-{
-    var i = 1;
-    return x + i;
-}"
+        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseExpression "x + 1")) =? "x => x + 1"
+        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseStatement "{ var i = 1; return x + i; }")) =? "x => { var i = 1; return x + i; }"
 
     [<Test>]
     let ``creates lambda with single argument`` () =
         let parameterSyntax = SyntaxFactory.Parameter(SyntaxFactory.Identifier "x").WithType (SyntaxFactory.ParseTypeName "int")
-        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseExpression "x+1")) =? "(int x) => x + 1"
-        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseStatement "{ var i = 1; return x+i; }")) =? 
-        "(int x) =>
-{
-    var i = 1;
-    return x + i;
-}"
+        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseExpression "x + 1")) =? "(int x) => x + 1"
+        toString (Syntax.Lambda [parameterSyntax] (SyntaxFactory.ParseStatement "{ var i = 1; return x + i; }")) =? "(int x) => { var i = 1; return x + i; }"
 
     [<Test>]
     let ``creates lambda with multiple argument`` () =
@@ -127,10 +112,6 @@ module ``Lambda method`` =
         let parameters1 = [parameterSyntax1; parameterSyntax2]
         let parameters2 = [parameterSyntax1; parameterSyntax2; parameterSyntax3]
 
-        toString (Syntax.Lambda parameters1 (SyntaxFactory.ParseExpression "x+y")) =? "(int x, int y) => x + y"
-        toString (Syntax.Lambda parameters2 (SyntaxFactory.ParseStatement "{ var i = x; return i==y||z; }")) =? 
-        "(int x, int y, bool z) =>
-{
-    var i = x;
-    return i == y || z;
-}"
+        toString (Syntax.Lambda parameters1 (SyntaxFactory.ParseExpression "x + y")) =? "(int x, int y) => x + y"
+        toString (Syntax.Lambda parameters2 (SyntaxFactory.ParseStatement "{ var i = x; return i == y || z; }")) =? 
+            "(int x, int y, bool z) => { var i = x; return i == y || z; }"
