@@ -40,7 +40,7 @@ type WriteOnceExpression =
     | ConstLiteral of Value : SimpleConstLiteral
     
     /// Represents the application of an unary operator to an expression.
-    | UnaryExpression of Operand : SimpleExpression * Operator : MMUnaryOperator
+    | UnaryExpression of Operand : WriteOnceExpression * Operator : MMUnaryOperator
 
     /// Represents the application of a binary operator to two subexpressions.
     | BinaryExpression of LeftExpression : WriteOnceExpression * Operator : MMBinaryOperator * RightExpression : WriteOnceExpression
@@ -113,11 +113,11 @@ type WriteOnceStatement =
 // TODO: Refactor: readonly-parts as "let" and "Initialize" as only constructor
 // TODO: include in name something like "Branch" or Decisions BranchAndFieldManager? Or TransformationManager
 type WriteOnceTypeFieldManager = {
-    // static across a model
-    SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>; //map to the initial SimpleGlobalField
+    // static across a model. TODO: Maybe we can remove it
+    SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>; //map to the initial SimpleGlobalField
     // static across a scope. Changes with scopes. Organised as stacks. The head elements are the current elements. on a popScope the head elements are just thrown away
-    SimpleFieldToCurrentArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //if an artificial field for a reference field is created, link the artificial fields to the field it overwrites
-    SimpleFieldToNewArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) list; //same as above, but only the fields introduced in this of the current scope. If a field is not "overwritten" in this scope, the map does not contain it.
+    SimpleFieldToCurrentRedirectionFieldMapping : (Map<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>) list; //if an artificial field for a reference field is created, link the artificial fields to the field it overwrites
+    SimpleFieldToNewArtificialFieldMapping : (Map<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>) list; //same as above, but only the fields introduced in this of the current scope. If a field is not "overwritten" in this scope, the map does not contain it.
     CurrentDecisions : (WriteOnceExpression list); //A Stack will all Decisions taken to this Branch
     // Following items are shared across all managers with the same .Initialize. They should only be changed internally.
     SimpleFieldToArtificialCounterShared : Map<SimpleGlobalFieldWithContext,int> ref; //every time a new artificial field is created, counter is increased. It is "ref" so its value is shared across different instances leading back to the same .Initialize
@@ -125,30 +125,45 @@ type WriteOnceTypeFieldManager = {
 
 } with
     static member Initialize (fieldsOfPartition:SimpleGlobalField list) =
-        let initializeCurrentValueMap  : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
-            let createEntry (fieldOfPartition:SimpleGlobalField) : (SimpleGlobalFieldWithContext*SimpleGlobalField) =
-                ""
+        let initialSimpleFieldToInitialFieldMapping: Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
+            let createEntry (field:SimpleGlobalField) : (SimpleGlobalFieldWithContext*SimpleGlobalField) =
+                (field.getSimpleGlobalFieldWithContext,field)
+            fieldsOfPartition |> List.map createEntry
+                              |> Map.ofList
+        let initialSimpleFieldToInitialRedirectionFieldMapping: Map<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>=
+            let createEntry (field:SimpleGlobalField) : (SimpleGlobalFieldWithContext*(WriteOnceTimeOfAccess*SimpleGlobalField)) =
+                (field.getSimpleGlobalFieldWithContext,(WriteOnceTimeOfAccess.UseResultOfLastStep,field))
+            fieldsOfPartition |> List.map createEntry
+                              |> Map.ofList
+        let initialSimpleFieldToArtificialCounterShared: Map<SimpleGlobalFieldWithContext,int>=
+            let createEntry (field:SimpleGlobalField) : (SimpleGlobalFieldWithContext*int) =
+                (field.getSimpleGlobalFieldWithContext,0)
             fieldsOfPartition |> List.map createEntry
                               |> Map.ofList
         {
-            WriteOnceTypeFieldManager.CurrentMapping = ref initializeCurrentValueMap
+            WriteOnceTypeFieldManager.SimpleFieldToInitialFieldMapping = initialSimpleFieldToInitialFieldMapping;
+            WriteOnceTypeFieldManager.SimpleFieldToCurrentRedirectionFieldMapping = [initialSimpleFieldToInitialRedirectionFieldMapping];
+            WriteOnceTypeFieldManager.SimpleFieldToNewArtificialFieldMapping = [Map.empty<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>];
+            WriteOnceTypeFieldManager.CurrentDecisions = [];
+            WriteOnceTypeFieldManager.SimpleFieldToArtificialCounterShared=ref initialSimpleFieldToArtificialCounterShared;
+            WriteOnceTypeFieldManager.CreatedArtificialFieldsShared= ref [];
         }
     member this.pushScope (newDecision:WriteOnceExpression) : WriteOnceTypeFieldManager =
-        let emptyNewMapping = Map.empty<SimpleGlobalFieldWithContext,SimpleGlobalField>
-        let currentlyKnownMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Head
+        let emptyNewMapping = Map.empty<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>
+        let currentlyKnownMapping = this.SimpleFieldToCurrentRedirectionFieldMapping.Head
         let newScope = 
             { this with
-                SimpleFieldToCurrentArtificialFieldMapping = currentlyKnownMapping::this.SimpleFieldToCurrentArtificialFieldMapping;
+                SimpleFieldToCurrentRedirectionFieldMapping = currentlyKnownMapping::this.SimpleFieldToCurrentRedirectionFieldMapping;
                 SimpleFieldToNewArtificialFieldMapping = emptyNewMapping::this.SimpleFieldToNewArtificialFieldMapping;
                 CurrentDecisions = newDecision::this.CurrentDecisions
             }
         newScope
-    member this.popScope : WriteOnceTypeFieldManager * (Map<SimpleGlobalFieldWithContext,SimpleGlobalField>) =
+    member this.popScope : WriteOnceTypeFieldManager * (Map<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>) =
         let newScope =
             { this with
-                SimpleFieldToCurrentArtificialFieldMapping = this.SimpleFieldToCurrentArtificialFieldMapping.Tail;
+                SimpleFieldToCurrentRedirectionFieldMapping = this.SimpleFieldToCurrentRedirectionFieldMapping.Tail;
                 SimpleFieldToNewArtificialFieldMapping = this.SimpleFieldToNewArtificialFieldMapping.Tail;
-                CurrentDecisions = this.CurrentDecisions.Tail
+                CurrentDecisions = this.CurrentDecisions.Tail;
             }
         (newScope,this.SimpleFieldToNewArtificialFieldMapping.Head)
     member this.getTakenDecisions =
@@ -156,14 +171,44 @@ type WriteOnceTypeFieldManager = {
     member this.getNewArtificialFieldMapping =
         this.SimpleFieldToNewArtificialFieldMapping.Head
     member this.getCurrentRedirection (field:SimpleGlobalFieldWithContext) : (WriteOnceTimeOfAccess*SimpleGlobalField) =
-        this.SimpleFieldToCurrentArtificialFieldMapping.Head.Item field
+        this.SimpleFieldToCurrentRedirectionFieldMapping.Head.Item field
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
-        //TODO: Take current redirections of fields in fieldManager into account
-        expression
+        match expression with
+            | SimpleExpression.ConstLiteral (literal:SimpleConstLiteral) ->
+                WriteOnceExpression.ConstLiteral(literal)
+            | SimpleExpression.UnaryExpression (operand:SimpleExpression, operator:MMUnaryOperator) ->
+                let transformedOperand = this.transformExpressionWithCurrentRedirections operand
+                WriteOnceExpression.UnaryExpression(transformedOperand,operator)
+            | SimpleExpression.BinaryExpression (leftExpression:SimpleExpression, operator:MMBinaryOperator, rightExpression : SimpleExpression) ->
+                let transformedLeft = this.transformExpressionWithCurrentRedirections leftExpression
+                let transformedRight = this.transformExpressionWithCurrentRedirections rightExpression
+                WriteOnceExpression.BinaryExpression(transformedLeft,operator,transformedRight)
+            | SimpleExpression.FieldAccessExpression (field:SimpleGlobalField) ->
+                //Take current redirections of fields in fieldManager into account
+                let fieldRef = this.getCurrentRedirection field.getSimpleGlobalFieldWithContext
+                WriteOnceExpression.FieldAccessExpression(fieldRef)
+                
     member this.createNewArtificialFieldForField ( field: SimpleGlobalFieldWithContext) : (SimpleGlobalField*WriteOnceTypeFieldManager) =
-        // TODO: implement
-        //TODO: Variable rewrite here, insert tainted variable
-        (field,this)
+        // get counter for the new variable and increase the counter
+        let currentNumber = (this.SimpleFieldToArtificialCounterShared.Value.Item field)+1
+        this.SimpleFieldToArtificialCounterShared.Value <-
+            (this.SimpleFieldToArtificialCounterShared.Value.Add(field,currentNumber))
+        let fieldContext = field.createDerivedFieldWithStandardValues currentNumber
+        let newArtificialField = SimpleGlobalField.FieldWithContext(fieldContext)
+        this.CreatedArtificialFieldsShared.Value <-
+            (newArtificialField::this.CreatedArtificialFieldsShared.Value)
+            
+        let newSimpleFieldToCurrentRedirectionFieldMapping = 
+            this.SimpleFieldToCurrentRedirectionFieldMapping.Head.Add(fieldContext,(WriteOnceTimeOfAccess.UseResultOfThisStep,newArtificialField))
+        let newSimpleFieldToNewArtificialFieldMapping = 
+            this.SimpleFieldToNewArtificialFieldMapping.Head.Add(fieldContext,(WriteOnceTimeOfAccess.UseResultOfThisStep,newArtificialField))
+
+        let newFieldManager =
+            { this with
+                SimpleFieldToCurrentRedirectionFieldMapping = newSimpleFieldToCurrentRedirectionFieldMapping::this.SimpleFieldToCurrentRedirectionFieldMapping.Tail;
+                SimpleFieldToNewArtificialFieldMapping = newSimpleFieldToNewArtificialFieldMapping::this.SimpleFieldToNewArtificialFieldMapping.Tail;
+            }
+        (newArtificialField,newFieldManager)
         
 type SimpleStatementsToWriteOnceStatements =
 
@@ -175,24 +220,26 @@ type SimpleStatementsToWriteOnceStatements =
     //  The fieldManager keeps the information of the current redirections and allows to introduce new unique artificial variables
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
     member this.simpleStatementToWriteOnceStatementsCached (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
+        
         let statementsToMergeTaintedVariables (fieldManager:WriteOnceTypeFieldManager) (fieldManagersAfterSplitToMerge:WriteOnceTypeFieldManager list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             //Code, which allows merging of the tainted Variables on a return
-            let addEntryToMap (map:Map<SimpleGlobalFieldWithContext,SimpleGlobalField list>) ((actualField,artificialField): SimpleGlobalFieldWithContext*SimpleGlobalField) : Map<SimpleGlobalFieldWithContext,SimpleGlobalField list> =
-                if map.ContainsKey actualField then
+            let addEntryToMap (map:Map<SimpleGlobalFieldWithContext,(WriteOnceTimeOfAccess*SimpleGlobalField) list>)
+                              ((actualField,artificialField): SimpleGlobalFieldWithContext*(WriteOnceTimeOfAccess*SimpleGlobalField)) 
+                                        : Map<SimpleGlobalFieldWithContext,(WriteOnceTimeOfAccess*SimpleGlobalField) list> =
+                if not (map.ContainsKey actualField) then
                     map.Add(actualField,[artificialField])
                 else
-                    let mapWithoutKey = map.Remove(actualField)
-                    mapWithoutKey.Add(actualField, artificialField::(map.Item actualField))
-            let fieldAndArtificialFieldPair = fieldManagersAfterSplitToMerge |> List.collect (fun fieldManager -> fieldManager.getNewArtificialFieldMapping |> Map.toList )
-            //TODO: find better name for fieldToArtificialField
-            let fieldToArtificialFields = fieldAndArtificialFieldPair |> List.fold addEntryToMap Map.empty
-            let transformFieldToArtificialFields ((alreadyTransformed,fieldManager):(WriteOnceStatement list*WriteOnceTypeFieldManager)) (field:SimpleGlobalFieldWithContext) (fieldsInBraches:SimpleGlobalField list) =
+                    map.Add(actualField, artificialField::(map.Item actualField))
+            let pairsOfReferenceToArtificialField = fieldManagersAfterSplitToMerge |> List.collect (fun fieldManager -> fieldManager.getNewArtificialFieldMapping |> Map.toList )
+            let referencesToArtificialFields = pairsOfReferenceToArtificialField |> List.fold addEntryToMap Map.empty
+            let assignToFieldTheValuesOfItsArtificialFields ((alreadyTransformed,fieldManager):(WriteOnceStatement list*WriteOnceTypeFieldManager)) 
+                                                            (field:SimpleGlobalFieldWithContext)
+                                                            (fieldsInBraches:(WriteOnceTimeOfAccess*SimpleGlobalField) list) 
+                                                                : (WriteOnceStatement list * WriteOnceTypeFieldManager)=
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
                 // we get the decisions taken in every branch of fieldsInBraches and create for it a specific effect
-                let transformFieldInBranch (fieldInBranch:SimpleGlobalField) =
-                    // because the value of an artificial field we are interested in was just defined in the current step we use the just defined value using "WriteOnceTimeOfAccess.UseResultOfThisStep"
-                    // TODO: Maybe move this information so we can retrieve it ffrom the fieldToArtificialFields-Map
-                    let transformedExpression = WriteOnceExpression.FieldAccessExpression(WriteOnceTimeOfAccess.UseResultOfThisStep,fieldInBranch)
+                let transformFieldInBranch ((timeofAccess,fieldInBranch):WriteOnceTimeOfAccess*SimpleGlobalField) =
+                    let transformedExpression = WriteOnceExpression.FieldAccessExpression(timeofAccess,fieldInBranch)
                     {
                         WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                         WriteOncePossibleEffect.TargetEffect = transformedExpression;
@@ -201,7 +248,7 @@ type SimpleStatementsToWriteOnceStatements =
                 let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( transformedTarget, effects)
 
                 (alreadyTransformed@[statement],newFieldManager)
-            fieldToArtificialFields |> Map.fold transformFieldToArtificialFields ([],fieldManager)
+            referencesToArtificialFields |> Map.fold assignToFieldTheValuesOfItsArtificialFields ([],fieldManager)
             
         let transformSimpleStatement (fieldManager:WriteOnceTypeFieldManager) (statement:SimpleStatement) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
             match statement with

@@ -70,6 +70,8 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
 
      *)
     member this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier (simpleGlobalField : SimpleGlobalField) : Identifier=
+        //TODO: also add Artificial Values
+        
         // only use, when we know that simpleGlobalField is in the partition, the method calling this function, has
         // the partition of the simpleGlobalField in mind.
         if not simpleGlobalField.hasContext then
@@ -80,9 +82,13 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             itemsInOrderRootToLeaf.Tail |> List.map (fun elem -> sprintf "c%s_" elem)
                                         |> String.concat ""
         match simpleGlobalField with
-            | SimpleGlobalField.FieldLinkedToMetamodel(_, field:SimpleGlobalFieldWithContext) ->
-                let fieldName = "f"+field.FieldSymbol.Name
-                let flattenedNameOfField = (flatSubcomponentName field.Context) + fieldName;
+            | SimpleGlobalField.FieldOfMetamodel(_, field:SimpleGlobalField) ->
+                let fieldName = "f"+simpleGlobalField.getFieldSymbol.Name
+                let flattenedNameOfField = (flatSubcomponentName simpleGlobalField.getContext) + fieldName;
+                {Identifier.Name=flattenedNameOfField}
+            | SimpleGlobalField.FieldWithContext(field:SimpleGlobalFieldWithContext) ->
+                let fieldName = "a"+simpleGlobalField.getFieldSymbol.Name
+                let flattenedNameOfField = (flatSubcomponentName simpleGlobalField.getContext) + fieldName;
                 {Identifier.Name=flattenedNameOfField}
 
 
@@ -229,6 +235,22 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
                 value |> System.Decimal.ToDouble
                       |> NuXmvConstExpression.RealConstant 
                       |> NuXmvBasicExpression.ConstExpression
+    
+    member this.transformBinaryOperator (operator:MMBinaryOperator) : BinaryOperator =
+        match operator with
+            | MMBinaryOperator.Add                -> BinaryOperator.IntegerAddition
+            | MMBinaryOperator.Subtract           -> BinaryOperator.IntegerSubtraction
+            | MMBinaryOperator.Multiply           -> BinaryOperator.IntegerMultiplication
+            | MMBinaryOperator.Divide             -> BinaryOperator.IntegerDivision
+            | MMBinaryOperator.Modulo             -> BinaryOperator.IntegerRemainder
+            | MMBinaryOperator.LogicalAnd         -> BinaryOperator.LogicalAnd
+            | MMBinaryOperator.LogicalOr          -> BinaryOperator.LogicalOr
+            | MMBinaryOperator.Equals             -> BinaryOperator.Equality
+            | MMBinaryOperator.NotEquals          -> BinaryOperator.Inequality
+            | MMBinaryOperator.LessThan           -> BinaryOperator.LessThan
+            | MMBinaryOperator.LessThanOrEqual    -> BinaryOperator.LessEqual
+            | MMBinaryOperator.GreaterThan        -> BinaryOperator.GreaterThan
+            | MMBinaryOperator.GreaterThanOrEqual -> BinaryOperator.GreaterEqual
 
     member this.transformSimpleExpression (expression:SimpleExpression) : NuXmvBasicExpression =
         match expression with
@@ -242,24 +264,33 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
             | SimpleExpression.BinaryExpression (leftExpression:SimpleExpression, operator:MMBinaryOperator, rightExpression : SimpleExpression) ->
                 let transformedLeft = this.transformSimpleExpression leftExpression
                 let transformedRight = this.transformSimpleExpression rightExpression
-                match operator with
-                    | MMBinaryOperator.Add                -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.IntegerAddition,transformedRight)
-                    | MMBinaryOperator.Subtract           -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.IntegerSubtraction,transformedRight)
-                    | MMBinaryOperator.Multiply           -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.IntegerMultiplication,transformedRight)
-                    | MMBinaryOperator.Divide             -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.IntegerDivision,transformedRight)
-                    | MMBinaryOperator.Modulo             -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.IntegerRemainder,transformedRight)
-                    | MMBinaryOperator.LogicalAnd         -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.LogicalAnd,transformedRight)
-                    | MMBinaryOperator.LogicalOr          -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.LogicalOr,transformedRight)
-                    | MMBinaryOperator.Equals             -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.Equality,transformedRight)
-                    | MMBinaryOperator.NotEquals          -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.Inequality,transformedRight)
-                    | MMBinaryOperator.LessThan           -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.LessThan,transformedRight)
-                    | MMBinaryOperator.LessThanOrEqual    -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.LessEqual,transformedRight)
-                    | MMBinaryOperator.GreaterThan        -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.GreaterThan,transformedRight)
-                    | MMBinaryOperator.GreaterThanOrEqual -> NuXmvBasicExpression.BinaryExpression(transformedLeft,BinaryOperator.GreaterEqual,transformedRight)
+                let transformedOperator = this.transformBinaryOperator operator
+                NuXmvBasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)                
             | SimpleExpression.FieldAccessExpression (field:SimpleGlobalField) ->
                 this.transformSimpleGlobalFieldToAccessExpression field mainModuleIdentifier
 
-    member this.transformWriteOnceStatement (statement:WriteOnceStatement) (accessFromPartition:Identifier) : SingleAssignConstraint =        
+    member this.transformWriteOnceExpression (expression:WriteOnceExpression) : NuXmvBasicExpression =
+        match expression with
+            | WriteOnceExpression.ConstLiteral (literal:SimpleConstLiteral) ->
+                this.transformSimpleConstLiteral literal
+            | WriteOnceExpression.UnaryExpression (operand:WriteOnceExpression, operator:MMUnaryOperator) ->
+                let transformedOperand = this.transformWriteOnceExpression operand
+                match operator with
+                    | MMUnaryOperator.LogicalNot -> NuXmvBasicExpression.UnaryExpression(UnaryOperator.LogicalNot,transformedOperand)
+                    | MMUnaryOperator.Minus      -> failwith "NotImplementedYet"
+            | WriteOnceExpression.BinaryExpression (leftExpression:WriteOnceExpression, operator:MMBinaryOperator, rightExpression : WriteOnceExpression) ->
+                let transformedLeft = this.transformWriteOnceExpression leftExpression
+                let transformedRight = this.transformWriteOnceExpression rightExpression
+                let transformedOperator = this.transformBinaryOperator operator
+                NuXmvBasicExpression.BinaryExpression(transformedLeft,transformedOperator,transformedRight)                
+            | WriteOnceExpression.FieldAccessExpression (timeOfAccess:WriteOnceTimeOfAccess,field:SimpleGlobalField) ->
+                match timeOfAccess with
+                    | WriteOnceTimeOfAccess.UseResultOfLastStep ->
+                        this.transformSimpleGlobalFieldToAccessExpression field mainModuleIdentifier
+                    | WriteOnceTimeOfAccess.UseResultOfThisStep ->
+                        this.transformSimpleGlobalFieldToAccessExpression field mainModuleIdentifier |> NuXmvBasicExpression.BasicNextExpression
+    
+    (*member this.transformWriteOnceStatement (statement:WriteOnceStatement) (accessFromPartition:Identifier) : SingleAssignConstraint =        
         //TODO: If Condition is true, no case-splitting is necessary        
         let transformOption (option:WriteOncePossibleEffect) : CaseConditionAndEffect =        
             let transformedCondition = this.transformSimpleExpression option.getTakenDecisionsAsCondition
@@ -271,7 +302,7 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
         let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
         let effect = statement.getPossibleEffectsForSequentialEvaluation |> List.map transformOption
                                                                          |> BasicExpression.CaseExpression
-        SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)
+        SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)*)
     
     member this.transFormCtlFormula (formula:MMFormula) : CtlExpression =
         match formula with

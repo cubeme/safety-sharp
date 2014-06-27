@@ -80,7 +80,8 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     member this.transformSimpleGlobalFieldToName (simpleGlobalField : SimpleGlobalField) =
         // this is something model checker specific, as different model checkers may have different constraints for identifier
         match simpleGlobalField with
-            | SimpleGlobalField.FieldLinkedToMetamodel(_, field:SimpleGlobalFieldWithContext) ->
+            | SimpleGlobalField.FieldOfMetamodel(_, field:SimpleGlobalField) ->
+                let field = field.getSimpleGlobalFieldWithContext
                 let partitionName = "p" + field.Context.rootComponentName + "_"
                 let hierarchicalAccessName =
                     field.Context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent

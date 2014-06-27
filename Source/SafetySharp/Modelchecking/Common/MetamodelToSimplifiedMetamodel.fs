@@ -117,31 +117,47 @@ type SimpleGlobalFieldWithContext = {
     Context : Context;
     FieldSymbol: MMFieldSymbol;
     InitialValues : SimpleConstLiteral list;
-}
+} with
+    member this.createDerivedFieldWithStandardValues (postfixCounter:int) = 
+        let initialValue = match this.FieldSymbol.Type with
+                                | MMTypeSymbol.Boolean -> SimpleConstLiteral.BooleanLiteral(false)
+                                | MMTypeSymbol.Integer -> SimpleConstLiteral.IntegerLiteral(0)
+                                | MMTypeSymbol.Decimal -> SimpleConstLiteral.DecimalLiteral(0.0f |> decimal)
+        let newFieldSymbol =            
+            {
+                MMFieldSymbol.Name=this.FieldSymbol.Name+postfixCounter.ToString();
+                MMFieldSymbol.Type= this.FieldSymbol.Type;
+            }
+        {
+            SimpleGlobalFieldWithContext.Context=this.Context;
+            SimpleGlobalFieldWithContext.FieldSymbol=newFieldSymbol;
+            SimpleGlobalFieldWithContext.InitialValues=[initialValue];
+        }
 
 type SimpleGlobalField =
-    | FieldLinkedToMetamodel of ComponentObject : MMComponentObject * Field : SimpleGlobalFieldWithContext
-    //| FieldArtificialWithReferenceToFieldInMetamodel of ReferencedField : SimpleGlobalField * FieldName : string //ReferencedField
- // | FieldArtifical of Context : (Context option) * FieldSymbol : MMFieldSymbol * InitialValues : (obj list)
+    | FieldWithContext of Field : SimpleGlobalFieldWithContext
+    | FieldOfMetamodel of ComponentObject : MMComponentObject * Field : SimpleGlobalField 
     with
         member this.getFieldSymbol =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.FieldSymbol
+                | SimpleGlobalField.FieldWithContext (field)-> field.FieldSymbol
+                | SimpleGlobalField.FieldOfMetamodel (_,field)-> field.getFieldSymbol
         member this.getInitialValues =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (_,field)-> field.InitialValues
+                | SimpleGlobalField.FieldWithContext (field)-> field.InitialValues
+                | SimpleGlobalField.FieldOfMetamodel (_,field)-> field.getInitialValues
         member this.hasContext =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel _ -> true
-                | _ -> false
+                | SimpleGlobalField.FieldWithContext _ -> true
+                | SimpleGlobalField.FieldOfMetamodel (_,field) -> field.hasContext
         member this.getContext =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (_,field) -> field.Context
-                | _ -> failwith "this SimpleGlobalField has no context"
+                | SimpleGlobalField.FieldWithContext (field) -> field.Context
+                | SimpleGlobalField.FieldOfMetamodel (_,field) -> field.getContext
         member this.getSimpleGlobalFieldWithContext =
             match this with
-                | SimpleGlobalField.FieldLinkedToMetamodel (_,field) -> field
-                | _ -> failwith "this is not a SimpleGlobalField which contains a field of the type SimpleGlobalFieldWithContext"
+                | SimpleGlobalField.FieldWithContext (field) -> field
+                | SimpleGlobalField.FieldOfMetamodel (_,field) -> field.getSimpleGlobalFieldWithContext
 
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
@@ -240,12 +256,13 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
                 let collectedInSubcomponents : SimpleGlobalField list =
                     (getSubComponentObjects componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent comp (contextCache.createContextForSubcomponent myContext name comp) )
                 let collectFieldInThisComponent (fieldobject:MMFieldObject) =
-                    let field = {
+                    let fieldContext = {
                         SimpleGlobalFieldWithContext.Context=myContext;
                         SimpleGlobalFieldWithContext.FieldSymbol=fieldobject.FieldSymbol;
                         SimpleGlobalFieldWithContext.InitialValues=(SimpleConstLiteral.convertFromObjectList fieldobject.InitialValues);
                     }
-                    SimpleGlobalField.FieldLinkedToMetamodel(componentObject,field)
+                    let field = SimpleGlobalField.FieldWithContext(fieldContext)
+                    SimpleGlobalField.FieldOfMetamodel(componentObject,field)
                 let collectedInThisComponent = (getFieldObjects componentObject.Fields) |> List.map collectFieldInThisComponent 
                 collectedInThisComponent @ collectedInSubcomponents
             let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
@@ -258,8 +275,8 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
             //type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
             let converter (elem:SimpleGlobalField) =
                 match elem with
-                    | SimpleGlobalField.FieldLinkedToMetamodel(componentObject:MMComponentObject, field:SimpleGlobalFieldWithContext) ->
-                        [((componentObject.Name, field.FieldSymbol.Name),elem)] //return as list to allow List.collect
+                    | SimpleGlobalField.FieldOfMetamodel(componentObject:MMComponentObject, field:SimpleGlobalField) ->
+                        [((componentObject.Name, field.getFieldSymbol.Name),elem)] //return as list to allow List.collect
                     | _ -> []
             simpleGlobalFields |> List.collect converter
                                |> Map.ofList
@@ -331,12 +348,13 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                 else
                     // TODO: Better retrieve it from the cache than reconstruct it here
                     let fieldObject = (componentObject.Fields.Item field)
-                    let fieldWithContext = {
+                    let fieldContext = {
                         SimpleGlobalFieldWithContext.Context=context;
                         SimpleGlobalFieldWithContext.FieldSymbol=field;
                         SimpleGlobalFieldWithContext.InitialValues=(SimpleConstLiteral.convertFromObjectList fieldObject.InitialValues);
                     }
-                    SimpleGlobalField.FieldLinkedToMetamodel(componentObject,fieldWithContext)
+                    let field=SimpleGlobalField.FieldWithContext(fieldContext)
+                    SimpleGlobalField.FieldOfMetamodel(componentObject,field)
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (fieldCache:SimpleGlobalFieldCache) (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
         match expression with
