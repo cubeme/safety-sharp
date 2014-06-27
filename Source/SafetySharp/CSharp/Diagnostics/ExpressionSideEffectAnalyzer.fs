@@ -110,5 +110,6 @@ type ExpressionSideEffectAnalyzer () as this =
         semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
         |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
         |> Seq.collect (fun classDeclaration -> classDeclaration.Descendants<MethodDeclarationSyntax> ())
+        |> Seq.where (fun methodDeclaration -> methodDeclaration.Body <> null)
         |> Seq.collect (fun methodDeclaration -> methodDeclaration.Body.Descendants<ExpressionSyntax> ())
         |> Seq.iter formulaVisitor.Visit

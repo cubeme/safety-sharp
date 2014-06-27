@@ -206,6 +206,9 @@ module Compiler =
             let project = workspace.OpenProjectAsync(projectFile).Result
 
             let compilation = project.GetCompilationAsync().Result
+            let diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress)
+            let options = compilation.Options.WithSpecificDiagnosticOptions diagnosticOptions
+            let compilation = compilation.WithOptions options
 
             if not <| diagnose compilation then
                 -1

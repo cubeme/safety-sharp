@@ -72,9 +72,28 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallbac
     override this.VisitElseClause node              = this.VisitDescendantNodes node
 
     override this.VisitMethodDeclaration node =
-        // Async methods are not supported
         if node.Modifiers.Any SyntaxKind.AsyncKeyword then
             emitDiagnostic.Invoke (node, "async method")
+        elif node.Modifiers.Any SyntaxKind.VirtualKeyword then
+            emitDiagnostic.Invoke (node, "virtual method")
+        elif node.Modifiers.Any SyntaxKind.AbstractKeyword then
+            emitDiagnostic.Invoke (node, "abstract method")
+        elif node.Modifiers.Any SyntaxKind.PartialKeyword then
+            emitDiagnostic.Invoke (node, "partial method")
+        elif node.Modifiers.Any SyntaxKind.StaticKeyword then
+            emitDiagnostic.Invoke (node, "static method")
+        elif node.Modifiers.Any SyntaxKind.NewKeyword then
+            emitDiagnostic.Invoke (node, "overriding method")
+        elif node.Modifiers.Any SyntaxKind.UnsafeKeyword then
+            emitDiagnostic.Invoke (node, "unsafe method")
+        elif node.Modifiers.Any SyntaxKind.SealedKeyword then
+            emitDiagnostic.Invoke (node, "sealed method")
+        elif node.Modifiers.Any SyntaxKind.OperatorKeyword then
+            emitDiagnostic.Invoke (node, "operator method")
+        elif node.Modifiers.Any SyntaxKind.ExplicitKeyword then
+            emitDiagnostic.Invoke (node, "explicit method")
+        elif node.Modifiers.Any SyntaxKind.ImplicitKeyword then
+            emitDiagnostic.Invoke (node, "implicit method")
         else
             this.VisitDescendantNodes node
 

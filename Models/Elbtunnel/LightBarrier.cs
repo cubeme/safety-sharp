@@ -74,6 +74,8 @@ namespace Elbtunnel
 			i++;
 		}
 
+		public extern void Test();
+
 		protected override void Update()
 		{
 			_value = Choose.Boolean();
