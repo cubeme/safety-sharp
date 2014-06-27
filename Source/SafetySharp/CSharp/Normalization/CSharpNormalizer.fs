@@ -67,14 +67,14 @@ type CSharpNormalizer (scope) =
 
     /// Ensures that non-component classes are only visited when the normalizer as global scope.
     override this.VisitClassDeclaration node =
-        if scope <> NormalizationScope.Global && not <| node.IsComponentDeclaration this.semanticModel then
-            upcast node
-        else
+        if scope = NormalizationScope.Global || node.IsComponentDeclaration this.semanticModel then
             base.VisitClassDeclaration node
+        else
+            upcast node
 
     /// Ensures that a constructor is only visited when the normalizer as global scope.
     override this.VisitConstructorDeclaration node =
-        if scope <> NormalizationScope.Global && scope <> NormalizationScope.ComponentStatements then
+        if scope <> NormalizationScope.ComponentStatements then
             base.VisitConstructorDeclaration node
         else
             upcast node
