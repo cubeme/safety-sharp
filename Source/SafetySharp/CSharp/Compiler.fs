@@ -158,7 +158,9 @@ module Compiler =
 
     /// Applies normalizations to the simulation compilation.
     let private normalizeSimulationCode (compilation : Compilation) =
-        // TODO
+        let compilation =
+            compilation
+            |> applyNormalizer<ExternMethodNormalizer>
 
         outputCode compilation "obj/Simulation"
         compilation
@@ -170,7 +172,6 @@ module Compiler =
             compilation
             |> applyNormalizer<UpdateMethodVisibilityNormalizer>
             |> applyNormalizer<ExpressionLifter>
-            |> applyNormalizer<ExternMethodNormalizer>
 
         outputCode compilation "obj/BeforeSwap"
         compilation
