@@ -20,68 +20,61 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// Bla
-
 namespace Elbtunnel
 {
-	// Blub
 	using System;
 	using System.Diagnostics;
 	using SafetySharp.Modeling;
 
 	public class LightBarrier : Component
 	{
-		public bool Triggered;
-		private int i = 1;
+		public bool Triggered = false;
+		private int _i = 1;
 		
 		public int Do()
 		{
-			i = Choose.Value(23, 4, 23, 55);
-			return i;
+			_i = Choose.Value(23, 4, 23, 55);
+			return _i;
 		}
 	}
 
-	/// <summary>
-	///     This is a great interface.
-	/// </summary>
-	internal interface MyInterface
-	{
-		void Test();
-	}
 
 	internal class Test2 : Component
 	{
-		private BooleanComponent boolean1;
-		public BooleanComponent boolean2;
+		private BooleanComponent _boolean1;
+		public readonly BooleanComponent Boolean2;
 
 		public Test2()
 		{
-			boolean1 = new BooleanComponent(true);
-			boolean2 = new BooleanComponent(false);
+			_boolean1 = new BooleanComponent(true);
+			Boolean2 = new BooleanComponent(false);
 		}
 	}
 
 	internal class BooleanComponent : Component
 	{
-		public bool _value;
+		public bool Value;
 
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
 			if (nondeterministicInitialValue)
-				SetInitialValues(_value, true, false);
+				SetInitialValues(Value, true, false);
 			else
-				_value = false;
+				Value = false;
 
-			sbyte i = 0;
-			i++;
-
-			Update();
+			//Update();
+			//Bind(Q2, Provided);
 		}
 
 		public extern void Test(); // ---> public Action Test { private get; set; }
 
 		protected internal extern  int Q();
 		protected internal extern  int Q2(bool f);
+
+		int Provided(bool f)
+		{
+			return 0;
+		}
 
 			[DebuggerNonUserCode]
 
@@ -92,15 +85,15 @@ namespace Elbtunnel
 
 		protected override void Update()
 		{
-			_value = Choose.Boolean();
-			if (_value == false)
-				_value = true;
-			else if (!_value)
-				_value = false;
+			Value = Choose.Boolean();
+			if (Value == false)
+				Value = true;
+			else if (!Value)
+				Value = false;
 			else
 			{
-				_value = true || false;
-				_value = !_value;
+				Value = true || false;
+				Value = !Value;
 			}
 		}
 	}

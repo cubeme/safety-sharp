@@ -1,7 +1,6 @@
 ﻿namespace Elbtunnel
 {
 	using System;
-	using System.Linq.Expressions;
 	using NUnit.Framework;
 	using SafetySharp.Modeling;
 
@@ -19,14 +18,16 @@
 				SetPartitions(c1, c2, t, lb);
 
 				var unknown = new LightBarrier();
-				var value = c1.Access<bool>("_value");
-				var value1 = lb.Access<int>("i");
-				var value2 = c1.Access<bool>("_value");
+				var value = c1.Access<bool>("Value");
+				var value1 = lb.Access<int>("_i");
+				var value2 = c1.Access<bool>("Value");
 
 				bool b = value;
-				int x = 0;
-				Hazard = Ltl.Globally(value != b || -value1 == x)
-							.Implies(Ltl.Finally(!value == false || value2 == true || lb.Triggered && t.boolean2._value));
+				var x = 0;
+				Hazard = Ltl.Globally(value != b
+									  || -value1
+									  == x)
+							.Implies(Ltl.Finally(!value == false || value2 == true || lb.Triggered && t.Boolean2.Value));
 
 				Hazard2 = Ctl.AllPaths.Globally(value != false || unknown.Triggered);
 			}
