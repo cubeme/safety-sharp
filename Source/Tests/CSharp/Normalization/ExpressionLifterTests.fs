@@ -94,3 +94,8 @@ module ExpressionLifterTests =
     [<Test>]
     let ``lifts nested method invocations and object creations`` () =
         compile "new C(O(M(1), N(17 + 1)))" =? "new C(() => O(() => M(1), () => N(() => 17 + 1)))"
+
+    [<Test>]
+    let ``preserves all line breaks in expressions`` () =
+        compile "new C(1\n + 1)" =? "new C(() => 1\n + 1)"
+        compile "O(M(2 -\n1)\n+ 0,\n3\n- N(\n2 *\n5))" =? "O(() => M(2 -\n1)\n+ 0,\n() => 3\n- N(\n() => 2 *\n5))"

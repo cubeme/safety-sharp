@@ -40,7 +40,7 @@ module UpdateMethodVisibilityNormalizerTests =
 
     let visibility csharpCode =
         let compilation = TestCompilation (csharpCode, SafetySharpAssembly.Modeling)
-        let syntaxTree = UpdateMethodVisibilityNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single()
+        let syntaxTree = UpdateMethodVisibilityNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
         syntaxTree.Descendants<MethodDeclarationSyntax>().Last().Visibility
     
     [<Test>]
@@ -64,3 +64,15 @@ module UpdateMethodVisibilityNormalizerTests =
     [<Test>]
     let ``does not change visibility of non-component Update method`` () =
         visibility "class Base { protected virtual void Update() {} } class C : Base { protected override void Update() {} }" =? Protected
+
+    [<Test>]
+    let ``preserves all line breaks in method declaration`` () =
+        let csharpCode = "class C : Component { \nprotected\n \noverride void \nUpdate(\n) { \nvar i = 0; ++i; \n} }"
+        let compilation = TestCompilation (csharpCode, SafetySharpAssembly.Modeling)
+        let syntaxTree = UpdateMethodVisibilityNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        let classDeclaration = syntaxTree.Descendants<ClassDeclarationSyntax>().Single ()
+
+        let actual = classDeclaration.ToFullString ()
+        let expected = "class C : Component { \npublic\n \noverride void \nUpdate(\n) { \nvar i = 0; ++i; \n} }"
+
+        actual =? expected
