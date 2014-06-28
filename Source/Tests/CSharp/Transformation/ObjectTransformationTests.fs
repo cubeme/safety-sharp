@@ -104,8 +104,8 @@ module ``ModelObject property`` =
             emptyComponentObject "Root0" componentSymbol with
                 Fields = 
                 [
-                    (fieldSymbol1, { FieldSymbol = fieldSymbol1; InitialValues = [1; 2; 3] })
-                    (fieldSymbol2, { FieldSymbol = fieldSymbol2; InitialValues = [77.7m] })
+                    fieldSymbol1, { FieldSymbol = fieldSymbol1; InitialValues = [1; 2; 3] }
+                    fieldSymbol2, { FieldSymbol = fieldSymbol2; InitialValues = [77.7m] }
                 ] |> Map.ofList
         }
 
@@ -121,8 +121,8 @@ module ``ModelObject property`` =
             emptyComponentObject "Root0" componentSymbolA with
                 Subcomponents = 
                 [
-                    (subcomponentSymbol1, emptyComponentObject "Root0.b1" componentSymbolB)
-                    (subcomponentSymbol2, emptyComponentObject "Root0.b2" componentSymbolB)
+                    subcomponentSymbol1, emptyComponentObject "Root0.b1" componentSymbolB
+                    subcomponentSymbol2, emptyComponentObject "Root0.b2" componentSymbolB
                 ] |> Map.ofList
         }
 
@@ -130,8 +130,8 @@ module ``ModelObject property`` =
     let ``model maps root component objects`` () =
         compile "class A : Component {} class B : Component {}" ["A"; "B"]
         modelObject.ComponentObjects =? Map.ofList [
-            (modelSymbol.ComponentObjects.[0], emptyComponentObject "Root0" (symbolResolver.ResolveComponent components.[0]))
-            (modelSymbol.ComponentObjects.[1], emptyComponentObject "Root1" (symbolResolver.ResolveComponent components.[1]))
+            modelSymbol.ComponentObjects.[0], emptyComponentObject "Root0" (symbolResolver.ResolveComponent components.[0])
+            modelSymbol.ComponentObjects.[1], emptyComponentObject "Root1" (symbolResolver.ResolveComponent components.[1])
         ]
 
     [<Test>]
@@ -145,15 +145,15 @@ module ``ModelObject property`` =
             emptyComponentObject "Root0" componentSymbolA with
                 Subcomponents =
                 [
-                    (subcomponentSymbol1, emptyComponentObject "Root0.b1" componentSymbolB)
-                    (subcomponentSymbol2, emptyComponentObject "Root0.b2" componentSymbolB)
+                    subcomponentSymbol1, emptyComponentObject "Root0.b1" componentSymbolB
+                    subcomponentSymbol2, emptyComponentObject "Root0.b2" componentSymbolB
                 ] |> Map.ofList
         }
         modelObject.ComponentObjects =? Map.ofList [
-            (modelSymbol.ComponentObjects.[0], nestedComponent)
-            (modelSymbol.ComponentObjects.[1], emptyComponentObject "Root0.b1" componentSymbolB)
-            (modelSymbol.ComponentObjects.[2], emptyComponentObject "Root0.b2" componentSymbolB)
-            (modelSymbol.ComponentObjects.[3], emptyComponentObject "Root1" componentSymbolB)
+            modelSymbol.ComponentObjects.[0], nestedComponent
+            modelSymbol.ComponentObjects.[1], emptyComponentObject "Root0.b1" componentSymbolB
+            modelSymbol.ComponentObjects.[2], emptyComponentObject "Root0.b2" componentSymbolB
+            modelSymbol.ComponentObjects.[3], emptyComponentObject "Root1" componentSymbolB
         ]
 
     [<Test>]
@@ -180,20 +180,20 @@ module ``ModelObject property`` =
             emptyComponentObject "Root0" componentSymbolA with
                 Subcomponents =
                 [
-                    (subcomponentSymbol1, { 
+                    subcomponentSymbol1, { 
                         emptyComponentObject "Root0.b1" componentSymbolB with
-                            Subcomponents = [(subcomponentSymbol3, emptyComponentObject "Root0.b1.c" componentSymbolC)] |> Map.ofList
-                    })
-                    (subcomponentSymbol2, {
+                            Subcomponents = [subcomponentSymbol3, emptyComponentObject "Root0.b1.c" componentSymbolC] |> Map.ofList
+                    }
+                    subcomponentSymbol2, {
                         emptyComponentObject "Root0.b2" componentSymbolB with
-                            Subcomponents = [(subcomponentSymbol3, emptyComponentObject "Root0.b2.c" componentSymbolC)] |> Map.ofList
-                    }) 
+                            Subcomponents = [subcomponentSymbol3, emptyComponentObject "Root0.b2.c" componentSymbolC] |> Map.ofList
+                    } 
                 ] |> Map.ofList
         }
 
         let partition1 = {
             emptyComponentObject "Root1" componentSymbolB with
-                Subcomponents = [(subcomponentSymbol3, emptyComponentObject "Root1.c" componentSymbolC)] |> Map.ofList
+                Subcomponents = [subcomponentSymbol3, emptyComponentObject "Root1.c" componentSymbolC] |> Map.ofList
         }
 
         let partition2 = emptyComponentObject "Root2" componentSymbolC

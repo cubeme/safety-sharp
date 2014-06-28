@@ -108,7 +108,7 @@ module internal StatementTransformation =
             EmptyStatement
         else
             let syntaxReference = csharpMethod.DeclaringSyntaxReferences.[0]
-            let methodDeclaration = syntaxReference.GetSyntax() :?> MethodDeclarationSyntax
+            let methodDeclaration = syntaxReference.GetSyntax () :?> MethodDeclarationSyntax
             let semanticModel = compilation.GetSemanticModel syntaxReference.SyntaxTree
 
             Transform symbolResolver semanticModel methodDeclaration.Body

@@ -159,7 +159,7 @@ module internal SymbolTransformation =
         let symbolResolver = {
             Model = { Partitions = []; ComponentSymbols = componentListBuilder |> List.ofSeq; Subcomponents = Map.empty; ComponentObjects = [] }
             ComponentMap = componentMapBuilder.ToImmutable ()
-            ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> (component'.Name, component')) |> Map.ofSeq
+            ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> component'.Name, component') |> Map.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
             SubcomponentMap = ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>.Empty
             MethodMap = methodMapBuilder.ToImmutable ()

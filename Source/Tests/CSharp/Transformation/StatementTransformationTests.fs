@@ -193,8 +193,8 @@ module ``TransformMethodBodies method`` =
         let methodSymbol = symbolResolver.ResolveMethod csharpMethodSymbol
         let expected = 
             [
-                ((componentSymbol, methodSymbol), statement)
-                ((componentSymbol, componentSymbol.UpdateMethod), EmptyStatement)
+                (componentSymbol, methodSymbol), statement
+                (componentSymbol, componentSymbol.UpdateMethod), EmptyStatement
             ] |> Map.ofList
         
         actual =? expected
@@ -207,7 +207,7 @@ module ``TransformMethodBodies method`` =
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
         let csharpMethodSymbol = compilation.FindMethodSymbol "A" "Update"
         let methodSymbol = symbolResolver.ResolveMethod csharpMethodSymbol
-        let expected = [((componentSymbol, methodSymbol), statement)] |> Map.ofList
+        let expected = [(componentSymbol, methodSymbol), statement] |> Map.ofList
         
         actual =? expected
 
@@ -221,8 +221,8 @@ module ``TransformMethodBodies method`` =
         let componentSymbolB = symbolResolver.ResolveComponent classSymbolB
         let expected = 
             [
-                ((componentSymbolA, componentSymbolA.UpdateMethod), statement)
-                ((componentSymbolB, componentSymbolB.UpdateMethod), statement)
+                (componentSymbolA, componentSymbolA.UpdateMethod), statement
+                (componentSymbolB, componentSymbolB.UpdateMethod), statement
             ] |> Map.ofList
         
         actual =? expected
@@ -252,10 +252,10 @@ module ``TransformMethodBodies method`` =
 
         let expected = 
             [
-                ((componentSymbolA, methodSymbolUpdate), statement3)
-                ((componentSymbolA, methodSymbolM), statement1)
-                ((componentSymbolB, methodSymbolN), statement2)
-                ((componentSymbolB, componentSymbolB.UpdateMethod), statement3)
+                (componentSymbolA, methodSymbolUpdate), statement3
+                (componentSymbolA, methodSymbolM), statement1
+                (componentSymbolB, methodSymbolN), statement2
+                (componentSymbolB, componentSymbolB.UpdateMethod), statement3
             ] |> Map.ofList
         
         actual =? expected
