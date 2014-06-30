@@ -58,7 +58,13 @@ module internal SymbolTransformation =
 
         // Instantiate the component symbols for the Component base class and the IComponent interface
         let createComponentSymbol name csharpSymbol = 
-            let symbol = { Name = name; UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = [] }; Methods = []; Fields = [] }
+            let symbol = { 
+                Name = name
+                UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = [] }
+                ProvidedPorts = []
+                RequiredPorts = [] 
+                Fields = [] 
+            }
             componentMapBuilder.Add (csharpSymbol, symbol)
             symbol
 
@@ -114,17 +120,16 @@ module internal SymbolTransformation =
                 csharpComponent.GetMembers().OfType<IMethodSymbol>() 
                 |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod compilation && method'.MethodKind = MethodKind.Ordinary)
 
-            [
-                for csharpMethod in methods ->
-                    let methodSymbol = { 
-                        Name = csharpMethod.Name
-                        ReturnType = transformReturnType csharpMethod.ReturnType
-                        Parameters = [ for parameter in csharpMethod.Parameters -> transformParameter parameter ]
-                    }
-                    methodMapBuilder.Add (csharpMethod, methodSymbol)
-                    methodCSharpMapBuilder.Add (methodSymbol, csharpMethod)
-                    methodSymbol
-            ]
+            methods |> Seq.map (fun csharpMethod ->
+                let methodSymbol = { 
+                    Name = csharpMethod.Name
+                    ReturnType = transformReturnType csharpMethod.ReturnType
+                    Parameters = csharpMethod.Parameters |> Seq.map transformParameter |> List.ofSeq
+                }
+                methodMapBuilder.Add (csharpMethod, methodSymbol)
+                methodCSharpMapBuilder.Add (methodSymbol, csharpMethod)
+                methodSymbol
+            ) |> List.ofSeq
 
         // Creates the symbols and mapping information for all fields of the component.
         let transformFields (csharpComponent : ITypeSymbol) =
@@ -141,7 +146,8 @@ module internal SymbolTransformation =
             let componentSymbol = {
                 Name = transformComponentName csharpComponent
                 UpdateMethod = transformUpdateMethod csharpComponent
-                Methods = transformMethods csharpComponent
+                ProvidedPorts = []
+                RequiredPorts = []
                 Fields = transformFields csharpComponent
             }
 
@@ -171,14 +177,13 @@ module internal SymbolTransformation =
         // Creates the symbols and mapping information for all subcomponents of the component.
         let transformSubcomponents (csharpComponent : ITypeSymbol) =
             let fields = csharpComponent.GetMembers().OfType<IFieldSymbol>() |> Seq.filter (fun field -> field.IsSubcomponentField compilation)
-            let subcomponents = [
-                for csharpField in fields -> 
-                    let componentSymbol = symbolResolver.ResolveComponent (csharpField.Type :?> INamedTypeSymbol)
-                    let subComponentSymbol = { ComponentReferenceSymbol.Name = csharpField.Name; ComponentSymbol = componentSymbol }
-                    subcomponentMapBuilder.Add (csharpField, subComponentSymbol)
-                    subComponentSymbol
-            ]
-            (symbolResolver.ResolveComponent (csharpComponent :?> INamedTypeSymbol), subcomponents)
+            let subcomponents = fields |> Seq.map (fun csharpField ->
+                let componentSymbol = symbolResolver.ResolveComponent (csharpField.Type :?> INamedTypeSymbol)
+                let subComponentSymbol = { ComponentReferenceSymbol.Name = csharpField.Name; ComponentSymbol = componentSymbol }
+                subcomponentMapBuilder.Add (csharpField, subComponentSymbol)
+                subComponentSymbol
+            )
+            (symbolResolver.ResolveComponent (csharpComponent :?> INamedTypeSymbol), subcomponents |> List.ofSeq)
 
         // Create and return the model symbol and the final version of the symbol resolver
         let modelSymbol = { symbolResolver.Model with Subcomponents = csharpComponents |> Array.map transformSubcomponents |> Map.ofArray }

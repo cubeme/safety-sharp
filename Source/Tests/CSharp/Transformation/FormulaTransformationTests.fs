@@ -105,29 +105,29 @@ module ``Linear Temporal Logic`` =
     [<Test>]
     let ``transform component indirect member access`` () =
         let actual = compileLtl "Ltl.StateExpression(() => accessIntField == intValue)"
-        let fieldAccess = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[1], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
+        let fieldAccess = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[1], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
         let expected = StateFormula (BinaryExpression (fieldAccess, BinaryOperator.Equals, IntegerLiteral 17))
         actual =? expected
 
     [<Test>]
     let ``transform component direct member access`` () =
         let actual = compileLtl "Ltl.StateExpression(() => !a.boolField)"
-        let fieldAccess = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
+        let fieldAccess = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
         let expected = StateFormula (UnaryExpression (fieldAccess, UnaryOperator.LogicalNot))
         actual =? expected
 
     [<Test>]
     let ``transform subcomponent direct member access`` () =
         let actual = compileLtl "Ltl.StateExpression(() => !sub.boolField)"
-        let fieldAccess = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[2])
+        let fieldAccess = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[2])
         let expected = StateFormula (UnaryExpression (fieldAccess, UnaryOperator.LogicalNot))
         actual =? expected
 
     [<Test>]
     let ``transform mixed component member access`` () =
         let actual = compileLtl "Ltl.StateExpression(() => a.boolField != b.boolField)"
-        let fieldAccessA = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
-        let fieldAccessB = FieldAccessExpression (symbolResolver.ComponentSymbols.[1].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[1])
+        let fieldAccessA = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
+        let fieldAccessB = ReadField (symbolResolver.ComponentSymbols.[1].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[1])
         let expected = StateFormula (BinaryExpression (fieldAccessA, BinaryOperator.NotEquals, fieldAccessB))
         actual =? expected
 
@@ -191,29 +191,29 @@ module ``Computation Tree Logic`` =
     [<Test>]
     let ``transform component indirect member access`` () =
         let actual = compileCtl "Ctl.StateExpression(() => accessIntField == intValue)"
-        let fieldAccess = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[1], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
+        let fieldAccess = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[1], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
         let expected = StateFormula (BinaryExpression (fieldAccess, BinaryOperator.Equals, IntegerLiteral 17))
         actual =? expected
 
     [<Test>]
     let ``transform component direct member access`` () =
         let actual = compileCtl "Ctl.StateExpression(() => !a.boolField)"
-        let fieldAccess = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
+        let fieldAccess = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
         let expected = StateFormula (UnaryExpression (fieldAccess, UnaryOperator.LogicalNot))
         actual =? expected
 
     [<Test>]
     let ``transform subcomponent direct member access`` () =
         let actual = compileCtl "Ctl.StateExpression(() => !sub.boolField)"
-        let fieldAccess = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[2])
+        let fieldAccess = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[2])
         let expected = StateFormula (UnaryExpression (fieldAccess, UnaryOperator.LogicalNot))
         actual =? expected
 
     [<Test>]
     let ``transform mixed component member access`` () =
         let actual = compileCtl "Ctl.StateExpression(() => a.boolField != b.boolField)"
-        let fieldAccessA = FieldAccessExpression (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
-        let fieldAccessB = FieldAccessExpression (symbolResolver.ComponentSymbols.[1].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[1])
+        let fieldAccessA = ReadField (symbolResolver.ComponentSymbols.[0].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[0])
+        let fieldAccessB = ReadField (symbolResolver.ComponentSymbols.[1].Fields.[0], Some symbolResolver.ModelSymbol.ComponentObjects.[1])
         let expected = StateFormula (BinaryExpression (fieldAccessA, BinaryOperator.NotEquals, fieldAccessB))
         actual =? expected
 

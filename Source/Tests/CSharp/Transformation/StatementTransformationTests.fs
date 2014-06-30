@@ -72,21 +72,21 @@ module ``Transform method`` =
     [<Test>]
     let ``statement block`` () =
         let actual = transform "{ boolField = true; intField = 2; }" 
-        let assignment1 = (AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral true))
-        let assignment2 = (AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 2))
-        let expected = BlockStatement [ assignment1; assignment2 ]
+        let assignment1 = WriteField (booleanFieldSymbol, BooleanLiteral true)
+        let assignment2 = WriteField (integerFieldSymbol, IntegerLiteral 2)
+        let expected = BlockStatement ([], [assignment1; assignment2])
 
         actual =? expected
 
     [<Test>]
     let ``stand-alone assignment statement`` () =
-        transform "boolField = true" =? AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral true)
+        transform "boolField = true" =? WriteField (booleanFieldSymbol, BooleanLiteral true)
 
     [<Test>]
     let ``assignment statement in binary expression`` () =
         let actual = transform "boolField = true || false"
         let expression = BinaryExpression(BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral false)
-        let expected = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), expression)
+        let expected = WriteField (booleanFieldSymbol, expression)
 
         actual =? expected
 
@@ -107,15 +107,15 @@ module ``Transform method`` =
     [<Test>]
     let ``nested if-then-else statements`` () =
         let actual = transform "if (boolField) intField = 1; else if (intField > 2) decimalField = 3.14m; else { boolField = false; intField = 2; }"
-        let ifCondition = FieldAccessExpression (booleanFieldSymbol, None)
-        let ifStatement = AssignmentStatement (FieldAccessExpression (integerFieldSymbol, None), IntegerLiteral 1)
+        let ifCondition = ReadField (booleanFieldSymbol, None)
+        let ifStatement = WriteField (integerFieldSymbol, IntegerLiteral 1)
         let ifClause = (ifCondition, ifStatement)
-        let elseIfCondition = BinaryExpression (FieldAccessExpression (integerFieldSymbol, None), BinaryOperator.GreaterThan, IntegerLiteral 2)
-        let elseIfStatement = AssignmentStatement (FieldAccessExpression (decimalFieldSymbol, None), DecimalLiteral 3.14m)
+        let elseIfCondition = BinaryExpression (ReadField (integerFieldSymbol, None), BinaryOperator.GreaterThan, IntegerLiteral 2)
+        let elseIfStatement = WriteField (decimalFieldSymbol, DecimalLiteral 3.14m)
         let elseIfClause = (elseIfCondition, elseIfStatement)
-        let elseStatement1 = AssignmentStatement (FieldAccessExpression (booleanFieldSymbol, None), BooleanLiteral false)
-        let elseStatement2 = AssignmentStatement (FieldAccessExpression (integerFieldSymbol, None), IntegerLiteral 2)
-        let elseStatements = BlockStatement [elseStatement1; elseStatement2]
+        let elseStatement1 = WriteField (booleanFieldSymbol, BooleanLiteral false)
+        let elseStatement2 = WriteField (integerFieldSymbol, IntegerLiteral 2)
+        let elseStatements = BlockStatement ([], [elseStatement1; elseStatement2])
         let elseClause = (UnaryExpression (elseIfCondition, UnaryOperator.LogicalNot), elseStatements)
         let nestedGuardedCommand = GuardedCommandStatement [elseIfClause; elseClause]
         let expected = GuardedCommandStatement [ifClause; (UnaryExpression (ifCondition, UnaryOperator.LogicalNot), nestedGuardedCommand)]
@@ -126,8 +126,8 @@ module ``Transform method`` =
     let ``choose Boolean value`` () =
         let actual = transform "Choose.Boolean(out boolField)"
 
-        let assignment1 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral true)
-        let assignment2 = AssignmentStatement(FieldAccessExpression(booleanFieldSymbol, None), BooleanLiteral false)
+        let assignment1 = WriteField (booleanFieldSymbol, BooleanLiteral true)
+        let assignment2 = WriteField (booleanFieldSymbol, BooleanLiteral false)
 
         let expected = GuardedCommandStatement [(BooleanLiteral true, assignment1); (BooleanLiteral true, assignment2)]
         actual =? expected
@@ -137,10 +137,10 @@ module ``Transform method`` =
         let actual = transform "Choose.Value(out intField, -17, 0, 33, 127)"
 
         let minusSeventeen = UnaryExpression(IntegerLiteral 17, UnaryOperator.Minus)
-        let assignment1 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), minusSeventeen)
-        let assignment2 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 0)
-        let assignment3 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 33)
-        let assignment4 = AssignmentStatement(FieldAccessExpression(integerFieldSymbol, None), IntegerLiteral 127)
+        let assignment1 = WriteField (integerFieldSymbol, minusSeventeen)
+        let assignment2 = WriteField (integerFieldSymbol, IntegerLiteral 0)
+        let assignment3 = WriteField (integerFieldSymbol, IntegerLiteral 33)
+        let assignment4 = WriteField (integerFieldSymbol, IntegerLiteral 127)
 
         let expected = 
             GuardedCommandStatement [
@@ -157,10 +157,10 @@ module ``Transform method`` =
         let actual = transform "Choose.Value(out decimalField, -17.0m, 0.0m, 33.4m, 127.23m)"
 
         let minusSeventeen = UnaryExpression(DecimalLiteral 17.0m, UnaryOperator.Minus)
-        let assignment1 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), minusSeventeen)
-        let assignment2 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), DecimalLiteral 0m)
-        let assignment3 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), DecimalLiteral 33.4m)
-        let assignment4 = AssignmentStatement(FieldAccessExpression(decimalFieldSymbol, None), DecimalLiteral 127.23m)
+        let assignment1 = WriteField (decimalFieldSymbol, minusSeventeen)
+        let assignment2 = WriteField (decimalFieldSymbol, DecimalLiteral 0m)
+        let assignment3 = WriteField (decimalFieldSymbol, DecimalLiteral 33.4m)
+        let assignment4 = WriteField (decimalFieldSymbol, DecimalLiteral 127.23m)
 
         let expected = 
             GuardedCommandStatement [
@@ -185,7 +185,7 @@ module ``TransformMethodBodies method`` =
     [<Test>]
     let ``transforms body of single method of single component`` () =
         let expression = BinaryExpression (BooleanLiteral true, LogicalOr, BinaryExpression (IntegerLiteral 1, Equals, IntegerLiteral 2))
-        let statement = BlockStatement [ReturnStatement <| Some expression]
+        let statement = BlockStatement ([], [ReturnStatement <| Some expression])
         let actual = transform "class A : Component { bool M() { return true || 1 == 2; }}"
         let classSymbol = compilation.FindClassSymbol "A"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
@@ -201,7 +201,7 @@ module ``TransformMethodBodies method`` =
 
     [<Test>]
     let ``transforms body of update method of a component`` () =
-        let statement = BlockStatement [ReturnStatement None]
+        let statement = BlockStatement ([], [ReturnStatement None])
         let actual = transform "class A : Component { public override void Update() { return; }}"
         let classSymbol = compilation.FindClassSymbol "A"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
@@ -213,7 +213,7 @@ module ``TransformMethodBodies method`` =
 
     [<Test>]
     let ``transforms inherited body of update method of a component`` () =
-        let statement = BlockStatement [ReturnStatement None]
+        let statement = BlockStatement ([], [ReturnStatement None])
         let actual = transform "class A : Component { public override void Update() { return; }} class B : A {}"
         let classSymbolA = compilation.FindClassSymbol "A"
         let classSymbolB = compilation.FindClassSymbol "B"
@@ -230,9 +230,9 @@ module ``TransformMethodBodies method`` =
     [<Test>]
     let ``transforms bodies of multiple methods of multiple components`` () =
         let expression = BinaryExpression (BooleanLiteral true, LogicalOr, BinaryExpression (IntegerLiteral 1, Equals, IntegerLiteral 2))
-        let statement1 = BlockStatement [ReturnStatement <| Some expression]
-        let statement2 = BlockStatement []
-        let statement3 = BlockStatement [ReturnStatement None]
+        let statement1 = BlockStatement ([], [ReturnStatement <| Some expression])
+        let statement2 = BlockStatement ([], [])
+        let statement3 = BlockStatement ([], [ReturnStatement None])
 
         let actual = transform "class A : Component { public override void Update() { return; } bool M() { return true || 1 == 2; }} class B : A { void N() {}}"
 

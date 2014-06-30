@@ -60,6 +60,7 @@ module internal ObjectTransformation =
                 ComponentSymbol = componentSymbol
                 Fields = transformFields component' componentSymbol |> Map.ofList
                 Subcomponents = transformSubcomponents component' componentSymbol |> Map.ofList
+                Bindings = Map.empty
             }
             
             componentSymbolMapBuilder.Add (component', componentSymbol)

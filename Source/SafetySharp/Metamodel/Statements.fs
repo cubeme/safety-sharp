@@ -27,8 +27,9 @@ type Statement =
     /// Represents the empty statement that does nothing.
     | EmptyStatement
 
-    /// Represents a block of statements that are executed sequentially.
-    | BlockStatement of Statements : Statement list
+    /// Represents a block of statements that are executed sequentially. Within the statement block, the 
+    /// local variables are defined and can be accessed by read and write operations.
+    | BlockStatement of Locals : LocalSymbol list * Statements : Statement list
 
     /// Represents a return statement that ends the execution of a method, optionally returning a value.
     | ReturnStatement of Expression : Expression option
@@ -38,5 +39,11 @@ type Statement =
     /// clause is chosen nondeterministically.
     | GuardedCommandStatement of Clauses : (Expression * Statement) list
 
-    /// Represents the assignment of a value to an assignment target, i.e., a field, for instance.
-    | AssignmentStatement of Target : Expression * Expression : Expression
+    /// Represents the assignment of a value to a component field.
+    | WriteField of Field : FieldSymbol * Expression : Expression
+
+    /// Represents the assignment of a value to a local variable.
+    | WriteLocal of Local : LocalSymbol * Expression : Expression
+
+    /// Represents the assignment of a value to a method parameter.
+    | WriteParameter of Parameter : ParameterSymbol * Expression : Expression

@@ -341,7 +341,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                 failwith "NotImplementedYet" //TODO: Is this even useful? Maybe for array access...
             | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
                 failwith "NotImplementedYet" //TODO: Is this even useful? Maybe for array access...
-            | MMExpression.FieldAccessExpression (field:MMFieldSymbol, comp:MMComponentReferenceSymbol option) ->
+            | MMExpression.ReadField (field:MMFieldSymbol, comp:MMComponentReferenceSymbol option) ->
                 if comp.IsSome then
                     // if comp is set, then this expression is an expression inside a formula
                     failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
@@ -368,7 +368,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                 let transformedLeft = transformMMExpressionInsideAComponentToSimpleExpression fieldCache comp leftExpression
                 let transformedRight = transformMMExpressionInsideAComponentToSimpleExpression fieldCache comp rightExpression
                 SimpleExpression.BinaryExpression(transformedLeft,operator,transformedRight)
-            | MMExpression.FieldAccessExpression (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
+            | MMExpression.ReadField (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
                 if componentReference.IsNone then
                     //called inside a component
                     fieldCache.createSimpleFieldAccessExpression field comp
@@ -401,7 +401,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                 | MMStatement.EmptyStatement ->
                     let newToTransform = toTransform.Tail
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver collected newToTransform
-                | MMStatement.BlockStatement (statements : MMStatement list) ->
+                | MMStatement.BlockStatement (_, statements : MMStatement list) ->
                     let expandedBlockStatement = statements |> List.map coverStatementWithContext
                     let newToTransform = expandedBlockStatement @ toTransform.Tail
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver collected newToTransform
@@ -427,13 +427,18 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                                                                   |> SimpleStatement.GuardedCommandStatement
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedGuardedCommand]) newToTransform
 
-                | MMStatement.AssignmentStatement (target : MMExpression, expression : MMExpression) ->
+                // TODO UPDATED METAMODEL
+                (*| MMStatement.WriteField (target : MMFieldSymbol, expression : MMExpression) ->
                     //resolveTargetOfAnAssignment
+                    
                     let transformedTarget = resolveTargetOfAnAssignment componentObject contextOfStatement target
                     let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression fieldCache componentObject expression
                     let transformedAssignment = SimpleStatement.AssignmentStatement (transformedTarget,transformedExpression)
                     let newToTransform = toTransform.Tail
-                    transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedAssignment]) newToTransform
+                    transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedAssignment]) newToTransform*)
+
+                    
+
     
     
     // module (the public part for _external_ use)

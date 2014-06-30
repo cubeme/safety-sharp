@@ -39,12 +39,25 @@ type FieldSymbol = {
     /// The name of the field. Field names are unique within a single component and do not overlap
     /// with subcomponent or method names.
     Name : string
+
+    /// The type of the field.
+    Type : TypeSymbol
+} 
+
+/// Represents the definition of a local variable within a statement block.
+type LocalSymbol = {
+    /// The name of the local variable. Local variable names are unique within a single method and do not overlap
+    /// with method parameter names.
+    Name : string
+
+    /// The type of the field.
     Type : TypeSymbol
 } 
 
 /// Represents the definition of a method parameter.
 type ParameterSymbol = {
-    /// The name of the method parameter. Parameter names are unique within a single method.
+    /// The name of the method parameter. Parameter names are unique within a single method and do not overlap
+    /// with local variable names.
     Name : string
 
     /// The type of the method parameter.
@@ -64,6 +77,12 @@ type MethodSymbol = {
     Parameters : ParameterSymbol list
 } 
 
+/// Represents the definition of a provided port within a component.
+type ProvidedPortSymbol = ProvidedPort of MethodSymbol
+
+/// Represents the definition of a required port within a component.
+type RequiredPortSymbol = RequiredPort of MethodSymbol
+
 /// Represents the type definition of a component within a model.
 type ComponentSymbol = { 
     /// The name of the component. Component names are unique within a single model.
@@ -72,8 +91,11 @@ type ComponentSymbol = {
     /// The update method of the component, overriding <see cref="SafetySharp.Modeling.Component.Update()" />.
     UpdateMethod : MethodSymbol
 
-    /// The methods declared by the component. The <see cref="UpdateMethod" /> is never contained in this list.
-    Methods : MethodSymbol list
+    /// The provided ports declared by the component.
+    ProvidedPorts : ProvidedPortSymbol list
+
+    /// The required ports declared by the component.
+    RequiredPorts : RequiredPortSymbol list
 
     /// The fields declared by the component.
     Fields : FieldSymbol list

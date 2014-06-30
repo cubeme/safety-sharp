@@ -32,15 +32,26 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 
 module internal StatementTransformation =
 
+    /// Transforms an assignment to a field, local, or parameter.
+    let private transformAssignment (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (target : ExpressionSyntax) expression =
+        let symbolInfo = semanticModel.GetSymbolInfo target
+        match symbolInfo.Symbol with
+        | null -> invalidOp "Failed to get symbol info for assignment target '%A'." target
+        | :? IFieldSymbol as fieldSymbol ->
+            WriteField (symbolResolver.ResolveField fieldSymbol, expression)
+        | _ -> invalidOp "Not implemented"
+
     /// Transforms C# statements to metamodel statements.
     let Transform (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (statement : StatementSyntax) =
-        let transformExpression = ExpressionTransformation.Transform symbolResolver semanticModel
+        let transformExpression = 
+            ExpressionTransformation.Transform symbolResolver semanticModel
+
         let rec transform = function
         | EmptyStatement ->
             EmptyStatement
 
         | BlockStatement statements ->
-            statements |> Seq.map transform |> List.ofSeq |> BlockStatement 
+            BlockStatement ([], statements |> Seq.map transform |> List.ofSeq)
 
         | ReturnStatement None ->
             ReturnStatement None
@@ -64,7 +75,7 @@ module internal StatementTransformation =
 
             match expression with
             | AssignmentExpression (left, right) ->
-                AssignmentStatement (transformExpression left, transformExpression right)
+                transformAssignment symbolResolver semanticModel left (transformExpression right)
 
             | InvocationExpression invocation ->
                 let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> invocation
@@ -73,18 +84,17 @@ module internal StatementTransformation =
                 let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
                 let chooseIntegerValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Int32
                 let chooseDecimalValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Decimal
+                let assignment value = transformAssignment symbolResolver semanticModel arguments.[0].Expression value
 
                 if chooseBooleanValueMethodSymbol.Equals methodSymbol then
-                    let assignmentTarget = transformExpression arguments.[0].Expression
                     GuardedCommandStatement [
-                        (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral true))
-                        (BooleanLiteral true, AssignmentStatement (assignmentTarget, BooleanLiteral false))
+                        (BooleanLiteral true, assignment (BooleanLiteral true))
+                        (BooleanLiteral true, assignment (BooleanLiteral false))
                     ]
 
                 elif chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
-                    let assignmentTarget = transformExpression arguments.[0].Expression
                     let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
-                    let statements = expressions |> Seq.map (fun expression -> AssignmentStatement(assignmentTarget, expression))
+                    let statements = expressions |> Seq.map (fun expression -> assignment expression)
                     let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
                     clauses |> List.ofSeq |> GuardedCommandStatement
                 else
@@ -115,7 +125,7 @@ module internal StatementTransformation =
 
     /// Transforms the bodies of all of the component's methods.
     let private transformComponentMethods compilation symbolResolver componentSymbol =
-        componentSymbol.UpdateMethod :: componentSymbol.Methods
+        componentSymbol.UpdateMethod :: (componentSymbol.ProvidedPorts |> List.map (fun (ProvidedPort method') -> method'))
         |> Seq.map (fun methodSymbol -> ((componentSymbol, methodSymbol), transformMethodBody compilation symbolResolver methodSymbol))
 
     /// Transforms the bodies of all methods declared by the components in the symbol resolver.

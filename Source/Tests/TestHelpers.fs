@@ -55,9 +55,10 @@ module TestHelpers =
         Name = sprintf "%s::%s" TestCompilation.CompilationName name
         UpdateMethod = emptyUpdateMethodSymbol
         Fields = []
-        Methods = []
+        ProvidedPorts = []
+        RequiredPorts = []
     } 
 
     /// Gets a component object with the given name and component symbol, with no fields or subcomponents.
     let emptyComponentObject name symbol = 
-        { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty }
+        { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty; Bindings = Map.empty }

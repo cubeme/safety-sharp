@@ -44,6 +44,9 @@ type ComponentObject = {
 
     /// Maps each subcomponent declared by the component type to a component instantiation.
     Subcomponents : Map<ComponentReferenceSymbol, ComponentObject>
+
+    /// Binds each required port declared by the component to a provided port.
+    Bindings : Map<RequiredPortSymbol, ComponentObject * ProvidedPortSymbol>
 } 
 
 /// Represents the instantiation of a partition.
@@ -70,7 +73,7 @@ type ModelObject = {
 /// Represents a configuration of symbols, objects, and formulas that allows a transformation of the model
 /// to a modelchecker in order to verify the formulas.
 type Configuration = {
-    /// The method symbol of the configuration, containing all symbols used throughout the model.
+    /// The model symbol of the configuration, containing all symbols used throughout the model.
     ModelSymbol : ModelSymbol
 
     /// The model object of the configuration, containing all partition and component objects used throughout the model.
@@ -79,6 +82,6 @@ type Configuration = {
     /// The formulas defined over the symbols and objects that require verification.
     Formulas : Formula list
 
-    /// Resolves the body of a component's method.
+    /// Resolves the bodies of the Update method and provided ports of a component.
     MethodBodyResolver : Map<ComponentSymbol * MethodSymbol, Statement>
 }

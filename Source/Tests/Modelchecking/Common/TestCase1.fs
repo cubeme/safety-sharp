@@ -41,7 +41,7 @@ module TestCase1 =
     let updateMethodReturnType = None
     let updateMethodSymbol = { MethodSymbol.Name="irrelevant"; MethodSymbol.ReturnType=updateMethodReturnType; MethodSymbol.Parameters=[]; }
     let indeterministicComponentSymbolName = "indeterministic Component Symbol..."
-    let indeterministicComponentSymbol = { ComponentSymbol.Name=indeterministicComponentSymbolName; ComponentSymbol.UpdateMethod=updateMethodSymbol; ComponentSymbol.Methods=[]; ComponentSymbol.Fields=[fieldXSymbol]; }
+    let indeterministicComponentSymbol = { ComponentSymbol.Name=indeterministicComponentSymbolName; ComponentSymbol.UpdateMethod=updateMethodSymbol; ComponentSymbol.RequiredPorts=[]; ComponentSymbol.ProvidedPorts=[]; ComponentSymbol.Fields=[fieldXSymbol]; }
     let indeterministicComponentReferenceSymbolName = "Reference to the root of a partition of the Type defined in 'indeterministic Component Symbol'..."
     let indeterministicComponentReferenceSymbolForFormulaUse = { ComponentReferenceSymbol.Name=indeterministicComponentReferenceSymbolName; ComponentReferenceSymbol.ComponentSymbol=indeterministicComponentSymbol; }
     let partitionASymbol = { PartitionSymbol.Name="partition A Symbol"; PartitionSymbol.RootComponent=indeterministicComponentSymbol; }
@@ -49,12 +49,12 @@ module TestCase1 =
     let testCase1ModelSymbol = { ModelSymbol.Partitions=[partitionASymbol]; ModelSymbol.ComponentSymbols=[indeterministicComponentSymbol] ; ModelSymbol.Subcomponents=([(indeterministicComponentSymbol,[])] |> Map.ofList ) ; ModelSymbol.ComponentObjects=todo1  }
     
     // Expressions II
-    let fieldXExpressionInComponent = Expression.FieldAccessExpression(fieldXSymbol,None)
-    let fieldXExpressionInFormula = Expression.FieldAccessExpression(fieldXSymbol,Some(indeterministicComponentReferenceSymbolForFormulaUse))
+    let fieldXExpressionInComponent = Expression.ReadField(fieldXSymbol,None)
+    let fieldXExpressionInFormula = Expression.ReadField(fieldXSymbol,Some(indeterministicComponentReferenceSymbolForFormulaUse))
 
     // Statements
-    let assignTrueStatement = Statement.AssignmentStatement(fieldXExpressionInComponent,booleanTrueExpression)
-    let assignFalseStatement = Statement.AssignmentStatement(fieldXExpressionInComponent,booleanFalseExpression)
+    let assignTrueStatement = Statement.WriteField(fieldXSymbol,booleanTrueExpression)
+    let assignFalseStatement = Statement.WriteField(fieldXSymbol,booleanFalseExpression)
     let assignTrueOption = (booleanTrueExpression,assignTrueStatement)
     let assignFalseOption = (booleanTrueExpression,assignFalseStatement)
     let indeterministicStatement = Statement.GuardedCommandStatement([assignTrueOption;assignFalseOption])
@@ -62,7 +62,7 @@ module TestCase1 =
     // Objects I
     let fieldXObject = { FieldObject.FieldSymbol=fieldXSymbol; FieldObject.InitialValues=[true;false]; }
     let indeterministicComponentObjectName = indeterministicComponentReferenceSymbolName //TODO: Not sure, if this is correct. I assume it is
-    let indeterministicComponentObject = { ComponentObject.Name=indeterministicComponentObjectName; ComponentObject.ComponentSymbol=indeterministicComponentSymbol ; ComponentObject.Fields=([(fieldXSymbol,fieldXObject)] |> Map.ofList); ComponentObject.Subcomponents=([]|>Map.ofList ); }
+    let indeterministicComponentObject = { ComponentObject.Name=indeterministicComponentObjectName; ComponentObject.ComponentSymbol=indeterministicComponentSymbol ; ComponentObject.Fields=([(fieldXSymbol,fieldXObject)] |> Map.ofList); ComponentObject.Subcomponents=([]|>Map.ofList ); Bindings = Map.empty }
     let partitionAObject = { PartitionObject.PartitionSymbol=partitionASymbol; PartitionObject.RootComponent=indeterministicComponentObject; }
     
     // MethodBodyResolver

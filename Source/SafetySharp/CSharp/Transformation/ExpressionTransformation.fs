@@ -48,7 +48,7 @@ module internal ExpressionTransformation =
 
         | IdentifierName identifier ->
             let fieldSymbol = semanticModel.GetSymbol<IFieldSymbol> identifier
-            FieldAccessExpression (symbolResolver.ResolveField fieldSymbol, None)
+            ReadField (symbolResolver.ResolveField fieldSymbol, None)
 
         | ParenthesizedExpression expression ->
             transform expression

@@ -95,7 +95,7 @@ module internal FormulaTransformation =
         let componentReferenceSymbol = symbolResolver.ResolveComponentReference component'
         match componentSymbol.Fields |> Seq.tryFind (fun fieldSymbol -> fieldSymbol.Name = fieldName) with
         | None -> invalidOp "Unable to find component field '%s.%s'." (component'.GetType().FullName) fieldName
-        | Some fieldSymbol -> FieldAccessExpression (fieldSymbol, Some componentReferenceSymbol)
+        | Some fieldSymbol -> ReadField (fieldSymbol, Some componentReferenceSymbol)
 
     /// Checks whether the given method info represents the implicit conversion operator of <see cref="MemberAccess{T}" />.
     let private isImplicitMemberAccessConversion (methodInfo : MethodInfo) =
