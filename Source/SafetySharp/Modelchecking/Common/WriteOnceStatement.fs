@@ -74,19 +74,16 @@ type WriteOncePossibleEffect = {
 // Be cautious: If no option matches, the assignment doesn't change anything. (Thus the next value of target is the current value of target).
 
 type WriteOnceStatement = 
-    | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
+    | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceExpression option)
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
+    | WriteOnceStatementSimpleAssign of Target : (WriteOnceGlobalField) * Effect : (WriteOncePossibleEffect)
  with
     member this.getTarget =
         match this with
-            | WriteOnceStatementEvaluateDecisionsParallel(target,_) -> target
+            | WriteOnceStatementEvaluateDecisionsParallel(target,_,_) -> target
             | WriteOnceStatementEvaluateDecisionsSequential(target,_) -> target
-
-    member this.getPossibleEffectsForSequentialEvaluation =
-        match this with
-            | WriteOnceStatementEvaluateDecisionsParallel(_,possibleEffects) -> failwith "NotImplementedYet"
-            | WriteOnceStatementEvaluateDecisionsSequential(_,possibleEffects) -> possibleEffects
-
+            | WriteOnceStatementSimpleAssign(target,_) -> target
+            
 
 // contains information, which Decicions have already been taken in the current statement
 // - if an assignment is done, write it to a new variable (an artificial field), if it is not the last assignment to this variable
@@ -236,6 +233,10 @@ type SimpleStatementsToWriteOnceStatements =
                                                             (field:SimpleGlobalFieldWithContext)
                                                             (fieldsInBraches:(WriteOnceTimeOfAccess*SimpleGlobalField) list) 
                                                                 : (WriteOnceStatement list * WriteOnceTypeFieldManager)=
+                //ELSE: If none of the branch matches, assign to the transformedTarget the value in the redirected field (not the origin field)
+                let currentRedirectionOfField = fieldManager.getCurrentRedirection field
+                let elseEffect = WriteOnceExpression.FieldAccessExpression currentRedirectionOfField |> Some
+                // create artificial Field
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
                 // we get the decisions taken in every branch of fieldsInBraches and create for it a specific effect
                 let transformFieldInBranch ((timeofAccess,fieldInBranch):WriteOnceTimeOfAccess*SimpleGlobalField) =
@@ -243,9 +244,10 @@ type SimpleStatementsToWriteOnceStatements =
                     {
                         WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                         WriteOncePossibleEffect.TargetEffect = transformedExpression;
-                    }
+                    }                
                 let effects = fieldsInBraches |> List.map transformFieldInBranch
-                let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( transformedTarget, effects)
+                                
+                let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( transformedTarget, effects, elseEffect)
 
                 (alreadyTransformed@[statement],newFieldManager)
             referencesToArtificialFields |> Map.fold assignToFieldTheValuesOfItsArtificialFields ([],fieldManager)
@@ -277,7 +279,7 @@ type SimpleStatementsToWriteOnceStatements =
                             WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                             WriteOncePossibleEffect.TargetEffect = transformedExpression;
                     }
-                    let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( transformedTarget, [effect])
+                    let statement = WriteOnceStatement.WriteOnceStatementSimpleAssign( transformedTarget, effect)
                     ([statement],newFieldManager)
         // LINEARIZE
         // Here we have to transform a LIST of Statements. The fieldManager of the next Statement is the resutling fieldManager of the
@@ -303,7 +305,7 @@ type SimpleStatementsToWriteOnceStatements =
                                 WriteOncePossibleEffect.TakenDecisions = []; //always true, no decisions made, because we didn't branch here
                                 WriteOncePossibleEffect.TargetEffect = redirectedToFieldExpression;
                              }
-                let statement = WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel( field, [effect])
+                let statement = WriteOnceStatement.WriteOnceStatementSimpleAssign( field, effect)
                 statement
             fieldsOfPartition |> List.map transformField
             
