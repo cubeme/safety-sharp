@@ -82,8 +82,14 @@ type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 
 // TODO: Move much of the stuff into file SimplifiedMetamodel
 
+//TODO: Also use in Context
+type SimplePartition = {
+     RootComponentName : string;
+}
+
 type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
 
+//TODO: Switch from RootComponentName to SimplePartition. Or maybe not (to avoid cyclic dependencies)
 type Context = {
     hierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
     rootComponentName : string; //only the name of the root component
@@ -201,6 +207,14 @@ type ContextCache (configuration:MMConfiguration) =
                                                       (elem.Name,"root"+counterString))
                              |> Map.ofList
 
+        //TODO: Make creation more efficient
+        let nameOfRootToPartitionObject : Map<string,MMPartitionObject> =
+            let findComponent (internalName:string) : MMPartitionObject =
+                model.Partitions |> List.find (fun elem  -> elem.RootComponent.Name = internalName)
+            rootComponentToName |> Map.toList
+                                |> List.map (fun (internalName,artificialName) -> (artificialName,findComponent internalName))
+                                |> Map.ofList
+
         // accessor and helper functions (internal use)
         let nameOfRootComponent (rootComponent:MMComponentObject) : string =
             rootComponentToName.Item rootComponent.Name
@@ -216,7 +230,13 @@ type ContextCache (configuration:MMConfiguration) =
                 Context.hierarchicalAccess = newElementName::parentContext.hierarchicalAccess; //parentsAndMe
                 Context.rootComponentName = parentContext.rootComponentName;
             }
-
+        member this.getRootComponents : string list =
+            rootComponentToName |> Map.toList
+                                |> List.map (fun (_,value) -> value)
+        
+        // name is the artificial name
+        member this.getRootComponentFromName (name:string) : MMPartitionObject =
+            nameOfRootToPartitionObject.Item name
 
         
     // this is extraced from ModelInformationCache, to keep the code together which belongs together
@@ -445,7 +465,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
 
     //TODO: Put methodBodyResolver into cached information and use Cached Information here
     //      This function also needs the SimpleGlobalFieldCache and RootComponentCache
-    member this.partitionUpdateInSimpleStatements (partition:MMPartitionObject) : SimpleStatement list=
+    member this.partitionUpdateInSimpleStatements2 (partition:MMPartitionObject) : SimpleStatement list=
         //TODO: sort, updateMethods of Non-Root-Components
         //partition.RootComponent 
         let collected = []
@@ -459,8 +479,16 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
         let partitionUpdateInSimpleStatements = transformMMStepInfosToSimpleStatements fieldCache configuration.MethodBodyResolver collected [toTransform]
         partitionUpdateInSimpleStatements
 
+    //TODO: Refactor PromelaTransform to use this function
+    member this.partitionUpdateInSimpleStatements (partition:SimplePartition) : SimpleStatement list =
+        let mmpartitionObject = contextCache.getRootComponentFromName partition.RootComponentName
+        this.partitionUpdateInSimpleStatements2 mmpartitionObject
+
+    member this.getPartitions : SimplePartition list =
+        contextCache.getRootComponents |> List.map (fun componentName -> { SimplePartition.RootComponentName=componentName })
+
     member this.getSimpleGlobalFields : SimpleGlobalField list =
-            fieldCache.getSimpleGlobalFields
+        fieldCache.getSimpleGlobalFields
                            
     member this.resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : SimpleGlobalField =
         fieldCache.resolveFieldAccessInsideAFormula referenceSymbol field

@@ -61,7 +61,7 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
         
         let fieldInitialisations = this.generateFieldInitialisations
         
-        //updates and bindings: Cover them in an endless loop
+        //TODO: updates and bindings: Cover them in an endless loop
         let partitionStatements =
             //TODO: Correct semantics with bindings and correct "interleaving" of bindings and partitions
             configuration.ModelObject.Partitions |> List.collect this.generatePartitionUpdateCode 
@@ -133,7 +133,7 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
     
 
     member this.generatePartitionUpdateCode (partition:MMPartitionObject) : PrStatement list=
-        let partitionUpdateInSimpleStatements = toSimplifiedMetamodel.partitionUpdateInSimpleStatements partition
+        let partitionUpdateInSimpleStatements = toSimplifiedMetamodel.partitionUpdateInSimpleStatements2 partition
         let transformedSimpleStatements = partitionUpdateInSimpleStatements |> List.map this.transformSimpleStatement
         transformedSimpleStatements
 
