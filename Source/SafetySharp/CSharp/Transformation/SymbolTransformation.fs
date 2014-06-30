@@ -106,7 +106,7 @@ module internal SymbolTransformation =
 
         // Creates the symbols and mapping information for all methods of the component. We'll also build up a 
         // dictionary that allows us to retrieve the original C# method symbol again.
-        let transformMethods (csharpComponent : ITypeSymbol) =
+        let transformMethods (csharpComponent : ITypeSymbol) methodTypeSelector portConstructor =
             let transformReturnType (returnType : ITypeSymbol) =
                 if returnType.SpecialType = SpecialType.System_Void then 
                     None 
@@ -119,6 +119,7 @@ module internal SymbolTransformation =
             let methods = 
                 csharpComponent.GetMembers().OfType<IMethodSymbol>() 
                 |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod compilation && method'.MethodKind = MethodKind.Ordinary)
+                |> Seq.filter methodTypeSelector
 
             methods |> Seq.map (fun csharpMethod ->
                 let methodSymbol = { 
@@ -128,7 +129,7 @@ module internal SymbolTransformation =
                 }
                 methodMapBuilder.Add (csharpMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, csharpMethod)
-                methodSymbol
+                portConstructor methodSymbol
             ) |> List.ofSeq
 
         // Creates the symbols and mapping information for all fields of the component.
@@ -143,11 +144,12 @@ module internal SymbolTransformation =
 
         // Creates the symbols and mapping information for a component with the given type.
         let transformComponent (csharpComponent : ITypeSymbol) =
+            let isExtern (methodSymbol : IMethodSymbol) = methodSymbol.IsExtern
             let componentSymbol = {
                 Name = transformComponentName csharpComponent
                 UpdateMethod = transformUpdateMethod csharpComponent
-                ProvidedPorts = []
-                RequiredPorts = []
+                ProvidedPorts = transformMethods csharpComponent (not << isExtern) ProvidedPort
+                RequiredPorts = transformMethods csharpComponent isExtern RequiredPort
                 Fields = transformFields csharpComponent
             }
 

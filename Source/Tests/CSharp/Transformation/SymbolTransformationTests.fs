@@ -147,36 +147,28 @@ module ``ModelSymbol property`` =
     [<Test>]
     let ``component symbol contains all provided ports`` () =
         compile "class A : Component { int M(int i, decimal d) { return 0; } void N(bool b) {} bool O() { return false; } }"
-        components.[0] =? { 
-            emptyComponentSymbol "A" with 
-                ProvidedPorts =
-                [ 
-                    ProvidedPort { 
-                        Name = "M"
-                        ReturnType = Some TypeSymbol.Integer 
-                        Parameters = [{ Name = "i"; Type = TypeSymbol.Integer }; { Name = "d"; Type = TypeSymbol.Decimal }]
-                    }
-                    ProvidedPort { Name = "N"; ReturnType = None; Parameters = [{ Name = "b"; Type = TypeSymbol.Boolean }] }
-                    ProvidedPort { Name = "O"; ReturnType = Some TypeSymbol.Boolean; Parameters = [] }
-                ] 
-        }
+        components.[0].ProvidedPorts =? [ 
+            ProvidedPort { 
+                Name = "M"
+                ReturnType = Some TypeSymbol.Integer 
+                Parameters = [{ Name = "i"; Type = TypeSymbol.Integer }; { Name = "d"; Type = TypeSymbol.Decimal }]
+            }
+            ProvidedPort { Name = "N"; ReturnType = None; Parameters = [{ Name = "b"; Type = TypeSymbol.Boolean }] }
+            ProvidedPort { Name = "O"; ReturnType = Some TypeSymbol.Boolean; Parameters = [] }
+        ] 
 
     [<Test>]
     let ``component symbol contains all required ports`` () =
         compile "class A : Component { extern int M(int i, decimal d); extern void N(bool b); extern bool O(); }"
-        components.[0] =? { 
-            emptyComponentSymbol "A" with 
-                RequiredPorts =
-                [ 
-                    RequiredPort { 
-                        Name = "M"
-                        ReturnType = Some TypeSymbol.Integer 
-                        Parameters = [{ Name = "i"; Type = TypeSymbol.Integer }; { Name = "d"; Type = TypeSymbol.Decimal }]
-                    }
-                    RequiredPort { Name = "N"; ReturnType = None; Parameters = [{ Name = "b"; Type = TypeSymbol.Boolean }] }
-                    RequiredPort { Name = "O"; ReturnType = Some TypeSymbol.Boolean; Parameters = [] }
-                ] 
-        }
+        components.[0].RequiredPorts =? [ 
+            RequiredPort { 
+                Name = "M"
+                ReturnType = Some TypeSymbol.Integer 
+                Parameters = [{ Name = "i"; Type = TypeSymbol.Integer }; { Name = "d"; Type = TypeSymbol.Decimal }]
+            }
+            RequiredPort { Name = "N"; ReturnType = None; Parameters = [{ Name = "b"; Type = TypeSymbol.Boolean }] }
+            RequiredPort { Name = "O"; ReturnType = Some TypeSymbol.Boolean; Parameters = [] }
+        ] 
 
     [<Test>]
     let ``component symbol contains update methods`` () =
