@@ -53,6 +53,8 @@ module internal SymbolTransformation =
         let componentMapBuilder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ComponentSymbol> ()
         let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
         let subcomponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, ComponentReferenceSymbol> ()
+        let parameterMapBuilder = ImmutableDictionary.CreateBuilder<IParameterSymbol, ParameterSymbol> ()
+        let localMapBuilder = ImmutableDictionary.CreateBuilder<ILocalSymbol, LocalSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
         let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
 
@@ -114,7 +116,20 @@ module internal SymbolTransformation =
                     Some <| toTypeSymbol returnType
 
             let transformParameter (parameter : IParameterSymbol) =
-                { ParameterSymbol.Name = parameter.Name; Type = toTypeSymbol parameter.Type }
+                let parameterSymbol = { ParameterSymbol.Name = parameter.Name; Type = toTypeSymbol parameter.Type }
+                parameterMapBuilder.Add (parameter, parameterSymbol)
+                parameterSymbol
+
+            let transformLocals (methodSymbol : IMethodSymbol) =
+                match methodSymbol.DeclaringSyntaxReferences.Length with
+                | 1 -> 
+                    let semanticModel = compilation.GetSemanticModel methodSymbol.DeclaringSyntaxReferences.[0].SyntaxTree
+                    let methodDeclaration = methodSymbol.DeclaringSyntaxReferences.[0].GetSyntax () :?> MethodDeclarationSyntax
+                    methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
+                    |> Seq.map (fun declarator -> semanticModel.GetDeclaredSymbol declarator :?> ILocalSymbol)
+                    |> Seq.iter (fun symbol -> localMapBuilder.Add (symbol, { Name = symbol.Name; Type = toTypeSymbol symbol.Type }))
+                | 0 -> invalidOp "Unable to retrieve source code for method '%s'" <| methodSymbol.ToDisplayString ()
+                | _ -> invalidOp "Method '%s' has more than one source location." <| methodSymbol.ToDisplayString ()
 
             let methods = 
                 csharpComponent.GetMembers().OfType<IMethodSymbol>() 
@@ -122,6 +137,7 @@ module internal SymbolTransformation =
                 |> Seq.filter methodTypeSelector
 
             methods |> Seq.map (fun csharpMethod ->
+                transformLocals csharpMethod
                 let methodSymbol = { 
                     Name = csharpMethod.Name
                     ReturnType = transformReturnType csharpMethod.ReturnType
@@ -170,6 +186,8 @@ module internal SymbolTransformation =
             ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> component'.Name, component') |> Map.ofSeq
             FieldMap = fieldMapBuilder.ToImmutable ()
             SubcomponentMap = ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>.Empty
+            ParameterMap = parameterMapBuilder.ToImmutable ()
+            LocalMap = localMapBuilder.ToImmutable ()
             MethodMap = methodMapBuilder.ToImmutable ()
             MethodCSharpMap = methodCSharpMapBuilder.ToImmutable ()
             ComponentBaseTypeSymbol = componentBaseSymbol

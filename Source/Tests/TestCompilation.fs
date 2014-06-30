@@ -108,7 +108,7 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
     member this.FindTypeDeclaration typeName =
         let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
         let types = 
-            this.SyntaxRoot.DescendantsAndSelf<BaseTypeDeclarationSyntax>()
+            this.SyntaxRoot.DescendantsAndSelf<BaseTypeDeclarationSyntax> ()
             |> Seq.where (fun typeDeclaration -> 
                     let symbol = this.SemanticModel.GetDeclaredSymbol typeDeclaration
                     symbol.ToDisplayString displayFormat = typeName
@@ -138,7 +138,7 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
     /// within the compilation. Throws an exception if more than one type or method with the given name was found.
     member this.FindMethodDeclaration typeName methodName =
         let methods = 
-            this.FindTypeDeclaration(typeName).DescendantsAndSelf<MethodDeclarationSyntax>()
+            this.FindTypeDeclaration(typeName).DescendantsAndSelf<MethodDeclarationSyntax> ()
             |> Seq.where (fun methodDeclaration -> methodDeclaration.Identifier.ValueText = methodName)
             |> List.ofSeq
 
@@ -151,7 +151,7 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
     /// within the compilation. Throws an exception if more than one type or field with the given name was found.
     member this.FindFieldDeclaration typeName fieldName =
         let fields = 
-            this.FindTypeDeclaration(typeName).DescendantsAndSelf<FieldDeclarationSyntax>()
+            this.FindTypeDeclaration(typeName).DescendantsAndSelf<FieldDeclarationSyntax> ()
             |> Seq.collect (fun fieldDeclaration -> fieldDeclaration.Declaration.Variables :> IEnumerable<VariableDeclaratorSyntax>)
             |> Seq.filter (fun variableDeclaration -> variableDeclaration.Identifier.ValueText = fieldName)
             |> List.ofSeq
@@ -160,6 +160,20 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
         | fieldDeclaration :: [] -> fieldDeclaration
         | [] -> failed "Found no fields with name '%s' in '%s'." fieldName typeName
         | _ -> failed "Found more than one field with name '%s' in '%s'." fieldName typeName
+
+    /// Gets the <see cref="VariableDeclaratorSyntax" /> representing the local variable with the given name in the method
+    /// with the given name in the type with the given name.
+    member this.FindLocalDeclaration typeName methodName localName =
+        let methodDeclaration = this.FindMethodDeclaration typeName methodName
+        let locals =
+            methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
+            |> Seq.where (fun declarator -> declarator.Identifier.ValueText = localName)
+            |> List.ofSeq
+
+        match locals with 
+        | localDeclaration :: [] -> localDeclaration
+        | [] -> failed "Found no local with name '%s' in method '%s.%s'." localName typeName methodName
+        | _ -> failed "Found more than one local with name '%s' in method '%s.%s'." localName typeName methodName
 
     /// Gets the <see cref="ITypeSymbol" /> representing the type with the given name.
     member this.FindTypeSymbol typeName =
@@ -183,7 +197,7 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
     /// with the given name.
     member this.FindMethodSymbol typeName methodName =
         let typeSymbol = this.FindTypeSymbol typeName
-        match typeSymbol.GetMembers(methodName).OfType<IMethodSymbol>() |> List.ofSeq with
+        match typeSymbol.GetMembers(methodName).OfType<IMethodSymbol> () |> List.ofSeq with
         | methodSymbol :: [] -> methodSymbol
         | [] -> failed "Unable to find method '%s' on type '%s'." methodName typeName
         | _ -> failed "Found more than one method '%s' on type '%s'." methodName typeName
@@ -192,10 +206,25 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
     /// the given name.
     member this.FindFieldSymbol typeName fieldName =
         let typeSymbol = this.FindTypeSymbol typeName
-        match typeSymbol.GetMembers(fieldName).OfType<IFieldSymbol>() |> List.ofSeq with
+        match typeSymbol.GetMembers(fieldName).OfType<IFieldSymbol> () |> List.ofSeq with
         | methodSymbol :: [] -> methodSymbol
         | [] -> failed "Unable to find field '%s' on type '%s'." fieldName typeName
         | _ -> failed "Found more than one field '%s' on type '%s'." fieldName typeName
+
+    /// Gets the <see cref="IParameterSymbol" /> representing the parameter with the given name in the method
+    /// with the given name in the type with the given name.
+    member this.FindParameterSymbol typeName methodName parameterName =
+        let methodSymbol = this.FindMethodSymbol typeName methodName
+        match methodSymbol.Parameters |> Seq.where (fun parameter -> parameter.Name = parameterName) |> List.ofSeq with
+        | parameterSymbol :: [] -> parameterSymbol
+        | [] -> failed "Unable to find parameter '%s' of method '%s.%s'." parameterName typeName methodName
+        | _ -> failed "Found more than one parameter '%s' of method '%s.%s'." parameterName typeName methodName
+
+    /// Gets the <see cref="ILocalSymbol" /> representing the local variable with the given name in the method
+    /// with the given name in the type with the given name.
+    member this.FindLocalSymbol typeName methodName localName =
+        let localDeclaration = this.FindLocalDeclaration typeName methodName localName
+        this.SemanticModel.GetDeclaredSymbol localDeclaration :?> ILocalSymbol
 
     /// If necessary, compiles the compilation and loads the resulting assembly into the app domain, then searches for
     /// a type with the given name and returns a new instance of the type by invoking the type's default constructor.

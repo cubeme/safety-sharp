@@ -35,6 +35,8 @@ type internal SymbolResolver = private {
     ComponentNameMap : Map<string, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
     SubcomponentMap : ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>
+    ParameterMap : ImmutableDictionary<IParameterSymbol, ParameterSymbol>
+    LocalMap : ImmutableDictionary<ILocalSymbol, LocalSymbol>
     MethodMap : ImmutableDictionary<IMethodSymbol, MethodSymbol>
     MethodCSharpMap : ImmutableDictionary<MethodSymbol, IMethodSymbol>
     IComponentTypeSymbol : ComponentSymbol
@@ -88,6 +90,20 @@ type internal SymbolResolver = private {
         nullArg subcomponentSymbol "subcomponentSymbol"
         let (result, symbol) = this.SubcomponentMap.TryGetValue subcomponentSymbol
         invalidArg (not result) "subcomponentSymbol" "The given C# subcomponent symbol '%s' is unknown." <| subcomponentSymbol.ToDisplayString ()
+        symbol
+
+    /// Resolves the <see cref="ParameterSymbol"/> corresponding to the given C# parameter symbol.
+    member this.ResolveParameter (parameterSymbol : IParameterSymbol) =
+        nullArg parameterSymbol "parameterSymbol"
+        let (result, symbol) = this.ParameterMap.TryGetValue parameterSymbol
+        invalidArg (not result) "parameterSymbol" "The given C# parameter symbol '%s' is unknown." <| parameterSymbol.ToDisplayString ()
+        symbol
+
+    /// Resolves the <see cref="LocalSymbol"/> corresponding to the given C# local symbol.
+    member this.ResolveLocal (localSymbol : ILocalSymbol) =
+        nullArg localSymbol "localSymbol"
+        let (result, symbol) = this.LocalMap.TryGetValue localSymbol
+        invalidArg (not result) "localSymbol" "The given C# local symbol '%s' is unknown." <| localSymbol.ToDisplayString ()
         symbol
 
     /// Resolves the <see cref="MethodSymbol"/> corresponding to the given C# method symbol.

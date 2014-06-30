@@ -139,9 +139,9 @@ module ``ModelSymbol property`` =
         compile "class A : Component { Component c; B b; IComponent i; } class B : Component {}"
         modelSymbol.Subcomponents.[modelSymbol.ComponentSymbols.[0]] =? 
         [ 
-            { ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentBaseSymbol }
-            { ComponentReferenceSymbol.Name = "b"; ComponentSymbol = modelSymbol.ComponentSymbols.[1] }
-            { ComponentReferenceSymbol.Name = "i"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }
+            { Name = "c"; ComponentSymbol = symbolResolver.ComponentBaseSymbol }
+            { Name = "b"; ComponentSymbol = modelSymbol.ComponentSymbols.[1] }
+            { Name = "i"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }
         ] 
 
     [<Test>]
@@ -321,7 +321,7 @@ module ``ResolveField method`` =
         compile "class A : Component { int f; } class B : Component {}"
         let field = compilation.FindFieldSymbol "A" "f"
 
-        symbolResolver.ResolveField field =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveField field =? { Name = "f"; Type = TypeSymbol.Integer }
 
     [<Test>]
     let ``returns different symbols for different fields of same transformed component`` () =
@@ -329,8 +329,8 @@ module ``ResolveField method`` =
         let field1 = compilation.FindFieldSymbol "A" "f"
         let field2 = compilation.FindFieldSymbol "A" "g"
 
-        symbolResolver.ResolveField field1 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
-        symbolResolver.ResolveField field2 =? { FieldSymbol.Name = "g"; Type = TypeSymbol.Boolean }
+        symbolResolver.ResolveField field1 =? { Name = "f"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveField field2 =? { Name = "g"; Type = TypeSymbol.Boolean }
         symbolResolver.ResolveField field1 <>? symbolResolver.ResolveField field2
 
     [<Test>]
@@ -340,9 +340,9 @@ module ``ResolveField method`` =
         let field2 = compilation.FindFieldSymbol "B" "f"
         let field3 = compilation.FindFieldSymbol "B" "g"
 
-        symbolResolver.ResolveField field1 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
-        symbolResolver.ResolveField field2 =? { FieldSymbol.Name = "f"; Type = TypeSymbol.Integer }
-        symbolResolver.ResolveField field3 =? { FieldSymbol.Name = "g"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveField field1 =? { Name = "f"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveField field2 =? { Name = "f"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveField field3 =? { Name = "g"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
         test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveField field1, symbolResolver.ResolveField field2) @>
@@ -387,7 +387,7 @@ module ``ResolveSubcomponent method`` =
         compile "class A : Component { B f; } class B : Component {}"
         let field = compilation.FindFieldSymbol "A" "f"
 
-        symbolResolver.ResolveSubcomponent field =? { ComponentReferenceSymbol.Name = "f"; ComponentSymbol = components.[1] }
+        symbolResolver.ResolveSubcomponent field =? { Name = "f"; ComponentSymbol = components.[1] }
 
     [<Test>]
     let ``returns different symbols for different subcomponents of same transformed component`` () =
@@ -395,8 +395,8 @@ module ``ResolveSubcomponent method`` =
         let field1 = compilation.FindFieldSymbol "A" "b1"
         let field2 = compilation.FindFieldSymbol "A" "b2"
 
-        symbolResolver.ResolveSubcomponent field1 =? { ComponentReferenceSymbol.Name = "b1"; ComponentSymbol = components.[1] }
-        symbolResolver.ResolveSubcomponent field2 =? { ComponentReferenceSymbol.Name = "b2"; ComponentSymbol = components.[1] }
+        symbolResolver.ResolveSubcomponent field1 =? { Name = "b1"; ComponentSymbol = components.[1] }
+        symbolResolver.ResolveSubcomponent field2 =? { Name = "b2"; ComponentSymbol = components.[1] }
         symbolResolver.ResolveSubcomponent field1 <>? symbolResolver.ResolveSubcomponent field2
 
     [<Test>]
@@ -406,12 +406,99 @@ module ``ResolveSubcomponent method`` =
         let field2 = compilation.FindFieldSymbol "B" "a1"
         let field3 = compilation.FindFieldSymbol "B" "a2"
 
-        symbolResolver.ResolveSubcomponent field1 =? { ComponentReferenceSymbol.Name = "b"; ComponentSymbol = components.[1]}
-        symbolResolver.ResolveSubcomponent field2 =? { ComponentReferenceSymbol.Name = "a1"; ComponentSymbol = components.[0] }
-        symbolResolver.ResolveSubcomponent field3 =? { ComponentReferenceSymbol.Name = "a2"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveSubcomponent field1 =? { Name = "b"; ComponentSymbol = components.[1]}
+        symbolResolver.ResolveSubcomponent field2 =? { Name = "a1"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveSubcomponent field3 =? { Name = "a2"; ComponentSymbol = components.[0] }
 
         // We have to check for reference equality here
         test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveSubcomponent field1, symbolResolver.ResolveSubcomponent field2) @>
+        
+[<TestFixture>]
+module ``ResolveParameter method`` =
+    [<Test>]
+    let ``throws when null is passed`` () =
+        compile "class A : Component { void M(int i) {} }"
+        raisesArgumentNullException "parameterSymbol" <@ symbolResolver.ResolveParameter null @>
+
+    [<Test>]
+    let ``throws when a parameter of non-component method is passed`` () =
+        compile "class A { void M(int i) {} }"
+        let parameterSymbol = compilation.FindParameterSymbol "A" "M" "i"
+        raisesArgumentException "parameterSymbol" <@ symbolResolver.ResolveParameter parameterSymbol @>
+
+    [<Test>]
+    let ``returns symbol for parameter of transformed component method`` () =
+        compile "class A : Component { void M(int i) {} }"
+        let parameter = compilation.FindParameterSymbol "A" "M" "i"
+        symbolResolver.ResolveParameter parameter =? { Name = "i"; Type = TypeSymbol.Integer }
+
+    [<Test>]
+    let ``returns different symbols for different parameters of same transformed component method`` () =
+        compile "class A : Component { void M(int i, bool b) {} }"
+        let parameter1 = compilation.FindParameterSymbol "A" "M" "i"
+        let parameter2 = compilation.FindParameterSymbol "A" "M" "b"
+
+        symbolResolver.ResolveParameter parameter1 =? { Name = "i"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveParameter parameter2 =? { Name = "b"; Type = TypeSymbol.Boolean }
+        symbolResolver.ResolveParameter parameter1 <>? symbolResolver.ResolveParameter parameter2
+
+    [<Test>]
+    let ``returns different symbols for different parameters of different transformed component methods`` () =
+        compile "class A : Component { void M(int i, bool b) {} } class B : Component { void M(int i) {} }"
+        let parameter1 = compilation.FindParameterSymbol "A" "M" "i"
+        let parameter2 = compilation.FindParameterSymbol "A" "M" "b"
+        let parameter3 = compilation.FindParameterSymbol "B" "M" "i"
+
+        symbolResolver.ResolveParameter parameter1 =? { Name = "i"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveParameter parameter2 =? { Name = "b"; Type = TypeSymbol.Boolean }
+        symbolResolver.ResolveParameter parameter3 =? { Name = "i"; Type = TypeSymbol.Integer }
+
+        // We have to check for reference equality here
+        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveParameter parameter1, symbolResolver.ResolveParameter parameter3) @>
+
+[<TestFixture>]
+module ``ResolveLocal method`` =
+    [<Test>]
+    let ``throws when null is passed`` () =
+        compile "class A : Component { void M(int i) {} }"
+        raisesArgumentNullException "localSymbol" <@ symbolResolver.ResolveLocal null @>
+
+    [<Test>]
+    let ``throws when a local of non-component method is passed`` () =
+        compile "class A { void M() { int a; } }"
+        let localSymbol = compilation.FindLocalSymbol "A" "M" "a"
+        raisesArgumentException "localSymbol" <@ symbolResolver.ResolveLocal localSymbol @>
+
+    [<Test>]
+    let ``returns symbol for local of transformed component method`` () =
+        compile "class A : Component { void M() { int i; } }"
+        let localSymbol = compilation.FindLocalSymbol "A" "M" "i"
+        symbolResolver.ResolveLocal localSymbol =? { Name = "i"; Type = TypeSymbol.Integer }
+
+    [<Test>]
+    let ``returns different symbols for different locals of same transformed component method`` () =
+        compile "class A : Component { void M() { int i, j; bool b; if (true) { decimal d; } } }"
+        let local1 = compilation.FindLocalSymbol "A" "M" "i"
+        let local2 = compilation.FindLocalSymbol "A" "M" "j"
+        let local3 = compilation.FindLocalSymbol "A" "M" "b"
+        let local4 = compilation.FindLocalSymbol "A" "M" "d"
+
+        symbolResolver.ResolveLocal local1 =? { Name = "i"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveLocal local2 =? { Name = "j"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveLocal local3 =? { Name = "b"; Type = TypeSymbol.Boolean }
+        symbolResolver.ResolveLocal local4 =? { Name = "d"; Type = TypeSymbol.Decimal }
+
+    [<Test>]
+    let ``returns different symbols for different locals of different transformed component methods`` () =
+        compile "class A : Component { void M() { int a; } } class B : Component { void M() { int a; } }"
+        let local1 = compilation.FindLocalSymbol "A" "M" "a"
+        let local2 = compilation.FindLocalSymbol "B" "M" "a"
+
+        symbolResolver.ResolveLocal local1 =? { Name = "a"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveLocal local2 =? { Name = "a"; Type = TypeSymbol.Integer }
+
+        // We have to check for reference equality here
+        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveLocal local1, symbolResolver.ResolveLocal local2) @>
 
 [<TestFixture>]
 module ``ResolveMethod method`` =
@@ -440,7 +527,7 @@ module ``ResolveMethod method`` =
         compile "class A : Component { void M() {} } class B : Component {}"
         let methodSymbol = compilation.FindMethodSymbol "A" "M"
 
-        symbolResolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod methodSymbol =? { Name = "M"; ReturnType = None; Parameters = [] }
 
     [<Test>]
     let ``returns update method symbol for update method of transformed component`` () =
@@ -449,7 +536,7 @@ module ``ResolveMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "A" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
 
-        symbolResolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = [] }
 
         // We have to check for reference equality here
         test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) @>
@@ -461,7 +548,7 @@ module ``ResolveMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "SafetySharp.Modeling.Component" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
 
-        symbolResolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = [] }
 
         // We have to check for reference equality here
         test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) @>
@@ -473,7 +560,7 @@ module ``ResolveMethod method`` =
         let methodSymbol = compilation.FindMethodSymbol "B" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
 
-        symbolResolver.ResolveMethod methodSymbol =? { MethodSymbol.Name = "Update"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = [] }
 
         // We have to check for reference equality here
         test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) @>
@@ -484,8 +571,8 @@ module ``ResolveMethod method`` =
         let method1 = compilation.FindMethodSymbol "A" "M"
         let method2 = compilation.FindMethodSymbol "A" "N"
 
-        symbolResolver.ResolveMethod method1 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
-        symbolResolver.ResolveMethod method2 =? { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod method1 =? { Name = "M"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod method2 =? { Name = "N"; ReturnType = None; Parameters = [] }
         symbolResolver.ResolveMethod method1 <>? symbolResolver.ResolveMethod method2
 
     [<Test>]
@@ -495,9 +582,9 @@ module ``ResolveMethod method`` =
         let method2 = compilation.FindMethodSymbol "B" "M"
         let method3 = compilation.FindMethodSymbol "B" "N"
 
-        symbolResolver.ResolveMethod method1 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
-        symbolResolver.ResolveMethod method2 =? { MethodSymbol.Name = "M"; ReturnType = None; Parameters = [] }
-        symbolResolver.ResolveMethod method3 =? { MethodSymbol.Name = "N"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod method1 =? { Name = "M"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod method2 =? { Name = "M"; ReturnType = None; Parameters = [] }
+        symbolResolver.ResolveMethod method3 =? { Name = "N"; ReturnType = None; Parameters = [] }
 
         // We have to check for reference equality here
         test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveMethod method1, symbolResolver.ResolveMethod method2) @>
@@ -593,21 +680,21 @@ module ``ResolveComponentReference method`` =
     let ``returns symbol for partition root component reference`` () =
         compileModel "class A : Component {}" ["A"]
         let componentA = model.PartitionRoots.[0]
-        symbolResolver.ResolveComponentReference componentA =? { ComponentReferenceSymbol.Name = "Root0"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveComponentReference componentA =? { Name = "Root0"; ComponentSymbol = components.[0] }
 
     [<Test>]
     let ``returns symbol for nested component reference`` () =
         compileModel "class A : Component {} class B : A { A a = new A(); }" ["B"]
         let componentA = model.PartitionRoots.[0].GetSubcomponent "a"
-        symbolResolver.ResolveComponentReference componentA =? { ComponentReferenceSymbol.Name = "Root0.a"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveComponentReference componentA =? { Name = "Root0.a"; ComponentSymbol = components.[0] }
 
     [<Test>]
     let ``returns different symbols for different components`` () =
         compileModel "class A : Component {} class B : A { A a = new A(); }" ["B"; "B"]
         let componentA1 = model.PartitionRoots.[0].GetSubcomponent "a"
         let componentA2 = model.PartitionRoots.[1].GetSubcomponent "a"
-        symbolResolver.ResolveComponentReference componentA1 =? { ComponentReferenceSymbol.Name = "Root0.a"; ComponentSymbol = components.[0] }
-        symbolResolver.ResolveComponentReference componentA2 =? { ComponentReferenceSymbol.Name = "Root1.a"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveComponentReference componentA1 =? { Name = "Root0.a"; ComponentSymbol = components.[0] }
+        symbolResolver.ResolveComponentReference componentA2 =? { Name = "Root1.a"; ComponentSymbol = components.[0] }
 
         symbolResolver.ResolveComponentReference componentA1 <>? symbolResolver.ResolveComponentReference componentA2
 
