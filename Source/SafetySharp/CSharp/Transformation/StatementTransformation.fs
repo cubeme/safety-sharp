@@ -51,7 +51,7 @@ module internal StatementTransformation =
             EmptyStatement
 
         | BlockStatement statements ->
-            BlockStatement ([], statements |> Seq.map transform |> List.ofSeq)
+            statements |> Seq.map transform |> List.ofSeq |> BlockStatement
 
         | ReturnStatement None ->
             ReturnStatement None

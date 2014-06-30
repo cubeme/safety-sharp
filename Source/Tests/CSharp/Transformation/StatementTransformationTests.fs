@@ -74,7 +74,7 @@ module ``Transform method`` =
         let actual = transform "{ boolField = true; intField = 2; }" 
         let assignment1 = WriteField (booleanFieldSymbol, BooleanLiteral true)
         let assignment2 = WriteField (integerFieldSymbol, IntegerLiteral 2)
-        let expected = BlockStatement ([], [assignment1; assignment2])
+        let expected = BlockStatement [assignment1; assignment2]
 
         actual =? expected
 
@@ -115,7 +115,7 @@ module ``Transform method`` =
         let elseIfClause = (elseIfCondition, elseIfStatement)
         let elseStatement1 = WriteField (booleanFieldSymbol, BooleanLiteral false)
         let elseStatement2 = WriteField (integerFieldSymbol, IntegerLiteral 2)
-        let elseStatements = BlockStatement ([], [elseStatement1; elseStatement2])
+        let elseStatements = BlockStatement [elseStatement1; elseStatement2]
         let elseClause = (UnaryExpression (elseIfCondition, UnaryOperator.LogicalNot), elseStatements)
         let nestedGuardedCommand = GuardedCommandStatement [elseIfClause; elseClause]
         let expected = GuardedCommandStatement [ifClause; (UnaryExpression (ifCondition, UnaryOperator.LogicalNot), nestedGuardedCommand)]
@@ -185,7 +185,7 @@ module ``TransformMethodBodies method`` =
     [<Test>]
     let ``transforms body of single method of single component`` () =
         let expression = BinaryExpression (BooleanLiteral true, LogicalOr, BinaryExpression (IntegerLiteral 1, Equals, IntegerLiteral 2))
-        let statement = BlockStatement ([], [ReturnStatement <| Some expression])
+        let statement = BlockStatement [ReturnStatement <| Some expression]
         let actual = transform "class A : Component { bool M() { return true || 1 == 2; }}"
         let classSymbol = compilation.FindClassSymbol "A"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
@@ -201,7 +201,7 @@ module ``TransformMethodBodies method`` =
 
     [<Test>]
     let ``transforms body of update method of a component`` () =
-        let statement = BlockStatement ([], [ReturnStatement None])
+        let statement = BlockStatement [ReturnStatement None]
         let actual = transform "class A : Component { public override void Update() { return; }}"
         let classSymbol = compilation.FindClassSymbol "A"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
@@ -213,7 +213,7 @@ module ``TransformMethodBodies method`` =
 
     [<Test>]
     let ``transforms inherited body of update method of a component`` () =
-        let statement = BlockStatement ([], [ReturnStatement None])
+        let statement = BlockStatement [ReturnStatement None]
         let actual = transform "class A : Component { public override void Update() { return; }} class B : A {}"
         let classSymbolA = compilation.FindClassSymbol "A"
         let classSymbolB = compilation.FindClassSymbol "B"
@@ -230,9 +230,9 @@ module ``TransformMethodBodies method`` =
     [<Test>]
     let ``transforms bodies of multiple methods of multiple components`` () =
         let expression = BinaryExpression (BooleanLiteral true, LogicalOr, BinaryExpression (IntegerLiteral 1, Equals, IntegerLiteral 2))
-        let statement1 = BlockStatement ([], [ReturnStatement <| Some expression])
-        let statement2 = BlockStatement ([], [])
-        let statement3 = BlockStatement ([], [ReturnStatement None])
+        let statement1 = BlockStatement [ReturnStatement <| Some expression]
+        let statement2 = BlockStatement []
+        let statement3 = BlockStatement [ReturnStatement None]
 
         let actual = transform "class A : Component { public override void Update() { return; } bool M() { return true || 1 == 2; }} class B : A { void N() {}}"
 

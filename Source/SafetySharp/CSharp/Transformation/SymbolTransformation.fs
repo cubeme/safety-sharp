@@ -62,7 +62,7 @@ module internal SymbolTransformation =
         let createComponentSymbol name csharpSymbol = 
             let symbol = { 
                 Name = name
-                UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = [] }
+                UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
                 ProvidedPorts = []
                 RequiredPorts = [] 
                 Fields = [] 
@@ -89,22 +89,46 @@ module internal SymbolTransformation =
             let componentName = csharpComponent.ToDisplayString displayFormat
             sprintf "%s::%s" assemblyName componentName
 
-        // Creates the symbols mapping information for the Update method of the component.
-        let rec transformUpdateMethod (csharpComponent : ITypeSymbol) =
-            let updateMethods = csharpComponent.GetMembers().OfType<IMethodSymbol>() |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
-            let updateMethodCount = updateMethods |> Seq.length
-            let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = [] }
+        // Creates the symbols and mapping information for the local variables of the given method.
+        let transformLocals (methodSymbol : IMethodSymbol) =
+            let transformLocal (local : ILocalSymbol) =
+                let localSymbol = { LocalSymbol.Name = local.Name; Type = toTypeSymbol local.Type }
+                localMapBuilder.Add (local, localSymbol)
+                localSymbol
 
-            if updateMethodCount > 1 then 
-                csharpComponent.ToDisplayString () |> invalidOp "Component of type '%A' defines more than one Update() method."
-            elif updateMethodCount = 1 then
-                let updateMethod = updateMethods |> Seq.head
+            match methodSymbol.DeclaringSyntaxReferences.Length with
+            | 1 -> 
+                let semanticModel = compilation.GetSemanticModel methodSymbol.DeclaringSyntaxReferences.[0].SyntaxTree
+                let methodDeclaration = methodSymbol.DeclaringSyntaxReferences.[0].GetSyntax () :?> MethodDeclarationSyntax
+                methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
+                |> Seq.map (fun declarator -> semanticModel.GetDeclaredSymbol declarator :?> ILocalSymbol)
+                |> Seq.map transformLocal
+                |> List.ofSeq
+            | 0 -> invalidOp "Unable to retrieve source code for method '%s'" <| methodSymbol.ToDisplayString ()
+            | _ -> invalidOp "Method '%s' has more than one source location." <| methodSymbol.ToDisplayString ()
+
+        // Creates the mapping information for the Update method of the component.
+        let rec transformUpdateMethod (csharpComponent : ITypeSymbol) =
+            let updateMethods = 
+                csharpComponent.GetMembers().OfType<IMethodSymbol>() 
+                |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
+                |> List.ofSeq
+            match updateMethods with
+            | updateMethod :: [] ->
+                let locals = 
+                    if updateMethod.ContainingType = compilation.GetComponentClassSymbol () then
+                        []
+                    else
+                        transformLocals updateMethod
+                let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = []; Locals = locals }
                 methodMapBuilder.Add (updateMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
                 methodSymbol
-            else
+            | [] ->
                 // We'll map to the first overriden update method that we encounter in the hierarchy (or possibly to Component.Update() itself)
                 transformUpdateMethod csharpComponent.BaseType
+            | _ ->
+                csharpComponent.ToDisplayString () |> invalidOp "Component of type '%A' defines more than one Update() method."
 
         // Creates the symbols and mapping information for all methods of the component. We'll also build up a 
         // dictionary that allows us to retrieve the original C# method symbol again.
@@ -120,28 +144,17 @@ module internal SymbolTransformation =
                 parameterMapBuilder.Add (parameter, parameterSymbol)
                 parameterSymbol
 
-            let transformLocals (methodSymbol : IMethodSymbol) =
-                match methodSymbol.DeclaringSyntaxReferences.Length with
-                | 1 -> 
-                    let semanticModel = compilation.GetSemanticModel methodSymbol.DeclaringSyntaxReferences.[0].SyntaxTree
-                    let methodDeclaration = methodSymbol.DeclaringSyntaxReferences.[0].GetSyntax () :?> MethodDeclarationSyntax
-                    methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
-                    |> Seq.map (fun declarator -> semanticModel.GetDeclaredSymbol declarator :?> ILocalSymbol)
-                    |> Seq.iter (fun symbol -> localMapBuilder.Add (symbol, { Name = symbol.Name; Type = toTypeSymbol symbol.Type }))
-                | 0 -> invalidOp "Unable to retrieve source code for method '%s'" <| methodSymbol.ToDisplayString ()
-                | _ -> invalidOp "Method '%s' has more than one source location." <| methodSymbol.ToDisplayString ()
-
             let methods = 
                 csharpComponent.GetMembers().OfType<IMethodSymbol>() 
                 |> Seq.filter (fun method' -> not <| method'.IsUpdateMethod compilation && method'.MethodKind = MethodKind.Ordinary)
                 |> Seq.filter methodTypeSelector
 
             methods |> Seq.map (fun csharpMethod ->
-                transformLocals csharpMethod
                 let methodSymbol = { 
                     Name = csharpMethod.Name
                     ReturnType = transformReturnType csharpMethod.ReturnType
                     Parameters = csharpMethod.Parameters |> Seq.map transformParameter |> List.ofSeq
+                    Locals = transformLocals csharpMethod
                 }
                 methodMapBuilder.Add (csharpMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, csharpMethod)

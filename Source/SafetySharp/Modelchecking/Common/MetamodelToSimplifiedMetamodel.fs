@@ -401,7 +401,7 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                 | MMStatement.EmptyStatement ->
                     let newToTransform = toTransform.Tail
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver collected newToTransform
-                | MMStatement.BlockStatement (_, statements : MMStatement list) ->
+                | MMStatement.BlockStatement (statements : MMStatement list) ->
                     let expandedBlockStatement = statements |> List.map coverStatementWithContext
                     let newToTransform = expandedBlockStatement @ toTransform.Tail
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver collected newToTransform

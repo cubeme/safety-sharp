@@ -75,6 +75,9 @@ type MethodSymbol = {
 
     /// The parameters, if any, of the method.
     Parameters : ParameterSymbol list
+
+    /// The local varaibles, if any, of the method.
+    Locals : LocalSymbol list
 } 
 
 /// Represents the definition of a provided port within a component.

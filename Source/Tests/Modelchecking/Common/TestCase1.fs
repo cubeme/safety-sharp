@@ -39,7 +39,7 @@ module TestCase1 =
     let fieldXType = TypeSymbol.Boolean
     let fieldXSymbol = { FieldSymbol.Name="x"; FieldSymbol.Type=fieldXType; }
     let updateMethodReturnType = None
-    let updateMethodSymbol = { MethodSymbol.Name="irrelevant"; MethodSymbol.ReturnType=updateMethodReturnType; MethodSymbol.Parameters=[]; }
+    let updateMethodSymbol = { MethodSymbol.Name="irrelevant"; MethodSymbol.ReturnType=updateMethodReturnType; MethodSymbol.Parameters=[];Locals = [] }
     let indeterministicComponentSymbolName = "indeterministic Component Symbol..."
     let indeterministicComponentSymbol = { ComponentSymbol.Name=indeterministicComponentSymbolName; ComponentSymbol.UpdateMethod=updateMethodSymbol; ComponentSymbol.RequiredPorts=[]; ComponentSymbol.ProvidedPorts=[]; ComponentSymbol.Fields=[fieldXSymbol]; }
     let indeterministicComponentReferenceSymbolName = "Reference to the root of a partition of the Type defined in 'indeterministic Component Symbol'..."

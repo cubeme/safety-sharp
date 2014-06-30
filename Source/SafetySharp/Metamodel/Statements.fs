@@ -29,7 +29,7 @@ type Statement =
 
     /// Represents a block of statements that are executed sequentially. Within the statement block, the 
     /// local variables are defined and can be accessed by read and write operations.
-    | BlockStatement of Locals : LocalSymbol list * Statements : Statement list
+    | BlockStatement of Statements : Statement list
 
     /// Represents a return statement that ends the execution of a method, optionally returning a value.
     | ReturnStatement of Expression : Expression option

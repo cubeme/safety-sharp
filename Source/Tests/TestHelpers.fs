@@ -48,7 +48,7 @@ module TestHelpers =
 
     /// Gets the symbol for the empty Update method of a component.
     let emptyUpdateMethodSymbol = 
-        { Name = "Update"; ReturnType = None; Parameters = [] }
+        { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
 
     /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
     let emptyComponentSymbol name = { 
