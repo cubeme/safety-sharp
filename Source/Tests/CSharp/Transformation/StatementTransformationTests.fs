@@ -34,9 +34,16 @@ open SafetySharp.CSharp.Transformation
 
 [<AutoOpen>]
 module private StatementTransformationTestsHelper =
-    let mutable booleanFieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Boolean }
-    let mutable integerFieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Integer }
-    let mutable decimalFieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Decimal }
+    let mutable booleanFieldSymbol = Unchecked.defaultof<FieldSymbol>
+    let mutable integerFieldSymbol = Unchecked.defaultof<FieldSymbol>
+    let mutable decimalFieldSymbol = Unchecked.defaultof<FieldSymbol>
+    let mutable booleanParameterSymbol = Unchecked.defaultof<ParameterSymbol>
+    let mutable integerParameterSymbol = Unchecked.defaultof<ParameterSymbol>
+    let mutable decimalParameterSymbol = Unchecked.defaultof<ParameterSymbol>
+    let mutable booleanLocalSymbol = Unchecked.defaultof<LocalSymbol>
+    let mutable integerLocalSymbol = Unchecked.defaultof<LocalSymbol>
+    let mutable decimalLocalSymbol = Unchecked.defaultof<LocalSymbol>
+    let mutable compilation = null : TestCompilation
 
     let transformWithReturnType csharpCode returnType =
         let csharpCode = 
@@ -46,18 +53,34 @@ module private StatementTransformationTestsHelper =
                 private bool boolField;
                 private int intField;
                 private decimal decimalField;
-                %s M()
+                %s M(bool boolParameter, int intParameter, decimal decimalParameter)
                 {
+                    bool boolLocal = true;
+                    int intLocal = 0;
+                    decimal decimalLocal = 0.0m;
                     %s;
                 }
             }" returnType csharpCode
 
-        let compilation = TestCompilation csharpCode
-        let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[0]
+        compilation <- TestCompilation csharpCode
+        let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[3]
         let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
+
         booleanFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[0]
         integerFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[1]
         decimalFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[2]
+
+        let methodSymbol =
+            let getMethodSymbol (ProvidedPort methodSymbol) = methodSymbol 
+            getMethodSymbol symbolResolver.ComponentSymbols.[0].ProvidedPorts.[0]
+
+        booleanParameterSymbol <- methodSymbol.Parameters.[0]
+        integerParameterSymbol <- methodSymbol.Parameters.[1]
+        decimalParameterSymbol <- methodSymbol.Parameters.[2]
+
+        booleanLocalSymbol <- methodSymbol.Locals.[0]
+        integerLocalSymbol <- methodSymbol.Locals.[1]
+        decimalLocalSymbol <- methodSymbol.Locals.[2]
 
         StatementTransformation.Transform symbolResolver compilation.SemanticModel statement
 
@@ -83,12 +106,34 @@ module ``Transform method`` =
         transform "boolField = true" =? WriteField (booleanFieldSymbol, BooleanLiteral true)
 
     [<Test>]
-    let ``assignment statement in binary expression`` () =
+    let ``assignment statement with binary expression on right-hand side`` () =
         let actual = transform "boolField = true || false"
-        let expression = BinaryExpression(BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral false)
+        let expression = BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral false)
         let expected = WriteField (booleanFieldSymbol, expression)
 
         actual =? expected
+
+    [<Test>]
+    let ``field access`` () =
+        transform "boolField = boolField" =? WriteField (booleanFieldSymbol, ReadField (booleanFieldSymbol, None))
+        transform "intField = intField" =? WriteField (integerFieldSymbol, ReadField (integerFieldSymbol, None))
+        transform "decimalField = decimalField" =? WriteField (decimalFieldSymbol, ReadField (decimalFieldSymbol, None))
+
+    [<Test>]
+    let ``parameter access`` () =
+        transform "boolParameter = boolParameter" =? WriteParameter (booleanParameterSymbol, ReadParameter booleanParameterSymbol)
+        transform "intParameter = intParameter" =? WriteParameter (integerParameterSymbol, ReadParameter integerParameterSymbol)
+        transform "decimalParameter = decimalParameter" =? WriteParameter (decimalParameterSymbol, ReadParameter decimalParameterSymbol)
+
+    [<Test>]
+    let ``local access`` () =
+        transform "boolLocal = boolLocal" =? WriteLocal (booleanLocalSymbol, ReadLocal booleanLocalSymbol)
+        transform "intLocal = intLocal" =? WriteLocal (integerLocalSymbol, ReadLocal integerLocalSymbol)
+        transform "decimalLocal = decimalLocal" =? WriteLocal (decimalLocalSymbol, ReadLocal decimalLocalSymbol)
+
+    [<Test>]
+    let ``skips over declaration of local variables`` () =
+        transform "{ var x = true; var y = 0; return; }" =? BlockStatement [EmptyStatement; EmptyStatement; ReturnStatement None]
 
     [<Test>]
     let ``return statement`` () = 
@@ -181,6 +226,14 @@ module ``TransformMethodBodies method`` =
         symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
 
         StatementTransformation.TransformMethodBodies compilation.CSharpCompilation symbolResolver
+
+    [<Test>]
+    let ``does not try to transform extern method (required port)`` () =
+        let actual = transform "class A : Component { extern void M(); }"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let componentSymbol = symbolResolver.ResolveComponent classSymbol
+        let expected = [(componentSymbol, componentSymbol.UpdateMethod), EmptyStatement] |> Map.ofList
+        actual =? expected
     
     [<Test>]
     let ``transforms body of single method of single component`` () =

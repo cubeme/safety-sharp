@@ -43,9 +43,9 @@ module internal SymbolTransformation =
         let comparer = { 
             new IEqualityComparer<MethodSymbol> with
                 member this.Equals (symbol1, symbol2) = 
-                    obj.ReferenceEquals(symbol1, symbol2)
-                member this.GetHashCode (symbol) =
-                    RuntimeHelpers.GetHashCode(symbol)
+                    obj.ReferenceEquals (symbol1, symbol2)
+                member this.GetHashCode symbol =
+                    RuntimeHelpers.GetHashCode symbol
         }
 
         // We're using the builder pattern to initialize the dictionaries and the component list
@@ -56,7 +56,7 @@ module internal SymbolTransformation =
         let parameterMapBuilder = ImmutableDictionary.CreateBuilder<IParameterSymbol, ParameterSymbol> ()
         let localMapBuilder = ImmutableDictionary.CreateBuilder<ILocalSymbol, LocalSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
-        let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> (comparer)
+        let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> comparer
 
         // Instantiate the component symbols for the Component base class and the IComponent interface
         let createComponentSymbol name csharpSymbol = 

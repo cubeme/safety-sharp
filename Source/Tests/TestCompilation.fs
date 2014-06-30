@@ -46,6 +46,7 @@ type internal SafetySharpAssembly =
     | Runtime
 
 /// Represents a compiled C# compilation unit with a single syntax tree. By default, it references the runtime SafetySharp assembly.
+[<AllowNullLiteral>]
 type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : SafetySharpAssembly) =
     let mutable (assembly : Assembly) = null
     let safetySharpAssembly = defaultArg safetySharpAssembly SafetySharpAssembly.Runtime

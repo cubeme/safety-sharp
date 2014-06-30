@@ -36,74 +36,82 @@ module internal StatementTransformation =
     let private transformAssignment (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (target : ExpressionSyntax) expression =
         let symbolInfo = semanticModel.GetSymbolInfo target
         match symbolInfo.Symbol with
-        | null -> invalidOp "Failed to get symbol info for assignment target '%A'." target
         | :? IFieldSymbol as fieldSymbol ->
             WriteField (symbolResolver.ResolveField fieldSymbol, expression)
-        | _ -> invalidOp "Not implemented"
+        | :? IParameterSymbol as parameterSymbol ->
+            WriteParameter (symbolResolver.ResolveParameter parameterSymbol, expression)
+        | :? ILocalSymbol as localSymbol ->
+            WriteLocal (symbolResolver.ResolveLocal localSymbol, expression)
+        | null -> invalidOp "Failed to get symbol info for assignment target '%A'." target
+        | _ -> invalidOp "Encountered unexpected symbol '%A' while trying to transform assignment target '%A'." symbolInfo.Symbol target
 
     /// Transforms C# statements to metamodel statements.
     let Transform (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (statement : StatementSyntax) =
         let transformExpression = 
             ExpressionTransformation.Transform symbolResolver semanticModel
 
-        let rec transform = function
-        | EmptyStatement ->
-            EmptyStatement
+        let rec transform statement =
+            match statement with
+            | EmptyStatement ->
+                EmptyStatement
 
-        | BlockStatement statements ->
-            statements |> Seq.map transform |> List.ofSeq |> BlockStatement
+            | LocalDeclarationStatement _ ->
+                EmptyStatement
 
-        | ReturnStatement None ->
-            ReturnStatement None
+            | BlockStatement statements ->
+                statements |> Seq.map transform |> List.ofSeq |> BlockStatement
 
-        | ReturnStatement (Some expression) ->
-            transformExpression expression |> Some |> ReturnStatement
+            | ReturnStatement None ->
+                ReturnStatement None
 
-        | IfStatement (condition, ifStatement, None) ->
-            let condition = transformExpression condition
-            let ifStatement = transform ifStatement
-            GuardedCommandStatement [(condition, ifStatement)]
+            | ReturnStatement (Some expression) ->
+                transformExpression expression |> Some |> ReturnStatement
 
-        | IfStatement (condition, ifStatement, Some elseStatement) ->
-            let ifCondition = transformExpression condition
-            let ifStatement = transform ifStatement
-            let elseCondition = UnaryExpression (ifCondition, UnaryOperator.LogicalNot)
-            let elseStatement = transform elseStatement
-            GuardedCommandStatement [(ifCondition, ifStatement); (elseCondition, elseStatement)]
+            | IfStatement (condition, ifStatement, None) ->
+                let condition = transformExpression condition
+                let ifStatement = transform ifStatement
+                GuardedCommandStatement [(condition, ifStatement)]
 
-        | ExpressionStatement expression ->
+            | IfStatement (condition, ifStatement, Some elseStatement) ->
+                let ifCondition = transformExpression condition
+                let ifStatement = transform ifStatement
+                let elseCondition = UnaryExpression (ifCondition, UnaryOperator.LogicalNot)
+                let elseStatement = transform elseStatement
+                GuardedCommandStatement [(ifCondition, ifStatement); (elseCondition, elseStatement)]
 
-            match expression with
-            | AssignmentExpression (left, right) ->
-                transformAssignment symbolResolver semanticModel left (transformExpression right)
+            | ExpressionStatement expression ->
 
-            | InvocationExpression invocation ->
-                let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> invocation
-                let arguments = invocation.ArgumentList.Arguments
+                match expression with
+                | AssignmentExpression (left, right) ->
+                    transformAssignment symbolResolver semanticModel left (transformExpression right)
+
+                | InvocationExpression invocation ->
+                    let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> invocation
+                    let arguments = invocation.ArgumentList.Arguments
                    
-                let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
-                let chooseIntegerValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Int32
-                let chooseDecimalValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Decimal
-                let assignment value = transformAssignment symbolResolver semanticModel arguments.[0].Expression value
+                    let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
+                    let chooseIntegerValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Int32
+                    let chooseDecimalValueMethodSymbol = semanticModel.GetChooseValueMethodSymbol true SpecialType.System_Decimal
+                    let assignment value = transformAssignment symbolResolver semanticModel arguments.[0].Expression value
 
-                if chooseBooleanValueMethodSymbol.Equals methodSymbol then
-                    GuardedCommandStatement [
-                        (BooleanLiteral true, assignment (BooleanLiteral true))
-                        (BooleanLiteral true, assignment (BooleanLiteral false))
-                    ]
+                    if chooseBooleanValueMethodSymbol.Equals methodSymbol then
+                        GuardedCommandStatement [
+                            (BooleanLiteral true, assignment (BooleanLiteral true))
+                            (BooleanLiteral true, assignment (BooleanLiteral false))
+                        ]
 
-                elif chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
-                    let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
-                    let statements = expressions |> Seq.map (fun expression -> assignment expression)
-                    let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
-                    clauses |> List.ofSeq |> GuardedCommandStatement
-                else
-                    invalidOp "Unsupported C# Choose call: '%A'." invocation
+                    elif chooseDecimalValueMethodSymbol.Equals methodSymbol || chooseIntegerValueMethodSymbol.Equals methodSymbol then
+                        let expressions = arguments |> Seq.skip 1 |> Seq.map (fun argument -> transformExpression argument.Expression)
+                        let statements = expressions |> Seq.map (fun expression -> assignment expression)
+                        let clauses = statements |> Seq.map (fun statement -> (BooleanLiteral true, statement))
+                        clauses |> List.ofSeq |> GuardedCommandStatement
+                    else
+                        invalidOp "Unsupported C# Choose call: '%A'." invocation
 
-            | _ -> invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
+                | _ -> invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
 
-        | _ ->
-             invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
+            | _ ->
+                 invalidOp "Encountered an unexpected C# syntax node: '%A'." <| statement.CSharpKind ()
 
         transform statement
 

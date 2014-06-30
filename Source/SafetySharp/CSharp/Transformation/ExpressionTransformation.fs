@@ -47,8 +47,16 @@ module internal ExpressionTransformation =
             | _ -> invalidOp "Unsupported C# literal: '%A'" kind
 
         | IdentifierName identifier ->
-            let fieldSymbol = semanticModel.GetSymbol<IFieldSymbol> identifier
-            ReadField (symbolResolver.ResolveField fieldSymbol, None)
+            let symbolInfo = semanticModel.GetSymbolInfo identifier
+            match symbolInfo.Symbol with
+            | :? IFieldSymbol as fieldSymbol ->
+                ReadField (symbolResolver.ResolveField fieldSymbol, None)
+            | :? IParameterSymbol as parameterSymbol ->
+                ReadParameter (symbolResolver.ResolveParameter parameterSymbol)
+            | :? ILocalSymbol as localSymbol ->
+                ReadLocal (symbolResolver.ResolveLocal localSymbol)
+            | null -> invalidOp "Failed to get symbol info for identifier '%A'." identifier
+            | _ -> invalidOp "Encountered unexpected symbol '%A' while trying to transform identifier '%A' target." symbolInfo.Symbol identifier
 
         | ParenthesizedExpression expression ->
             transform expression
