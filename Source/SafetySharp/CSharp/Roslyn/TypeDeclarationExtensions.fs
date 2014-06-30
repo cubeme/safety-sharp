@@ -50,4 +50,4 @@ module TypeDeclarationExtensions =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
             nullArg baseType "baseType"
-            semanticModel.GetSymbol(this).IsDerivedFrom baseType
+            semanticModel.DeclaredSymbolOf(this).IsDerivedFrom baseType

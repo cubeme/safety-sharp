@@ -43,7 +43,12 @@ module private StatementTransformationTestsHelper =
     let mutable booleanLocalSymbol = Unchecked.defaultof<LocalSymbol>
     let mutable integerLocalSymbol = Unchecked.defaultof<LocalSymbol>
     let mutable decimalLocalSymbol = Unchecked.defaultof<LocalSymbol>
+    let mutable componentSymbol = Unchecked.defaultof<ComponentSymbol>
     let mutable compilation = null : TestCompilation
+
+    let getMethodSymbol () =
+        let getMethodSymbol (ProvidedPort methodSymbol) = methodSymbol 
+        getMethodSymbol componentSymbol.ProvidedPorts.[0]
 
     let transformWithReturnType csharpCode returnType =
         let csharpCode = 
@@ -65,15 +70,13 @@ module private StatementTransformationTestsHelper =
         compilation <- TestCompilation csharpCode
         let statement = compilation.SyntaxRoot.Descendants<BlockSyntax>().First().Statements.[3]
         let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
+        componentSymbol <- symbolResolver.ComponentSymbols.[0]
 
         booleanFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[0]
         integerFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[1]
         decimalFieldSymbol <- symbolResolver.ComponentSymbols.[0].Fields.[2]
 
-        let methodSymbol =
-            let getMethodSymbol (ProvidedPort methodSymbol) = methodSymbol 
-            getMethodSymbol symbolResolver.ComponentSymbols.[0].ProvidedPorts.[0]
-
+        let methodSymbol = getMethodSymbol ()
         booleanParameterSymbol <- methodSymbol.Parameters.[0]
         integerParameterSymbol <- methodSymbol.Parameters.[1]
         decimalParameterSymbol <- methodSymbol.Parameters.[2]
@@ -132,8 +135,25 @@ module ``Transform method`` =
         transform "decimalLocal = decimalLocal" =? WriteLocal (decimalLocalSymbol, ReadLocal decimalLocalSymbol)
 
     [<Test>]
-    let ``skips over declaration of local variables`` () =
-        transform "{ var x = true; var y = 0; return; }" =? BlockStatement [EmptyStatement; EmptyStatement; ReturnStatement None]
+    let ``skips over declarations of local variables without an initializer`` () =
+        transform "{ bool x; int y; return; }" =? BlockStatement [EmptyStatement; EmptyStatement; ReturnStatement None]
+        transform "{ bool x, y; return; }" =? BlockStatement [EmptyStatement; ReturnStatement None]
+
+    [<Test>]
+    let ``initializers of local variables`` () =
+        let actual = transform "{ var x = true; var y = 0 + 3; return; }"
+        let methodSymbol = getMethodSymbol ()
+        let x = WriteLocal (methodSymbol.Locals.[3], BooleanLiteral true)
+        let y = WriteLocal (methodSymbol.Locals.[4], BinaryExpression (IntegerLiteral 0, BinaryOperator.Add, IntegerLiteral 3))
+        let expected = BlockStatement [BlockStatement [x]; BlockStatement [y]; ReturnStatement None]
+        actual =? expected
+
+        let actual = transform "{ int x = 1, y = 2; return; }"
+        let methodSymbol = getMethodSymbol ()
+        let x = WriteLocal (methodSymbol.Locals.[3], IntegerLiteral 1)
+        let y = WriteLocal (methodSymbol.Locals.[4], IntegerLiteral 2)
+        let expected = BlockStatement [BlockStatement [x; y]; ReturnStatement None]
+        actual =? expected
 
     [<Test>]
     let ``return statement`` () = 

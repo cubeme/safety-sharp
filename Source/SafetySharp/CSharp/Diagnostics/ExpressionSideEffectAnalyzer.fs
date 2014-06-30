@@ -51,7 +51,7 @@ type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel
     // For now, allow method invocations only when the result is immediately assigned to a variable 
     // as well as invocations of void returning methods.
     override this.VisitInvocationExpression node =
-        let methodSymbol = semanticModel.GetSymbol<IMethodSymbol> node
+        let methodSymbol = semanticModel.SymbolInfoOf<IMethodSymbol> node
             
         // Choose methods are always ok
         if methodSymbol.ContainingType = semanticModel.GetTypeSymbol<Choose> () then

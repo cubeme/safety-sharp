@@ -61,7 +61,7 @@ module internal PatternMatching =
         projectNode statement <| fun (statement : EmptyStatementSyntax) -> ()
 
     let (|LocalDeclarationStatement|_|) (statement : StatementSyntax) =
-        projectNode statement <| fun (statement : LocalDeclarationStatementSyntax) -> statement
+        projectNode statement <| fun (statement : LocalDeclarationStatementSyntax) -> statement.Declaration.Type, statement.Declaration.Variables
 
     let (|BlockStatement|_|) (statement : StatementSyntax) =
         projectNode statement <| fun (statement : BlockSyntax) -> statement.Statements
