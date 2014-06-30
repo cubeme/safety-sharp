@@ -38,14 +38,15 @@ type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel
     inherit CSharpSyntaxVisitor ()
 
     /// Reports the node as a use of an unsupported C# feature.
-    override this.DefaultVisit node                 = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
+    override this.DefaultVisit node = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
 
     (* Supported C# syntax elements *)
-    override this.VisitIdentifierName node          = ()
-    override this.VisitQualifiedName node           = ()
-    override this.VisitLiteralExpression node       = ()
-    override this.VisitMemberAccessExpression node  = ()
-    override this.VisitParenthesizedExpression node = ()
+    override this.VisitIdentifierName node            = ()
+    override this.VisitQualifiedName node             = ()
+    override this.VisitLiteralExpression node         = ()
+    override this.VisitMemberAccessExpression node    = ()
+    override this.VisitParenthesizedExpression node   = ()
+    override this.VisitPredefinedType node            = ()
 
     // For now, allow method invocations only when the result is immediately assigned to a variable 
     // as well as invocations of void returning methods.

@@ -33,8 +33,10 @@ namespace Elbtunnel
 		
 		public int Do()
 		{
-			_i = Choose.Value(23, 4, 23, 55);
-			return _i;
+			var q = 38;
+			q = Choose.Value(23, 4, 23, 55);
+			_i = _i + 1;
+			return _i + q;
 		}
 	}
 
@@ -73,6 +75,7 @@ namespace Elbtunnel
 
 		int Provided(bool f)
 		{
+			int x = 0;
 			return 0;
 		}
 
@@ -82,7 +85,7 @@ namespace Elbtunnel
 		private extern void P(int a, 
 				
 				int b);
-
+		 
 		protected override void Update()
 		{
 			Value = Choose.Boolean();

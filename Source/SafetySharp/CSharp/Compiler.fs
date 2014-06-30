@@ -55,25 +55,29 @@ module Compiler =
         |> Seq.map (fun typeInfo -> (Activator.CreateInstance typeInfo) :?> IDiagnosticAnalyzer)
 
     /// Logs <paramref name="diagnostic" /> depending on its severity.
-    let private logDiagnostic (diagnostic : Diagnostic) =
+    let private logDiagnostic errorsOnly (diagnostic : Diagnostic) =
         match diagnostic.Severity with
-        | DiagnosticSeverity.Error -> Log.Error "%A" diagnostic
-        | DiagnosticSeverity.Warning -> Log.Warn "%A" diagnostic
-        | DiagnosticSeverity.Info -> Log.Info "%A" diagnostic
-        | DiagnosticSeverity.Hidden -> Log.Debug "%A" diagnostic
+        | DiagnosticSeverity.Error -> 
+            Log.Error "%A" diagnostic
+        | DiagnosticSeverity.Warning -> 
+            if not errorsOnly then Log.Warn "%A" diagnostic
+        | DiagnosticSeverity.Info -> 
+            if not errorsOnly then Log.Info "%A" diagnostic
+        | DiagnosticSeverity.Hidden -> 
+            if not errorsOnly then Log.Debug "%A" diagnostic
         | _ -> Log.Die "Unknown C# diagnostic severity."
 
     /// Logs all <paramref name="diagnostics" /> depending on their severities. The function returns
     /// <c>false</c> when at least one error diagnostic has been reported.
-    let private logDiagnostics (diagnostics : Diagnostic seq) =
-        diagnostics |> Seq.iter logDiagnostic
+    let private logDiagnostics errorsOnly (diagnostics : Diagnostic seq) =
+        diagnostics |> Seq.iter (logDiagnostic errorsOnly)
         diagnostics |> Seq.exists (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error) |> not
 
     /// Instantiates a <see cref="Diagnostic" /> for the error and logs it.
     let private logError identifier message =
         Printf.ksprintf (fun message ->
             Diagnostic.Create (DiagnosticIdentifiers.Prefix + identifier, DiagnosticIdentifiers.Category, message, DiagnosticSeverity.Error, true, 0, false) 
-            |> logDiagnostic 
+            |> logDiagnostic true
         ) message
 
     /// Writes the C# code contained in the <paramref name="compilation" /> to the directory denoted by
@@ -113,7 +117,7 @@ module Compiler =
         let originalAssembly = getModelingAssemblyReference compilation projectFile
         let compilation = compilation.ReplaceReference (originalAssembly, safetySharpAssembly)
 
-        if compilation.GetDiagnostics () |> logDiagnostics then
+        if compilation.GetDiagnostics () |> logDiagnostics true then
             Some compilation
         else
             None
@@ -121,9 +125,9 @@ module Compiler =
     /// Runs the SafetySharp diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
     /// <c>false</c> when at least one error diagnostic has been reported.
     let private diagnose (compilation : Compilation) =
-        if compilation.GetDiagnostics () |> logDiagnostics then
+        if compilation.GetDiagnostics () |> logDiagnostics true then
             let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, diagnosticAnalyzers, CancellationToken ()) |> Array.ofSeq
-            diagnostics |> logDiagnostics
+            diagnostics |> logDiagnostics false
         else
             false
 
@@ -185,7 +189,7 @@ module Compiler =
         if emitResult.Success then
             0
         else
-            emitResult.Diagnostics |> Seq.iter logDiagnostic
+            emitResult.Diagnostics |> Seq.iter (logDiagnostic true)
             -1
 
     /// Compiles the C# modeling project identified by the given project file in the given configuration for the given platform.
