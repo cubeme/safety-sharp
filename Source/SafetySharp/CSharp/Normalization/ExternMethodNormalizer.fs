@@ -49,7 +49,7 @@ type ExternMethodNormalizer () =
                     sprintf "%s<%s>" delegateType (String.Join (", ", typeArguments))
 
             let propertyType =
-                match this.semanticModel.SymbolInfoOf<INamedTypeSymbol>(node.ReturnType).SpecialType with
+                match this.semanticModel.GetReferencedSymbol<INamedTypeSymbol>(node.ReturnType).SpecialType with
                 | SpecialType.System_Void ->
                     generatePropertyType "System.Action" typeArguments
                 | _ -> 

@@ -136,8 +136,8 @@ module ``Transform method`` =
 
     [<Test>]
     let ``skips over declarations of local variables without an initializer`` () =
-        transform "{ bool x; int y; return; }" =? BlockStatement [EmptyStatement; EmptyStatement; ReturnStatement None]
-        transform "{ bool x, y; return; }" =? BlockStatement [EmptyStatement; ReturnStatement None]
+        transform "{ bool x; int y; return; }" =? BlockStatement [BlockStatement []; BlockStatement []; ReturnStatement None]
+        transform "{ bool x, y; return; }" =? BlockStatement [BlockStatement []; ReturnStatement None]
 
     [<Test>]
     let ``initializers of local variables`` () =

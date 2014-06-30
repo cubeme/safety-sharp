@@ -116,8 +116,8 @@ module SemanticModelExtensions =
             nullArg this "this"
             this.Compilation.GetUpdateMethodSymbol ()
 
-        /// Gets the symbol corresponding to the given syntax node.
-        member this.SymbolInfoOf<'T when 'T :> ISymbol> (node : SyntaxNode) =
+        /// Gets the symbol referenced by the given syntax node.
+        member this.GetReferencedSymbol<'T when 'T :> ISymbol> (node : SyntaxNode) =
             nullArg this "this"
             nullArg node "node"
 

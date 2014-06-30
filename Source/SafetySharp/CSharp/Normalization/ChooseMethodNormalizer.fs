@@ -41,7 +41,7 @@ type ChooseMethodNormalizer () =
             upcast node
         else
             let invocation = node.Right :?> InvocationExpressionSyntax
-            let methodSymbol = this.semanticModel.SymbolInfoOf<IMethodSymbol> invocation
+            let methodSymbol = this.semanticModel.GetReferencedSymbol<IMethodSymbol> invocation
 
             if methodSymbol.ContainingType = this.semanticModel.GetTypeSymbol<Choose> () then
                 let outToken = SyntaxFactory.Token(SyntaxKind.OutKeyword)

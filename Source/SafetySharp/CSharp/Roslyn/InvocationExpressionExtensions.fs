@@ -41,7 +41,7 @@ module InvocationExpressionExtensions =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
 
-            let methodSymbol = semanticModel.SymbolInfoOf<IMethodSymbol> this
+            let methodSymbol = semanticModel.GetReferencedSymbol<IMethodSymbol> this
             let methodClass = methodSymbol.ContainingType
             methodClass = semanticModel.GetTypeSymbol<Ltl> () ||
                 methodClass = semanticModel.GetTypeSymbol<Ctl> () ||

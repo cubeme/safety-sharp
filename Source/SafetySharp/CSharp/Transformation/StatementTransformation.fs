@@ -33,7 +33,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 module internal StatementTransformation =
 
     /// Transforms an assignment to a field, local, or parameter.
-    let private transformAssignment (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (target : SyntaxNode) expression =
+    let private transformAssignment (symbolResolver : SymbolResolver) (semanticModel : SemanticModel) (target : ExpressionSyntax) expression =
         let symbolInfo = semanticModel.GetSymbolInfo target
         match symbolInfo.Symbol with
         | :? IFieldSymbol as fieldSymbol ->
@@ -56,18 +56,15 @@ module internal StatementTransformation =
                 EmptyStatement
 
             | LocalDeclarationStatement (_, variables) ->
-                if variables |> Seq.exists (fun variable -> variable.Initializer <> null) then
-                    variables
-                    |> Seq.where (fun variable -> variable.Initializer <> null)
-                    |> Seq.map (fun variable ->
-                        let symbol = semanticModel.DeclaredSymbolOf<ILocalSymbol> variable
-                        let localSymbol = symbolResolver.ResolveLocal symbol
-                        WriteLocal (localSymbol, transformExpression variable.Initializer.Value)
-                    )
-                    |> List.ofSeq
-                    |> BlockStatement
-                else
-                    EmptyStatement
+                variables
+                |> Seq.where (fun variable -> variable.Initializer <> null)
+                |> Seq.map (fun variable ->
+                    let symbol = semanticModel.DeclaredSymbolOf<ILocalSymbol> variable
+                    let localSymbol = symbolResolver.ResolveLocal symbol
+                    WriteLocal (localSymbol, transformExpression variable.Initializer.Value)
+                )
+                |> List.ofSeq
+                |> BlockStatement
 
             | BlockStatement statements ->
                 statements |> Seq.map transform |> List.ofSeq |> BlockStatement
@@ -97,7 +94,7 @@ module internal StatementTransformation =
                     transformAssignment symbolResolver semanticModel left (transformExpression right)
 
                 | InvocationExpression invocation ->
-                    let methodSymbol = semanticModel.SymbolInfoOf<IMethodSymbol> invocation
+                    let methodSymbol = semanticModel.GetReferencedSymbol<IMethodSymbol> invocation
                     let arguments = invocation.ArgumentList.Arguments
                    
                     let chooseBooleanValueMethodSymbol = semanticModel.GetChooseBooleanMethodSymbol true
