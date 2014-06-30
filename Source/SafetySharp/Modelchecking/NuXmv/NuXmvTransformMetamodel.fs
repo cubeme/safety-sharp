@@ -253,6 +253,10 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
                     //called inside a formula
                     let simpleGlobalField = toSimplifiedMetamodel.resolveFieldAccessInsideAFormula componentReference.Value field
                     this.transformSimpleGlobalFieldToAccessExpression simpleGlobalField mainModuleIdentifier
+            | MMExpression.ReadLocal (local:MMLocalSymbol) ->
+                failwith "NotImplementedYet"
+            | MMExpression.ReadParameter (parameter:MMParameterSymbol) ->
+                failwith "NotImplementedYet"
     
     member this.transformSimpleConstLiteral (literal:SimpleConstLiteral) : NuXmvBasicExpression =
         match literal with

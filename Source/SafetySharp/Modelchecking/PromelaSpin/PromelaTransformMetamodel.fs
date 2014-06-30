@@ -185,6 +185,10 @@ type MetamodelToPromela (configuration:MMConfiguration)  =
                     let simpleGlobalField = toSimplifiedMetamodel.resolveFieldAccessInsideAFormula componentReference.Value field
                     let varref = this.transformSimpleGlobalFieldToVarref simpleGlobalField
                     PrExpression.Varref varref
+            | MMExpression.ReadLocal (local:MMLocalSymbol) ->
+                failwith "NotImplementedYet"
+            | MMExpression.ReadParameter (parameter:MMParameterSymbol) ->
+                failwith "NotImplementedYet"
           
     member this.transformSimpleConstLiteral (literal:SimpleConstLiteral) : PrExpression =
         match literal with

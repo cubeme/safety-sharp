@@ -46,6 +46,7 @@ type MMConfiguration = SafetySharp.Metamodel.Configuration // <--------- main ar
 
 type MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
 type MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
+type MMLocalSymbol = SafetySharp.Metamodel.LocalSymbol
 type MMParameterSymbol = SafetySharp.Metamodel.ParameterSymbol
 type MMMethodSymbol = SafetySharp.Metamodel.MethodSymbol
 type MMComponentReferenceSymbol = SafetySharp.Metamodel.ComponentReferenceSymbol
@@ -347,34 +348,16 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
     let contextCache = ContextCache(configuration)
     let fieldCache = SimpleGlobalFieldCache(contextCache,configuration)
 
-    let rec resolveTargetOfAnAssignment (componentObject:MMComponentObject) (context:Context) (expression:MMExpression) : SimpleGlobalField =
-        // Use resolveSimpleGlobalFieldInCode only for expression inside components and not in formulas
-        // Example of usage: Used on the left side of assignments
-        match expression with
-            | MMExpression.BooleanLiteral (value:bool) ->
-                failwith "target of field access cannot be a constant value"
-            | MMExpression.IntegerLiteral (value:int) ->
-                failwith "target of field access cannot be a constant value"
-            | MMExpression.DecimalLiteral (value:decimal) ->
-                failwith "target of field access cannot be a constant value"
-            | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
-                failwith "NotImplementedYet" //TODO: Is this even useful? Maybe for array access...
-            | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
-                failwith "NotImplementedYet" //TODO: Is this even useful? Maybe for array access...
-            | MMExpression.ReadField (field:MMFieldSymbol, comp:MMComponentReferenceSymbol option) ->
-                if comp.IsSome then
-                    // if comp is set, then this expression is an expression inside a formula
-                    failwith "Use resolveTargetOfAnAssignment only for expression inside components and not in formulas"
-                else
-                    // TODO: Better retrieve it from the cache than reconstruct it here
-                    let fieldObject = (componentObject.Fields.Item field)
-                    let fieldContext = {
-                        SimpleGlobalFieldWithContext.Context=context;
-                        SimpleGlobalFieldWithContext.FieldSymbol=field;
-                        SimpleGlobalFieldWithContext.InitialValues=(SimpleConstLiteral.convertFromObjectList fieldObject.InitialValues);
-                    }
-                    let field=SimpleGlobalField.FieldWithContext(fieldContext)
-                    SimpleGlobalField.FieldOfMetamodel(componentObject,field)
+    let resolveTargetOfAnAssignment (componentObject:MMComponentObject) (context:Context) (field:MMFieldSymbol) : SimpleGlobalField =
+        // TODO: Better retrieve it from the cache than reconstruct it here
+        let fieldObject = (componentObject.Fields.Item field)
+        let fieldContext = {
+            SimpleGlobalFieldWithContext.Context=context;
+            SimpleGlobalFieldWithContext.FieldSymbol=field;
+            SimpleGlobalFieldWithContext.InitialValues=(SimpleConstLiteral.convertFromObjectList fieldObject.InitialValues);
+        }
+        let field=SimpleGlobalField.FieldWithContext(fieldContext)
+        SimpleGlobalField.FieldOfMetamodel(componentObject,field)
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (fieldCache:SimpleGlobalFieldCache) (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
         match expression with
@@ -395,6 +378,10 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                 else
                     //called inside a formula or already transformed
                     failwith "Use transformExpressionInsideAComponent only for expression inside untransformed components and not in formulas"
+            | MMExpression.ReadLocal (local:MMLocalSymbol) ->
+                failwith "NotImplementedYet"
+            | MMExpression.ReadParameter (parameter:MMParameterSymbol) ->
+                failwith "NotImplementedYet"
 
     let rec transformMMStepInfosToSimpleStatements (fieldCache:SimpleGlobalFieldCache) (methodBodyResolver:MMMethodBodyResolver) (collected:SimpleStatement list) (toTransform:MMStepInfo list) : SimpleStatement list =
         // Properties of the result:
@@ -447,15 +434,16 @@ type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                                                                   |> SimpleStatement.GuardedCommandStatement
                     transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedGuardedCommand]) newToTransform
 
-                // TODO UPDATED METAMODEL
-                (*| MMStatement.WriteField (target : MMFieldSymbol, expression : MMExpression) ->
-                    //resolveTargetOfAnAssignment
-                    
+                | MMStatement.WriteField (target : MMFieldSymbol, expression : MMExpression) ->
                     let transformedTarget = resolveTargetOfAnAssignment componentObject contextOfStatement target
                     let transformedExpression = transformMMExpressionInsideAComponentToSimpleExpression fieldCache componentObject expression
                     let transformedAssignment = SimpleStatement.AssignmentStatement (transformedTarget,transformedExpression)
                     let newToTransform = toTransform.Tail
-                    transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedAssignment]) newToTransform*)
+                    transformMMStepInfosToSimpleStatements fieldCache methodBodyResolver (collected @ [transformedAssignment]) newToTransform
+                | MMStatement.WriteLocal (local:MMLocalSymbol,expression:MMExpression) ->
+                    failwith "NotImplementedYet"
+                | MMStatement.WriteParameter (parameter:MMParameterSymbol, expression:MMExpression) ->
+                    failwith "NotImplementedYet"
 
                     
 
