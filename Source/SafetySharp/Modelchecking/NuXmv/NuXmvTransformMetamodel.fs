@@ -290,19 +290,34 @@ type MetamodelToNuXmv (configuration:MMConfiguration)  =
                     | WriteOnceTimeOfAccess.UseResultOfThisStep ->
                         this.transformSimpleGlobalFieldToAccessExpression field mainModuleIdentifier |> NuXmvBasicExpression.BasicNextExpression
     
-    (*member this.transformWriteOnceStatement (statement:WriteOnceStatement) (accessFromPartition:Identifier) : SingleAssignConstraint =        
-        //TODO: If Condition is true, no case-splitting is necessary        
+    member this.transformWriteOnceStatement (statement:WriteOnceStatement) (accessFromPartition:Identifier) : SingleAssignConstraint =        
         let transformOption (option:WriteOncePossibleEffect) : CaseConditionAndEffect =        
-            let transformedCondition = this.transformSimpleExpression option.getTakenDecisionsAsCondition
-            let transformedEffect = this.transformSimpleExpression option.TargetEffect
-            {
-                CaseConditionAndEffect.CaseCondition = transformedCondition;
-                CaseConditionAndEffect.CaseEffect = transformedEffect;
-            }
-        let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
-        let effect = statement.getPossibleEffectsForSequentialEvaluation |> List.map transformOption
-                                                                         |> BasicExpression.CaseExpression
-        SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)*)
+                    let transformedCondition = this.transformWriteOnceExpression option.getTakenDecisionsAsCondition
+                    let transformedEffect = this.transformWriteOnceExpression option.TargetEffect
+                    {
+                        CaseConditionAndEffect.CaseCondition = transformedCondition;
+                        CaseConditionAndEffect.CaseEffect = transformedEffect;
+                    }
+        match statement with
+            | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceExpression option) ->  
+                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
+                failwith "NotImplementedYet"
+            | WriteOnceStatementEvaluateDecisionsSequential (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list) ->
+                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
+                let effect = possibleEffects |> List.map transformOption
+                                             |> BasicExpression.CaseExpression
+                SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)
+                
+            | WriteOnceStatementSimpleAssignWithCondition (target:WriteOnceGlobalField, effect:WriteOncePossibleEffect) ->
+                // Isn't used right now. But consider: What to do, if "effect.TakenDecisions" doesn't match. Which value should be assigned to the targetField?
+                // If it isn't used in the near future, delete it!
+                failwith "NotImplementedYet"
+            | WriteOnceStatementSimpleAssign (target:WriteOnceGlobalField, effect:WriteOnceExpression) ->
+                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
+                let transformedEffect = this.transformWriteOnceExpression effect
+                SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,transformedEffect)
+
+   
     
     member this.transFormCtlFormula (formula:MMFormula) : CtlExpression =
         match formula with

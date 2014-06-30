@@ -76,13 +76,15 @@ type WriteOncePossibleEffect = {
 type WriteOnceStatement = 
     | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceExpression option)
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
-    | WriteOnceStatementSimpleAssign of Target : (WriteOnceGlobalField) * Effect : (WriteOncePossibleEffect)
+    | WriteOnceStatementSimpleAssign of Target : (WriteOnceGlobalField) * Expression : (WriteOnceExpression)
+    | WriteOnceStatementSimpleAssignWithCondition of Target : (WriteOnceGlobalField) * Effect : (WriteOncePossibleEffect)
  with
     member this.getTarget =
         match this with
             | WriteOnceStatementEvaluateDecisionsParallel(target,_,_) -> target
             | WriteOnceStatementEvaluateDecisionsSequential(target,_) -> target
             | WriteOnceStatementSimpleAssign(target,_) -> target
+            | WriteOnceStatementSimpleAssignWithCondition(target,_) -> target
             
 
 // contains information, which Decicions have already been taken in the current statement
@@ -275,11 +277,12 @@ type SimpleStatementsToWriteOnceStatements =
                     // ASSIGN, Introduce a new artificial field, and update the fieldManager to include the new field
                     let transformedExpression = fieldManager.transformExpressionWithCurrentRedirections expression
                     let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField target.getSimpleGlobalFieldWithContext
-                    let effect = {
+                    // The TakenDecisions are processed in the MERGE-Stage
+                    (*let effect = {
                             WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
                             WriteOncePossibleEffect.TargetEffect = transformedExpression;
-                    }
-                    let statement = WriteOnceStatement.WriteOnceStatementSimpleAssign( transformedTarget, effect)
+                    }*)
+                    let statement = WriteOnceStatement.WriteOnceStatementSimpleAssign( transformedTarget, transformedExpression)
                     ([statement],newFieldManager)
         // LINEARIZE
         // Here we have to transform a LIST of Statements. The fieldManager of the next Statement is the resutling fieldManager of the
@@ -301,11 +304,8 @@ type SimpleStatementsToWriteOnceStatements =
             let transformField (field:SimpleGlobalField) : WriteOnceStatement =
                 let (timeOfAccess,redirectedToField) = fieldManagerAfterSequence.getCurrentRedirection field.getSimpleGlobalFieldWithContext
                 let redirectedToFieldExpression = WriteOnceExpression.FieldAccessExpression(timeOfAccess,redirectedToField)
-                let effect = {
-                                WriteOncePossibleEffect.TakenDecisions = []; //always true, no decisions made, because we didn't branch here
-                                WriteOncePossibleEffect.TargetEffect = redirectedToFieldExpression;
-                             }
-                let statement = WriteOnceStatement.WriteOnceStatementSimpleAssign( field, effect)
+                // No decisions made, because we didn't branch here
+                let statement = WriteOnceStatement.WriteOnceStatementSimpleAssign( field, redirectedToFieldExpression)
                 statement
             fieldsOfPartition |> List.map transformField
             
