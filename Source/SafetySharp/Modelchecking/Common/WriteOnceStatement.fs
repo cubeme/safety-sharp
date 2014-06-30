@@ -74,7 +74,7 @@ type WriteOncePossibleEffect = {
 // Be cautious: If no option matches, the assignment doesn't change anything. (Thus the next value of target is the current value of target).
 
 type WriteOnceStatement = 
-    | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceExpression option)
+    | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceExpression)
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
     | WriteOnceStatementSimpleAssign of Target : (WriteOnceGlobalField) * Expression : (WriteOnceExpression)
     | WriteOnceStatementSimpleAssignWithCondition of Target : (WriteOnceGlobalField) * Effect : (WriteOncePossibleEffect)
@@ -237,7 +237,7 @@ type SimpleStatementsToWriteOnceStatements =
                                                                 : (WriteOnceStatement list * WriteOnceTypeFieldManager)=
                 //ELSE: If none of the branch matches, assign to the transformedTarget the value in the redirected field (not the origin field)
                 let currentRedirectionOfField = fieldManager.getCurrentRedirection field
-                let elseEffect = WriteOnceExpression.FieldAccessExpression currentRedirectionOfField |> Some
+                let elseEffect = WriteOnceExpression.FieldAccessExpression currentRedirectionOfField
                 // create artificial Field
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
                 // we get the decisions taken in every branch of fieldsInBraches and create for it a specific effect
