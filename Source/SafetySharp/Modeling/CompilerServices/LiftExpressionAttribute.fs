@@ -20,42 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Modeling.CompilerServices
 
 open System
 open Microsoft.CodeAnalysis.CSharp
 open SafetySharp.Internal.Utilities
-
-/// Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
-[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
-type ModelingCompilationUnitAttribute (syntaxTree : string, filePath : string) =
-    inherit Attribute ()
-
-    /// Gets the syntax tree of the compilation unit.
-    member this.SyntaxTree = 
-        nullOrWhitespaceArg syntaxTree "syntaxTree"
-        nullOrWhitespaceArg filePath "filePath"
-        SyntaxFactory.ParseSyntaxTree (syntaxTree, filePath)
-
-/// Provides metadata about a reference of a Safety Sharp modeling assembly to another Safety Sharp modeling assembly.
-[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
-type ModelingAssemblyReferenceAttribute (assemblyName : string) =
-    inherit Attribute ()
-
-    /// Gets the fully qualified name of the referenced modeling assembly.
-    member this.AssemblyName = 
-        nullOrWhitespaceArg assemblyName "assemblyName"
-        assemblyName
-
-/// Provides metadata about a Safety Sharp modeling assembly.
-[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
-type ModelingAssemblyAttribute (compilerVersion : string) =
-    inherit Attribute ()
-
-    /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
-    member this.CompilerVersion = 
-        nullOrWhitespaceArg compilerVersion "compilerVersion"
-        compilerVersion
 
 /// When applied to a method parameter, instructs the SafetySharp compiler to lift an expression 'expr'
 /// to a lambda function of the form '() => expr'.

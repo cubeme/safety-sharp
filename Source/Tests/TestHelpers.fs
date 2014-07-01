@@ -107,17 +107,7 @@ module private ObjectDumper =
             (object' :?> IEnumerable).Cast<obj> ()
 
         let rec dumpEnumerable (elements : obj seq) front back =
-            writer.Append front
-            writer.IncreaseIndent ()
-            writer.AppendRepeated elements dump (fun () -> writer.Append ", ")
-            writer.DecreaseIndent ()
-            writer.Append back
-
-        and dumpArray (elements : obj seq) =
-            dumpEnumerable elements "[|" "|]"
-
-        and dumpList (elements : obj seq) =
-            dumpEnumerable elements "[" "]"
+            writer.AppendBlockStatement (fun () -> writer.AppendRepeated elements dump (fun () -> writer.Append ", ")) front back
 
         and dumpMap (elements : obj seq) =
             let elements = Array.ofSeq elements
@@ -176,9 +166,9 @@ module private ObjectDumper =
             else
                 let objectType = object'.GetType ()
                 if objectType.IsArray then
-                    dumpArray <| asEnumerable object'
+                    dumpEnumerable (asEnumerable object') "[|" "|]"
                 elif objectType.FullName.StartsWith "Microsoft.FSharp.Collections.FSharpList" then
-                    dumpList <| asEnumerable object'
+                    dumpEnumerable (asEnumerable object') "[" "]"
                 elif objectType.FullName.StartsWith "Microsoft.FSharp.Collections.FSharpMap" then
                     dumpMap <| asEnumerable object'
                 elif object' :? string then

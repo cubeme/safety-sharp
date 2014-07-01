@@ -30,23 +30,25 @@ open System.Linq.Expressions
 open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp.Internal.Utilities
+open SafetySharp.Modeling.CompilerServices
 
 /// Represents a marker interface for components.
 [<AllowNullLiteral>]
-type IComponent =
-    /// Gets the name of the component instance. Returns the empty string if no component name could be determined.
-    abstract member Name : string
+type IComponent = interface end
 
 /// Provides access to a non-public member of a component.
-type IMemberAccess =
+type internal IMemberAccess =
     /// Gets the accessed component instance.
     abstract member Component : IComponent
 
     /// Gets the name of the accessed member.
     abstract member MemberName : string
 
-/// Provides access to a non-public member of a component.
-type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
+/// <summary>
+///     Provides access to a non-public member of a component.
+/// </summary>
+/// <typeparam name="T">The type of the accessed member.</typeparam>
+type MemberAccess<'T> internal (component', memberName) =
     let componentType = component'.GetType ()
     let bindingFlags = BindingFlags.Instance ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Public ||| BindingFlags.NonPublic
     let fieldInfo = componentType.GetField (memberName, bindingFlags)
@@ -69,12 +71,16 @@ type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
         /// Gets the name of the accessed member.
         override this.MemberName = memberName
 
-    /// Gets the current value of the accessed member.
+    /// <summary>
+    ///     Gets the current. value of the accessed member.
+    /// </summary>
+    /// <param name="access">The member access the value should be retrieved for.</param>
+    /// <returns>Returns the current value of the accessed member.</returns>
     static member op_Implicit (access : MemberAccess<'T>) =
         access.Value
 
     /// Gets the current value of the accessed member.
-    member this.Value = 
+    member internal this.Value = 
         if fieldInfo <> null then
             fieldInfo.GetValue component' :?> 'T
         else
@@ -83,7 +89,7 @@ type MemberAccess<'T> internal (component' : IComponent, memberName : string) =
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>] 
 type Component () =
-
+    
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -96,25 +102,21 @@ type Component () =
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
 
+    interface IComponent
+
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
-
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-    // Update method and interface implementation
-    // ---------------------------------------------------------------------------------------------------------------------------------------
-
-    /// Invoked exactly once during each system step.
-    abstract member Update : unit -> unit
-    default this.Update () = ()
-
-    interface IComponent with
-        override this.Name = this.Name
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Internal access
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Allows access to a non-public member of the component.
+    /// <summary>
+    ///     Allows access to a non-public member of the component.
+    /// </summary>
+    /// <typeparam name="T">The type of the accessed member.</typeparam>
+    /// <param name="memberName">The name of the member that should be accessed.</param>
+    /// <returns>Returns an <see cref="MemberAccess{T}" /> instance that can be used to access the non-public member.</returns>
     member this.Access<'T> memberName =
         nullOrWhitespaceArg memberName "memberName"
         MemberAccess<'T> (this, memberName)
@@ -123,7 +125,19 @@ type Component () =
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Sets the initial values of a field of the component instance.
+    /// <summary>
+    ///     Sets the initial values of a field of the component instance.
+    /// </summary>
+    /// <param name="field">[LiftExpression] A field of the component.</param>
+    /// <param name="initialValues">The initial values of the field.</param>
+    member this.SetInitialValues<'T when 'T :> obj> ([<LiftExpression>] field : 'T, [<ParamArray>] initialValues : 'T array) =
+        invalidUnliftedCall
+
+    /// <summary>
+    ///     Sets the initial values of a field of the component instance.
+    /// </summary>
+    /// <param name="field">A field of the component.</param>
+    /// <param name="initialValues">The initial values of the field.</param>
     member this.SetInitialValues<'T when 'T :> obj> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
         nullArg field "field"
         nullArg initialValues "initialValues"

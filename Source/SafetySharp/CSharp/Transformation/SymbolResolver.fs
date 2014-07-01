@@ -52,7 +52,7 @@ type internal SymbolResolver = private {
         symbol
 
     /// Resolves the <see cref="ComponentSymbol"/> corresponding to the given .NET component object.
-    member this.ResolveComponent (componentObject : IComponent) =
+    member this.ResolveComponent (componentObject : Component) =
         nullArg componentObject "componentObject"
         let typeName = componentObject.GetType().FullName.Replace("+", ".")
         let assemblyName = componentObject.GetType().Assembly.GetName().Name
@@ -63,7 +63,7 @@ type internal SymbolResolver = private {
         symbol.Value
 
     /// Resolves the model's <see cref="ComponentReferenceSymbol" /> corresponding to the given C# component object.
-    member this.ResolveComponentReference (componentObject : IComponent) =
+    member this.ResolveComponentReference (componentObject : Component) =
         nullArg componentObject "componentObject"
         invalidCall (List.isEmpty this.Model.ComponentObjects) "No component object symbols have been created yet for the model."
         let symbol = this.Model.ComponentObjects |> List.tryFind (fun symbol -> symbol.Name = componentObject.Name)
@@ -71,7 +71,7 @@ type internal SymbolResolver = private {
         symbol.Value
 
     /// Resolves the <see cref="PartitionSymbol" /> corresponding to the given C# component object.
-    member this.ResolvePartition (componentObject : IComponent) =
+    member this.ResolvePartition (componentObject : Component) =
         nullArg componentObject "componentObject"
         invalidCall (List.isEmpty this.Model.Partitions) "No partition symbols have been created yet for the model."
         let symbol = this.Model.Partitions |> List.tryFind (fun symbol -> symbol.Name = componentObject.Name)

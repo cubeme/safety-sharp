@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E9E9147B-A4C4-4E3E-BFDF-898A9B0CE101}</ProjectGuid>
+    <ProjectGuid>{C7377EF7-E8FE-4864-802F-B2DAB535D20C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SafetySharp.Modeling</RootNamespace>
-    <AssemblyName>SafetySharp.Modeling</AssemblyName>
+    <RootNamespace>SharedComponents</RootNamespace>
+    <AssemblyName>SharedComponents</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -17,10 +17,10 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\Binaries\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\..\Binaries\Debug\SafetySharp.Modeling.xml</DocumentationFile>
+    <NoWarn>0626</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,34 +29,30 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\..\Binaries\Release\SafetySharp.Modeling.xml</DocumentationFile>
+    <NoWarn>0626</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SafetySharp, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>$(TargetDir)\SafetySharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Choose.cs" />
-    <Compile Include="CtlOperatorFactory.cs" />
-    <Compile Include="IComponent.cs" />
-    <Compile Include="LiftExpressionAttribute.cs" />
-    <Compile Include="Ctl.cs" />
-    <Compile Include="CtlFormula.cs" />
-    <Compile Include="LtlFormula.cs" />
-    <Compile Include="Ltl.cs" />
-    <Compile Include="Component.cs" />
-    <Compile Include="MemberAccess.cs" />
-    <Compile Include="Model.cs" />
-    <Compile Include="OverflowBehavior.cs" />
-    <Compile Include="SpinModelChecker.cs" />
+    <Compile Include="Timer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
   <Target Name="AfterBuild">
+    <Exec Command="&quot;$(TargetDir)ssc.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
+    <OnError ExecuteTargets="RemoveTargetAssembly" />
   </Target>
-  -->
+  <Target Name="RemoveTargetAssembly">
+    <Delete Files="$(TargetPath)" />
+  </Target>
 </Project>

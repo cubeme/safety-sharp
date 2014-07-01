@@ -28,6 +28,7 @@ open System.Linq
 open System.IO
 open System.Reflection
 open System.Threading
+open SafetySharp.Modeling
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Internal.CSharp
 open SafetySharp.Internal.CSharp.Roslyn
@@ -39,32 +40,20 @@ open Microsoft.CodeAnalysis.Diagnostics
 type CompilationException (message : string) =
     inherit Exception (message)
 
-/// Indicates which SafetySharp assembly a <see cref="TestCompilation" /> references.
-[<RequireQualifiedAccess>]
-type internal SafetySharpAssembly =
-    | Modeling
-    | Runtime
-
-/// Represents a compiled C# compilation unit with a single syntax tree. By default, it references the runtime SafetySharp assembly.
+/// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]
-type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : SafetySharpAssembly) =
+type internal TestCompilation (csharpCode) =
     let mutable (assembly : Assembly) = null
-    let safetySharpAssembly = defaultArg safetySharpAssembly SafetySharpAssembly.Runtime
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
-    let compilationUnit = SyntaxFactory.ParseCompilationUnit("using SafetySharp.Modeling; " + csharpCode)
+    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices; " + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
-
-    let safetySharpAssembly =
-        match safetySharpAssembly with
-        | SafetySharpAssembly.Modeling -> Path.Combine (Environment.CurrentDirectory, Compiler.ModelingAssemblyFileName)
-        | SafetySharpAssembly.Runtime -> typeof<ComponentSymbol>.Assembly.Location
 
     let csharpCompilation = 
         CSharpCompilation
             .Create(TestCompilation.CompilationName)
             .AddReferences(MetadataFileReference typeof<obj>.Assembly.Location)
-            .AddReferences(MetadataFileReference safetySharpAssembly)
+            .AddReferences(MetadataFileReference typeof<Component>.Assembly.Location)
             .AddReferences(MetadataFileReference typeof<System.Linq.Expressions.Expression>.Assembly.Location)
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))

@@ -3,6 +3,7 @@
 	using System;
 	using NUnit.Framework;
 	using SafetySharp.Modeling;
+	using SharedComponents;
 
 	[TestFixture]
 	public class Tests
@@ -15,7 +16,8 @@
 				var c2 = new BooleanComponent(false);
 				var lb = new LightBarrier();
 				var t = new Test2();
-				SetPartitions(c1, c2, t, lb);
+				var timer = new Timer();
+				SetPartitions(c1, c2, t, lb, timer);
 
 				var unknown = new LightBarrier();
 				var value = c1.Access<bool>("Value");

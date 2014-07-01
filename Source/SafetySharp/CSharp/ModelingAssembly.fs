@@ -27,7 +27,7 @@ open System.Reflection
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open SafetySharp.Internal.Utilities
-open SafetySharp.Modeling
+open SafetySharp.Modeling.CompilerServices
 
 /// Represents a Safety Sharp modeling assembly.
 type internal ModelingAssembly (modelingAssembly : Assembly) as this=

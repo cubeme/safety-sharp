@@ -80,18 +80,18 @@ module ``IsUpdateMethod method`` =
         raisesArgumentNullException "semanticModel" (fun () -> methodSymbol.IsUpdateMethod (null : SemanticModel) |> ignore)
 
     [<Test>]
-    let ``returns true for overriden Update method of component`` () =
-        isUpdateMethod "class X : Component { public override void Update() {} }" "Update" =? true
+    let ``returns true for Update method of component`` () =
+        isUpdateMethod "class X : Component { [Behavior] void Update() {} }" "Update" =? true
 
     [<Test>]
-    let ``returns true for overriden Update method of inherited component`` () =
-        isUpdateMethod "class Y : Component {} class X : Y { public override void Update() {} }" "Update" =? true
-        isUpdateMethod "class Y : Component { public override void Update() {} } class X : Y { public override void Update() {} }" "Update" =? true
+    let ``returns true for Update method of inherited component`` () =
+        isUpdateMethod "class Y : Component {} class X : Y { [Behavior] void Update() {} }" "Update" =? true
+        isUpdateMethod "class Y : Component { [Behavior] void Update() {} } class X : Y { [Behavior] void Update() {} }" "Update" =? true
 
     [<Test>]
     let ``returns false for non-overriding methods of component`` () =
         isUpdateMethod "class X : Component { void M() {} }" "M" =? false
-        isUpdateMethod "class X : Component { public new void Update() {} }" "Update" =? false
+        isUpdateMethod "class X : Component { public void Update() {} }" "Update" =? false
 
     [<Test>]
     let ``returns false for Update method of non-Component class`` () =

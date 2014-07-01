@@ -29,7 +29,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.Utilities
-open SafetySharp.Modeling
+open SafetySharp.Modeling.CompilerServices
 
 /// Provides extension methods for working with <see cref="ArgumentSyntax" /> instances.
 [<AutoOpen>]
@@ -50,7 +50,7 @@ module internal ArgumentExtensions =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
             let attributeSymbol = semanticModel.GetTypeSymbol<'T> ()
-            this.GetParameterSymbol(semanticModel).GetAttributes()
+            this.GetParameterSymbol(semanticModel).GetAttributes ()
             |> Seq.exists (fun attribute -> attribute.AttributeClass.Equals attributeSymbol)
 
         /// Gets a value indicating whether the argument is of the given type.

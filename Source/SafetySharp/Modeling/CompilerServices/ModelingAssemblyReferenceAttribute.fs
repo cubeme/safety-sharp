@@ -20,14 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
-{
-	using System;
+namespace SafetySharp.Modeling.CompilerServices
 
-	/// <summary>
-	/// 
-	/// </summary>
-	public interface IComponent
-	{
-	}
-}
+open System
+open Microsoft.CodeAnalysis.CSharp
+open SafetySharp.Internal.Utilities
+
+/// Provides metadata about a reference of a Safety Sharp modeling assembly to another Safety Sharp modeling assembly.
+[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
+type ModelingAssemblyReferenceAttribute (assemblyName : string) =
+    inherit Attribute ()
+
+    /// Gets the fully qualified name of the referenced modeling assembly.
+    member this.AssemblyName = 
+        nullOrWhitespaceArg assemblyName "assemblyName"
+        assemblyName

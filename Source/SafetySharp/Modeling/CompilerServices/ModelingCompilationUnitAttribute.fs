@@ -20,26 +20,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.CSharp.Normalization
+namespace SafetySharp.Modeling.CompilerServices
 
 open System
-open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Internal.Utilities
 
-/// When the modeling-time SafetySharp assembly is replaced by the compile-time SafetySharp assembly, we have to change the 
-/// 'protected' modifier on overridden Component.Update methods to 'public', as the F# version is declared 'public'. If
-/// F# one day finally supports 'protected' visibility, this normalizer is rendered unnecessary.
-type internal UpdateMethodVisibilityNormalizer () =
-    inherit CSharpNormalizer (NormalizationScope.Components)
+/// Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
+[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
+type ModelingCompilationUnitAttribute (syntaxTree : string, filePath : string) =
+    inherit Attribute ()
 
-    override this.VisitMethodDeclaration (declaration : MethodDeclarationSyntax) =
-        if declaration.IsUpdateMethod this.semanticModel then
-            let protectedModifier = declaration.Modifiers |> Seq.find (fun modifier -> modifier.ValueText = "protected")
-            let publicModifier = SyntaxFactory.Token(SyntaxKind.PublicKeyword).AddTriviaFrom protectedModifier
-
-            let modifiers = declaration.Modifiers.Replace (protectedModifier, publicModifier)
-            upcast declaration.WithModifiers modifiers
-        else
-            upcast declaration
+    /// Gets the syntax tree of the compilation unit.
+    member this.SyntaxTree = 
+        nullOrWhitespaceArg syntaxTree "syntaxTree"
+        nullOrWhitespaceArg filePath "filePath"
+        SyntaxFactory.ParseSyntaxTree (syntaxTree, filePath)

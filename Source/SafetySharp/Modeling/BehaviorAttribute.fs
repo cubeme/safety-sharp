@@ -21,22 +21,12 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Modeling
-{
-	using System;
 
-	/// <summary>
-	/// 
-	/// </summary>
-	public abstract class LtlFormula
-	{
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="f"></param>
-		/// <returns></returns>
-		public LtlFormula Implies(LtlFormula f)
-		{
-			throw new NotSupportedException();
-		}
-	}
-}
+open System
+open Microsoft.CodeAnalysis.CSharp
+open SafetySharp.Internal.Utilities
+
+/// When applied to a method of a <see cref="Component" />, marks the method as the component's behavior.
+[<AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)>]
+type BehaviorAttribute () =
+    inherit Attribute ()

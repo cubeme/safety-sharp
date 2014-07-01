@@ -29,7 +29,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.Modeling
+open SafetySharp.Modeling.CompilerServices
 open SafetySharp.Internal.CSharp.Roslyn
 
 [<AutoOpen>]

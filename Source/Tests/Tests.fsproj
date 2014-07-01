@@ -64,7 +64,6 @@
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.fs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
-    <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExternMethodNormalizerTests.fs" />
     <Compile Include="CSharp\Normalization\EnumTypeNormalizerTests.fs" />
     <Compile Include="CSharp\Normalization\EnumLiteralNormalizerTests.fs" />

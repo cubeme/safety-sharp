@@ -90,6 +90,7 @@ module internal FormulaTransformation =
 
     /// Transforms a component field access. 
     let private transformComponentFieldAccess (symbolResolver : SymbolResolver) (objectResolver : ObjectResolver) (component' : IComponent) fieldName =
+        let component' = component' :?> Component
         if not <| objectResolver.CanResolve component' then
             UnknownComponentException component' |> raise
         let componentSymbol = symbolResolver.ResolveComponent component'

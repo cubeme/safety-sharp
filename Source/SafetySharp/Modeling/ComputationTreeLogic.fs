@@ -24,6 +24,7 @@ namespace SafetySharp.Modeling
 
 open System
 open System.Linq.Expressions
+open SafetySharp.Modeling.CompilerServices
 open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.Metamodel
 
@@ -43,7 +44,11 @@ type internal PathQuantifier =
     | ExistsPath
 
 type CtlOperatorFactory internal (quantifier) =
-    /// Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+    
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">The operand the 'next' operator should be applied to.</param>
     member this.Next (operand : CtlFormula) =
         nullArg operand "operand"
         let operator = 
@@ -52,7 +57,10 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> UnaryFormulaOperator.ExistsPathNext
         CtlFormula (CSharpUnaryFormula(operand.Formula, operator))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">The operand the 'next' operator should be applied to.</param>
     member this.Next (operand : Expression<Func<bool>>) =
         nullArg operand "operand"
         let operator = 
@@ -61,7 +69,18 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> UnaryFormulaOperator.ExistsPathNext
         CtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, operator))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">[LiftExpression] The operand the 'next' operator should be applied to.</param>
+    member this.Next ([<LiftExpression>] operand : bool) : CtlFormula =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">The operand the 'finally' operator should be applied to.</param>
     member this.Finally (operand : CtlFormula) =
         nullArg operand "operand"
         let operator = 
@@ -70,7 +89,10 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> UnaryFormulaOperator.ExistsPathFinally
         CtlFormula (CSharpUnaryFormula(operand.Formula, operator))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">The operand the 'finally' operator should be applied to.</param>
     member this.Finally (operand : Expression<Func<bool>>) =
         nullArg operand "operand"
         let operator = 
@@ -79,7 +101,18 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> UnaryFormulaOperator.ExistsPathFinally
         CtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, operator))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">[LiftExpression] The operand the 'finally' operator should be applied to.</param>
+    member this.Finally ([<LiftExpression>] operand : bool) : CtlFormula =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">The operand the 'globally' operator should be applied to.</param>
     member this.Globally (operand : CtlFormula) =
         nullArg operand "operand"
         let operator = 
@@ -88,7 +121,10 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> UnaryFormulaOperator.ExistsPathGlobally
         CtlFormula (CSharpUnaryFormula(operand.Formula, operator))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">The operand the 'globally' operator should be applied to.</param>
     member this.Globally (operand : Expression<Func<bool>>) =
         nullArg operand "operand"
         let operator = 
@@ -97,8 +133,20 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> UnaryFormulaOperator.ExistsPathGlobally
         CtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, operator))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'globally' operator to <paramref name="operand" />.
+    /// </summary>
+    /// <param name="operand">[LiftExpression] The operand the 'globally' operator should be applied to.</param>
+    member this.Globally ([<LiftExpression>] operand : bool) : CtlFormula =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     member this.Until (leftOperand : CtlFormula, rightOperand : CtlFormula) =
         nullArg leftOperand "leftOperand"
         nullArg rightOperand "rightOperand"
@@ -108,8 +156,12 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> BinaryFormulaOperator.ExistsPathUntil
         CtlFormula (CSharpBinaryFormula(leftOperand.Formula, operator, rightOperand.Formula))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     member this.Until (leftOperand : Expression<Func<bool>>, rightOperand : Expression<Func<bool>>) =
         nullArg leftOperand "leftOperand"
         nullArg rightOperand "rightOperand"
@@ -119,8 +171,12 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> BinaryFormulaOperator.ExistsPathUntil
         CtlFormula (CSharpBinaryFormula(CSharpStateFormula leftOperand, operator, CSharpStateFormula rightOperand))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     member this.Until (leftOperand : CtlFormula, rightOperand : Expression<Func<bool>>) =
         nullArg leftOperand "leftOperand"
         nullArg rightOperand "rightOperand"
@@ -130,8 +186,12 @@ type CtlOperatorFactory internal (quantifier) =
             | ExistsPath -> BinaryFormulaOperator.ExistsPathUntil
         CtlFormula (CSharpBinaryFormula(leftOperand.Formula, operator, CSharpStateFormula rightOperand))
 
-    /// Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
-    /// <paramref name="rightOperand" />.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     member this.Until (leftOperand : Expression<Func<bool>>, rightOperand : CtlFormula) =
         nullArg leftOperand "leftOperand"
         nullArg rightOperand "rightOperand"
@@ -140,6 +200,56 @@ type CtlOperatorFactory internal (quantifier) =
             | AllPaths -> BinaryFormulaOperator.AllPathsUntil
             | ExistsPath -> BinaryFormulaOperator.ExistsPathUntil
         CtlFormula (CSharpBinaryFormula(CSharpStateFormula leftOperand, operator, rightOperand.Formula))
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
+    member this.Until ([<LiftExpression>] leftOperand : bool, [<LiftExpression>] rightOperand : bool) =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+    member this.Until ([<LiftExpression>] leftOperand : bool, rightOperand : CtlFormula) : CtlFormula =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
+    member this.Until (leftOperand : CtlFormula, [<LiftExpression>] rightOperand : bool) : CtlFormula =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
+    member this.Until ([<LiftExpression>] leftOperand : bool, rightOperand : Expression<Func<bool>>) : CtlFormula =
+        invalidUnliftedCall
+        null
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that applies the 'until' operator to <paramref name="leftOperand" /> and
+    ///     <paramref name="rightOperand" />.
+    /// </summary>
+    /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
+    /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
+    member this.Until (leftOperand : Expression<Func<bool>>, [<LiftExpression>] rightOperand : bool) : CtlFormula =
+        invalidUnliftedCall
+        null
 
 /// Provides factory methods for the construction of computation tree logic formulas.
 [<AbstractClass; Sealed>]
@@ -152,7 +262,17 @@ type Ctl =
     /// require the existence of a certain path within the subtree of a computation tree.
     static member ExistsPath = CtlOperatorFactory PathQuantifier.ExistsPath
 
-    /// Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression"/> within a system state.
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
+    /// </summary>
+    /// <param name="expression">The expression that should be evaluated.</param>
     static member StateExpression (expression : Expression<Func<bool>>) =
         nullArg expression "expression"
         CtlFormula (CSharpStateFormula expression)
+
+    /// <summary>
+    ///     Returns a <see cref="CtlFormula" /> that evaluates <paramref name="expression" /> within a system state.
+    /// </summary>
+    /// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
+    static member StateExpression ([<LiftExpression>] expression : bool) =
+        invalidUnliftedCall

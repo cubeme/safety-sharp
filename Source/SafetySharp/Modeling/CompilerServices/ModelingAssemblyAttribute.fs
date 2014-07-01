@@ -20,17 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace SafetySharp.Modeling.CompilerServices
 
-[assembly: AssemblyTitle("SafetySharp Modeling Framework")]
-[assembly: AssemblyDescription("SafetySharp Modeling Framework")]
-[assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("SafetySharp")]
-[assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
-[assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("Tests")]
+open System
+open Microsoft.CodeAnalysis.CSharp
+open SafetySharp.Internal.Utilities
+
+/// Provides metadata about a Safety Sharp modeling assembly.
+[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
+type ModelingAssemblyAttribute (compilerVersion : string) =
+    inherit Attribute ()
+
+    /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
+    member this.CompilerVersion = 
+        nullOrWhitespaceArg compilerVersion "compilerVersion"
+        compilerVersion

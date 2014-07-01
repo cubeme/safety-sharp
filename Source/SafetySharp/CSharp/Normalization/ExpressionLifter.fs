@@ -27,7 +27,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp.Roslyn
-open SafetySharp.Modeling
+open SafetySharp.Modeling.CompilerServices
 
 /// Lifts all method invocation parameter expressions 'expr' to a lambda function of the form '() => expr'.
 type internal ExpressionLifter () =

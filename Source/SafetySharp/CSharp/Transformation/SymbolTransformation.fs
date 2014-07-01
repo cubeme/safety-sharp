@@ -113,20 +113,15 @@ module internal SymbolTransformation =
                 csharpComponent.GetMembers().OfType<IMethodSymbol>() 
                 |> Seq.filter (fun method' -> method'.IsUpdateMethod compilation)
                 |> List.ofSeq
+
             match updateMethods with
             | updateMethod :: [] ->
-                let locals = 
-                    if updateMethod.ContainingType = compilation.GetComponentClassSymbol () then
-                        []
-                    else
-                        transformLocals updateMethod
-                let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = []; Locals = locals }
+                let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = []; Locals = transformLocals updateMethod }
                 methodMapBuilder.Add (updateMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
                 methodSymbol
             | [] ->
-                // We'll map to the first overriden update method that we encounter in the hierarchy (or possibly to Component.Update() itself)
-                transformUpdateMethod csharpComponent.BaseType
+                { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
             | _ ->
                 csharpComponent.ToDisplayString () |> invalidOp "Component of type '%A' defines more than one Update() method."
 

@@ -110,11 +110,11 @@ module internal SemanticModelExtensions =
             nullArg this "this"
             this.Compilation.GetComponentInterfaceSymbol ()
 
-        /// Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method
+        /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="BehaviorAttribute" />
         /// within the context of the semantic model.
-        member this.GetUpdateMethodSymbol () =
+        member this.GetBehaviorAttributeSymbol () =
             nullArg this "this"
-            this.Compilation.GetUpdateMethodSymbol ()
+            this.Compilation.GetBehaviorAttributeSymbol ()
 
         /// Gets the symbol referenced by the given syntax node.
         member this.GetReferencedSymbol<'T when 'T :> ISymbol> (node : SyntaxNode) =

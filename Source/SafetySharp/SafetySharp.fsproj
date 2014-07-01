@@ -57,7 +57,10 @@
     <Compile Include="Metamodel\Formulas.fs" />
     <Compile Include="Metamodel\Statements.fs" />
     <Compile Include="Metamodel\Objects.fs" />
-    <Compile Include="Modeling\Attributes.fs" />
+    <Compile Include="Modeling\CompilerServices\ModelingAssemblyAttribute.fs" />
+    <Compile Include="Modeling\CompilerServices\ModelingCompilationUnitAttribute.fs" />
+    <Compile Include="Modeling\CompilerServices\ModelingAssemblyReferenceAttribute.fs" />
+    <Compile Include="Modeling\CompilerServices\LiftExpressionAttribute.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
@@ -65,6 +68,7 @@
     <Compile Include="Modeling\CSharpFormula.fs" />
     <Compile Include="Modeling\LinearTemporalLogic.fs" />
     <Compile Include="Modeling\ComputationTreeLogic.fs" />
+    <Compile Include="Modeling\BehaviorAttribute.fs" />
     <Compile Include="CSharp\Roslyn\Visibility.fs" />
     <Compile Include="CSharp\Roslyn\PatternMatching.fs" />
     <Compile Include="CSharp\Roslyn\SyntaxTokenExtensions.fs" />
@@ -92,7 +96,6 @@
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
-    <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
     <Compile Include="CSharp\Normalization\ExternMethodNormalizer.fs" />

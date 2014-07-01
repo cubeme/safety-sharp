@@ -87,8 +87,9 @@ namespace Elbtunnel
 		private extern void P(int a, 
 				
 				int b);
-		 
-		protected override void Update()
+		
+ 		[Behavior]
+		void Update()
 		{
 			Lane = Lane.Left;
 			Value = Choose.Boolean();

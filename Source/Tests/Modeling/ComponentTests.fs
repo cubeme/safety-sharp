@@ -67,12 +67,15 @@ module ``SetInitialValues method`` =
     [<Test>]
     let ``throws when initial values is null`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentNullException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", null) |> ignore)
+        let field = createFieldExpression<int> component' "_field"
+        raisesArgumentNullException "initialValues" (fun () -> component'.SetInitialValues (field, (null : int array)) |> ignore)
 
     [<Test>]
     let ``throws when initial values is empty`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field") |> ignore)
+        let field = createFieldExpression<int> component' "_field"
+        let values : int array = [||]
+        raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (field, values) |> ignore)
 
     [<Test>]
     let ``throws when the component metadata has already been finalized`` () =

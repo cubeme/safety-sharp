@@ -42,8 +42,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
-    <Reference Include="SafetySharp.Modeling, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(TargetDir)\SafetySharp.Modeling.dll</HintPath>
+    <Reference Include="SafetySharp, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>$(TargetDir)\SafetySharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -58,6 +58,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SharedComponents\SharedComponents.csproj">
+      <Project>{c7377ef7-e8fe-4864-802f-b2dab535d20c}</Project>
+      <Name>SharedComponents</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
