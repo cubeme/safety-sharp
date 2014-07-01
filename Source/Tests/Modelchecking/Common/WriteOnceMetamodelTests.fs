@@ -24,7 +24,7 @@ namespace SafetySharp.Tests.Modelchecking.Common.WriteOnceMetamodelTests
 
 
 open NUnit.Framework
-open Swensen.Unquote
+open SafetySharp.Tests
 open SafetySharp.Tests.Modelchecking
 open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.Modelchecking
