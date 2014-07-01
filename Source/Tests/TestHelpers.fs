@@ -223,14 +223,10 @@ module internal TestHelpers =
         if not result then
             Assert.Fail ("Objects are equal, even though they are expected to be different.\n\n{0}", ObjectDumper.dump left)
 
-    /// Gets the symbol for the empty Update method of a component.
-    let emptyUpdateMethodSymbol = 
-        { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
-
     /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
     let emptyComponentSymbol name = { 
         Name = sprintf "%s::%s" TestCompilation.CompilationName name
-        UpdateMethod = emptyUpdateMethodSymbol
+        UpdateMethod = None
         Fields = []
         ProvidedPorts = []
         RequiredPorts = []

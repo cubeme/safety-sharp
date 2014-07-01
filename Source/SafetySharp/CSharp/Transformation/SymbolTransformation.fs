@@ -62,7 +62,7 @@ module internal SymbolTransformation =
         let createComponentSymbol name csharpSymbol = 
             let symbol = { 
                 Name = name
-                UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
+                UpdateMethod = None
                 ProvidedPorts = []
                 RequiredPorts = [] 
                 Fields = [] 
@@ -119,9 +119,11 @@ module internal SymbolTransformation =
                 let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = []; Locals = transformLocals updateMethod }
                 methodMapBuilder.Add (updateMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
-                methodSymbol
+                Some methodSymbol
+            | [] when csharpComponent.BaseType <> null ->
+                transformUpdateMethod csharpComponent.BaseType
             | [] ->
-                { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
+                None
             | _ ->
                 csharpComponent.ToDisplayString () |> invalidOp "Component of type '%A' defines more than one Update() method."
 

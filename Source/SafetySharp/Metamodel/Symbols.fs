@@ -91,7 +91,7 @@ type internal ComponentSymbol = {
     Name : string
 
     /// The update method of the component, overriding <see cref="SafetySharp.Modeling.Component.Update()" />.
-    UpdateMethod : MethodSymbol
+    UpdateMethod : MethodSymbol option
 
     /// The provided ports declared by the component.
     ProvidedPorts : ProvidedPortSymbol list

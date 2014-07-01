@@ -172,13 +172,18 @@ module ``ModelSymbol property`` =
         ] 
 
     [<Test>]
-    let ``component symbol contains update methods`` () =
-        compile "class A : Component { public override void Update() { bool b; } }"
-        components.[0].UpdateMethod =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [{ Name = "b"; Type = TypeSymbol.Boolean }] }
+    let ``component symbol does not contain update method`` () =
+        compile "class A : Component { void M() { bool b; } }"
+        components.[0].UpdateMethod =? None
+
+    [<Test>]
+    let ``component symbol contains update method`` () =
+        compile "class A : Component { [Behavior] void DoStep() { bool b; } }"
+        components.[0].UpdateMethod =? Some { Name = "DoStep"; ReturnType = None; Parameters = []; Locals = [{ Name = "b"; Type = TypeSymbol.Boolean }] }
 
     [<Test>]
     let ``component symbol contains all data`` () =
-        compile "class C : Component { extern bool M(int y); bool N(int x) { bool b = true; return b; } public override void Update() { int i; } int f; IComponent c; }"
+        compile "class C : Component { extern bool M(int y); bool N(int x) { bool b = true; return b; } [Behavior] void Update() { int i; } int f; IComponent c; }"
         let componentSymbol = modelSymbol.ComponentSymbols.[0]
         componentSymbol =? {
             emptyComponentSymbol "C" with
@@ -195,7 +200,7 @@ module ``ModelSymbol property`` =
                     Locals = []
                 }]
                 Fields = [{ Name = "f"; Type = TypeSymbol.Integer }]
-                UpdateMethod = { Name = "Update"; ReturnType = None; Parameters = []; Locals = [{ Name = "i"; Type = TypeSymbol.Integer }] }
+                UpdateMethod = Some { Name = "Update"; ReturnType = None; Parameters = []; Locals = [{ Name = "i"; Type = TypeSymbol.Integer }] }
         }
 
         modelSymbol.Subcomponents.[componentSymbol] =? [{ ComponentReferenceSymbol.Name = "c"; ComponentSymbol = symbolResolver.ComponentInterfaceSymbol }]
@@ -296,7 +301,7 @@ module ``ResolveComponent(Component) method`` =
         symbolResolver.ResolveComponent componentB =? emptyComponentSymbol "A"
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveComponent componentA, symbolResolver.ResolveComponent componentB) =? true
+        obj.ReferenceEquals (symbolResolver.ResolveComponent componentA, symbolResolver.ResolveComponent componentB) =? true
 
 [<TestFixture>]
 module ``ResolveField method`` =
@@ -348,7 +353,7 @@ module ``ResolveField method`` =
         symbolResolver.ResolveField field3 =? { Name = "g"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveField field1, symbolResolver.ResolveField field2) =? false
+        obj.ReferenceEquals (symbolResolver.ResolveField field1, symbolResolver.ResolveField field2) =? false
 
 [<TestFixture>]
 module ``ResolveSubcomponent method`` =
@@ -414,7 +419,7 @@ module ``ResolveSubcomponent method`` =
         symbolResolver.ResolveSubcomponent field3 =? { Name = "a2"; ComponentSymbol = components.[0] }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveSubcomponent field1, symbolResolver.ResolveSubcomponent field2) =? false
+        obj.ReferenceEquals (symbolResolver.ResolveSubcomponent field1, symbolResolver.ResolveSubcomponent field2) =? false
         
 [<TestFixture>]
 module ``ResolveParameter method`` =
@@ -457,7 +462,7 @@ module ``ResolveParameter method`` =
         symbolResolver.ResolveParameter parameter3 =? { Name = "i"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveParameter parameter1, symbolResolver.ResolveParameter parameter3) =? false
+        obj.ReferenceEquals (symbolResolver.ResolveParameter parameter1, symbolResolver.ResolveParameter parameter3) =? false
 
 [<TestFixture>]
 module ``ResolveLocal method`` =
@@ -487,7 +492,7 @@ module ``ResolveLocal method`` =
         symbolResolver.ResolveLocal localSymbols.[1] =? { Name = "i"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveLocal localSymbols.[0], symbolResolver.ResolveLocal localSymbols.[1]) =? false
+        obj.ReferenceEquals (symbolResolver.ResolveLocal localSymbols.[0], symbolResolver.ResolveLocal localSymbols.[1]) =? false
 
     [<Test>]
     let ``returns different symbols for different locals of same transformed component method`` () =
@@ -512,7 +517,7 @@ module ``ResolveLocal method`` =
         symbolResolver.ResolveLocal local2 =? { Name = "a"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveLocal local1, symbolResolver.ResolveLocal local2) =? false
+        obj.ReferenceEquals (symbolResolver.ResolveLocal local1, symbolResolver.ResolveLocal local2) =? false
 
 [<TestFixture>]
 module ``ResolveMethod method`` =
@@ -545,7 +550,7 @@ module ``ResolveMethod method`` =
 
     [<Test>]
     let ``returns update method symbol for update method of transformed component`` () =
-        compile "class A : Component { public override void Update() {} } class B : Component {}"
+        compile "class A : Component { [Behavior] void Update() {} } class B : Component {}"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "A" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
@@ -553,23 +558,11 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) =? true
+        obj.ReferenceEquals (componentSymbol.UpdateMethod.Value, symbolResolver.ResolveMethod methodSymbol) =? true
 
     [<Test>]
     let ``returns base update method symbol for transformed component that does not override update method`` () =
-        compile "class A : Component {}"
-        let classSymbol = compilation.FindClassSymbol "A"
-        let methodSymbol = compilation.FindMethodSymbol "SafetySharp.Modeling.Component" "Update"
-        let componentSymbol = symbolResolver.ResolveComponent classSymbol
-
-        symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
-
-        // We have to check for reference equality here
-        obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) =? true
-
-    [<Test>]
-    let ``returns overriden base update method symbol for transformed component that does not override update method`` () =
-        compile "class A : B {} class B : Component { public override void Update () {} }"
+        compile "class A : B {} class B : Component { [Behavior] void Update () {} }"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "B" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
@@ -577,7 +570,7 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) =? true
+        obj.ReferenceEquals (componentSymbol.UpdateMethod.Value, symbolResolver.ResolveMethod methodSymbol) =? true
 
     [<Test>]
     let ``returns different symbols for different methods of same transformed component`` () =
@@ -601,7 +594,7 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod method3 =? { Name = "N"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        obj.ReferenceEquals(symbolResolver.ResolveMethod method1, symbolResolver.ResolveMethod method2) =? false
+        obj.ReferenceEquals (symbolResolver.ResolveMethod method1, symbolResolver.ResolveMethod method2) =? false
 
 [<TestFixture>]
 module ``ResolveCSharpMethod method`` =
@@ -621,33 +614,33 @@ module ``ResolveCSharpMethod method`` =
 
     [<Test>]
     let ``returns update method symbol for update method of transformed component`` () =
-        compile "class A : Component { public override void Update() {} }"
+        compile "class A : Component { [Behavior] void Update() {} }"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "A" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
 
         symbolResolver.ResolveMethod methodSymbol |> symbolResolver.ResolveCSharpMethod =? methodSymbol
-        symbolResolver.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
+        symbolResolver.ResolveCSharpMethod componentSymbol.UpdateMethod.Value =? methodSymbol
 
     [<Test>]
-    let ``returns base update method symbol for transformed component that does not override update method`` () =
-        compile "class A : Component {}"
-        let classSymbol = compilation.FindClassSymbol "A"
-        let methodSymbol = compilation.FindMethodSymbol "SafetySharp.Modeling.Component" "Update"
-        let componentSymbol = symbolResolver.ResolveComponent classSymbol
-
-        symbolResolver.ResolveMethod methodSymbol |> symbolResolver.ResolveCSharpMethod =? methodSymbol
-        symbolResolver.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
-
-    [<Test>]
-    let ``returns overriden base update method symbol for transformed component that does not override update method`` () =
-        compile "class A : B {} class B : Component { public override void Update () {} }"
+    let ``returns base update method symbol for transformed component that does not define update method`` () =
+        compile "class A : B {} class B : Component { [Behavior] void Update () {} }"
         let classSymbol = compilation.FindClassSymbol "A"
         let methodSymbol = compilation.FindMethodSymbol "B" "Update"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
 
         symbolResolver.ResolveMethod methodSymbol |> symbolResolver.ResolveCSharpMethod =? methodSymbol
-        symbolResolver.ResolveCSharpMethod componentSymbol.UpdateMethod =? methodSymbol
+        symbolResolver.ResolveCSharpMethod componentSymbol.UpdateMethod.Value =? methodSymbol
+
+    [<Test>]
+    let ``returns overriden update method symbol for inherited component that does implement its own update method`` () =
+        compile "class A : B { [Behavior] void Overridden () { return; } } class B : Component { [Behavior] void Update () {} }"
+        let classSymbol = compilation.FindClassSymbol "A"
+        let methodSymbol = compilation.FindMethodSymbol "A" "Overridden"
+        let componentSymbol = symbolResolver.ResolveComponent classSymbol
+
+        symbolResolver.ResolveMethod methodSymbol |> symbolResolver.ResolveCSharpMethod =? methodSymbol
+        symbolResolver.ResolveCSharpMethod componentSymbol.UpdateMethod.Value =? methodSymbol
 
     [<Test>]
     let ``returns different symbols for different methods of same transformed component`` () =

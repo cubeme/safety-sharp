@@ -251,8 +251,7 @@ module ``TransformMethodBodies method`` =
         let actual = transform "class A : Component { extern void M(); }"
         let classSymbol = compilation.FindClassSymbol "A"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
-        let expected = [(componentSymbol, componentSymbol.UpdateMethod), EmptyStatement] |> Map.ofList
-        actual =? expected
+        actual =? Map.empty
     
     [<Test>]
     let ``transforms body of single method of single component`` () =
@@ -263,18 +262,13 @@ module ``TransformMethodBodies method`` =
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
         let csharpMethodSymbol = compilation.FindMethodSymbol "A" "M"
         let methodSymbol = symbolResolver.ResolveMethod csharpMethodSymbol
-        let expected = 
-            [
-                (componentSymbol, methodSymbol), statement
-                (componentSymbol, componentSymbol.UpdateMethod), EmptyStatement
-            ] |> Map.ofList
-        
+        let expected = [(componentSymbol, methodSymbol), statement] |> Map.ofList
         actual =? expected
 
     [<Test>]
     let ``transforms body of update method of a component`` () =
         let statement = BlockStatement [ReturnStatement None]
-        let actual = transform "class A : Component { public override void Update() { return; }}"
+        let actual = transform "class A : Component { [Behavior] void Update() { return; }}"
         let classSymbol = compilation.FindClassSymbol "A"
         let componentSymbol = symbolResolver.ResolveComponent classSymbol
         let csharpMethodSymbol = compilation.FindMethodSymbol "A" "Update"
@@ -286,15 +280,15 @@ module ``TransformMethodBodies method`` =
     [<Test>]
     let ``transforms inherited body of update method of a component`` () =
         let statement = BlockStatement [ReturnStatement None]
-        let actual = transform "class A : Component { public override void Update() { return; }} class B : A {}"
+        let actual = transform "class A : Component { [Behavior] void Update() { return; }} class B : A {}"
         let classSymbolA = compilation.FindClassSymbol "A"
         let classSymbolB = compilation.FindClassSymbol "B"
         let componentSymbolA = symbolResolver.ResolveComponent classSymbolA
         let componentSymbolB = symbolResolver.ResolveComponent classSymbolB
         let expected = 
             [
-                (componentSymbolA, componentSymbolA.UpdateMethod), statement
-                (componentSymbolB, componentSymbolB.UpdateMethod), statement
+                (componentSymbolA, componentSymbolA.UpdateMethod.Value), statement
+                (componentSymbolB, componentSymbolB.UpdateMethod.Value), statement
             ] |> Map.ofList
         
         actual =? expected
@@ -306,7 +300,7 @@ module ``TransformMethodBodies method`` =
         let statement2 = BlockStatement []
         let statement3 = BlockStatement [ReturnStatement None]
 
-        let actual = transform "class A : Component { public override void Update() { return; } bool M() { return true || 1 == 2; }} class B : A { void N() {}}"
+        let actual = transform "class A : Component { [Behavior] void Update() { return; } bool M() { return true || 1 == 2; }} class B : A { void N() {}}"
 
         let classSymbolA = compilation.FindClassSymbol "A"
         let classSymbolB = compilation.FindClassSymbol "B"
@@ -327,7 +321,7 @@ module ``TransformMethodBodies method`` =
                 (componentSymbolA, methodSymbolUpdate), statement3
                 (componentSymbolA, methodSymbolM), statement1
                 (componentSymbolB, methodSymbolN), statement2
-                (componentSymbolB, componentSymbolB.UpdateMethod), statement3
+                (componentSymbolB, componentSymbolB.UpdateMethod.Value), statement3
             ] |> Map.ofList
         
         actual =? expected

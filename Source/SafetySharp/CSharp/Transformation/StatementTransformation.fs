@@ -134,9 +134,15 @@ module internal StatementTransformation =
         Transform symbolResolver semanticModel methodDeclaration.Body
 
     /// Transforms the bodies of all of the component's methods.
-    let private transformComponentMethods compilation symbolResolver componentSymbol =
-        componentSymbol.UpdateMethod :: (componentSymbol.ProvidedPorts |> List.map (fun (ProvidedPort method') -> method'))
-        |> Seq.map (fun methodSymbol -> ((componentSymbol, methodSymbol), transformMethodBody compilation symbolResolver methodSymbol))
+    let private transformComponentMethods compilation symbolResolver componentSymbol = 
+        let methods = seq {
+            match componentSymbol.UpdateMethod with
+            | None -> ()
+            | Some methodSymbol ->
+                yield methodSymbol
+            yield! componentSymbol.ProvidedPorts |> List.map (fun (ProvidedPort method') -> method')
+        }
+        methods |> Seq.map (fun methodSymbol -> ((componentSymbol, methodSymbol), transformMethodBody compilation symbolResolver methodSymbol))
 
     /// Transforms the bodies of all methods declared by the components in the symbol resolver.
     let TransformMethodBodies (compilation : Compilation) (symbolResolver : SymbolResolver) =

@@ -469,7 +469,10 @@ type internal MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
             {
                 MMStepInfo.context= contextOfCurrentPartitionRootComponent;
                 MMStepInfo.componentObject = partition.RootComponent;
-                MMStepInfo.statement=(configuration.MethodBodyResolver.Item (partition.RootComponent.ComponentSymbol,partition.RootComponent.ComponentSymbol.UpdateMethod));
+                MMStepInfo.statement=
+                    match partition.RootComponent.ComponentSymbol.UpdateMethod with
+                    | None -> MMStatement.EmptyStatement
+                    | Some methodSymbol -> (configuration.MethodBodyResolver.Item (partition.RootComponent.ComponentSymbol,methodSymbol));
             }
         let partitionUpdateInSimpleStatements = transformMMStepInfosToSimpleStatements fieldCache configuration.MethodBodyResolver collected [toTransform]
         partitionUpdateInSimpleStatements
