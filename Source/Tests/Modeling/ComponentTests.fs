@@ -214,6 +214,18 @@ module ``GetInitialValuesOfField method`` =
         component'.FinalizeMetadata ()
         component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [1; 2]
 
+    [<Test>]
+    let ``returns latest initial values when previous initial values were overridden`` () =
+        let component' = FieldComponent<int> (1, 2)
+        component'.SetInitialValues (createFieldExpression component' "_field", 17)
+        component'.FinalizeMetadata ()
+        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [17]
+        
+        let component' = FieldComponent<int> (17)
+        component'.SetInitialValues (createFieldExpression component' "_field", 17, 93, 1)
+        component'.FinalizeMetadata ()
+        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [17; 93; 1]
+
 [<TestFixture>]
 module ``GetSubcomponent method`` = 
     [<Test>]
