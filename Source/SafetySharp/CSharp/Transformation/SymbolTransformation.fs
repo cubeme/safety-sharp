@@ -116,7 +116,7 @@ module internal SymbolTransformation =
 
             match updateMethods with
             | updateMethod :: [] ->
-                let methodSymbol = { Name = "Update"; ReturnType = None; Parameters = []; Locals = transformLocals updateMethod }
+                let methodSymbol = { Name = updateMethod.Name; ReturnType = None; Parameters = []; Locals = transformLocals updateMethod }
                 methodMapBuilder.Add (updateMethod, methodSymbol)
                 methodCSharpMapBuilder.Add (methodSymbol, updateMethod)
                 Some methodSymbol
