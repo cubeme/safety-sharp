@@ -25,16 +25,16 @@ namespace SafetySharp.Modelchecking.NuXmv
 
 open SafetySharp.Modelchecking
 
-type NuXmvBasicExpression = SafetySharp.Modelchecking.NuXmv.BasicExpression
-type NuXmvConstExpression = SafetySharp.Modelchecking.NuXmv.ConstExpression
-type NuXmvSignSpecifier = SafetySharp.Modelchecking.NuXmv.SignSpecifier
-type NuXmvRadix = SafetySharp.Modelchecking.NuXmv.Radix
+type internal NuXmvBasicExpression = SafetySharp.Modelchecking.NuXmv.BasicExpression
+type internal NuXmvConstExpression = SafetySharp.Modelchecking.NuXmv.ConstExpression
+type internal NuXmvSignSpecifier = SafetySharp.Modelchecking.NuXmv.SignSpecifier
+type internal NuXmvRadix = SafetySharp.Modelchecking.NuXmv.Radix
 
-type NuXmvCtlExpression = SafetySharp.Modelchecking.NuXmv.CtlExpression
-type NuXmvLtlExpression = SafetySharp.Modelchecking.NuXmv.LtlExpression
-type NuXmvSpecification = SafetySharp.Modelchecking.NuXmv.Specification
-type NuXmvModuleTypeSpecifier = SafetySharp.Modelchecking.NuXmv.ModuleTypeSpecifier
-type NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
+type internal NuXmvCtlExpression = SafetySharp.Modelchecking.NuXmv.CtlExpression
+type internal NuXmvLtlExpression = SafetySharp.Modelchecking.NuXmv.LtlExpression
+type internal NuXmvSpecification = SafetySharp.Modelchecking.NuXmv.Specification
+type internal NuXmvModuleTypeSpecifier = SafetySharp.Modelchecking.NuXmv.ModuleTypeSpecifier
+type internal NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
 
 
 

@@ -25,27 +25,27 @@ namespace SafetySharp.Modelchecking.PromelaSpin
 open PromelaAstHelpers
 open SafetySharp.Modelchecking
 
-type PrExpression = SafetySharp.Modelchecking.PromelaSpin.AnyExpr
-type PrConst = SafetySharp.Modelchecking.PromelaSpin.Const
-type PrUnarop = SafetySharp.Modelchecking.PromelaSpin.Unarop
-type PrBinarop = SafetySharp.Modelchecking.PromelaSpin.Binarop
-type PrAndor = SafetySharp.Modelchecking.PromelaSpin.Andor
-type PrStatement = SafetySharp.Modelchecking.PromelaSpin.Stmnt
-type PrOptions = SafetySharp.Modelchecking.PromelaSpin.Options
-type PrSequence = SafetySharp.Modelchecking.PromelaSpin.Sequence
-type PrStep = SafetySharp.Modelchecking.PromelaSpin.Step
-type PrFormula = SafetySharp.Modelchecking.PromelaSpin.Formula
-type PrBinaryFormulaOperator = SafetySharp.Modelchecking.PromelaSpin.BinaryFormulaOperator
-type PrUnaryFormulaOperator = SafetySharp.Modelchecking.PromelaSpin.UnaryFormulaOperator
-type PrVarref = SafetySharp.Modelchecking.PromelaSpin.Varref
-type PrProctype = SafetySharp.Modelchecking.PromelaSpin.Proctype
-type PrDeclLst = SafetySharp.Modelchecking.PromelaSpin.DeclLst
-type PrModule = SafetySharp.Modelchecking.PromelaSpin.Module
-type PrOneDecl = SafetySharp.Modelchecking.PromelaSpin.OneDecl
-type PrTypename = SafetySharp.Modelchecking.PromelaSpin.Typename
-type PrIvar = SafetySharp.Modelchecking.PromelaSpin.Ivar
-type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
-type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
+type internal PrExpression = SafetySharp.Modelchecking.PromelaSpin.AnyExpr
+type internal PrConst = SafetySharp.Modelchecking.PromelaSpin.Const
+type internal PrUnarop = SafetySharp.Modelchecking.PromelaSpin.Unarop
+type internal PrBinarop = SafetySharp.Modelchecking.PromelaSpin.Binarop
+type internal PrAndor = SafetySharp.Modelchecking.PromelaSpin.Andor
+type internal PrStatement = SafetySharp.Modelchecking.PromelaSpin.Stmnt
+type internal PrOptions = SafetySharp.Modelchecking.PromelaSpin.Options
+type internal PrSequence = SafetySharp.Modelchecking.PromelaSpin.Sequence
+type internal PrStep = SafetySharp.Modelchecking.PromelaSpin.Step
+type internal PrFormula = SafetySharp.Modelchecking.PromelaSpin.Formula
+type internal PrBinaryFormulaOperator = SafetySharp.Modelchecking.PromelaSpin.BinaryFormulaOperator
+type internal PrUnaryFormulaOperator = SafetySharp.Modelchecking.PromelaSpin.UnaryFormulaOperator
+type internal PrVarref = SafetySharp.Modelchecking.PromelaSpin.Varref
+type internal PrProctype = SafetySharp.Modelchecking.PromelaSpin.Proctype
+type internal PrDeclLst = SafetySharp.Modelchecking.PromelaSpin.DeclLst
+type internal PrModule = SafetySharp.Modelchecking.PromelaSpin.Module
+type internal PrOneDecl = SafetySharp.Modelchecking.PromelaSpin.OneDecl
+type internal PrTypename = SafetySharp.Modelchecking.PromelaSpin.Typename
+type internal PrIvar = SafetySharp.Modelchecking.PromelaSpin.Ivar
+type internal PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
+type internal PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
            
 type internal MetamodelToPromela (configuration:MMConfiguration)  =

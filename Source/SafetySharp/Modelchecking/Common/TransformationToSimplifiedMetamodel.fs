@@ -38,30 +38,30 @@ namespace SafetySharp.Modelchecking
 //      - a Guarded Command = List of Options, Option = Guards (Expression) and a Sequence (List of SimpleStatements)
 //  * A SimpleGlobalField is a struct, which encapsulates all information about a Global Field in the Simplified Metamodel
 
-type MMModelObject = SafetySharp.Metamodel.ModelObject
-type MMPartitionObject = SafetySharp.Metamodel.PartitionObject
-type MMComponentObject = SafetySharp.Metamodel.ComponentObject
-type MMFieldObject = SafetySharp.Metamodel.FieldObject
-type MMConfiguration = SafetySharp.Metamodel.Configuration // <--------- main artifact
+type internal MMModelObject = SafetySharp.Metamodel.ModelObject
+type internal MMPartitionObject = SafetySharp.Metamodel.PartitionObject
+type internal MMComponentObject = SafetySharp.Metamodel.ComponentObject
+type internal MMFieldObject = SafetySharp.Metamodel.FieldObject
+type internal MMConfiguration = SafetySharp.Metamodel.Configuration // <--------- main artifact
 
-type MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
-type MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
-type MMLocalSymbol = SafetySharp.Metamodel.LocalSymbol
-type MMParameterSymbol = SafetySharp.Metamodel.ParameterSymbol
-type MMMethodSymbol = SafetySharp.Metamodel.MethodSymbol
-type MMComponentReferenceSymbol = SafetySharp.Metamodel.ComponentReferenceSymbol
-type MMComponentSymbol = SafetySharp.Metamodel.ComponentSymbol
-type MMPartitionSymbol = SafetySharp.Metamodel.PartitionSymbol
-type MMModelSymbol = SafetySharp.Metamodel.ModelSymbol
+type internal MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
+type internal MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
+type internal MMLocalSymbol = SafetySharp.Metamodel.LocalSymbol
+type internal MMParameterSymbol = SafetySharp.Metamodel.ParameterSymbol
+type internal MMMethodSymbol = SafetySharp.Metamodel.MethodSymbol
+type internal MMComponentReferenceSymbol = SafetySharp.Metamodel.ComponentReferenceSymbol
+type internal MMComponentSymbol = SafetySharp.Metamodel.ComponentSymbol
+type internal MMPartitionSymbol = SafetySharp.Metamodel.PartitionSymbol
+type internal MMModelSymbol = SafetySharp.Metamodel.ModelSymbol
 
-type MMExpression = SafetySharp.Metamodel.Expression
-type MMUnaryOperator = SafetySharp.Metamodel.UnaryOperator
-type MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
-type MMStatement = SafetySharp.Metamodel.Statement
-type MMFormula = SafetySharp.Metamodel.Formula
-type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
-type MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
-type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
+type internal MMExpression = SafetySharp.Metamodel.Expression
+type internal MMUnaryOperator = SafetySharp.Metamodel.UnaryOperator
+type internal MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
+type internal MMStatement = SafetySharp.Metamodel.Statement
+type internal MMFormula = SafetySharp.Metamodel.Formula
+type internal MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
+type internal MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
+type internal MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 
 
 // TODO: Ensure reverse mapping is working for debugging purposes

@@ -26,8 +26,8 @@ namespace SafetySharp.Tests.Modelchecking
 open SafetySharp.Modelchecking.PromelaSpin
 open SafetySharp.Metamodel
 
-type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
-type MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
+type internal MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
+type internal MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
 
 module internal TestCase1 =    
     
@@ -77,7 +77,7 @@ module internal TestCase1 =
     let testCase1ModelObject = { ModelObject.ModelSymbol=testCase1ModelSymbol; ModelObject.Partitions=[partitionAObject]; ModelObject.ComponentObjects= ([(indeterministicComponentReferenceSymbolForFormulaUse,indeterministicComponentObject)] |> Map.ofList);}
     let testCase1Configuration = { Configuration.ModelSymbol=testCase1ModelSymbol; Configuration.ModelObject=testCase1ModelObject; Configuration.Formulas=[formulaFieldXAlwaysTrue]; Configuration.MethodBodyResolver=methodBodyResolver; }
 
-module TestCase1Simplified =
+module internal TestCase1Simplified =
 
     open SafetySharp.Modelchecking
 

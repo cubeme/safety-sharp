@@ -49,7 +49,7 @@ type internal WriteOnceExpression =
     | FieldAccessExpression of TimeOfAccess: WriteOnceTimeOfAccess * Field : SimpleGlobalField
     
 
-type WriteOnceGlobalField = SimpleGlobalField
+type internal WriteOnceGlobalField = SimpleGlobalField
 
 
 type internal WriteOncePossibleEffect = {
