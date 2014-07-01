@@ -20,13 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.Internal.CSharp.Normalization
 
 open System
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Roslyn
 
 /// When the modeling-time SafetySharp assembly is replaced by the compile-time SafetySharp assembly, we have to change the 
 /// 'protected' modifier on overridden Component.Update methods to 'public', as the F# version is declared 'public'. If

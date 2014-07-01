@@ -30,10 +30,10 @@ open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.CSharp
+open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.CSharp.Normalization
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Normalization
+open SafetySharp.Internal.CSharp.Roslyn
 
 [<TestFixture>]
 module EnumLiteralNormalizerTests =

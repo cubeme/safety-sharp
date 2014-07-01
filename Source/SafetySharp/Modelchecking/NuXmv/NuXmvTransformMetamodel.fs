@@ -20,23 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modelchecking.NuXmv
+namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 
-open SafetySharp.Modelchecking
+open SafetySharp.Internal.Modelchecking
 
-type internal NuXmvBasicExpression = SafetySharp.Modelchecking.NuXmv.BasicExpression
-type internal NuXmvConstExpression = SafetySharp.Modelchecking.NuXmv.ConstExpression
-type internal NuXmvSignSpecifier = SafetySharp.Modelchecking.NuXmv.SignSpecifier
-type internal NuXmvRadix = SafetySharp.Modelchecking.NuXmv.Radix
+type internal NuXmvBasicExpression = SafetySharp.Internal.Modelchecking.NuXmv.BasicExpression
+type internal NuXmvConstExpression = SafetySharp.Internal.Modelchecking.NuXmv.ConstExpression
+type internal NuXmvSignSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.SignSpecifier
+type internal NuXmvRadix = SafetySharp.Internal.Modelchecking.NuXmv.Radix
 
-type internal NuXmvCtlExpression = SafetySharp.Modelchecking.NuXmv.CtlExpression
-type internal NuXmvLtlExpression = SafetySharp.Modelchecking.NuXmv.LtlExpression
-type internal NuXmvSpecification = SafetySharp.Modelchecking.NuXmv.Specification
-type internal NuXmvModuleTypeSpecifier = SafetySharp.Modelchecking.NuXmv.ModuleTypeSpecifier
-type internal NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
-
-
+type internal NuXmvCtlExpression = SafetySharp.Internal.Modelchecking.NuXmv.CtlExpression
+type internal NuXmvLtlExpression = SafetySharp.Internal.Modelchecking.NuXmv.LtlExpression
+type internal NuXmvSpecification = SafetySharp.Internal.Modelchecking.NuXmv.Specification
+type internal NuXmvModuleTypeSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.ModuleTypeSpecifier
+type internal NuXmvModuleDeclaration = SafetySharp.Internal.Modelchecking.NuXmv.ModuleDeclaration
 
 
 type internal MetamodelToNuXmv (configuration:MMConfiguration)  =

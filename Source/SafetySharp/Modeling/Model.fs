@@ -28,7 +28,7 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open System.Runtime.InteropServices
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 
 /// Raised when a component is found in multiple locations of a component tree.
 type SharedComponentsException internal (components : Component list) =

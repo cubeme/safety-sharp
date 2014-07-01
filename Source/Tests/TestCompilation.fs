@@ -28,9 +28,9 @@ open System.Linq
 open System.IO
 open System.Reflection
 open System.Threading
-open SafetySharp.Metamodel
-open SafetySharp.CSharp
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.Metamodel
+open SafetySharp.Internal.CSharp
+open SafetySharp.Internal.CSharp.Roslyn
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax

@@ -24,7 +24,7 @@ namespace SafetySharp.Modeling
 
 open System
 open Microsoft.CodeAnalysis.CSharp
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 
 /// Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
 [<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]

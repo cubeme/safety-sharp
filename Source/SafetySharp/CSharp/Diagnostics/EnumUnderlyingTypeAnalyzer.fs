@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Diagnostics
+namespace SafetySharp.Internal.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
@@ -29,7 +29,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 
 /// Ensures that no enumerations explicitly declare an underlying type.
 [<DiagnosticAnalyzer>]

@@ -29,7 +29,7 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open System.Runtime.InteropServices
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 
 /// Represents a marker interface for components.
 [<AllowNullLiteral>]

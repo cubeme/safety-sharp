@@ -23,11 +23,11 @@
 namespace SafetySharp.Tests.Modelchecking
 
 
-open SafetySharp.Modelchecking.PromelaSpin
-open SafetySharp.Metamodel
+open SafetySharp.Internal.Modelchecking.PromelaSpin
+open SafetySharp.Internal.Metamodel
 
-type internal MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
-type internal MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
+type internal MMUnaryFormulaOperator = SafetySharp.Internal.Metamodel.UnaryFormulaOperator
+type internal MMBinaryOperator = SafetySharp.Internal.Metamodel.BinaryOperator
 
 module internal TestCase1 =    
     
@@ -79,7 +79,7 @@ module internal TestCase1 =
 
 module internal TestCase1Simplified =
 
-    open SafetySharp.Modelchecking
+    open SafetySharp.Internal.Modelchecking
 
     // Expressions
     let booleanTrueExpression = SimpleExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))

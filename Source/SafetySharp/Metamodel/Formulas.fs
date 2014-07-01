@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel
+namespace SafetySharp.Internal.Metamodel
 
 /// Represents the operator of an unary temporal formula.
 type internal UnaryFormulaOperator =

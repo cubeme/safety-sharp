@@ -27,8 +27,8 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open SafetySharp.Modeling
-open SafetySharp.Metamodel
-open SafetySharp.Utilities
+open SafetySharp.Internal.Metamodel
+open SafetySharp.Internal.Utilities
 open SafetySharp.Tests
 
 [<AutoOpen>]

@@ -20,12 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-open SafetySharp.Utilities
-
 open System
 open CommandLine
 open CommandLine.Text
-open SafetySharp.CSharp
+open SafetySharp.Internal.CSharp
+open SafetySharp.Internal.Utilities
 
 /// Provides access to the command line arguments that have been provided to the compiler.
 type CommandLineArguments () =

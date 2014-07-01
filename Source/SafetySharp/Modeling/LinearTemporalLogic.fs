@@ -24,8 +24,8 @@ namespace SafetySharp.Modeling
 
 open System
 open System.Linq.Expressions
-open SafetySharp.Utilities
-open SafetySharp.Metamodel
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.Metamodel
 
 /// Represents a linear temporal logic formula provided by a C# model.
 [<AllowNullLiteral>]

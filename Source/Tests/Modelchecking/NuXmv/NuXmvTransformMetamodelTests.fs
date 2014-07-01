@@ -24,12 +24,10 @@ namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
 
 
 open NUnit.Framework
-open Swensen.Unquote
 open SafetySharp.Tests.Modelchecking
-
-open SafetySharp.Utilities
-open SafetySharp.Modelchecking
-open SafetySharp.Modelchecking.NuXmv
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.Modelchecking
+open SafetySharp.Internal.Modelchecking.NuXmv
 
 [<TestFixture>]
 module TestCase1ToNuXmvTests =

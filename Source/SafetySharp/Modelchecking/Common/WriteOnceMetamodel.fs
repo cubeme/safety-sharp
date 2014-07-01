@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modelchecking
+namespace SafetySharp.Internal.Modelchecking
 
 
-open SafetySharp.Modelchecking
+open SafetySharp.Internal.Modelchecking
 
 
 //TODO: Somehow enable the use of DEFINE?!?

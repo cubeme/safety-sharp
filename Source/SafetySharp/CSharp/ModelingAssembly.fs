@@ -20,13 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.Internal.CSharp
 
 open System
 open System.Reflection
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 open SafetySharp.Modeling
 
 /// Represents a Safety Sharp modeling assembly.

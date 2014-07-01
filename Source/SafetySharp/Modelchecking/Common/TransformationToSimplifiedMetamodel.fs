@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-namespace SafetySharp.Modelchecking
+namespace SafetySharp.Internal.Modelchecking
 
 //  * The Simplified Metamodel is a flat version of the Full Metamodel without the concept of Components and Structure.
 //    It is somehow removing the object orientation from the Full Metamodel.
@@ -38,29 +38,29 @@ namespace SafetySharp.Modelchecking
 //      - a Guarded Command = List of Options, Option = Guards (Expression) and a Sequence (List of SimpleStatements)
 //  * A SimpleGlobalField is a struct, which encapsulates all information about a Global Field in the Simplified Metamodel
 
-type internal MMModelObject = SafetySharp.Metamodel.ModelObject
-type internal MMPartitionObject = SafetySharp.Metamodel.PartitionObject
-type internal MMComponentObject = SafetySharp.Metamodel.ComponentObject
-type internal MMFieldObject = SafetySharp.Metamodel.FieldObject
-type internal MMConfiguration = SafetySharp.Metamodel.Configuration // <--------- main artifact
-
-type internal MMTypeSymbol = SafetySharp.Metamodel.TypeSymbol
-type internal MMFieldSymbol = SafetySharp.Metamodel.FieldSymbol
-type internal MMLocalSymbol = SafetySharp.Metamodel.LocalSymbol
-type internal MMParameterSymbol = SafetySharp.Metamodel.ParameterSymbol
-type internal MMMethodSymbol = SafetySharp.Metamodel.MethodSymbol
-type internal MMComponentReferenceSymbol = SafetySharp.Metamodel.ComponentReferenceSymbol
-type internal MMComponentSymbol = SafetySharp.Metamodel.ComponentSymbol
-type internal MMPartitionSymbol = SafetySharp.Metamodel.PartitionSymbol
-type internal MMModelSymbol = SafetySharp.Metamodel.ModelSymbol
-
-type internal MMExpression = SafetySharp.Metamodel.Expression
-type internal MMUnaryOperator = SafetySharp.Metamodel.UnaryOperator
-type internal MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
-type internal MMStatement = SafetySharp.Metamodel.Statement
-type internal MMFormula = SafetySharp.Metamodel.Formula
-type internal MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
-type internal MMBinaryFormulaOperator = SafetySharp.Metamodel.BinaryFormulaOperator
+type internal MMModelObject = SafetySharp.Internal.Metamodel.ModelObject
+type internal MMPartitionObject = SafetySharp.Internal.Metamodel.PartitionObject
+type internal MMComponentObject = SafetySharp.Internal.Metamodel.ComponentObject
+type internal MMFieldObject = SafetySharp.Internal.Metamodel.FieldObject
+type internal MMConfiguration = SafetySharp.Internal.Metamodel.Configuration // <--------- main artifact
+      
+type internal MMTypeSymbol = SafetySharp.Internal.Metamodel.TypeSymbol
+type internal MMFieldSymbol = SafetySharp.Internal.Metamodel.FieldSymbol
+type internal MMLocalSymbol = SafetySharp.Internal.Metamodel.LocalSymbol
+type internal MMParameterSymbol = SafetySharp.Internal.Metamodel.ParameterSymbol
+type internal MMMethodSymbol = SafetySharp.Internal.Metamodel.MethodSymbol
+type internal MMComponentReferenceSymbol = SafetySharp.Internal.Metamodel.ComponentReferenceSymbol
+type internal MMComponentSymbol = SafetySharp.Internal.Metamodel.ComponentSymbol
+type internal MMPartitionSymbol = SafetySharp.Internal.Metamodel.PartitionSymbol
+type internal MMModelSymbol = SafetySharp.Internal.Metamodel.ModelSymbol
+      
+type internal MMExpression = SafetySharp.Internal.Metamodel.Expression
+type internal MMUnaryOperator = SafetySharp.Internal.Metamodel.UnaryOperator
+type internal MMBinaryOperator = SafetySharp.Internal.Metamodel.BinaryOperator
+type internal MMStatement = SafetySharp.Internal.Metamodel.Statement
+type internal MMFormula = SafetySharp.Internal.Metamodel.Formula
+type internal MMUnaryFormulaOperator = SafetySharp.Internal.Metamodel.UnaryFormulaOperator
+type internal MMBinaryFormulaOperator = SafetySharp.Internal.Metamodel.BinaryFormulaOperator
 type internal MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 
 

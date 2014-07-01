@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Metamodel
+namespace SafetySharp.Internal.Metamodel
 
 /// Represents statements contained within method bodies.
 type internal Statement =

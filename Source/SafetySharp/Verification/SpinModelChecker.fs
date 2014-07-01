@@ -23,9 +23,9 @@
 namespace SafetySharp.Modeling
 
 open System
-open SafetySharp.Utilities
-open SafetySharp.CSharp
-open SafetySharp.CSharp.Transformation
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.CSharp
+open SafetySharp.Internal.CSharp.Transformation
 
 [<Sealed>]
 type SpinModelChecker (model : Model) =
@@ -37,8 +37,8 @@ type SpinModelChecker (model : Model) =
         let formulas = [formula.Formula]
         let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
         
-        let converter = SafetySharp.Modelchecking.PromelaSpin.MetamodelToPromela(configuration)
-        let astWriter = SafetySharp.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
+        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela(configuration)
+        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
 
         let converted = converter.transformConfiguration
         let convertedString = astWriter.Export converted

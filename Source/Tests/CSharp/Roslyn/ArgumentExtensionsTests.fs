@@ -1,5 +1,5 @@
 ﻿// The MIT License (MIT)
-// 
+// open SafetySharp.Modeling
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,10 +28,10 @@ open NUnit.Framework
 open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp
+open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
 open SafetySharp.Modeling
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Roslyn
 
 [<AutoOpen>]
 module ArgumentExtentionsTestHelper =

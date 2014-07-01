@@ -26,9 +26,9 @@ open NUnit.Framework
 open Swensen.Unquote
 open SafetySharp.Tests.Modelchecking
 
-open SafetySharp.Utilities
-open SafetySharp.Modelchecking
-open SafetySharp.Modelchecking.PromelaSpin
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.Modelchecking
+open SafetySharp.Internal.Modelchecking.PromelaSpin
 
 [<TestFixture>]
 module TestCase1ToPromelaTests =

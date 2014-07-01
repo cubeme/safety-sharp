@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modelchecking.PromelaSpin
+namespace SafetySharp.Internal.Modelchecking.PromelaSpin
 (*
 
 Grammar: http://spinroot.com/spin/Man/grammar.html

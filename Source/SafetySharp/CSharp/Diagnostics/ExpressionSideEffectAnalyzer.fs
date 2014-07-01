@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Diagnostics
+namespace SafetySharp.Internal.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
@@ -29,9 +29,9 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 open SafetySharp.Modeling
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Roslyn
 
 /// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
 type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback) =

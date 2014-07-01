@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Diagnostics
+namespace SafetySharp.Internal.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
@@ -29,8 +29,8 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Utilities
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.CSharp.Roslyn
 
 /// Checks for unsupported C# features within a component declaration.
 type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =

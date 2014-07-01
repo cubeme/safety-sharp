@@ -28,10 +28,10 @@ open NUnit.Framework
 open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp
+open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
 open SafetySharp.Modeling
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Roslyn
 
 [<TestFixture>]
 module ``Visibility method`` =

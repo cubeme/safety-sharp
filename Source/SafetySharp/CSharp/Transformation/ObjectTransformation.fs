@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Transformation
+namespace SafetySharp.Internal.CSharp.Transformation
 
 open System.Collections.Immutable
-open SafetySharp.Metamodel
+open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 
 module internal ObjectTransformation =
 

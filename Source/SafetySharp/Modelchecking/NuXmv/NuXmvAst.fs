@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modelchecking.NuXmv
+namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 //TODO: For validation active pattern?!?
 // interface for validation. 
@@ -182,7 +182,7 @@ and internal ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31
 }
 
 // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
-// moved to the namespace SafetySharp.Modelchecking.NuXmv, because there is also identifier
+// moved to the namespace SafetySharp.Internal.Modelchecking.NuXmv, because there is also identifier
 
 and internal NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
     Modules:ModuleDeclaration list;

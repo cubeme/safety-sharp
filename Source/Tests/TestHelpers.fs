@@ -28,7 +28,7 @@ open System.Linq.Expressions
 open System.Reflection
 open SafetySharp.Modeling
 open Swensen.Unquote
-open SafetySharp.Metamodel
+open SafetySharp.Internal.Metamodel
 
 [<AutoOpen>]
 module internal TestHelpers =

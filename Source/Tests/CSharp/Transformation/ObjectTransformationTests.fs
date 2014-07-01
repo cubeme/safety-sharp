@@ -28,12 +28,12 @@ open NUnit.Framework
 open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp
-open SafetySharp.Metamodel
+open SafetySharp.Internal.CSharp
+open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests.CSharp
 open SafetySharp.Tests
-open SafetySharp.CSharp.Transformation
+open SafetySharp.Internal.CSharp.Transformation
 
 [<AutoOpen>]
 module private ObjectTransformationTestsHelper =

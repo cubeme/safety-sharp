@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Roslyn
+namespace SafetySharp.Internal.CSharp.Roslyn
 
 open System
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="Compilation" /> instances.

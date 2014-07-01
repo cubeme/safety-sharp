@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Diagnostics
+namespace SafetySharp.Internal.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Utilities
+open SafetySharp.Internal.Utilities
 
 /// A base class for C# code analyzers.
 [<AbstractClass>]

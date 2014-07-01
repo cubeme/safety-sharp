@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp
+namespace SafetySharp.Internal.CSharp
 
 open System
 open System.Collections.Generic
@@ -33,9 +33,9 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.Diagnostics
 open Microsoft.CodeAnalysis.MSBuild
 open SafetySharp.Modeling
-open SafetySharp.Utilities
-open SafetySharp.CSharp.Diagnostics
-open SafetySharp.CSharp.Normalization
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.CSharp.Diagnostics
+open SafetySharp.Internal.CSharp.Normalization
 
 /// The SafetySharp compiler that compiles C# code into a modeling assembly.
 module internal Compiler =

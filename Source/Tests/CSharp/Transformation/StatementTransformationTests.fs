@@ -25,12 +25,12 @@ namespace SafetySharp.Tests.CSharp.Transformation.StatementTransformationTests
 open System.Linq
 open NUnit.Framework
 open Swensen.Unquote
-open SafetySharp.CSharp
-open SafetySharp.Metamodel
+open SafetySharp.Internal.CSharp
+open SafetySharp.Internal.Metamodel
 open SafetySharp.Tests
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharp.Roslyn
-open SafetySharp.CSharp.Transformation
+open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Transformation
 
 [<AutoOpen>]
 module private StatementTransformationTestsHelper =

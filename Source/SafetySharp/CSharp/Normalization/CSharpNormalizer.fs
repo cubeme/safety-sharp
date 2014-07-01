@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Normalization
+namespace SafetySharp.Internal.CSharp.Normalization
 
 open System
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Roslyn
 
 /// Indicates which parts of the code are affected by a normalizer.
 [<RequireQualifiedAccess>]

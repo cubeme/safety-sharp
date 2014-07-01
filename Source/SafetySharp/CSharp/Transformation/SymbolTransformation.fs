@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Transformation
+namespace SafetySharp.Internal.CSharp.Transformation
 
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Runtime.CompilerServices
-open SafetySharp.Utilities
-open SafetySharp.Metamodel
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling
-open SafetySharp.CSharp.Roslyn
+open SafetySharp.Internal.CSharp.Roslyn
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
