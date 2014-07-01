@@ -94,7 +94,7 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
     member this.getPartitionInstanceNameFromContext (context:Context): Identifier =
         {Identifier.Name=("p" + context.rootComponentName)}
 
-    member this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier (simpleGlobalField : SimpleGlobalField) : Identifier=
+    member this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier (simpleGlobalField : SimpleGlobalField) : Identifier =
         // only use, when we know that simpleGlobalField is in the partition, the method calling this function, has
         // the partition of the simpleGlobalField in mind.
         if not simpleGlobalField.hasContext then
@@ -102,8 +102,8 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         let flatSubcomponentName (context:Context) : string =
             let itemsInOrderRootToLeaf =
                 context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
-            itemsInOrderRootToLeaf.Tail |> List.map (fun elem -> sprintf "c%s_" elem)
-                                        |> String.concat ""
+            itemsInOrderRootToLeaf |> List.map (fun elem -> sprintf "c%s_" elem)
+                                   |> String.concat ""
         match simpleGlobalField with
             | SimpleGlobalField.FieldOfMetamodel(_, field:SimpleGlobalField) ->
                 let fieldName = "f"+simpleGlobalField.getFieldSymbol.Name

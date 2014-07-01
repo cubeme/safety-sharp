@@ -108,8 +108,10 @@
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
-    <Compile Include="Modelchecking\Common\MetamodelToSimplifiedMetamodel.fs" />
-    <Compile Include="Modelchecking\Common\WriteOnceStatement.fs" />
+    <Compile Include="Modelchecking\Common\SimplifiedMetamodel.fs" />
+    <Compile Include="Modelchecking\Common\TransformationToSimplifiedMetamodel.fs" />
+    <Compile Include="Modelchecking\Common\WriteOnceMetamodel.fs" />
+    <Compile Include="Modelchecking\Common\TransformationToWriteOnceMetamodel.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />

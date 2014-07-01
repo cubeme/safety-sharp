@@ -77,3 +77,39 @@ module internal TestCase1 =
     let testCase1ModelObject = { ModelObject.ModelSymbol=testCase1ModelSymbol; ModelObject.Partitions=[partitionAObject]; ModelObject.ComponentObjects= ([(indeterministicComponentReferenceSymbolForFormulaUse,indeterministicComponentObject)] |> Map.ofList);}
     let testCase1Configuration = { Configuration.ModelSymbol=testCase1ModelSymbol; Configuration.ModelObject=testCase1ModelObject; Configuration.Formulas=[formulaFieldXAlwaysTrue]; Configuration.MethodBodyResolver=methodBodyResolver; }
 
+module TestCase1Simplified =
+
+    open SafetySharp.Modelchecking
+
+    // Expressions
+    let booleanTrueExpression = SimpleExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))
+    let booleanFalseExpression = SimpleExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(false))
+    
+    // Context and Partition
+    let contextComponent = {
+        Context.hierarchicalAccess = [];
+        Context.rootComponentName = "root1";
+    }
+    let simplePartition = {
+        SimplePartition.RootComponentName = "root1";
+    }
+
+    // Fields
+    let initialValues = [SimpleConstLiteral.BooleanLiteral(true);SimpleConstLiteral.BooleanLiteral(false)]
+    let simpleGlobalFieldWithContext = {
+        SimpleGlobalFieldWithContext.Context=contextComponent;
+        SimpleGlobalFieldWithContext.FieldSymbol=TestCase1.fieldXSymbol;
+        SimpleGlobalFieldWithContext.InitialValues=initialValues;
+    }
+    let innerField = SimpleGlobalField.FieldWithContext(simpleGlobalFieldWithContext)
+    let field = SimpleGlobalField.FieldOfMetamodel(TestCase1.indeterministicComponentObject,innerField)
+
+    // Statements
+    let assignStatementTrue = SimpleStatement.AssignmentStatement(field,booleanTrueExpression)
+    let assignStatementFalse = SimpleStatement.AssignmentStatement(field,booleanFalseExpression)
+    let guardedCommandStatement = SimpleStatement.GuardedCommandStatement([(booleanTrueExpression,[assignStatementTrue]);
+                                                                           (booleanTrueExpression,[assignStatementFalse])])
+    
+    // Outputs
+    let fields = [field]
+    let partitionUpdate = guardedCommandStatement

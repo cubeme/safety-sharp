@@ -171,6 +171,7 @@ type internal WriteOnceTypeFieldManager = {
         this.SimpleFieldToNewArtificialFieldMapping.Head
     member this.getCurrentRedirection (field:SimpleGlobalFieldWithContext) : (WriteOnceTimeOfAccess*SimpleGlobalField) =
         this.SimpleFieldToCurrentRedirectionFieldMapping.Head.Item field
+
     member this.transformExpressionWithCurrentRedirections (expression:SimpleExpression) : WriteOnceExpression =
         match expression with
             | SimpleExpression.ConstLiteral (literal:SimpleConstLiteral) ->

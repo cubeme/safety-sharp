@@ -22,5 +22,38 @@
 
 namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
 
-module NuXmvTransformMetamodelTests =
-    let x=1
+
+open NUnit.Framework
+open Swensen.Unquote
+open SafetySharp.Tests.Modelchecking
+
+open SafetySharp.Utilities
+open SafetySharp.Modelchecking
+open SafetySharp.Modelchecking.NuXmv
+
+[<TestFixture>]
+module TestCase1ToNuXmvTests =
+    open TestCase1
+    
+    [<Test>]
+    let ``transforms model without exception`` () =
+        let modelTransformer = MetamodelToNuXmv (testCase1Configuration)
+        let nuXmvCode = modelTransformer.transformConfiguration
+        ()
+        
+    [<Test>]
+    let ``write transformed model to string`` () =
+        let modelTransformer = MetamodelToNuXmv (testCase1Configuration)        
+        let nuXmvCode = modelTransformer.transformConfiguration
+        let nuXmvWriter = ExportNuXmvAstToFile()
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
+        ()
+
+    [<Test>]
+    let ``write transformed model to file`` () =
+        let modelTransformer = MetamodelToNuXmv (testCase1Configuration)        
+        let nuXmvCode = modelTransformer.transformConfiguration
+        let nuXmvWriter = ExportNuXmvAstToFile()
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
+        FileSystem.WriteToAsciiFile "Modelchecking/Promela/testcase1.smv" nuXmvCodeString
+        ()
