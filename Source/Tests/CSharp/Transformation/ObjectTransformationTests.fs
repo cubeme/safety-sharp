@@ -25,7 +25,6 @@ namespace SafetySharp.Tests.CSharp.Transformation.ObjectTransformationTests
 open System
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -67,7 +66,7 @@ module ``Transform method`` =
     let ``throws when null is passed`` () =
         let compilation = TestCompilation "class A : Component {}"
         let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
-        raisesArgumentNullException "model" <@ ObjectTransformation.Transform null symbolResolver @>
+        raisesArgumentNullException "model" (fun () -> ObjectTransformation.Transform null symbolResolver |> ignore)
 
     [<Test>]
     let ``throws when model metadata has not yet been finalized`` () =
@@ -75,7 +74,7 @@ module ``Transform method`` =
         symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
         let model = TestModel (EmptyComponent ())
 
-        raisesArgumentException "model" <@ ObjectTransformation.Transform model symbolResolver @>
+        raisesArgumentException "model" (fun () -> ObjectTransformation.Transform model symbolResolver |> ignore)
 
 [<TestFixture>]
 module ``ModelObject property`` =
@@ -210,12 +209,12 @@ module ``ResolveSymbol Method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesArgumentNullException "componentObject" <@ objectResolver.ResolveSymbol null @>
+        raisesArgumentNullException "componentObject" (fun () -> objectResolver.ResolveSymbol null |> ignore)
 
     [<Test>]
     let ``throws when component of unknown type is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesArgumentException "componentObject" <@ objectResolver.ResolveSymbol (EmptyComponent ()) @>
+        raisesArgumentException "componentObject" (fun () -> objectResolver.ResolveSymbol (EmptyComponent ()) |> ignore)
 
     [<Test>]
     let ``returns component symbol for component object of known type`` () =
@@ -236,19 +235,19 @@ module ``ResolveSymbol Method`` =
         objectResolver.ResolveSymbol components.[1] =? symbolResolver.ComponentSymbols.[0]
 
         // We have to check for reference equality here
-        test <@ obj.ReferenceEquals (objectResolver.ResolveSymbol components.[0], objectResolver.ResolveSymbol components.[1]) @>
+        obj.ReferenceEquals (objectResolver.ResolveSymbol components.[0], objectResolver.ResolveSymbol components.[1]) =? true
 
 [<TestFixture>]
 module ``ResolveObject Method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesArgumentNullException "componentObject" <@ objectResolver.ResolveObject null @>
+        raisesArgumentNullException "componentObject" (fun () -> objectResolver.ResolveObject null |> ignore)
 
     [<Test>]
     let ``throws when component of unknown type is passed`` () =
         compile "class A : Component {}" ["A"]
-        raisesArgumentException "componentObject" <@ objectResolver.ResolveObject (EmptyComponent ()) @>
+        raisesArgumentException "componentObject" (fun () -> objectResolver.ResolveObject (EmptyComponent ()) |> ignore)
 
     [<Test>]
     let ``returns component object for component object of known type`` () =

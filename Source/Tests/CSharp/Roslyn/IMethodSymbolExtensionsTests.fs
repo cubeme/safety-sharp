@@ -24,7 +24,6 @@ namespace SafetySharp.Tests.CSharp.Roslyn.IMethodSymbolExtensionsTests
 
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -44,7 +43,7 @@ module ``Overrides method`` =
     let ``throws when overriden method symbol is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        raisesArgumentNullException "overriddenMethod" <@ methodSymbol.Overrides null @>
+        raisesArgumentNullException "overriddenMethod" (fun () -> methodSymbol.Overrides null |> ignore)
 
     [<Test>]
     let ``returns false for non-overriding method`` () =
@@ -78,7 +77,7 @@ module ``IsUpdateMethod method`` =
     let ``throws when semantic model is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        raisesArgumentNullException "semanticModel" <@ methodSymbol.IsUpdateMethod (null : SemanticModel) @>
+        raisesArgumentNullException "semanticModel" (fun () -> methodSymbol.IsUpdateMethod (null : SemanticModel) |> ignore)
 
     [<Test>]
     let ``returns true for overriden Update method of component`` () =

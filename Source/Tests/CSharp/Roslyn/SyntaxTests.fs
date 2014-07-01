@@ -25,7 +25,6 @@ namespace SafetySharp.Tests.CSharp.Roslyn.SyntaxTests
 open System
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
@@ -47,7 +46,7 @@ module ``AsSingleLine method`` =
 
     [<Test>]
     let ``throws when null is passed`` () =
-        raisesArgumentNullException "syntaxNode" <@ Syntax.AsSingleLine null @>
+        raisesArgumentNullException "syntaxNode" (fun () -> Syntax.AsSingleLine null |> ignore)
 
     [<Test>]
     let ``does not modify single line statements`` () =
@@ -68,17 +67,17 @@ module ``EnsureSameLineCount method`` =
 
     [<Test>]
     let ``throws when syntax node is null`` () =
-        raisesArgumentNullException "syntaxNode" <@ Syntax.EnsureSameLineCount (SyntaxFactory.ParseExpression "1") null @>
+        raisesArgumentNullException "syntaxNode" (fun () -> Syntax.EnsureSameLineCount (SyntaxFactory.ParseExpression "1") null |> ignore)
 
     [<Test>]
     let ``throws when template node is null`` () =
-        raisesArgumentNullException "templateNode" <@ Syntax.EnsureSameLineCount null (SyntaxFactory.ParseExpression "1") @>
+        raisesArgumentNullException "templateNode" (fun () -> Syntax.EnsureSameLineCount null (SyntaxFactory.ParseExpression "1") |> ignore)
 
     [<Test>]
     let ``throws when syntax node has more lines than template node`` () =
         let syntaxNode = SyntaxFactory.ParseExpression "1 +\n 1"
         let templateNode = SyntaxFactory.ParseExpression "1 + 1"
-        raises<InvalidOperationException> <@ Syntax.EnsureSameLineCount templateNode syntaxNode @>
+        raises<InvalidOperationException> (fun () -> Syntax.EnsureSameLineCount templateNode syntaxNode |> ignore)
 
     [<Test>]
     let ``does not modify syntax node when line counts match`` () =
@@ -97,23 +96,23 @@ module ``EnsureSameLineCount method`` =
 module ``AutoProperty method`` =
     [<Test>]
     let ``throws when property name is null`` () =
-        raisesArgumentNullException "propertyName" <@ Syntax.AutoProperty null "int" Public None None @>
+        raisesArgumentNullException "propertyName" (fun () -> Syntax.AutoProperty null "int" Public None None |> ignore)
 
     [<Test>]
     let ``throws when property name is empty`` () =
-        raisesArgumentException "propertyName" <@ Syntax.AutoProperty "  " "int" Public None None @>
+        raisesArgumentException "propertyName" (fun () -> Syntax.AutoProperty "  " "int" Public None None |> ignore)
 
     [<Test>]
     let ``throws when property type is null`` () =
-        raisesArgumentNullException "propertyType" <@ Syntax.AutoProperty "Name" null Public None None @>
+        raisesArgumentNullException "propertyType" (fun () -> Syntax.AutoProperty "Name" null Public None None |> ignore)
 
     [<Test>]
     let ``throws when property type is empty`` () =
-        raisesArgumentException "propertyType" <@ Syntax.AutoProperty "Name" "  " Public None None @>
+        raisesArgumentException "propertyType" (fun () -> Syntax.AutoProperty "Name" "  " Public None None |> ignore)
 
     [<Test>]
     let ``throws when visibility modifiers are specified for both accessors`` () =
-        raises<InvalidOperationException> <@ Syntax.AutoProperty "Name" "int" Public (Some Public) (Some Public) @>
+        raises<InvalidOperationException> (fun () -> Syntax.AutoProperty "Name" "int" Public (Some Public) (Some Public) |> ignore)
 
     [<Test>]
     let ``creates property without accessor visibility modifiers`` () =
@@ -139,7 +138,7 @@ module ``AutoProperty method`` =
 module ``Lambda method`` =
     [<Test>]
     let ``throws when body is null`` () =
-        raisesArgumentNullException "body" <@ Syntax.Lambda [] null @>
+        raisesArgumentNullException "body" (fun () -> Syntax.Lambda [] null |> ignore)
 
     [<Test>]
     let ``creates lambda with empty argument list`` () =

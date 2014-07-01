@@ -25,10 +25,10 @@ namespace SafetySharp.Tests
 open System
 open System.Linq
 open System.Linq.Expressions
-open System.Reflection
+open System.IO
 open SafetySharp.Modeling
-open Swensen.Unquote
 open SafetySharp.Internal.Metamodel
+open NUnit.Framework
 
 [<AutoOpen>]
 module internal TestHelpers =
@@ -36,15 +36,34 @@ module internal TestHelpers =
     /// Raises an <see cref="InvalidOperationException" /> with the given message.
     let inline invalidOp message = Printf.ksprintf invalidOp message
 
-    /// Checks whether the given quoted expression raises an <see cref="ArgumentNullException"/> for the argument
-    /// with the given name.
-    let raisesArgumentNullException argumentName quotedExpression =
-        raisesWith<ArgumentNullException> quotedExpression (fun e -> <@ e.ParamName = argumentName @>)
+     /// Checks whether the given function raises an exception of the given type.
+    let raisesWith<'T when 'T :> Exception> func =
+        Assert.Throws<'T> (fun () -> func ())
 
-    /// Checks whether the given quoted expression raises an <see cref="ArgumentException"/> for the argument
-    /// with the given name.
-    let raisesArgumentException argumentName quotedExpression =
-        raisesWith<ArgumentException> quotedExpression (fun e -> <@ e.ParamName = argumentName @>)
+    /// Checks whether the given function raises an exception of the given type.
+    let raises<'T when 'T :> Exception> func =
+        raisesWith<'T> func |> ignore
+
+    /// Checks whether the given function raises an <see cref="ArgumentNullException"/> for the argument with the given name.
+    let raisesArgumentNullException argumentName func =
+        let e = raisesWith<ArgumentNullException> func
+        Assert.AreEqual (e.ParamName, argumentName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
+
+    /// Checks whether the given function raises an <see cref="ArgumentException"/> for the argument with the given name.
+    let raisesArgumentException argumentName func =
+        let e = raisesWith<ArgumentException> func
+        Assert.AreEqual (e.ParamName, argumentName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
+
+    /// Asserts that the two values are equal.
+    let (=?) left right =
+        let result = left = right
+        if not result then
+            Assert.Fail ()
+
+    /// Asserts that the two values are not equal.
+    let (<>?) left right =
+        let result = left <> right
+        Assert.IsTrue (result)
 
     /// Gets the symbol for the empty Update method of a component.
     let emptyUpdateMethodSymbol = 

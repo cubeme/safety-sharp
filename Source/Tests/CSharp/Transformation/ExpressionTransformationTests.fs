@@ -24,7 +24,6 @@ namespace SafetySharp.Tests.CSharp.Transformation
 
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open SafetySharp.Internal.CSharp
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Tests
@@ -89,7 +88,7 @@ module ExpressionTransformationTests =
 
     [<Test>]
     let ``nested unary expressions`` () =
-        transform "-+1" =? UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus)
+        transform "+1" =? UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus)
         transform "!!true" =? UnaryExpression(UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), UnaryOperator.LogicalNot)
 
     [<Test>]

@@ -129,10 +129,6 @@
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <Reference Include="Unquote">
-      <HintPath>..\packages\Unquote.2.2.2\lib\net40\Unquote.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -24,7 +24,6 @@ namespace SafetySharp.Tests.CSharp.Roslyn.ITypeSymbolExtensionsTests
 
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -93,7 +92,7 @@ module ``IsDerivedFromComponent method`` =
     [<Test>]
     let ``throws when semantic model is null`` () =
         let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
-        raisesArgumentNullException "semanticModel" <@ symbol.IsDerivedFromComponent (null : SemanticModel) @>
+        raisesArgumentNullException "semanticModel" (fun () -> symbol.IsDerivedFromComponent (null : SemanticModel) |> ignore)
 
     [<Test>]
     let ``returns false for class with no base`` () =
@@ -126,7 +125,7 @@ module ``ImplementsIComponent method`` =
     [<Test>]
     let ``throws when semantic model is null`` () =
         let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
-        raisesArgumentNullException "semanticModel" <@ symbol.ImplementsIComponent (null : SemanticModel) @>
+        raisesArgumentNullException "semanticModel" (fun () -> symbol.ImplementsIComponent (null : SemanticModel) |> ignore)
 
     [<Test>]
     let ``returns false for class with no base`` () =

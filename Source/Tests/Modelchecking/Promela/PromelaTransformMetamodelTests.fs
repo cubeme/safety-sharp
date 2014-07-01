@@ -23,7 +23,6 @@
 namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformMetamodelTests
 
 open NUnit.Framework
-open Swensen.Unquote
 open SafetySharp.Tests.Modelchecking
 
 open SafetySharp.Internal.Utilities

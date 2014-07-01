@@ -23,10 +23,9 @@
 namespace SafetySharp.Tests.Modelchecking.Promela.PromelaAstToFileTests
 
 open NUnit.Framework
-open Swensen.Unquote
-
 open SafetySharp.Internal.Modelchecking.PromelaSpin
 open PromelaAstHelpers
+open SafetySharp.Tests
 
 [<TestFixture>]
 module EnumTests =

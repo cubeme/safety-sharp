@@ -27,7 +27,6 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -43,12 +42,12 @@ module ``FinalizeMetadata method`` =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
 
-        raises<InvalidOperationException> <@ model.FinalizeMetadata () @>
+        raises<InvalidOperationException> (fun () -> model.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``throws when no partition root has been set`` () =
         let model = EmptyModel ()
-        raises<InvalidOperationException> <@ model.FinalizeMetadata () @>
+        raises<InvalidOperationException> (fun () -> model.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``updates the IsMetadataFinalized property`` () =
@@ -60,34 +59,36 @@ module ``FinalizeMetadata method`` =
 
 [<TestFixture>]
 module ``SetPartitionRoots method`` =
-    let contains components (e : SharedComponentsException) = <@ e.Components = components @>
+    let raisesSharedComponentsException func components =
+        let e = raisesWith<SharedComponentsException> func 
+        e.Components =? components
 
     [<Test>]
     let ``throws when null is passed`` () =
-        raisesArgumentNullException "rootComponents" <@ TestModel null @>
+        raisesArgumentNullException "rootComponents" (fun () -> TestModel null |> ignore)
 
     [<Test>]
     let ``throws when empty component array is passed`` () =
-        raisesArgumentException "rootComponents" <@ TestModel [||] @>
+        raisesArgumentException "rootComponents" (fun () -> TestModel [||] |> ignore)
 
     [<Test>]
     let ``throws when the metadata has already been finalized`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
 
-        raises<InvalidOperationException> <@ model.SetPartitions [| EmptyComponent () :> Component |] @>
+        raises<InvalidOperationException> (fun () -> model.SetPartitions [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
     let ``throws when method is called twice on same object`` () =
         let model = EmptyModel ()
         model.SetPartitions [| EmptyComponent () :> Component |]
 
-        raises<InvalidOperationException> <@ model.SetPartitions [| EmptyComponent () :> Component |] @>
+        raises<InvalidOperationException> (fun () -> model.SetPartitions [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
     let ``throws when component is shared within the same partition root at the same level`` () =
         let component1 = EmptyComponent ()
-        raisesWith<SharedComponentsException> <@ TestModel (component1, component1) @> (contains [component1])
+        raisesSharedComponentsException (fun () -> TestModel (component1, component1) |> ignore) [component1]
 
     [<Test>]
     let ``throws when component is shared within the same partition root at different levels`` () =
@@ -97,7 +98,7 @@ module ``SetPartitionRoots method`` =
         let component4 = ComplexComponent (component1, component3, obj ())
         let component5 = ComplexComponent (component4, component2, obj ())
 
-        raisesWith<SharedComponentsException> <@ TestModel component5 @> (contains [component2])
+        raisesSharedComponentsException (fun () -> TestModel component5 |> ignore) [component2]
 
     [<Test>]
     let ``throws when component is shared between different roots at different levels`` () =
@@ -108,7 +109,7 @@ module ``SetPartitionRoots method`` =
         let component5 =  EmptyComponent ()
         let component6 =  ComplexComponent (component5, component2, obj ())
 
-        raisesWith<SharedComponentsException> <@ TestModel (component4, component6) @> (contains [component2])
+        raisesSharedComponentsException (fun () -> TestModel (component4, component6) |> ignore) [component2]
 
     [<Test>]
     let ``throws when multiple components are shared between different roots at different levels`` () =
@@ -118,14 +119,14 @@ module ``SetPartitionRoots method`` =
         let component4 =  ComplexComponent (component1, component3, obj ())
         let component5 =  ComplexComponent (component1, component2, obj ())
 
-        raisesWith<SharedComponentsException> <@ TestModel (component4, component5) @> (contains [component1; component2])
+        raisesSharedComponentsException (fun () -> TestModel (component4, component5) |> ignore) [component1]
 
 [<TestFixture>]
 module ``Components property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let model = TestModel (EmptyComponent ())
-        raises<InvalidOperationException> <@ model.Components @>
+        raises<InvalidOperationException> (fun () -> model.Components |> ignore)
 
     [<Test>]
     let ``does not contain non-component null-objects`` () =
@@ -232,7 +233,7 @@ module ``PartitionRoots property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let model = TestModel (EmptyComponent ())
-        raises<InvalidOperationException> <@ model.PartitionRoots @>
+        raises<InvalidOperationException> (fun () -> model.PartitionRoots |> ignore)
 
     [<Test>]
     let ``contains single top-level component`` () =

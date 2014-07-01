@@ -25,7 +25,6 @@ namespace SafetySharp.Tests.CSharp.Roslyn.MethodDeclarationExtensionsTests
 open System
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp

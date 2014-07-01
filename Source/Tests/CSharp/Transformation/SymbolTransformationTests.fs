@@ -25,7 +25,6 @@ namespace SafetySharp.Tests.CSharp.Transformation.SymbolTransformationTests
 open System
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -62,18 +61,18 @@ module private SymbolTransformationTestsHelper =
 module ``TransformComponentSymbols method`` =
     [<Test>]
     let ``throws when null compilation is passed`` () =
-        raisesArgumentNullException "compilation" <@ SymbolTransformation.TransformComponentSymbols null @>
+        raisesArgumentNullException "compilation" (fun () -> SymbolTransformation.TransformComponentSymbols null |> ignore)
 
     [<Test>]
     let ``throws when null model is passed`` () =
         let compilation = TestCompilation("").CSharpCompilation
-        raisesArgumentNullException "model" <@ SymbolTransformation.Transform compilation null @>
+        raisesArgumentNullException "model" (fun () -> SymbolTransformation.Transform compilation null |> ignore)
 
     [<Test>]
     let ``throws when non-finalized model is passed`` () =
         let compilation = TestCompilation("").CSharpCompilation
         let model = TestModel (EmptyComponent ())
-        raisesArgumentException "model" <@ SymbolTransformation.Transform compilation model @>
+        raisesArgumentException "model" (fun () -> SymbolTransformation.Transform compilation model |> ignore)
 
 [<TestFixture>]
 module ``TransformModelSymbol method`` =
@@ -81,14 +80,14 @@ module ``TransformModelSymbol method`` =
     let ``throws when null model is passed`` () =
         let compilation = TestCompilation("").CSharpCompilation
         let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation
-        raisesArgumentNullException "model" <@ SymbolTransformation.TransformModelSymbol symbolResolver null @>
+        raisesArgumentNullException "model" (fun () -> SymbolTransformation.TransformModelSymbol symbolResolver null |> ignore)
 
     [<Test>]
     let ``throws when non-finalized model is passed`` () =
         let compilation = TestCompilation("").CSharpCompilation
         let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation
         let model = TestModel (EmptyComponent ())
-        raisesArgumentException "model" <@ SymbolTransformation.TransformModelSymbol symbolResolver model @>
+        raisesArgumentException "model" (fun () -> SymbolTransformation.TransformModelSymbol symbolResolver model |> ignore)
 
 [<TestFixture>]
 module ``ModelSymbol property`` =
@@ -224,14 +223,14 @@ module ``ResolveComponent(INamedTypeSymbol) method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {} class B : Component {}"
-        raisesArgumentNullException "componentSymbol" <@ symbolResolver.ResolveComponent (null : INamedTypeSymbol) @>
+        raisesArgumentNullException "componentSymbol" (fun () -> symbolResolver.ResolveComponent (null : INamedTypeSymbol) |> ignore)
 
     [<Test>]
     let ``throws when non-component is passed`` () =
         compile "class A : Component {} class B {}"
         let classB = compilation.FindClassSymbol "B"
 
-        raisesArgumentException "componentSymbol" <@ symbolResolver.ResolveComponent classB @>
+        raisesArgumentException "componentSymbol" (fun () -> symbolResolver.ResolveComponent classB |> ignore)
 
     [<Test>]
     let ``returns symbol for transformed component`` () =
@@ -255,12 +254,12 @@ module ``ResolveComponent(Component) method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {} class B : Component {}"
-        raisesArgumentNullException "componentObject" <@ symbolResolver.ResolveComponent (null : Component) @>
+        raisesArgumentNullException "componentObject" (fun () -> symbolResolver.ResolveComponent (null : Component) |> ignore)
 
     [<Test>]
     let ``throws when component object with unknown type is passed`` () =
         compile "class A : Component {}"
-        raisesArgumentException "componentObject" <@ symbolResolver.ResolveComponent (EmptyComponent ()) @>
+        raisesArgumentException "componentObject" (fun () -> symbolResolver.ResolveComponent (EmptyComponent ()) |> ignore)
 
     [<Test>]
     let ``returns symbol for component object of transformed type`` () =
@@ -297,28 +296,28 @@ module ``ResolveComponent(Component) method`` =
         symbolResolver.ResolveComponent componentB =? emptyComponentSymbol "A"
 
         // We have to check for reference equality here
-        test <@ obj.ReferenceEquals(symbolResolver.ResolveComponent componentA, symbolResolver.ResolveComponent componentB) @>
+        obj.ReferenceEquals(symbolResolver.ResolveComponent componentA, symbolResolver.ResolveComponent componentB) =? true
 
 [<TestFixture>]
 module ``ResolveField method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {} class B : Component {}"
-        raisesArgumentNullException "fieldSymbol" <@ symbolResolver.ResolveField null @>
+        raisesArgumentNullException "fieldSymbol" (fun () -> symbolResolver.ResolveField null |> ignore)
 
     [<Test>]
     let ``throws when field of non-component is passed`` () =
         compile "class A : Component {} class B { int f; }"
         let field = compilation.FindFieldSymbol "B" "f"
 
-        raisesArgumentException "fieldSymbol" <@ symbolResolver.ResolveField field @>
+        raisesArgumentException "fieldSymbol" (fun () -> symbolResolver.ResolveField field |> ignore)
 
     [<Test>]
     let ``throws when subcomponent field is passed`` () =
         compile "class A : Component { B b; } class B : Component { }"
         let field = compilation.FindFieldSymbol "A" "b"
 
-        raisesArgumentException "fieldSymbol" <@ symbolResolver.ResolveField field @>
+        raisesArgumentException "fieldSymbol" (fun () -> symbolResolver.ResolveField field |> ignore)
 
     [<Test>]
     let ``returns symbol for field of transformed component`` () =
@@ -349,28 +348,28 @@ module ``ResolveField method`` =
         symbolResolver.ResolveField field3 =? { Name = "g"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveField field1, symbolResolver.ResolveField field2) @>
+        obj.ReferenceEquals(symbolResolver.ResolveField field1, symbolResolver.ResolveField field2) =? false
 
 [<TestFixture>]
 module ``ResolveSubcomponent method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {} class B : Component {}"
-        raisesArgumentNullException "subcomponentSymbol" <@ symbolResolver.ResolveSubcomponent null @>
+        raisesArgumentNullException "subcomponentSymbol" (fun () -> symbolResolver.ResolveSubcomponent null |> ignore)
 
     [<Test>]
     let ``throws when subcomponent of non-component is passed`` () =
         compile "class A : Component {} class B { A f; }"
         let field = compilation.FindFieldSymbol "B" "f"
 
-        raisesArgumentException "subcomponentSymbol" <@ symbolResolver.ResolveSubcomponent field @>
+        raisesArgumentException "subcomponentSymbol" (fun () -> symbolResolver.ResolveSubcomponent field |> ignore)
 
     [<Test>]
     let ``throws when non-subcomponent field is passed`` () =
         compile "class A : Component { int b; } class B : Component { }"
         let field = compilation.FindFieldSymbol "A" "b"
 
-        raisesArgumentException "subcomponentSymbol" <@ symbolResolver.ResolveSubcomponent field @>
+        raisesArgumentException "subcomponentSymbol" (fun () -> symbolResolver.ResolveSubcomponent field |> ignore)
 
     [<Test>]
     let ``returns symbol for IComponent for subcomponent of type IComponent`` () =
@@ -415,20 +414,20 @@ module ``ResolveSubcomponent method`` =
         symbolResolver.ResolveSubcomponent field3 =? { Name = "a2"; ComponentSymbol = components.[0] }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveSubcomponent field1, symbolResolver.ResolveSubcomponent field2) @>
+        obj.ReferenceEquals(symbolResolver.ResolveSubcomponent field1, symbolResolver.ResolveSubcomponent field2) =? false
         
 [<TestFixture>]
 module ``ResolveParameter method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component { void M(int i) {} }"
-        raisesArgumentNullException "parameterSymbol" <@ symbolResolver.ResolveParameter null @>
+        raisesArgumentNullException "parameterSymbol" (fun () -> symbolResolver.ResolveParameter null |> ignore)
 
     [<Test>]
     let ``throws when a parameter of non-component method is passed`` () =
         compile "class A { void M(int i) {} }"
         let parameterSymbol = compilation.FindParameterSymbol "A" "M" "i"
-        raisesArgumentException "parameterSymbol" <@ symbolResolver.ResolveParameter parameterSymbol @>
+        raisesArgumentException "parameterSymbol" (fun () -> symbolResolver.ResolveParameter parameterSymbol |> ignore)
 
     [<Test>]
     let ``returns symbol for parameter of transformed component method`` () =
@@ -458,20 +457,20 @@ module ``ResolveParameter method`` =
         symbolResolver.ResolveParameter parameter3 =? { Name = "i"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveParameter parameter1, symbolResolver.ResolveParameter parameter3) @>
+        obj.ReferenceEquals(symbolResolver.ResolveParameter parameter1, symbolResolver.ResolveParameter parameter3) =? false
 
 [<TestFixture>]
 module ``ResolveLocal method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component { void M(int i) {} }"
-        raisesArgumentNullException "localSymbol" <@ symbolResolver.ResolveLocal null @>
+        raisesArgumentNullException "localSymbol" (fun () -> symbolResolver.ResolveLocal null |> ignore)
 
     [<Test>]
     let ``throws when a local of non-component method is passed`` () =
         compile "class A { void M() { int a; } }"
         let localSymbol = compilation.FindLocalSymbol "A" "M" "a"
-        raisesArgumentException "localSymbol" <@ symbolResolver.ResolveLocal localSymbol @>
+        raisesArgumentException "localSymbol" (fun () -> symbolResolver.ResolveLocal localSymbol |> ignore)
 
     [<Test>]
     let ``returns symbol for local of transformed component method`` () =
@@ -488,7 +487,7 @@ module ``ResolveLocal method`` =
         symbolResolver.ResolveLocal localSymbols.[1] =? { Name = "i"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveLocal localSymbols.[0], symbolResolver.ResolveLocal localSymbols.[1]) @>
+        obj.ReferenceEquals(symbolResolver.ResolveLocal localSymbols.[0], symbolResolver.ResolveLocal localSymbols.[1]) =? false
 
     [<Test>]
     let ``returns different symbols for different locals of same transformed component method`` () =
@@ -513,21 +512,21 @@ module ``ResolveLocal method`` =
         symbolResolver.ResolveLocal local2 =? { Name = "a"; Type = TypeSymbol.Integer }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveLocal local1, symbolResolver.ResolveLocal local2) @>
+        obj.ReferenceEquals(symbolResolver.ResolveLocal local1, symbolResolver.ResolveLocal local2) =? false
 
 [<TestFixture>]
 module ``ResolveMethod method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compile "class A : Component {} class B : Component {}"
-        raisesArgumentNullException "methodSymbol" <@ symbolResolver.ResolveMethod null @>
+        raisesArgumentNullException "methodSymbol" (fun () -> symbolResolver.ResolveMethod null |> ignore)
 
     [<Test>]
     let ``throws when method of non-component is passed`` () =
         compile "class A : Component {} class B { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
 
-        raisesArgumentException "methodSymbol" <@ symbolResolver.ResolveMethod methodSymbol @>
+        raisesArgumentException "methodSymbol" (fun () -> symbolResolver.ResolveMethod methodSymbol |> ignore)
 
     [<Test>]
     let ``throws when constructor is passed`` () =
@@ -535,7 +534,7 @@ module ``ResolveMethod method`` =
         let classSymbol = compilation.FindClassSymbol "A"
         let constructorSymbol = classSymbol.GetMembers().OfType<IMethodSymbol>().Single(fun method' -> method'.MethodKind = MethodKind.Constructor)
 
-        raisesArgumentException "methodSymbol" <@ symbolResolver.ResolveMethod constructorSymbol @>
+        raisesArgumentException "methodSymbol" (fun () -> symbolResolver.ResolveMethod constructorSymbol |> ignore)
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
@@ -554,7 +553,7 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) @>
+        obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) =? true
 
     [<Test>]
     let ``returns base update method symbol for transformed component that does not override update method`` () =
@@ -566,7 +565,7 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) @>
+        obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) =? true
 
     [<Test>]
     let ``returns overriden base update method symbol for transformed component that does not override update method`` () =
@@ -578,7 +577,7 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod methodSymbol =? { Name = "Update"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        test <@ obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) @>
+        obj.ReferenceEquals(componentSymbol.UpdateMethod, symbolResolver.ResolveMethod methodSymbol) =? true
 
     [<Test>]
     let ``returns different symbols for different methods of same transformed component`` () =
@@ -602,7 +601,7 @@ module ``ResolveMethod method`` =
         symbolResolver.ResolveMethod method3 =? { Name = "N"; ReturnType = None; Parameters = []; Locals = [] }
 
         // We have to check for reference equality here
-        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveMethod method1, symbolResolver.ResolveMethod method2) @>
+        obj.ReferenceEquals(symbolResolver.ResolveMethod method1, symbolResolver.ResolveMethod method2) =? false
 
 [<TestFixture>]
 module ``ResolveCSharpMethod method`` =
@@ -611,7 +610,7 @@ module ``ResolveCSharpMethod method`` =
         compile "class A : Component {} class B { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "B" "M"
 
-        raisesArgumentException "methodSymbol" <@ symbolResolver.ResolveCSharpMethod <| symbolResolver.ResolveMethod methodSymbol @> 
+        raisesArgumentException "methodSymbol" (fun () -> symbolResolver.ResolveCSharpMethod <| symbolResolver.ResolveMethod methodSymbol |> ignore) 
 
     [<Test>]
     let ``returns symbol for method of transformed component`` () =
@@ -675,21 +674,21 @@ module ``ResolveComponentReference method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compileModel "class A : Component {}" ["A"]
-        raisesArgumentNullException "componentObject" <@ symbolResolver.ResolveComponentReference (null : Component) @>
+        raisesArgumentNullException "componentObject" (fun () -> symbolResolver.ResolveComponentReference (null : Component) |> ignore)
 
     [<Test>]
     let ``throws when component object with unknown type is passed`` () =
         compileModel "class A : Component {}" ["A"]
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
-        raisesArgumentException "componentObject" <@ symbolResolver.ResolveComponentReference component' @>
+        raisesArgumentException "componentObject" (fun () -> symbolResolver.ResolveComponentReference component' |> ignore)
 
     [<Test>]
     let ``throws when component objects have not yet been transformed`` () =
         compile "class A : Component {}"
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
-        raises<InvalidOperationException> <@ symbolResolver.ResolveComponentReference component' @>
+        raises<InvalidOperationException> (fun () -> symbolResolver.ResolveComponentReference component' |> ignore)
 
     [<Test>]
     let ``returns symbol for partition root component reference`` () =
@@ -718,21 +717,21 @@ module ``ResolvePartition method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         compileModel "class A : Component {}" ["A"]
-        raisesArgumentNullException "componentObject" <@ symbolResolver.ResolvePartition (null : Component) @>
+        raisesArgumentNullException "componentObject" (fun () -> symbolResolver.ResolvePartition (null : Component) |> ignore)
 
     [<Test>]
     let ``throws when component object with unknown type is passed`` () =
         compileModel "class A : Component {}" ["A"]
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
-        raisesArgumentException "componentObject" <@ symbolResolver.ResolvePartition component' @>
+        raisesArgumentException "componentObject" (fun () -> symbolResolver.ResolvePartition component' |> ignore)
 
     [<Test>]
     let ``throws when component objects have not yet been transformed`` () =
         compile "class A : Component {}"
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
-        raises<InvalidOperationException> <@ symbolResolver.ResolvePartition component' @>
+        raises<InvalidOperationException> (fun () -> symbolResolver.ResolvePartition component' |> ignore)
 
     [<Test>]
     let ``returns symbol for single partition`` () =

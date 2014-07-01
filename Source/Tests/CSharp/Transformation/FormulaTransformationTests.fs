@@ -25,7 +25,6 @@ namespace SafetySharp.Tests.CSharp.Transformation.FormulaTransformationTests
 open System
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open SafetySharp.Internal.CSharp
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling
@@ -86,17 +85,18 @@ module private FormulaTransformationTestsHelper =
         transform (formula :?> CtlFormula).Formula
 
     let raisesUnknownComponent expression = 
-        raisesWith<UnknownComponentException> expression (fun e -> <@ e.UnknownComponent = unknownComponent @>)
+        let e = raisesWith<UnknownComponentException> expression 
+        e.UnknownComponent =? unknownComponent
 
 [<TestFixture>]
 module ``Linear Temporal Logic`` =
     [<Test>]
     let ``throws when unknown component instance is accessed directly`` () =
-        raisesUnknownComponent <@ compileLtl "Ltl.StateExpression(() => !Unknown.boolField)" @>
+        raisesUnknownComponent (fun () -> compileLtl "Ltl.StateExpression(() => !Unknown.boolField)" |> ignore)
 
     [<Test>]
     let ``throws when unknown component instance is accessed indirectly`` () =
-        raisesUnknownComponent <@ compileLtl "Ltl.StateExpression(() => !unknownAccess)" @>
+        raisesUnknownComponent (fun () -> compileLtl "Ltl.StateExpression(() => !unknownAccess)" |> ignore)
 
     [<Test>]
     let ``transform state expression`` () =
@@ -183,11 +183,11 @@ module ``Linear Temporal Logic`` =
 module ``Computation Tree Logic`` =
     [<Test>]
     let ``throws when unknown component instance is accessed directly`` () =
-        raisesUnknownComponent <@ compileCtl "Ctl.StateExpression(() => !Unknown.boolField)" @>
+        raisesUnknownComponent (fun () -> compileCtl "Ctl.StateExpression(() => !Unknown.boolField)" |> ignore)
 
     [<Test>]
     let ``throws when unknown component instance is accessed indirectly`` () =
-        raisesUnknownComponent <@ compileCtl "Ctl.StateExpression(() => !unknownAccess)" @>
+        raisesUnknownComponent (fun () -> compileCtl "Ctl.StateExpression(() => !unknownAccess)" |> ignore)
 
     [<Test>]
     let ``transform state expression`` () =

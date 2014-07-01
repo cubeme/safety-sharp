@@ -24,7 +24,6 @@ namespace SafetySharp.Tests.CSharp.Transformation.StatementTransformationTests
 
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open SafetySharp.Internal.CSharp
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Tests

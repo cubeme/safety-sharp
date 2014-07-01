@@ -27,7 +27,6 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -63,36 +62,36 @@ module ``SetInitialValues method`` =
     [<Test>]
     let ``throws when field expression is null`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentNullException "field" <@ component'.SetInitialValues (null, 1, 2) @>
+        raisesArgumentNullException "field" (fun () -> component'.SetInitialValues (null, 1, 2) |> ignore)
 
     [<Test>]
     let ``throws when initial values is null`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentNullException "initialValues" <@ component'.SetInitialValues (createFieldExpression<int> component' "_field", null) @>
+        raisesArgumentNullException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", null) |> ignore)
 
     [<Test>]
     let ``throws when initial values is empty`` () =
         let component' = FieldComponent<int>()
-        raisesArgumentException "initialValues" <@ component'.SetInitialValues (createFieldExpression<int> component' "_field") @>
+        raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field") |> ignore)
 
     [<Test>]
     let ``throws when the component metadata has already been finalized`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<InvalidOperationException> <@ component'.SetInitialValues (createFieldExpression<int> component' "_field", 1) @>
+        raises<InvalidOperationException> (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", 1) |> ignore)
 
     [<Test>]
     let ``throws when field does not reference a field of the component`` () =
         let component' = InheritedComponent ()
         let otherComponent = FieldComponent<int, int> ()
 
-        raisesArgumentException "field" <@ component'.SetInitialValues (createFieldExpression<int> otherComponent "_field1", 17)  @>
+        raisesArgumentException "field" (fun () -> component'.SetInitialValues (createFieldExpression<int> otherComponent "_field1", 17)  |> ignore)
 
     [<Test>]
     let ``throws when undefined enum value is passed`` () =
         let component' = FieldComponent<TestEnum> ()
-        raisesArgumentException "initialValues" <@ component'.SetInitialValues (createFieldExpression<TestEnum> component' "_field", enum<TestEnum> 177) @>
+        raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<TestEnum> component' "_field", enum<TestEnum> 177) |> ignore)
 
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
@@ -101,7 +100,7 @@ module ``FinalizeMetadata method`` =
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
 
-        raises<InvalidOperationException> <@ component'.FinalizeMetadata () @>
+        raises<InvalidOperationException> (fun () -> component'.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``updates the IsMetadataFinalized property`` () =
@@ -118,33 +117,33 @@ module ``GetInitialValuesOfField method`` =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" <@ component'.GetInitialValuesOfField null @>
+        raisesArgumentNullException "fieldName" (fun () -> component'.GetInitialValuesOfField null |> ignore)
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" <@ component'.GetInitialValuesOfField "" @>
+        raisesArgumentException "fieldName" (fun () -> component'.GetInitialValuesOfField "" |> ignore)
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" <@ component'.GetInitialValuesOfField "abcd" @>
+        raisesArgumentException "fieldName" (fun () -> component'.GetInitialValuesOfField "abcd" |> ignore)
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> 3
-        raises<InvalidOperationException> <@ component'.GetInitialValuesOfField <| fsharpFieldName "_field" @>
+        raises<InvalidOperationException> (fun () -> component'.GetInitialValuesOfField <| fsharpFieldName "_field" |> ignore)
 
     [<Test>]
     let ``throws for subcomponent field`` () =
         let component' = OneSubcomponent (FieldComponent<int> 3)
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" <@ component'.GetInitialValuesOfField <| fsharpFieldName "_component" @>
+        raisesArgumentException "fieldName" (fun () -> component'.GetInitialValuesOfField <| fsharpFieldName "_component" |> ignore)
 
     [<Test>]
     let ``returns initial value of single field`` () =
@@ -233,33 +232,33 @@ module ``GetSubcomponent method`` =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent null @>
+        raisesArgumentNullException "subcomponentName" (fun () -> component'.GetSubcomponent null |> ignore)
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent "" @>
+        raisesArgumentException "subcomponentName" (fun () -> component'.GetSubcomponent "" |> ignore)
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> <@ component'.GetSubcomponent (fsharpFieldName "_field") @>
+        raises<InvalidOperationException> (fun () -> component'.GetSubcomponent (fsharpFieldName "_field") |> ignore)
 
     [<Test>]
     let ``throws for non-component field`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent (fsharpFieldName "_field") @>
+        raisesArgumentException "subcomponentName" (fun () -> component'.GetSubcomponent (fsharpFieldName "_field") |> ignore)
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" <@ component'.GetSubcomponent (fsharpFieldName "abcd") @>
+        raisesArgumentException "subcomponentName" (fun () -> component'.GetSubcomponent (fsharpFieldName "abcd") |> ignore)
 
     [<Test>]
     let ``returns single subcomponent`` () =
@@ -284,7 +283,7 @@ module ``Subcomponents property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = OneSubcomponent (FieldComponent<int> 3)
-        raises<InvalidOperationException> <@ component'.Subcomponents @>
+        raises<InvalidOperationException> (fun () -> component'.Subcomponents |> ignore)
 
     [<Test>]
     let ``ignores non-component fields`` () =
@@ -341,35 +340,35 @@ module ``Access method`` =
     [<Test>]
     let ``throws when null is passed`` () =
         let component' = EmptyComponent ()
-        raisesArgumentNullException "memberName" <@ component'.Access<bool> null @>
+        raisesArgumentNullException "memberName" (fun () -> component'.Access<bool> null |> ignore)
 
     [<Test>]
     let ``throws when empty string is passed`` () =
         let component' = EmptyComponent ()
-        raisesArgumentException "memberName" <@ component'.Access<bool> "" @>
+        raisesArgumentException "memberName" (fun () -> component'.Access<bool> "" |> ignore)
 
     [<Test>]
     let ``throws when no member with the given name exists`` () =
         let component' = EmptyComponent ()
-        raises<InvalidOperationException> <@ component'.Access<bool> "xyz" @>
+        raises<InvalidOperationException> (fun () -> component'.Access<bool> "xyz" |> ignore)
 
     [<Test>]
     let ``throws when field with given name exists but types differ`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> <@ component'.Access<bool> (fsharpFieldName "_field") @>
+        raises<InvalidOperationException> (fun () -> component'.Access<bool> (fsharpFieldName "_field") |> ignore)
 
         let component' = FieldComponent<int, bool> ()
-        raises<InvalidOperationException> <@ component'.Access<bool> (fsharpFieldName "_field1") @>
-        raises<InvalidOperationException> <@ component'.Access<int> (fsharpFieldName "_field2") @>
+        raises<InvalidOperationException> (fun () -> component'.Access<bool> (fsharpFieldName "_field1") |> ignore)
+        raises<InvalidOperationException> (fun () -> component'.Access<int> (fsharpFieldName "_field2") |> ignore)
 
     [<Test>]
     let ``throws when property with given name exists but types differ`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> <@ component'.Access<bool> "_field" @>
+        raises<InvalidOperationException> (fun () -> component'.Access<bool> "_field" |> ignore)
 
         let component' = FieldComponent<int, bool> ()
-        raises<InvalidOperationException> <@ component'.Access<bool> "_field1" @>
-        raises<InvalidOperationException> <@ component'.Access<int> "_field2" @>
+        raises<InvalidOperationException> (fun () -> component'.Access<bool> "_field1" |> ignore)
+        raises<InvalidOperationException> (fun () -> component'.Access<int> "_field2" |> ignore)
 
     type SetterOnlyComponent () =
         inherit Component ()
@@ -378,7 +377,7 @@ module ``Access method`` =
     [<Test>]
     let ``throws when property has no getter`` () =
         let component' = SetterOnlyComponent ()
-        raises<InvalidOperationException> <@ component'.Access<int> "X" @>
+        raises<InvalidOperationException> (fun () -> component'.Access<int> "X" |> ignore)
 
     [<Test>]
     let ``gets field value when integer field with given name exists`` () =

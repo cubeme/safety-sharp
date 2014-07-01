@@ -25,7 +25,6 @@ namespace SafetySharp.Tests.CSharp.Roslyn.ArgumentExtensionsTests
 open System
 open System.Linq
 open NUnit.Framework
-open Swensen.Unquote
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
@@ -92,7 +91,7 @@ module ``ParameterHasAttribute method`` =
 
     [<Test>]
     let ``throws when semantic model is null`` () =
-        raisesArgumentNullException "semanticModel" <@ invocations.[0].ArgumentList.Arguments.[0].HasAttribute<LiftExpressionAttribute> null @>
+        raisesArgumentNullException "semanticModel" (fun () -> invocations.[0].ArgumentList.Arguments.[0].HasAttribute<LiftExpressionAttribute> null |> ignore)
 
     [<Test>]
     let ``returns false when no attribute is applied`` () =
@@ -143,7 +142,7 @@ module ``GetMethodSymbol method`` =
 
     [<Test>]
     let ``throws when semantic model is null`` () =
-        raisesArgumentNullException "semanticModel" <@ invocations.[0].ArgumentList.Arguments.[0].GetMethodSymbol null @>
+        raisesArgumentNullException "semanticModel" (fun () -> invocations.[0].ArgumentList.Arguments.[0].GetMethodSymbol null |> ignore)
 
     [<Test>]
     let ``returns correct method symbol`` () =
@@ -169,7 +168,7 @@ module ``GetMethodSymbol method`` =
 module ``IsOfType method`` =
     [<Test>]
     let ``throws when semantic model is null`` () =
-        raisesArgumentNullException "semanticModel" <@ invokeMethodO.ArgumentList.Arguments.[0].IsOfType<bool> null @>
+        raisesArgumentNullException "semanticModel" (fun () -> invokeMethodO.ArgumentList.Arguments.[0].IsOfType<bool> null |> ignore)
 
     [<Test>]
     let ``returns true for correct types`` () =
@@ -191,7 +190,7 @@ module ``IsOfType method`` =
 module ``IsBooleanExpressionArgument method`` =
     [<Test>]
     let ``throws when semantic model is null`` () =
-        raisesArgumentNullException "semanticModel" <@ invokeMethodO.ArgumentList.Arguments.[0].IsBooleanExpressionArgument null @>
+        raisesArgumentNullException "semanticModel" (fun () -> invokeMethodO.ArgumentList.Arguments.[0].IsBooleanExpressionArgument null |> ignore)
 
     [<Test>]
     let ``returns true for Boolean arguments`` () =
