@@ -31,7 +31,7 @@ open SafetySharp.Utilities
 
 /// A base class for C# code analyzers.
 [<AbstractClass>]
-type CSharpAnalyzer () =
+type internal CSharpAnalyzer () =
 
     /// The descriptor for the diagnostic emitted by the analyzer.
     [<DefaultValue>] val mutable descriptor : DiagnosticDescriptor

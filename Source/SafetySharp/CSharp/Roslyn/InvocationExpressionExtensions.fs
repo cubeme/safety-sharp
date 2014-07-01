@@ -33,7 +33,7 @@ open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="InvocationExpressionSyntax" /> instances.
 [<AutoOpen>]
-module InvocationExpressionExtensions =
+module internal InvocationExpressionExtensions =
     type InvocationExpressionSyntax with
 
         /// Checks whether the invocation expression invokes a CTL or LTL formula function.

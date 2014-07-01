@@ -34,7 +34,7 @@ open SafetySharp.Utilities
 /// Ensures that no enumerations explicitly declare an underlying type.
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalUnderlyingEnumType, LanguageNames.CSharp)>]
-type EnumUnderlyingTypeAnalyzer () as this =
+type internal EnumUnderlyingTypeAnalyzer () as this =
     inherit SyntaxNodeAnalyzer<EnumDeclarationSyntax> ()
 
     do this.Error DiagnosticIdentifiers.IllegalUnderlyingEnumType

@@ -36,7 +36,7 @@ open SafetySharp.CSharp.Roslyn
 [<TestFixture>]
 module ``Visibility property`` =
 
-    let getVisibility csharpCode =
+    let private getVisibility csharpCode =
         let compilation = TestCompilation csharpCode
         let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
         methodDeclaration.Visibility

@@ -38,5 +38,6 @@ module internal AssemblyInfo =
     [<assembly: AssemblyFileVersion("0.1.0.0")>]
     [<assembly: ComVisible(false)>]
     [<assembly: InternalsVisibleTo("Tests")>]
+    [<assembly: InternalsVisibleTo("ssc")>]
 
     do ()

@@ -33,11 +33,11 @@ open SafetySharp.Utilities
 open SafetySharp.CSharp.Roslyn
 
 /// Represents a callback that emits a diagnostic.
-type DiagnosticCallback = delegate of locationNode : SyntaxNode * [<ParamArray>] messageArgs : obj array -> unit
+type internal DiagnosticCallback = delegate of locationNode : SyntaxNode * [<ParamArray>] messageArgs : obj array -> unit
 
 /// A base class for syntax node analyzers.
 [<AbstractClass>]
-type SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
+type internal SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
     inherit CSharpAnalyzer ()
 
     interface ISyntaxTreeAnalyzer with

@@ -31,7 +31,7 @@ open SafetySharp.Utilities
 open SafetySharp.Modeling
 
 /// Normalizes all usages of the nondeterministic Choose methods.
-type ChooseMethodNormalizer () =
+type internal ChooseMethodNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
     override this.VisitBinaryExpression node =

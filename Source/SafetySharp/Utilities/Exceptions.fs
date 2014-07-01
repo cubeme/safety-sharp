@@ -32,6 +32,15 @@ module internal Exceptions =
     let inline invalidOp message = 
         Printf.ksprintf invalidOp message
 
+    /// Raises a <see cref="NotSupportedException" /> with the given message.
+    let inline notSupported message =
+        Printf.ksprintf (fun message -> raise (NotSupportedException message)) message
+
+    /// Raises a <see cref="NotSupportedException" /> with a message informing the user that another overload of the method
+    /// should be called with lifted expression parameters.
+    let invalidUnliftedCall =
+        notSupported "Call a lifted overload of the method instead." |> ignore
+
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
     let inline nullArg<'T when 'T : null> (argument : 'T) argumentName =
         if obj.ReferenceEquals(argument, null) then 

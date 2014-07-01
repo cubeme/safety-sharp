@@ -35,7 +35,7 @@ open SafetySharp.Modeling
 ///     --> public Action<int, decimal> MyMethod { private get; set; }
 /// - private extern bool MyMethod(int a)
 ///     --> private Func<int, bool> MyMethod { private get; set; }
-type ExternMethodNormalizer () =
+type internal ExternMethodNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
     override this.VisitMethodDeclaration node =

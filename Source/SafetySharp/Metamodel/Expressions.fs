@@ -23,12 +23,12 @@
 namespace SafetySharp.Metamodel
 
 /// Represents the operator in an unary expression.
-type UnaryOperator =
+type internal UnaryOperator =
     | Minus
     | LogicalNot
 
 /// Represents the operator in a binary expression.
-type BinaryOperator =
+type internal BinaryOperator =
     // Arithmetic operators
     | Add
     | Subtract
@@ -51,7 +51,7 @@ type BinaryOperator =
     | GreaterThanOrEqual
 
 /// Represents side-effect free expressions within a model.
-type Expression =
+type internal Expression =
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
     | BooleanLiteral of Value : bool
 

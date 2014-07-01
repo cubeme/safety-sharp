@@ -38,7 +38,7 @@ open SafetySharp.CSharp.Roslyn
 [<TestFixture>]
 module UpdateMethodVisibilityNormalizerTests =
 
-    let normalize csharpCode =
+    let private normalize csharpCode =
         let compilation = TestCompilation (csharpCode, SafetySharpAssembly.Modeling)
         let syntaxTree = UpdateMethodVisibilityNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
         syntaxTree.Descendants<MethodDeclarationSyntax>().Last().Visibility

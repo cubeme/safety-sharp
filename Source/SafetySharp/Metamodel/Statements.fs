@@ -23,7 +23,7 @@
 namespace SafetySharp.Metamodel
 
 /// Represents statements contained within method bodies.
-type Statement =
+type internal Statement =
     /// Represents the empty statement that does nothing.
     | EmptyStatement
 

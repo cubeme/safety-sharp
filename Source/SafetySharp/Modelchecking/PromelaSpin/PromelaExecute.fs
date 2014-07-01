@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Modelchecking.PromelaSpin
 
-module PromelaExecute =
+module internal PromelaExecute =
     let execute =""
 

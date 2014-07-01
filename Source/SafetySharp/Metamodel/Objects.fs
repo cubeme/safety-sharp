@@ -23,7 +23,7 @@
 namespace SafetySharp.Metamodel
 
 /// Represents an instantiation of a component field.
-type FieldObject = {
+type internal FieldObject = {
     /// The instantiated field symbol.
     FieldSymbol : FieldSymbol
 
@@ -32,7 +32,7 @@ type FieldObject = {
 } 
 
 /// Represents the instantiation of a component.
-type ComponentObject = {
+type internal ComponentObject = {
     /// The name of the component object. Component object names are unique within a single model object.
     Name : string
 
@@ -50,7 +50,7 @@ type ComponentObject = {
 } 
 
 /// Represents the instantiation of a partition.
-type PartitionObject = {
+type internal PartitionObject = {
     /// The instantiated partition symbol.
     PartitionSymbol : PartitionSymbol
 
@@ -59,7 +59,7 @@ type PartitionObject = {
 }
 
 /// Represents the instantiation of a model.
-type ModelObject = {
+type internal ModelObject = {
     /// The instantiated model symbol.
     ModelSymbol : ModelSymbol
 
@@ -72,7 +72,7 @@ type ModelObject = {
 
 /// Represents a configuration of symbols, objects, and formulas that allows a transformation of the model
 /// to a modelchecker in order to verify the formulas.
-type Configuration = {
+type internal Configuration = {
     /// The model symbol of the configuration, containing all symbols used throughout the model.
     ModelSymbol : ModelSymbol
 

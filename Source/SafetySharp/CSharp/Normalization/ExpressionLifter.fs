@@ -30,7 +30,7 @@ open SafetySharp.CSharp.Roslyn
 open SafetySharp.Modeling
 
 /// Lifts all method invocation parameter expressions 'expr' to a lambda function of the form '() => expr'.
-type ExpressionLifter () =
+type internal ExpressionLifter () =
     inherit CSharpNormalizer (NormalizationScope.Global)
 
     override this.VisitArgument node =

@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="SyntaxToken" /> instances.
 [<AutoOpen>]
-module SyntaxTokenExtensions =
+module internal SyntaxTokenExtensions =
     type SyntaxToken with
 
         /// Removes all leading and trailing trivia from the syntax token.

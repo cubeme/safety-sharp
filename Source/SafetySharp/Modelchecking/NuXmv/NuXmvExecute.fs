@@ -22,5 +22,5 @@
 
 namespace SafetySharp.Modelchecking.NuXmv
 
-module NuXmvExecute =
+module internal NuXmvExecute =
     let execute = ""

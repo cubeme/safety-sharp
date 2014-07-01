@@ -29,7 +29,7 @@ open SafetySharp.CSharp.Roslyn
 
 /// Indicates which parts of the code are affected by a normalizer.
 [<RequireQualifiedAccess>]
-type NormalizationScope =
+type internal NormalizationScope =
     /// Limits the scope of the normalizer to all members of a component class.
     | Components
     /// Limits the scope of the normalizer to all statements (excluding those of the constructors) of a component class.
@@ -40,7 +40,7 @@ type NormalizationScope =
 /// A base class for C# normalizers that normalize certain C# features to equivalent ones that are easier to transform to
 /// the metamodel.
 [<AbstractClass>]
-type CSharpNormalizer (scope) =
+type internal CSharpNormalizer (scope) =
     inherit CSharpSyntaxRewriter ()
 
     /// The semantic model that should be used for semantic analysis during normalization.

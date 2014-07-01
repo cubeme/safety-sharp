@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="ITypeSymbol" /> instances.
 [<AutoOpen>]
-module TypeSymbolExtensions =
+module internal TypeSymbolExtensions =
     type ITypeSymbol with
 
         /// Checks whether the type symbol is directly or indirectly derived from the given base type interface or class.

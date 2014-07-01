@@ -29,13 +29,13 @@ open SafetySharp.Modelchecking
 //TODO: Somehow enable the use of DEFINE?!?
 
 // used to annotate, if a value referenced
-type WriteOnceTimeOfAccess =
+type internal WriteOnceTimeOfAccess =
     | UseResultOfLastStep // for input fields
     | UseResultOfThisStep // for artificial fields
 
 // There exists a difference between SimpleExpression and WriteOnceExpression:
 // Here we need a different FieldAccessor: Depending on if we Want to access the value of the current time step or the value of the last
-type WriteOnceExpression = 
+type internal WriteOnceExpression = 
     /// Represents a constant value which may be e.g. a BooleanLiteral with the values true and false.
     | ConstLiteral of Value : SimpleConstLiteral
     
@@ -52,7 +52,7 @@ type WriteOnceExpression =
 type WriteOnceGlobalField = SimpleGlobalField
 
 
-type WriteOncePossibleEffect = {
+type internal WriteOncePossibleEffect = {
     TakenDecisions : WriteOnceExpression list;
     TargetEffect : WriteOnceExpression;
 } with 
@@ -73,7 +73,7 @@ type WriteOncePossibleEffect = {
 // Thus we introduce the two different interpretations and conversions between them
 // Be cautious: If no option matches, the assignment doesn't change anything. (Thus the next value of target is the current value of target).
 
-type WriteOnceStatement = 
+type internal WriteOnceStatement = 
     | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceExpression)
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
     | WriteOnceStatementSimpleAssign of Target : (WriteOnceGlobalField) * Expression : (WriteOnceExpression)
@@ -111,7 +111,7 @@ type WriteOnceStatement =
 
 // TODO: Refactor: readonly-parts as "let" and "Initialize" as only constructor
 // TODO: include in name something like "Branch" or Decisions BranchAndFieldManager? Or TransformationManager
-type WriteOnceTypeFieldManager = {
+type internal WriteOnceTypeFieldManager = {
     // static across a model. TODO: Maybe we can remove it
     SimpleFieldToInitialFieldMapping : Map<SimpleGlobalFieldWithContext,SimpleGlobalField>; //map to the initial SimpleGlobalField
     // static across a scope. Changes with scopes. Organised as stacks. The head elements are the current elements. on a popScope the head elements are just thrown away
@@ -209,7 +209,7 @@ type WriteOnceTypeFieldManager = {
             }
         (newArtificialField,newFieldManager)
         
-type SimpleStatementsToWriteOnceStatements() =
+type internal SimpleStatementsToWriteOnceStatements() =
 
     // TODO: Describe how it works:
     //  ASSIGN:

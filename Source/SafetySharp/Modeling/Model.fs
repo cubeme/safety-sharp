@@ -31,7 +31,7 @@ open System.Runtime.InteropServices
 open SafetySharp.Utilities
 
 /// Raised when a component is found in multiple locations of a component tree.
-type SharedComponentsException (components : Component list) =
+type SharedComponentsException internal (components : Component list) =
     inherit Exception ("One or more components have been found in multiple locations of the component tree.")
 
     /// Gets the component instances that was found in multiple locations of a component tree.

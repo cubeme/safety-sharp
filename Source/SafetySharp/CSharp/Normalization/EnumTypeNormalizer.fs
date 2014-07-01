@@ -30,7 +30,7 @@ open SafetySharp.CSharp.Roslyn
 open SafetySharp.Modeling
 
 /// Replaces all uses of enum types within a component by int.
-type EnumTypeNormalizer () =
+type internal EnumTypeNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
     let intType = SyntaxFactory.ParseTypeName "int"

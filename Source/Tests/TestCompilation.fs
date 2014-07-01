@@ -243,6 +243,5 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
 
     /// Checks whether the compilation has any diagnostics for the given diagnostic analyzer.
-    member this.HasDiagnostics<'T when 'T : (new : unit -> 'T) and 'T :> IDiagnosticAnalyzer> () = 
-        let analyzers = [| new 'T () :> IDiagnosticAnalyzer |]
-        AnalyzerDriver.GetDiagnostics(csharpCompilation, analyzers, new CancellationToken()) |> Seq.isEmpty |> not
+    member this.HasDiagnostics diagnosticAnalyzer = 
+        AnalyzerDriver.GetDiagnostics(csharpCompilation, [| diagnosticAnalyzer |], new CancellationToken()) |> Seq.isEmpty |> not

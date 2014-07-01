@@ -241,7 +241,7 @@ module ``TransformMethodBodies method`` =
     let mutable private compilation = Unchecked.defaultof<TestCompilation>
     let mutable private symbolResolver = Unchecked.defaultof<SymbolResolver>
 
-    let transform csharpCode =
+    let private transform csharpCode =
         compilation <- TestCompilation csharpCode
         symbolResolver <- SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
 

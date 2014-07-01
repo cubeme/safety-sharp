@@ -98,7 +98,7 @@ type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel
 /// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression, LanguageNames.CSharp)>]
-type ExpressionSideEffectAnalyzer () as this =
+type internal ExpressionSideEffectAnalyzer () as this =
     inherit SemanticModelAnalyzer ()
 
     do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression

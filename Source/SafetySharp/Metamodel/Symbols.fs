@@ -24,7 +24,7 @@ namespace SafetySharp.Metamodel
 
 /// Represents the definition of a type.
 [<RequireQualifiedAccess>]
-type TypeSymbol = 
+type internal TypeSymbol = 
     /// Represents the type of Boolean values <c>true</c> and <c>false</c>.
     | Boolean
 
@@ -35,7 +35,7 @@ type TypeSymbol =
     | Decimal
 
 /// Represents the definition of a field within a component.
-type FieldSymbol = {
+type internal FieldSymbol = {
     /// The name of the field. Field names are unique within a single component and do not overlap
     /// with subcomponent or method names.
     Name : string
@@ -45,7 +45,7 @@ type FieldSymbol = {
 } 
 
 /// Represents the definition of a local variable within a statement block.
-type LocalSymbol = {
+type internal LocalSymbol = {
     /// The name of the local variable. Local variable names do not overlap with method parameter names.
     Name : string
 
@@ -54,7 +54,7 @@ type LocalSymbol = {
 } 
 
 /// Represents the definition of a method parameter.
-type ParameterSymbol = {
+type internal ParameterSymbol = {
     /// The name of the method parameter. Parameter names are unique within a single method and do not overlap
     /// with local variable names.
     Name : string
@@ -64,7 +64,7 @@ type ParameterSymbol = {
 } 
 
 /// Represents the definition of a method within a component.
-type MethodSymbol = {
+type internal MethodSymbol = {
     /// The name of the method. Method names are unique within a single component and do not overlap
     /// with subcomponent or field names.
     Name : string
@@ -80,13 +80,13 @@ type MethodSymbol = {
 } 
 
 /// Represents the definition of a provided port within a component.
-type ProvidedPortSymbol = ProvidedPort of MethodSymbol
+type internal ProvidedPortSymbol = ProvidedPort of MethodSymbol
 
 /// Represents the definition of a required port within a component.
-type RequiredPortSymbol = RequiredPort of MethodSymbol
+type internal RequiredPortSymbol = RequiredPort of MethodSymbol
 
 /// Represents the type definition of a component within a model.
-type ComponentSymbol = { 
+type internal ComponentSymbol = { 
     /// The name of the component. Component names are unique within a single model.
     Name : string
 
@@ -104,7 +104,7 @@ type ComponentSymbol = {
 }
 
 /// Represents the definition of a subcomponent within a parent component or model.
-type ComponentReferenceSymbol = {
+type internal ComponentReferenceSymbol = {
     /// The name of the component reference. Component reference names are unique within a single component or model and do
     /// not overlap with field or method names.
     Name : string
@@ -114,7 +114,7 @@ type ComponentReferenceSymbol = {
 } 
 
 /// Represents the type definition of a partition within a model.
-type PartitionSymbol = {
+type internal PartitionSymbol = {
     /// The name of the partition. Within a single model, the partition name is unique.
     Name : string
 
@@ -125,7 +125,7 @@ type PartitionSymbol = {
 }
 
 /// Represents the type definition of a model.
-type ModelSymbol = { 
+type internal ModelSymbol = { 
     /// The partitions the model consists of.
     Partitions : PartitionSymbol list
 

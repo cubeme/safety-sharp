@@ -31,7 +31,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Utilities
 open SafetySharp.Modeling
 
-module Syntax =
+module internal Syntax =
 
     /// Replaces all end-of-line trivia contained in the syntax node by spaces.
     let AsSingleLine (syntaxNode : #SyntaxNode) =

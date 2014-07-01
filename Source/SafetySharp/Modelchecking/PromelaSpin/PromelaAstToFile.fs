@@ -24,7 +24,7 @@ namespace SafetySharp.Modelchecking.PromelaSpin
 
 open System
 
-type ExportPromelaAstToFile() =
+type internal ExportPromelaAstToFile() =
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()

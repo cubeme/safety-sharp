@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 open SafetySharp.Modeling
 
 /// Represents a Safety Sharp modeling assembly.
-type ModelingAssembly (modelingAssembly : Assembly) as this=
+type internal ModelingAssembly (modelingAssembly : Assembly) as this=
 
     do nullArg modelingAssembly "modelingAssembly"
 

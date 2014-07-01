@@ -66,18 +66,18 @@ module SeparatorTests =
     // http://spinroot.com/spin/Man/separators.html
     // http://spinroot.com/spin/Man/grammar.html
     
-    let astToFile = ExportPromelaAstToFile()
-    let indent = 0
+    let private astToFile = ExportPromelaAstToFile()
+    let private indent = 0
 
-    let simpleStatement1 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.True)))
-    let simpleStatement2 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
-    let elseStatement = Stmnt.ElseStmnt
+    let private simpleStatement1 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.True)))
+    let private simpleStatement2 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
+    let private elseStatement = Stmnt.ElseStmnt
     
-    let option1Sequence = statementsToSequence [simpleStatement1;simpleStatement2]
-    let option2Sequence = statementsToSequence [elseStatement;simpleStatement2]
+    let private option1Sequence = statementsToSequence [simpleStatement1;simpleStatement2]
+    let private option2Sequence = statementsToSequence [elseStatement;simpleStatement2]
     
-    let simpleGuardedCommand1 = Stmnt.IfStmnt(Options.Options([option1Sequence]))
-    let simpleGuardedCommand2 = Stmnt.IfStmnt(Options.Options([option1Sequence;option2Sequence]))
+    let private simpleGuardedCommand1 = Stmnt.IfStmnt(Options.Options([option1Sequence]))
+    let private simpleGuardedCommand2 = Stmnt.IfStmnt(Options.Options([option1Sequence;option2Sequence]))
     
     [<Test>]
     let ``simple guarded command clause has _one_ separator in the middle`` () =

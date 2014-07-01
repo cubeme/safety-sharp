@@ -139,7 +139,7 @@ type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallbac
 /// Checks for unsupported C# features within a component declaration.
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInComponent, LanguageNames.CSharp)>]
-type ComponentSyntaxAnalyzer () as this =
+type internal ComponentSyntaxAnalyzer () as this =
     inherit SemanticModelAnalyzer ()
 
     do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInComponent

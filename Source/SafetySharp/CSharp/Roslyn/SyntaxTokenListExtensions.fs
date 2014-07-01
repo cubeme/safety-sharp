@@ -28,7 +28,7 @@ open Microsoft.CodeAnalysis.CSharp
 
 /// Provides extension methods for working with <see cref="SyntaxTokenList" /> instances.
 [<AutoOpen>]
-module SyntaxTokenListExtensions =
+module internal SyntaxTokenListExtensions =
     type SyntaxTokenList with
 
         /// Deduces the type or member visibility from the syntax token list.

@@ -38,7 +38,7 @@ open SafetySharp.CSharp.Diagnostics
 open SafetySharp.CSharp.Normalization
 
 /// The SafetySharp compiler that compiles C# code into a modeling assembly.
-module Compiler =
+module internal Compiler =
 
     /// The version string of the compiler.
     [<Literal>]

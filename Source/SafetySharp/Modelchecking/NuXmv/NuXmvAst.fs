@@ -28,14 +28,14 @@ namespace SafetySharp.Modelchecking.NuXmv
 
 // Identifier and TypeSpecifier
 // Chapter 2 Input Language of NUXMV p 7-8
-type Identifier = {
+type internal Identifier = {
     Name:string;
 }
             
 // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
 // moved it here, because it belongs to the identifier
         
-type ComplexIdentifier =
+type internal ComplexIdentifier =
     | NameComplexIdentifier of NameIdentifier:Identifier                                    // NestedComplexIdentifier : Identifier
     | NestedComplexIdentifier of Container:ComplexIdentifier * NameIdentifier:Identifier    // NestedComplexIdentifier : Container '.' NameIdentifier
     | ArrayAccessComplexIdentifier of Container:ComplexIdentifier * Index:SimpleExpression  // NestedComplexIdentifier : Container '[' Index ']'
@@ -43,7 +43,7 @@ type ComplexIdentifier =
     
 //seems to be a duplication of NuXmvType, but isn't:
 //The type isn't determined yet. It depends on expressions, which can be contained in a specifier.
-and TypeSpecifier =
+and internal TypeSpecifier =
     | SimpleTypeSpecifier of Specifier:SimpleTypeSpecifier
     | ModuleTypeSpecifier of Specifier:ModuleTypeSpecifier
 
@@ -53,7 +53,7 @@ and TypeSpecifier =
         // in the smv-file may use expression to define e.g. the lower and upper bound 
         // of an array, the number of bytes of a word, etc...
 
-and Type =
+and internal Type =
     | BooleanType
     | EnumerationType of Domain:(ConstExpression list)
     | UnsignedWordType of Length:int  //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
@@ -73,7 +73,7 @@ and Type =
 // Note: //TODO: Change following: In the documentation on page 23 only basic_expr is used. But simple_expr would make more sense (no next).
 // TODO: Write member GetType, which derives the Type of the TypeSpecifier
 
-and SimpleTypeSpecifier =
+and internal SimpleTypeSpecifier =
     | BooleanTypeSpecifier
     | UnsignedWordTypeSpecifier of Length:BasicExpression  //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
     | SignedWordTypeSpecifier of Length:BasicExpression    //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
@@ -87,24 +87,24 @@ and SimpleTypeSpecifier =
 // Chapter 2.2 Expressions p 10-22
 // Expressions
 
-and CaseConditionAndEffect = {
+and internal CaseConditionAndEffect = {
     CaseCondition:BasicExpression;
     CaseEffect:BasicExpression;
 }
 
-and Radix = 
+and internal Radix = 
     | BinaryRadix
     | OctalRadix
     | DecimalRadix
     | HexadecimalRadix
 
     
-and SignSpecifier =
+and internal SignSpecifier =
     | UnsignedSpecifier
     | SignedSpecifier
 
 
-and ConstExpression =
+and internal ConstExpression =
     | BooleanConstant of Value:bool
     | SymbolicConstant of SymbolName:Identifier
     | IntegerConstant of Value:System.Numerics.BigInteger
@@ -112,7 +112,7 @@ and ConstExpression =
     | WordConstant of Value:(bool[]) * Sign:SignSpecifier * Base:Radix * ImproveReadability:bool
     | RangeConstant of From:System.Numerics.BigInteger * To:System.Numerics.BigInteger
 
-and BasicExpression =
+and internal BasicExpression =
     | ConstExpression of ConstExpression
     | ComplexIdentifierExpression of Identifier:ComplexIdentifier //Identifier is the reference to a variable or a define. Might be hierarchical.
     | UnaryExpression of Operator:UnaryOperator * Operand:BasicExpression
@@ -123,35 +123,35 @@ and BasicExpression =
     | CaseExpression of CaseBody:(CaseConditionAndEffect list)
     | BasicNextExpression of Expression:BasicExpression // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
 
-and SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit convertions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
-and NextExpression = BasicExpression //validation: next allowed
+and internal SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit convertions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
+and internal NextExpression = BasicExpression //validation: next allowed
 
 
 // Chapter 2.3 Definition of the FSM p 22-35
 // FSM
 
 
-and TypedIdentifier = {
+and internal TypedIdentifier = {
     TypeSpecifier:TypeSpecifier;
     Identifier:Identifier;
 }
 
-and SimpleTypedIdentifier = {
+and internal SimpleTypedIdentifier = {
     TypeSpecifier:SimpleTypeSpecifier;
     Identifier:Identifier;
 }
 
-and IdentifierNextExpressionTuple = {
+and internal IdentifierNextExpressionTuple = {
     Identifier:Identifier;
     Expression:NextExpression;
 }
 
-and SingleAssignConstraint = // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
+and internal SingleAssignConstraint = // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
     | CurrentStateAssignConstraint of Identifier:ComplexIdentifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
     | InitialStateAssignConstraint of Identifier:ComplexIdentifier * Expression:SimpleExpression //Invariant which must evaluate to true. next-Statement is forbidden inside
     | NextStateAssignConstraint of Identifier:ComplexIdentifier * Expression:NextExpression
 
-and ModuleElement =
+and internal ModuleElement =
     | VarDeclaration of Variables:(TypedIdentifier list) // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.
     | IVarDeclaration of InputVariables:(SimpleTypedIdentifier list)
     | FrozenVarDeclaration of FrozenVariables:(SimpleTypedIdentifier list) //Array of frozen variable declarations (readonly, nondeterministic initialization
@@ -169,14 +169,14 @@ and ModuleElement =
     | MirrorDeclaration of VariableIdentifier:ComplexIdentifier
 
 
-and ModuleDeclaration = { // Chapter 2.3.10 MODULE Declarations p 30-31
+and internal ModuleDeclaration = { // Chapter 2.3.10 MODULE Declarations p 30-31
     Identifier:Identifier;
     ModuleParameters:Identifier list;
     ModuleElements:ModuleElement list;
  }
 
 
-and ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31.
+and internal ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31.
     ModuleName:Identifier;
     ModuleParameters:BasicExpression list;
 }
@@ -184,7 +184,7 @@ and ModuleTypeSpecifier = {// Chapter 2.3.11 MODULE Instantiations p 31.
 // Chapter 2.3.12 References to Module Components (Variables and Defines) p 32-33
 // moved to the namespace SafetySharp.Modelchecking.NuXmv, because there is also identifier
 
-and NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
+and internal NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
     Modules:ModuleDeclaration list;
     Specifications:Specification list;
 }
@@ -200,7 +200,7 @@ and NuXmvProgram = { // Chapter 2.3.13 A Program and the main Module p 33
 // Specification
             
 // Chapter 2.4.1 CTL Specifications p 35-36
-and CtlExpression =
+and internal CtlExpression =
     | CtlSimpleExpression of Expression:SimpleExpression //next not allowed 
     | CtlUnaryExpression of Operator:CtlUnaryOperator *  Operand:CtlExpression
     | CtlBinaryExpression of Left:CtlExpression * Operator:CtlBinaryOperator * Right:CtlExpression
@@ -208,7 +208,7 @@ and CtlExpression =
 //TODO // Chapter 2.4.2 Invariant Specifications p 36
             
 // Chapter 2.4.3 LTL Specifications p 36-38
-and LtlExpression =
+and internal LtlExpression =
     | LtlSimpleExpression of Expression:NextExpression //more powerful (next allowed)
     | LtlUnaryExpression of Operator:LtlUnaryOperator *  Operand:LtlExpression
     | LtlBinaryExpression of Left:LtlExpression * Operator:LtlBinaryOperator * Right:LtlExpression
@@ -218,7 +218,7 @@ and LtlExpression =
 //TODO // Chapter 2.4.5 PSL Specifications p 39-42
 
 
-and Specification =
+and internal Specification =
     | CtlSpecification of CtlExpression:CtlExpression
     //TODO: | InvariantSpecification
     | LtlSpecification of LtlExpression:LtlExpression

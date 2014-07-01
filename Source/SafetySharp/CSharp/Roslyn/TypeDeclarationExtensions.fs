@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="TypeDeclarationSyntax" /> instances.
 [<AutoOpen>]
-module TypeDeclarationExtensions =
+module internal TypeDeclarationExtensions =
     type TypeDeclarationSyntax with
 
         /// Checks whether the type declaration declaration is a component declaration.

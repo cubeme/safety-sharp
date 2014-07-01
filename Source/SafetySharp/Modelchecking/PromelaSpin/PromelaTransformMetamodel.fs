@@ -48,7 +48,7 @@ type PrAssign = SafetySharp.Modelchecking.PromelaSpin.Assign
 type PrSpec = SafetySharp.Modelchecking.PromelaSpin.Spec
 
            
-type MetamodelToPromela (configuration:MMConfiguration)  =
+type internal MetamodelToPromela (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
 
 

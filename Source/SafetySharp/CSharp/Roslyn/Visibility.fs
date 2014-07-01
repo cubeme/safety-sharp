@@ -27,7 +27,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 
 /// Represents the visibility of a C# type or member.
-type Visibility = 
+type internal Visibility = 
     | Private
     | Protected
     | Internal

@@ -84,19 +84,19 @@ type MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMStatement>
 // TODO: Move much of the stuff into file SimplifiedMetamodel
 
 //TODO: Also use in Context
-type SimplePartition = {
+type internal SimplePartition = {
      RootComponentName : string;
 }
 
-type ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
+type internal ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
 
 //TODO: Switch from RootComponentName to SimplePartition. Or maybe not (to avoid cyclic dependencies)
-type Context = {
+type internal Context = {
     hierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
     rootComponentName : string; //only the name of the root component
 }
 
-type SimpleConstLiteral = 
+type internal SimpleConstLiteral = 
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
     | BooleanLiteral of Value : bool
 
@@ -120,7 +120,7 @@ type SimpleConstLiteral =
             values |> List.map SimpleConstLiteral.convertFromObject
 
 [<StructuralEquality;StructuralComparison>]
-type SimpleGlobalFieldWithContext = {
+type internal SimpleGlobalFieldWithContext = {
     Context : Context;
     FieldSymbol: MMFieldSymbol;
     InitialValues : SimpleConstLiteral list;
@@ -141,7 +141,7 @@ type SimpleGlobalFieldWithContext = {
             SimpleGlobalFieldWithContext.InitialValues=[initialValue];
         }
 
-type SimpleGlobalField =
+type internal SimpleGlobalField =
     | FieldWithContext of Field : SimpleGlobalFieldWithContext
     | FieldOfMetamodel of ComponentObject : MMComponentObject * Field : SimpleGlobalField 
     with
@@ -168,7 +168,7 @@ type SimpleGlobalField =
 
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
-type SimpleExpression = 
+type internal SimpleExpression = 
     /// Represents a constant value which may be e.g. a BooleanLiteral with the values true and false.
     | ConstLiteral of Value : SimpleConstLiteral
     
@@ -184,7 +184,7 @@ type SimpleExpression =
 
 
 // A simpleStatement has only assignments and guarded commands. Also Assignments are defined on SimpleGlobalFields
-type SimpleStatement = 
+type internal SimpleStatement = 
     | GuardedCommandStatement of (SimpleExpression * (SimpleStatement list) ) list //Guard (which knows its Context) * Statements
     | AssignmentStatement of Target : SimpleGlobalField * Expression : SimpleExpression //Expression (knows its Context). SimpleGlobalField has its own Context (may result of a return-Statement, when context is different)
 
@@ -193,10 +193,10 @@ type SimpleStatement =
 
 
 // Only use in this file
-type ResolverForSimpleGlobalFields = Map<string*string,SimpleGlobalField>
+type private ResolverForSimpleGlobalFields = Map<string*string,SimpleGlobalField>
 
     
-type ContextCache (configuration:MMConfiguration) =
+type internal ContextCache (configuration:MMConfiguration) =
         // _once_ calculated and cached information for internal use
         let model = configuration.ModelObject
 
@@ -246,7 +246,7 @@ type ContextCache (configuration:MMConfiguration) =
     //      - _once_ calculated and cached information for external use (better write accessor functions for it)        
     //      - accessor and helper functions (internal use)
     //      - accessor and helper functions (external use)
-type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfiguration) =
+type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfiguration) =
         // this should only calculate and _cache_ information for the transformation to
         // SimpleStatements/SimpleExpressions and not be used from outside this file
         
@@ -326,7 +326,7 @@ type SimpleGlobalFieldCache (contextCache:ContextCache, configuration:MMConfigur
     
     
 // Many steps are a sequence. Only use in this file
-type MMStepInfo = {
+type internal MMStepInfo = {
         context : Context;
         componentObject:MMComponentObject;
         statement : MMStatement;
@@ -344,7 +344,7 @@ type SimplifiedMetamodel =
     generate (Metamodel:MMConfiguration)
 *)
 
-type MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
+type internal MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
     let contextCache = ContextCache(configuration)
     let fieldCache = SimpleGlobalFieldCache(contextCache,configuration)
 

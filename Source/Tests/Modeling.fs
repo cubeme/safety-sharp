@@ -43,12 +43,12 @@ module ModelingShared =
             invalidOp "Unable to find field '%s' in '%s'." field (o.GetType().FullName) 
         Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(o), fieldInfo))
 
-type EmptyComponent () =
+type internal EmptyComponent () =
     inherit Component ()
 
     static member Symbol = emptyComponentSymbol "EmptyComponent"
 
-type FieldComponent<'T> =
+type internal FieldComponent<'T> =
     inherit Component 
     
     val private _field : 'T
@@ -63,7 +63,7 @@ type FieldComponent<'T> =
 
     member this.Field = this._field
 
-type InheritedComponent =
+type internal InheritedComponent =
     inherit FieldComponent<int>
     val private _otherField : int
 
@@ -72,7 +72,7 @@ type InheritedComponent =
 
     member this.OtherField = this._otherField
 
-type FieldComponent<'T1, 'T2> =
+type internal FieldComponent<'T1, 'T2> =
     inherit Component 
     
     val private _field1 : 'T1
@@ -90,7 +90,7 @@ type FieldComponent<'T1, 'T2> =
         this.SetInitialValues (createFieldExpression<'T1> this "_field1", value1a, value1b)
         this.SetInitialValues (createFieldExpression<'T2> this "_field2", value2a, value2b)
         
-type OneSubcomponent =
+type internal OneSubcomponent =
     inherit Component
 
     val _component : Component
@@ -100,7 +100,7 @@ type OneSubcomponent =
 
     static member Symbol = emptyComponentSymbol "OneSubcomponent"
 
-type TwoSubcomponents =
+type internal TwoSubcomponents =
     inherit Component
 
     val _component1 : Component
@@ -110,7 +110,7 @@ type TwoSubcomponents =
 
     static member Symbol = emptyComponentSymbol "TwoSubcomponents"
 
-type ComplexComponent =
+type internal ComplexComponent =
     inherit Component
 
     val _nested1 : Component
@@ -120,9 +120,9 @@ type ComplexComponent =
     new (nested1, nested2, other) =
         { _nested1 = nested1; _nested2 = nested2; _other = other }
 
-type EmptyModel () =
+type internal EmptyModel () =
     inherit Model ()
 
-type TestModel ([<ParamArray>] components : Component array) as this =
+type internal TestModel ([<ParamArray>] components : Component array) as this =
     inherit Model ()
     do this.SetPartitions components

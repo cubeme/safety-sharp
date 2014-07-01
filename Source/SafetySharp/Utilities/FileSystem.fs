@@ -26,7 +26,7 @@ open System.IO
 open System.Text
 
 /// Provides helper methods for working with the file system.
-module FileSystem =
+module internal FileSystem =
 
     /// Writes the given text to the file indicated by the path, using the given text encoding. If the file or some directories of
     /// the path do not exist, they are created. Otherwise, the contents of the file are overwritten.

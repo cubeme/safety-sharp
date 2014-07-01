@@ -39,7 +39,7 @@ type NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
 
 
 
-type MetamodelToNuXmv (configuration:MMConfiguration)  =
+type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
     let toWriteOnceStatements = SimpleStatementsToWriteOnceStatements()
 

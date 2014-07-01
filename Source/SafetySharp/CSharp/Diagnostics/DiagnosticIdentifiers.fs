@@ -23,7 +23,7 @@
 namespace SafetySharp.CSharp.Diagnostics
 
 /// Provides the diagnostic identifiers for C# code diagnostics.
-module DiagnosticIdentifiers =
+module internal DiagnosticIdentifiers =
 
     /// The prefix that is used for all diagnostic identifiers.
     [<Literal>]

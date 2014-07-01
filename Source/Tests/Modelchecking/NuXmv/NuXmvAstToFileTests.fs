@@ -27,18 +27,18 @@ module NuXmvTests =
 
 (*
 [Test]
-        public void MainModuleTest()
+        public void MainmoduleTest()
         {
-            var mainModuleIdentifier = new Identifier("main");
-            var mainModuleElements = ImmutableArray<ModuleElement>.Empty;
-            var mainModule = new ModuleDeclaration(mainModuleIdentifier, ImmutableArray<Identifier>.Empty, mainModuleElements);
+            var mainmoduleIdentifier = new Identifier("main");
+            var mainmoduleElements = ImmutableArray<moduleElement>.Empty;
+            var mainmodule = new moduleDeclaration(mainmoduleIdentifier, ImmutableArray<Identifier>.Empty, mainmoduleElements);
 
             var fileWriter = new NuXmvModelWriter(true);
-            fileWriter.Visit(mainModule);
+            fileWriter.Visit(mainmodule);
             var output = fileWriter.CodeWriter.ToString().Trim();
 
             
-            output.Contains("MODULE main").Should().BeTrue();
+            output.Contains("module main").Should().BeTrue();
         }
 
 *)

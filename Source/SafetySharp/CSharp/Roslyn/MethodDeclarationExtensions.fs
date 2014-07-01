@@ -30,7 +30,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="MethodDeclarationSyntax" /> instances.
 [<AutoOpen>]
-module MethodDeclarationExtensions =
+module internal MethodDeclarationExtensions =
     type MethodDeclarationSyntax with
 
         /// Checks whether the method declaration declares a method overriding the <see cref="Component.Update()" /> method.

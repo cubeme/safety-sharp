@@ -34,7 +34,7 @@ open SafetySharp.CSharp.Roslyn
 
 /// A base class for syntax node analyzers.
 [<AbstractClass>]
-type SemanticModelAnalyzer () =
+type internal SemanticModelAnalyzer () =
     inherit CSharpAnalyzer ()
 
     interface ISemanticModelAnalyzer with

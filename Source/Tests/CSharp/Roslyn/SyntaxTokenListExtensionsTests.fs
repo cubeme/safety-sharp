@@ -36,7 +36,7 @@ open SafetySharp.CSharp.Roslyn
 [<TestFixture>]
 module ``Visibility method`` =
     
-    let getVisibility csharpModifiers =
+    let private getVisibility csharpModifiers =
         let compilation = TestCompilation ("
             class C {
                 " + csharpModifiers + " void M() { }

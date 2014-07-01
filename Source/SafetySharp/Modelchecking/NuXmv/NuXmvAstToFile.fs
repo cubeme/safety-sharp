@@ -24,7 +24,7 @@ namespace SafetySharp.Modelchecking.NuXmv
 
 open System
 
-type ExportNuXmvAstToFile() =
+type internal ExportNuXmvAstToFile() =
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()

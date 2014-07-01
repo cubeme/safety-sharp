@@ -33,7 +33,7 @@ open SafetySharp.Modeling
 
 /// Provides extension methods for working with <see cref="ArgumentSyntax" /> instances.
 [<AutoOpen>]
-module ArgumentExtensions =
+module internal ArgumentExtensions =
     type ArgumentSyntax with
 
         /// Gets the <see cref="IMethodSymbol" /> of the method call expression that contains the argument.

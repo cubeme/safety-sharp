@@ -29,7 +29,7 @@ open SafetySharp.Metamodel
 type MMUnaryFormulaOperator = SafetySharp.Metamodel.UnaryFormulaOperator
 type MMBinaryOperator = SafetySharp.Metamodel.BinaryOperator
 
-module TestCase1 =    
+module internal TestCase1 =    
     
     // Expressions I
     let booleanTrueExpression = Expression.BooleanLiteral(true)

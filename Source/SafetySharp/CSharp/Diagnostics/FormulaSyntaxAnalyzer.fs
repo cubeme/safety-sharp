@@ -79,7 +79,7 @@ type internal FormulaSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback)
 /// Checks for unsupported C# features within a formula expression.
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInFormula, LanguageNames.CSharp)>]
-type FormulaSyntaxAnalyzer () as this =
+type internal FormulaSyntaxAnalyzer () as this =
     inherit SemanticModelAnalyzer ()
 
     do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInFormula

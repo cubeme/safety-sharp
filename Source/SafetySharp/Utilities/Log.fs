@@ -27,7 +27,7 @@ open System.Diagnostics
 open Microsoft.FSharp.Core
 
 /// Identifies the type of information provided by a <see cref="LogEntry" />.
-type LogType =
+type internal LogType =
     | Fatal
     | Error
     | Warning
@@ -36,7 +36,7 @@ type LogType =
 
 /// Represents a log entry, describing fatal errors, non-fatal errors, or warnings as well as providing debugging
 /// information and other informational messages.
-type LogEntry = {
+type internal LogEntry = {
     Type : LogType
     Message : string
     Time : DateTime
@@ -46,7 +46,7 @@ type LogEntry = {
 /// debug-time only informational messages. The <see cref="Logged" /> event is raised whenever a <see cref="LogEntry" /> has
 /// been generated.
 [<AbstractClass; Sealed>]
-type Log () =
+type internal Log () =
     [<DefaultValue>] static val mutable private logged : Event<LogEntry>
 
     static do

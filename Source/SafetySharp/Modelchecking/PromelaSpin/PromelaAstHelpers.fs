@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Modelchecking.PromelaSpin
 
-module PromelaAstHelpers =
+module internal PromelaAstHelpers =
 
     let skipStatement = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
 

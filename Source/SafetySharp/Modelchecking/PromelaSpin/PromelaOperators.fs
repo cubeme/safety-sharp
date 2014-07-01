@@ -22,16 +22,16 @@
 
 namespace SafetySharp.Modelchecking.PromelaSpin
 
-type Unarop =
+type internal Unarop =
     | Tilde // ~
     | Neg   // -
     | Not   // !
 
-type Andor =
+type internal Andor =
     | And  // &&
     | Or   // ||
     
-type Binarop =
+type internal Binarop =
     | Add  // +
     | Min  // -
     | Mul  // *
@@ -50,7 +50,7 @@ type Binarop =
     | Brs  // >> (Bitwise left shift)
     | Andor of Andor // &&, ||
   
-type BinaryFormulaOperator =
+type internal BinaryFormulaOperator =
     | Equals     // == <->
     | Until      // U
     | WeakUntil  // W
@@ -59,7 +59,7 @@ type BinaryFormulaOperator =
     | Or         // || \/
     | Implies    // maybe equivalent to <=
 
-type UnaryFormulaOperator =
+type internal UnaryFormulaOperator =
     | Not       // !
     | Always    // []
     | Eventually // <>

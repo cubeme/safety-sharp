@@ -32,7 +32,7 @@ open SafetySharp.Utilities
 
 /// Provides extension methods for working with <see cref="SyntaxKind" /> instances.
 [<AutoOpen>]
-module SyntaxKindExtensions =
+module internal SyntaxKindExtensions =
     type SyntaxKind with
         /// Generates a user-friendly description for the syntax kind.
         member this.ToDescription () =

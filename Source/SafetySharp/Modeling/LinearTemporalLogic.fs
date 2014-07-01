@@ -56,6 +56,10 @@ type Ltl =
         nullArg operand "operand"
         LtlFormula (CSharpUnaryFormula(CSharpStateFormula operand, UnaryFormulaOperator.Next))
 
+    /// Returns a <see cref="LtlFormula" /> that applies the 'next' operator to <paramref name="operand" />.
+    static member Next ([<LiftExpression>] operand : bool) =
+        invalidUnliftedCall
+
     /// Returns a <see cref="LtlFormula" /> that applies the 'finally' operator to <paramref name="operand" />.
     static member Finally (operand : LtlFormula) =
         nullArg operand "operand"

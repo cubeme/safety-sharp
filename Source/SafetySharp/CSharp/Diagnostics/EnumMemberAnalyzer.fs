@@ -34,7 +34,7 @@ open SafetySharp.Utilities
 /// Ensures that no enumeration members explicitly declare a constant value.
 [<DiagnosticAnalyzer>]
 [<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalEnumMemberValue, LanguageNames.CSharp)>]
-type EnumMemberAnalyzer () as this =
+type internal EnumMemberAnalyzer () as this =
     inherit SyntaxNodeAnalyzer<EnumMemberDeclarationSyntax> ()
 
     do this.Error DiagnosticIdentifiers.IllegalEnumMemberValue

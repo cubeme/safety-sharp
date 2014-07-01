@@ -22,10 +22,10 @@
 
 namespace SafetySharp.Modelchecking.NuXmv
 
-type UnaryOperator = 
+type internal UnaryOperator = 
     | LogicalNot
 
-type BinaryOperator=      
+type internal BinaryOperator=      
     | LogicalAnd
     | LogicalOr
     | LogicalXor
@@ -57,7 +57,7 @@ type BinaryOperator=
     | //Inclusion
     | //IfThenElse (Tenary)*)
     
-type CtlUnaryOperator =
+type internal CtlUnaryOperator =
     | LogicalNot
     | ExistsGlobally
     | ExistsNextState
@@ -66,7 +66,7 @@ type CtlUnaryOperator =
     | ForallNext
     | ForallFinally
 
-type CtlBinaryOperator =
+type internal CtlBinaryOperator =
     | LogicalAnd
     | LogicalOr
     | LogicalXor
@@ -76,7 +76,7 @@ type CtlBinaryOperator =
     | ExistsUntil
     | ForallUntil
 
-type LtlUnaryOperator =
+type internal LtlUnaryOperator =
     | LogicalNot
     | FutureNext
     | FutureGlobally
@@ -86,7 +86,7 @@ type LtlUnaryOperator =
     | PastHistorically
     | PastOnce
 
-type LtlBinaryOperator =
+type internal LtlBinaryOperator =
     | LogicalAnd
     | LogicalOr
     | LogicalXor

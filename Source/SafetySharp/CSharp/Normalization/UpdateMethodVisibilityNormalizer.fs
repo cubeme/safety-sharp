@@ -31,7 +31,7 @@ open SafetySharp.CSharp.Roslyn
 /// When the modeling-time SafetySharp assembly is replaced by the compile-time SafetySharp assembly, we have to change the 
 /// 'protected' modifier on overridden Component.Update methods to 'public', as the F# version is declared 'public'. If
 /// F# one day finally supports 'protected' visibility, this normalizer is rendered unnecessary.
-type UpdateMethodVisibilityNormalizer () =
+type internal UpdateMethodVisibilityNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
     override this.VisitMethodDeclaration (declaration : MethodDeclarationSyntax) =

@@ -30,7 +30,7 @@ open SafetySharp.CSharp.Roslyn
 open SafetySharp.Modeling
 
 /// Replaces uses of enum literals within a component by their underlying int value.
-type EnumLiteralNormalizer () =
+type internal EnumLiteralNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
     override this.VisitMemberAccessExpression node =

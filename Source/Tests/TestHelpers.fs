@@ -31,7 +31,7 @@ open Swensen.Unquote
 open SafetySharp.Metamodel
 
 [<AutoOpen>]
-module TestHelpers =
+module internal TestHelpers =
     
     /// Raises an <see cref="InvalidOperationException" /> with the given message.
     let inline invalidOp message = Printf.ksprintf invalidOp message

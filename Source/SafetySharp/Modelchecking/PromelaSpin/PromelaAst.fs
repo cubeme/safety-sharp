@@ -31,18 +31,18 @@ Basic Manual: http://spinroot.com/spin/Man/Manual.html
 // Names of types from: http://spinroot.com/spin/Man/grammar.html
 // Promela accepts two different statement separators: an arrow `->'and the semicolon `;'. The two statement separators are equival
 
-type Const =
+type internal Const =
     | True  // is a synonym of the constant value one (1)
     | False // is a synonym of the constant value zero (0)
     | Skip  //is translated by the Spin lexical analyzer into the constant value one (1)
     | Number of int32
 
 // varref	: name [ '[' any_expr ']' ] [ '.' varref ]
-type Varref =
+type internal Varref =
     | Varref of string * (AnyExpr option) * (Varref option)
         
 // any_expr: '(' any_expr ')' ...
-and AnyExpr =
+and internal AnyExpr =
     | BinaryExpr of AnyExpr * Binarop * AnyExpr
     | UnaryExpr of Unarop * AnyExpr
     | IfThenElse of AnyExpr * AnyExpr * AnyExpr // Meaning concluded from spin.yacc line 714 (SPIN 6.2.5)
@@ -50,16 +50,16 @@ and AnyExpr =
     | Const of Const
 
 // expr	: any_expr ...
-type Expr =
+type internal Expr =
     | AnyExpr of AnyExpr
     | ExprAndOrExpr of Expr * Andor * Expr
 //    | ChanPoll of
 
-type Visible =
+type internal Visible =
     | Hidden
     | Show
 
-type Typename =
+type internal Typename =
     | Bit
     | Bool
     | Byte
@@ -71,43 +71,43 @@ type Typename =
     //| Uname TODO: Userdefined...
 
 // ivar    : name [ '[' const ']' ] [ '=' any_expr | '=' ch_init ]
-type Ivar =
+type internal Ivar =
     | Ivar  of string * (int32 option) * (AnyExpr option)
 
 // one_decl: [ visible ] typename  ivar [',' ivar ] *
-type OneDecl =
+type internal OneDecl =
      | OneDecl of (Visible option) * Typename * (Ivar list)
 
 // decl_lst: one_decl [ ';' one_decl ] *
-type DeclLst = 
+type internal DeclLst = 
      DeclLst of (OneDecl list)
 
 // assign  : varref '=' any_expr	/* standard assignment */
-type Assign =
+type internal Assign =
     | AssignExpr of Varref * AnyExpr
     | Incr of Varref
     | Decr of Varref
     
 // range	: varref ':' expr '..' expr
-type Range =
+type internal Range =
     | Range of Varref * Expr * Expr
 
 // step    : stmnt	[ UNLESS stmnt ]
 //          | decl_lst
-type Step = 
+type internal Step = 
     | StmntStep of Stmnt * (Stmnt option)
     | DeclListStep of DeclLst
 
 // sequence: step [ ';' step ] *
-and Sequence = 
+and internal Sequence = 
     | Sequence of Step list
 
 // options : ':' ':' sequence [ ':' ':' sequence ] *
-and Options = 
+and internal Options = 
     | Options of Sequence list
 
 // stmnt	: IF options FI		/* selection */
-and Stmnt =
+and internal Stmnt =
     | IfStmnt of Options
     | DoStmnt of Options
     | ForStmnt of Range * Sequence
@@ -122,36 +122,36 @@ and Stmnt =
     | AssertStmnt of Expr 
     | ExprStmnt of Expr
 
-type Priority = Int of int32 //Standard is 1
+type internal Priority = Int of int32 //Standard is 1
 
 // init	: INIT [ priority ] '{' sequence '}'
-type Init =
+type internal Init =
     | Init of (Priority option) * Sequence
 
 // active  : ACTIVE [ '[' const ']' ]	/* instantiation */
-type Active =
+type internal Active =
     | Active of (Const option)
 
 // enabler : PROVIDED '(' expr ')'	/* execution constraint */
-type Enabler = 
+type internal Enabler = 
     | Expr of Expr
 
 // proctype: [ active ] PROCTYPE name '(' [ decl_lst ]')'
 // 	         [ priority ] [ enabler ] '{' sequence '}'
-type Proctype =
+type internal Proctype =
     | Proctype of (Active option) * string * ( DeclLst option) * (Priority option) *  (Enabler option) * Sequence
 
-type Module =
+type internal Module =
     | ProcTypeModule of Proctype
     | InitModule of Init
     | GlobalVarsAndChans of DeclLst
     
-type Formula =
+type internal Formula =
     | PropositionalStateFormula of Expression : AnyExpr
     | BinaryFormula of Left : Formula * Operator : BinaryFormulaOperator * Right : Formula
     | UnaryFormula of Operator : UnaryFormulaOperator * Operand : Formula
 
-type Spec = {
+type internal Spec = {
     Code : Module list;
     Formulas : Formula list;
 }
