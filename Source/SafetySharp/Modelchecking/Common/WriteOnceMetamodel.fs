@@ -193,15 +193,15 @@ type internal WriteOnceTypeFieldManager = {
         let currentNumber = (this.SimpleFieldToArtificialCounterShared.Value.Item field)+1
         this.SimpleFieldToArtificialCounterShared.Value <-
             (this.SimpleFieldToArtificialCounterShared.Value.Add(field,currentNumber))
-        let fieldContext = field.createDerivedFieldWithStandardValues currentNumber
-        let newArtificialField = SimpleGlobalField.FieldWithContext(fieldContext)
+        let newFieldWithContext= field.createDerivedFieldWithStandardValues currentNumber
+        let newArtificialField = SimpleGlobalField.FieldWithContext(newFieldWithContext)
         this.CreatedArtificialFieldsShared.Value <-
             (newArtificialField::this.CreatedArtificialFieldsShared.Value)
             
         let newSimpleFieldToCurrentRedirectionFieldMapping = 
-            this.SimpleFieldToCurrentRedirectionFieldMapping.Head.Add(fieldContext,(WriteOnceTimeOfAccess.UseResultOfThisStep,newArtificialField))
+            this.SimpleFieldToCurrentRedirectionFieldMapping.Head.Add(field,(WriteOnceTimeOfAccess.UseResultOfThisStep,newArtificialField))
         let newSimpleFieldToNewArtificialFieldMapping = 
-            this.SimpleFieldToNewArtificialFieldMapping.Head.Add(fieldContext,(WriteOnceTimeOfAccess.UseResultOfThisStep,newArtificialField))
+            this.SimpleFieldToNewArtificialFieldMapping.Head.Add(field,(WriteOnceTimeOfAccess.UseResultOfThisStep,newArtificialField))
 
         let newFieldManager =
             { this with
