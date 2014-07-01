@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+//TODO: Solve the indentions more gracefully
 namespace SafetySharp.Modelchecking.NuXmv
 
 open System
@@ -45,6 +46,11 @@ type internal ExportNuXmvAstToFile() =
     
     let joinWithNewLine (lst:string list) : string =
         String.Join("\n", lst)
+
+    let joinWithIndentedNewLine (indent:int) (lst:string list): string =
+        let indents = String.replicate indent "\t"
+        let separator = "\n"+indents
+        String.Join(separator, lst)
         
     let joinWith (operator:string) (lst:string list) : string =
         String.Join(operator, lst)
@@ -257,8 +263,8 @@ type internal ExportNuXmvAstToFile() =
                 let ExportCaseConditionAndEffect (caseConditionAndEffect:CaseConditionAndEffect) =
                     sprintf "%s : %s;" (this.ExportBasicExpression caseConditionAndEffect.CaseCondition) (this.ExportBasicExpression caseConditionAndEffect.CaseEffect)
                 let content = caseBody |> List.map ExportCaseConditionAndEffect
-                                       |> joinWithNewLine
-                sprintf "\ncase\n%s\nesac" content
+                                       |> joinWithIndentedNewLine 4
+                sprintf "\n\t\t\tcase\n\t\t\t\t%s\n\t\t\tesac" content
             | BasicNextExpression (expression:BasicExpression) ->
                 // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
                 sprintf "next(%s)" (this.ExportBasicExpression expression)
@@ -280,39 +286,39 @@ type internal ExportNuXmvAstToFile() =
             | VarDeclaration (variables:(TypedIdentifier list)) -> 
                 // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.                
                 let content = variables |> List.map ExportVariable
-                                        |> joinWithNewLine
-                sprintf "VAR\n%s" content
+                                        |> joinWithIndentedNewLine 2
+                sprintf "\tVAR\n\t\t%s" content
             | IVarDeclaration (inputVariables:(SimpleTypedIdentifier list)) ->                
                 let content = inputVariables |> List.map ExportVariableSimple
-                                             |> joinWithNewLine
-                sprintf "IVAR\n%s" content
+                                             |> joinWithIndentedNewLine 2
+                sprintf "\tIVAR\n%s" content
             | FrozenVarDeclaration (frozenVariables:(SimpleTypedIdentifier list)) ->
                 let content = frozenVariables |> List.map ExportVariableSimple
-                                              |> joinWithNewLine
-                sprintf "FROZENVAR\n%s" content
+                                              |> joinWithIndentedNewLine 2
+                sprintf "\tFROZENVAR\n%s" content
             | DefineDeclaration (defines:(IdentifierNextExpressionTuple list)) -> 
                 //Chapter 2.3.2 DEFINE Declarations p 26
                 let content = defines |> List.map ExportIdentifierNextExpressionTuple
-                                      |> joinWithNewLine
-                sprintf "DEFINE\n%s" content
+                                      |> joinWithIndentedNewLine 2
+                sprintf "\tDEFINE\n\t\t%s" content
             // TODO | ArrayDefineDeclaration // Chapter 2.3.3 Array Define Declarations p 26-27
             | ConstantsDeclaration (constants:(Identifier list)) ->
                 // Chapter 2.3.4 CONSTANTS Declarations p 27
                 let content = constants |> List.map this.ExportIdentifier
                                         |> joinWithComma
-                sprintf "CONSTANTS\n%s" content
+                sprintf "\tCONSTANTS\n%s" content
             | InitConstraint (expression:SimpleExpression) ->
                 // Chapter 2.3.5 INIT Constraint p 27
                 let content = this.ExportSimpleExpression expression
-                sprintf "INIT\n%s" content
+                sprintf "\tINIT\n%s" content
             | InvarConstraint (expression:SimpleExpression) ->
                 // Chapter 2.3.6 INVAR Constraint p 27
                 let content = this.ExportSimpleExpression expression
-                sprintf "INVAR\n%s" content
+                sprintf "\tINVAR\n%s" content
             | TransConstraint (expression:NextExpression) ->
                 // Chapter 2.3.7 TRANS Constraint p 28                
                 let content = this.ExportSimpleExpression expression
-                sprintf "TRANS\n%s" content
+                sprintf "\tTRANS\n%s" content
             | AssignConstraint (assigns:(SingleAssignConstraint list)) ->
                 let ExportSingleAssignConstraint (singleAssignConstraint:SingleAssignConstraint) = 
                     // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
@@ -325,8 +331,8 @@ type internal ExportNuXmvAstToFile() =
                             sprintf "next(%s) := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
                 // Chapter 2.3.8 ASSIGN Constraint p 28-29
                 let content = assigns |> List.map ExportSingleAssignConstraint
-                                      |> joinWithNewLine
-                sprintf "ASSIGN\n%s" content
+                                      |> joinWithIndentedNewLine 2
+                sprintf "\tASSIGN\n\t\t%s" content
             // TODO | FairnessConstraint // Chapter 2.3.9 FAIRNESS Constraints p 30
             | SpecificationInModule (specification) -> 
                 this.ExportSpecification specification
@@ -334,9 +340,9 @@ type internal ExportNuXmvAstToFile() =
             | PredDeclaration (identifier:Identifier, expression:SimpleExpression) -> 
                 // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35. Useful for debugging and CEGAR (Counterexample Guided Abstraction Refinement)
                 //TODO: optional
-                sprintf "PRED <%s> :=  %s" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+                sprintf "\tPRED <%s> :=  %s" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
             | MirrorDeclaration (variableIdentifier:ComplexIdentifier) -> 
-                sprintf "MIRROR %s" (this.ExportComplexIdentifier variableIdentifier)
+                sprintf "\tMIRROR %s" (this.ExportComplexIdentifier variableIdentifier)
 
 
     member this.ExportModuleDeclaration (moduleDeclaration:ModuleDeclaration) = 
@@ -350,7 +356,7 @@ type internal ExportNuXmvAstToFile() =
         let content =
             moduleDeclaration.ModuleElements |> List.map this.ExportModuleElement
                                              |> joinWithNewLine
-        sprintf "MODULE %s%s%s" name parameterString content
+        sprintf "MODULE %s%s\n%s" name parameterString content
     
 
 
