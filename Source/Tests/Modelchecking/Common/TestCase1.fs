@@ -112,4 +112,5 @@ module TestCase1Simplified =
     
     // Outputs
     let fields = [field]
-    let partitionUpdate = guardedCommandStatement
+    let partitionFields = [field]
+    let partitionUpdate = [guardedCommandStatement]

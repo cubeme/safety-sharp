@@ -41,7 +41,7 @@ type NuXmvModuleDeclaration = SafetySharp.Modelchecking.NuXmv.ModuleDeclaration
 
 type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
-    let toWriteOnceStatements = SimpleStatementsToWriteOnceStatements()
+    let toWriteOnceStatements = SimpleStatementsToWriteOnceStatements(toSimplifiedMetamodel.getSimpleGlobalFields)
 
     let mainModuleIdentifier = {Identifier.Name="main"}    
     let partitions = toSimplifiedMetamodel.getPartitions
@@ -143,7 +143,8 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         NuXmvBasicExpression.ComplexIdentifierExpression (varName)
     
     member this.getFieldsToTransform (partition:SimplePartition) =
-        let fields = toSimplifiedMetamodel.getSimpleGlobalFields
+        // TODO: A bit ugly right now: this method relies on side effects and must be executed _after_ the transformation of the sequence
+        let fields = toWriteOnceStatements.getAllFields()
         let filterInCurrentPartition (field:SimpleGlobalField) =
             if field.hasContext then
                 let context = field.getContext
@@ -153,8 +154,6 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         fields |> List.filter filterInCurrentPartition
 
     member this.generateFieldDeclarationsOfPartition (partition:SimplePartition) : ModuleElement =
-        //TODO: also add Artificial Values
-        
         let fieldsToTransform = this.getFieldsToTransform partition
         let generateDecl (field:SimpleGlobalField) : TypedIdentifier =
             let _simpleType = match field.getFieldSymbol.Type with
@@ -201,9 +200,12 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         transformedWriteOnlyStatements |> ModuleElement.AssignConstraint
 
     member this.generatePartition (partition:SimplePartition) : ModuleDeclaration =
-        let fieldDecls = this.generateFieldDeclarationsOfPartition partition
+        // TODO: remove parameter with identifier of this partition, if it is the partition itself. Use this.getModuleParametersforPartitions (Some(partition))
+        // TODO: pretty ugly right now: partitionUpdateCode has to be generated before the fieldDeclaration, because
+        //       this code has side effects in "toWriteOnceStatements" (generation of artificial fields)
         let partitionUpdateCode = this.generatePartitionUpdateCode partition
-        let otherPartitionIdentifier = this.getModuleParametersforPartitions (Some(partition))
+        let fieldDecls = this.generateFieldDeclarationsOfPartition partition
+        let otherPartitionIdentifier = this.getModuleParametersforPartitions (None)
         {
             ModuleDeclaration.Identifier = this.getPartitionModuleNameFromSimplePartition partition;
             ModuleDeclaration.ModuleParameters = otherPartitionIdentifier;
@@ -362,15 +364,15 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
                             let effect = chosenAsTrue |> List.map (fun effect -> this.transformWriteOnceExpression effect.TargetEffect)
                                                       |> BasicExpression.SetExpression
                             [{
-                                CaseConditionAndEffect.CaseCondition = effect
-                                CaseConditionAndEffect.CaseEffect = condition;
+                                CaseConditionAndEffect.CaseCondition = condition;
+                                CaseConditionAndEffect.CaseEffect = effect;
                             }]
                     else
                         // recursive-case, some nodes undetermined: Divide into subcases and merge them
                         let elementToDecide = unchosen.Head
                         let trueCase = determineEffect (elementToDecide::chosenAsTrue) chosenAsFalse unchosen.Tail
                         let falseCase = determineEffect chosenAsTrue (elementToDecide::chosenAsFalse) unchosen.Tail
-                        falseCase @ falseCase
+                        trueCase @ falseCase
 
                 let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
                 let effect = determineEffect [] [] possibleEffects |> BasicExpression.CaseExpression

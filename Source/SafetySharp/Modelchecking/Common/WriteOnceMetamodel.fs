@@ -123,22 +123,22 @@ type internal WriteOnceTypeFieldManager = {
     CreatedArtificialFieldsShared : (SimpleGlobalField list) ref; //every time a new artificial field is created by the manager, it is associated with this manager. It is "ref" so its value is shared across different instances leading back to the same .Initialize
 
 } with
-    static member Initialize (fieldsOfPartition:SimpleGlobalField list) =
+    static member Initialize (fields:SimpleGlobalField list) =
         let initialSimpleFieldToInitialFieldMapping: Map<SimpleGlobalFieldWithContext,SimpleGlobalField>=
             let createEntry (field:SimpleGlobalField) : (SimpleGlobalFieldWithContext*SimpleGlobalField) =
                 (field.getSimpleGlobalFieldWithContext,field)
-            fieldsOfPartition |> List.map createEntry
-                              |> Map.ofList
+            fields |> List.map createEntry
+                   |> Map.ofList
         let initialSimpleFieldToInitialRedirectionFieldMapping: Map<SimpleGlobalFieldWithContext,WriteOnceTimeOfAccess*SimpleGlobalField>=
             let createEntry (field:SimpleGlobalField) : (SimpleGlobalFieldWithContext*(WriteOnceTimeOfAccess*SimpleGlobalField)) =
                 (field.getSimpleGlobalFieldWithContext,(WriteOnceTimeOfAccess.UseResultOfLastStep,field))
-            fieldsOfPartition |> List.map createEntry
-                              |> Map.ofList
+            fields |> List.map createEntry
+                   |> Map.ofList
         let initialSimpleFieldToArtificialCounterShared: Map<SimpleGlobalFieldWithContext,int>=
             let createEntry (field:SimpleGlobalField) : (SimpleGlobalFieldWithContext*int) =
                 (field.getSimpleGlobalFieldWithContext,0)
-            fieldsOfPartition |> List.map createEntry
-                              |> Map.ofList
+            fields |> List.map createEntry
+                   |> Map.ofList
         {
             WriteOnceTypeFieldManager.SimpleFieldToInitialFieldMapping = initialSimpleFieldToInitialFieldMapping;
             WriteOnceTypeFieldManager.SimpleFieldToCurrentRedirectionFieldMapping = [initialSimpleFieldToInitialRedirectionFieldMapping];
@@ -210,13 +210,17 @@ type internal WriteOnceTypeFieldManager = {
             }
         (newArtificialField,newFieldManager)
         
-type internal SimpleStatementsToWriteOnceStatements() =
+//initialFields contains all fields of every partition
+type internal SimpleStatementsToWriteOnceStatements(initialFields:SimpleGlobalField list) =
+    
+    let initialFieldManager = WriteOnceTypeFieldManager.Initialize initialFields
 
     // TODO: Describe how it works:
     //  ASSIGN:
     //  BRANCH:
     //  MERGE BRANCHES:
     //  LINEARIZE:
+    //  NEXTSTEP:
     //  The fieldManager keeps the information of the current redirections and allows to introduce new unique artificial variables
     // returns the converted Statements and a list of variables, which got touched in the conversion progress
     member this.simpleStatementToWriteOnceStatementsCached (fieldManager:WriteOnceTypeFieldManager) (stmnts:SimpleStatement list) : (WriteOnceStatement list*WriteOnceTypeFieldManager) =
@@ -296,10 +300,15 @@ type internal SimpleStatementsToWriteOnceStatements() =
 
         (transformedStatements,fieldManagerAfterSequence)
     
+
+    //fieldsOfPartition only contains the fields of the current partition
+    //RELY: smnts contains every update and binding-stmnt of a partition. Every writing access to a field access of this partition is included in stmnts.
+    //      Reason: Artificial fields are introduced and their name relies on the name of a kfield they are based on. Thus fields are not duplicated.
     member this.simpleStatementToWriteOnceStatements (fieldsOfPartition:SimpleGlobalField list) (stmnts:SimpleStatement list) : WriteOnceStatement list =
         
-        let fieldManager = WriteOnceTypeFieldManager.Initialize fieldsOfPartition
+        let fieldManager = initialFieldManager
         let (transformedStatements,fieldManagerAfterSequence) = this.simpleStatementToWriteOnceStatementsCached fieldManager stmnts
+        //  NEXTSTEP:
         // write an assignment for every SimpleGlobalField (get the current redirection from the fieldManagerAfterSequence)
         let assignmentsToCurrentValuationStatements = 
             let transformField (field:SimpleGlobalField) : WriteOnceStatement =
@@ -312,3 +321,10 @@ type internal SimpleStatementsToWriteOnceStatements() =
             
         // The effect is the current valuation of the artificial field in the map
         transformedStatements @ assignmentsToCurrentValuationStatements
+
+
+    member this.getAllArtificialFields() : SimpleGlobalField list = 
+        initialFieldManager.CreatedArtificialFieldsShared.Value
+    
+    member this.getAllFields() : SimpleGlobalField list = 
+        initialFields @ this.getAllArtificialFields()

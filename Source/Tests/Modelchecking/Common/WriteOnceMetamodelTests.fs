@@ -74,5 +74,42 @@ module WriteOnceTypeFieldManagerTests =
         redirectedTime =? WriteOnceTimeOfAccess.UseResultOfThisStep
         redirectedField =? newField
         ()
+        
+[<TestFixture>]
+module SimpleStatementsToWriteOnceStatementsTests =
+    let isSimpleAssignment (stmnt:WriteOnceStatement) =
+        match stmnt with
+            | WriteOnceStatement.WriteOnceStatementSimpleAssign _ -> true
+            | _ -> false
+    let isParallelDecisionAssignment (stmnt:WriteOnceStatement) =
+        match stmnt with
+            | WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel _ -> true
+            | _ -> false
+    //let isBasedOnField =
 
-
+    [<Test>]
+    let ``update of testcase1 is transformed correctly`` () =
+        // TODO: Make complete
+        let transformer = SimpleStatementsToWriteOnceStatements(TestCase1Simplified.fields)
+        let transformed = transformer.simpleStatementToWriteOnceStatements (TestCase1Simplified.partitionFields) (TestCase1Simplified.partitionUpdate)
+        transformer.getAllArtificialFields().Length =? 3
+        transformer.getAllFields().Length =? 4
+        transformed.Length =? 4
+        let statement1 = transformed.Item 0
+        let statement2 = transformed.Item 1
+        let statement3 = transformed.Item 2
+        let statement4 = transformed.Item 3        
+        (isSimpleAssignment statement1) =? true
+        (isSimpleAssignment statement2) =? true
+        (isParallelDecisionAssignment statement3) =? true
+        (isSimpleAssignment statement4) =? true
+        match statement3 with
+            | WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel(target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceExpression ) ->
+                possibleEffects.Length =? 2
+                let effect1 = possibleEffects.Item 0
+                let effect2 = possibleEffects.Item 1
+                effect1 <>? effect2
+                elseEffect =? WriteOnceExpression.FieldAccessExpression(WriteOnceTimeOfAccess.UseResultOfLastStep,TestCase1Simplified.field)
+                ()
+            | _ ->
+                ()
