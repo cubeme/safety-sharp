@@ -337,7 +337,6 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         match statement with
             | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceExpression) ->  
                 let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
-                failwith "NotImplementedYet"
                 let rec determineEffect (chosenAsTrue:WriteOncePossibleEffect list)
                                         (chosenAsFalse:WriteOncePossibleEffect list)
                                         (unchosen:WriteOncePossibleEffect list) : CaseConditionAndEffect list =

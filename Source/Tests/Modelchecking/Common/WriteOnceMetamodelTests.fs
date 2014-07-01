@@ -58,12 +58,15 @@ module WriteOnceTypeFieldManagerTests =
         let fieldManager=WriteOnceTypeFieldManager.Initialize([fieldToCheck])
         let (newField,newFieldManager) = fieldManager.createNewArtificialFieldForField(fieldToCheck.getSimpleGlobalFieldWithContext)
         newField <>? fieldToCheck
+        // check if new Field is in the pool of new fields
+        fieldManager.CreatedArtificialFieldsShared.Value.Length =? 1
+        newFieldManager.CreatedArtificialFieldsShared.Value.Length =? 1
+        fieldManager.CreatedArtificialFieldsShared.Value.Head =? newField
+        newFieldManager.CreatedArtificialFieldsShared.Value.Head =? newField
         // check if new Field is in the _current_ Redirection Map
         let (redirectedTime,redirectedField) = newFieldManager.getCurrentRedirection(fieldToCheck.getSimpleGlobalFieldWithContext)
         redirectedTime =? WriteOnceTimeOfAccess.UseResultOfThisStep
         redirectedField =? newField
-        // TODO: CreatedArtificialFieldsShared
-
         // check if new Field is in the _new_ Redirection Map
         let newArtificialFields = newFieldManager.getNewArtificialFieldMapping
         newArtificialFields.Count =? 1

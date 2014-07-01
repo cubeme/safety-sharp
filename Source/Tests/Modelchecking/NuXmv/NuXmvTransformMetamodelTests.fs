@@ -55,5 +55,5 @@ module TestCase1ToNuXmvTests =
         let nuXmvCode = modelTransformer.transformConfiguration
         let nuXmvWriter = ExportNuXmvAstToFile()
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
-        FileSystem.WriteToAsciiFile "Modelchecking/Promela/testcase1.smv" nuXmvCodeString
+        FileSystem.WriteToAsciiFile "Modelchecking/NuXmv/testcase1.smv" nuXmvCodeString
         ()
