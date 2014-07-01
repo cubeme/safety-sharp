@@ -32,7 +32,7 @@ open SafetySharp.Modelchecking
 
 
 [<TestFixture>]
-module internal WriteOnceTypeFieldManagerTests =
+module WriteOnceTypeFieldManagerTests =
         
     [<Test>]
     let ``fieldManager initializes without exception`` () =
@@ -76,12 +76,12 @@ module internal WriteOnceTypeFieldManagerTests =
         ()
         
 [<TestFixture>]
-module internal SimpleStatementsToWriteOnceStatementsTests =
-    let isSimpleAssignment (stmnt:WriteOnceStatement) =
+module SimpleStatementsToWriteOnceStatementsTests =
+    let internal isSimpleAssignment (stmnt:WriteOnceStatement) =
         match stmnt with
             | WriteOnceStatement.WriteOnceStatementSimpleAssign _ -> true
             | _ -> false
-    let isParallelDecisionAssignment (stmnt:WriteOnceStatement) =
+    let internal isParallelDecisionAssignment (stmnt:WriteOnceStatement) =
         match stmnt with
             | WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel _ -> true
             | _ -> false
