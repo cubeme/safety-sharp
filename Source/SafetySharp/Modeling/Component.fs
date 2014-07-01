@@ -24,6 +24,7 @@ namespace SafetySharp.Modeling
 
 open System
 open System.Collections.Generic
+open System.Globalization
 open System.Linq
 open System.Linq.Expressions
 open System.Reflection
@@ -123,7 +124,7 @@ type Component () =
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
     /// Sets the initial values of a field of the component instance.
-    member this.SetInitialValues<'T> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
+    member this.SetInitialValues<'T when 'T :> obj> (field : Expression<Func<'T>>, [<ParamArray>] initialValues : 'T array) =
         nullArg field "field"
         nullArg initialValues "initialValues"
         invalidArg (initialValues.Length <= 0) "initialValues" "At least one value must be provided."
@@ -136,7 +137,14 @@ type Component () =
             if not (fieldInfo.DeclaringType.IsAssignableFrom <| this.GetType ()) then
                 invalidArg true "field" "Expected a reference to a field of the component."
 
-            fields.[fieldInfo.Name] <- initialValues |> Seq.cast<obj> |> List.ofSeq
+            fields.[fieldInfo.Name] <-
+                if fieldInfo.FieldType.IsEnum then
+                    let containsInvalidLiteral = initialValues |> Seq.tryFind (fun value -> not <| Enum.IsDefined (fieldInfo.FieldType, value))
+                    if containsInvalidLiteral.IsSome then
+                        invalidArg true "initialValues" "Invalid enumeration value '%A'." containsInvalidLiteral.Value
+                    initialValues |> Seq.map (fun value -> ((value :> obj) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj) |> List.ofSeq
+                else
+                    initialValues |> Seq.cast<obj> |> List.ofSeq
 
             let random = Random();
             fieldInfo.SetValue(this, initialValues.[random.Next(0, initialValues.Length)]);
@@ -151,7 +159,14 @@ type Component () =
 
         this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
         |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field.Name))
-        |> Seq.iter (fun field -> fields.Add (field.Name, [field.GetValue this]))
+        |> Seq.iter (fun field ->
+            let value =
+                if field.FieldType.IsEnum then
+                    (field.GetValue(this) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj
+                else
+                    field.GetValue this
+            fields.Add (field.Name, [value])
+        )
 
         let subcomponentMetadata = 
             this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)

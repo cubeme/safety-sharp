@@ -480,6 +480,17 @@ module ``ResolveLocal method`` =
         symbolResolver.ResolveLocal localSymbol =? { Name = "i"; Type = TypeSymbol.Integer }
 
     [<Test>]
+    let ``returns different symbols for locals with same name and type within a transformed component method`` () =
+        compile "class A : Component { void M() { for (int i = 0; true;) {} for (int i = 0; true;) {} } }"
+        let localSymbols = compilation.FindLocalSymbols "A" "M" "i"
+        localSymbols.[0] <>? localSymbols.[1]
+        symbolResolver.ResolveLocal localSymbols.[0] =? { Name = "i"; Type = TypeSymbol.Integer }
+        symbolResolver.ResolveLocal localSymbols.[1] =? { Name = "i"; Type = TypeSymbol.Integer }
+
+        // We have to check for reference equality here
+        test <@ not <| obj.ReferenceEquals(symbolResolver.ResolveLocal localSymbols.[0], symbolResolver.ResolveLocal localSymbols.[1]) @>
+
+    [<Test>]
     let ``returns different symbols for different locals of same transformed component method`` () =
         compile "class A : Component { void M() { int i, j; bool b; if (true) { decimal d; } } }"
         let local1 = compilation.FindLocalSymbol "A" "M" "i"

@@ -162,16 +162,18 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
         | [] -> failed "Found no fields with name '%s' in '%s'." fieldName typeName
         | _ -> failed "Found more than one field with name '%s' in '%s'." fieldName typeName
 
+    /// Gets the <see cref="VariableDeclaratorSyntax" /> instances representing the local variables with the given name in the method
+    /// with the given name in the type with the given name.
+    member this.FindLocalDeclarations typeName methodName localName =
+        let methodDeclaration = this.FindMethodDeclaration typeName methodName
+        methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
+        |> Seq.where (fun declarator -> declarator.Identifier.ValueText = localName)
+        |> List.ofSeq
+    
     /// Gets the <see cref="VariableDeclaratorSyntax" /> representing the local variable with the given name in the method
     /// with the given name in the type with the given name.
     member this.FindLocalDeclaration typeName methodName localName =
-        let methodDeclaration = this.FindMethodDeclaration typeName methodName
-        let locals =
-            methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
-            |> Seq.where (fun declarator -> declarator.Identifier.ValueText = localName)
-            |> List.ofSeq
-
-        match locals with 
+        match this.FindLocalDeclarations typeName methodName localName with 
         | localDeclaration :: [] -> localDeclaration
         | [] -> failed "Found no local with name '%s' in method '%s.%s'." localName typeName methodName
         | _ -> failed "Found more than one local with name '%s' in method '%s.%s'." localName typeName methodName
@@ -220,6 +222,12 @@ type internal TestCompilation (csharpCode : string, ?safetySharpAssembly : Safet
         | parameterSymbol :: [] -> parameterSymbol
         | [] -> failed "Unable to find parameter '%s' of method '%s.%s'." parameterName typeName methodName
         | _ -> failed "Found more than one parameter '%s' of method '%s.%s'." parameterName typeName methodName
+
+    /// Gets the <see cref="ILocalSymbol" /> representing the local variable with the given name in the method
+    /// with the given name in the type with the given name.
+    member this.FindLocalSymbols typeName methodName localName =
+        this.FindLocalDeclarations typeName methodName localName
+        |> List.map (fun localDeclaration -> this.SemanticModel.GetDeclaredSymbol localDeclaration :?> ILocalSymbol)
 
     /// Gets the <see cref="ILocalSymbol" /> representing the local variable with the given name in the method
     /// with the given name in the type with the given name.

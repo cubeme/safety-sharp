@@ -156,6 +156,8 @@ module Compiler =
         let metadataCompilation = 
             compilation
             |> applyNormalizer<ChooseMethodNormalizer>
+            |> applyNormalizer<EnumLiteralNormalizer>
+            |> applyNormalizer<EnumTypeNormalizer>
 
         outputCode metadataCompilation "obj/Model"
         addMetadata metadataCompilation compilation

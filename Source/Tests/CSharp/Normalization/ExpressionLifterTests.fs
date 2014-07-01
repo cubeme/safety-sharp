@@ -37,7 +37,7 @@ open SafetySharp.CSharp.Roslyn
 [<TestFixture>]
 module ExpressionLifterTests =
 
-    let compile csharpCode =
+    let normalize csharpCode =
         let compilation = TestCompilation ("
             class C : Component
             {
@@ -63,39 +63,39 @@ module ExpressionLifterTests =
 
     [<Test>]
     let ``does not lift method invocation argument that does not require lifting`` () =
-        compile "M(30)" =? "M(30)"
+        normalize "M(30)" =? "M(30)"
 
     [<Test>]
     let ``does not lift object creation argument that does not require lifting`` () =
-        compile "new C(false)" =? "new C(false)"
+        normalize "new C(false)" =? "new C(false)"
 
     [<Test>]
     let ``lifts object creation argument`` () =
-        compile "new C(1)" =? "new C(() => 1)"
-        compile "new C(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "new C(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
+        normalize "new C(1)" =? "new C(() => 1)"
+        normalize "new C(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "new C(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
 
     [<Test>]
     let ``lifts method invocation argument`` () =
-        compile "N(1)" =? "N(() => 1)"
-        compile "N(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "N(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
+        normalize "N(1)" =? "N(() => 1)"
+        normalize "N(1 + 3 / 54 + (true == false ? 17 : 33 + 1))" =? "N(() => 1 + 3 / 54 + (true == false ? 17 : 33 + 1))"
 
     [<Test>]
     let ``lifts both method invocation arguments`` () =
-        compile "O(1, 17)" =? "O(() => 1, () => 17)"
-        compile "O(1, 1 + 3)" =? "O(() => 1, () => 1 + 3)"
-        compile "O(1 - 0, 3)" =? "O(() => 1 - 0, () => 3)"
+        normalize "O(1, 17)" =? "O(() => 1, () => 17)"
+        normalize "O(1, 1 + 3)" =? "O(() => 1, () => 1 + 3)"
+        normalize "O(1 - 0, 3)" =? "O(() => 1 - 0, () => 3)"
 
     [<Test>]
     let ``lifts second method invocation argument`` () =
-        compile "P(1, true)" =? "P(1, () => true)"
-        compile "P(1, true || false)" =? "P(1, () => true || false)"
-        compile "P(1 - 0, false)" =? "P(1 - 0, () => false)"
+        normalize "P(1, true)" =? "P(1, () => true)"
+        normalize "P(1, true || false)" =? "P(1, () => true || false)"
+        normalize "P(1 - 0, false)" =? "P(1 - 0, () => false)"
 
     [<Test>]
     let ``lifts nested method invocations and object creations`` () =
-        compile "new C(O(M(1), N(17 + 1)))" =? "new C(() => O(() => M(1), () => N(() => 17 + 1)))"
+        normalize "new C(O(M(1), N(17 + 1)))" =? "new C(() => O(() => M(1), () => N(() => 17 + 1)))"
 
     [<Test>]
     let ``preserves all line breaks in expressions`` () =
-        compile "new C(1\n + 1)" =? "new C(() => 1\n + 1)"
-        compile "O(M(2 -\n1)\n+ 0,\n3\n- N(\n2 *\n5))" =? "O(() => M(2 -\n1)\n+ 0,\n() => 3\n- N(\n() => 2 *\n5))"
+        normalize "new C(1\n + 1)" =? "new C(() => 1\n + 1)"
+        normalize "O(M(2 -\n1)\n+ 0,\n3\n- N(\n2 *\n5))" =? "O(() => M(2 -\n1)\n+ 0,\n() => 3\n- N(\n() => 2 *\n5))"

@@ -73,6 +73,7 @@ module internal FormulaTransformation =
         | :? bool as value -> BooleanLiteral value
         | :? int as value -> IntegerLiteral value
         | :? decimal as value -> DecimalLiteral value
+        | _ when value.GetType().IsEnum -> IntegerLiteral (value :?> int)
         | _ -> invalidOp "Constants of type '%s' are not supported within formulas." <| value.GetType().FullName
 
     /// Gets the CLR object represented by the Linq expression.
@@ -120,8 +121,15 @@ module internal FormulaTransformation =
                 elif typeof<IMemberAccess>.IsAssignableFrom expression.Type then
                     let memberAccess = getValue expression :?> IMemberAccess
                     transformComponentFieldAccess symbolResolver objectResolver memberAccess.Component memberAccess.MemberName
+                elif objectExpression.Type.IsEnum then
+                    let fieldInfo = memberInfo :?> FieldInfo
+                    IntegerLiteral (fieldInfo.GetValue null :?> int)
                 else
                     getValue expression |> convertConstant
+
+            // We'll skip over 'enum literal to int' conversions
+            | ConversionExpression (operand, conversionMethod) when operand.Type.IsEnum ->
+                transformLinqExpression operand
 
             // We'll skip over conversion expressions that result from invoking the implicit conversion operator
             // of a MemberAccess instance. Other conversions are not supported within formulas.

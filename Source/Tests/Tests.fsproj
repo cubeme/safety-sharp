@@ -66,6 +66,8 @@
     <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
     <Compile Include="CSharp\Normalization\UpdateMethodVisibilityNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExternMethodNormalizerTests.fs" />
+    <Compile Include="CSharp\Normalization\EnumTypeNormalizerTests.fs" />
+    <Compile Include="CSharp\Normalization\EnumLiteralNormalizerTests.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />

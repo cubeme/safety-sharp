@@ -27,28 +27,25 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp.Roslyn
-open SafetySharp.Utilities
 open SafetySharp.Modeling
 
-/// Normalizes all usages of the nondeterministic Choose methods.
-type ChooseMethodNormalizer () =
+/// Replaces all uses of enum types within a component by int.
+type EnumTypeNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
-    override this.VisitBinaryExpression node =
-        if node.CSharpKind () <> SyntaxKind.SimpleAssignmentExpression then
-            upcast node
-        elif node.Right.CSharpKind () <> SyntaxKind.InvocationExpression then
-            upcast node
-        else
-            let invocation = node.Right :?> InvocationExpressionSyntax
-            let methodSymbol = this.semanticModel.GetReferencedSymbol<IMethodSymbol> invocation
+    let intType = SyntaxFactory.ParseTypeName "int"
 
-            if methodSymbol.ContainingType = this.semanticModel.GetTypeSymbol<Choose> () then
-                let outToken = SyntaxFactory.Token SyntaxKind.OutKeyword
-                let argument = SyntaxFactory.Argument(node.Left).WithRefOrOutKeyword outToken
-                let arguments = invocation.ArgumentList.Arguments.Insert (0, argument)
-                let argumentList = invocation.ArgumentList.WithArguments arguments
-                let invocation = invocation.WithArgumentList argumentList
-                upcast (invocation.NormalizeWhitespace () |> Syntax.WithTriviaFromNode node)
-            else
-                upcast node
+    member private this.ReplaceEnumType (nameSyntax : NameSyntax) =
+        match this.semanticModel.GetSymbolInfo(nameSyntax).Symbol with
+        | :? ITypeSymbol as typeSymbol when typeSymbol.TypeKind = TypeKind.Enum ->
+            intType |> Syntax.WithTriviaFromNode nameSyntax :> SyntaxNode
+        | _ ->
+            nameSyntax :> SyntaxNode
+
+    override this.VisitAliasQualifiedName node = this.ReplaceEnumType node
+    override this.VisitQualifiedName node = this.ReplaceEnumType node
+    override this.VisitIdentifierName node = this.ReplaceEnumType node
+
+    override this.VisitMemberAccessExpression node = 
+        // We want to rewrite enum literals such as 'E.A' to 'int.A'...
+        upcast node

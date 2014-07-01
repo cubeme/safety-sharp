@@ -41,6 +41,7 @@ module private FormulaTransformationTestsHelper =
 
     let compile formulaType csharpCode =
         let compilation = TestCompilation (@"
+            enum E { A, B, C }
             class A : Component { public bool boolField; private int intField; }
             class B : Component { public B(A a) { this.a = a; } private A a; public bool boolField; }
             class M : Model {
@@ -50,6 +51,7 @@ module private FormulaTransformationTestsHelper =
                     var b = new B(sub);
                     Unknown = new A();
 
+                    var enumValue = E.B;
                     int intValue = 17;
                     bool boolValue = true;
 
@@ -99,8 +101,13 @@ module ``Linear Temporal Logic`` =
     [<Test>]
     let ``transform state expression`` () =
         let oneEqualsSeventeen = BinaryExpression (IntegerLiteral 1, BinaryOperator.Equals, IntegerLiteral 17)
-        let expected =  StateFormula (BinaryExpression(BooleanLiteral true, BinaryOperator.LogicalOr, oneEqualsSeventeen))
+        let expected = StateFormula (BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalOr, oneEqualsSeventeen))
         compileLtl "Ltl.StateExpression(() => true || 1 == intValue)" =? expected
+
+    [<Test>]
+    let ``transform enum literals in state expressions`` () =
+        let expected = StateFormula (BinaryExpression (IntegerLiteral 1, BinaryOperator.Equals, IntegerLiteral 2))
+        compileLtl "Ltl.StateExpression(() => enumValue == E.C)" =? expected
 
     [<Test>]
     let ``transform component indirect member access`` () =
@@ -187,6 +194,11 @@ module ``Computation Tree Logic`` =
         let oneEqualsSeventeen = BinaryExpression(IntegerLiteral 1, BinaryOperator.Equals, IntegerLiteral 17)
         let expected =  StateFormula(BinaryExpression(BooleanLiteral true, BinaryOperator.LogicalOr, oneEqualsSeventeen))
         compileCtl "Ctl.StateExpression(() => boolValue || 1 == intValue)" =? expected
+
+    [<Test>]
+    let ``transform enum literals in state expressions`` () =
+        let expected = StateFormula (BinaryExpression (IntegerLiteral 1, BinaryOperator.Equals, IntegerLiteral 2))
+        compileCtl "Ctl.StateExpression(() => enumValue == E.C)" =? expected
 
     [<Test>]
     let ``transform component indirect member access`` () =

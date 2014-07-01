@@ -40,6 +40,7 @@ namespace Elbtunnel
 		}
 	}
 
+	enum Lane {Left, Right}
 
 	internal class Test2 : Component
 	{
@@ -56,6 +57,7 @@ namespace Elbtunnel
 	internal class BooleanComponent : Component
 	{
 		public bool Value;
+		public Lane Lane = Lane.Right;
 
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
@@ -63,7 +65,7 @@ namespace Elbtunnel
 				SetInitialValues(Value, true, false);
 			else
 				Value = false;
-
+			//SetInitialValues(Lane, Lane.Right, Lane.Left);
 			//Update();
 			//Bind(Q2, Provided);
 		}
@@ -88,6 +90,7 @@ namespace Elbtunnel
 		 
 		protected override void Update()
 		{
+			Lane = Lane.Left;
 			Value = Choose.Boolean();
 			if (Value == false)
 				Value = true;

@@ -25,8 +25,8 @@
 				bool b = value;
 				var x = 0;
 				Hazard = Ltl.Globally(value != b
-									  || -value1
-									  == x)
+									  || -value1 == x
+									  || c1.Lane == Lane.Right)
 							.Implies(Ltl.Finally(!value == false || value2 == true || lb.Triggered && t.Boolean2.Value));
 
 				Hazard2 = Ctl.AllPaths.Globally(value != false || unknown.Triggered);

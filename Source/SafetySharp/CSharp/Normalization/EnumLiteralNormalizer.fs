@@ -27,28 +27,16 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharp.Roslyn
-open SafetySharp.Utilities
 open SafetySharp.Modeling
 
-/// Normalizes all usages of the nondeterministic Choose methods.
-type ChooseMethodNormalizer () =
+/// Replaces uses of enum literals within a component by their underlying int value.
+type EnumLiteralNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
-    override this.VisitBinaryExpression node =
-        if node.CSharpKind () <> SyntaxKind.SimpleAssignmentExpression then
+    override this.VisitMemberAccessExpression node =
+        let symbolInfo = this.semanticModel.GetSymbolInfo node
+        match symbolInfo.Symbol with
+        | :? IFieldSymbol as fieldSymbol when fieldSymbol.ContainingType.TypeKind = TypeKind.Enum ->
+            upcast (SyntaxFactory.ParseExpression (fieldSymbol.ConstantValue.ToString ()) |> Syntax.WithTriviaFromNode node)
+        | _ -> 
             upcast node
-        elif node.Right.CSharpKind () <> SyntaxKind.InvocationExpression then
-            upcast node
-        else
-            let invocation = node.Right :?> InvocationExpressionSyntax
-            let methodSymbol = this.semanticModel.GetReferencedSymbol<IMethodSymbol> invocation
-
-            if methodSymbol.ContainingType = this.semanticModel.GetTypeSymbol<Choose> () then
-                let outToken = SyntaxFactory.Token SyntaxKind.OutKeyword
-                let argument = SyntaxFactory.Argument(node.Left).WithRefOrOutKeyword outToken
-                let arguments = invocation.ArgumentList.Arguments.Insert (0, argument)
-                let argumentList = invocation.ArgumentList.WithArguments arguments
-                let invocation = invocation.WithArgumentList argumentList
-                upcast (invocation.NormalizeWhitespace () |> Syntax.WithTriviaFromNode node)
-            else
-                upcast node

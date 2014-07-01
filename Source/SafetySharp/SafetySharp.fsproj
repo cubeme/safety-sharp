@@ -96,6 +96,8 @@
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
     <Compile Include="CSharp\Normalization\ExternMethodNormalizer.fs" />
+    <Compile Include="CSharp\Normalization\EnumTypeNormalizer.fs" />
+    <Compile Include="CSharp\Normalization\EnumLiteralNormalizer.fs" />
     <Compile Include="CSharp\Transformation\SymbolResolver.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformation.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformation.fs" />

@@ -36,6 +36,11 @@ open SafetySharp.Modeling
 open SafetySharp.Tests
 open SafetySharp.Tests.CSharp
 
+type private TestEnum =
+    | Default = 0
+    | A = 1
+    | B = 2
+
 [<TestFixture>]
 module ``SetInitialValues method`` =
     [<Test>]
@@ -83,6 +88,11 @@ module ``SetInitialValues method`` =
         let otherComponent = FieldComponent<int, int> ()
 
         raisesArgumentException "field" <@ component'.SetInitialValues (createFieldExpression<int> otherComponent "_field1", 17)  @>
+
+    [<Test>]
+    let ``throws when undefined enum value is passed`` () =
+        let component' = FieldComponent<TestEnum> ()
+        raisesArgumentException "initialValues" <@ component'.SetInitialValues (createFieldExpression<TestEnum> component' "_field", enum<TestEnum> 177) @>
 
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
@@ -193,6 +203,16 @@ module ``GetInitialValuesOfField method`` =
 
         component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [158; 392]
         component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [false; true]
+
+    [<Test>]
+    let ``returns integer values for fields of enumeration type`` () =
+        let component' = FieldComponent<TestEnum> ()
+        component'.FinalizeMetadata ()
+        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [0]
+
+        let component' = FieldComponent<TestEnum> (TestEnum.A, TestEnum.B)
+        component'.FinalizeMetadata ()
+        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [1; 2]
 
 [<TestFixture>]
 module ``GetSubcomponent method`` = 

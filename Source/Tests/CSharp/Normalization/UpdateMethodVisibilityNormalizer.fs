@@ -38,32 +38,32 @@ open SafetySharp.CSharp.Roslyn
 [<TestFixture>]
 module UpdateMethodVisibilityNormalizerTests =
 
-    let visibility csharpCode =
+    let normalize csharpCode =
         let compilation = TestCompilation (csharpCode, SafetySharpAssembly.Modeling)
         let syntaxTree = UpdateMethodVisibilityNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
         syntaxTree.Descendants<MethodDeclarationSyntax>().Last().Visibility
     
     [<Test>]
     let ``changes visibility of Update method of non-inherited component`` () =
-        visibility "class C : Component { protected override void Update() {} }" =? Public
+        normalize "class C : Component { protected override void Update() {} }" =? Public
 
     [<Test>]
     let ``changes visibility of Update method of inherited component`` () =
-        visibility "class D : Component {} class C : D { protected override void Update() {} }" =? Public
-        visibility "class D : Component { protected override void Update() {} } class C : D { protected override void Update() {} }" =? Public
+        normalize "class D : Component {} class C : D { protected override void Update() {} }" =? Public
+        normalize "class D : Component { protected override void Update() {} } class C : D { protected override void Update() {} }" =? Public
 
     [<Test>]
     let ``does not change visibility of non-Update method`` () =
-        visibility "class C : Component { private void M () {} }" =? Private
-        visibility "class C : Component { protected void M () {} }" =? Protected
-        visibility "class C : Component { protected internal virtual void M () {} }" =? ProtectedInternal
-        visibility "class C : Component { internal protected void M () {} }" =? ProtectedInternal
-        visibility "class C : Component { internal void M () {} }" =? Internal
-        visibility "abstract class C : Component { public abstract void M (); }" =? Public
+        normalize "class C : Component { private void M () {} }" =? Private
+        normalize "class C : Component { protected void M () {} }" =? Protected
+        normalize "class C : Component { protected internal virtual void M () {} }" =? ProtectedInternal
+        normalize "class C : Component { internal protected void M () {} }" =? ProtectedInternal
+        normalize "class C : Component { internal void M () {} }" =? Internal
+        normalize "abstract class C : Component { public abstract void M (); }" =? Public
 
     [<Test>]
     let ``does not change visibility of non-component Update method`` () =
-        visibility "class Base { protected virtual void Update() {} } class C : Base { protected override void Update() {} }" =? Protected
+        normalize "class Base { protected virtual void Update() {} } class C : Base { protected override void Update() {} }" =? Protected
 
     [<Test>]
     let ``preserves all line breaks in method declaration`` () =

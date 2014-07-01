@@ -46,8 +46,7 @@ type FieldSymbol = {
 
 /// Represents the definition of a local variable within a statement block.
 type LocalSymbol = {
-    /// The name of the local variable. Local variable names are unique within a single method and do not overlap
-    /// with method parameter names.
+    /// The name of the local variable. Local variable names do not overlap with method parameter names.
     Name : string
 
     /// The type of the field.
