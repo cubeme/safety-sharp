@@ -101,8 +101,7 @@ module internal TestCase1Simplified =
         SimpleGlobalFieldWithContext.FieldSymbol=TestCase1.fieldXSymbol;
         SimpleGlobalFieldWithContext.InitialValues=initialValues;
     }
-    let innerField = SimpleGlobalField.FieldWithContext(simpleGlobalFieldWithContext)
-    let field = SimpleGlobalField.FieldOfMetamodel(TestCase1.indeterministicComponentObject,innerField)
+    let field = SimpleGlobalField.FieldWithContext(simpleGlobalFieldWithContext)
 
     // Statements
     let assignStatementTrue = SimpleStatement.AssignmentStatement(field,booleanTrueExpression)

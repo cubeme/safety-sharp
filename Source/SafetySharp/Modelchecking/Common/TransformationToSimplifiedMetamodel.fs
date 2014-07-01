@@ -69,12 +69,12 @@ type internal MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMS
 //       - Duplicate every discriminated union case of SimpleStatement, SimpleExpression, SimpleGlobalField to allow the case
 //         that the field is artificial or references a MM-equivalent
 //              (contra: bloats types)
-//       - Introduce a mapping
-//              (contra: bloats recursive call parameters and return parameters)
+//       - Introduce a mapping <----- switch to this solution
+//              (contra: bloats recursive call parameters and return parameters. But could also be a mutable map in the Type. This is contrary to the functional programming style)
 //       - Introduce in every discriminated union case an optional element
 //              (contra: drag along information not really necessary in many cases)
 //       - Introduce one extra case: "MMReference of MMX * SimpleX" and member-Functions "dereference" and "recursiveDereference"
-//              (I think I'll take this approach)
+
 
 // Maybe TODO:
 // The Simplified Metamodel is still connected to the Full Metamodel, because it links to some of its artifacts
@@ -141,30 +141,37 @@ type internal SimpleGlobalFieldWithContext = {
             SimpleGlobalFieldWithContext.InitialValues=[initialValue];
         }
 
+// TODO: - Remove FieldOfMetamodel, add different Cases of context in Context (the context object is also used when the
+//         linearizer walks through the components and methods
+//       - Replace Usage of SimpleGlobalFieldWithContext in maps by SimpleGlobalField where practicable 
+//       - Transform it into a record-type, if no different case is found. But: It might be the case, that we
+//         introduce complete artificial fields which optimize things. Maybe better keep it
+//       - Add Attributes
+//[<StructuralEquality;StructuralComparison>]
 type internal SimpleGlobalField =
     | FieldWithContext of Field : SimpleGlobalFieldWithContext
-    | FieldOfMetamodel of ComponentObject : MMComponentObject * Field : SimpleGlobalField 
+    //| FieldOfMetamodel of ComponentObject : MMComponentObject * Field : SimpleGlobalField 
     with
         member this.getFieldSymbol =
             match this with
                 | SimpleGlobalField.FieldWithContext (field)-> field.FieldSymbol
-                | SimpleGlobalField.FieldOfMetamodel (_,field)-> field.getFieldSymbol
+                //| SimpleGlobalField.FieldOfMetamodel (_,field)-> field.getFieldSymbol
         member this.getInitialValues =
             match this with
                 | SimpleGlobalField.FieldWithContext (field)-> field.InitialValues
-                | SimpleGlobalField.FieldOfMetamodel (_,field)-> field.getInitialValues
+                //| SimpleGlobalField.FieldOfMetamodel (_,field)-> field.getInitialValues
         member this.hasContext =
             match this with
                 | SimpleGlobalField.FieldWithContext _ -> true
-                | SimpleGlobalField.FieldOfMetamodel (_,field) -> field.hasContext
+                //| SimpleGlobalField.FieldOfMetamodel (_,field) -> field.hasContext
         member this.getContext =
             match this with
                 | SimpleGlobalField.FieldWithContext (field) -> field.Context
-                | SimpleGlobalField.FieldOfMetamodel (_,field) -> field.getContext
+                //| SimpleGlobalField.FieldOfMetamodel (_,field) -> field.getContext
         member this.getSimpleGlobalFieldWithContext =
             match this with
                 | SimpleGlobalField.FieldWithContext (field) -> field
-                | SimpleGlobalField.FieldOfMetamodel (_,field) -> field.getSimpleGlobalFieldWithContext
+                //| SimpleGlobalField.FieldOfMetamodel (_,field) -> field.getSimpleGlobalFieldWithContext
 
 
 // A SimpleExpression knows the Context of its variables (We use MMExpression, because it already offers this functionality for Formulas)
@@ -231,6 +238,9 @@ type internal ContextCache (configuration:MMConfiguration) =
                 Context.hierarchicalAccess = newElementName::parentContext.hierarchicalAccess; //parentsAndMe
                 Context.rootComponentName = parentContext.rootComponentName;
             }
+
+        // TODO: createContextForMethodInvocation()
+
         member this.getRootComponents : string list =
             rootComponentToName |> Map.toList
                                 |> List.map (fun (_,value) -> value)
@@ -269,8 +279,15 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
         let getFieldObjects (fieldMap : Map<MMFieldSymbol, MMFieldObject>) : (MMFieldObject list) =
             fieldMap |> Map.fold (fun acc key value -> value::acc) []
 
-            
-        let simpleGlobalFields : SimpleGlobalField list =
+        // type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
+        // TODO: name of type doesn't really match anymore
+        let fieldAccessInACompomonentToSimpleGlobalFieldMap : ResolverForSimpleGlobalFields ref = 
+            ref Map.empty<string*string,SimpleGlobalField>
+
+        // has side-effect, so should only be executed once
+        let mutable simpleGlobalFieldsFromComponentFields : SimpleGlobalField list =
+            let fieldAccessInACompomonentToSimpleGlobalFieldMapAppend (uniqueComponentName:string) (fieldName:string) (simpleGlobalFieldToAdd:SimpleGlobalField) =
+                fieldAccessInACompomonentToSimpleGlobalFieldMap := fieldAccessInACompomonentToSimpleGlobalFieldMap.Value.Add((uniqueComponentName,fieldName),simpleGlobalFieldToAdd)
             // This function works like this: collectFromPartition -> collectFromComponent -> collectFieldInThisComponent
             // It traverses the model and generates a list of all fields with all necessary information about the field (SimpleGlobalField)
             let rec collectFromComponent (componentObject:MMComponentObject) (myContext:Context) : SimpleGlobalField list =
@@ -282,8 +299,11 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
                         SimpleGlobalFieldWithContext.FieldSymbol=fieldobject.FieldSymbol;
                         SimpleGlobalFieldWithContext.InitialValues=(SimpleConstLiteral.convertFromObjectList fieldobject.InitialValues);
                     }
-                    let field = SimpleGlobalField.FieldWithContext(fieldContext)
-                    SimpleGlobalField.FieldOfMetamodel(componentObject,field)
+                    let newField = SimpleGlobalField.FieldWithContext(fieldContext)
+                    //add to map
+                    fieldAccessInACompomonentToSimpleGlobalFieldMapAppend componentObject.Name fieldobject.FieldSymbol.Name newField
+                    // return for the collector
+                    newField
                 let collectedInThisComponent = (getFieldObjects componentObject.Fields) |> List.map collectFieldInThisComponent 
                 collectedInThisComponent @ collectedInSubcomponents
             let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
@@ -291,21 +311,13 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
                 collectFromComponent partition.RootComponent contextOfCurrentPartitionRootComponent
             model.Partitions |> List.collect collectFromPartition
         
-        // this resolves a field access inside a component to a SimpleGlobalField.FieldLinkedToMetamodel
-        let fieldAccessInACompomonentToSimpleGlobalFieldMap : ResolverForSimpleGlobalFields = 
-            //type ResolverForFormulas = Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is fieldName
-            let converter (elem:SimpleGlobalField) =
-                match elem with
-                    | SimpleGlobalField.FieldOfMetamodel(componentObject:MMComponentObject, field:SimpleGlobalField) ->
-                        [((componentObject.Name, field.getFieldSymbol.Name),elem)] //return as list to allow List.collect
-                    | _ -> []
-            simpleGlobalFields |> List.collect converter
-                               |> Map.ofList
-        
-        let resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : SimpleGlobalField =
+        // for faster access
+        let simpleGlobalFieldsFromComponentFieldsSet = Set.ofList simpleGlobalFieldsFromComponentFields
+                    
+        member this.resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : SimpleGlobalField =
             let componentObjectName = comp.Name
             let fieldName = field.Name
-            fieldAccessInACompomonentToSimpleGlobalFieldMap.Item (componentObjectName,fieldName)
+            fieldAccessInACompomonentToSimpleGlobalFieldMap.Value.Item (componentObjectName,fieldName)
 
         
         member this.createSimpleFieldAccessExpression (field:MMFieldSymbol) (comp:MMComponentObject): SimpleExpression =
@@ -314,13 +326,16 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
             SimpleExpression.FieldAccessExpression(simpleGlobalField)
 
         member this.getSimpleGlobalFields : SimpleGlobalField list =
-            simpleGlobalFields
+            simpleGlobalFieldsFromComponentFields // TODO: Missing: Method-Access,...
+
+        member this.isFieldInAComponent (field:SimpleGlobalField) =
+            simpleGlobalFieldsFromComponentFieldsSet.Contains field
                            
         member this.resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : SimpleGlobalField =
             let componentObject = model.ComponentObjects.Item referenceSymbol
             let componentObjectName = componentObject.Name
             let fieldName = field.Name
-            fieldAccessInACompomonentToSimpleGlobalFieldMap.Item (componentObjectName,fieldName)
+            fieldAccessInACompomonentToSimpleGlobalFieldMap.Value.Item (componentObjectName,fieldName)
         
     
     
@@ -349,15 +364,7 @@ type internal MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
     let fieldCache = SimpleGlobalFieldCache(contextCache,configuration)
 
     let resolveTargetOfAnAssignment (componentObject:MMComponentObject) (context:Context) (field:MMFieldSymbol) : SimpleGlobalField =
-        // TODO: Better retrieve it from the cache than reconstruct it here
-        let fieldObject = (componentObject.Fields.Item field)
-        let fieldContext = {
-            SimpleGlobalFieldWithContext.Context=context;
-            SimpleGlobalFieldWithContext.FieldSymbol=field;
-            SimpleGlobalFieldWithContext.InitialValues=(SimpleConstLiteral.convertFromObjectList fieldObject.InitialValues);
-        }
-        let field=SimpleGlobalField.FieldWithContext(fieldContext)
-        SimpleGlobalField.FieldOfMetamodel(componentObject,field)
+        fieldCache.resolveFieldAccessInsideAComponent componentObject field
     
     let rec transformMMExpressionInsideAComponentToSimpleExpression (fieldCache:SimpleGlobalFieldCache) (comp:MMComponentObject) (expression:MMExpression) : SimpleExpression =
         match expression with
@@ -477,6 +484,9 @@ type internal MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
 
     member this.getSimpleGlobalFields : SimpleGlobalField list =
         fieldCache.getSimpleGlobalFields
+
+    member this.isFieldInAComponent (field:SimpleGlobalField) =
+            fieldCache.isFieldInAComponent field
                            
     member this.resolveFieldAccessInsideAFormula (referenceSymbol:MMComponentReferenceSymbol) (field:MMFieldSymbol) : SimpleGlobalField =
         fieldCache.resolveFieldAccessInsideAFormula referenceSymbol field

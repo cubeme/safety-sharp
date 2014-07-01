@@ -102,15 +102,11 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
                 context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
             itemsInOrderRootToLeaf |> List.map (fun elem -> sprintf "c%s_" elem)
                                    |> String.concat ""
-        match simpleGlobalField with
-            | SimpleGlobalField.FieldOfMetamodel(_, field:SimpleGlobalField) ->
-                let fieldName = "f"+simpleGlobalField.getFieldSymbol.Name
-                let flattenedNameOfField = (flatSubcomponentName simpleGlobalField.getContext) + fieldName;
-                {Identifier.Name=flattenedNameOfField}
-            | SimpleGlobalField.FieldWithContext(field:SimpleGlobalFieldWithContext) ->
-                let fieldName = "a"+simpleGlobalField.getFieldSymbol.Name
-                let flattenedNameOfField = (flatSubcomponentName simpleGlobalField.getContext) + fieldName;
-                {Identifier.Name=flattenedNameOfField}
+        
+        let kindOfFieldSymbol = if toSimplifiedMetamodel.isFieldInAComponent simpleGlobalField then "f" else "a"
+        let fieldName = kindOfFieldSymbol+simpleGlobalField.getFieldSymbol.Name
+        let flattenedNameOfField = (flatSubcomponentName simpleGlobalField.getContext) + fieldName;
+        {Identifier.Name=flattenedNameOfField}
 
 
     member this.transformSimpleGlobalFieldToComplexIdentifier (simpleGlobalField : SimpleGlobalField) (accessFromPartition:Identifier) : ComplexIdentifier =
