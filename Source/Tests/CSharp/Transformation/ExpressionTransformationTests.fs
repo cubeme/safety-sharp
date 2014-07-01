@@ -78,8 +78,8 @@ module ExpressionTransformationTests =
     let ``minus expressions`` () =
         transform "-.50m" =? UnaryExpression(DecimalLiteral(0.50m), UnaryOperator.Minus)
         transform "-10m" =? UnaryExpression(DecimalLiteral(10m), UnaryOperator.Minus)
-        transform "-4" =? UnaryExpression(IntegerLiteral(4), UnaryOperator.Minus)
-        transform "-0" =? UnaryExpression(IntegerLiteral(0), UnaryOperator.Minus)
+        transform "-4" =? UnaryExpression(IntegerLiteral 4, UnaryOperator.Minus)
+        transform "-0" =? UnaryExpression(IntegerLiteral 0, UnaryOperator.Minus)
 
     [<Test>]
     let ``not expressions`` () =
@@ -88,15 +88,15 @@ module ExpressionTransformationTests =
 
     [<Test>]
     let ``nested unary expressions`` () =
-        transform "+1" =? UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus)
+        transform "-+1" =? UnaryExpression(IntegerLiteral 1, UnaryOperator.Minus)
         transform "!!true" =? UnaryExpression(UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), UnaryOperator.LogicalNot)
 
     [<Test>]
     let ``plus expressions`` () =
         transform "+.50m" =? DecimalLiteral(0.50m)
         transform "+10m" =? DecimalLiteral(10m)
-        transform "+4" =? IntegerLiteral(4)
-        transform "+0" =? IntegerLiteral(0)
+        transform "+4" =? IntegerLiteral 4
+        transform "+0" =? IntegerLiteral 0
 
     [<Test>]
     let ``add expressions`` () =
@@ -173,24 +173,24 @@ module ExpressionTransformationTests =
 
     [<Test>]
     let ``nested binary expressions`` () =
-        let add = BinaryExpression(IntegerLiteral(1), BinaryOperator.Add, IntegerLiteral(2))
+        let add = BinaryExpression(IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 2)
         let multiply = BinaryExpression(add, BinaryOperator.Multiply, IntegerLiteral(10))
         transform "(1 + 2) * 10" =? multiply
 
-        let multiply = BinaryExpression(IntegerLiteral(1), BinaryOperator.Multiply, IntegerLiteral(10))
-        let add = BinaryExpression(multiply, BinaryOperator.Add, IntegerLiteral(2))
+        let multiply = BinaryExpression(IntegerLiteral 1, BinaryOperator.Multiply, IntegerLiteral(10))
+        let add = BinaryExpression(multiply, BinaryOperator.Add, IntegerLiteral 2)
         transform "1 * 10 + 2" =? add
 
-        let left = BinaryExpression(IntegerLiteral(1), BinaryOperator.Add, IntegerLiteral(2))
-        let right = BinaryExpression(IntegerLiteral(4), BinaryOperator.Add, IntegerLiteral(5))
+        let left = BinaryExpression(IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 2)
+        let right = BinaryExpression(IntegerLiteral 4, BinaryOperator.Add, IntegerLiteral 5)
         let multiply = BinaryExpression(left, BinaryOperator.Multiply, right)
         transform "(1 + 2) * (4 + 5)" =? multiply
 
     [<Test>]
     let ``nested unary and binary expressions`` () =
-        let minusOne = UnaryExpression(IntegerLiteral(1), UnaryOperator.Minus)
-        let left = BinaryExpression(minusOne, BinaryOperator.Add, IntegerLiteral(2))
-        let right = BinaryExpression(IntegerLiteral(4), BinaryOperator.Add, IntegerLiteral(5))
+        let minusOne = UnaryExpression(IntegerLiteral 1, UnaryOperator.Minus)
+        let left = BinaryExpression(minusOne, BinaryOperator.Add, IntegerLiteral 2)
+        let right = BinaryExpression(IntegerLiteral 4, BinaryOperator.Add, IntegerLiteral 5)
         let multiply = BinaryExpression(UnaryExpression(left, UnaryOperator.Minus), BinaryOperator.Multiply, right)
 
         transform "-(-1 + 2) * (4 + +5)" =? multiply

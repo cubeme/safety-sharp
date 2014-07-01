@@ -119,7 +119,7 @@ module ``SetPartitionRoots method`` =
         let component4 =  ComplexComponent (component1, component3, obj ())
         let component5 =  ComplexComponent (component1, component2, obj ())
 
-        raisesSharedComponentsException (fun () -> TestModel (component4, component5) |> ignore) [component1]
+        raisesSharedComponentsException (fun () -> TestModel (component4, component5) |> ignore) [component1; component2]
 
 [<TestFixture>]
 module ``Components property`` =
