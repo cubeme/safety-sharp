@@ -199,3 +199,63 @@ type internal ClassPortAttributeContradictsInterfacePortAttributeAnalyzer () as 
                                 addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString (), interfaceProperty.ToDisplayString (), 
                                                       typeof<RequiredAttribute>.FullName, typeof<ProvidedAttribute>.FullName)
                         | _ -> ()
+
+/// Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
+/// the <see cref="RequiredAttribute" /> or <see cref="PortAttribute" />.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.ExternImplementedProvidedPort, LanguageNames.CSharp)>]
+type internal ExternImplementedProvidedPortAnalyzer () as this =
+    inherit SymbolAnalyzer<INamedTypeSymbol> (SymbolKind.NamedType)
+
+    do this.Error DiagnosticIdentifiers.ExternImplementedProvidedPort
+        "Method or property does not implement the corresponding interface method or property, as a provided port cannot be declared 'extern'." 
+        "'{0}' does not implement interface member '{1}'. A provided port cannot be declared 'extern'."
+
+    override this.Analyze symbol compilation addDiagnostic cancellationToken = 
+        if symbol.TypeKind = TypeKind.Class && symbol.IsDerivedFromComponent compilation then
+            for interfaceSymbol in symbol.AllInterfaces |> Seq.where (fun interfaceSymbol -> interfaceSymbol.ImplementsIComponent compilation) do
+                for interfaceMember in interfaceSymbol.GetMembers () do
+                    let implementingMember = symbol.FindImplementationForInterfaceMember interfaceMember
+                    if implementingMember.ContainingType = symbol then
+                        match implementingMember with
+                        | :? IMethodSymbol as methodSymbol ->
+                            let interfaceMethodSymbol = interfaceMember :?> IMethodSymbol
+                            let hasProvidedAttribute = interfaceMethodSymbol.HasAttribute<ProvidedAttribute> compilation
+                            if hasProvidedAttribute && methodSymbol.IsExtern then
+                                addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString (), interfaceMember.ToDisplayString ())
+                        | :? IPropertySymbol as propertySymbol ->
+                            let interfacePropertySymbol = interfaceMember :?> IPropertySymbol
+                            let hasProvidedAttribute = interfacePropertySymbol.HasAttribute<ProvidedAttribute> compilation
+                            if hasProvidedAttribute && propertySymbol.IsExtern then
+                                addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString (), interfaceMember.ToDisplayString ())
+                        | _ -> ()
+
+/// Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
+/// the <see cref="RequiredAttribute" /> or <see cref="PortAttribute" />.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.NonExternImplementedRequiredPort, LanguageNames.CSharp)>]
+type internal NonExternImplementedRequiredPortAnalyzer () as this =
+    inherit SymbolAnalyzer<INamedTypeSymbol> (SymbolKind.NamedType)
+
+    do this.Error DiagnosticIdentifiers.NonExternImplementedRequiredPort
+        "Method or property does not implement the corresponding interface method or property, as a required port must be declared 'extern'." 
+        "'{0}' does not implement interface member '{1}'. A required port must be declared 'extern'."
+
+    override this.Analyze symbol compilation addDiagnostic cancellationToken = 
+        if symbol.TypeKind = TypeKind.Class && symbol.IsDerivedFromComponent compilation then
+            for interfaceSymbol in symbol.AllInterfaces |> Seq.where (fun interfaceSymbol -> interfaceSymbol.ImplementsIComponent compilation) do
+                for interfaceMember in interfaceSymbol.GetMembers () do
+                    let implementingMember = symbol.FindImplementationForInterfaceMember interfaceMember
+                    if implementingMember.ContainingType = symbol then
+                        match implementingMember with
+                        | :? IMethodSymbol as methodSymbol ->
+                            let interfaceMethodSymbol = interfaceMember :?> IMethodSymbol
+                            let hasRequiredAttribute = interfaceMethodSymbol.HasAttribute<RequiredAttribute> compilation
+                            if hasRequiredAttribute && not methodSymbol.IsExtern then
+                                addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString (), interfaceMember.ToDisplayString ())
+                        | :? IPropertySymbol as propertySymbol ->
+                            let interfacePropertySymbol = interfaceMember :?> IPropertySymbol
+                            let hasRequiredAttribute = interfacePropertySymbol.HasAttribute<RequiredAttribute> compilation
+                            if hasRequiredAttribute && not propertySymbol.IsExtern then
+                                addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString (), interfaceMember.ToDisplayString ())
+                        | _ -> ()

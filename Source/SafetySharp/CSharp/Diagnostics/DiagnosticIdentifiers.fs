@@ -77,3 +77,9 @@ module internal DiagnosticIdentifiers =
 
     [<Literal>]
     let ClassPortAttributeContradictsInterfacePortAttribute = Prefix + "1306"
+
+    [<Literal>]
+    let ExternImplementedProvidedPort = Prefix + "1307"
+
+    [<Literal>]
+    let NonExternImplementedRequiredPort = Prefix + "1308"

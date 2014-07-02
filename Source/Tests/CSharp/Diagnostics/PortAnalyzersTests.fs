@@ -255,3 +255,55 @@ module ClassPortAttributeContradictsInterfacePortAttributeAnalyzerTests =
         hasDiagnostics "class C : Component, J { [Required] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? true
         hasDiagnostics "class C : Component, J { [Provided] int J.In { get; set; } [Provided] int J.Out { get; set; }}" =? true
         hasDiagnostics "class C : Component, J { [Provided] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? true
+
+[<TestFixture>]
+module ExternImplementedProvidedPortAnalyzerTests =
+    let hasDiagnostics csharpCode = 
+        let csharpCode = "interface I : IComponent { [Provided] void M(); } interface J : IComponent { [Provided] int M { get; set; }}" + csharpCode
+        TestCompilation.HasDiagnostics (ExternImplementedProvidedPortAnalyzer ()) csharpCode
+
+    [<Test>]
+    let ``Non-extern method or property is valid`` () =
+        hasDiagnostics "class C : Component, I { public void M() {}}" =? false
+        hasDiagnostics "class C : Component, J { public int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Extern method or property with is invalid`` () =
+        hasDiagnostics "class C : Component, I { public extern void M(); }" =? true
+        hasDiagnostics "class C : Component, J { public extern int M { get; set; }}" =? true
+
+    [<Test>]
+    let ``Extern method or property outside of component classes is valid`` () =
+        hasDiagnostics "class C : I { public extern void M();}" =? false
+        hasDiagnostics "class C : J { public extern int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Extern method or property outside of component interfaces is valid`` () =
+        hasDiagnostics "interface X { [Provided] void M(); } class C : X { public extern void M();}" =? false
+        hasDiagnostics "interface X { [Provided] int M { get; set; }} class C : X { public extern int M { get; set; }}" =? false
+
+[<TestFixture>]
+module NonExternImplementedRequiredPortAnalyzerTests =
+    let hasDiagnostics csharpCode = 
+        let csharpCode = "interface I : IComponent { [Required] void M(); } interface J : IComponent { [Required] int M { get; set; }}" + csharpCode
+        TestCompilation.HasDiagnostics (NonExternImplementedRequiredPortAnalyzer ()) csharpCode
+
+    [<Test>]
+    let ``Non-extern method or property is invalid`` () =
+        hasDiagnostics "class C : Component, I { public void M() {}}" =? true
+        hasDiagnostics "class C : Component, J { public int M { get; set; }}" =? true
+
+    [<Test>]
+    let ``Extern method or property with Required attribute is valid`` () =
+        hasDiagnostics "class C : Component, I { public extern void M(); }" =? false
+        hasDiagnostics "class C : Component, J { public extern int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Non-extern method or property outside of component classes is valid`` () =
+        hasDiagnostics "class C : I { public void M() {}}" =? false
+        hasDiagnostics "class C : J { public int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Non-extern method or property outside of component interfaces is valid`` () =
+        hasDiagnostics "interface X { [Required] void M(); } class C : X { public void M() {}}" =? false
+        hasDiagnostics "interface X { [Required] int M { get; set; }} class C : X { public int M { get; set; }}" =? false
