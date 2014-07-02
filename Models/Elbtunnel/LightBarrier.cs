@@ -28,8 +28,9 @@ namespace Elbtunnel
 
 	internal interface ISensor : IComponent
 	{
+		[Provided]
 		bool IsTriggered();
-		bool X { get; [Provided]set; }
+		//bool X { get; [Provided]set; }
 	}
 
 	internal class InterfacedSubcomponent : Component
@@ -41,13 +42,13 @@ namespace Elbtunnel
 		{
 			_sensor = sensor;
 		}
-		int x
-		{
-			[Provided]
-			get { return
-				1;
-			}
-		}
+		//int x
+		//{
+		//	[Provided]
+		//	get { return
+		//		1;
+		//	}
+		//}
 		[Behavior]
 		private void Do()
 		{
@@ -65,7 +66,7 @@ namespace Elbtunnel
 			return true;
 		}
 
-		public bool X { get; set; }
+		//public bool X { get; set; }
 
 		public int Do()
 		{
