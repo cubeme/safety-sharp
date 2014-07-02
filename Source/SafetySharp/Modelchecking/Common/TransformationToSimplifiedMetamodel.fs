@@ -353,9 +353,8 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
         
         // for faster access
         let simpleGlobalFieldsFromComponentFieldsSet = Set.ofList simpleGlobalFieldsFromComponentFields
-        
-        
-        // Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is methodname, third string is fieldName
+                
+        // Map<string*string*string,SimpleGlobalField> first string is the unique componentName, second string is methodname, third string is fieldName
         let simpleGlobalFieldFromFieldOrParameterInAMethodMap : Map<string*string*string,SimpleGlobalField> ref = 
             ref Map.empty<string*string*string,SimpleGlobalField>
             
@@ -413,19 +412,47 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
         // for faster access
         let simpleGlobalFieldsFromMethodsSet = Set.ofList simpleGlobalFieldsFromMethods
         
+        
+        // Map<string*string,SimpleGlobalField> first string is the unique componentName, second string is the required name
+        let simpleGlobalFieldFromRequiredPortInAComponentMap : Map<string*string,SimpleGlobalField> ref = 
+            ref Map.empty<string*string,SimpleGlobalField>
+
         // has side-effect, so should only be executed once
-        let simpleGlobalFieldsFromBindings : SimpleGlobalField list =
-            //TODO
-            []
+        //TODO: look at definition of myContext at Type Context
+        (*let simpleGlobalFieldsFromRequiredPorts : SimpleGlobalField list =
+            let appendFieldInAMethodToMap (uniqueComponentName:string) (methodName:string) (fieldName:string) (simpleGlobalFieldToAdd:SimpleGlobalField) =
+                simpleGlobalFieldFromFieldOrParameterInAMethodMap := simpleGlobalFieldFromFieldOrParameterInAMethodMap.Value.Add((uniqueComponentName,methodName,fieldName),simpleGlobalFieldToAdd)
+            // It traverses the model and generates a list of all fields with all necessary information about the field (SimpleGlobalField)
+            // This function works like this: collectFromPartition -> collectFromComponent -> collectRequired
+            let rec collectFromComponent (componentObject:MMComponentObject) (myContext:Context) : SimpleGlobalField list =
+                let collectedInSubcomponents : SimpleGlobalField list =
+                    (getSubComponentObjects componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent comp (contextCache.createContextForSubcomponent myContext name comp) )
+                let collectRequired (myContext:Context) (methodSymbol:MMMethodSymbol) : SimpleGlobalField list =
+                    
+                let methodSymbols =
+                    let fromUpdate = componentObject.ComponentSymbol.UpdateMethod
+                    let fromProvidedPorts =
+                        let getMethodSymbol (port:MMProvidedPortSymbol) = 
+                            match port with
+                                | MMProvidedPortSymbol.ProvidedPort methodSymbol -> methodSymbol
+                        componentObject.ComponentSymbol.ProvidedPorts |> List.map getMethodSymbol
+                    fromUpdate::fromProvidedPorts
+                let collectedInThisComponent = methodSymbols |> List.collect (fun methodSymbol -> let context = contextCache.createContextForMethod myContext methodSymbol.Name
+                                                                                                  collectFromMethod context methodSymbol)
+                collectedInThisComponent @ collectedInSubcomponents
+            let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
+                let contextOfCurrentPartitionRootComponent = contextCache.createContextOfRootComponent partition
+                collectFromComponent partition.RootComponent contextOfCurrentPartitionRootComponent
+            model.Partitions |> List.collect collectFromPartition
+        *)
 
         // for faster access
-        let simpleGlobalFieldsFromBindingsSet = Set.ofList simpleGlobalFieldsFromBindings
+        let simpleGlobalFieldsFromRequiredPortsSet = Set.ofList simpleGlobalFieldsFromRequiredPorts
                   
         member this.resolveFieldAccessInsideAComponent (comp:MMComponentObject) (field:MMFieldSymbol) : SimpleGlobalField =
             let componentObjectName = comp.Name
             let fieldName = field.Name
             simpleGlobalFieldFromFieldInAComponentMap.Value.Item (componentObjectName,fieldName)
-
         
         member this.createSimpleFieldAccessExpression (field:MMFieldSymbol) (comp:MMComponentObject): SimpleExpression =
             let componentReference = ComponentObjectToComponentReference comp
@@ -433,7 +460,7 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
             SimpleExpression.FieldAccessExpression(simpleGlobalField)
 
         member this.getSimpleGlobalFields : SimpleGlobalField list =
-            simpleGlobalFieldsFromComponentFields @ simpleGlobalFieldsFromMethods @ simpleGlobalFieldsFromBindings
+            simpleGlobalFieldsFromComponentFields @ simpleGlobalFieldsFromMethods @ simpleGlobalFieldsFromRequiredPorts
 
         member this.isFieldInAComponent (field:SimpleGlobalField) =
             simpleGlobalFieldsFromComponentFieldsSet.Contains field
