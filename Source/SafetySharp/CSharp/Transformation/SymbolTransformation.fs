@@ -51,12 +51,25 @@ module internal SymbolTransformation =
         // We're using the builder pattern to initialize the dictionaries and the component list
         let componentListBuilder = ImmutableList.CreateBuilder<ComponentSymbol> ()
         let componentMapBuilder = ImmutableDictionary.CreateBuilder<ITypeSymbol, ComponentSymbol> ()
+        let componentNameMapBuilder = ImmutableDictionary.CreateBuilder<string, ComponentSymbol> ()
         let fieldMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, FieldSymbol> ()
         let subcomponentMapBuilder = ImmutableDictionary.CreateBuilder<IFieldSymbol, ComponentReferenceSymbol> ()
         let parameterMapBuilder = ImmutableDictionary.CreateBuilder<IParameterSymbol, ParameterSymbol> ()
         let localMapBuilder = ImmutableDictionary.CreateBuilder<ILocalSymbol, LocalSymbol> ()
         let methodMapBuilder = ImmutableDictionary.CreateBuilder<IMethodSymbol, MethodSymbol> ()
         let methodCSharpMapBuilder = ImmutableDictionary.CreateBuilder<MethodSymbol, IMethodSymbol> comparer
+
+        // Maps a component by its name
+        let mapComponentByName (component' : ComponentSymbol) =
+            match componentNameMapBuilder.TryGetValue component'.Name with
+            | (true, otherComponent) ->
+                let getAssemblyName component' =
+                    (componentMapBuilder |> Seq.find (fun pair -> pair.Value = component')).Key.ContainingAssembly.Identity.ToString ()
+                let assembly1 = getAssemblyName component'
+                let assembly2 = getAssemblyName otherComponent
+                invalidOp "Found two components with same name '%s' defined in assembly '%s' and '%s'." component'.Name assembly1 assembly2
+            | (false, _) ->
+                componentNameMapBuilder.Add (component'.Name, component')
 
         // Instantiate the component symbols for the Component base class and the IComponent interface
         let createComponentSymbol name csharpSymbol = 
@@ -68,6 +81,7 @@ module internal SymbolTransformation =
                 Fields = [] 
             }
             componentMapBuilder.Add (csharpSymbol, symbol)
+            mapComponentByName symbol
             symbol
 
         let componentBaseSymbol = createComponentSymbol "Component" (compilation.GetComponentClassSymbol ())
@@ -84,10 +98,9 @@ module internal SymbolTransformation =
 
         // Encodes the assembly name and all parent namespaces in the component name to ensure the uniqueness of the name.
         let transformComponentName (csharpComponent : ITypeSymbol) = 
-            let assemblyName = csharpComponent.ContainingAssembly.Identity.Name
             let displayFormat = SymbolDisplayFormat (SymbolDisplayGlobalNamespaceStyle.Omitted, SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces)
             let componentName = csharpComponent.ToDisplayString displayFormat
-            sprintf "%s::%s" assemblyName componentName
+            componentName
 
         // Creates the symbols and mapping information for the local variables of the given method.
         let transformLocals (methodSymbol : IMethodSymbol) =
@@ -174,9 +187,9 @@ module internal SymbolTransformation =
                 RequiredPorts = transformMethods csharpComponent isExtern RequiredPort
                 Fields = transformFields csharpComponent
             }
-
             componentListBuilder.Add componentSymbol
             componentMapBuilder.Add (csharpComponent, componentSymbol)
+            mapComponentByName componentSymbol
 
         // Create the symbols for all components
         let csharpComponents = 
@@ -189,7 +202,7 @@ module internal SymbolTransformation =
         let symbolResolver = {
             Model = { Partitions = []; ComponentSymbols = componentListBuilder |> List.ofSeq; Subcomponents = Map.empty; ComponentObjects = [] }
             ComponentMap = componentMapBuilder.ToImmutable ()
-            ComponentNameMap = componentListBuilder |> Seq.map (fun component' -> component'.Name, component') |> Map.ofSeq
+            ComponentNameMap = componentNameMapBuilder.ToImmutable ()
             FieldMap = fieldMapBuilder.ToImmutable ()
             SubcomponentMap = ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>.Empty
             ParameterMap = parameterMapBuilder.ToImmutable ()

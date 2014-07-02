@@ -263,7 +263,7 @@ module internal TestHelpers =
 
     /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
     let emptyComponentSymbol name = { 
-        Name = sprintf "%s::%s" TestCompilation.CompilationName name
+        Name = name
         UpdateMethod = None
         Fields = []
         ProvidedPorts = []

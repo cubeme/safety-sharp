@@ -32,7 +32,7 @@ open Microsoft.CodeAnalysis
 type internal SymbolResolver = private {
     Model : ModelSymbol
     ComponentMap : ImmutableDictionary<ITypeSymbol, ComponentSymbol>
-    ComponentNameMap : Map<string, ComponentSymbol>
+    ComponentNameMap : ImmutableDictionary<string, ComponentSymbol>
     FieldMap : ImmutableDictionary<IFieldSymbol, FieldSymbol>
     SubcomponentMap : ImmutableDictionary<IFieldSymbol, ComponentReferenceSymbol>
     ParameterMap : ImmutableDictionary<IParameterSymbol, ParameterSymbol>
@@ -55,12 +55,9 @@ type internal SymbolResolver = private {
     member this.ResolveComponent (componentObject : Component) =
         nullArg componentObject "componentObject"
         let typeName = componentObject.GetType().FullName.Replace("+", ".")
-        let assemblyName = componentObject.GetType().Assembly.GetName().Name
-        let name = sprintf "%s::%s" assemblyName typeName
-
-        let symbol = this.ComponentNameMap |> Map.tryFind name
-        invalidArg symbol.IsNone "componentObject" "Unknown component type '%s'." <| componentObject.GetType().FullName
-        symbol.Value
+        let (result, symbol) = this.ComponentNameMap.TryGetValue typeName
+        invalidArg (not result) "componentObject" "Unknown component type '%s'." <| componentObject.GetType().FullName
+        symbol
 
     /// Resolves the model's <see cref="ComponentReferenceSymbol" /> corresponding to the given C# component object.
     member this.ResolveComponentReference (componentObject : Component) =
