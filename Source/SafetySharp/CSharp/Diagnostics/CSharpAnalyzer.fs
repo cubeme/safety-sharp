@@ -82,13 +82,8 @@ type internal SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
             let diagnosticCallback = DiagnosticCallback<SyntaxNode> (fun locationNode args ->
                 addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationNode.GetLocation (), args)))
     
-            // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
-            // report them as an error.
-            try
-                syntaxTree.DescendantsAndSelf<'T>()
-                |> Seq.iter (fun node -> this.Analyze node diagnosticCallback cancellationToken)
-            with
-            | e -> Log.Error "%s" e.Message
+            syntaxTree.DescendantsAndSelf<'T>()
+            |> Seq.iter (fun node -> this.Analyze node diagnosticCallback cancellationToken)
 
     ///  Analyzes the <paramref name="syntaxNode"/>.
     abstract member Analyze : syntaxNode : 'T -> addDiagnostic : DiagnosticCallback<SyntaxNode> -> cancellationToken : CancellationToken -> unit
@@ -112,14 +107,9 @@ type internal SymbolAnalyzer<'T when 'T :> ISymbol> ([<ParamArray>] symbolKinds 
             let diagnosticCallback = DiagnosticCallback<ISymbol> (fun locationSymbol args ->
                 addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationSymbol.Locations.[0], args)))
     
-            // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
-            // report them as an error.
-            try
-                match symbol with
-                | :? 'T as symbol -> this.Analyze symbol compilation diagnosticCallback cancellationToken
-                | _ -> ()
-            with
-            | e -> Log.Error "%s" e.Message
+            match symbol with
+            | :? 'T as symbol -> this.Analyze symbol compilation diagnosticCallback cancellationToken
+            | _ -> ()
 
     ///  Analyzes the <paramref name="symbol"/>.
     abstract member Analyze : symbol : 'T -> compilation : Compilation -> addDiagnostic : DiagnosticCallback<ISymbol> -> cancellationToken : CancellationToken -> unit
@@ -137,12 +127,7 @@ type internal SemanticModelAnalyzer () =
             let diagnosticCallback = DiagnosticCallback<SyntaxNode> (fun locationNode args ->
                 addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationNode.GetLocation (), args)))
     
-            // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
-            // report them as an error.
-            try
-                this.Analyze semanticModel diagnosticCallback cancellationToken
-            with
-            | e -> Log.Error "%s" e.Message
+            this.Analyze semanticModel diagnosticCallback cancellationToken
 
     ///  Analyzes the <paramref name="syntaxNode"/>.
     abstract member Analyze : semanticModel : SemanticModel -> addDiagnostic : DiagnosticCallback<SyntaxNode> -> cancellationToken : CancellationToken -> unit

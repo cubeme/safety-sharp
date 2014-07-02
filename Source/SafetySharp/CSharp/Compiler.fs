@@ -98,7 +98,7 @@ module internal Compiler =
     /// <c>false</c> when at least one error diagnostic has been reported.
     let private diagnose (compilation : Compilation) =
         if compilation.GetDiagnostics () |> logDiagnostics true then
-            let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, diagnosticAnalyzers, CancellationToken ()) |> Array.ofSeq
+            let diagnostics = AnalyzerDriver.GetDiagnostics (compilation, diagnosticAnalyzers, CancellationToken (), false) |> Array.ofSeq
             diagnostics |> logDiagnostics false
         else
             false

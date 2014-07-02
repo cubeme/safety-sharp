@@ -45,9 +45,9 @@ type internal MarkedWithBothProvidedAndRequiredAttributesAnalyzer () as this =
         (sprintf "'{0}' cannot be marked with both '%s' and '%s'." typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
 
     override this.Analyze symbol compilation addDiagnostic cancellationToken = 
-        if symbol.ContainingType.IsDerivedFromComponent compilation then
+        if symbol.ContainingType.ImplementsIComponent compilation then
             match symbol with
-            | :? IMethodSymbol as methodSymbol ->
+            | :? IMethodSymbol as methodSymbol when not (methodSymbol.AssociatedSymbol :? IPropertySymbol) ->
                 let hasRequiredAttribute = methodSymbol.HasAttribute<RequiredAttribute> compilation
                 let hasProvidedAttribute = methodSymbol.HasAttribute<ProvidedAttribute> compilation
                 if hasProvidedAttribute && hasRequiredAttribute then
@@ -57,7 +57,7 @@ type internal MarkedWithBothProvidedAndRequiredAttributesAnalyzer () as this =
                 let hasProvidedAttribute = propertySymbol.HasAttribute<ProvidedAttribute> compilation
                 if hasProvidedAttribute && hasRequiredAttribute then
                     addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString ())
-            | _ -> invalidOp "Unexpected symbol type."
+            | _ -> ()
 
 /// Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not extern.
 [<DiagnosticAnalyzer>]
@@ -72,7 +72,7 @@ type internal ExternProvidedPortAnalyzer () as this =
     override this.Analyze symbol compilation addDiagnostic cancellationToken = 
         if symbol.ContainingType.IsDerivedFromComponent compilation then
             match symbol with
-            | :? IMethodSymbol as methodSymbol ->
+            | :? IMethodSymbol as methodSymbol when not (methodSymbol.AssociatedSymbol :? IPropertySymbol) ->
                 let hasProvidedAttribute = methodSymbol.HasAttribute<ProvidedAttribute> compilation
                 if hasProvidedAttribute && methodSymbol.IsExtern then
                     addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString ())
@@ -80,7 +80,7 @@ type internal ExternProvidedPortAnalyzer () as this =
                 let hasProvidedAttribute = propertySymbol.HasAttribute<ProvidedAttribute> compilation
                 if hasProvidedAttribute && propertySymbol.IsExtern then
                     addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString ())
-            | _ -> invalidOp "Unexpected symbol type."
+            | _ -> ()
 
 /// Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is extern.
 [<DiagnosticAnalyzer>]
@@ -95,7 +95,7 @@ type internal NonExternRequiredPortAnalyzer () as this =
     override this.Analyze symbol compilation addDiagnostic cancellationToken = 
         if symbol.ContainingType.IsDerivedFromComponent compilation then
             match symbol with
-            | :? IMethodSymbol as methodSymbol ->
+            | :? IMethodSymbol as methodSymbol when not (methodSymbol.AssociatedSymbol :? IPropertySymbol) ->
                 let hasRequiredAttribute = methodSymbol.HasAttribute<RequiredAttribute> compilation
                 if hasRequiredAttribute && not methodSymbol.IsExtern then
                     addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString ())
@@ -103,4 +103,55 @@ type internal NonExternRequiredPortAnalyzer () as this =
                 let hasRequiredAttribute = propertySymbol.HasAttribute<RequiredAttribute> compilation
                 if hasRequiredAttribute && not propertySymbol.IsExtern then
                     addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString ())
-            | _ -> invalidOp "Unexpected symbol type."
+            | _ -> ()
+
+/// Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
+/// the <see cref="RequiredAttribute" /> or <see cref="PortAttribute" />.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.ComponentInterfaceMethodWithoutPortAttribute, LanguageNames.CSharp)>]
+type internal ComponentInterfaceMethodWithoutPortAttributeAnalyzer () as this =
+    inherit SymbolAnalyzer<ISymbol> (SymbolKind.Method, SymbolKind.Property)
+
+    do this.Error DiagnosticIdentifiers.ComponentInterfaceMethodWithoutPortAttribute
+        (sprintf "A method or property within a component interface must be marked with either '%s' or '%s'." 
+            typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
+        (sprintf "'{0}' must be marked with either '%s' or '%s'."
+            typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
+
+    override this.Analyze symbol compilation addDiagnostic cancellationToken = 
+        if symbol.ContainingType.TypeKind = TypeKind.Interface && symbol.ContainingType.ImplementsIComponent compilation then
+            match symbol with
+            | :? IMethodSymbol as methodSymbol when not (methodSymbol.AssociatedSymbol :? IPropertySymbol) ->
+                let hasRequiredAttribute = methodSymbol.HasAttribute<RequiredAttribute> compilation
+                let hasProvidedAttribute = methodSymbol.HasAttribute<ProvidedAttribute> compilation
+                if not hasProvidedAttribute && not hasRequiredAttribute then
+                    addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString ())
+            | :? IPropertySymbol as propertySymbol ->
+                let hasRequiredAttribute = propertySymbol.HasAttribute<RequiredAttribute> compilation
+                let hasProvidedAttribute = propertySymbol.HasAttribute<ProvidedAttribute> compilation
+                if not hasProvidedAttribute && not hasRequiredAttribute then
+                    addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString ())
+            | _ -> ()
+
+/// Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
+/// the <see cref="RequiredAttribute" /> or <see cref="PortAttribute" />.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.AccessorIsMakredWithPortAttribute, LanguageNames.CSharp)>]
+type internal AccessorIsMakredWithPortAttributeAnalyzer () as this =
+    inherit SymbolAnalyzer<ISymbol> (SymbolKind.Method, SymbolKind.Property)
+
+    do this.Error DiagnosticIdentifiers.AccessorIsMakredWithPortAttribute
+        (sprintf "An accessor cannot be marked with '%s' or '%s'." 
+            typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
+        (sprintf "'{0}' cannot be marked with '%s' or '%s'. Apply the attribute to the property instead."
+            typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
+
+    override this.Analyze symbol compilation addDiagnostic cancellationToken = 
+        if symbol.ContainingType.ImplementsIComponent compilation then
+            match symbol with
+            | :? IMethodSymbol as methodSymbol when methodSymbol.MethodKind = MethodKind.PropertyGet || methodSymbol.MethodKind = MethodKind.PropertySet ->
+                let hasRequiredAttribute = methodSymbol.HasAttribute<RequiredAttribute> compilation
+                let hasProvidedAttribute = methodSymbol.HasAttribute<ProvidedAttribute> compilation
+                if hasProvidedAttribute || hasRequiredAttribute then
+                    addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString ())
+            | _ -> ()

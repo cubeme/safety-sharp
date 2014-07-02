@@ -41,13 +41,19 @@ module MarkedWithBothProvidedAndRequiredAttributesAnalyzerTests =
     let ``Method or property without attributes is valid`` () =
         hasDiagnostics "class C : Component { void M() {}}" =? false
         hasDiagnostics "class C : Component { int M { get; set; }}" =? false
+        hasDiagnostics "interface C : IComponent { void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { int M { get; set; }}" =? false
 
     [<Test>]
-    let ``Method or property without only one of the attributes is valid`` () =
+    let ``Method or property with only one of the attributes is valid`` () =
         hasDiagnostics "class C : Component { [Required] void M() {}}" =? false
         hasDiagnostics "class C : Component { [Required] int M { get; set; }}" =? false
         hasDiagnostics "class C : Component { [Provided] void M() {}}" =? false
         hasDiagnostics "class C : Component { [Provided] int M { get; set; }}" =? false
+        hasDiagnostics "interface C : IComponent { [Required] void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { [Required] int M { get; set; }}" =? false
+        hasDiagnostics "interface C : IComponent { [Provided] void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { [Provided] int M { get; set; }}" =? false
 
     [<Test>]
     let ``Method or property with both attributes is invalid`` () =
@@ -55,13 +61,21 @@ module MarkedWithBothProvidedAndRequiredAttributesAnalyzerTests =
         hasDiagnostics "class C : Component { [Required, Provided] int M { get; set; }}" =? true
         hasDiagnostics "class C : Component { [Required] [Provided] void M() {}}" =? true
         hasDiagnostics "class C : Component { [Required] [Provided] int M { get; set; }}" =? true
+        hasDiagnostics "interface C : IComponent { [Required, Provided] void M(); }" =? true
+        hasDiagnostics "interface C : IComponent { [Required, Provided] int M { get; set; }}" =? true
+        hasDiagnostics "interface C : IComponent { [Required] [Provided] void M(); }" =? true
+        hasDiagnostics "interface C : IComponent { [Required] [Provided] int M { get; set; }}" =? true
 
     [<Test>]
-    let ``Method or property with both attributes outside of component class is valid`` () =
+    let ``Method or property with both attributes outside of component class or interface is valid`` () =
         hasDiagnostics "class C { [Required, Provided] void M() {}}" =? false
         hasDiagnostics "class C { [Required, Provided] int M { get; set; }}" =? false
         hasDiagnostics "class C { [Required] [Provided] void M() {}}" =? false
         hasDiagnostics "class C { [Required] [Provided] int M { get; set; }}" =? false
+        hasDiagnostics "interface C { [Required, Provided] void M(); }" =? false
+        hasDiagnostics "interface C { [Required, Provided] int M { get; set; }}" =? false
+        hasDiagnostics "interface C { [Required] [Provided] void M(); }" =? false
+        hasDiagnostics "interface C { [Required] [Provided] int M { get; set; }}" =? false
 
 [<TestFixture>]
 module ExternProvidedPortAnalyzerTests =
@@ -114,3 +128,83 @@ module NonExternRequiredPortAnalyzerTests =
     let ``Non-extern method or property with Required attribute outside of component classes is valid`` () =
         hasDiagnostics "class C { [Provided] void M() {}}" =? false
         hasDiagnostics "class C { [Provided] int M { get; set; }}" =? false
+
+[<TestFixture>]
+module ComponentInterfaceMethodWithoutPortAttributeAnalyzerTests =
+    let hasDiagnostics = TestCompilation.HasDiagnostics (ComponentInterfaceMethodWithoutPortAttributeAnalyzer ())
+
+    [<Test>]
+    let ``Method or property without attributes is invalid`` () =
+        hasDiagnostics "interface C : IComponent { void M(); }" =? true
+        hasDiagnostics "interface C : IComponent { int M { get; set; }}" =? true
+
+    [<Test>]
+    let ``Method or property with only one of the attributes is valid`` () =
+        hasDiagnostics "interface C : IComponent { [Required] void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { [Required] int M { get; set; }}" =? false
+        hasDiagnostics "interface C : IComponent { [Provided] void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { [Provided] int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Method or property with both attributes is valid`` () =
+        hasDiagnostics "interface C : IComponent { [Required, Provided] void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { [Required, Provided] int M { get; set; }}" =? false
+        hasDiagnostics "interface C : IComponent { [Required] [Provided] void M(); }" =? false
+        hasDiagnostics "interface C : IComponent { [Required] [Provided] int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Method or property without attributes outside of component interface is valid`` () =
+        hasDiagnostics "interface C { void M(); }" =? false
+        hasDiagnostics "interface C { int M { get; set; }}" =? false
+        hasDiagnostics "class C : Component { void M() {} }" =? false
+        hasDiagnostics "class C : Component { int M { get; set; }}" =? false
+        hasDiagnostics "class C { void M() {} }" =? false
+        hasDiagnostics "class C { int M { get; set; }}" =? false
+        hasDiagnostics "class C : IComponent { void M() {} }" =? false
+        hasDiagnostics "class C : IComponent { int M { get; set; }}" =? false
+
+[<TestFixture>]
+module AccessorIsMakredWithPortAttributeAnalyzerTests =
+    let hasDiagnostics = TestCompilation.HasDiagnostics (AccessorIsMakredWithPortAttributeAnalyzer ())
+
+    [<Test>]
+    let ``Accessors without attributes are valid`` () =
+        hasDiagnostics "class C : Component { int M { get; set; }}" =? false
+        hasDiagnostics "interface C : IComponent { int M { get; set; }}" =? false
+
+    [<Test>]
+    let ``Accessors with single attribute are invalid`` () =
+        hasDiagnostics "class C : Component { int M { [Required] get; set; }}" =? true
+        hasDiagnostics "class C : Component { int M { [Provided] get; set; }}" =? true
+        hasDiagnostics "class C : Component { int M { get; [Required] set; }}" =? true
+        hasDiagnostics "class C : Component { int M { get; [Provided] set; }}" =? true
+        hasDiagnostics "class C : Component { int M { [Required] get; [Required] set; }}" =? true
+        hasDiagnostics "class C : Component { int M { [Provided] get; [Provided] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Required] get; set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Provided] get; set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { get; [Required] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { get; [Provided] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Required] get; [Required] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Provided] get; [Provided] set; }}" =? true
+
+    [<Test>]
+    let ``Accessors with both attributes are invalid`` () =
+        hasDiagnostics "class C : Component { int M { [Required, Provided] get; set; }}" =? true
+        hasDiagnostics "class C : Component { int M { get; [Required, Provided] set; }}" =? true
+        hasDiagnostics "class C : Component { int M { [Required, Provided] get; [Required, Provided] set; }}" =? true
+        hasDiagnostics "class C : Component { int M { [Required] [Provided] get; set; }}" =? true
+        hasDiagnostics "class C : Component { int M { get; [Required] [Provided] set; }}" =? true
+        hasDiagnostics "class C : Component { int M { [Required] [Provided] get; [Required] [Provided] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Required, Provided] get; set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { get; [Required, Provided] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Required, Provided] get; [Required, Provided] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Required] [Provided] get; set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { get; [Required] [Provided] set; }}" =? true
+        hasDiagnostics "interface C : IComponent { int M { [Required] [Provided] get; [Required] [Provided] set; }}" =? true
+
+    [<Test>]
+    let ``Accessors with attributes outside of component class or interface are valid`` () =
+        hasDiagnostics "class C { int M { [Required, Provided] get; set; }}" =? false
+        hasDiagnostics "class C { int M { get; [Provided] set; }}" =? false
+        hasDiagnostics "interface C { int M { get; [Required] set; }}" =? false
+        hasDiagnostics "interface C { int M { [Provided] get; set; }}" =? false

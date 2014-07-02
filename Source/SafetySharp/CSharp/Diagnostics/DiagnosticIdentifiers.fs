@@ -68,3 +68,9 @@ module internal DiagnosticIdentifiers =
 
     [<Literal>]
     let NonExternRequiredPort = Prefix + "1303"
+
+    [<Literal>]
+    let ComponentInterfaceMethodWithoutPortAttribute = Prefix + "1304"
+
+    [<Literal>]
+    let AccessorIsMakredWithPortAttribute = Prefix + "1305"

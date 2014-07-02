@@ -256,4 +256,4 @@ type internal TestCompilation (csharpCode) =
     /// Checks whether the given C# code has any diagnostics for the given diagnostic analyzer.
     static member HasDiagnostics diagnosticAnalyzer csharpCode = 
         let compilation = TestCompilation csharpCode
-        AnalyzerDriver.GetDiagnostics(compilation.CSharpCompilation, [| diagnosticAnalyzer |], new CancellationToken()) |> Seq.isEmpty |> not
+        AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| diagnosticAnalyzer |], new CancellationToken(), false) |> Seq.isEmpty |> not
