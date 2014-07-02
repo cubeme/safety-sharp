@@ -126,10 +126,8 @@ module internal StatementTransformation =
     /// Transforms the body of the given method symbol.
     let private transformMethodBody (compilation : Compilation) (symbolResolver : SymbolResolver) methodSymbol =
         let csharpMethod = symbolResolver.ResolveCSharpMethod methodSymbol
-
-        let syntaxReference = csharpMethod.DeclaringSyntaxReferences.[0]
-        let methodDeclaration = syntaxReference.GetSyntax () :?> MethodDeclarationSyntax
-        let semanticModel = compilation.GetSemanticModel syntaxReference.SyntaxTree
+        let methodDeclaration = csharpMethod.GetMethodDeclaration ()
+        let semanticModel = csharpMethod.GetSemanticModel compilation
 
         Transform symbolResolver semanticModel methodDeclaration.Body
 

@@ -43,30 +43,33 @@ type internal ModelingAssembly (modelingAssembly : Assembly) as this=
     /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
     member this.CompilerVersion = assemblyMetadata.CompilerVersion
 
-    /// Gets the C# <see cref="Compilation" /> representing the source code of the modeling assembly and of all of its dependent
-    /// modeling assemblies.
-    member this.Compilation =
-        let options = CSharpCompilationOptions OutputKind.DynamicallyLinkedLibrary
-        let compilation = CSharpCompilation.Create(modelingAssembly.GetName().Name).WithOptions(options)
-
-        let compilation = 
-            modelingAssembly.GetReferencedAssemblies()
-            |> Seq.map Assembly.Load
-            |> Seq.fold (fun (compilation : CSharpCompilation) assembly -> compilation.AddReferences (MetadataFileReference assembly.Location)) compilation
-
-        this.AddCompilationUnits compilation
-
     /// Gets the modeling assemblies this modeling assembly depends on.
     member this.DependentAssemblies =
-        modelingAssembly.GetCustomAttributes<ModelingAssemblyReferenceAttribute> ()
-        |> Seq.map (fun assembly -> ModelingAssembly (Assembly.Load assembly.AssemblyName))
+        modelingAssembly.GetReferencedAssemblies ()
+        |> Seq.map Assembly.Load
+        |> Seq.where ModelingAssembly.IsModelingAssembly
+        |> Seq.map (fun assembly -> ModelingAssembly assembly)
 
     /// Gets the C# <see cref="SyntaxTree" />s of all compilation units of the modeling assembly.
     member this.CompilationUnits =
         modelingAssembly.GetCustomAttributes<ModelingCompilationUnitAttribute> ()
         |> Seq.map (fun compilationUnit -> compilationUnit.SyntaxTree)
 
-    /// Adds the modeling assembly's compilation units and all compilation units of the assembly's dependent assemblies to the
+    /// Returns a <see cref="ModelingAssembly" /> instance wrapping the given assembly if the assembly is a modeling assembly.
+    static member private IsModelingAssembly (assembly : Assembly) =
+        assembly.GetCustomAttribute<ModelingAssemblyAttribute> () <> null
+
+    /// Gets the C# <see cref="Compilation" /> representing the source code of the modeling assembly and of all of its dependent
+    /// modeling assemblies.
+    member this.Compilation =
+        let options = CSharpCompilationOptions OutputKind.DynamicallyLinkedLibrary
+        let compilation = CSharpCompilation.Create(modelingAssembly.GetName().Name).WithOptions(options)
+        let compilation = compilation.AddReferences (MetadataFileReference typeof<obj>.Assembly.Location)
+        let compilation = compilation.AddReferences (MetadataFileReference typeof<ModelingAssembly>.Assembly.Location)
+        let compilation = compilation.AddReferences (MetadataFileReference typeof<System.Linq.Expressions.Expression>.Assembly.Location)
+        this.AddCompilationUnits compilation
+
+    /// Adds the modeling assembly's compilation units and all compilation units of the assembly's dependent modeling assemblies to the
     /// <paramref name="compilation" />.
     member private this.AddCompilationUnits (compilation : CSharpCompilation) =
         let compilation = 

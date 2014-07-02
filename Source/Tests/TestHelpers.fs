@@ -24,11 +24,13 @@ namespace SafetySharp.Tests
 
 open System
 open System.Collections
+open System.Collections.Generic
 open System.Linq
 open System.Linq.Expressions
 open System.IO
 open System.Text
 open System.Reflection
+open System.Runtime.CompilerServices
 open SafetySharp.Modeling
 open SafetySharp.Internal.Metamodel
 open Microsoft.FSharp.Reflection
@@ -102,6 +104,15 @@ module private ObjectDumper =
     /// Dumps the given object for debugging purposes.
     let dump (object' : obj) =
         
+        let duplicationCheck = HashSet<obj> ({ new IEqualityComparer<obj> with
+            member this.Equals (symbol1, symbol2) = 
+                obj.ReferenceEquals (symbol1, symbol2)
+            member this.GetHashCode symbol =
+                RuntimeHelpers.GetHashCode symbol
+        })
+
+        let maxLevel = 5
+        let currentLevel = ref 0
         let writer = ObjectWriter ()
         let asEnumerable (object' : obj) = 
             (object' :?> IEnumerable).Cast<obj> ()
@@ -156,31 +167,40 @@ module private ObjectDumper =
                 writer.AppendRepeated (FSharpValue.GetTupleFields object') dump (fun () -> writer.Append ", ")
                 writer.Append ")"
             else
-                let bindingFlags = BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic
-                let properties = objectType.GetProperties bindingFlags |> Seq.where (fun property -> property.CanRead) |> Array.ofSeq
-                dumpProperties objectType.Name properties
+                incr currentLevel 
+                if !currentLevel >= maxLevel then
+                    writer.Append "..."
+                else
+                    let bindingFlags = BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic
+                    let properties = objectType.GetProperties bindingFlags |> Seq.where (fun property -> property.CanRead) |> Array.ofSeq
+                    dumpProperties objectType.Name properties
+                decr currentLevel
 
         and dump (object' : obj) : unit =
-            if object' = null then
-                writer.Append "null"
-            else
-                let objectType = object'.GetType ()
-                if objectType.IsArray then
-                    dumpEnumerable (asEnumerable object') "[|" "|]"
-                elif objectType.FullName.StartsWith "Microsoft.FSharp.Collections.FSharpList" then
-                    dumpEnumerable (asEnumerable object') "[" "]"
-                elif objectType.FullName.StartsWith "Microsoft.FSharp.Collections.FSharpMap" then
-                    dumpMap <| asEnumerable object'
-                elif object' :? string then
-                    writer.Append "%A" object'
-                elif objectType.FullName.StartsWith "Microsoft.FSharp.Core.FSharpOption" then
-                    dump (object'.GetType().GetProperty("Value").GetValue object')
-                elif object' :? IEnumerable then
-                    dumpEnumerable (asEnumerable object') "seq {" "}"
-                elif objectType.IsPrimitive then
-                    writer.Append "%A" object'
+            try
+                if duplicationCheck.Add object' = false then
+                    writer.Append "#object has already been dumped elsewhere#"
+                elif object' = null then
+                    writer.Append "null"
                 else
-                    dumpObject object'
+                    let objectType = object'.GetType ()
+                    if objectType.IsArray then
+                        dumpEnumerable (asEnumerable object') "[|" "|]"
+                    elif objectType.FullName.StartsWith "Microsoft.FSharp.Collections.FSharpList" then
+                        dumpEnumerable (asEnumerable object') "[" "]"
+                    elif objectType.FullName.StartsWith "Microsoft.FSharp.Collections.FSharpMap" then
+                        dumpMap <| asEnumerable object'
+                    elif object' :? string then
+                        writer.Append "%A" object'
+                    elif objectType.FullName.StartsWith "Microsoft.FSharp.Core.FSharpOption" then
+                        dump (object'.GetType().GetProperty("Value").GetValue object')
+                    elif object' :? IEnumerable then
+                        dumpEnumerable (asEnumerable object') "seq {" "}"
+                    elif objectType.IsPrimitive then
+                        writer.Append "%A" object'
+                    else
+                        dumpObject object'
+            with e -> writer.Append "#exception#"
 
         dump object'
         writer.ToString ()
@@ -193,7 +213,25 @@ module internal TestHelpers =
 
      /// Checks whether the given function raises an exception of the given type.
     let raisesWith<'T when 'T :> Exception> func =
-        Assert.Throws<'T> (fun () -> func ())
+        let mutable thrownException : Exception option = None
+        try 
+            func ()
+        with 
+        | :? 'T as e -> 
+            thrownException <- Some <| upcast e
+        | e ->
+            thrownException <- Some e
+
+        match thrownException with
+        | None ->
+            Assert.Fail ("Expected an exception of type '{0}', but no exception was thrown.", typeof<'T>.FullName)
+            Unchecked.defaultof<'T>
+        | Some (:? 'T as e) ->
+            e
+        | Some e ->
+            let message = "Expected an exception of type '{0}', but an exception of type '{1}' was thrown instead.\n\nActual:\n{2}"
+            Assert.Fail (message, typeof<'T>.FullName, e.GetType().FullName, ObjectDumper.dump e)
+            Unchecked.defaultof<'T>
 
     /// Checks whether the given function raises an exception of the given type.
     let raises<'T when 'T :> Exception> func =

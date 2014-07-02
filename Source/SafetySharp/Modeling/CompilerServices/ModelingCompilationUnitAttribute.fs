@@ -26,7 +26,7 @@ open System
 open Microsoft.CodeAnalysis.CSharp
 open SafetySharp.Internal.Utilities
 
-/// Provides metadata about a compilation unit within a Safety Sharp modeling assembly.
+/// Provides metadata about a compilation unit within a SafetySharp modeling assembly.
 [<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
 type ModelingCompilationUnitAttribute (syntaxTree : string, filePath : string) =
     inherit Attribute ()

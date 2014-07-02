@@ -22,9 +22,11 @@
 
 namespace SafetySharp.Tests.CSharp.Roslyn.IMethodSymbolExtensionsTests
 
+open System
 open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
@@ -96,3 +98,21 @@ module ``IsUpdateMethod method`` =
     [<Test>]
     let ``returns false for Update method of non-Component class`` () =
         isUpdateMethod "class X { public void Update() {} }" "Update" =? false
+
+[<TestFixture>]
+module ``GetMethodDeclaration method`` =
+
+    let mutable private compilation : TestCompilation = null
+
+    let getMethodDeclaration csharpCode className methodName =
+        compilation <- TestCompilation csharpCode
+        let methodSymbol = compilation.FindMethodSymbol className methodName
+        methodSymbol.GetMethodDeclaration ()
+
+    [<Test>]
+    let ``returns method declaration of method defined in source at one location`` () =
+        getMethodDeclaration "class C { void M() { return; }}" "C" "M" =? compilation.FindMethodDeclaration "C" "M"
+
+    [<Test>]
+    let ``throws when method is not defined in source`` () =
+        raises<InvalidOperationException> (fun () -> getMethodDeclaration "" "System.Object" "ToString" |> ignore)

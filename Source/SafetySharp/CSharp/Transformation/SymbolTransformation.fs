@@ -96,16 +96,12 @@ module internal SymbolTransformation =
                 localMapBuilder.Add (local, localSymbol)
                 localSymbol
 
-            match methodSymbol.DeclaringSyntaxReferences.Length with
-            | 1 -> 
-                let semanticModel = compilation.GetSemanticModel methodSymbol.DeclaringSyntaxReferences.[0].SyntaxTree
-                let methodDeclaration = methodSymbol.DeclaringSyntaxReferences.[0].GetSyntax () :?> MethodDeclarationSyntax
-                methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
-                |> Seq.map (fun declarator -> semanticModel.GetDeclaredSymbol declarator :?> ILocalSymbol)
-                |> Seq.map transformLocal
-                |> List.ofSeq
-            | 0 -> invalidOp "Unable to retrieve source code for method '%s'" <| methodSymbol.ToDisplayString ()
-            | _ -> invalidOp "Method '%s' has more than one source location." <| methodSymbol.ToDisplayString ()
+            let methodDeclaration = methodSymbol.GetMethodDeclaration ()
+            let semanticModel = methodSymbol.GetSemanticModel compilation
+            methodDeclaration.Descendants<VariableDeclaratorSyntax> ()
+            |> Seq.map (fun declarator -> semanticModel.GetDeclaredSymbol declarator :?> ILocalSymbol)
+            |> Seq.map transformLocal
+            |> List.ofSeq
 
         // Creates the mapping information for the Update method of the component.
         let rec transformUpdateMethod (csharpComponent : ITypeSymbol) =

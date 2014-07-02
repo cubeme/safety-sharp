@@ -59,3 +59,20 @@ module internal MethodSymbolExtensions =
             nullArg this "this"
             nullArg semanticModel "semanticModel"
             this.IsUpdateMethod semanticModel.Compilation
+
+        /// Gets the method declaration corresponding to the method symbol.
+        member this.GetMethodDeclaration () =
+            nullArg this "this"
+            let e = this.DeclaringSyntaxReferences
+            match this.DeclaringSyntaxReferences.Length with
+            | 1 -> this.DeclaringSyntaxReferences.[0].GetSyntax () :?> MethodDeclarationSyntax
+            | 0 -> invalidOp "Unable to retrieve source code for method '%s'." <| this.ToDisplayString ()
+            | _ -> invalidOp "Method '%s' has more than one source location." <| this.ToDisplayString ()
+
+        /// Gets the semantic model that can be used to resolve C# symbols in the method's body. The method source code
+        /// must be available for this operation to succeed.
+        member this.GetSemanticModel (compilation : Compilation) =
+            nullArg this "this"
+            nullArg compilation "compilation"
+            let syntaxTree = this.GetMethodDeclaration().SyntaxTree
+            compilation.GetSemanticModel syntaxTree

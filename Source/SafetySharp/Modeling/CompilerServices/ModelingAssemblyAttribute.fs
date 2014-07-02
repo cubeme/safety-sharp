@@ -26,12 +26,13 @@ open System
 open Microsoft.CodeAnalysis.CSharp
 open SafetySharp.Internal.Utilities
 
-/// Provides metadata about a Safety Sharp modeling assembly.
+/// Provides metadata about a SafetySharp modeling assembly.
 [<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
+[<AllowNullLiteral>]
 type ModelingAssemblyAttribute (compilerVersion : string) =
     inherit Attribute ()
 
-    /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
+    /// Gets the version string of the SafetySharp compiler that was used to compile the modeling assembly.
     member this.CompilerVersion = 
         nullOrWhitespaceArg compilerVersion "compilerVersion"
         compilerVersion
