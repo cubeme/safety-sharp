@@ -34,7 +34,7 @@ open SafetySharp.Modeling
 open SafetySharp.Internal.CSharp.Roslyn
 
 /// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
-type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback) =
+type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback<SyntaxNode>) =
     inherit CSharpSyntaxVisitor ()
 
     /// Reports the node as a use of an unsupported C# feature.

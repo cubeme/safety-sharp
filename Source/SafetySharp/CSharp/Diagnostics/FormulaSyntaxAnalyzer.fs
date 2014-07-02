@@ -33,7 +33,7 @@ open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.CSharp.Roslyn
 
 /// Checks for unsupported C# features within a formula expression.
-type internal FormulaSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
+type internal FormulaSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback<SyntaxNode>) =
     inherit CSharpSyntaxWalker ()
 
     /// Visits the descendant nodes of <paramref name="node" />.

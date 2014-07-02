@@ -48,3 +48,11 @@ module internal DiagnosticIdentifiers =
     [<Literal>] 
     let IllegalEnumMemberValue = Prefix + "1102"
 
+    [<Literal>]
+    let ReturnTypeOfUpdateMethodMustBeVoid = Prefix + "1201"
+
+    [<Literal>]
+    let UpdateMethodCannotHaveParameters = Prefix + "1202"
+
+    [<Literal>]
+    let MultipleUpdateMethods = Prefix + "1203"

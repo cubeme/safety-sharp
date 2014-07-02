@@ -33,7 +33,7 @@ open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.CSharp.Roslyn
 
 /// Checks for unsupported C# features within a component declaration.
-type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback) =
+type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback<SyntaxNode>) =
     inherit CSharpSyntaxWalker ()
 
     /// Visits the descendant nodes of <paramref name="node" />.

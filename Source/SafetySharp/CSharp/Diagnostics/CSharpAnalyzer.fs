@@ -24,10 +24,13 @@ namespace SafetySharp.Internal.CSharp.Diagnostics
 
 open System
 open System.Collections.Immutable
+open System.Threading
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
+open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.CSharp.Roslyn
 
 /// A base class for C# code analyzers.
 [<AbstractClass>]
@@ -62,4 +65,81 @@ type internal CSharpAnalyzer () =
     interface IDiagnosticAnalyzer with
         /// Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
         member this.SupportedDiagnostics = this.supportedDiagnostics
+
+/// Represents a callback that emits a diagnostic.
+type internal DiagnosticCallback<'T> = delegate of element : 'T * [<ParamArray>] messageArgs : obj array -> unit
+
+/// A base class for syntax node analyzers.
+[<AbstractClass>]
+type internal SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
+    inherit CSharpAnalyzer ()
+
+    interface ISyntaxTreeAnalyzer with
+        override this.AnalyzeSyntaxTree (syntaxTree, addDiagnostic, cancellationToken) =
+            nullArg syntaxTree "syntaxTree"
+            nullArg addDiagnostic "addDiagnostic"
+
+            let diagnosticCallback = DiagnosticCallback<SyntaxNode> (fun locationNode args ->
+                addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationNode.GetLocation (), args)))
+    
+            // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
+            // report them as an error.
+            try
+                syntaxTree.DescendantsAndSelf<'T>()
+                |> Seq.iter (fun node -> this.Analyze node diagnosticCallback cancellationToken)
+            with
+            | e -> Log.Error "%s" e.Message
+
+    ///  Analyzes the <paramref name="syntaxNode"/>.
+    abstract member Analyze : syntaxNode : 'T -> addDiagnostic : DiagnosticCallback<SyntaxNode> -> cancellationToken : CancellationToken -> unit
+   
+/// A base class for symbol analyzers.
+[<AbstractClass>]
+type internal SymbolAnalyzer<'T when 'T :> ISymbol> (symbolKind : SymbolKind) =
+    inherit CSharpAnalyzer ()
+
+    interface ISymbolAnalyzer with
+        override this.SymbolKindsOfInterest = 
+            ImmutableArray.Create (symbolKind)
+
+        override this.AnalyzeSymbol (symbol, compilation, addDiagnostic, cancellationToken) =
+            nullArg symbol "symbol"
+            nullArg addDiagnostic "addDiagnostic"
+
+            let diagnosticCallback = DiagnosticCallback<ISymbol> (fun locationSymbol args ->
+                addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationSymbol.Locations.[0], args)))
+    
+            // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
+            // report them as an error.
+            try
+                match symbol with
+                | :? 'T as symbol -> this.Analyze symbol compilation diagnosticCallback cancellationToken
+                | _ -> ()
+            with
+            | e -> Log.Error "%s" e.Message
+
+    ///  Analyzes the <paramref name="symbol"/>.
+    abstract member Analyze : symbol : 'T -> compilation : Compilation -> addDiagnostic : DiagnosticCallback<ISymbol> -> cancellationToken : CancellationToken -> unit
         
+/// A base class for syntax node analyzers.
+[<AbstractClass>]
+type internal SemanticModelAnalyzer () =
+    inherit CSharpAnalyzer ()
+
+    interface ISemanticModelAnalyzer with
+        override this.AnalyzeSemanticModel (semanticModel, addDiagnostic, cancellationToken) =
+            nullArg semanticModel "semanticModel"
+            nullArg addDiagnostic "addDiagnostic"
+
+            let diagnosticCallback = DiagnosticCallback<SyntaxNode> (fun locationNode args ->
+                addDiagnostic.Invoke (Diagnostic.Create (this.descriptor, locationNode.GetLocation (), args)))
+    
+            // Roslyn's AnalyzerDriver is going to swallow all exceptions that might be raised -- that is ok, as long as we
+            // report them as an error.
+            try
+                this.Analyze semanticModel diagnosticCallback cancellationToken
+            with
+            | e -> Log.Error "%s" e.Message
+
+    ///  Analyzes the <paramref name="syntaxNode"/>.
+    abstract member Analyze : semanticModel : SemanticModel -> addDiagnostic : DiagnosticCallback<SyntaxNode> -> cancellationToken : CancellationToken -> unit

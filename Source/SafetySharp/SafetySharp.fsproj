@@ -87,13 +87,12 @@
     <Compile Include="CSharp\Roslyn\Syntax.fs" />
     <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />
-    <Compile Include="CSharp\Diagnostics\SyntaxNodeAnalyzer.fs" />
-    <Compile Include="CSharp\Diagnostics\SemanticModelAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\UpdateMethodAnalyzer.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
