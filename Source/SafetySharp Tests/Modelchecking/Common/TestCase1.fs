@@ -96,9 +96,10 @@ module internal TestCase1Simplified =
 
     // Fields
     let initialValues = [SimpleConstLiteral.BooleanLiteral(true);SimpleConstLiteral.BooleanLiteral(false)]
+    let simpleFieldXSymbol = { SimpleFieldSymbol.Name="x"; SimpleFieldSymbol.Type=TestCase1.fieldXType; }
     let simpleGlobalFieldWithContext = {
         SimpleGlobalFieldWithContext.Context=contextComponent;
-        SimpleGlobalFieldWithContext.FieldSymbol=TestCase1.fieldXSymbol;
+        SimpleGlobalFieldWithContext.FieldSymbol=simpleFieldXSymbol;
         SimpleGlobalFieldWithContext.InitialValues=initialValues;
     }
     let field = SimpleGlobalField.FieldWithContext(simpleGlobalFieldWithContext)
