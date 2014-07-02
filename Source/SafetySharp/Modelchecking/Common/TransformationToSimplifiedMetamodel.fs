@@ -260,7 +260,11 @@ type internal ContextCache (configuration:MMConfiguration) =
                 Context.Partition = parentContext.Partition;
             }
 
-        // TODO: createContextForMethod()
+        member this.createContextForMethod(parentContext:Context) (newElementName:string) : Context =
+            {
+                Context.HierarchicalAccess = newElementName::parentContext.HierarchicalAccess; //parentsAndMe
+                Context.Partition = parentContext.Partition;
+            }
 
         member this.getPartitions : SimplePartitionIdentity list =
             rootComponentToPartition |> Map.toList
@@ -362,13 +366,9 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
             // It traverses the model and generates a list of all fields with all necessary information about the field (SimpleGlobalField)
             // This function works like this: collectFromPartition -> collectFromComponent -> collectFromMethod -> collectFieldInMethod/collectParameterOfMethod
             let rec collectFromComponent (componentObject:MMComponentObject) (myContext:Context) : SimpleGlobalField list =
-                
-                ////CONTEXT!=!=!=!=!=!=!!=
-                
-                
                 let collectedInSubcomponents : SimpleGlobalField list =
                     (getSubComponentObjects componentObject.Subcomponents) |> List.collect (fun (name,comp) -> collectFromComponent comp (contextCache.createContextForSubcomponent myContext name comp) )
-                let collectFromMethod (methodSymbol:MMMethodSymbol) : SimpleGlobalField list =
+                let collectFromMethod (myContext:Context) (methodSymbol:MMMethodSymbol) : SimpleGlobalField list =
                     let collectLocalFieldInMethod (localSymbol:MMLocalSymbol) =
                         let fieldContext = {
                             SimpleGlobalFieldWithContext.Context=myContext;
@@ -402,7 +402,8 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
                                 | MMProvidedPortSymbol.ProvidedPort methodSymbol -> methodSymbol
                         componentObject.ComponentSymbol.ProvidedPorts |> List.map getMethodSymbol
                     fromUpdate::fromProvidedPorts
-                let collectedInThisComponent = methodSymbols |> List.collect collectFromMethod 
+                let collectedInThisComponent = methodSymbols |> List.collect (fun methodSymbol -> let context = contextCache.createContextForMethod myContext methodSymbol.Name
+                                                                                                  collectFromMethod context methodSymbol)
                 collectedInThisComponent @ collectedInSubcomponents
             let collectFromPartition (partition:MMPartitionObject) : SimpleGlobalField list  =
                 let contextOfCurrentPartitionRootComponent = contextCache.createContextOfRootComponent partition
