@@ -136,11 +136,11 @@ type internal ComponentInterfaceMethodWithoutPortAttributeAnalyzer () as this =
 /// Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
 /// the <see cref="RequiredAttribute" /> or <see cref="PortAttribute" />.
 [<DiagnosticAnalyzer>]
-[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.AccessorIsMakredWithPortAttribute, LanguageNames.CSharp)>]
-type internal AccessorIsMakredWithPortAttributeAnalyzer () as this =
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.AccessorIsMarkedWithPortAttribute, LanguageNames.CSharp)>]
+type internal AccessorIsMarkedWithPortAttributeAnalyzer () as this =
     inherit SymbolAnalyzer<ISymbol> (SymbolKind.Method, SymbolKind.Property)
 
-    do this.Error DiagnosticIdentifiers.AccessorIsMakredWithPortAttribute
+    do this.Error DiagnosticIdentifiers.AccessorIsMarkedWithPortAttribute
         (sprintf "An accessor cannot be marked with '%s' or '%s'." 
             typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
         (sprintf "'{0}' cannot be marked with '%s' or '%s'. Apply the attribute to the property instead."
@@ -155,3 +155,47 @@ type internal AccessorIsMakredWithPortAttributeAnalyzer () as this =
                 if hasProvidedAttribute || hasRequiredAttribute then
                     addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString ())
             | _ -> ()
+
+/// Ensures that the port attribute specifications of an implementing method or property and the corresponding interface
+/// method or property don't contradict.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.ClassPortAttributeContradictsInterfacePortAttribute, LanguageNames.CSharp)>]
+type internal ClassPortAttributeContradictsInterfacePortAttributeAnalyzer () as this =
+    inherit SymbolAnalyzer<INamedTypeSymbol> (SymbolKind.NamedType)
+
+    do this.Error DiagnosticIdentifiers.ClassPortAttributeContradictsInterfacePortAttribute
+        "Method or property does not implement the corresponding interface method or property, as the port attributes are different." 
+        "'{0}' does not implement interface member '{1}'. Replace attribute '{2}' with '{3}' to implement the interface member."
+
+    override this.Analyze symbol compilation addDiagnostic cancellationToken = 
+        if symbol.TypeKind = TypeKind.Class && symbol.IsDerivedFromComponent compilation then
+            for interfaceSymbol in symbol.AllInterfaces |> Seq.where (fun interfaceSymbol -> interfaceSymbol.ImplementsIComponent compilation) do
+                for interfaceMember in interfaceSymbol.GetMembers () do
+                    let implementingMember = symbol.FindImplementationForInterfaceMember interfaceMember
+                    if implementingMember.ContainingType = symbol then
+                        match implementingMember with
+                        | :? IMethodSymbol as methodSymbol ->
+                            let interfaceMethod = interfaceMember :?> IMethodSymbol
+                            let interfaceRequiredAttribute = interfaceMethod.HasAttribute<RequiredAttribute> compilation
+                            let interfaceProvidedAttribute = interfaceMethod.HasAttribute<ProvidedAttribute> compilation
+                            let methodRequiredAttribute = methodSymbol.HasAttribute<RequiredAttribute> compilation
+                            let methodProvidedAttribute = methodSymbol.HasAttribute<ProvidedAttribute> compilation
+                            if interfaceRequiredAttribute && methodProvidedAttribute then
+                                addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString (), interfaceMethod.ToDisplayString (), 
+                                                      typeof<ProvidedAttribute>.FullName, typeof<RequiredAttribute>.FullName)
+                            elif interfaceProvidedAttribute && methodRequiredAttribute then
+                                addDiagnostic.Invoke (methodSymbol, methodSymbol.ToDisplayString (), interfaceMethod.ToDisplayString (), 
+                                                      typeof<RequiredAttribute>.FullName, typeof<ProvidedAttribute>.FullName)
+                        | :? IPropertySymbol as propertySymbol ->
+                            let interfaceProperty = interfaceMember :?> IPropertySymbol
+                            let interfaceRequiredAttribute = interfaceProperty.HasAttribute<RequiredAttribute> compilation
+                            let interfaceProvidedAttribute = interfaceProperty.HasAttribute<ProvidedAttribute> compilation
+                            let propertyRequiredAttribute = propertySymbol.HasAttribute<RequiredAttribute> compilation
+                            let propertyProvidedAttribute = propertySymbol.HasAttribute<ProvidedAttribute> compilation
+                            if interfaceRequiredAttribute && propertyProvidedAttribute then
+                                addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString (), interfaceProperty.ToDisplayString (), 
+                                                      typeof<ProvidedAttribute>.FullName, typeof<RequiredAttribute>.FullName)
+                            elif interfaceProvidedAttribute && propertyRequiredAttribute then
+                                addDiagnostic.Invoke (propertySymbol, propertySymbol.ToDisplayString (), interfaceProperty.ToDisplayString (), 
+                                                      typeof<RequiredAttribute>.FullName, typeof<ProvidedAttribute>.FullName)
+                        | _ -> ()

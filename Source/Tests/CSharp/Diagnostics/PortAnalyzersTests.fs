@@ -164,8 +164,8 @@ module ComponentInterfaceMethodWithoutPortAttributeAnalyzerTests =
         hasDiagnostics "class C : IComponent { int M { get; set; }}" =? false
 
 [<TestFixture>]
-module AccessorIsMakredWithPortAttributeAnalyzerTests =
-    let hasDiagnostics = TestCompilation.HasDiagnostics (AccessorIsMakredWithPortAttributeAnalyzer ())
+module AccessorIsMarkedWithPortAttributeAnalyzerTests =
+    let hasDiagnostics = TestCompilation.HasDiagnostics (AccessorIsMarkedWithPortAttributeAnalyzer ())
 
     [<Test>]
     let ``Accessors without attributes are valid`` () =
@@ -208,3 +208,50 @@ module AccessorIsMakredWithPortAttributeAnalyzerTests =
         hasDiagnostics "class C { int M { get; [Provided] set; }}" =? false
         hasDiagnostics "interface C { int M { get; [Required] set; }}" =? false
         hasDiagnostics "interface C { int M { [Provided] get; set; }}" =? false
+
+[<TestFixture>]
+module ClassPortAttributeContradictsInterfacePortAttributeAnalyzerTests =
+    let hasDiagnostics csharpCode = 
+        let csharpCode = "interface I : IComponent { [Required] void In(); [Provided] void Out(); }
+            interface J : IComponent { [Required] int In { get; set; } [Provided] int Out { get; set; }}" + csharpCode
+        TestCompilation.HasDiagnostics (ClassPortAttributeContradictsInterfacePortAttributeAnalyzer ()) csharpCode
+
+    [<Test>]
+    let ``Implementations without attributes are valid`` () =
+        hasDiagnostics "class C : Component, I { public void In() {} public void Out() {}}" =? false
+        hasDiagnostics "class C : Component, I { void I.In() {} void I.Out() {}}" =? false
+        hasDiagnostics "class C : Component, J { public int In { get; set; } public int Out { get; set; }}" =? false
+        hasDiagnostics "class C : Component, J { int J.In { get; set; } int J.Out { get; set; }}" =? false
+
+    [<Test>]
+    let ``Implementations with wrong attribute outside of component class are valid`` () =
+        hasDiagnostics "class C : I { [Provided] public void In() {} [Required] public void Out() {}}" =? false
+        hasDiagnostics "class C : I { [Provided] void I.In() {} [Required] void I.Out() {}}" =? false
+        hasDiagnostics "class C : J { [Provided] public int In { get; set; } [Required] public int Out { get; set; }}" =? false
+        hasDiagnostics "class C : J { [Provided] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? false
+
+    [<Test>]
+    let ``Implementations with wrong attribute are valid if interface does not derive from IComponent`` () =
+        hasDiagnostics "interface X { [Provided] void T(); } class C : X { [Required] public void T() {}}" =? false
+        hasDiagnostics "interface X { [Provided] void T(); } class C : X { [Required] void X.T() {}}" =? false
+        hasDiagnostics "interface X { [Provided] void T(); } class C : Component, X { [Required] public void T() {}}" =? false
+        hasDiagnostics "interface X { [Provided] void T(); } class C : Component, X { [Required] void X.T() {}}" =? false
+        hasDiagnostics "interface X { [Provided] int T { get; set; }} class C : X { [Required] public int T { get; set; }}" =? false
+        hasDiagnostics "interface X { [Provided] int T { get; set; }} class C : X { [Required] int X.T { get; set; }}" =? false
+        hasDiagnostics "interface X { [Provided] int T { get; set; }} class C : Component, X { [Required] public int T { get; set; }}" =? false
+        hasDiagnostics "interface X { [Provided] int T { get; set; }} class C : Component, X { [Required] int X.T { get; set; }}" =? false
+
+    [<Test>]
+    let ``Implementations with wrong attribute class are invalid`` () =
+        hasDiagnostics "class C : Component, I { [Required] public void In() {} [Required] public void Out() {}}" =? true
+        hasDiagnostics "class C : Component, I { [Provided] public void In() {} [Provided] public void Out() {}}" =? true
+        hasDiagnostics "class C : Component, I { [Provided] public void In() {} [Required] public void Out() {}}" =? true
+        hasDiagnostics "class C : Component, I { [Required] void I.In() {} [Required] void I.Out() {}}" =? true
+        hasDiagnostics "class C : Component, I { [Provided] void I.In() {} [Provided] void I.Out() {}}" =? true
+        hasDiagnostics "class C : Component, I { [Provided] void I.In() {} [Required] void I.Out() {}}" =? true
+        hasDiagnostics "class C : Component, J { [Required] public int In { get; set; } [Required] public int Out { get; set; }}" =? true
+        hasDiagnostics "class C : Component, J { [Provided] public int In { get; set; } [Provided] public int Out { get; set; }}" =? true
+        hasDiagnostics "class C : Component, J { [Provided] public int In { get; set; } [Required] public int Out { get; set; }}" =? true
+        hasDiagnostics "class C : Component, J { [Required] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? true
+        hasDiagnostics "class C : Component, J { [Provided] int J.In { get; set; } [Provided] int J.Out { get; set; }}" =? true
+        hasDiagnostics "class C : Component, J { [Provided] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? true

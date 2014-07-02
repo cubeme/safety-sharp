@@ -73,4 +73,7 @@ module internal DiagnosticIdentifiers =
     let ComponentInterfaceMethodWithoutPortAttribute = Prefix + "1304"
 
     [<Literal>]
-    let AccessorIsMakredWithPortAttribute = Prefix + "1305"
+    let AccessorIsMarkedWithPortAttribute = Prefix + "1305"
+
+    [<Literal>]
+    let ClassPortAttributeContradictsInterfacePortAttribute = Prefix + "1306"

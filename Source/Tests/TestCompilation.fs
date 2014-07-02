@@ -254,6 +254,6 @@ type internal TestCompilation (csharpCode) =
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
 
     /// Checks whether the given C# code has any diagnostics for the given diagnostic analyzer.
-    static member HasDiagnostics diagnosticAnalyzer csharpCode = 
+    static member HasDiagnostics diagnosticAnalyzer csharpCode =
         let compilation = TestCompilation csharpCode
         AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| diagnosticAnalyzer |], new CancellationToken(), false) |> Seq.isEmpty |> not

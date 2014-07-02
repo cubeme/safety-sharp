@@ -64,8 +64,8 @@
     <Compile Include="CSharp\Roslyn\IPropertySymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzerTests.fs" />
     <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzerTests.fs" />
-    <Compile Include="CSharp\Diagnostics\PortAnalyzersTests.fs" />
     <Compile Include="CSharp\Diagnostics\UpdateMethodAnalyzersTests.fs" />
+    <Compile Include="CSharp\Diagnostics\PortAnalyzersTests.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
     <Compile Include="CSharp\Normalization\ExternMethodNormalizerTests.fs" />
     <Compile Include="CSharp\Normalization\EnumTypeNormalizerTests.fs" />
