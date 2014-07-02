@@ -35,43 +35,40 @@ open SafetySharp.Internal.CSharp.Roslyn
 
 [<TestFixture>]
 module EnumUnderlyingTypeAnalyzerTests =
-
-    let validate csharpCode = 
-        let compilation = TestCompilation csharpCode
-        compilation.HasDiagnostics (EnumUnderlyingTypeAnalyzer ()) |> not
+    let hasDiagnostics = TestCompilation.HasDiagnostics (EnumUnderlyingTypeAnalyzer ())
 
     [<Test>]
     let ``implicit underlying type is valid`` () =
-        validate "enum E { A }" =? true
+        hasDiagnostics "enum E { A }" =? false
 
     [<Test>]
     let ``byte as underlying type is invalid`` () =
-        validate "enum E : byte { A }" =? false
+        hasDiagnostics "enum E : byte { A }" =? true
 
     [<Test>]
     let ``int as underlying type is invalid`` () =
-        validate "enum E : int { A }" =? false
+        hasDiagnostics "enum E : int { A }" =? true
 
     [<Test>]
     let ``long as underlying type is invalid`` () =
-        validate "enum E : long { A }" =? false
+        hasDiagnostics "enum E : long { A }" =? true
 
     [<Test>]
     let ``sbyte as underlying type is invalid`` () =
-        validate "enum E : sbyte { A }" =? false
+        hasDiagnostics "enum E : sbyte { A }" =? true
 
     [<Test>]
     let ``short as underlying type is invalid`` () =
-        validate "enum E : short { A }" =? false
+        hasDiagnostics "enum E : short { A }" =? true
 
     [<Test>]
     let ``uint as underlying type is invalid`` () =
-        validate "enum E : uint { A }" =? false
+        hasDiagnostics "enum E : uint { A }" =? true
 
     [<Test>]
     let ``ulong as underlying type is invalid`` () =
-        validate "enum E : ulong { A }" =? false
+        hasDiagnostics "enum E : ulong { A }" =? true
 
     [<Test>]
     let ``ushort as underlying type is invalid`` () =
-        validate "enum E : ushort { A }" =? false
+        hasDiagnostics "enum E : ushort { A }" =? true

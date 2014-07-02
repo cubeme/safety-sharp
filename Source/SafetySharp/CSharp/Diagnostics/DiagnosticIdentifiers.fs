@@ -56,3 +56,6 @@ module internal DiagnosticIdentifiers =
 
     [<Literal>]
     let MultipleUpdateMethods = Prefix + "1203"
+
+    [<Literal>]
+    let UpdateMethodWithoutBody = Prefix + "1204"

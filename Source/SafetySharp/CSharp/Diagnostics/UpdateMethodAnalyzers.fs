@@ -43,7 +43,9 @@ type internal UpdateMethodReturnTypeAnalyzer () as this =
     do this.Error DiagnosticIdentifiers.ReturnTypeOfUpdateMethodMustBeVoid message message        
 
     override this.Analyze methodSymbol compilation addDiagnostic cancellationToken = 
-        if methodSymbol.IsUpdateMethod compilation && not methodSymbol.ReturnsVoid then
+        let withinComponent = methodSymbol.ContainingType.IsDerivedFromComponent compilation
+        let hasNonVoidReturnType = methodSymbol.IsUpdateMethod compilation && not methodSymbol.ReturnsVoid 
+        if withinComponent && hasNonVoidReturnType then
             addDiagnostic.Invoke methodSymbol
 
 /// Ensures that a component update method has no parameters.
@@ -55,8 +57,10 @@ type internal UpdateMethodParameterAnalyzer () as this =
     let message = sprintf "A method marked with '%s' cannot have any parameters." typeof<BehaviorAttribute>.FullName
     do this.Error DiagnosticIdentifiers.UpdateMethodCannotHaveParameters message message        
 
-    override this.Analyze methodSymbol compilation addDiagnostic cancellationToken = 
-        if methodSymbol.IsUpdateMethod compilation && methodSymbol.Parameters.Length <> 0 then
+    override this.Analyze methodSymbol compilation addDiagnostic cancellationToken =   
+        let withinComponent = methodSymbol.ContainingType.IsDerivedFromComponent compilation
+        let hasParameters = methodSymbol.IsUpdateMethod compilation && methodSymbol.Parameters.Length <> 0
+        if withinComponent && hasParameters then
             addDiagnostic.Invoke methodSymbol
 
 /// Ensures that a component declares only one update method.
@@ -78,3 +82,24 @@ type internal MultipleUpdateMethodsAnalyzer () as this =
             if updateMethods.Length > 1 then
                 for updateMethod in updateMethods do
                     addDiagnostic.Invoke updateMethod
+
+/// Ensures that a component update method has a body and is therefore neither extern nor abstract.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.UpdateMethodWithoutBody, LanguageNames.CSharp)>]
+type internal UpdateMethodWithoutBodyAnalyzer () as this =
+    inherit SymbolAnalyzer<IMethodSymbol> (SymbolKind.Method)
+
+    let message = sprintf "A method marked with '%s' must define a body and cannot be extern or abstract." typeof<BehaviorAttribute>.FullName
+    do this.Error DiagnosticIdentifiers.UpdateMethodWithoutBody message message        
+
+    override this.Analyze methodSymbol compilation addDiagnostic cancellationToken = 
+        let withinComponent = methodSymbol.ContainingType.IsDerivedFromComponent compilation
+        if withinComponent && methodSymbol.IsUpdateMethod compilation then
+            let hasBody = 
+                methodSymbol.DeclaringSyntaxReferences 
+                |> Seq.map (fun reference -> reference.GetSyntax () :?> MethodDeclarationSyntax)
+                |> Seq.map (fun methodDeclaration -> methodDeclaration.Body)
+                |> Seq.where ((<>) null)
+                |> Seq.length <> 0
+            if not hasBody then
+                addDiagnostic.Invoke methodSymbol

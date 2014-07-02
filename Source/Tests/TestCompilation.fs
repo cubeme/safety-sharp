@@ -231,6 +231,7 @@ type internal TestCompilation (csharpCode) =
         | null -> failed "Unable to find a type with name '%s' in the compiled assembly." typeName
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
 
-    /// Checks whether the compilation has any diagnostics for the given diagnostic analyzer.
-    member this.HasDiagnostics diagnosticAnalyzer = 
-        AnalyzerDriver.GetDiagnostics(csharpCompilation, [| diagnosticAnalyzer |], new CancellationToken()) |> Seq.isEmpty |> not
+    /// Checks whether the given C# code has any diagnostics for the given diagnostic analyzer.
+    static member HasDiagnostics diagnosticAnalyzer csharpCode = 
+        let compilation = TestCompilation csharpCode
+        AnalyzerDriver.GetDiagnostics(compilation.CSharpCompilation, [| diagnosticAnalyzer |], new CancellationToken()) |> Seq.isEmpty |> not

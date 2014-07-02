@@ -35,27 +35,24 @@ open SafetySharp.Internal.CSharp.Roslyn
 
 [<TestFixture>]
 module EnumMemberAnalyzerTests =
-
-    let validate csharpCode = 
-        let compilation = TestCompilation csharpCode
-        compilation.HasDiagnostics (EnumMemberAnalyzer ()) |> not
+    let hasDiagnostics = TestCompilation.HasDiagnostics (EnumMemberAnalyzer ())
 
     [<Test>]
     let ``enum declaration without explicit member values is valid`` () =
-        validate "enum E { A, B, C }" =? true
+        hasDiagnostics "enum E { A, B, C }" =? false
 
     [<Test>]
     let ``enum declaration with explicit value on first member is invalid`` () =
-        validate "enum E { A = 1, B, C }" =? false
+        hasDiagnostics "enum E { A = 1, B, C }" =? true
 
     [<Test>]
     let ``enum declaration with explicit value on second member is invalid`` () =
-        validate "enum E { A, B = 1, C }" =? false
+        hasDiagnostics "enum E { A, B = 1, C }" =? true
 
     [<Test>]
     let ``enum declaration with explicit value on third member is invalid`` () =
-        validate "enum E { A, B, C = 3 }" =? false
+        hasDiagnostics "enum E { A, B, C = 3 }" =? true
 
     [<Test>]
     let ``enum declaration with explicit values on all members is invalid`` () =
-        validate "enum E { A = 4, B = 1, C = 3 }" =? false
+        hasDiagnostics "enum E { A = 4, B = 1, C = 3 }" =? true
