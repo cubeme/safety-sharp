@@ -43,7 +43,7 @@
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="SafetySharp, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(OutDir)SafetySharp.dll</HintPath>
+      <HintPath>$(TargetDir)SafetySharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -67,7 +67,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <Exec Command="&quot;$(OutDir)ssc.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
+    <Exec Command="&quot;$(TargetDir)ssc.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
     <OnError ExecuteTargets="RemoveTargetAssembly" />
   </Target>
   <Target Name="RemoveTargetAssembly">
