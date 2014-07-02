@@ -59,3 +59,12 @@ module internal DiagnosticIdentifiers =
 
     [<Literal>]
     let UpdateMethodWithoutBody = Prefix + "1204"
+
+    [<Literal>]
+    let MarkedWithBothProvidedAndRequiredAttribute = Prefix + "1301"
+
+    [<Literal>]
+    let ExternProvidedPort = Prefix + "1302"
+
+    [<Literal>]
+    let NonExternRequiredPort = Prefix + "1303"

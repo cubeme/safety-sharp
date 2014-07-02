@@ -26,11 +26,37 @@ namespace Elbtunnel
 	using System.Diagnostics;
 	using SafetySharp.Modeling;
 
-	public class LightBarrier : Component
+	internal interface ISensor : IComponent
+	{
+		bool IsTriggered();
+	}
+
+	internal class InterfacedSubcomponent : Component
+	{
+		private readonly ISensor _sensor;
+		private bool _triggered;
+
+		public InterfacedSubcomponent(ISensor sensor)
+		{
+			_sensor = sensor;
+		}
+
+		[Behavior]
+		private void Do()
+		{
+			_triggered = _sensor.IsTriggered();
+		}
+	}
+
+	public class LightBarrier : Component, ISensor
 	{
 		public bool Triggered = false;
 		private int _i = 1;
-		
+
+		public bool IsTriggered()
+		{
+			return true;
+		}
 		public int Do()
 		{
 			var q = 38;
@@ -40,12 +66,16 @@ namespace Elbtunnel
 		}
 	}
 
-	enum Lane {Left, Right}
+	internal enum Lane
+	{
+		Left,
+		Right
+	}
 
 	internal class Test2 : Component
 	{
-		private BooleanComponent _boolean1;
 		public readonly BooleanComponent Boolean2;
+		private BooleanComponent _boolean1;
 
 		public Test2()
 		{
@@ -56,8 +86,8 @@ namespace Elbtunnel
 
 	internal class BooleanComponent : Component
 	{
-		public bool Value;
 		public Lane Lane = Lane.Right;
+		public bool Value;
 
 		public BooleanComponent(bool nondeterministicInitialValue)
 		{
@@ -69,27 +99,24 @@ namespace Elbtunnel
 			//Update();
 			//Bind(Q2, Provided);
 		}
-
 		public extern void Test(); // ---> public Action Test { private get; set; }
 
-		protected internal extern  int Q();
-		protected internal extern  int Q2(bool f);
+		protected internal extern int Q();
+		protected internal extern int Q2(bool f);
 
-		int Provided(bool f)
+		private int Provided(bool f)
 		{
 			int x = 0;
 			return 0;
 		}
 
-			[DebuggerNonUserCode]
+		[DebuggerNonUserCode]
+		[DebuggerHidden][Required]
+		private extern void P(int a,
+							  int b);
 
-		[DebuggerHidden]
-		private extern void P(int a, 
-				
-				int b);
-		
- 		[Behavior]
-		void Update()
+		[Behavior]
+		private void Update()
 		{
 			Lane = Lane.Left;
 			Value = Choose.Boolean();

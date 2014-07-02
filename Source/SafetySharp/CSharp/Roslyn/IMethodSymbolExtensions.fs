@@ -22,6 +22,7 @@
 
 namespace SafetySharp.Internal.CSharp.Roslyn
 
+open System
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -76,3 +77,13 @@ module internal MethodSymbolExtensions =
             nullArg compilation "compilation"
             let syntaxTree = this.GetMethodDeclaration().SyntaxTree
             compilation.GetSemanticModel syntaxTree
+
+        /// Checks whether the method is marked with the given attribute.
+        member this.HasAttribute (attributeType : INamedTypeSymbol) =
+            nullArg this "this"
+            this.GetAttributes () |> Seq.exists (fun attribute -> attribute.AttributeClass = attributeType)
+
+        /// Checks whether the method is marked with the given attribute.
+        member this.HasAttribute<'T when 'T :> Attribute> (compilation : Compilation) =
+            nullArg compilation "compilation"
+            this.HasAttribute (compilation.GetTypeSymbol<'T> ())

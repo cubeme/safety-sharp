@@ -17,7 +17,7 @@
 				var lb = new LightBarrier();
 				var t = new Test2();
 				var timer = new Timer();
-				SetPartitions(c1, c2, t, lb, timer);
+				SetPartitions(new InterfacedSubcomponent(new LightBarrier()));
 
 				var unknown = new LightBarrier();
 				var value = c1.Access<bool>("Value");
@@ -43,7 +43,7 @@
 			var elbtunnel = new Elbtunnel(true);
 			var spin = new SpinModelChecker(elbtunnel);
 
-			spin.Check(elbtunnel.Hazard);
+			spin.Check(Ltl.Globally(true));
 		}
 
 		[Test]

@@ -37,10 +37,16 @@ type SpinModelChecker (model : Model) =
         let formulas = [formula.Formula]
         let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
         
-        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela(configuration)
-        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
+        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela configuration
+        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile ()
 
         let converted = converter.transformConfiguration
-        let convertedString = astWriter.Export converted
+        FileSystem.WriteToAsciiFile "Modelchecking/Spin.promela" (astWriter.Export converted)
+
+        let converter = SafetySharp.Internal.Modelchecking.NuXmv.MetamodelToNuXmv configuration
+        let astWriter = SafetySharp.Internal.Modelchecking.NuXmv.ExportNuXmvAstToFile ()
+
+        let converted = converter.transformConfiguration
+        FileSystem.WriteToAsciiFile "Modelchecking/NuXmv.smv" (astWriter.ExportNuXmvProgram converted)
 
         ()

@@ -95,12 +95,15 @@ type internal SyntaxNodeAnalyzer<'T when 'T :> CSharpSyntaxNode> () =
    
 /// A base class for symbol analyzers.
 [<AbstractClass>]
-type internal SymbolAnalyzer<'T when 'T :> ISymbol> (symbolKind : SymbolKind) =
+type internal SymbolAnalyzer<'T when 'T :> ISymbol> ([<ParamArray>] symbolKinds : SymbolKind array) =
     inherit CSharpAnalyzer ()
+
+    do nullArg symbolKinds "symbolKinds"
+    do invalidArg (symbolKinds.Length = 0) "symbolKinds" "At least one symbol kind must be specified."
 
     interface ISymbolAnalyzer with
         override this.SymbolKindsOfInterest = 
-            ImmutableArray.Create (symbolKind)
+            ImmutableArray.CreateRange (symbolKinds)
 
         override this.AnalyzeSymbol (symbol, compilation, addDiagnostic, cancellationToken) =
             nullArg symbol "symbol"

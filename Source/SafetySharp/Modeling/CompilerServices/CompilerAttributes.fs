@@ -29,5 +29,29 @@ open SafetySharp.Internal.Utilities
 /// When applied to a method parameter, instructs the SafetySharp compiler to lift an expression 'expr'
 /// to a lambda function of the form '() => expr'.
 [<AttributeUsage(AttributeTargets.Parameter, AllowMultiple = true, Inherited = false)>]
+[<Sealed>]
 type LiftExpressionAttribute () =
     inherit Attribute ()
+
+/// Provides metadata about a compilation unit within a SafetySharp modeling assembly.
+[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
+[<Sealed>]
+type ModelingCompilationUnitAttribute (syntaxTree : string, filePath : string) =
+    inherit Attribute ()
+
+    /// Gets the syntax tree of the compilation unit.
+    member this.SyntaxTree = 
+        nullOrWhitespaceArg syntaxTree "syntaxTree"
+        nullOrWhitespaceArg filePath "filePath"
+        SyntaxFactory.ParseSyntaxTree (syntaxTree, filePath)
+
+/// Provides metadata about a SafetySharp modeling assembly.
+[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
+[<AllowNullLiteral; Sealed>]
+type ModelingAssemblyAttribute (compilerVersion : string) =
+    inherit Attribute ()
+
+    /// Gets the version string of the SafetySharp compiler that was used to compile the modeling assembly.
+    member this.CompilerVersion = 
+        nullOrWhitespaceArg compilerVersion "compilerVersion"
+        compilerVersion

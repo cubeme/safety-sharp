@@ -240,12 +240,12 @@ module internal TestHelpers =
     /// Checks whether the given function raises an <see cref="ArgumentNullException"/> for the argument with the given name.
     let raisesArgumentNullException argumentName func =
         let e = raisesWith<ArgumentNullException> func
-        Assert.AreEqual (e.ParamName, argumentName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
+        Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
 
     /// Checks whether the given function raises an <see cref="ArgumentException"/> for the argument with the given name.
     let raisesArgumentException argumentName func =
         let e = raisesWith<ArgumentException> func
-        Assert.AreEqual (e.ParamName, argumentName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
+        Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
 
     /// Asserts that the two values are equal.
     let (=?) left right =

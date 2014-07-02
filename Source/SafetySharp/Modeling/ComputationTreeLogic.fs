@@ -29,7 +29,7 @@ open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.Metamodel
 
 /// Represents a computation tree logic formula provided by a C# model.
-[<AllowNullLiteral>]
+[<AllowNullLiteral; Sealed>]
 type CtlFormula internal (formula : CSharpFormula) = 
     /// Gets the wrapped C# formula.
     member internal this.Formula = formula
@@ -43,6 +43,7 @@ type internal PathQuantifier =
     | AllPaths
     | ExistsPath
 
+[<Sealed>]
 type CtlOperatorFactory internal (quantifier) =
     
     /// <summary>

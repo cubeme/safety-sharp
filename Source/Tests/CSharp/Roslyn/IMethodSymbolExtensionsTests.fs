@@ -31,6 +31,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
 open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Modeling
 
 [<TestFixture>]
 module ``Overrides method`` =
@@ -101,7 +102,6 @@ module ``IsUpdateMethod method`` =
 
 [<TestFixture>]
 module ``GetMethodDeclaration method`` =
-
     let mutable private compilation : TestCompilation = null
 
     let getMethodDeclaration csharpCode className methodName =
@@ -116,3 +116,28 @@ module ``GetMethodDeclaration method`` =
     [<Test>]
     let ``throws when method is not defined in source`` () =
         raises<InvalidOperationException> (fun () -> getMethodDeclaration "" "System.Object" "ToString" |> ignore)
+
+[<TestFixture>]
+module ``HasAttribute method`` =
+    let hasAttribute<'T when 'T :> Attribute> csharpCode =
+        let compilation = TestCompilation csharpCode
+        let methodSymbol = compilation.FindMethodSymbol "C" "M"
+        methodSymbol.HasAttribute<'T> compilation.CSharpCompilation
+
+    [<Test>]
+    let ``throws when compilation is null`` () =
+        let compilation = TestCompilation "class C { void M() {}}"
+        let methodSymbol = compilation.FindMethodSymbol "C" "M"
+        raisesArgumentNullException "compilation" (fun () -> methodSymbol.HasAttribute<ProvidedAttribute> null |> ignore)
+
+    [<Test>]
+    let ``returns false if method has no attribute`` () =
+        hasAttribute<ProvidedAttribute> "class C { void M() {}}" =? false
+
+    [<Test>]
+    let ``returns false if method has different attribute`` () =
+        hasAttribute<ProvidedAttribute> "class C { [Required] void M() {}}" =? false
+
+    [<Test>]
+    let ``returns true if method has attribute`` () =
+        hasAttribute<ProvidedAttribute> "class C { [Provided] void M() {}}" =? true

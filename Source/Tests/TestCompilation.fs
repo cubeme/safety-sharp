@@ -137,6 +137,19 @@ type internal TestCompilation (csharpCode) =
         | [] -> failed "Found no methods with name '%s' in '%s'." methodName typeName
         | _ -> failed "Found more than one method with name '%s' in '%s'." methodName typeName
 
+    /// Finds the <see cref="PropertyDeclarationSyntax" /> for the property with the given name in the type with the given name
+    /// within the compilation. Throws an exception if more than one type or property with the given name was found.
+    member this.FindPropertyDeclaration typeName propertyName =
+        let properties = 
+            this.FindTypeDeclaration(typeName).DescendantsAndSelf<PropertyDeclarationSyntax> ()
+            |> Seq.where (fun propertyDeclaration -> propertyDeclaration.Identifier.ValueText = propertyName)
+            |> List.ofSeq
+
+        match properties with
+        | propertyDeclaration :: [] -> propertyDeclaration
+        | [] -> failed "Found no properties with name '%s' in '%s'." propertyName typeName
+        | _ -> failed "Found more than one property with name '%s' in '%s'." propertyName typeName
+
     /// Finds the <see cref="VariableDeclaratorSyntax" /> for the field with the given name in the type with the given name
     /// within the compilation. Throws an exception if more than one type or field with the given name was found.
     member this.FindFieldDeclaration typeName fieldName =
@@ -193,6 +206,15 @@ type internal TestCompilation (csharpCode) =
         | methodSymbol :: [] -> methodSymbol
         | [] -> failed "Unable to find method '%s' on type '%s'." methodName typeName
         | _ -> failed "Found more than one method '%s' on type '%s'." methodName typeName
+
+    /// Gets the <see cref="IPropertySymbol" /> representing the property with the given name in the type with
+    /// with the given name.
+    member this.FindPropertySymbol typeName propertyName =
+        let typeSymbol = this.FindTypeSymbol typeName
+        match typeSymbol.GetMembers(propertyName).OfType<IPropertySymbol> () |> List.ofSeq with
+        | propertySymbol :: [] -> propertySymbol
+        | [] -> failed "Unable to find property '%s' on type '%s'." propertyName typeName
+        | _ -> failed "Found more than one property '%s' on type '%s'." propertyName typeName
 
     /// Gets the <see cref="IFieldSymbol" /> representing the field with the given name in the type with
     /// the given name.

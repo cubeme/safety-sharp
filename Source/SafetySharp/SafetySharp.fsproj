@@ -57,9 +57,7 @@
     <Compile Include="Metamodel\Formulas.fs" />
     <Compile Include="Metamodel\Statements.fs" />
     <Compile Include="Metamodel\Objects.fs" />
-    <Compile Include="Modeling\CompilerServices\ModelingAssemblyAttribute.fs" />
-    <Compile Include="Modeling\CompilerServices\ModelingCompilationUnitAttribute.fs" />
-    <Compile Include="Modeling\CompilerServices\LiftExpressionAttribute.fs" />
+    <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
@@ -67,7 +65,7 @@
     <Compile Include="Modeling\CSharpFormula.fs" />
     <Compile Include="Modeling\LinearTemporalLogic.fs" />
     <Compile Include="Modeling\ComputationTreeLogic.fs" />
-    <Compile Include="Modeling\BehaviorAttribute.fs" />
+    <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="CSharp\Roslyn\Visibility.fs" />
     <Compile Include="CSharp\Roslyn\PatternMatching.fs" />
     <Compile Include="CSharp\Roslyn\SyntaxTokenExtensions.fs" />
@@ -77,8 +75,9 @@
     <Compile Include="CSharp\Roslyn\SemanticModelExtensions.fs" />
     <Compile Include="CSharp\Roslyn\ITypeSymbolExtensions.fs" />
     <Compile Include="CSharp\Roslyn\IFieldSymbolExtensions.fs" />
-    <Compile Include="CSharp\Roslyn\IMethodSymbolExtensions.fs" />
     <Compile Include="CSharp\Roslyn\SyntaxTokenListExtensions.fs" />
+    <Compile Include="CSharp\Roslyn\IPropertySymbolExtensions.fs" />
+    <Compile Include="CSharp\Roslyn\IMethodSymbolExtensions.fs" />
     <Compile Include="CSharp\Roslyn\MethodDeclarationExtensions.fs" />
     <Compile Include="CSharp\Roslyn\TypeDeclarationExtensions.fs" />
     <Compile Include="CSharp\Roslyn\ArgumentExtensions.fs" />
@@ -93,6 +92,7 @@
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\UpdateMethodAnalyzers.fs" />
+    <Compile Include="CSharp\Diagnostics\PortAnalyzers.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
