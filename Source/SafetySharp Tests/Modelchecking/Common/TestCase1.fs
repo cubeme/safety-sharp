@@ -86,12 +86,12 @@ module internal TestCase1Simplified =
     let booleanFalseExpression = SimpleExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(false))
     
     // Context and Partition
-    let contextComponent = {
-        Context.hierarchicalAccess = [];
-        Context.rootComponentName = "root1";
-    }
     let simplePartition = {
-        SimplePartition.RootComponentName = "root1";
+        SimplePartitionIdentity.RootComponentName = "root1";
+    }
+    let contextComponent = {
+        Context.HierarchicalAccess = [];
+        Context.Partition = simplePartition;
     }
 
     // Fields

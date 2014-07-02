@@ -84,7 +84,7 @@ type internal MMMethodBodyResolver = Map<MMComponentSymbol * MMMethodSymbol, MMS
 // TODO: Move much of the stuff into file SimplifiedMetamodel
 
 //TODO: Also use in Context
-type internal SimplePartition = {
+type internal SimplePartitionIdentity = {
      RootComponentName : string;
 }
 
@@ -92,8 +92,8 @@ type internal ReverseComponentObjectMap = Map<string,MMComponentReferenceSymbol>
 
 //TODO: Switch from RootComponentName to SimplePartition. Or maybe not (to avoid cyclic dependencies)
 type internal Context = {
-    hierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
-    rootComponentName : string; //only the name of the root component
+    HierarchicalAccess : string list; // hierarchicalAccess does not contain the name of the root Component. Last object is the name of the root-Component; head is a subComponent of its parent:  subComponent1::(parentOfSubComponent1)*. Construction is done in type SimpleGlobalFieldCache
+    Partition : SimplePartitionIdentity; //only the name of the root component
 }
 
 type internal SimpleConstLiteral = 
@@ -207,47 +207,48 @@ type internal ContextCache (configuration:MMConfiguration) =
         // _once_ calculated and cached information for internal use
         let model = configuration.ModelObject
 
-        let rootComponentToName : Map<string,string> =
+        let rootComponentToPartition : Map<string,SimplePartitionIdentity> =
             let counter = ref 0
             model.Partitions |> List.map (fun elem -> elem.RootComponent)
                              |> List.map (fun elem -> counter:=!counter+1
                                                       let counterString = (!counter).ToString()
-                                                      (elem.Name,"root"+counterString))
+                                                      let partition = {SimplePartitionIdentity.RootComponentName="root"+counterString;}
+                                                      (elem.Name,partition))
                              |> Map.ofList
 
         //TODO: Make creation more efficient
-        let nameOfRootToPartitionObject : Map<string,MMPartitionObject> =
+        let partitionToPartitionObject : Map<SimplePartitionIdentity,MMPartitionObject> =
             let findComponent (internalName:string) : MMPartitionObject =
                 model.Partitions |> List.find (fun elem  -> elem.RootComponent.Name = internalName)
-            rootComponentToName |> Map.toList
-                                |> List.map (fun (internalName,artificialName) -> (artificialName,findComponent internalName))
-                                |> Map.ofList
+            rootComponentToPartition |> Map.toList
+                                     |> List.map (fun (internalName,artificialName) -> (artificialName,findComponent internalName))
+                                     |> Map.ofList
 
         // accessor and helper functions (internal use)
-        let nameOfRootComponent (rootComponent:MMComponentObject) : string =
-            rootComponentToName.Item rootComponent.Name
+        let partitionOfRootComponent (rootComponent:MMComponentObject) : SimplePartitionIdentity =
+            rootComponentToPartition.Item rootComponent.Name
             
         // accessor and helper functions (external use)
         member this.createContextOfRootComponent (partition:MMPartitionObject) : Context =
             {
-                Context.hierarchicalAccess = [];
-                Context.rootComponentName = nameOfRootComponent partition.RootComponent;
+                Context.HierarchicalAccess = [];
+                Context.Partition = partitionOfRootComponent partition.RootComponent;
             }
         member this.createContextForSubcomponent (parentContext:Context) (newElementName:string) (comp:MMComponentObject) : Context =
             {
-                Context.hierarchicalAccess = newElementName::parentContext.hierarchicalAccess; //parentsAndMe
-                Context.rootComponentName = parentContext.rootComponentName;
+                Context.HierarchicalAccess = newElementName::parentContext.HierarchicalAccess; //parentsAndMe
+                Context.Partition = parentContext.Partition;
             }
 
-        // TODO: createContextForMethodInvocation()
+        // TODO: createContextForMethod()
 
-        member this.getRootComponents : string list =
-            rootComponentToName |> Map.toList
-                                |> List.map (fun (_,value) -> value)
+        member this.getPartitions : SimplePartitionIdentity list =
+            rootComponentToPartition |> Map.toList
+                                     |> List.map (fun (_,value) -> value)
         
         // name is the artificial name
-        member this.getRootComponentFromName (name:string) : MMPartitionObject =
-            nameOfRootToPartitionObject.Item name
+        member this.getRootComponentFromPartition (paritition:SimplePartitionIdentity) : MMPartitionObject =
+            partitionToPartitionObject.Item paritition
 
         
     // this is extraced from ModelInformationCache, to keep the code together which belongs together
@@ -430,6 +431,7 @@ type internal MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
                     //      (for the partition-update and every partition-binding there is exactly one flatten
                     //      order for the execution of the statements). In this function, every ReturnStatement
                     //      needs to be replaced. Thus this case should never be reached
+                    // Also: Reset values of temporary fields which are only accessible in the current scope
                 | MMStatement.GuardedCommandStatement (guardedStmnts:(MMExpression * MMStatement) list) ->
                     let transformOption ((guard,stmnt):MMExpression * MMStatement) :(SimpleExpression*(SimpleStatement list))=
                         let transformedGuard = transformMMExpressionInsideAComponentToSimpleExpression fieldCache componentObject guard
@@ -478,12 +480,12 @@ type internal MetamodelToSimplifiedMetamodel (configuration:MMConfiguration) =
         partitionUpdateInSimpleStatements
 
     //TODO: Refactor PromelaTransform to use this function
-    member this.partitionUpdateInSimpleStatements (partition:SimplePartition) : SimpleStatement list =
-        let mmpartitionObject = contextCache.getRootComponentFromName partition.RootComponentName
+    member this.partitionUpdateInSimpleStatements (partition:SimplePartitionIdentity) : SimpleStatement list =
+        let mmpartitionObject = contextCache.getRootComponentFromPartition partition
         this.partitionUpdateInSimpleStatements2 mmpartitionObject
 
-    member this.getPartitions : SimplePartition list =
-        contextCache.getRootComponents |> List.map (fun componentName -> { SimplePartition.RootComponentName=componentName })
+    member this.getPartitions : SimplePartitionIdentity list =
+        contextCache.getPartitions
 
     member this.getSimpleGlobalFields : SimpleGlobalField list =
         fieldCache.getSimpleGlobalFields

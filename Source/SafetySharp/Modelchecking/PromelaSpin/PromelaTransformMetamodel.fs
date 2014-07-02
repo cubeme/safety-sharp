@@ -46,6 +46,16 @@ type internal PrTypename = SafetySharp.Internal.Modelchecking.PromelaSpin.Typena
 type internal PrIvar = SafetySharp.Internal.Modelchecking.PromelaSpin.Ivar
 type internal PrAssign = SafetySharp.Internal.Modelchecking.PromelaSpin.Assign
 type internal PrSpec = SafetySharp.Internal.Modelchecking.PromelaSpin.Spec
+
+// IDEA: 
+//   - Use pool of temporary fields of each type for the implementation of temporary variables
+//       * Determine the size of the pool
+//   - If a field isn't used later on, set it to its initial value to keep state space small
+//       * for this introduce a set "lastUsage". Associate the lastUsage to the stmnt, if it is used in
+//         the statement or expression itself. When traversing the list of statements here add a map field->field of pool
+//         and put the field back to the pool it isn't used in the future
+//   - Remove temporary fields from state vector (if possible)
+
            
 type internal MetamodelToPromela (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
@@ -80,9 +90,9 @@ type internal MetamodelToPromela (configuration:MMConfiguration)  =
         // this is something model checker specific, as different model checkers may have different constraints for identifier
         match simpleGlobalField with
             | SimpleGlobalField.FieldWithContext( field:SimpleGlobalFieldWithContext) ->
-                let partitionName = "p" + field.Context.rootComponentName + "_"
+                let partitionName = "p" + field.Context.Partition.RootComponentName + "_"
                 let hierarchicalAccessName =
-                    field.Context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+                    field.Context.HierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
                                                      |> List.map (fun elem -> "c"+elem) //add c in front of every element
                                                      |> String.concat "_"
                 let fieldName = "_f"+field.FieldSymbol.Name

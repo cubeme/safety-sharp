@@ -53,7 +53,7 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
 
         let partitionModules = partitions |> List.map this.generatePartition
 
-        let createPartitionInstantiation (partition:SimplePartition) : TypedIdentifier =
+        let createPartitionInstantiation (partition:SimplePartitionIdentity) : TypedIdentifier =
             let moduleTypeSpecifier = 
                 let parameters = this.getModuleParametersforPartitions None |> List.map (fun identifier -> BasicExpression.ComplexIdentifierExpression(ComplexIdentifier.NameComplexIdentifier(identifier)))
                 {
@@ -79,18 +79,18 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         }
         
     
-    member this.getModuleParametersforPartitions (skip:SimplePartition option) : Identifier list =
+    member this.getModuleParametersforPartitions (skip:SimplePartitionIdentity option) : Identifier list =
         let filtered = if skip.IsSome then partitions |> List.filter (fun elem -> elem <> skip.Value) else partitions
         filtered |> List.map this.getPartitionInstanceNameFromSimplePartition
         
-    member this.getPartitionModuleNameFromSimplePartition(partition:SimplePartition): Identifier =
+    member this.getPartitionModuleNameFromSimplePartition(partition:SimplePartitionIdentity): Identifier =
         {Identifier.Name=("P" + partition.RootComponentName)}
 
-    member this.getPartitionInstanceNameFromSimplePartition(partition:SimplePartition): Identifier =
+    member this.getPartitionInstanceNameFromSimplePartition(partition:SimplePartitionIdentity): Identifier =
         {Identifier.Name=("p" + partition.RootComponentName)}
 
     member this.getPartitionInstanceNameFromContext (context:Context): Identifier =
-        {Identifier.Name=("p" + context.rootComponentName)}
+        {Identifier.Name=("p" + context.Partition.RootComponentName)}
 
     member this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier (simpleGlobalField : SimpleGlobalField) : Identifier =
         // only use, when we know that simpleGlobalField is in the partition, the method calling this function, has
@@ -99,7 +99,7 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
             failwith "SimpleGlobalFields in this function must belong to a partition"
         let flatSubcomponentName (context:Context) : string =
             let itemsInOrderRootToLeaf =
-                context.hierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
+                context.HierarchicalAccess |> List.rev //the order should be root::subcomponent::leafSubcomponent
             itemsInOrderRootToLeaf |> List.map (fun elem -> sprintf "c%s_" elem)
                                    |> String.concat ""
         
@@ -118,7 +118,7 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
             // If partitionName is empty, associate it with the main-module.
             let context = simpleGlobalField.getContext
             let partitionIdentifier =
-                if not (context.rootComponentName = "") then
+                if not (context.Partition.RootComponentName = "") then
                     this.getPartitionInstanceNameFromContext context
                 else 
                     mainModuleIdentifier
@@ -136,18 +136,18 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         let varName = this.transformSimpleGlobalFieldToComplexIdentifier simpleGlobalField accessFromPartition
         NuXmvBasicExpression.ComplexIdentifierExpression (varName)
     
-    member this.getFieldsToTransform (partition:SimplePartition) =
+    member this.getFieldsToTransform (partition:SimplePartitionIdentity) =
         // TODO: A bit ugly right now: this method relies on side effects and must be executed _after_ the transformation of the sequence
         let fields = toWriteOnceStatements.getAllFields()
         let filterInCurrentPartition (field:SimpleGlobalField) =
             if field.hasContext then
                 let context = field.getContext
-                context.rootComponentName = partition.RootComponentName //return the boolean value of the comparision. Recall: This is no assignment
+                context.Partition = partition //return the boolean value of the comparision. Recall: This is no assignment
             else
                 false
         fields |> List.filter filterInCurrentPartition
 
-    member this.generateFieldDeclarationsOfPartition (partition:SimplePartition) : ModuleElement =
+    member this.generateFieldDeclarationsOfPartition (partition:SimplePartitionIdentity) : ModuleElement =
         let fieldsToTransform = this.getFieldsToTransform partition
         let generateDecl (field:SimpleGlobalField) : TypedIdentifier =
             let _simpleType = match field.getFieldSymbol.Type with
@@ -163,7 +163,7 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         fieldsToTransform |> List.map generateDecl
                           |> ModuleElement.VarDeclaration
 
-    member this.generateInitialisations (partition:SimplePartition) : SingleAssignConstraint list =
+    member this.generateInitialisations (partition:SimplePartitionIdentity) : SingleAssignConstraint list =
         let fieldsToTransform = this.getFieldsToTransform partition
         let generateSingleInit (field:SimpleGlobalField) =
             let identifier = this.transformSimpleGlobalFieldInCurrentPartitionToIdentifier field |> ComplexIdentifier.NameComplexIdentifier
@@ -187,13 +187,13 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         fieldsToTransform |> List.map generateSingleInit
 
          
-    member this.generatePartitionUpdateCode (partition:SimplePartition) : ModuleElement =
+    member this.generatePartitionUpdateCode (partition:SimplePartitionIdentity) : ModuleElement =
         let partitionUpdateInSimpleStatements = toSimplifiedMetamodel.partitionUpdateInSimpleStatements partition
         let partitionUpdateInWriteOnlyStatements = toWriteOnceStatements.simpleStatementToWriteOnceStatements toSimplifiedMetamodel.getSimpleGlobalFields partitionUpdateInSimpleStatements
         let transformedWriteOnlyStatements = partitionUpdateInWriteOnlyStatements |> List.map (this.transformWriteOnceStatement (this.getPartitionInstanceNameFromSimplePartition partition))
         transformedWriteOnlyStatements |> ModuleElement.AssignConstraint
 
-    member this.generatePartition (partition:SimplePartition) : ModuleDeclaration =
+    member this.generatePartition (partition:SimplePartitionIdentity) : ModuleDeclaration =
         // TODO: remove parameter with identifier of this partition, if it is the partition itself. Use this.getModuleParametersforPartitions (Some(partition))
         // TODO: pretty ugly right now: partitionUpdateCode has to be generated before the fieldDeclaration, because
         //       this code has side effects in "toWriteOnceStatements" (generation of artificial fields)
