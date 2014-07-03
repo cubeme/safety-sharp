@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Normalization
+namespace SafetySharp.Tests.CSharp.Normalization.ExternMethodNormalizersTests
 
 open System
 open System.Linq
@@ -35,11 +35,11 @@ open SafetySharp.Internal.CSharp.Normalization
 open SafetySharp.Internal.CSharp.Roslyn
 
 [<TestFixture>]
-module ExternMethodNormalizerTests =
+module ComponentExternMethodNormalizerTests =
 
     let normalize csharpCode =
         let compilation = TestCompilation ("using System.Diagnostics;" + csharpCode)
-        let syntaxTree = ExternMethodNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        let syntaxTree = ComponentExternMethodNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
 
     let normalizeNewLines (str : string) =

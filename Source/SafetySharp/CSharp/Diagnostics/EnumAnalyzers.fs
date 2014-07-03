@@ -45,4 +45,16 @@ type internal EnumMemberAnalyzer () as this =
         if syntaxNode.EqualsValue <> null then
             addDiagnostic.Invoke (syntaxNode.EqualsValue.Value, syntaxNode.Identifier.ValueText)
 
-    
+/// Ensures that no enumerations explicitly declare an underlying type.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalUnderlyingEnumType, LanguageNames.CSharp)>]
+type internal EnumUnderlyingTypeAnalyzer () as this =
+    inherit SyntaxNodeAnalyzer<EnumDeclarationSyntax> ()
+
+    do this.Error DiagnosticIdentifiers.IllegalUnderlyingEnumType
+        "Enumeration declarations must not explicitly declare an underlying type."
+        "Enum '{0}' must not declare an underlying type."
+
+    override this.Analyze syntaxNode addDiagnostic cancellationToken = 
+        if syntaxNode.BaseList <> null then
+            addDiagnostic.Invoke (syntaxNode.BaseList.Types.First(), syntaxNode.Identifier.ValueText)

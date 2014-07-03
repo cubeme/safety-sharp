@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Diagnostics
+namespace SafetySharp.Tests.CSharp.Diagnostics.EnumAnalyzersTests
 
 open System.Linq
 open System.Threading
@@ -32,6 +32,46 @@ open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
 open SafetySharp.Internal.CSharp.Diagnostics
 open SafetySharp.Internal.CSharp.Roslyn
+
+[<TestFixture>]
+module EnumUnderlyingTypeAnalyzerTests =
+    let hasDiagnostics = TestCompilation.HasDiagnostics (EnumUnderlyingTypeAnalyzer ())
+
+    [<Test>]
+    let ``implicit underlying type is valid`` () =
+        hasDiagnostics "enum E { A }" =? false
+
+    [<Test>]
+    let ``byte as underlying type is invalid`` () =
+        hasDiagnostics "enum E : byte { A }" =? true
+
+    [<Test>]
+    let ``int as underlying type is invalid`` () =
+        hasDiagnostics "enum E : int { A }" =? true
+
+    [<Test>]
+    let ``long as underlying type is invalid`` () =
+        hasDiagnostics "enum E : long { A }" =? true
+
+    [<Test>]
+    let ``sbyte as underlying type is invalid`` () =
+        hasDiagnostics "enum E : sbyte { A }" =? true
+
+    [<Test>]
+    let ``short as underlying type is invalid`` () =
+        hasDiagnostics "enum E : short { A }" =? true
+
+    [<Test>]
+    let ``uint as underlying type is invalid`` () =
+        hasDiagnostics "enum E : uint { A }" =? true
+
+    [<Test>]
+    let ``ulong as underlying type is invalid`` () =
+        hasDiagnostics "enum E : ulong { A }" =? true
+
+    [<Test>]
+    let ``ushort as underlying type is invalid`` () =
+        hasDiagnostics "enum E : ushort { A }" =? true
 
 [<TestFixture>]
 module EnumMemberAnalyzerTests =

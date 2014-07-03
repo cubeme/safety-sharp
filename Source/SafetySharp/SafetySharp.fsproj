@@ -86,8 +86,7 @@
     <Compile Include="CSharp\Roslyn\Syntax.fs" />
     <Compile Include="CSharp\Diagnostics\DiagnosticIdentifiers.fs" />
     <Compile Include="CSharp\Diagnostics\CSharpAnalyzer.fs" />
-    <Compile Include="CSharp\Diagnostics\EnumMemberAnalyzer.fs" />
-    <Compile Include="CSharp\Diagnostics\EnumUnderlyingTypeAnalyzer.fs" />
+    <Compile Include="CSharp\Diagnostics\EnumAnalyzers.fs" />
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
@@ -96,9 +95,8 @@
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
-    <Compile Include="CSharp\Normalization\ExternMethodNormalizer.fs" />
-    <Compile Include="CSharp\Normalization\EnumTypeNormalizer.fs" />
-    <Compile Include="CSharp\Normalization\EnumLiteralNormalizer.fs" />
+    <Compile Include="CSharp\Normalization\ExternMethodNormalizers.fs" />
+    <Compile Include="CSharp\Normalization\EnumNormalizers.fs" />
     <Compile Include="CSharp\Transformation\SymbolResolver.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformation.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformation.fs" />

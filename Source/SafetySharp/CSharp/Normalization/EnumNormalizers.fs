@@ -49,3 +49,15 @@ type internal EnumTypeNormalizer () =
     override this.VisitMemberAccessExpression node = 
         // We want to rewrite enum literals such as 'E.A' to 'int.A'...
         upcast node
+
+/// Replaces uses of enum literals within a component by their underlying int value.
+type internal EnumLiteralNormalizer () =
+    inherit CSharpNormalizer (NormalizationScope.Components)
+
+    override this.VisitMemberAccessExpression node =
+        let symbolInfo = this.semanticModel.GetSymbolInfo node
+        match symbolInfo.Symbol with
+        | :? IFieldSymbol as fieldSymbol when fieldSymbol.ContainingType.TypeKind = TypeKind.Enum ->
+            upcast (SyntaxFactory.ParseExpression (fieldSymbol.ConstantValue.ToString ()) |> Syntax.WithTriviaFromNode node)
+        | _ -> 
+            upcast node

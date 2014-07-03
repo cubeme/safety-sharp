@@ -139,7 +139,7 @@ module internal Compiler =
         let compilation =
             compilation
             |> applyNormalizer<ExpressionLifter>
-            |> applyNormalizer<ExternMethodNormalizer>
+            |> applyNormalizer<ComponentExternMethodNormalizer>
 
         outputCode compilation "obj/Simulation"
         compilation

@@ -29,13 +29,13 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp.Roslyn
 open SafetySharp.Modeling
 
-/// Replaces all extern method declarations with a property of the appropriate System.Func<> or System.Action<> type.
+/// Replaces all extern method declarations within a component with a property of the appropriate System.Func<> or System.Action<> type.
 /// For instance:
 /// - public extern void MyMethod(int a, decimal b) 
 ///     --> public Action<int, decimal> MyMethod { private get; set; }
 /// - private extern bool MyMethod(int a)
 ///     --> private Func<int, bool> MyMethod { private get; set; }
-type internal ExternMethodNormalizer () =
+type internal ComponentExternMethodNormalizer () =
     inherit CSharpNormalizer (NormalizationScope.Components)
 
     override this.VisitMethodDeclaration node =
