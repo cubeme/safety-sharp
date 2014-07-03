@@ -28,6 +28,9 @@ namespace Elbtunnel
 
 	internal interface ISensor : IComponent
 	{
+		[Required]
+		void SendData(int position);
+
 		[Provided]
 		bool IsTriggered();
 		//bool X { get; [Provided]set; }
@@ -42,13 +45,7 @@ namespace Elbtunnel
 		{
 			_sensor = sensor;
 		}
-		//int x
-		//{
-		//	[Provided]
-		//	get { return
-		//		1;
-		//	}
-		//}
+	
 		[Behavior]
 		private void Do()
 		{
@@ -61,15 +58,18 @@ namespace Elbtunnel
 		public bool Triggered = false;
 		private int _i = 1;
 
+		public extern void SendData(int position);
+
 		public bool IsTriggered()
 		{
-			return true;
+			return false;
 		}
 
 		//public bool X { get; set; }
 
 		public int Do()
 		{
+			SendData(22);
 			var q = 38;
 			q = Choose.Value(23, 4, 23, 55);
 			_i = _i + 1;
@@ -118,7 +118,7 @@ namespace Elbtunnel
 		private int Provided(bool f)
 		{
 			int x = 0;
-			return 0;
+			return x;
 		}
 
 		[DebuggerNonUserCode]

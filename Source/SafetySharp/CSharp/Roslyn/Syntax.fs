@@ -172,7 +172,7 @@ module internal Syntax =
         nullOrWhitespaceArg propertyType "propertyType"
         invalidCall (getterVisibility <> None && setterVisibility <> None) "Cannot specify visibility modifiers for both accessors."
 
-        let propertyType = SyntaxFactory.ParseTypeName(propertyType) |> WithLeadingAndTrailingSpace
+        let propertyType = SyntaxFactory.ParseTypeName propertyType |> WithLeadingAndTrailingSpace
         let property = SyntaxFactory.PropertyDeclaration (propertyType, (propertyName : string))
         let property = property.WithModifiers <| VisibilityModifier visibility
 
@@ -180,6 +180,28 @@ module internal Syntax =
         let setter = Accessor SyntaxKind.SetAccessorDeclaration setterVisibility |> WithLeadingAndTrailingSpace
 
         let accessors = SyntaxFactory.AccessorList (SyntaxFactory.List (getter :: [setter])) |> WithLeadingSpace
+        property.WithAccessorList accessors
+
+    /// Creates a declaration of a property within an interface.
+    let InterfaceProperty propertyName propertyType hasGetter hasSetter =
+        nullOrWhitespaceArg propertyName "propertyName"
+        nullOrWhitespaceArg propertyType "propertyType"
+        invalidCall (not hasGetter && not hasSetter) "Cannot specify property with neither a getter nor a setter."
+
+        let propertyType = SyntaxFactory.ParseTypeName propertyType |> WithTrailingSpace
+        let property = SyntaxFactory.PropertyDeclaration (propertyType, (propertyName : string))
+
+        let accessors =
+            if hasGetter && hasSetter then
+                let getter = Accessor SyntaxKind.GetAccessorDeclaration None |> WithLeadingSpace
+                let setter = Accessor SyntaxKind.SetAccessorDeclaration None |> WithLeadingAndTrailingSpace
+                [getter; setter]
+            elif hasGetter && not hasSetter then
+                [Accessor SyntaxKind.GetAccessorDeclaration None |> WithLeadingAndTrailingSpace]
+            else
+                [Accessor SyntaxKind.SetAccessorDeclaration None |> WithLeadingAndTrailingSpace]
+
+        let accessors = SyntaxFactory.AccessorList (SyntaxFactory.List accessors) |> WithLeadingSpace
         property.WithAccessorList accessors
 
     /// Creates a lambda function with the given body and arguments.

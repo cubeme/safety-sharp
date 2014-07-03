@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Normalization.ExternMethodNormalizersTests
+namespace SafetySharp.Tests.CSharp.Normalization.PortNormalizersTests
 
 open System
 open System.Linq
@@ -34,16 +34,19 @@ open SafetySharp.Tests
 open SafetySharp.Internal.CSharp.Normalization
 open SafetySharp.Internal.CSharp.Roslyn
 
-[<TestFixture>]
-module ComponentExternMethodNormalizerTests =
-
-    let normalize csharpCode =
+[<AutoOpen>]
+module private TestHelpers =
+    let normalize<'T when 'T :> SyntaxNode> (normalizer : CSharpNormalizer) csharpCode =
         let compilation = TestCompilation ("using System.Diagnostics;" + csharpCode)
-        let syntaxTree = ComponentExternMethodNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+        let syntaxTree = normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        syntaxTree.Descendants<'T>().Single().ToFullString ()
 
     let normalizeNewLines (str : string) =
         str.Replace ("\r", String.Empty)
+
+[<TestFixture>]
+module ComponentExternMethodNormalizerTests =
+    let normalize = normalize<ClassDeclarationSyntax> (ComponentExternMethodNormalizer ())
 
     [<Test>]
     let ``does not normalize extern method not declared within a component class`` () =
@@ -100,5 +103,54 @@ module ComponentExternMethodNormalizerTests =
     let ``preserves line numbers of following lines`` () =
         let actual = normalize "class X : Component { public extern void M(int a,\nint b,\nint c); \n\nint f; }" |> normalizeNewLines
         let expected = "class X : Component { public System.Action<int, int, int> M { private get; set; } \n\n\n\nint f; }"
+
+        actual =? expected
+
+[<TestFixture>]
+module InterfaceRequiredPortNormalizerTests =
+    let normalize = normalize<InterfaceDeclarationSyntax> (InterfaceRequiredPortNormalizer ())
+
+    [<Test>]
+    let ``does not normalize required port not declared within a component interface`` () =
+        normalize "interface X { [Required] void M(); }" =? "interface X { [Required] void M(); }"
+
+    [<Test>]
+    let ``normalizes required 'void -> void' port within a component interface`` () =
+        normalize "interface X : IComponent { [Required] void M(); }" =? 
+            "interface X : IComponent { [Required] System.Action M { set; } }"
+
+    [<Test>]
+    let ``normalizes required void returning port within a component interface`` () =
+        normalize "interface X : IComponent { [Required] void M(int a); }" =? 
+            "interface X : IComponent { [Required] System.Action<int> M { set; } }"
+        normalize "interface X : IComponent { [Required] void M(int a, decimal b); }" =? 
+            "interface X : IComponent { [Required] System.Action<int, decimal> M { set; } }"
+        normalize "interface X : IComponent { [Required] void M(int a, decimal b, bool c); }" =? 
+            "interface X : IComponent { [Required] System.Action<int, decimal, bool> M { set; } }"
+
+    [<Test>]
+    let ``normalizes required non-void returning port within a component interface`` () =
+        normalize "interface X : IComponent { [Required] bool M(int a); }" =? 
+            "interface X : IComponent { [Required] System.Func<int, bool> M { set; } }"
+        normalize "interface X : IComponent { [Required] int M(int a, decimal b); }" =? 
+            "interface X : IComponent { [Required] System.Func<int, decimal, int> M { set; } }"
+        normalize "interface X : IComponent { [Required] bool M(int a, decimal b, bool c); }" =? 
+            "interface X : IComponent { [Required] System.Func<int, decimal, bool, bool> M { set; } }"
+
+    [<Test>]
+    let ``preserves attributes applied to required port within a component interface`` () =
+        normalize "interface X : IComponent { [DebuggerHidden, Required] void M(); }" =?
+            "interface X : IComponent { [DebuggerHidden, Required] System.Action M { set; } }"
+
+        normalize "interface X : IComponent { [DebuggerHidden, Required, DebuggerNonUserCode] void M(); }" =?
+            "interface X : IComponent { [DebuggerHidden, Required, DebuggerNonUserCode] System.Action M { set; } }"
+
+        normalize "interface X : IComponent { [DebuggerHidden] [Required] [DebuggerNonUserCode] void M(); }" =?
+            "interface X : IComponent { [DebuggerHidden] [Required] [DebuggerNonUserCode] System.Action M { set; } }"
+
+    [<Test>]
+    let ``preserves line numbers of following lines`` () =
+        let actual = normalize "interface X : IComponent { [Required] void M(int a,\nint b,\nint c); \n\nint N(); }" |> normalizeNewLines
+        let expected = "interface X : IComponent { [Required] System.Action<int, int, int> M { set; } \n\n\n\nint N(); }"
 
         actual =? expected

@@ -22,6 +22,7 @@
 
 namespace SafetySharp.Internal.CSharp.Roslyn
 
+open System
 open System.Linq
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
@@ -44,3 +45,30 @@ module internal MethodDeclarationExtensions =
             nullArg this "this"
             let defaultVisibility = if this.ExplicitInterfaceSpecifier = null then Private else Public
             this.Modifiers.GetVisibility defaultVisibility
+
+        /// Gets the <see cref="System.Action{}" /> or <see cref="System.Func{}" /> delegate type corresponding to the
+        /// method declaration.
+        member this.GetDelegateType (semanticModel : SemanticModel) =
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+
+            let typeArguments = this.ParameterList.Parameters |> Seq.map (fun parameter -> parameter.Type.ToString ())
+
+            let generateType delegateType (typeArguments : string seq) =
+                if typeArguments |> Seq.isEmpty then
+                    "System.Action"
+                else
+                    sprintf "%s<%s>" delegateType (String.Join (", ", typeArguments))
+
+            match semanticModel.GetReferencedSymbol<INamedTypeSymbol>(this.ReturnType).SpecialType with
+            | SpecialType.System_Void ->
+                generateType "System.Action" typeArguments
+            | _ -> 
+                let typeArguments = seq { yield! typeArguments; yield this.ReturnType.ToString () }
+                generateType "System.Func" typeArguments
+
+        /// Checks whether the method is marked with the given attribute.
+        member this.HasAttribute<'T when 'T :> Attribute> (semanticModel : SemanticModel) =
+            nullArg this "this"
+            nullArg semanticModel "semanticModel"
+            semanticModel.DeclaredSymbolOf(this).HasAttribute<'T> semanticModel.Compilation

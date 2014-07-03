@@ -40,22 +40,7 @@ type internal ComponentExternMethodNormalizer () =
 
     override this.VisitMethodDeclaration node =
         if node.Modifiers.Any SyntaxKind.ExternKeyword then
-            let typeArguments = node.ParameterList.Parameters |> Seq.map (fun parameter -> parameter.Type.ToString ())
-
-            let generatePropertyType delegateType (typeArguments : string seq) =
-                if typeArguments |> Seq.isEmpty then
-                    "System.Action"
-                else
-                    sprintf "%s<%s>" delegateType (String.Join (", ", typeArguments))
-
-            let propertyType =
-                match this.semanticModel.GetReferencedSymbol<INamedTypeSymbol>(node.ReturnType).SpecialType with
-                | SpecialType.System_Void ->
-                    generatePropertyType "System.Action" typeArguments
-                | _ -> 
-                    let typeArguments = seq { yield! typeArguments; yield node.ReturnType.ToString () }
-                    generatePropertyType "System.Func" typeArguments
-
+            let propertyType = node.GetDelegateType this.semanticModel
             let getterVisibility = if node.Visibility = Visibility.Private then None else Some Private
             let property = Syntax.AutoProperty node.Identifier.ValueText propertyType node.Visibility getterVisibility None
             
@@ -66,6 +51,35 @@ type internal ComponentExternMethodNormalizer () =
                 else
                     property
 
+            let property = 
+                if node.AttributeLists.Count <> 0 then
+                    property.WithAttributeLists(node.AttributeLists)
+                else
+                    property
+
+            upcast (property
+                |> Syntax.AsSingleLine
+                |> Syntax.WithTriviaFromNode node
+                |> Syntax.EnsureSameLineCount node)
+        else
+            upcast node
+
+/// Replaces all required port method declarations within a component interface with a property of the appropriate 
+//// System.Func<> or System.Action<> type.
+/// For instance: 
+/// - extern void MyMethod(int a, decimal b) 
+///     --> Action<int, decimal> MyMethod { set; }
+/// - extern bool MyMethod(int a)
+///     --> Func<int, bool> MyMethod { set; }
+type internal InterfaceRequiredPortNormalizer () =
+    inherit CSharpNormalizer (NormalizationScope.ComponentInterfaces)
+
+    override this.VisitMethodDeclaration node =
+        if node.HasAttribute<RequiredAttribute> this.semanticModel then
+            let propertyType = node.GetDelegateType this.semanticModel
+            let getterVisibility = if node.Visibility = Visibility.Private then None else Some Private
+            let property = Syntax.InterfaceProperty node.Identifier.ValueText propertyType false true
+            
             let property = 
                 if node.AttributeLists.Count <> 0 then
                     property.WithAttributeLists(node.AttributeLists)

@@ -32,6 +32,8 @@ open SafetySharp.Internal.CSharp.Roslyn
 type internal NormalizationScope =
     /// Limits the scope of the normalizer to all members of a component class.
     | Components
+    /// Limits the scope of the normalizer to all members of a component interface.
+    | ComponentInterfaces
     /// Limits the scope of the normalizer to all statements (excluding those of the constructors) of a component class.
     | ComponentStatements
     /// Does not limit the scope of the normalizer.
@@ -65,14 +67,21 @@ type internal CSharpNormalizer (scope) =
             compilation.ReplaceSyntaxTree (syntaxTree, this.NormalizeSyntaxTree compilation syntaxTree)
         ) compilation
 
-    /// Ensures that non-component classes are only visited when the normalizer as global scope.
+    /// Ensures that non-component classes are only visited when the normalizer has global scope.
     override this.VisitClassDeclaration node =
         if scope = NormalizationScope.Global || node.IsComponentDeclaration this.semanticModel then
             base.VisitClassDeclaration node
         else
             upcast node
 
-    /// Ensures that a constructor is only visited when the normalizer as global scope.
+    /// Ensures that non-component interfaces are only visited when the normalizer has global scope.
+    override this.VisitInterfaceDeclaration node =
+        if scope = NormalizationScope.Global || node.IsComponentInterfaceDeclaration this.semanticModel then
+            base.VisitInterfaceDeclaration node
+        else
+            upcast node
+
+    /// Ensures that a constructor is only visited when the normalizer has global scope.
     override this.VisitConstructorDeclaration node =
         if scope <> NormalizationScope.ComponentStatements then
             base.VisitConstructorDeclaration node

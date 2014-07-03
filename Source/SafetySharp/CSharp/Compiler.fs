@@ -140,6 +140,7 @@ module internal Compiler =
             compilation
             |> applyNormalizer<ExpressionLifter>
             |> applyNormalizer<ComponentExternMethodNormalizer>
+            |> applyNormalizer<InterfaceRequiredPortNormalizer>
 
         outputCode compilation "obj/Simulation"
         compilation

@@ -65,3 +65,63 @@ module ``Visibility property`` =
     [<Test>]
     let ``public visibility`` () =
         getVisibility "class C { public void M() {}}" =? Public
+
+[<TestFixture>]
+module ``GetDelegateType method`` =
+
+    let getDelegateType csharpCode =
+        let compilation = TestCompilation csharpCode
+        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
+        methodDeclaration.GetDelegateType compilation.SemanticModel
+
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        let compilation = TestCompilation "class C { void M() {}}"
+        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
+        raisesArgumentNullException "semanticModel" (fun () -> methodDeclaration.GetDelegateType null |> ignore)
+
+    [<Test>]
+    let ``returns Action for void-returning parameterless method`` () =
+        getDelegateType "class C { void M() {}}" =? "System.Action"
+
+    [<Test>]
+    let ``returns Action<> for void-returning method with parameters`` () =
+        getDelegateType "class C { void M(int i) {}}" =? "System.Action<int>"
+        getDelegateType "class C { void M(int i, System.Boolean b, object o) {}}" =? "System.Action<int, System.Boolean, object>"
+        getDelegateType "class C { void M(int i, int? x) {}}" =? "System.Action<int, int?>"
+
+    [<Test>]
+    let ``returns Func<> for non-void-returning method without parameters`` () =
+        getDelegateType "class C { int M() { return 0; }}" =? "System.Func<int>"
+        getDelegateType "class C { System.Boolean? M() { return null; }}" =? "System.Func<System.Boolean?>"
+
+    [<Test>]
+    let ``returns Func<> for non-void-returning method with parameters`` () =
+        getDelegateType "class C { int M(int i) { return 0; }}" =? "System.Func<int, int>"
+        getDelegateType "class C { int? M(int i, System.Boolean b, object o) { return null; }}" =? "System.Func<int, System.Boolean, object, int?>"
+        getDelegateType "class C { int M(int i, int? x) { return 0; }}" =? "System.Func<int, int?, int>"
+
+[<TestFixture>]
+module ``HasAttribute method`` =
+    let hasAttribute<'T when 'T :> Attribute> csharpCode =
+        let compilation = TestCompilation csharpCode
+        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
+        methodDeclaration.HasAttribute<'T> compilation.SemanticModel
+
+    [<Test>]
+    let ``throws when compilation is null`` () =
+        let compilation = TestCompilation "class C { void M() {}}"
+        let methodSymbol = compilation.FindMethodSymbol "C" "M"
+        raisesArgumentNullException "compilation" (fun () -> methodSymbol.HasAttribute<ProvidedAttribute> null |> ignore)
+
+    [<Test>]
+    let ``returns false if method has no attribute`` () =
+        hasAttribute<ProvidedAttribute> "class C { void M() {}}" =? false
+
+    [<Test>]
+    let ``returns false if method has different attribute`` () =
+        hasAttribute<ProvidedAttribute> "class C { [Required] void M() {}}" =? false
+
+    [<Test>]
+    let ``returns true if method has attribute`` () =
+        hasAttribute<ProvidedAttribute> "class C { [Provided] void M() {}}" =? true

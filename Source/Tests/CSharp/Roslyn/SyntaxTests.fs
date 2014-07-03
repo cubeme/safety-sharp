@@ -135,6 +135,40 @@ module ``AutoProperty method`` =
         toString (Syntax.AutoProperty "Name" "int" Public None (Some Internal)) =? "public int Name { get; internal set; }"
 
 [<TestFixture>]
+module ``InterfaceProperty method`` =
+    [<Test>]
+    let ``throws when property name is null`` () =
+        raisesArgumentNullException "propertyName" (fun () -> Syntax.InterfaceProperty null "int" true true |> ignore)
+
+    [<Test>]
+    let ``throws when property name is empty`` () =
+        raisesArgumentException "propertyName" (fun () -> Syntax.InterfaceProperty "  " "int" true true |> ignore)
+
+    [<Test>]
+    let ``throws when property type is null`` () =
+        raisesArgumentNullException "propertyType" (fun () -> Syntax.InterfaceProperty "Name" null true true |> ignore)
+
+    [<Test>]
+    let ``throws when property type is empty`` () =
+        raisesArgumentException "propertyType" (fun () -> Syntax.InterfaceProperty "Name" "  " true true |> ignore)
+
+    [<Test>]
+    let ``throws when property has no accessor`` () =
+        raises<InvalidOperationException> (fun () -> Syntax.InterfaceProperty "Name" "int" false false |> ignore)
+
+    [<Test>]
+    let ``creates get-only property`` () =
+        toString (Syntax.InterfaceProperty "Name" "int" true false) =? "int Name { get; }"
+
+    [<Test>]
+    let ``creates set-only property`` () =
+        toString (Syntax.InterfaceProperty "Name" "int" false true) =? "int Name { set; }"
+
+    [<Test>]
+    let ``creates get/set property`` () =
+        toString (Syntax.InterfaceProperty "Name" "int" true true) =? "int Name { get; set; }"
+
+[<TestFixture>]
 module ``Lambda method`` =
     [<Test>]
     let ``throws when body is null`` () =
