@@ -31,6 +31,7 @@ open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Modeling
 
 /// Checks for unsupported C# features within a component declaration.
 type internal ComponentSyntaxAnalyzerVisitor (emitDiagnostic : DiagnosticCallback<SyntaxNode>) =
@@ -152,3 +153,103 @@ type internal ComponentSyntaxAnalyzer () as this =
         semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
         |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
         |> Seq.iter componentVisitor.Visit
+
+/// Checks for unsupported C# primitive types within a component.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpPrimitiveType, LanguageNames.CSharp)>]
+type internal IllegalCSharpPrimitiveTypeAnalyzer () as this =
+    inherit SymbolAnalyzer<INamedTypeSymbol> (SymbolKind.NamedType)
+
+    do this.Error DiagnosticIdentifiers.IllegalCSharpPrimitiveType
+        "Only the primitive types 'bool', and 'int' are supported."
+        "Primitive type '{0}' is not supported for {1} '{2}'. Only the primitive types {3}'bool', 'int', and 'decimal' are supported."
+
+    let isSupportedPrimitiveType (typeSymbol : ITypeSymbol) = 
+        match typeSymbol.SpecialType with
+        | SpecialType.System_Void
+        | SpecialType.System_Boolean
+        | SpecialType.System_Int32
+        | SpecialType.System_Decimal
+        | SpecialType.None -> true
+        | _ -> false
+
+    let checkType (addDiagnostic : DiagnosticCallback<ISymbol>) symbols selector descriptor toDisplayString additionalType =
+        for symbol in symbols |> Seq.where ((fun symbol -> isSupportedPrimitiveType <| selector symbol) >> not) do
+                addDiagnostic.Invoke (symbol, selector symbol, descriptor, toDisplayString symbol, additionalType)
+                
+    override this.Analyze symbol compilation addDiagnostic cancellationToken =
+        if symbol.ImplementsIComponent compilation then
+            let fields = symbol.GetMembers().OfType<IFieldSymbol> ()
+            let properties = symbol.GetMembers().OfType<IPropertySymbol> ()
+            let methods = symbol.GetMembers().OfType<IMethodSymbol>() |> Seq.where (fun methodSymbol -> methodSymbol.MethodKind = MethodKind.Ordinary)
+            let parameters = methods |> Seq.collect (fun methodSymbol -> methodSymbol.Parameters)
+
+            checkType addDiagnostic fields (fun fieldSymbol -> fieldSymbol.Type) "field" id ""
+            checkType addDiagnostic properties (fun propertySymbol -> propertySymbol.Type) "property" id ""
+            checkType addDiagnostic methods (fun methodSymbol -> methodSymbol.ReturnType) "return type of method" id "'void', "
+            checkType addDiagnostic parameters (fun parameterSymbol -> parameterSymbol.Type) "parameter of method" 
+                (fun parameterSymbol -> parameterSymbol.ContainingSymbol.ToDisplayString ()) ""
+
+/// Checks for unsupported C# non-interface reference types within a component.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalNonInterfaceReferenceType, LanguageNames.CSharp)>]
+type internal IllegalNonInterfaceReferenceTypeAnalyzer () as this =
+    inherit SymbolAnalyzer<INamedTypeSymbol> (SymbolKind.NamedType)
+
+    do this.Error DiagnosticIdentifiers.IllegalNonInterfaceReferenceType
+        (sprintf "Unsupported use of reference type. Only reference types derived from '%s' are supported." typeof<Component>.FullName)
+        (sprintf "Unsupported reference type '{0}' used by {1} '{2}'. Only reference types derived from '%s' are supported." typeof<Component>.FullName)
+
+    let isSupportedNonInterfaceReferenceType (compilation : Compilation) (typeSymbol : ITypeSymbol) = 
+        match typeSymbol.SpecialType with
+        | SpecialType.None when typeSymbol.TypeKind = TypeKind.Class && not <| typeSymbol.IsDerivedFromComponent compilation -> false
+        | _ -> true
+
+    let checkType compilation (addDiagnostic : DiagnosticCallback<ISymbol>) symbols selector descriptor toDisplayString additionalType =
+        for symbol in symbols |> Seq.where ((fun symbol -> isSupportedNonInterfaceReferenceType compilation <| selector symbol) >> not) do
+                addDiagnostic.Invoke (symbol, selector symbol, descriptor, toDisplayString symbol, additionalType)
+                
+    override this.Analyze symbol compilation addDiagnostic cancellationToken =
+        if symbol.ImplementsIComponent compilation then
+            let fields = symbol.GetMembers().OfType<IFieldSymbol> ()
+            let properties = symbol.GetMembers().OfType<IPropertySymbol> ()
+            let methods = symbol.GetMembers().OfType<IMethodSymbol>() |> Seq.where (fun methodSymbol -> methodSymbol.MethodKind = MethodKind.Ordinary)
+            let parameters = methods |> Seq.collect (fun methodSymbol -> methodSymbol.Parameters)
+
+            checkType compilation addDiagnostic fields (fun fieldSymbol -> fieldSymbol.Type) "field" id ""
+            checkType compilation addDiagnostic properties (fun propertySymbol -> propertySymbol.Type) "property" id ""
+            checkType compilation addDiagnostic methods (fun methodSymbol -> methodSymbol.ReturnType) "return type of method" id "'void', "
+            checkType compilation addDiagnostic parameters (fun parameterSymbol -> parameterSymbol.Type) "parameter of method" 
+                (fun parameterSymbol -> parameterSymbol.ContainingSymbol.ToDisplayString ()) ""
+
+/// Checks for unsupported C# interface reference types within a component.
+[<DiagnosticAnalyzer>]
+[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalInterfaceReferenceType, LanguageNames.CSharp)>]
+type internal IllegalInterfaceReferenceTypeAnalyzer () as this =
+    inherit SymbolAnalyzer<INamedTypeSymbol> (SymbolKind.NamedType)
+
+    do this.Error DiagnosticIdentifiers.IllegalInterfaceReferenceType
+        (sprintf "Unsupported use of interface type. Only interface types derived from '%s' are supported." typeof<IComponent>.FullName)
+        (sprintf "Unsupported interface type '{0}' used by {1} '{2}'. Only interface types derived from '%s' are supported." typeof<IComponent>.FullName)
+
+    let isSupportedInterfaceReferenceType (compilation : Compilation) (typeSymbol : ITypeSymbol) = 
+        match typeSymbol.SpecialType with
+        | SpecialType.None when typeSymbol.TypeKind = TypeKind.Interface && not <| typeSymbol.ImplementsIComponent compilation -> false
+        | _ -> true
+
+    let checkType compilation (addDiagnostic : DiagnosticCallback<ISymbol>) symbols selector descriptor toDisplayString additionalType =
+        for symbol in symbols |> Seq.where ((fun symbol -> isSupportedInterfaceReferenceType compilation <| selector symbol) >> not) do
+                addDiagnostic.Invoke (symbol, selector symbol, descriptor, toDisplayString symbol, additionalType)
+                
+    override this.Analyze symbol compilation addDiagnostic cancellationToken =
+        if symbol.ImplementsIComponent compilation then
+            let fields = symbol.GetMembers().OfType<IFieldSymbol> ()
+            let properties = symbol.GetMembers().OfType<IPropertySymbol> ()
+            let methods = symbol.GetMembers().OfType<IMethodSymbol>() |> Seq.where (fun methodSymbol -> methodSymbol.MethodKind = MethodKind.Ordinary)
+            let parameters = methods |> Seq.collect (fun methodSymbol -> methodSymbol.Parameters)
+
+            checkType compilation addDiagnostic fields (fun fieldSymbol -> fieldSymbol.Type) "field" id ""
+            checkType compilation addDiagnostic properties (fun propertySymbol -> propertySymbol.Type) "property" id ""
+            checkType compilation addDiagnostic methods (fun methodSymbol -> methodSymbol.ReturnType) "return type of method" id "'void', "
+            checkType compilation addDiagnostic parameters (fun parameterSymbol -> parameterSymbol.Type) "parameter of method" 
+                (fun parameterSymbol -> parameterSymbol.ContainingSymbol.ToDisplayString ()) ""

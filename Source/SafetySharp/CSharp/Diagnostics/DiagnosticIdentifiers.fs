@@ -42,6 +42,15 @@ module internal DiagnosticIdentifiers =
     [<Literal>] 
     let IllegalCSharpSyntaxElementInExpression = Prefix + "1002" // TODO: Remove once expression may have side effects
 
+    [<Literal>]
+    let IllegalCSharpPrimitiveType = Prefix + "1003"
+
+    [<Literal>]
+    let IllegalNonInterfaceReferenceType = Prefix + "1004"
+
+    [<Literal>]
+    let IllegalInterfaceReferenceType = Prefix + "1005"
+
     [<Literal>] 
     let IllegalUnderlyingEnumType = Prefix + "1101"
 
