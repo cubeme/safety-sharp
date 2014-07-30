@@ -325,53 +325,18 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
     member this.transformWriteOnceStatement (accessFromPartition:Identifier) (statement:WriteOnceStatement) : SingleAssignConstraint =        
         let transformOption (option:WriteOncePossibleEffect) : CaseConditionAndEffect =        
                     let transformedCondition = this.transformWriteOnceExpression option.getTakenDecisionsAsCondition
-                    let transformedEffect = this.transformWriteOnceExpression option.TargetEffect
+                    //let condition = bothDecisions.Tail |> List.fold (fun acc elem -> NuXmvBasicExpression.BinaryExpression(elem,BinaryOperator.LogicalAnd,acc)) bothDecisions.Head
+                    let transformedEffect = option.TargetEffect.getEffects
+                                                |> List.map (fun effect -> this.transformWriteOnceExpression effect)
+                                                |> BasicExpression.SetExpression
                     {
                         CaseConditionAndEffect.CaseCondition = transformedCondition;
                         CaseConditionAndEffect.CaseEffect = transformedEffect;
                     }
         match statement with
-            | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceExpression) ->  
-                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
-                let rec determineEffect (chosenAsTrue:WriteOncePossibleEffect list)
-                                        (chosenAsFalse:WriteOncePossibleEffect list)
-                                        (unchosen:WriteOncePossibleEffect list) : CaseConditionAndEffect list =
-                    if unchosen.IsEmpty then
-                        // basic case, everything chosen: Build the CaseConditionAndEffects
-                        if chosenAsTrue.IsEmpty then
-                            // use elseEffect
-                            [{
-                                CaseConditionAndEffect.CaseCondition = NuXmvBasicExpression.ConstExpression(ConstExpression.BooleanConstant(true));
-                                CaseConditionAndEffect.CaseEffect = (this.transformWriteOnceExpression elseEffect);
-                            }]
-                        else
-                            // we know minimal one chosen as true
-                            // the effect are all chosenAsTrue effects in a set
-                            let falseDecisions = chosenAsFalse |> List.map (fun effect -> 
-                                                                            let transformedExpr = this.transformWriteOnceExpression effect.getTakenDecisionsAsCondition
-                                                                            NuXmvBasicExpression.UnaryExpression(UnaryOperator.LogicalNot,transformedExpr))
-                            let trueDecisions = chosenAsTrue |> List.map (fun effect -> 
-                                                                            this.transformWriteOnceExpression effect.getTakenDecisionsAsCondition)
-                            // Decisions in the resulting Ast are reorder. This might be a bit annoying for readers of the resulting source code. Maybe improve this in the future.
-                            let bothDecisions = trueDecisions@falseDecisions
-                            let condition = bothDecisions.Tail |> List.fold (fun acc elem -> NuXmvBasicExpression.BinaryExpression(elem,BinaryOperator.LogicalAnd,acc)) bothDecisions.Head
-                            let effect = chosenAsTrue |> List.map (fun effect -> this.transformWriteOnceExpression effect.TargetEffect)
-                                                      |> BasicExpression.SetExpression
-                            [{
-                                CaseConditionAndEffect.CaseCondition = condition;
-                                CaseConditionAndEffect.CaseEffect = effect;
-                            }]
-                    else
-                        // recursive-case, some nodes undetermined: Divide into subcases and merge them
-                        let elementToDecide = unchosen.Head
-                        let trueCase = determineEffect (elementToDecide::chosenAsTrue) chosenAsFalse unchosen.Tail
-                        let falseCase = determineEffect chosenAsTrue (elementToDecide::chosenAsFalse) unchosen.Tail
-                        trueCase @ falseCase
-
-                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
-                let effect = determineEffect [] [] possibleEffects |> BasicExpression.CaseExpression
-                SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)
-
+            | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceEffectOnTarget) ->  
+                let convertedToSequentialDecision = statement.convertToDecisionsSequential
+                this.transformWriteOnceStatement accessFromPartition convertedToSequentialDecision
             | WriteOnceStatementEvaluateDecisionsSequential (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list) ->
                 let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
                 let effect = possibleEffects |> List.map transformOption

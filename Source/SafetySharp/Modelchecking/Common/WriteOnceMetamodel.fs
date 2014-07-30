@@ -51,10 +51,18 @@ type internal WriteOnceExpression =
 
 type internal WriteOnceGlobalField = SimpleGlobalField
 
+type internal WriteOnceEffectOnTarget =
+    | WriteOnceEffectOnTargetDeterministic of WriteOnceExpression
+    | WriteOnceEffectOnTargetIndeterministic of WriteOnceExpression list
+    with
+        member this.getEffects =
+            match this with
+                | WriteOnceEffectOnTargetDeterministic(writeOnceExpression) -> [writeOnceExpression]
+                | WriteOnceEffectOnTargetIndeterministic(writeOnceExpressions) -> writeOnceExpressions
 
 type internal WriteOncePossibleEffect = {
     TakenDecisions : WriteOnceExpression list;
-    TargetEffect : WriteOnceExpression;
+    TargetEffect : WriteOnceEffectOnTarget;
 } with 
     member this.getTakenDecisionsAsCondition: WriteOnceExpression =
         if this.TakenDecisions.IsEmpty then
@@ -74,7 +82,8 @@ type internal WriteOncePossibleEffect = {
 // Be cautious: If no option matches, the assignment doesn't change anything. (Thus the next value of target is the current value of target).
 
 type internal WriteOnceStatement = 
-    | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceExpression)
+    | WriteOnceStatementEvaluateDecisionsParallel of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list) * ElseEffect : (WriteOnceEffectOnTarget)
+    //TODO: Be cautious: A PossibleEffect of a Sequencial Decision should be able to have more target effects
     | WriteOnceStatementEvaluateDecisionsSequential of Target : (WriteOnceGlobalField) * PossibleEffects : (WriteOncePossibleEffect list)
     | WriteOnceStatementSimpleAssign of Target : (WriteOnceGlobalField) * Expression : (WriteOnceExpression)
     | WriteOnceStatementSimpleAssignWithCondition of Target : (WriteOnceGlobalField) * Effect : (WriteOncePossibleEffect)
@@ -85,7 +94,53 @@ type internal WriteOnceStatement =
             | WriteOnceStatementEvaluateDecisionsSequential(target,_) -> target
             | WriteOnceStatementSimpleAssign(target,_) -> target
             | WriteOnceStatementSimpleAssignWithCondition(target,_) -> target
-            
+    member this.convertToDecisionsSequential =
+        match this with
+            | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceEffectOnTarget) ->
+                let rec determineEffects (chosenAsTrue:WriteOncePossibleEffect list)
+                                        (chosenAsFalse:WriteOncePossibleEffect list)
+                                        (unchosen:WriteOncePossibleEffect list) : WriteOncePossibleEffect list =
+                    if unchosen.IsEmpty then
+                        // basic case, everything chosen: Build the CaseConditionAndEffects
+                        if chosenAsTrue.IsEmpty then
+                            // use elseEffect
+                            [{
+                                WriteOncePossibleEffect.TakenDecisions = [WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))];
+                                WriteOncePossibleEffect.TargetEffect = elseEffect;
+                            }]
+                        else
+                            // we know chosenAsTrue has at least one element
+                            let falseDecisions = chosenAsFalse |> List.map (fun possibleEffect -> 
+                                                                            let andedDecisions = possibleEffect.getTakenDecisionsAsCondition
+                                                                            let negatedAndedDecisions = WriteOnceExpression.UnaryExpression(andedDecisions,MMUnaryOperator.LogicalNot)
+                                                                            {
+                                                                                WriteOncePossibleEffect.TakenDecisions = [negatedAndedDecisions];
+                                                                                WriteOncePossibleEffect.TargetEffect = possibleEffect.TargetEffect;
+                                                                            })
+                            let trueDecisions = chosenAsTrue 
+                            // Decisions in the resulting Ast are reordered. This might be a bit annoying for readers of the resulting source code. Maybe improve this in the future.
+                            let bothDecisions = trueDecisions@falseDecisions
+                            // chosenAsTrue contains at least one element. Thus bothDecisions contains at least one element
+                            let condition = bothDecisions |> List.collect (fun decision -> decision.TakenDecisions)
+                            // the effect of the newly created effect comprises all chosenAsTrue effects
+                            let effect = chosenAsTrue |> List.collect (fun effect -> effect.TargetEffect.getEffects)
+                                                      |> WriteOnceEffectOnTarget.WriteOnceEffectOnTargetIndeterministic
+                            [{
+                                WriteOncePossibleEffect.TakenDecisions = condition;
+                                WriteOncePossibleEffect.TargetEffect = effect;
+                            }]
+                    else
+                        // recursive-case, some nodes undetermined: Divide into subcases and merge them
+                        let elementToDecide = unchosen.Head
+                        let trueCase = determineEffects (elementToDecide::chosenAsTrue) chosenAsFalse unchosen.Tail
+                        let falseCase = determineEffects chosenAsTrue (elementToDecide::chosenAsFalse) unchosen.Tail
+                        trueCase @ falseCase
+
+                let effects = determineEffects [] [] possibleEffects
+                WriteOnceStatementEvaluateDecisionsSequential(target,effects)
+            | WriteOnceStatementEvaluateDecisionsSequential(_) -> this
+            | WriteOnceStatementSimpleAssign(_) -> failwith "notImplementedYet"
+            | WriteOnceStatementSimpleAssignWithCondition(_) -> failwith "notImplementedYet"
 
 // contains information, which Decicions have already been taken in the current statement
 // - if an assignment is done, write it to a new variable (an artificial field), if it is not the last assignment to this variable
@@ -243,14 +298,17 @@ type internal SimpleStatementsToWriteOnceStatements(initialFields:SimpleGlobalFi
                 //ELSE: If none of the branch matches, assign to the transformedTarget the value in the redirected field (not the origin field)
                 let currentRedirectionOfField = fieldManager.getCurrentRedirection field
                 let elseEffect = WriteOnceExpression.FieldAccessExpression currentRedirectionOfField
+                                    |> WriteOnceEffectOnTarget.WriteOnceEffectOnTargetDeterministic
                 // create artificial Field
                 let (transformedTarget,newFieldManager) = fieldManager.createNewArtificialFieldForField field
                 // we get the decisions taken in every branch of fieldsInBraches and create for it a specific effect
                 let transformFieldInBranch ((timeofAccess,fieldInBranch):WriteOnceTimeOfAccess*SimpleGlobalField) =
                     let transformedExpression = WriteOnceExpression.FieldAccessExpression(timeofAccess,fieldInBranch)
+                    let effect = transformedExpression
+                                    |> WriteOnceEffectOnTarget.WriteOnceEffectOnTargetDeterministic
                     {
                         WriteOncePossibleEffect.TakenDecisions = newFieldManager.getTakenDecisions;
-                        WriteOncePossibleEffect.TargetEffect = transformedExpression;
+                        WriteOncePossibleEffect.TargetEffect = effect;
                     }                
                 let effects = fieldsInBraches |> List.map transformFieldInBranch
                                 

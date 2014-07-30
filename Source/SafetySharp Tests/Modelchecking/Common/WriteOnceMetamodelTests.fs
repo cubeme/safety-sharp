@@ -103,12 +103,12 @@ module SimpleStatementsToWriteOnceStatementsTests =
         (isParallelDecisionAssignment statement3) =? true
         (isSimpleAssignment statement4) =? true
         match statement3 with
-            | WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel(target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceExpression ) ->
+            | WriteOnceStatement.WriteOnceStatementEvaluateDecisionsParallel(target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceEffectOnTarget) ->
                 possibleEffects.Length =? 2
                 let effect1 = possibleEffects.Item 0
                 let effect2 = possibleEffects.Item 1
                 effect1 <>? effect2
-                elseEffect =? WriteOnceExpression.FieldAccessExpression(WriteOnceTimeOfAccess.UseResultOfLastStep,TestCase1Simplified.field)
+                elseEffect =? WriteOnceEffectOnTarget.WriteOnceEffectOnTargetDeterministic(WriteOnceExpression.FieldAccessExpression(WriteOnceTimeOfAccess.UseResultOfLastStep,TestCase1Simplified.field))
                 ()
             | _ ->
                 ()
