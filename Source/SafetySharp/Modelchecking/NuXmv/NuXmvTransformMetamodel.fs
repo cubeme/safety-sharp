@@ -187,11 +187,11 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         fieldsToTransform |> List.map generateSingleInit
 
          
-    member this.generatePartitionUpdateCode (partition:SimplePartitionIdentity) : ModuleElement =
+    member this.generatePartitionUpdateCode (partition:SimplePartitionIdentity) : ModuleElement list=
         let partitionUpdateInSimpleStatements = toSimplifiedMetamodel.partitionUpdateInSimpleStatements partition
         let partitionUpdateInWriteOnlyStatements = toWriteOnceStatements.simpleStatementToWriteOnceStatements toSimplifiedMetamodel.getSimpleGlobalFields partitionUpdateInSimpleStatements
         let transformedWriteOnlyStatements = partitionUpdateInWriteOnlyStatements |> List.map (this.transformWriteOnceStatement (this.getPartitionInstanceNameFromSimplePartition partition))
-        transformedWriteOnlyStatements |> ModuleElement.AssignConstraint
+        transformedWriteOnlyStatements
 
     member this.generatePartition (partition:SimplePartitionIdentity) : ModuleDeclaration =
         // TODO: remove parameter with identifier of this partition, if it is the partition itself. Use this.getModuleParametersforPartitions (Some(partition))
@@ -203,7 +203,7 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         {
             ModuleDeclaration.Identifier = this.getPartitionModuleNameFromSimplePartition partition;
             ModuleDeclaration.ModuleParameters = otherPartitionIdentifier;
-            ModuleDeclaration.ModuleElements = fieldDecls::[partitionUpdateCode];
+            ModuleDeclaration.ModuleElements = fieldDecls::partitionUpdateCode;
         }        
 
     member this.transformExpressionInsideAFormula (expression:MMExpression) : NuXmvBasicExpression =
@@ -322,8 +322,49 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
                     | WriteOnceTimeOfAccess.UseResultOfThisStep ->
                         this.transformSimpleGlobalFieldToAccessExpression field mainModuleIdentifier |> NuXmvBasicExpression.BasicNextExpression
     
-    member this.transformWriteOnceStatement (accessFromPartition:Identifier) (statement:WriteOnceStatement) : SingleAssignConstraint =        
-        let transformOption (option:WriteOncePossibleEffect) : CaseConditionAndEffect =        
+    member this.transformWriteOnceStatement (accessFromPartition:Identifier) (statement:WriteOnceStatement) : ModuleElement =
+        let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
+        match statement with
+            | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceEffectOnTarget) ->  
+                (* old system:
+                    convert to sequential decision and transform the sequential decision
+                    let convertedToSequentialDecision = statement.convertToDecisionsSequential
+                    this.transformWriteOnceStatement accessFromPartition convertedToSequentialDecision
+                *)
+                (* new system:
+                    see also topic "How I can get non-deterministic behavior" on [nusmv-users]-Mailing List:
+                    https://list.fbk.eu/sympa/arc/nusmv-users/2014-06/msg00002.html
+                    TRANS
+                        ( left_expression_1 -> next(variable)=right_expression_1) |
+                        ( left_expression_2 -> next(variable)=right_expression_2) |
+                        ...
+                        ( left_expression_N -> next(variable)=right_expression_N)
+                *)
+                let transformedNextTarget = transformedTarget |> NextExpression.ComplexIdentifierExpression |> NextExpression.BasicNextExpression
+                let transformOption (option:WriteOncePossibleEffect) =
+                    let transformedCondition = this.transformWriteOnceExpression option.getTakenDecisionsAsCondition                    
+                    let transformedEffect = option.TargetEffect.getEffects
+                                                |> List.map (fun effect -> this.transformWriteOnceExpression effect)
+                                                |> BasicExpression.SetExpression
+                    let nextState = NextExpression.BinaryExpression(transformedNextTarget,BinaryOperator.Equality,transformedEffect)
+                    NextExpression.BinaryExpression(transformedCondition,BinaryOperator.LogicalImplies,nextState)
+                let transformedElse =
+                    // if every other case doesn't match
+                    let transformedCondition =
+                        possibleEffects |> List.map (fun effect -> effect.getTakenDecisionsAsCondition)
+                                        |> List.map (fun decision -> WriteOnceExpression.UnaryExpression(decision,MMUnaryOperator.LogicalNot))
+                                        |> WriteOnceExpression.concatenateWithAnd
+                                        |> this.transformWriteOnceExpression
+                    let transformedEffect = elseEffect.getEffects
+                                                |> List.map (fun effect -> this.transformWriteOnceExpression effect)
+                                                |> BasicExpression.SetExpression
+                    let nextState = NextExpression.BinaryExpression(transformedNextTarget,BinaryOperator.Equality,transformedEffect)
+                    NextExpression.BinaryExpression(transformedCondition,BinaryOperator.LogicalImplies,nextState)
+                let transformedOptions = possibleEffects |> List.map transformOption 
+                let concatenatedWithOr = NuXmvAstHelpers.concatenateWithOr (transformedOptions@[transformedElse])
+                ModuleElement.TransConstraint(concatenatedWithOr)
+            | WriteOnceStatementEvaluateDecisionsSequential (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list) ->
+                let transformOption (option:WriteOncePossibleEffect) : CaseConditionAndEffect =        
                     let transformedCondition = this.transformWriteOnceExpression option.getTakenDecisionsAsCondition
                     //let condition = bothDecisions.Tail |> List.fold (fun acc elem -> NuXmvBasicExpression.BinaryExpression(elem,BinaryOperator.LogicalAnd,acc)) bothDecisions.Head
                     let transformedEffect = option.TargetEffect.getEffects
@@ -332,24 +373,17 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
                     {
                         CaseConditionAndEffect.CaseCondition = transformedCondition;
                         CaseConditionAndEffect.CaseEffect = transformedEffect;
-                    }
-        match statement with
-            | WriteOnceStatementEvaluateDecisionsParallel (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list, elseEffect:WriteOnceEffectOnTarget) ->  
-                let convertedToSequentialDecision = statement.convertToDecisionsSequential
-                this.transformWriteOnceStatement accessFromPartition convertedToSequentialDecision
-            | WriteOnceStatementEvaluateDecisionsSequential (target:WriteOnceGlobalField, possibleEffects:WriteOncePossibleEffect list) ->
-                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
+                    }                
                 let effect = possibleEffects |> List.map transformOption
                                              |> BasicExpression.CaseExpression
-                SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)
+                ModuleElement.AssignConstraint([SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,effect)])
             | WriteOnceStatementSimpleAssignWithCondition (target:WriteOnceGlobalField, effect:WriteOncePossibleEffect) ->
                 // Isn't used right now. But consider: What to do, if "effect.TakenDecisions" doesn't match. Which value should be assigned to the targetField?
                 // If it isn't used in the near future, delete it!
                 failwith "NotImplementedYet"
             | WriteOnceStatementSimpleAssign (target:WriteOnceGlobalField, effect:WriteOnceExpression) ->
-                let transformedTarget = this.transformSimpleGlobalFieldToComplexIdentifier statement.getTarget accessFromPartition
                 let transformedEffect = this.transformWriteOnceExpression effect
-                SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,transformedEffect)
+                ModuleElement.AssignConstraint([SingleAssignConstraint.NextStateAssignConstraint(transformedTarget,transformedEffect)])
 
    
     

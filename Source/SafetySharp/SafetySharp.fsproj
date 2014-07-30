@@ -110,6 +110,7 @@
     <Compile Include="Modelchecking\PromelaSpin\PromelaTransformMetamodel.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvOperators.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAst.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvAstHelpers.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAstToFile.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvExecute.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodel.fs" />

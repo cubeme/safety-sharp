@@ -48,6 +48,18 @@ type internal WriteOnceExpression =
     /// Represents a field access for reading.
     | FieldAccessExpression of TimeOfAccess: WriteOnceTimeOfAccess * Field : SimpleGlobalField
     
+    with
+        static member concatenateWithOr (exprs:WriteOnceExpression list) =
+            if exprs.IsEmpty then
+                WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))
+            else
+                exprs.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalOr,acc)) exprs.Head
+        static member concatenateWithAnd (exprs:WriteOnceExpression list) =
+            if exprs.IsEmpty then
+                WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(false))
+            else
+                exprs.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalAnd,acc)) exprs.Head
+    
 
 type internal WriteOnceGlobalField = SimpleGlobalField
 
@@ -66,10 +78,11 @@ type internal WriteOncePossibleEffect = {
 } with 
     member this.getTakenDecisionsAsCondition: WriteOnceExpression =
         if this.TakenDecisions.IsEmpty then
+            // Different than the standard case of an empty set of booleans. If we have no assumptions, we assume for TakenDecision
+            // that the assumptions are fulfilled 
             WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))
         else
-            // Concat every element with a logical and
-            this.TakenDecisions.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalAnd,acc)) this.TakenDecisions.Head
+            WriteOnceExpression.concatenateWithAnd this.TakenDecisions
 
 // A WriteOnceStatement is always an assignment
 
