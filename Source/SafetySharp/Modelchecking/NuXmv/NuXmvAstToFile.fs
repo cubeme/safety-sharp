@@ -318,7 +318,7 @@ type internal ExportNuXmvAstToFile() =
             | TransConstraint (expression:NextExpression) ->
                 // Chapter 2.3.7 TRANS Constraint p 28                
                 let content = this.ExportSimpleExpression expression
-                sprintf "\tTRANS\n%s\t\t" content
+                sprintf "\tTRANS\n\t\t%s" content
             | AssignConstraint (assigns:(SingleAssignConstraint list)) ->
                 let ExportSingleAssignConstraint (singleAssignConstraint:SingleAssignConstraint) = 
                     // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
