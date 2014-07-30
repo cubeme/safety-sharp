@@ -22,7 +22,6 @@
 
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
-
 open SafetySharp.Internal.Modelchecking
 
 type internal NuXmvBasicExpression = SafetySharp.Internal.Modelchecking.NuXmv.BasicExpression
@@ -199,11 +198,12 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
         //       this code has side effects in "toWriteOnceStatements" (generation of artificial fields)
         let partitionUpdateCode = this.generatePartitionUpdateCode partition
         let fieldDecls = this.generateFieldDeclarationsOfPartition partition
+        let fieldInits = this.generateInitialisations partition |> ModuleElement.AssignConstraint
         let otherPartitionIdentifier = this.getModuleParametersforPartitions (None)
         {
             ModuleDeclaration.Identifier = this.getPartitionModuleNameFromSimplePartition partition;
             ModuleDeclaration.ModuleParameters = otherPartitionIdentifier;
-            ModuleDeclaration.ModuleElements = fieldDecls::partitionUpdateCode;
+            ModuleDeclaration.ModuleElements = fieldDecls::fieldInits::partitionUpdateCode;
         }        
 
     member this.transformExpressionInsideAFormula (expression:MMExpression) : NuXmvBasicExpression =

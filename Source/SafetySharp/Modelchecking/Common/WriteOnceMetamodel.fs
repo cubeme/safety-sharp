@@ -53,12 +53,12 @@ type internal WriteOnceExpression =
             if exprs.IsEmpty then
                 WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(true))
             else
-                exprs.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalOr,acc)) exprs.Head
+                exprs.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(acc,MMBinaryOperator.LogicalOr,elem)) exprs.Head
         static member concatenateWithAnd (exprs:WriteOnceExpression list) =
             if exprs.IsEmpty then
                 WriteOnceExpression.ConstLiteral(SimpleConstLiteral.BooleanLiteral(false))
             else
-                exprs.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(elem,MMBinaryOperator.LogicalAnd,acc)) exprs.Head
+                exprs.Tail |> List.fold (fun acc elem -> WriteOnceExpression.BinaryExpression(acc,MMBinaryOperator.LogicalAnd,elem)) exprs.Head
     
 
 type internal WriteOnceGlobalField = SimpleGlobalField
