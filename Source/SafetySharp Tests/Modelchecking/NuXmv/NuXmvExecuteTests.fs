@@ -22,6 +22,32 @@
 
 namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvExecuteTests
 
-module NuXmvExecuteTests =
-    let x=1
+open NUnit.Framework
+open SafetySharp.Tests
+open SafetySharp.Tests.Modelchecking
+open SafetySharp.Internal.Utilities
+open SafetySharp.Internal.Modelchecking
+open SafetySharp.Internal.Modelchecking.NuXmv
 
+[<TestFixture>]
+module NuXmvExecuteTests =
+
+    [<Test>]
+    let ``NuXmv is in PATH or in dependency folder`` () =
+        let path = ExecuteNuXmv.FindNuXmv ()
+        (path.Length > 0) =? true
+
+        
+    open TestCase1
+    
+    [<Test>]
+    let ``test transformed model`` () =
+        let modelTransformer = MetamodelToNuXmv (testCase1Configuration)        
+        let nuXmvCode = modelTransformer.transformConfiguration
+        let nuXmvWriter = ExportNuXmvAstToFile()
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
+        let filename = "Modelchecking/NuXmv/testcase1.smv"
+        FileSystem.WriteToAsciiFile filename nuXmvCodeString
+        let result = ExecuteNuXmv.ExecuteNuXmv filename
+        result.HasSucceeded =? true
+        ()

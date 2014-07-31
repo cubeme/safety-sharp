@@ -48,7 +48,7 @@ type internal ExecuteNuXmv() =
         let candidates = candidatesManual @ candidatesOfPath
         match candidates |> Seq.tryFind tryCandidate with
             | Some(filename) -> filename
-            | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder"
+            | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
 
     static member ExecuteNuXmv (arguments:string) : NuXmvResult =
         let stdoutOutputBuffer = new System.Text.StringBuilder ()
@@ -64,9 +64,7 @@ type internal ExecuteNuXmv() =
         proc.StartInfo.RedirectStandardError <-  true
         proc.StartInfo.RedirectStandardInput <-  true
 
-
         //proc.EnableRaisingEvents = true |> ignore
-        // TODO: hier könnte man noch zu den Buffern einen TimeCode oder sowas hinzufügen
         proc.ErrorDataReceived.Add (fun dataReceivedEvArgs -> (stderrOutputBuffer.Append(dataReceivedEvArgs.Data) |> ignore) )
         proc.OutputDataReceived .Add (fun dataReceivedEvArgs -> (stdoutOutputBuffer.Append(dataReceivedEvArgs.Data) |> ignore))
 
@@ -75,13 +73,11 @@ type internal ExecuteNuXmv() =
         proc.BeginErrorReadLine ()
         proc.BeginOutputReadLine ()
 
-        // proc.StandardInput.WriteLine("hier Eingabe für das Programm");
+        // proc.StandardInput.WriteLine("input for nuXmv");
         // proc.StandardInput.Flush();
         
         proc.WaitForExit()
-
-        //let (output:string) = proc.StandardOutput.ReadToEnd() <--- braucht man wohl nicht mehr mit den asynchronen Funktionen, die später vllt. nützlich werden können
-
+        
         let exitCode = proc.ExitCode
         match exitCode with
             | 0 -> Successful(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
