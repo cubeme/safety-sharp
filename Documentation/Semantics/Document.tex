@@ -1,0 +1,310 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[T1,hyphens]{url}
+\usepackage[pdftex]{hyperref}
+\usepackage{mathrsfs}
+\usepackage{amsfonts}
+\usepackage{stmaryrd}
+\usepackage[fleqn,leqno]{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+\input{Macros}
+
+\title{SafetySharp Semantics}
+\author{Axel Habermaier, Johannes Leupolz}
+
+\begin{document}
+
+\maketitle
+
+\section{Conventions}
+Throughout the remainder of this report, we use the following conventions in all formal definitions whereever appropriate:
+
+\header{Optional Elements and Failure Elements}
+	We use $\missing$ and $\failure$ to denote the missing element and the failure element respectively. For some domain $A$, it is
+	always true that $\missing \notin A$ and $\failure \notin A$. We define the liftings $\liftMissing{A} := A \cup
+	\missing$, $\liftFailure{A} := A \cup \failure$, and $\liftMissingFailure{A} := A \cup \varepsilon \cup	\bot$.
+	For some $a \in A$, we know that $a \neq \missing$ and $a \neq \failure$, whereas for $\liftMissing{a} \in
+	\liftMissing{A}$, we only know that $\liftMissing{a} \neq \failure$, but $\liftMissing{a}$ might be $\missing$ or
+	any element of $A$. When we write $a \in \liftMissing{A}$ or $a = f(a')$ for some function $f : A \rightarrow
+	\liftMissing{A}$, $a$ cannot be $\missing$, so the selection or assignment is only possible if the selected or
+	returned value is not $\missing$. For example, this allows us to shorten some side conditions in function definitions with case
+	distinctions. The following two definitions of function $g : A \rightarrow \liftFailure{A}$ illustrate the usage of this
+	convention.
+	With function $f$ defined as above, the following two definitions of $g$ are equivalent:
+	\begin{align*}
+		g(a') = \begin{cases}
+			a & \text{if } \quad a = f(a') \\
+			\bot & \text{if } \quad \missing = f(a')
+		\end{cases}
+		&&&
+		g(a') = \begin{cases}
+			\liftMissing{a} & \text{if } \quad \liftMissing{a} = f(a') \wedge \liftMissing{a} \neq \missing	\\
+			\bot & \text{if } \quad \missing = f(a')
+		\end{cases}
+	\end{align*}
+
+\header{Functions}
+	Oftentimes, the codomain of some function includes the failure element. Usually the definitions of those functions contain case distinctions.
+	Whenever we do not specify all cases for such a function, the remaining cases are implicitly assumed to return $\failure$.
+	Alternatively, we use the word ``otherwise'' to denote a side condition that is true if the side conditions of all other cases are not true. We do not use partial functions.
+
+	It is sometimes necessary to change the value a function returns for a specific input. We establish the notation $f[a \mapsto b]$
+	for some function $f : A \rightarrow B$ that serves this purpose and is defined as follows:
+	\begin{equation*}
+	f[a \mapsto b](a') = \begin{cases}
+		b & \text{if } \quad a' = a \\
+		f(a') & \text{otherwise}
+	\end{cases}
+	\end{equation*}
+
+	For convenience, we use the following notations to update several values at the same time: 
+	$f[a_1 \; a_2 \mapsto b] = f[a_1 \mapsto b][a_2 \mapsto b]$, $f[a_1 \; a_2 \mapsto b_1 \; b_2] = f[a_1 \mapsto b_1][a_2 \mapsto b_2]$, and $\_$ represents all
+	input values, such that $f[ \_ \mapsto b](a)$ returns $b$ for all input values $a$.	This is only well-defined if all updated input values are
+	mutually distinct.
+
+\header{Lists}
+	Some domains defined in the following chapters comprise sets or lists of elements of other domains. In all of these cases, we consistently use
+	lists rather than a combination of sets and lists for reasons of clarity, even if the ordering of elements inside the list is not important.
+	The domain $\ToList{A}$ denotes the set of all lists with elements in $A$ whose length is arbitrary but finite.
+	The domain $A^n$ denotes the set of all lists with elements in $A$ whose length is exactly $n \in \mathbb{N}$. $\emptyList$
+	denotes the empty list. The operations on lists that we use throughout the remainder of the text are briefly and
+	informally introduced in figure \ref{fig:ListOps}.
+	\renewcommand{\arraystretch}{1.5}
+	\begin{figure}[ht] 
+		\centering
+		\begin{tabular}{l | p{8.5cm}}
+			Operation & Description \\ \hline \hline
+			$a :: \vec{a}$ & Concatenates an element and a list. 
+			For convenience, we also use the concatenation operator to concatenate two lists. \\ 
+			$| \vec{a} |$ & Returns the length of a list;
+			obviously, $| \vec{a} | = n $ for some list $\vec{a} \in A^n$ with $n \in \mathbb{N}$. \\ 
+			$a \in \vec{a}$ & True, if the list contains element $a$ somewhere. This is well-defined as lists are always of finite length. \\
+			$\vec{a}_k$ & Returns the element at position $k \in \mathbb{N}$ in the list. Undefined if $|\vec{a}| < k$. \\
+			$\vec{a}[k \mapsto a]$ & Returns a new list where the element at position $k \in \mathbb{N}$ is replaced with $a$. This notational convention is equivalent
+			to that of function updates, so we use the same convenience notations for multiple updates at the same time. Undefined if $|\vec{a}| < k$.\\
+			$a \circ \vec{a}$ & Inserts $a$ anywhere in $\vec{a}$. For convenience, we also use this operator to insert one list into another.
+			In that case, the elements of the first list are inserted in any order and any location into the second list; in other words, 
+			the first list is not continuously inserted into the second one. \\
+			$a \odot \vec{a}$ & Same as above, however, if the list already contains element $a$, it is not inserted again. \\
+			$\vec{a} = \bigcup_{i \in \{ 1 \ldots n \}} a_{\varepsilon, i}$ & Similar to writing 
+			$\vec{a} = a_{\varepsilon, 1} \circ \ldots \circ a_{\varepsilon, n}$, however, 
+			if an $a_{\varepsilon, i} = \varepsilon$, it is not inserted into the list, hence $\varepsilon \notin \vec{a}$. \\
+			$\vec{a} \setminus a$ & Removes all occurrences of $a$ from the list, thus $a \notin \vec{a} \setminus a$.  \\
+			$a_1 \ldots a_n$ & An alternative to writing $a_1 \circ \ldots \circ a_n$.
+		\end{tabular}
+		\caption[Brief Overview of List Operations]{Brief overview of list operations for elements $a$ and lists $\vec{a}$}
+		\label{fig:ListOps}
+	\end{figure}
+
+\header{Metavariables}
+	Words starting with a capital letter denote a semantic domain. For instance, the set of two-dimensional vectors might be defined as 
+	$\mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. To denote a single element of a domain, we use metavariables that are identical to the domain's
+	name starting with a lower-case letter; in this example, $\mathit{vector2}$. 
+	The default metavariable for a domain can be overridden by explicitly specifying the metavariable 
+	when defining the domain, such as $v \in \mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. In this case, $v$ denotes an element of domain $\mathit{Vector2}$.
+	We also use metavariables in variously decorated forms such as $v'$, $v''$, $v_0$, $v_1$, and so on. 
+	We adorn a domain's metavariable with an arrow at the top to denote a list of elements of the domain, for example
+	$\toList{v} \in \ToList{\mathit{Vector2}}$.
+ 
+\header{Handling of Tuples}
+	Most of the semantic domains we deal with in the following chapters consist of several subdomains. 
+	Let $X = A \times B \times C \times D \times \ToList{E}$ be a domain and $x \in X$ be
+	an element of that domain. To get the projection of $x$ to one of its subdomains, we subscript $x$ with the metavariable of the
+	domain we want to project to. For instance, to get $x$'s projection to domain $D$, we write $x_d$. We use the same convention if the projected subdomain is
+	a list, so $x_{\toList{e}}$ projects $x$ to the element in $\ToList{E}$.
+	
+	We often have a complex tuple type instance like $(a, b, c, d, \toList{e}) \in X$, but in a rule or
+	function we actually only need a few of the variables. For example, suppose we only need to use $c$ and $\toList{e}$ in a rule. In that case,
+	we write $x \triangleright c, \toList{e}$.
+	This way, we can reference the entire tuple with $x$ and do not need any projections to access $x$'s subdomains. When using this projection syntax, we list the
+	metavariables of the subdomains in the order they were specified in the definition of $X$. If this notational convention causes any ambiguities, we either
+	resort to the standard tuple notation or list all subdomains in our projection notation. We use a notation similar to the
+	projection syntax to update only some of a tuple's values: If $x \triangleright a, b, c, d, \toList{e}$, we write $x' = x
+	\triangleleft a', \toList{e'}$ as an alternative to $x' = (a', b, c, d, \toList{e'})$.  
+
+\header{Rules}
+	We define the rules of the SafetySharp semantics over transition systems implicitly defined by
+	specifying their configurations $\configuration{c}$ and their transitions $\configuration{c} \rightarrow_x \configuration{c'}$.
+	We identify each transition system defined throughout this report by its transition symbol; in the example above, $\rightarrow_x$
+	is the transition system's name.
+	The general structure of some rule (r) for some transition system $\rightarrow$, 
+	some configuration $\Gamma$, some Boolean side condition $b$,
+	and some context function $C(\Gamma)$ is:
+	\begin{equation*}
+		\tag{r}
+		\dfrac
+		{
+			\Gamma \rightarrow \Gamma'
+		}
+		{
+			C(\Gamma) \rightarrow C(\Gamma')
+		}
+		\qquad \text{if } \quad b
+	\end{equation*}
+
+\section{Formal Programs}
+
+\subsection{Domains}
+
+Formal programs support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
+value.
+\begin{align*}
+    \bool &\in \Bool
+    \\
+    \integer &\in \Integer
+    \\
+    \var &\in \Var
+    \\
+    \val &\in \Val:= \Bool \mid \Integer
+\end{align*}
+
+During execution, the \textit{variable environment} stores the values of all variables, provided that a value has previously been
+assigned to a variable:
+\begin{align*}
+	\varEnv \in \VarEnv := \Var \rightarrow \liftMissing{\Val}
+\end{align*}
+
+\subsection{Expressions}
+
+Formal programs support only side effect free expressions. Expressions consist of literal values, read operations of variables as
+well as a small set of unary and binary operator applications.
+\begin{align*}
+	\uop \in \Uop & := - \mid \neg
+	\\
+    \bop \in \Bop & := {} + {} \mid {} - {} \mid {} \ast {} \mid {} / {}
+                       \mid {} \% {} \mid {} > {} \mid {} < {} \mid {} \geq {} 
+                       \mid {} \leq {} \mid {} = {} \mid {} \neq {}
+	\\
+	\expr \in \Expr & := 
+		\val \mid \var \mid
+		\unaryExpr{\uop\;}{\expr} \mid
+		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
+\end{align*}
+
+The function $\ExprSem{-} : \Expr \rightarrow \VarEnv \rightarrow \Val$ defines the semantics of
+expressions.
+Its definition is omitted for the time being.
+
+\subsection{Statements}
+
+Formal programs support skip statements, variable assignments, sequential compositions and guarded commands.
+\begin{align*}
+	\stm \in \Stm & :=
+		\skipStm \mid 
+		\assignVarStm{\var}{\expr} \mid 
+		\seqStm{\stm_1}{\stm_2} \mid
+		\guardedStm{\guardedClause{\expr}{\stm}}
+\end{align*}
+
+The nondeterministic rule system $\stmArrow$ defines the natural semantics of statements.
+\begin{align*}
+	\mathit{Configurations} : & \;\configuration{\stm, \varEnv} \in \Stm \times \VarEnv, \; \varEnv \in \VarEnv
+	\\
+	\mathit{Transitions} : & \;\configuration{\stm, \varEnv} \stmArrow \varEnv'
+\end{align*}
+
+The skip statement has no effect on the variable environment and is therefore simply discarded.
+\begin{equation*}
+	\tag{skip}
+	\configuration{\skipStm, \varEnv}
+		\stmArrow
+	\varEnv
+\end{equation*}
+
+Assignments to a variable update the variable environment accordingly, replacing the variable's current value with the value
+obtained from the evaluation of the assigned expression.
+\begin{equation*}
+	\tag{assign}
+	\configuration{\assignVarStm{\var}{\expr}, \varEnv}
+		\stmArrow
+	\varEnv[\var \mapsto \ExprSem{\expr} \varEnv]
+\end{equation*}
+
+Sequential composition executes the two statements sequentially, passing down the modified variable environment.
+\begin{equation*}
+	\tag{seq}
+	\dfrac
+	{
+		\configuration{\stm_1, \varEnv}
+			\stmArrow
+		\varEnv'
+		\qquad
+		\configuration{\stm_2, \varEnv'}
+			\stmArrow
+		\varEnv''
+	}
+	{
+		\configuration{\seqStm{\stm_1}{\stm_2}, \varEnv}
+			\stmArrow
+		\varEnv''
+	}
+\end{equation*}
+
+Guarded commands nondeterministically choose and execute a statement whose corresponding guard evaluates to true. If no guard
+evaluates to true, the rule cannot be applied and hence the program is ``stuck''.
+
+\begin{equation*}
+	\tag{cmd}
+	\dfrac
+	{
+		\configuration{\stm_i, \varEnv}
+			\stmArrow
+		\varEnv'
+	}
+	{
+		\configuration{\guardedClause{\expr_1}{\stm_1} \; \ldots \; \guardedClause{\expr_n}{\stm_n}, \varEnv}
+			\stmArrow
+		\varEnv'
+	}
+	\qquad \text{if} \quad \exists \, i \in \{1 \ldots n\} \; . \; \ExprSem{e_i} \varEnv = \true
+\end{equation*}
+
+A denotational definition of the statement semantics might be able to better highlight the nondeterministic nature of guarded
+commands. Therefore, let the semantic relation $\StmSem{-} : \Stm \rightarrow \mathscr{P}(\VarEnv \times \VarEnv)$ define the
+denotational semantics of statements as follows:
+\begin{align*}
+	\StmSem{\skipStm} &= \{ (\varEnv, \varEnv) \mid \varEnv \in \VarEnv \}
+	\\
+	\StmSem{\assignVarStm{\var}{\expr}} &= \{ (\varEnv, \varEnv[\var \mapsto \ExprSem{\expr} \varEnv]) \mid \varEnv \in \VarEnv \}
+	\\
+	\StmSem{\seqStm{\stm_1}{\stm_2}} &= \StmSem{\stm_2} \circ \StmSem{\stm_1}
+	\\
+	\StmSem{\guardedClause{\expr_1}{\stm_1} \ldots \guardedClause{\expr_n}{\stm_n}} &= 
+		\bigcup\nolimits_{i = 1}^n 
+		{\{ (\varEnv, \varEnv') \mid \ExprSem{e_i} \varEnv = \true \wedge (\varEnv, \varEnv') \in \StmSem{\stm_i} \}}
+\end{align*}
+
+Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rule system $\stmArrow$:
+\begin{equation*}
+	\StmSem{\stm} := \{ (\varEnv, \varEnv') \in \VarEnv \times \VarEnv \mid \configuration{\stm, \varEnv} \stmArrow \varEnv' \}
+\end{equation*}
+
+\subsection{Semantics of Formal Programs}
+
+Formal programs have a set of global and local variables. The program is executed in a series of steps, with each step executing
+the exact same sequence of statements. There are global variables that are initialized once and whose values are preserved between
+different steps of the program. Additionally, there are step-local variables whose values are not preserved between different
+program steps.
+\begin{equation*}
+	\prog \in \Prog := \ToList{\Var} \times \ToList{\Var} \times (\Var \rightarrow \ToList{\Val}) \times \Stm
+\end{equation*}
+
+The first set of variables represents the global variables defined by the program, whereas the second set describes the step-local
+ones. The function is used to determine the initial values of all (global) variables; there might be multiple initial
+values for each variable. The statement of the program is executed once during each step.
+
+The semantics of a program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
+\varEnv_1 \, \varEnv_2 \ldots$ of variable environments:
+\begin{multline*}
+	\mathit{traces}(\prog \triangleright \toList{\var}_g, \toList{\var}_l, \mathit{init}, \stm) :=
+	\\ \shoveright{
+	\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \mid 
+		\forall \var \in \toList{\var}_g \, . \, \varEnv_0(\var) \in \mathit{init}(\var) \qquad \qquad}
+	\\ \wedge \
+		\forall i \in \mathbb{N} \, . \, \configuration{\stm, \varEnv_i[\toList{\var_l} \mapsto \missing]} \stmArrow \varEnv_{i+1} \}
+\end{multline*}
+
+\end{document}

@@ -1,0 +1,56 @@
+% Domains
+\newcommand{\Bool}{\mathbb{B}}
+\newcommand{\Integer}{\mathbb{N}}
+\newcommand{\Var}{\mathit{Var}}
+\newcommand{\Uop}{\mathit{UnaryOp}}
+\newcommand{\Bop}{\mathit{BinaryOp}}
+\newcommand{\Expr}{\mathit{Expr}}
+\newcommand{\Stm}{\mathit{Stm}}
+\newcommand{\Prog}{\mathit{Prog}}
+\newcommand{\VarEnv}{\Sigma}
+\newcommand{\Val}{\mathit{Value}}
+\newcommand{\stmArrow}{\rightarrow_s}
+
+% Meta variables
+\newcommand{\bool}{b}
+\newcommand{\integer}{n}
+\newcommand{\var}{v}
+\newcommand{\uop}{\mathit{uop}}
+\newcommand{\bop}{\mathit{bop}}
+\newcommand{\expr}{e}
+\newcommand{\stm}{S}
+\newcommand{\prog}{P}
+\newcommand{\varEnv}{\sigma}
+\newcommand{\val}{\nu}
+\newcommand{\emptyList}{\varepsilon}
+
+%Expressions
+\newcommand{\unaryExpr}[2]{#1 #2}
+\newcommand{\binaryExpr}[3]{#2 #1 #3}
+\newcommand{\true}{\mathit{tt}}
+\newcommand{\false}{\mathit{ff}}
+
+% Statements
+\newcommand{\skipStm}{\mathtt{skip}}
+\newcommand{\assignVarStm}[2]{#1\; \mathtt{:=}\; #2}
+\newcommand{\seqStm}[2]{#1 \; \mathtt{;} \; #2}
+\newcommand{\guardedClause}[2]{#1 \; \mathtt{\twoheadrightarrow} \; #2}
+\newcommand{\guardedStm}[1]{(#1)^*}
+
+% Lifting
+\newcommand{\failure}{\bot}
+\newcommand{\missing}{\varepsilon}
+\newcommand{\liftMissing}[1]{#1_\missing}
+\newcommand{\liftFailure}[1]{#1_\failure}
+\newcommand{\liftMissingFailure}[1]{#1_{\missing, \failure}}
+\newcommand{\configuration}[1]{\langle #1 \rangle}
+\newcommand{\toList}[1]{\vec{#1}}
+\newcommand{\ToList}[1]{#1^*}
+
+% Functions
+\newcommand{\ExprSem}[1]{\mathcal{E} \llbracket #1 \rrbracket}
+\newcommand{\StmSem}[1]{\mathcal{S} \llbracket #1 \rrbracket}
+\newcommand{\ProgSem}[1]{\mathcal{P} \llbracket #1 \rrbracket}
+
+% Layout
+\newcommand{\header}[1]{\addvspace{7pt}\textbf{{#1}}.}

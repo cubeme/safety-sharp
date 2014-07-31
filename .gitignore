@@ -78,3 +78,12 @@ Backup*/
 UpgradeLog*.XML
 UpgradeLog*.htm
 *.ww0
+
+# Latex and Texlipse
+.project
+.texlipse
+*.pdf
+*.synctex
+*.aux
+*.log
+*.out
