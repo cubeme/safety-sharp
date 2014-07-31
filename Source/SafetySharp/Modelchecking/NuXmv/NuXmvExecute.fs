@@ -25,6 +25,29 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 open System.Diagnostics
 
+[<RequireQualifiedAccess>]
+type internal NuXmvInputState =
+    | WaitingForInput
+    | Processing
+
+[<RequireQualifiedAccess>]
+type internal NuXmvProgramState =
+    | NuXmvInStartState
+    | ProgramModeSet
+    | LoadingModel
+    | ModelLoaded
+    | CheckingFormulas
+    | FormulasChecked
+    | Simulation of TraceNumber:int
+    | TrackCounterexampleTrace of TraceNumber:int
+    
+[<RequireQualifiedAccess>]
+type internal NuXmvProgramMode =
+    | NotDetermined
+    | SmtMode
+    | BddMode
+    
+
 type internal NuXmvResult =
     | Successful of string * string
     | Failed of string * string
@@ -35,6 +58,13 @@ type internal NuXmvResult =
                                         | Failed (_,_) -> false
 
 type internal ExecuteNuXmv() =
+    let stdoutOutputBuffer = new System.Text.StringBuilder ()
+    let stderrOutputBuffer = new System.Text.StringBuilder ()
+    
+    let mutable commandQueue = []
+    let mutable currentState = []
+    let mutable expectedStateAfterQueue = []
+
     static member FindNuXmv (): string =
         let tryCandidate (filename:string) : bool =
             System.IO.File.Exists filename
@@ -49,10 +79,8 @@ type internal ExecuteNuXmv() =
         match candidates |> Seq.tryFind tryCandidate with
             | Some(filename) -> filename
             | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
-
-    static member ExecuteNuXmv (arguments:string) : NuXmvResult =
-        let stdoutOutputBuffer = new System.Text.StringBuilder ()
-        let stderrOutputBuffer = new System.Text.StringBuilder ()
+    
+    member this.StartNuXmv (arguments:string) : NuXmvResult =
         use proc = new Process()
         
         proc.StartInfo.Arguments <- arguments
