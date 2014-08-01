@@ -36,8 +36,20 @@ module NuXmvExecuteTests =
     let ``NuXmv is in PATH or in dependency folder`` () =
         let path = ExecuteNuXmv.FindNuXmv ()
         (path.Length > 0) =? true
-
         
+    [<Test>]
+    let ``NuXmv is runable and shows help`` () =
+        let nuxmv = ExecuteNuXmv()
+        nuxmv.IsNuXmvRunable () =? true
+    
+    [<Test>]
+    let ``NuXmv starts in interactive mode`` () =
+        let nuxmv = ExecuteNuXmv()
+        nuxmv.StartNuXmvInteractive ()
+        nuxmv.QuitNuXmvAndWaitForExit()
+        
+
+
     open TestCase1
     
     [<Test>]
@@ -48,6 +60,10 @@ module NuXmvExecuteTests =
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
         let filename = "Modelchecking/NuXmv/testcase1.smv"
         FileSystem.WriteToAsciiFile filename nuXmvCodeString
-        let result = ExecuteNuXmv.ExecuteNuXmv filename
-        result.HasSucceeded =? true
+
+        let nuxmv = ExecuteNuXmv()
+        nuxmv.StartNuXmvInteractive ()
+        nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        nuxmv.QuitNuXmvAndWaitForExit()
         ()

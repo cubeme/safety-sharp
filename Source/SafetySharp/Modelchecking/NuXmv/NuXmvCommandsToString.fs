@@ -23,7 +23,7 @@
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 
-type internal ExportCommandsToFile() =
+type internal ExportCommandsToString() =
     
     let astToFile = ExportNuXmvAstToFile()
 
@@ -33,6 +33,7 @@ type internal ExportCommandsToFile() =
             | :? NuSMVEnvironmentVariables.NusmvStdErr as stderr -> "nusmv_stderr"
             | :? NuSMVEnvironmentVariables.NusmvStdout as stdout -> "nusmv_stdout"
             | :? NuSMVEnvironmentVariables.NusmvStdIn as stdin -> "nusmv_stdin"
+            | :? NuSMVEnvironmentVariables.DefaultTracePlugin as tracePlugin -> "default_trace_plugin"
             // NuXmv
             | :? NuXmvEnvironmentVariables.AbstractionEngine as abstractionEngine -> "abstraction.engine"
             // NotImplementedYet
@@ -82,6 +83,11 @@ type internal ExportCommandsToFile() =
                         sprintf "set nusmv_stdout %s" stdout.FileName
                     | :? NuSMVEnvironmentVariables.NusmvStdIn as stdin ->
                         sprintf "set nusmv_stdin %s" stdin.FileName
+                    | :? NuSMVEnvironmentVariables.DefaultTracePlugin as tracePlugin ->
+                        match tracePlugin with
+                            | NuSMVEnvironmentVariables.DefaultTracePlugin.BasicChangesOnly -> "set default_trace_plugin 0"
+                            | NuSMVEnvironmentVariables.DefaultTracePlugin.BasicAll -> "set default_trace_plugin 1"
+                            | NuSMVEnvironmentVariables.DefaultTracePlugin.Xml -> "set default_trace_plugin 4"
                     // NuXmv
                     | :? NuXmvEnvironmentVariables.AbstractionEngine as abstractionEngine ->
                         let engine = match abstractionEngine with
@@ -121,9 +127,23 @@ type internal ExportCommandsToFile() =
             | NuXmvCommand.WriteSimplifiedModelFunc  -> failwith "NotImplementedYet"
             | NuXmvCommand.BuildSimplifiedProperty   -> failwith "NotImplementedYet"
 
-    member this.ExportNuXmvCommandLine (argument:NuXmvCommandLine) : string =
+    member this.ExportCustomCommand (command:NuXmvCustomCommand) : string =
+        command.Command
+    
+    member this.ExportICommand (command:ICommand) : string =
+        match command with
+            | :? NuXmvCustomCommand as command -> this.ExportCustomCommand command
+            | :? NuSMVCommand as command -> this.ExportNuSMVCommand command
+            | :? NuXmvCommand as command -> this.ExportNuXmvCommand command
+            | _ -> failwith "NotImplementedYet"
+
+    member this.ExportNuXmvCommandLineArgument (argument:NuXmvCommandLine) : string =
         match argument with
             | NuXmvCommandLine.Help                        -> "-help"
             | NuXmvCommandLine.Verbose                     -> "-v 1"
             | NuXmvCommandLine.Interactive                 -> "-int"
             | NuXmvCommandLine.AvoidLoadingDefaultSettings -> "-s"
+
+    member this.ExportNuXmvCommandLine (arguments:NuXmvCommandLine list) : string =
+        arguments |> List.map (fun argument -> this.ExportNuXmvCommandLineArgument argument)
+                  |> String.concat " "

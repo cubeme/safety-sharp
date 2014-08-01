@@ -78,11 +78,18 @@ module internal NuSMVEnvironmentVariables =
             FileName:string;
         }
         with interface IEnvironmentVariable
-
+        
     [<RequireQualifiedAccess>]
     type NusmvStdIn = {
             FileName:string;
         }
+        with interface IEnvironmentVariable
+
+    [<RequireQualifiedAccess>]
+    type DefaultTracePlugin =
+        | BasicChangesOnly
+        | BasicAll
+        | Xml
         with interface IEnvironmentVariable
 
 [<RequireQualifiedAccess>]
@@ -122,6 +129,16 @@ module internal NuXmvEnvironmentVariables =
         | Bdd
         with interface IEnvironmentVariable
         
+type internal NuXmvCustomCommand =
+    {
+        Command:string;
+    }
+    with interface ICommand
+    
+type internal NuXmvStartedCommand() =
+    class end
+    with interface ICommand
+
 [<RequireQualifiedAccess>]
 type internal NuXmvCommandLine =
     | Help
@@ -130,15 +147,58 @@ type internal NuXmvCommandLine =
     | AvoidLoadingDefaultSettings // -s
 
 module internal NuXmvHelpfulCommandSequences =
-    let readmodel (filename: string ) = [
+    let commandLineStart = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
+    let commandLineHelp = [ NuXmvCommandLine.Help ]
+
+    let readModel (filename: string ) : ICommand list = [
         NuSMVCommand.ReadModel filename
     ]
-    let switchToXmlOutput = [
+    let switchToXmlOutput : ICommand list = [
+        NuSMVCommand.SetTyped (NuSMVEnvironmentVariables.DefaultTracePlugin.Xml)
     ]
-    let goCommandExpanded (filename:string) = [
+
+    let readModelAndBuildBdd (filename:string) : ICommand list = [
         NuSMVCommand.ReadModel filename;
         NuSMVCommand.FlattenHierarchy;
         NuSMVCommand.EncodeVariables;
         NuSMVCommand.BuildFlatModel;
         NuSMVCommand.BuildModel;
     ]
+    
+[<RequireQualifiedAccess>]
+type internal NuXmvModeOfProgramm =
+    | NotStarted
+    | InitialOrReseted
+    | TechniqueForVerificationSet
+    | LoadingModel
+    | ModelLoaded
+    | CheckingFormulas
+    | FormulasChecked
+    | Unknown
+    //| Simulation of TraceNumber:int
+    //| TrackCounterexampleTrace of TraceNumber:int
+
+module internal NuXmvCommandHelpers =    
+    let isCommandExecutableInMode (command:ICommand) (mode:NuXmvModeOfProgramm) : bool =
+        let isNuXmvCommandExecutableInMode (command:NuXmvCommand) (mode:NuXmvModeOfProgramm) : bool =
+            true
+        let isNuSMVCommandExecutableInMode (command:NuSMVCommand) (mode:NuXmvModeOfProgramm) : bool =
+            true        
+        match command with
+            | :? NuXmvCustomCommand as command -> true
+            | :? NuXmvStartedCommand as command -> if mode = NuXmvModeOfProgramm.NotStarted then true else false
+            | :? NuSMVCommand as command -> isNuSMVCommandExecutableInMode command mode
+            | :? NuXmvCommand as command -> isNuXmvCommandExecutableInMode command mode
+            | _ -> failwith "NotImplementedYet"
+
+    let nextModeOfProgram (command:ICommand) : NuXmvModeOfProgramm=        
+        let nextModeOfProgramNuXmv (command:NuXmvCommand) : NuXmvModeOfProgramm =
+            NuXmvModeOfProgramm.InitialOrReseted
+        let nextModeOfProgramNuSMV (command:NuSMVCommand) : NuXmvModeOfProgramm =
+            NuXmvModeOfProgramm.InitialOrReseted
+        match command with
+            | :? NuXmvCustomCommand as command -> NuXmvModeOfProgramm.Unknown
+            | :? NuXmvStartedCommand as command -> NuXmvModeOfProgramm.InitialOrReseted
+            | :? NuSMVCommand as command -> nextModeOfProgramNuSMV command
+            | :? NuXmvCommand as command -> nextModeOfProgramNuXmv command
+            | _ -> failwith "NotImplementedYet"
