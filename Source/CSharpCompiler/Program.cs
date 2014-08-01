@@ -119,8 +119,7 @@ namespace SafetySharp.CSharpCompiler
 			// Start the compilation process.
 			try
 			{
-				var compiler = new Compiler();
-				var resultCode = compiler.Compile(ProjectFile, Configuration, Platform);
+				var resultCode = Compiler.Compile(ProjectFile, Configuration, Platform);
 
 				if (resultCode == 0)
 					Log.Info("Compilation completed successfully.");

@@ -59,7 +59,7 @@ namespace SafetySharp.CSharpCompiler
 		/// <param name="projectFile">The file of the C# project that should be compiled.</param>
 		/// <param name="configuration">The configuration the C# project should be compiled in.</param>
 		/// <param name="platform">The platform the C# project should be compiled for.</param>
-		public int Compile(string projectFile, string configuration, string platform)
+		public static int Compile(string projectFile, string configuration, string platform)
 		{
 			Requires.NotNullOrWhitespace(projectFile, () => projectFile);
 			Requires.NotNullOrWhitespace(configuration, () => configuration);
@@ -204,7 +204,7 @@ namespace SafetySharp.CSharpCompiler
 			using (var ilStream = new FileStream(assemblyPath, FileMode.OpenOrCreate))
 			using (var pdbStream = new FileStream(Path.ChangeExtension(assemblyPath, ".pdb"), FileMode.OpenOrCreate))
 			{
-				var emitResult = compilation.Emit(ilStream, null, null, pdbStream);
+				var emitResult = compilation.Emit(ilStream, pdbStream: pdbStream);
 
 				if (emitResult.Success)
 					return 0;
