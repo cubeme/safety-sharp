@@ -53,16 +53,17 @@ module internal Compiler =
 
     /// Logs <paramref name="diagnostic" /> depending on its severity.
     let private logDiagnostic errorsOnly (diagnostic : Diagnostic) =
-        match diagnostic.Severity with
-        | DiagnosticSeverity.Error -> 
-            Log.Error "%A" diagnostic
-        | DiagnosticSeverity.Warning -> 
-            if not errorsOnly then Log.Warn "%A" diagnostic
-        | DiagnosticSeverity.Info -> 
-            if not errorsOnly then Log.Info "%A" diagnostic
-        | DiagnosticSeverity.Hidden -> 
-            if not errorsOnly then Log.Debug "%A" diagnostic
-        | _ -> Log.Die "Unknown C# diagnostic severity."
+//        match diagnostic.Severity with
+//        | DiagnosticSeverity.Error -> 
+//            Log.Error "%A" diagnostic
+//        | DiagnosticSeverity.Warning -> 
+//            if not errorsOnly then Log.Warn "%A" diagnostic
+//        | DiagnosticSeverity.Info -> 
+//            if not errorsOnly then Log.Info "%A" diagnostic
+//        | DiagnosticSeverity.Hidden -> 
+//            if not errorsOnly then Log.Debug "%A" diagnostic
+//        | _ -> Log.Die "Unknown C# diagnostic severity."
+        ()
 
     /// Logs all <paramref name="diagnostics" /> depending on their severities. The function returns
     /// <c>false</c> when at least one error diagnostic has been reported.
