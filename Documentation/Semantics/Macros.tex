@@ -1,6 +1,6 @@
 % Domains
 \newcommand{\Bool}{\mathbb{B}}
-\newcommand{\Integer}{\mathbb{N}}
+\newcommand{\Integer}{\mathbb{Z}}
 \newcommand{\Var}{\mathit{Var}}
 \newcommand{\Uop}{\mathit{UnaryOp}}
 \newcommand{\Bop}{\mathit{BinaryOp}}
@@ -13,7 +13,7 @@
 
 % Meta variables
 \newcommand{\bool}{b}
-\newcommand{\integer}{n}
+\newcommand{\integer}{z}
 \newcommand{\var}{v}
 \newcommand{\uop}{\mathit{uop}}
 \newcommand{\bop}{\mathit{bop}}
@@ -46,6 +46,8 @@
 \newcommand{\configuration}[1]{\langle #1 \rangle}
 \newcommand{\toList}[1]{\vec{#1}}
 \newcommand{\ToList}[1]{#1^*}
+\newcommand{\toSet}[1]{\mathbf{#1}}
+\newcommand{\ToSet}[1]{\wp #1}
 
 % Functions
 \newcommand{\ExprSem}[1]{\mathcal{E} \llbracket #1 \rrbracket}

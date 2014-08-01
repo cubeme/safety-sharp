@@ -65,40 +65,6 @@ Throughout the remainder of this report, we use the following conventions in all
 	input values, such that $f[ \_ \mapsto b](a)$ returns $b$ for all input values $a$.	This is only well-defined if all updated input values are
 	mutually distinct.
 
-\header{Lists}
-	Some domains defined in the following chapters comprise sets or lists of elements of other domains. In all of these cases, we consistently use
-	lists rather than a combination of sets and lists for reasons of clarity, even if the ordering of elements inside the list is not important.
-	The domain $\ToList{A}$ denotes the set of all lists with elements in $A$ whose length is arbitrary but finite.
-	The domain $A^n$ denotes the set of all lists with elements in $A$ whose length is exactly $n \in \mathbb{N}$. $\emptyList$
-	denotes the empty list. The operations on lists that we use throughout the remainder of the text are briefly and
-	informally introduced in figure \ref{fig:ListOps}.
-	\renewcommand{\arraystretch}{1.5}
-	\begin{figure}[ht] 
-		\centering
-		\begin{tabular}{l | p{8.5cm}}
-			Operation & Description \\ \hline \hline
-			$a :: \vec{a}$ & Concatenates an element and a list. 
-			For convenience, we also use the concatenation operator to concatenate two lists. \\ 
-			$| \vec{a} |$ & Returns the length of a list;
-			obviously, $| \vec{a} | = n $ for some list $\vec{a} \in A^n$ with $n \in \mathbb{N}$. \\ 
-			$a \in \vec{a}$ & True, if the list contains element $a$ somewhere. This is well-defined as lists are always of finite length. \\
-			$\vec{a}_k$ & Returns the element at position $k \in \mathbb{N}$ in the list. Undefined if $|\vec{a}| < k$. \\
-			$\vec{a}[k \mapsto a]$ & Returns a new list where the element at position $k \in \mathbb{N}$ is replaced with $a$. This notational convention is equivalent
-			to that of function updates, so we use the same convenience notations for multiple updates at the same time. Undefined if $|\vec{a}| < k$.\\
-			$a \circ \vec{a}$ & Inserts $a$ anywhere in $\vec{a}$. For convenience, we also use this operator to insert one list into another.
-			In that case, the elements of the first list are inserted in any order and any location into the second list; in other words, 
-			the first list is not continuously inserted into the second one. \\
-			$a \odot \vec{a}$ & Same as above, however, if the list already contains element $a$, it is not inserted again. \\
-			$\vec{a} = \bigcup_{i \in \{ 1 \ldots n \}} a_{\varepsilon, i}$ & Similar to writing 
-			$\vec{a} = a_{\varepsilon, 1} \circ \ldots \circ a_{\varepsilon, n}$, however, 
-			if an $a_{\varepsilon, i} = \varepsilon$, it is not inserted into the list, hence $\varepsilon \notin \vec{a}$. \\
-			$\vec{a} \setminus a$ & Removes all occurrences of $a$ from the list, thus $a \notin \vec{a} \setminus a$.  \\
-			$a_1 \ldots a_n$ & An alternative to writing $a_1 \circ \ldots \circ a_n$.
-		\end{tabular}
-		\caption[Brief Overview of List Operations]{Brief overview of list operations for elements $a$ and lists $\vec{a}$}
-		\label{fig:ListOps}
-	\end{figure}
-
 \header{Metavariables}
 	Words starting with a capital letter denote a semantic domain. For instance, the set of two-dimensional vectors might be defined as 
 	$\mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. To denote a single element of a domain, we use metavariables that are identical to the domain's
@@ -125,26 +91,6 @@ Throughout the remainder of this report, we use the following conventions in all
 	projection syntax to update only some of a tuple's values: If $x \triangleright a, b, c, d, \toList{e}$, we write $x' = x
 	\triangleleft a', \toList{e'}$ as an alternative to $x' = (a', b, c, d, \toList{e'})$.  
 
-\header{Rules}
-	We define the rules of the SafetySharp semantics over transition systems implicitly defined by
-	specifying their configurations $\configuration{c}$ and their transitions $\configuration{c} \rightarrow_x \configuration{c'}$.
-	We identify each transition system defined throughout this report by its transition symbol; in the example above, $\rightarrow_x$
-	is the transition system's name.
-	The general structure of some rule (r) for some transition system $\rightarrow$, 
-	some configuration $\Gamma$, some Boolean side condition $b$,
-	and some context function $C(\Gamma)$ is:
-	\begin{equation*}
-		\tag{r}
-		\dfrac
-		{
-			\Gamma \rightarrow \Gamma'
-		}
-		{
-			C(\Gamma) \rightarrow C(\Gamma')
-		}
-		\qquad \text{if } \quad b
-	\end{equation*}
-
 \section{Formal Programs}
 
 \subsection{Domains}
@@ -152,13 +98,13 @@ Throughout the remainder of this report, we use the following conventions in all
 Formal programs support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
 value.
 \begin{align*}
-    \bool &\in \Bool
+    \bool \in \Bool &:= \{ \true, \false \}
     \\
-    \integer &\in \Integer
+    \integer \in \Integer &:= \{ \ldots, -2, -1, 0, 1, 2, \ldots \}
     \\
-    \var &\in \Var
+    \var \in \Var
     \\
-    \val &\in \Val:= \Bool \mid \Integer
+    \val \in \Val &:= \Bool \mid \Integer
 \end{align*}
 
 During execution, the \textit{variable environment} stores the values of all variables, provided that a value has previously been
@@ -259,11 +205,11 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 			\stmArrow
 		\varEnv'
 	}
-	\qquad \text{if} \quad \exists \, i \in \{1 \ldots n\} \; . \; \ExprSem{e_i} \varEnv = \true
+	\qquad \text{if} \quad \exists i \in \{1 \ldots n\} \colon \ExprSem{e_i} \varEnv = \true
 \end{equation*}
 
 A denotational definition of the statement semantics might be able to better highlight the nondeterministic nature of guarded
-commands. Therefore, let the semantic relation $\StmSem{-} : \Stm \rightarrow \mathscr{P}(\VarEnv \times \VarEnv)$ define the
+commands. Therefore, let the semantic relation $\StmSem{-} : \Stm \rightarrow \ToSet{(\VarEnv \times \VarEnv)}$ define the
 denotational semantics of statements as follows:
 \begin{align*}
 	\StmSem{\skipStm} &= \{ (\varEnv, \varEnv) \mid \varEnv \in \VarEnv \}
@@ -289,7 +235,7 @@ the exact same sequence of statements. There are global variables that are initi
 different steps of the program. Additionally, there are step-local variables whose values are not preserved between different
 program steps.
 \begin{equation*}
-	\prog \in \Prog := \ToList{\Var} \times \ToList{\Var} \times (\Var \rightarrow \ToList{\Val}) \times \Stm
+	\prog \in \Prog := \ToSet{\Var} \times \ToSet{\Var} \times (\Var \rightarrow \ToSet{\Val}) \times \Stm
 \end{equation*}
 
 The first set of variables represents the global variables defined by the program, whereas the second set describes the step-local
@@ -299,12 +245,13 @@ values for each variable. The statement of the program is executed once during e
 The semantics of a program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
 \varEnv_1 \, \varEnv_2 \ldots$ of variable environments:
 \begin{multline*}
-	\mathit{traces}(\prog \triangleright \toList{\var}_g, \toList{\var}_l, \mathit{init}, \stm) :=
+	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm) :=
 	\\ \shoveright{
 	\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \mid 
-		\forall \var \in \toList{\var}_g \, . \, \varEnv_0(\var) \in \mathit{init}(\var) \qquad \qquad}
-	\\ \wedge \
-		\forall i \in \mathbb{N} \, . \, \configuration{\stm, \varEnv_i[\toList{\var_l} \mapsto \missing]} \stmArrow \varEnv_{i+1} \}
+		\forall \var \in \toSet{\var}_g \colon \varEnv_0(\var) \in \mathit{init}(\var) \qquad \qquad}
+	\\ \wedge \;
+		\forall i \in \mathbb{N} \colon \configuration{\stm, \varEnv_i[\toSet{\var}_l \mapsto \missing]} \stmArrow \varEnv_{i+1}
+		\}
 \end{multline*}
 
 \end{document}
