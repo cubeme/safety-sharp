@@ -205,7 +205,7 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 			\stmArrow
 		\varEnv'
 	}
-	\qquad \text{if} \quad \exists i \in \{1 \ldots n\} \colon \ExprSem{e_i} \varEnv = \true
+	\qquad \text{if} \quad \ExprSem{e_i} \varEnv = \true
 \end{equation*}
 
 A denotational definition of the statement semantics might be able to better highlight the nondeterministic nature of guarded
@@ -249,7 +249,7 @@ The semantics of a program is a set of \textit{traces}, with each trace being an
 	\\ \shoveright{
 	\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \mid 
 		\forall \var \in \toSet{\var}_g \colon \varEnv_0(\var) \in \mathit{init}(\var) \qquad \qquad}
-	\\ \wedge \;
+	\\ \wedge
 		\forall i \in \mathbb{N} \colon \configuration{\stm, \varEnv_i[\toSet{\var}_l \mapsto \missing]} \stmArrow \varEnv_{i+1}
 		\}
 \end{multline*}
