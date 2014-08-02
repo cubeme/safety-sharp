@@ -29,7 +29,7 @@ namespace SafetySharp.CSharpCompiler
 	using Utilities;
 
 	/// <summary>
-	///     Represents the entry point to the compiler.
+	///     Parses the command line arguments and starts the compilation process.
 	/// </summary>
 	internal class Program
 	{

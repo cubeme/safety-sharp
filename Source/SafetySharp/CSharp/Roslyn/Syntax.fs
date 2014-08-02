@@ -131,15 +131,6 @@ module internal Syntax =
         nullArg syntaxNode "syntaxNode"
         syntaxNode.NormalizeWhitespace ()
 
-    let With withMethod (syntaxNode : #SyntaxNode) =
-        nullArg syntaxNode "syntaxNode"
-        withMethod syntaxNode
-
-    let ConditionalWith condition withMethod (syntaxNode : #SyntaxNode) =
-        nullArg syntaxNode "syntaxNode"
-        if condition then withMethod syntaxNode
-        else syntaxNode
-
     /// Creates a syntax token list containing the appropriate visibility modifier(s).
     let VisibilityModifier = function
         | Private -> 

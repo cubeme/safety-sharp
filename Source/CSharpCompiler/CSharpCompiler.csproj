@@ -63,9 +63,30 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analyzers\CSharpAnalyzer.cs" />
+    <Compile Include="Analyzers\DiagnosticEmitter.cs" />
+    <Compile Include="Analyzers\SemanticModelAnalyzer.cs" />
+    <Compile Include="Analyzers\SymbolAnalyzer.cs" />
+    <Compile Include="Analyzers\SyntaxNodeAnalyzer.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Roslyn\Symbols\SymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\PropertySymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\SemanticModelExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
+    <Compile Include="Roslyn\Visibility.cs" />
     <Compile Include="Utilities\Assert.cs" />
     <Compile Include="Utilities\Log.cs" />
     <Compile Include="Utilities\LogEntry.cs" />

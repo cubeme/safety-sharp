@@ -8,10 +8,10 @@
     <ProjectGuid>acdba456-3b21-480d-b739-dcc7eae6d233</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Tests</RootNamespace>
-    <AssemblyName>Tests</AssemblyName>
+    <AssemblyName>SafetySharp.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>Tests</Name>
+    <Name>SafetySharp Tests</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -51,7 +51,9 @@
   </Choose>
   <ItemGroup>
     <Compile Include="TestCompilation.fs" />
-    <Compile Include="TestHelpers.fs" />
+    <Compile Include="..\TestHelpers.fs">
+      <Link>TestHelpers.fs</Link>
+    </Compile>
     <Compile Include="Modeling.fs" />
     <Compile Include="CSharp\Roslyn\IFieldSymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Roslyn\ITypeSymbolExtensionsTests.fs" />
@@ -124,11 +126,6 @@
       <HintPath>..\packages\Microsoft.Bcl.Metadata.1.0.11-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <ProjectReference Include="..\CSharpCompiler\CSharpCompiler.csproj">
-      <Name>CSharpCompiler</Name>
-      <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">
       <Name>SafetySharp</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>

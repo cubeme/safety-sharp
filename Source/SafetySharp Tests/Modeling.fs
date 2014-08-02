@@ -40,8 +40,21 @@ module ModelingShared =
     let createFieldExpression<'T> (o : obj) field = 
         let fieldInfo = o.GetType().GetField(fsharpFieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
         if fieldInfo = null then
-            invalidOp "Unable to find field '%s' in '%s'." field (o.GetType().FullName) 
+            InvalidOperationException (sprintf "Unable to find field '%s' in '%s'." field (o.GetType().FullName)) |> raise
         Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(o), fieldInfo))
+
+    /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
+    let internal emptyComponentSymbol name = { 
+        Name = name
+        UpdateMethod = None
+        Fields = []
+        ProvidedPorts = []
+        RequiredPorts = []
+    } 
+
+    /// Gets a component object with the given name and component symbol, with no fields or subcomponents.
+    let internal emptyComponentObject name symbol = 
+        { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty; Bindings = Map.empty }
 
 type internal EmptyComponent () =
     inherit Component ()

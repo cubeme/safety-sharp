@@ -20,24 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp
+namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
+{
+	using System;
+	using Microsoft.CodeAnalysis;
+	using Utilities;
 
-module internal AssemblyInfo =
+	/// <summary>
+	///     Provides extension methods for working with <see cref="IPropertySymbol" /> instances.
+	/// </summary>
+	public static class PropertySymbolExtensions
+	{
+		/// <summary>
+		///     Checks whether <paramref name="propertySymbol" /> overrides <paramref name="overriddenProperty" />.
+		/// </summary>
+		/// <param name="propertySymbol">The symbol of the property that should be checked.</param>
+		/// <param name="overriddenProperty">The symbol of the property that should be overridden.</param>
+		public static bool Overrides(this IPropertySymbol propertySymbol, IPropertySymbol overriddenProperty)
+		{
+			Requires.NotNull(propertySymbol, () => propertySymbol);
+			Requires.NotNull(overriddenProperty, () => overriddenProperty);
 
-    open System.Reflection
-    open System.Runtime.CompilerServices
-    open System.Runtime.InteropServices
+			if (propertySymbol.Equals(overriddenProperty))
+				return true;
 
-    [<assembly: AssemblyTitle("SafetySharp Library")>]
-    [<assembly: AssemblyDescription("SafetySharp Library")>]
-    [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyProduct("SafetySharp")>]
-    [<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyCulture("")>]
-    [<assembly: AssemblyVersion("0.1.0.0")>]
-    [<assembly: AssemblyFileVersion("0.1.0.0")>]
-    [<assembly: ComVisible(false)>]
-    [<assembly: InternalsVisibleTo("SafetySharp.Tests")>]
-    [<assembly: InternalsVisibleTo("ssc")>]
+			if (!propertySymbol.IsOverride)
+				return false;
 
-    do ()
+			if (propertySymbol.OverriddenProperty.Equals(overriddenProperty))
+				return true;
+
+			return propertySymbol.OverriddenProperty.Overrides(overriddenProperty);
+		}
+	}
+}

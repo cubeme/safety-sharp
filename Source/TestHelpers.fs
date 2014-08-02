@@ -20,7 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests
+/// Defines a set of test helper functions and operators that are shared between all test projects.
+/// The test helpers are defined in the global namespace within an auto-open module so that all
+/// testing code can conveniently use those helpers.
+[<AutoOpen>]
+module TestHelpers
 
 open System
 open System.Collections
@@ -205,71 +209,52 @@ module private ObjectDumper =
         dump object'
         writer.ToString ()
 
-[<AutoOpen>]
-module internal TestHelpers =
-    
-    /// Raises an <see cref="InvalidOperationException" /> with the given message.
-    let inline invalidOp message = Printf.ksprintf invalidOp message
-
-     /// Checks whether the given function raises an exception of the given type.
-    let raisesWith<'T when 'T :> Exception> func =
-        let mutable thrownException : Exception option = None
-        try 
-            func ()
-        with 
-        | :? 'T as e -> 
-            thrownException <- Some <| upcast e
-        | e ->
-            thrownException <- Some e
-
-        match thrownException with
-        | None ->
-            Assert.Fail ("Expected an exception of type '{0}', but no exception was thrown.", typeof<'T>.FullName)
-            Unchecked.defaultof<'T>
-        | Some (:? 'T as e) ->
-            e
-        | Some e ->
-            let message = "Expected an exception of type '{0}', but an exception of type '{1}' was thrown instead.\n\nActual:\n{2}"
-            Assert.Fail (message, typeof<'T>.FullName, e.GetType().FullName, ObjectDumper.dump e)
-            Unchecked.defaultof<'T>
-
     /// Checks whether the given function raises an exception of the given type.
-    let raises<'T when 'T :> Exception> func =
-        raisesWith<'T> func |> ignore
+let raisesWith<'T when 'T :> Exception> func =
+    let mutable thrownException : Exception option = None
+    try 
+        func ()
+    with 
+    | :? 'T as e -> 
+        thrownException <- Some <| upcast e
+    | e ->
+        thrownException <- Some e
 
-    /// Checks whether the given function raises an <see cref="ArgumentNullException"/> for the argument with the given name.
-    let raisesArgumentNullException argumentName func =
-        let e = raisesWith<ArgumentNullException> func
-        Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
+    match thrownException with
+    | None ->
+        Assert.Fail ("Expected an exception of type '{0}', but no exception was thrown.", typeof<'T>.FullName)
+        Unchecked.defaultof<'T>
+    | Some (:? 'T as e) ->
+        e
+    | Some e ->
+        let message = "Expected an exception of type '{0}', but an exception of type '{1}' was thrown instead.\n\nActual:\n{2}"
+        Assert.Fail (message, typeof<'T>.FullName, e.GetType().FullName, ObjectDumper.dump e)
+        Unchecked.defaultof<'T>
 
-    /// Checks whether the given function raises an <see cref="ArgumentException"/> for the argument with the given name.
-    let raisesArgumentException argumentName func =
-        let e = raisesWith<ArgumentException> func
-        Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
+/// Checks whether the given function raises an exception of the given type.
+let raises<'T when 'T :> Exception> func =
+    raisesWith<'T> func |> ignore
 
-    /// Asserts that the two values are equal.
-    let (=?) left right =
-        let result = left = right
-        if not result then
-            let actual = ObjectDumper.dump left
-            let expected = ObjectDumper.dump right
-            Assert.Fail ("Objects are not equal, even though they are expected to be equal.\n\nExpected:\n{0}\n\nActual:\n{1}", expected, actual)
+/// Checks whether the given function raises an <see cref="ArgumentNullException"/> for the argument with the given name.
+let raisesArgumentNullException argumentName func =
+    let e = raisesWith<ArgumentNullException> func
+    Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
 
-    /// Asserts that the two values are not equal.
-    let (<>?) left right =
-        let result = left <> right
-        if not result then
-            Assert.Fail ("Objects are equal, even though they are expected to be different.\n\n{0}", ObjectDumper.dump left)
+/// Checks whether the given function raises an <see cref="ArgumentException"/> for the argument with the given name.
+let raisesArgumentException argumentName func =
+    let e = raisesWith<ArgumentException> func
+    Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
 
-    /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
-    let emptyComponentSymbol name = { 
-        Name = name
-        UpdateMethod = None
-        Fields = []
-        ProvidedPorts = []
-        RequiredPorts = []
-    } 
+/// Asserts that the two values are equal.
+let (=?) left right =
+    let result = left = right
+    if not result then
+        let actual = ObjectDumper.dump left
+        let expected = ObjectDumper.dump right
+        Assert.Fail ("Objects are not equal, even though they are expected to be equal.\n\nExpected:\n{0}\n\nActual:\n{1}", expected, actual)
 
-    /// Gets a component object with the given name and component symbol, with no fields or subcomponents.
-    let emptyComponentObject name symbol = 
-        { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty; Bindings = Map.empty }
+/// Asserts that the two values are not equal.
+let (<>?) left right =
+    let result = left <> right
+    if not result then
+        Assert.Fail ("Objects are equal, even though they are expected to be different.\n\n{0}", ObjectDumper.dump left)

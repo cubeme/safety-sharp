@@ -20,24 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp
+namespace SafetySharp.CSharpCompiler.Roslyn
+{
+	using System;
 
-module internal AssemblyInfo =
+	/// <summary>
+	///     Represents the visibility of a C# type or member.
+	/// </summary>
+	public enum Visibility
+	{
+		/// <summary>
+		///     Indicates that the type or member has private visibility.
+		/// </summary>
+		Private,
 
-    open System.Reflection
-    open System.Runtime.CompilerServices
-    open System.Runtime.InteropServices
+		/// <summary>
+		///     Indicates that the type or member has protected visibility.
+		/// </summary>
+		Protected,
 
-    [<assembly: AssemblyTitle("SafetySharp Library")>]
-    [<assembly: AssemblyDescription("SafetySharp Library")>]
-    [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyProduct("SafetySharp")>]
-    [<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyCulture("")>]
-    [<assembly: AssemblyVersion("0.1.0.0")>]
-    [<assembly: AssemblyFileVersion("0.1.0.0")>]
-    [<assembly: ComVisible(false)>]
-    [<assembly: InternalsVisibleTo("SafetySharp.Tests")>]
-    [<assembly: InternalsVisibleTo("ssc")>]
+		/// <summary>
+		///     Indicates that the type or member has protected or internal visibility.
+		/// </summary>
+		ProtectedInternal,
 
-    do ()
+		/// <summary>
+		///     Indicates that the type or member has internal visibility.
+		/// </summary>
+		Internal,
+
+		/// <summary>
+		///     Indicates that the type or member has public visibility.
+		/// </summary>
+		Public
+	}
+}

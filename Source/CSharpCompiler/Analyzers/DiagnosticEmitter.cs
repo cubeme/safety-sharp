@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -20,24 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp
+namespace SafetySharp.CSharpCompiler.Analyzers
+{
+	using System;
 
-module internal AssemblyInfo =
-
-    open System.Reflection
-    open System.Runtime.CompilerServices
-    open System.Runtime.InteropServices
-
-    [<assembly: AssemblyTitle("SafetySharp Library")>]
-    [<assembly: AssemblyDescription("SafetySharp Library")>]
-    [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyProduct("SafetySharp")>]
-    [<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyCulture("")>]
-    [<assembly: AssemblyVersion("0.1.0.0")>]
-    [<assembly: AssemblyFileVersion("0.1.0.0")>]
-    [<assembly: ComVisible(false)>]
-    [<assembly: InternalsVisibleTo("SafetySharp.Tests")>]
-    [<assembly: InternalsVisibleTo("ssc")>]
-
-    do ()
+	/// <summary>
+	///     Represents a callback that emits a diagnostic.
+	/// </summary>
+	/// <typeparam name="T">The type of the element that the diagnostic is emitted for.</typeparam>
+	/// <param name="element">The element the diagnostic is emitted for.</param>
+	/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+	public delegate void DiagnosticEmitter<in T>(T element, params object[] messageArgs);
+}

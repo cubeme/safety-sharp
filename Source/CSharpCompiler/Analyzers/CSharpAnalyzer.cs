@@ -23,8 +23,15 @@
 namespace SafetySharp.CSharpCompiler.Analyzers
 {
 	using System;
+	using System.Collections.Immutable;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.Diagnostics;
+	using Utilities;
 
-	public class CSharpAnalyzer
+	/// <summary>
+	///     A base class for SafetySharp C# code analyzers.
+	/// </summary>
+	public abstract class CSharpAnalyzer : IDiagnosticAnalyzer
 	{
 		/// <summary>
 		///     The prefix that is used for all diagnostic identifiers.
@@ -35,5 +42,58 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		///     The category that is used for all diagnostics.
 		/// </summary>
 		public const string Category = "SafetySharp";
+
+		/// <summary>
+		///     Gets the descriptor for the diagnostic emitted by the analyzer.
+		/// </summary>
+		protected DiagnosticDescriptor Descriptor { get; private set; }
+
+		/// <summary>
+		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
+		/// </summary>
+		public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; private set; }
+
+		/// <summary>
+		///     Describes the error diagnostic of the analyzer.
+		/// </summary>
+		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
+		/// <param name="description">The description of the diagnostic.</param>
+		/// <param name="messageFormat">The message format of the diagnostic.</param>
+		protected void Error(string identifier, string description, string messageFormat)
+		{
+			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Error);
+		}
+
+		/// <summary>
+		///     Describes the error diagnostic of the analyzer.
+		/// </summary>
+		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
+		/// <param name="description">The description of the diagnostic.</param>
+		/// <param name="messageFormat">The message format of the diagnostic.</param>
+		protected void Warning(string identifier, string description, string messageFormat)
+		{
+			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Warning);
+		}
+
+		/// <summary>
+		///     Describes the error diagnostic of the analyzer.
+		/// </summary>
+		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
+		/// <param name="description">The description of the diagnostic.</param>
+		/// <param name="messageFormat">The message format of the diagnostic.</param>
+		/// <param name="severity">The severity of the diagnostic.</param>
+		private void SetDescriptor(string identifier, string description, string messageFormat, DiagnosticSeverity severity)
+		{
+			Requires.That(Descriptor == null, "A descriptor has already been set.");
+			Requires.NotNullOrWhitespace(identifier, () => identifier);
+			Requires.NotNullOrWhitespace(description, () => description);
+			Requires.NotNullOrWhitespace(messageFormat, () => messageFormat);
+			Requires.InRange(severity, () => severity);
+			Requires.ArgumentSatisfies(identifier.StartsWith(Prefix), () => identifier,
+									   "Diagnostic identifier does not start with prefix '{0}'.", Prefix);
+
+			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Category, severity, true);
+			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
+		}
 	}
 }
