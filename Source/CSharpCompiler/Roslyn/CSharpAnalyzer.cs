@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Analyzers
+namespace SafetySharp.CSharpCompiler.Roslyn
 {
 	using System;
 	using System.Collections.Immutable;
@@ -42,6 +42,11 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		///     The category that is used for all diagnostics.
 		/// </summary>
 		public const string Category = "SafetySharp";
+
+		/// <summary>
+		///     A callback that can be used to emit a diagnostic.
+		/// </summary>
+		protected Action<Diagnostic> DiagnosticCallback { get; set; }
 
 		/// <summary>
 		///     Gets the descriptor for the diagnostic emitted by the analyzer.

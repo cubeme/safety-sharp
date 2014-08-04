@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Analyzers
+namespace SafetySharp.CSharpCompiler.Roslyn
 {
 	using System;
 	using System.Collections.Immutable;
@@ -66,10 +66,8 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNull(addDiagnostic, () => addDiagnostic);
 
-			DiagnosticEmitter<ISymbol> emitDiagnostic = (locationSymbol, args) =>
-				addDiagnostic(Diagnostic.Create(Descriptor, locationSymbol.Locations[0], args));
-
-			Analyze(typedSymbol, compilation, emitDiagnostic, cancellationToken);
+			DiagnosticCallback = addDiagnostic;
+			Analyze(typedSymbol, compilation);
 		}
 
 		/// <summary>
@@ -82,9 +80,17 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		/// </summary>
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
-		/// <param name="emitDiagnostic">The delegate that should be used to emit diagnostics.</param>
-		/// <param name="cancellationToken">The token that should be checked for cancelling the analysis.</param>
-		protected abstract void Analyze(T symbol, Compilation compilation, DiagnosticEmitter<ISymbol> emitDiagnostic,
-										CancellationToken cancellationToken);
+		protected abstract void Analyze(T symbol, Compilation compilation);
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="symbol" /> using the <paramref name="messageArgs" /> to format the diagnostic
+		///     message.
+		/// </summary>
+		/// <param name="symbol">The symbol the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic(ISymbol symbol, params object[] messageArgs)
+		{
+			DiagnosticCallback(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
+		}
 	}
 }

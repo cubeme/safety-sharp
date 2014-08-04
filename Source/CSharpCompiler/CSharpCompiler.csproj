@@ -51,6 +51,7 @@
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
     <Reference Include="System.Reflection.Metadata">
       <HintPath>..\packages\Microsoft.Bcl.Metadata.1.0.11-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
@@ -62,11 +63,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Analyzers\CSharpAnalyzer.cs" />
-    <Compile Include="Analyzers\DiagnosticEmitter.cs" />
-    <Compile Include="Analyzers\SemanticModelAnalyzer.cs" />
-    <Compile Include="Analyzers\SymbolAnalyzer.cs" />
-    <Compile Include="Analyzers\SyntaxNodeAnalyzer.cs" />
+    <Compile Include="Analyzers\SS1000.cs" />
+    <Compile Include="Analyzers\SS1001.cs" />
+    <Compile Include="Roslyn\CSharpAnalyzer.cs" />
+    <Compile Include="Roslyn\SemanticModelAnalyzer.cs" />
+    <Compile Include="Roslyn\SymbolAnalyzer.cs" />
+    <Compile Include="Roslyn\SyntaxNodeAnalyzer.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -104,6 +106,7 @@
       <Name>SafetySharp</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

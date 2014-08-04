@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Analyzers
+namespace SafetySharp.CSharpCompiler.Roslyn
 {
 	using System;
 	using System.Threading;
@@ -44,19 +44,25 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 			Requires.NotNull(semanticModel, () => semanticModel);
 			Requires.NotNull(addDiagnostic, () => addDiagnostic);
 
-			DiagnosticEmitter<SyntaxNode> emitDiagnostic = (locationNode, args) =>
-				addDiagnostic(Diagnostic.Create(Descriptor, locationNode.GetLocation(), args));
-
-			Analyze(semanticModel, emitDiagnostic, cancellationToken);
+			DiagnosticCallback = addDiagnostic;
+			Analyze(semanticModel);
 		}
 
 		/// <summary>
 		///     Analyzes the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semanticModel that should be analyzed.</param>
-		/// <param name="emitDiagnostic">The delegate that should be used to emit diagnostics.</param>
-		/// <param name="cancellationToken">The token that should be checked for cancelling the analysis.</param>
-		protected abstract void Analyze(SemanticModel semanticModel, DiagnosticEmitter<SyntaxNode> emitDiagnostic,
-										CancellationToken cancellationToken);
+		protected abstract void Analyze(SemanticModel semanticModel);
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the diagnostic
+		///     message.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic(SyntaxNode syntaxNode, params object[] messageArgs)
+		{
+			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+		}
 	}
 }

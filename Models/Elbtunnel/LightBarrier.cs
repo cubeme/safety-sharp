@@ -64,8 +64,9 @@ namespace Elbtunnel
 			return false;
 		}
 
-		//public bool X { get; set; }
+		public bool X { [Provided]get;[Required] set; }
 
+		[Provided] 
 		public int Do()
 		{
 			SendData(22);
@@ -76,7 +77,7 @@ namespace Elbtunnel
 		}
 	}
 
-	internal enum Lane
+	internal enum Lane 
 	{
 		Left,
 		Right

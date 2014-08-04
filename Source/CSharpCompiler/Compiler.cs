@@ -28,10 +28,10 @@ namespace SafetySharp.CSharpCompiler
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
-	using Analyzers;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.MSBuild;
+	using Roslyn;
 	using Utilities;
 
 	/// <summary>
@@ -47,7 +47,7 @@ namespace SafetySharp.CSharpCompiler
 			get
 			{
 				return from type in typeof(Compiler).Assembly.GetTypes()
-					   where type.IsClass && !type.IsAbstract && typeof(CSharpAnalyzer).IsAssignableFrom(type)
+					   where type.IsClass && !type.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(type)
 					   select (IDiagnosticAnalyzer)Activator.CreateInstance(type);
 			}
 		}
