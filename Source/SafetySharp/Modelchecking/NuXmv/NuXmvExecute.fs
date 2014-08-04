@@ -23,26 +23,18 @@
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // TODO:
-//  - Ensure: If commandQueueToProcess is not empty, Processing is Followed by WaitingForInput. (Doesn't get stuck in WaitingForInput)
+//  - Ensure: If commandQueueToProcess is not empty and no Command is active, the next element in the queue is processed
 //    Szenarios (What happens, if):
 //     - ProcessNextQueueElement is called by two functions at the same time
 //     - If one of those function calls is ignored (maybe called by an event) will the complete queue be processed in the future?
+//  - Ensure: stderr of the verbose result of a command is always associated to the correct command
 
-
-(*
-[<RequireQualifiedAccess>]
-type internal NuXmvStateOfInput =
-    | WaitingForInput
-    | Processing
-*)
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
     | NotDetermined
     | SmtMode
     | BddMode
-    
-    
     
 type internal QueueCommand = {
     Command: ICommand;
