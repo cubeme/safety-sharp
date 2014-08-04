@@ -133,6 +133,7 @@ type internal ExportCommandsToString() =
     member this.ExportICommand (command:ICommand) : string =
         match command with
             | :? NuXmvCustomCommand as command -> this.ExportCustomCommand command
+            | :? NuXmvStartedCommand as command -> "NuXmv Started"
             | :? NuSMVCommand as command -> this.ExportNuSMVCommand command
             | :? NuXmvCommand as command -> this.ExportNuXmvCommand command
             | _ -> failwith "NotImplementedYet"

@@ -45,9 +45,15 @@ module NuXmvExecuteTests =
     [<Test>]
     let ``NuXmv starts in interactive mode`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive ()
+        nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
         nuxmv.QuitNuXmvAndWaitForExit()
         
+    [<Test>]
+    let ``Shutdown of NuXmv can be forced`` () =
+        let nuxmv = ExecuteNuXmv()
+        nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
+        System.Threading.Thread.Sleep (100)
+        nuxmv.ForceShutdownNuXmv ()
 
 
     open TestCase1
@@ -62,10 +68,14 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename nuXmvCodeString
 
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive ()
+        nuxmv.StartNuXmvInteractive (-1)
+        nuxmv.QuitNuXmvAndWaitForExit()
         nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         nuxmv.QuitNuXmvAndWaitForExit()
         let result = nuxmv.ReturnResults ()
+        //System.Threading.Thread.Sleep (2000)
+        //nuxmv.ForceShutdownNuXmv ()
+
         result.Length > 0 =? true
         ()
