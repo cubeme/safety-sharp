@@ -28,8 +28,6 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //     - ProcessNextQueueElement is called by two functions at the same time
 //     - If one of those function calls is ignored (maybe called by an event) will the complete queue be processed in the future?
 
-// http://msdn.microsoft.com/en-us/library/433b98s3(v=vs.110).aspx
-
 
 (*
 [<RequireQualifiedAccess>]
@@ -37,10 +35,6 @@ type internal NuXmvStateOfInput =
     | WaitingForInput
     | Processing
 *)
-    
-// http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
-//
-
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
@@ -84,7 +78,10 @@ type internal ExecuteNuXmv() =
     
     let stdoutOutputBuffer = new System.Text.StringBuilder ()
     let stderrOutputBuffer = new System.Text.StringBuilder ()
-
+    
+    let mutable processOutputReader : System.Threading.Tasks.Task = null
+    let mutable processErrorReader : System.Threading.Tasks.Task = null
+    let mutable processWaiter : System.Threading.Tasks.Task<bool> = null
     let proc = new System.Diagnostics.Process()
 
 
@@ -103,14 +100,13 @@ type internal ExecuteNuXmv() =
             | Some(filename) -> filename
             | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
     
+    (*
+    old Method
     member this.stderrReceivedNewInput (dataReceivedEvArgs:System.Diagnostics.DataReceivedEventArgs) = 
         let newData = dataReceivedEvArgs.Data
         stderrOutputBuffer.Append newData |> ignore
 
     member this.stdoutReceivedNewInput (dataReceivedEvArgs:System.Diagnostics.DataReceivedEventArgs) = 
-        // be cautious: stdoutReceivedNewInput is only called, when the inputline is finished by a newline!!!!
-        //              the command prompt does "nuXmv >" does not contain a line ending
-        
         let newData = dataReceivedEvArgs.Data
         if newData.StartsWith "nuXmv >" && activeCommand.IsSome then
             let newFinishedCommand = {
@@ -125,7 +121,79 @@ type internal ExecuteNuXmv() =
         else
             stdoutOutputBuffer.Append newData |> ignore
         ()
+    *)
+    
+    member this.TaskReadStderr () : System.Threading.Tasks.Task =
+        System.Threading.Tasks.Task.Factory.StartNew(
+            fun () -> 
+                // http://msdn.microsoft.com/en-us/library/ath1fht8(v=vs.110).aspx
+                let mutable endReached = false
+                while endReached <> true do
+                    let newChar = proc.StandardError.Read()
+                    if newChar = -1 then
+                        endReached <- true
+                    else
+                        stderrOutputBuffer.Append newChar |> ignore
+                ()
+        )
 
+    member this.TaskReadStdout () : System.Threading.Tasks.Task =
+        let promptPossible = ref true
+        let currentLine = ref (new System.Text.StringBuilder())
+        let checkIfActiveCommandFinished (character:char) (position:int) =
+            let promptString = "nuXmv > "
+            let updatePromptPossible ()=
+                //position is 0-based
+                if !promptPossible = false then
+                    ()
+                else
+                    if position >= promptString.Length  then
+                        promptPossible := false
+                    else
+                        let characterInPrompt = promptString.Chars(position)
+                        if character <> characterInPrompt then
+                            promptPossible := false
+            updatePromptPossible ()
+            let isPrompt : bool =
+                !promptPossible && position = promptString.Length-1
+            if isPrompt && activeCommand.IsSome then
+                let newFinishedCommand = {
+                    QueueCommandResult.Command = activeCommand.Value.Command;
+                    QueueCommandResult.Stdout = stdoutOutputBuffer.ToString();
+                    QueueCommandResult.Stderr = stderrOutputBuffer.ToString();
+                }
+                activeCommand <- None
+                stdoutOutputBuffer.Clear() |> ignore
+                stderrOutputBuffer.Clear() |> ignore
+                this.ProcessNextQueueElement()
+
+        System.Threading.Tasks.Task.Factory.StartNew(
+            fun () -> 
+                // http://msdn.microsoft.com/en-us/library/ath1fht8(v=vs.110).aspx
+                let mutable endReached = false
+                while endReached <> true do
+                    let newChar = proc.StandardOutput.Read()
+                    if newChar = -1 then
+                        endReached <- true
+                    let newChar = (char newChar)
+                    if newChar = '\n' then
+                        currentLine.Value.Append newChar |> ignore
+                        stdoutOutputBuffer.Append currentLine.Value |> ignore
+                        currentLine.Value.Clear() |> ignore
+                        promptPossible := true
+                    else
+                        currentLine.Value.Append newChar |> ignore
+                        checkIfActiveCommandFinished newChar (currentLine.Value.Length - 1)
+                ()
+        )
+
+    member this.TaskWaitForEnd () : System.Threading.Tasks.Task<bool> =
+        System.Threading.Tasks.Task<bool>.Factory.StartNew(
+            fun () ->
+                proc.WaitForExit()
+                true //<-- this Value gets interesting, when we define a timeout (see pattern)
+        )
+            
     member this.AppendQueueCommand (command:QueueCommand) =
         // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip them out from the input-stream
         // TODO: check if in valid state (use expectedModeOfProgramAfterQueue)
@@ -184,14 +252,7 @@ type internal ExecuteNuXmv() =
             }
         activeCommand<-Some(initialCommand)
         expectedModeOfProgramAfterQueue <- NuXmvModeOfProgramm.InitialOrReseted
-        
-        // From MSDN (Analogue for StandardError)
-        //   Follow these steps to perform asynchronous read operations on StandardOutput for a Process :
-        //   1. Set UseShellExecute to false.
-        //   2. Set RedirectStandardOutput to true.
-        //   3. Add your event handler to the OutputDataReceived event. The event handler must match the System.Diagnostics.DataReceivedEventHandler delegate signature.
-        //   4. Start the Process.
-        //   5. Call BeginOutputReadLine for the Process. This call starts asynchronous read operations on StandardOutput.        
+                
               
         proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine NuXmvHelpfulCommandSequences.commandLineStart
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
@@ -202,12 +263,36 @@ type internal ExecuteNuXmv() =
         proc.StartInfo.RedirectStandardError <-  true
         proc.StartInfo.RedirectStandardInput <-  true
 
+        proc.Start() |> ignore
+
+        proc.StandardInput.AutoFlush <- true
+
         //proc.EnableRaisingEvents <- true // process emits an exit event if killed or exits
+        (*
+        Old system:
+        // be cautious: stdoutReceivedNewInput is only called, when the inputline is finished by a newline!!!!
+        //              the command prompt does "nuXmv >" does not contain a line ending
+        // From MSDN (Analogue for StandardError)
+        //   Follow these steps to perform asynchronous read operations on StandardOutput for a Process :
+        //   1. Set UseShellExecute to false.
+        //   2. Set RedirectStandardOutput to true.
+        //   3. Add your event handler to the OutputDataReceived event. The event handler must match the System.Diagnostics.DataReceivedEventHandler delegate signature.
+        //   4. Start the Process.
+        //   5. Call BeginOutputReadLine for the Process. This call starts asynchronous read operations on StandardOutput.
         proc.OutputDataReceived.Add (this.stdoutReceivedNewInput)
         proc.ErrorDataReceived.Add (this.stderrReceivedNewInput)
         proc.Start() |> ignore
         proc.BeginOutputReadLine ()
         proc.BeginErrorReadLine ()
+        *)
+        // New system (avoids the problem with the newline
+        // Inspiration:
+        //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
+        //  - https://gist.github.com/alabax/11353282
+
+        processOutputReader <- this.TaskReadStdout ()
+        processErrorReader <- this.TaskReadStderr ()
+        processWaiter <- this.TaskWaitForEnd ()
         ()
                 
     member this.ProcessNextQueueElement () =
@@ -225,8 +310,9 @@ type internal ExecuteNuXmv() =
         proc.Kill()
 
     member this.QuitNuXmvAndWaitForExit () =
-        this.ExecuteCommand NuSMVCommand.Quit 
-        proc.WaitForExit()
+        this.ExecuteCommand NuSMVCommand.Quit
+        System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
+
         let exitCode = proc.ExitCode
         ()
         // match exitCode with
