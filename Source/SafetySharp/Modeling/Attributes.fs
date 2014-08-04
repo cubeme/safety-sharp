@@ -26,12 +26,6 @@ open System
 open Microsoft.CodeAnalysis.CSharp
 open SafetySharp.Internal.Utilities
 
-/// When applied to a method of a <see cref="Component" />, marks the method as the component's behavior.
-[<AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)>]
-[<Sealed>]
-type BehaviorAttribute () =
-    inherit Attribute ()
-
 /// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
 /// marks the method or property as a provided port.
 [<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]

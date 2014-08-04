@@ -84,12 +84,12 @@ module ``GetComponentInterfaceSymbol method`` =
         compilation.SemanticModel.GetComponentInterfaceSymbol().Name =? typeof<IComponent>.Name
 
 [<TestFixture>]
-module ``GetBehaviorAttributeSymbol method`` =
+module ``GetUpdateMethodSymbol method`` =
     [<Test>]
     let ``throws when semantic model is null`` () =
-        raisesArgumentNullException "semanticModel" (fun () -> (null : SemanticModel).GetBehaviorAttributeSymbol () |> ignore)
+        raisesArgumentNullException "semanticModel" (fun () -> (null : SemanticModel).GetUpdateMethodSymbol () |> ignore)
 
     [<Test>]
     let ``returns the BehaviorAttribute symbol`` () =
         let compilation = TestCompilation ""
-        compilation.SemanticModel.GetBehaviorAttributeSymbol().Name =? typeof<BehaviorAttribute>.Name
+        compilation.SemanticModel.GetUpdateMethodSymbol().Name =? "Update"

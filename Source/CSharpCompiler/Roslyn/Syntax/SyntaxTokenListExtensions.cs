@@ -50,9 +50,6 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			var isInternal = tokenList.Any(SyntaxKind.InternalKeyword);
 			var isPublic = tokenList.Any(SyntaxKind.PublicKeyword);
 
-			if (!isPrivate && !isProtected && !isInternal && !isPublic)
-				return defaultVisibility;
-
 			if (isPrivate && !isProtected && !isInternal && !isPublic)
 				return Visibility.Private;
 
@@ -68,7 +65,6 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			if (isPublic && !isPrivate && !isProtected && !isInternal)
 				return Visibility.Public;
 
-			Assert.NotReached("Unable to determine visibility.");
 			return defaultVisibility;
 		}
 	}

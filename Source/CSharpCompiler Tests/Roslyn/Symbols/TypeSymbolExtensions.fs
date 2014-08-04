@@ -126,7 +126,7 @@ module ``IsDerivedFromComponent methods`` =
 
     [<Test>]
     let ``returns false for class only implementing IComponent`` () =
-        isDerivedFromComponent "class X : IComponent { public string Name {get;private set;} }" =? false
+        isDerivedFromComponent "class X : IComponent { public void Update() {} }" =? false
 
     [<Test>]
     let ``returns true for class directly derived from Component`` () =
@@ -170,7 +170,7 @@ module ``ImplementsIComponent methods`` =
 
     [<Test>]
     let ``returns true for class only implementing IComponent`` () =
-        implementsIComponent "class X : IComponent { public string Name {get;private set;} }" =? true
+        implementsIComponent "class X : IComponent { public void Update() {} }" =? true
 
     [<Test>]
     let ``returns true for class directly derived from Component`` () =
@@ -182,4 +182,4 @@ module ``ImplementsIComponent methods`` =
 
     [<Test>]
     let ``returns true for class indirectly implementing IComponent`` () =
-        implementsIComponent "class Y : IComponent { public string Name {get;private set;} } class X : Y {}" =? true
+        implementsIComponent "class Y : IComponent { public void Update() {} } class X : Y {}" =? true

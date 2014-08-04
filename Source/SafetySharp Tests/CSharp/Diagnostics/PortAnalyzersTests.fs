@@ -160,8 +160,8 @@ module ComponentInterfaceMethodWithoutPortAttributeAnalyzerTests =
         hasDiagnostics "class C : Component { int M { get; set; }}" =? false
         hasDiagnostics "class C { void M() {} }" =? false
         hasDiagnostics "class C { int M { get; set; }}" =? false
-        hasDiagnostics "class C : IComponent { void M() {} }" =? false
-        hasDiagnostics "class C : IComponent { int M { get; set; }}" =? false
+        hasDiagnostics "class C : IComponent { public void Update() {} void M() {} }" =? false
+        hasDiagnostics "class C : IComponent { public void Update() {} int M { get; set; }}" =? false
 
 [<TestFixture>]
 module AccessorIsMarkedWithPortAttributeAnalyzerTests =
@@ -225,10 +225,10 @@ module ClassPortAttributeContradictsInterfacePortAttributeAnalyzerTests =
 
     [<Test>]
     let ``Implementations with wrong attribute outside of component class are valid`` () =
-        hasDiagnostics "class C : I { [Provided] public void In() {} [Required] public void Out() {}}" =? false
-        hasDiagnostics "class C : I { [Provided] void I.In() {} [Required] void I.Out() {}}" =? false
-        hasDiagnostics "class C : J { [Provided] public int In { get; set; } [Required] public int Out { get; set; }}" =? false
-        hasDiagnostics "class C : J { [Provided] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? false
+        hasDiagnostics "class C : I { public void Update() {} [Provided] public void In() {} [Required] public void Out() {}}" =? false
+        hasDiagnostics "class C : I { public void Update() {} [Provided] void I.In() {} [Required] void I.Out() {}}" =? false
+        hasDiagnostics "class C : J { public void Update() {} [Provided] public int In { get; set; } [Required] public int Out { get; set; }}" =? false
+        hasDiagnostics "class C : J { public void Update() {} [Provided] int J.In { get; set; } [Required] int J.Out { get; set; }}" =? false
 
     [<Test>]
     let ``Implementations with wrong attribute are valid if interface does not derive from IComponent`` () =
@@ -274,8 +274,8 @@ module ExternImplementedProvidedPortAnalyzerTests =
 
     [<Test>]
     let ``Extern method or property outside of component classes is valid`` () =
-        hasDiagnostics "class C : I { public extern void M();}" =? false
-        hasDiagnostics "class C : J { public extern int M { get; set; }}" =? false
+        hasDiagnostics "class C : I { public void Update() {} public extern void M();}" =? false
+        hasDiagnostics "class C : J { public void Update() {} public extern int M { get; set; }}" =? false
 
     [<Test>]
     let ``Extern method or property outside of component interfaces is valid`` () =
@@ -300,8 +300,8 @@ module NonExternImplementedRequiredPortAnalyzerTests =
 
     [<Test>]
     let ``Non-extern method or property outside of component classes is valid`` () =
-        hasDiagnostics "class C : I { public void M() {}}" =? false
-        hasDiagnostics "class C : J { public int M { get; set; }}" =? false
+        hasDiagnostics "class C : I { public void Update() {} public void M() {}}" =? false
+        hasDiagnostics "class C : J { public void Update() {} public int M { get; set; }}" =? false
 
     [<Test>]
     let ``Non-extern method or property outside of component interfaces is valid`` () =

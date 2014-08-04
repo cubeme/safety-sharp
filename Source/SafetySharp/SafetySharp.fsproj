@@ -89,7 +89,6 @@
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzers.fs" />
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
-    <Compile Include="CSharp\Diagnostics\UpdateMethodAnalyzers.fs" />
     <Compile Include="CSharp\Diagnostics\PortAnalyzers.fs" />
     <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
     <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />

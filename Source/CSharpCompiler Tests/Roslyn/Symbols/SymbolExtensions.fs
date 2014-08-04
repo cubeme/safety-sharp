@@ -64,10 +64,10 @@ module ``HasAttribute methods`` =
     [<Test>]
     let ``throws when symbol is null`` () =
         let compilation = TestCompilation ""
-        let symbol = compilation.CSharpCompilation.GetTypeSymbol<BehaviorAttribute> ()
+        let symbol = compilation.CSharpCompilation.GetTypeSymbol<ProvidedAttribute> ()
         raisesArgumentNullException "symbol" (fun () -> (null : ISymbol).HasAttribute symbol |> ignore)
-        raisesArgumentNullException "symbol" (fun () -> (null : ISymbol).HasAttribute<BehaviorAttribute> compilation.CSharpCompilation |> ignore)
-        raisesArgumentNullException "symbol" (fun () -> (null : ISymbol).HasAttribute<BehaviorAttribute> compilation.SemanticModel |> ignore)
+        raisesArgumentNullException "symbol" (fun () -> (null : ISymbol).HasAttribute<ProvidedAttribute> compilation.CSharpCompilation |> ignore)
+        raisesArgumentNullException "symbol" (fun () -> (null : ISymbol).HasAttribute<ProvidedAttribute> compilation.SemanticModel |> ignore)
 
     [<Test>]
     let ``throws when compilation is null`` () =

@@ -34,7 +34,9 @@ open SafetySharp.Modeling.CompilerServices
 
 /// Represents a marker interface for components.
 [<AllowNullLiteral>]
-type IComponent = interface end
+type IComponent = 
+    /// Updates the internal state of the component.
+    abstract member Update : unit -> unit
 
 /// Provides access to a non-public member of a component.
 type internal IMemberAccess =
@@ -102,7 +104,13 @@ type Component () =
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
 
-    interface IComponent
+    interface IComponent with
+        /// Updates the internal state of the component.
+        member this.Update () = this.Update ()
+
+    /// Updates the internal state of the component.
+    abstract member Update : unit -> unit
+    default this.Update () = ()
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
@@ -212,9 +220,7 @@ type Component () =
 
         initialValues
 
-    /// <summary>
     /// Gets the subcomponent with the given name.
-    /// </summary>
     member internal this.GetSubcomponent subcomponentName =
         nullOrWhitespaceArg subcomponentName "subcomponentName"
         requiresIsSealed ()

@@ -46,8 +46,7 @@ namespace Elbtunnel
 			_sensor = sensor;
 		}
 	
-		[Behavior]
-		private void Do()
+		public override void Update()
 		{
 			_triggered = _sensor.IsTriggered();
 		}
@@ -126,8 +125,7 @@ namespace Elbtunnel
 		private extern void P(int a,
 							  int b);
 
-		[Behavior]
-		private void Update()
+		public override void Update()
 		{
 			Lane = Lane.Left;
 			Value = Choose.Boolean();

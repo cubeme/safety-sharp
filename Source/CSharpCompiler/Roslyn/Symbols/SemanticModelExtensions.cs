@@ -95,14 +95,14 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="BehaviorAttribute" /> attribute within the
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the attribute symbol should be returned for.</param>
-		public static INamedTypeSymbol GetBehaviorAttributeSymbol(this SemanticModel semanticModel)
+		public static IMethodSymbol GetUpdateMethodSymbol(this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
-			return semanticModel.Compilation.GetTypeSymbol<BehaviorAttribute>();
+			return semanticModel.Compilation.GetUpdateMethodSymbol();
 		}
 	}
 }

@@ -52,8 +52,7 @@ module internal MethodSymbolExtensions =
         member this.IsUpdateMethod (compilation : Compilation) =
             nullArg this "this"
             nullArg compilation "compilation"
-            let behaviorAttribute = compilation.GetBehaviorAttributeSymbol ()
-            this.GetAttributes () |> Seq.exists (fun attribute -> attribute.AttributeClass = behaviorAttribute)
+            false
 
         /// Checks whether the method symbol overrides the <see cref="Component.Update()" /> method.
         member this.IsUpdateMethod (semanticModel : SemanticModel) =

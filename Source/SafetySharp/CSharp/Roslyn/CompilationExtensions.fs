@@ -65,12 +65,6 @@ module internal CompilationExtensions =
             nullArg this "this"
             this.GetTypeSymbol<IComponent> ()
 
-        /// Gets the <see cref="ITypeSymbol " /> representing the <see cref="BehaviorAttribute" />
-        /// within the context of the compilation.
-        member this.GetBehaviorAttributeSymbol () =
-            nullArg this "this"
-            this.GetTypeSymbol<BehaviorAttribute> ()
-
         /// Gets the symbols for all types contained in the compilation except for types defined in mscorlib or in SafetySharp.dll.
         member this.GetTypeSymbols () =
             let mscorlib = this.ObjectType.ContainingAssembly

@@ -24,7 +24,6 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 {
 	using System;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
 	using Utilities;
 
@@ -56,31 +55,31 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="methodSymbol" /> is marked with the <see cref="BehaviorAttribute" /> within the context
-		///     of the <paramref name="compilation" />.
+		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> method within the
+		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
-		public static bool IsBehaviorMethod(this IMethodSymbol methodSymbol, Compilation compilation)
+		public static bool IsUpdateMethod(this IMethodSymbol methodSymbol, Compilation compilation)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
 
-			return methodSymbol.HasAttribute<BehaviorAttribute>(compilation);
+			return methodSymbol.Overrides(compilation.GetUpdateMethodSymbol());
 		}
 
 		/// <summary>
-		///     Checks whether <paramref name="methodSymbol" /> is marked with the <see cref="BehaviorAttribute" /> within the context
-		///     of the <paramref name="semanticModel" />.
+		///     Checks whether <paramref name="methodSymbol" /> overrides the <see cref="Component.Update()" /> method within the
+		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		public static bool IsBehaviorMethod(this IMethodSymbol methodSymbol, SemanticModel semanticModel)
+		public static bool IsUpdateMethod(this IMethodSymbol methodSymbol, SemanticModel semanticModel)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return methodSymbol.HasAttribute<BehaviorAttribute>(semanticModel);
+			return methodSymbol.Overrides(semanticModel.GetUpdateMethodSymbol());
 		}
 	}
 }

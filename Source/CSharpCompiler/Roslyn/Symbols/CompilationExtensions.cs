@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Modeling;
 	using Utilities;
@@ -95,14 +96,18 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="BehaviorAttribute" /> attribute within the
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Update()" /> method within the
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
-		public static INamedTypeSymbol GetBehaviorAttributeSymbol(this Compilation compilation)
+		public static IMethodSymbol GetUpdateMethodSymbol(this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
-			return compilation.GetTypeSymbol<BehaviorAttribute>();
+
+			return compilation.GetTypeSymbol<Component>()
+							  .GetMembers("Update")
+							  .OfType<IMethodSymbol>()
+							  .Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
 		}
 	}
 }

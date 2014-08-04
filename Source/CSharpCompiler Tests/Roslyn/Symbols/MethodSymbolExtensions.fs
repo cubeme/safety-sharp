@@ -76,38 +76,42 @@ module ``Overrides method`` =
         methodSymbol.Overrides methodSymbol =? true
 
 [<TestFixture>]
-module ``IsBehaviorMethod methods`` =
-    let isBehaviorMethod csharpCode =
+module ``IsUpdateMethod methods`` =
+    let isUpdateMethod csharpCode methodName =
         let compilation = TestCompilation csharpCode
-        let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        methodSymbol.IsBehaviorMethod compilation.SemanticModel && methodSymbol.IsBehaviorMethod compilation.CSharpCompilation
+        let methodSymbol = compilation.FindMethodSymbol "X" methodName
+        methodSymbol.IsUpdateMethod compilation.SemanticModel && methodSymbol.IsUpdateMethod compilation.CSharpCompilation
 
     [<Test>]
     let ``throws when method symbol is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
-        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).IsBehaviorMethod (compilation.SemanticModel) |> ignore)
+        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).IsUpdateMethod (compilation.SemanticModel) |> ignore)
     
     [<Test>]
     let ``throws when semantic model is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        raisesArgumentNullException "semanticModel" (fun () -> methodSymbol.IsBehaviorMethod (null : SemanticModel) |> ignore)
+        raisesArgumentNullException "semanticModel" (fun () -> methodSymbol.IsUpdateMethod (null : SemanticModel) |> ignore)
 
     [<Test>]
     let ``throws when compilation is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        raisesArgumentNullException "compilation" (fun () -> methodSymbol.IsBehaviorMethod (null : Compilation) |> ignore)
+        raisesArgumentNullException "compilation" (fun () -> methodSymbol.IsUpdateMethod (null : Compilation) |> ignore)
 
     [<Test>]
-    let ``returns true for method with BehaviorAttribute`` () =
-        isBehaviorMethod "class X { [Behavior] void M() {} }" =? true
+    let ``returns true for Update method within component`` () =
+        isUpdateMethod "class X : Component { public override void Update() {} }" "Update" =? true
 
     [<Test>]
-    let ``returns true for method with BehaviorAttribute in inherited class`` () =
-        isBehaviorMethod "class Y : Component {} class X : Y { [Behavior] void M() {} }" =? true
-        isBehaviorMethod "class Y : Component { [Behavior] void M() {} } class X : Y { [Behavior] void M() {} }" =? true
+    let ``returns true for inherited Update methods within components`` () =
+        isUpdateMethod "class Y : Component {} class X : Y { public override void Update() {} }" "Update" =? true
+        isUpdateMethod "class Y : Component { public override void Update() {} } class X : Y { public override void Update() {} }" "Update" =? true
 
     [<Test>]
-    let ``returns false for method without BehaviorAttribute`` () =
-        isBehaviorMethod "class X : Component { void M() {} }" =? false
+    let ``returns false for non-Update method within component`` () =
+        isUpdateMethod "class X : Component { void M() {} }" "M" =? false
+
+    [<Test>]
+    let ``returns false for Update method outside of component`` () =
+        isUpdateMethod "class Y { public virtual void Update() {} } class X : Y { public override void Update() {} }" "Update" =? false
