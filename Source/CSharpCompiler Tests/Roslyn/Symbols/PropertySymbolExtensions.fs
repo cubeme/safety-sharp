@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Roslyn.IPropertySymbolExtensionsTests
+namespace Roslyn.Symbols.PropertySymbolExtensions
 
 open System
 open System.Linq
@@ -28,9 +28,8 @@ open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 open SafetySharp.Modeling
 
 [<TestFixture>]
@@ -41,6 +40,12 @@ module ``Overrides method`` =
         let overridenPropertySymbol = compilation.FindPropertySymbol "Y" "M"
 
         propertySymbol.Overrides overridenPropertySymbol
+
+    [<Test>]
+    let ``throws when property symbol is null`` () =
+        let compilation = TestCompilation "class X { int P { get; set; } }"
+        let propertySymbol = compilation.FindPropertySymbol "X" "P"
+        raisesArgumentNullException "propertySymbol" (fun () -> (null : IPropertySymbol).Overrides propertySymbol |> ignore)
 
     [<Test>]
     let ``throws when overriden property symbol is null`` () =
@@ -69,27 +74,27 @@ module ``Overrides method`` =
 
         propertySymbol.Overrides propertySymbol =? true
 
-[<TestFixture>]
-module ``HasAttribute method`` =
-    let hasAttribute<'T when 'T :> Attribute> csharpCode =
-        let compilation = TestCompilation csharpCode
-        let propertySymbol = compilation.FindPropertySymbol "C" "P"
-        propertySymbol.HasAttribute<'T> compilation.CSharpCompilation
-
-    [<Test>]
-    let ``throws when compilation is null`` () =
-        let compilation = TestCompilation "class C { int P { get; set; }}"
-        let propertySymbol = compilation.FindPropertySymbol "C" "P"
-        raisesArgumentNullException "compilation" (fun () -> propertySymbol.HasAttribute<ProvidedAttribute> null |> ignore)
-
-    [<Test>]
-    let ``returns false if property has no attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { int P { get; set; }}" =? false
-
-    [<Test>]
-    let ``returns false if property has different attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { [Required] int P { get; set; }}" =? false
-
-    [<Test>]
-    let ``returns true if property has attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { [Provided] int P { get; set; }}" =? true
+//[<TestFixture>]
+//module ``HasAttribute method`` =
+//    let hasAttribute<'T when 'T :> Attribute> csharpCode =
+//        let compilation = TestCompilation csharpCode
+//        let propertySymbol = compilation.FindPropertySymbol "C" "P"
+//        propertySymbol.HasAttribute<'T> compilation.CSharpCompilation
+//
+//    [<Test>]
+//    let ``throws when compilation is null`` () =
+//        let compilation = TestCompilation "class C { int P { get; set; }}"
+//        let propertySymbol = compilation.FindPropertySymbol "C" "P"
+//        raisesArgumentNullException "compilation" (fun () -> propertySymbol.HasAttribute<ProvidedAttribute> null |> ignore)
+//
+//    [<Test>]
+//    let ``returns false if property has no attribute`` () =
+//        hasAttribute<ProvidedAttribute> "class C { int P { get; set; }}" =? false
+//
+//    [<Test>]
+//    let ``returns false if property has different attribute`` () =
+//        hasAttribute<ProvidedAttribute> "class C { [Required] int P { get; set; }}" =? false
+//
+//    [<Test>]
+//    let ``returns true if property has attribute`` () =
+//        hasAttribute<ProvidedAttribute> "class C { [Provided] int P { get; set; }}" =? true

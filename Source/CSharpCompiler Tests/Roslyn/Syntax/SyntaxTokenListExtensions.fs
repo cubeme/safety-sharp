@@ -20,17 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Roslyn.SyntaxTokenListExtensionsTests
+namespace Roslyn.Syntax.SyntaxTokenListExtensions
 
 open System
 open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.Modeling
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Modeling.CompilerServices
+open SafetySharp.CSharpCompiler.Roslyn.Syntax
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
 module ``Visibility method`` =
@@ -43,29 +43,29 @@ module ``Visibility method`` =
         ")
 
         let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
-        methodDeclaration.Modifiers.GetVisibility Private
+        methodDeclaration.Modifiers.GetVisibility Visibility.ProtectedInternal
 
     [<Test>]
     let ``default visibility`` () =
-        getVisibility "" =? Private
+        getVisibility "" =? Visibility.ProtectedInternal
 
     [<Test>]
     let ``private visibility`` () =
-        getVisibility "private" =? Private
+        getVisibility "private" =? Visibility.Private
 
     [<Test>]
     let ``protected visibility`` () =
-        getVisibility "protected" =? Protected
+        getVisibility "protected" =? Visibility.Protected
 
     [<Test>]
     let ``protected internal visibility`` () =
-        getVisibility "protected internal" =? ProtectedInternal
-        getVisibility "internal protected" =? ProtectedInternal
+        getVisibility "protected internal" =? Visibility.ProtectedInternal
+        getVisibility "internal protected" =? Visibility.ProtectedInternal
 
     [<Test>]
     let ``internal visibility`` () =
-        getVisibility "internal" =? Internal
+        getVisibility "internal" =? Visibility.Internal
 
     [<Test>]
     let ``public visibility`` () =
-        getVisibility "public" =? Public
+        getVisibility "public" =? Visibility.Public

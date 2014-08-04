@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Roslyn.MethodDeclarationExtensionsTests
+namespace Roslyn.Syntax.MethodDeclarationExtensions
 
 open System
 open System.Linq
@@ -28,43 +28,73 @@ open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
-open SafetySharp.Tests
 open SafetySharp.Modeling
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.CSharpCompiler.Roslyn.Syntax
+open SafetySharp.Tests
+
+[<TestFixture>]
+module ``GetMethodSymbol method`` =
+    let checkMethodSymbol csharpCode typeName methodName =
+        let compilation = TestCompilation csharpCode
+        let declaration = compilation.FindMethodDeclaration typeName methodName
+        let symbol = compilation.FindMethodSymbol typeName methodName
+
+        declaration.GetMethodSymbol compilation.SemanticModel =? symbol
+
+    [<Test>]
+    let ``throws when method declaration is null`` () =
+        let compilation = TestCompilation ""
+        raisesArgumentNullException "methodDeclaration" 
+            (fun () -> (null : BaseMethodDeclarationSyntax).GetMethodSymbol compilation.SemanticModel |> ignore)
+
+    [<Test>]
+    let ``throws when semantic model is null`` () =
+        let compilation = TestCompilation "class X { void M() {} }"
+        let declaration = compilation.FindMethodDeclaration "X" "M"
+        raisesArgumentNullException "semanticModel" (fun () -> declaration.GetMethodSymbol null |> ignore)
+
+    [<Test>]
+    let ``returns correct class symbol`` () =
+        checkMethodSymbol "class X { void M() {} void N() {} } class Y { void M() {}}" "X" "M"
+        checkMethodSymbol "class X { void M() {} void N() {} } class Y { void M() {}}" "X" "N"
+        checkMethodSymbol "class X { void M() {} void N() {} } class Y { void M() {}}" "Y" "M"
 
 [<TestFixture>]
 module ``Visibility property`` =
-
     let private getVisibility csharpCode =
         let compilation = TestCompilation csharpCode
         let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
-        methodDeclaration.Visibility
+        methodDeclaration.GetVisibility ()
+
+    [<Test>]
+    let ``throws if method declaration is null`` () =
+        raisesArgumentNullException "methodDeclaration" (fun () -> (null : MethodDeclarationSyntax).GetVisibility() |> ignore)
 
     [<Test>]
     let ``default visibility`` () =
-        getVisibility "class C { void M() {}}" =? Private
-        getVisibility "interface I { void M(); } class C : I { void I.M() {}}" =? Public
+        getVisibility "class C { void M() {}}" =? Visibility.Private
+        getVisibility "interface I { void M(); } class C : I { void I.M() {}}" =? Visibility.Public
 
     [<Test>]
     let ``private visibility`` () =
-        getVisibility "class C { private void M() {}}" =? Private
+        getVisibility "class C { private void M() {}}" =? Visibility.Private
 
     [<Test>]
     let ``protected visibility`` () =
-        getVisibility "class C { protected void M() {}}" =? Protected
+        getVisibility "class C { protected void M() {}}" =? Visibility.Protected
 
     [<Test>]
     let ``protected internal visibility`` () =
-        getVisibility "class C { protected internal void M() {}}" =? ProtectedInternal
-        getVisibility "class C { internal protected void M() {}}" =? ProtectedInternal
+        getVisibility "class C { protected internal void M() {}}" =? Visibility.ProtectedInternal
+        getVisibility "class C { internal protected void M() {}}" =? Visibility.ProtectedInternal
 
     [<Test>]
     let ``internal visibility`` () =
-        getVisibility "class C { internal void M() {}}" =? Internal
+        getVisibility "class C { internal void M() {}}" =? Visibility.Internal
 
     [<Test>]
     let ``public visibility`` () =
-        getVisibility "class C { public void M() {}}" =? Public
+        getVisibility "class C { public void M() {}}" =? Visibility.Public
 
 [<TestFixture>]
 module ``GetDelegateType method`` =
@@ -73,6 +103,12 @@ module ``GetDelegateType method`` =
         let compilation = TestCompilation csharpCode
         let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
         methodDeclaration.GetDelegateType compilation.SemanticModel
+
+    [<Test>]
+    let ``throws when method declaration is null`` () =
+        let compilation = TestCompilation ""
+        raisesArgumentNullException "methodDeclaration" 
+            (fun () -> (null : MethodDeclarationSyntax).GetDelegateType compilation.SemanticModel |> ignore)
 
     [<Test>]
     let ``throws when semantic model is null`` () =
@@ -100,28 +136,3 @@ module ``GetDelegateType method`` =
         getDelegateType "class C { int M(int i) { return 0; }}" =? "System.Func<int, int>"
         getDelegateType "class C { int? M(int i, System.Boolean b, object o) { return null; }}" =? "System.Func<int, System.Boolean, object, int?>"
         getDelegateType "class C { int M(int i, int? x) { return 0; }}" =? "System.Func<int, int?, int>"
-
-[<TestFixture>]
-module ``HasAttribute method`` =
-    let hasAttribute<'T when 'T :> Attribute> csharpCode =
-        let compilation = TestCompilation csharpCode
-        let methodDeclaration = compilation.FindMethodDeclaration "C" "M"
-        methodDeclaration.HasAttribute<'T> compilation.SemanticModel
-
-    [<Test>]
-    let ``throws when compilation is null`` () =
-        let compilation = TestCompilation "class C { void M() {}}"
-        let methodSymbol = compilation.FindMethodSymbol "C" "M"
-        raisesArgumentNullException "compilation" (fun () -> methodSymbol.HasAttribute<ProvidedAttribute> null |> ignore)
-
-    [<Test>]
-    let ``returns false if method has no attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { void M() {}}" =? false
-
-    [<Test>]
-    let ``returns false if method has different attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { [Required] void M() {}}" =? false
-
-    [<Test>]
-    let ``returns true if method has attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { [Provided] void M() {}}" =? true

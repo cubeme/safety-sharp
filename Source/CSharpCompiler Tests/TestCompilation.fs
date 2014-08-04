@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Tests
+namespace SafetySharp.Tests
 
 open System
 open System.Collections.Generic
@@ -40,7 +40,7 @@ type CompilationException (message : string) =
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]
-type internal TestCompilation (csharpCode) =
+type TestCompilation (csharpCode) =
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 

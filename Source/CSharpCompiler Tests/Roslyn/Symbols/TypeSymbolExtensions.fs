@@ -20,15 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Roslyn.ITypeSymbolExtensionsTests
+namespace Roslyn.Symbols.TypeSymbolExtensions
 
 open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 open SafetySharp.Tests
-open SafetySharp.Internal.CSharp.Roslyn
 
 [<TestFixture>]
 module ``IsDerivedFrom method`` =
@@ -39,6 +38,18 @@ module ``IsDerivedFrom method`` =
         let baseSymbol = compilation.FindTypeSymbol baseName
 
         derivedSymbol.IsDerivedFrom baseSymbol
+
+    [<Test>]
+    let ``throws when type symbol is null`` () =
+        let compilation = TestCompilation ""
+        let symbol = compilation.CSharpCompilation.GetTypeSymbol<obj> ()
+        raisesArgumentNullException "typeSymbol" (fun () -> (null : ITypeSymbol).IsDerivedFrom symbol |> ignore)
+
+    [<Test>]
+    let ``throws when base type is null`` () =
+        let compilation = TestCompilation ""
+        let symbol = compilation.CSharpCompilation.GetTypeSymbol<obj> ()
+        raisesArgumentNullException "baseType" (fun () -> symbol.IsDerivedFrom null |> ignore)
 
     [<Test>]
     let ``returns false for self checks`` () =
@@ -82,17 +93,28 @@ module ``IsDerivedFrom method`` =
         isDerivedFrom "interface Q {} interface Z {} interface Y : Z, Q {} interface X : Y {}" "Q" =? true
 
 [<TestFixture>]
-module ``IsDerivedFromComponent method`` =
+module ``IsDerivedFromComponent methods`` =
     let isDerivedFromComponent csharpCode =
         let compilation = TestCompilation csharpCode
         let derivedSymbol = compilation.FindTypeSymbol "X"
 
-        derivedSymbol.IsDerivedFromComponent compilation.SemanticModel
+        derivedSymbol.IsDerivedFromComponent compilation.SemanticModel && derivedSymbol.IsDerivedFromComponent compilation.CSharpCompilation
+
+    [<Test>]
+    let ``throws when type symbol is null`` () =
+        let compilation = TestCompilation("class X {}")
+        raisesArgumentNullException "typeSymbol" (fun () -> (null : ITypeSymbol).IsDerivedFromComponent compilation.SemanticModel |> ignore)
+        raisesArgumentNullException "typeSymbol" (fun () -> (null : ITypeSymbol).IsDerivedFromComponent compilation.CSharpCompilation |> ignore)
 
     [<Test>]
     let ``throws when semantic model is null`` () =
         let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
         raisesArgumentNullException "semanticModel" (fun () -> symbol.IsDerivedFromComponent (null : SemanticModel) |> ignore)
+
+    [<Test>]
+    let ``throws when compilation is null`` () =
+        let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
+        raisesArgumentNullException "compilation" (fun () -> symbol.IsDerivedFromComponent (null : Compilation) |> ignore)
 
     [<Test>]
     let ``returns false for class with no base`` () =
@@ -115,17 +137,28 @@ module ``IsDerivedFromComponent method`` =
         isDerivedFromComponent "class Y : Component {} class X : Y {}" =? true
 
 [<TestFixture>]
-module ``ImplementsIComponent method`` =
+module ``ImplementsIComponent methods`` =
     let implementsIComponent csharpCode =
         let compilation = TestCompilation csharpCode
         let derivedSymbol = compilation.FindTypeSymbol "X"
 
-        derivedSymbol.ImplementsIComponent compilation.SemanticModel
+        derivedSymbol.ImplementsIComponent compilation.SemanticModel && derivedSymbol.ImplementsIComponent compilation.CSharpCompilation
+
+    [<Test>]
+    let ``throws when type symbol is null`` () =
+        let compilation = TestCompilation("class X {}")
+        raisesArgumentNullException "typeSymbol" (fun () -> (null : ITypeSymbol).ImplementsIComponent compilation.SemanticModel |> ignore)
+        raisesArgumentNullException "typeSymbol" (fun () -> (null : ITypeSymbol).ImplementsIComponent compilation.CSharpCompilation |> ignore)
 
     [<Test>]
     let ``throws when semantic model is null`` () =
         let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
         raisesArgumentNullException "semanticModel" (fun () -> symbol.ImplementsIComponent (null : SemanticModel) |> ignore)
+
+    [<Test>]
+    let ``throws when compilation is null`` () =
+        let symbol = TestCompilation("class X {}").FindTypeSymbol("X")
+        raisesArgumentNullException "compilation" (fun () -> symbol.ImplementsIComponent (null : Compilation) |> ignore)
 
     [<Test>]
     let ``returns false for class with no base`` () =

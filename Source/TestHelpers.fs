@@ -200,6 +200,8 @@ module private ObjectDumper =
                         dump (object'.GetType().GetProperty("Value").GetValue object')
                     elif object' :? IEnumerable then
                         dumpEnumerable (asEnumerable object') "seq {" "}"
+                    elif objectType.IsEnum then
+                        writer.Append "%s.%A" (object'.GetType().Name) object'
                     elif objectType.IsPrimitive then
                         writer.Append "%A" object'
                     else

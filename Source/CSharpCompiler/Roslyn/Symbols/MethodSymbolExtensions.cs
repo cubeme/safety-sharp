@@ -82,19 +82,5 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 			return methodSymbol.HasAttribute<BehaviorAttribute>(semanticModel);
 		}
-
-		/// <summary>
-		///     Gets the <see cref="SemanticModel" /> that can be used to resolve symbols within <paramref name="methodSymbol" />'s
-		///     body. The source code of <paramref name="methodSymbol" /> must be available for this operation to succeed.
-		/// </summary>
-		/// <param name="methodSymbol">The method symbol the semantic model should be returned for.</param>
-		/// <param name="compilation">The compilation <paramref name="methodSymbol" /> belongs to.</param>
-		public static SemanticModel GetSemanticModel(this IMethodSymbol methodSymbol, Compilation compilation)
-		{
-			Requires.NotNull(methodSymbol, () => methodSymbol);
-			Requires.NotNull(compilation, () => compilation);
-
-			return compilation.GetSemanticModel(methodSymbol.GetSyntaxNode<MethodDeclarationSyntax>().SyntaxTree);
-		}
 	}
 }

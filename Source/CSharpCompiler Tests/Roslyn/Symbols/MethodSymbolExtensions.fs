@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Roslyn.IMethodSymbolExtensionsTests
+namespace Roslyn.Symbols.IMethodSymbolExtensions
 
 open System
 open System.Linq
@@ -29,9 +29,9 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
-open SafetySharp.Tests
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 open SafetySharp.Modeling
+open SafetySharp.Tests
 
 [<TestFixture>]
 module ``Overrides method`` =
@@ -41,6 +41,12 @@ module ``Overrides method`` =
         let overridenMethodSymbol = compilation.FindMethodSymbol "Y" "M"
 
         methodSymbol.Overrides overridenMethodSymbol
+
+    [<Test>]
+    let ``throws when method symbol is null`` () =
+        let compilation = TestCompilation "class X { void M() {} }"
+        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).Overrides methodSymbol |> ignore)
 
     [<Test>]
     let ``throws when overriden method symbol is null`` () =
@@ -70,74 +76,38 @@ module ``Overrides method`` =
         methodSymbol.Overrides methodSymbol =? true
 
 [<TestFixture>]
-module ``IsUpdateMethod method`` =
-    let isUpdateMethod csharpCode methodName =
+module ``IsBehaviorMethod methods`` =
+    let isBehaviorMethod csharpCode =
         let compilation = TestCompilation csharpCode
-        let methodSymbol = compilation.FindMethodSymbol "X" methodName
-        methodSymbol.IsUpdateMethod compilation.SemanticModel
+        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+        methodSymbol.IsBehaviorMethod compilation.SemanticModel && methodSymbol.IsBehaviorMethod compilation.CSharpCompilation
+
+    [<Test>]
+    let ``throws when method symbol is null`` () =
+        let compilation = TestCompilation "class X { void M() {} }"
+        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).IsBehaviorMethod (compilation.SemanticModel) |> ignore)
     
     [<Test>]
     let ``throws when semantic model is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
         let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        raisesArgumentNullException "semanticModel" (fun () -> methodSymbol.IsUpdateMethod (null : SemanticModel) |> ignore)
-
-    [<Test>]
-    let ``returns true for Update method of component`` () =
-        isUpdateMethod "class X : Component { [Behavior] void Update() {} }" "Update" =? true
-
-    [<Test>]
-    let ``returns true for Update method of inherited component`` () =
-        isUpdateMethod "class Y : Component {} class X : Y { [Behavior] void Update() {} }" "Update" =? true
-        isUpdateMethod "class Y : Component { [Behavior] void Update() {} } class X : Y { [Behavior] void Update() {} }" "Update" =? true
-
-    [<Test>]
-    let ``returns false for non-overriding methods of component`` () =
-        isUpdateMethod "class X : Component { void M() {} }" "M" =? false
-        isUpdateMethod "class X : Component { public void Update() {} }" "Update" =? false
-
-    [<Test>]
-    let ``returns false for Update method of non-Component class`` () =
-        isUpdateMethod "class X { public void Update() {} }" "Update" =? false
-
-[<TestFixture>]
-module ``GetMethodDeclaration method`` =
-    let mutable private compilation : TestCompilation = null
-
-    let getMethodDeclaration csharpCode className methodName =
-        compilation <- TestCompilation csharpCode
-        let methodSymbol = compilation.FindMethodSymbol className methodName
-        methodSymbol.GetMethodDeclaration ()
-
-    [<Test>]
-    let ``returns method declaration of method defined in source at one location`` () =
-        getMethodDeclaration "class C { void M() { return; }}" "C" "M" =? compilation.FindMethodDeclaration "C" "M"
-
-    [<Test>]
-    let ``throws when method is not defined in source`` () =
-        raises<InvalidOperationException> (fun () -> getMethodDeclaration "" "System.Object" "ToString" |> ignore)
-
-[<TestFixture>]
-module ``HasAttribute method`` =
-    let hasAttribute<'T when 'T :> Attribute> csharpCode =
-        let compilation = TestCompilation csharpCode
-        let methodSymbol = compilation.FindMethodSymbol "C" "M"
-        methodSymbol.HasAttribute<'T> compilation.CSharpCompilation
+        raisesArgumentNullException "semanticModel" (fun () -> methodSymbol.IsBehaviorMethod (null : SemanticModel) |> ignore)
 
     [<Test>]
     let ``throws when compilation is null`` () =
-        let compilation = TestCompilation "class C { void M() {}}"
-        let methodSymbol = compilation.FindMethodSymbol "C" "M"
-        raisesArgumentNullException "compilation" (fun () -> methodSymbol.HasAttribute<ProvidedAttribute> null |> ignore)
+        let compilation = TestCompilation "class X { void M() {} }"
+        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+        raisesArgumentNullException "compilation" (fun () -> methodSymbol.IsBehaviorMethod (null : Compilation) |> ignore)
 
     [<Test>]
-    let ``returns false if method has no attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { void M() {}}" =? false
+    let ``returns true for method with BehaviorAttribute`` () =
+        isBehaviorMethod "class X { [Behavior] void M() {} }" =? true
 
     [<Test>]
-    let ``returns false if method has different attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { [Required] void M() {}}" =? false
+    let ``returns true for method with BehaviorAttribute in inherited class`` () =
+        isBehaviorMethod "class Y : Component {} class X : Y { [Behavior] void M() {} }" =? true
+        isBehaviorMethod "class Y : Component { [Behavior] void M() {} } class X : Y { [Behavior] void M() {} }" =? true
 
     [<Test>]
-    let ``returns true if method has attribute`` () =
-        hasAttribute<ProvidedAttribute> "class C { [Provided] void M() {}}" =? true
+    let ``returns false for method without BehaviorAttribute`` () =
+        isBehaviorMethod "class X : Component { void M() {} }" =? false

@@ -55,15 +55,6 @@
       <Link>TestHelpers.fs</Link>
     </Compile>
     <Compile Include="Modeling.fs" />
-    <Compile Include="CSharp\Roslyn\IFieldSymbolExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\ITypeSymbolExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\CompilationExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\ArgumentExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\SyntaxTokenListExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\SyntaxTests.fs" />
-    <Compile Include="CSharp\Roslyn\MethodDeclarationExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\IMethodSymbolExtensionsTests.fs" />
-    <Compile Include="CSharp\Roslyn\IPropertySymbolExtensionsTests.fs" />
     <Compile Include="CSharp\Diagnostics\EnumAnalyzersTests.fs" />
     <Compile Include="CSharp\Diagnostics\UpdateMethodAnalyzersTests.fs" />
     <Compile Include="CSharp\Diagnostics\PortAnalyzersTests.fs" />

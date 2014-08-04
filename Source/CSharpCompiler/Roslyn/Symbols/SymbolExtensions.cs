@@ -74,26 +74,5 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 			return symbol.HasAttribute(semanticModel.GetTypeSymbol<T>());
 		}
-
-		/// <summary>
-		///     Gets the <see cref="SyntaxNode" /> corresponding to <paramref name="symbol" />.
-		/// </summary>
-		/// <typeparam name="T">The expected type of the syntax node.</typeparam>
-		/// <param name="symbol">The symbol the corresponding <see cref="SyntaxNode" /> should be returned for.</param>
-		public static T GetSyntaxNode<T>(this ISymbol symbol)
-			where T : SyntaxNode
-		{
-			Requires.NotNull(symbol, () => symbol);
-
-			var syntaxReferences = symbol.DeclaringSyntaxReferences;
-			Requires.That(syntaxReferences.Length != 0, "Unable to retrieve source code for symbol '{0}'.", symbol);
-			Requires.That(syntaxReferences.Length < 2, "Symbol '{0}' has more than one source location.", symbol);
-
-			var syntax = syntaxReferences[0].GetSyntax() as T;
-			Requires.That(syntax != null, "Expected a syntax node of type '{0}'. However, the actual syntax node type for symbol '{1}' is '{2}'.",
-						  typeof(T).FullName, symbol, syntax.GetType().FullName);
-
-			return syntax;
-		}
 	}
 }

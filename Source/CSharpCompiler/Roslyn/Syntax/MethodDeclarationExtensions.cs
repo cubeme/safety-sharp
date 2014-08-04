@@ -41,13 +41,13 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration the declared symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the declared symbol.</param>
-		public static IMethodSymbol GetDeclaredSymbol(this BaseMethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
+		public static IMethodSymbol GetMethodSymbol(this BaseMethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
 		{
 			Requires.NotNull(methodDeclaration, () => methodDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var symbol = semanticModel.GetDeclaredSymbol(methodDeclaration);
-			Requires.That(symbol != null, "Unable to determine method symbol of method declaration '{0}'.", methodDeclaration);
+			Assert.NotNull(symbol, "Unable to determine method symbol of method declaration '{0}'.", methodDeclaration);
 
 			return symbol;
 		}
@@ -56,10 +56,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Gets the visibility of the <paramref name="methodDeclaration" />.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration the visibility should be returned for.</param>
-		public static Visibility GetVisibility(this BaseMethodDeclarationSyntax methodDeclaration)
+		public static Visibility GetVisibility(this MethodDeclarationSyntax methodDeclaration)
 		{
 			Requires.NotNull(methodDeclaration, () => methodDeclaration);
-			return methodDeclaration.Modifiers.GetVisibility();
+
+			var defaultVisibility = methodDeclaration.ExplicitInterfaceSpecifier == null ? Visibility.Private : Visibility.Public;
+			return methodDeclaration.Modifiers.GetVisibility(defaultVisibility);
 		}
 
 		/// <summary>
@@ -87,7 +89,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			if (returnType.SpecialType == SpecialType.System_Void)
 				return generateType("System.Action", argumentTypes);
 
-			argumentTypes = argumentTypes.Union(new[] { returnType.ToString() });
+			argumentTypes = argumentTypes.Concat(new[] { methodDeclaration.ReturnType.ToString() });
 			return generateType("System.Func", argumentTypes);
 		}
 	}

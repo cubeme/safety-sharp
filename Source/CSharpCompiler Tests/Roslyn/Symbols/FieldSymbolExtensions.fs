@@ -20,25 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Roslyn.IFieldSymbolExtensionsTests
+namespace Roslyn.Symbols.FieldSymbolExtensions
 
+open System
 open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
-module ``IsSubcomponentField method`` =
+module ``IsSubcomponentField methods`` =
     let isComponentField csharpCode =
         let compilation = TestCompilation csharpCode
 
         let classSymbol = compilation.CSharpCompilation.GetTypeSymbol "X"
         let fieldSymbol = classSymbol.GetMembers().OfType<IFieldSymbol>().Single()
             
-        fieldSymbol.IsSubcomponentField compilation.SemanticModel
+        fieldSymbol.IsSubcomponentField compilation.SemanticModel && fieldSymbol.IsSubcomponentField compilation.CSharpCompilation
+
+    [<Test>]
+    let ``throws if field symbol is null`` () =
+        let compilation = TestCompilation ""
+        raisesArgumentNullException "fieldSymbol" (fun () -> (null : IFieldSymbol).IsSubcomponentField compilation.CSharpCompilation |> ignore)
+        raisesArgumentNullException "fieldSymbol" (fun () -> (null : IFieldSymbol).IsSubcomponentField compilation.SemanticModel |> ignore)
+
+    [<Test>]
+    let ``throws if semantic model is null`` () =
+        let compilation = TestCompilation "class C { int x; }"
+        let fieldSymbol = compilation.FindFieldSymbol "C" "x"
+        raisesArgumentNullException "semanticModel" (fun () -> fieldSymbol.IsSubcomponentField (null : SemanticModel) |> ignore)
+
+    [<Test>]
+    let ``throws if compilation is null`` () =
+        let compilation = TestCompilation "class C { int x; }"
+        let fieldSymbol = compilation.FindFieldSymbol "C" "x"
+        raisesArgumentNullException "compilation" (fun () -> fieldSymbol.IsSubcomponentField (null : Compilation) |> ignore)
 
     [<Test>]
     let ``returns false for non-component fields`` () =

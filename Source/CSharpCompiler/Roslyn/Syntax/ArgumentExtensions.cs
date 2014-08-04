@@ -84,7 +84,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return argument.GetParameterSymbol(semanticModel).Type == semanticModel.GetTypeSymbol<T>();
+			var typeSymbol = semanticModel.GetTypeSymbol<T>();
+			Requires.That(typeSymbol != null, "Unable to determine type symbol of type '{0}'.", typeof(T).FullName);
+
+			return Equals(argument.GetParameterSymbol(semanticModel).Type, typeSymbol);
 		}
 
 		/// <summary>
@@ -100,7 +103,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			Requires.NotNull(semanticModel, () => semanticModel);
 			Requires.NotNull(argumentType, () => argumentType);
 
-			return argument.GetParameterSymbol(semanticModel).Type == argumentType;
+			return Equals(argument.GetParameterSymbol(semanticModel).Type, argumentType);
 		}
 
 		/// <summary>
@@ -109,12 +112,14 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
-		public static bool IsBoooleanExpression(this ArgumentSyntax argument, SemanticModel semanticModel)
+		public static bool IsBooleanExpression(this ArgumentSyntax argument, SemanticModel semanticModel)
 		{
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			var isExpression = argument.IsOfType<Expression<Func<bool>>>(semanticModel);
+			var funcSymbol = semanticModel.GetTypeSymbol(typeof(Func<>)).Construct(semanticModel.GetTypeSymbol<bool>());
+			var expressionSymbol = semanticModel.GetTypeSymbol(typeof(Expression<>)).Construct(funcSymbol);
+			var isExpression = argument.IsOfType(semanticModel, expressionSymbol);
 			var isLiftedBoolean = argument.IsOfType<bool>(semanticModel) && argument.HasAttribute<LiftExpressionAttribute>(semanticModel);
 			return isLiftedBoolean || isExpression;
 		}
@@ -145,8 +150,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="argument">The argument the parameter symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
 		/// <remarks>
-		///     There might be an official Roslyn API one day that should be used to replace this method.
-		///     (see also https://roslyn.codeplex.com/discussions/541303)
+		///     There might be an official Roslyn API one day that should be used to replace this method
+		///     (see also https://roslyn.codeplex.com/discussions/541303).
 		/// </remarks>
 		public static IParameterSymbol GetParameterSymbol(this ArgumentSyntax argument, SemanticModel semanticModel)
 		{

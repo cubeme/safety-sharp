@@ -80,13 +80,14 @@
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.cs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
     <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxTokenExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
-    <Compile Include="Roslyn\Visibility.cs" />
+    <Compile Include="Roslyn\Syntax\Visibility.cs" />
     <Compile Include="Utilities\Assert.cs" />
     <Compile Include="Utilities\Log.cs" />
     <Compile Include="Utilities\LogEntry.cs" />

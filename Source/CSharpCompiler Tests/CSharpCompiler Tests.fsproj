@@ -55,8 +55,21 @@
       <Link>TestHelpers.fs</Link>
     </Compile>
     <Compile Include="TestCompilation.fs" />
-    <Compile Include="Roslyn\Syntax\MethodDeclarationExtensionsTests.fs" />
-	  <Compile Include="Roslyn\Symbols\IMethodSymbolExtensionsTests.fs" />
+    <Compile Include="Roslyn\Symbols\CompilationExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\PropertySymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\SemanticModelExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\SymbolExtensions.fs" />
+    <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\ArgumentExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\SyntaxBuilder.fs" />
+	  <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
+	  <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
 	  <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

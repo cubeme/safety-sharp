@@ -48,7 +48,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="token">The token that should have its trivia replaced.</param>
 		/// <param name="leadingTrivia">The leading trivia of the returned token.</param>
 		/// <param name="trailingTrivia">The trailing trivia of the returned token.</param>
-		public static SyntaxToken RemoveTrivia(this SyntaxToken token, SyntaxTriviaList leadingTrivia, SyntaxTriviaList trailingTrivia)
+		public static SyntaxToken WithTrivia(this SyntaxToken token, SyntaxTriviaList leadingTrivia, SyntaxTriviaList trailingTrivia)
 		{
 			return token.WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia);
 		}
@@ -59,7 +59,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="token">The token that should have its trivia replaced.</param>
 		/// <param name="node">The node the leading and trailing trivia should be copied from.</param>
-		public static SyntaxToken AddTrivia(this SyntaxToken token, SyntaxNode node)
+		public static SyntaxToken WithTrivia(this SyntaxToken token, SyntaxNode node)
 		{
 			Requires.NotNull(node, () => node);
 			return token.WithTrailingTrivia(node.GetTrailingTrivia()).WithLeadingTrivia(node.GetLeadingTrivia());
@@ -71,7 +71,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="token">The token that should have its trivia replaced.</param>
 		/// <param name="otherToken">The token the leading and trailing trivia should be copied from.</param>
-		public static SyntaxToken AddTrivia(this SyntaxToken token, SyntaxToken otherToken)
+		public static SyntaxToken WithTrivia(this SyntaxToken token, SyntaxToken otherToken)
 		{
 			return token.WithTrailingTrivia(otherToken.TrailingTrivia).WithLeadingTrivia(otherToken.LeadingTrivia);
 		}
@@ -80,7 +80,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Returns a copy of <paramref name="token" /> with all leading and trailing trivia replaced by a single space token.
 		/// </summary>
 		/// <param name="token">The token that should have its trivia replaced.</param>
-		public static SyntaxToken SurroundWithSingleSpace(this SyntaxToken token)
+		public static SyntaxToken WithLeadingAndTrailingSpace(this SyntaxToken token)
 		{
 			return token.WithTrailingTrivia(SyntaxFactory.Space).WithLeadingTrivia(SyntaxFactory.Space);
 		}

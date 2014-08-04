@@ -41,13 +41,13 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="typeDeclaration">The type declaration the declared symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the declared symbol.</param>
-		public static INamedTypeSymbol GetDeclaredSymbol(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
+		public static INamedTypeSymbol GetTypeSymbol(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeDeclaration, () => typeDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var symbol = semanticModel.GetDeclaredSymbol(typeDeclaration);
-			Requires.That(symbol != null, "Unable to determine type symbol of type declaration '{0}'.", typeDeclaration);
+			Assert.NotNull(symbol, "Unable to determine type symbol of type declaration '{0}'.", typeDeclaration);
 
 			return symbol;
 		}
@@ -68,7 +68,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			Requires.NotNull(semanticModel, () => semanticModel);
 			Requires.NotNull(baseType, () => baseType);
 
-			return typeDeclaration.GetDeclaredSymbol(semanticModel).IsDerivedFrom(baseType);
+			return typeDeclaration.GetTypeSymbol(semanticModel).IsDerivedFrom(baseType);
 		}
 
 		/// <summary>
