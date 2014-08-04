@@ -69,13 +69,10 @@ module NuXmvExecuteTests =
 
         let nuxmv = ExecuteNuXmv()
         nuxmv.StartNuXmvInteractive (-1)
-        nuxmv.QuitNuXmvAndWaitForExit()
-        nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         nuxmv.QuitNuXmvAndWaitForExit()
         let result = nuxmv.ReturnResults ()
-        //System.Threading.Thread.Sleep (2000)
-        //nuxmv.ForceShutdownNuXmv ()
 
         result.Length > 0 =? true
         ()

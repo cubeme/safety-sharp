@@ -112,6 +112,7 @@ type internal ExecuteNuXmv() =
                     if newChar = -1 then
                         endReached <- true
                     else
+                        let newChar = (char newChar)
                         stderrOutputBuffer.Append newChar |> ignore
                 ()
         )
@@ -294,9 +295,26 @@ type internal ExecuteNuXmv() =
     member this.ReturnResults () : string =
         let stringBuilder = new System.Text.StringBuilder()
         let printEntry (entry:QueueCommandResult) : unit = 
-            stringBuilder.AppendLine (commandToString.ExportICommand entry.Command) |> ignore
-            stringBuilder.AppendLine entry.Stdout |> ignore
-            stringBuilder.AppendLine entry.Stderr |> ignore
+            stringBuilder.AppendLine ((commandToString.ExportICommand entry.Command)) |> ignore
+            stringBuilder.AppendLine ("stdout:\n" + entry.Stdout) |> ignore
+            stringBuilder.AppendLine ("stderr:\n" + entry.Stderr) |> ignore
             stringBuilder.AppendLine "==========" |> ignore
+        let printUnprogressed () : unit =
+            stringBuilder.AppendLine "unprogressed" |> ignore
+            stringBuilder.AppendLine ("stdout-line-buffer:\n" + stdoutCurrentLine.ToString() ) |> ignore
+            stringBuilder.AppendLine ("stdout-buffer:\n" + stdoutOutputBuffer.ToString()) |> ignore
+            stringBuilder.AppendLine ("stderr-buffer:\n" + stderrOutputBuffer.ToString()) |> ignore
+            stringBuilder.AppendLine "==========" |> ignore
+        let printActiveCommand () : unit =
+            if activeCommand.IsSome then
+                stringBuilder.AppendLine ("current Command:\n" + (commandToString.ExportICommand activeCommand.Value.Command)) |> ignore
+            else
+                stringBuilder.AppendLine ("current Command:\n ---- ") |> ignore
+            stringBuilder.AppendLine "==========" |> ignore
+        let printCommandInQueue (number:int) (command:QueueCommand) : unit =
+            stringBuilder.AppendLine ("Command " + (string number) + ":\n"+ (commandToString.ExportICommand command.Command)) |> ignore
         commandQueueResults |> Seq.iter printEntry
+        printUnprogressed ()
+        printActiveCommand ()
+        commandQueueToProcess |> Seq.iteri printCommandInQueue
         stringBuilder.ToString()
