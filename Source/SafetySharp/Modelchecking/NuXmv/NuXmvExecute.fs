@@ -30,6 +30,14 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //  - Ensure: stderr of the verbose result of a command is always associated to the correct command
 
 
+// be cautious:
+//  - the command prompt does "nuXmv >" does not contain a line ending.
+//  - this method avoids the problem with the newline
+// Inspiration:
+//  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
+//  - https://gist.github.com/alabax/11353282
+
+
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
     | NotDetermined
@@ -64,7 +72,6 @@ type internal ExecuteNuXmv() =
     let mutable expectedModeOfProgramAfterQueue = NuXmvModeOfProgramm.NotStarted
     let commandQueueResults = new System.Collections.Generic.List<QueueCommandResult>()
 
-    //let mutable currentStateOfInput = NuXmvStateOfInput.Processing
     let mutable currentTechniqueForVerification = NuXmvCurrentTechniqueForVerification.NotDetermined
     let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
     
@@ -243,13 +250,6 @@ type internal ExecuteNuXmv() =
 
         proc.Start() |> ignore
         proc.StandardInput.AutoFlush <- true
-        // be cautious:
-        //  - the command prompt does "nuXmv >" does not contain a line ending.
-        //  - this method avoids the problem with the newline
-        // Inspiration:
-        //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
-        //  - https://gist.github.com/alabax/11353282
-
         processOutputReader <- this.TaskReadStdout ()
         processErrorReader <- this.TaskReadStderr ()
         processWaiter <- this.TaskWaitForEnd (timeInMs)
