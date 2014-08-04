@@ -66,4 +66,6 @@ module NuXmvExecuteTests =
         nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         nuxmv.QuitNuXmvAndWaitForExit()
+        let result = nuxmv.ReturnResults ()
+        result.Length > 0 =? true
         ()

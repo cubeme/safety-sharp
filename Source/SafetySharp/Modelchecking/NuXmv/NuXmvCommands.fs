@@ -175,6 +175,7 @@ type internal NuXmvModeOfProgramm =
     | CheckingFormulas
     | FormulasChecked
     | Unknown
+    | Terminated
     //| Simulation of TraceNumber:int
     //| TrackCounterexampleTrace of TraceNumber:int
 
@@ -193,9 +194,12 @@ module internal NuXmvCommandHelpers =
 
     let nextModeOfProgram (command:ICommand) : NuXmvModeOfProgramm=        
         let nextModeOfProgramNuXmv (command:NuXmvCommand) : NuXmvModeOfProgramm =
-            NuXmvModeOfProgramm.InitialOrReseted
+            match command with
+                | _ -> NuXmvModeOfProgramm.InitialOrReseted
         let nextModeOfProgramNuSMV (command:NuSMVCommand) : NuXmvModeOfProgramm =
-            NuXmvModeOfProgramm.InitialOrReseted
+            match command with
+                | NuSMVCommand.Quit -> NuXmvModeOfProgramm.Terminated
+                | _ -> NuXmvModeOfProgramm.InitialOrReseted
         match command with
             | :? NuXmvCustomCommand as command -> NuXmvModeOfProgramm.Unknown
             | :? NuXmvStartedCommand as command -> NuXmvModeOfProgramm.InitialOrReseted

@@ -28,12 +28,20 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //     - ProcessNextQueueElement is called by two functions at the same time
 //     - If one of those function calls is ignored (maybe called by an event) will the complete queue be processed in the future?
 
+// http://msdn.microsoft.com/en-us/library/433b98s3(v=vs.110).aspx
+
+
+(*
 [<RequireQualifiedAccess>]
 type internal NuXmvStateOfInput =
     | WaitingForInput
     | Processing
-
+*)
     
+// http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
+//
+
+
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
     | NotDetermined
@@ -65,20 +73,20 @@ type internal NuXmvResult =
 type internal ExecuteNuXmv() =
     let commandToString = ExportCommandsToString ()
 
-    let commandQueueToProcess = new System.Collections.Generic.List<QueueCommand>()
+    let mutable activeCommand : QueueCommand option =  None
+    let commandQueueToProcess = new System.Collections.Generic.Queue<QueueCommand>()
     let mutable expectedModeOfProgramAfterQueue = NuXmvModeOfProgramm.NotStarted
     let commandQueueResults = new System.Collections.Generic.List<QueueCommandResult>()
 
-    let mutable currentStateOfInput = NuXmvStateOfInput.Processing
+    //let mutable currentStateOfInput = NuXmvStateOfInput.Processing
     let mutable currentTechniqueForVerification = NuXmvCurrentTechniqueForVerification.NotDetermined
     let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
     
     let stdoutOutputBuffer = new System.Text.StringBuilder ()
-    let stdoutReceivedNewInput (dataReceivedEvArgs:System.Diagnostics.DataReceivedEventArgs) = 
-        let newData = dataReceivedEvArgs.Data
-        stdoutOutputBuffer.Append newData |> ignore
+    let stderrOutputBuffer = new System.Text.StringBuilder ()
 
     let proc = new System.Diagnostics.Process()
+
 
     static member FindNuXmv (): string =
         let tryCandidate (filename:string) : bool =
@@ -95,12 +103,35 @@ type internal ExecuteNuXmv() =
             | Some(filename) -> filename
             | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
     
+    member this.stderrReceivedNewInput (dataReceivedEvArgs:System.Diagnostics.DataReceivedEventArgs) = 
+        let newData = dataReceivedEvArgs.Data
+        stderrOutputBuffer.Append newData |> ignore
+
+    member this.stdoutReceivedNewInput (dataReceivedEvArgs:System.Diagnostics.DataReceivedEventArgs) = 
+        // be cautious: stdoutReceivedNewInput is only called, when the inputline is finished by a newline!!!!
+        //              the command prompt does "nuXmv >" does not contain a line ending
+        
+        let newData = dataReceivedEvArgs.Data
+        if newData.StartsWith "nuXmv >" && activeCommand.IsSome then
+            let newFinishedCommand = {
+                QueueCommandResult.Command = activeCommand.Value.Command;
+                QueueCommandResult.Stdout = stdoutOutputBuffer.ToString();
+                QueueCommandResult.Stderr = stderrOutputBuffer.ToString();
+            }
+            activeCommand <- None
+            stdoutOutputBuffer.Clear() |> ignore
+            stderrOutputBuffer.Clear() |> ignore
+            this.ProcessNextQueueElement()
+        else
+            stdoutOutputBuffer.Append newData |> ignore
+        ()
+
     member this.AppendQueueCommand (command:QueueCommand) =
         // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip them out from the input-stream
         // TODO: check if in valid state (use expectedModeOfProgramAfterQueue)
         if NuXmvCommandHelpers.isCommandExecutableInMode command.Command expectedModeOfProgramAfterQueue <> true then
             failwith "Command not executable in mode after queue"
-        commandQueueToProcess.Add(command)
+        commandQueueToProcess.Enqueue(command)
         
     member this.AppendQueueCommands (commands:QueueCommand list) =
         commands |> List.iter this.AppendQueueCommand
@@ -110,7 +141,7 @@ type internal ExecuteNuXmv() =
             QueueCommand.Command = command;
             QueueCommand.ActionsToExecuteAfterSuccess = [];
         }
-        commandQueueToProcess.Add(queueCommand)
+        commandQueueToProcess.Enqueue(queueCommand)
         
     member this.ExecuteCommandSequence (commands:ICommand list) =
         commands |> List.iter this.ExecuteCommand
@@ -135,9 +166,11 @@ type internal ExecuteNuXmv() =
         proc.Start() |> ignore        
         proc.WaitForExit()
         let exitCode = proc.ExitCode
+        // error codes are defined in src/cinit/cinitData.c
+        // under windows there are no negative values. Thus exit code -1 becomes 255 (2-complement)
         match exitCode with
             | 0 -> true
-            | 1 -> false
+            | 255 -> false
             | 2 -> true //help
             | _ -> false
 
@@ -149,7 +182,7 @@ type internal ExecuteNuXmv() =
                 QueueCommand.Command = NuXmvStartedCommand();
                 QueueCommand.ActionsToExecuteAfterSuccess = [];
             }
-        commandQueueToProcess.Add(initialCommand)
+        activeCommand<-Some(initialCommand)
         expectedModeOfProgramAfterQueue <- NuXmvModeOfProgramm.InitialOrReseted
         
         // From MSDN (Analogue for StandardError)
@@ -166,31 +199,50 @@ type internal ExecuteNuXmv() =
         proc.StartInfo.CreateNoWindow <-  true
         proc.StartInfo.UseShellExecute <-  false
         proc.StartInfo.RedirectStandardOutput <-  true
-        proc.StartInfo.RedirectStandardError <-  false
-        proc.StartInfo.RedirectStandardInput <-  false
+        proc.StartInfo.RedirectStandardError <-  true
+        proc.StartInfo.RedirectStandardInput <-  true
 
         //proc.EnableRaisingEvents <- true // process emits an exit event if killed or exits
-        proc.OutputDataReceived.Add (stdoutReceivedNewInput)
+        proc.OutputDataReceived.Add (this.stdoutReceivedNewInput)
+        proc.ErrorDataReceived.Add (this.stderrReceivedNewInput)
         proc.Start() |> ignore
         proc.BeginOutputReadLine ()
+        proc.BeginErrorReadLine ()
         ()
-
-    member this.SetEnvironmentVariablesOfNuXmv () =
-        // xml-Output of Traces
-        
-        failwith "NotImplementedYet"
-        
+                
     member this.ProcessNextQueueElement () =
-        failwith "NotImplementedYet"
+        if activeCommand.IsSome then
+            ()
+        else
+            if commandQueueToProcess.Count > 0 then
+                let commandToExecute = commandQueueToProcess.Dequeue()
+                activeCommand <- Some(commandToExecute)
+                proc.StandardInput.WriteLine(commandToString.ExportICommand commandToExecute.Command) 
+            
                        
-    member this.ForceShutdownNuXmv () = 
-        failwith "NotImplementedYet"
+    member this.ForceShutdownNuXmv () =
+        currentModeOfProgram <- NuXmvModeOfProgramm.Terminated
+        proc.Kill()
 
     member this.QuitNuXmvAndWaitForExit () =
         this.ExecuteCommand NuSMVCommand.Quit 
         proc.WaitForExit()
         let exitCode = proc.ExitCode
         ()
-        //match exitCode with
+        // match exitCode with
+        //     | 0 -> true
+        //     | 255 -> false
+        //     | 2 -> true //help
+        //     | _ -> false
         //     | 0 -> Successful(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
-        //     | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
+        //     | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())        
+
+    member this.ReturnResults () : string =
+        let stringBuilder = new System.Text.StringBuilder()
+        let printEntry (entry:QueueCommandResult) : unit = 
+            stringBuilder.AppendLine (commandToString.ExportICommand entry.Command) |> ignore
+            stringBuilder.AppendLine entry.Stdout |> ignore
+            stringBuilder.AppendLine entry.Stderr |> ignore
+            stringBuilder.AppendLine "==========" |> ignore
+        commandQueueResults |> Seq.iter printEntry
+        stringBuilder.ToString()
