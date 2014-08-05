@@ -247,6 +247,15 @@ let raisesArgumentException argumentName func =
     let e = raisesWith<ArgumentException> func
     Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
 
+/// Checks whether the given function raises no exception.
+let nothrow func =
+    try
+        func ()
+    with
+    | e -> 
+        let message = "Expected no exception to be thrown, but an exception of type '{0}' was raised:\n{1}"
+        Assert.Fail (message, e.GetType().FullName, ObjectDumper.dump e)
+
 /// Asserts that the two values are equal.
 let (=?) left right =
     let result = left = right

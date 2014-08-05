@@ -38,7 +38,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		internal LogEntry(LogType logType, string message)
 			: this()
 		{
-			Assert.InRange(logType);
+			Requires.InRange(logType, () => logType);
 			Requires.NotNull(message, () => message);
 
 			LogType = logType;

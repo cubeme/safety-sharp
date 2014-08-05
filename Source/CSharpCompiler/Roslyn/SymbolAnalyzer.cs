@@ -57,16 +57,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="cancellationToken">A token for cancelling the computation.</param>
 		public void AnalyzeSymbol(ISymbol symbol, Compilation compilation, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
 		{
-			var typedSymbol = symbol as T;
-			if (typedSymbol == null)
-				return;
-
 			Requires.NotNull(symbol, () => symbol);
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNull(addDiagnostic, () => addDiagnostic);
 
 			DiagnosticCallback = addDiagnostic;
-			Analyze(typedSymbol, compilation);
+			Analyze((T)symbol, compilation);
 		}
 
 		/// <summary>

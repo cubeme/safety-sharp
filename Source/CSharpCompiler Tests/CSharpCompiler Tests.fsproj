@@ -70,7 +70,6 @@
     <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.fs" />
     <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
-    <None Include="packages.config" />
     <Compile Include="Analyzers\SS1000.fs" />
     <Compile Include="Analyzers\SS1001.fs" />
     <Compile Include="Analyzers\SS1002.fs" />
@@ -79,6 +78,9 @@
     <Compile Include="Analyzers\SS1005.fs" />
     <Compile Include="Analyzers\SS1006.fs" />
     <Compile Include="Analyzers\SS1007.fs" />
+    <None Include="packages.config" />
+    <Compile Include="Utilities\Assert.fs" />
+    <Compile Include="Utilities\Requires.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">

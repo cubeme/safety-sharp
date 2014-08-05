@@ -76,3 +76,7 @@ module SS1001 =
         getDiagnostic "class C { int M { get; [Provided] set; }}" =? None
         getDiagnostic "interface C { int M { get; [Required] set; }}" =? None
         getDiagnostic "interface C { int M { [Provided] get; set; }}" =? None
+
+    [<Test>]
+    let ``Methods with attributes are valid`` () =
+        getDiagnostic "class C { [Provided] void M() {}}" =? None
