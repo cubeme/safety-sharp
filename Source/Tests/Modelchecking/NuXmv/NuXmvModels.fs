@@ -1,7 +1,6 @@
 ﻿namespace SafetySharp.Tests.Modelchecking.NuXmv.Models
 
 module Models =
-
     let ``incomplete-case-distinction`` =
           "MODULE main\n"
         + "	VAR\n"
@@ -83,3 +82,31 @@ module Models =
         + "				x = TRUE : FALSE;\n"
         + "				x = FALSE : TRUE;\n"
         + "			esac;\n"
+
+    (*  
+        For tests: Copy&Paste
+        
+        FileSystem.WriteToAsciiFile filename model
+
+        let filename = "Modelchecking/NuXmv/incomplete-case-distinction.smv"
+        let model = Models.``incomplete-case-distinction``
+        let filename = "Modelchecking/NuXmv/incomplete-instantiation.smv"
+        let model = Models.``incomplete-instantiation``
+        let filename = "Modelchecking/NuXmv/not-fully-defined1.smv"
+        let model = Models.``not-fully-defined1``
+        let filename = "Modelchecking/NuXmv/not-fully-defined2.smv"
+        let model = Models.``not-fully-defined2``
+        let filename = "Modelchecking/NuXmv/fully-defined.smv"
+        let model = Models.``fully-defined``
+        let filename = "Modelchecking/NuXmv/wrong-syntax1.smv"
+        let model = Models.``wrong-syntax1``
+        let filename = "Modelchecking/NuXmv/wrong-syntax2.smv"
+        let model = Models.``wrong-syntax2``
+        let filename = "Modelchecking/NuXmv/simple-indeterministic.smv"
+        let model = Models.``simple-indeterministic``
+        let filename = "Modelchecking/NuXmv/range-not-respected.smv"
+        let model = Models.``range-not-respected``
+        let filename = "Modelchecking/NuXmv/simple-deterministic.smv"
+        let model = Models.``simple-deterministic``
+
+    *)

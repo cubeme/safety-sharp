@@ -29,6 +29,8 @@ open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.Modelchecking
 open SafetySharp.Internal.Modelchecking.NuXmv
 
+open SafetySharp.Tests.Modelchecking.NuXmv.Models
+
 [<TestFixture>]
 module NuXmvExecuteTests =
 
@@ -57,7 +59,10 @@ module NuXmvExecuteTests =
         
     [<Test>]
     let ``An action associated with a spimple NuXmv-'echo'-Command gets executed after NuXmv has finished the command`` () =
-        
+        let nuxmv = ExecuteNuXmv()
+        nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
+        //nuxmv.ExecuteCommand(NuSMVCommand.Echo("verbose_level"),)
+
         true =? false
         
     [<Test>]

@@ -188,8 +188,15 @@ type internal ExecuteNuXmv() =
         
     member this.AppendQueueCommands (commands:QueueCommand list) =
         commands |> List.iter this.AppendQueueCommand
-
+        
     member this.ExecuteCommand (command:ICommand) =
+        let queueCommand = {
+            QueueCommand.Command = command;
+            QueueCommand.ActionsToExecuteAfterSuccess = [];
+        }
+        this.AppendQueueCommand(queueCommand)
+
+    member this.ExecuteCommandWithActions (command:ICommand) =
         let queueCommand = {
             QueueCommand.Command = command;
             QueueCommand.ActionsToExecuteAfterSuccess = [];
