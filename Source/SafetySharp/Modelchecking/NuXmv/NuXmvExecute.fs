@@ -28,7 +28,8 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //     - ProcessNextQueueElement is called by two functions at the same time
 //     - If one of those function calls is ignored (maybe called by an event) will the complete queue be processed in the future?
 //  - Ensure: stderr of the verbose result of a command is always associated to the correct command
-
+//  - Introduce Cancelation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
+//  - Tests for access from multiple Threads
 
 // be cautious:
 //  - the command prompt does "nuXmv >" does not contain a line ending.
@@ -37,19 +38,16 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
 //  - https://gist.github.com/alabax/11353282
 
+// Event Wait Handles:
+// -  http://www.albahari.com/threading/part2.aspx#_Signaling_with_Event_Wait_Handles
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
     | NotDetermined
     | SmtMode
     | BddMode
-    
-type internal QueueCommand = {
-    Command: ICommand;
-    ActionsToExecuteAfterSuccess : System.Action list ;
-}
-
-type internal QueueCommandResult = {
+ 
+type internal NuXmvCommandResult = {
     Command: ICommand;
     Stderr : string;
     Stdout : string;
@@ -67,10 +65,12 @@ type internal NuXmvResult =
 type internal ExecuteNuXmv() =
     let commandToString = ExportCommandsToString ()
 
-    let mutable activeCommand : QueueCommand option =  None
-    let commandQueueToProcess = new System.Collections.Generic.Queue<QueueCommand>()
-    let mutable expectedModeOfProgramAfterQueue = NuXmvModeOfProgramm.NotStarted
-    let commandQueueResults = new System.Collections.Generic.List<QueueCommandResult>()
+    
+    let commandActiveMutex = new System.Threading.Mutex()
+    let commandFinished = new System.Threading.AutoResetEvent (false);
+    let stdoutReadyForNextRead = new System.Threading.AutoResetEvent (false);
+    let mutable activeCommand : ICommand option =  None
+    let mutable lastCommandResult : NuXmvCommandResult option = None
 
     let mutable currentTechniqueForVerification = NuXmvCurrentTechniqueForVerification.NotDetermined
     let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
@@ -140,15 +140,16 @@ type internal ExecuteNuXmv() =
                 stdoutPromptPossible && position = promptString.Length-1
             if isPrompt && activeCommand.IsSome then
                 let newFinishedCommand = {
-                    QueueCommandResult.Command = activeCommand.Value.Command;
-                    QueueCommandResult.Stdout = stdoutOutputBuffer.ToString();
-                    QueueCommandResult.Stderr = stderrOutputBuffer.ToString();
+                    NuXmvCommandResult.Command = activeCommand.Value;
+                    NuXmvCommandResult.Stdout = stdoutOutputBuffer.ToString();
+                    NuXmvCommandResult.Stderr = stderrOutputBuffer.ToString();
                 }
-                commandQueueResults.Add newFinishedCommand
+                lastCommandResult <-  Some(newFinishedCommand)
                 activeCommand <- None
                 stdoutOutputBuffer.Clear() |> ignore
                 stderrOutputBuffer.Clear() |> ignore
-                this.ProcessNextQueueElement()
+                commandFinished.Set() |> ignore
+                stdoutReadyForNextRead.WaitOne() |> ignore
 
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
@@ -172,46 +173,45 @@ type internal ExecuteNuXmv() =
         System.Threading.Tasks.Task<bool>.Factory.StartNew(
             fun () ->
                 if timeInMs > 0 then
-                    proc.WaitForExit(timeInMs)
+                    let result = proc.WaitForExit(timeInMs)
+                    commandFinished.Set() |> ignore //no new Command-Prompt after quit, so we have to set it manually
+                    result
                 else
                     proc.WaitForExit()
+                    commandFinished.Set() |> ignore //no new Command-Prompt after quit, so we have to set it manually
                     true
         )
-            
-    member this.AppendQueueCommand (command:QueueCommand) =
-        // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip them out from the input-stream
-        // TODO: check if in valid state (use expectedModeOfProgramAfterQueue)
-        if NuXmvCommandHelpers.isCommandExecutableInMode command.Command expectedModeOfProgramAfterQueue <> true then
-            failwith "Command not executable in mode after queue"
-        commandQueueToProcess.Enqueue(command)
-        this.ProcessNextQueueElement ()
+    
+    member this.ExecuteCommand (command:ICommand) : NuXmvCommandResult =
+        // if a command is currently executing, wait
+        commandActiveMutex.WaitOne() |> ignore
         
-    member this.AppendQueueCommands (commands:QueueCommand list) =
-        commands |> List.iter this.AppendQueueCommand
-        
-    member this.ExecuteCommand (command:ICommand) =
-        let queueCommand = {
-            QueueCommand.Command = command;
-            QueueCommand.ActionsToExecuteAfterSuccess = [];
-        }
-        this.AppendQueueCommand(queueCommand)
+        activeCommand <- Some(command)
+        this.StdoutEndCurrentLine()
+        // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip anything
+        // which might be a control word of GNU readline out of the input-stream
+        proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
-    member this.ExecuteCommandWithActions (command:ICommand) =
-        let queueCommand = {
-            QueueCommand.Command = command;
-            QueueCommand.ActionsToExecuteAfterSuccess = [];
-        }
-        this.AppendQueueCommand(queueCommand)
+        commandFinished.WaitOne() |> ignore
+        let result = lastCommandResult.Value
+        
+        stdoutReadyForNextRead.Set() |> ignore
+        commandActiveMutex.ReleaseMutex()
+
+        result
+
+    
+    // return Task, which can be awaited for
+    member this.ExecuteCommandAsync (command:ICommand) : System.Threading.Tasks.Task<NuXmvCommandResult> =
+        System.Threading.Tasks.Task.Factory.StartNew(
+            fun () -> this.ExecuteCommand command
+        )
         
     member this.ExecuteCommandSequence (commands:ICommand list) =
-        commands |> List.iter this.ExecuteCommand
+        commands |> List.map (fun command -> (this.ExecuteCommand command))
         
-    member this.ExecuteCommandString (command:string) (actionsToExecuteAfterSuccess : System.Action list) =
-        let queueCommand = {
-            QueueCommand.Command = {NuXmvCustomCommand.Command = command};
-            QueueCommand.ActionsToExecuteAfterSuccess = actionsToExecuteAfterSuccess;
-        }
-        this.AppendQueueCommand queueCommand
+    member this.ExecuteCommandString (command:string) =
+        this.ExecuteCommand {NuXmvCustomCommand.Command = command};
 
     member this.IsNuXmvRunable () : bool =
         use proc = new System.Diagnostics.Process()        
@@ -236,16 +236,11 @@ type internal ExecuteNuXmv() =
 
 
     member this.StartNuXmvInteractive (timeInMs:int) : unit =
+        let initialCommand = NuXmvStartedCommand() :> ICommand
+        activeCommand<-Some(initialCommand) 
+        commandActiveMutex.WaitOne() |> ignore
+        
         // TODO: check if already started (use expectedModeOfProgramAfterQueue)
-        let initialCommand = 
-            {
-                QueueCommand.Command = NuXmvStartedCommand();
-                QueueCommand.ActionsToExecuteAfterSuccess = [];
-            }
-        activeCommand<-Some(initialCommand)
-        expectedModeOfProgramAfterQueue <- NuXmvModeOfProgramm.InitialOrReseted
-                
-              
         proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine NuXmvHelpfulCommandSequences.commandLineStart
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
@@ -260,29 +255,26 @@ type internal ExecuteNuXmv() =
         processOutputReader <- this.TaskReadStdout ()
         processErrorReader <- this.TaskReadStderr ()
         processWaiter <- this.TaskWaitForEnd (timeInMs)
+
+        commandFinished.WaitOne() |> ignore
+        let result = lastCommandResult        
+        stdoutReadyForNextRead.Set() |> ignore
+        commandActiveMutex.ReleaseMutex()
         ()
-                
-    member this.ProcessNextQueueElement () =
-        if activeCommand.IsSome then
-            ()
-        else
-            if commandQueueToProcess.Count > 0 then
-                let commandToExecute = commandQueueToProcess.Dequeue()
-                activeCommand <- Some(commandToExecute)
-                this.StdoutEndCurrentLine()
-                proc.StandardInput.WriteLine(commandToString.ExportICommand commandToExecute.Command) 
-            
+                           
                        
     member this.ForceShutdownNuXmv () =
         currentModeOfProgram <- NuXmvModeOfProgramm.Terminated
         proc.Kill()
 
+    // TODO: Consider: Should this and StartCommand be integrated into ExecuteCommand as special-cases?
     member this.QuitNuXmvAndWaitForExit () =
-        this.ExecuteCommand NuSMVCommand.Quit
+        let result = this.ExecuteCommand NuSMVCommand.Quit
+        
         System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
 
         let exitCode = proc.ExitCode
-        ()
+        result
         // match exitCode with
         //     | 0 -> true
         //     | 255 -> false
@@ -291,14 +283,17 @@ type internal ExecuteNuXmv() =
         //     | 0 -> Successful(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
         //     | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())        
 
-    member this.ReturnResults () : string =
+    member this.ReturnCommandResult (entry:NuXmvCommandResult) : string = 
         let stringBuilder = new System.Text.StringBuilder()
-        let printEntry (entry:QueueCommandResult) : unit = 
-            stringBuilder.AppendLine ((commandToString.ExportICommand entry.Command)) |> ignore
-            stringBuilder.AppendLine ("stdout:\n" + entry.Stdout) |> ignore
-            stringBuilder.AppendLine ("stderr:\n" + entry.Stderr) |> ignore
-            stringBuilder.AppendLine "==========" |> ignore
-        let printUnprogressed () : unit =
+        stringBuilder.AppendLine ((commandToString.ExportICommand entry.Command)) |> ignore
+        stringBuilder.AppendLine ("stdout:\n" + entry.Stdout) |> ignore
+        stringBuilder.AppendLine ("stderr:\n" + entry.Stderr) |> ignore
+        stringBuilder.AppendLine "==========" |> ignore
+        stringBuilder.ToString()
+    
+    member this.ReturnUnprocessedOutput() : string =
+        let stringBuilder = new System.Text.StringBuilder()
+        let printUnprocessed () : unit =
             stringBuilder.AppendLine "unprogressed" |> ignore
             stringBuilder.AppendLine ("stdout-line-buffer:\n" + stdoutCurrentLine.ToString() ) |> ignore
             stringBuilder.AppendLine ("stdout-buffer:\n" + stdoutOutputBuffer.ToString()) |> ignore
@@ -306,14 +301,14 @@ type internal ExecuteNuXmv() =
             stringBuilder.AppendLine "==========" |> ignore
         let printActiveCommand () : unit =
             if activeCommand.IsSome then
-                stringBuilder.AppendLine ("current Command:\n" + (commandToString.ExportICommand activeCommand.Value.Command)) |> ignore
+                stringBuilder.AppendLine ("current Command:\n" + (commandToString.ExportICommand activeCommand.Value)) |> ignore
             else
                 stringBuilder.AppendLine ("current Command:\n ---- ") |> ignore
             stringBuilder.AppendLine "==========" |> ignore
-        let printCommandInQueue (number:int) (command:QueueCommand) : unit =
-            stringBuilder.AppendLine ("Command " + (string number) + ":\n"+ (commandToString.ExportICommand command.Command)) |> ignore
-        commandQueueResults |> Seq.iter printEntry
-        printUnprogressed ()
+        let printCommandInQueue (number:int) (command:ICommand) : unit =
+            stringBuilder.AppendLine ("Command " + (string number) + ":\n"+ (commandToString.ExportICommand command)) |> ignore
+        //commandQueueResults |> Seq.iter printEntry
+        printUnprocessed ()
         printActiveCommand ()
-        commandQueueToProcess |> Seq.iteri printCommandInQueue
+        //commandQueueToProcess |> Seq.iteri printCommandInQueue
         stringBuilder.ToString()

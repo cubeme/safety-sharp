@@ -48,7 +48,8 @@ module NuXmvExecuteTests =
     let ``NuXmv starts in interactive mode`` () =
         let nuxmv = ExecuteNuXmv()
         nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
-        nuxmv.QuitNuXmvAndWaitForExit()
+        let result = nuxmv.QuitNuXmvAndWaitForExit()
+        ()
         
     [<Test>]
     let ``Shutdown of NuXmv can be forced`` () =
@@ -100,10 +101,14 @@ module NuXmvExecuteTests =
 
         let nuxmv = ExecuteNuXmv()
         nuxmv.StartNuXmvInteractive (-1)
-        nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
-        nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
-        nuxmv.QuitNuXmvAndWaitForExit()
-        let result = nuxmv.ReturnResults ()
+        let outputTuple1 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputUnprocessed = nuxmv.ReturnUnprocessedOutput ()
+
+        let outputTuples = outputTuple1@outputTuple2@[outputTuple3]
+        let resultTuples = outputTuples |> List.map nuxmv.ReturnCommandResult |> String.concat ""
+        let result = resultTuples+outputUnprocessed
 
         result.Length > 0 =? true
         ()
