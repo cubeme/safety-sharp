@@ -54,6 +54,31 @@ module NuXmvExecuteTests =
         nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
         System.Threading.Thread.Sleep (100)
         nuxmv.ForceShutdownNuXmv ()
+        
+    [<Test>]
+    let ``An action associated with a spimple NuXmv-'echo'-Command gets executed after NuXmv has finished the command`` () =
+        true =? false
+        
+    [<Test>]
+    let ``NuXmv doesn't read a syntactical wrong model file`` () =
+        true =? false
+        
+    [<Test>]
+    let ``NuXmv reads a file with a simple model`` () =
+        true =? false
+        
+    [<Test>]
+    let ``NuXmv returns a counterexample of an unsatisfied formula`` () =
+        true =? false
+        
+    [<Test>]
+    let ``NuXmv validates a satisfied formula`` () =
+        true =? false
+        
+    [<Test>]
+    let ``NuXmv validates two satisfied formulas`` () =
+        true =? false
+        
 
 
     open TestCase1
