@@ -106,18 +106,6 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		}
 
 		/// <summary>
-		///     In debug builds, logs debugging information.
-		/// </summary>
-		/// <param name="message">The non-empty message that should be logged.</param>
-		/// <param name="arguments">The arguments that should be used to format <paramref name="message" />.</param>
-		[Conditional("DEBUG"), StringFormatMethod("message")]
-		public static void Debug(string message, params object[] arguments)
-		{
-			Requires.NotNull(message, () => message);
-			RaiseLoggedEvent(LogType.Debug, String.Format(message, arguments));
-		}
-
-		/// <summary>
 		///     Raises the <see cref="Logged" /> event.
 		/// </summary>
 		/// <param name="logType">The <see cref="LogType" /> of the <see cref="LogEntry" />.</param>
@@ -138,9 +126,6 @@ namespace SafetySharp.CSharpCompiler.Utilities
 				var type = "";
 				switch (entry.LogType)
 				{
-					case LogType.Debug:
-						type = "Debug ";
-						break;
 					case LogType.Info:
 						type = "Info ";
 						break;
@@ -158,7 +143,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 						break;
 				}
 
-				System.Diagnostics.Debug.WriteLine("[{0}] {1}", type, entry.Message);
+				Debug.WriteLine("[{0}] {1}", type, entry.Message);
 			};
 		}
 	}

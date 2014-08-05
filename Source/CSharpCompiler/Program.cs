@@ -143,10 +143,6 @@ namespace SafetySharp.CSharpCompiler
 			{
 				switch (entry.LogType)
 				{
-					case LogType.Debug:
-						if (!Silent)
-							WriteToConsole(ConsoleColor.Magenta, entry.Message);
-						break;
 					case LogType.Info:
 						if (!Silent)
 							WriteToConsole(ConsoleColor.White, entry.Message);

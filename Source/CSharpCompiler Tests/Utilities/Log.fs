@@ -31,22 +31,6 @@ open SafetySharp.CSharpCompiler.Utilities
 
 module Log =
     [<Test>]
-    let ``Debug method`` () =
-        let invoked = ref false
-        let logged = Action<LogEntry> (fun logEntry ->
-                logEntry.LogType =? LogType.Debug
-                logEntry.Message =? "Debug 1 2"
-                invoked := true)
-
-        try
-            Log.add_Logged logged
-            Log.Debug ("Debug {0} {1}", 1, 2)
-            !invoked =? true
-
-        finally
-            Log.remove_Logged logged
-
-    [<Test>]
     let ``Info method`` () =
         let invoked = ref false
         let logged = Action<LogEntry> (fun logEntry ->

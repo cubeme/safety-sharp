@@ -107,12 +107,9 @@ namespace SafetySharp.CSharpCompiler
 						Log.Warn("{0}", diagnostic);
 					break;
 				case DiagnosticSeverity.Info:
-					if (!errorsOnly)
-						Log.Info("{0}", diagnostic);
-					break;
 				case DiagnosticSeverity.Hidden:
 					if (!errorsOnly)
-						Log.Debug("{0}", diagnostic);
+						Log.Info("{0}", diagnostic);
 					break;
 				default:
 					Assert.NotReached("Unknown diagnostic severity.");

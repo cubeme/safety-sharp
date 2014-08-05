@@ -47,11 +47,6 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <summary>
 		///     The <see cref="LogEntry" /> provides an informational message.
 		/// </summary>
-		Info,
-
-		/// <summary>
-		///     The <see cref="LogEntry" /> provides debugging information.
-		/// </summary>
-		Debug
+		Info
 	}
 }
