@@ -65,6 +65,7 @@
     <Compile Include="Modelchecking\Common\TestCase1.fs" />
     <Compile Include="Modelchecking\Common\SimplifiedMetamodelTests.fs" />
     <Compile Include="Modelchecking\Common\WriteOnceMetamodelTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvModels.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvExecuteTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodelTests.fs" />
