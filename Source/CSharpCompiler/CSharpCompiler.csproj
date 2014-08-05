@@ -65,6 +65,12 @@
   <ItemGroup>
     <Compile Include="Analyzers\SS1000.cs" />
     <Compile Include="Analyzers\SS1001.cs" />
+    <Compile Include="Analyzers\SS1002.cs" />
+    <Compile Include="Analyzers\SS1003.cs" />
+    <Compile Include="Analyzers\SS1004.cs" />
+    <Compile Include="Analyzers\SS1005.cs" />
+    <Compile Include="Analyzers\SS1006.cs" />
+    <Compile Include="Analyzers\SS1007.cs" />
     <Compile Include="Roslyn\CSharpAnalyzer.cs" />
     <Compile Include="Roslyn\SemanticModelAnalyzer.cs" />
     <Compile Include="Roslyn\SymbolAnalyzer.cs" />

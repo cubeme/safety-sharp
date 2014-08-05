@@ -62,15 +62,23 @@
     <Compile Include="Roslyn\Symbols\SemanticModelExtensions.fs" />
     <Compile Include="Roslyn\Symbols\SymbolExtensions.fs" />
     <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\ArgumentExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\SyntaxBuilder.fs" />
-	  <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
-	  <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
-	  <None Include="packages.config" />
+    <Compile Include="Roslyn\Syntax\ArgumentExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\SyntaxBuilder.fs" />
+    <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.fs" />
+    <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.fs" />
+    <None Include="packages.config" />
+    <Compile Include="Analyzers\SS1000.fs" />
+    <Compile Include="Analyzers\SS1001.fs" />
+    <Compile Include="Analyzers\SS1002.fs" />
+    <Compile Include="Analyzers\SS1003.fs" />
+    <Compile Include="Analyzers\SS1004.fs" />
+    <Compile Include="Analyzers\SS1005.fs" />
+    <Compile Include="Analyzers\SS1006.fs" />
+    <Compile Include="Analyzers\SS1007.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">

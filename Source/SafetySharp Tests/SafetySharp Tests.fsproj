@@ -55,8 +55,6 @@
       <Link>TestHelpers.fs</Link>
     </Compile>
     <Compile Include="Modeling.fs" />
-    <Compile Include="CSharp\Diagnostics\EnumAnalyzersTests.fs" />
-    <Compile Include="CSharp\Diagnostics\PortAnalyzersTests.fs" />
     <Compile Include="CSharp\Normalization\ExpressionLifterTests.fs" />
     <Compile Include="CSharp\Normalization\PortNormalizersTests.fs" />
     <Compile Include="CSharp\Normalization\EnumNormalizersTests.fs" />

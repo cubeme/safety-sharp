@@ -20,79 +20,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Diagnostics.EnumAnalyzersTests
+namespace Analyzers
 
+open System
 open System.Linq
-open System.Threading
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.Internal.CSharp.Diagnostics
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Modeling
+open SafetySharp.CSharpCompiler.Analyzers
+open SafetySharp.CSharpCompiler.Roslyn.Syntax
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
-module EnumUnderlyingTypeAnalyzerTests =
-    let hasDiagnostics = TestCompilation.HasDiagnostics (EnumUnderlyingTypeAnalyzer ())
+module SS1007 =
+    let getDiagnostic = TestCompilation.GetDiagnostic (SS1007 ())
 
+    let ss1007 location length =
+        Diagnostic ("SS1007", (1, location), (1, location + length), "Enum 'E' must not explicitly declare an underlying type.")
+        |> Some
     [<Test>]
     let ``implicit underlying type is valid`` () =
-        hasDiagnostics "enum E { A }" =? false
+        getDiagnostic "enum E { A }" =? None
 
     [<Test>]
     let ``byte as underlying type is invalid`` () =
-        hasDiagnostics "enum E : byte { A }" =? true
+        getDiagnostic "enum E : byte { A }" =? ss1007 9 4
 
     [<Test>]
     let ``int as underlying type is invalid`` () =
-        hasDiagnostics "enum E : int { A }" =? true
+        getDiagnostic "enum E : int { A }" =? ss1007 9 3
 
     [<Test>]
     let ``long as underlying type is invalid`` () =
-        hasDiagnostics "enum E : long { A }" =? true
+        getDiagnostic "enum E : long { A }" =? ss1007 9 4
 
     [<Test>]
     let ``sbyte as underlying type is invalid`` () =
-        hasDiagnostics "enum E : sbyte { A }" =? true
+        getDiagnostic "enum E : sbyte { A }" =? ss1007 9 5
 
     [<Test>]
     let ``short as underlying type is invalid`` () =
-        hasDiagnostics "enum E : short { A }" =? true
+        getDiagnostic "enum E : short { A }" =? ss1007 9 5
 
     [<Test>]
     let ``uint as underlying type is invalid`` () =
-        hasDiagnostics "enum E : uint { A }" =? true
+        getDiagnostic "enum E : uint { A }" =? ss1007 9 4
 
     [<Test>]
     let ``ulong as underlying type is invalid`` () =
-        hasDiagnostics "enum E : ulong { A }" =? true
+        getDiagnostic "enum E : ulong { A }" =? ss1007 9 5
 
     [<Test>]
     let ``ushort as underlying type is invalid`` () =
-        hasDiagnostics "enum E : ushort { A }" =? true
-
-[<TestFixture>]
-module EnumMemberAnalyzerTests =
-    let hasDiagnostics = TestCompilation.HasDiagnostics (EnumMemberAnalyzer ())
-
-    [<Test>]
-    let ``enum declaration without explicit member values is valid`` () =
-        hasDiagnostics "enum E { A, B, C }" =? false
-
-    [<Test>]
-    let ``enum declaration with explicit value on first member is invalid`` () =
-        hasDiagnostics "enum E { A = 1, B, C }" =? true
-
-    [<Test>]
-    let ``enum declaration with explicit value on second member is invalid`` () =
-        hasDiagnostics "enum E { A, B = 1, C }" =? true
-
-    [<Test>]
-    let ``enum declaration with explicit value on third member is invalid`` () =
-        hasDiagnostics "enum E { A, B, C = 3 }" =? true
-
-    [<Test>]
-    let ``enum declaration with explicit values on all members is invalid`` () =
-        hasDiagnostics "enum E { A = 4, B = 1, C = 3 }" =? true
+        getDiagnostic "enum E : ushort { A }" =? ss1007 9 6

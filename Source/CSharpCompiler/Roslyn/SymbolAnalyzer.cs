@@ -39,13 +39,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		/// <param name="symbolKinds">The kinds of symbols analyzed by this analyzer.</param>
-		protected SymbolAnalyzer(params SymbolKind[] symbolKinds)
+		/// <param name="symbolKind">The kind of the symbol analyzed by this analyzer.</param>
+		/// <param name="symbolKinds">The additional kinds of symbols analyzed by this analyzer.</param>
+		protected SymbolAnalyzer(SymbolKind symbolKind, params SymbolKind[] symbolKinds)
 		{
 			Requires.NotNull(symbolKinds, () => symbolKinds);
-			Requires.ArgumentSatisfies(symbolKinds.Length > 0, () => symbolKinds, "At least one symbol kind must be specified.");
-
-			SymbolKindsOfInterest = ImmutableArray.Create(symbolKinds);
+			SymbolKindsOfInterest = ImmutableArray.Create(symbolKind).AddRange(symbolKinds);
 		}
 
 		/// <summary>

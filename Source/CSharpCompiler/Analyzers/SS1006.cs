@@ -20,49 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Roslyn
+namespace SafetySharp.CSharpCompiler.Analyzers
 {
 	using System;
-	using System.Threading;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Utilities;
+	using Roslyn;
+	using Roslyn.Syntax;
 
 	/// <summary>
-	///     A base class for SafetySharp C# <see cref="SemanticModel" /> analyzers.
+	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
-	public abstract class SemanticModelAnalyzer : CSharpAnalyzer, ISemanticModelAnalyzer
+	[DiagnosticAnalyzer]
+	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	public class SS1006 : SemanticModelAnalyzer
 	{
 		/// <summary>
-		///     Analyzes the <paramref name="semanticModel" />.
+		///     The identifier of the diagnostic emitted by the analyzer.
 		/// </summary>
-		/// <param name="semanticModel">The semanticModel that should be analyzed.</param>
-		/// <param name="addDiagnostic">The delegate that should be used to emit diagnostics.</param>
-		/// <param name="cancellationToken">The token that should be checked for cancelling the analysis.</param>
-		public void AnalyzeSemanticModel(SemanticModel semanticModel, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
-		{
-			Requires.NotNull(semanticModel, () => semanticModel);
-			Requires.NotNull(addDiagnostic, () => addDiagnostic);
+		private const string Identifier = Prefix + "1006";
 
-			DiagnosticCallback = addDiagnostic;
-			Analyze(semanticModel);
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		public SS1006()
+		{
+			Error(Identifier,
+				  "Values of enumeration members must not be explicitly declared.",
+				  "Value of enum member '{0}' cannot be declared explicitly.");
 		}
 
 		/// <summary>
 		///     Analyzes the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model that should be analyzed.</param>
-		protected abstract void Analyze(SemanticModel semanticModel);
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the diagnostic
-		///     message.
-		/// </summary>
-		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SyntaxNode syntaxNode, params object[] messageArgs)
+		protected override void Analyze(SemanticModel semanticModel)
 		{
-			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+			var enumDeclarations = semanticModel
+				.SyntaxTree.Descendants<EnumMemberDeclarationSyntax>()
+				.Where(enumMember => enumMember.EqualsValue != null);
+
+			foreach (var enumMember in enumDeclarations)
+				EmitDiagnostic(enumMember.EqualsValue.Value, semanticModel.GetDeclaredSymbol(enumMember).ToDisplayString());
 		}
 	}
 }

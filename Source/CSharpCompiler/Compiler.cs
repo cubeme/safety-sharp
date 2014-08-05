@@ -42,14 +42,11 @@ namespace SafetySharp.CSharpCompiler
 		/// <summary>
 		///     Gets the diagnostic analyzers that are used to diagnose the C# code before compilation.
 		/// </summary>
-		private static IEnumerable<IDiagnosticAnalyzer> Analyzers
+		private static IEnumerable<IDiagnosticAnalyzer> GetAnalyzers()
 		{
-			get
-			{
-				return from type in typeof(Compiler).Assembly.GetTypes()
-					   where type.IsClass && !type.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(type)
-					   select (IDiagnosticAnalyzer)Activator.CreateInstance(type);
-			}
+			return from type in typeof(Compiler).Assembly.GetTypes()
+				   where type.IsClass && !type.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(type)
+				   select (IDiagnosticAnalyzer)Activator.CreateInstance(type);
 		}
 
 		/// <summary>
@@ -189,7 +186,7 @@ namespace SafetySharp.CSharpCompiler
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
 
-			var diagnostics = AnalyzerDriver.GetDiagnostics(compilation, Analyzers, new CancellationToken(), false).ToArray();
+			var diagnostics = AnalyzerDriver.GetDiagnostics(compilation, GetAnalyzers(), new CancellationToken(), false).ToArray();
 			return Report(diagnostics, false);
 		}
 

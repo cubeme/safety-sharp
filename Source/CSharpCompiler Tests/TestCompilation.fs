@@ -33,10 +33,16 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.CSharpCompiler.Roslyn.Syntax
+open SafetySharp.CSharpCompiler.Roslyn
 open SafetySharp.Modeling
 
+/// Raises when a C# compilation problem occurred.
 type CompilationException (message : string) =
     inherit Exception (message)
+
+/// Provides information about a diagnostic.
+type Diagnostic =
+    | Diagnostic of Identifier : string * Start : (int * int) * End : (int * int) * Message : string
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]
@@ -44,7 +50,7 @@ type TestCompilation (csharpCode) =
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
-    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices; " + csharpCode)
+    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices;\n" + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
     let csharpCompilation = 
@@ -251,7 +257,21 @@ type TestCompilation (csharpCode) =
         | null -> failed "Unable to find a type with name '%s' in the compiled assembly." typeName
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
 
-    /// Checks whether the given C# code has any diagnostics for the given diagnostic analyzer.
-    static member HasDiagnostics diagnosticAnalyzer csharpCode =
+    /// Checks whether the given C# code has any diagnostics.
+    static member GetDiagnostic analyzer csharpCode =
         let compilation = TestCompilation csharpCode
-        AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| diagnosticAnalyzer |], new CancellationToken(), false) |> Seq.isEmpty |> not
+        let diagnostics = AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| analyzer |], new CancellationToken(), false)
+        let diagnostics = Array.ofSeq diagnostics
+
+        if diagnostics.Length > 1 then
+            raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))
+        elif diagnostics.Length = 0 then
+            None
+        else
+            let diagnostic = diagnostics.[0]
+            let span = diagnostic.Location.GetLineSpan ()
+            Diagnostic (diagnostic.Id, 
+                        (span.StartLinePosition.Line, span.StartLinePosition.Character),
+                        (span.EndLinePosition.Line, span.EndLinePosition.Character),
+                        diagnostic.GetMessage ())
+            |> Some

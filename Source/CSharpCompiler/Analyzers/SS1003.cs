@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -30,31 +30,26 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a getter or setter of a property is not marked with either the <see cref="ProvidedAttribute" /> or the
-	///     <see cref="RequiredAttribute" />.
+	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
 	/// </summary>
 	[DiagnosticAnalyzer]
 	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
-	public class SS1001 : SymbolAnalyzer<IMethodSymbol>
+	public class SS1003 : SymbolAnalyzer<ISymbol>
 	{
 		/// <summary>
 		///     The identifier of the diagnostic emitted by the analyzer.
 		/// </summary>
-		private const string Identifier = Prefix + "1001";
+		private const string Identifier = Prefix + "1003";
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1001()
-			: base(SymbolKind.Method)
+		public SS1003()
+			: base(SymbolKind.Method, SymbolKind.Property)
 		{
 			Error(Identifier,
-				  String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName),
-				  String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName));
+				  String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
+				  "Required port '{0}' must be extern.");
 		}
 
 		/// <summary>
@@ -62,18 +57,17 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		/// </summary>
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
-		protected override void Analyze(IMethodSymbol symbol, Compilation compilation)
+		protected override void Analyze(ISymbol symbol, Compilation compilation)
 		{
-			if (!symbol.ContainingType.ImplementsIComponent(compilation))
+			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
 				return;
 
-			if (!(symbol.AssociatedSymbol is IPropertySymbol))
+			// Ignore getter and setter methods of properties
+			var methodSymbol = symbol as IMethodSymbol;
+			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
 				return;
 
-			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
-
-			if (hasProvidedAttribute || hasRequiredAttribute)
+			if (!symbol.IsExtern && symbol.HasAttribute<RequiredAttribute>(compilation))
 				EmitDiagnostic(symbol, symbol.ToDisplayString());
 		}
 	}

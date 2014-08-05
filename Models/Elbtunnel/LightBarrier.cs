@@ -49,7 +49,7 @@ namespace Elbtunnel
 		public override void Update()
 		{
 			_triggered = _sensor.IsTriggered();
-		}
+		} 
 	}
 
 	public class LightBarrier : Component, ISensor
@@ -57,14 +57,13 @@ namespace Elbtunnel
 		public bool Triggered = false;
 		private int _i = 1;
 
+		[Required]
 		public extern void SendData(int position);
 
 		public bool IsTriggered()
 		{
 			return false;
 		}
-
-		public bool X { [Provided]get;[Required] set; }
 
 		[Provided] 
 		public int Do()
@@ -77,7 +76,7 @@ namespace Elbtunnel
 		}
 	}
 
-	internal enum Lane 
+	internal enum Lane
 	{
 		Left,
 		Right
