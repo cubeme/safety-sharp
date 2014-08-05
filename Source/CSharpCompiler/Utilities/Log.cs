@@ -41,14 +41,21 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		}
 
 		/// <summary>
+		///     Raised when the <see cref="Die" /> function has completed execution. One of the event handlers is assumed to terminate
+		///     the application without returning control to the <see cref="Die" /> function.
+		/// </summary>
+		public static event Action OnDie;
+
+		/// <summary>
 		///     Raised when a <see cref="LogEntry" /> has been generated. If the <see cref="LogEntry" />'s type is
 		///     <see cref="LogType.Fatal" />, the program terminates after all event handlers have been executed.
 		/// </summary>
 		public static event Action<LogEntry> Logged;
 
 		/// <summary>
-		///     Logs a fatal application error and terminates the application after all event handlers of the <see cref="Logged" />
-		///     event have been executed.
+		///     Logs a fatal application error. After all event handlers of the <see cref="Logged" />
+		///     event have been executed, the <see cref="OnDie" /> callback is invoked that is assumed to terminate the application
+		///     without returning control to the <see cref="Die" /> function.
 		/// </summary>
 		/// <param name="message">The non-empty message that should be logged.</param>
 		/// <param name="arguments">The arguments that should be used to format <paramref name="message" />.</param>
@@ -58,7 +65,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 			Requires.NotNull(message, () => message);
 
 			RaiseLoggedEvent(LogType.Fatal, String.Format(message, arguments));
-			Environment.Exit(-1);
+			if (OnDie != null)
+				OnDie();
 		}
 
 		/// <summary>

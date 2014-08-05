@@ -46,6 +46,10 @@ module ComponentRequiredPortNormalizer =
         normalize "class X { extern void M(); }" =? "class X { extern void M(); }"
 
     [<Test>]
+    let ``does not normalize non-extern component method`` () =
+        normalize "class X : Component { public void M() {}}" =? "class X : Component { public void M() {}}"
+
+    [<Test>]
     let ``normalizes extern 'void -> void' method within a component`` () =
         normalize "class X : Component { public extern void M(); }" =? 
             "class X : Component { public System.Action M { private get; set; } }"

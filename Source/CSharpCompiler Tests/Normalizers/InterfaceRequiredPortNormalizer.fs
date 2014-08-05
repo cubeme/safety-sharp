@@ -46,6 +46,10 @@ module InterfaceRequiredPortNormalizer =
         normalize "interface X { [Required] void M(); }" =? "interface X { [Required] void M(); }"
 
     [<Test>]
+    let ``does not normalize non-required port component interface method`` () =
+        normalize "interface X : IComponent { void M(); }" =? "interface X : IComponent { void M(); }"
+
+    [<Test>]
     let ``normalizes required 'void -> void' port within a component interface`` () =
         normalize "interface X : IComponent { [Required] void M(); }" =? 
             "interface X : IComponent { [Required] System.Action M { set; } }"

@@ -55,6 +55,9 @@
       <Link>TestHelpers.fs</Link>
     </Compile>
     <Compile Include="TestCompilation.fs" />
+    <Compile Include="Utilities\Assert.fs" />
+    <Compile Include="Utilities\Log.fs" />
+    <Compile Include="Utilities\Requires.fs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.fs" />
     <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.fs" />
     <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.fs" />
@@ -78,12 +81,10 @@
     <Compile Include="Analyzers\SS1005.fs" />
     <Compile Include="Analyzers\SS1006.fs" />
     <Compile Include="Analyzers\SS1007.fs" />
-    <None Include="packages.config" />
-    <Compile Include="Utilities\Assert.fs" />
-    <Compile Include="Utilities\Requires.fs" />
     <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">

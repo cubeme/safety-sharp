@@ -187,6 +187,8 @@ namespace SafetySharp.CSharpCompiler
 		/// <param name="args">The compiler arguments passed via the command line.</param>
 		private static int Main(string[] args)
 		{
+			Log.OnDie += () => Environment.Exit(-1);
+
 			var program = new Program();
 			return program.Compile(args);
 		}
