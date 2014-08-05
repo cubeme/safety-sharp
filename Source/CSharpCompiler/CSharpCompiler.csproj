@@ -71,7 +71,12 @@
     <Compile Include="Analyzers\SS1005.cs" />
     <Compile Include="Analyzers\SS1006.cs" />
     <Compile Include="Analyzers\SS1007.cs" />
+    <Compile Include="Normalization\ComponentRequiredPortNormalizer.cs" />
+    <Compile Include="Normalization\ExpressionLifter.cs" />
+    <Compile Include="Normalization\InterfaceRequiredPortNormalizer.cs" />
     <Compile Include="Roslyn\CSharpAnalyzer.cs" />
+    <Compile Include="Roslyn\CSharpNormalizer.cs" />
+    <Compile Include="Roslyn\NormalizationScope.cs" />
     <Compile Include="Roslyn\SemanticModelAnalyzer.cs" />
     <Compile Include="Roslyn\SymbolAnalyzer.cs" />
     <Compile Include="Roslyn\SyntaxNodeAnalyzer.cs" />

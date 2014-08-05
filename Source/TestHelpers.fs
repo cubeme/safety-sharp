@@ -269,3 +269,7 @@ let (<>?) left right =
     let result = left <> right
     if not result then
         Assert.Fail ("Objects are equal, even though they are expected to be different.\n\n{0}", ObjectDumper.dump left)
+
+/// Normalizes all new lines to '\n' only.
+let normalizeNewLines (str : string) =
+    str.Replace ("\r", String.Empty)

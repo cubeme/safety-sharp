@@ -30,15 +30,15 @@ open SafetySharp.Internal.Utilities
 open SafetySharp.Modeling.CompilerServices
 
 /// Represents a Safety Sharp modeling assembly.
-type internal ModelingAssembly (modelingAssembly : Assembly) as this=
+type internal ModelingAssembly (modelingAssembly : Assembly) =
 
     do nullArg modelingAssembly "modelingAssembly"
 
     let assemblyMetadata = modelingAssembly.GetCustomAttribute<ModelingAssemblyAttribute> ()
     do invalidArg (obj.ReferenceEquals(assemblyMetadata, null)) "modelingAssembly" "Expected a SafetySharp modeling assembly."
 
-    do if this.CompilerVersion <> Compiler.Version then
-        invalidOp "Modeling assembly '%s' was compiled with a different version of the SafetySharp compiler." modelingAssembly.FullName 
+//    do if this.CompilerVersion <> Compiler.Version then
+//        invalidOp "Modeling assembly '%s' was compiled with a different version of the SafetySharp compiler." modelingAssembly.FullName 
 
     /// Gets the version string of the Safety Sharp compiler that was used to compile the modeling assembly.
     member this.CompilerVersion = assemblyMetadata.CompilerVersion

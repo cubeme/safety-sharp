@@ -1,0 +1,132 @@
+// The MIT License (MIT)
+// 
+// Copyright (c) 2014, Institute for Software & Systems Engineering
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+namespace SafetySharp.CSharpCompiler.Roslyn
+{
+	using System;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Syntax;
+	using Utilities;
+
+	/// <summary>
+	///     A base class for C# normalizers that normalize certain SafetySharp C# language features in order to
+	///     ensure that the SafetySharp models remain executable.
+	/// </summary>
+	public abstract class CSharpNormalizer : CSharpSyntaxRewriter
+	{
+		/// <summary>
+		///     The scope of the normalizer.
+		/// </summary>
+		private readonly NormalizationScope _scope;
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		/// <param name="scope">The scope of the normalizer.</param>
+		protected CSharpNormalizer(NormalizationScope scope)
+		{
+			Requires.InRange(scope, () => scope);
+			_scope = scope;
+		}
+
+		/// <summary>
+		///     Gets the semantic model that should be used for semantic analysis during normalization.
+		/// </summary>
+		protected SemanticModel SemanticModel { get; private set; }
+
+		/// <summary>
+		///     Normalizes the C# code contained in <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation that contains the code that should be normalized.</param>
+		public Compilation Normalize(Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+
+			foreach (var syntaxTree in compilation.SyntaxTrees)
+				compilation = compilation.ReplaceSyntaxTree(syntaxTree, Normalize(compilation, syntaxTree));
+
+			return compilation;
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="syntaxTree" /> of the <paramref name="compilation." />
+		/// </summary>
+		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
+		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
+		private SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		{
+			SemanticModel = compilation.GetSemanticModel(syntaxTree);
+
+			var root = syntaxTree.GetRoot();
+			var normalizedRoot = Visit(root);
+
+			if (root == normalizedRoot)
+				return syntaxTree;
+
+			return syntaxTree.WithChangedText(normalizedRoot.GetText());
+		}
+
+		/// <summary>
+		///     Ensures that the <paramref name="classDeclaration" /> is only normalized when the normalizer has the appropriate
+		///     <see cref="NormalizationScope" />.
+		/// </summary>
+		public override sealed SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		{
+			if (_scope == NormalizationScope.ComponentInterfaces)
+				return classDeclaration;
+
+			if (_scope != NormalizationScope.Global && !classDeclaration.IsDerivedFromComponent(SemanticModel))
+				return classDeclaration;
+
+			return base.VisitClassDeclaration(classDeclaration);
+		}
+
+		/// <summary>
+		///     Ensures that the <paramref name="interfaceDeclaration" /> is only normalized when the normalizer has the appropriate
+		///     <see cref="NormalizationScope" />.
+		/// </summary>
+		public override sealed SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax interfaceDeclaration)
+		{
+			if (_scope == NormalizationScope.Components || _scope == NormalizationScope.ComponentStatements)
+				return interfaceDeclaration;
+
+			if (_scope != NormalizationScope.Global && !interfaceDeclaration.ImplementsIComponent(SemanticModel))
+				return interfaceDeclaration;
+
+			return base.VisitInterfaceDeclaration(interfaceDeclaration);
+		}
+
+		/// <summary>
+		///     Ensures that the <paramref name="constructorDeclaration" /> is only normalized when the normalizer has the appropriate
+		///     <see cref="NormalizationScope" />.
+		/// </summary>
+		public override sealed SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax constructorDeclaration)
+		{
+			if (_scope == NormalizationScope.Global)
+				return base.VisitConstructorDeclaration(constructorDeclaration);
+
+			return constructorDeclaration;
+		}
+	}
+}

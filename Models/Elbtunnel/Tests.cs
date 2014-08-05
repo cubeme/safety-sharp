@@ -46,7 +46,7 @@
 			spin.Check(Ltl.Globally(true));
 		}
 
-		[Test]
+		[Test] 
 		public void FirstTest()
 		{
 			var elbtunnel = new Elbtunnel(true);

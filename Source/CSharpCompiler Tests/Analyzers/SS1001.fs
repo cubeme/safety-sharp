@@ -79,4 +79,4 @@ module SS1001 =
 
     [<Test>]
     let ``Methods with attributes are valid`` () =
-        getDiagnostic "class C { [Provided] void M() {}}" =? None
+        getDiagnostic "class C : Component { [Provided] void M() {}}" =? None

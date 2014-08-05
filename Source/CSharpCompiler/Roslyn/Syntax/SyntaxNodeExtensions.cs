@@ -97,7 +97,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			Requires.NotNull(syntaxNode, () => syntaxNode);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return syntaxNode.GetReferencedSymbol<ISymbol>(semanticModel).HasAttribute<T>(semanticModel);
+			var declaredSymbol = semanticModel.GetDeclaredSymbol(syntaxNode);
+			Assert.NotNull(declaredSymbol, "Unable to determine symbol declared by syntax node '{0}'.", syntaxNode);
+
+			return declaredSymbol.HasAttribute<T>(semanticModel);
 		}
 
 		/// <summary>

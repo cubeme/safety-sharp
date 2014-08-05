@@ -81,6 +81,9 @@
     <None Include="packages.config" />
     <Compile Include="Utilities\Assert.fs" />
     <Compile Include="Utilities\Requires.fs" />
+    <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
+    <Compile Include="Normalizers\ExpressionLifter.fs" />
+    <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">

@@ -112,7 +112,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		public static void NotReached(string message = null, params object[] parameters)
 		{
 			message = message == null ? "Control flow should not have reached this point." : String.Format(message, parameters);
-			That(false, message);
+			throw new InvalidOperationException(message);
 		}
 
 		/// <summary>

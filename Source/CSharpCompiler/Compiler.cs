@@ -31,6 +31,7 @@ namespace SafetySharp.CSharpCompiler
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.MSBuild;
+	using Normalization;
 	using Roslyn;
 	using Utilities;
 
@@ -84,6 +85,7 @@ namespace SafetySharp.CSharpCompiler
 			if (!Diagnose(compilation))
 				return -1;
 
+			compilation = NormalizeSimulationCode(compilation);
 			return Emit(compilation, project.OutputFilePath);
 		}
 
@@ -188,6 +190,31 @@ namespace SafetySharp.CSharpCompiler
 
 			var diagnostics = AnalyzerDriver.GetDiagnostics(compilation, GetAnalyzers(), new CancellationToken(), false).ToArray();
 			return Report(diagnostics, false);
+		}
+
+		/// <summary>
+		///     Applies a normalizer of type <typeparamref name="T" /> to the <paramref name="compilation." />
+		/// </summary>
+		/// <typeparam name="T">The type of the normalizer that should be applied to <paramref name="compilation" />.</typeparam>
+		/// <param name="compilation">The compilation that should be normalized.</param>
+		private static Compilation ApplyNormalizer<T>(Compilation compilation)
+			where T : CSharpNormalizer, new()
+		{
+			return new T().Normalize(compilation);
+		}
+
+		/// <summary>
+		///     Applies the required normalizations to the simulation code.
+		/// </summary>
+		/// <param name="compilation">The compilation that should be normalized.</param>
+		private static Compilation NormalizeSimulationCode(Compilation compilation)
+		{
+			compilation = ApplyNormalizer<ExpressionLifter>(compilation);
+			compilation = ApplyNormalizer<ComponentRequiredPortNormalizer>(compilation);
+			compilation = ApplyNormalizer<InterfaceRequiredPortNormalizer>(compilation);
+
+			OutputCode(compilation, "obj/Simulation");
+			return compilation;
 		}
 
 		/// <summary>

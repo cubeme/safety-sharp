@@ -88,11 +88,6 @@
     <Compile Include="CSharp\Diagnostics\ComponentSyntaxAnalyzers.fs" />
     <Compile Include="CSharp\Diagnostics\FormulaSyntaxAnalyzer.fs" />
     <Compile Include="CSharp\Diagnostics\ExpressionSideEffectAnalyzer.fs" />
-    <Compile Include="CSharp\Normalization\CSharpNormalizer.fs" />
-    <Compile Include="CSharp\Normalization\ChooseMethodNormalizer.fs" />
-    <Compile Include="CSharp\Normalization\ExpressionLifter.fs" />
-    <Compile Include="CSharp\Normalization\PortNormalizers.fs" />
-    <Compile Include="CSharp\Normalization\EnumNormalizers.fs" />
     <Compile Include="CSharp\Transformation\SymbolResolver.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformation.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformation.fs" />
@@ -101,7 +96,6 @@
     <Compile Include="CSharp\Transformation\ObjectTransformation.fs" />
     <Compile Include="CSharp\Transformation\FormulaTransformation.fs" />
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
-    <Compile Include="CSharp\Compiler.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
     <Compile Include="Modelchecking\Common\SimplifiedMetamodel.fs" />
     <Compile Include="Modelchecking\Common\TransformationToSimplifiedMetamodel.fs" />

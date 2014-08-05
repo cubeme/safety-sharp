@@ -20,24 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.CSharp.Normalization
+namespace Normalization
 
+open System
 open System.Linq
-open System.Threading
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Internal.CSharp
 open SafetySharp.Tests
-open SafetySharp.Internal.CSharp.Normalization
-open SafetySharp.Internal.CSharp.Roslyn
+open SafetySharp.Modeling
+open SafetySharp.CSharpCompiler.Normalization
+open SafetySharp.CSharpCompiler.Roslyn.Syntax
+open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
-module ExpressionLifterTests =
-
+module ExpressionLifter =
     let normalize csharpCode =
-        let compilation = TestCompilation ("
+        let compilation = TestCompilation (sprintf "
             class C : Component
             {
                 C(bool b) {}
@@ -48,8 +48,8 @@ module ExpressionLifterTests =
                 int O([LiftExpression] int i, [LiftExpression] int j) { return 0; }
                 int P(int i, [LiftExpression] bool b) { return 0; }
 
-                void Test() { " + csharpCode + "; }
-            }")
+                void Test() { %s; }
+            }" csharpCode)
 
         let syntaxTree = ExpressionLifter().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
         let creationInvocation = syntaxTree.Descendants<ObjectCreationExpressionSyntax>().FirstOrDefault ()

@@ -20,26 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.CSharp.Normalization
+namespace SafetySharp.CSharpCompiler.Roslyn
+{
+	using System;
+	using Modeling;
 
-open System
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp.Roslyn
-open SafetySharp.Modeling.CompilerServices
+	/// <summary>
+	///     Indicates which parts of the code are affected by a <see cref="CSharpNormalizer" />.
+	/// </summary>
+	public enum NormalizationScope
+	{
+		/// <summary>
+		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all members of all classes derived from
+		///     <see cref="Component" />.
+		/// </summary>
+		Components,
 
-/// Lifts all method invocation parameter expressions 'expr' to a lambda function of the form '() => expr'.
-type internal ExpressionLifter () =
-    inherit CSharpNormalizer (NormalizationScope.Global)
+		/// <summary>
+		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all members of all interfaces derived from
+		///     <see cref="IComponent" />.
+		/// </summary>
+		ComponentInterfaces,
 
-    override this.VisitArgument node =
-        let requiresRewrite = node.HasAttribute<LiftExpressionAttribute> this.semanticModel
-        let node = base.VisitArgument node :?> ArgumentSyntax
+		/// <summary>
+		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all statements (excluding those of the constructors) of
+		///     all classes derived from <see cref="Component" />.
+		/// </summary>
+		ComponentStatements,
 
-        if not requiresRewrite then
-            upcast node
-        else
-            let expression = Syntax.Lambda [] node.Expression
-            let expression = expression |> Syntax.WithTriviaFromNode node.Expression
-            upcast node.WithExpression expression
+		/// <summary>
+		///     Does not limit the scope of the <see cref="CSharpNormalizer" />.
+		/// </summary>
+		Global
+	}
+}
