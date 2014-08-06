@@ -104,6 +104,7 @@ Initializing the Cegar package...
 Initializing the Sym2ex package... 
 Initializing the GR commands... 
 """
+    let ``flatten_hierarchy-ResultStdoutFailed`` = ""
 
     let ``encode_variables-ResultStdoutSuccess`` = ""
     let ``encode_variables-ResultStderrSuccess`` =
@@ -111,7 +112,7 @@ Initializing the GR commands...
 Heuristics "basic" is going to be used to create varordering statically
 ...done
 """
-    let ``encode_variables-ResultStderrFailed1` = """A model must be read before. Use the "read_model" command.
+    let ``encode_variables-ResultStderrFailed1`` = """A model must be read before. Use the "read_model" command.
 """
 
     let ``build_flat_model-ResultStdoutSuccess`` = ""
@@ -145,9 +146,22 @@ Successful termination
 "
 
 
-
-
     [<Test>]
-    let ``NuXmv is in PATH or in dependency folder`` () =
-        let path = ExecuteNuXmv.FindNuXmv ()
-        (path.Length > 0) =? true
+    let ``interpret failed flatten_command correctly`` () =
+        let commandResult= {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
+            NuXmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrFailed``;
+            NuXmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutFailed``;
+        }
+        let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
+        interpretedResult.HasSucceeded =? false
+        
+    [<Test>]
+    let ``interpret successful flatten_command correctly`` () =
+        let commandResult= {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
+            NuXmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrSuccess``;
+            NuXmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutSuccess``;
+        }
+        let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
+        interpretedResult.HasSucceeded =? true

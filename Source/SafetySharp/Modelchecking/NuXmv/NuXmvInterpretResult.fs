@@ -93,9 +93,15 @@ type internal NuXmvInterpretedResults =
     end
 
 module internal NuXmvInterpretResult =
+    let otherwise (result) =
+        //pesimistic:
+        // NuXmvInterpretedResult.Failed(result)
+        //optimistic
+        NuXmvInterpretedResult.Successful(result)
+
     let interpretResultOfNuXmvCommand (result:NuXmvCommandResultBasic) (command:NuXmvCommand) =
         match command with
-            | _ -> NuXmvInterpretedResult.Successful(result)
+            | _ -> otherwise result
 
         
     let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
@@ -103,7 +109,7 @@ module internal NuXmvInterpretResult =
         match command with
             | NuSMVCommand.ReadModel (_) -> success
             | NuSMVCommand.FlattenHierarchy -> success
-            | _ -> success
+            | _ -> otherwise result
     
     let interpretResult (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =
         match result.Command with
@@ -111,4 +117,4 @@ module internal NuXmvInterpretResult =
             | :? NuXmvCommand as command -> interpretResultOfNuXmvCommand result command
             //| :? NuXmvCustomCommand as command -> this.ExportCustomCommand command
             //| :? NuXmvStartedCommand as command -> "NuXmv Started"
-            | _ -> NuXmvInterpretedResult.Successful(result)
+            | _ -> otherwise result
