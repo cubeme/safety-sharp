@@ -23,10 +23,6 @@
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // TODO:
-//  - Ensure: If commandQueueToProcess is not empty and no Command is active, the next element in the queue is processed
-//    Szenarios (What happens, if):
-//     - ProcessNextQueueElement is called by two functions at the same time
-//     - If one of those function calls is ignored (maybe called by an event) will the complete queue be processed in the future?
 //  - Ensure: stderr of the verbose result of a command is always associated to the correct command
 //  - Introduce Cancelation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
 //  - Tests for access from multiple Threads
@@ -54,9 +50,9 @@ type internal NuXmvCommandResult = {
     Stdout : string;
 }
 
-type internal NuXmvResult =
-    | Successful of string * string
-    | Failed of string * string
+type internal NuXmvSimpleResult =
+    | Successful of ICommand * string
+    | Failed of ICommand * string
     with
         member this.HasSucceeded with get () =
                                     match this with
@@ -85,7 +81,10 @@ type internal ExecuteNuXmv() =
     let mutable processErrorReader : System.Threading.Tasks.Task = null
     let mutable processWaiter : System.Threading.Tasks.Task<bool> = null
     let proc = new System.Diagnostics.Process()
-
+    
+    ///////////////////////////////////////////////////
+    // NuXmv-Process and Interactive Console Management
+    ///////////////////////////////////////////////////
 
     static member FindNuXmv (): string =
         let tryCandidate (filename:string) : bool =
@@ -122,7 +121,7 @@ type internal ExecuteNuXmv() =
         stdoutCurrentLine.Clear() |> ignore
         stdoutPromptPossible <- true
 
-    member this.CommandFinished () =        
+    member this.FinishCommand () =        
         let newFinishedCommand = {
             NuXmvCommandResult.Command = activeCommand.Value;
             NuXmvCommandResult.Stdout = stdoutOutputBuffer.ToString();
@@ -154,7 +153,7 @@ type internal ExecuteNuXmv() =
             let isPrompt : bool =
                 stdoutPromptPossible && position = promptString.Length-1
             if isPrompt && activeCommand.IsSome then
-                this.CommandFinished ()
+                this.FinishCommand ()
                 stdoutCurrentLine.Clear () |> ignore //get rid of the prompt
                 stdoutReadyForNextRead.WaitOne() |> ignore
 
@@ -181,11 +180,15 @@ type internal ExecuteNuXmv() =
             fun () ->
                 if timeInMs > 0 then
                     let result = proc.WaitForExit(timeInMs)
-                    this.CommandFinished ()
+                    //TODO: Should we first wait for [processOutputReader,processErrorReader] to ensure that
+                    //      every output is attatched to the last command????
+                    this.FinishCommand ()
                     result
                 else
                     proc.WaitForExit()
-                    this.CommandFinished ()
+                    //TODO: Should we first wait for [processOutputReader,processErrorReader] to ensure that
+                    //      every output is attatched to the last command????
+                    this.FinishCommand ()
                     true
         )
     
@@ -242,7 +245,7 @@ type internal ExecuteNuXmv() =
             | _ -> false
 
 
-    member this.StartNuXmvInteractive (timeInMs:int) : unit =
+    member this.StartNuXmvInteractive (timeInMs:int) : NuXmvCommandResult =
         let initialCommand = NuXmvStartedCommand() :> ICommand
         activeCommand<-Some(initialCommand) 
         commandActiveMutex.WaitOne() |> ignore
@@ -267,17 +270,15 @@ type internal ExecuteNuXmv() =
         let result = lastCommandResult        
         stdoutReadyForNextRead.Set() |> ignore
         commandActiveMutex.ReleaseMutex()
-        ()
+        result.Value
                            
                        
     member this.ForceShutdownNuXmv () =
         currentModeOfProgram <- NuXmvModeOfProgramm.Terminated
         proc.Kill()
 
-    // TODO: Consider: Should this and StartCommand be integrated into ExecuteCommand as special-cases?
     member this.QuitNuXmvAndWaitForExit () =
         let result = this.ExecuteCommand NuSMVCommand.Quit
-        
         System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
 
         let exitCode = proc.ExitCode
@@ -290,6 +291,21 @@ type internal ExecuteNuXmv() =
         //     | 0 -> Successful(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
         //     | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())        
 
+
+    //////////////////////////////
+    // Interpreted Commands below
+    /////////////////////////////
+
+    member this.ReadModelBuildBddWithInterpretation () : NuXmvSimpleResult =
+        ()
+
+
+
+        
+    //////////////////////////////
+    // Debugging helpers
+    /////////////////////////////
+        
     member this.ReturnCommandResult (entry:NuXmvCommandResult) : string = 
         let stringBuilder = new System.Text.StringBuilder()
         stringBuilder.AppendLine ((commandToString.ExportICommand entry.Command)) |> ignore
@@ -298,7 +314,7 @@ type internal ExecuteNuXmv() =
         stringBuilder.AppendLine "==========" |> ignore
         stringBuilder.ToString()
     
-    member this.ReturnUnprocessedOutput() : string =
+    member this.ReturnUnprocessedOutput () : string =
         let stringBuilder = new System.Text.StringBuilder()
         let printUnprocessed () : unit =
             stringBuilder.AppendLine "unprogressed" |> ignore

@@ -47,27 +47,45 @@ module NuXmvExecuteTests =
     [<Test>]
     let ``NuXmv starts in interactive mode`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
+        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
         let result = nuxmv.QuitNuXmvAndWaitForExit()
         ()
         
     [<Test>]
     let ``Shutdown of NuXmv can be forced`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
+        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
         System.Threading.Thread.Sleep (100)
         nuxmv.ForceShutdownNuXmv ()
         
     [<Test>]
     let ``An action associated with a spimple NuXmv-'echo'-Command gets executed after NuXmv has finished the command`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) //wait infinitely long
+        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
         //nuxmv.ExecuteCommand(NuSMVCommand.Echo("verbose_level"),)
 
         true =? false
         
     [<Test>]
-    let ``NuXmv doesn't read a syntactical wrong model file`` () =
+    let ``NuXmv doesn't read a syntactical wrong model file 1`` () =        
+        let filename = "Modelchecking/NuXmv/wrong-syntax1.smv"
+        let code = Models.``wrong-syntax1``
+        FileSystem.WriteToAsciiFile filename code
+        let nuxmv = ExecuteNuXmv()
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
+        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
+
+        true =? false
+        
+    [<Test>]
+    let ``NuXmv doesn't read a syntactical wrong model file 2`` () =        
+        let filename = "Modelchecking/NuXmv/wrong-syntax2.smv"
+        let code = Models.``wrong-syntax2``
+        FileSystem.WriteToAsciiFile filename code
+        let nuxmv = ExecuteNuXmv()
+        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
         true =? false
         
     [<Test>]
@@ -100,13 +118,13 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename nuXmvCodeString
 
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1)
-        let outputTuple1 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
-        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
-        let outputTuple3 = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
+        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         let outputUnprocessed = nuxmv.ReturnUnprocessedOutput ()
 
-        let outputTuples = outputTuple1@outputTuple2@[outputTuple3]
+        let outputTuples = [outputTuple1]@outputTuple2@outputTuple3@[outputTuple4]
         let resultTuples = outputTuples |> List.map nuxmv.ReturnCommandResult |> String.concat ""
         let result = resultTuples+outputUnprocessed
 
