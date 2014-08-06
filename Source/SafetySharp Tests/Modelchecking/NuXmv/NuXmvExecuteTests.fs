@@ -119,12 +119,14 @@ module NuXmvExecuteTests =
 
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
-        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuples2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuples2Basic = outputTuples2.GetBasicResultsOfAllCommand
+        let outputTuples3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuples3Basic = outputTuples3.GetBasicResultsOfAllCommand
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         let outputUnprocessed = nuxmv.ReturnUnprocessedOutput ()
 
-        let outputTuples = [outputTuple1]@outputTuple2@outputTuple3@[outputTuple4]
+        let outputTuples = [outputTuple1]@outputTuples2Basic@outputTuples3Basic@[outputTuple4]
         let resultTuples = outputTuples |> List.map nuxmv.ReturnCommandResult |> String.concat ""
         let result = resultTuples+outputUnprocessed
 

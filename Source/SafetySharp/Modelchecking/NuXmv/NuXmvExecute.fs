@@ -205,8 +205,22 @@ type internal ExecuteNuXmv() =
             fun () -> this.ExecuteCommand command
         )
         
-    member this.ExecuteCommandSequence (commands:ICommand list) =
-        commands |> List.map (fun command -> (this.ExecuteCommand command))
+    member this.ExecuteCommandSequence (commands:ICommand list) : NuXmvInterpretedResults =
+        let rec processCommands (alreadySuccessfullyProcessedReverse:INuXmvCommandResult list) (commands) =
+            match commands with
+                | command :: tail ->
+                    let result = this.ExecuteCommand command
+                    let interpretedResult = NuXmvInterpretResult.interpretResult result
+                    match interpretedResult with
+                        | Successful (successful:INuXmvCommandResult) ->
+                            processCommands (successful::alreadySuccessfullyProcessedReverse) tail
+                        | Failed (failed:INuXmvCommandResult) ->
+                            let successful = alreadySuccessfullyProcessedReverse |> List.rev
+                            NuXmvInterpretedResults.OneFailed(successful,failed)
+                | [] ->
+                    let successful = alreadySuccessfullyProcessedReverse |> List.rev
+                    NuXmvInterpretedResults.AllSuccessful(successful)        
+        commands |> processCommands []
         
     member this.ExecuteCommandString (command:string) =
         this.ExecuteCommand {NuXmvCustomCommand.Command = command};
@@ -284,12 +298,13 @@ type internal ExecuteNuXmv() =
     // Interpreted Commands below
     /////////////////////////////
 
+    (*
     member this.ReadModelBuildBddWithInterpretation () : NuXmvInterpretedResult =
         ()
         let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         NuXmvInterpretedResult
-
+    *)
 
         
     //////////////////////////////

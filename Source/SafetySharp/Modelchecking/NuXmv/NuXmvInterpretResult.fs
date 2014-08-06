@@ -57,23 +57,58 @@ type internal NuXmvCommandResultFormula = {
 *)
 
 type internal NuXmvInterpretedResult =
-    | AllSuccessful of Successful:NuXmvCommandResultBasic list
-    | OneFailed of Successful:NuXmvCommandResultBasic list * Failed:NuXmvCommandResultBasic
+    | Successful of Successful:INuXmvCommandResult
+    | Failed of Failed:INuXmvCommandResult
     with
-        member this.HasSucceeded () =
+        member this.HasSucceeded =
+            match this with
+                | Successful (_) -> true
+                | Failed (_) -> false
+
+
+type internal NuXmvInterpretedResults =
+    | AllSuccessful of Successful:INuXmvCommandResult list
+    | OneFailed of Successful:INuXmvCommandResult list * Failed:INuXmvCommandResult
+    with
+        member this.HasSucceeded =
             match this with
                 | AllSuccessful (_) -> true
                 | OneFailed (_,_) -> false
-        member this.FailedCommand () =
+        member this.FailedCommand =
             match this with
                 | AllSuccessful (_) -> None
                 | OneFailed (_,failed) -> Some(failed)
-        member this.GetResultsOfSuccessfulCommands () =
+        member this.GetResultsOfSuccessfulCommands =
             match this with
                 | AllSuccessful (successful) -> successful
                 | OneFailed (successful,_) -> successful
-        member this.GetResultsOfAllCommand () =
+        member this.GetResultsOfAllCommand =
             match this with
                 | AllSuccessful (successful) -> successful
                 | OneFailed (successful,failed) -> successful@[failed]
+        member this.GetBasicResultsOfAllCommand =
+            match this with
+                | AllSuccessful (successful) -> successful |> List.map (fun result -> result.Basic)
+                | OneFailed (successful,failed) -> successful@[failed] |> List.map (fun result -> result.Basic)
     end
+
+module internal NuXmvInterpretResult =
+    let interpretResultOfNuXmvCommand (result:NuXmvCommandResultBasic) (command:NuXmvCommand) =
+        match command with
+            | _ -> NuXmvInterpretedResult.Successful(result)
+
+        
+    let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
+        let success = NuXmvInterpretedResult.Successful(result)
+        match command with
+            | NuSMVCommand.ReadModel (_) -> success
+            | NuSMVCommand.FlattenHierarchy -> success
+            | _ -> success
+    
+    let interpretResult (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =
+        match result.Command with
+            | :? NuSMVCommand as command -> interpretResultOfNuSMVCommand result command
+            | :? NuXmvCommand as command -> interpretResultOfNuXmvCommand result command
+            //| :? NuXmvCustomCommand as command -> this.ExportCustomCommand command
+            //| :? NuXmvStartedCommand as command -> "NuXmv Started"
+            | _ -> NuXmvInterpretedResult.Successful(result)
