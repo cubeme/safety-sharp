@@ -93,6 +93,21 @@ type internal NuXmvInterpretedResults =
     end
 
 module internal NuXmvInterpretResult =
+    let splitLines (str:string) =
+        str.Split([|"\r\n"; "\n"|],System.StringSplitOptions.None)
+    let linesAsExpected (str:string) (expectation:string list) =
+        let lines = splitLines str
+        if expectation.Length > lines.Length then
+            false
+        else
+            expectation |> List.mapi (fun i elem -> lines.[i].StartsWith(elem))
+                        |> List.forall id
+    let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =
+        if success then
+            NuXmvInterpretedResult.Successful(result)
+        else
+            NuXmvInterpretedResult.Failed(result)
+
     let otherwise (result) =
         //pesimistic:
         // NuXmvInterpretedResult.Failed(result)
@@ -105,10 +120,11 @@ module internal NuXmvInterpretResult =
 
         
     let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
-        let success = NuXmvInterpretedResult.Successful(result)
         match command with
-            | NuSMVCommand.ReadModel (_) -> success
-            | NuSMVCommand.FlattenHierarchy -> success
+            | NuSMVCommand.ReadModel (_) -> otherwise result
+            | NuSMVCommand.FlattenHierarchy ->
+                let success = linesAsExpected result.Stderr ["Flattening hierarchy...";"...done"]
+                successFromBool success result
             | _ -> otherwise result
     
     let interpretResult (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =

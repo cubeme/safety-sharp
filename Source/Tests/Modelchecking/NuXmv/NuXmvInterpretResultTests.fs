@@ -145,6 +145,21 @@ Done
 Successful termination
 "
 
+    [<Test>]
+    let ``linesAsExpected works correctly`` () =
+        let testInput = "AAA\nABC\nADE"
+        let expectationEmpty = []
+        let expectationTrue1 = ["A";"AB";"AD"]
+        let expectationFalse1 = ["A";"AB";"AE"]
+        let expectationFalse2 = ["D";"AB";"AD"]
+        let expectationFalse3 = ["A";"AB";"AD";"E"]
+        NuXmvInterpretResult.linesAsExpected testInput expectationEmpty =? true
+        NuXmvInterpretResult.linesAsExpected testInput expectationTrue1 =? true
+        NuXmvInterpretResult.linesAsExpected testInput expectationFalse1 =? false
+        NuXmvInterpretResult.linesAsExpected testInput expectationFalse2 =? false
+        NuXmvInterpretResult.linesAsExpected testInput expectationFalse2 =? false
+
+
 
     [<Test>]
     let ``interpret failed flatten_command correctly`` () =
