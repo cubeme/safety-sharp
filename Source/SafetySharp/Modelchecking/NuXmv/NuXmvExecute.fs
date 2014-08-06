@@ -43,21 +43,52 @@ type internal NuXmvCurrentTechniqueForVerification =
     | NotDetermined
     | SmtMode
     | BddMode
- 
-type internal NuXmvCommandResult = {
+    
+type internal INuXmvCommandResult =
+    interface
+        abstract member Basic : NuXmvCommandResultBasic
+    end
+
+and internal NuXmvCommandResultBasic = {
+    Command: ICommand;
+    Stderr : string;
+    Stdout : string;
+}   with
+        interface INuXmvCommandResult with
+            member this.Basic = this
+
+(*
+type internal NuXmvCommandResultFormula = {
     Command: ICommand;
     Stderr : string;
     Stdout : string;
 }
+*)
 
-type internal NuXmvSimpleResult =
-    | Successful of ICommand * string
-    | Failed of ICommand * string
+type internal NuXmvInterpretedResult =
+    | AllSuccessful of Successful:NuXmvCommandResultBasic list
+    | OneFailed of Successful:NuXmvCommandResultBasic list * Failed:NuXmvCommandResultBasic
     with
-        member this.HasSucceeded with get () =
-                                    match this with
-                                        | Successful (_,_) -> true
-                                        | Failed (_,_) -> false
+        member this.HasSucceeded () =
+            match this with
+                | AllSuccessful (_) -> true
+                | OneFailed (_,_) -> false
+        member this.FailedCommand () =
+            match this with
+                | AllSuccessful (_) -> None
+                | OneFailed (_,failed) -> Some(failed)
+        member this.GetResultsOfSuccessfulCommands () =
+            match this with
+                | AllSuccessful (successful) -> successful
+                | OneFailed (successful,_) -> successful
+        member this.GetResultsOfAllCommand () =
+            match this with
+                | AllSuccessful (successful) -> successful
+                | OneFailed (successful,failed) -> successful@[failed]
+    end
+
+                    
+
 
 type internal ExecuteNuXmv() =
     let commandToString = ExportCommandsToString ()
@@ -67,7 +98,7 @@ type internal ExecuteNuXmv() =
     let commandFinished = new System.Threading.AutoResetEvent (false);
     let stdoutReadyForNextRead = new System.Threading.AutoResetEvent (false);
     let mutable activeCommand : ICommand option =  None
-    let mutable lastCommandResult : NuXmvCommandResult option = None
+    let mutable lastCommandResult : NuXmvCommandResultBasic option = None
 
     let mutable currentTechniqueForVerification = NuXmvCurrentTechniqueForVerification.NotDetermined
     let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
@@ -123,9 +154,9 @@ type internal ExecuteNuXmv() =
 
     member this.FinishCommand () =        
         let newFinishedCommand = {
-            NuXmvCommandResult.Command = activeCommand.Value;
-            NuXmvCommandResult.Stdout = stdoutOutputBuffer.ToString();
-            NuXmvCommandResult.Stderr = stderrOutputBuffer.ToString();
+            NuXmvCommandResultBasic.Command = activeCommand.Value;
+            NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
+            NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
         }
         lastCommandResult <-  Some(newFinishedCommand)
         activeCommand <- None
@@ -192,7 +223,7 @@ type internal ExecuteNuXmv() =
                     true
         )
     
-    member this.ExecuteCommand (command:ICommand) : NuXmvCommandResult =
+    member this.ExecuteCommand (command:ICommand) : NuXmvCommandResultBasic =
         // if a command is currently executing, wait
         commandActiveMutex.WaitOne() |> ignore
         
@@ -212,7 +243,7 @@ type internal ExecuteNuXmv() =
 
     
     // return Task, which can be awaited for
-    member this.ExecuteCommandAsync (command:ICommand) : System.Threading.Tasks.Task<NuXmvCommandResult> =
+    member this.ExecuteCommandAsync (command:ICommand) : System.Threading.Tasks.Task<NuXmvCommandResultBasic> =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> this.ExecuteCommand command
         )
@@ -245,7 +276,7 @@ type internal ExecuteNuXmv() =
             | _ -> false
 
 
-    member this.StartNuXmvInteractive (timeInMs:int) : NuXmvCommandResult =
+    member this.StartNuXmvInteractive (timeInMs:int) : NuXmvCommandResultBasic =
         let initialCommand = NuXmvStartedCommand() :> ICommand
         activeCommand<-Some(initialCommand) 
         commandActiveMutex.WaitOne() |> ignore
@@ -296,21 +327,25 @@ type internal ExecuteNuXmv() =
     // Interpreted Commands below
     /////////////////////////////
 
-    member this.ReadModelBuildBddWithInterpretation () : NuXmvSimpleResult =
+    (*
+    member this.ReadModelBuildBddWithInterpretation () : NuXmvInterpretedResult =
         ()
+        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        NuXmvInterpretedResult
 
-
+    *)
 
         
     //////////////////////////////
     // Debugging helpers
     /////////////////////////////
         
-    member this.ReturnCommandResult (entry:NuXmvCommandResult) : string = 
+    member this.ReturnCommandResult (entry:INuXmvCommandResult) : string = 
         let stringBuilder = new System.Text.StringBuilder()
-        stringBuilder.AppendLine ((commandToString.ExportICommand entry.Command)) |> ignore
-        stringBuilder.AppendLine ("stdout:\n" + entry.Stdout) |> ignore
-        stringBuilder.AppendLine ("stderr:\n" + entry.Stderr) |> ignore
+        stringBuilder.AppendLine ((commandToString.ExportICommand entry.Basic.Command)) |> ignore
+        stringBuilder.AppendLine ("stdout:\n" + entry.Basic.Stdout) |> ignore
+        stringBuilder.AppendLine ("stderr:\n" + entry.Basic.Stderr) |> ignore
         stringBuilder.AppendLine "==========" |> ignore
         stringBuilder.ToString()
     
