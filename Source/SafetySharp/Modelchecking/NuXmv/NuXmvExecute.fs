@@ -30,6 +30,7 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //  - Ensure: stderr of the verbose result of a command is always associated to the correct command
 //  - Introduce Cancelation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
 //  - Tests for access from multiple Threads
+//  - After NuXmv quits, ensure that this.CommandFinished () is called after last write into stdout and stderr
 
 // be cautious:
 //  - the command prompt does "nuXmv >" does not contain a line ending.
@@ -121,7 +122,21 @@ type internal ExecuteNuXmv() =
         stdoutCurrentLine.Clear() |> ignore
         stdoutPromptPossible <- true
 
-    member this.TaskReadStdout () : System.Threading.Tasks.Task =  
+    member this.CommandFinished () =        
+        let newFinishedCommand = {
+            NuXmvCommandResult.Command = activeCommand.Value;
+            NuXmvCommandResult.Stdout = stdoutOutputBuffer.ToString();
+            NuXmvCommandResult.Stderr = stderrOutputBuffer.ToString();
+        }
+        lastCommandResult <-  Some(newFinishedCommand)
+        activeCommand <- None
+        stdoutOutputBuffer.Clear() |> ignore
+        stderrOutputBuffer.Clear() |> ignore
+        commandFinished.Set() |> ignore
+
+    member this.TaskReadStdout () : System.Threading.Tasks.Task =
+        // Note: This code assumes that the actual output of a command never contains
+        // the prompt-string in one of its line beginnings!!! So it is kind of a hack.
         let checkIfActiveCommandFinished (character:char) (position:int) =
             let promptString = "nuXmv > "
             let updatePromptPossible ()=
@@ -139,16 +154,8 @@ type internal ExecuteNuXmv() =
             let isPrompt : bool =
                 stdoutPromptPossible && position = promptString.Length-1
             if isPrompt && activeCommand.IsSome then
-                let newFinishedCommand = {
-                    NuXmvCommandResult.Command = activeCommand.Value;
-                    NuXmvCommandResult.Stdout = stdoutOutputBuffer.ToString();
-                    NuXmvCommandResult.Stderr = stderrOutputBuffer.ToString();
-                }
-                lastCommandResult <-  Some(newFinishedCommand)
-                activeCommand <- None
-                stdoutOutputBuffer.Clear() |> ignore
-                stderrOutputBuffer.Clear() |> ignore
-                commandFinished.Set() |> ignore
+                this.CommandFinished ()
+                stdoutCurrentLine.Clear () |> ignore //get rid of the prompt
                 stdoutReadyForNextRead.WaitOne() |> ignore
 
         System.Threading.Tasks.Task.Factory.StartNew(
@@ -174,11 +181,11 @@ type internal ExecuteNuXmv() =
             fun () ->
                 if timeInMs > 0 then
                     let result = proc.WaitForExit(timeInMs)
-                    commandFinished.Set() |> ignore //no new Command-Prompt after quit, so we have to set it manually
+                    this.CommandFinished ()
                     result
                 else
                     proc.WaitForExit()
-                    commandFinished.Set() |> ignore //no new Command-Prompt after quit, so we have to set it manually
+                    this.CommandFinished ()
                     true
         )
     
