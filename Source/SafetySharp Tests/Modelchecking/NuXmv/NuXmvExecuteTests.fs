@@ -76,8 +76,9 @@ module NuXmvExecuteTests =
         let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
-
-        true =? false
+        outputTuple3.HasSucceeded =? false
+        outputTuple3.FailedCommand.IsSome =? true
+        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
         
     [<Test>]
     let ``NuXmv doesn't read a syntactical wrong model file 2`` () =        
@@ -85,8 +86,13 @@ module NuXmvExecuteTests =
         let code = Models.``wrong-syntax2``
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
-        true =? false
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
+        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
+        outputTuple3.HasSucceeded =? false
+        outputTuple3.FailedCommand.IsSome =? true
+        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.ReadModel(filename) :> ICommand)
         
     [<Test>]
     let ``NuXmv reads a file with a simple model`` () =

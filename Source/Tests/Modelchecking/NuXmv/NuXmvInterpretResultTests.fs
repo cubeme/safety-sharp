@@ -70,6 +70,10 @@ module NuXmvInterpretResultTests =
     let ``read_model -i Modelchecking/NuXmv/testcase1.smv-ResultStdoutSuccess`` = ""
     let ``read_model -i Modelchecking/NuXmv/testcase1.smv-ResultStderrSuccess`` = """Parsing file "Modelchecking/NuXmv/testcase1.smv" ..... done.
 """
+    let ``read_model -i Modelchecking/NuXmv/wrong-syntax2.smv-ResultStderrFailed`` =
+        """Parsing file "Modelchecking/NuXmv/wrong-syntax2.smv" ..... 
+file Modelchecking/NuXmv/wrong-syntax2.smv: line 5: at token "": syntax error
+"""
 
     let ``flatten_hierarchy-ResultStdoutSuccess`` = ""
     let ``flatten_hierarchy-ResultStderrSuccess`` =
@@ -146,19 +150,33 @@ Successful termination
 "
 
     [<Test>]
-    let ``linesAsExpected works correctly`` () =
+    let ``linesAsExpectedStr works correctly`` () =
         let testInput = "AAA\nABC\nADE"
         let expectationEmpty = []
         let expectationTrue1 = ["A";"AB";"AD"]
         let expectationFalse1 = ["A";"AB";"AE"]
         let expectationFalse2 = ["D";"AB";"AD"]
         let expectationFalse3 = ["A";"AB";"AD";"E"]
-        NuXmvInterpretResult.linesAsExpected testInput expectationEmpty =? true
-        NuXmvInterpretResult.linesAsExpected testInput expectationTrue1 =? true
-        NuXmvInterpretResult.linesAsExpected testInput expectationFalse1 =? false
-        NuXmvInterpretResult.linesAsExpected testInput expectationFalse2 =? false
-        NuXmvInterpretResult.linesAsExpected testInput expectationFalse2 =? false
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationEmpty =? true
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationTrue1 =? true
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse1 =? false
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
 
+    (*[<Test>]
+    let ``linesAsExpectedRegex works correctly`` () =
+        let testInput = "AAA\nABC\nADE"
+        let expectationEmpty = []
+        let expectationTrue1 = ["A";"AB";"AD"]
+        let expectationFalse1 = ["A";"AB";"AE"]
+        let expectationFalse2 = ["D";"AB";"AD"]
+        let expectationFalse3 = ["A";"AB";"AD";"E"]
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationEmpty =? true
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationTrue1 =? true
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse1 =? false
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
+        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
+    *)
 
 
     [<Test>]

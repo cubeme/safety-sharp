@@ -95,13 +95,21 @@ type internal NuXmvInterpretedResults =
 module internal NuXmvInterpretResult =
     let splitLines (str:string) =
         str.Split([|"\r\n"; "\n"|],System.StringSplitOptions.None)
-    let linesAsExpected (str:string) (expectation:string list) =
+    let linesAsExpectedStr (str:string) (expectation:string list) =
         let lines = splitLines str
         if expectation.Length > lines.Length then
             false
         else
             expectation |> List.mapi (fun i elem -> lines.[i].StartsWith(elem))
                         |> List.forall id
+    
+    // regular expressions here to avoid multiple initialisations
+    // nice to test on the fly: http://www.rubular.com/
+    let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")     // Example: Parsing file "Modelchecking/NuXmv/testcase1.smv" ..... done.
+
+    let linesAsExpectedRegex (str:string) (regex:System.Text.RegularExpressions.Regex) =
+        regex.IsMatch(str)
+
     let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =
         if success then
             NuXmvInterpretedResult.Successful(result)
@@ -121,9 +129,11 @@ module internal NuXmvInterpretResult =
         
     let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
         match command with
-            | NuSMVCommand.ReadModel (_) -> otherwise result
+            | NuSMVCommand.ReadModel (_) ->                
+                let success = linesAsExpectedRegex result.Stderr regexReadModel
+                successFromBool success result
             | NuSMVCommand.FlattenHierarchy ->
-                let success = linesAsExpected result.Stderr ["Flattening hierarchy...";"...done"]
+                let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
                 successFromBool success result
             | _ -> otherwise result
     
