@@ -23,14 +23,16 @@
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // TODO:
-//  - Ensure: stderr of the verbose result of a command is always associated to the correct command (race condition, actually a problem)
 //  - Introduce Cancelation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
 //  - Tests for access from multiple Threads
-//  - After NuXmv quits, ensure that this.CommandFinished () is called after last write into stdout and stderr
 
 // be cautious:
 //  - the command prompt does "nuXmv >" does not contain a line ending.
 //  - this method avoids the problem with the newline
+//  - Ensure: stderr of the verbose result of a command is always associated to the correct command (race condition, actually a problem)
+//  - some commands like "go" are actually chains of commands (go is a shorthand for 5 commands)
+//    "autoexec" thus executes the "echo"-Command 5 times. Either use something which looks for the prompt
+//    in stdout again (this time with a counter) or forbid chained-Commands to correctly determine the end of a command
 // Source of Inspiration:
 //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
 //  - https://gist.github.com/alabax/11353282
@@ -123,9 +125,11 @@ type internal ExecuteNuXmv() =
                 // http://msdn.microsoft.com/en-us/library/system.io.streamreader.readline(v=vs.110).aspx
                 while proc.StandardError.EndOfStream <> true  do
                     let newLine = proc.StandardError.ReadLine()
-                    stderrOutputBuffer.AppendLine newLine |> ignore
                     if newLine.StartsWith commandEndingStringStderr then
+                        stderrOutputBuffer.AppendLine newLine |> ignore  //remove, if marker should not appear in stderr
                         stderrFinishedBlocker.Set () |> ignore
+                    else
+                        stderrOutputBuffer.AppendLine newLine |> ignore
                 stderrFinishedBlocker.Set () |> ignore
         )
                 
@@ -143,14 +147,26 @@ type internal ExecuteNuXmv() =
             stdoutAndCommandFinishedBlocker.Set() |> ignore
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
+                let mutable needToRemovePromptFromCurrentLine = false //Before the first command is no prompt
                 while proc.StandardOutput.EndOfStream <> true do
-                    //TODO: maybe clean out the prompt after a new command
                     let newLine = proc.StandardOutput.ReadLine()
-                    stdoutOutputBuffer.AppendLine newLine |> ignore
-                    if newLine.StartsWith commandEndingStringStdout then
+                    let newLineCleared =
+                        // we need to clean out the prompt after a new command
+                        // otherwise the check "newLine.StartsWith commandEndingStringStdout"
+                        // is not true, when the prompt is before the marker
+                        if needToRemovePromptFromCurrentLine && newLine.StartsWith(promptString) then
+                            needToRemovePromptFromCurrentLine <- false
+                            newLine.Remove(0,promptString.Length)
+                        else
+                            newLine
+                    if newLineCleared.StartsWith commandEndingStringStdout then
+                        stdoutOutputBuffer.AppendLine newLineCleared |> ignore //remove, if marker should not appear in stdout
                         stderrFinishedBlocker.WaitOne() |> ignore
                         FinishCommandAndReleaseBlocker ()
+                        needToRemovePromptFromCurrentLine <- true
                         ()
+                    else                        
+                        stdoutOutputBuffer.AppendLine newLineCleared |> ignore
                 FinishCommandAndReleaseBlocker ()
                 ()
         )
@@ -253,6 +269,9 @@ type internal ExecuteNuXmv() =
         processErrorReader <- this.TaskReadStderr ()
         processWaiter <- this.TaskWaitForEnd (timeInMs)
         
+        let quitOnFailure = "set on_failure_script_quits"
+        proc.StandardInput.WriteLine(quitOnFailure) 
+        // indication must be the last command!!!
         let enableIndicationOfCommandEnd = sprintf "set autoexec \"echo %s; echo -2 %s\"" commandEndingStringStdout commandEndingStringStderr
         proc.StandardInput.WriteLine(enableIndicationOfCommandEnd) 
 
