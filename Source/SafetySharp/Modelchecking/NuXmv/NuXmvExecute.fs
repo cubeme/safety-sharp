@@ -31,14 +31,13 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // be cautious:
 //  - the command prompt does "nuXmv >" does not contain a line ending.
 //  - this method avoids the problem with the newline
-// Inspiration:
+// Source of Inspiration:
 //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
 //  - https://gist.github.com/alabax/11353282
 //  - http://www.codeproject.com/Articles/170017/Solving-Problems-of-Monitoring-Standard-Output-and
 //  - http://stackoverflow.com/questions/1420965/redirect-stdout-and-stderr-to-a-single-file
 //  - http://msdn.microsoft.com/en-us/library/windows/desktop/ms682075(v=vs.85).aspx
-
-// Event Wait Handles:
+//  - http://msdn.microsoft.com/en-us/library/ath1fht8(v=vs.110).aspx
 // -  http://www.albahari.com/threading/part2.aspx#_Signaling_with_Event_Wait_Handles
 
 // for a fixed version of NuXmv, where "set nusmv_stdout" and "set nusmv_stderr" works, output
@@ -56,7 +55,12 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // 'set autoexec "echo nuXmv finished last command; echo -2 nuXmv finished last command"'
 // could also be used as separation between two commands, which allows us to get
 // rid of the tasking code :-D
+// the prompt "nuXmv > " is in the end at the beginning of the currently unfinished line
 
+// Stdout-Thread waits for Stderr-Thread
+// ExecuteCommand-Thread waits for Stdout-Thread 
+// We assume after a "nuXmv finished last command" nothing else is written into each Buffer
+// until a new command is executed
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
@@ -72,8 +76,8 @@ type internal ExecuteNuXmv() =
 
     
     let commandActiveMutex = new System.Threading.Mutex()
-    let commandFinished = new System.Threading.AutoResetEvent (false);
-    let stdoutReadyForNextRead = new System.Threading.AutoResetEvent (false);
+    let stdoutAndCommandFinishedBlocker = new System.Threading.AutoResetEvent (false);
+    let stderrFinishedBlocker = new System.Threading.AutoResetEvent (false);
     let mutable activeCommand : ICommand option =  None
     let mutable lastCommandResult : NuXmvCommandResultBasic option = None
 
@@ -89,6 +93,9 @@ type internal ExecuteNuXmv() =
     let mutable processErrorReader : System.Threading.Tasks.Task = null
     let mutable processWaiter : System.Threading.Tasks.Task<bool> = null
     let proc = new System.Diagnostics.Process()
+    
+    let commandEndingStringStdout = "nuXmv finished last command stdout"
+    let commandEndingStringStderr = "nuXmv finished last command stderr"
     
     ///////////////////////////////////////////////////
     // NuXmv-Process and Interactive Console Management
@@ -131,7 +138,7 @@ type internal ExecuteNuXmv() =
         stdoutCurrentLine.Clear() |> ignore
         stdoutPromptPossible <- true
 
-    member this.FinishCommand () =        
+    member this.FinishCommandAndReleaseBlocker () =
         let newFinishedCommand = {
             NuXmvCommandResultBasic.Command = activeCommand.Value;
             NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
@@ -141,11 +148,9 @@ type internal ExecuteNuXmv() =
         activeCommand <- None
         stdoutOutputBuffer.Clear() |> ignore
         stderrOutputBuffer.Clear() |> ignore
-        commandFinished.Set() |> ignore
+        stdoutAndCommandFinishedBlocker.Set() |> ignore
 
     member this.TaskReadStdout () : System.Threading.Tasks.Task =
-        // Note: This code assumes that the actual output of a command never contains
-        // the prompt-string in one of its line beginnings!!! So it is kind of a hack.
         let checkIfActiveCommandFinished (character:char) (position:int) =
             let promptString = "nuXmv > "
             let updatePromptPossible ()=
@@ -163,13 +168,12 @@ type internal ExecuteNuXmv() =
             let isPrompt : bool =
                 stdoutPromptPossible && position = promptString.Length-1
             if isPrompt && activeCommand.IsSome then
-                this.FinishCommand ()
+                stderrFinishedBlocker.WaitOne () |> ignore
+                this.FinishCommandAndReleaseBlocker ()
                 stdoutCurrentLine.Clear () |> ignore //get rid of the prompt
-                stdoutReadyForNextRead.WaitOne() |> ignore
 
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
-                // http://msdn.microsoft.com/en-us/library/ath1fht8(v=vs.110).aspx
                 let mutable endReached = false
                 while endReached <> true do
                     let newChar = proc.StandardOutput.Read()
@@ -192,13 +196,15 @@ type internal ExecuteNuXmv() =
                     let result = proc.WaitForExit(timeInMs)
                     //TODO: Should we first wait for [processOutputReader,processErrorReader] to ensure that
                     //      every output is attatched to the last command????
-                    this.FinishCommand ()
+                    //      Is there are mutual waiting then?!?
+                    this.FinishCommandAndReleaseBlocker ()
                     result
                 else
                     proc.WaitForExit()
                     //TODO: Should we first wait for [processOutputReader,processErrorReader] to ensure that
                     //      every output is attatched to the last command????
-                    this.FinishCommand ()
+                    //      Is there are mutual waiting then?!?
+                    this.FinishCommandAndReleaseBlocker ()
                     true
         )
     
@@ -212,10 +218,9 @@ type internal ExecuteNuXmv() =
         // which might be a control word of GNU readline out of the input-stream
         proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
-        commandFinished.WaitOne() |> ignore
+        stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
         let result = lastCommandResult.Value
         
-        stdoutReadyForNextRead.Set() |> ignore
         commandActiveMutex.ReleaseMutex()
 
         result
@@ -289,10 +294,12 @@ type internal ExecuteNuXmv() =
         processOutputReader <- this.TaskReadStdout ()
         processErrorReader <- this.TaskReadStderr ()
         processWaiter <- this.TaskWaitForEnd (timeInMs)
+        
+        let enableIndicationOfCommandEnd = sprintf "set autoexec \"echo %s; echo -2 %s\"" commandEndingStringStdout commandEndingStringStderr
+        proc.StandardInput.WriteLine(enableIndicationOfCommandEnd) 
 
-        commandFinished.WaitOne() |> ignore
+        stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
         let result = lastCommandResult        
-        stdoutReadyForNextRead.Set() |> ignore
         commandActiveMutex.ReleaseMutex()
         result.Value
                            
@@ -315,20 +322,7 @@ type internal ExecuteNuXmv() =
         //     | 0 -> Successful(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
         //     | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())        
 
-
-    //////////////////////////////
-    // Interpreted Commands below
-    /////////////////////////////
-
-    (*
-    member this.ReadModelBuildBddWithInterpretation () : NuXmvInterpretedResult =
-        ()
-        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
-        NuXmvInterpretedResult
-    *)
-
-        
+                
     //////////////////////////////
     // Debugging helpers
     /////////////////////////////

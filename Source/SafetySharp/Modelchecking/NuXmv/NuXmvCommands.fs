@@ -147,7 +147,7 @@ type internal NuXmvCommandLine =
     | AvoidLoadingDefaultSettings // -s
 
 module internal NuXmvHelpfulCommandSequences =
-    let commandLineStart (logFile) = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
+    let commandLineStart = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
     let commandLineHelp = [ NuXmvCommandLine.Help ]
 
     let readModel (filename: string ) : ICommand list = [
