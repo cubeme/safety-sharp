@@ -46,10 +46,17 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 
 // idea:
-// after each command an "echo -2 nuXmv finished last command is appended
-// command finishes, when the stdout "nuXmv > " appears the second time and
+// after each command an 'echo -2 nuXmv finished last command' is appended
+// using 'set autoexec "echo -2 nuXmv finished last command"'
+// command finishes, when the stdout "nuXmv > " appears and
 // the stderr prompt was shown. Thus we can ensure that both stderr and stdout
 // were parsed until their end
+// idea 2:
+// commands can also be seperated by ";" so using
+// 'set autoexec "echo nuXmv finished last command; echo -2 nuXmv finished last command"'
+// could also be used as separation between two commands, which allows us to get
+// rid of the tasking code :-D
+
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
