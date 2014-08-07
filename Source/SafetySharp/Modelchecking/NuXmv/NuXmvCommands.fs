@@ -147,7 +147,7 @@ type internal NuXmvCommandLine =
     | AvoidLoadingDefaultSettings // -s
 
 module internal NuXmvHelpfulCommandSequences =
-    let commandLineStart = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
+    let commandLineStart (logFile) = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
     let commandLineHelp = [ NuXmvCommandLine.Help ]
 
     let readModel (filename: string ) : ICommand list = [
@@ -164,7 +164,8 @@ module internal NuXmvHelpfulCommandSequences =
         NuSMVCommand.BuildFlatModel;
         NuSMVCommand.BuildModel;
     ]
-    
+   
+// for implementation see dependency graph in Figure 3.1: The dependency among NUXMV commands.
 [<RequireQualifiedAccess>]
 type internal NuXmvModeOfProgramm =
     | NotStarted
@@ -191,7 +192,8 @@ module internal NuXmvCommandHelpers =
             | :? NuSMVCommand as command -> isNuSMVCommandExecutableInMode command mode
             | :? NuXmvCommand as command -> isNuXmvCommandExecutableInMode command mode
             | _ -> failwith "NotImplementedYet"
-
+    
+    // for implementation see dependency graph in Figure 3.1: The dependency among NUXMV commands.
     let nextModeOfProgram (command:ICommand) : NuXmvModeOfProgramm=        
         let nextModeOfProgramNuXmv (command:NuXmvCommand) : NuXmvModeOfProgramm =
             match command with

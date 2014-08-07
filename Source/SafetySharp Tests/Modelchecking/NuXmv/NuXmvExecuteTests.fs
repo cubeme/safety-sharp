@@ -47,21 +47,24 @@ module NuXmvExecuteTests =
     [<Test>]
     let ``NuXmv starts in interactive mode`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
+        let logFile = "startInteractiveMode.log"
+        nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
         let result = nuxmv.QuitNuXmvAndWaitForExit()
         ()
         
     [<Test>]
     let ``Shutdown of NuXmv can be forced`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
+        let logFile = "forceShutdown.log"
+        nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
         System.Threading.Thread.Sleep (100)
         nuxmv.ForceShutdownNuXmv ()
         
     [<Test>]
-    let ``An action associated with a spimple NuXmv-'echo'-Command gets executed after NuXmv has finished the command`` () =
+    let ``An echo-command can be executed`` () =
         let nuxmv = ExecuteNuXmv()
-        nuxmv.StartNuXmvInteractive (-1) |> ignore //wait infinitely long
+        let logFile = "echo.log"
+        nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
         //nuxmv.ExecuteCommand(NuSMVCommand.Echo("verbose_level"),)
 
         true =? false
@@ -69,10 +72,11 @@ module NuXmvExecuteTests =
     [<Test>]
     let ``NuXmv doesn't read a syntactical wrong model file 1`` () =        
         let filename = "Modelchecking/NuXmv/wrong-syntax1.smv"
+        let logFile = filename+".log"
         let code = Models.``wrong-syntax1``
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
-        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
@@ -83,10 +87,11 @@ module NuXmvExecuteTests =
     [<Test>]
     let ``NuXmv doesn't read a syntactical wrong model file 2`` () =        
         let filename = "Modelchecking/NuXmv/wrong-syntax2.smv"
+        let logFile = filename+".log"
         let code = Models.``wrong-syntax2``
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
-        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
@@ -121,10 +126,11 @@ module NuXmvExecuteTests =
         let nuXmvWriter = ExportNuXmvAstToFile()
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
         let filename = "Modelchecking/NuXmv/testcase1.smv"
+        let logFile = filename+".log"
         FileSystem.WriteToAsciiFile filename nuXmvCodeString
 
         let nuxmv = ExecuteNuXmv()
-        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1)
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputTuples2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
         let outputTuples2Basic = outputTuples2.GetBasicResultsOfAllCommand
         let outputTuples3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)

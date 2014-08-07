@@ -23,7 +23,7 @@
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // TODO:
-//  - Ensure: stderr of the verbose result of a command is always associated to the correct command
+//  - Ensure: stderr of the verbose result of a command is always associated to the correct command (race condition, actually a problem)
 //  - Introduce Cancelation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
 //  - Tests for access from multiple Threads
 //  - After NuXmv quits, ensure that this.CommandFinished () is called after last write into stdout and stderr
@@ -34,6 +34,8 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // Inspiration:
 //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
 //  - https://gist.github.com/alabax/11353282
+//  - http://www.codeproject.com/Articles/170017/Solving-Problems-of-Monitoring-Standard-Output-and
+//  - http://stackoverflow.com/questions/1420965/redirect-stdout-and-stderr-to-a-single-file
 
 // Event Wait Handles:
 // -  http://www.albahari.com/threading/part2.aspx#_Signaling_with_Event_Wait_Handles
@@ -89,6 +91,8 @@ type internal ExecuteNuXmv() =
             | Some(filename) -> filename
             | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
         
+    //TODO: Ensure nothing to read left before going to next command
+    //is actually a problem
     member this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
@@ -247,13 +251,13 @@ type internal ExecuteNuXmv() =
             | _ -> false
 
 
-    member this.StartNuXmvInteractive (timeInMs:int) : NuXmvCommandResultBasic =
+    member this.StartNuXmvInteractive (timeInMs:int) (pathToLog:string) : NuXmvCommandResultBasic =
         let initialCommand = NuXmvStartedCommand() :> ICommand
         activeCommand<-Some(initialCommand) 
         commandActiveMutex.WaitOne() |> ignore
         
         // TODO: check if already started (use expectedModeOfProgramAfterQueue)
-        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine NuXmvHelpfulCommandSequences.commandLineStart
+        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine (NuXmvHelpfulCommandSequences.commandLineStart)
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
