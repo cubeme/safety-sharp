@@ -48,8 +48,8 @@ module NuXmvExecuteTests =
     let ``NuXmv starts in interactive mode`` () =
         let nuxmv = ExecuteNuXmv()
         let logFile = "startInteractiveMode.log"
-        nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
-        let result = nuxmv.QuitNuXmvAndWaitForExit()
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile //wait infinitely long
+        let outputTuple2 = nuxmv.QuitNuXmvAndWaitForExit()
         ()
         
     [<Test>]

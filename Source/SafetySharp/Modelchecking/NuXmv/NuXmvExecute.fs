@@ -84,8 +84,6 @@ type internal ExecuteNuXmv() =
     let mutable currentTechniqueForVerification = NuXmvCurrentTechniqueForVerification.NotDetermined
     let mutable currentModeOfProgram = NuXmvModeOfProgramm.NotStarted
     
-    let stdoutCurrentLine = new System.Text.StringBuilder()
-    let mutable stdoutPromptPossible = true
     let stdoutOutputBuffer = new System.Text.StringBuilder ()
     let stderrOutputBuffer = new System.Text.StringBuilder ()
     
@@ -96,6 +94,7 @@ type internal ExecuteNuXmv() =
     
     let commandEndingStringStdout = "nuXmv finished last command stdout"
     let commandEndingStringStderr = "nuXmv finished last command stderr"
+    let promptString = "nuXmv > "
     
     ///////////////////////////////////////////////////
     // NuXmv-Process and Interactive Console Management
@@ -121,71 +120,38 @@ type internal ExecuteNuXmv() =
     member this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
-                // http://msdn.microsoft.com/en-us/library/ath1fht8(v=vs.110).aspx
-                let mutable endReached = false
-                while endReached <> true do
-                    let newChar = proc.StandardError.Read()
-                    if newChar = -1 then
-                        endReached <- true
-                    else
-                        let newChar = (char newChar)
-                        stderrOutputBuffer.Append newChar |> ignore
-                ()
+                // http://msdn.microsoft.com/en-us/library/system.io.streamreader.readline(v=vs.110).aspx
+                while proc.StandardError.EndOfStream <> true  do
+                    let newLine = proc.StandardError.ReadLine()
+                    stderrOutputBuffer.AppendLine newLine |> ignore
+                    if newLine.StartsWith commandEndingStringStderr then
+                        stderrFinishedBlocker.Set () |> ignore
+                stderrFinishedBlocker.Set () |> ignore
         )
-
-    member this.StdoutEndCurrentLine () =
-        stdoutOutputBuffer.Append stdoutCurrentLine |> ignore
-        stdoutCurrentLine.Clear() |> ignore
-        stdoutPromptPossible <- true
-
-    member this.FinishCommandAndReleaseBlocker () =
-        let newFinishedCommand = {
-            NuXmvCommandResultBasic.Command = activeCommand.Value;
-            NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
-            NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
-        }
-        lastCommandResult <-  Some(newFinishedCommand)
-        activeCommand <- None
-        stdoutOutputBuffer.Clear() |> ignore
-        stderrOutputBuffer.Clear() |> ignore
-        stdoutAndCommandFinishedBlocker.Set() |> ignore
-
+                
     member this.TaskReadStdout () : System.Threading.Tasks.Task =
-        let checkIfActiveCommandFinished (character:char) (position:int) =
-            let promptString = "nuXmv > "
-            let updatePromptPossible ()=
-                //position is 0-based
-                if stdoutPromptPossible = false then
-                    ()
-                else
-                    if position >= promptString.Length  then
-                        stdoutPromptPossible <- false
-                    else
-                        let characterInPrompt = promptString.Chars(position)
-                        if character <> characterInPrompt then
-                            stdoutPromptPossible <- false
-            updatePromptPossible ()
-            let isPrompt : bool =
-                stdoutPromptPossible && position = promptString.Length-1
-            if isPrompt && activeCommand.IsSome then
-                stderrFinishedBlocker.WaitOne () |> ignore
-                this.FinishCommandAndReleaseBlocker ()
-                stdoutCurrentLine.Clear () |> ignore //get rid of the prompt
-
+        let FinishCommandAndReleaseBlocker () =
+            let newFinishedCommand = {
+                NuXmvCommandResultBasic.Command = activeCommand.Value;
+                NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
+                NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
+            }
+            lastCommandResult <-  Some(newFinishedCommand)
+            activeCommand <- None
+            stdoutOutputBuffer.Clear() |> ignore
+            stderrOutputBuffer.Clear() |> ignore
+            stdoutAndCommandFinishedBlocker.Set() |> ignore
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
-                let mutable endReached = false
-                while endReached <> true do
-                    let newChar = proc.StandardOutput.Read()
-                    if newChar = -1 then
-                        endReached <- true
-                    let newChar = (char newChar)
-                    if newChar = '\n' then
-                        stdoutCurrentLine.Append newChar |> ignore
-                        this.StdoutEndCurrentLine ()
-                    else
-                        stdoutCurrentLine.Append newChar |> ignore
-                        checkIfActiveCommandFinished newChar (stdoutCurrentLine.Length - 1)
+                while proc.StandardOutput.EndOfStream <> true do
+                    //TODO: maybe clean out the prompt after a new command
+                    let newLine = proc.StandardOutput.ReadLine()
+                    stdoutOutputBuffer.AppendLine newLine |> ignore
+                    if newLine.StartsWith commandEndingStringStdout then
+                        stderrFinishedBlocker.WaitOne() |> ignore
+                        FinishCommandAndReleaseBlocker ()
+                        ()
+                FinishCommandAndReleaseBlocker ()
                 ()
         )
 
@@ -194,17 +160,10 @@ type internal ExecuteNuXmv() =
             fun () ->
                 if timeInMs > 0 then
                     let result = proc.WaitForExit(timeInMs)
-                    //TODO: Should we first wait for [processOutputReader,processErrorReader] to ensure that
-                    //      every output is attatched to the last command????
-                    //      Is there are mutual waiting then?!?
-                    this.FinishCommandAndReleaseBlocker ()
+                    
                     result
                 else
                     proc.WaitForExit()
-                    //TODO: Should we first wait for [processOutputReader,processErrorReader] to ensure that
-                    //      every output is attatched to the last command????
-                    //      Is there are mutual waiting then?!?
-                    this.FinishCommandAndReleaseBlocker ()
                     true
         )
     
@@ -213,7 +172,6 @@ type internal ExecuteNuXmv() =
         commandActiveMutex.WaitOne() |> ignore
         
         activeCommand <- Some(command)
-        this.StdoutEndCurrentLine()
         // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip anything
         // which might be a control word of GNU readline out of the input-stream
         proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
@@ -339,7 +297,6 @@ type internal ExecuteNuXmv() =
         let stringBuilder = new System.Text.StringBuilder()
         let printUnprocessed () : unit =
             stringBuilder.AppendLine "unprogressed" |> ignore
-            stringBuilder.AppendLine ("stdout-line-buffer:\n" + stdoutCurrentLine.ToString() ) |> ignore
             stringBuilder.AppendLine ("stdout-buffer:\n" + stdoutOutputBuffer.ToString()) |> ignore
             stringBuilder.AppendLine ("stderr-buffer:\n" + stderrOutputBuffer.ToString()) |> ignore
             stringBuilder.AppendLine "==========" |> ignore
