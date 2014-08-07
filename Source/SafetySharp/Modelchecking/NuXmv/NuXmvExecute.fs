@@ -36,9 +36,20 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //  - https://gist.github.com/alabax/11353282
 //  - http://www.codeproject.com/Articles/170017/Solving-Problems-of-Monitoring-Standard-Output-and
 //  - http://stackoverflow.com/questions/1420965/redirect-stdout-and-stderr-to-a-single-file
+//  - http://msdn.microsoft.com/en-us/library/windows/desktop/ms682075(v=vs.85).aspx
 
 // Event Wait Handles:
 // -  http://www.albahari.com/threading/part2.aspx#_Signaling_with_Event_Wait_Handles
+
+// for a fixed version of NuXmv, where "set nusmv_stdout" and "set nusmv_stderr" works, output
+// could be redirected to the same file and this file could be read.
+
+
+// idea:
+// after each command an "echo -2 nuXmv finished last command is appended
+// command finishes, when the stdout "nuXmv > " appears the second time and
+// the stderr prompt was shown. Thus we can ensure that both stderr and stdout
+// were parsed until their end
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
