@@ -34,22 +34,17 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1006 : SemanticModelAnalyzer
 	{
-		/// <summary>
-		///     The identifier of the diagnostic emitted by the analyzer.
-		/// </summary>
-		private const string Identifier = Prefix + "1006";
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1006()
 		{
-			Error(Identifier,
-				  "Values of enumeration members must not be explicitly declared.",
-				  "Value of enum member '{0}' cannot be declared explicitly.");
+			Error(1006,
+				"Values of enumeration members must not be explicitly declared.",
+				"Value of enum member '{0}' cannot be declared explicitly.");
 		}
 
 		/// <summary>

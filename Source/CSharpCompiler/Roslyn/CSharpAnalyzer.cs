@@ -64,7 +64,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
 		/// <param name="description">The description of the diagnostic.</param>
 		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		protected void Error(string identifier, string description, string messageFormat)
+		protected void Error(int identifier, string description, string messageFormat)
 		{
 			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Error);
 		}
@@ -75,7 +75,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
 		/// <param name="description">The description of the diagnostic.</param>
 		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		protected void Warning(string identifier, string description, string messageFormat)
+		protected void Warning(int identifier, string description, string messageFormat)
 		{
 			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Warning);
 		}
@@ -87,17 +87,14 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="description">The description of the diagnostic.</param>
 		/// <param name="messageFormat">The message format of the diagnostic.</param>
 		/// <param name="severity">The severity of the diagnostic.</param>
-		private void SetDescriptor(string identifier, string description, string messageFormat, DiagnosticSeverity severity)
+		private void SetDescriptor(int identifier, string description, string messageFormat, DiagnosticSeverity severity)
 		{
 			Requires.That(Descriptor == null, "A descriptor has already been set.");
-			Requires.NotNullOrWhitespace(identifier, () => identifier);
 			Requires.NotNullOrWhitespace(description, () => description);
 			Requires.NotNullOrWhitespace(messageFormat, () => messageFormat);
 			Requires.InRange(severity, () => severity);
-			Requires.ArgumentSatisfies(identifier.StartsWith(Prefix), () => identifier,
-									   "Diagnostic identifier does not start with prefix '{0}'.", Prefix);
 
-			Descriptor = new DiagnosticDescriptor(identifier, description, messageFormat, Category, severity, true);
+			Descriptor = new DiagnosticDescriptor(Prefix + identifier, description, messageFormat, Category, severity, true);
 			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
 		}
 	}

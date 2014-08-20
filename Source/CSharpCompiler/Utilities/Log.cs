@@ -138,9 +138,6 @@ namespace SafetySharp.CSharpCompiler.Utilities
 					case LogType.Fatal:
 						type = "Fatal ";
 						break;
-					default:
-						Assert.NotReached();
-						break;
 				}
 
 				Debug.WriteLine("[{0}] {1}", type, entry.Message);

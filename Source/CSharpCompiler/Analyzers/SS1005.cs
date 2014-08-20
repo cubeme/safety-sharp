@@ -35,23 +35,18 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     corresponding interface method or property.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1005 : SymbolAnalyzer<INamedTypeSymbol>
 	{
-		/// <summary>
-		///     The identifier of the diagnostic emitted by the analyzer.
-		/// </summary>
-		private const string Identifier = Prefix + "1005";
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1005()
 			: base(SymbolKind.NamedType)
 		{
-			Error(Identifier,
-				  "Method or property does not implement the corresponding interface method or property, as the port types are different.",
-				  "'{0}' does not implement interface member '{1}'. '{1}' is declared as a {2} port, but is implemented as a {3} port.");
+			Error(1005,
+				"Method or property does not implement the corresponding interface method or property, as the port types are different.",
+				"'{0}' does not implement interface member '{1}'. '{1}' is declared as a {2} port, but is implemented as a {3} port.");
 		}
 
 		/// <summary>
@@ -64,34 +59,46 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 			if (symbol.TypeKind != TypeKind.Class || !symbol.IsDerivedFromComponent(compilation))
 				return;
 
-			foreach (var interfaceSymbol in symbol.AllInterfaces.Where(interfaceSymbol => interfaceSymbol.ImplementsIComponent(compilation)))
-			{
-				foreach (var interfaceMember in interfaceSymbol.GetMembers())
-				{
-					var implementingMember = symbol.FindImplementationForInterfaceMember(interfaceMember);
-					if (!Equals(implementingMember.ContainingSymbol, symbol))
-						continue;
+			var interfaceMembers = symbol
+				.AllInterfaces
+				.Where(interfaceSymbol => interfaceSymbol.ImplementsIComponent(compilation))
+				.SelectMany(interfaceSymbol => interfaceSymbol.GetMembers());
 
-					var interfaceIsRequired = interfaceMember.HasAttribute<RequiredAttribute>(compilation);
-					var interfaceIsProvided = interfaceMember.HasAttribute<ProvidedAttribute>(compilation);
+			foreach (var interfaceMember in interfaceMembers)
+				CheckMember(symbol, compilation, interfaceMember);
+		}
 
-					var implementationIsRequired = implementingMember.HasAttribute<RequiredAttribute>(compilation) || implementingMember.IsExtern;
-					var implementationIsProvided = implementingMember.HasAttribute<ProvidedAttribute>(compilation) || !implementingMember.IsExtern;
+		/// <summary>
+		///     Checks whether the <paramref name="symbol" />'s implementing member for <paramref name="interfaceMember" /> has the
+		///     correct port type..
+		/// </summary>
+		/// <param name="symbol">The symbol that should be analyzed.</param>
+		/// <param name="compilation">The compilation the symbol is declared in.</param>
+		/// <param name="interfaceMember">The interface member that should be checked.</param>
+		private void CheckMember(INamedTypeSymbol symbol, Compilation compilation, ISymbol interfaceMember)
+		{
+			var implementingMember = symbol.FindImplementationForInterfaceMember(interfaceMember);
+			if (!Equals(implementingMember.ContainingSymbol, symbol))
+				return;
 
-					// If we can't uniquely classify the port type of either the interface member or the implementation, 
-					// there is another problem that another analyzer deals with. So let's just ignore it here.
-					if ((interfaceIsRequired && interfaceIsProvided) || (implementationIsProvided && implementationIsRequired))
-						continue;
+			var interfaceIsRequired = interfaceMember.HasAttribute<RequiredAttribute>(compilation);
+			var interfaceIsProvided = interfaceMember.HasAttribute<ProvidedAttribute>(compilation);
 
-					if (interfaceIsRequired && !implementationIsRequired)
-						EmitDiagnostic(implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
-									   "required", "provided");
+			var implementationIsRequired = implementingMember.HasAttribute<RequiredAttribute>(compilation) || implementingMember.IsExtern;
+			var implementationIsProvided = implementingMember.HasAttribute<ProvidedAttribute>(compilation) || !implementingMember.IsExtern;
 
-					if (interfaceIsProvided && !implementationIsProvided)
-						EmitDiagnostic(implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
-									   "provided", "required");
-				}
-			}
+			// If we can't uniquely classify the port type of either the interface member or the implementation, 
+			// there is another problem that another analyzer deals with. So let's just ignore it here.
+			if ((interfaceIsRequired && interfaceIsProvided) || (implementationIsProvided && implementationIsRequired))
+				return;
+
+			if (interfaceIsRequired && !implementationIsRequired)
+				EmitDiagnostic(implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
+					"required", "provided");
+
+			if (interfaceIsProvided && !implementationIsProvided)
+				EmitDiagnostic(implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
+					"provided", "required");
 		}
 	}
 }

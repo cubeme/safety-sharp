@@ -34,27 +34,22 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     <see cref="RequiredAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1001 : SymbolAnalyzer<IMethodSymbol>
 	{
-		/// <summary>
-		///     The identifier of the diagnostic emitted by the analyzer.
-		/// </summary>
-		private const string Identifier = Prefix + "1001";
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1001()
 			: base(SymbolKind.Method)
 		{
-			Error(Identifier,
-				  String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName),
-				  String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName));
+			Error(1001,
+				String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName),
+				String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>

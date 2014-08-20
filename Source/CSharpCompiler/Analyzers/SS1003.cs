@@ -33,23 +33,18 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1003 : SymbolAnalyzer<ISymbol>
 	{
-		/// <summary>
-		///     The identifier of the diagnostic emitted by the analyzer.
-		/// </summary>
-		private const string Identifier = Prefix + "1003";
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1003()
 			: base(SymbolKind.Method, SymbolKind.Property)
 		{
-			Error(Identifier,
-				  String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
-				  "Required port '{0}' must be extern.");
+			Error(1003,
+				String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
+				"Required port '{0}' must be extern.");
 		}
 
 		/// <summary>

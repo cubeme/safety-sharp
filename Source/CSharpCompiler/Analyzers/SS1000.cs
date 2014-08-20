@@ -34,27 +34,22 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     <see cref="RequiredAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1000 : SymbolAnalyzer<ISymbol>
 	{
-		/// <summary>
-		///     The identifier of the diagnostic emitted by the analyzer.
-		/// </summary>
-		private const string Identifier = Prefix + "1000";
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1000()
 			: base(SymbolKind.Method, SymbolKind.Property)
 		{
-			Error(Identifier,
-				  String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName),
-				  String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName));
+			Error(1000,
+				String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName),
+				String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>

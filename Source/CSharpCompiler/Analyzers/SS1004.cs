@@ -34,27 +34,22 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     the <see cref="RequiredAttribute" /> or <see cref="ProvidedAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer(Identifier, LanguageNames.CSharp)]
+	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1004 : SymbolAnalyzer<ISymbol>
 	{
-		/// <summary>
-		///     The identifier of the diagnostic emitted by the analyzer.
-		/// </summary>
-		private const string Identifier = Prefix + "1004";
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1004()
 			: base(SymbolKind.Method, SymbolKind.Property)
 		{
-			Error(Identifier,
-				  String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName),
-				  String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
-								typeof(RequiredAttribute).FullName,
-								typeof(ProvidedAttribute).FullName));
+			Error(1004,
+				String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName),
+				String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
