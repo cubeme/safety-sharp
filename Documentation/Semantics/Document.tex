@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[a4paper,10pt,english]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[T1,hyphens]{url}
@@ -9,6 +9,17 @@
 \usepackage[fleqn,leqno]{amsmath}
 \usepackage{amssymb}
 \usepackage{mathtools}
+\usepackage{xspace}
+\usepackage{listings}
+\usepackage{cleveref}
+\hypersetup{colorlinks=false, 
+				linkcolor=black,
+				citecolor=black,
+				pdfauthor=Axel Habermaier,
+				pdftitle=Masterarbeit,
+				pdfborder={0 0 0}, 
+				pdfpagelayout=SinglePage,
+				pdfsubject=Masterarbeit}
 
 \input{Macros}
 
@@ -116,7 +127,8 @@ assigned to a variable:
 \subsection{Expressions}
 
 Formal programs support only side effect free expressions. Expressions consist of literal values, read operations of variables as
-well as a small set of unary and binary operator applications.
+well as a small set of unary and binary operator applications. The \texttt{prev} operator returns the value of a global
+variable at the beginning of the current step.
 \begin{align*}
 	\uop \in \Uop & := - \mid \neg
 	\\
@@ -125,14 +137,23 @@ well as a small set of unary and binary operator applications.
                        \mid {} \leq {} \mid {} = {} \mid {} \neq {}
 	\\
 	\expr \in \Expr & := 
-		\val \mid \var \mid
+		\val \mid
+		\var \mid
+		\prev{\var} \mid
 		\unaryExpr{\uop\;}{\expr} \mid
 		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
 \end{align*}
 
-The function $\ExprSem{-} : \Expr \rightarrow \VarEnv \rightarrow \Val$ defines the semantics of
-expressions.
-Its definition is omitted for the time being.
+The function $\ExprSem{-} : \Expr \rightarrow \VarEnv \rightarrow \VarEnv \rightarrow \Val$ defines the semantics of
+expressions. It is given the current variable environment and the one at the beginning of the current step.
+\begin{align*}
+	\ExprSem{\val} \varEnv \varEnv' &= \val \\
+	\ExprSem{\var} \varEnv \varEnv' &= \varEnv(\var) \\
+	\ExprSem{\prev{\var}} \varEnv \varEnv' &= \varEnv'(\var) \\
+	\ExprSem{\unaryExpr{\uop\;}{\expr}} \varEnv \varEnv' &= \llbracket \uop \rrbracket (\ExprSem{\expr} \varEnv \varEnv') \\
+	\ExprSem{\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}} \varEnv \varEnv' &= \llbracket \bop \rrbracket (\ExprSem{\expr_1} \varEnv
+	\varEnv', \ExprSem{\expr_2} \varEnv	\varEnv')
+\end{align*}
 
 \subsection{Statements}
 
@@ -147,15 +168,16 @@ Formal programs support skip statements, variable assignments, sequential compos
 
 The nondeterministic rule system $\stmArrow$ defines the natural semantics of statements.
 \begin{align*}
-	\mathit{Configurations} : & \;\configuration{\stm, \varEnv} \in \Stm \times \VarEnv, \; \varEnv \in \VarEnv
+	\mathit{Configurations} : & \;\configuration{\stm, \varEnv, \varEnv'} \in \Stm \times \VarEnv \times \VarEnv, \; 
+	\varEnv \in \VarEnv
 	\\
-	\mathit{Transitions} : & \;\configuration{\stm, \varEnv} \stmArrow \varEnv'
+	\mathit{Transitions} : & \;\configuration{\stm, \varEnv, \varEnv'} \stmArrow \varEnv''
 \end{align*}
 
 The skip statement has no effect on the variable environment and is therefore simply discarded.
 \begin{equation*}
 	\tag{skip}
-	\configuration{\skipStm, \varEnv}
+	\configuration{\skipStm, \varEnv, \varEnv'}
 		\stmArrow
 	\varEnv
 \end{equation*}
@@ -164,28 +186,28 @@ Assignments to a variable update the variable environment accordingly, replacing
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign}
-	\configuration{\assignVarStm{\var}{\expr}, \varEnv}
+	\configuration{\assignVarStm{\var}{\expr}, \varEnv, \varEnv'}
 		\stmArrow
-	\varEnv[\var \mapsto \ExprSem{\expr} \varEnv]
+	\varEnv[\var \mapsto \ExprSem{\expr} \varEnv \varEnv']
 \end{equation*}
 
-Sequential composition executes the two statements sequentially, passing down the modified variable environment.
+Sequential composition executes two statements sequentially, carrying along the modified variable environment.
 \begin{equation*}
 	\tag{seq}
 	\dfrac
 	{
-		\configuration{\stm_1, \varEnv}
+		\configuration{\stm_1, \varEnv, \varEnv'}
 			\stmArrow
-		\varEnv'
+		\varEnv_1
 		\qquad
-		\configuration{\stm_2, \varEnv'}
+		\configuration{\stm_2, \varEnv_1, \varEnv'}
 			\stmArrow
-		\varEnv''
+		\varEnv_2
 	}
 	{
-		\configuration{\seqStm{\stm_1}{\stm_2}, \varEnv}
+		\configuration{\seqStm{\stm_1}{\stm_2}, \varEnv, \varEnv'}
 			\stmArrow
-		\varEnv''
+		\varEnv_2
 	}
 \end{equation*}
 
@@ -196,36 +218,38 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\tag{cmd}
 	\dfrac
 	{
-		\configuration{\stm_i, \varEnv}
+		\configuration{\stm_i, \varEnv, \varEnv'}
 			\stmArrow
-		\varEnv'
+		\varEnv''
 	}
 	{
-		\configuration{\guardedClause{\expr_1}{\stm_1} \; \ldots \; \guardedClause{\expr_n}{\stm_n}, \varEnv}
+		\configuration{\guardedClause{\expr_1}{\stm_1} \; \ldots \; \guardedClause{\expr_n}{\stm_n}, \varEnv, \varEnv'}
 			\stmArrow
-		\varEnv'
+		\varEnv''
 	}
-	\qquad \text{if} \quad \ExprSem{e_i} \varEnv = \true
+	\qquad \text{if} \quad \ExprSem{e_i} \varEnv \varEnv' = \true
 \end{equation*}
 
 A denotational definition of the statement semantics might be able to better highlight the nondeterministic nature of guarded
-commands. Therefore, let the semantic relation $\StmSem{-} : \Stm \rightarrow \ToSet{(\VarEnv \times \VarEnv)}$ define the
-denotational semantics of statements as follows:
+commands. Therefore, let the semantic relation $\StmSem{-} : \Stm \rightarrow \ToSet{(\VarEnv \times \VarEnv \times \VarEnv)}$
+define the denotational semantics of statements as follows:
 \begin{align*}
-	\StmSem{\skipStm} &= \{ (\varEnv, \varEnv) \mid \varEnv \in \VarEnv \}
+	\StmSem{\skipStm} &= \{ (\varEnv, \varEnv', \varEnv) \mid \varEnv, \varEnv' \in \VarEnv \}
 	\\
-	\StmSem{\assignVarStm{\var}{\expr}} &= \{ (\varEnv, \varEnv[\var \mapsto \ExprSem{\expr} \varEnv]) \mid \varEnv \in \VarEnv \}
+	\StmSem{\assignVarStm{\var}{\expr}} &= \{ (\varEnv, \varEnv', \varEnv[\var \mapsto \ExprSem{\expr} \varEnv \varEnv']) \mid
+	\varEnv, \varEnv' \in \VarEnv \}
 	\\
 	\StmSem{\seqStm{\stm_1}{\stm_2}} &= \StmSem{\stm_2} \circ \StmSem{\stm_1}
 	\\
 	\StmSem{\guardedClause{\expr_1}{\stm_1} \ldots \guardedClause{\expr_n}{\stm_n}} &= 
-		\bigcup\nolimits_{i = 1}^n 
-		{\{ (\varEnv, \varEnv') \mid \ExprSem{e_i} \varEnv = \true \wedge (\varEnv, \varEnv') \in \StmSem{\stm_i} \}}
+		\bigcup\nolimits_{i = 1}^n \,
+		\{ (\varEnv, \varEnv', \varEnv'') \in \StmSem{\stm_i} \mid \ExprSem{e_i} \varEnv \varEnv' = \true \}
 \end{align*}
 
 Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rule system $\stmArrow$:
 \begin{equation*}
-	\StmSem{\stm} := \{ (\varEnv, \varEnv') \in \VarEnv \times \VarEnv \mid \configuration{\stm, \varEnv} \stmArrow \varEnv' \}
+	\StmSem{\stm} := \{ (\varEnv, \varEnv', \varEnv'') \in \VarEnv \times \VarEnv \times \VarEnv \mid \configuration{\stm, \varEnv,
+	\varEnv'} \stmArrow \varEnv'' \}
 \end{equation*}
 
 \subsection{Semantics of Formal Programs}
@@ -242,16 +266,343 @@ The first set of variables represents the global variables defined by the progra
 ones. The function is used to determine the initial values of all (global) variables; there might be multiple initial
 values for each variable. The statement of the program is executed once during each step.
 
-The semantics of a program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
-\varEnv_1 \, \varEnv_2 \ldots$ of variable environments:
-\begin{multline*}
-	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm) :=
-	\\ \shoveright{
-	\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \mid 
-		\forall \var \in \toSet{\var}_g \colon \varEnv_0(\var) \in \mathit{init}(\var) \qquad \qquad}
-	\\ \wedge
-		\forall i \in \mathbb{N} \colon \configuration{\stm, \varEnv_i[\toSet{\var}_l \mapsto \missing]} \stmArrow \varEnv_{i+1}
-		\}
-\end{multline*}
+\begin{samepage}
+	The semantics of a program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
+	\varEnv_1 \, \varEnv_2 \ldots$ of variable environments. We have $\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \} \in
+	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm)$ if
+	\begin{itemize}
+		\item $\forall \var \in \toSet{\var}_g \colon \varEnv_0(\var) \in \mathit{init}(\var)$
+		\item $\forall \var \in \Var \setminus \toSet{\var}_g \colon \varEnv_0(\var) = \missing$
+		\item $\forall i \in \mathbb{N}_0 \colon \configuration{\stm, \varEnv_i, \varEnv_i} \stmArrow
+		\varEnv_{i+1}' \wedge \varEnv_{i+1} = \varEnv_{i + 1}'[\toSet{\var}_l \mapsto \missing]$
+	\end{itemize}
+\end{samepage}
+
+\subsection{Well-Formedness of Formal Programs}
+\begin{itemize}
+	\item All expressions and statements are typed correctly.
+	\item All variables are written to before they are assigned (definitely assigned, see also discussion of well-formedness of
+	formal models).
+\end{itemize}
+
+\section{Formal Models}
+We're now going to define the syntactic and semantic
+domains for formal models. The basic structure of a formal model is shown in~\cref{FormalModelOverview}.
+
+\begin{lstlisting}[tabsize=4,basicstyle=\footnotesize\ttfamily,label=FormalModelOverview,caption={Basic Structure of a
+Formal Model},float=ht]
+component C
+	// subcomponent
+	component D
+		// fields
+		b1 : bool := false
+			
+		// provided ports
+		Q : (p1 : int, p2 : int) -> (r1 : bool, r2 : bool)
+			r1 := false
+			r2 := b1
+
+	// fields
+	x : int := 1, 2, 3
+	b : bool := true, false
+		
+	// required ports
+	M : (int * int) -> (bool * bool)
+	N : () -> ()
+		
+	// provided ports
+	X : (p1 : int, p2 : int) -> (r1 : bool, r2 : bool)
+		r1 := p1 > 1
+		r2 := p2 > x && b
+	Y : () -> ()
+		;
+		
+	// bindings
+	M ->d D.Q   // delayed
+	N ->i Y     // instantaneous
+	
+	// behavior
+	l1 : bool, l2 : bool
+	M(x, x - 1) -> (l1, l2)
+	N() -> ()
+	(l1 -> x = x - 1; l2 -> b = true)
+\end{lstlisting}
+
+We assume different abstract domains of names that we use to identify fields, ports, parameters, local variables, and components.
+There are four name spaces, one for fields, parameters, and local variables, one each for required and provided ports, and one for
+components. Within a name space, names must be unique. The name spaces are pairwise disjoint. Only ports can be accessed
+outside of a component, namely by a parent component. When a parent component refers to a port of one of its
+subcomponents, the port must be qualified with the name of the subcomponent, as the port names of the parent components and the
+subcomponents might overlap.
+\begin{align*}
+	\varName &\in \VarName \\
+	\reqPortName &\in \ReqPortName \\
+	\provPortName &\in \ProvPortName \\
+	\compName &\in \CompName \\
+	\qReqPortName &\in \QReqPortName := \reqPortName \mid \qualifiedName{\compName}{\reqPortName} \\
+	\qProvPortName &\in \QProvPortName := \provPortName \mid \qualifiedName{\compName}{\provPortName}
+\end{align*}
+
+Similar to formal programs, formal models have values of Boolean and integer type; we also have a domain of types
+for those values.
+\begin{align*}
+    \bool \in \Bool &:= \{ \true, \false \}
+    \\
+    \integer \in \Integer &:= \{ \ldots, -2, -1, 0, 1, 2, \ldots \}
+    \\
+    \val \in \Val &:= \Bool \mid \Integer
+    \\
+	\type \in \Type &:= \boolType \mid \intType
+\end{align*}
+
+\subsection{Expressions}
+
+Formal models support only side effect free expressions. Expressions consist of literal values, read operations of variables
+as well as a small set of unary and binary operator applications.
+\begin{align*}
+	\uop \in \Uop & := - \mid \neg
+	\\
+    \bop \in \Bop & := {} + {} \mid {} - {} \mid {} \ast {} \mid {} / {}
+                       \mid {} \% {} \mid {} > {} \mid {} < {} \mid {} \geq {} 
+                       \mid {} \leq {} \mid {} = {} \mid {} \neq {}
+	\\
+	\expr \in \Expr & := 
+		\val \mid
+		\varName \mid 
+		\unaryExpr{\uop\;}{\expr} \mid
+		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
+\end{align*}
+
+The function $\ExprSem{-} : \Expr \rightarrow \VarEnv \rightarrow \Val$ defines the semantics of
+expressions.
+Its definition is omitted for the time being.
+
+\subsection{Statements}
+
+Formal models support skip statements, variable assignments, sequential compositions, guarded commands, and
+invocations of required ports.
+\begin{equation*}
+	\stm \in \Stm :=
+		\skipStm \mid 
+		\assignVarStm{\varName}{\expr} \mid
+		\seqStm{\stm_1}{\stm_2} \mid
+		\guardedStm{\guardedClause{\expr}{\stm}} \mid
+		\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}
+\end{equation*}
+
+\subsection{Domains of Formal Models}
+
+\subsubsection{Variables and Fields}
+A variable is typed and has a name unique within the context of the component; though the name may be reused in subcomponents.
+A field is a variable with a non-empty set of initial values, one of which is chosen nondeterministically when
+the component is executed. Fields can be accessed throughout the entire component -- except the subcomponents. Variables used as
+port parameters or defined locally by a provided port, on the other hand, can only be accessed by that port. 
+\begin{align*}
+	\var \in \Var &:= \varDecl{\varName}{\type} \\
+	\field \in \Field &:= \fieldDecl{\var}{\val_1, \ldots, \val_n}
+\end{align*}
+
+We assume two functions $\nameof : \Var \rightarrow \VarName$ and $\typeof : \Var \rightarrow \Type$ such that for a variable
+$\var$ defined as above we have $\nameof(\var) = \varName$ and $\typeof(\var) = \type$. Similarly for
+fields, we define $\nameof : \Field \rightarrow \VarName$, $\typeof : \Field \rightarrow \Type$, and $\init : \Field \rightarrow
+\ToSet(\Val)$ such that for a field $\field$ defined as above we have $\nameof(\field) =
+\varName$, $\typeof(\field) = \type$, and $\init(\field) = \{\val_1, \ldots, \val_n\}$.
+
+\subsubsection{Required and Provided Ports}
+A required port of a component is uniquely identified by its name within the context of the component; though the name may be
+reused in subcomponents. It has a possibly empty list of input parameters and a possible empty list of output parameters. 
+Provided ports are defined similarly. However, they also introduce local names for their input and output parameters and declare a
+body with a possible empty set of local variables. 
+\begin{align*}
+	\reqPort \in \ReqPort &:= \reqPortDecl{\reqPortName}{\type_{\mathit{in}, 1}, \ldots, \type_{\mathit{in}, n}}{\type_{\mathit{out},
+	1}, \ldots, \type_{\mathit{out}, m}} \\
+	\provPort \in \ProvPort &:= \provPortDecl{\provPortName}
+			{\var_{\mathit{in}, 1}, \ldots, \var_{\mathit{in}, n}}
+			{\var_{\mathit{out}, 1}, \ldots, \var_{\mathit{out}, m}}
+			{\\&\qquad\quad\var_{\mathit{loc}, 1}, \ldots, \var_{\mathit{loc}, k}}
+			{\\&\qquad\quad\stm}
+\end{align*}
+
+We define a couple of helper functions for required ports $\reqPort$ and provided ports $\provPort$ defined as above. We assume
+the two functions $\nameof : \ReqPort \rightarrow \ReqPortName$ and $\nameof : \ProvPort \rightarrow \ProvPortName$ such that
+$\nameof(\reqPort) = \reqPortName$ and $\typeof(\provPort) = \provPortName$.
+The functions $\signature :
+\ReqPort \rightarrow \ToList{\Type} \times \ToList{\Type}$ and $\signature : \ProvPort \rightarrow \ToList{\Type} \times
+\ToList{\Type}$ return the signature of the respective port, i.e., the list of input and output parameter types:
+$\signature(\reqPort) = (\type_{\mathit{in}, 1} \cons \ldots \cons \type_{\mathit{in}, n}, \type_{\mathit{out}, 1} \cons \ldots
+\cons \type_{\mathit{out}, m})$ and $\signature(\provPort) = (\typeof(\var_{\mathit{in}, 1}) \cons \ldots \cons
+\typeof(\var_{\mathit{in}, n}), \typeof(\var_{\mathit{out}, 1}) \cons \ldots \cons \typeof(\var_{\mathit{out}, m}))$.
+
+Additionally, the function $\inputs : \ProvPort \rightarrow \ToList{\Var}$ with $\inputs(\provPort) = \var_{\mathit{in}, 1} \cons
+\ldots \cons \var_{\mathit{in}, n}$ extracts the list of input parameters of a provided port. $\outputs : \ProvPort \rightarrow
+\ToList{\Var}$ with $\outputs(\provPort) = \var_{\mathit{out}, 1} \cons \ldots \cons \var_{\mathit{out}, m}$, on the other hand,
+extracts the list of output parameters of a provided port. The set of locally defined variables of a provided port can be obtained
+with the function $\locals : \ProvPort \rightarrow
+\ToSet{\Var}$, defined as $\locals(\provPort) = \{\var_{\mathit{loc}, 1}, \ldots, \var_{\mathit{loc}, k}\}$. The body of a
+provided port defining the port's behavior can be accessed with function $\body : \ProvPort \rightarrow \Stm$, where
+$\body(\provPort) = \stm$.
+
+\subsubsection{Bindings}
+A binding binds a required port to a provided port. The binding must be either between two components on the
+same level within the hierarchy or must span at most one level of the hierarchy. A binding can be either
+instantaneous or delayed. When a required port with a delayed binding is invoked, the corresponding provided port is executed
+at the beginning of the next step with the provided parameters, the computed results are cached and the results of the invocation
+of the previous state are returned. If the same provided port is invoked multiple times in a delayed fashion, the results are also
+cached multiple times, always returning the computed values during the next step that corresponds to the appropriate invocation
+during the current step. If the provided port does not have any incoming parameters, it suffices to cache the results once.
+\begin{equation*} 
+	\binding \in \Binding := \bindingDecl{\qReqPortName}{\qProvPortName}{\instantBinding} \mid
+		\bindingDecl{\qReqPortName}{\qProvPortName}{\delayedBinding}
+\end{equation*}
+
+We assume the functions $\req : \Binding \rightarrow \QReqPortName$ and $\prov : \Binding \rightarrow \QProvPortName$ that return
+the qualified name of the required or the provided port of a binding. For a binding $\binding$ defined as above, $\req(\binding) =
+\qReqPortName$ and $\prov(\binding) = \qProvPortName$, regardless of whether the binding is instantaneous or delayed. The
+predicate $\isDelayed : \Binding \rightarrow \Bool$ indicates whether the binding is delayed, that is, $\isDelayed(\binding) \Leftrightarrow
+\binding = \bindingDecl{\qReqPortName}{\qProvPortName}{\delayedBinding}$.
+
+\subsubsection{Components}
+Finally, components are uniquely identified by their names and consist of sets
+of provided and required ports, fields, and port bindings. They have a behavior described by a statement and may optionally be
+the parent of a set of subcomponents.
+\begin{align*}
+	\comp \in \Comp := &\mathtt{component} \; \compName \\
+		&\qquad \comp_1, \ldots \comp_n \\
+		&\qquad \field_1, \ldots, \field_m \\
+		&\qquad \reqPort_1, \ldots, \reqPort_k \\
+		&\qquad \provPort_1, \ldots, \provPort_l \\
+		&\qquad \binding_1, \ldots, \binding_o \\
+		&\qquad \stm
+\end{align*}
+
+Again we're defining a couple of functions that allow us to conveniently extract the different parts of a component $\comp$
+defined as above. $\nameof : \Comp \rightarrow \CompName$ retrieves the name of the component, such that
+$\nameof(\comp) = \compName$. $\subComp : \Comp \rightarrow \ToSet{\Comp}$ with $\subComp(\comp) = \{\comp_1, \ldots, \comp_n\}$
+retrieves the subcomponents of component $\comp$. The fields can be obtained using function $\fields : \Comp \rightarrow
+\ToSet{\Field}$, defined as $\fields(\comp) = \{ \field_1, \ldots, \field_m \}$. To extract the required and the provided ports
+of a component, functions $\reqs : \Comp \rightarrow \ToSet{\ReqPort}$ with $\reqs(\comp) = \{ \reqPort_1, \ldots \reqPort_k \}$
+and $\provs : \Comp \rightarrow \ToSet{\ProvPort}$ with $\provs(\comp) = \{ \provPort_1, \ldots, \provPort_l \}$ can be used. The
+bindings of a component are returned by function $\bindings : \Comp \rightarrow \ToSet{\Binding}$, defined as $\bindings(\comp) =
+\{ \binding_1, \ldots, \binding_o \}$. Finally, the component's behavior can be extracted using function $\behavior : \Comp
+\rightarrow \Stm$, with $\behavior(\comp) = \stm$.
+
+\subsection{Transformation to Formal Programs}
+The transformation of a formal model into a formal program first flattens the hierarchy in post order. That is, for a given
+component, all fields, ports, and bindings are moved to the parent component, ensuring that all names remain unique. The behavior
+is added at the correct location into the parent's behavior, depending on the scheduling. 
+
+Once the hierarchy is fully flattened, all ports are inlined into the behavior of the root component. For delayed bindings, the
+appropriate variables must be introduced. When the results of a delayed binding are read, the \texttt{prev} instruction must be used.
+
+The resulting monolithic component can then be transformed in a rather straightforward way to a formal program.
+
+\subsection{Well-Formedness of Components}
+We only consider components that are well-formed according to the following criteria:
+\begin{itemize}
+	\item All expressions and statements are typed correctly.
+	\item All fields, ports, and components within the hierarchy have unique names.
+	\item All statements and expressions respect the scoping of parameters, locals, fields, and required ports.
+	\item All bindings respect the component hierarchy: A binding connecting two ports of components $\comp_1$ and $\comp_2$ within
+	the context of component $\comp$ with subcomponents $\toSet{s}$ is only well-formed if $\comp_1, \comp_2 \in \{ \comp \} \cup
+	\toSet{s}$.
+	\item There are no circular bindings, resulting in a provided port indirectly invoking itself. Such a circle can only be allowed
+	if at least one of the involved bindings is delayed.
+	\item There is exactly one binding for each required port; there can be none, one, or multiple bindings for a provided port.
+	\item The ports of a binding are compatible, that is, they have the same signature (= type, order, and number of input and
+	output parameters).
+	\item Required ports are invoked with the correct parameters (both in type and number).
+	\item All fields have at least one initial value.
+	\item All variables are definitely assigned before they are read and all out parameters of a provided port are definitely
+	assigned when the function returns. Analogous to \CSharp's definite assignment rules. Definite assignment is somewhat complex to
+	check, requiring a control flow analysis. On the other hand, if an unassigned variable is read, the semantics just ``hangs``.
+	So alternatively, we could just live with that without making it a well-formedness requirement. When transforming a \SSharp
+	model into a formal model, definite assignment is guaranteed by the \CSharp compiler anyway, probably not justifying the work to
+	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting formal program
+	has infinite traces only. If we don't check definite assignment, infinite traces cannot be guaranteed. So maybe we just formally
+	require definite assignment, giving a somewhat high-level formal definition, and simply don't implement the definite assignment
+	check in the \SSharp compiler. Even yet another possibility would be to define that each and every variable is initialized to the
+	default value of its type (e.g., $\false$ for Boolean variables, $0$ for integer variables), therefore all variables are always
+	definitely assigned. This might hide bugs, but on the other hand, we do not expect anyone to write formal models by hand. Again,
+	\CSharp guarantees definite assignment without implicitly assigning default values, so the transformation from \CSharp doesn't
+	have this problem.
+\end{itemize}
+
+\section{Modeling with \SafetySharp}
+The general idea of the transformation process is as follows:
+\begin{itemize}
+	\item Compile-time
+	\begin{enumerate}
+		\item If the \SSharp model is not valid \CSharp code, abort.
+		\item \SSharp well-formedness checks are performed. If the model is not well-formed, abort.
+		\item Perform \CSharp code normalizations.
+		\item For each component type in the \SSharp model, create a builder that -- at runtime -- creates a formal
+		model component instance for a concrete \SSharp component instance of the component type, recursively also transforming the
+		entire component subtree in post order. 
+		
+		For generic component types, these builders are also generic, causing the generics to be resolved by standard \DotNet
+		mechanisms.
+	\end{enumerate}
+	
+	\item Runtime
+	\begin{enumerate}
+		\item Initialize the component instances, running their constructors. Abort if any exceptions occur.
+		\item Perform runtime well-formedness checks. Abort if the model is not well-formed.
+		\item Determine the array sizes for all fields, locals and parameters of the model. Abort if there is an array for which no
+		unique array size can be determined.
+		\item Additional pass-through ports and the appropriate bindings must be introduced if the component has subcomponents with ports
+		bound to ports of components of another partition.
+		\item Synthesize a unique root component for the entire component hierarchy.
+		\item Invoke the builder for the main component instance in the hierarchy tree, causing the transformation of the tree in post
+		order. The result is a formal model. It is well-formed if no components defined in an external assembly are used. Otherwise, the
+		formal model is only well-formed if the external assembly is not ``malicious''.
+	\end{enumerate}
+\end{itemize}
+
+\subsection{Runtime Well-Formedness Checks}
+Certain well-formedness checks on the \SSharp model cannot be performed at compile time, as runtime information is required:
+\begin{itemize}
+	\item Port bindings cannot be circular, unless at least one delayed binding is involved.
+	\item Port bindings cannot span more than one level of the component hierarchy and cannot cross different branches of the tree,
+	expect for bindings crossing partition boundaries.
+	\item Every required port can only be contained in exactly one binding.
+	\item Port bindings are only allowed between compatible component types, i.e., it is invalid to bind a required port of a
+	controller component to a provided port of an environment component.
+	\item It must be possible to uniquely determine the sizes of all arrays used throughout the component hierarchy (either as local
+	variables, port parameters, or fields).
+\end{itemize}
+
+\subsection{Transformation to Formal Models}
+All \SSharp models are valid \CSharp code. At compile time, additional \SSharp-specific checks are made on the
+\CSharp code that guarantee that the code can be successfully transformed and that the transformed formal model is well-formed.
+Even if the \CSharp code is error-free, the generated formal model must be checked for well-formedness, especially when components
+from external \SSharp assemblies are used.
+
+Certain \CSharp features that can be used when writing \SSharp models are normalized to other, semantically equivalent
+\CSharp features, in order to reduce the complexity of the transformation to formal models. Component initialization and
+construction use standard \CSharp/\DotNet mechanisms.
+\begin{itemize}
+	\item State machines must be transformed to equivalent imperative code.
+	\item Implementation inheritance is flattened. 
+	\item Properties and indexers are replaced with the appropriate getter or setter methods.
+	\item Variables of enum type are replaced by \texttt{int}, enum values are replaced by their underlying integer value.
+	\item Compound assignment operators (\texttt{+=}, \texttt{-=}, etc.) are replaced by the appropriate expression and a simple
+	assignment.
+	\item Additional required ports must be introduced for all provided ports of subcomponents invoked by the parent component. The
+	corresponding provided port invocations have to be replaced by the synthesized required ports and the corresponding bindings have
+	to be established.
+	\item All methods calls (both helper methods and invocations of other provided ports of the same component) must be inlined. The
+	only invocations allowed to remain are invocations of required ports.
+	\item All ports are rewritten such that they have a \texttt{void} return type, with the returned values written to newly
+	introduced \texttt{out} parameters. All invocations are normalized accordingly.
+	\item Expressions must be rewritten such that they contain no side effects (assignments to variables, method calls, overloaded
+	operators).
+	\item Fields, local variables, properties, indexers and parameters of struct or array type must be replaced by the appropriate
+	number of flattened elements. Structs and arrays can be recursive in the sense that a struct can contain an array of structs,
+	and so on. Structs can be replaced at compile time. Arrays cannot be replaced at compile time, as the size of an array can
+	generally only be determined at run-time when the port bindings have been established. It is an error if no unique size can be
+	determined. Code accessing array or struct elements must be rewritten accordingly. Operations on arrays (Linq-like functions or
+	\texttt{foreach} loops) must be unrolled. For arrays, the builders generate the appropriate instructions dynamically at runtime
+	based on the determined array size.
+\end{itemize}
 
 \end{document}

@@ -1,3 +1,9 @@
+% Names
+\newcommand{\CSharp}{{\settoheight{\dimen0}{C}C\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}\xspace}
+\newcommand{\SSharp}{{\settoheight{\dimen0}{S}S\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}\xspace}
+\newcommand{\SafetySharp}{Safety\-Sharp\xspace}
+\newcommand{\DotNet}{\textsc{.Net}\xspace}
+
 % Domains
 \newcommand{\Bool}{\mathbb{B}}
 \newcommand{\Integer}{\mathbb{Z}}
@@ -10,6 +16,19 @@
 \newcommand{\VarEnv}{\Sigma}
 \newcommand{\Val}{\mathit{Value}}
 \newcommand{\stmArrow}{\rightarrow_s}
+\newcommand{\VarName}{\mathit{VarName}}
+\newcommand{\ReqPortName}{\mathit{ReqPortName}}
+\newcommand{\ProvPortName}{\mathit{ProvPortName}}
+\newcommand{\QReqPortName}{\mathit{QualifiedReqPortName}}
+\newcommand{\QProvPortName}{\mathit{QualifiedProvPortName}}
+\newcommand{\CompName}{\mathit{CompName}}
+\newcommand{\Type}{\mathit{Type}}
+\newcommand{\Field}{\mathit{Field}}
+\newcommand{\Local}{\mathit{Local}}
+\newcommand{\ReqPort}{\mathit{ReqPort}}
+\newcommand{\ProvPort}{\mathit{ProvPort}}
+\newcommand{\Comp}{\mathit{Comp}}
+\newcommand{\Binding}{\mathit{Binding}}
 
 % Meta variables
 \newcommand{\bool}{b}
@@ -23,19 +42,44 @@
 \newcommand{\varEnv}{\sigma}
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
+\newcommand{\varName}{\mathit{n_v}}
+\newcommand{\reqPortName}{\mathit{n_r}}
+\newcommand{\provPortName}{\mathit{n_p}}
+\newcommand{\qReqPortName}{\mathit{q_r}}
+\newcommand{\qProvPortName}{\mathit{q_p}}
+\newcommand{\compName}{\mathit{n_c}}
+\newcommand{\type}{\tau}
+\newcommand{\field}{f}
+\newcommand{\local}{l}
+\newcommand{\reqPort}{r}
+\newcommand{\provPort}{p}
+\newcommand{\comp}{c}
+\newcommand{\binding}{bn}
 
 %Expressions
 \newcommand{\unaryExpr}[2]{#1 #2}
 \newcommand{\binaryExpr}[3]{#2 #1 #3}
+\newcommand{\prev}[1]{\mathtt{prev} \,#1}
 \newcommand{\true}{\mathit{tt}}
 \newcommand{\false}{\mathit{ff}}
 
 % Statements
 \newcommand{\skipStm}{\mathtt{skip}}
 \newcommand{\assignVarStm}[2]{#1\; \mathtt{:=}\; #2}
+\newcommand{\invoke}[3]{#1 \left( #2 \right) \mathtt{\rightarrow} \left( #3 \right)}
 \newcommand{\seqStm}[2]{#1 \; \mathtt{;} \; #2}
 \newcommand{\guardedClause}[2]{#1 \; \mathtt{\twoheadrightarrow} \; #2}
 \newcommand{\guardedStm}[1]{(#1)^*}
+
+% Formal model
+\newcommand{\varDecl}[2]{#1 \; \mathtt{:} \; #2}
+\newcommand{\fieldDecl}[2]{#1 \; \mathtt{=} \; #2}
+\newcommand{\reqPortDecl}[3]{#1 \; \mathtt{:} \; \mathtt{(} #2 \mathtt{) \rightarrow (} #3 \mathtt{)}}
+\newcommand{\provPortDecl}[5]{#1 \; \mathtt{:} \; \mathtt{(} #2 \mathtt{) \rightarrow (} #3 \mathtt{)} \; #4 #5}
+\newcommand{\bindingDecl}[3]{#1 \; #3 \; #2}
+\newcommand{\instantBinding}{\mathtt{\rightarrow_i}}
+\newcommand{\delayedBinding}{\mathtt{\rightarrow_d}}
+\newcommand{\qualifiedName}[2]{#1\mathtt{.}#2}
 
 % Lifting
 \newcommand{\failure}{\bot}
@@ -53,6 +97,35 @@
 \newcommand{\ExprSem}[1]{\mathcal{E} \llbracket #1 \rrbracket}
 \newcommand{\StmSem}[1]{\mathcal{S} \llbracket #1 \rrbracket}
 \newcommand{\ProgSem}[1]{\mathcal{P} \llbracket #1 \rrbracket}
+\newcommand{\cons}{\circ}
+\newcommand{\nameof}{\mathit{name}}
+\newcommand{\typeof}{\mathit{type}}
+\newcommand{\init}{\mathit{init}}
+\newcommand{\signature}{\mathit{sig}}
+\newcommand{\inputs}{\mathit{in}}
+\newcommand{\outputs}{\mathit{out}}
+\newcommand{\locals}{\mathit{loc}}
+\newcommand{\body}{\mathit{body}}
+\newcommand{\req}{\mathit{req}}
+\newcommand{\prov}{\mathit{prov}}
+\newcommand{\isDelayed}{\mathit{delayed}}
+\newcommand{\subComp}{\mathit{sub}}
+\newcommand{\fields}{\mathit{fields}}
+\newcommand{\reqs}{\mathit{reqs}}
+\newcommand{\provs}{\mathit{provs}}
+\newcommand{\bindings}{\mathit{bnds}}
+\newcommand{\behavior}{\mathit{beh}}
+
+% Values
+\newcommand{\mkTuple}[1]{\left( #1 \right)}
+\newcommand{\mkArray}[1]{\left[ #1 \right]}
+\newcommand{\voidType}{\mathtt{void}}
+\newcommand{\boolType}{\mathtt{bool}}
+\newcommand{\intType}{\mathtt{int}}
+\newcommand{\arrayType}[1]{#1\mathtt{[]}}
+\newcommand{\tupleType}[1]{\left(#1\right)}
+\newcommand{\instant}{\mathrm{instantaneous}}
+\newcommand{\delayed}{\mathrm{delayed}}
 
 % Layout
 \newcommand{\header}[1]{\addvspace{7pt}\textbf{{#1}}.}
