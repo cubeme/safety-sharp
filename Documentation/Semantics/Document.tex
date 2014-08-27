@@ -1,6 +1,11 @@
+% requires cm-super
+% use MikTex package manager to install (might require database synchronization)
+% run initexmf --mkmaps to update miktex mapfiles
+
 \documentclass[a4paper,10pt,english]{article}
+\usepackage{a4wide}
 \usepackage[utf8]{inputenc}
-\usepackage{lmodern}
+\usepackage[T1]{fontenc}
 \usepackage[T1,hyphens]{url}
 \usepackage[pdftex]{hyperref}
 \usepackage{mathrsfs}
@@ -15,11 +20,11 @@
 \hypersetup{colorlinks=false, 
 				linkcolor=black,
 				citecolor=black,
-				pdfauthor=Axel Habermaier,
-				pdftitle=Masterarbeit,
+				pdfauthor={Axel Habermaier, Johannes Leupolz},
+				pdftitle={SafetySharp},
 				pdfborder={0 0 0}, 
 				pdfpagelayout=SinglePage,
-				pdfsubject=Masterarbeit}
+				pdfsubject=SafetySharp}
 
 \input{Macros}
 
@@ -102,11 +107,12 @@ Throughout the remainder of this report, we use the following conventions in all
 	projection syntax to update only some of a tuple's values: If $x \triangleright a, b, c, d, \toList{e}$, we write $x' = x
 	\triangleleft a', \toList{e'}$ as an alternative to $x' = (a', b, c, d, \toList{e'})$.  
 
-\section{Formal Programs}
-
+\section{Formal Intermediate Language}
+The Formal Intermediate Language, simply called \Fil from now on, is a low-level representation of a formal model. Transformations
+to model checker input languages are defined over \Fil.
 \subsection{Domains}
 
-Formal programs support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
+\Fil support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
 value.
 \begin{align*}
     \bool \in \Bool &:= \{ \true, \false \}
@@ -126,7 +132,7 @@ assigned to a variable:
 
 \subsection{Expressions}
 
-Formal programs support only side effect free expressions. Expressions consist of literal values, read operations of variables as
+\Fil supports only side effect free expressions. Expressions consist of literal values, read operations of variables as
 well as a small set of unary and binary operator applications. The \texttt{prev} operator returns the value of a global
 variable at the beginning of the current step.
 \begin{align*}
@@ -157,7 +163,8 @@ expressions. It is given the current variable environment and the one at the beg
 
 \subsection{Statements}
 
-Formal programs support skip statements, variable assignments, sequential compositions and guarded commands.
+\Fil is an imperative, sequential, and nondeterministic language supporting skip statements, variable assignments, sequential
+compositions and guarded commands.
 \begin{align*}
 	\stm \in \Stm & :=
 		\skipStm \mid 
@@ -252,9 +259,9 @@ Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rul
 	\varEnv'} \stmArrow \varEnv'' \}
 \end{equation*}
 
-\subsection{Semantics of Formal Programs}
+\subsection{Semantics of \Fil Programs}
 
-Formal programs have a set of global and local variables. The program is executed in a series of steps, with each step executing
+\Fil programs have a set of global and local variables. A \Fil program is executed in a series of steps, with each step executing
 the exact same sequence of statements. There are global variables that are initialized once and whose values are preserved between
 different steps of the program. Additionally, there are step-local variables whose values are not preserved between different
 program steps.
@@ -262,12 +269,12 @@ program steps.
 	\prog \in \Prog := \ToSet{\Var} \times \ToSet{\Var} \times (\Var \rightarrow \ToSet{\Val}) \times \Stm
 \end{equation*}
 
-The first set of variables represents the global variables defined by the program, whereas the second set describes the step-local
+The first set of variables represents the global variables defined by a program, whereas the second set describes the step-local
 ones. The function is used to determine the initial values of all (global) variables; there might be multiple initial
-values for each variable. The statement of the program is executed once during each step.
+values for each variable. The statement of a program is executed once during each step.
 
 \begin{samepage}
-	The semantics of a program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
+	The semantics of a \Fil program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
 	\varEnv_1 \, \varEnv_2 \ldots$ of variable environments. We have $\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \} \in
 	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm)$ if
 	\begin{itemize}
@@ -278,7 +285,7 @@ values for each variable. The statement of the program is executed once during e
 	\end{itemize}
 \end{samepage}
 
-\subsection{Well-Formedness of Formal Programs}
+\subsection{Well-Formedness of \Fil Programs}
 \begin{itemize}
 	\item All expressions and statements are typed correctly.
 	\item All variables are written to before they are assigned (definitely assigned, see also discussion of well-formedness of
@@ -290,42 +297,43 @@ We're now going to define the syntactic and semantic
 domains for formal models. The basic structure of a formal model is shown in~\cref{FormalModelOverview}.
 
 \begin{lstlisting}[tabsize=4,basicstyle=\footnotesize\ttfamily,label=FormalModelOverview,caption={Basic Structure of a
-Formal Model},float=ht]
+Formal Model},float=ht,emph={component, subcomponents, fields, required, provided, bindings,
+behavior},emphstyle={\sffamily\bfseries},escapeinside={(*}{*)}]
 component C
-	// subcomponent
-	component D
-		// fields
-		b1 : bool := false
-			
-		// provided ports
-		Q : (p1 : int, p2 : int) -> (r1 : bool, r2 : bool)
-			r1 := false
-			r2 := b1
+	subcomponents:
+		component D
+			fields:
+				b : bool = false
+				
+			provided:
+				X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
+					r1 := false
+					r2 := b1
 
-	// fields
-	x : int := 1, 2, 3
-	b : bool := true, false
+	fields:
+		x : int = 1, 2, 3
+		b : bool = true, false
 		
-	// required ports
-	M : (int * int) -> (bool * bool)
-	N : () -> ()
+	required:
+		M : (int * int) (* $\rightarrow$ *) (bool * bool)
+		N : () (* $\rightarrow$ *) ()
 		
-	// provided ports
-	X : (p1 : int, p2 : int) -> (r1 : bool, r2 : bool)
-		r1 := p1 > 1
-		r2 := p2 > x && b
-	Y : () -> ()
-		;
+	provided:
+		X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
+			r1 := p1 > 1
+			r2 := p2 > x && b
+		Y : () (* $\rightarrow$ *) ()
+			skip
 		
-	// bindings
-	M ->d D.Q   // delayed
-	N ->i Y     // instantaneous
+	bindings:
+		M (* $\rightarrow_\mathtt{d}$ *) D.X   // delayed
+		N (* $\rightarrow_\mathtt{i}$ *) Y     // instantaneous
 	
-	// behavior
-	l1 : bool, l2 : bool
-	M(x, x - 1) -> (l1, l2)
-	N() -> ()
-	(l1 -> x = x - 1; l2 -> b = true)
+	behavior:
+		l1 : bool, l2 : bool
+		M(x, x - 1) (* $\rightarrow$ *) (l1, l2)
+		N() (* $\rightarrow$ *) ()
+		(l1 (* $\twoheadrightarrow$ *) x = x - 1; l2 (* $\twoheadrightarrow$ *) b = true)
 \end{lstlisting}
 
 We assume different abstract domains of names that we use to identify fields, ports, parameters, local variables, and components.
@@ -343,7 +351,7 @@ subcomponents might overlap.
 	\qProvPortName &\in \QProvPortName := \provPortName \mid \qualifiedName{\compName}{\provPortName}
 \end{align*}
 
-Similar to formal programs, formal models have values of Boolean and integer type; we also have a domain of types
+Similar to \Fil, formal models have values of Boolean and integer type; we also have a domain of types
 for those values.
 \begin{align*}
     \bool \in \Bool &:= \{ \true, \false \}
@@ -419,7 +427,7 @@ body with a possible empty set of local variables.
 	\provPort \in \ProvPort &:= \provPortDecl{\provPortName}
 			{\var_{\mathit{in}, 1}, \ldots, \var_{\mathit{in}, n}}
 			{\var_{\mathit{out}, 1}, \ldots, \var_{\mathit{out}, m}}
-			{\\&\qquad\quad\var_{\mathit{loc}, 1}, \ldots, \var_{\mathit{loc}, k}}
+			{\\&\qquad\quad\var_{\mathit{loc}, 1} \ldots \var_{\mathit{loc}, k}}
 			{\\&\qquad\quad\stm}
 \end{align*}
 
@@ -466,13 +474,14 @@ Finally, components are uniquely identified by their names and consist of sets
 of provided and required ports, fields, and port bindings. They have a behavior described by a statement and may optionally be
 the parent of a set of subcomponents.
 \begin{align*}
-	\comp \in \Comp := &\mathtt{component} \; \compName \\
-		&\qquad \comp_1, \ldots \comp_n \\
-		&\qquad \field_1, \ldots, \field_m \\
-		&\qquad \reqPort_1, \ldots, \reqPort_k \\
-		&\qquad \provPort_1, \ldots, \provPort_l \\
-		&\qquad \binding_1, \ldots, \binding_o \\
-		&\qquad \stm
+	\comp \in \Comp := & 
+		\compDecl{\compName\\&\qquad}
+			{\comp_1 \ldots \comp_n\\&\qquad}
+			{\field_1 \ldots \field_m\\&\qquad}
+			{\reqPort_1 \ldots \reqPort_k\\&\qquad}
+			{\provPort_1 \ldots \provPort_l\\&\qquad}
+			{\binding_1 \ldots \binding_o\\&\qquad}
+			{\stm}
 \end{align*}
 
 Again we're defining a couple of functions that allow us to conveniently extract the different parts of a component $\comp$
@@ -486,15 +495,15 @@ bindings of a component are returned by function $\bindings : \Comp \rightarrow 
 \{ \binding_1, \ldots, \binding_o \}$. Finally, the component's behavior can be extracted using function $\behavior : \Comp
 \rightarrow \Stm$, with $\behavior(\comp) = \stm$.
 
-\subsection{Transformation to Formal Programs}
-The transformation of a formal model into a formal program first flattens the hierarchy in post order. That is, for a given
+\subsection{Transformation to \Fil Programs}
+The transformation of a formal model into a \Fil program first flattens the hierarchy in post order. That is, for a given
 component, all fields, ports, and bindings are moved to the parent component, ensuring that all names remain unique. The behavior
 is added at the correct location into the parent's behavior, depending on the scheduling. 
 
 Once the hierarchy is fully flattened, all ports are inlined into the behavior of the root component. For delayed bindings, the
 appropriate variables must be introduced. When the results of a delayed binding are read, the \texttt{prev} instruction must be used.
 
-The resulting monolithic component can then be transformed in a rather straightforward way to a formal program.
+The resulting monolithic component can then be transformed in a rather straightforward way to a \Fil program.
 
 \subsection{Well-Formedness of Components}
 We only consider components that are well-formed according to the following criteria:
@@ -517,7 +526,7 @@ We only consider components that are well-formed according to the following crit
 	check, requiring a control flow analysis. On the other hand, if an unassigned variable is read, the semantics just ``hangs``.
 	So alternatively, we could just live with that without making it a well-formedness requirement. When transforming a \SSharp
 	model into a formal model, definite assignment is guaranteed by the \CSharp compiler anyway, probably not justifying the work to
-	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting formal program
+	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting \Fil program
 	has infinite traces only. If we don't check definite assignment, infinite traces cannot be guaranteed. So maybe we just formally
 	require definite assignment, giving a somewhat high-level formal definition, and simply don't implement the definite assignment
 	check in the \SSharp compiler. Even yet another possibility would be to define that each and every variable is initialized to the
