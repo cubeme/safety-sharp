@@ -3,6 +3,7 @@
 \newcommand{\SSharp}{{\settoheight{\dimen0}{S}S\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}\xspace}
 \newcommand{\SafetySharp}{Safety\-Sharp\xspace}
 \newcommand{\DotNet}{\textsc{.Net}\xspace}
+\newcommand{\Fil}{\textsc{Fil}\xspace}
 
 % Domains
 \newcommand{\Bool}{\mathbb{B}}
@@ -19,8 +20,6 @@
 \newcommand{\VarName}{\mathit{VarName}}
 \newcommand{\ReqPortName}{\mathit{ReqPortName}}
 \newcommand{\ProvPortName}{\mathit{ProvPortName}}
-\newcommand{\QReqPortName}{\mathit{QualifiedReqPortName}}
-\newcommand{\QProvPortName}{\mathit{QualifiedProvPortName}}
 \newcommand{\CompName}{\mathit{CompName}}
 \newcommand{\Type}{\mathit{Type}}
 \newcommand{\Field}{\mathit{Field}}
@@ -29,6 +28,7 @@
 \newcommand{\ProvPort}{\mathit{ProvPort}}
 \newcommand{\Comp}{\mathit{Comp}}
 \newcommand{\Binding}{\mathit{Binding}}
+\newcommand{\Procedure}{\mathit{Procedure}}
 
 % Meta variables
 \newcommand{\bool}{b}
@@ -42,19 +42,18 @@
 \newcommand{\varEnv}{\sigma}
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
-\newcommand{\varName}{\mathit{n_v}}
-\newcommand{\reqPortName}{\mathit{n_r}}
-\newcommand{\provPortName}{\mathit{n_p}}
-\newcommand{\qReqPortName}{\mathit{q_r}}
-\newcommand{\qProvPortName}{\mathit{q_p}}
-\newcommand{\compName}{\mathit{n_c}}
+\newcommand{\varName}{n_v}
+\newcommand{\reqPortName}{n_r}
+\newcommand{\provPortName}{n_p}
+\newcommand{\compName}{n_c}
 \newcommand{\type}{\tau}
 \newcommand{\field}{f}
 \newcommand{\local}{l}
 \newcommand{\reqPort}{r}
 \newcommand{\provPort}{p}
 \newcommand{\comp}{c}
-\newcommand{\binding}{bn}
+\newcommand{\binding}{\mathit{bn}}
+\newcommand{\procedure}{\mathit{proc}}
 
 %Expressions
 \newcommand{\unaryExpr}[2]{#1 #2}
@@ -72,14 +71,17 @@
 \newcommand{\guardedStm}[1]{(#1)^*}
 
 % Formal model
+\newcommand{\procDecl}[2]{\mathtt{let} \; #1 \; \mathtt{in} \; #2}
 \newcommand{\varDecl}[2]{#1 \; \mathtt{:} \; #2}
 \newcommand{\fieldDecl}[2]{#1 \; \mathtt{=} \; #2}
 \newcommand{\reqPortDecl}[3]{#1 \; \mathtt{:} \; \mathtt{(} #2 \mathtt{) \rightarrow (} #3 \mathtt{)}}
-\newcommand{\provPortDecl}[5]{#1 \; \mathtt{:} \; \mathtt{(} #2 \mathtt{) \rightarrow (} #3 \mathtt{)} \; #4 #5}
+\newcommand{\provPortDecl}[4]{#1 \; \mathtt{:} \; \mathtt{(} #2 \mathtt{) \rightarrow (} #3 \mathtt{)} \; #4}
 \newcommand{\bindingDecl}[3]{#1 \; #3 \; #2}
 \newcommand{\instantBinding}{\mathtt{\rightarrow_i}}
 \newcommand{\delayedBinding}{\mathtt{\rightarrow_d}}
 \newcommand{\qualifiedName}[2]{#1\mathtt{.}#2}
+\newcommand{\compDecl}[7]{\texttt{component} \; #1 \texttt{subcomponents:} \; #2 \texttt{fields:} \; #3 \texttt{required:} \; #4
+	\texttt{provided:} \; #5 \texttt{bindings:} \; #6 \texttt{behavior:} \; #7}
 
 % Lifting
 \newcommand{\failure}{\bot}
@@ -105,10 +107,10 @@
 \newcommand{\inputs}{\mathit{in}}
 \newcommand{\outputs}{\mathit{out}}
 \newcommand{\locals}{\mathit{loc}}
-\newcommand{\body}{\mathit{body}}
+\newcommand{\stmof}{\mathit{stm}}
 \newcommand{\req}{\mathit{req}}
 \newcommand{\prov}{\mathit{prov}}
-\newcommand{\isDelayed}{\mathit{delayed}}
+\newcommand{\delayed}{\mathit{delayed}}
 \newcommand{\subComp}{\mathit{sub}}
 \newcommand{\fields}{\mathit{fields}}
 \newcommand{\reqs}{\mathit{reqs}}
@@ -124,8 +126,6 @@
 \newcommand{\intType}{\mathtt{int}}
 \newcommand{\arrayType}[1]{#1\mathtt{[]}}
 \newcommand{\tupleType}[1]{\left(#1\right)}
-\newcommand{\instant}{\mathrm{instantaneous}}
-\newcommand{\delayed}{\mathrm{delayed}}
 
 % Layout
 \newcommand{\header}[1]{\addvspace{7pt}\textbf{{#1}}.}

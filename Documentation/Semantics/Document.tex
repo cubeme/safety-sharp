@@ -1,6 +1,11 @@
+% requires cm-super
+% use MikTex package manager to install (might require database synchronization)
+% run initexmf --mkmaps to update miktex mapfiles
+
 \documentclass[a4paper,10pt,english]{article}
+\usepackage{a4wide}
 \usepackage[utf8]{inputenc}
-\usepackage{lmodern}
+\usepackage[T1]{fontenc}
 \usepackage[T1,hyphens]{url}
 \usepackage[pdftex]{hyperref}
 \usepackage{mathrsfs}
@@ -15,11 +20,11 @@
 \hypersetup{colorlinks=false, 
 				linkcolor=black,
 				citecolor=black,
-				pdfauthor=Axel Habermaier,
-				pdftitle=Masterarbeit,
+				pdfauthor={Axel Habermaier, Johannes Leupolz},
+				pdftitle={SafetySharp},
 				pdfborder={0 0 0}, 
 				pdfpagelayout=SinglePage,
-				pdfsubject=Masterarbeit}
+				pdfsubject=SafetySharp}
 
 \input{Macros}
 
@@ -102,11 +107,12 @@ Throughout the remainder of this report, we use the following conventions in all
 	projection syntax to update only some of a tuple's values: If $x \triangleright a, b, c, d, \toList{e}$, we write $x' = x
 	\triangleleft a', \toList{e'}$ as an alternative to $x' = (a', b, c, d, \toList{e'})$.  
 
-\section{Formal Programs}
-
+\section{Formal Intermediate Language}
+The Formal Intermediate Language, simply called \Fil from now on, is a low-level representation of a formal model. Transformations
+to model checker input languages are defined over \Fil.
 \subsection{Domains}
 
-Formal programs support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
+\Fil support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
 value.
 \begin{align*}
     \bool \in \Bool &:= \{ \true, \false \}
@@ -126,7 +132,7 @@ assigned to a variable:
 
 \subsection{Expressions}
 
-Formal programs support only side effect free expressions. Expressions consist of literal values, read operations of variables as
+\Fil supports only side effect free expressions. Expressions consist of literal values, read operations of variables as
 well as a small set of unary and binary operator applications. The \texttt{prev} operator returns the value of a global
 variable at the beginning of the current step.
 \begin{align*}
@@ -157,7 +163,8 @@ expressions. It is given the current variable environment and the one at the beg
 
 \subsection{Statements}
 
-Formal programs support skip statements, variable assignments, sequential compositions and guarded commands.
+\Fil is an imperative, sequential, and nondeterministic language supporting skip statements, variable assignments, sequential
+compositions and guarded commands.
 \begin{align*}
 	\stm \in \Stm & :=
 		\skipStm \mid 
@@ -252,9 +259,9 @@ Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rul
 	\varEnv'} \stmArrow \varEnv'' \}
 \end{equation*}
 
-\subsection{Semantics of Formal Programs}
+\subsection{Semantics of \Fil Programs}
 
-Formal programs have a set of global and local variables. The program is executed in a series of steps, with each step executing
+\Fil programs have a set of global and local variables. A \Fil program is executed in a series of steps, with each step executing
 the exact same sequence of statements. There are global variables that are initialized once and whose values are preserved between
 different steps of the program. Additionally, there are step-local variables whose values are not preserved between different
 program steps.
@@ -262,12 +269,12 @@ program steps.
 	\prog \in \Prog := \ToSet{\Var} \times \ToSet{\Var} \times (\Var \rightarrow \ToSet{\Val}) \times \Stm
 \end{equation*}
 
-The first set of variables represents the global variables defined by the program, whereas the second set describes the step-local
+The first set of variables represents the global variables defined by a program, whereas the second set describes the step-local
 ones. The function is used to determine the initial values of all (global) variables; there might be multiple initial
-values for each variable. The statement of the program is executed once during each step.
+values for each variable. The statement of a program is executed once during each step.
 
 \begin{samepage}
-	The semantics of a program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
+	The semantics of a \Fil program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
 	\varEnv_1 \, \varEnv_2 \ldots$ of variable environments. We have $\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \} \in
 	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm)$ if
 	\begin{itemize}
@@ -278,7 +285,7 @@ values for each variable. The statement of the program is executed once during e
 	\end{itemize}
 \end{samepage}
 
-\subsection{Well-Formedness of Formal Programs}
+\subsection{Well-Formedness of \Fil Programs}
 \begin{itemize}
 	\item All expressions and statements are typed correctly.
 	\item All variables are written to before they are assigned (definitely assigned, see also discussion of well-formedness of
@@ -290,60 +297,57 @@ We're now going to define the syntactic and semantic
 domains for formal models. The basic structure of a formal model is shown in~\cref{FormalModelOverview}.
 
 \begin{lstlisting}[tabsize=4,basicstyle=\footnotesize\ttfamily,label=FormalModelOverview,caption={Basic Structure of a
-Formal Model},float=ht]
+Formal Model},float=ht,emph={component, subcomponents, fields, required, provided, bindings,
+behavior},emphstyle={\sffamily\bfseries},escapeinside={(*}{*)}]
 component C
-	// subcomponent
-	component D
-		// fields
-		b1 : bool := false
-			
-		// provided ports
-		Q : (p1 : int, p2 : int) -> (r1 : bool, r2 : bool)
-			r1 := false
-			r2 := b1
+	subcomponents:
+		component D
+			fields:
+				b : bool = false
+				
+			provided:
+				X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
+					r1 := false
+					r2 := b1
 
-	// fields
-	x : int := 1, 2, 3
-	b : bool := true, false
+	fields:
+		x : int = 1, 2, 3
+		b : bool = true, false
 		
-	// required ports
-	M : (int * int) -> (bool * bool)
-	N : () -> ()
+	required:
+		M : (int, int) (* $\rightarrow$ *) (bool, bool)
+		N : () (* $\rightarrow$ *) ()
 		
-	// provided ports
-	X : (p1 : int, p2 : int) -> (r1 : bool, r2 : bool)
-		r1 := p1 > 1
-		r2 := p2 > x && b
-	Y : () -> ()
-		;
+	provided:
+		X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
+			r1 := p1 > 1
+			r2 := p2 > x && b
+		Y : () (* $\rightarrow$ *) ()
+			skip
 		
-	// bindings
-	M ->d D.Q   // delayed
-	N ->i Y     // instantaneous
+	bindings:
+		C.M (* $\rightarrow_\mathtt{d}$ *) D.X // delayed
+		C.N (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
 	
-	// behavior
-	l1 : bool, l2 : bool
-	M(x, x - 1) -> (l1, l2)
-	N() -> ()
-	(l1 -> x = x - 1; l2 -> b = true)
+	behavior:
+		l1 : bool, l2 : bool
+		M(x, x - 1) (* $\rightarrow$ *) (l1, l2)
+		N() (* $\rightarrow$ *) ()
+		(l1 (* $\twoheadrightarrow$ *) x = x - 1; l2 (* $\twoheadrightarrow$ *) b = true)
 \end{lstlisting}
 
 We assume different abstract domains of names that we use to identify fields, ports, parameters, local variables, and components.
 There are four name spaces, one for fields, parameters, and local variables, one each for required and provided ports, and one for
 components. Within a name space, names must be unique. The name spaces are pairwise disjoint. Only ports can be accessed
-outside of a component, namely by a parent component. When a parent component refers to a port of one of its
-subcomponents, the port must be qualified with the name of the subcomponent, as the port names of the parent components and the
-subcomponents might overlap.
+outside of a component, namely by a parent component. 
 \begin{align*}
 	\varName &\in \VarName \\
 	\reqPortName &\in \ReqPortName \\
 	\provPortName &\in \ProvPortName \\
-	\compName &\in \CompName \\
-	\qReqPortName &\in \QReqPortName := \reqPortName \mid \qualifiedName{\compName}{\reqPortName} \\
-	\qProvPortName &\in \QProvPortName := \provPortName \mid \qualifiedName{\compName}{\provPortName}
+	\compName &\in \CompName
 \end{align*}
 
-Similar to formal programs, formal models have values of Boolean and integer type; we also have a domain of types
+Similar to \Fil, formal models have values of Boolean and integer type; we also have a domain of types
 for those values.
 \begin{align*}
     \bool \in \Bool &:= \{ \true, \false \}
@@ -390,6 +394,18 @@ invocations of required ports.
 		\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}
 \end{equation*}
 
+A procedure consists of a statement and a possibly empty set of local variables that can only be accessed within the context
+of the procedure.
+\begin{equation*}
+	\procedure \in \Procedure := \procDecl{\var_1 \ldots \var_n}{\stm}
+\end{equation*}
+
+The set of locally defined variables of a procedure can be obtained
+with the function $\locals : \Procedure \rightarrow
+\ToSet{\Var}$, defined as $\locals(\procedure) = \{\var_1, \ldots, \var_n\}$. The statement of a
+procedure defining the procedure's behavior can be accessed using the function $\stmof : \Procedure \rightarrow \Stm$, where
+$\stmof(\procedure) = \stm$.
+
 \subsection{Domains of Formal Models}
 
 \subsubsection{Variables and Fields}
@@ -412,15 +428,15 @@ fields, we define $\nameof : \Field \rightarrow \VarName$, $\typeof : \Field \ri
 A required port of a component is uniquely identified by its name within the context of the component; though the name may be
 reused in subcomponents. It has a possibly empty list of input parameters and a possible empty list of output parameters. 
 Provided ports are defined similarly. However, they also introduce local names for their input and output parameters and declare a
-body with a possible empty set of local variables. 
+procedure. 
 \begin{align*}
-	\reqPort \in \ReqPort &:= \reqPortDecl{\reqPortName}{\type_{\mathit{in}, 1}, \ldots, \type_{\mathit{in}, n}}{\type_{\mathit{out},
-	1}, \ldots, \type_{\mathit{out}, m}} \\
+	\reqPort \in \ReqPort &:= \reqPortDecl{\reqPortName}{\type_{\mathit{in}, 1}, \ldots, \type_{\mathit{in}, n}}
+		{\type_{\mathit{out},1}, \ldots, \type_{\mathit{out}, m}} 
+	\\
 	\provPort \in \ProvPort &:= \provPortDecl{\provPortName}
-			{\var_{\mathit{in}, 1}, \ldots, \var_{\mathit{in}, n}}
-			{\var_{\mathit{out}, 1}, \ldots, \var_{\mathit{out}, m}}
-			{\\&\qquad\quad\var_{\mathit{loc}, 1}, \ldots, \var_{\mathit{loc}, k}}
-			{\\&\qquad\quad\stm}
+		{\var_{\mathit{in}, 1}, \ldots, \var_{\mathit{in}, n}}
+		{\var_{\mathit{out}, 1}, \ldots, \var_{\mathit{out}, m}}
+		{\procedure}
 \end{align*}
 
 We define a couple of helper functions for required ports $\reqPort$ and provided ports $\provPort$ defined as above. We assume
@@ -436,11 +452,9 @@ $\signature(\reqPort) = (\type_{\mathit{in}, 1} \cons \ldots \cons \type_{\mathi
 Additionally, the function $\inputs : \ProvPort \rightarrow \ToList{\Var}$ with $\inputs(\provPort) = \var_{\mathit{in}, 1} \cons
 \ldots \cons \var_{\mathit{in}, n}$ extracts the list of input parameters of a provided port. $\outputs : \ProvPort \rightarrow
 \ToList{\Var}$ with $\outputs(\provPort) = \var_{\mathit{out}, 1} \cons \ldots \cons \var_{\mathit{out}, m}$, on the other hand,
-extracts the list of output parameters of a provided port. The set of locally defined variables of a provided port can be obtained
-with the function $\locals : \ProvPort \rightarrow
-\ToSet{\Var}$, defined as $\locals(\provPort) = \{\var_{\mathit{loc}, 1}, \ldots, \var_{\mathit{loc}, k}\}$. The body of a
-provided port defining the port's behavior can be accessed with function $\body : \ProvPort \rightarrow \Stm$, where
-$\body(\provPort) = \stm$.
+extracts the list of output parameters of a provided port. The behavior of a provided port is defined by its procedure; it can be
+obtained using the function $\behavior : \ProvPort \rightarrow
+\Procedure$, where $\behavior(\provPort) = \procedure$.
 
 \subsubsection{Bindings}
 A binding binds a required port to a provided port. The binding must be either between two components on the
@@ -450,29 +464,55 @@ at the beginning of the next step with the provided parameters, the computed res
 of the previous state are returned. If the same provided port is invoked multiple times in a delayed fashion, the results are also
 cached multiple times, always returning the computed values during the next step that corresponds to the appropriate invocation
 during the current step. If the provided port does not have any incoming parameters, it suffices to cache the results once.
+
+Since port names are only unique within a component but can overlap between a parent component and its subcomponents, a
+binding must qualify a port name with the name of the port's component. The component name can refer to any of the parent
+component's subcomponents or to the parent component itself.
 \begin{equation*} 
-	\binding \in \Binding := \bindingDecl{\qReqPortName}{\qProvPortName}{\instantBinding} \mid
-		\bindingDecl{\qReqPortName}{\qProvPortName}{\delayedBinding}
+	\binding \in \Binding :=
+		\bindingDecl{\qualifiedName{\compName^r}{\reqPortName}}{\qualifiedName{\compName^p}{\provPortName}}{\instantBinding}
+		\mid
+		\bindingDecl{\qualifiedName{\compName^r}{\reqPortName}}{\qualifiedName{\compName^p}{\provPortName}}{\delayedBinding}
 \end{equation*}
 
-We assume the functions $\req : \Binding \rightarrow \QReqPortName$ and $\prov : \Binding \rightarrow \QProvPortName$ that return
-the qualified name of the required or the provided port of a binding. For a binding $\binding$ defined as above, $\req(\binding) =
-\qReqPortName$ and $\prov(\binding) = \qProvPortName$, regardless of whether the binding is instantaneous or delayed. The
-predicate $\isDelayed : \Binding \rightarrow \Bool$ indicates whether the binding is delayed, that is, $\isDelayed(\binding) \Leftrightarrow
-\binding = \bindingDecl{\qReqPortName}{\qProvPortName}{\delayedBinding}$.
+We assume the functions $\req : \Binding \rightarrow \CompName \times \ReqPortName$ and $\prov : \Binding \rightarrow \CompName
+\times \ProvPortName$ that return the names of the required or the provided port of a binding and their respective component
+names.
+For a binding $\binding$ defined as above, $\req(\binding) = (\compName^r, \reqPortName)$ and $\prov(\binding) = (\compName^p,
+\provPortName)$, regardless of whether the binding is instantaneous or delayed. The predicate $\delayed : \Binding \rightarrow
+\Bool$ indicates whether the binding is delayed, that is, $\delayed(\binding) \Leftrightarrow \binding =
+\bindingDecl{\qualifiedName{\compName^r}{\reqPortName}}{\qualifiedName{\compName^p}{\provPortName}}{\delayedBinding}$.
+
+We define a renaming operation for component names used within bindings as follows: Given a component name $\compName$ that is
+to be replaced by component name $\compName'$, we update a binding $\binding$ using the notation $\binding' =
+\binding\left[\compName\mapsto\compName'\right]$ with 
+\begin{itemize}
+	\item $\delayed(\binding) = \delayed(\binding')$,
+	\item $\req(\binding') = 
+		\begin{cases}
+			(\compName', \reqPortName) & \text{if } \req(\binding) = (\compName, \reqPortName) \\
+			\req(\binding) & \text{otherwise, and}
+		\end{cases}$
+	\item $\prov(\binding') = 
+		\begin{cases}
+			(\compName', \provPortName) & \text{if } \prov(\binding) = (\compName, \provPortName) \\
+			\prov(\binding) & \text{otherwise.}
+		\end{cases}$
+\end{itemize}
 
 \subsubsection{Components}
 Finally, components are uniquely identified by their names and consist of sets
 of provided and required ports, fields, and port bindings. They have a behavior described by a statement and may optionally be
 the parent of a set of subcomponents.
 \begin{align*}
-	\comp \in \Comp := &\mathtt{component} \; \compName \\
-		&\qquad \comp_1, \ldots \comp_n \\
-		&\qquad \field_1, \ldots, \field_m \\
-		&\qquad \reqPort_1, \ldots, \reqPort_k \\
-		&\qquad \provPort_1, \ldots, \provPort_l \\
-		&\qquad \binding_1, \ldots, \binding_o \\
-		&\qquad \stm
+	\comp \in \Comp := & 
+		\compDecl{\compName\\&\qquad}
+			{\comp_1 \ldots \comp_n\\&\qquad}
+			{\field_1 \ldots \field_m\\&\qquad}
+			{\reqPort_1 \ldots \reqPort_k\\&\qquad}
+			{\provPort_1 \ldots \provPort_l\\&\qquad}
+			{\binding_1 \ldots \binding_o\\&\qquad}
+			{\procedure}
 \end{align*}
 
 Again we're defining a couple of functions that allow us to conveniently extract the different parts of a component $\comp$
@@ -480,21 +520,37 @@ defined as above. $\nameof : \Comp \rightarrow \CompName$ retrieves the name of 
 $\nameof(\comp) = \compName$. $\subComp : \Comp \rightarrow \ToSet{\Comp}$ with $\subComp(\comp) = \{\comp_1, \ldots, \comp_n\}$
 retrieves the subcomponents of component $\comp$. The fields can be obtained using function $\fields : \Comp \rightarrow
 \ToSet{\Field}$, defined as $\fields(\comp) = \{ \field_1, \ldots, \field_m \}$. To extract the required and the provided ports
-of a component, functions $\reqs : \Comp \rightarrow \ToSet{\ReqPort}$ with $\reqs(\comp) = \{ \reqPort_1, \ldots \reqPort_k \}$
+of a component, functions $\reqs : \Comp \rightarrow \ToSet{\ReqPort}$ with $\reqs(\comp) = \{ \reqPort_1, \ldots, \reqPort_k \}$
 and $\provs : \Comp \rightarrow \ToSet{\ProvPort}$ with $\provs(\comp) = \{ \provPort_1, \ldots, \provPort_l \}$ can be used. The
 bindings of a component are returned by function $\bindings : \Comp \rightarrow \ToSet{\Binding}$, defined as $\bindings(\comp) =
 \{ \binding_1, \ldots, \binding_o \}$. Finally, the component's behavior can be extracted using function $\behavior : \Comp
-\rightarrow \Stm$, with $\behavior(\comp) = \stm$.
+\rightarrow \Procedure$, with $\behavior(\comp) = \procedure$.
 
-\subsection{Transformation to Formal Programs}
-The transformation of a formal model into a formal program first flattens the hierarchy in post order. That is, for a given
+We define a renaming operation for components. Given a component $\comp$ with $\nameof(\comp) = \compName$ that we want to
+rename to $\compName'$, we use the notation $\comp' = \comp\left[\compName\mapsto\compName'\right]$ to create the renamed
+component $\comp'$ with $\nameof(\comp') = \compName'$, $\subComp(\comp') = \subComp(\comp)$, $\fields(\comp')=\fields(\comp)$,
+$\reqs(\comp') = \reqs(\comp)$, $\provs(\comp') = \provs(\comp)$, $\bindings(\comp') =
+\bindings\left[\compName\mapsto\compName'\right]$, and $\behavior(\comp') = \behavior(\comp)$; that is, the component remains unchanged
+except for its name and for the bindings referring to the component's name.
+
+We can replace or substitute a subcomponent of some component $\comp_0$, provided that the original subcomponent $\comp'$ and the
+new subcomponent $\comp''$ are port-equivalent, that is $\reqs(\comp') = \reqs(\comp'')$ and $\provs(\comp') = \provs(\comp'')$.
+We use the notation $\comp_1 = \comp_0\left[\comp' \mapsto \comp''\right]$ to obtain a new component $\comp_1$ where $\comp'$ has
+been replaced by $\comp''$, such that $\nameof(\comp_1) = \nameof(\comp_0)$, $\subComp(\comp_1) = \subComp(\comp_0) \setminus
+\comp' \cup \comp''$, $\fields(\comp_1)=\fields(\comp_0)$, $\reqs(\comp_1) = \reqs(\comp_0)$, $\provs(\comp_1) = \provs(\comp_0)$,
+$\bindings(\comp_1) = \bindings\left[\nameof(\comp')\mapsto\nameof(\comp'')\right]$, and $\behavior(\comp_1) =
+\behavior(\comp_0)$. We also allow for simultaneous substitution of multiple subcomponents, written as
+$\comp\left[\comp_1\mapsto\comp_1', \ldots, \comp_n\mapsto\comp_n'\right]$.
+
+\subsection{Transformation to \Fil Programs}
+The transformation of a formal model into a \Fil program first flattens the hierarchy in post order. That is, for a given
 component, all fields, ports, and bindings are moved to the parent component, ensuring that all names remain unique. The behavior
 is added at the correct location into the parent's behavior, depending on the scheduling. 
 
 Once the hierarchy is fully flattened, all ports are inlined into the behavior of the root component. For delayed bindings, the
 appropriate variables must be introduced. When the results of a delayed binding are read, the \texttt{prev} instruction must be used.
 
-The resulting monolithic component can then be transformed in a rather straightforward way to a formal program.
+The resulting monolithic component can then be transformed in a rather straightforward way to a \Fil program.
 
 \subsection{Well-Formedness of Components}
 We only consider components that are well-formed according to the following criteria:
@@ -517,14 +573,18 @@ We only consider components that are well-formed according to the following crit
 	check, requiring a control flow analysis. On the other hand, if an unassigned variable is read, the semantics just ``hangs``.
 	So alternatively, we could just live with that without making it a well-formedness requirement. When transforming a \SSharp
 	model into a formal model, definite assignment is guaranteed by the \CSharp compiler anyway, probably not justifying the work to
-	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting formal program
+	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting \Fil program
 	has infinite traces only. If we don't check definite assignment, infinite traces cannot be guaranteed. So maybe we just formally
 	require definite assignment, giving a somewhat high-level formal definition, and simply don't implement the definite assignment
 	check in the \SSharp compiler. Even yet another possibility would be to define that each and every variable is initialized to the
 	default value of its type (e.g., $\false$ for Boolean variables, $0$ for integer variables), therefore all variables are always
 	definitely assigned. This might hide bugs, but on the other hand, we do not expect anyone to write formal models by hand. Again,
 	\CSharp guarantees definite assignment without implicitly assigning default values, so the transformation from \CSharp doesn't
-	have this problem.
+	have this problem. So the current thinking is: All locals and all output parameters are initialized to their default value,
+	sidestepping this well-formedness check altogether. Input parameters are always assigned (it is illegal to call a port without
+	the correct number and type of parameters) and fields always have at least one initial value.
+	\item Note that we do not have to check for cycles (i.e., a component being its own parent), as that simply cannot be expressed
+	with the domains we have defined.
 \end{itemize}
 
 \section{Modeling with \SafetySharp}
