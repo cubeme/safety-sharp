@@ -127,7 +127,7 @@ value.
 During execution, the \textit{variable environment} stores the values of all variables, provided that a value has previously been
 assigned to a variable:
 \begin{align*}
-	\varEnv \in \VarEnv := \Var \rightarrow \liftMissing{\Val}
+	\varEnvFil \in \VarEnvFil := \Var \rightarrow \liftMissing{\Val}
 \end{align*}
 
 \subsection{Expressions}
@@ -150,15 +150,16 @@ variable at the beginning of the current step.
 		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
 \end{align*}
 
-The function $\ExprSem{-} : \Expr \rightarrow \VarEnv \rightarrow \VarEnv \rightarrow \Val$ defines the semantics of
+The function $\ExprSem{-} : \Expr \rightarrow \VarEnvFil \rightarrow \VarEnvFil \rightarrow \Val$ defines the semantics of
 expressions. It is given the current variable environment and the one at the beginning of the current step.
 \begin{align*}
-	\ExprSem{\val} \varEnv \varEnv' &= \val \\
-	\ExprSem{\var} \varEnv \varEnv' &= \varEnv(\var) \\
-	\ExprSem{\prev{\var}} \varEnv \varEnv' &= \varEnv'(\var) \\
-	\ExprSem{\unaryExpr{\uop\;}{\expr}} \varEnv \varEnv' &= \llbracket \uop \rrbracket (\ExprSem{\expr} \varEnv \varEnv') \\
-	\ExprSem{\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}} \varEnv \varEnv' &= \llbracket \bop \rrbracket (\ExprSem{\expr_1} \varEnv
-	\varEnv', \ExprSem{\expr_2} \varEnv	\varEnv')
+	\ExprSem{\val} \varEnvFil \varEnvFil' &= \val \\
+	\ExprSem{\var} \varEnvFil \varEnvFil' &= \varEnvFil(\var) \\
+	\ExprSem{\prev{\var}} \varEnvFil \varEnvFil' &= \varEnvFil'(\var) \\
+	\ExprSem{\unaryExpr{\uop\;}{\expr}} \varEnvFil \varEnvFil' &= \llbracket \uop \rrbracket (\ExprSem{\expr} \varEnvFil \varEnvFil')
+	\\
+	\ExprSem{\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}} \varEnvFil \varEnvFil' &= \llbracket \bop \rrbracket (\ExprSem{\expr_1}
+	\varEnvFil \varEnvFil', \ExprSem{\expr_2} \varEnvFil \varEnvFil')
 \end{align*}
 
 \subsection{Statements}
@@ -166,36 +167,36 @@ expressions. It is given the current variable environment and the one at the beg
 \Fil is an imperative, sequential, and nondeterministic language supporting skip statements, variable assignments, sequential
 compositions and guarded commands.
 \begin{align*}
-	\stm \in \Stm & :=
+	\stmFil \in \StmFil & :=
 		\skipStm \mid 
 		\assignVarStm{\var}{\expr} \mid 
-		\seqStm{\stm_1}{\stm_2} \mid
-		\guardedStm{\guardedClause{\expr}{\stm}}
+		\seqStm{\stmFil_1}{\stmFil_2} \mid
+		\guardedStm{\guardedClause{\expr}{\stmFil}}
 \end{align*}
 
-The nondeterministic rule system $\stmArrow$ defines the natural semantics of statements.
+The nondeterministic rule system $\stmArrowFil$ defines the natural semantics of statements.
 \begin{align*}
-	\mathit{Configurations} : & \;\configuration{\stm, \varEnv, \varEnv'} \in \Stm \times \VarEnv \times \VarEnv, \; 
-	\varEnv \in \VarEnv
+	\mathit{Configurations} : & \;\configuration{\stmFil, \varEnvFil, \varEnvFil'} \in \StmFil \times \VarEnvFil \times \VarEnvFil,
+	\; \varEnvFil \in \VarEnvFil
 	\\
-	\mathit{Transitions} : & \;\configuration{\stm, \varEnv, \varEnv'} \stmArrow \varEnv''
+	\mathit{Transitions} : & \;\configuration{\stmFil, \varEnvFil, \varEnvFil'} \stmArrowFil \varEnvFil''
 \end{align*}
 
 The skip statement has no effect on the variable environment and is therefore simply discarded.
 \begin{equation*}
 	\tag{skip}
-	\configuration{\skipStm, \varEnv, \varEnv'}
-		\stmArrow
-	\varEnv
+	\configuration{\skipStm, \varEnvFil, \varEnvFil'}
+		\stmArrowFil
+	\varEnvFil
 \end{equation*}
 
 Assignments to a variable update the variable environment accordingly, replacing the variable's current value with the value
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign}
-	\configuration{\assignVarStm{\var}{\expr}, \varEnv, \varEnv'}
-		\stmArrow
-	\varEnv[\var \mapsto \ExprSem{\expr} \varEnv \varEnv']
+	\configuration{\assignVarStm{\var}{\expr}, \varEnvFil, \varEnvFil'}
+		\stmArrowFil
+	\varEnvFil[\var \mapsto \ExprSem{\expr} \varEnvFil \varEnvFil']
 \end{equation*}
 
 Sequential composition executes two statements sequentially, carrying along the modified variable environment.
@@ -203,60 +204,59 @@ Sequential composition executes two statements sequentially, carrying along the 
 	\tag{seq}
 	\dfrac
 	{
-		\configuration{\stm_1, \varEnv, \varEnv'}
-			\stmArrow
-		\varEnv_1
+		\configuration{\stmFil_1, \varEnvFil, \varEnvFil'}
+			\stmArrowFil
+		\varEnvFil_1
 		\qquad
-		\configuration{\stm_2, \varEnv_1, \varEnv'}
-			\stmArrow
-		\varEnv_2
+		\configuration{\stmFil_2, \varEnvFil_1, \varEnvFil'}
+			\stmArrowFil
+		\varEnvFil_2
 	}
 	{
-		\configuration{\seqStm{\stm_1}{\stm_2}, \varEnv, \varEnv'}
-			\stmArrow
-		\varEnv_2
+		\configuration{\seqStm{\stmFil_1}{\stmFil_2}, \varEnvFil, \varEnvFil'}
+			\stmArrowFil
+		\varEnvFil_2
 	}
 \end{equation*}
 
 Guarded commands nondeterministically choose and execute a statement whose corresponding guard evaluates to true. If no guard
 evaluates to true, the rule cannot be applied and hence the program is ``stuck''.
-
 \begin{equation*}
 	\tag{cmd}
 	\dfrac
 	{
-		\configuration{\stm_i, \varEnv, \varEnv'}
-			\stmArrow
-		\varEnv''
+		\configuration{\stmFil_i, \varEnvFil, \varEnvFil'}
+			\stmArrowFil
+		\varEnvFil''
 	}
 	{
-		\configuration{\guardedClause{\expr_1}{\stm_1} \; \ldots \; \guardedClause{\expr_n}{\stm_n}, \varEnv, \varEnv'}
-			\stmArrow
-		\varEnv''
+		\configuration{\guardedClause{\expr_1}{\stmFil_1} \; \ldots \; \guardedClause{\expr_n}{\stmFil_n}, \varEnvFil, \varEnvFil'}
+			\stmArrowFil
+		\varEnvFil''
 	}
-	\qquad \text{if} \quad \ExprSem{e_i} \varEnv \varEnv' = \true
+	\qquad \text{if} \quad \ExprSem{e_i} \varEnvFil \varEnvFil' = \true
 \end{equation*}
 
 A denotational definition of the statement semantics might be able to better highlight the nondeterministic nature of guarded
-commands. Therefore, let the semantic relation $\StmSem{-} : \Stm \rightarrow \ToSet{(\VarEnv \times \VarEnv \times \VarEnv)}$
-define the denotational semantics of statements as follows:
+commands. Therefore, let the semantic relation $\StmSem{-} : \StmFil \rightarrow \ToSet{(\VarEnvFil \times \VarEnvFil \times
+\VarEnvFil)}$ define the denotational semantics of statements as follows:
 \begin{align*}
-	\StmSem{\skipStm} &= \{ (\varEnv, \varEnv', \varEnv) \mid \varEnv, \varEnv' \in \VarEnv \}
+	\StmSem{\skipStm} &= \{ (\varEnvFil, \varEnvFil', \varEnvFil) \mid \varEnvFil, \varEnvFil' \in \VarEnvFil \}
 	\\
-	\StmSem{\assignVarStm{\var}{\expr}} &= \{ (\varEnv, \varEnv', \varEnv[\var \mapsto \ExprSem{\expr} \varEnv \varEnv']) \mid
-	\varEnv, \varEnv' \in \VarEnv \}
+	\StmSem{\assignVarStm{\var}{\expr}} &= \{ (\varEnvFil, \varEnvFil', \varEnvFil[\var \mapsto \ExprSem{\expr} \varEnvFil
+	\varEnvFil']) \mid \varEnvFil, \varEnvFil' \in \VarEnvFil \}
 	\\
-	\StmSem{\seqStm{\stm_1}{\stm_2}} &= \StmSem{\stm_2} \circ \StmSem{\stm_1}
+	\StmSem{\seqStm{\stmFil_1}{\stmFil_2}} &= \StmSem{\stmFil_2} \circ \StmSem{\stmFil_1}
 	\\
-	\StmSem{\guardedClause{\expr_1}{\stm_1} \ldots \guardedClause{\expr_n}{\stm_n}} &= 
+	\StmSem{\guardedClause{\expr_1}{\stmFil_1} \ldots \guardedClause{\expr_n}{\stmFil_n}} &= 
 		\bigcup\nolimits_{i = 1}^n \,
-		\{ (\varEnv, \varEnv', \varEnv'') \in \StmSem{\stm_i} \mid \ExprSem{e_i} \varEnv \varEnv' = \true \}
+		\{ (\varEnvFil, \varEnvFil', \varEnvFil'') \in \StmSem{\stmFil_i} \mid \ExprSem{e_i} \varEnvFil \varEnvFil' = \true \}
 \end{align*}
 
-Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rule system $\stmArrow$:
+Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rule system $\stmArrowFil$:
 \begin{equation*}
-	\StmSem{\stm} := \{ (\varEnv, \varEnv', \varEnv'') \in \VarEnv \times \VarEnv \times \VarEnv \mid \configuration{\stm, \varEnv,
-	\varEnv'} \stmArrow \varEnv'' \}
+	\StmSem{\stmFil} := \{ (\varEnvFil, \varEnvFil', \varEnvFil'') \in \VarEnvFil \times \VarEnvFil \times \VarEnvFil \mid
+	\configuration{\stmFil, \varEnvFil, \varEnvFil'} \stmArrowFil \varEnvFil'' \}
 \end{equation*}
 
 \subsection{Semantics of \Fil Programs}
@@ -266,7 +266,7 @@ the exact same sequence of statements. There are global variables that are initi
 different steps of the program. Additionally, there are step-local variables whose values are not preserved between different
 program steps.
 \begin{equation*}
-	\prog \in \Prog := \ToSet{\Var} \times \ToSet{\Var} \times (\Var \rightarrow \ToSet{\Val}) \times \Stm
+	\prog \in \Prog := \ToSet{\Var} \times \ToSet{\Var} \times (\Var \rightarrow \ToSet{\Val}) \times \StmFil
 \end{equation*}
 
 The first set of variables represents the global variables defined by a program, whereas the second set describes the step-local
@@ -274,14 +274,14 @@ ones. The function is used to determine the initial values of all (global) varia
 values for each variable. The statement of a program is executed once during each step.
 
 \begin{samepage}
-	The semantics of a \Fil program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
-	\varEnv_1 \, \varEnv_2 \ldots$ of variable environments. We have $\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \} \in
-	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm)$ if
+	The semantics of a \Fil program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnvFil_0 \,
+	\varEnvFil_1 \, \varEnvFil_2 \ldots$ of variable environments. We have $\{ \varEnvFil_0 \, \varEnvFil_1 \, \varEnvFil_2 \ldots \}
+	\in \mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stmFil)$ if
 	\begin{itemize}
-		\item $\forall \var \in \toSet{\var}_g \colon \varEnv_0(\var) \in \mathit{init}(\var)$
-		\item $\forall \var \in \Var \setminus \toSet{\var}_g \colon \varEnv_0(\var) = \missing$
-		\item $\forall i \in \mathbb{N}_0 \colon \configuration{\stm, \varEnv_i, \varEnv_i} \stmArrow
-		\varEnv_{i+1}' \wedge \varEnv_{i+1} = \varEnv_{i + 1}'[\toSet{\var}_l \mapsto \missing]$
+		\item $\forall \var \in \toSet{\var}_g \colon \varEnvFil_0(\var) \in \mathit{init}(\var)$
+		\item $\forall \var \in \Var \setminus \toSet{\var}_g \colon \varEnvFil_0(\var) = \missing$
+		\item $\forall i \in \mathbb{N}_0 \colon \configuration{\stmFil, \varEnvFil_i, \varEnvFil_i} \stmArrowFil
+		\varEnvFil_{i+1}' \wedge \varEnvFil_{i+1} = \varEnvFil_{i + 1}'[\toSet{\var}_l \mapsto \missing]$
 	\end{itemize}
 \end{samepage}
 
@@ -307,8 +307,12 @@ component C
 				
 			provided:
 				X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
+					Y() (* $\rightarrow$ *) ()
 					r1 := false
 					r2 := b1
+					
+			required:
+				Y : () (* $\rightarrow$ *) ()
 
 	fields:
 		x : int = 1, 2, 3
@@ -316,7 +320,6 @@ component C
 		
 	required:
 		M : (int, int) (* $\rightarrow$ *) (bool, bool)
-		N : () (* $\rightarrow$ *) ()
 		
 	provided:
 		X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
@@ -327,15 +330,15 @@ component C
 		
 	bindings:
 		C.M (* $\rightarrow_\mathtt{d}$ *) D.X // delayed
-		C.N (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
+		D.Y (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
 	
 	behavior:
 		l1 : bool, l2 : bool
 		M(x, x - 1) (* $\rightarrow$ *) (l1, l2)
-		N() (* $\rightarrow$ *) ()
 		(l1 (* $\twoheadrightarrow$ *) x = x - 1; l2 (* $\twoheadrightarrow$ *) b = true)
 \end{lstlisting}
 
+\subsection{Domains of Formal Models}
 We assume different abstract domains of names that we use to identify fields, ports, parameters, local variables, and components.
 There are four name spaces, one for fields, parameters, and local variables, one each for required and provided ports, and one for
 components. Within a name space, names must be unique. The name spaces are pairwise disjoint. Only ports can be accessed
@@ -359,8 +362,33 @@ for those values.
 	\type \in \Type &:= \boolType \mid \intType
 \end{align*}
 
-\subsection{Expressions}
+During execution, the \textit{scoped variable environment} stores the values of all variables. All variables that are in scope are
+guaranteed to be definitely assigned, therefore either a valid value is returned or the variable is not in scope. Since variables
+are only unique within the context of a single component, the scoped variable environment needs to know the the concrete component
+(i.e., the scope) the variable is declared in. A scope is uniquely identified by a path through the component
+hierarchy. Such a path is a list of components starting with the root. Using function currying, a non-scoped variable environment
+can be obtained for a given scope.
+\begin{align*}
+	\varEnvFmScoped \in \VarEnvFmScoped &:= \ToList{\Comp} \rightarrow \liftFailure{(\VarName \rightarrow \liftFailure{\Val})} \\
+	\varEnvFm \in \VarEnvFm &:= \VarName \rightarrow \liftFailure{\Val}
+\end{align*}
 
+When we update the value of a variable named $\varName$ at some level of the component hierarchy $\toList{\comp}$, we write
+$\varEnvFmScoped\left[\toList{\comp}, \varName \mapsto \val \right]$, defined as
+\begin{equation*}
+	\varEnvFmScoped\left[\toList{\comp}, \varName \mapsto \val \right](\toList{\comp'}, \varName') =
+		\begin{cases}
+			\val & \text{if } \toList{\comp} = \toList{\comp'} \wedge \varName = \varName' \\
+			\varEnvFmScoped(\toList{\comp'}, \varName') & \text{otherwise.}
+		\end{cases}
+\end{equation*}
+
+We also allow for simultaneous updates of multiple variables of the same component, written as $\varEnvFmScoped\left[\toList{\comp},
+\varName^1, \ldots, \varName^k \mapsto \val_1, \ldots, \val_k \right]$ or $\varEnvFmScoped\left[\toList{\comp},
+\varName^1, \ldots, \varName^k \mapsto \val \right]$ if all variables are updated to the same value. To remove a value of a
+variable from the variable environment, we write $\varEnvFmScoped\left[\toList{\comp}, \varName \mapsto \failure \right]$.
+
+\subsubsection{Expressions}
 Formal models support only side effect free expressions. Expressions consist of literal values, read operations of variables
 as well as a small set of unary and binary operator applications.
 \begin{align*}
@@ -377,36 +405,41 @@ as well as a small set of unary and binary operator applications.
 		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
 \end{align*}
 
-The function $\ExprSem{-} : \Expr \rightarrow \VarEnv \rightarrow \Val$ defines the semantics of
-expressions.
-Its definition is omitted for the time being.
+The function $\ExprSem{-} : \Expr \rightarrow \VarEnvFm \rightarrow \liftFailure{\Val}$ defines the
+semantics of expressions. Since an expression of a non well-formed model might potentially accessed an undefined variable, the expression
+evaluation might fail. 
+\begin{align*}
+	\ExprSem{\val} \varEnvFm &= \val \\
+	\ExprSem{\var} \varEnvFm &= \varEnvFm(\var) \\
+	\ExprSem{\unaryExpr{\uop\;}{\expr}} \varEnvFm &= \llbracket \uop \rrbracket (\ExprSem{\expr} \varEnvFm)
+	\\
+	\ExprSem{\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}} \varEnvFm &= \llbracket \bop \rrbracket
+	(\ExprSem{\expr_1} \varEnvFm, \ExprSem{\expr_2} \varEnvFm)
+\end{align*}
 
-\subsection{Statements}
-
+\subsubsection{Statements}
 Formal models support skip statements, variable assignments, sequential compositions, guarded commands, and
 invocations of required ports.
 \begin{equation*}
-	\stm \in \Stm :=
+	\stmFm \in \StmFm :=
 		\skipStm \mid 
 		\assignVarStm{\varName}{\expr} \mid
-		\seqStm{\stm_1}{\stm_2} \mid
-		\guardedStm{\guardedClause{\expr}{\stm}} \mid
+		\seqStm{\stmFm_1}{\stmFm_2} \mid
+		\guardedStm{\guardedClause{\expr}{\stmFm}} \mid
 		\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}
 \end{equation*}
 
 A procedure consists of a statement and a possibly empty set of local variables that can only be accessed within the context
 of the procedure.
 \begin{equation*}
-	\procedure \in \Procedure := \procDecl{\var_1 \ldots \var_n}{\stm}
+	\procedure \in \Procedure := \procDecl{\var_1 \ldots \var_n}{\stmFm}
 \end{equation*}
 
 The set of locally defined variables of a procedure can be obtained
 with the function $\locals : \Procedure \rightarrow
 \ToSet{\Var}$, defined as $\locals(\procedure) = \{\var_1, \ldots, \var_n\}$. The statement of a
-procedure defining the procedure's behavior can be accessed using the function $\stmof : \Procedure \rightarrow \Stm$, where
-$\stmof(\procedure) = \stm$.
-
-\subsection{Domains of Formal Models}
+procedure defining the procedure's behavior can be accessed using the function $\stmof : \Procedure \rightarrow \StmFm$, where
+$\stmof(\procedure) = \stmFm$.
 
 \subsubsection{Variables and Fields}
 A variable is typed and has a name unique within the context of the component; though the name may be reused in subcomponents.
@@ -500,12 +533,24 @@ to be replaced by component name $\compName'$, we update a binding $\binding$ us
 		\end{cases}$
 \end{itemize}
 
+For a set of bindings $\toSet{\binding}$ we have the notational convention
+$\toSet{\binding}\left[\compName\mapsto\compName'\right]$ to rename the component in all bindings contained in the set. When we
+want to find the provided port a required port is bound to by a set of bindings, we use $.[., .] : \ToSet{\Binding} \times
+\CompName \times \ReqPortName \rightarrow \liftFailure{(\CompName \times \ProvPortName)}$ defined as
+\begin{equation*}
+	\{\binding_1, \ldots, \binding_n\}[\compName, \reqPortName] = 
+		\begin{cases}
+			\prov(\binding_i) & \text{if } \req(\binding_i) = (\compName, \reqPortName) \wedge 1 \leq i \leq n \\
+			\failure & \text{otherwise.}
+		\end{cases}
+\end{equation*}
+
 \subsubsection{Components}
 Finally, components are uniquely identified by their names and consist of sets
 of provided and required ports, fields, and port bindings. They have a behavior described by a statement and may optionally be
 the parent of a set of subcomponents.
 \begin{align*}
-	\comp \in \Comp := & 
+	\comp \in \Comp := & \; 
 		\compDecl{\compName\\&\qquad}
 			{\comp_1 \ldots \comp_n\\&\qquad}
 			{\field_1 \ldots \field_m\\&\qquad}
@@ -517,7 +562,7 @@ the parent of a set of subcomponents.
 
 Again we're defining a couple of functions that allow us to conveniently extract the different parts of a component $\comp$
 defined as above. $\nameof : \Comp \rightarrow \CompName$ retrieves the name of the component, such that
-$\nameof(\comp) = \compName$. $\subComp : \Comp \rightarrow \ToSet{\Comp}$ with $\subComp(\comp) = \{\comp_1, \ldots, \comp_n\}$
+$\nameof(\comp) = \compName$. $\subComps : \Comp \rightarrow \ToSet{\Comp}$ with $\subComps(\comp) = \{\comp_1, \ldots, \comp_n\}$
 retrieves the subcomponents of component $\comp$. The fields can be obtained using function $\fields : \Comp \rightarrow
 \ToSet{\Field}$, defined as $\fields(\comp) = \{ \field_1, \ldots, \field_m \}$. To extract the required and the provided ports
 of a component, functions $\reqs : \Comp \rightarrow \ToSet{\ReqPort}$ with $\reqs(\comp) = \{ \reqPort_1, \ldots, \reqPort_k \}$
@@ -528,7 +573,7 @@ bindings of a component are returned by function $\bindings : \Comp \rightarrow 
 
 We define a renaming operation for components. Given a component $\comp$ with $\nameof(\comp) = \compName$ that we want to
 rename to $\compName'$, we use the notation $\comp' = \comp\left[\compName\mapsto\compName'\right]$ to create the renamed
-component $\comp'$ with $\nameof(\comp') = \compName'$, $\subComp(\comp') = \subComp(\comp)$, $\fields(\comp')=\fields(\comp)$,
+component $\comp'$ with $\nameof(\comp') = \compName'$, $\subComps(\comp') = \subComps(\comp)$, $\fields(\comp')=\fields(\comp)$,
 $\reqs(\comp') = \reqs(\comp)$, $\provs(\comp') = \provs(\comp)$, $\bindings(\comp') =
 \bindings\left[\compName\mapsto\compName'\right]$, and $\behavior(\comp') = \behavior(\comp)$; that is, the component remains unchanged
 except for its name and for the bindings referring to the component's name.
@@ -536,21 +581,11 @@ except for its name and for the bindings referring to the component's name.
 We can replace or substitute a subcomponent of some component $\comp_0$, provided that the original subcomponent $\comp'$ and the
 new subcomponent $\comp''$ are port-equivalent, that is $\reqs(\comp') = \reqs(\comp'')$ and $\provs(\comp') = \provs(\comp'')$.
 We use the notation $\comp_1 = \comp_0\left[\comp' \mapsto \comp''\right]$ to obtain a new component $\comp_1$ where $\comp'$ has
-been replaced by $\comp''$, such that $\nameof(\comp_1) = \nameof(\comp_0)$, $\subComp(\comp_1) = \subComp(\comp_0) \setminus
+been replaced by $\comp''$, such that $\nameof(\comp_1) = \nameof(\comp_0)$, $\subComps(\comp_1) = \subComps(\comp_0) \setminus
 \comp' \cup \comp''$, $\fields(\comp_1)=\fields(\comp_0)$, $\reqs(\comp_1) = \reqs(\comp_0)$, $\provs(\comp_1) = \provs(\comp_0)$,
-$\bindings(\comp_1) = \bindings\left[\nameof(\comp')\mapsto\nameof(\comp'')\right]$, and $\behavior(\comp_1) =
+$\bindings(\comp_1) = \bindings(\comp_0)\left[\nameof(\comp')\mapsto\nameof(\comp'')\right]$, and $\behavior(\comp_1) =
 \behavior(\comp_0)$. We also allow for simultaneous substitution of multiple subcomponents, written as
 $\comp\left[\comp_1\mapsto\comp_1', \ldots, \comp_n\mapsto\comp_n'\right]$.
-
-\subsection{Transformation to \Fil Programs}
-The transformation of a formal model into a \Fil program first flattens the hierarchy in post order. That is, for a given
-component, all fields, ports, and bindings are moved to the parent component, ensuring that all names remain unique. The behavior
-is added at the correct location into the parent's behavior, depending on the scheduling. 
-
-Once the hierarchy is fully flattened, all ports are inlined into the behavior of the root component. For delayed bindings, the
-appropriate variables must be introduced. When the results of a delayed binding are read, the \texttt{prev} instruction must be used.
-
-The resulting monolithic component can then be transformed in a rather straightforward way to a \Fil program.
 
 \subsection{Well-Formedness of Components}
 We only consider components that are well-formed according to the following criteria:
@@ -586,6 +621,149 @@ We only consider components that are well-formed according to the following crit
 	\item Note that we do not have to check for cycles (i.e., a component being its own parent), as that simply cannot be expressed
 	with the domains we have defined.
 \end{itemize}
+
+\subsection{Semantics of Formal Models}
+The nondeterministic rule system $\stmArrowFm$ defines the natural semantics of statements.
+\begin{align*}
+	\mathit{Configurations} : & \;\configuration{\stmFm, \varEnvFmScoped, \toList{\comp}} \in \StmFm \times \VarEnvFmScoped \times
+	\ToList{\Comp}, \; \varEnvFmScoped \in \VarEnvFmScoped
+	\\
+	\mathit{Transitions} : & \;\configuration{\stmFm, \varEnvFmScoped, \toList{\comp}} \stmArrowFm \varEnvFmScoped'
+\end{align*}
+
+The skip statement has no effect on the variable environment and is therefore simply discarded.
+\begin{equation*}
+	\tag{skip}
+	\configuration{\skipStm, \varEnvFmScoped, \toList{\comp}}
+		\stmArrowFm
+	\varEnvFm
+\end{equation*}
+
+Assignments to a variable update the variable environment accordingly, replacing the variable's current value with the value
+obtained from the evaluation of the assigned expression.
+\begin{equation*}
+	\tag{assign}
+	\configuration{\assignVarStm{\varName}{\expr}, \varEnvFmScoped, \toList{\comp}}
+		\stmArrowFm
+	\varEnvFmScoped[\toList{\comp}, \varName \mapsto \ExprSem{\expr} \varEnvFmScoped(\toList{\comp})]
+\end{equation*}
+
+Sequential composition executes two statements sequentially, carrying along the modified variable environment.
+\begin{equation*}
+	\tag{seq}
+	\dfrac
+	{
+		\configuration{\stmFm_1, \varEnvFmScoped, \toList{\comp}}
+			\stmArrowFm
+		\varEnvFmScoped_1
+		\qquad
+		\configuration{\stmFm_2, \varEnvFmScoped_1, \toList{\comp}}
+			\stmArrowFm
+		\varEnvFmScoped_2
+	}
+	{
+		\configuration{\seqStm{\stmFm_1}{\stmFm_2}, \varEnvFmScoped, \toList{\comp}}
+			\stmArrowFm
+		\varEnvFmScoped_2
+	}
+\end{equation*}
+
+Guarded commands nondeterministically choose and execute a statement whose corresponding guard evaluates to true. If no guard
+evaluates to true, the rule cannot be applied and hence the program is ``stuck''.
+\begin{equation*}
+	\tag{cmd}
+	\dfrac
+	{
+		\configuration{\stmFm_i, \varEnvFmScoped, \toList{\comp}}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	{
+		\configuration{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}, \varEnvFmScoped,
+		\toList{\comp}}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	\qquad \text{if} \quad \ExprSem{e_i} \varEnvFmScoped(\toList{\comp}) = \true
+\end{equation*}
+
+\begin{equation*}
+	\tag{call${}_1$}
+	\dfrac
+	{
+		\configuration{\stmof(\behavior(\comp.\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	{
+		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	\quad \text{if } \bindings(\comp)[\comp, \reqPortName] = (\nameof(\comp), \provPortName)
+\end{equation*}
+
+\begin{equation*}
+	\tag{call${}_2$}
+	\dfrac
+	{
+		\configuration{\stmof(\behavior((\comp.\compName).\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+		\comp.\compName}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	{
+		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	\quad \text{if } \bindings(\comp)[\comp, \reqPortName] = (\compName, \provPortName) \wedge \compName \neq \nameof(\comp)
+\end{equation*}
+
+\begin{equation*}
+	\tag{call${}_3$}
+	\dfrac
+	{
+		\configuration{\stmof(\behavior(\comp.\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	{
+		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+		\comp'}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	\quad \text{if } \bindings(\comp)[\comp', \reqPortName] = (\nameof(\comp), \provPortName)
+\end{equation*}
+
+\begin{equation*}
+	\tag{call${}_4$}
+	\dfrac
+	{
+		\configuration{\stmof(\behavior((\comp.\compName).\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+		\comp.\compName}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	{
+		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+		\comp'}
+			\stmArrowFm
+		\varEnvFmScoped'
+	}
+	\quad \text{if } \bindings(\comp)[\comp', \reqPortName] = (\compName, \provPortName) \wedge \compName \neq \nameof(\comp)
+\end{equation*}
+
+\subsection{Transformation to \Fil Programs}
+The transformation of a well-formed formal model into a \Fil program first flattens the hierarchy in post order. That is, for a
+given component, all fields, ports, and bindings are moved to the parent component, ensuring that all names remain unique. The behavior
+is added at the correct location into the parent's behavior, depending on the scheduling. 
+
+Once the hierarchy is fully flattened, all ports are inlined into the behavior of the root component. For delayed bindings, the
+appropriate variables must be introduced. When the results of a delayed binding are read, the \texttt{prev} instruction must be used.
+
+The resulting monolithic component can then be transformed in a rather straightforward way to a \Fil program.
 
 \section{Modeling with \SafetySharp}
 The general idea of the transformation process is as follows:

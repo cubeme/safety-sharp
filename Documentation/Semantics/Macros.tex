@@ -4,6 +4,7 @@
 \newcommand{\SafetySharp}{Safety\-Sharp\xspace}
 \newcommand{\DotNet}{\textsc{.Net}\xspace}
 \newcommand{\Fil}{\textsc{Fil}\xspace}
+\newcommand{\Fm}{\textsc{Fm}\xspace}
 
 % Domains
 \newcommand{\Bool}{\mathbb{B}}
@@ -12,11 +13,15 @@
 \newcommand{\Uop}{\mathit{UnaryOp}}
 \newcommand{\Bop}{\mathit{BinaryOp}}
 \newcommand{\Expr}{\mathit{Expr}}
-\newcommand{\Stm}{\mathit{Stm}}
+\newcommand{\StmFil}{\mathit{Stm}_\Fil}
+\newcommand{\StmFm}{\mathit{Stm}_\Fm}
 \newcommand{\Prog}{\mathit{Prog}}
-\newcommand{\VarEnv}{\Sigma}
+\newcommand{\VarEnvFil}{\Sigma_\Fil}
+\newcommand{\VarEnvFm}{\Sigma_\Fm}
+\newcommand{\VarEnvFmScoped}{\Theta}
 \newcommand{\Val}{\mathit{Value}}
-\newcommand{\stmArrow}{\rightarrow_s}
+\newcommand{\stmArrowFil}{\rightarrow_{\Fil}}
+\newcommand{\stmArrowFm}{\rightarrow_{\Fm}}
 \newcommand{\VarName}{\mathit{VarName}}
 \newcommand{\ReqPortName}{\mathit{ReqPortName}}
 \newcommand{\ProvPortName}{\mathit{ProvPortName}}
@@ -28,7 +33,7 @@
 \newcommand{\ProvPort}{\mathit{ProvPort}}
 \newcommand{\Comp}{\mathit{Comp}}
 \newcommand{\Binding}{\mathit{Binding}}
-\newcommand{\Procedure}{\mathit{Procedure}}
+\newcommand{\Procedure}{\mathit{Proc}}
 
 % Meta variables
 \newcommand{\bool}{b}
@@ -37,9 +42,12 @@
 \newcommand{\uop}{\mathit{uop}}
 \newcommand{\bop}{\mathit{bop}}
 \newcommand{\expr}{e}
-\newcommand{\stm}{S}
+\newcommand{\stmFil}{S}
+\newcommand{\stmFm}{S}
 \newcommand{\prog}{P}
-\newcommand{\varEnv}{\sigma}
+\newcommand{\varEnvFil}{\sigma}
+\newcommand{\varEnvFm}{\varsigma}
+\newcommand{\varEnvFmScoped}{\vartheta}
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
 \newcommand{\varName}{n_v}
@@ -92,7 +100,7 @@
 \newcommand{\configuration}[1]{\langle #1 \rangle}
 \newcommand{\toList}[1]{\vec{#1}}
 \newcommand{\ToList}[1]{#1^*}
-\newcommand{\toSet}[1]{\mathbf{#1}}
+\newcommand{\toSet}[1]{\hat{#1}}
 \newcommand{\ToSet}[1]{\wp #1}
 
 % Functions
@@ -100,6 +108,7 @@
 \newcommand{\StmSem}[1]{\mathcal{S} \llbracket #1 \rrbracket}
 \newcommand{\ProgSem}[1]{\mathcal{P} \llbracket #1 \rrbracket}
 \newcommand{\cons}{\circ}
+\newcommand{\unionCons}{\bullet}
 \newcommand{\nameof}{\mathit{name}}
 \newcommand{\typeof}{\mathit{type}}
 \newcommand{\init}{\mathit{init}}
@@ -111,7 +120,7 @@
 \newcommand{\req}{\mathit{req}}
 \newcommand{\prov}{\mathit{prov}}
 \newcommand{\delayed}{\mathit{delayed}}
-\newcommand{\subComp}{\mathit{sub}}
+\newcommand{\subComps}{\mathit{subs}}
 \newcommand{\fields}{\mathit{fields}}
 \newcommand{\reqs}{\mathit{reqs}}
 \newcommand{\provs}{\mathit{provs}}
