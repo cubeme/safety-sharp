@@ -36,7 +36,7 @@
 \maketitle
 
 \section{Conventions}
-Throughout the remainder of this report, we use the following conventions in all formal definitions whereever appropriate:
+Throughout the remainder of this report, we use the following conventions in all formal definitions wherever appropriate:
 
 \header{Optional Elements and Failure Elements}
 	We use $\missing$ and $\failure$ to denote the missing element and the failure element respectively. For some domain $A$, it is
@@ -44,10 +44,10 @@ Throughout the remainder of this report, we use the following conventions in all
 	\missing$, $\liftFailure{A} := A \cup \failure$, and $\liftMissingFailure{A} := A \cup \varepsilon \cup	\bot$.
 	For some $a \in A$, we know that $a \neq \missing$ and $a \neq \failure$, whereas for $\liftMissing{a} \in
 	\liftMissing{A}$, we only know that $\liftMissing{a} \neq \failure$, but $\liftMissing{a}$ might be $\missing$ or
-	any element of $A$. When we write $a \in \liftMissing{A}$ or $a = f(a')$ for some function $f : A \rightarrow
+	any element of $A$. When we write $a \in \liftMissing{A}$ or $a = f(a')$ for some function $f \colon A \rightarrow
 	\liftMissing{A}$, $a$ cannot be $\missing$, so the selection or assignment is only possible if the selected or
 	returned value is not $\missing$. For example, this allows us to shorten some side conditions in function definitions with case
-	distinctions. The following two definitions of function $g : A \rightarrow \liftFailure{A}$ illustrate the usage of this
+	distinctions. The following two definitions of function $g \colon A \rightarrow \liftFailure{A}$ illustrate the usage of this
 	convention.
 	With function $f$ defined as above, the following two definitions of $g$ are equivalent:
 	\begin{align*}
@@ -68,7 +68,7 @@ Throughout the remainder of this report, we use the following conventions in all
 	Alternatively, we use the word ``otherwise'' to denote a side condition that is true if the side conditions of all other cases are not true. We do not use partial functions.
 
 	It is sometimes necessary to change the value a function returns for a specific input. We establish the notation $f[a \mapsto b]$
-	for some function $f : A \rightarrow B$ that serves this purpose and is defined as follows:
+	for some function $f \colon A \rightarrow B$ that serves this purpose and is defined as follows:
 	\begin{equation*}
 	f[a \mapsto b](a') = \begin{cases}
 		b & \text{if } \quad a' = a \\
@@ -150,7 +150,7 @@ variable at the beginning of the current step.
 		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
 \end{align*}
 
-The function $\ExprSem{-} : \Expr \rightarrow \VarEnvFil \rightarrow \VarEnvFil \rightarrow \Val$ defines the semantics of
+The function $\ExprSem{-} \colon \Expr \rightarrow \VarEnvFil \rightarrow \VarEnvFil \rightarrow \Val$ defines the semantics of
 expressions. It is given the current variable environment and the one at the beginning of the current step.
 \begin{align*}
 	\ExprSem{\val} \varEnvFil \varEnvFil' &= \val \\
@@ -176,16 +176,16 @@ compositions and guarded commands.
 
 The nondeterministic rule system $\stmArrowFil$ defines the natural semantics of statements.
 \begin{align*}
-	\mathit{Configurations} : & \;\configuration{\stmFil, \varEnvFil, \varEnvFil'} \in \StmFil \times \VarEnvFil \times \VarEnvFil,
-	\; \varEnvFil \in \VarEnvFil
+	\mathit{Configurations} \colon & \;\configurationFil{\stmFil, \varEnvFil, \varEnvFil'} \in \StmFil \times \VarEnvFil \times
+	\VarEnvFil, \; \varEnvFil \in \VarEnvFil
 	\\
-	\mathit{Transitions} : & \;\configuration{\stmFil, \varEnvFil, \varEnvFil'} \stmArrowFil \varEnvFil''
+	\mathit{Transitions} \colon & \;\configurationFil{\stmFil, \varEnvFil, \varEnvFil'} \stmArrowFil \varEnvFil''
 \end{align*}
 
 The skip statement has no effect on the variable environment and is therefore simply discarded.
 \begin{equation*}
 	\tag{skip}
-	\configuration{\skipStm, \varEnvFil, \varEnvFil'}
+	\configurationFil{\skipStm, \varEnvFil, \varEnvFil'}
 		\stmArrowFil
 	\varEnvFil
 \end{equation*}
@@ -194,7 +194,7 @@ Assignments to a variable update the variable environment accordingly, replacing
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign}
-	\configuration{\assignVarStm{\var}{\expr}, \varEnvFil, \varEnvFil'}
+	\configurationFil{\assignVarStm{\var}{\expr}, \varEnvFil, \varEnvFil'}
 		\stmArrowFil
 	\varEnvFil[\var \mapsto \ExprSem{\expr} \varEnvFil \varEnvFil']
 \end{equation*}
@@ -204,16 +204,16 @@ Sequential composition executes two statements sequentially, carrying along the 
 	\tag{seq}
 	\dfrac
 	{
-		\configuration{\stmFil_1, \varEnvFil, \varEnvFil'}
+		\configurationFil{\stmFil_1, \varEnvFil, \varEnvFil'}
 			\stmArrowFil
 		\varEnvFil_1
 		\qquad
-		\configuration{\stmFil_2, \varEnvFil_1, \varEnvFil'}
+		\configurationFil{\stmFil_2, \varEnvFil_1, \varEnvFil'}
 			\stmArrowFil
 		\varEnvFil_2
 	}
 	{
-		\configuration{\seqStm{\stmFil_1}{\stmFil_2}, \varEnvFil, \varEnvFil'}
+		\configurationFil{\seqStm{\stmFil_1}{\stmFil_2}, \varEnvFil, \varEnvFil'}
 			\stmArrowFil
 		\varEnvFil_2
 	}
@@ -225,12 +225,12 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\tag{cmd}
 	\dfrac
 	{
-		\configuration{\stmFil_i, \varEnvFil, \varEnvFil'}
+		\configurationFil{\stmFil_i, \varEnvFil, \varEnvFil'}
 			\stmArrowFil
 		\varEnvFil''
 	}
 	{
-		\configuration{\guardedClause{\expr_1}{\stmFil_1} \; \ldots \; \guardedClause{\expr_n}{\stmFil_n}, \varEnvFil, \varEnvFil'}
+		\configurationFil{\guardedClause{\expr_1}{\stmFil_1} \; \ldots \; \guardedClause{\expr_n}{\stmFil_n}, \varEnvFil, \varEnvFil'}
 			\stmArrowFil
 		\varEnvFil''
 	}
@@ -238,7 +238,7 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 \end{equation*}
 
 A denotational definition of the statement semantics might be able to better highlight the nondeterministic nature of guarded
-commands. Therefore, let the semantic relation $\StmSem{-} : \StmFil \rightarrow \ToSet{(\VarEnvFil \times \VarEnvFil \times
+commands. Therefore, let the semantic relation $\StmSem{-} \colon \StmFil \rightarrow \ToSet{(\VarEnvFil \times \VarEnvFil \times
 \VarEnvFil)}$ define the denotational semantics of statements as follows:
 \begin{align*}
 	\StmSem{\skipStm} &= \{ (\varEnvFil, \varEnvFil', \varEnvFil) \mid \varEnvFil, \varEnvFil' \in \VarEnvFil \}
@@ -256,7 +256,7 @@ commands. Therefore, let the semantic relation $\StmSem{-} : \StmFil \rightarrow
 Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rule system $\stmArrowFil$:
 \begin{equation*}
 	\StmSem{\stmFil} := \{ (\varEnvFil, \varEnvFil', \varEnvFil'') \in \VarEnvFil \times \VarEnvFil \times \VarEnvFil \mid
-	\configuration{\stmFil, \varEnvFil, \varEnvFil'} \stmArrowFil \varEnvFil'' \}
+	\configurationFil{\stmFil, \varEnvFil, \varEnvFil'} \stmArrowFil \varEnvFil'' \}
 \end{equation*}
 
 \subsection{Semantics of \Fil Programs}
@@ -280,7 +280,7 @@ values for each variable. The statement of a program is executed once during eac
 	\begin{itemize}
 		\item $\forall \var \in \toSet{\var}_g \colon \varEnvFil_0(\var) \in \mathit{init}(\var)$
 		\item $\forall \var \in \Var \setminus \toSet{\var}_g \colon \varEnvFil_0(\var) = \missing$
-		\item $\forall i \in \mathbb{N}_0 \colon \configuration{\stmFil, \varEnvFil_i, \varEnvFil_i} \stmArrowFil
+		\item $\forall i \in \mathbb{N}_0 \colon \configurationFil{\stmFil, \varEnvFil_i, \varEnvFil_i} \stmArrowFil
 		\varEnvFil_{i+1}' \wedge \varEnvFil_{i+1} = \varEnvFil_{i + 1}'[\toSet{\var}_l \mapsto \missing]$
 	\end{itemize}
 \end{samepage}
@@ -339,15 +339,15 @@ component C
 \end{lstlisting}
 
 \subsection{Domains of Formal Models}
-We assume different abstract domains of names that we use to identify fields, ports, parameters, local variables, and components.
-There are four name spaces, one for fields, parameters, and local variables, one each for required and provided ports, and one for
-components. Within a name space, names must be unique. The name spaces are pairwise disjoint. Only ports can be accessed
-outside of a component, namely by a parent component. 
+We assume a domain of variables that represent provided port input and output parameters as well as local variables with a default
+initial value. Fields, on the other hand, represent component-global variables with one or more initial value. Required and
+provided ports allow different components to communicate with each other.
 \begin{align*}
-	\varName &\in \VarName \\
-	\reqPortName &\in \ReqPortName \\
-	\provPortName &\in \ProvPortName \\
-	\compName &\in \CompName
+	\var &\in \Var \\
+	\field &\in \Field \\
+	\reqPort &\in \ReqPort \\
+	\provPort &\in \ProvPort \\
+	\comp&\in \Comp
 \end{align*}
 
 Similar to \Fil, formal models have values of Boolean and integer type; we also have a domain of types
@@ -362,35 +362,38 @@ for those values.
 	\type \in \Type &:= \boolType \mid \intType
 \end{align*}
 
-During execution, the \textit{scoped variable environment} stores the values of all variables. All variables that are in scope are
-guaranteed to be definitely assigned, therefore either a valid value is returned or the variable is not in scope. Since variables
-are only unique within the context of a single component, the scoped variable environment needs to know the the concrete component
-(i.e., the scope) the variable is declared in. A scope is uniquely identified by a path through the component
-hierarchy. Such a path is a list of components starting with the root. Using function currying, a non-scoped variable environment
-can be obtained for a given scope.
+During execution, a \textit{variable environment} stores the values of all local variables as well as all input and output
+parameters of a provided port.
+A \textit{field environment} stores the values of all fields of all components in the hierarchy. Since fields are only unique
+within the context of a single component, the field environment needs to know the the concrete component the field is declared
+in. A component is uniquely identified by the path through the component hierarchy starting at the root and proceeding down to the
+component. We occasionally use field environments in a curried form where the component path has already been provided.
 \begin{align*}
-	\varEnvFmScoped \in \VarEnvFmScoped &:= \ToList{\Comp} \rightarrow \liftFailure{(\VarName \rightarrow \liftFailure{\Val})} \\
-	\varEnvFm \in \VarEnvFm &:= \VarName \rightarrow \liftFailure{\Val}
+	\fieldEnv \in \FieldEnv &:= \ToListNE{\Comp} \rightarrow \liftFailure{(\Field \rightarrow \liftFailure{\Val})} \\
+	\fieldEnvCurried \in \FieldEnvCurried &:= \Field \rightarrow \liftFailure{\Val} \\
+	\varEnvFm \in \VarEnvFm &:= \Var \rightarrow \liftFailure{\Val}
 \end{align*}
 
-When we update the value of a variable named $\varName$ at some level of the component hierarchy $\toList{\comp}$, we write
-$\varEnvFmScoped\left[\toList{\comp}, \varName \mapsto \val \right]$, defined as
+$\varEnvFm_\missing$ and $\fieldEnv_\missing$ denote the empty variable and field environments, respectively. We use the standard
+notation $\varEnvFm\left[\var \mapsto \val \right]$ to update the value of a variable $\var$ and also allow for simultaneous
+updates, written as $\varEnvFm\left[\var_1, \ldots, \var_n \mapsto \val_1, \ldots, \val_n\right]$.
+For field environments, the notation $\fieldEnv\left[\toListNE{\comp}, \field \mapsto \val \right]$ is used to update the value of
+some field $\field$ within the hierarchy of components at location $\toListNE{\comp}$, where
 \begin{equation*}
-	\varEnvFmScoped\left[\toList{\comp}, \varName \mapsto \val \right](\toList{\comp'}, \varName') =
+	\fieldEnv\left[\toListNE{\comp}, \field \mapsto \val \right](\toListNE{\comp}_0, \field_0) =
 		\begin{cases}
-			\val & \text{if } \toList{\comp} = \toList{\comp'} \wedge \varName = \varName' \\
-			\varEnvFmScoped(\toList{\comp'}, \varName') & \text{otherwise.}
+			\val & \text{if } \toListNE{\comp} = \toListNE{\comp}_0 \wedge \field = \field_0 \\
+			\fieldEnv(\toListNE{\comp}_0, \field_0) & \text{otherwise.}
 		\end{cases}
 \end{equation*}
 
-We also allow for simultaneous updates of multiple variables of the same component, written as $\varEnvFmScoped\left[\toList{\comp},
-\varName^1, \ldots, \varName^k \mapsto \val_1, \ldots, \val_k \right]$ or $\varEnvFmScoped\left[\toList{\comp},
-\varName^1, \ldots, \varName^k \mapsto \val \right]$ if all variables are updated to the same value. To remove a value of a
-variable from the variable environment, we write $\varEnvFmScoped\left[\toList{\comp}, \varName \mapsto \failure \right]$.
+We also allow for simultaneous updates of multiple fields of the same component, written as $\fieldEnv\left[\toListNE{\comp},
+\field_1, \ldots, \field_n \mapsto \val_1, \ldots, \val_n \right]$ or $\fieldEnv\left[\toListNE{\comp}, \field_1, \ldots, \field_n
+\mapsto \val \right]$ if all fields are updated to the same value.
 
 \subsubsection{Expressions}
 Formal models support only side effect free expressions. Expressions consist of literal values, read operations of variables
-as well as a small set of unary and binary operator applications.
+and fields as well as a small set of unary and binary operator applications.
 \begin{align*}
 	\uop \in \Uop & := - \mid \neg
 	\\
@@ -400,94 +403,82 @@ as well as a small set of unary and binary operator applications.
 	\\
 	\expr \in \Expr & := 
 		\val \mid
-		\varName \mid 
+		\var \mid
+		\field \mid 
 		\unaryExpr{\uop\;}{\expr} \mid
 		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
 \end{align*}
 
-The function $\ExprSem{-} : \Expr \rightarrow \VarEnvFm \rightarrow \liftFailure{\Val}$ defines the
+The function $\ExprSem{-} \colon \Expr \rightarrow \FieldEnvCurried \rightarrow \VarEnvFm \rightarrow \liftFailure{\Val}$ defines the
 semantics of expressions. Since an expression of a non well-formed model might potentially accessed an undefined variable, the expression
 evaluation might fail. 
 \begin{align*}
-	\ExprSem{\val} \varEnvFm &= \val \\
-	\ExprSem{\var} \varEnvFm &= \varEnvFm(\var) \\
-	\ExprSem{\unaryExpr{\uop\;}{\expr}} \varEnvFm &= \llbracket \uop \rrbracket (\ExprSem{\expr} \varEnvFm)
-	\\
-	\ExprSem{\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}} \varEnvFm &= \llbracket \bop \rrbracket
-	(\ExprSem{\expr_1} \varEnvFm, \ExprSem{\expr_2} \varEnvFm)
+	\ExprSem{\val} \fieldEnvCurried \varEnvFm &= \val \\
+	\ExprSem{\var} \fieldEnvCurried \varEnvFm &= \varEnvFm(\var) \\
+	\ExprSem{\field} \fieldEnvCurried \varEnvFm &= \fieldEnvCurried(\field) \\
+	\ExprSem{\unaryExpr{\uop\;}{\expr}} \fieldEnvCurried \varEnvFm &= \llbracket \uop \rrbracket (\ExprSem{\expr} \fieldEnvCurried
+	\varEnvFm) \\
+	\ExprSem{\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}} \fieldEnvCurried \varEnvFm &= \llbracket \bop \rrbracket
+	(\ExprSem{\expr_1} \fieldEnvCurried \varEnvFm, \ExprSem{\expr_2} \fieldEnvCurried \varEnvFm)
 \end{align*}
 
 \subsubsection{Statements}
-Formal models support skip statements, variable assignments, sequential compositions, guarded commands, and
-invocations of required ports.
-\begin{equation*}
-	\stmFm \in \StmFm :=
-		\skipStm \mid 
-		\assignVarStm{\varName}{\expr} \mid
-		\seqStm{\stmFm_1}{\stmFm_2} \mid
-		\guardedStm{\guardedClause{\expr}{\stmFm}} \mid
-		\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}
-\end{equation*}
-
-A procedure consists of a statement and a possibly empty set of local variables that can only be accessed within the context
-of the procedure.
-\begin{equation*}
-	\procedure \in \Procedure := \procDecl{\var_1 \ldots \var_n}{\stmFm}
-\end{equation*}
-
-The set of locally defined variables of a procedure can be obtained
-with the function $\locals : \Procedure \rightarrow
-\ToSet{\Var}$, defined as $\locals(\procedure) = \{\var_1, \ldots, \var_n\}$. The statement of a
-procedure defining the procedure's behavior can be accessed using the function $\stmof : \Procedure \rightarrow \StmFm$, where
-$\stmof(\procedure) = \stmFm$.
-
-\subsubsection{Variables and Fields}
-A variable is typed and has a name unique within the context of the component; though the name may be reused in subcomponents.
-A field is a variable with a non-empty set of initial values, one of which is chosen nondeterministically when
-the component is executed. Fields can be accessed throughout the entire component -- except the subcomponents. Variables used as
-port parameters or defined locally by a provided port, on the other hand, can only be accessed by that port. 
+Formal models support skip statements, variable and field assignments, sequential compositions, guarded commands, and
+invocations of required ports. Only variables but not fields are allowed as output parameters of required port invocations.
 \begin{align*}
-	\var \in \Var &:= \varDecl{\varName}{\type} \\
-	\field \in \Field &:= \fieldDecl{\var}{\val_1, \ldots, \val_n}
+	\guardedCmd \in \GuardedCmd &:= \guardedClause{\expr}{\stmFm} \\
+	\stmFm \in \StmFm &:=
+		\skipStm \mid 
+		\assignVarStm{\var}{\expr} \mid
+		\assignVarStm{\field}{\expr} \mid
+		\seqStm{\stmFm_1}{\stmFm_2} \mid
+		\toListNE{\guardedCmd} \mid
+		\invoke{\reqPort}{\toList{\expr}}{\toList{\var}}
 \end{align*}
 
-We assume two functions $\nameof : \Var \rightarrow \VarName$ and $\typeof : \Var \rightarrow \Type$ such that for a variable
-$\var$ defined as above we have $\nameof(\var) = \varName$ and $\typeof(\var) = \type$. Similarly for
-fields, we define $\nameof : \Field \rightarrow \VarName$, $\typeof : \Field \rightarrow \Type$, and $\init : \Field \rightarrow
-\ToSet(\Val)$ such that for a field $\field$ defined as above we have $\nameof(\field) =
-\varName$, $\typeof(\field) = \type$, and $\init(\field) = \{\val_1, \ldots, \val_n\}$.
+\subsubsection{Variable and Field Declarations}
+A variable declaration introduces typed local variables or parameters.
+A field declaration declares component fields with a non-empty set of initial values, one of which is chosen
+nondeterministically when the component is executed. Fields are global within the context of the component, but cannot be accessed
+by parent components or subcomponents. Variables and parameters are only in scope within a the context of a component behavior or
+a provided port.
+\begin{align*}
+	\varDecl \in \VarDecl &:= \varDeclSyn{\var}{\type} \\
+	\fieldDecl \in \FieldDecl &:= \fieldDeclSyn{\field}{\type}{\toListNE{\val}}
+\end{align*}
+
+We assume two functions $\varof \colon \VarDecl \rightarrow \Var$ and $\typeof \colon \VarDecl \rightarrow \Type$ with
+$\varof(\varDeclSyn{\var}{\type}) = \var$ and $\typeof(\varDeclSyn{\var}{\type}) = \type$. Similarly for fields, we define
+$\fieldof \colon \FieldDecl \rightarrow \Field$, $\typeof \colon \FieldDecl \rightarrow \Type$, and $\init \colon \FieldDecl \rightarrow
+\ToSet{\Val}$ such that $\fieldof(\fieldDeclSyn{\field}{\type}{\toListNE{\val}}) = \field$,
+$\typeof(\fieldDeclSyn{\field}{\type}{\toListNE{\val}}) = \type$, and
+$\init(\fieldDeclSyn{\field}{\type}{\toListNE{\val}}) = \asSet(\toListNE{\val})$. We also use all of these functions
+on lists of variable and field declarations, applying the function to each element of the list; for instance, $\varof(\varDecl_1
+\cons \ldots \cons \varDecl_n) = \varof(\varDecl_1) \cons \ldots \cons \varof(\varDecl_n)$.
 
 \subsubsection{Required and Provided Ports}
-A required port of a component is uniquely identified by its name within the context of the component; though the name may be
-reused in subcomponents. It has a possibly empty list of input parameters and a possible empty list of output parameters. 
-Provided ports are defined similarly. However, they also introduce local names for their input and output parameters and declare a
-procedure. 
+A required port of a component has a possibly empty list of input parameters and a possible empty list of input/output parameters. 
+Provided ports are defined similarly. However, they also introduce local names for their input and input/output parameters and
+declare a behavior in form of a statement, optionally also introducing additional local variables. 
 \begin{align*}
-	\reqPort \in \ReqPort &:= \reqPortDecl{\reqPortName}{\type_{\mathit{in}, 1}, \ldots, \type_{\mathit{in}, n}}
-		{\type_{\mathit{out},1}, \ldots, \type_{\mathit{out}, m}} 
+	\reqPortDecl \in \ReqPortDecl &:=
+		\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}}
 	\\
-	\provPort \in \ProvPort &:= \provPortDecl{\provPortName}
-		{\var_{\mathit{in}, 1}, \ldots, \var_{\mathit{in}, n}}
-		{\var_{\mathit{out}, 1}, \ldots, \var_{\mathit{out}, m}}
-		{\procedure}
+	\provPortDecl \in \ProvPortDecl &:= \provPortDeclSyn{\provPort}
+		{\toList{\varDecl}_\mathit{in}}
+		{\toList{\varDecl}_\mathit{io}}
+		{\toList{\varDecl}_\mathit{loc}}
+		{\stmFm}
 \end{align*}
 
-We define a couple of helper functions for required ports $\reqPort$ and provided ports $\provPort$ defined as above. We assume
-the two functions $\nameof : \ReqPort \rightarrow \ReqPortName$ and $\nameof : \ProvPort \rightarrow \ProvPortName$ such that
-$\nameof(\reqPort) = \reqPortName$ and $\typeof(\provPort) = \provPortName$.
-The functions $\signature :
-\ReqPort \rightarrow \ToList{\Type} \times \ToList{\Type}$ and $\signature : \ProvPort \rightarrow \ToList{\Type} \times
-\ToList{\Type}$ return the signature of the respective port, i.e., the list of input and output parameter types:
-$\signature(\reqPort) = (\type_{\mathit{in}, 1} \cons \ldots \cons \type_{\mathit{in}, n}, \type_{\mathit{out}, 1} \cons \ldots
-\cons \type_{\mathit{out}, m})$ and $\signature(\provPort) = (\typeof(\var_{\mathit{in}, 1}) \cons \ldots \cons
-\typeof(\var_{\mathit{in}, n}), \typeof(\var_{\mathit{out}, 1}) \cons \ldots \cons \typeof(\var_{\mathit{out}, m}))$.
-
-Additionally, the function $\inputs : \ProvPort \rightarrow \ToList{\Var}$ with $\inputs(\provPort) = \var_{\mathit{in}, 1} \cons
-\ldots \cons \var_{\mathit{in}, n}$ extracts the list of input parameters of a provided port. $\outputs : \ProvPort \rightarrow
-\ToList{\Var}$ with $\outputs(\provPort) = \var_{\mathit{out}, 1} \cons \ldots \cons \var_{\mathit{out}, m}$, on the other hand,
-extracts the list of output parameters of a provided port. The behavior of a provided port is defined by its procedure; it can be
-obtained using the function $\behavior : \ProvPort \rightarrow
-\Procedure$, where $\behavior(\provPort) = \procedure$.
+The functions $\signature \colon
+\ReqPortDecl \rightarrow \ToList{\Type} \times \ToList{\Type}$ and $\signature \colon \ProvPortDecl \rightarrow \ToList{\Type} \times
+\ToList{\Type}$ return the signature of a required or provided port declaration, that is, the lists of input and input/output
+parameter types:
+$\signature(\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}}) = (\toList{\type_\mathit{in}},
+\toList{\type_\mathit{io}})$ and
+$\signature(\provPortDeclSyn{\provPort}{\toList{\varDecl}_\mathit{in}}{\toList{\varDecl}_\mathit{io}}{\toList{\varDecl}_\mathit{loc}}{\stmFm})
+= (\typeof(\toList{\var_{\mathit{in}}}), \typeof(\toList{\var_{\mathit{io}}}))$.
 
 \subsubsection{Bindings}
 A binding binds a required port to a provided port. The binding must be either between two components on the
@@ -498,100 +489,87 @@ of the previous state are returned. If the same provided port is invoked multipl
 cached multiple times, always returning the computed values during the next step that corresponds to the appropriate invocation
 during the current step. If the provided port does not have any incoming parameters, it suffices to cache the results once.
 
-Since port names are only unique within a component but can overlap between a parent component and its subcomponents, a
-binding must qualify a port name with the name of the port's component. The component name can refer to any of the parent
-component's subcomponents or to the parent component itself.
+To uniquely identify a port of a component or a subcomponent, a binding must qualify a port with the component the port belongs
+to. The component can be any of the parent component's subcomponents or to the parent component itself.
 \begin{equation*} 
-	\binding \in \Binding :=
-		\bindingDecl{\qualifiedName{\compName^r}{\reqPortName}}{\qualifiedName{\compName^p}{\provPortName}}{\instantBinding}
+	\bindingDecl \in \BindingDecl :=
+		\bindingDeclSyn{\qualifiedName{\comp_\reqPort}{\reqPort}}{\qualifiedName{\comp_\provPort}{\provPort}}{\instantBinding}
 		\mid
-		\bindingDecl{\qualifiedName{\compName^r}{\reqPortName}}{\qualifiedName{\compName^p}{\provPortName}}{\delayedBinding}
+		\bindingDeclSyn{\qualifiedName{\comp_\reqPort}{\reqPort}}{\qualifiedName{\comp_\provPort}{\provPort}}{\delayedBinding}
 \end{equation*}
 
-We assume the functions $\req : \Binding \rightarrow \CompName \times \ReqPortName$ and $\prov : \Binding \rightarrow \CompName
-\times \ProvPortName$ that return the names of the required or the provided port of a binding and their respective component
-names.
-For a binding $\binding$ defined as above, $\req(\binding) = (\compName^r, \reqPortName)$ and $\prov(\binding) = (\compName^p,
-\provPortName)$, regardless of whether the binding is instantaneous or delayed. The predicate $\delayed : \Binding \rightarrow
-\Bool$ indicates whether the binding is delayed, that is, $\delayed(\binding) \Leftrightarrow \binding =
-\bindingDecl{\qualifiedName{\compName^r}{\reqPortName}}{\qualifiedName{\compName^p}{\provPortName}}{\delayedBinding}$.
-
-We define a renaming operation for component names used within bindings as follows: Given a component name $\compName$ that is
-to be replaced by component name $\compName'$, we update a binding $\binding$ using the notation $\binding' =
-\binding\left[\compName\mapsto\compName'\right]$ with 
-\begin{itemize}
-	\item $\delayed(\binding) = \delayed(\binding')$,
-	\item $\req(\binding') = 
-		\begin{cases}
-			(\compName', \reqPortName) & \text{if } \req(\binding) = (\compName, \reqPortName) \\
-			\req(\binding) & \text{otherwise, and}
-		\end{cases}$
-	\item $\prov(\binding') = 
-		\begin{cases}
-			(\compName', \provPortName) & \text{if } \prov(\binding) = (\compName, \provPortName) \\
-			\prov(\binding) & \text{otherwise.}
-		\end{cases}$
-\end{itemize}
-
-For a set of bindings $\toSet{\binding}$ we have the notational convention
-$\toSet{\binding}\left[\compName\mapsto\compName'\right]$ to rename the component in all bindings contained in the set. When we
-want to find the provided port a required port is bound to by a set of bindings, we use $.[., .] : \ToSet{\Binding} \times
-\CompName \times \ReqPortName \rightarrow \liftFailure{(\CompName \times \ProvPortName)}$ defined as
-\begin{equation*}
-	\{\binding_1, \ldots, \binding_n\}[\compName, \reqPortName] = 
-		\begin{cases}
-			\prov(\binding_i) & \text{if } \req(\binding_i) = (\compName, \reqPortName) \wedge 1 \leq i \leq n \\
-			\failure & \text{otherwise.}
-		\end{cases}
-\end{equation*}
+We define a substitution operation for components used within bindings as follows: Given a component $\comp$ that is to be
+replaced by component $\comp'$, we update a binding $\bindingDecl$ using the notation $\bindingDecl\left[\comp \mapsto
+\comp'\right]$, such that
+$(\bindingDeclSyn{\qualifiedName{\comp_\reqPort}{\reqPort}}{\qualifiedName{\comp_\provPort}{\provPort}}{\anyBinding})[\comp
+\mapsto \comp'] = \bindingDeclSyn{\qualifiedName{\comp_1}{\reqPort}}{\qualifiedName{\comp_2}{\provPort}}{\anyBinding}$ where
+$\comp_1 = \comp_\reqPort$ if $\comp_1 \neq \comp$ and $\comp_1 = \comp'$ otherwise; and $\comp_2 = \comp_\provPort$ if $\comp_2
+\neq \comp$ and $\comp_2 = \comp'$ otherwise.
+For a list of bindings $\toList{\bindingDecl}$ we use the notational convention
+$\toList{\bindingDecl}[\comp \mapsto \comp']$ to substitute the component in all bindings contained in the list.
 
 \subsubsection{Components}
-Finally, components are uniquely identified by their names and consist of sets
-of provided and required ports, fields, and port bindings. They have a behavior described by a statement and may optionally be
-the parent of a set of subcomponents.
+Components declare sets of required and provided ports, fields, port bindings and subcomponents. They have a behavior described by
+a statement with optional local variables.
+\begin{equation*}
+	\compDecl \in \CompDecl :=  
+		\compDeclSyn{\comp}
+			{\toList{\compDecl}}
+			{\toList{\fieldDecl}}
+			{\toList{\reqPortDecl}}{\toList{\provPortDecl}}
+			{\toList{\bindingDecl}}
+			{\toList{\varDecl}}
+			{\stmFm}
+\end{equation*}
+
+We define a couple of selector methods: $\compof \colon \CompDecl \rightarrow \Comp$ yields the component declared by the
+component declaration, whereas the functions $\reqsof \colon \CompDecl \rightarrow \ToSet{\ReqPortDecl}$ and $\provsof \colon
+\CompDecl \rightarrow \ToSet{\ProvPortDecl}$ return the declared required and provided ports, respectively. $\subsof \colon \CompDecl \rightarrow
+\ToSet{\CompDecl}$ returns the set of subcomponent declarations of a component declaration.
+
+
+We use the $\in$ operator to check whether a component declaration declares a specific subcomponent, required or provided port,
+field, or binding.
+For instance, for required port declarations we have
+$\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in
+(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})
+\Leftrightarrow \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in \toList{\reqPortDecl}$.
+
+We are allowed to substitute a subcomponent declaration of some component declaration, provided that
+the original subcomponent declaration $\compDecl'$ and the new subcomponent declaration $\compDecl''$ are port-equivalent, that is
+$\reqsof(\compDecl') = \reqsof(\compDecl'')$ and $\provsof(\compDecl') = \provsof(\compDecl'')$.
+We use the notation $\compDecl[\compDecl' \mapsto \compDecl'']$ to obtain a new component declaration
+where $\compDecl'$ has been replaced with $\compDecl''$. Consequently,
+$(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})[\compDecl'
+\mapsto \compDecl''] =
+\compDeclSyn{\comp}{\toList{\compDecl}[\compDecl'
+\mapsto \compDecl'']}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}[\compDecl'
+\mapsto \compDecl'']}{\toList{\varDecl}}{\stmFm}$. We also allow for simultaneous substitution of multiple subcomponents, written as
+$\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compDecl_n']$.
+
+We can also select a subcomponent declaration at some level of the component hierarchy using the subcomponent selector $.[.]
+\colon \CompDecl \times \ToListNE{\Comp} \rightarrow \liftFailure{\CompDecl}$, defined as
 \begin{align*}
-	\comp \in \Comp := & \; 
-		\compDecl{\compName\\&\qquad}
-			{\comp_1 \ldots \comp_n\\&\qquad}
-			{\field_1 \ldots \field_m\\&\qquad}
-			{\reqPort_1 \ldots \reqPort_k\\&\qquad}
-			{\provPort_1 \ldots \provPort_l\\&\qquad}
-			{\binding_1 \ldots \binding_o\\&\qquad}
-			{\procedure}
+	\compDecl[\missing] &= \failure \\
+	\compDecl[\comp] &= \begin{cases}
+		\compDecl & \text{if } \compof(\compDecl) = \comp \\
+		\failure & \text{otherwise}
+	\end{cases} \\
+	\compDecl[\comp1 \cons \comp_2 \cons \toList{\comp}] &= 
+		\begin{cases}
+			\compDecl'[\comp_2 \cons \toList{\comp}] & \text{if } 
+				\compof(\compDecl) = \comp_1 \wedge \exists \compDecl' \in \compDecl \colon \compof(\compDecl') = \comp_2 \\
+			\failure & \text{otherwise.}
+		\end{cases}
 \end{align*}
-
-Again we're defining a couple of functions that allow us to conveniently extract the different parts of a component $\comp$
-defined as above. $\nameof : \Comp \rightarrow \CompName$ retrieves the name of the component, such that
-$\nameof(\comp) = \compName$. $\subComps : \Comp \rightarrow \ToSet{\Comp}$ with $\subComps(\comp) = \{\comp_1, \ldots, \comp_n\}$
-retrieves the subcomponents of component $\comp$. The fields can be obtained using function $\fields : \Comp \rightarrow
-\ToSet{\Field}$, defined as $\fields(\comp) = \{ \field_1, \ldots, \field_m \}$. To extract the required and the provided ports
-of a component, functions $\reqs : \Comp \rightarrow \ToSet{\ReqPort}$ with $\reqs(\comp) = \{ \reqPort_1, \ldots, \reqPort_k \}$
-and $\provs : \Comp \rightarrow \ToSet{\ProvPort}$ with $\provs(\comp) = \{ \provPort_1, \ldots, \provPort_l \}$ can be used. The
-bindings of a component are returned by function $\bindings : \Comp \rightarrow \ToSet{\Binding}$, defined as $\bindings(\comp) =
-\{ \binding_1, \ldots, \binding_o \}$. Finally, the component's behavior can be extracted using function $\behavior : \Comp
-\rightarrow \Procedure$, with $\behavior(\comp) = \procedure$.
-
-We define a renaming operation for components. Given a component $\comp$ with $\nameof(\comp) = \compName$ that we want to
-rename to $\compName'$, we use the notation $\comp' = \comp\left[\compName\mapsto\compName'\right]$ to create the renamed
-component $\comp'$ with $\nameof(\comp') = \compName'$, $\subComps(\comp') = \subComps(\comp)$, $\fields(\comp')=\fields(\comp)$,
-$\reqs(\comp') = \reqs(\comp)$, $\provs(\comp') = \provs(\comp)$, $\bindings(\comp') =
-\bindings\left[\compName\mapsto\compName'\right]$, and $\behavior(\comp') = \behavior(\comp)$; that is, the component remains unchanged
-except for its name and for the bindings referring to the component's name.
-
-We can replace or substitute a subcomponent of some component $\comp_0$, provided that the original subcomponent $\comp'$ and the
-new subcomponent $\comp''$ are port-equivalent, that is $\reqs(\comp') = \reqs(\comp'')$ and $\provs(\comp') = \provs(\comp'')$.
-We use the notation $\comp_1 = \comp_0\left[\comp' \mapsto \comp''\right]$ to obtain a new component $\comp_1$ where $\comp'$ has
-been replaced by $\comp''$, such that $\nameof(\comp_1) = \nameof(\comp_0)$, $\subComps(\comp_1) = \subComps(\comp_0) \setminus
-\comp' \cup \comp''$, $\fields(\comp_1)=\fields(\comp_0)$, $\reqs(\comp_1) = \reqs(\comp_0)$, $\provs(\comp_1) = \provs(\comp_0)$,
-$\bindings(\comp_1) = \bindings(\comp_0)\left[\nameof(\comp')\mapsto\nameof(\comp'')\right]$, and $\behavior(\comp_1) =
-\behavior(\comp_0)$. We also allow for simultaneous substitution of multiple subcomponents, written as
-$\comp\left[\comp_1\mapsto\comp_1', \ldots, \comp_n\mapsto\comp_n'\right]$.
 
 \subsection{Well-Formedness of Components}
 We only consider components that are well-formed according to the following criteria:
 \begin{itemize}
 	\item All expressions and statements are typed correctly.
-	\item All fields, ports, and components within the hierarchy have unique names.
+	\item All fields, required ports, and provided ports within a component have a unique name.
+	\item All subcomponents of a component have unique names; additionally, a parent component has a name that is different from the
+	names of all of its subcomponents.
 	\item All statements and expressions respect the scoping of parameters, locals, fields, and required ports.
 	\item All bindings respect the component hierarchy: A binding connecting two ports of components $\comp_1$ and $\comp_2$ within
 	the context of component $\comp$ with subcomponents $\toSet{s}$ is only well-formed if $\comp_1, \comp_2 \in \{ \comp \} \cup
@@ -602,50 +580,55 @@ We only consider components that are well-formed according to the following crit
 	\item The ports of a binding are compatible, that is, they have the same signature (= type, order, and number of input and
 	output parameters).
 	\item Required ports are invoked with the correct parameters (both in type and number).
-	\item All fields have at least one initial value.
-	\item All variables are definitely assigned before they are read and all out parameters of a provided port are definitely
-	assigned when the function returns. Analogous to \CSharp's definite assignment rules. Definite assignment is somewhat complex to
-	check, requiring a control flow analysis. On the other hand, if an unassigned variable is read, the semantics just ``hangs``.
-	So alternatively, we could just live with that without making it a well-formedness requirement. When transforming a \SSharp
-	model into a formal model, definite assignment is guaranteed by the \CSharp compiler anyway, probably not justifying the work to
-	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting \Fil program
-	has infinite traces only. If we don't check definite assignment, infinite traces cannot be guaranteed. So maybe we just formally
-	require definite assignment, giving a somewhat high-level formal definition, and simply don't implement the definite assignment
-	check in the \SSharp compiler. Even yet another possibility would be to define that each and every variable is initialized to the
-	default value of its type (e.g., $\false$ for Boolean variables, $0$ for integer variables), therefore all variables are always
-	definitely assigned. This might hide bugs, but on the other hand, we do not expect anyone to write formal models by hand. Again,
-	\CSharp guarantees definite assignment without implicitly assigning default values, so the transformation from \CSharp doesn't
-	have this problem. So the current thinking is: All locals and all output parameters are initialized to their default value,
-	sidestepping this well-formedness check altogether. Input parameters are always assigned (it is illegal to call a port without
-	the correct number and type of parameters) and fields always have at least one initial value.
-	\item Note that we do not have to check for cycles (i.e., a component being its own parent), as that simply cannot be expressed
-	with the domains we have defined.
+	\item All ports mentioned in a binding are actually declared in the respective component.
+	\item All invoked required ports are actually declared in the component.
+	\item All local variables must be definitely assigned before they are first read. Analogous to \CSharp's definite assignment.
+	Definite assignment is somewhat complex to check, requiring a control flow analysis. If an unassigned variable is read, the
+	semantics would just ``hang``, so we could just live with that without making definite assignment a well-formedness requirement.
+	Particularly, when transforming a \SSharp model into a formal model, definite assignment is guaranteed by the \CSharp compiler
+	anyway. However, the purpose of the well-formedness property is to guarantee that the resulting \Fil program
+	has infinite traces only. If we don't require definite assignment, infinite traces cannot be guaranteed. Note that parameters
+	of a required port are always definitely assigned (it is illegal to call a required port without the correct number and type of
+	parameters) and fields always have at least one initial value, so they're also always definitely assigned.
+	\item Note that we do not have to check for component cycles (i.e., a component being its own parent), as that simply cannot be
+	expressed with the domains we have defined.
 \end{itemize}
 
 \subsection{Semantics of Formal Models}
-The nondeterministic rule system $\stmArrowFm$ defines the natural semantics of statements.
+The nondeterministic rule system $\stmArrowFm$ is parametrized over a component declaration or hierarchy $\compDecl$ and defines
+the natural semantics of statements.
 \begin{align*}
-	\mathit{Configurations} : & \;\configuration{\stmFm, \varEnvFmScoped, \toList{\comp}} \in \StmFm \times \VarEnvFmScoped \times
-	\ToList{\Comp}, \; \varEnvFmScoped \in \VarEnvFmScoped
+	\mathit{Configurations} \colon & \;\configurationFm{\stmFm, \fieldEnv, \varEnvFm, \toListNE{\comp}} \in \StmFm \times \FieldEnv \times
+	\VarEnvFm \times \ToListNE{\Comp}, \; \configurationFm{\fieldEnv, \varEnvFm} \in \FieldEnv \times \VarEnvFm
 	\\
-	\mathit{Transitions} : & \;\configuration{\stmFm, \varEnvFmScoped, \toList{\comp}} \stmArrowFm \varEnvFmScoped'
+	\mathit{Transitions} \colon & \;\configurationFm{\stmFm, \fieldEnv, \varEnvFm, \toListNE{\comp}} \stmArrowFm
+	\configurationFm{\fieldEnv', \varEnvFm'}
 \end{align*}
 
-The skip statement has no effect on the variable environment and is therefore simply discarded.
+The skip statement has no effect and is therefore simply discarded.
 \begin{equation*}
 	\tag{skip}
-	\configuration{\skipStm, \varEnvFmScoped, \toList{\comp}}
+	\configurationFm{\skipStm, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
-	\varEnvFm
+	\configurationFm{\fieldEnv, \varEnvFm}
 \end{equation*}
 
 Assignments to a variable update the variable environment accordingly, replacing the variable's current value with the value
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
-	\tag{assign}
-	\configuration{\assignVarStm{\varName}{\expr}, \varEnvFmScoped, \toList{\comp}}
+	\tag{assign${}_\text{v}$}
+	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
-	\varEnvFmScoped[\toList{\comp}, \varName \mapsto \ExprSem{\expr} \varEnvFmScoped(\toList{\comp})]
+	\configurationFm{\fieldEnv, \varEnvFm[\var \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm]}
+\end{equation*}
+
+Assignments to a field update the field environment accordingly, replacing the fields current value with the value
+obtained from the evaluation of the assigned expression.
+\begin{equation*}
+	\tag{assign${}_\text{f}$}
+	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+		\stmArrowFm
+	\configurationFm{\fieldEnv[\toListNE{\comp}, \field \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm], \varEnvFm}
 \end{equation*}
 
 Sequential composition executes two statements sequentially, carrying along the modified variable environment.
@@ -653,18 +636,18 @@ Sequential composition executes two statements sequentially, carrying along the 
 	\tag{seq}
 	\dfrac
 	{
-		\configuration{\stmFm_1, \varEnvFmScoped, \toList{\comp}}
+		\configurationFm{\stmFm_1, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\varEnvFmScoped_1
+		\configurationFm{\fieldEnv_1, \varEnvFm_1}
 		\qquad
-		\configuration{\stmFm_2, \varEnvFmScoped_1, \toList{\comp}}
+		\configurationFm{\stmFm_2, \fieldEnv_1, \varEnvFm_1, \toListNE{\comp}}
 			\stmArrowFm
-		\varEnvFmScoped_2
+		\configurationFm{\fieldEnv_2, \varEnvFm_2}
 	}
 	{
-		\configuration{\seqStm{\stmFm_1}{\stmFm_2}, \varEnvFmScoped, \toList{\comp}}
+		\configurationFm{\seqStm{\stmFm_1}{\stmFm_2}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\varEnvFmScoped_2
+		\configurationFm{\fieldEnv_2, \varEnvFm_2}
 	}
 \end{equation*}
 
@@ -674,86 +657,134 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\tag{cmd}
 	\dfrac
 	{
-		\configuration{\stmFm_i, \varEnvFmScoped, \toList{\comp}}
+		\configurationFm{\stmFm_i, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\varEnvFmScoped'
+		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configuration{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}, \varEnvFmScoped,
-		\toList{\comp}}
+		\configurationFm{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}, \fieldEnv, \varEnvFm,
+		\toListNE{\comp}}
 			\stmArrowFm
-		\varEnvFmScoped'
+		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
-	\qquad \text{if} \quad \ExprSem{e_i} \varEnvFmScoped(\toList{\comp}) = \true
+	\qquad \text{if} \quad \ExprSem{e_i} \fieldEnv(\toListNE{\comp}) \varEnvFm = \true
 \end{equation*}
 
-\begin{equation*}
+When a required port is called that is instantaneously bound to a provided port, and the component itself
+declares this binding, we check whether the component actually declares both ports and then execute the bound port's statement.
+While the field environment remains unchanged, the component context might change and the port is executed in a new, empty
+variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
+done with the execution of the port, we restore our previous variable environment, just taking over the port's output values.
+Note that $\unionCons$ is the ``union cons'' operator, adding an element to a list only if the neighboring elements
+differ from the appended one. So $\toList{e} \cons e_1 \unionCons e_2 = \toList{e} \cons e_1 \cons e_2$ while $\toList{e} \cons e \unionCons e =
+\toList{e} \cons e$.
+\begin{multline*}
 	\tag{call${}_1$}
 	\dfrac
 	{
-		\configuration{\stmof(\behavior(\comp.\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp}
+		\configurationFm{\stmFm, \fieldEnv, \varEnvFm_\missing[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
+		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\varof(\toList{\varDecl}_\mathit{io}))],
+		\toListNE{\comp} \unionCons \comp'}
 			\stmArrowFm
-		\varEnvFmScoped'
+		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp}
+		\configurationFm{\invoke{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \varEnvFm, \toListNE{\comp}
+		\triangleright \, \toList{\comp} \cons \comp}
 			\stmArrowFm
-		\varEnvFmScoped'
+		\configurationFm{\fieldEnv', \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
 	}
-	\quad \text{if } \bindings(\comp)[\comp, \reqPortName] = (\nameof(\comp), \provPortName)
-\end{equation*}
+	\\ \text{if} \quad \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in
+		\compDecl[\toListNE{\comp}] 
+	\wedge 
+	\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\instantBinding} \in
+		\compDecl[\toListNE{\comp}]
+	\wedge
+	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm}
+	\in	\compDecl[\toListNE{\comp} \unionCons \comp']
+\end{multline*}
 
-\begin{equation*}
+When a required port is called that is instantaneously bound to a provided port, and the component itself
+does not declare this binding, we do the same as above except that we have to look for the binding in the parent component. Note
+that these two rules are nondeterministic if there are two bindings declared for the same required port in both the component and
+its parent. However, this is never the case in well-formed formal models.
+\begin{multline*}
 	\tag{call${}_2$}
 	\dfrac
 	{
-		\configuration{\stmof(\behavior((\comp.\compName).\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp \cons
-		\comp.\compName}
+		\configurationFm{\stmFm, \fieldEnv, \varEnvFm_\missing[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
+		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\varof(\toList{\varDecl}_\mathit{io}))],
+		\toList{\comp} \cons \comp' \unionCons \comp''}
 			\stmArrowFm
-		\varEnvFmScoped'
+		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp}
+		\configurationFm{\invoke{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \varEnvFm, \toListNE{\comp}
+		\triangleright \, \toList{\comp} \cons \comp' \cons \comp}
 			\stmArrowFm
-		\varEnvFmScoped'
+		\configurationFm{\fieldEnv', \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
 	}
-	\quad \text{if } \bindings(\comp)[\comp, \reqPortName] = (\compName, \provPortName) \wedge \compName \neq \nameof(\comp)
-\end{equation*}
+	\\ \text{if} \quad \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in
+		\compDecl[\toListNE{\comp}] 
+	\wedge 
+	\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp''}{\provPort}}{\instantBinding} \in
+		\compDecl[\toList{\comp} \cons \comp']
+	\wedge
+	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm}
+	\in	\compDecl[\toList{\comp} \cons \comp' \unionCons \comp'']
+\end{multline*}
 
-\begin{equation*}
-	\tag{call${}_3$}
-	\dfrac
-	{
-		\configuration{\stmof(\behavior(\comp.\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp}
-			\stmArrowFm
-		\varEnvFmScoped'
-	}
-	{
-		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp \cons
-		\comp'}
-			\stmArrowFm
-		\varEnvFmScoped'
-	}
-	\quad \text{if } \bindings(\comp)[\comp', \reqPortName] = (\nameof(\comp), \provPortName)
-\end{equation*}
-
-\begin{equation*}
-	\tag{call${}_4$}
-	\dfrac
-	{
-		\configuration{\stmof(\behavior((\comp.\compName).\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp \cons
-		\comp.\compName}
-			\stmArrowFm
-		\varEnvFmScoped'
-	}
-	{
-		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp \cons
-		\comp'}
-			\stmArrowFm
-		\varEnvFmScoped'
-	}
-	\quad \text{if } \bindings(\comp)[\comp', \reqPortName] = (\compName, \provPortName) \wedge \compName \neq \nameof(\comp)
-\end{equation*}
+% \begin{equation*}
+% 	\tag{call${}_2$}
+% 	\dfrac
+% 	{
+% 		\configuration{\stmof(\behavior((\comp.\compName).\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+% 		\comp.\compName}
+% 			\stmArrowFm
+% 		\varEnvFmScoped'
+% 	}
+% 	{
+% 		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp}
+% 			\stmArrowFm
+% 		\varEnvFmScoped'
+% 	}
+% 	\quad \text{if } \bindings(\comp)[\comp, \reqPortName] = (\compName, \provPortName) \wedge \compName \neq \nameof(\comp)
+% \end{equation*}
+% 
+% \begin{equation*}
+% 	\tag{call${}_3$}
+% 	\dfrac
+% 	{
+% 		\configuration{\stmof(\behavior(\comp.\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp}
+% 			\stmArrowFm
+% 		\varEnvFmScoped'
+% 	}
+% 	{
+% 		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+% 		\comp'}
+% 			\stmArrowFm
+% 		\varEnvFmScoped'
+% 	}
+% 	\quad \text{if } \bindings(\comp)[\comp', \reqPortName] = (\nameof(\comp), \provPortName)
+% \end{equation*}
+% 
+% \begin{equation*}
+% 	\tag{call${}_4$}
+% 	\dfrac
+% 	{
+% 		\configuration{\stmof(\behavior((\comp.\compName).\provPortName)), \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+% 		\comp.\compName}
+% 			\stmArrowFm
+% 		\varEnvFmScoped'
+% 	}
+% 	{
+% 		\configuration{\invoke{\reqPortName}{\toList{\expr}}{\toList{\varName}}, \varEnvFmScoped, \toList{\comp} \cons \comp \cons
+% 		\comp'}
+% 			\stmArrowFm
+% 		\varEnvFmScoped'
+% 	}
+% 	\quad \text{if } \bindings(\comp)[\comp', \reqPortName] = (\compName, \provPortName) \wedge \compName \neq \nameof(\comp)
+% \end{equation*}
 
 \subsection{Transformation to \Fil Programs}
 The transformation of a well-formed formal model into a \Fil program first flattens the hierarchy in post order. That is, for a
