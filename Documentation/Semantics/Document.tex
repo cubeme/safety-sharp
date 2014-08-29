@@ -274,15 +274,9 @@ ones. The function is used to determine the initial values of all (global) varia
 values for each variable. The statement of a program is executed once during each step.
 
 \begin{samepage}
-<<<<<<< HEAD
 	The semantics of a \Fil program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnvFil_0 \,
 	\varEnvFil_1 \, \varEnvFil_2 \ldots$ of variable environments. We have $\{ \varEnvFil_0 \, \varEnvFil_1 \, \varEnvFil_2 \ldots \}
 	\in \mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stmFil)$ if
-=======
-	The semantics of a \Fil program is a set of \textit{traces}, with each trace being an infinite sequence $\varEnv_0 \,
-	\varEnv_1 \, \varEnv_2 \ldots$ of variable environments. We have $\{ \varEnv_0 \, \varEnv_1 \, \varEnv_2 \ldots \} \in
-	\mathit{traces}(\prog \triangleright \toSet{\var}_g, \toSet{\var}_l, \mathit{init}, \stm)$ if
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 	\begin{itemize}
 		\item $\forall \var \in \toSet{\var}_g \colon \varEnvFil_0(\var) \in \mathit{init}(\var)$
 		\item $\forall \var \in \Var \setminus \toSet{\var}_g \colon \varEnvFil_0(\var) = \missing$
@@ -313,29 +307,19 @@ component C
 				
 			provided:
 				X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
-<<<<<<< HEAD
 					Y() (* $\rightarrow$ *) ()
 					r1 := false
 					r2 := b1
 					
 			required:
 				Y : () (* $\rightarrow$ *) ()
-=======
-					r1 := false
-					r2 := b1
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 
 	fields:
 		x : int = 1, 2, 3
 		b : bool = true, false
 		
 	required:
-<<<<<<< HEAD
 		M : (int, int) (* $\rightarrow$ *) (bool, bool)
-=======
-		M : (int * int) (* $\rightarrow$ *) (bool * bool)
-		N : () (* $\rightarrow$ *) ()
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 		
 	provided:
 		X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
@@ -345,21 +329,12 @@ component C
 			skip
 		
 	bindings:
-<<<<<<< HEAD
 		C.M (* $\rightarrow_\mathtt{d}$ *) D.X // delayed
 		D.Y (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
-=======
-		M (* $\rightarrow_\mathtt{d}$ *) D.X   // delayed
-		N (* $\rightarrow_\mathtt{i}$ *) Y     // instantaneous
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 	
 	behavior:
 		l1 : bool, l2 : bool
 		M(x, x - 1) (* $\rightarrow$ *) (l1, l2)
-<<<<<<< HEAD
-=======
-		N() (* $\rightarrow$ *) ()
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 		(l1 (* $\twoheadrightarrow$ *) x = x - 1; l2 (* $\twoheadrightarrow$ *) b = true)
 \end{lstlisting}
 
@@ -486,7 +461,6 @@ A required port of a component has a possibly empty list of input parameters and
 Provided ports are defined similarly. However, they also introduce local names for their input and input/output parameters and
 declare a behavior in form of a statement, optionally also introducing additional local variables. 
 \begin{align*}
-<<<<<<< HEAD
 	\reqPortDecl \in \ReqPortDecl &:=
 		\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}}
 	\\
@@ -495,15 +469,6 @@ declare a behavior in form of a statement, optionally also introducing additiona
 		{\toList{\varDecl}_\mathit{io}}
 		{\toList{\varDecl}_\mathit{loc}}
 		{\stmFm}
-=======
-	\reqPort \in \ReqPort &:= \reqPortDecl{\reqPortName}{\type_{\mathit{in}, 1}, \ldots, \type_{\mathit{in}, n}}{\type_{\mathit{out},
-	1}, \ldots, \type_{\mathit{out}, m}} \\
-	\provPort \in \ProvPort &:= \provPortDecl{\provPortName}
-			{\var_{\mathit{in}, 1}, \ldots, \var_{\mathit{in}, n}}
-			{\var_{\mathit{out}, 1}, \ldots, \var_{\mathit{out}, m}}
-			{\\&\qquad\quad\var_{\mathit{loc}, 1} \ldots \var_{\mathit{loc}, k}}
-			{\\&\qquad\quad\stm}
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 \end{align*}
 
 The functions $\signature \colon
@@ -585,7 +550,6 @@ $\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compD
 We can also select a subcomponent declaration at some level of the component hierarchy using the subcomponent selector $.[.]
 \colon \CompDecl \times \ToListNE{\Comp} \rightarrow \liftFailure{\CompDecl}$, defined as
 \begin{align*}
-<<<<<<< HEAD
 	\compDecl[\missing] &= \failure \\
 	\compDecl[\comp] &= \begin{cases}
 		\compDecl & \text{if } \compof(\compDecl) = \comp \\
@@ -599,39 +563,6 @@ We can also select a subcomponent declaration at some level of the component hie
 		\end{cases}
 \end{align*}
 
-=======
-	\comp \in \Comp := & 
-		\compDecl{\compName\\&\qquad}
-			{\comp_1 \ldots \comp_n\\&\qquad}
-			{\field_1 \ldots \field_m\\&\qquad}
-			{\reqPort_1 \ldots \reqPort_k\\&\qquad}
-			{\provPort_1 \ldots \provPort_l\\&\qquad}
-			{\binding_1 \ldots \binding_o\\&\qquad}
-			{\stm}
-\end{align*}
-
-Again we're defining a couple of functions that allow us to conveniently extract the different parts of a component $\comp$
-defined as above. $\nameof : \Comp \rightarrow \CompName$ retrieves the name of the component, such that
-$\nameof(\comp) = \compName$. $\subComp : \Comp \rightarrow \ToSet{\Comp}$ with $\subComp(\comp) = \{\comp_1, \ldots, \comp_n\}$
-retrieves the subcomponents of component $\comp$. The fields can be obtained using function $\fields : \Comp \rightarrow
-\ToSet{\Field}$, defined as $\fields(\comp) = \{ \field_1, \ldots, \field_m \}$. To extract the required and the provided ports
-of a component, functions $\reqs : \Comp \rightarrow \ToSet{\ReqPort}$ with $\reqs(\comp) = \{ \reqPort_1, \ldots \reqPort_k \}$
-and $\provs : \Comp \rightarrow \ToSet{\ProvPort}$ with $\provs(\comp) = \{ \provPort_1, \ldots, \provPort_l \}$ can be used. The
-bindings of a component are returned by function $\bindings : \Comp \rightarrow \ToSet{\Binding}$, defined as $\bindings(\comp) =
-\{ \binding_1, \ldots, \binding_o \}$. Finally, the component's behavior can be extracted using function $\behavior : \Comp
-\rightarrow \Stm$, with $\behavior(\comp) = \stm$.
-
-\subsection{Transformation to \Fil Programs}
-The transformation of a formal model into a \Fil program first flattens the hierarchy in post order. That is, for a given
-component, all fields, ports, and bindings are moved to the parent component, ensuring that all names remain unique. The behavior
-is added at the correct location into the parent's behavior, depending on the scheduling. 
-
-Once the hierarchy is fully flattened, all ports are inlined into the behavior of the root component. For delayed bindings, the
-appropriate variables must be introduced. When the results of a delayed binding are read, the \texttt{prev} instruction must be used.
-
-The resulting monolithic component can then be transformed in a rather straightforward way to a \Fil program.
-
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 \subsection{Well-Formedness of Components}
 We only consider components that are well-formed according to the following criteria:
 \begin{itemize}
@@ -649,7 +580,6 @@ We only consider components that are well-formed according to the following crit
 	\item The ports of a binding are compatible, that is, they have the same signature (= type, order, and number of input and
 	output parameters).
 	\item Required ports are invoked with the correct parameters (both in type and number).
-<<<<<<< HEAD
 	\item All ports mentioned in a binding are actually declared in the respective component.
 	\item All invoked required ports are actually declared in the component.
 	\item All local variables must be definitely assigned before they are first read. Analogous to \CSharp's definite assignment.
@@ -662,22 +592,6 @@ We only consider components that are well-formed according to the following crit
 	parameters) and fields always have at least one initial value, so they're also always definitely assigned.
 	\item Note that we do not have to check for component cycles (i.e., a component being its own parent), as that simply cannot be
 	expressed with the domains we have defined.
-=======
-	\item All fields have at least one initial value.
-	\item All variables are definitely assigned before they are read and all out parameters of a provided port are definitely
-	assigned when the function returns. Analogous to \CSharp's definite assignment rules. Definite assignment is somewhat complex to
-	check, requiring a control flow analysis. On the other hand, if an unassigned variable is read, the semantics just ``hangs``.
-	So alternatively, we could just live with that without making it a well-formedness requirement. When transforming a \SSharp
-	model into a formal model, definite assignment is guaranteed by the \CSharp compiler anyway, probably not justifying the work to
-	implement such a check. Then again, the purpose of the well-formedness property is to guarantee that the resulting \Fil program
-	has infinite traces only. If we don't check definite assignment, infinite traces cannot be guaranteed. So maybe we just formally
-	require definite assignment, giving a somewhat high-level formal definition, and simply don't implement the definite assignment
-	check in the \SSharp compiler. Even yet another possibility would be to define that each and every variable is initialized to the
-	default value of its type (e.g., $\false$ for Boolean variables, $0$ for integer variables), therefore all variables are always
-	definitely assigned. This might hide bugs, but on the other hand, we do not expect anyone to write formal models by hand. Again,
-	\CSharp guarantees definite assignment without implicitly assigning default values, so the transformation from \CSharp doesn't
-	have this problem.
->>>>>>> 2bc64a7c92d7f0820469884e79f4f39be8fb51f3
 \end{itemize}
 
 \subsection{Semantics of Formal Models}
