@@ -23,7 +23,7 @@
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // TODO:
-//  - Introduce Cancelation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
+//  - Introduce Cancellation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
 //  - Tests for access from multiple Threads
 
 // be cautious:
@@ -53,7 +53,7 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // the stderr prompt was shown. Thus we can ensure that both stderr and stdout
 // were parsed until their end
 // idea 2:
-// commands can also be seperated by ";" so using
+// commands can also be separated by ";" so using
 // 'set autoexec "echo nuXmv finished last command; echo -2 nuXmv finished last command"'
 // could also be used as separation between two commands, which allows us to get
 // rid of the tasking code :-D
@@ -72,10 +72,12 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 //
 
 // Execution of Threads (example):
-// Start ─┬─⊸
-//        ├──⊸
-//        └─⊸
-// Remark: Unicode characters for visualisation found on http://shapecatcher.com/unicode/block/Box_Drawing/
+//         Startup-Phase                                                                ┆  Command-Phase                                                                                                                                                      ┆ Shutdown-Phase                                                                   ┆
+//       Start ─── call StartNuXmvInteractive ──────────────────────────────────────────┆─ call ExecuteCommand ────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ────────┆─ call QuitNuXmvAndWaitForExit ─ wait for end of the three threads below ─────────┆─ ...
+//                        ├─ new thread TaskReadStdout ─────────────────────────────────┆─ TaskReadStdout.newLine* ─── command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ────────────────┆─────── read StandardOutput.EndOfStream ─ stdoutAndCommandFinishedBlocker.Set ─⊸  ┆
+//                        ├─ new thread TaskReadStderr ─────────────────────────────────┆─ TaskReadStderr.newline* ─── command-finished-token in stderr found ── stderrFinishedBlocker.Set ───────────────────────────────────────────────────────────────────┆─────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸            ┆
+//                        └─ new thread TaskWaitForEnd ─ start to wait for process end ─┆─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆────────── process ended ─── set NuXmvModeOfProgramm.Terminated ⊸                 ┆
+// Remark: Unicode characters for visualization found on http://shapecatcher.com/unicode/block/Box_Drawing/
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
@@ -210,7 +212,7 @@ type internal ExecuteNuXmv() =
             proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
 
-            // deadlock might happen here, when in this sequence:
+            // deadlock might occur here, when in this sequence:
             // 1. a former command lead to the shutdown of nuXmv
             // 2. Stdout-Thread receives EOL and allows passing of current Command
             // 3. TaskWaitForEnd didn't set currentModeOfProgram to NuXmvModeOfProgramm.Terminated yet
@@ -345,7 +347,7 @@ type internal ExecuteNuXmv() =
     member this.ReturnUnprocessedOutput () : string =
         let stringBuilder = new System.Text.StringBuilder()
         let printUnprocessed () : unit =
-            stringBuilder.AppendLine "unprogressed" |> ignore
+            stringBuilder.AppendLine "not progressed" |> ignore
             stringBuilder.AppendLine ("stdout-buffer:\n" + stdoutOutputBuffer.ToString()) |> ignore
             stringBuilder.AppendLine ("stderr-buffer:\n" + stderrOutputBuffer.ToString()) |> ignore
             stringBuilder.AppendLine "==========" |> ignore
