@@ -71,13 +71,21 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // when nuxmv was shutdown.
 //
 
-// Execution of Threads (example):
-//         Startup-Phase                                                                ┆  Command-Phase                                                                                                                                                      ┆ Shutdown-Phase                                                                   ┆
-//       Start ─── call StartNuXmvInteractive ──────────────────────────────────────────┆─ call ExecuteCommand ────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ────────┆─ call QuitNuXmvAndWaitForExit ─ wait for end of the three threads below ─────────┆─ ...
-//                        ├─ new thread TaskReadStdout ─────────────────────────────────┆─ TaskReadStdout.newLine* ─── command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ────────────────┆─────── read StandardOutput.EndOfStream ─ stdoutAndCommandFinishedBlocker.Set ─⊸  ┆
-//                        ├─ new thread TaskReadStderr ─────────────────────────────────┆─ TaskReadStderr.newline* ─── command-finished-token in stderr found ── stderrFinishedBlocker.Set ───────────────────────────────────────────────────────────────────┆─────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸            ┆
-//                        └─ new thread TaskWaitForEnd ─ start to wait for process end ─┆─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆────────── process ended ─── set NuXmvModeOfProgramm.Terminated ⊸                 ┆
+// Execution of Threads (usually without any error):
+//         Startup-Phase                                                                                                                                                                                                                 ┆  Command-Phase                                                                                                                                                      ┆ Shutdown-Phase                                                                                                                                                                                                ┆
+//       Start ─── call StartNuXmvInteractive ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─────┆─ call ExecuteCommand ────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ────────┆─ call QuitNuXmvAndWaitForExit ───────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─ wait for end of the three threads below ─────────┆─ ...
+//                        ├─ new thread TaskReadStdout ─ TaskReadStdout.newLine* ─ command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ───────────────────────────────┆─ TaskReadStdout.newLine* ─── command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ────────────────┆─────── read StandardOutput.EndOfStream ─ set NuXmvModeOfProgramm.Terminated ─ stderrFinishedBlocker.WaitOne ─  stdoutAndCommandFinishedBlocker.Set ─⊸                                                         ┆
+//                        ├─ new thread TaskReadStderr ─ TaskReadStderr.newLine* ─ command-finished-token in stderr found ── stderrFinishedBlocker.Set ──────────────────────────────────────────────────────────────────────────────────┆─ TaskReadStderr.newline* ─── command-finished-token in stderr found ── stderrFinishedBlocker.Set ───────────────────────────────────────────────────────────────────┆──────────────────────────────────────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸                                                                                                        ┆
+//                        └─ new thread TaskWaitForEnd ─ start to wait for process end ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆────────── process ended ───⊸                                                                                                                                                                                  ┆
+//
+// Execution of Threads (with one unsuccessful command which leads to a shutdown):
+//         Startup-Phase                                                                                                                                                                                                                 ┆  Command-Phase            ┆ Shutdown-Phase                                                                                                                                                ┆
+//       Start ─── call StartNuXmvInteractive ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  stdoutAndCommandFinishedBlocker.WaitOne ─────┆─ call ExecuteCommand ─────┆───────────────────────────────────────────────────────────────────────────────────────────────────────────────────── stdoutAndCommandFinishedBlocker.WaitOne ─┆─ ...
+//                        ├─ new thread TaskReadStdout ─ TaskReadStdout.newLine* ─ command-finished-token in stdout found ──────── stderrFinishedBlocker.WaitOne  ─── stdoutAndCommandFinishedBlocker.Set ───────────────────────────────┆─ TaskReadStdout.newLine* ─┆─────── read StandardOutput.EndOfStream ─ set NuXmvModeOfProgramm.Terminated ─ stderrFinishedBlocker.WaitOne ─  stdoutAndCommandFinishedBlocker.Set ─⊸         ┆
+//                        ├─ new thread TaskReadStderr ─ TaskReadStderr.newLine* ─ command-finished-token in stderr found ── stderrFinishedBlocker.Set ──────────────────────────────────────────────────────────────────────────────────┆─ TaskReadStderr.newline* ─┆──────────────────────────────────────── read StandardError.EndOfStream ── stderrFinishedBlocker.Set ─⊸                                                        ┆
+//                        └─ new thread TaskWaitForEnd ─ start to wait for process end ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┆───────────────────────────┆────────── process ended ───⊸                                                                                                                                  ┆
 // Remark: Unicode characters for visualization found on http://shapecatcher.com/unicode/block/Box_Drawing/
+
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
@@ -182,6 +190,13 @@ type internal ExecuteNuXmv() =
                         ()
                     else                        
                         stdoutOutputBuffer.AppendLine newLineCleared |> ignore
+                // process definitively terminated here, because otherwise we wouldn't have received a EndOfStream-Token
+                // we set the currentModeOfProgram here, because only here we can assure, that
+                //    * we read everything from stderr
+                //    * the main thread still waits in ExecuteCommand and there is no race-condition between the
+                //      current command and a next command, which cannot be processed anymore, because nuxmv terminated.
+                currentModeOfProgram<-NuXmvModeOfProgramm.Terminated //must occur before FinishCommandAndReleaseBlocker
+                stderrFinishedBlocker.WaitOne() |> ignore
                 FinishCommandAndReleaseBlocker ()
                 ()
         )
@@ -191,11 +206,9 @@ type internal ExecuteNuXmv() =
             fun () ->
                 if timeInMs > 0 then
                     let result = proc.WaitForExit(timeInMs)
-                    currentModeOfProgram<-NuXmvModeOfProgramm.Terminated                    
                     result
                 else
                     proc.WaitForExit()
-                    currentModeOfProgram<-NuXmvModeOfProgramm.Terminated
                     true
         )
     
@@ -211,12 +224,6 @@ type internal ExecuteNuXmv() =
             // which might be a control word of GNU readline out of the input-stream
             proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
-
-            // deadlock might occur here, when in this sequence:
-            // 1. a former command lead to the shutdown of nuXmv
-            // 2. Stdout-Thread receives EOL and allows passing of current Command
-            // 3. TaskWaitForEnd didn't set currentModeOfProgram to NuXmvModeOfProgramm.Terminated yet
-            // 4. the program logic continues with the next command
             stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
             let result = lastCommandResult.Value
             
@@ -319,6 +326,8 @@ type internal ExecuteNuXmv() =
 
     member this.QuitNuXmvAndWaitForExit () =
         let result = this.ExecuteCommand NuSMVCommand.Quit
+
+        stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
         System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
 
         let exitCode = proc.ExitCode
