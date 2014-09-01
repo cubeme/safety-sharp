@@ -215,6 +215,7 @@ type internal ExecuteNuXmv() =
     //TODO: Make result optional and if terminated return none
     member this.ExecuteCommand (command:ICommand) : NuXmvCommandResultBasic =
         // if a command is currently executing, wait
+        // TODO: I think we can safely remove this mutex
         commandActiveMutex.WaitOne() |> ignore
 
         if currentModeOfProgram <> NuXmvModeOfProgramm.Terminated then
@@ -327,7 +328,6 @@ type internal ExecuteNuXmv() =
     member this.QuitNuXmvAndWaitForExit () =
         let result = this.ExecuteCommand NuSMVCommand.Quit
 
-        stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
         System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
 
         let exitCode = proc.ExitCode
