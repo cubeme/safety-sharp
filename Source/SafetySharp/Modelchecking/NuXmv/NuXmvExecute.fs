@@ -64,6 +64,18 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // We assume after a "nuXmv finished last command" nothing else is written into each Buffer
 // until a new command is executed
 
+//Somewhere is still a race condition: syntactical wrong model 2 sometimes succeeds, sometimes not
+
+
+// http://shapecatcher.com/unicode/block/Box_Drawing
+// Execution of Threads (example):
+// Start ─┬─
+//        ├─
+//        └─
+// 
+// 
+// 
+
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
     | NotDetermined
@@ -117,8 +129,8 @@ type internal ExecuteNuXmv() =
             | Some(filename) -> filename
             | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
         
-    //TODO: Ensure nothing to read left before going to next command
-    //is actually a problem
+    //TODO: Ensure nothing to read left before going to next command.
+    //It is actually a problem!
     member this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
@@ -176,28 +188,41 @@ type internal ExecuteNuXmv() =
             fun () ->
                 if timeInMs > 0 then
                     let result = proc.WaitForExit(timeInMs)
-                    
+                    currentModeOfProgram<-NuXmvModeOfProgramm.Terminated                    
                     result
                 else
                     proc.WaitForExit()
+                    currentModeOfProgram<-NuXmvModeOfProgramm.Terminated
                     true
         )
     
+    //TODO: Make result optional and if terminated return none
     member this.ExecuteCommand (command:ICommand) : NuXmvCommandResultBasic =
         // if a command is currently executing, wait
         commandActiveMutex.WaitOne() |> ignore
-        
-        activeCommand <- Some(command)
-        // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip anything
-        // which might be a control word of GNU readline out of the input-stream
-        proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
-        stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
-        let result = lastCommandResult.Value
+        if currentModeOfProgram <> NuXmvModeOfProgramm.Terminated then
         
-        commandActiveMutex.ReleaseMutex()
+            activeCommand <- Some(command)
+            // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip anything
+            // which might be a control word of GNU readline out of the input-stream
+            proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
-        result
+
+            //deadlock happens here!!!!!!!!!!!!
+            stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
+            let result = lastCommandResult.Value
+            
+            commandActiveMutex.ReleaseMutex()
+
+            result
+        else
+            commandActiveMutex.ReleaseMutex()            
+            {
+                NuXmvCommandResultBasic.Command=command;
+                NuXmvCommandResultBasic.Stderr="";
+                NuXmvCommandResultBasic.Stdout="";
+            }
 
     
     // return Task, which can be awaited for
