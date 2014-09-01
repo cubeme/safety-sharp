@@ -309,6 +309,7 @@ type internal ExecuteNuXmv() =
         processErrorReader <- this.TaskReadStderr ()
         processWaiter <- this.TaskWaitForEnd (timeInMs)
         
+        // this.ExecuteCommand cannot be used during initialization, so use StandardInput directly
         let quitOnFailure = "set on_failure_script_quits"
         proc.StandardInput.WriteLine(quitOnFailure) 
         // indication must be the last command!!!
