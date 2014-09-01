@@ -64,17 +64,18 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 // We assume after a "nuXmv finished last command" nothing else is written into each Buffer
 // until a new command is executed
 
-//Somewhere is still a race condition: syntactical wrong model 2 sometimes succeeds, sometimes not
+// Somewhere is still a race condition: syntactical wrong model 2 sometimes succeeds, sometimes not
 
+// Race condition:
+// on_failure_script_quits is true. Thus it may happen, that there are still commands in the pipeline
+// when nuxmv was shutdown.
+//
 
-// http://shapecatcher.com/unicode/block/Box_Drawing
 // Execution of Threads (example):
-// Start ─┬─
-//        ├─
-//        └─
-// 
-// 
-// 
+// Start ─┬─⊸
+//        ├──⊸
+//        └─⊸
+// Remark: Unicode characters for visualisation found on http://shapecatcher.com/unicode/block/Box_Drawing/
 
 [<RequireQualifiedAccess>]
 type internal NuXmvCurrentTechniqueForVerification =
@@ -209,7 +210,11 @@ type internal ExecuteNuXmv() =
             proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
 
-            //deadlock happens here!!!!!!!!!!!!
+            // deadlock might happen here, when in this sequence:
+            // 1. a former command lead to the shutdown of nuXmv
+            // 2. Stdout-Thread receives EOL and allows passing of current Command
+            // 3. TaskWaitForEnd didn't set currentModeOfProgram to NuXmvModeOfProgramm.Terminated yet
+            // 4. the program logic continues with the next command
             stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
             let result = lastCommandResult.Value
             
