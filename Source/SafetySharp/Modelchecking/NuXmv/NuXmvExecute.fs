@@ -24,15 +24,6 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // TODO:
 //  - Introduce Cancellation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken
-//  - Tests for access from multiple Threads
-
-// be cautious:
-//  - the command prompt does "nuXmv >" does not contain a line ending.
-//  - this method avoids the problem with the newline
-//  - Ensure: stderr of the verbose result of a command is always associated to the correct command (race condition, actually a problem)
-//  - some commands like "go" are actually chains of commands (go is a shorthand for 5 commands)
-//    "autoexec" thus executes the "echo"-Command 5 times. Either use something which looks for the prompt
-//    in stdout again (this time with a counter) or forbid chained-Commands to correctly determine the end of a command
 // Source of Inspiration:
 //  - http://alabaxblog.info/2013/06/redirectstandardoutput-beginoutputreadline-pattern-broken/
 //  - https://gist.github.com/alabax/11353282
@@ -47,29 +38,25 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 
 // idea:
-// after each command an 'echo -2 nuXmv finished last command' is appended
-// using 'set autoexec "echo -2 nuXmv finished last command"'
-// command finishes, when the stdout "nuXmv > " appears and
-// the stderr prompt was shown. Thus we can ensure that both stderr and stdout
-// were parsed until their end
-// idea 2:
-// commands can also be separated by ";" so using
-// 'set autoexec "echo nuXmv finished last command; echo -2 nuXmv finished last command"'
-// could also be used as separation between two commands, which allows us to get
-// rid of the tasking code :-D
-// the prompt "nuXmv > " is in the end at the beginning of the currently unfinished line
-
-// Stdout-Thread waits for Stderr-Thread
-// ExecuteCommand-Thread waits for Stdout-Thread 
-// We assume after a "nuXmv finished last command" nothing else is written into each Buffer
-// until a new command is executed
-
-// Somewhere is still a race condition: syntactical wrong model 2 sometimes succeeds, sometimes not
-
-// Race condition:
-// on_failure_script_quits is true. Thus it may happen, that there are still commands in the pipeline
-// when nuxmv was shutdown.
-//
+// * after each command an 'echo -2 nuXmv finished last command' is appended
+//   using 'set autoexec "echo -2 nuXmv finished last command"'
+//   command finishes, when the stdout "nuXmv > " appears and
+//   the stderr prompt was shown. Thus we can ensure that both stderr and stdout
+//   were parsed until their end
+// * commands can also be separated by ";" so using
+//   'set autoexec "echo nuXmv finished last command; echo -2 nuXmv finished last command"'
+//   could also be used as separation between two commands
+// * Stdout-Thread waits for Stderr-Thread
+//   ExecuteCommand-Thread waits for Stdout-Thread 
+//   We assume after a "nuXmv finished last command" nothing else is written into each Buffer
+//   until a new command is executed
+// be cautious:
+//  - the command prompt does "nuXmv >" does not contain a line ending.
+//  - this method avoids the problem with the newline
+//  - Ensure: stderr of the verbose result of a command is always associated to the correct command (race condition, actually a problem)
+//  - some commands like "go" are actually chains of commands (go is a shorthand for 5 commands)
+//    "autoexec" thus executes the "echo"-Command 5 times. Either use something which looks for the prompt
+//    in stdout again (this time with a counter) or forbid chained-Commands to correctly determine the end of a command
 
 // Execution of Threads (usually without any error):
 //         Startup-Phase                                                                                                                                                                                                                 ┆  Command-Phase                                                                                                                                                      ┆ Shutdown-Phase                                                                                                                                                                                                ┆
@@ -140,8 +127,6 @@ type internal ExecuteNuXmv() =
             | Some(filename) -> filename
             | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
         
-    //TODO: Ensure nothing to read left before going to next command.
-    //It is actually a problem!
     member this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
@@ -293,7 +278,7 @@ type internal ExecuteNuXmv() =
         activeCommand<-Some(initialCommand) 
         commandActiveMutex.WaitOne() |> ignore
         
-        // TODO: check if already started (use expectedModeOfProgramAfterQueue)
+        // TODO: check if already started
         proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine (NuXmvHelpfulCommandSequences.commandLineStart)
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
@@ -328,18 +313,9 @@ type internal ExecuteNuXmv() =
 
     member this.QuitNuXmvAndWaitForExit () =
         let result = this.ExecuteCommand NuSMVCommand.Quit
-
         System.Threading.Tasks.Task.WaitAll(processOutputReader,processErrorReader,processWaiter)
-
         let exitCode = proc.ExitCode
-        result
-        // match exitCode with
-        //     | 0 -> true
-        //     | 255 -> false
-        //     | 2 -> true //help
-        //     | _ -> false
-        //     | 0 -> Successful(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
-        //     | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())        
+        result      
 
                 
     //////////////////////////////
@@ -367,10 +343,6 @@ type internal ExecuteNuXmv() =
             else
                 stringBuilder.AppendLine ("current Command:\n ---- ") |> ignore
             stringBuilder.AppendLine "==========" |> ignore
-        let printCommandInQueue (number:int) (command:ICommand) : unit =
-            stringBuilder.AppendLine ("Command " + (string number) + ":\n"+ (commandToString.ExportICommand command)) |> ignore
-        //commandQueueResults |> Seq.iter printEntry
         printUnprocessed ()
         printActiveCommand ()
-        //commandQueueToProcess |> Seq.iteri printCommandInQueue
         stringBuilder.ToString()
