@@ -146,16 +146,21 @@ type internal NuXmvCommandLine =
     | Interactive
     | AvoidLoadingDefaultSettings // -s
 
-module internal NuXmvHelpfulCommandSequences =
+module internal NuXmvHelpfulCommandsAndCommandSequences =
     let commandLineStart = [ NuXmvCommandLine.Verbose; NuXmvCommandLine.Interactive; NuXmvCommandLine.AvoidLoadingDefaultSettings ]
     let commandLineHelp = [ NuXmvCommandLine.Help ]
 
-    let readModel (filename: string ) : ICommand list = [
-        NuSMVCommand.ReadModel filename
-    ]
-    let switchToXmlOutput : ICommand list = [
-        NuSMVCommand.SetTyped (NuSMVEnvironmentVariables.DefaultTracePlugin.Xml)
-    ]
+    let readModel (filename: string ) : ICommand = 
+        NuSMVCommand.ReadModel filename :> ICommand
+
+    let switchToXmlOutput : ICommand =
+        NuSMVCommand.SetTyped (NuSMVEnvironmentVariables.DefaultTracePlugin.Xml) :> ICommand
+    
+    let enableOnFailureScriptQuits : ICommand =
+        NuSMVCommand.Set ("on_failure_script_quits",None) :> ICommand        
+    
+    let setAutoexec (commandsAsString:string) : ICommand =
+        NuSMVCommand.Set ("autoexec",Some(commandsAsString)) :> ICommand
 
     let readModelAndBuildBdd (filename:string) : ICommand list = [
         NuSMVCommand.ReadModel filename;

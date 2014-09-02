@@ -70,7 +70,11 @@ type internal ExportCommandsToString() =
             | NuSMVCommand.Set (name:string,value:string option) ->
                 let valueStr =
                     match value with
-                        | Some(value) -> sprintf " %s" value
+                        | Some(value) ->
+                            if value.Contains(" ") then
+                                sprintf " \"%s\"" value //add quotation marks
+                            else
+                                sprintf " %s" value
                         | None -> ""
                 sprintf "set %s%s" name valueStr
             

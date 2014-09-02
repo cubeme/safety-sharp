@@ -264,7 +264,7 @@ type internal ExecuteNuXmv() =
 
     member this.IsNuXmvRunable () : bool =
         use proc = new System.Diagnostics.Process()        
-        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine NuXmvHelpfulCommandSequences.commandLineHelp
+        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine NuXmvHelpfulCommandsAndCommandSequences.commandLineHelp
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
@@ -290,7 +290,7 @@ type internal ExecuteNuXmv() =
         commandActiveMutex.WaitOne() |> ignore
         
         // TODO: check if already started
-        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine (NuXmvHelpfulCommandSequences.commandLineStart)
+        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine (NuXmvHelpfulCommandsAndCommandSequences.commandLineStart)
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
@@ -306,10 +306,14 @@ type internal ExecuteNuXmv() =
         processWaiter <- this.TaskWaitForEnd (timeInMs)
         
         // this.ExecuteCommand cannot be used during initialization, so use StandardInput directly
-        let quitOnFailure = "set on_failure_script_quits"
-        proc.StandardInput.WriteLine(quitOnFailure) 
+        let quitOnFailure = commandToString.ExportICommand NuXmvHelpfulCommandsAndCommandSequences.enableOnFailureScriptQuits
+        proc.StandardInput.WriteLine(quitOnFailure)
+        let switchToXmlOutput = commandToString.ExportICommand NuXmvHelpfulCommandsAndCommandSequences.switchToXmlOutput
+        proc.StandardInput.WriteLine(switchToXmlOutput)
         // indication must be the last command!!!
-        let enableIndicationOfCommandEnd = sprintf "set autoexec \"echo %s; echo -2 %s\"" commandEndingStringStdout commandEndingStringStderr
+        let enableIndicationOfCommandEnd =
+            let commandForAutoexec = sprintf "echo %s; echo -2 %s" commandEndingStringStdout commandEndingStringStderr
+            commandToString.ExportICommand (NuXmvHelpfulCommandsAndCommandSequences.setAutoexec commandForAutoexec)            
         proc.StandardInput.WriteLine(enableIndicationOfCommandEnd) 
 
         stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
