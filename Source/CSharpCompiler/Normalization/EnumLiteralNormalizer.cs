@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -23,47 +23,35 @@
 namespace SafetySharp.CSharpCompiler.Normalization
 {
 	using System;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Modeling.CompilerServices;
 	using Roslyn;
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces the parameters of method invocations or object creations with a lifted lambda if the corresponding
-	///     method argument has the <see cref="LiftExpressionAttribute" /> applied.
-	/// 
-	///     For instance, with method M declared as <c>void M([LiftExpression] int a, int b)</c>:
-	///     <code>
-	///  		M(1 + 2, 4); 
-	///  		// becomes:
-	///  		M(() => 1 + 2, 4);
-	/// 	</code>
+	///     Replaces uses of enum literals within a component by their underlying integer value.
 	/// </summary>
-	public class ExpressionLifter : CSharpNormalizer
+	public class EnumLiteralNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public ExpressionLifter()
-			: base(NormalizationScope.Global)
+		public EnumLiteralNormalizer()
+			: base(NormalizationScope.Components)
 		{
 		}
 
 		/// <summary>
-		///     Lifts the expression represented by <paramref name="argument" />, if necessary.
+		///     If an enum literal is accessed, replaces the literal with its underlying integer value.
 		/// </summary>
-		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
+		public override SyntaxNode VisitMemberAccessExpression(MemberAccessExpressionSyntax memberAccess)
 		{
-			var requiresLifting = argument.HasAttribute<LiftExpressionAttribute>(SemanticModel);
-			argument = (ArgumentSyntax)base.VisitArgument(argument);
+			var symbol = memberAccess.GetReferencedSymbol(SemanticModel) as IFieldSymbol;
+			if (symbol == null || symbol.ContainingType.TypeKind != TypeKind.Enum)
+				return memberAccess;
 
-			if (!requiresLifting)
-				return argument;
-
-			var expression = SyntaxBuilder.Lambda(Enumerable.Empty<ParameterSyntax>(), argument.Expression).WithTrivia(argument);
-			return argument.WithExpression(expression);
+			return SyntaxFactory.ParseExpression(symbol.ConstantValue.ToString()).WithTrivia(memberAccess);
 		}
 	}
 }

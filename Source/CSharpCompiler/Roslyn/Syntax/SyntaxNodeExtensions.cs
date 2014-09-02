@@ -64,6 +64,23 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Gets the symbol referenced by <paramref name="syntaxNode" /> within the context of the
 		///     <paramref name="semanticModel" />.
 		/// </summary>
+		/// <param name="syntaxNode">The node the referenced symbol should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the referenced symbol.</param>
+		public static ISymbol GetReferencedSymbol(this SyntaxNode syntaxNode, SemanticModel semanticModel)
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			var symbolInfo = semanticModel.GetSymbolInfo(syntaxNode);
+			Requires.That(symbolInfo.Symbol != null, "Unable to determine the symbol referenced by syntax node '{0}'.", syntaxNode);
+
+			return symbolInfo.Symbol;
+		}
+
+		/// <summary>
+		///     Gets the symbol referenced by <paramref name="syntaxNode" /> within the context of the
+		///     <paramref name="semanticModel" />.
+		/// </summary>
 		/// <typeparam name="T">The expected type of the referenced symbol.</typeparam>
 		/// <param name="syntaxNode">The node the referenced symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the referenced symbol.</param>
@@ -78,7 +95,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 
 			var symbol = symbolInfo.Symbol as T;
 			Requires.That(symbol != null, "Expected a symbol of type '{0}'. However, the actual symbol type for syntax node '{1}' is '{2}'.",
-						  typeof(T).FullName, syntaxNode, symbolInfo.Symbol.GetType().FullName);
+				typeof(T).FullName, syntaxNode, symbolInfo.Symbol.GetType().FullName);
 
 			return symbol;
 		}
@@ -170,7 +187,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 				return syntaxNode.WithTrailingNewLines(desiredLineCount - actualLineCount);
 
 			Assert.NotReached("The given syntax node occupies {0} lines, whereas it is only allowed to occupy {1} lines.",
-							  actualLineCount, desiredLineCount);
+				actualLineCount, desiredLineCount);
 			return syntaxNode;
 		}
 

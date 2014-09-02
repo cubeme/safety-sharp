@@ -82,6 +82,8 @@
     <Compile Include="Analyzers\SS1006.fs" />
     <Compile Include="Analyzers\SS1007.fs" />
     <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
+    <Compile Include="Normalizers\EnumLiteralNormalizer.fs" />
+    <Compile Include="Normalizers\EnumTypeNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
     <None Include="packages.config" />

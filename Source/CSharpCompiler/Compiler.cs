@@ -36,7 +36,7 @@ namespace SafetySharp.CSharpCompiler
 	using Utilities;
 
 	/// <summary>
-	///     Compiles a SafetySharp modeling project authored in C# to SafetySharp modeling assembly.
+	///     Compiles a SafetySharp modeling project authored in C# to a SafetySharp modeling assembly.
 	/// </summary>
 	internal class Compiler
 	{
@@ -168,7 +168,7 @@ namespace SafetySharp.CSharpCompiler
 			foreach (var syntaxTree in compilation.SyntaxTrees)
 			{
 				var fileName = Path.GetFileNameWithoutExtension(syntaxTree.FilePath ?? String.Empty);
-				var filePath = Path.Combine(path, String.Format("{0}{1}", fileName, index));
+				var filePath = Path.Combine(path, String.Format("{0}{1}.cs", fileName, index));
 
 				File.WriteAllText(filePath, syntaxTree.GetText().ToString());
 				++index;

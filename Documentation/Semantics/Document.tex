@@ -887,7 +887,12 @@ to transform into a formal model.
 	\item All methods calls (both helper methods and invocations of other provided ports of the same component) must be inlined. The
 	only invocations allowed to remain are invocations of required ports.
 	\item All ports are rewritten such that they have a \texttt{void} return type, with the returned values written to newly
-	introduced \texttt{out} parameters. All invocations are normalized accordingly.
+	introduced \texttt{ref} parameters. All invocations are normalized accordingly.
+	\item If a port contains \texttt{out} parameters, the \texttt{out} keyword is replaced with \texttt{ref}.
+	\item If a port contains \texttt{ref} parameters, all of those parameters are moved to the end of the method signature.
+	\item All invocations that have fields as \texttt{ref} parameters are rewritten such that for all field \texttt{ref} parameters new variables are
+	introduced that are used as the \texttt{ref} parameters instead of the fields. After the invocation, the values of these
+	variables are assigned to the corresponding field.
 	\item Expressions must be rewritten such that they contain no side effects (assignments to variables, method calls, overloaded
 	operators).
 	\item Fields, local variables, properties, indexers and parameters of struct or array type must be replaced by the appropriate
