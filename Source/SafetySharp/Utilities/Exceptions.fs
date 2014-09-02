@@ -38,7 +38,7 @@ module internal Exceptions =
 
     /// Raises a <see cref="NotSupportedException" /> with a message informing the user that another overload of the method
     /// should be called with lifted expression parameters.
-    let invalidUnliftedCall =
+    let inline invalidUnliftedCall () =
         notSupported "Call a lifted overload of the method instead." |> ignore
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.

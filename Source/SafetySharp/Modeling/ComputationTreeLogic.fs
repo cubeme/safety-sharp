@@ -75,7 +75,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// </summary>
     /// <param name="operand">[LiftExpression] The operand the 'next' operator should be applied to.</param>
     member this.Next ([<LiftExpression>] operand : bool) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -107,7 +107,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// </summary>
     /// <param name="operand">[LiftExpression] The operand the 'finally' operator should be applied to.</param>
     member this.Finally ([<LiftExpression>] operand : bool) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -139,7 +139,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// </summary>
     /// <param name="operand">[LiftExpression] The operand the 'globally' operator should be applied to.</param>
     member this.Globally ([<LiftExpression>] operand : bool) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -209,7 +209,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
     member this.Until ([<LiftExpression>] leftOperand : bool, [<LiftExpression>] rightOperand : bool) =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -219,7 +219,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     member this.Until ([<LiftExpression>] leftOperand : bool, rightOperand : CtlFormula) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -229,7 +229,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
     member this.Until (leftOperand : CtlFormula, [<LiftExpression>] rightOperand : bool) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -239,7 +239,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     member this.Until ([<LiftExpression>] leftOperand : bool, rightOperand : Expression<Func<bool>>) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -249,7 +249,7 @@ type CtlOperatorFactory internal (quantifier) =
     /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
     member this.Until (leftOperand : Expression<Func<bool>>, [<LiftExpression>] rightOperand : bool) : CtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
 /// Provides factory methods for the construction of computation tree logic formulas.
@@ -276,4 +276,4 @@ type Ctl =
     /// </summary>
     /// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
     static member StateExpression ([<LiftExpression>] expression : bool) =
-        invalidUnliftedCall
+        invalidUnliftedCall ()

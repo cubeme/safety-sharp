@@ -55,7 +55,7 @@ type Ltl =
     /// </summary>
     /// <param name="expression">[LiftExpression] The expression that should be evaluated.</param>
     static member StateExpression ([<LiftExpression>] expression : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -79,7 +79,7 @@ type Ltl =
     /// </summary>
     /// <param name="operand">[LiftExpression] The operand the 'next' operator should be applied to.</param>
     static member Next ([<LiftExpression>] operand : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -103,7 +103,7 @@ type Ltl =
     /// </summary>
     /// <param name="operand">[LiftExpression] The operand the 'finally' operator should be applied to.</param>
     static member Finally ([<LiftExpression>] operand : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -127,7 +127,7 @@ type Ltl =
     /// </summary>
     /// <param name="operand">[LiftExpression] The operand the 'globally' operator should be applied to.</param>
     static member Globally ([<LiftExpression>] operand : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -185,7 +185,7 @@ type Ltl =
     /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
     static member Until ([<LiftExpression>] leftOperand : bool, [<LiftExpression>] rightOperand : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -195,7 +195,7 @@ type Ltl =
     /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     static member Until ([<LiftExpression>] leftOperand : bool, rightOperand : LtlFormula) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -205,7 +205,7 @@ type Ltl =
     /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
     static member Until (leftOperand : LtlFormula, [<LiftExpression>] rightOperand : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -215,7 +215,7 @@ type Ltl =
     /// <param name="leftOperand">[LiftExpression] The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">The operand on the right-hand side of the 'until' operator.</param>
     static member Until ([<LiftExpression>] leftOperand : bool, rightOperand : Expression<Func<bool>>) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null
 
     /// <summary>
@@ -225,5 +225,5 @@ type Ltl =
     /// <param name="leftOperand">The operand on the left-hand side of the 'until' operator.</param>
     /// <param name="rightOperand">[LiftExpression] The operand on the right-hand side of the 'until' operator.</param>
     static member Until (leftOperand : Expression<Func<bool>>, [<LiftExpression>] rightOperand : bool) : LtlFormula =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
         null

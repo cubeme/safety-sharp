@@ -22,13 +22,20 @@
 
 module Test
 
-type IElem = interface end
+type Var = 
+    | Var of string
 
-type Var = Var of IElem
-type Field = Field of IElem
-type ReqPort = ReqPort of IElem
-type ProvPort = ProvPort of IElem
-type Comp = Comp of IElem
+type Field = 
+    | Field of string
+
+type ReqPort =
+    | ReqPort of string
+
+type ProvPort = 
+    | ProvPort of string
+
+type Comp = 
+    | Comp of string
 
 type UOp =
     | Minus

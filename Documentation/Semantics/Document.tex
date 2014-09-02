@@ -564,7 +564,6 @@ $\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compD
 We can also select a subcomponent declaration at some level of the component hierarchy using the subcomponent selector $.[.]
 \colon \CompDecl \times \ToListNE{\Comp} \rightarrow \liftFailure{\CompDecl}$, defined as
 \begin{align*}
-	\compDecl[\missing] &= \failure \\
 	\compDecl[\comp] &= \begin{cases}
 		\compDecl & \text{if } \compof(\compDecl) = \comp \\
 		\failure & \text{otherwise}
