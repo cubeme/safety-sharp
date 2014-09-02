@@ -718,7 +718,7 @@ done with the execution of the port, we restore our previous variable environmen
 	\dfrac
 	{
 		\configurationFm{\stmFm, \fieldEnv, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
-		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\varof(\toList{\varDecl}_\mathit{io}))],
+		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
