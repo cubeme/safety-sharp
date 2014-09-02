@@ -185,6 +185,7 @@ Successful termination
             NuXmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
             NuXmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrFailed``;
             NuXmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutFailed``;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
         interpretedResult.HasSucceeded =? false
@@ -195,6 +196,7 @@ Successful termination
             NuXmvCommandResultBasic.Command = NuSMVCommand.FlattenHierarchy;
             NuXmvCommandResultBasic.Stderr  = ``flatten_hierarchy-ResultStderrSuccess``;
             NuXmvCommandResultBasic.Stdout  = ``flatten_hierarchy-ResultStdoutSuccess``;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
         }
         let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
         interpretedResult.HasSucceeded =? true

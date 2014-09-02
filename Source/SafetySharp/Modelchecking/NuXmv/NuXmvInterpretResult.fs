@@ -22,22 +22,39 @@
 
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
+// It is nice to be able to show the reason for a failure of the processing of a command in the GUI
+[<RequireQualifiedAccess>]
+type CommandResultProcessingFailure =
+    | NuXmvShutdown
+    | NotDeterminedYet
+    | Unclear
+    | SyntacticalError
+    | SemanticalError
+    | ExecutionTimeExceeded
+
 type internal INuXmvCommandResult =
     interface
         abstract member Basic : NuXmvCommandResultBasic
+        abstract member HasSucceeded : bool
     end
 
 and internal NuXmvCommandResultBasic = {
-    Command: ICommand;
+    Command : ICommand;
     Stderr : string;
     Stdout : string;
+    Failure : CommandResultProcessingFailure option;
 }   with
         interface INuXmvCommandResult with
             member this.Basic = this
+            member this.HasSucceeded =
+                this.Failure.IsNone
+        // to allow access without casting to ":> INuXmvCommandResult"
+        member this.HasSucceeded =
+                this.Failure.IsNone
 
 (*
 type internal NuXmvCheckedFormula =
-    | Valid of Formula:Formula *  Whitness:Trace option 
+    | Valid of Formula:Formula *  Witness:Trace option 
     | Undetermined of Formula:Formula
     | Invalid of Formula:Formula * CounterExample:Trace option
     with
@@ -56,17 +73,21 @@ type internal NuXmvCommandResultFormula = {
 }
 *)
 
-type internal NuXmvInterpretedResult =
-    | Successful of Successful:INuXmvCommandResult
-    | Failed of Failed:INuXmvCommandResult
+
+type internal NuXmvCommandResultInterpretedBasic = {
+    Basic : NuXmvCommandResultBasic;
+    Successful : bool;
+}
     with
+        interface INuXmvCommandResult with
+            member this.Basic = this.Basic
+            member this.HasSucceeded =
+                this.Successful
         member this.HasSucceeded =
-            match this with
-                | Successful (_) -> true
-                | Failed (_) -> false
+                this.Successful
+    
 
-
-type internal NuXmvInterpretedResults =
+type internal NuXmvCommandResultsInterpreted =
     | AllSuccessful of Successful:INuXmvCommandResult list
     | OneFailed of Successful:INuXmvCommandResult list * Failed:INuXmvCommandResult
     with
@@ -103,31 +124,38 @@ module internal NuXmvInterpretResult =
             expectation |> List.mapi (fun i elem -> lines.[i].StartsWith(elem))
                         |> List.forall id
     
-    // regular expressions here to avoid multiple initialisations
+    // regular expressions here to avoid multiple initializations
     // nice to test on the fly: http://www.rubular.com/
     let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")     // Example: Parsing file "Modelchecking/NuXmv/testcase1.smv" ..... done.
 
     let linesAsExpectedRegex (str:string) (regex:System.Text.RegularExpressions.Regex) =
         regex.IsMatch(str)
 
-    let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =
-        if success then
-            NuXmvInterpretedResult.Successful(result)
-        else
-            NuXmvInterpretedResult.Failed(result)
+    // this should only be used for commands, where the result doesn't need further interpretation
+    let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
+        let newResult =
+            if success then 
+                {
+                    NuXmvCommandResultInterpretedBasic.Basic=result;
+                    NuXmvCommandResultInterpretedBasic.Successful=true;
+                }
+            else
+                {
+                    NuXmvCommandResultInterpretedBasic.Basic= {result with NuXmvCommandResultBasic.Failure=Some(CommandResultProcessingFailure.Unclear)};
+                    NuXmvCommandResultInterpretedBasic.Successful=false;
+                }
+        newResult :> INuXmvCommandResult
+            
+    // this should only be used for commands, where the result doesn't need further interpretation
+    let otherwise (result:NuXmvCommandResultBasic) : INuXmvCommandResult=
+        successFromBool (result.HasSucceeded) result
 
-    let otherwise (result) =
-        //pesimistic:
-        // NuXmvInterpretedResult.Failed(result)
-        //optimistic
-        NuXmvInterpretedResult.Successful(result)
-
-    let interpretResultOfNuXmvCommand (result:NuXmvCommandResultBasic) (command:NuXmvCommand) =
+    let interpretResultOfNuXmvCommand (result:NuXmvCommandResultBasic) (command:NuXmvCommand) : INuXmvCommandResult =
         match command with
             | _ -> otherwise result
 
         
-    let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
+    let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) : INuXmvCommandResult =
         match command with
             | NuSMVCommand.ReadModel (_) ->                
                 let success = linesAsExpectedRegex result.Stderr regexReadModel
@@ -137,7 +165,7 @@ module internal NuXmvInterpretResult =
                 successFromBool success result
             | _ -> otherwise result
     
-    let interpretResult (result:NuXmvCommandResultBasic) : NuXmvInterpretedResult =
+    let interpretResult (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
         match result.Command with
             | :? NuSMVCommand as command -> interpretResultOfNuSMVCommand result command
             | :? NuXmvCommand as command -> interpretResultOfNuXmvCommand result command

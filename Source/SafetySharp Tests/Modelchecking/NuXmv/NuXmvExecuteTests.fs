@@ -100,8 +100,18 @@ module NuXmvExecuteTests =
         outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.ReadModel(filename) :> ICommand)
         
     [<Test>]
-    let ``NuXmv reads a file with a simple model`` () =
-        true =? false
+    let ``NuXmv reads a file with a simple determinisitc model`` () =        
+        let filename = "Modelchecking/NuXmv/simple-deterministic.smv"
+        let logFile = filename+".log"
+        let code = Models.``simple-deterministic``
+        FileSystem.WriteToAsciiFile filename code
+        let nuxmv = ExecuteNuXmv()
+        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
+        let outputTuple2 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.switchToXmlOutput)
+        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
+        outputTuple3.HasSucceeded =? true
+        outputTuple3.FailedCommand.IsSome =? false
         
     [<Test>]
     let ``NuXmv returns a counterexample of an unsatisfied formula`` () =

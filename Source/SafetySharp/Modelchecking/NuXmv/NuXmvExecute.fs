@@ -147,6 +147,7 @@ type internal ExecuteNuXmv() =
                 NuXmvCommandResultBasic.Command = activeCommand.Value;
                 NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
                 NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
+                NuXmvCommandResultBasic.Failure = None; //Assume no failure occurred. If a failure occurred, ExecuteCommand detects it and corrects the result
             }
             lastCommandResult <-  Some(newFinishedCommand)
             activeCommand <- None
@@ -179,7 +180,7 @@ type internal ExecuteNuXmv() =
                 // we set the currentModeOfProgram here, because only here we can assure, that
                 //    * we read everything from stderr
                 //    * the main thread still waits in ExecuteCommand and there is no race-condition between the
-                //      current command and a next command, which cannot be processed anymore, because nuxmv terminated.
+                //      current command and a next command, which cannot be processed anymore, because nuXmv terminated.
                 currentModeOfProgram<-NuXmvModeOfProgramm.Terminated //must occur before FinishCommandAndReleaseBlocker
                 stderrFinishedBlocker.WaitOne() |> ignore
                 FinishCommandAndReleaseBlocker ()
@@ -197,7 +198,6 @@ type internal ExecuteNuXmv() =
                     true
         )
     
-    //TODO: Make result optional and if terminated return none
     member this.ExecuteCommand (command:ICommand) : NuXmvCommandResultBasic =
         // if a command is currently executing, wait
         // TODO: I think we can safely remove this mutex
@@ -211,17 +211,29 @@ type internal ExecuteNuXmv() =
             proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
 
             stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
-            let result = lastCommandResult.Value
+
+            let resultFailureUnconsidered = lastCommandResult.Value            
+            let resultFailureConsidered =
+                if currentModeOfProgram = NuXmvModeOfProgramm.Terminated then
+                    // command was executed unsuccessfully (if it was not the quit-command)
+                    // and lead to the termination of nuXmv
+                    {
+                        resultFailureUnconsidered with NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.NotDeterminedYet)
+                    }
+                else
+                    // command was executed successfully
+                    resultFailureUnconsidered            
             
             commandActiveMutex.ReleaseMutex()
 
-            result
+            resultFailureUnconsidered
         else
             commandActiveMutex.ReleaseMutex()            
             {
                 NuXmvCommandResultBasic.Command=command;
                 NuXmvCommandResultBasic.Stderr="";
                 NuXmvCommandResultBasic.Stdout="";
+                NuXmvCommandResultBasic.Failure=Some(CommandResultProcessingFailure.NuXmvShutdown);
             }
 
     
@@ -231,21 +243,20 @@ type internal ExecuteNuXmv() =
             fun () -> this.ExecuteCommand command
         )
         
-    member this.ExecuteCommandSequence (commands:ICommand list) : NuXmvInterpretedResults =
+    member this.ExecuteCommandSequence (commands:ICommand list) : NuXmvCommandResultsInterpreted =
         let rec processCommands (alreadySuccessfullyProcessedReverse:INuXmvCommandResult list) (commands) =
             match commands with
                 | command :: tail ->
                     let result = this.ExecuteCommand command
                     let interpretedResult = NuXmvInterpretResult.interpretResult result
-                    match interpretedResult with
-                        | Successful (successful:INuXmvCommandResult) ->
-                            processCommands (successful::alreadySuccessfullyProcessedReverse) tail
-                        | Failed (failed:INuXmvCommandResult) ->
-                            let successful = alreadySuccessfullyProcessedReverse |> List.rev
-                            NuXmvInterpretedResults.OneFailed(successful,failed)
+                    if interpretedResult.HasSucceeded then
+                            processCommands (interpretedResult::alreadySuccessfullyProcessedReverse) tail
+                    else
+                        let successful = alreadySuccessfullyProcessedReverse |> List.rev
+                        NuXmvCommandResultsInterpreted.OneFailed(successful,interpretedResult)
                 | [] ->
                     let successful = alreadySuccessfullyProcessedReverse |> List.rev
-                    NuXmvInterpretedResults.AllSuccessful(successful)        
+                    NuXmvCommandResultsInterpreted.AllSuccessful(successful)        
         commands |> processCommands []
         
     member this.ExecuteCommandString (command:string) =
