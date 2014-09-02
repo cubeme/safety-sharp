@@ -226,7 +226,7 @@ type internal ExecuteNuXmv() =
             
             commandActiveMutex.ReleaseMutex()
 
-            resultFailureUnconsidered
+            resultFailureConsidered
         else
             commandActiveMutex.ReleaseMutex()            
             {

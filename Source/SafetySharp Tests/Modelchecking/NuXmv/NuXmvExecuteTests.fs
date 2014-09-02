@@ -84,7 +84,7 @@ module NuXmvExecuteTests =
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? false
         outputTuple3.FailedCommand.IsSome =? true
-        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
+        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.BuildModel :> ICommand)
         
     [<Test>]
     let ``NuXmv doesn't read a file with an incomplete instantiation`` () =        
@@ -210,8 +210,9 @@ module NuXmvExecuteTests =
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
-        outputTuple3.HasSucceeded =? true
-        outputTuple3.FailedCommand.IsSome =? false
+        outputTuple3.HasSucceeded =? false
+        outputTuple3.FailedCommand.IsSome =? true
+        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.BuildModel :> ICommand)
 
         
     // for traces
