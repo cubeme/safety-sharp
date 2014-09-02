@@ -149,7 +149,7 @@ Done
 Successful termination
 """
 
-    let checkFsm1Stdout = """
+    let checkFsmNotTotalWithDeadlockStdout = """
 ##########################################################
 The transition relation is not total. A state without
 successors is:
@@ -159,14 +159,14 @@ A deadlock state is:
 x = FALSE
 ##########################################################"""
     
-    let checkFsm1Stderr = """Checking totality and deadlock states.
+    let checkFsmNotTotalWithDeadlockStderr = """Checking totality and deadlock states.
 
 ********   WARNING   ********
 Fair states set of the finite state machine is empty.
 This might make results of model checking not trustable.
 ******** END WARNING ********"""
 
-    let checkFsm2Stdout = """
+    let checkFsmNotTotalWithoutDeadlockStdout = """
 ##########################################################
 The transition relation is not total. A state without
 successors is:
@@ -175,15 +175,15 @@ However, all the states without successors are
 non-reachable, so the machine is deadlock-free.
 ##########################################################"""
 
-    let checkFsm2Stderr = """Checking totality and deadlock states.
+    let checkFsmNotTotalWithoutDeadlockStderr = """Checking totality and deadlock states.
 """
 
-    let checkFsm3Stdout = """
+    let checkFsmTotalStdout = """
 ##########################################################
 The transition relation is total: No deadlock state exists
 ##########################################################
 """
-    let checkFsm3Stderr = """Checking totality and deadlock states.
+    let checkFsmTotalStderr = """Checking totality and deadlock states.
 """
 
 

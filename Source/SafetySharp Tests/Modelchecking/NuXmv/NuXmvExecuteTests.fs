@@ -114,7 +114,9 @@ module NuXmvExecuteTests =
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple2.HasSucceeded =? true
         outputTuple3.HasSucceeded =? true
-        //let checkFsmResultInterpreted = NuXmvInterpretResult.
+        let checkFsmResultInterpreted = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTuple3
+        checkFsmResultInterpreted.IsDeadlockFree =? false
+        checkFsmResultInterpreted.IsTotal =? false
 
         
     // interpretation of check_fsm
@@ -131,7 +133,9 @@ module NuXmvExecuteTests =
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple2.HasSucceeded =? true
         outputTuple3.HasSucceeded =? true
-        //outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
+        let checkFsmResultInterpreted = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTuple3
+        checkFsmResultInterpreted.IsDeadlockFree =? true
+        checkFsmResultInterpreted.IsTotal =? false
 
 
     // interpretation of check_fsm
@@ -148,6 +152,9 @@ module NuXmvExecuteTests =
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple2.HasSucceeded =? true
         outputTuple3.HasSucceeded =? true
+        let checkFsmResultInterpreted = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm outputTuple3
+        checkFsmResultInterpreted.IsDeadlockFree =? true
+        checkFsmResultInterpreted.IsTotal =? true
 
 
     [<Test>]

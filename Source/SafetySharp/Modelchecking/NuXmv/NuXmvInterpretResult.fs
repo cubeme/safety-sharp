@@ -53,6 +53,7 @@ and internal NuXmvCommandResultBasic = {
                 this.Failure.IsNone
 
 (*
+
 type internal NuXmvCheckedFormula =
     | Valid of Formula:Formula *  Witness:Trace option 
     | Undetermined of Formula:Formula
@@ -67,11 +68,24 @@ type internal NuXmvCheckedFormula =
 
 (*
 type internal NuXmvCommandResultFormula = {
-    Command: ICommand;
-    Stderr : string;
-    Stdout : string;
+    Basic : NuXmvCommandResultBasic;
+    ResultFormula : NuXmvCheckedFormula;
 }
 *)
+
+type internal NuXmvCommandResultInterpretedCheckFsm = {
+    Basic : NuXmvCommandResultBasic;
+    IsTotal : bool;
+    IsDeadlockFree : bool;
+}
+    with
+        interface INuXmvCommandResult with
+            member this.Basic = this.Basic
+            member this.HasSucceeded =
+                this.Basic.HasSucceeded
+        member this.HasSucceeded =
+                this.Basic.HasSucceeded
+
 
 
 type internal NuXmvCommandResultInterpretedBasic = {
@@ -121,6 +135,7 @@ module internal NuXmvInterpretResult =
 
     let splitLines (str:string) =
         str.Split([|"\r\n"; "\n"|],System.StringSplitOptions.None)
+
     let linesAsExpectedStr (str:string) (expectation:string list) =
         let lines = splitLines str
         if expectation.Length > lines.Length then
@@ -128,6 +143,8 @@ module internal NuXmvInterpretResult =
         else
             expectation |> List.mapi (fun i elem -> lines.[i].StartsWith(elem))
                         |> List.forall id
+    let linesAsExpectedRegex (str:string) (regex:System.Text.RegularExpressions.Regex) =
+        regex.IsMatch(str)
     
     // this should only be used for commands, where the result doesn't need further interpretation
     let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
@@ -148,45 +165,55 @@ module internal NuXmvInterpretResult =
     let otherwise (result:NuXmvCommandResultBasic) : INuXmvCommandResult=
         successFromBool (result.HasSucceeded) result
 
-
-
-    //////////////////////////////////////
-    // regular expressions
-    //////////////////////////////////////
-
-    // regular expressions here to avoid multiple initializations
-    // nice to test on the fly: http://www.rubular.com/
-    let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")     // Example: Parsing file "Modelchecking/NuXmv/testcase1.smv" ..... done.
-
-    let linesAsExpectedRegex (str:string) (regex:System.Text.RegularExpressions.Regex) =
-        regex.IsMatch(str)
-            
-    
     
     //////////////////////////////////////
     // interpretation of concrete commands
     //////////////////////////////////////
 
-    let interpretResultOfNuSMVCommandReadModel (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
-        match command with
-            | NuSMVCommand.ReadModel (_) ->                
-                let success = linesAsExpectedRegex result.Stderr regexReadModel
-                successFromBool success result
-            | _ -> failwith "wrong command"
+    // note: regular expressions are on top level to avoid multiple initializations
+    //       nice to test regular expressions on the fly: http://www.rubular.com/
+    //       for examples see file NuXmvInterpretResultTests
+    //       http://stackoverflow.com/questions/851057/how-to-prevent-regular-expression-of-hang-or-set-time-out-for-it-in-net
+    //       http://www.regular-expressions.info/catastrophic.html
+        
+    let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")
+    let interpretResultOfNuSMVCommandReadModel (result:NuXmvCommandResultBasic) =
+        let success = linesAsExpectedRegex result.Stderr regexReadModel
+        successFromBool success result
 
-    let interpretResultOfNuSMVCommandFlattenHierarchy (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
-        match command with
-            | NuSMVCommand.FlattenHierarchy ->
-                let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
-                successFromBool success result
-            | _ -> failwith "wrong command"
+    let interpretResultOfNuSMVCommandFlattenHierarchy (result:NuXmvCommandResultBasic) =
+        let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
+        successFromBool success result
+            
+    let regexCheckFsmTotal = new System.Text.RegularExpressions.Regex("""The transition relation is total""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckFsmNotTotalWithDeadlock = new System.Text.RegularExpressions.Regex("""The transition relation is not total.*The transition relation is not deadlock-free""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckFsmNotTotalWithoutDeadlock = new System.Text.RegularExpressions.Regex("""The transition relation is not total.*so the machine is deadlock-free""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let interpretResultOfNuSMVCommandCheckFsm (result:NuXmvCommandResultBasic) =
+        if linesAsExpectedRegex result.Stdout regexCheckFsmTotal then
+            {
+                NuXmvCommandResultInterpretedCheckFsm.Basic=result;
+                NuXmvCommandResultInterpretedCheckFsm.IsDeadlockFree=true;
+                NuXmvCommandResultInterpretedCheckFsm.IsTotal=true;
+            }
+        elif linesAsExpectedRegex result.Stdout regexCheckFsmNotTotalWithDeadlock then
+            // TODO: In many cases it doesn't make sense to continue the verification if the Kripke-Structure contains a deadlock
+            //       we could rewrite the basic result to HasSucceeded:=false                    
+            {
+                NuXmvCommandResultInterpretedCheckFsm.Basic=result;
+                NuXmvCommandResultInterpretedCheckFsm.IsDeadlockFree=false;
+                NuXmvCommandResultInterpretedCheckFsm.IsTotal=false;
+            }
+        elif linesAsExpectedRegex result.Stdout regexCheckFsmNotTotalWithoutDeadlock then
+            {
+                NuXmvCommandResultInterpretedCheckFsm.Basic=result;
+                NuXmvCommandResultInterpretedCheckFsm.IsDeadlockFree=true;
+                NuXmvCommandResultInterpretedCheckFsm.IsTotal=false;
+            }
+        else
+            failwith "result of check_fsm could not be interpreted"
 
-    let interpretResultOfNuSMVCommandCheckFsm (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
-        match command with
-            | NuSMVCommand.CheckFsm ->
-                ""
-            | _ -> failwith "wrong command"
     
+
     //////////////////////////////////////
     // interpretation of abstract commands
     //////////////////////////////////////
@@ -199,8 +226,9 @@ module internal NuXmvInterpretResult =
         
     let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) : INuXmvCommandResult =
         match command with
-            | NuSMVCommand.ReadModel (_) ->    interpretResultOfNuSMVCommandReadModel result command
-            | NuSMVCommand.FlattenHierarchy -> interpretResultOfNuSMVCommandFlattenHierarchy result command
+            | NuSMVCommand.ReadModel (_) ->    interpretResultOfNuSMVCommandReadModel result
+            | NuSMVCommand.FlattenHierarchy -> interpretResultOfNuSMVCommandFlattenHierarchy result 
+            | NuSMVCommand.CheckFsm ->         (interpretResultOfNuSMVCommandCheckFsm result) :> INuXmvCommandResult
             | _ -> otherwise result
     
     let interpretResult (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
