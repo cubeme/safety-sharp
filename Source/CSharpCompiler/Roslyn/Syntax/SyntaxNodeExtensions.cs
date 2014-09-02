@@ -72,7 +72,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var symbolInfo = semanticModel.GetSymbolInfo(syntaxNode);
-			Requires.That(symbolInfo.Symbol != null, "Unable to determine the symbol referenced by syntax node '{0}'.", syntaxNode);
+			Assert.NotNull(symbolInfo.Symbol, "Unable to determine the symbol referenced by syntax node '{0}'.", syntaxNode);
 
 			return symbolInfo.Symbol;
 		}
@@ -87,17 +87,11 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		public static T GetReferencedSymbol<T>(this SyntaxNode syntaxNode, SemanticModel semanticModel)
 			where T : class, ISymbol
 		{
-			Requires.NotNull(syntaxNode, () => syntaxNode);
-			Requires.NotNull(semanticModel, () => semanticModel);
+			var symbol = syntaxNode.GetReferencedSymbol(semanticModel);
+			Assert.OfType<T>(symbol, "Expected a symbol of type '{0}'. However, the actual symbol type for syntax node '{1}' is '{2}'.",
+				typeof(T).FullName, syntaxNode, symbol.GetType().FullName);
 
-			var symbolInfo = semanticModel.GetSymbolInfo(syntaxNode);
-			Requires.That(symbolInfo.Symbol != null, "Unable to determine the symbol referenced by syntax node '{0}'.", syntaxNode);
-
-			var symbol = symbolInfo.Symbol as T;
-			Requires.That(symbol != null, "Expected a symbol of type '{0}'. However, the actual symbol type for syntax node '{1}' is '{2}'.",
-				typeof(T).FullName, syntaxNode, symbolInfo.Symbol.GetType().FullName);
-
-			return symbol;
+			return (T)symbol;
 		}
 
 		/// <summary>

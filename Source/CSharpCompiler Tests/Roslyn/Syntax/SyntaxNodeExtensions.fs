@@ -61,11 +61,11 @@ module ``GetReferencedSymbol`` =
 
     [<Test>]
     let ``throws when syntax node does not reference any symbol`` () =
-        raises<InvalidOperationException> (fun () -> getReferencedSymbol<IMethodSymbol> "1" |> ignore)
+        raises<NullReferenceException> (fun () -> getReferencedSymbol<IMethodSymbol> "1" |> ignore)
 
     [<Test>]
     let ``throws when syntax node references symbol of different kind`` () =
-        raises<InvalidOperationException> (fun () -> getReferencedSymbol<IMethodSymbol> "f" |> ignore)
+        raises<InvalidCastException> (fun () -> getReferencedSymbol<IMethodSymbol> "f" |> ignore)
 
     [<Test>]
     let ``returns referenced field symbol`` () =
