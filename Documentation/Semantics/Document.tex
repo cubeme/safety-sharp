@@ -685,7 +685,7 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\qquad \text{if} \quad \ExprSem{e_i} \fieldEnv(\toListNE{\comp}) \varEnvFm = \true
 \end{equation*}
 
-We define a helper function $\boundof_\compDecl : \ToListNE{\Comp} \times \ReqPort \rightarrow \liftFailure{(\ToListNE{\Comp}
+We define a helper function $\boundof_\compDecl \colon \ToListNE{\Comp} \times \ReqPort \rightarrow \liftFailure{(\ToListNE{\Comp}
 \times \ProvPort)}$ parametrized over a component hierarchy $\compDecl$ that returns the provided port bound to a required
 port as follows:
 \begin{align*}
