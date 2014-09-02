@@ -297,45 +297,58 @@ We're now going to define the syntactic and semantic
 domains for formal models. The basic structure of a formal model is shown in~\cref{FormalModelOverview}.
 
 \begin{lstlisting}[tabsize=4,basicstyle=\footnotesize\ttfamily,label=FormalModelOverview,caption={Basic Structure of a
-Formal Model},float=ht,emph={component, subcomponents, fields, required, provided, bindings,
-behavior},emphstyle={\sffamily\bfseries},escapeinside={(*}{*)}]
+Formal Model},escapeinside={(*}{*)}]
 component C
-	subcomponents:
-		component D
-			fields:
-				b : bool = false
+{
+	// subcomponents
+	component D
+	{
+		// fields
+		b : bool = false
+			 
+		// provided port
+		X(p1 : int, p2 : int; r1 : bool, r2 : bool)
+		{
+			Y(;)
+			r1 := false
+			r2 := b1
+		}
 				
-			provided:
-				X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
-					Y() (* $\rightarrow$ *) ()
-					r1 := false
-					r2 := b1
-					
-			required:
-				Y : () (* $\rightarrow$ *) ()
+		// required port
+		Y(;)
+	}
 
-	fields:
-		x : int = 1, 2, 3
-		b : bool = true, false
+	// fields
+	x : int = 1, 2, 3
+	b : bool = true, false
 		
-	required:
-		M : (int, int) (* $\rightarrow$ *) (bool, bool)
+	// required port
+	M(int, int; bool, bool)
 		
-	provided:
-		X : (p1 : int, p2 : int) (* $\rightarrow$ *) (r1 : bool, r2 : bool)
-			r1 := p1 > 1
-			r2 := p2 > x && b
-		Y : () (* $\rightarrow$ *) ()
-			skip
-		
-	bindings:
-		C.M (* $\rightarrow_\mathtt{d}$ *) D.X // delayed
-		D.Y (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
+	// provided port
+	X(p1 : int, p2 : int; r1 : bool, r2 : bool)
+	{
+		r1 := p1 > 1
+		r2 := p2 > x && b
+	}	
 	
-	behavior:
+	Y(;)
+	{
+		skip
+	}
+		
+	// bindings
+	C.M (* $\rightarrow_\mathtt{d}$ *) D.X // delayed
+	D.Y (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
+	
+	// behavior
+	{
 		l1 : bool, l2 : bool
-		M(x, x - 1) (* $\rightarrow$ *) (l1, l2)
+		M(x, x - 1; l1, l2)
 		(l1 (* $\twoheadrightarrow$ *) x = x - 1; l2 (* $\twoheadrightarrow$ *) b = true)
+		D() // invoke behavior of subcomponent D
+	}
+}
 \end{lstlisting}
 
 \subsection{Domains of Formal Models}
@@ -374,7 +387,7 @@ component. We occasionally use field environments in a curried form where the co
 	\varEnvFm \in \VarEnvFm &:= \Var \rightarrow \liftFailure{\Val}
 \end{align*}
 
-$\varEnvFm_\missing$ and $\fieldEnv_\missing$ denote the empty variable and field environments, respectively. We use the standard
+$\varEnvFmEmpty$ and $\fieldEnvEmpty$ denote the empty variable and field environments, respectively. We use the standard
 notation $\varEnvFm\left[\var \mapsto \val \right]$ to update the value of a variable $\var$ and also allow for simultaneous
 updates, written as $\varEnvFm\left[\var_1, \ldots, \var_n \mapsto \val_1, \ldots, \val_n\right]$.
 For field environments, the notation $\fieldEnv\left[\toListNE{\comp}, \field \mapsto \val \right]$ is used to update the value of
@@ -433,7 +446,8 @@ invocations of required ports. Only variables but not fields are allowed as outp
 		\assignVarStm{\field}{\expr} \mid
 		\seqStm{\stmFm_1}{\stmFm_2} \mid
 		\toListNE{\guardedCmd} \mid
-		\invoke{\reqPort}{\toList{\expr}}{\toList{\var}}
+		\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}} \mid
+		\invokeBeh{\comp}
 \end{align*}
 
 \subsubsection{Variable and Field Declarations}
@@ -566,6 +580,7 @@ We can also select a subcomponent declaration at some level of the component hie
 \subsection{Well-Formedness of Components}
 We only consider components that are well-formed according to the following criteria:
 \begin{itemize}
+	\item To decide: Should we restrict calls to subcomponent behaviors to exactly one invocation per step?
 	\item All expressions and statements are typed correctly.
 	\item All fields, required ports, and provided ports within a component have a unique name.
 	\item All subcomponents of a component have unique names; additionally, a parent component has a name that is different from the
@@ -595,7 +610,7 @@ We only consider components that are well-formed according to the following crit
 \end{itemize}
 
 \subsection{Semantics of Formal Models}
-The nondeterministic rule system $\stmArrowFm$ is parametrized over a component declaration or hierarchy $\compDecl$ and defines
+The nondeterministic rule system $\stmArrowFm$ is parametrized over a component declaration or hierarchy $\compDecl$. It defines
 the natural semantics of statements.
 \begin{align*}
 	\mathit{Configurations} \colon & \;\configurationFm{\stmFm, \fieldEnv, \varEnvFm, \toListNE{\comp}} \in \StmFm \times \FieldEnv \times
@@ -670,69 +685,76 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\qquad \text{if} \quad \ExprSem{e_i} \fieldEnv(\toListNE{\comp}) \varEnvFm = \true
 \end{equation*}
 
-When a required port is called that is instantaneously bound to a provided port, and the component itself
-declares this binding, we check whether the component actually declares both ports and then execute the bound port's statement.
+We define a helper function $\boundof_\compDecl : \ToListNE{\Comp} \times \ReqPort \rightarrow \liftFailure{(\ToListNE{\Comp}
+\times \ProvPort)}$ parametrized over a component hierarchy $\compDecl$ that returns the provided port bound to a required
+port as follows:
+\begin{align*}
+	\boundof_\compDecl(\toList{\comp} \cons \comp, \reqPort) &=
+		\begin{cases}
+			(\toList{\comp} \cons \comp, \provPort) & \; \, \text{if } 
+				\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp}{\provPort}}{\instantBinding} \in
+				\compDecl[\toList{\comp} \cons \comp] \\
+			(\toList{\comp} \cons \comp \cons \comp', \provPort) & \; \, \text{if } 
+				\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\instantBinding} \in
+				\compDecl[\toList{\comp} \cons \comp] \wedge \comp' \neq \comp
+		\end{cases} \\
+	\boundof_\compDecl(\toList{\comp} \cons \comp_1 \cons \comp_2, \reqPort) &=
+		\begin{cases}
+			(\toList{\comp} \cons \comp_1, \provPort) & \text{if } 
+				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\qualifiedName{\comp_1}{\provPort}}{\instantBinding} \in
+				\compDecl[\toList{\comp} \cons \comp_1] \\
+			(\toList{\comp} \cons \comp_1 \cons \comp', \provPort) & \text{if } 
+				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\instantBinding} \in
+				\compDecl[\toList{\comp} \cons \comp_1] \wedge \comp' \neq \comp_2
+		\end{cases}
+\end{align*}
+
+When a required port is called that is instantaneously bound to a provided port, we execute the bound port's statement.
 While the field environment remains unchanged, the component context might change and the port is executed in a new, empty
 variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
 done with the execution of the port, we restore our previous variable environment, just taking over the port's output values.
-Note that $\unionCons$ is the ``union cons'' operator, adding an element to a list only if the neighboring elements
-differ from the appended one. So $\toList{e} \cons e_1 \unionCons e_2 = \toList{e} \cons e_1 \cons e_2$ while $\toList{e} \cons e \unionCons e =
-\toList{e} \cons e$.
 \begin{multline*}
-	\tag{call${}_1$}
+	\tag{call${}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \varEnvFm_\missing[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
+		\configurationFm{\stmFm, \fieldEnv, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
 		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\varof(\toList{\varDecl}_\mathit{io}))],
-		\toListNE{\comp} \unionCons \comp'}
+		\toListNE{\comp}_\provPort}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\invoke{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \varEnvFm, \toListNE{\comp}
-		\triangleright \, \toList{\comp} \cons \comp}
+		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
 	}
-	\\ \text{if} \quad \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in
-		\compDecl[\toListNE{\comp}] 
-	\wedge 
-	\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\instantBinding} \in
-		\compDecl[\toListNE{\comp}]
-	\wedge
-	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm}
-	\in	\compDecl[\toListNE{\comp} \unionCons \comp']
+	\\ \text{if} \quad \boundof_\compDecl(\toListNE{\comp},
+	\reqPort) = (\toListNE{\comp}_\provPort, \provPort) \wedge
+	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm})
+	\in \compDecl[\toListNE{\comp}_\provPort]
 \end{multline*}
 
-When a required port is called that is instantaneously bound to a provided port, and the component itself
-does not declare this binding, we do the same as above except that we have to look for the binding in the parent component. Note
-that these two rules are nondeterministic if there are two bindings declared for the same required port in both the component and
-its parent. However, this is never the case in well-formed formal models.
-\begin{multline*}
-	\tag{call${}_2$}
+When the behavior of a subcomponent is invoked, the subcomponent is added to the component path and an empty variable environment
+is used to execute the behavior. Execution of the current behavior or port continues with the new field environment and the old
+variable environment.
+\begin{equation*}
+	\tag{beh}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \varEnvFm_\missing[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
-		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\varof(\toList{\varDecl}_\mathit{io}))],
-		\toList{\comp} \cons \comp' \unionCons \comp''}
+		\configurationFm{\stmFm, \fieldEnv, \varEnvFmEmpty, \toListNE{\comp}
+		\cons \comp}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\invoke{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \varEnvFm, \toListNE{\comp}
-		\triangleright \, \toList{\comp} \cons \comp' \cons \comp}
+		\configurationFm{\invokeBeh{\comp}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
+		\configurationFm{\fieldEnv', \varEnvFm}
 	}
-	\\ \text{if} \quad \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in
-		\compDecl[\toListNE{\comp}] 
-	\wedge 
-	\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp''}{\provPort}}{\instantBinding} \in
-		\compDecl[\toList{\comp} \cons \comp']
-	\wedge
-	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm}
-	\in	\compDecl[\toList{\comp} \cons \comp' \unionCons \comp'']
-\end{multline*}
+	\quad \text{if} \quad
+	\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm}
+	\in \compDecl[\toListNE{\comp}]
+\end{equation*}
 
 % \begin{equation*}
 % 	\tag{call${}_2$}
@@ -849,6 +871,9 @@ from external \SSharp assemblies are used.
 Certain \CSharp features that can be used when writing \SSharp models are normalized to other, semantically equivalent
 \CSharp features, in order to reduce the complexity of the transformation to formal models. Component initialization and
 construction use standard \CSharp/\DotNet mechanisms.
+
+The following normalization are performed on the \CSharp code. The resulting (still valid) \CSharp code should be straightforward
+to transform into a formal model.
 \begin{itemize}
 	\item State machines must be transformed to equivalent imperative code.
 	\item Implementation inheritance is flattened. 

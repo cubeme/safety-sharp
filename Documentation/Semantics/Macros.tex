@@ -51,8 +51,10 @@
 \newcommand{\guardedCmd}{G}
 \newcommand{\varEnvFil}{\sigma}
 \newcommand{\varEnvFm}{\varsigma}
+\newcommand{\varEnvFmEmpty}{\varEnvFm_{{}_\failure}}
 \newcommand{\fieldEnv}{\varphi}
 \newcommand{\fieldEnvCurried}{\phi}
+\newcommand{\fieldEnvEmpty}{\fieldEnv_{{}_\failure}}
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
 \newcommand{\type}{\tau}
@@ -79,7 +81,8 @@
 % Statements
 \newcommand{\skipStm}{\mathtt{skip}}
 \newcommand{\assignVarStm}[2]{#1\; \mathtt{:=}\; #2}
-\newcommand{\invoke}[3]{#1 (#2; #3)}
+\newcommand{\invokePort}[3]{#1 (#2; #3)}
+\newcommand{\invokeBeh}[1]{#1 ()}
 \newcommand{\seqStm}[2]{#1 \; \mathtt{;} \; #2}
 \newcommand{\guardedClause}[2]{#1 \; \mathtt{\twoheadrightarrow} \; #2}
 \newcommand{\guardedStm}[1]{(#1)^*}
@@ -138,6 +141,7 @@
 \newcommand{\provsof}{\mathit{provs}}
 \newcommand{\init}{\mathit{init}}
 \newcommand{\defaultof}{\mathit{default}}
+\newcommand{\boundof}{\mathit{bound}}
 
 % Values
 \newcommand{\mkTuple}[1]{\left( #1 \right)}
