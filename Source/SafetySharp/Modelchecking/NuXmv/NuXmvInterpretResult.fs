@@ -114,6 +114,11 @@ type internal NuXmvCommandResultsInterpreted =
     end
 
 module internal NuXmvInterpretResult =
+    //////////////////////////////////////
+    // helpers
+    //////////////////////////////////////
+
+
     let splitLines (str:string) =
         str.Split([|"\r\n"; "\n"|],System.StringSplitOptions.None)
     let linesAsExpectedStr (str:string) (expectation:string list) =
@@ -124,13 +129,6 @@ module internal NuXmvInterpretResult =
             expectation |> List.mapi (fun i elem -> lines.[i].StartsWith(elem))
                         |> List.forall id
     
-    // regular expressions here to avoid multiple initializations
-    // nice to test on the fly: http://www.rubular.com/
-    let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")     // Example: Parsing file "Modelchecking/NuXmv/testcase1.smv" ..... done.
-
-    let linesAsExpectedRegex (str:string) (regex:System.Text.RegularExpressions.Regex) =
-        regex.IsMatch(str)
-
     // this should only be used for commands, where the result doesn't need further interpretation
     let successFromBool (success:bool) (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
         let newResult =
@@ -150,6 +148,50 @@ module internal NuXmvInterpretResult =
     let otherwise (result:NuXmvCommandResultBasic) : INuXmvCommandResult=
         successFromBool (result.HasSucceeded) result
 
+
+
+    //////////////////////////////////////
+    // regular expressions
+    //////////////////////////////////////
+
+    // regular expressions here to avoid multiple initializations
+    // nice to test on the fly: http://www.rubular.com/
+    let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")     // Example: Parsing file "Modelchecking/NuXmv/testcase1.smv" ..... done.
+
+    let linesAsExpectedRegex (str:string) (regex:System.Text.RegularExpressions.Regex) =
+        regex.IsMatch(str)
+            
+    
+    
+    //////////////////////////////////////
+    // interpretation of concrete commands
+    //////////////////////////////////////
+
+    let interpretResultOfNuSMVCommandReadModel (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
+        match command with
+            | NuSMVCommand.ReadModel (_) ->                
+                let success = linesAsExpectedRegex result.Stderr regexReadModel
+                successFromBool success result
+            | _ -> failwith "wrong command"
+
+    let interpretResultOfNuSMVCommandFlattenHierarchy (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
+        match command with
+            | NuSMVCommand.FlattenHierarchy ->
+                let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
+                successFromBool success result
+            | _ -> failwith "wrong command"
+
+    let interpretResultOfNuSMVCommandCheckFsm (result:NuXmvCommandResultBasic) (command:NuSMVCommand) =
+        match command with
+            | NuSMVCommand.CheckFsm ->
+                ""
+            | _ -> failwith "wrong command"
+    
+    //////////////////////////////////////
+    // interpretation of abstract commands
+    //////////////////////////////////////
+    
+
     let interpretResultOfNuXmvCommand (result:NuXmvCommandResultBasic) (command:NuXmvCommand) : INuXmvCommandResult =
         match command with
             | _ -> otherwise result
@@ -157,12 +199,8 @@ module internal NuXmvInterpretResult =
         
     let interpretResultOfNuSMVCommand (result:NuXmvCommandResultBasic) (command:NuSMVCommand) : INuXmvCommandResult =
         match command with
-            | NuSMVCommand.ReadModel (_) ->                
-                let success = linesAsExpectedRegex result.Stderr regexReadModel
-                successFromBool success result
-            | NuSMVCommand.FlattenHierarchy ->
-                let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
-                successFromBool success result
+            | NuSMVCommand.ReadModel (_) ->    interpretResultOfNuSMVCommandReadModel result command
+            | NuSMVCommand.FlattenHierarchy -> interpretResultOfNuSMVCommandFlattenHierarchy result command
             | _ -> otherwise result
     
     let interpretResult (result:NuXmvCommandResultBasic) : INuXmvCommandResult =
@@ -172,3 +210,4 @@ module internal NuXmvInterpretResult =
             //| :? NuXmvCustomCommand as command -> this.ExportCustomCommand command
             //| :? NuXmvStartedCommand as command -> "NuXmv Started"
             | _ -> otherwise result
+

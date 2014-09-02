@@ -132,7 +132,7 @@ The model has been built from file Modelchecking/NuXmv/testcase1.smv.
 """
 
     let ``quit-ResultStdoutSuccess`` = ""
-    let ``quit-ResultStderrSuccess`` = "Quitting the GR commands... 
+    let ``quit-ResultStderrSuccess`` = """Quitting the GR commands... 
 Quitting the Automata package... 
 Quitting the Mathsat package...
 Quitting the Trace_Executor package... 
@@ -147,7 +147,45 @@ Quitting the BMC package...
 Done 
 
 Successful termination
-"
+"""
+
+    let checkFsm1Stdout = """
+##########################################################
+The transition relation is not total. A state without
+successors is:
+x = FALSE
+The transition relation is not deadlock-free.
+A deadlock state is:
+x = FALSE
+##########################################################"""
+    
+    let checkFsm1Stderr = """Checking totality and deadlock states.
+
+********   WARNING   ********
+Fair states set of the finite state machine is empty.
+This might make results of model checking not trustable.
+******** END WARNING ********"""
+
+    let checkFsm2Stdout = """
+##########################################################
+The transition relation is not total. A state without
+successors is:
+x = FALSE
+However, all the states without successors are
+non-reachable, so the machine is deadlock-free.
+##########################################################"""
+
+    let checkFsm2Stderr = """Checking totality and deadlock states.
+"""
+
+    let checkFsm3Stdout = """
+##########################################################
+The transition relation is total: No deadlock state exists
+##########################################################
+"""
+    let checkFsm3Stderr = """Checking totality and deadlock states.
+"""
+
 
     [<Test>]
     let ``linesAsExpectedStr works correctly`` () =

@@ -56,6 +56,9 @@ type internal ExportCommandsToString() =
                 "go"
             | NuSMVCommand.BuildFlatModel ->
                 "build_flat_model"
+
+            | NuSMVCommand.CheckFsm ->
+                "check_fsm"
                 
             | NuSMVCommand.Echo (variable:string) ->
                 sprintf "echo %s" variable

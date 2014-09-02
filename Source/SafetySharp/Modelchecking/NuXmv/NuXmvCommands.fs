@@ -44,6 +44,7 @@ type internal NuSMVCommand =
     | Go
     | BuildFlatModel
     // Chapter 4.2 Commands for Checking Specifications
+    | CheckFsm
     // Chapter 4.3 Commands for Bounded Model Checking
     // Chapter 4.4 Commands for checking PSL specifications
     // Chapter 4.5 Simulation Commands

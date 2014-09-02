@@ -67,9 +67,9 @@ module NuXmvExecuteTests =
         let nuxmv = ExecuteNuXmv()
         let logFile = "echo.log"
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile |> ignore //wait infinitely long
-        let outputTuple2 = nuxmv.ExecuteCommand(NuSMVCommand.Echo("verbose_level"))
+        let outputTuple2 = nuxmv.ExecuteAndIntepretCommand(NuSMVCommand.Echo("verbose_level"))
         let outputTuple3 = nuxmv.QuitNuXmvAndWaitForExit()
-        outputTuple2.Failure.IsNone =? true
+        outputTuple2.HasSucceeded =? true
 
         
     [<Test>]
@@ -80,7 +80,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? false
         outputTuple3.FailedCommand.IsSome =? true
@@ -94,7 +94,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? false
         outputTuple3.FailedCommand.IsSome =? true
@@ -109,11 +109,12 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple2 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
-        outputTuple3.HasSucceeded =? false
-        outputTuple3.FailedCommand.IsSome =? true
-        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
+        outputTuple2.HasSucceeded =? true
+        outputTuple3.HasSucceeded =? true
+        //let checkFsmResultInterpreted = NuXmvInterpretResult.
 
         
     // interpretation of check_fsm
@@ -125,27 +126,28 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple2 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
-        outputTuple3.HasSucceeded =? false
-        outputTuple3.FailedCommand.IsSome =? true
-        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
+        outputTuple2.HasSucceeded =? true
+        outputTuple3.HasSucceeded =? true
+        //outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
 
 
     // interpretation of check_fsm
     [<Test>]
-    let ``NuXmv read a file which is fully defined`` () =        
+    let ``NuXmv reads a file which is fully defined`` () =        
         let filename = "Modelchecking/NuXmv/fully-defined.smv"
         let logFile = filename+".log"
         let code = Models.``fully-defined``
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple2 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteCommand NuSMVCommand.CheckFsm
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
-        outputTuple3.HasSucceeded =? false
-        outputTuple3.FailedCommand.IsSome =? true
-        outputTuple3.FailedCommand.Value.Basic.Command =? (NuSMVCommand.FlattenHierarchy :> ICommand)
+        outputTuple2.HasSucceeded =? true
+        outputTuple3.HasSucceeded =? true
 
 
     [<Test>]
@@ -156,7 +158,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? false
         outputTuple3.FailedCommand.IsSome =? true
@@ -170,7 +172,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? false
         outputTuple3.FailedCommand.IsSome =? true
@@ -185,7 +187,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? true
         outputTuple3.FailedCommand.IsSome =? false
@@ -199,7 +201,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? true
         outputTuple3.FailedCommand.IsSome =? false
@@ -214,7 +216,7 @@ module NuXmvExecuteTests =
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuple3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuple3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         outputTuple3.HasSucceeded =? true
         outputTuple3.FailedCommand.IsSome =? false
@@ -253,7 +255,7 @@ module NuXmvExecuteTests =
 
         let nuxmv = ExecuteNuXmv()
         let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
-        let outputTuples3 = nuxmv.ExecuteCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
+        let outputTuples3 = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
         let outputTuples3Basic = outputTuples3.GetBasicResultsOfAllCommand
         let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
         let outputUnprocessed = nuxmv.ReturnUnprocessedOutput ()

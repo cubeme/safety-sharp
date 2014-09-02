@@ -242,8 +242,12 @@ type internal ExecuteNuXmv() =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> this.ExecuteCommand command
         )
-        
-    member this.ExecuteCommandSequence (commands:ICommand list) : NuXmvCommandResultsInterpreted =
+    
+    member this.ExecuteAndIntepretCommand (command:ICommand) : INuXmvCommandResult =
+        command |> this.ExecuteCommand
+                |> NuXmvInterpretResult.interpretResult
+
+    member this.ExecuteAndIntepretCommandSequence (commands:ICommand list) : NuXmvCommandResultsInterpreted =
         let rec processCommands (alreadySuccessfullyProcessedReverse:INuXmvCommandResult list) (commands) =
             match commands with
                 | command :: tail ->
