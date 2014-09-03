@@ -20,6 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// Note: 
+//  The interpretation code is vulnerable to security attacks which want to provoke
+//  wrong results. For example if a quoted variable in a nuXmv model is called
+//  "is true" the regular expression regexCheckCtlSpecValid also matches, if a
+//  counter example is given. Thus the interpretation code could not be applied
+//  to all kinds of models.
+// TODO:
+//   - More accurate interpretation, which doesn't allow these kind of attacks
+//   - Tests for those attacks
+
+
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 // It is nice to be able to show the reason for a failure of the processing of a command in the GUI
@@ -52,7 +63,7 @@ and internal NuXmvCommandResultBasic = {
         member this.HasSucceeded =
                 this.Failure.IsNone
 
-type Trace =
+type Trace() =
     class end
 
 [<RequireQualifiedAccess>]
@@ -171,6 +182,7 @@ module internal NuXmvInterpretResult =
     let otherwise (result:NuXmvCommandResultBasic) : INuXmvCommandResult=
         successFromBool (result.HasSucceeded) result
 
+    let regexOption = System.Text.RegularExpressions.RegexOptions.Singleline ||| System.Text.RegularExpressions.RegexOptions.Multiline
     
     //////////////////////////////////////
     // interpretation of concrete commands
@@ -182,7 +194,7 @@ module internal NuXmvInterpretResult =
     //       http://stackoverflow.com/questions/851057/how-to-prevent-regular-expression-of-hang-or-set-time-out-for-it-in-net
     //       http://www.regular-expressions.info/catastrophic.html
         
-    let regexReadModel = new System.Text.RegularExpressions.Regex("""Parsing file \".*\" [.][.][.][.][.] done[.]""")
+    let regexReadModel = new System.Text.RegularExpressions.Regex("""\AParsing file \".*\" [.][.][.][.][.] done[.]""")
     let interpretResultOfNuSMVCommandReadModel (result:NuXmvCommandResultBasic) =
         let success = linesAsExpectedRegex result.Stderr regexReadModel
         successFromBool success result
@@ -191,9 +203,9 @@ module internal NuXmvInterpretResult =
         let success = linesAsExpectedStr result.Stderr ["Flattening hierarchy...";"...done"]
         successFromBool success result
             
-    let regexCheckFsmTotal = new System.Text.RegularExpressions.Regex("""The transition relation is total""",System.Text.RegularExpressions.RegexOptions.Singleline)
-    let regexCheckFsmNotTotalWithDeadlock = new System.Text.RegularExpressions.Regex("""The transition relation is not total.*The transition relation is not deadlock-free""",System.Text.RegularExpressions.RegexOptions.Singleline)
-    let regexCheckFsmNotTotalWithoutDeadlock = new System.Text.RegularExpressions.Regex("""The transition relation is not total.*so the machine is deadlock-free""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckFsmTotal = new System.Text.RegularExpressions.Regex("""^The transition relation is total""",regexOption)
+    let regexCheckFsmNotTotalWithDeadlock = new System.Text.RegularExpressions.Regex("""^The transition relation is not total.*The transition relation is not deadlock-free""",regexOption)
+    let regexCheckFsmNotTotalWithoutDeadlock = new System.Text.RegularExpressions.Regex("""^The transition relation is not total.*so the machine is deadlock-free""",regexOption)
     let interpretResultOfNuSMVCommandCheckFsm (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckFsmTotal then
             {
@@ -218,9 +230,12 @@ module internal NuXmvInterpretResult =
         else
             failwith "result of check_fsm could not be interpreted"
 
+    let interpretCounterExample (counterExample:string) : Trace =
+        Trace()
     
-    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""-- specification .* is true""",System.Text.RegularExpressions.RegexOptions.Singleline)
-    let regexCheckCtlSpecInvalid = new System.Text.RegularExpressions.Regex("""-- specification .* is false.*-- as demonstrated by the following execution sequence""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    //TODO: Assure, the string is tested from the beginning of the first line!!!
+    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true""",regexOption)
+    let regexCheckCtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckCtlSpec (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckCtlSpecValid then
             {
@@ -235,8 +250,8 @@ module internal NuXmvInterpretResult =
         else
             failwith "result could not be interpreted"
         
-    let regexCheckLtlSpecValid = new System.Text.RegularExpressions.Regex("""-- specification .* is true""",System.Text.RegularExpressions.RegexOptions.Singleline)
-    let regexCheckLtlSpecInvalid = new System.Text.RegularExpressions.Regex("""-- specification .* is false.*-- as demonstrated by the following execution sequence""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckLtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true""",regexOption)
+    let regexCheckLtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckLtlSpec (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckLtlSpecValid then
             {
@@ -251,8 +266,8 @@ module internal NuXmvInterpretResult =
         else
             failwith "result could not be interpreted"
         
-    let regexCheckInvarValid = new System.Text.RegularExpressions.Regex("""-- invariant .* is true""",System.Text.RegularExpressions.RegexOptions.Singleline)
-    let regexCheckInvarInvalid = new System.Text.RegularExpressions.Regex("""-- invariant .* is false.*-- as demonstrated by the following execution sequence""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckInvarValid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is true""",regexOption)
+    let regexCheckInvarInvalid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckInvar (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckInvarValid then
             {
