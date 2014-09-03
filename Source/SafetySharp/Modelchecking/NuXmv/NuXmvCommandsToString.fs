@@ -59,7 +59,28 @@ type internal ExportCommandsToString() =
 
             | NuSMVCommand.CheckFsm ->
                 "check_fsm"
-                
+            | NuSMVCommand.CheckCtlSpec (formula:CtlExpression) ->
+                sprintf "check_ctlspec -p \"%s\"" (astToFile.ExportCtlExpression formula)
+            | NuSMVCommand.CheckInvar (formula:NextExpression) ->
+                sprintf "check_invar -p \"%s\"" (astToFile.ExportNextExpression formula)
+            | NuSMVCommand.CheckLtlSpec (formula:LtlExpression) ->
+                sprintf "check_ltlspec -p \"%s\"" (astToFile.ExportLtlExpression formula)
+            //| NuSMVCommand.CheckCompute  ->
+            //    ""
+            | NuSMVCommand.CheckProperty (name:string) ->
+                sprintf "check_property -P \"%s\"" name
+            | NuSMVCommand.AddPropertyCtl (name:string,formula:CtlExpression) ->
+                sprintf "add_property -c -p \"%s\" -n \"%s\"" (astToFile.ExportCtlExpression formula) name
+            | NuSMVCommand.AddPropertyInvar (name:string,formula:NextExpression) ->
+                sprintf "add_property -i -p \"%s\" -n \"%s\"" (astToFile.ExportNextExpression formula) name
+            | NuSMVCommand.AddPropertyLtl (name:string,formula:LtlExpression) ->
+                sprintf "add_property -l -p \"%s\" -n \"%s\"" (astToFile.ExportLtlExpression formula) name
+            //| NuSMVCommand.AddPropertyCompute (name:string,formula:LtlExpression) ->
+            //    sprintf "add_property -q -p \"%s\" -n \"%s\"" (astToFile.ExportCtlExpression formula) name
+
+            //| NuSMVCommand.AddPropertyPsl (name:string,formula) ->
+            //    sprintf "add_property -s -p \"%s\" -n \"%s\"" (astToFile.ExportCtlExpression formula) name
+
             | NuSMVCommand.Echo (variable:string) ->
                 sprintf "echo %s" variable
             | NuSMVCommand.EchoTyped (variable:IEnvironmentVariable) ->

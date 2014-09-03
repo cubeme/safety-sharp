@@ -22,6 +22,7 @@
 
 namespace SafetySharp.Internal.Modelchecking.NuXmv
 
+
 type internal IEnvironmentVariable =
     interface end
 
@@ -45,8 +46,18 @@ type internal NuSMVCommand =
     | BuildFlatModel
     // Chapter 4.2 Commands for Checking Specifications
     | CheckFsm
+    | CheckCtlSpec of Formula:CtlExpression // for named formulas use checkProperty
+    | CheckInvar of Formula:NextExpression // for named formulas use checkProperty
+    | CheckLtlSpec of Formula:LtlExpression // for named formulas use checkProperty
+    //| CheckCompute // for named formulas use checkProperty
+    | CheckProperty of Name:string
+    | AddPropertyCtl of Name:string * Formula:CtlExpression
+    | AddPropertyInvar of Name:string * Formula:NextExpression
+    | AddPropertyLtl of Name:string * Formula:LtlExpression
+    //| AddPropertyCompute of Name:string * Formula:CtlExpression
     // Chapter 4.3 Commands for Bounded Model Checking
     // Chapter 4.4 Commands for checking PSL specifications
+    //| AddPropertyPsl of Name:string * Formula
     // Chapter 4.5 Simulation Commands
     // Chapter 4.6 Execution Commands
     // Chapter 4.7 Traces

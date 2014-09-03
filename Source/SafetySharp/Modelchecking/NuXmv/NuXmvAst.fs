@@ -123,7 +123,7 @@ and internal BasicExpression =
     | CaseExpression of CaseBody:(CaseConditionAndEffect list)
     | BasicNextExpression of Expression:BasicExpression // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
 
-and internal SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit convertions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
+and internal SimpleExpression = BasicExpression //validation: next forbidden //TODO: Define implicit and explicit conversions, which validate, if conditions in chapter "2.2.4 Simple and Next Expressions" on page 21 are fulfilled. From BasicExpression to SimpleExpression and back again. The conversation step makes the validation
 and internal NextExpression = BasicExpression //validation: next allowed
 
 
@@ -220,7 +220,7 @@ and internal LtlExpression =
 
 and internal Specification =
     | CtlSpecification of CtlExpression:CtlExpression
-    //TODO: | InvariantSpecification
+    //TODO: | InvariantSpecification of NextExpression:NextExpression
     | LtlSpecification of LtlExpression:LtlExpression
         
 // Chapter 2.5 Variable Order Input p 42-44
