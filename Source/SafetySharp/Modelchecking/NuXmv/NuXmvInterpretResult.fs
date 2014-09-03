@@ -23,9 +23,9 @@
 // Note: 
 //  The interpretation code is vulnerable to security attacks which want to provoke
 //  wrong results. For example if a quoted variable in a nuXmv model is called
-//  "is true" the regular expression regexCheckCtlSpecValid also matches, if a
-//  counter example is given. Thus the interpretation code could not be applied
-//  to all kinds of models.
+//  "is true" the regular expression "specification .* is true" also matches, if a
+//  counter example is given, because it contains the string "is true".
+//  Thus the interpretation code is not robust for all input models.
 // TODO:
 //   - More accurate interpretation, which doesn't allow these kind of attacks
 //   - Tests for those attacks
@@ -230,11 +230,12 @@ module internal NuXmvInterpretResult =
         else
             failwith "result of check_fsm could not be interpreted"
 
-    let interpretCounterExample (counterExample:string) : Trace =
+    let regexCounterexample = new System.Text.RegularExpressions.Regex("""<[?]xml version="1.0" encoding="UTF-8"[?]>\s*<counter-example.*<\/counter-example>""",regexOption)
+    let interpretCounterExample (input:string) : Trace =
+        let counterexampleString = regexCounterexample.Match(input).Value
         Trace()
     
-    //TODO: Assure, the string is tested from the beginning of the first line!!!
-    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true""",regexOption)
+    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true$""",regexOption)
     let regexCheckCtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckCtlSpec (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckCtlSpecValid then
@@ -242,10 +243,11 @@ module internal NuXmvInterpretResult =
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
                 NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
             }
-        elif linesAsExpectedRegex result.Stdout regexCheckCtlSpecInvalid then                   
+        elif linesAsExpectedRegex result.Stdout regexCheckCtlSpecInvalid then
+            let counterExample = interpretCounterExample result.Stdout
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
-                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(None);
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(Some(counterExample));
             }
         else
             failwith "result could not be interpreted"
@@ -258,10 +260,11 @@ module internal NuXmvInterpretResult =
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
                 NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
             }
-        elif linesAsExpectedRegex result.Stdout regexCheckLtlSpecInvalid then                   
+        elif linesAsExpectedRegex result.Stdout regexCheckLtlSpecInvalid then
+            let counterExample = interpretCounterExample result.Stdout
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
-                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(None);
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(Some(counterExample));
             }
         else
             failwith "result could not be interpreted"
@@ -274,10 +277,11 @@ module internal NuXmvInterpretResult =
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
                 NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
             }
-        elif linesAsExpectedRegex result.Stdout regexCheckInvarInvalid then                   
+        elif linesAsExpectedRegex result.Stdout regexCheckInvarInvalid then
+            let counterExample = interpretCounterExample result.Stdout
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
-                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(None);
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(Some(counterExample));
             }
         else
             failwith "result could not be interpreted"
