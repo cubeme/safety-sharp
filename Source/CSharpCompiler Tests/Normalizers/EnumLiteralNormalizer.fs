@@ -78,3 +78,11 @@ module EnumLiteralNormalizer =
     let ``replaces enum in switch case labels`` () =
         normalize "class C : Component { void M(E e) { switch (e) { case E.A: return; case E.B: return; case E.C: return; } }}" =?
             "class C : Component { void M(E e) { switch (e) { case 0: return; case 1: return; case 2: return; } }}"
+
+    [<Test>]
+    let ``replaces extern alias enum literal`` () =
+        let externCompilation = TestCompilation "public enum E { A, B }"
+        let csharpCode = "namespace Y { extern alias X; class C : Component { bool M() { return X::E.A == X::E.B; }}}"
+        let compilation = TestCompilation (csharpCode, ("X", externCompilation))
+        let syntaxTree = EnumLiteralNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString () =? "class C : Component { bool M() { return 0 == 1; }}"

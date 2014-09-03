@@ -86,3 +86,10 @@ module EnumTypeNormalizer =
         normalize "class C : Component { void M() { E e; }}" =? "class C : Component { void M() { int e; }}"
         normalize "class C : Component { void M() { E e1, e2; }}" =? "class C : Component { void M() { int e1, e2; }}"
         normalize "class C : Component { void M() { E e = E.A; }}" =? "class C : Component { void M() { int e = E.A; }}"
+
+    [<Test>]
+    let ``replaces extern alias enum local variable declaration`` () =
+        let externCompilation = TestCompilation "public enum E { A, B }"
+        let compilation = TestCompilation ("namespace Y { extern alias X; class C : Component { void M() { X::E e; }}}", ("X", externCompilation))
+        let syntaxTree = EnumTypeNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString () =? "class C : Component { void M() { int e; }}"

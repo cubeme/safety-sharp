@@ -24,6 +24,7 @@ namespace SafetySharp.Tests
 
 open System
 open System.Collections.Generic
+open System.Collections.Immutable
 open System.Linq
 open System.IO
 open System.Reflection
@@ -46,7 +47,7 @@ type Diagnostic =
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]
-type TestCompilation (csharpCode) =
+type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * TestCompilation) array) =
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
@@ -62,6 +63,16 @@ type TestCompilation (csharpCode) =
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
+    let rec addExternAliases (compilation : CSharpCompilation) (externAliases : (string * CSharpCompilation) list) =
+        match externAliases with
+        | [] -> compilation
+        | (name, externCompilation) :: externAliases -> 
+            let compilation = compilation.AddReferences(externCompilation.ToMetadataReference(ImmutableArray.Create(name)))
+            addExternAliases compilation externAliases
+
+    let externAliases = externAliases |> Array.map (fun (name, compilation) -> (name, compilation.CSharpCompilation)) |> List.ofArray
+    let csharpCompilation = addExternAliases csharpCompilation externAliases
+
     let diagnostics = csharpCompilation.GetDiagnostics() |> Seq.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
     do diagnostics |> Seq.iter (fun d -> printfn "%A" d)
 
@@ -75,7 +86,7 @@ type TestCompilation (csharpCode) =
     member this.SyntaxTree = syntaxTree
 
     /// Gets the <see cref="CSharpCompilation" /> corresponding to the current instance.
-    member this.CSharpCompilation = csharpCompilation
+    member this.CSharpCompilation : CSharpCompilation = csharpCompilation
 
     /// Gets the root syntax node of the syntax tree.
     member this.SyntaxRoot = syntaxTree.GetRoot ()
