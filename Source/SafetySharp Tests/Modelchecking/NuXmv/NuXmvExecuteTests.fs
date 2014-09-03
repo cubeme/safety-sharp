@@ -237,9 +237,8 @@ module NuXmvExecuteTestsWithPrebuildModels =
     let internal customCommand (str:string) =
         ({NuXmvCustomCommand.Command = str})
 
-    // TODO: Do the same with ast-model
     [<Test>]
-    let ``NuXmv validates valid ctl- and ltl-formulas and invariants with input as named property`` () =
+    let ``NuXmv validates valid ctl- and ltl-formulas and invariants`` () =
         let filename = "Modelchecking/NuXmv/simple-indeterministic.smv"
         let logFile = filename+".log"
         let code = Models.``simple-indeterministic``
@@ -250,70 +249,69 @@ module NuXmvExecuteTestsWithPrebuildModels =
         outputResultBuildBdd.HasSucceeded =? true
         let invariant = "(x=TRUE | x=FALSE)"
         let ctlProperty = sprintf "AG %s" invariant
-        let outputAddPropertyCtl = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -c -p "%s" -n "%s" """ "ctlProperty" ctlProperty))
+        let outputAddPropertyCtl = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -c -p "%s" -n "%s" """ ctlProperty "ctlProperty"))
         let ltlProperty = sprintf "G %s" invariant
-        let outputAddPropertyLtl = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -l -p "%s" -n "%s" """ "ltlProperty" ltlProperty))
-        let outputAddPropertyInvariant = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -i -p "%s" -n "%s" """ "invariant" invariant))
+        let outputAddPropertyLtl = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -l -p "%s" -n "%s" """ ltlProperty "ltlProperty"))
+        let outputAddPropertyInvariant = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -i -p "%s" -n "%s" """ invariant "invariant"))
         outputAddPropertyCtl.HasSucceeded =? true
         outputAddPropertyLtl.HasSucceeded =? true
         outputAddPropertyInvariant.HasSucceeded =? true
-        let outoutCheckPropertyCtl = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "ctlProperty"))
-        let outoutCheckPropertyLtl = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "ltlProperty"))
-        let outoutCheckPropertyInvar = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "invariant"))
-        outoutCheckPropertyCtl.HasSucceeded =? true
-        outoutCheckPropertyInvar.HasSucceeded =? true
-        outputAddPropertyInvariant.HasSucceeded =? true
+        let outputCheckPropertyCtl = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "ctlProperty"))
+        let outputCheckPropertyLtl = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "ltlProperty"))
+        let outputCheckPropertyInvar = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "invariant"))
+        outputCheckPropertyCtl.HasSucceeded =? true
+        outputCheckPropertyLtl.HasSucceeded =? true
+        outputCheckPropertyInvar.HasSucceeded =? true
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
         // TODO: Interpret if all results are valid
         //NuXmvInterpretResult.interpretResultOfCheckProperty
         ()
         
-        
-
-        (*        
     [<Test>]
-    let ``NuXmv validates valid ctl- and ltl-formulas and invariants with direct input`` () =
-        TODO
-        let filename = "Modelchecking/NuXmv/simple-indeterministic.smv"
+    let ``NuXmv finds counterexample for invalid ctl- and ltl-formulas and invariants with input as named property`` () =
+        let filename = "Modelchecking/NuXmv/simple-deterministic.smv"
         let logFile = filename+".log"
-        let code = Models.``simple-indeterministic``
+        let code = Models.``simple-deterministic``
         FileSystem.WriteToAsciiFile filename code
         let nuxmv = ExecuteNuXmv()
-        let outputTuple1 = nuxmv.StartNuXmvInteractive (-1) logFile
+        let outputResultStart = nuxmv.StartNuXmvInteractive (-1) logFile
         let outputResultBuildBdd = nuxmv.ExecuteAndIntepretCommandSequence (NuXmvHelpfulCommandsAndCommandSequences.readModelAndBuildBdd filename)
-        let outputTuple4 = nuxmv.QuitNuXmvAndWaitForExit()
-        outputTuple3.HasSucceeded =? true
-        outputTuple3.FailedCommand.IsSome =? false
-        *)
-    (*
-    
-    | CheckCtlSpec of Formula:CtlExpression // for named formulas use checkProperty
-    | CheckInvar of Formula:NextExpression // for named formulas use checkProperty
-    | CheckLtlSpec of Formula:LtlExpression // for named formulas use checkProperty
-    | AddPropertyCtl of Name:string * Formula:CtlExpression
-    | AddPropertyInvar of Name:string * Formula:NextExpression
-    | AddPropertyLtl of Name:string * Formula:LtlExpression
-    | CheckProperty of Name:string
-
-    [<Test>]
-    let ``NuXmv returns a counterexample of an unsatisfied formula`` () =
-        true =? false
-        
-    [<Test>]
-    let ``NuXmv validates a satisfied formula`` () =
-        true =? false
-        
-    [<Test>]
-    let ``NuXmv validates two satisfied formulas`` () =
-        true =? false
-
-        
-
-    *)  
+        outputResultBuildBdd.HasSucceeded =? true
+        let invariant = "x=TRUE"
+        let ctlProperty = sprintf "AG %s" invariant
+        let outputAddPropertyCtl = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -c -p "%s" -n "%s" """ ctlProperty "ctlProperty"))
+        let ltlProperty = sprintf "G %s" invariant
+        let outputAddPropertyLtl = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -l -p "%s" -n "%s" """ ltlProperty "ltlProperty"))
+        let outputAddPropertyInvariant = nuxmv.ExecuteCommand (customCommand (sprintf """add_property -i -p "%s" -n "%s" """ invariant "invariant"))
+        outputAddPropertyCtl.HasSucceeded =? true
+        outputAddPropertyLtl.HasSucceeded =? true
+        outputAddPropertyInvariant.HasSucceeded =? true
+        let outputCheckPropertyCtl = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "ctlProperty"))
+        let outputCheckPropertyLtl = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "ltlProperty"))
+        let outputCheckPropertyInvar = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "invariant"))
+        outputCheckPropertyCtl.HasSucceeded =? true
+        outputCheckPropertyLtl.HasSucceeded =? true
+        outputCheckPropertyInvar.HasSucceeded =? true
+        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
+        // TODO: Interpret if all results are valid
+        //NuXmvInterpretResult.interpretResultOfCheckProperty
+        ()        
     
 [<TestFixture>]
 module NuXmvExecuteTestsWithAstModels =
-    let a = ""
+    
+    [<Test>]
+    let todo () =
+        ()
+    (*
+    
+    [<Test>]
+    let ``NuXmv finds counterexample for invalid ctl- and ltl-formulas and invariants with input as named property`` () =
+
+    
+    [<Test>]
+    let ``NuXmv validates valid ctl- and ltl-formulas and invariants with direct input`` () =
+    *)
 
 
 [<TestFixture>]

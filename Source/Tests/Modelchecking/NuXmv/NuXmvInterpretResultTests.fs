@@ -187,6 +187,98 @@ The transition relation is total: No deadlock state exists
 """
 
 
+    let checkValidInvariantStdout = """-- invariant (x = TRUE | x = FALSE)  is true
+"""
+    let checkValidInvariantStderr = """evaluating invariant (x = TRUE | x = FALSE) 
+"""
+
+    let checkValidCtlStdout = """-- specification AG (x = TRUE | x = FALSE)  is true
+"""
+    let checkValidCtlStderr = """evaluating specification AG (x = TRUE | x = FALSE)  
+"""
+
+    let checkValidLtlStdout = """-- specification  G (x = TRUE | x = FALSE)  is true
+"""
+    let checkValidLtlStderr = """evaluating LTL specification  G (x = TRUE | x = FALSE) 
+Flattening the generated tableau........ done
+Creating LTL tableau variables...
+
+********   WARNING   ********
+Fair states set of the finite state machine is empty.
+This might make results of model checking not trustable.
+******** END WARNING ********
+"""
+    
+
+    let checkInvalidInvariantStdout = """-- invariant x = TRUE  is false
+-- as demonstrated by the following execution sequence
+<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" desc="AG alpha Counterexample" >
+    <node>
+        <state id="1">
+            <value variable="x">TRUE</value>
+        </state>
+    </node>
+    <node>
+        <state id="2">
+            <value variable="x">FALSE</value>
+        </state>
+    </node>
+    <loops> </loops>
+</counter-example>
+"""
+    let checkInvalidInvariantStderr = """evaluating invariant x = TRUE 
+"""
+
+    let checkInvalidCtlStdout = """-- specification AG x = TRUE  is false
+-- as demonstrated by the following execution sequence
+<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" desc="CTL Counterexample" >
+    <node>
+        <state id="1">
+            <value variable="x">TRUE</value>
+        </state>
+    </node>
+    <node>
+        <state id="2">
+            <value variable="x">FALSE</value>
+        </state>
+    </node>
+    <loops> </loops>
+</counter-example>
+"""
+    let checkInvalidCtlStderr = """evaluating specification AG x = TRUE  
+"""
+
+    let checkInvalidLtlStdout = """-- specification  G x = TRUE  is false
+-- as demonstrated by the following execution sequence
+<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" desc="LTL Counterexample" >
+    <node>
+        <state id="1">
+            <value variable="x">TRUE</value>
+        </state>
+    </node>
+    <node>
+        <state id="2">
+            <value variable="x">FALSE</value>
+        </state>
+    </node>
+    <node>
+        <state id="3">
+            <value variable="x">TRUE</value>
+        </state>
+    </node>
+    <loops> 1 </loops>
+</counter-example>
+"""
+    let checkInvalidLtlStderr = """evaluating LTL specification  G x = TRUE 
+Flattening the generated tableau........ done
+Creating LTL tableau variables...
+"""
+
+
+
     [<Test>]
     let ``linesAsExpectedStr works correctly`` () =
         let testInput = "AAA\nABC\nADE"
