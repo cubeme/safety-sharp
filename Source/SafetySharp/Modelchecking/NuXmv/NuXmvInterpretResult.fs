@@ -52,26 +52,32 @@ and internal NuXmvCommandResultBasic = {
         member this.HasSucceeded =
                 this.Failure.IsNone
 
-(*
+type Trace =
+    class end
 
-type internal NuXmvCheckedFormula =
-    | Valid of Formula:Formula *  Witness:Trace option 
-    | Undetermined of Formula:Formula
-    | Invalid of Formula:Formula * CounterExample:Trace option
+[<RequireQualifiedAccess>]
+type internal CheckOfSpecificationDetailedResult =
+    | Valid of Witness:Trace option 
+    | Undetermined
+    | Invalid of CounterExample:Trace option
     with
-        member this.Formula =
+        member this.IsSpecValid =
             match this with
-                | Valid (formula:Formula,_) -> formula
-                | Undetermined (formula:Formula) -> formula
-                | Invalid (formula:Formula,_) -> formula
-*)
+                | CheckOfSpecificationDetailedResult.Valid(_) -> true
+                | _ -> false
+        member this.IsSpecInvalid =
+            match this with
+                | CheckOfSpecificationDetailedResult.Invalid(_) -> true
+                | _ -> false
+        member this.IsSpecUndetermined =
+            match this with
+                | CheckOfSpecificationDetailedResult.Undetermined -> true
+                | _ -> false
 
-(*
-type internal NuXmvCommandResultFormula = {
+type internal NuXmvCommandResultInterpretedCheckOfSpecification = {
     Basic : NuXmvCommandResultBasic;
-    ResultFormula : NuXmvCheckedFormula;
+    Result : CheckOfSpecificationDetailedResult;
 }
-*)
 
 type internal NuXmvCommandResultInterpretedCheckFsm = {
     Basic : NuXmvCommandResultBasic;
@@ -213,6 +219,53 @@ module internal NuXmvInterpretResult =
             failwith "result of check_fsm could not be interpreted"
 
     
+    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""-- specification .* is true""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckCtlSpecInvalid = new System.Text.RegularExpressions.Regex("""-- specification .* is false.*-- as demonstrated by the following execution sequence""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let interpretResultOfNuSMVCommandCheckCtlSpec (result:NuXmvCommandResultBasic) =
+        if linesAsExpectedRegex result.Stdout regexCheckCtlSpecValid then
+            {
+                NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
+            }
+        elif linesAsExpectedRegex result.Stdout regexCheckCtlSpecInvalid then                   
+            {
+                NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(None);
+            }
+        else
+            failwith "result could not be interpreted"
+        
+    let regexCheckLtlSpecValid = new System.Text.RegularExpressions.Regex("""-- specification .* is true""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckLtlSpecInvalid = new System.Text.RegularExpressions.Regex("""-- specification .* is false.*-- as demonstrated by the following execution sequence""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let interpretResultOfNuSMVCommandCheckLtlSpec (result:NuXmvCommandResultBasic) =
+        if linesAsExpectedRegex result.Stdout regexCheckLtlSpecValid then
+            {
+                NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
+            }
+        elif linesAsExpectedRegex result.Stdout regexCheckLtlSpecInvalid then                   
+            {
+                NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(None);
+            }
+        else
+            failwith "result could not be interpreted"
+        
+    let regexCheckInvarValid = new System.Text.RegularExpressions.Regex("""-- invariant .* is true""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let regexCheckInvarInvalid = new System.Text.RegularExpressions.Regex("""-- invariant .* is false.*-- as demonstrated by the following execution sequence""",System.Text.RegularExpressions.RegexOptions.Singleline)
+    let interpretResultOfNuSMVCommandCheckInvar (result:NuXmvCommandResultBasic) =
+        if linesAsExpectedRegex result.Stdout regexCheckInvarValid then
+            {
+                NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
+            }
+        elif linesAsExpectedRegex result.Stdout regexCheckInvarInvalid then                   
+            {
+                NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Invalid(None);
+            }
+        else
+            failwith "result could not be interpreted"
 
     //////////////////////////////////////
     // interpretation of abstract commands

@@ -261,10 +261,14 @@ module NuXmvExecuteTestsWithPrebuildModels =
         let outputCheckPropertyInvar = nuxmv.ExecuteCommand (customCommand (sprintf """check_property -P "%s" """ "invariant"))
         outputCheckPropertyCtl.HasSucceeded =? true
         outputCheckPropertyLtl.HasSucceeded =? true
-        outputCheckPropertyInvar.HasSucceeded =? true
+        outputCheckPropertyInvar.HasSucceeded =? true        
+        let interpretationCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec outputCheckPropertyCtl
+        let interpretationLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec outputCheckPropertyLtl
+        let interpretationInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar outputCheckPropertyInvar
+        interpretationCtl.Result.IsSpecValid =? true
+        interpretationLtl.Result.IsSpecValid =? true
+        interpretationInvar.Result.IsSpecValid =? true
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
-        // TODO: Interpret if all results are valid
-        //NuXmvInterpretResult.interpretResultOfCheckProperty
         ()
         
     [<Test>]
@@ -292,9 +296,14 @@ module NuXmvExecuteTestsWithPrebuildModels =
         outputCheckPropertyCtl.HasSucceeded =? true
         outputCheckPropertyLtl.HasSucceeded =? true
         outputCheckPropertyInvar.HasSucceeded =? true
-        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()
-        // TODO: Interpret if all results are valid
-        //NuXmvInterpretResult.interpretResultOfCheckProperty
+        let interpretationCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec outputCheckPropertyCtl
+        let interpretationLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec outputCheckPropertyLtl
+        let interpretationInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar outputCheckPropertyInvar
+        interpretationCtl.Result.IsSpecInvalid =? true
+        interpretationLtl.Result.IsSpecInvalid =? true
+        interpretationInvar.Result.IsSpecInvalid =? true
+        // TODO: Check Traces
+        let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()        
         ()        
     
 [<TestFixture>]
