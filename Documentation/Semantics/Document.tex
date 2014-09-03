@@ -886,6 +886,8 @@ to transform into a formal model.
 	\item Variables of enum type are replaced by \texttt{int}, enum values are replaced by their underlying integer value.
 	\item Compound assignment operators (\texttt{+=}, \texttt{-=}, etc.) are replaced by the appropriate expression and a simple
 	assignment.
+	\item Multiple local variables declared by the same declaration are split into multiple declarations.
+	\item All locally declared variables that are not initialized during declaration are initialized to their default value.
 	\item Additional required ports must be introduced for all provided ports of subcomponents invoked by the parent component. The
 	corresponding provided port invocations have to be replaced by the synthesized required ports and the corresponding bindings have
 	to be established.

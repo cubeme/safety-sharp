@@ -95,7 +95,8 @@ namespace SafetySharp.CSharpCompiler.Normalization
 					return expression;
 			}
 
-			var parenthesizedExpression = SyntaxFactory.ParenthesizedExpression(expression.Right).WithLeadingSpace();
+			var originalRightHand = (ExpressionSyntax)base.Visit(expression.Right);
+			var parenthesizedExpression = SyntaxFactory.ParenthesizedExpression(originalRightHand).WithLeadingSpace();
 			var rightHandExpression = SyntaxFactory.BinaryExpression(expressionKind, expression.Left.WithLeadingSpace(), parenthesizedExpression);
 			var simpleAssignment = SyntaxFactory.BinaryExpression(SyntaxKind.SimpleAssignmentExpression, expression.Left, rightHandExpression);
 			return simpleAssignment.WithTrivia(expression);

@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -23,61 +23,46 @@
 namespace SafetySharp.CSharpCompiler.Normalization
 {
 	using System;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn;
-	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces all out parameters of a method declaration or method invocation with ref parameters. This normalization assumes
-	///     that the variable is definitely assigned before the method invocation; otherwise, invalid C# code is generated.
+	///     Initializes all locally declared variables to their types' default values if no initializer is provided.
 	/// 
 	///     For instance:
 	///     <code>
-	///  		public void MyMethod(out int a) { ... }
+	///  		int x;
 	///  		// becomes:
-	///  		public void MyMethod(ref int a) { ... }
+	///  		int x = default(int);
 	///  		
-	///  		MyMethod(out x);
+	///  		bool x = false, y, z;
 	///  		// becomes:
-	///  		MyMethod(ref x);
+	///  		bool x = false, y = default(bool), z = default(bool);
 	/// 	</code>
 	/// </summary>
-	public class OutParameterNormalizer : CSharpNormalizer
+	public class InitializationNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public OutParameterNormalizer()
-			: base(NormalizationScope.Components)
+		public InitializationNormalizer()
+			: base(NormalizationScope.ComponentStatements)
 		{
 		}
 
 		/// <summary>
-		///     Replaces the <paramref name="parameter" />'s out modifier with a ref modifier.
+		///     Initializes the declared variable to its type's default value, if the <paramref name="declarator" /> has no initializer.
 		/// </summary>
-		public override SyntaxNode VisitParameter(ParameterSyntax parameter)
+		public override SyntaxNode VisitVariableDeclarator(VariableDeclaratorSyntax declarator)
 		{
-			if (!parameter.Modifiers.Any(SyntaxKind.OutKeyword))
-				return parameter;
+			if (declarator.Initializer != null)
+				return declarator;
 
-			var outModifier = parameter.Modifiers.SingleOrDefault(token => token.CSharpKind() == SyntaxKind.OutKeyword);
-			var refModifier = SyntaxFactory.Token(SyntaxKind.RefKeyword).WithTrivia(outModifier);
-			return parameter.WithModifiers(parameter.Modifiers.Replace(outModifier, refModifier));
-		}
-
-		/// <summary>
-		///     Replaces the <paramref name="argument" />'s out modifier with a ref modifier.
-		/// </summary>
-		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
-		{
-			if (argument.RefOrOutKeyword.CSharpKind() != SyntaxKind.OutKeyword)
-				return base.VisitArgument(argument);
-
-			var refModifier = SyntaxFactory.Token(SyntaxKind.RefKeyword).WithTrivia(argument.RefOrOutKeyword);
-			return argument.WithRefOrOutKeyword(refModifier);
+			var type = ((VariableDeclarationSyntax)declarator.Parent).Type;
+			var initializer = SyntaxFactory.EqualsValueClause(SyntaxFactory.DefaultExpression(type));
+			return declarator.WithInitializer(initializer).NormalizeWhitespace();
 		}
 	}
 }

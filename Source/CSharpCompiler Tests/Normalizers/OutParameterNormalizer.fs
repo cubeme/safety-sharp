@@ -46,7 +46,7 @@ module OutParameterNormalizer =
         normalize "class X { void M(out int x) { x = 1; }}" =? "class X { void M(out int x) { x = 1; }}"
 
     [<Test>]
-    let ``does not normalize out arguments of method invocation outisde a component class`` () =
+    let ``does not normalize out arguments of method invocation outside a component class`` () =
         normalize "class X { void M(out int x) { x = 1; M(out x); }}" =? "class X { void M(out int x) { x = 1; M(out x); }}"
 
     [<Test>]
@@ -73,3 +73,8 @@ module OutParameterNormalizer =
             "class X : Component { void M(int a, ref int x, int b) { M(a, ref x, b); }}"
         normalize "class X : Component { void M(ref int a, out int x, out int y) { M(ref a, out x, out y); }}" =? 
             "class X : Component { void M(ref int a, ref int x, ref int y) { M(ref a, ref x, ref y); }}"
+
+    [<Test>]
+    let ``normalizes nested method invocations with out parameters within a component`` () =
+        normalize "class X : Component { int M(int x, out int y) { return M(M(x, out y), out y); }}" =?
+            "class X : Component { int M(int x, ref int y) { return M(M(x, ref y), ref y); }}"

@@ -66,6 +66,30 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		}
 
 		/// <summary>
+		///     Returns a copy of <paramref name="token" /> with all leading trivia replaced by the leading
+		///     trivia of <paramref name="node" />.
+		/// </summary>
+		/// <param name="token">The token that should have its trivia replaced.</param>
+		/// <param name="node">The node the leading and trailing trivia should be copied from.</param>
+		public static SyntaxToken WithLeadingTrivia(this SyntaxToken token, SyntaxNode node)
+		{
+			Requires.NotNull(node, () => node);
+			return token.WithLeadingTrivia(node.GetLeadingTrivia());
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="token" /> with all trailing trivia replaced by the trailing
+		///     trivia of <paramref name="node" />.
+		/// </summary>
+		/// <param name="token">The token that should have its trivia replaced.</param>
+		/// <param name="node">The node the leading and trailing trivia should be copied from.</param>
+		public static SyntaxToken WithTrailingTrivia(this SyntaxToken token, SyntaxNode node)
+		{
+			Requires.NotNull(node, () => node);
+			return token.WithTrailingTrivia(node.GetTrailingTrivia());
+		}
+
+		/// <summary>
 		///     Returns a copy of <paramref name="token" /> with all leading and trailing trivia replaced by the leading and trailing
 		///     trivia of <paramref name="otherToken" />.
 		/// </summary>

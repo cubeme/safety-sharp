@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014, Institute for Software & Systems Engineering
 // 
@@ -23,7 +23,6 @@
 namespace SafetySharp.CSharpCompiler.Normalization
 {
 	using System;
-	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,53 +30,61 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces all out parameters of a method declaration or method invocation with ref parameters. This normalization assumes
-	///     that the variable is definitely assigned before the method invocation; otherwise, invalid C# code is generated.
+	///     Splits multiple local variable declarations declared by the same declaration into mulitple declarations.
 	/// 
 	///     For instance:
 	///     <code>
-	///  		public void MyMethod(out int a) { ... }
+	///  		int x, y = 3, z;
 	///  		// becomes:
-	///  		public void MyMethod(ref int a) { ... }
-	///  		
-	///  		MyMethod(out x);
-	///  		// becomes:
-	///  		MyMethod(ref x);
+	///  		int x; int y = 3; int z;
 	/// 	</code>
 	/// </summary>
-	public class OutParameterNormalizer : CSharpNormalizer
+	public class LocalDeclarationNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public OutParameterNormalizer()
-			: base(NormalizationScope.Components)
+		public LocalDeclarationNormalizer()
+			: base(NormalizationScope.ComponentStatements)
 		{
 		}
 
 		/// <summary>
-		///     Replaces the <paramref name="parameter" />'s out modifier with a ref modifier.
+		///     Normalizes all variable declarations within the <paramref name="block" />.
 		/// </summary>
-		public override SyntaxNode VisitParameter(ParameterSyntax parameter)
+		public override SyntaxNode VisitBlock(BlockSyntax block)
 		{
-			if (!parameter.Modifiers.Any(SyntaxKind.OutKeyword))
-				return parameter;
+			block = (BlockSyntax)base.VisitBlock(block);
+			var statements = block.Statements;
 
-			var outModifier = parameter.Modifiers.SingleOrDefault(token => token.CSharpKind() == SyntaxKind.OutKeyword);
-			var refModifier = SyntaxFactory.Token(SyntaxKind.RefKeyword).WithTrivia(outModifier);
-			return parameter.WithModifiers(parameter.Modifiers.Replace(outModifier, refModifier));
-		}
+			for (var i = 0; i < statements.Count; ++i)
+			{
+				var localDeclaration = statements[i] as LocalDeclarationStatementSyntax;
+				if (localDeclaration == null || localDeclaration.Declaration.Variables.Count == 1)
+					continue;
 
-		/// <summary>
-		///     Replaces the <paramref name="argument" />'s out modifier with a ref modifier.
-		/// </summary>
-		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
-		{
-			if (argument.RefOrOutKeyword.CSharpKind() != SyntaxKind.OutKeyword)
-				return base.VisitArgument(argument);
+				statements = statements.RemoveAt(i);
 
-			var refModifier = SyntaxFactory.Token(SyntaxKind.RefKeyword).WithTrivia(argument.RefOrOutKeyword);
-			return argument.WithRefOrOutKeyword(refModifier);
+				var count = localDeclaration.Declaration.Variables.Count;
+				for (var j = 0; j < count; ++j)
+				{
+					var declarator = localDeclaration.Declaration.Variables[j];
+					var declaration = localDeclaration.Declaration.WithVariables(SyntaxFactory.SingletonSeparatedList(declarator));
+					var local = SyntaxFactory.LocalDeclarationStatement(localDeclaration.Modifiers, declaration);
+
+					if (j == 0)
+						local = local.WithLeadingTrivia(localDeclaration);
+					else
+						local = local.WithLeadingSpace();
+
+					if (j == count - 1)
+						local = local.WithTrailingTrivia(localDeclaration);
+
+					statements = statements.Insert(i + j, local);
+				}
+			}
+
+			return block.WithStatements(statements);
 		}
 	}
 }

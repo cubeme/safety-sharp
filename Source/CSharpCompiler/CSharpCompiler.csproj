@@ -76,8 +76,10 @@
     <Compile Include="Normalization\EnumLiteralNormalizer.cs" />
     <Compile Include="Normalization\EnumTypeNormalizer.cs" />
     <Compile Include="Normalization\ExpressionLifter.cs" />
+    <Compile Include="Normalization\InitializationNormalizer.cs" />
     <Compile Include="Normalization\InterfaceRequiredPortNormalizer.cs" />
     <Compile Include="Normalization\OutParameterNormalizer.cs" />
+    <Compile Include="Normalization\LocalDeclarationNormalizer.cs" />
     <Compile Include="Roslyn\CSharpAnalyzer.cs" />
     <Compile Include="Roslyn\CSharpNormalizer.cs" />
     <Compile Include="Roslyn\NormalizationScope.cs" />

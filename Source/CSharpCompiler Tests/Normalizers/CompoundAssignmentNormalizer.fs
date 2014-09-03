@@ -82,3 +82,8 @@ module CompoundAssignmentNormalizer =
         check "^" "^"
         check "<<" "<<"
         check ">>" ">>"
+
+    [<Test>]
+    let ``normalizes nested compound assignments`` () =
+        normalize "class X : Component { void M() { int x = 0, y = 0; x += y += 1; }}" =?
+            "class X : Component { void M() { int x = 0, y = 0; x = x + (y = y + (1)); }}"
