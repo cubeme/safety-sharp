@@ -35,14 +35,14 @@ open SafetySharp.CSharpCompiler.Roslyn.Syntax
 open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
-module OptionalParameterNormalizer =
+module OptionalArgumentNormalizer =
     let normalize csharpCode = 
         let compilation = TestCompilation csharpCode
-        let syntaxTree = OptionalParameterNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        let syntaxTree = OptionalArgumentNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
 
     [<Test>]
-    let ``does not normalize optional parameters of method invocation outside a component class`` () =
+    let ``does not normalize optional arguments of method invocation outside a component class`` () =
         normalize "class X { void M(int a = 0) { M(); }}" =? "class X { void M(int a = 0) { M(); }}"
 
     [<Test>]
@@ -51,18 +51,18 @@ module OptionalParameterNormalizer =
             "class X : Component { void M(int x) { M(2); } void N() { N(); }}"
 
     [<Test>]
-    let ``does not change invocation of method with optional parameters within a component class when all parameters are provided`` () =
+    let ``does not change invocation of method with optional parameters within a component class when all arguments are provided`` () =
         normalize "class X : Component { void M(int x = 0) { M(2); } void N(bool b = false, bool c = true) { N(true, false); }}" =? 
             "class X : Component { void M(int x = 0) { M(2); } void N(bool b = false, bool c = true) { N(true, false); }}"
 
     [<Test>]
-    let ``adds omitted parameters to invocation without named arguments within a component`` () =
+    let ``adds omitted arguments to invocation without named arguments within a component`` () =
         normalize "class X : Component { void M(int a = 17) { M(); }}" =? "class X : Component { void M(int a = 17) { M(a: 17); }}"
         normalize "class X : Component { void M(bool a = true) { M(); }}" =? "class X : Component { void M(bool a = true) { M(a: true); }}"
         normalize "class X : Component { void M(decimal a = 3.14m) { M(); }}" =? "class X : Component { void M(decimal a = 3.14m) { M(a: 3.14m); }}"
 
     [<Test>]
-    let ``adds omitted parameters to invocation with multiple arguments within a component`` () =
+    let ``adds omitted arguments to invocation with multiple arguments within a component`` () =
         normalize "class X : Component { void M(int a, int b = 17) { M(3); }}" =? 
             "class X : Component { void M(int a, int b = 17) { M(3, b: 17); }}"
         normalize "class X : Component { void M(int a, int b = 17, int c = 2) { M(3); }}" =? 
@@ -77,7 +77,7 @@ module OptionalParameterNormalizer =
             "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(3, 2, 1); }}"
 
     [<Test>]
-    let ``adds omitted parameters with default values to invocation without named arguments within a component`` () =
+    let ``adds omitted arguments with default values to invocation without named arguments within a component`` () =
         normalize "class X : Component { void M(int a = default(int)) { M(); }}" =? 
             "class X : Component { void M(int a = default(int)) { M(a: 0); }}"
         normalize "class X : Component { void M(bool a = default(bool)) { M(); }}" =? 
@@ -88,7 +88,7 @@ module OptionalParameterNormalizer =
             "class X : Component { void M(System.DateTime a = default(System.DateTime)) { M(a: default (global::System.DateTime)); }}"
 
     [<Test>]
-    let ``adds omitted parameters to invocation with named arguments within a component`` () =
+    let ``adds omitted arguments to invocation with named arguments within a component`` () =
         normalize "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(c: 3, a: 2); }}" =? 
             "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(c: 3, a: 2, b: 17); }}"
         normalize "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(3, b: 1); }}" =? 
@@ -97,7 +97,7 @@ module OptionalParameterNormalizer =
             "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(c: 3, a: 2, b: 1); }}"
 
     [<Test>]
-    let ``adds omitted parameters to nested invocations within a component`` () =
+    let ``adds omitted arguments to nested invocations within a component`` () =
         normalize "class X : Component { int M(int a = 1, int b = 2) { return M(b: M(b: 17)); }}" =?
             "class X : Component { int M(int a = 1, int b = 2) { return M(b: M(b: 17, a: 1), a: 1); }}"
         normalize "class X : Component { int M(int a = 1, int b = 2) { return M(M(17)); }}" =?

@@ -89,7 +89,8 @@
     <Compile Include="Normalizers\InitializationNormalizer.fs" />
     <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\LocalDeclarationNormalizer.fs" />
-    <Compile Include="Normalizers\OptionalParameterNormalizer.fs" />
+    <Compile Include="Normalizers\NamedArgumentNormalizer.fs" />
+    <Compile Include="Normalizers\OptionalArgumentNormalizer.fs" />
     <Compile Include="Normalizers\OutParameterNormalizer.fs" />
     <None Include="packages.config" />
   </ItemGroup>

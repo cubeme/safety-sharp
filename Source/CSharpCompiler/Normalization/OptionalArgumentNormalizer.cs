@@ -34,7 +34,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	using Utilities;
 
 	/// <summary>
-	///     Adds omitted optional parameters to all method invocations. The normalizer assumes that optional parameters are of
+	///     Adds omitted optional arguments to all method invocations. The normalizer assumes that optional parameters are of
 	///     struct, Boolean, integer, or decimal type.
 	/// 
 	///     For instance, with method M declared as <c>void M(int a, int b = 2, int c = default(int))</c>:
@@ -48,18 +48,18 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	///  		M(c: 4, a: 1, b: 2);
 	/// 	</code>
 	/// </summary>
-	public class OptionalParameterNormalizer : CSharpNormalizer
+	public class OptionalArgumentNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public OptionalParameterNormalizer()
+		public OptionalArgumentNormalizer()
 			: base(NormalizationScope.ComponentStatements)
 		{
 		}
 
 		/// <summary>
-		///     Adds omitted optional parameters to the <paramref name="invocation" />.
+		///     Adds omitted optional arguments to the <paramref name="invocation" />.
 		/// </summary>
 		public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax invocation)
 		{
@@ -67,8 +67,8 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			var methodSymbol = invocation.GetReferencedSymbol<IMethodSymbol>(SemanticModel);
 			if (methodSymbol.Parameters.All(parameter => !parameter.IsOptional))
 				return base.VisitInvocationExpression(invocation);
-			
-			// Nothing to do if all optional parameters have been provided
+
+			// Nothing to do if all optional arguments have been provided
 			if (invocation.ArgumentList.Arguments.Count == methodSymbol.Parameters.Length)
 				return base.VisitInvocationExpression(invocation);
 
@@ -80,7 +80,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			invocation = (InvocationExpressionSyntax)base.VisitInvocationExpression(invocation);
 			var arguments = invocation.ArgumentList.Arguments;
 
-			// Add the default values of all omitted optional arguments as named parameters to the end of the argument list
+			// Add the default values of all omitted optional arguments as named arguments to the end of the argument list
 			foreach (var omittedParameter in omittedParameters)
 			{
 				Assert.That(omittedParameter.HasExplicitDefaultValue, "Expected an implicit default value.");
@@ -100,7 +100,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 
 				var argument = SyntaxFactory.Argument(SyntaxFactory.NameColon(omittedParameter.Name),
 					SyntaxFactory.Token(SyntaxKind.None), SyntaxFactory.ParseExpression(defaultValue));
-				
+
 				arguments = arguments.Add(argument);
 			}
 
