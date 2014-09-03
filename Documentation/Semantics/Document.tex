@@ -900,6 +900,7 @@ to transform into a formal model.
 	\item All invocations that have fields as \texttt{ref} parameters are rewritten such that for all field \texttt{ref} parameters new variables are
 	introduced that are used as the \texttt{ref} parameters instead of the fields. After the invocation, the values of these
 	variables are assigned to the corresponding field.
+	\item Named parameters are sorted in accordance with the parameter declarations; optional parameters are filled in.
 	\item Expressions must be rewritten such that they contain no side effects (assignments to variables, method calls, overloaded
 	operators).
 	\item Fields, local variables, properties, indexers and parameters of struct or array type must be replaced by the appropriate

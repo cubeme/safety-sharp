@@ -66,6 +66,11 @@ module LocalDeclarationNormalizer =
             "class X : Component { void M() { int x; int y; { int a; int b; }}}"
 
     [<Test>]
-    let ``normalizes multiple variable declarations within a component`` () =
+    let ``normalizes multiple variable declarations nested within other statements`` () =
+        normalize "class X : Component { void M() { int a = 0; a++; bool x, y; a--; int z, w; }}" =?
+            "class X : Component { void M() { int a = 0; a++; bool x; bool y; a--; int z; int w; }}"
+
+    [<Test>]
+    let ``normalizes multiple variable declarations in nested blocks within a component`` () =
         normalize "class X : Component { void M() { int x, y = 1; x = y; bool z, w = x != y; { int a = 0, b = 0; z = a == b; }}}" =?
             "class X : Component { void M() { int x; int y = 1; x = y; bool z; bool w = x != y; { int a = 0; int b = 0; z = a == b; }}}"
