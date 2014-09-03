@@ -851,14 +851,20 @@ The general idea of the transformation process is as follows:
 \subsection{Runtime Well-Formedness Checks}
 Certain well-formedness checks on the \SSharp model cannot be performed at compile time, as runtime information is required:
 \begin{itemize}
-	\item Port bindings cannot be circular, unless at least one delayed binding is involved.
-	\item Port bindings cannot span more than one level of the component hierarchy and cannot cross different branches of the tree,
-	expect for bindings crossing partition boundaries.
-	\item Every required port can only be contained in exactly one binding.
+	\item Every component appears only once in the hierarchy (no shared components).
+	\item Port bindings can optionally be checked, but this is part of the formal model well-formedness check anyway, so it can be
+	skipped here.
+	\begin{itemize} 
+		\item Port bindings cannot be circular, unless at least one delayed binding is involved.
+		\item Port bindings cannot span more than one level of the component hierarchy and cannot cross different branches of the tree,
+		expect for bindings crossing partition boundaries.
+		\item Every required port can only be contained in exactly one binding.
+	\end{itemize}
 	\item Port bindings are only allowed between compatible component types, i.e., it is invalid to bind a required port of a
-	controller component to a provided port of an environment component.
+	controller component to a provided port of an environment component. Note that signature compatibility is enforced by the \CSharp
+	compiler.
 	\item It must be possible to uniquely determine the sizes of all arrays used throughout the component hierarchy (either as local
-	variables, port parameters, or fields).
+	variables, port parameters, or fields). 
 \end{itemize}
 
 \subsection{Transformation to Formal Models}

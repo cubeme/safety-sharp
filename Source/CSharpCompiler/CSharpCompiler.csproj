@@ -72,6 +72,7 @@
     <Compile Include="Analyzers\SS1006.cs" />
     <Compile Include="Analyzers\SS1007.cs" />
     <Compile Include="Normalization\ComponentRequiredPortNormalizer.cs" />
+    <Compile Include="Normalization\CompoundAssignmentNormalizer.cs" />
     <Compile Include="Normalization\EnumLiteralNormalizer.cs" />
     <Compile Include="Normalization\EnumTypeNormalizer.cs" />
     <Compile Include="Normalization\ExpressionLifter.cs" />
