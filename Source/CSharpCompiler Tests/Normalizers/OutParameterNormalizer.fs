@@ -36,10 +36,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
 module OutParameterNormalizer =
-    let normalize csharpCode = 
-        let compilation = TestCompilation csharpCode
-        let syntaxTree = OutParameterNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+    let normalize = TestCompilation.GetNormalizedClass (OutParameterNormalizer ())
 
     [<Test>]
     let ``does not normalize out parameters of method not declared within a component class`` () =

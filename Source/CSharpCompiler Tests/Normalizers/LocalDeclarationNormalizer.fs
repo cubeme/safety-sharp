@@ -36,10 +36,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
 module LocalDeclarationNormalizer =
-    let normalize csharpCode = 
-        let compilation = TestCompilation csharpCode
-        let syntaxTree = LocalDeclarationNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+    let normalize = TestCompilation.GetNormalizedClass (LocalDeclarationNormalizer ())
 
     [<Test>]
     let ``does not normalize variable declarations of method not declared within a component class`` () =

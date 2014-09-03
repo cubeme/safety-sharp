@@ -37,9 +37,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 [<TestFixture>]
 module ComponentRequiredPortNormalizer =
     let normalize csharpCode = 
-        let compilation = TestCompilation ("using System.Diagnostics;" + csharpCode)
-        let syntaxTree = ComponentRequiredPortNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+        TestCompilation.GetNormalizedClass (ComponentRequiredPortNormalizer()) (sprintf "using System.Diagnostics; %s" csharpCode)
 
     [<Test>]
     let ``does not normalize extern method not declared within a component class`` () =

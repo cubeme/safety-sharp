@@ -36,10 +36,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
 module NamedArgumentNormalizer =
-    let normalize csharpCode = 
-        let compilation = TestCompilation csharpCode
-        let syntaxTree = NamedArgumentNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+    let normalize = TestCompilation.GetNormalizedClass (NamedArgumentNormalizer ())
 
     [<Test>]
     let ``does not normalize named arguments of method invocation outside a component class`` () =

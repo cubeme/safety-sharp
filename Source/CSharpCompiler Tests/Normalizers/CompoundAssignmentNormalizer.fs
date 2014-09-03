@@ -36,10 +36,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
 module CompoundAssignmentNormalizer =
-    let normalize csharpCode = 
-        let compilation = TestCompilation csharpCode
-        let syntaxTree = CompoundAssignmentNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+    let normalize = TestCompilation.GetNormalizedClass (CompoundAssignmentNormalizer ())
 
     [<Test>]
     let ``does not normalize compound assignment outside a component class`` () =

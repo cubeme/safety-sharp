@@ -37,7 +37,8 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 [<TestFixture>]
 module ExpressionLifter =
     let normalize csharpCode =
-        let compilation = TestCompilation (sprintf "
+        let csharpCode = 
+            sprintf "
             class C : Component
             {
                 C(bool b) {}
@@ -49,9 +50,9 @@ module ExpressionLifter =
                 int P(int i, [LiftExpression] bool b) { return 0; }
 
                 void Test() { %s; }
-            }" csharpCode)
+            }" csharpCode
 
-        let syntaxTree = ExpressionLifter().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
+        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ExpressionLifter ()) csharpCode
         let creationInvocation = syntaxTree.Descendants<ObjectCreationExpressionSyntax>().FirstOrDefault ()
         
         if creationInvocation <> null then

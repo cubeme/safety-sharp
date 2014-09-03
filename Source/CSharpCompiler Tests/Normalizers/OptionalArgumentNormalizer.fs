@@ -36,10 +36,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
 module OptionalArgumentNormalizer =
-    let normalize csharpCode = 
-        let compilation = TestCompilation csharpCode
-        let syntaxTree = OptionalArgumentNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+    let normalize = TestCompilation.GetNormalizedClass (OptionalArgumentNormalizer ())
 
     [<Test>]
     let ``does not normalize optional arguments of method invocation outside a component class`` () =

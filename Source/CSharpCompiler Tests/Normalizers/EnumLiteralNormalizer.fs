@@ -37,9 +37,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 [<TestFixture>]
 module EnumLiteralNormalizer =
     let normalize csharpCode =
-        let compilation = TestCompilation ("enum E { A, B, C } " + csharpCode)
-        let syntaxTree = EnumLiteralNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+        TestCompilation.GetNormalizedClass (EnumLiteralNormalizer ()) (sprintf "namespace Q { enum E { A, B, C } %s}" csharpCode)
 
     [<Test>]
     let ``does not change non-enum member accesses`` () =
@@ -75,14 +73,19 @@ module EnumLiteralNormalizer =
         normalize "class C : Component { bool M() { return E.A == E.C; }}" =? "class C : Component { bool M() { return 0 == 2; }}"
 
     [<Test>]
+    let ``replaces use of namespace qualified enum literal`` () =
+        normalize "class C : Component { bool M() { return global::Q.E.A == global::Q.E.C; }}" =? 
+            "class C : Component { bool M() { return 0 == 2; }}"
+
+    [<Test>]
     let ``replaces enum in switch case labels`` () =
         normalize "class C : Component { void M(E e) { switch (e) { case E.A: return; case E.B: return; case E.C: return; } }}" =?
             "class C : Component { void M(E e) { switch (e) { case 0: return; case 1: return; case 2: return; } }}"
 
     [<Test>]
     let ``replaces extern alias enum literal`` () =
-        let externCompilation = TestCompilation "public enum E { A, B }"
+        let external = ("X", "public enum E { A, B }")
         let csharpCode = "namespace Y { extern alias X; class C : Component { bool M() { return X::E.A == X::E.B; }}}"
-        let compilation = TestCompilation (csharpCode, ("X", externCompilation))
-        let syntaxTree = EnumLiteralNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString () =? "class C : Component { bool M() { return 0 == 1; }}"
+
+        TestCompilation.GetNormalizedClassWithExternAliases (EnumLiteralNormalizer()) csharpCode [external] =?
+            "class C : Component { bool M() { return 0 == 1; }}"

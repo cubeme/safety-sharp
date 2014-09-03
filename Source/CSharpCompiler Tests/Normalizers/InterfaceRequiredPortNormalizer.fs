@@ -37,9 +37,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 [<TestFixture>]
 module InterfaceRequiredPortNormalizer =
     let normalize csharpCode = 
-        let compilation = TestCompilation ("using System.Diagnostics;" + csharpCode)
-        let syntaxTree = InterfaceRequiredPortNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<InterfaceDeclarationSyntax>().Single().ToFullString ()
+        TestCompilation.GetNormalizedInterface (InterfaceRequiredPortNormalizer ()) ("using System.Diagnostics;" + csharpCode)
 
     [<Test>]
     let ``does not normalize required port not declared within a component interface`` () =

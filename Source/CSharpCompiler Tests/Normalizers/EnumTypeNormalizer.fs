@@ -37,9 +37,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Symbols
 [<TestFixture>]
 module EnumTypeNormalizer =
     let normalize csharpCode =
-        let compilation = TestCompilation ("enum E { A } " + csharpCode)
-        let syntaxTree = EnumTypeNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+        TestCompilation.GetNormalizedClass (EnumTypeNormalizer ()) (sprintf "namespace Q { enum E { A } %s}" csharpCode)
 
     [<Test>]
     let ``does not change references to non-enum types`` () =
@@ -80,6 +78,10 @@ module EnumTypeNormalizer =
     [<Test>]
     let ``replaces use of enum type in 'default' expression`` () =
         normalize "class C : Component { E M() { return default(E); }}" =? "class C : Component { int M() { return default(int); }}"
+
+    [<Test>]
+    let ``replaces use of namespace qualified enum type`` () =
+        normalize "class C : Component { global::Q.E e; }" =? "class C : Component { int e; }"
     
     [<Test>]
     let ``replaces enum local variable declarations`` () =
@@ -89,7 +91,8 @@ module EnumTypeNormalizer =
 
     [<Test>]
     let ``replaces extern alias enum local variable declaration`` () =
-        let externCompilation = TestCompilation "public enum E { A, B }"
-        let compilation = TestCompilation ("namespace Y { extern alias X; class C : Component { void M() { X::E e; }}}", ("X", externCompilation))
-        let syntaxTree = EnumTypeNormalizer().Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString () =? "class C : Component { void M() { int e; }}"
+        let external = ("X", "public enum E { A, B }")
+        let csharpCode = "namespace Y { extern alias X; class C : Component { void M() { X::E e; }}}"
+
+        TestCompilation.GetNormalizedClassWithExternAliases (EnumTypeNormalizer()) csharpCode [external] =?
+            "class C : Component { void M() { int e; }}"
