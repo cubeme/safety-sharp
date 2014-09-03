@@ -63,6 +63,33 @@ and internal NuXmvCommandResultBasic = {
         member this.HasSucceeded =
                 this.Failure.IsNone
 
+module internal CounterexampleXml =
+    // see file counter-example-no-ns.xsd
+    type CounterexampleXmlValue = {
+        //<value variable=Variablename>Value</value>
+        VariableName:string;
+        Value:string;
+    }
+
+    type CounterexampleXmlSection = {
+        //<state id=Id> or <combinatorial id=Id> or <input id=Id>
+        Id:int;
+        Values:CounterexampleXmlValue list;
+    }
+    type CounterexampleXmlNode = {
+        //<node>
+        State : CounterexampleXmlSection;
+        Combinatorial : CounterexampleXmlSection option;
+        Input : CounterexampleXmlSection option;
+    }
+    type CounterexampleXmlRoot = {
+        //<counterexample type=Type desc=Desc>
+        Nodes : (int*CounterexampleXmlNode) list;
+        LoopStart : int option;
+        Type : string;
+        Desc : string;
+    }
+
 type Trace() =
     class end
 
