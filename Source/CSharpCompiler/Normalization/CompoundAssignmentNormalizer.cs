@@ -49,7 +49,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 		///     Initializes a new instance.
 		/// </summary>
 		public CompoundAssignmentNormalizer()
-			: base(NormalizationScope.Components)
+			: base(NormalizationScope.ComponentStatements)
 		{
 		}
 

@@ -54,6 +54,7 @@
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
     </Compile>
+    
     <Compile Include="TestCompilation.fs" />
     <Compile Include="Utilities\Assert.fs" />
     <Compile Include="Utilities\Log.fs" />
@@ -81,12 +82,14 @@
     <Compile Include="Analyzers\SS1005.fs" />
     <Compile Include="Analyzers\SS1006.fs" />
     <Compile Include="Analyzers\SS1007.fs" />
-    <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
+	  <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\CompoundAssignmentNormalizer.fs" />
     <Compile Include="Normalizers\EnumLiteralNormalizer.fs" />
     <Compile Include="Normalizers\EnumTypeNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
+    
+	  <Compile Include="Normalizers\OutParameterNormalizer.fs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
