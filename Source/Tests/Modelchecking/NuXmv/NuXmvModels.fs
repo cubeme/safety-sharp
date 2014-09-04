@@ -141,7 +141,27 @@ module Models =
         + "				cix <= 6 : cix;\n"
         + "				TRUE : 1;\n"
         + "			esac;\n"
-    (*  
+    
+  
+    let ``simple-constants`` =
+          "  MODULE main\n"
+        + "	CONSTANTS --constants here are only used in define\n"
+        + "		symbolic_constant_A,\n"
+        + "		symbolic_constant_B;\n"
+        + "	DEFINE\n"
+        + "		defineA:=symbolic_constant_A;\n"
+        + "		defineB:=(defineA=symbolic_constant_A) | (defineA=symbolic_constant_B);\n"
+        + "	VAR\n"
+        + "		x : 1..10;\n"
+        + "	ASSIGN\n"
+        + "		init(x) := 1;\n"
+        + "		next(x) :=\n"
+        + "			case\n"
+        + "				defineB & (x + 1 <= 10) : x + 1;\n"
+        + "				TRUE : 1;\n"
+        + "			esac;\n"
+              
+  (*  
         For tests: Copy&Paste
         
         FileSystem.WriteToAsciiFile filename model
