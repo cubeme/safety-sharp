@@ -84,8 +84,21 @@ module internal CounterexampleData =
         Type : string;
         Description : string;
     }
+    
+    let internal counterexampleGroupBy (indexer:CounterexampleEntry->'a) (counterexamples:CounterexampleEntry list) : Map<'a,CounterexampleEntry list> =
+        // assume counterexamples are ordered
+        // maybe a more efficient solution is possible with List.sortWith or with dictionaries
+        // see http://stackoverflow.com/questions/6726559/group-totals-in-f-easy-with-sequences-is-it-possible-with-lists
+        counterexamples
+            |> List.rev
+            |> List.fold (fun groupsAcc counterexample ->
+                                let index = indexer counterexample
+                                match groupsAcc |> Map.tryFind index with
+                                    | Some(s) -> groupsAcc |> Map.remove index |> Map.add index (counterexample::s)
+                                    | None -> groupsAcc |> Map.add index [counterexample]
+                            ) Map.empty<'a,CounterexampleEntry list>
 
-    let internal parseXml (xmlString:string) : Counterexample =
+    let internal parseXml (xmlString:string) : Counterexample =        
         // TODO: very inefficient (extensive use of XPath and list-concatenations)
         // The basic structure of a counterexample is delivered in counter-example-no-ns.xsd
         // Some remarks:
@@ -168,10 +181,12 @@ module internal CounterexampleData =
                      |> Seq.collect parseNode
                      |> Seq.toList
         // create maps for a convenient access
+        let entriesOfStep = entries |> counterexampleGroupBy (fun (entry:CounterexampleEntry) -> entry.StepNumber)  
+        let entriesOfVariableName = entries |> counterexampleGroupBy (fun (entry:CounterexampleEntry) -> entry.VariableName)
         {
             Counterexample.Entries = entries;
-            Counterexample.EntriesOfStep = Map.empty<int,CounterexampleEntry list>; //TODO
-            Counterexample.EntriesOfVariableName = Map.empty<string,CounterexampleEntry list>; //TODO
+            Counterexample.EntriesOfStep = entriesOfStep;
+            Counterexample.EntriesOfVariableName = entriesOfVariableName;
             Counterexample.Loops= loops;
             Counterexample.Type = counterexampleType;
             Counterexample.Description = description;
