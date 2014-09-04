@@ -277,6 +277,164 @@ Flattening the generated tableau........ done
 Creating LTL tableau variables...
 """
 
+    let counterExampleWithInputXml = """<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" desc="LTL Counterexample" >
+        <node>
+                <state id="1">
+                        <value variable="x">TRUE</value>
+                </state>
+                <input id="2">
+                        <value variable="i">FALSE</value>
+                </input>
+        </node>
+        <node>
+                <state id="2">
+                        <value variable="x">FALSE</value>
+                </state>
+                <input id="3">
+                        <value variable="i">FALSE</value>
+                </input>
+        </node>
+        <node>
+                <state id="3">
+                        <value variable="x">TRUE</value>
+                </state>
+                <input id="4">
+                        <value variable="i">TRUE</value>
+                </input>
+        </node>
+        <node>
+                <state id="4">
+                        <value variable="x">TRUE</value>
+                </state>
+                <input id="5">
+                        <value variable="i">TRUE</value>
+                </input>
+        </node>
+        <node>
+                <state id="5">
+                        <value variable="x">TRUE</value>
+                </state>
+                <input id="6">
+                        <value variable="i">TRUE</value>
+                </input>
+        </node>
+        <node>
+                <state id="6">
+                        <value variable="x">TRUE</value>
+                </state>
+        </node>
+        <loops> 1 ,3 ,4 ,5 </loops>
+</counter-example>"""
+    let counterExampleWithInputSimple = """  -- Loop starts here
+  -> State: 3.1 <-
+    x = TRUE
+  -> Input: 3.2 <-
+    i = FALSE
+  -> State: 3.2 <-
+    x = FALSE
+  -> Input: 3.3 <-
+  -- Loop starts here
+  -> State: 3.3 <-
+    x = TRUE
+  -> Input: 3.4 <-
+    i = TRUE
+  -- Loop starts here
+  -> State: 3.4 <-
+  -> Input: 3.5 <-
+  -- Loop starts here
+  -> State: 3.5 <-
+  -> Input: 3.6 <-
+  -> State: 3.6 <-"""
+
+    let counterExampleWithCombinatorialXml = """<?xml version="1.0" encoding="UTF-8"?>
+<counter-example type="0" desc="LTL Counterexample" >
+        <node>
+                <state id="1">
+                        <value variable="x">1</value>
+                        <value variable="cx">1</value>
+                </state>
+                <combinatorial id="2">
+                        <value variable="cix">2</value>
+                </combinatorial>
+                <input id="2">
+                        <value variable="i">1</value>
+                        <value variable="ci">1</value>
+                </input>
+        </node>
+        <node>
+                <state id="2">
+                        <value variable="x">2</value>
+                        <value variable="cx">2</value>
+                </state>
+                <combinatorial id="3">
+                        <value variable="cix">4</value>
+                </combinatorial>
+                <input id="3">
+                        <value variable="i">2</value>
+                        <value variable="ci">2</value>
+                </input>
+        </node>
+        <node>
+                <state id="3">
+                        <value variable="x">4</value>
+                        <value variable="cx">4</value>
+                </state>
+                <combinatorial id="4">
+                        <value variable="cix">6</value>
+                </combinatorial>
+                <input id="4">
+                        <value variable="i">2</value>
+                        <value variable="ci">2</value>
+                </input>
+        </node>
+        <node>
+                <state id="4">
+                        <value variable="x">6</value>
+                        <value variable="cx">6</value>
+                </state>
+                <combinatorial id="5">
+                        <value variable="cix">7</value>
+                </combinatorial>
+                <input id="5">
+                        <value variable="i">1</value>
+                        <value variable="ci">1</value>
+                </input>
+        </node>
+        <node>
+                <state id="5">
+                        <value variable="x">1</value>
+                        <value variable="cx">1</value>
+                </state>
+                <combinatorial id="6">
+                        <value variable="cix">2</value>
+                </combinatorial>
+                <input id="6">
+                        <value variable="i">1</value>
+                        <value variable="ci">1</value>
+                </input>
+        </node>
+        <node>
+                <state id="6">
+                        <value variable="x">2</value>
+                        <value variable="cx">2</value>
+                </state>
+                <combinatorial id="7">
+                        <value variable="cix">2</value>
+                </combinatorial>
+                <input id="7">
+                        <value variable="i">0</value>
+                        <value variable="ci">0</value>
+                </input>
+        </node>
+        <node>
+                <state id="7">
+                        <value variable="x">2</value>
+                        <value variable="cx">2</value>
+                </state>
+        </node>
+        <loops> 2 ,6 </loops>
+</counter-example>"""
 
 
     [<Test>]

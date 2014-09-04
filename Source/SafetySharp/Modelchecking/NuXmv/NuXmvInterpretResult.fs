@@ -65,32 +65,86 @@ and internal NuXmvCommandResultBasic = {
 
 module internal CounterexampleXml =
     // see file counter-example-no-ns.xsd
-    type CounterexampleXmlValue = {
+    type internal CounterexampleXmlValue = {
         //<value variable=Variablename>Value</value>
         VariableName:string;
         Value:string;
     }
 
-    type CounterexampleXmlSection = {
+    type internal CounterexampleXmlSection = {
         //<state id=Id> or <combinatorial id=Id> or <input id=Id>
         Id:int;
         Values:CounterexampleXmlValue list;
     }
-    type CounterexampleXmlNode = {
+    type internal CounterexampleXmlNode = {
         //<node>
         State : CounterexampleXmlSection;
         Combinatorial : CounterexampleXmlSection option;
         Input : CounterexampleXmlSection option;
     }
-    type CounterexampleXmlRoot = {
+    type internal CounterexampleXmlRoot = {
         //<counterexample type=Type desc=Desc>
-        Nodes : (int*CounterexampleXmlNode) list;
+        Nodes : Map<int,CounterexampleXmlNode>;
         LoopStart : int option;
         Type : string;
         Desc : string;
     }
 
+    let internal parseXml (xmlString:string) : CounterexampleXmlRoot =
+        // http://stackoverflow.com/questions/332871/f-xml-parsing
+        // http://msdn.microsoft.com/de-de/library/d271ytdx(v=vs.110).aspx
+        // http://www.w3schools.com/xpath/xpath_syntax.asp
+        
+        // Problem: node doesn't really have an id, only its children. they may be different        
+        // From nuXmv chapter 4.8.3 XML Format Printer:
+        // Note that for the last state in the trace, there is no input section in the node tags. This is because the inputs
+        // section gives the new input values which cause the transition to the next state in the trace. There is also no
+        // combinatorial section as this depends on the values of the inputs and are therefore undefined when there are no
+        // inputs.
+
+        let parseNode (xmlNode:System.Xml.XmlNode) : int*CounterexampleXmlNode=
+            let parseSection =
+                let parseValue =
+                    {
+                        CounterexampleXmlValue.VariableName = "";
+                        CounterexampleXmlValue.Value = "";
+                    }
+                {
+                    CounterexampleXmlSection.Id = 0;
+                    CounterexampleXmlSection.Values = [];
+                }
+            (0,{
+                CounterexampleXmlNode.State = parseSection;
+                CounterexampleXmlNode.Combinatorial = None;
+                CounterexampleXmlNode.Input = None;
+            })
+        let doc = new System.Xml.XmlDocument()
+        doc.LoadXml xmlString
+        let docRoot = doc.DocumentElement
+        let counterexampleType = docRoot.GetAttribute "type"
+        let description = docRoot.GetAttribute "description"
+        let loopstart =
+            let candidates = docRoot.SelectNodes("./loops")
+            if candidates.Count = 0 then
+                None
+            else
+                let item = candidates.Item 0 //first item
+                let number = System.Convert.ToInt32 item.Value
+                Some(number)
+        let xmlNodes = doc.SelectNodes "./node"
+        let nodes =
+            xmlNodes |> Seq.cast<System.Xml.XmlNode>
+                     |> Seq.map parseNode
+                     |> Map.ofSeq
+        {
+            CounterexampleXmlRoot.Nodes = nodes;
+            CounterexampleXmlRoot.LoopStart = loopstart;
+            CounterexampleXmlRoot.Type = counterexampleType;
+            CounterexampleXmlRoot.Desc = description;
+        }
+
 type Trace() =
+    //Chapter 4.7
     class end
 
 [<RequireQualifiedAccess>]

@@ -83,6 +83,64 @@ module Models =
         + "				x = FALSE : TRUE;\n"
         + "			esac;\n"
 
+    let ``simple-deterministic-int`` =
+          "MODULE main\n"
+        + "	VAR\n"
+        + "		x : 1..20;\n"
+        + "	ASSIGN\n"
+        + "		init(x) := 5;\n"
+        + "		next(x) :=\n"
+        + "			case\n"
+        + "				x < 20 : x+1;\n"
+        + "				x =20 : 5;\n"
+        + "			esac;\n"
+
+        
+    let ``simple-inputvariable`` =
+          "MODULE main\n"
+        + "	IVAR\n"
+        + "		i : boolean; --x stays\n"
+        + "	VAR\n"
+        + "		x : boolean;\n"
+        + "	ASSIGN\n"
+        + "		init(x) := TRUE;\n"
+        + "		next(x) :=\n"
+        + "			case\n"
+        + "				i = TRUE  : x;\n"
+        + "				i = FALSE : !x;\n"
+        + "			esac;\n"
+        
+    let ``simple-inputvariable2`` =
+          "MODULE main\n"
+        + "	IVAR\n"
+        + "		i : 0..2; --add to x\n"
+        + "	VAR\n"
+        + "		x : 1..6;\n"
+        + "	ASSIGN\n"
+        + "		init(x) := 1;\n"
+        + "		next(x) :=\n"
+        + "			case\n"
+        + "				i + x <= 6 : i + x;\n"
+        + "				TRUE : 1;\n"
+        + "			esac;\n"
+
+    let ``simple-combinatorial`` =
+          "MODULE main\n"
+        + "	IVAR\n"
+        + "		i : 0..2; --add to x\n"
+        + "	VAR\n"
+        + "		x : 1..6;\n"
+        + "	DEFINE\n"
+        + "		ci := i;\n"
+        + "		cx := x;\n"
+        + "		cix := i+x;\n"
+        + "	ASSIGN\n"
+        + "		init(x) := 1;\n"
+        + "		next(x) :=\n"
+        + "			case\n"
+        + "				cix <= 6 : cix;\n"
+        + "				TRUE : 1;\n"
+        + "			esac;\n"
     (*  
         For tests: Copy&Paste
         
