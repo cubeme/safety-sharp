@@ -63,84 +63,118 @@ and internal NuXmvCommandResultBasic = {
         member this.HasSucceeded =
                 this.Failure.IsNone
 
-module internal CounterexampleXml =
-    // see file counter-example-no-ns.xsd
-    type internal CounterexampleXmlValue = {
-        //<value variable=Variablename>Value</value>
+module internal CounterexampleData =
+    [<RequireQualifiedAccess>]
+    type internal KindOfVariable =
+        | State
+        | Input
+        | Combinatorial
+
+    type internal CounterexampleEntry = {
         VariableName:string;
         Value:string;
+        StepNumber:int;
+        KindOfVariable:KindOfVariable;
     }
-
-    type internal CounterexampleXmlSection = {
-        //<state id=Id> or <combinatorial id=Id> or <input id=Id>
-        Id:int;
-        Values:CounterexampleXmlValue list;
-    }
-    type internal CounterexampleXmlNode = {
-        //<node>
-        State : CounterexampleXmlSection;
-        Combinatorial : CounterexampleXmlSection option;
-        Input : CounterexampleXmlSection option;
-    }
-    type internal CounterexampleXmlRoot = {
-        //<counterexample type=Type desc=Desc>
-        Nodes : Map<int,CounterexampleXmlNode>;
-        LoopStart : int option;
+    type internal Counterexample = {
+        Entries: CounterexampleEntry list;
+        EntriesOfStep: Map<int,CounterexampleEntry list>; //entries are not required to be sorted
+        EntriesOfVariableName: Map<string,CounterexampleEntry list>; //entries should be sorted by stepNumber (ascending)
+        Loops : int list;
         Type : string;
-        Desc : string;
+        Description : string;
     }
 
-    let internal parseXml (xmlString:string) : CounterexampleXmlRoot =
+    let internal parseXml (xmlString:string) : Counterexample =
+        // TODO: very inefficient (extensive use of XPath and list-concatenations)
+        // The basic structure of a counterexample is delivered in counter-example-no-ns.xsd
+        // Some remarks:
+        //  a <counterexample type=0 desc=Description> looks like:
+        //      <counterexample>
+        //          <node>
+        //                <state id=Id>...
+        //                <combinatorial id=Id+1>?...
+        //                <input id=Id+1>?
+        //          </node>*
+        //          <loops>Ids*</loops>?
+        //      </counterexample>
+        //  a <node> might contain:
+        //      <state> with the state values (VARs) of step i.
+        //      <input> with the input values (IVARs) of step i+1. An input values of step i can be used to calculate the state values of step i.
+        //      <combinatorial> with the combinatorial values of VARs of step i+1. A combinatorial values of step i are DEFINEs, which have as input the resulting value of a VAR in step i-1 and an IVAR of step i. They can be used to calculate the resulting values of step i.    
         // http://stackoverflow.com/questions/332871/f-xml-parsing
         // http://msdn.microsoft.com/de-de/library/d271ytdx(v=vs.110).aspx
         // http://www.w3schools.com/xpath/xpath_syntax.asp
-        
-        // Problem: node doesn't really have an id, only its children. they may be different        
         // From nuXmv chapter 4.8.3 XML Format Printer:
-        // Note that for the last state in the trace, there is no input section in the node tags. This is because the inputs
-        // section gives the new input values which cause the transition to the next state in the trace. There is also no
-        // combinatorial section as this depends on the values of the inputs and are therefore undefined when there are no
-        // inputs.
-
-        let parseNode (xmlNode:System.Xml.XmlNode) : int*CounterexampleXmlNode=
-            let parseSection =
-                let parseValue =
+        //  Note that for the last state in the trace, there is no input section in the node tags. This is because the inputs
+        //  section gives the new input values which cause the transition to the next state in the trace. There is also no
+        //  combinatorial section as this depends on the values of the inputs and are therefore undefined when there are no
+        //  inputs.
+        let parseNode (xmlNode:System.Xml.XmlNode) : CounterexampleEntry list =
+            let parseSection (xmlNode:System.Xml.XmlNode) (kindOfVariable:KindOfVariable) : CounterexampleEntry list =
+                let parseValue (xmlNode:System.Xml.XmlNode) (stepNumber:int) : CounterexampleEntry =
                     {
-                        CounterexampleXmlValue.VariableName = "";
-                        CounterexampleXmlValue.Value = "";
+                        CounterexampleEntry.VariableName = "";
+                        CounterexampleEntry.Value = "";
+                        CounterexampleEntry.StepNumber = stepNumber;
+                        CounterexampleEntry.KindOfVariable = kindOfVariable;
                     }
-                {
-                    CounterexampleXmlSection.Id = 0;
-                    CounterexampleXmlSection.Values = [];
-                }
-            (0,{
-                CounterexampleXmlNode.State = parseSection;
-                CounterexampleXmlNode.Combinatorial = None;
-                CounterexampleXmlNode.Input = None;
-            })
+                // get all entries in this section
+                let stepNumber = xmlNode.SelectSingleNode "./@id" |> System.Convert.ToInt32
+                xmlNode.SelectNodes("./value")
+                    |> Seq.cast<System.Xml.XmlNode>
+                    |> Seq.map (fun (xmlNode:System.Xml.XmlNode) -> parseValue xmlNode stepNumber)
+                    |> List.ofSeq
+            // get all entries in this node
+            let entriesOfStates =
+                xmlNode.SelectNodes("./state")
+                    |> Seq.cast<System.Xml.XmlNode>
+                    |> Seq.collect (fun (xmlNode:System.Xml.XmlNode) -> parseSection xmlNode KindOfVariable.State)
+                    |> List.ofSeq
+            let entriesOfCombinatorial =
+                xmlNode.SelectNodes("./combinatorial")
+                    |> Seq.cast<System.Xml.XmlNode>
+                    |> Seq.collect (fun (xmlNode:System.Xml.XmlNode) -> parseSection xmlNode KindOfVariable.Combinatorial)
+                    |> List.ofSeq
+            let entriesOfInput =
+                xmlNode.SelectNodes("./input")
+                    |> Seq.cast<System.Xml.XmlNode>
+                    |> Seq.collect (fun (xmlNode:System.Xml.XmlNode) -> parseSection xmlNode KindOfVariable.Input)
+                    |> List.ofSeq
+            // this order guarantees, that entries are sorted by stepNumber, because step of combinatorial and step of input are always step of states+1
+            // we assume, that nuxmv outputs the nodes in ascending order and that .SelectNodes returns the nodes in document order
+            // see http://msdn.microsoft.com/en-us/library/1212yhbf.aspx
+            entriesOfStates@entriesOfCombinatorial@entriesOfInput
+        // parse document
         let doc = new System.Xml.XmlDocument()
         doc.LoadXml xmlString
         let docRoot = doc.DocumentElement
         let counterexampleType = docRoot.GetAttribute "type"
-        let description = docRoot.GetAttribute "description"
-        let loopstart =
+        let description = docRoot.GetAttribute "desc"
+        let loops =
             let candidates = docRoot.SelectNodes("./loops")
             if candidates.Count = 0 then
-                None
+                []
             else
                 let item = candidates.Item 0 //first item
-                let number = System.Convert.ToInt32 item.Value
-                Some(number)
+                let numbers =
+                    item.Value.Split(',')
+                        |> Array.toList
+                        |> List.map (fun entry -> entry.Trim() |> System.Convert.ToInt32)
+                numbers
         let xmlNodes = doc.SelectNodes "./node"
-        let nodes =
+        let entries =
             xmlNodes |> Seq.cast<System.Xml.XmlNode>
-                     |> Seq.map parseNode
-                     |> Map.ofSeq
+                     |> Seq.collect parseNode
+                     |> Seq.toList
+        // create maps for a convenient access
         {
-            CounterexampleXmlRoot.Nodes = nodes;
-            CounterexampleXmlRoot.LoopStart = loopstart;
-            CounterexampleXmlRoot.Type = counterexampleType;
-            CounterexampleXmlRoot.Desc = description;
+            Counterexample.Entries = entries;
+            Counterexample.EntriesOfStep = Map.empty<int,CounterexampleEntry list>; //TODO
+            Counterexample.EntriesOfVariableName = Map.empty<string,CounterexampleEntry list>; //TODO
+            Counterexample.Loops= loops;
+            Counterexample.Type = counterexampleType;
+            Counterexample.Description = description;
         }
 
 type Trace() =
