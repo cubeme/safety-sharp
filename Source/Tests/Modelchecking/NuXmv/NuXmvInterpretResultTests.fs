@@ -450,22 +450,7 @@ Creating LTL tableau variables...
         NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse1 =? false
         NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
         NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
-
-    (*[<Test>]
-    let ``linesAsExpectedRegex works correctly`` () =
-        let testInput = "AAA\nABC\nADE"
-        let expectationEmpty = []
-        let expectationTrue1 = ["A";"AB";"AD"]
-        let expectationFalse1 = ["A";"AB";"AE"]
-        let expectationFalse2 = ["D";"AB";"AD"]
-        let expectationFalse3 = ["A";"AB";"AD";"E"]
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationEmpty =? true
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationTrue1 =? true
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse1 =? false
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
-        NuXmvInterpretResult.linesAsExpectedStr testInput expectationFalse2 =? false
-    *)
-
+        
 
     [<Test>]
     let ``interpret failed flatten_command correctly`` () =
@@ -488,7 +473,105 @@ Creating LTL tableau variables...
         }
         let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
         interpretedResult.HasSucceeded =? true
+                           
+    [<Test>]
+    let ``interpret result of check_fsm correctly`` () =
+        let dummyExpression = SimpleExpression.ConstExpression(ConstExpression.BooleanConstant(true))
+        let commandResultCheckFsmNotTotalWithDeadlock = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
+            NuXmvCommandResultBasic.Stderr  = checkFsmNotTotalWithDeadlockStderr;
+            NuXmvCommandResultBasic.Stdout  = checkFsmNotTotalWithDeadlockStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let commandResultCheckFsmNotTotalWithoutDeadlock = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
+            NuXmvCommandResultBasic.Stderr  = checkFsmNotTotalWithoutDeadlockStderr;
+            NuXmvCommandResultBasic.Stdout  = checkFsmNotTotalWithoutDeadlockStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let commandResultCheckFsmTotal = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckFsm;
+            NuXmvCommandResultBasic.Stderr  = checkFsmTotalStderr;
+            NuXmvCommandResultBasic.Stdout  = checkFsmTotalStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let interpretedResultNotTotalWithDeadlock = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmNotTotalWithDeadlock
+        let interpretedResultNotTotalWithoutDeadlock = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmNotTotalWithoutDeadlock
+        let interpretedResultTotal = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckFsm commandResultCheckFsmTotal
+        interpretedResultNotTotalWithDeadlock.IsTotal =? false
+        interpretedResultNotTotalWithDeadlock.IsDeadlockFree =? false
+        interpretedResultNotTotalWithoutDeadlock.IsTotal =? false
+        interpretedResultNotTotalWithoutDeadlock.IsDeadlockFree =? true
+        interpretedResultTotal.IsTotal =? true
+        interpretedResultTotal.IsDeadlockFree =? true
+                                
+    [<Test>]
+    let ``interpret successful verifications correctly`` () =
+        let dummyExpression = SimpleExpression.ConstExpression(ConstExpression.BooleanConstant(true))
+        let commandResultCheckInvar = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckInvar(dummyExpression);
+            NuXmvCommandResultBasic.Stderr  = checkValidInvariantStderr;
+            NuXmvCommandResultBasic.Stdout  = checkValidInvariantStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let commandResultCheckCtl = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckCtlSpec(CtlExpression.CtlSimpleExpression(dummyExpression));
+            NuXmvCommandResultBasic.Stderr  = checkValidCtlStderr;
+            NuXmvCommandResultBasic.Stdout  = checkValidCtlStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let commandResultCheckLtl = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckLtlSpec(LtlExpression.LtlSimpleExpression(dummyExpression));
+            NuXmvCommandResultBasic.Stderr  = checkValidLtlStderr;
+            NuXmvCommandResultBasic.Stdout  = checkValidLtlStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let interpretedResultInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar commandResultCheckInvar
+        let interpretedResultCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec commandResultCheckCtl
+        let interpretedResultLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec commandResultCheckLtl
+        interpretedResultInvar.Result.IsSpecValid =? true
+        interpretedResultCtl.Result.IsSpecValid =? true
+        interpretedResultLtl.Result.IsSpecValid =? true
 
+    [<Test>]
+    let ``interpret verification result with counterexample correctly`` () =
+        let dummyExpression = SimpleExpression.ConstExpression(ConstExpression.BooleanConstant(true))
+        let commandResultCheckInvar = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckInvar(dummyExpression);
+            NuXmvCommandResultBasic.Stderr  = checkInvalidInvariantStderr;
+            NuXmvCommandResultBasic.Stdout  = checkInvalidInvariantStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let commandResultCheckCtl = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckCtlSpec(CtlExpression.CtlSimpleExpression(dummyExpression));
+            NuXmvCommandResultBasic.Stderr  = checkInvalidCtlStderr;
+            NuXmvCommandResultBasic.Stdout  = checkInvalidCtlStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let commandResultCheckLtl = {
+            NuXmvCommandResultBasic.Command = NuSMVCommand.CheckLtlSpec(LtlExpression.LtlSimpleExpression(dummyExpression));
+            NuXmvCommandResultBasic.Stderr  = checkInvalidLtlStderr;
+            NuXmvCommandResultBasic.Stdout  = checkInvalidLtlStdout;
+            NuXmvCommandResultBasic.Failure = Some(CommandResultProcessingFailure.Unclear);
+        }
+        let interpretedResultInvar = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckInvar commandResultCheckInvar
+        let interpretedResultCtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckCtlSpec commandResultCheckCtl
+        let interpretedResultLtl = NuXmvInterpretResult.interpretResultOfNuSMVCommandCheckLtlSpec commandResultCheckLtl
+        interpretedResultInvar.Result.IsSpecValid =? false
+        match interpretedResultInvar.Result with
+            | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
+                counterexample.Loops =? [] // check_invar does not return loops
+            | _ -> failwith "formula should be invalid and contain a counterexample"
+        interpretedResultCtl.Result.IsSpecValid =? false
+        match interpretedResultCtl.Result with
+            | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
+                counterexample.Loops =? []
+            | _ -> failwith "formula should be invalid and contain a counterexample"
+        interpretedResultLtl.Result.IsSpecValid =? false
+        match interpretedResultLtl.Result with
+            | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
+                counterexample.Loops =? [1]
+            | _ -> failwith "formula should be invalid and contain a counterexample"
     
     [<Test>]
     let ``interpret xml counterexample with combinatorial correctly`` () =

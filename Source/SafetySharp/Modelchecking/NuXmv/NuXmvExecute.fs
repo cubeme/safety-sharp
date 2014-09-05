@@ -279,7 +279,7 @@ type internal ExecuteNuXmv() =
         proc.Start() |> ignore        
         proc.WaitForExit()
         let exitCode = proc.ExitCode
-        // error codes are defined in src/cinit/cinitData.c
+        // error codes are defined in <src/cinit/cinitData.c>
         // under windows there are no negative values. Thus exit code -1 becomes 255 (2-complement)
         match exitCode with
             | 0 -> true
