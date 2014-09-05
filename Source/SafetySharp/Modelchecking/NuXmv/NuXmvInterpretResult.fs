@@ -87,6 +87,7 @@ module internal Counterexample =
         //             * IVARs of 7 is IVARs of 3
         //             * combinatorial vars of 7 is combinatorial vars of 3 (which are result of IVARs of 3(=7) and state-VARS of 2(=6))
         // Thus, with the help of Loop, a infinite trace can be reconstructed with the help of finite entries.
+        NumberOfLastExplicitStep : int;
         Loops : int list;
         Type : string;
         Description : string;
@@ -190,11 +191,12 @@ module internal Counterexample =
                         | [""] -> [] //no entry. empty string remains as relict of trim
                         | numbersAsString -> numbersAsString |> List.map (fun entry -> entry |> System.Convert.ToInt32)
                 numbers
-        let xmlNodes = doc.SelectNodes "./node"
+        let xmlNodes = doc.SelectNodes "/counter-example/node"
         let entries =
             xmlNodes |> Seq.cast<System.Xml.XmlNode>
                      |> Seq.collect parseNode
                      |> Seq.toList
+        let numberOfLastExplicitStep = entries |> List.map (fun entry -> entry.StepNumber) |> List.max
         // create maps for a convenient access
         let entriesOfStep = entries |> counterexampleGroupBy (fun (entry:CounterexampleEntry) -> entry.StepNumber)  
         let entriesOfVariableName = entries |> counterexampleGroupBy (fun (entry:CounterexampleEntry) -> entry.VariableName)
@@ -202,6 +204,7 @@ module internal Counterexample =
             CounterexampleTrace.Entries = entries;
             CounterexampleTrace.EntriesOfStep = entriesOfStep;
             CounterexampleTrace.EntriesOfVariableName = entriesOfVariableName;
+            CounterexampleTrace.NumberOfLastExplicitStep = numberOfLastExplicitStep;
             CounterexampleTrace.Loops= loops;
             CounterexampleTrace.Type = counterexampleType;
             CounterexampleTrace.Description = description;
