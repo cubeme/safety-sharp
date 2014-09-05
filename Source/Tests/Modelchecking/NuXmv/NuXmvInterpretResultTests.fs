@@ -149,6 +149,7 @@ Done
 Successful termination
 """
 
+    //not-fully-defined1
     let checkFsmNotTotalWithDeadlockStdout = """
 ##########################################################
 The transition relation is not total. A state without
@@ -166,6 +167,7 @@ Fair states set of the finite state machine is empty.
 This might make results of model checking not trustable.
 ******** END WARNING ********"""
 
+    //not-fully-defined2
     let checkFsmNotTotalWithoutDeadlockStdout = """
 ##########################################################
 The transition relation is not total. A state without
@@ -178,6 +180,7 @@ non-reachable, so the machine is deadlock-free.
     let checkFsmNotTotalWithoutDeadlockStderr = """Checking totality and deadlock states.
 """
 
+    //fully-defined
     let checkFsmTotalStdout = """
 ##########################################################
 The transition relation is total: No deadlock state exists
@@ -187,6 +190,7 @@ The transition relation is total: No deadlock state exists
 """
 
 
+    //simple-indeterministic
     let checkValidInvariantStdout = """-- invariant (x = TRUE | x = FALSE)  is true
 """
     let checkValidInvariantStderr = """evaluating invariant (x = TRUE | x = FALSE) 
@@ -209,7 +213,7 @@ This might make results of model checking not trustable.
 ******** END WARNING ********
 """
     
-
+    //simple-indeterministic
     let checkInvalidInvariantStdout = """-- invariant x = TRUE  is false
 -- as demonstrated by the following execution sequence
 <?xml version="1.0" encoding="UTF-8"?>
@@ -277,6 +281,8 @@ Flattening the generated tableau........ done
 Creating LTL tableau variables...
 """
 
+    // simple-inputvariable
+    // command: "check_ltlspec -p "G x=TRUE"
     let counterExampleWithInputXml = """<?xml version="1.0" encoding="UTF-8"?>
 <counter-example type="0" desc="LTL Counterexample" >
         <node>
@@ -326,6 +332,9 @@ Creating LTL tableau variables...
         </node>
         <loops> 1 ,3 ,4 ,5 </loops>
 </counter-example>"""
+
+    // simple-inputvariable
+    // command: "check_ltlspec -p "G x=TRUE"
     let counterExampleWithInputSimple = """  -- Loop starts here
   -> State: 3.1 <-
     x = TRUE
@@ -346,7 +355,10 @@ Creating LTL tableau variables...
   -> State: 3.5 <-
   -> Input: 3.6 <-
   -> State: 3.6 <-"""
+  
 
+    // simple-combinatorial
+    // command: "check_ltlspec -p "G x!=6"
     let counterExampleWithCombinatorialXml = """<?xml version="1.0" encoding="UTF-8"?>
 <counter-example type="0" desc="LTL Counterexample" >
         <node>
