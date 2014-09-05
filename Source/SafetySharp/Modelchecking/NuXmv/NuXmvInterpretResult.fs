@@ -218,7 +218,7 @@ type internal CheckOfSpecificationDetailedResult =
     with
         member this.IsSpecValid =
             match this with
-                | CheckOfSpecificationDetailedResult.Valid(_) -> true
+                | CheckOfSpecificationDetailedResult.Valid -> true
                 | _ -> false
         member this.IsSpecInvalid =
             match this with
@@ -228,6 +228,14 @@ type internal CheckOfSpecificationDetailedResult =
             match this with
                 | CheckOfSpecificationDetailedResult.Undetermined -> true
                 | _ -> false
+        member this.HasCounterExample =
+            match this with
+                | CheckOfSpecificationDetailedResult.Invalid(Some(_)) -> true
+                | _ -> false
+        member this.CounterExample =
+            match this with
+                | CheckOfSpecificationDetailedResult.Invalid(Some(counterExample)) -> counterExample
+                | _ -> failwith "no counterexample provided"
 
 type internal NuXmvCommandResultInterpretedCheckOfSpecification = {
     Basic : NuXmvCommandResultBasic;

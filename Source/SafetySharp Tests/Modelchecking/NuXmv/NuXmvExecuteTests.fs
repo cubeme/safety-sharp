@@ -302,6 +302,9 @@ module NuXmvExecuteTestsWithPrebuildModels =
         interpretationCtl.Result.IsSpecInvalid =? true
         interpretationLtl.Result.IsSpecInvalid =? true
         interpretationInvar.Result.IsSpecInvalid =? true
+        interpretationCtl.Result.HasCounterExample =? true
+        interpretationLtl.Result.HasCounterExample =? true
+        interpretationInvar.Result.HasCounterExample =? true
         // TODO: Check Traces
         let outputResultQuit = nuxmv.QuitNuXmvAndWaitForExit()        
         ()        

@@ -573,26 +573,31 @@ Creating LTL tableau variables...
         match interpretedResultInvar.Result with
             | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
                 counterexample.Loops =? [] // check_invar does not return loops
+                counterexample.NumberOfLastExplicitStep =? 2
             | _ -> failwith "formula should be invalid and contain a counterexample"
         interpretedResultCtl.Result.IsSpecValid =? false
         match interpretedResultCtl.Result with
             | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
                 counterexample.Loops =? []
+                counterexample.NumberOfLastExplicitStep =? 2
             | _ -> failwith "formula should be invalid and contain a counterexample"
         interpretedResultLtl.Result.IsSpecValid =? false
         match interpretedResultLtl.Result with
             | CheckOfSpecificationDetailedResult.Invalid(Some(counterexample)) ->
                 counterexample.Loops =? [1]
+                counterexample.NumberOfLastExplicitStep =? 3
             | _ -> failwith "formula should be invalid and contain a counterexample"
     
     [<Test>]
     let ``interpret xml counterexample with combinatorial correctly`` () =
         let interpretedResult = NuXmvInterpretResult.interpretCounterExample counterExampleWithCombinatorialXml
         interpretedResult.Loops =? [2; 6]
+        interpretedResult.NumberOfLastExplicitStep =? 7
         ()
 
     [<Test>]
     let ``interpret xml counterexample with input variable correctly`` () =
         let interpretedResult = NuXmvInterpretResult.interpretCounterExample counterExampleWithInputXml
         interpretedResult.Loops =? [1; 3; 4; 5]
+        interpretedResult.NumberOfLastExplicitStep =? 6
         ()
