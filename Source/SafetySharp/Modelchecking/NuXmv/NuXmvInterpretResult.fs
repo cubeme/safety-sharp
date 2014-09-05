@@ -80,6 +80,13 @@ module internal Counterexample =
         Entries: CounterexampleEntry list;
         EntriesOfStep: Map<int,CounterexampleEntry list>; //entries are not required to be sorted
         EntriesOfVariableName: Map<string,CounterexampleEntry list>; //entries should be sorted by stepNumber (ascending)
+        // Loops contain a list of states, which the last explicit step could be equivalent to. Loops could contain multiple
+        // value from 1..NumberOfLastExplicitStep or no value at all (if verification technique doesn't support loops)
+        // Example: If NumberOfLastExplicitStep is 6 and loop is value 2, then
+        //             * state-VARs of 6 is state-VARs of 2
+        //             * IVARs of 7 is IVARs of 3
+        //             * combinatorial vars of 7 is combinatorial vars of 3 (which are result of IVARs of 3(=7) and state-VARS of 2(=6))
+        // Thus, with the help of Loop, a infinite trace can be reconstructed with the help of finite entries.
         Loops : int list;
         Type : string;
         Description : string;
