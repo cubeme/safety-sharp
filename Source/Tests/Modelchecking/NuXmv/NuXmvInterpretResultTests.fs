@@ -488,3 +488,16 @@ Creating LTL tableau variables...
         }
         let interpretedResult = NuXmvInterpretResult.interpretResult commandResult
         interpretedResult.HasSucceeded =? true
+
+    
+    [<Test>]
+    let ``interpret xml counterexample with combinatorial correctly`` () =
+        let interpretedResult = NuXmvInterpretResult.interpretCounterExample counterExampleWithCombinatorialXml
+        interpretedResult.Loops =? [2; 6]
+        ()
+
+    [<Test>]
+    let ``interpret xml counterexample with input variable correctly`` () =
+        let interpretedResult = NuXmvInterpretResult.interpretCounterExample counterExampleWithInputXml
+        interpretedResult.Loops =? [1; 3; 4; 5]
+        ()

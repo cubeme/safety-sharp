@@ -63,7 +63,7 @@ and internal NuXmvCommandResultBasic = {
         member this.HasSucceeded =
                 this.Failure.IsNone
 
-module internal CounterexampleData =
+module internal Counterexample =
     [<RequireQualifiedAccess>]
     type internal KindOfVariable =
         | State
@@ -76,7 +76,7 @@ module internal CounterexampleData =
         StepNumber:int;
         KindOfVariable:KindOfVariable;
     }
-    type internal Counterexample = {
+    type internal CounterexampleTrace = {
         Entries: CounterexampleEntry list;
         EntriesOfStep: Map<int,CounterexampleEntry list>; //entries are not required to be sorted
         EntriesOfVariableName: Map<string,CounterexampleEntry list>; //entries should be sorted by stepNumber (ascending)
@@ -98,7 +98,7 @@ module internal CounterexampleData =
                                     | None -> groupsAcc |> Map.add index [counterexample]
                             ) Map.empty<'a,CounterexampleEntry list>
 
-    let internal parseXml (xmlString:string) : Counterexample =        
+    let internal parseXml (xmlString:string) : CounterexampleTrace =        
         // TODO: very inefficient (extensive use of XPath and list-concatenations)
         // The basic structure of a counterexample is delivered in counter-example-no-ns.xsd
         // Some remarks:
@@ -126,14 +126,18 @@ module internal CounterexampleData =
         let parseNode (xmlNode:System.Xml.XmlNode) : CounterexampleEntry list =
             let parseSection (xmlNode:System.Xml.XmlNode) (kindOfVariable:KindOfVariable) : CounterexampleEntry list =
                 let parseValue (xmlNode:System.Xml.XmlNode) (stepNumber:int) : CounterexampleEntry =
+                    let varNameNode = xmlNode.SelectSingleNode "./@variable"
+                    let varName = varNameNode.InnerText
+                    let value = xmlNode.InnerText
                     {
-                        CounterexampleEntry.VariableName = "";
-                        CounterexampleEntry.Value = "";
+                        CounterexampleEntry.VariableName = varName;
+                        CounterexampleEntry.Value = value;
                         CounterexampleEntry.StepNumber = stepNumber;
                         CounterexampleEntry.KindOfVariable = kindOfVariable;
                     }
                 // get all entries in this section
-                let stepNumber = xmlNode.SelectSingleNode "./@id" |> System.Convert.ToInt32
+                let stepNumberNode = xmlNode.SelectSingleNode "./@id"
+                let stepNumber = stepNumberNode.InnerText |> System.Convert.ToInt32
                 xmlNode.SelectNodes("./value")
                     |> Seq.cast<System.Xml.XmlNode>
                     |> Seq.map (fun (xmlNode:System.Xml.XmlNode) -> parseValue xmlNode stepNumber)
@@ -170,10 +174,14 @@ module internal CounterexampleData =
                 []
             else
                 let item = candidates.Item 0 //first item
-                let numbers =
-                    item.Value.Split(',')
+                let numbersAsString =
+                    item.InnerText.Split(',')
                         |> Array.toList
-                        |> List.map (fun entry -> entry.Trim() |> System.Convert.ToInt32)
+                        |> List.map (fun entry -> entry.Trim())
+                let numbers =
+                    match numbersAsString with
+                        | [""] -> [] //no entry. empty string remains as relict of trim
+                        | numbersAsString -> numbersAsString |> List.map (fun entry -> entry |> System.Convert.ToInt32)
                 numbers
         let xmlNodes = doc.SelectNodes "./node"
         let entries =
@@ -184,23 +192,19 @@ module internal CounterexampleData =
         let entriesOfStep = entries |> counterexampleGroupBy (fun (entry:CounterexampleEntry) -> entry.StepNumber)  
         let entriesOfVariableName = entries |> counterexampleGroupBy (fun (entry:CounterexampleEntry) -> entry.VariableName)
         {
-            Counterexample.Entries = entries;
-            Counterexample.EntriesOfStep = entriesOfStep;
-            Counterexample.EntriesOfVariableName = entriesOfVariableName;
-            Counterexample.Loops= loops;
-            Counterexample.Type = counterexampleType;
-            Counterexample.Description = description;
+            CounterexampleTrace.Entries = entries;
+            CounterexampleTrace.EntriesOfStep = entriesOfStep;
+            CounterexampleTrace.EntriesOfVariableName = entriesOfVariableName;
+            CounterexampleTrace.Loops= loops;
+            CounterexampleTrace.Type = counterexampleType;
+            CounterexampleTrace.Description = description;
         }
-
-type Trace() =
-    //Chapter 4.7
-    class end
-
+        
 [<RequireQualifiedAccess>]
 type internal CheckOfSpecificationDetailedResult =
-    | Valid of Witness:Trace option 
+    | Valid //of Witness:Counterexample.CounterexampleTrace option 
     | Undetermined
-    | Invalid of CounterExample:Trace option
+    | Invalid of CounterExample:Counterexample.CounterexampleTrace option
     with
         member this.IsSpecValid =
             match this with
@@ -361,17 +365,17 @@ module internal NuXmvInterpretResult =
             failwith "result of check_fsm could not be interpreted"
 
     let regexCounterexample = new System.Text.RegularExpressions.Regex("""<[?]xml version="1.0" encoding="UTF-8"[?]>\s*<counter-example.*<\/counter-example>""",regexOption)
-    let interpretCounterExample (input:string) : Trace =
+    let interpretCounterExample (input:string) : Counterexample.CounterexampleTrace =
         let counterexampleString = regexCounterexample.Match(input).Value
-        Trace()
+        Counterexample.parseXml counterexampleString
     
-    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true$""",regexOption)
+    let regexCheckCtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true([\r])?$""",regexOption) //[\r]? is because on windows systems newline is not \n but \r\n
     let regexCheckCtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckCtlSpec (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckCtlSpecValid then
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
-                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid;
             }
         elif linesAsExpectedRegex result.Stdout regexCheckCtlSpecInvalid then
             let counterExample = interpretCounterExample result.Stdout
@@ -382,13 +386,13 @@ module internal NuXmvInterpretResult =
         else
             failwith "result could not be interpreted"
         
-    let regexCheckLtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true""",regexOption)
+    let regexCheckLtlSpecValid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is true([\r])?$""",regexOption) //[\r]? is because on windows systems newline is not \n but \r\n
     let regexCheckLtlSpecInvalid = new System.Text.RegularExpressions.Regex("""\A-- specification .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckLtlSpec (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckLtlSpecValid then
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
-                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid;
             }
         elif linesAsExpectedRegex result.Stdout regexCheckLtlSpecInvalid then
             let counterExample = interpretCounterExample result.Stdout
@@ -399,13 +403,13 @@ module internal NuXmvInterpretResult =
         else
             failwith "result could not be interpreted"
         
-    let regexCheckInvarValid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is true""",regexOption)
+    let regexCheckInvarValid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is true([\r])?$""",regexOption) //[\r]? is because on windows systems newline is not \n but \r\n
     let regexCheckInvarInvalid = new System.Text.RegularExpressions.Regex("""\A-- invariant .* is false.*^-- as demonstrated by the following execution sequence""",regexOption)
     let interpretResultOfNuSMVCommandCheckInvar (result:NuXmvCommandResultBasic) =
         if linesAsExpectedRegex result.Stdout regexCheckInvarValid then
             {
                 NuXmvCommandResultInterpretedCheckOfSpecification.Basic=result;
-                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid(None);
+                NuXmvCommandResultInterpretedCheckOfSpecification.Result=CheckOfSpecificationDetailedResult.Valid;
             }
         elif linesAsExpectedRegex result.Stdout regexCheckInvarInvalid then
             let counterExample = interpretCounterExample result.Stdout
