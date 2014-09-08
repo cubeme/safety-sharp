@@ -75,6 +75,7 @@
     <Compile Include="Modelchecking\Promela\PromelaTransformMetamodelTests.fs" />
     <None Include="app.config" />
     <None Include="packages.config" />
+    <Compile Include="Modelchecking\Prism\PrismAstToFileTests.fs" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
