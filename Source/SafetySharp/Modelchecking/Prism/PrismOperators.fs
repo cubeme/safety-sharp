@@ -20,29 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module PrismOperators
 
+namespace SafetySharp.Internal.Modelchecking.Prism
 
+[<RequireQualifiedAccess>]
 type internal UnaryOperator = 
-    | LogicalNot
-
-type internal BinaryOperator=      
-    | LogicalAnd
-    | LogicalOr
-    | LogicalXor
-    | LogicalNxor
-    | LogicalImplies
-    | LogicalEquivalence
-    | Equality
-    | Inequality
-    | LessThan
-    | GreaterThan
-    | LessEqual
-    | GreaterEqual
-    | IntegerAddition
-    | IntegerSubtraction
-    | IntegerMultiplication
-    | IntegerDivision
-    | IntegerRemainder
-    | BitShiftRight
-    | BitShiftLeft
+    | Negation       // !
+    
+[<RequireQualifiedAccess>]
+type internal BinaryOperator =      
+    | Multiplication // *
+    | Diviosion      // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
+    | Addition       // +
+    | Substraction   // -
+    | LessThan       // <
+    | LessEqual      // <=
+    | GreaterEqual   // >=
+    | GreaterThan    // >
+    | Conjunction    // &
+    | Disjunction    // |
+    | IfAndOnlyIf    // <=>
+    | Implication    // =>
+    
+[<RequireQualifiedAccess>]
+type internal TenaryOperator =
+    | IfThenElse      // ? :
