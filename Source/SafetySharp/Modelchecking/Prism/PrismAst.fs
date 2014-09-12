@@ -25,7 +25,7 @@ namespace SafetySharp.Internal.Modelchecking.Prism
 // semantics of prism
 // http://www.prismmodelchecker.org/doc/semantics.pdf
 
-// source for AST:
+// AST based on:
 // http://www.prismmodelchecker.org/manual/ThePRISMLanguage/Introduction
 
 
@@ -43,14 +43,32 @@ type internal Identifier = {
         static member reserved = [ "A"; "bool"; "clock"; "const"; "ctmc"; "C"; "double"; "dtmc"; "E"; "endinit"; "endinvariant"; "endmodule"; "endrewards"; "endsystem"; "false"; "formula"; "filter"; "func"; "F"; "global"; "G"; "init"; "invariant"; "I"; "int"; "label"; "max"; "mdp"; "min"; "module"; "X"; "nondeterministic"; "Pmax"; "Pmin"; "P"; "probabilistic"; "prob"; "pta"; "rate"; "rewards"; "Rmax"; "Rmin"; "R"; "S"; "stochastic"; "system"; "true"; "U"; "W"]
         
 
+
+
 // Chapter Expressions
 // Prism differentiates between expressions and predicates. We treat them the same.
+// Note: We didn't consolidate the expressions and the functions here to be consistent with
+//       the type Properties (and there we didn't do it to keep it understandable)
 type internal Expression =
     | Constant of Constant
-    | Identifier of Identifier //Either to a variable or to a formula
-    | UnaryExpression of Operator:UnaryOperator * Operand:Expression
-    | BinaryExpression of Left:Expression * Operator:BinaryOperator * Right:Expression
-    | TenaryExpression //TODO
+    | Variable of Name:Identifier
+    | Formula of Name:Identifier
+    // Expressions with operators known from Propositional Logic
+    | UnaryNegation  of Operand:Expression                       // !
+    | BinaryMultiplication of Left:Expression * Right:Expression // *
+    | BinaryDivision of Left:Expression * Right:Expression       // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
+    | BinaryAddition of Left:Expression * Right:Expression       // +
+    | BinarySubstraction of Left:Expression * Right:Expression   // -
+    | BinaryLessThan of Left:Expression * Right:Expression       // <
+    | BinaryLessEqual of Left:Expression * Right:Expression      // <=
+    | BinaryGreaterEqual of Left:Expression * Right:Expression   // >=
+    | BinaryGreaterThan of Left:Expression * Right:Expression    // >
+    | BinaryConjunction of Left:Expression * Right:Expression    // &
+    | BinaryDisjunction of Left:Expression * Right:Expression    // |
+    | BinaryIfAndOnlyIf of Left:Expression * Right:Expression    // <=>
+    | BinaryImplication of Left:Expression * Right:Expression    // =>
+    | BinaryTenaryIfThenElse                                     // ? :
+    // Functions
     | FunctionMin of Expression list
     | FunctionMax of Expression list
     | FunctionFloor of Expression
@@ -58,6 +76,7 @@ type internal Expression =
     | FunctionPow of Base:Expression * Power:Expression // Base^Power = Number
     | FunctionMod of Dividend:Expression * Divisor:Expression // Dividend % Divisor
     | FunctionLog of Base:Expression * Number:Expression // Log_Base(Number) = Power
+    | FunctionMulti // TODO
 
 
 // Chapter Modules And Variables
@@ -147,9 +166,12 @@ type internal Label = { //used in properties
     Name : Identifier;
     Label : Expression; //must be boolean
 }
+    with
+        static member builtinInitLabel     = {Label.Name={Identifier.Name="init"};Label.Label=Expression.Constant(Constant.Boolean(true));} //TODO: improve, as it has no expression
+        static member builtinDeadlockLabel = {Label.Name={Identifier.Name="deadlock"};Label.Label=Expression.Constant(Constant.Boolean(true));} //TODO: improve, as it has no expression
 
 // Chapter Costs and Rewards
-type internal Reward = //can also be used for costs
+type internal Reward = //can also be used for costs or time
     | StateReward of Guard : Expression * Reward : Expression
     | TransitionReward of Action : Action * Guard : Expression * Reward : Expression
 
@@ -179,3 +201,110 @@ type internal PrismModel = {
     Rewards : RewardStructure list;
     ParallelComposition : ProcessAlgebraicExpression option;
 }
+
+///////////////////////////
+// PROPERTIES
+///////////////////////////
+
+// Chapter Property Specification -> Syntax and Semantics
+
+// Prisms property specification language subsumes
+//  * PCTL   for DTMCs, MDPs and PTAs
+//  * CSL   for CTMCs (is extension of PCTL)
+//  * probabilistic LTL   for DTMCs and MDPs
+//  * PCTL*   for DTMCs and MDPs
+//  (* CTL   for non-probabilistic verification)
+
+type internal ProbabilityQuery =
+    | LessEqual    // <=
+    | LessThan     // <
+    | Equal        // =
+    | GreaterEqual // >=
+    | GreaterThan  // >
+    | Calculate    // =?            
+    
+// Note: Although we could have consolidated some discriminated union cases (e.g. all ltl into one case) we didn't do it to keep it understandable.
+type internal Property =   
+    | Constant of Constant
+    | Variable of Name:Identifier
+    | Formula of Name:Identifier
+    | Label of Name:Identifier
+    | Property of Name:Identifier //a property can also use the result of another (labeled) property as input
+    // Expressions with operators known from Propositional Logic
+    | UnaryNegation  of Operand:Expression                       // !
+    | BinaryMultiplication of Left:Expression * Right:Expression // *
+    | BinaryDivision of Left:Expression * Right:Expression       // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
+    | BinaryAddition of Left:Expression * Right:Expression       // +
+    | BinarySubstraction of Left:Expression * Right:Expression   // -
+    | BinaryLessThan of Left:Expression * Right:Expression       // <
+    | BinaryLessEqual of Left:Expression * Right:Expression      // <=
+    | BinaryGreaterEqual of Left:Expression * Right:Expression   // >=
+    | BinaryGreaterThan of Left:Expression * Right:Expression    // >
+    | BinaryConjunction of Left:Expression * Right:Expression    // &
+    | BinaryDisjunction of Left:Expression * Right:Expression    // |
+    | BinaryIfAndOnlyIf of Left:Expression * Right:Expression    // <=>
+    | BinaryImplication of Left:Expression * Right:Expression    // =>
+    | BinaryTenaryIfThenElse                                     // ? :
+    | TenaryWithPropositionalOperator //TODO
+    // LTL-Formula
+    | LtlUnaryNext of Operand:Property
+    | LtlUnaryEventually of Operand:Property // Finally
+    | LtlUnaryAlways of Operand:Property // Globally
+    | LtlBinaryUntil of Left:Property * Right:Property
+    | LtlBinaryWeakUntil of Left:Property * Right:Property
+    | LtlBinaryRelease of Left:Property * Right:Property
+    // Probability
+    | ProbabilityOfProperty of Query:ProbabilityQuery * Operand:Property
+    // Steady State
+    | SteadyState
+    //Reward
+    | RewardReachability of Property
+    | RewardCumulative
+    | RewardInstantaneous
+    | RewardSteadyState
+    //CTL
+    | ForAllPathsGlobally
+    | ForAllPathsFinally    
+    | ExistsPathGlobally    
+    | ExistsPathFinally    
+    // Filters
+    | FilterMin
+    | FilterMax
+    | FilterArgmin
+    | FilterArgmax
+    | FilterCount
+    | FilterSum
+    | FilterAvg
+    | FilterFirst
+    | FilterRange
+    | FilterForall    
+    | FilterExists    
+    | FilterPrint    
+    | FilterPrintall
+    | FilterState
+
+// not every combination is possible
+// prism seems to differentiate between pathproperties and properties
+// Property "P>0 [F d=6]" is possible
+// Property "F d=6" is not possible
+// Property "F d=6" is not possible
+// Property "A[F d=6]" is possible
+// Property "P>0 [F (d=6 & (X s=7))]" is possible. (Note: Without additional parentheses around "X s=7" it doesn't work)
+// Property "E [F (d=6 & (X s=7))]" is able to be parsed but not verified ("Error: (Non-probabilistic) LTL model checking is not supported."
+// Property "E [F (d=6 & A [X s=7]]" is able to be parsed but not verified ("Error: CTL model checking of the A X operator is not yet supported.")
+// Property "E [F d=6 & A [F s=7]]" is possible
+// Property "filter(printall,P=? [F d=4],P>0 [F d>3])" is possible
+// Property "E [F d=6 & A [F P>0 [ s=7 ]]]" is possible
+// Property "P>0 [ P>0 [F s=7 ]]" is possible
+// Property "P>0 [ P>0 [s=0 ]]" is possible
+
+// Thus:
+//  - Only LTL-Formulas need to be in a "P~x[...]"
+//  - P~s can be nested
+//  - CTL* is not possible
+
+///////////////////////////
+// Command Line
+///////////////////////////
+
+

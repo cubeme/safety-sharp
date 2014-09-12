@@ -117,7 +117,6 @@
     <Compile Include="Modelchecking\NuXmv\NuXmvInterpretResult.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvExecute.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodel.fs" />
-    <Compile Include="Modelchecking\Prism\PrismOperators.fs" />
     <Compile Include="Modelchecking\Prism\PrismAst.fs" />
     <Compile Include="Modelchecking\Prism\PrismAstHelpers.fs" />
     <Compile Include="Modelchecking\Prism\PrismCommands.fs" />
