@@ -399,13 +399,18 @@ type internal SimpleGlobalFieldCache (contextCache:ContextCache, configuration:M
                     let methodParameters = methodSymbol.Parameters |> List.map collectParameterOfMethod
                     methodFields @ methodParameters
                 let methodSymbols =
-                    let fromUpdate = componentObject.ComponentSymbol.UpdateMethod
+                    let fromUpdate =
+                        let fromUpdate = componentObject.ComponentSymbol.UpdateMethod
+                        if fromUpdate.IsSome then
+                            [fromUpdate.Value]
+                        else
+                            []
                     let fromProvidedPorts =
                         let getMethodSymbol (port:MMProvidedPortSymbol) = 
                             match port with
                                 | MMProvidedPortSymbol.ProvidedPort methodSymbol -> methodSymbol
                         componentObject.ComponentSymbol.ProvidedPorts |> List.map getMethodSymbol
-                    fromUpdate::fromProvidedPorts
+                    fromUpdate@fromProvidedPorts                    
                 let collectedInThisComponent = methodSymbols |> List.collect (fun methodSymbol -> let context = contextCache.createContextForUpdateOrProvidedPort myContext methodSymbol.Name
                                                                                                   collectFromMethod context methodSymbol)
                 collectedInThisComponent @ collectedInSubcomponents
