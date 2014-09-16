@@ -297,6 +297,7 @@ type internal Property =
 // Property "E [F d=6 & A [F P>0 [ s=7 ]]]" is possible
 // Property "P>0 [ P>0 [F s=7 ]]" is possible
 // Property "P>0 [ P>0 [s=0 ]]" is possible
+// Property "P>0 [(F (d=6 & (X s=7)))& P>0 [F d=6]]" is possible
 
 // Thus:
 //  - Only LTL-Formulas need to be in a "P~x[...]"
