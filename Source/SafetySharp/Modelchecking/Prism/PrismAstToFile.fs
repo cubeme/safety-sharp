@@ -20,5 +20,258 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module PrismAstToFile
+namespace SafetySharp.Internal.Modelchecking.Prism
 
+open System
+
+type internal ExportPrismAstToFile() =
+
+
+    let indent (number:int) : string =
+        let s=System.Text.StringBuilder ()
+        for i = 1 to number do 
+            s.Append "  " |> ignore
+        s.ToString ()
+
+    let nl = Environment.NewLine
+    
+    let nli (i:int) =
+        nl + (indent i)
+        
+    let joinWithWhitespace (lst:string list) : string =
+        String.Join(" ", lst)
+
+    let joinWithComma (lst:string list) : string =
+        String.Join(", ", lst)
+    
+    let joinWithNewLine (lst:string list) : string =
+        String.Join("\n", lst)
+
+    let joinWithIndentedNewLine (indent:int) (lst:string list): string =
+        let indents = String.replicate indent "\t"
+        let separator = "\n"+indents
+        String.Join(separator, lst)
+        
+    let joinWith (operator:string) (lst:string list) : string =
+        String.Join(operator, lst)
+
+
+        
+    member this.ExportConstant (constant : Constant) = 
+        match constant with
+            | Integer (_int) -> _int.ToString()
+            | Double (_double) -> _double.ToString()
+            | Boolean (_bool) -> _bool.ToString()
+    
+    member this.ExportIdentifier (identifier : Identifier) = 
+        identifier.Name
+
+
+
+        
+
+    ///////////////////////////
+    // MODEL
+    ///////////////////////////
+    
+    //TODO: Property and label with ""
+
+    member this.ExportExpression (expression : Expression) : string =
+        match expression with
+            | Expression.Constant (constant:Constant) ->
+                this.ExportConstant constant
+            | Expression.Variable (name:Identifier) ->
+                this.ExportIdentifier name
+            | Expression.Formula (name:Identifier) ->
+                this.ExportIdentifier name
+            // Expressions with operators known from Propositional Logic
+            | Expression.UnaryNegation  (operand:Expression) ->                                 // !
+                sprintf "!(%s)" (this.ExportExpression operand)
+            | Expression.BinaryMultiplication (left:Expression, right:Expression) ->             // *
+                sprintf "(%s)*(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryDivision (left:Expression, right:Expression) ->                   // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead (3, even on integers
+                sprintf "(%s)/(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryAddition (left:Expression, right:Expression) ->                   // +
+                sprintf "(%s)+(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinarySubstraction (left:Expression, right:Expression) ->               // -
+                sprintf "(%s)-(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryLessThan (left:Expression, right:Expression) ->                   // <
+                sprintf "(%s)<(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryLessEqual (left:Expression, right:Expression) ->                  // <=
+                sprintf "(%s)<=(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryGreaterEqual (left:Expression, right:Expression ) ->              // >=
+                sprintf "(%s)>=(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryGreaterThan (left:Expression, right:Expression  ) ->              // >
+                sprintf "(%s)>(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryConjunction (left:Expression, right:Expression  ) ->              // &
+                sprintf "(%s)&(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryDisjunction (left:Expression, right:Expression  ) ->              // |
+                sprintf "(%s)|(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryIfAndOnlyIf (left:Expression, right:Expression  ) ->              // <=>
+                sprintf "(%s)<=>(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryImplication (left:Expression, right:Expression  ) ->              // =>
+                sprintf "(%s)=>(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.TenaryIfThenElse (_if:Expression, _then:Expression, _else:Expression) ->  // ? :
+                sprintf "(%s)?(%s):(%s)" (this.ExportExpression _if) (this.ExportExpression _then) (this.ExportExpression _else)
+            // Functions
+            | Expression.FunctionMin (exprs:Expression list) -> 
+                let content = exprs |> List.map this.ExportExpression
+                sprintf "min(%s)" (joinWithComma content)
+            | Expression.FunctionMax (exprs:Expression list) -> 
+                let content = exprs |> List.map this.ExportExpression
+                sprintf "max(%s)" (joinWithComma content)
+            | Expression.FunctionFloor (expr:Expression ) -> 
+                sprintf "floor(%s)" (this.ExportExpression expr)
+            | Expression.FunctionCeil (expr:Expression) -> 
+                sprintf "ceil(%s)" (this.ExportExpression expr)
+            | Expression.FunctionPow (_base:Expression, power:Expression) -> // Base^Power = Number
+                sprintf "pow(%s,%s)" (this.ExportExpression _base) (this.ExportExpression power)
+            | Expression.FunctionMod (dividend:Expression, divisor:Expression) ->  // Dividend % Divisor
+                sprintf "mod(%s,%s)" (this.ExportExpression dividend) (this.ExportExpression divisor)
+            | Expression.FunctionLog (_base:Expression, number:Expression) ->  // Log_Base(Number) = Power
+                sprintf "log(%s,%s)" (this.ExportExpression number) (this.ExportExpression _base)
+
+
+
+
+    ///////////////////////////
+    // PROPERTIES
+    ///////////////////////////
+
+    //TODO: Property and label with ""
+
+    member this.ExportProperty (property : Property) : string =
+        match property with
+            | Property.Constant (constant:Constant) ->
+                this.ExportConstant constant
+            | Property.Variable (name:Identifier) ->
+                this.ExportIdentifier name
+            | Property.Formula (name:Identifier) ->
+                this.ExportIdentifier name
+            | Property.Label (name:Identifier) ->
+                this.ExportIdentifier name
+            | Property.Property (name:Identifier) -> //a property can also use the result (another (labeled) property as input)
+                this.ExportIdentifier name
+            // Properties with operators known from Propositional Logic
+            | Property.UnaryNegation  (operand:Property) ->                                 // !
+                sprintf "!(%s)" (this.ExportProperty operand)
+            | Property.BinaryMultiplication (left:Property, right:Property) ->             // *
+                sprintf "(%s)*(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryDivision (left:Property, right:Property) ->                   // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead (3, even on integers
+                sprintf "(%s)/(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryAddition (left:Property, right:Property) ->                   // +
+                sprintf "(%s)+(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinarySubstraction (left:Property, right:Property) ->               // -
+                sprintf "(%s)-(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryLessThan (left:Property, right:Property) ->                   // <
+                sprintf "(%s)<(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryLessEqual (left:Property, right:Property) ->                  // <=
+                sprintf "(%s)<=(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryGreaterEqual (left:Property, right:Property ) ->              // >=
+                sprintf "(%s)>=(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryGreaterThan (left:Property, right:Property  ) ->              // >
+                sprintf "(%s)>(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryConjunction (left:Property, right:Property  ) ->              // &
+                sprintf "(%s)&(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryDisjunction (left:Property, right:Property  ) ->              // |
+                sprintf "(%s)|(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryIfAndOnlyIf (left:Property, right:Property  ) ->              // <=>
+                sprintf "(%s)<=>(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.BinaryImplication (left:Property, right:Property  ) ->              // =>
+                sprintf "(%s)=>(%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | Property.TenaryIfThenElse (_if:Property, _then:Property, _else:Property) ->  // ? :
+                sprintf "(%s)?(%s):(%s)" (this.ExportProperty _if) (this.ExportProperty _then) (this.ExportProperty _else)
+            // Functions
+            | Property.FunctionMin (exprs:Property list) -> 
+                let content = exprs |> List.map this.ExportProperty
+                sprintf "min(%s)" (joinWithComma content)
+            | Property.FunctionMax (exprs:Property list) -> 
+                let content = exprs |> List.map this.ExportProperty
+                sprintf "max(%s)" (joinWithComma content)
+            | Property.FunctionFloor (expr:Property ) -> 
+                sprintf "floor(%s)" (this.ExportProperty expr)
+            | Property.FunctionCeil (expr:Property) -> 
+                sprintf "ceil(%s)" (this.ExportProperty expr)
+            | Property.FunctionPow (_base:Property, power:Property) -> // Base^Power = Number
+                sprintf "pow(%s,%s)" (this.ExportProperty _base) (this.ExportProperty power)
+            | Property.FunctionMod (dividend:Property, divisor:Property) ->  // Dividend % Divisor
+                sprintf "mod(%s,%s)" (this.ExportProperty dividend) (this.ExportProperty divisor)
+            | Property.FunctionLog (_base:Property, number:Property) ->  // Log_Base(Number) = Power
+                sprintf "log(%s,%s)" (this.ExportProperty number) (this.ExportProperty _base)
+            // Functions only usable in properties
+
+
+            //TODO:
+
+            | Property.FunctionMultiAchievability (goal1:Property, goal2:Property) -> //Multi-Objective Property "achievability": Bool*Bool->Bool
+                sprintf ""
+            | Property.FunctionMultiNumerical (searchBestValueFor:Property, constraints:(Property list)) -> //Multi-Objective Property "numerical": Double*(Bool list)->Double
+                sprintf ""
+            | Property.FunctionMultiPareto (searchBestValueFor1:Property, searchBestValueFor2:Property) -> //Multi-Objective Property "Pareto": Double*Double->Void)
+                sprintf ""
+            // LTL-Formula
+            | Property.LtlUnaryNext (operand:Property) ->
+                sprintf ""
+            | Property.LtlUnaryEventually (operand:Property) -> // Finally
+                sprintf ""
+            | Property.LtlUnaryAlways (operand:Property) -> // Globally
+                sprintf ""
+            | Property.LtlBinaryUntil (left:Property, right:Property) ->
+                sprintf ""
+            | Property.LtlBinaryWeakUntil (left:Property, right:Property) ->
+                sprintf ""
+            | Property.LtlBinaryRelease (left:Property, right:Property) ->
+                sprintf ""
+            // Probability
+            | Property.ProbabilityOfProperty (query:ProbabilityQuery, operand:Property) ->
+                sprintf ""
+             // Steady State
+            | Property.SteadyState ->
+                sprintf ""
+            //Reward
+            | Property.RewardReachability (property:Property) ->
+                sprintf ""
+            | Property.RewardCumulative ->
+                sprintf ""
+            | Property.RewardInstantaneous ->
+                sprintf ""
+            | Property.RewardSteadyState  ->
+                sprintf ""
+            //CTL
+            | Property.ForAllPathsGlobally ->
+                sprintf ""
+            | Property.ForAllPathsFinally  ->   
+                sprintf ""
+            | Property.ExistsPathGlobally ->    
+                sprintf ""
+            | Property.ExistsPathFinally ->
+                sprintf ""
+            // Filters
+            | Property.FilterMin ->
+                sprintf ""
+            | Property.FilterMax->
+                sprintf ""
+            | Property.FilterArgmin->
+                sprintf ""
+            | Property.FilterArgmax->
+                sprintf ""
+            | Property.FilterCount->
+                sprintf ""
+            | Property.FilterSum->
+                sprintf ""
+            | Property.FilterAvg->
+                sprintf ""
+            | Property.FilterFirst->
+                sprintf ""
+            | Property.FilterRange->
+                sprintf ""
+            | Property.FilterForall    ->
+                sprintf ""
+            | Property.FilterExists    ->
+                sprintf ""
+            | Property.FilterPrint    ->
+                sprintf ""
+            | Property.FilterPrintall->
+                sprintf ""
+            | Property.FilterState->
+                sprintf ""

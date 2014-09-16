@@ -28,7 +28,6 @@ namespace SafetySharp.Internal.Modelchecking.Prism
 // AST based on:
 // http://www.prismmodelchecker.org/manual/ThePRISMLanguage/Introduction
 
-
 // Chapter Constants
 type internal Constant =
     | Integer of int
@@ -44,6 +43,9 @@ type internal Identifier = {
         
 
 
+///////////////////////////
+// MODEL
+///////////////////////////
 
 // Chapter Expressions
 // Prism differentiates between expressions and predicates. We treat them the same.
@@ -54,20 +56,20 @@ type internal Expression =
     | Variable of Name:Identifier
     | Formula of Name:Identifier
     // Expressions with operators known from Propositional Logic
-    | UnaryNegation  of Operand:Expression                       // !
-    | BinaryMultiplication of Left:Expression * Right:Expression // *
-    | BinaryDivision of Left:Expression * Right:Expression       // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
-    | BinaryAddition of Left:Expression * Right:Expression       // +
-    | BinarySubstraction of Left:Expression * Right:Expression   // -
-    | BinaryLessThan of Left:Expression * Right:Expression       // <
-    | BinaryLessEqual of Left:Expression * Right:Expression      // <=
-    | BinaryGreaterEqual of Left:Expression * Right:Expression   // >=
-    | BinaryGreaterThan of Left:Expression * Right:Expression    // >
-    | BinaryConjunction of Left:Expression * Right:Expression    // &
-    | BinaryDisjunction of Left:Expression * Right:Expression    // |
-    | BinaryIfAndOnlyIf of Left:Expression * Right:Expression    // <=>
-    | BinaryImplication of Left:Expression * Right:Expression    // =>
-    | BinaryTenaryIfThenElse                                     // ? :
+    | UnaryNegation  of Operand:Expression                                  // !
+    | BinaryMultiplication of Left:Expression * Right:Expression            // *
+    | BinaryDivision of Left:Expression * Right:Expression                  // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
+    | BinaryAddition of Left:Expression * Right:Expression                  // +
+    | BinarySubstraction of Left:Expression * Right:Expression              // -
+    | BinaryLessThan of Left:Expression * Right:Expression                  // <
+    | BinaryLessEqual of Left:Expression * Right:Expression                 // <=
+    | BinaryGreaterEqual of Left:Expression * Right:Expression              // >=
+    | BinaryGreaterThan of Left:Expression * Right:Expression               // >
+    | BinaryConjunction of Left:Expression * Right:Expression               // &
+    | BinaryDisjunction of Left:Expression * Right:Expression               // |
+    | BinaryIfAndOnlyIf of Left:Expression * Right:Expression               // <=>
+    | BinaryImplication of Left:Expression * Right:Expression               // =>
+    | TenaryIfThenElse of If:Expression * Then:Expression * Else:Expression // ? :
     // Functions
     | FunctionMin of Expression list
     | FunctionMax of Expression list
@@ -76,7 +78,6 @@ type internal Expression =
     | FunctionPow of Base:Expression * Power:Expression // Base^Power = Number
     | FunctionMod of Dividend:Expression * Divisor:Expression // Dividend % Divisor
     | FunctionLog of Base:Expression * Number:Expression // Log_Base(Number) = Power
-    | FunctionMulti // TODO
 
 
 // Chapter Modules And Variables
@@ -231,21 +232,32 @@ type internal Property =
     | Label of Name:Identifier
     | Property of Name:Identifier //a property can also use the result of another (labeled) property as input
     // Expressions with operators known from Propositional Logic
-    | UnaryNegation  of Operand:Expression                       // !
-    | BinaryMultiplication of Left:Expression * Right:Expression // *
-    | BinaryDivision of Left:Expression * Right:Expression       // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
-    | BinaryAddition of Left:Expression * Right:Expression       // +
-    | BinarySubstraction of Left:Expression * Right:Expression   // -
-    | BinaryLessThan of Left:Expression * Right:Expression       // <
-    | BinaryLessEqual of Left:Expression * Right:Expression      // <=
-    | BinaryGreaterEqual of Left:Expression * Right:Expression   // >=
-    | BinaryGreaterThan of Left:Expression * Right:Expression    // >
-    | BinaryConjunction of Left:Expression * Right:Expression    // &
-    | BinaryDisjunction of Left:Expression * Right:Expression    // |
-    | BinaryIfAndOnlyIf of Left:Expression * Right:Expression    // <=>
-    | BinaryImplication of Left:Expression * Right:Expression    // =>
-    | BinaryTenaryIfThenElse                                     // ? :
-    | TenaryWithPropositionalOperator //TODO
+    | UnaryNegation  of Operand:Property                                  // !
+    | BinaryMultiplication of Left:Property * Right:Property            // *
+    | BinaryDivision of Left:Property * Right:Property                  // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
+    | BinaryAddition of Left:Property * Right:Property                  // +
+    | BinarySubstraction of Left:Property * Right:Property              // -
+    | BinaryLessThan of Left:Property * Right:Property                  // <
+    | BinaryLessEqual of Left:Property * Right:Property                 // <=
+    | BinaryGreaterEqual of Left:Property * Right:Property              // >=
+    | BinaryGreaterThan of Left:Property * Right:Property               // >
+    | BinaryConjunction of Left:Property * Right:Property               // &
+    | BinaryDisjunction of Left:Property * Right:Property               // |
+    | BinaryIfAndOnlyIf of Left:Property * Right:Property               // <=>
+    | BinaryImplication of Left:Property * Right:Property               // =>
+    | TenaryIfThenElse of If:Property * Then:Property * Else:Property // ? :
+    // Functions
+    | FunctionMin of Property list
+    | FunctionMax of Property list
+    | FunctionFloor of Property
+    | FunctionCeil of Property
+    | FunctionPow of Base:Property * Power:Property // Base^Power = Number
+    | FunctionMod of Dividend:Property * Divisor:Property // Dividend % Divisor
+    | FunctionLog of Base:Property * Number:Property // Log_Base(Number) = Power
+    // Functions only usable in properties
+    | FunctionMultiAchievability of Goal1:Property * Goal2:Property //Multi-Objective Property "achievability": Bool*Bool->Bool
+    | FunctionMultiNumerical of SearchBestValueFor:Property * Constraints:(Property list) //Multi-Objective Property "numerical": Double*(Bool list)->Double
+    | FunctionMultiPareto of SearchBestValueFor1:Property * SearchBestValueFor2:Property //Multi-Objective Property "Pareto": Double*Double->Void
     // LTL-Formula
     | LtlUnaryNext of Operand:Property
     | LtlUnaryEventually of Operand:Property // Finally
@@ -266,7 +278,7 @@ type internal Property =
     | ForAllPathsGlobally
     | ForAllPathsFinally    
     | ExistsPathGlobally    
-    | ExistsPathFinally    
+    | ExistsPathFinally
     // Filters
     | FilterMin
     | FilterMax
@@ -285,6 +297,7 @@ type internal Property =
 
 // not every combination is possible
 // prism seems to differentiate between pathproperties and properties
+// Here are some properties tested with the dice-example
 // Property "P>0 [F d=6]" is possible
 // Property "F d=6" is not possible
 // Property "F d=6" is not possible
@@ -298,6 +311,7 @@ type internal Property =
 // Property "P>0 [ P>0 [F s=7 ]]" is possible
 // Property "P>0 [ P>0 [s=0 ]]" is possible
 // Property "P>0 [(F (d=6 & (X s=7)))& P>0 [F d=6]]" is possible
+// Property "P=? [F d=min(3,4)]" is possible
 
 // Thus:
 //  - Only LTL-Formulas need to be in a "P~x[...]"
