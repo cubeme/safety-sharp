@@ -216,14 +216,19 @@ type internal PrismModel = {
 //  * PCTL*   for DTMCs and MDPs
 //  (* CTL   for non-probabilistic verification)
 
-type internal ProbabilityQuery =
-    | LessEqual    // <=
-    | LessThan     // <
-    | Equal        // =
-    | GreaterEqual // >=
-    | GreaterThan  // >
-    | Calculate    // =?            
-    
+type internal Bound =
+    | LessEqual of Value:Constant    // <=
+    | LessThan of Value:Constant     // <
+    | Equal of Value:Constant        // =
+    | GreaterEqual of Value:Constant // >=
+    | GreaterThan of Value:Constant  // >          
+
+type internal Query =
+    | Deterministic
+    | IndeterministicMin
+    | IndeterministicMax
+
+
 // Note: Although we could have consolidated some discriminated union cases (e.g. all ltl into one case) we didn't do it to keep it understandable.
 type internal Property =   
     | Constant of Constant
@@ -255,6 +260,7 @@ type internal Property =
     | FunctionMod of Dividend:Property * Divisor:Property // Dividend % Divisor
     | FunctionLog of Base:Property * Number:Property // Log_Base(Number) = Power
     // Functions only usable in properties
+    // TODO: Manual describes in the Multi-objective chapter "R query [ C ] ", which we do not support yet 
     | FunctionMultiAchievability of Goal1:Property * Goal2:Property //Multi-Objective Property "achievability": Bool*Bool->Bool
     | FunctionMultiNumerical of SearchBestValueFor:Property * Constraints:(Property list) //Multi-Objective Property "numerical": Double*(Bool list)->Double
     | FunctionMultiPareto of SearchBestValueFor1:Property * SearchBestValueFor2:Property //Multi-Objective Property "Pareto": Double*Double->Void
@@ -266,34 +272,40 @@ type internal Property =
     | LtlBinaryWeakUntil of Left:Property * Right:Property
     | LtlBinaryRelease of Left:Property * Right:Property
     // Probability
-    | ProbabilityOfProperty of Query:ProbabilityQuery * Operand:Property
+    | ProbabilityAchievability of Bound:Bound * Operand:Property
+    | ProbabilityNumerical of Query:Query * Operand:Property
     // Steady State
-    | SteadyState
+    | SteadyStateAchievability of Bound:Bound * Operand:Property
+    | SteadyStateNumerical of Query:Query * Operand:Property
     //Reward
-    | RewardReachability of Property
-    | RewardCumulative
-    | RewardInstantaneous
-    | RewardSteadyState
+    | RewardReachabilityAchievability of Bound:Bound * Operand:Property
+    | RewardReachabilityNumerical of Query:Query * Operand:Property
+    | RewardCumulativeAchievability of Bound:Bound * UntilTimeStep:Property //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardCumulativeNumerical of Query:Query * UntilTimeStep:Property  //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardInstantaneousAchievability of Bound:Bound * InTimeStep:Property  //InTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardInstantaneousNumerical of Query:Query * InTimeStep:Property  //InTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardSteadyStateAchievability of Bound:Bound
+    | RewardSteadyStateNumerical of Query:Query
     //CTL
-    | ForAllPathsGlobally
-    | ForAllPathsFinally    
-    | ExistsPathGlobally    
-    | ExistsPathFinally
+    | ForAllPathsGlobally of Operand:Property
+    | ForAllPathsFinally of Operand:Property
+    | ExistsPathGlobally of Operand:Property
+    | ExistsPathFinally of Operand:Property
     // Filters
-    | FilterMin
-    | FilterMax
-    | FilterArgmin
-    | FilterArgmax
-    | FilterCount
-    | FilterSum
-    | FilterAvg
-    | FilterFirst
-    | FilterRange
-    | FilterForall    
-    | FilterExists    
-    | FilterPrint    
-    | FilterPrintall
-    | FilterState
+    | FilterMin of Property:Property * States:(Property option)
+    | FilterMax of Property:Property * States:(Property option)
+    | FilterArgmin of Property:Property * States:(Property option)
+    | FilterArgmax of Property:Property * States:(Property option)
+    | FilterCount of Property:Property * States:(Property option)
+    | FilterSum of Property:Property * States:(Property option)
+    | FilterAvg of Property:Property * States:(Property option)
+    | FilterFirst of Property:Property * States:(Property option)
+    | FilterRange of Property:Property * States:(Property option)
+    | FilterForall of Property:Property * States:(Property option)
+    | FilterExists of Property:Property * States:(Property option)
+    | FilterPrint of Property:Property * States:(Property option)
+    | FilterPrintall of Property:Property * States:(Property option)
+    | FilterState of Property:Property * States:(Property option)
 
 // not every combination is possible
 // prism seems to differentiate between pathproperties and properties
