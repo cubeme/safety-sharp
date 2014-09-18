@@ -25,8 +25,16 @@ namespace SafetySharp.Internal.Modelchecking.Prism
 // semantics of prism
 // http://www.prismmodelchecker.org/doc/semantics.pdf
 
-// AST based on:
+// AST based on Prism 4.2:
 // http://www.prismmodelchecker.org/manual/ThePRISMLanguage/Introduction
+
+
+// Chapter Parallel Composition
+type internal ModelType =
+    | MDP // Markov Decision Process
+    | DTMC // Discrete Time Markov Chain
+    | CTMC // Continuous Time Markov Chain
+    | PTA // Probabilistic Timed Automata
 
 // Chapter Constants
 type internal Constant =
@@ -40,7 +48,34 @@ type internal Identifier = {
 }
     with
         static member reserved = [ "A"; "bool"; "clock"; "const"; "ctmc"; "C"; "double"; "dtmc"; "E"; "endinit"; "endinvariant"; "endmodule"; "endrewards"; "endsystem"; "false"; "formula"; "filter"; "func"; "F"; "global"; "G"; "init"; "invariant"; "I"; "int"; "label"; "max"; "mdp"; "min"; "module"; "X"; "nondeterministic"; "Pmax"; "Pmin"; "P"; "probabilistic"; "prob"; "pta"; "rate"; "rewards"; "Rmax"; "Rmin"; "R"; "S"; "stochastic"; "system"; "true"; "U"; "W"]
+                
+type internal Label = {
+    // A label is a string with quotation marks around them
+    Name : string;
+}
+    with
+        static member builtinInitLabel     = {Label.Name="init"}
+        static member builtinDeadlockLabel = {Label.Name="deadlock"}
         
+[<RequireQualifiedAccess>]
+type internal DefactoType =
+    | Bool
+    | Int
+    | Double
+
+[<RequireQualifiedAccess>]
+type internal VariableDeclarationType =
+    | Bool
+    | IntRange of From:Expression * To:Expression //Expressions must be static after initial evaluation (i.e. not contain variables)
+    | Int //only usable in few kinds of model analysis (e.g. simulation)
+    | Clock //only usable in PTAs
+    with 
+        member this.DefactoType =
+            match this with
+                | VariableDeclarationType.Bool -> DefactoType.Bool
+                | VariableDeclarationType.IntRange(_) -> DefactoType.Int
+                | VariableDeclarationType.Int -> DefactoType.Int
+                | VariableDeclarationType.Clock -> DefactoType.Double
 
 
 ///////////////////////////
@@ -51,7 +86,7 @@ type internal Identifier = {
 // Prism differentiates between expressions and predicates. We treat them the same.
 // Note: We didn't consolidate the expressions and the functions here to be consistent with
 //       the type Properties (and there we didn't do it to keep it understandable)
-type internal Expression =
+and internal Expression =
     | Constant of Constant
     | Variable of Name:Identifier
     | Formula of Name:Identifier
@@ -81,39 +116,38 @@ type internal Expression =
 
 
 // Chapter Modules And Variables
-[<RequireQualifiedAccess>]
-type internal VariableType =
-    | Bool
-    | IntRange of From:Expression * To:Expression
-    | Int //only usable in few kinds of model analysis (e.g. simulation)
-    | Clock //only usable in PTAs
-
 type internal VariableDeclaration = {
     // A variable declaration in a module
     Name : Identifier;
-    Type : VariableType;
-    InitialValue : string option; //when initial value is omitted"; "lowest value is assumed (!= NuXmv where indeterministic initial value is assumed)
+    Type : VariableDeclarationType;
+    InitialValue : Expression option; //when initial value is omitted"; "lowest value is assumed (!= NuXmv where indeterministic initial value is assumed)
 }
 
 // Chapter Constants
 type internal ConstantDeclaration = {
     Name : Identifier;
-    //Type : 
+    Type : DefactoType; // only int double and bool
     Value : Expression;
 }
 
 // Chapter Commands
 
-type internal Update =
+type internal DeterministicUpdateOfVariables =
+    // In Manual simply called "Update"
     //equivalent examples for an update (unnecessary things can be left out):
     //    (x1'=x1)&(x2'=x2)
     //    (x1'=x1)
     //    true
     (Identifier * Expression) list
 
+type internal QuantifiedUpdateOfVariables =
+    // UpdateOfVariables is the update, where for each Identifier the new value is defined. And Expression its associate probability or rate.
+    //    0.8:(x1'=x1)&(x2'=x2) + 0.2:(x1'=0)&(x2'=1)
+    (Expression * DeterministicUpdateOfVariables) list
+        
 type ActionLabel = Identifier
 
-type internal Action =
+type internal CommandAction =
     | Synchronized of ActionLabel:ActionLabel //if two commands have the same action, they make their transition simultaneously
     | NoActionLabel
 
@@ -128,28 +162,23 @@ type internal Command = {
     //       "50" is the associate rate of update "x'=1"
     // An example with an action: "[serve] s=0 -> 1:(s'=1)";
     //       "serve" is the action for synchronization purposes
-    Action : Action; //if two commands have the same action, they make their transition simultaneously
+    Action : CommandAction; //if two commands have the same action, they make their transition simultaneously
     Guard : Expression;
-    //(Update is the update, where for each Identifier the new value is defined. And Expression its associate probability or rate)
-    Updates : (Expression*Update) list
+    QuantifiedUpdateOfVariables : QuantifiedUpdateOfVariables
 }
 
-// Parallel Composition
-type internal ModelType =
-    | MDP // Markov Decision Process
-    | DTMC // Discrete Time Markov Chain
-    | CTMC // Continuous Time Markov Chain
-    | PTA // Probabilistic Timed Automata
 
-type internal Choice =
+(*type internal Choice =
     | NondeterministicChoice // MDP
     | ProbabilisticChoice // DTMC
     | RaceCondition // CTMC
+*)
 
 // CTMC
-type internal ProbabilityOrRate =
+(*type internal ProbabilityOrRate =
     | Probability //MDP, DTMC
     | Rate //CTMC
+    *)
 
 type internal Module =
     | ModuleRenaming of Name:Identifier * CloneOf:Identifier * Renamings:((Identifier*Identifier) list) // Chapter Module Renaming
@@ -163,21 +192,21 @@ type internal Formula = { //used in models
     Formula : Expression;
 }
 
-type internal Label = { //used in properties
-    Name : Identifier;
-    Label : Expression; //must be boolean
+type internal LabeledExpression = {
+    // usable only in properties. Called Label in the Manual. We cal it labeled Expression to make a
+    // clear distinction between Label in the sense of an expression with a name and the Label itself
+    // which is also used in RewardStructures
+    Label : Label;
+    Expression : Expression; //must be boolean
 }
-    with
-        static member builtinInitLabel     = {Label.Name={Identifier.Name="init"};Label.Label=Expression.Constant(Constant.Boolean(true));} //TODO: improve, as it has no expression
-        static member builtinDeadlockLabel = {Label.Name={Identifier.Name="deadlock"};Label.Label=Expression.Constant(Constant.Boolean(true));} //TODO: improve, as it has no expression
 
 // Chapter Costs and Rewards
 type internal Reward = //can also be used for costs or time
     | StateReward of Guard : Expression * Reward : Expression
-    | TransitionReward of Action : Action * Guard : Expression * Reward : Expression
-
+    | TransitionReward of Action : CommandAction * Guard : Expression * Reward : Expression
+    
 type internal RewardStructure = {
-    Label : Label option;
+    Label : Label option; // A reward structure can be given a label. Thus, modelers can add multiple reward strucutures in their model an refer to a specific reward structure
     Rewards : Reward list;
 }
 
@@ -234,10 +263,10 @@ type internal Property =
     | Constant of Constant
     | Variable of Name:Identifier
     | Formula of Name:Identifier
-    | Label of Name:Identifier
+    | Label of Name:Label
     | Property of Name:Identifier //a property can also use the result of another (labeled) property as input
     // Expressions with operators known from Propositional Logic
-    | UnaryNegation  of Operand:Property                                  // !
+    | UnaryNegation  of Operand:Property                                // !
     | BinaryMultiplication of Left:Property * Right:Property            // *
     | BinaryDivision of Left:Property * Right:Property                  // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
     | BinaryAddition of Left:Property * Right:Property                  // +
@@ -278,6 +307,7 @@ type internal Property =
     | SteadyStateAchievability of Bound:Bound * Operand:Property
     | SteadyStateNumerical of Query:Query * Operand:Property
     //Reward
+    // TODO: Label
     | RewardReachabilityAchievability of Bound:Bound * Operand:Property
     | RewardReachabilityNumerical of Query:Query * Operand:Property
     | RewardCumulativeAchievability of Bound:Bound * UntilTimeStep:Property //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)

@@ -25,36 +25,23 @@ namespace SafetySharp.Internal.Modelchecking.Prism
 open System
 
 type internal ExportPrismAstToFile() =
-
-
-    let indent (number:int) : string =
-        let s=System.Text.StringBuilder ()
-        for i = 1 to number do 
-            s.Append "  " |> ignore
-        s.ToString ()
-
-    let nl = Environment.NewLine
     
-    let nli (i:int) =
-        nl + (indent i)
-        
-    let joinWithWhitespace (lst:string list) : string =
-        String.Join(" ", lst)
-
-    let joinWithComma (lst:string list) : string =
-        String.Join(", ", lst)
-    
-    let joinWithNewLine (lst:string list) : string =
-        String.Join("\n", lst)
-
-    let joinWithIndentedNewLine (indent:int) (lst:string list): string =
+    let indentElementWithNewLine (indent:int) (elem:string): string =
         let indents = String.replicate indent "\t"
-        let separator = "\n"+indents
-        String.Join(separator, lst)
+        sprintf "%s%s\n" indents elem
         
-    let joinWith (operator:string) (lst:string list) : string =
-        String.Join(operator, lst)
-
+    let indentElementsWithNewLine (indent:int) (lst:string list): string =
+        let indents = String.replicate indent "\t"
+        let newStr = new System.Text.StringBuilder()
+        lst |> List.iter (fun elem ->
+                            newStr.Append(indents) |> ignore
+                            newStr.Append(elem) |> ignore
+                            newStr.Append("\n") |> ignore
+                          )
+        newStr.ToString()
+        
+    let indent1ElementsWithNewLine (lst:string list): string =
+        indentElementsWithNewLine 1 lst
 
         
     member this.ExportConstant (constant : Constant) = 
@@ -66,7 +53,25 @@ type internal ExportPrismAstToFile() =
     member this.ExportIdentifier (identifier : Identifier) = 
         identifier.Name
 
+    member this.ExportLabel (label : Label) = 
+        sprintf "\"%s\"" label.Name
 
+    member this.ExportDefactoType (defactoType:DefactoType) : string =
+        match defactoType with
+            | DefactoType.Bool -> "bool"
+            | DefactoType.Int -> "int"
+            | DefactoType.Double -> "double"
+
+    member this.ExportVariableDeclarationType (variableDeclarationType:VariableDeclarationType) : string =
+        match variableDeclarationType with
+            | VariableDeclarationType.Bool ->
+                "bool"
+            | VariableDeclarationType.IntRange (_from:Expression, _to:Expression) ->
+                sprintf "[%s..%s]" (this.ExportExpression _from) (this.ExportExpression _to)                
+            | VariableDeclarationType.Int ->
+                "int"
+            | VariableDeclarationType.Clock ->
+                "clock"
 
         
 
@@ -116,10 +121,10 @@ type internal ExportPrismAstToFile() =
             // Functions
             | Expression.FunctionMin (exprs:Expression list) -> 
                 let content = exprs |> List.map this.ExportExpression
-                sprintf "min(%s)" (joinWithComma content)
+                sprintf "min(%s)" (content |> String.concat ",")
             | Expression.FunctionMax (exprs:Expression list) -> 
                 let content = exprs |> List.map this.ExportExpression
-                sprintf "max(%s)" (joinWithComma content)
+                sprintf "max(%s)" (content |> String.concat ",")
             | Expression.FunctionFloor (expr:Expression ) -> 
                 sprintf "floor(%s)" (this.ExportExpression expr)
             | Expression.FunctionCeil (expr:Expression) -> 
@@ -131,6 +136,81 @@ type internal ExportPrismAstToFile() =
             | Expression.FunctionLog (_base:Expression, number:Expression) ->  // Log_Base(Number) = Power
                 sprintf "log(%s,%s)" (this.ExportExpression number) (this.ExportExpression _base)
 
+
+    member this.ExportVariableDeclaration (variableDeclaration:VariableDeclaration) : string =
+        let _name = this.ExportIdentifier variableDeclaration.Name
+        let _type = this.ExportVariableDeclarationType variableDeclaration.Type
+        let _initValue =
+            match variableDeclaration.InitialValue with
+                | Some(expr) -> sprintf " %s" (this.ExportExpression expr)
+                | None -> ""
+        sprintf "%s : %s%s" _name _type _initValue
+
+    member this.ExportConstantDeclaration (constantDeclaration:ConstantDeclaration) : string =
+        let _type = this.ExportDefactoType constantDeclaration.Type
+        let _name = this.ExportIdentifier constantDeclaration.Name
+        let _init = this.ExportExpression constantDeclaration.Value
+        sprintf "const %s %s = %s" _type _name _init
+
+    member this.ExportCommand (command:Command) : string =
+        let exportDeterministicUpdateOfVariables (update:DeterministicUpdateOfVariables) : string =
+            if update = [] then
+                "true"
+            else
+                //something like (x1'=x1)&(x2'=x2)
+                update |> List.map (fun (targetVariable,expr) -> sprintf "(%s'=%s)" (this.ExportIdentifier targetVariable) (this.ExportExpression expr))
+                       |> String.concat "&"
+        let exportQuantifiedUpdateOfVariables (update:QuantifiedUpdateOfVariables) : string =
+            //something like 0.8:(x1'=x1)&(x2'=x2) + 0.2:(x1'=0)&(x2'=1)
+            if update = [] then
+                "1.0:true"
+            else
+                update |> List.map (fun (associateProbability,deterministicUpdate) ->
+                                            let associateProbability = this.ExportExpression associateProbability
+                                            let deterministicUpdate = exportDeterministicUpdateOfVariables deterministicUpdate
+                                            sprintf "(%s:%s)" associateProbability deterministicUpdate
+                                         )
+                       |> String.concat " + "
+        let exportAction (action:CommandAction) : string =
+            match action with
+                | CommandAction.NoActionLabel -> ""
+                | CommandAction.Synchronized(actionLabel) -> sprintf "%s" (this.ExportIdentifier actionLabel) //actionLabel is in fact an identifier, there are no quotation marks necessary
+        let actionForSynchronization = (exportAction command.Action)
+        let guard = exportAction command.Action
+        let updates = exportQuantifiedUpdateOfVariables command.QuantifiedUpdateOfVariables
+        sprintf "[%s] %s -> %s" actionForSynchronization guard updates
+
+    member this.ExportModule (_module:Module) : string =
+        match _module with
+            | Module.ModulePta(name:Identifier, variables:(VariableDeclaration list), invariant:Expression, commands:(Command list)) ->
+                failwith "NotImplementedYet"
+            | Module.ModuleRenaming(name:Identifier, cloneOf:Identifier, renamings:((Identifier*Identifier) list)) ->
+                failwith "NotImplementedYet"
+            | Module.Module(name:Identifier, variables:(VariableDeclaration list), commands:(Command list)) ->
+                let name = this.ExportIdentifier name
+                let variables = variables |> List.map this.ExportVariableDeclaration |> indent1ElementsWithNewLine
+                let commands = commands |> List.map this.ExportCommand |> indent1ElementsWithNewLine
+                sprintf "module %s\n/%s\n%s\nendmodule\n" name variables commands
+
+
+    member this.ExportFormula (formula:Formula) : string =
+        failwith "NotImplementedYet"
+        
+    member this.ExportLabeledExpression (labeledExpression:LabeledExpression) : string =        
+        failwith "NotImplementedYet"
+
+    member this.ExportRewardStructure (rewardStructure:RewardStructure) : string =
+        let exportReward(reward:Reward) : string =
+            failwith "NotImplementedYet"
+        failwith "NotImplementedYet"
+
+    member this.ExportProcessAlgebraicExpression (processAlgebraicExpression:ProcessAlgebraicExpression) : string =
+        failwith "NotImplementedYet"
+
+    member this.ExportPrismModel (prismModel:PrismModel) : string =
+        let exportModelType (modelType:ModelType) : string =
+            ""
+        failwith "NotImplementedYet"
 
 
 
@@ -171,8 +251,8 @@ type internal ExportPrismAstToFile() =
                 this.ExportIdentifier name
             | Property.Formula (name:Identifier) ->
                 this.ExportIdentifier name
-            | Property.Label (name:Identifier) ->
-                this.ExportIdentifier name
+            | Property.Label (label:Label) ->
+                this.ExportLabel label
             | Property.Property (name:Identifier) -> //a property can also use the result (another (labeled) property as input)
                 this.ExportIdentifier name
             // Properties with operators known from Propositional Logic
@@ -207,10 +287,10 @@ type internal ExportPrismAstToFile() =
             // Functions
             | Property.FunctionMin (exprs:Property list) -> 
                 let content = exprs |> List.map this.ExportProperty
-                sprintf "min(%s)" (joinWithComma content)
+                sprintf "min(%s)" (content |> String.concat ",")
             | Property.FunctionMax (exprs:Property list) -> 
                 let content = exprs |> List.map this.ExportProperty
-                sprintf "max(%s)" (joinWithComma content)
+                sprintf "max(%s)" (content |> String.concat ",")
             | Property.FunctionFloor (expr:Property ) -> 
                 sprintf "floor(%s)" (this.ExportProperty expr)
             | Property.FunctionCeil (expr:Property) -> 
@@ -226,7 +306,7 @@ type internal ExportPrismAstToFile() =
                 sprintf "multi(%s,%s)" (this.ExportProperty goal1) (this.ExportProperty goal1)
             | Property.FunctionMultiNumerical (searchBestValueFor:Property, constraints:(Property list)) -> //Multi-Objective Property "numerical": Double*(Bool list)->Double
                 let constraints = constraints |> List.map (this.ExportProperty)
-                sprintf "multi(%s,%s)" (this.ExportProperty searchBestValueFor) (joinWithComma constraints)
+                sprintf "multi(%s,%s)" (this.ExportProperty searchBestValueFor) (constraints |> String.concat ",")
             | Property.FunctionMultiPareto (searchBestValueFor1:Property, searchBestValueFor2:Property) -> //Multi-Objective Property "Pareto": Double*Double->Void)
                 sprintf "multi(%s,%s)" (this.ExportProperty searchBestValueFor1) (this.ExportProperty searchBestValueFor2)
             // LTL-Formula
