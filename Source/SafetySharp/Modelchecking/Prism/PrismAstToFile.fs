@@ -29,6 +29,9 @@ type internal ExportPrismAstToFile() =
     let indentElementWithNewLine (indent:int) (elem:string): string =
         let indents = String.replicate indent "\t"
         sprintf "%s%s\n" indents elem
+
+    let indent1ElementWithNewLine (indent:int) (elem:string): string =
+        indentElementWithNewLine 1 elem
         
     let indentElementsWithNewLine (indent:int) (lst:string list): string =
         let indents = String.replicate indent "\t"
@@ -79,8 +82,6 @@ type internal ExportPrismAstToFile() =
     // MODEL
     ///////////////////////////
     
-    //TODO: Property and label with ""
-
     member this.ExportExpression (expression : Expression) : string =
         match expression with
             | Expression.Constant (constant:Constant) ->
@@ -190,28 +191,52 @@ type internal ExportPrismAstToFile() =
                 let name = this.ExportIdentifier name
                 let variables = variables |> List.map this.ExportVariableDeclaration |> indent1ElementsWithNewLine
                 let commands = commands |> List.map this.ExportCommand |> indent1ElementsWithNewLine
-                sprintf "module %s\n/%s\n%s\nendmodule\n" name variables commands
+                sprintf "module %s\n%s%sendmodule\n" name variables commands
 
 
     member this.ExportFormula (formula:Formula) : string =
-        failwith "NotImplementedYet"
+        sprintf "formula %s = %s;" (this.ExportIdentifier formula.Name) (this.ExportExpression formula.Formula)
         
-    member this.ExportLabeledExpression (labeledExpression:LabeledExpression) : string =        
-        failwith "NotImplementedYet"
+    member this.ExportLabeledExpression (labeledExpression:LabeledExpression) : string =
+        sprintf "label %s = %s;" (this.ExportLabel labeledExpression.Label) (this.ExportExpression labeledExpression.Expression)
 
     member this.ExportRewardStructure (rewardStructure:RewardStructure) : string =
         let exportReward(reward:Reward) : string =
-            failwith "NotImplementedYet"
-        failwith "NotImplementedYet"
+            match reward with
+                | StateReward (guard:Expression, reward:Expression) ->
+                    sprintf "%s : %s;" (this.ExportExpression guard) (this.ExportExpression reward)
+                | TransitionReward (action:ActionLabel, guard:Expression, reward:Expression) ->
+                    sprintf "[%s] %s : %s;" (this.ExportIdentifier action) (this.ExportExpression guard) (this.ExportExpression reward)
+        let name = if rewardStructure.Label.IsNone then "" else " " + (this.ExportLabel rewardStructure.Label.Value)
+        let rewards = rewardStructure.Rewards |> List.map exportReward |> indent1ElementsWithNewLine
+        sprintf "rewards%s\n%sendrewards\n" name rewards
 
     member this.ExportProcessAlgebraicExpression (processAlgebraicExpression:ProcessAlgebraicExpression) : string =
         failwith "NotImplementedYet"
 
     member this.ExportPrismModel (prismModel:PrismModel) : string =
         let exportModelType (modelType:ModelType) : string =
-            ""
-        failwith "NotImplementedYet"
-
+            match modelType with
+                | MDP -> "mdp"
+                | DTMC -> "dtmc"
+                | CTMC -> "ctmc"
+                | PTA -> "pta"
+        let modelType = exportModelType prismModel.ModelType
+        let constants = prismModel.Constants |> List.map this.ExportConstantDeclaration |> indent1ElementsWithNewLine
+        let initModule =
+            match prismModel.InitModule with
+                | None -> ""
+                | Some(expr) -> sprintf "init\n\t%s\nendinit\n\n" (this.ExportExpression expr)
+        let globalVariables = prismModel.GlobalVariables |> List.map this.ExportVariableDeclaration |> indent1ElementsWithNewLine
+        let formulas = prismModel.Formulas |> List.map this.ExportFormula |> String.concat "\n"
+        let modules = prismModel.Modules |> List.map this.ExportModule |> String.concat "\n"
+        let labels = prismModel.Labels |> List.map this.ExportLabeledExpression |> String.concat "\n"
+        let rewards = prismModel.Rewards |> List.map this.ExportRewardStructure |> String.concat "\n"
+        let parallelComposition =             
+            match prismModel.ParallelComposition with
+                | None -> ""
+                | Some(parallelExpr) -> this.ExportProcessAlgebraicExpression parallelExpr
+        sprintf "%s\n\n%s%s%s%s\n%s\n%s\n%s\n%s" modelType initModule constants globalVariables formulas modules labels rewards parallelComposition
 
 
     ///////////////////////////
@@ -243,7 +268,6 @@ type internal ExportPrismAstToFile() =
             | Query.IndeterministicMax -> "max=?"
                             
     member this.ExportProperty (property : Property) : string =
-        //TODO: Property and label with ""
         match property with
             | Property.Constant (constant:Constant) ->
                 this.ExportConstant constant
@@ -303,7 +327,7 @@ type internal ExportPrismAstToFile() =
                 sprintf "log(%s,%s)" (this.ExportProperty number) (this.ExportProperty _base)
             // Functions only usable in properties
             | Property.FunctionMultiAchievability (goal1:Property, goal2:Property) -> //Multi-Objective Property "achievability": Bool*Bool->Bool
-                sprintf "multi(%s,%s)" (this.ExportProperty goal1) (this.ExportProperty goal1)
+                sprintf "multi(%s,%s)" (this.ExportProperty goal1) (this.ExportProperty goal2)
             | Property.FunctionMultiNumerical (searchBestValueFor:Property, constraints:(Property list)) -> //Multi-Objective Property "numerical": Double*(Bool list)->Double
                 let constraints = constraints |> List.map (this.ExportProperty)
                 sprintf "multi(%s,%s)" (this.ExportProperty searchBestValueFor) (constraints |> String.concat ",")

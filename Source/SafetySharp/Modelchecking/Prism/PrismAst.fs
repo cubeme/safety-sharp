@@ -203,7 +203,7 @@ type internal LabeledExpression = {
 // Chapter Costs and Rewards
 type internal Reward = //can also be used for costs or time
     | StateReward of Guard : Expression * Reward : Expression
-    | TransitionReward of Action : CommandAction * Guard : Expression * Reward : Expression
+    | TransitionReward of Action : ActionLabel * Guard : Expression * Reward : Expression
     
 type internal RewardStructure = {
     Label : Label option; // A reward structure can be given a label. Thus, modelers can add multiple reward strucutures in their model an refer to a specific reward structure
@@ -227,7 +227,7 @@ type internal PrismModel = {
     GlobalVariables : VariableDeclaration list;
     Modules : Module list;
     Formulas : Formula list;
-    Labels : Label list;
+    Labels : LabeledExpression list;
     Rewards : RewardStructure list;
     ParallelComposition : ProcessAlgebraicExpression option;
 }
