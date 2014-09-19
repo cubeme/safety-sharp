@@ -122,10 +122,16 @@ type internal ExecuteNuXmv() =
             let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
             paths |> Array.map (fun path -> System.IO.Path.Combine(path,"NuXmv.exe"))
                   |> Array.toList
-        let candidates = candidatesManual @ candidatesOfPath
+        let candidateOfNuXmvPath =
+            let path=System.Environment.GetEnvironmentVariable("NUXMV_DIR")
+            if path = null then
+                []
+            else
+                [System.IO.Path.Combine(path,"NuXmv.exe")]
+        let candidates = candidateOfNuXmvPath @ candidatesManual @ candidatesOfPath
         match candidates |> Seq.tryFind tryCandidate with
             | Some(filename) -> filename
-            | None -> failwith "Please add NuXmv installation folder into PATH or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
+            | None -> failwith "Please add NuXmv installation folder into PATH\n or set the environmental variable NUXMV_PATH\n or copy NuXmv-executable into the dependency folder. You can download NuXmv from http://nuxmv.fbk.eu"
         
     member this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(

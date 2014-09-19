@@ -49,14 +49,14 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-	  <Compile Include="Utilities\Exceptions.fs" />
-	  <Compile Include="Utilities\FileSystem.fs" />
-	  <Compile Include="Metamodel\Symbols.fs" />
-	  <Compile Include="Metamodel\Expressions.fs" />
-	  <Compile Include="Metamodel\Formulas.fs" />
-	  <Compile Include="Metamodel\Statements.fs" />
-	  <Compile Include="Metamodel\Metamodel.fs" />
-	  <Compile Include="Metamodel\Objects.fs" />
+    <Compile Include="Utilities\Exceptions.fs" />
+    <Compile Include="Utilities\FileSystem.fs" />
+    <Compile Include="Metamodel\Symbols.fs" />
+    <Compile Include="Metamodel\Expressions.fs" />
+    <Compile Include="Metamodel\Formulas.fs" />
+    <Compile Include="Metamodel\Statements.fs" />
+    <Compile Include="Metamodel\Metamodel.fs" />
+    <Compile Include="Metamodel\Objects.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
