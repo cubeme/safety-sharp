@@ -40,3 +40,7 @@ module PrismExecuteTestsBasic =
     let ``Prism is in PATH or in dependency folder`` () =
         let path = ExecutePrism.FindPrism ()
         (path.Length > 0) =? true
+        
+    [<Test>]
+    let ``Prism is runable and shows help`` () =
+        ExecutePrism.IsPrismRunable() =? true

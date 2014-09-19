@@ -45,6 +45,12 @@ module internal FileSystem =
         | I386
         | Unknown 
         | Other of Type:uint16
+            with
+                override this.ToString() : string =
+                    match this with
+                        | AMD64 -> "AMD64"
+                        | I386 -> "I386"
+                        | _ -> "unknown"
 
     let GetDllMachineType  (dllPath:string) =
         // Source: http://stackoverflow.com/questions/1001404/check-if-unmanaged-dll-is-32-bit-or-64-bit/1002672#1002672
