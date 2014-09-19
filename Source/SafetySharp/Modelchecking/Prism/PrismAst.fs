@@ -168,7 +168,7 @@ type internal Command = {
 }
 
 type internal Module =
-    | ModuleRenaming of Name:Identifier * CloneOf:Identifier * Renamings:((Identifier*Identifier) list) // Chapter Module Renaming
+    | ModuleRenaming of Name:Identifier * CloneOf:Identifier * Renamings:((Identifier*Identifier) list) // Chapter Module Renaming. (renamingpair: (variableToReplace,replacedBy))
     | Module of Name:Identifier * Variables:(VariableDeclaration list) * Commands:(Command list)
     | ModulePta of Name:Identifier * Variables:(VariableDeclaration list) * Invariant : Expression * Commands:(Command list)
 

@@ -182,9 +182,18 @@ type internal ExportPrismAstToFile() =
     member this.ExportModule (_module:Module) : string =
         match _module with
             | Module.ModulePta(name:Identifier, variables:(VariableDeclaration list), invariant:Expression, commands:(Command list)) ->
-                failwith "NotImplementedYet"
+                let name = this.ExportIdentifier name
+                let variables = variables |> List.map this.ExportVariableDeclaration |> indent1ElementsWithNewLine
+                let invariant = this.ExportExpression invariant
+                let commands = commands |> List.map this.ExportCommand |> indent1ElementsWithNewLine
+                sprintf "module %s\n%s\ninvariant\n\t%s\nendinvariant\n%sendmodule\n" name variables invariant commands
             | Module.ModuleRenaming(name:Identifier, cloneOf:Identifier, renamings:((Identifier*Identifier) list)) ->
-                failwith "NotImplementedYet"
+                let name = this.ExportIdentifier name
+                let cloneOf = this.ExportIdentifier cloneOf
+                let renamePair (variableToReplace:Identifier,replacedBy:Identifier) : string =
+                    sprintf "%s=%s" (this.ExportIdentifier variableToReplace) (this.ExportIdentifier replacedBy) 
+                let renamings = renamings |> List.map renamePair |> String.concat ","
+                sprintf "module %s = %s [ %s ] endmodule\n" name cloneOf renamings
             | Module.Module(name:Identifier, variables:(VariableDeclaration list), commands:(Command list)) ->
                 let name = this.ExportIdentifier name
                 let variables = variables |> List.map this.ExportVariableDeclaration |> indent1ElementsWithNewLine
@@ -210,7 +219,31 @@ type internal ExportPrismAstToFile() =
         sprintf "rewards%s\n%sendrewards\n" name rewards
 
     member this.ExportProcessAlgebraicExpression (processAlgebraicExpression:ProcessAlgebraicExpression) : string =
-        failwith "NotImplementedYet"
+        match processAlgebraicExpression with            
+            | Module (name:Identifier) ->
+                this.ExportIdentifier name
+            | OnActions (ms:ProcessAlgebraicExpression list) ->
+                // M1 || M2
+                ms |> List.map (fun elem -> sprintf "(%s)" (this.ExportProcessAlgebraicExpression elem))
+                   |> String.concat "||"
+            | Asynchronous (ms:ProcessAlgebraicExpression list) ->
+                // M1 ||| M2
+                ms |> List.map (fun elem -> sprintf "(%s)" (this.ExportProcessAlgebraicExpression elem))
+                   |> String.concat "|||"
+            | OnSomeActions (m1:ProcessAlgebraicExpression, m2:ProcessAlgebraicExpression, actions:(ActionLabel list)) ->
+                // M1 |[a,b,...]| M2
+                let actions = actions |> List.map this.ExportIdentifier |> String.concat ","
+                sprintf "%s |[%s]| %s" (this.ExportProcessAlgebraicExpression m1) actions (this.ExportProcessAlgebraicExpression m2)
+            | HideActions (m:ProcessAlgebraicExpression, actions:(ActionLabel list)) ->
+                // M / {a,b,...}
+                let actions = actions |> List.map this.ExportIdentifier |> String.concat ","
+                sprintf "%s / {%s}" (this.ExportProcessAlgebraicExpression m) actions
+            | RenameActions (m:ProcessAlgebraicExpression, renamings:((ActionLabel*ActionLabel) list)) ->
+                // M {a<-b,c<-d}
+                let renamePair (_from:ActionLabel,_to:ActionLabel) : string =
+                    sprintf "%s<-%s" (this.ExportIdentifier _from) (this.ExportIdentifier _to)
+                let renamings = renamings |> List.map renamePair |> String.concat ","
+                sprintf "%s / {%s}" (this.ExportProcessAlgebraicExpression m) renamings
 
     member this.ExportPrismModel (prismModel:PrismModel) : string =
         let exportModelType (modelType:ModelType) : string =
