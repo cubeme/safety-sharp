@@ -38,7 +38,7 @@ module PrismExecuteTestsBasic =
 
     [<Test>]
     let ``Prism is in PATH or in dependency folder`` () =
-        let path = ExecutePrism.FindPrism ()
+        let path = ExecutePrism.FindPrismAndAddToPath ()
         (path.Length > 0) =? true
         
     [<Test>]
