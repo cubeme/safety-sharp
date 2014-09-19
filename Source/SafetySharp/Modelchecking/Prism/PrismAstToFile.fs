@@ -22,8 +22,6 @@
 
 namespace SafetySharp.Internal.Modelchecking.Prism
 
-open System
-
 type internal ExportPrismAstToFile() =
     
     let indentElementWithNewLine (indent:int) (elem:string): string =
@@ -245,21 +243,32 @@ type internal ExportPrismAstToFile() =
 
     member this.ExportBound (bound:Bound) : string =
         match bound with        
-            | LessEqual (value:Constant) ->
+            | Bound.LessEqual (value:Constant) ->
                 let value = this.ExportConstant value
                 sprintf "<=%s" value
-            | LessThan (value:Constant) ->
+            | Bound.LessThan (value:Constant) ->
                 let value = this.ExportConstant value
                 sprintf "<%s" value
-            | Equal (value:Constant) ->
+            | Bound.Equal (value:Constant) ->
                 let value = this.ExportConstant value
                 sprintf "=%s" value
-            | GreaterEqual (value:Constant) ->
+            | Bound.GreaterEqual (value:Constant) ->
                 let value = this.ExportConstant value
                 sprintf ">=%s" value
-            | GreaterThan (value:Constant) ->
+            | Bound.GreaterThan (value:Constant) ->
                 let value = this.ExportConstant value
                 sprintf ">%s" value        
+
+    member this.ExportPathBound (bound:PathBound option) : string =
+        match bound with
+            | None -> ""
+            | Some(bound) ->
+                match bound with
+                    | PathBound.LessEqual (_to:Constant) -> sprintf "<=%s" (this.ExportConstant _to)
+                    | PathBound.LessThan (_to:Constant) -> sprintf "<%s" (this.ExportConstant _to)
+                    | PathBound.Interval (_from:Constant,_to:Constant) -> sprintf "[%s,%s]" (this.ExportConstant _from) (this.ExportConstant _to)
+                    | PathBound.GreaterEqual (_from:Constant) -> sprintf ">=%s" (this.ExportConstant _from)
+                    | PathBound.GreaterThan (_from:Constant) -> sprintf ">%s" (this.ExportConstant _from)
 
     member this.ExportQuery (query:Query) : string =
         match query with
@@ -268,6 +277,12 @@ type internal ExportPrismAstToFile() =
             | Query.IndeterministicMax -> "max=?"
                             
     member this.ExportProperty (property : Property) : string =
+        // helpers
+        let exportRewardLabel (rewardLabel:(Label option)) :string =
+            match rewardLabel with
+                | None -> ""
+                | Some(label) -> sprintf "{%s}" (this.ExportLabel label)
+        // actual function
         match property with
             | Property.Constant (constant:Constant) ->
                 this.ExportConstant constant
@@ -336,16 +351,18 @@ type internal ExportPrismAstToFile() =
             // LTL-Formula
             | Property.LtlUnaryNext (operand:Property) ->
                 sprintf "X (%s)" (this.ExportProperty operand)
-            | Property.LtlUnaryEventually (operand:Property) -> // Finally
-                sprintf "F (%s)" (this.ExportProperty operand)
-            | Property.LtlUnaryAlways (operand:Property) -> // Globally
-                sprintf "G (%s)" (this.ExportProperty operand)
-            | Property.LtlBinaryUntil (left:Property, right:Property) ->
-                sprintf "(%s) U (%s)" (this.ExportProperty left) (this.ExportProperty right)
-            | Property.LtlBinaryWeakUntil (left:Property, right:Property) ->
-                sprintf "(%s) W (%s)" (this.ExportProperty left) (this.ExportProperty right)
-            | Property.LtlBinaryRelease (left:Property, right:Property) ->
-                sprintf "(%s) R (%s)" (this.ExportProperty left) (this.ExportProperty right)
+            | LtlUnaryInTimeInstant (timeInstant:Property, operand:Property) ->
+                sprintf "F=%s (%s)" (this.ExportProperty timeInstant) (this.ExportProperty operand)
+            | Property.LtlUnaryEventually (withinSteps:(PathBound option),operand:Property) -> // Finally
+                sprintf "F%s (%s)" (this.ExportPathBound withinSteps) (this.ExportProperty operand)
+            | Property.LtlUnaryAlways (withinSteps:(PathBound option),operand:Property) -> // Globally
+                sprintf "G%s (%s)"  (this.ExportPathBound withinSteps) (this.ExportProperty operand)
+            | Property.LtlBinaryUntil (withinSteps:(PathBound option),left:Property, right:Property) ->
+                sprintf "(%s) U%s (%s)" (this.ExportProperty left)  (this.ExportPathBound withinSteps) (this.ExportProperty right)
+            | Property.LtlBinaryWeakUntil (withinSteps:(PathBound option),left:Property, right:Property) ->
+                sprintf "(%s) W%s (%s)" (this.ExportProperty left) (this.ExportPathBound withinSteps) (this.ExportProperty right)
+            | Property.LtlBinaryRelease (withinSteps:(PathBound option),left:Property, right:Property) ->
+                sprintf "(%s) R%s (%s)" (this.ExportProperty left) (this.ExportPathBound withinSteps) (this.ExportProperty right)
             // Probability            
             | ProbabilityAchievability (bound:Bound, operand:Property) ->
                 sprintf "P%s [ %s ]" (this.ExportBound bound) (this.ExportProperty operand)
@@ -357,22 +374,22 @@ type internal ExportPrismAstToFile() =
             | Property.SteadyStateNumerical (query:Query, operand:Property) ->
                 sprintf "S%s [ %s ]" (this.ExportQuery query) (this.ExportProperty operand)
             //Reward
-            | RewardReachabilityAchievability  (bound:Bound, operand:Property) ->
-                sprintf "R%s [ F (%s) ]" (this.ExportBound bound) (this.ExportProperty operand)
-            | RewardReachabilityNumerical (query:Query, operand:Property) ->
-                sprintf "R%s [ F (%s) ]" (this.ExportQuery query) (this.ExportProperty operand)
-            | RewardCumulativeAchievability  (bound:Bound,untilTimeStep:Property) ->
-                sprintf "R%s [ C<=(%s) ]" (this.ExportBound bound) (this.ExportProperty untilTimeStep)
-            | RewardCumulativeNumerical (query:Query,untilTimeStep:Property) ->
-                sprintf "R%s [ C<=(%s) ]" (this.ExportQuery query) (this.ExportProperty untilTimeStep)
-            | RewardInstantaneousAchievability (bound:Bound,inTimeStep:Property) ->
-                sprintf "R%s [ I=(%s) ]" (this.ExportBound bound) (this.ExportProperty inTimeStep)
-            | RewardInstantaneousNumerical (query:Query,inTimeStep:Property) ->
-                sprintf "R%s [ I=(%s) ]" (this.ExportQuery query) (this.ExportProperty inTimeStep)
-            | RewardSteadyStateAchievability (bound:Bound) ->
-                sprintf "R%s [ S ]" (this.ExportBound bound)
-            | RewardSteadyStateNumerical (query:Query) ->
-                sprintf "R%s [ S ]" (this.ExportQuery query)
+            | RewardReachabilityAchievability  (rewardLabel:(Label option),bound:Bound, operand:Property) ->
+                sprintf "R%s%s [ F (%s) ]" (exportRewardLabel rewardLabel) (this.ExportBound bound) (this.ExportProperty operand)
+            | RewardReachabilityNumerical (rewardLabel:(Label option),query:Query, operand:Property) ->
+                sprintf "R%s%s [ F (%s) ]" (exportRewardLabel rewardLabel) (this.ExportQuery query) (this.ExportProperty operand)
+            | RewardCumulativeAchievability  (rewardLabel:(Label option),bound:Bound,untilTimeStep:Property) ->
+                sprintf "R%s%s [ C<=(%s) ]" (exportRewardLabel rewardLabel) (this.ExportBound bound) (this.ExportProperty untilTimeStep)
+            | RewardCumulativeNumerical (rewardLabel:(Label option),query:Query,untilTimeStep:Property) ->
+                sprintf "R%s%s [ C<=(%s) ]" (exportRewardLabel rewardLabel) (this.ExportQuery query) (this.ExportProperty untilTimeStep)
+            | RewardInstantaneousAchievability (rewardLabel:(Label option),bound:Bound,inTimeStep:Property) ->
+                sprintf "R%s%s [ I=(%s) ]" (exportRewardLabel rewardLabel) (this.ExportBound bound) (this.ExportProperty inTimeStep)
+            | RewardInstantaneousNumerical (rewardLabel:(Label option),query:Query,inTimeStep:Property) ->
+                sprintf "R%s%s [ I=(%s) ]" (exportRewardLabel rewardLabel) (this.ExportQuery query) (this.ExportProperty inTimeStep)
+            | RewardSteadyStateAchievability (rewardLabel:(Label option),bound:Bound) ->
+                sprintf "R%s%s [ S ]" (exportRewardLabel rewardLabel) (this.ExportBound bound)
+            | RewardSteadyStateNumerical (rewardLabel:(Label option),query:Query) ->
+                sprintf "R%s%s [ S ]" (exportRewardLabel rewardLabel) (this.ExportQuery query)
             //CTL
             | Property.ForAllPathsGlobally (operand:Property) ->
                 sprintf "A [ G (%s)]" (this.ExportProperty operand)

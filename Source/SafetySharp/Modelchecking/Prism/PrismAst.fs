@@ -167,19 +167,6 @@ type internal Command = {
     QuantifiedUpdateOfVariables : QuantifiedUpdateOfVariables
 }
 
-
-(*type internal Choice =
-    | NondeterministicChoice // MDP
-    | ProbabilisticChoice // DTMC
-    | RaceCondition // CTMC
-*)
-
-// CTMC
-(*type internal ProbabilityOrRate =
-    | Probability //MDP, DTMC
-    | Rate //CTMC
-    *)
-
 type internal Module =
     | ModuleRenaming of Name:Identifier * CloneOf:Identifier * Renamings:((Identifier*Identifier) list) // Chapter Module Renaming
     | Module of Name:Identifier * Variables:(VariableDeclaration list) * Commands:(Command list)
@@ -245,12 +232,24 @@ type internal PrismModel = {
 //  * PCTL*   for DTMCs and MDPs
 //  (* CTL   for non-probabilistic verification)
 
+
+[<RequireQualifiedAccess>]
 type internal Bound =
     | LessEqual of Value:Constant    // <=
     | LessThan of Value:Constant     // <
     | Equal of Value:Constant        // =
     | GreaterEqual of Value:Constant // >=
     | GreaterThan of Value:Constant  // >          
+
+
+[<RequireQualifiedAccess>]
+type internal PathBound =
+    // see chapter "Bounded variants of path properties"
+    | LessEqual of To:Constant
+    | LessThan of To:Constant
+    | Interval of From:Constant * To:Constant // example G[5.5,6.5], caution: Only in CTMCs
+    | GreaterEqual of From:Constant // >= , caution: Only in CTMCs
+    | GreaterThan of From:Constant  // > , caution: Only in CTMCs   
 
 type internal Query =
     | Deterministic
@@ -295,11 +294,12 @@ type internal Property =
     | FunctionMultiPareto of SearchBestValueFor1:Property * SearchBestValueFor2:Property //Multi-Objective Property "Pareto": Double*Double->Void
     // LTL-Formula
     | LtlUnaryNext of Operand:Property
-    | LtlUnaryEventually of Operand:Property // Finally
-    | LtlUnaryAlways of Operand:Property // Globally
-    | LtlBinaryUntil of Left:Property * Right:Property
-    | LtlBinaryWeakUntil of Left:Property * Right:Property
-    | LtlBinaryRelease of Left:Property * Right:Property
+    | LtlUnaryInTimeInstant of TimeInstant:Property * Operand:Property// Translates to "F=Timeinstant" e.g. "F=10 x>0"
+    | LtlUnaryEventually of WithinSteps:(PathBound option) * Operand:Property// Finally
+    | LtlUnaryAlways of WithinSteps:(PathBound option) * Operand:Property// Globally
+    | LtlBinaryUntil of WithinSteps:(PathBound option) * Left:Property * Right:Property
+    | LtlBinaryWeakUntil of WithinSteps:(PathBound option) * Left:Property * Right:Property
+    | LtlBinaryRelease of WithinSteps:(PathBound option) * Left:Property * Right:Property
     // Probability
     | ProbabilityAchievability of Bound:Bound * Operand:Property
     | ProbabilityNumerical of Query:Query * Operand:Property
@@ -307,15 +307,14 @@ type internal Property =
     | SteadyStateAchievability of Bound:Bound * Operand:Property
     | SteadyStateNumerical of Query:Query * Operand:Property
     //Reward
-    // TODO: Label
-    | RewardReachabilityAchievability of Bound:Bound * Operand:Property
-    | RewardReachabilityNumerical of Query:Query * Operand:Property
-    | RewardCumulativeAchievability of Bound:Bound * UntilTimeStep:Property //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
-    | RewardCumulativeNumerical of Query:Query * UntilTimeStep:Property  //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
-    | RewardInstantaneousAchievability of Bound:Bound * InTimeStep:Property  //InTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
-    | RewardInstantaneousNumerical of Query:Query * InTimeStep:Property  //InTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
-    | RewardSteadyStateAchievability of Bound:Bound
-    | RewardSteadyStateNumerical of Query:Query
+    | RewardReachabilityAchievability of RewardLabel:(Label option) * Bound:Bound * Operand:Property
+    | RewardReachabilityNumerical of RewardLabel:(Label option) * Query:Query * Operand:Property
+    | RewardCumulativeAchievability of RewardLabel:(Label option) * Bound:Bound * UntilTimeStep:Property //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardCumulativeNumerical of RewardLabel:(Label option) * Query:Query * UntilTimeStep:Property  //UntilTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardInstantaneousAchievability of RewardLabel:(Label option) * Bound:Bound * InTimeStep:Property  //InTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardInstantaneousNumerical of RewardLabel:(Label option) * Query:Query * InTimeStep:Property  //InTimeStep must evaluate to Integer (DTMC/MDP) or Double (CTMC)
+    | RewardSteadyStateAchievability of RewardLabel:(Label option) * Bound:Bound
+    | RewardSteadyStateNumerical of RewardLabel:(Label option) * Query:Query
     //CTL
     | ForAllPathsGlobally of Operand:Property
     | ForAllPathsFinally of Operand:Property
