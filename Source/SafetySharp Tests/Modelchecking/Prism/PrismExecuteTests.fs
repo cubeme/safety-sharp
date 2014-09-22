@@ -50,7 +50,27 @@ module PrismExecuteTestsBasic =
         let exampleDir = System.IO.Path.Combine(prismDir,"examples","dice")
         let exampleModel = System.IO.Path.Combine(exampleDir,"dice.pm")
         let exampleProperties = System.IO.Path.Combine(exampleDir,"dice.pctl")
-        let commandLine = sprintf "%s %s" exampleModel exampleProperties
-        let executePrism = ExecutePrism("")
+        let exampleFlags = "-const x=1:2:5" //from 1 to 5 with step 2 => 1,3,5 will be checked
+        let maximalVerbosity = "-v -extraddinfo -extrareachinfo"
+        let commandLine = sprintf "%s %s %s %s" exampleModel exampleProperties maximalVerbosity exampleFlags 
+        let executePrism = ExecutePrism(commandLine)
         let result = executePrism.GetNextResult()
         ()
+
+        
+    [<Test>]
+    let ``Prism missing constant`` () =
+        let prismDir = ExecutePrism.FindPrismDir ()
+        let exampleDir = System.IO.Path.Combine(prismDir,"examples","dice")
+        let exampleModel = System.IO.Path.Combine(exampleDir,"dice.pm")
+        let exampleProperties = System.IO.Path.Combine(exampleDir,"dice.pctl")
+        let maximalVerbosity = "-v -extraddinfo -extrareachinfo"
+        let commandLine = sprintf "%s %s %s" exampleModel exampleProperties maximalVerbosity
+        let executePrism = ExecutePrism(commandLine)
+        let result = executePrism.GetNextResult()
+        ()
+
+
+    // TODO: Catch errors like "Error: Undefined constant "x" must be defined."
+    // Command line arguments in "prism/PrismCL.java/parseArguments"
+    // -const a=1,b=5.6,c=true

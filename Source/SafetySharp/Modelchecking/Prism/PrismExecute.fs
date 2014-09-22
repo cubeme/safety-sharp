@@ -26,11 +26,10 @@ open SafetySharp.Internal.Utilities
 
 type internal ExecutePrism =
     val private arguments : string
+    // good to know: Prism only prints to stdout, even if errors occur. So only buffer for stdout necessary
     val stdoutOutputBuffer : System.Text.StringBuilder
-    val stderrOutputBuffer : System.Text.StringBuilder
     
     val mutable processOutputReader : System.Threading.Tasks.Task
-    val mutable processErrorReader : System.Threading.Tasks.Task
     val mutable processWaiter : System.Threading.Tasks.Task
 
     val proc : System.Diagnostics.Process
@@ -39,9 +38,7 @@ type internal ExecutePrism =
         {
             arguments = arguments;
             stdoutOutputBuffer = new System.Text.StringBuilder ();
-            stderrOutputBuffer = new System.Text.StringBuilder ();
             processOutputReader = null;
-            processErrorReader = null;
             processWaiter = null;
             proc = new System.Diagnostics.Process()
         }
@@ -139,12 +136,11 @@ type internal ExecutePrism =
         this.proc.StartInfo.CreateNoWindow <-  true
         this.proc.StartInfo.UseShellExecute <-  false
         this.proc.StartInfo.RedirectStandardOutput <-  true
-        this.proc.StartInfo.RedirectStandardError <-  true
+        this.proc.StartInfo.RedirectStandardError <-  false
         this.proc.StartInfo.RedirectStandardInput <-  true
         this.proc.Start() |> ignore
         this.proc.StandardInput.AutoFlush <- true
         this.processOutputReader <- this.TaskReadStdout ()
-        this.processErrorReader <- this.TaskReadStderr ()
         this.processWaiter <- this.TaskWaitForEnd (0)
         ()
         
@@ -158,29 +154,20 @@ type internal ExecutePrism =
             | _ -> false
 
     member this.IsPrismRunning () =
-        let processes = [this.processOutputReader;this.processErrorReader;this.processWaiter]
+        let processes = [this.processOutputReader;this.processWaiter]
         processes |> List.forall (fun elem -> elem.Status = System.Threading.Tasks.TaskStatus.Running)
     
     
     member this.WaitUntilPrismTerminates () =
-        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processErrorReader,this.processWaiter)
+        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processWaiter)
         this.proc.ExitCode
 
     member this.GetNextResult () =
         // TODO: Improve and also output partial results
-        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processErrorReader,this.processWaiter)
+        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processWaiter)
         let stdout = this.stdoutOutputBuffer.ToString()
-        let stderr = this.stderrOutputBuffer.ToString()
-        sprintf "stdout:\n%s\n==================\nstderr:\n%s\n" stdout stderr
-
-    member private this.TaskReadStderr () : System.Threading.Tasks.Task =
-        System.Threading.Tasks.Task.Factory.StartNew(
-            fun () -> 
-                while this.proc.StandardError.EndOfStream <> true  do
-                    let newLine = this.proc.StandardError.ReadLine()
-                    this.stderrOutputBuffer.AppendLine newLine |> ignore
-        )
-                
+        stdout
+                        
     member private this.TaskReadStdout () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
