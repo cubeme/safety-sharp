@@ -34,13 +34,16 @@ type internal ExecutePrism =
 
     val proc : System.Diagnostics.Process
 
+    val completedCommands : System.Collections.Concurrent.ConcurrentQueue<System.Threading.AutoResetEvent * (string ref)>
+
     new (arguments : string) as this =
         {
             arguments = arguments;
             stdoutOutputBuffer = new System.Text.StringBuilder ();
             processOutputReader = null;
             processWaiter = null;
-            proc = new System.Diagnostics.Process()
+            proc = new System.Diagnostics.Process();
+            completedCommands = new System.Collections.Concurrent.ConcurrentQueue<System.Threading.AutoResetEvent * (string ref)>()
         }
         then
             this.ExecutePrismWithArgument()
