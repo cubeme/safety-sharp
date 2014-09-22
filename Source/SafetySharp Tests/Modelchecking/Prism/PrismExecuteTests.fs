@@ -30,7 +30,6 @@ open SafetySharp.Internal.Utilities
 open SafetySharp.Internal.Modelchecking
 open SafetySharp.Internal.Modelchecking.Prism
 
-open SafetySharp.Tests.Modelchecking.NuXmv.Models
 
 
 [<TestFixture>]
@@ -44,3 +43,14 @@ module PrismExecuteTestsBasic =
     [<Test>]
     let ``Prism is runable and shows help`` () =
         ExecutePrism.IsPrismRunable() =? true
+
+    [<Test>]
+    let ``Prism executes the dice-test`` () =
+        let prismDir = ExecutePrism.FindPrismDir ()
+        let exampleDir = System.IO.Path.Combine(prismDir,"examples","dice")
+        let exampleModel = System.IO.Path.Combine(exampleDir,"dice.pm")
+        let exampleProperties = System.IO.Path.Combine(exampleDir,"dice.pctl")
+        let commandLine = sprintf "%s %s" exampleModel exampleProperties
+        let executePrism = ExecutePrism("")
+        let result = executePrism.GetNextResult()
+        ()

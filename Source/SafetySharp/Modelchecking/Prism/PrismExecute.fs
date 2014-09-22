@@ -58,18 +58,15 @@ type internal ExecutePrism =
             failwith "Java not found"
         javaCandidate
 
-
-    static member FindPrismAndAddToPath (): string =
-        // TODO:
-        //   - check for correct java (minimal version and vendor)
-        //   - for windows and for linux and mac???
+    static member FindPrismDir () : string =
+        //TODO: What to do on Linux?!?
+        //      Gets executed several times. Calculate in constructor and remove the static?!?
+        //      Or is it better to define stuff like this in the GUI and create a PATH-Manager class and call
+        //      here just something like 'getSafetySharpEnvironmentVariable("PRISM")' or both (automatic guess
+        //      for command-line and custom in GUI)?!?
         let tryCandidate (filename:string) : bool =
             System.IO.File.Exists filename
-        
-        let javaExe = ExecutePrism.FindJava ()
 
-        let javaMachineCode = FileSystem.GetDllMachineType(javaExe)
-                
         let prismCandidatesManual = [
             "..\\..\\..\\..\\Dependencies\\prism\\bin\\prism.bat";
         ]
@@ -93,22 +90,40 @@ type internal ExecutePrism =
         let prismDir = 
             let directoryOfPrismBat = System.IO.Directory.GetParent fileNameToPrismBat
             directoryOfPrismBat.Parent.FullName
+        prismDir
+    
+    
+    static member FindPrismAndAddToPath (): string =
+        // TODO:
+        //   - check for correct java (minimal version and vendor)
+        ExecutePrism.EnsurePrismArchitectureSameAsJavaArchitecture ()
+        ExecutePrism.AddPrismLibToPath()
+        let prismDir = ExecutePrism.FindPrismDir ()
+        prismDir
+       
         
+    static member AddPrismLibToPath () =
+        let prismDir = ExecutePrism.FindPrismDir ()
         let prismLibDir = System.IO.Path.Combine(prismDir,"lib")
-        
-        if List.exists (fun elem -> elem = prismLibDir) prismCandidatesInPath then
+        let dirsInPath = System.Environment.GetEnvironmentVariable("PATH").Split(';')
+        if Array.exists (fun elem -> elem = prismLibDir) dirsInPath then
             ()
         else
             // Add libdir to PATH
             // http://stackoverflow.com/questions/2998343/adding-a-directory-temporarily-to-windows-7s-dll-search-paths
             System.Environment.SetEnvironmentVariable("PATH",System.Environment.GetEnvironmentVariable("PATH")+";"+prismLibDir);
+        ()
 
+    static member EnsurePrismArchitectureSameAsJavaArchitecture () =
+        let javaExe = ExecutePrism.FindJava ()
+        let prismDir = ExecutePrism.FindPrismDir ()
+        let javaMachineCode = FileSystem.GetDllMachineType(javaExe)
         let fileNameToPrismDll = System.IO.Path.Combine(prismDir,"lib","prism.dll")
-        let prismMachineCode = FileSystem.GetDllMachineType(fileNameToPrismDll)
+        let prismMachineCode = FileSystem.GetDllMachineType(fileNameToPrismDll)        
         if javaMachineCode <> prismMachineCode then
            let failString = sprintf "java VM and prism version are not compiled for the same architecture. Please replace prism by a version compiled for java version of %s (%s)" javaExe (javaMachineCode.ToString())
            failwith failString
-        prismDir
+           
             
     member private this.ExecutePrismWithArgument ()  =
         let argumentForJava (arguments:string) : string =
@@ -143,7 +158,8 @@ type internal ExecutePrism =
             | _ -> false
 
     member this.IsPrismRunning () =
-        false
+        let processes = [this.processOutputReader;this.processErrorReader;this.processWaiter]
+        processes |> List.forall (fun elem -> elem.Status = System.Threading.Tasks.TaskStatus.Running)
     
     
     member this.WaitUntilPrismTerminates () =
@@ -151,7 +167,11 @@ type internal ExecutePrism =
         this.proc.ExitCode
 
     member this.GetNextResult () =
-        ()
+        // TODO: Improve and also output partial results
+        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processErrorReader,this.processWaiter)
+        let stdout = this.stdoutOutputBuffer.ToString()
+        let stderr = this.stderrOutputBuffer.ToString()
+        sprintf "stdout:\n%s\n==================\nstderr:\n%s\n" stdout stderr
 
     member private this.TaskReadStderr () : System.Threading.Tasks.Task =
         System.Threading.Tasks.Task.Factory.StartNew(
