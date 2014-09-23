@@ -149,17 +149,24 @@ type internal ExecuteNuXmv() =
                 
     member this.TaskReadStdout () : System.Threading.Tasks.Task =
         let FinishCommandAndReleaseBlocker () =
-            let newFinishedCommand = {
-                NuXmvCommandResultBasic.Command = activeCommand.Value;
-                NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
-                NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
-                NuXmvCommandResultBasic.Failure = None; //Assume no failure occurred. If a failure occurred, ExecuteCommand detects it and corrects the result
-            }
-            lastCommandResult <-  Some(newFinishedCommand)
-            activeCommand <- None
-            stdoutOutputBuffer.Clear() |> ignore
-            stderrOutputBuffer.Clear() |> ignore
-            stdoutAndCommandFinishedBlocker.Set() |> ignore
+            if activeCommand.IsSome then 
+                let newFinishedCommand = {
+                    NuXmvCommandResultBasic.Command = activeCommand.Value;
+                    NuXmvCommandResultBasic.Stdout = stdoutOutputBuffer.ToString();
+                    NuXmvCommandResultBasic.Stderr = stderrOutputBuffer.ToString();
+                    NuXmvCommandResultBasic.Failure = None; //Assume no failure occurred. If a failure occurred, ExecuteCommand detects it and corrects the result
+                }
+                lastCommandResult <-  Some(newFinishedCommand)
+                activeCommand <- None
+                stdoutOutputBuffer.Clear() |> ignore
+                stderrOutputBuffer.Clear() |> ignore
+                stdoutAndCommandFinishedBlocker.Set() |> ignore
+            else
+                // TODO: An exception is sometimes thrown here (System.NullReferenceException when Task is invoked)
+                // TODO: It seems there is a race condition, this should never occur. In debug-mode sometimes the exception is thrown.
+                //       Do further investigations
+                failwith "When this is executed, activeCommand should contain a value"
+                ()
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
                 let mutable needToRemovePromptFromCurrentLine = false //Before the first command is no prompt

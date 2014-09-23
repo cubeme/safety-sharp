@@ -75,11 +75,20 @@
     <Compile Include="Modelchecking\Promela\PromelaTransformMetamodelTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismAstToFileTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismExecuteTests.fs" />
+    <Compile Include="Modelchecking\Prism\PrismInterpretResultTests.fs" />
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
+    <Reference Include="FParsec">
+      <HintPath>..\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FParsecCS">
+      <HintPath>..\packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
