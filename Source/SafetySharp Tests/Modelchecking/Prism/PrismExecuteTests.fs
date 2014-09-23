@@ -51,8 +51,8 @@ module PrismExecuteTestsBasic =
         let exampleModel = System.IO.Path.Combine(exampleDir,"dice.pm")
         let exampleProperties = System.IO.Path.Combine(exampleDir,"dice.pctl")
         let exampleFlags = "-const x=1:2:5" //from 1 to 5 with step 2 => 1,3,5 will be checked
-        let maximalVerbosity = "-v -extraddinfo -extrareachinfo"
-        let commandLine = sprintf "%s %s %s %s" exampleModel exampleProperties maximalVerbosity exampleFlags 
+        let maximalVerbosityAndOutput = "-v -extraddinfo -extrareachinfo  -exportmodel stdout.all"
+        let commandLine = sprintf "%s %s %s %s" exampleModel exampleProperties maximalVerbosityAndOutput exampleFlags 
         let executePrism = ExecutePrism(commandLine)
         let result = executePrism.GetNextResult()
         ()
@@ -64,8 +64,8 @@ module PrismExecuteTestsBasic =
         let exampleDir = System.IO.Path.Combine(prismDir,"examples","dice")
         let exampleModel = System.IO.Path.Combine(exampleDir,"dice.pm")
         let exampleProperties = System.IO.Path.Combine(exampleDir,"dice.pctl")
-        let maximalVerbosity = "-v -extraddinfo -extrareachinfo"
-        let commandLine = sprintf "%s %s %s" exampleModel exampleProperties maximalVerbosity
+        let maximalVerbosityAndOutput = "-v -extraddinfo -extrareachinfo"
+        let commandLine = sprintf "%s %s %s" exampleModel exampleProperties maximalVerbosityAndOutput
         let executePrism = ExecutePrism(commandLine)
         let result = executePrism.GetNextResult()
         ()

@@ -34,7 +34,7 @@ type internal ExecutePrism =
 
     val proc : System.Diagnostics.Process
 
-    val completedCommands : System.Collections.Concurrent.ConcurrentQueue<System.Threading.AutoResetEvent * (string ref)>
+    val completeResults : System.Collections.Concurrent.BlockingCollection<string*bool> //(string contains the result. bool tells, if it was the last element
 
     new (arguments : string) as this =
         {
@@ -43,7 +43,7 @@ type internal ExecutePrism =
             processOutputReader = null;
             processWaiter = null;
             proc = new System.Diagnostics.Process();
-            completedCommands = new System.Collections.Concurrent.ConcurrentQueue<System.Threading.AutoResetEvent * (string ref)>()
+            completeResults = new System.Collections.Concurrent.BlockingCollection<string*bool>(); //by default blockingcollection uses a fifo-queue.
         }
         then
             this.ExecutePrismWithArgument()
@@ -142,7 +142,7 @@ type internal ExecutePrism =
         this.proc.StartInfo.RedirectStandardError <-  false
         this.proc.StartInfo.RedirectStandardInput <-  true
         this.proc.Start() |> ignore
-        this.proc.StandardInput.AutoFlush <- true
+        this.proc.StandardInput.AutoFlush <- true        
         this.processOutputReader <- this.TaskReadStdout ()
         this.processWaiter <- this.TaskWaitForEnd (0)
         ()
@@ -165,18 +165,37 @@ type internal ExecutePrism =
         System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processWaiter)
         this.proc.ExitCode
 
-    member this.GetNextResult () =
-        // TODO: Improve and also output partial results
-        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processWaiter)
-        let stdout = this.stdoutOutputBuffer.ToString()
-        stdout
+    member this.GetNextResult () : string option =
+        // TODO:
+        //   - No concurrent access from different threads
+        // Note if you change this function:
+        //   - Changes might enable harmful sequences, which may lead to an inifinite blocking of GetNextResult() (race condition).
+        //     Suppose GetNextResult gets called two times, but TaskReadStdout only adds one final element to an empty queue.
+        //     Assure that the guard .IsCompleted() returns "true" the second time. This prevents the function to wait infinitely
+        //     at the point ".Take()".
+        if this.completeResults.IsCompleted then
+            None
+        else
+            let (nextResult,wasLastElement) = this.completeResults.Take() //Blocks until new element arrives
+            if wasLastElement then
+                this.completeResults.CompleteAdding() //Do not allow adding. If 
+            Some(nextResult)
                         
     member private this.TaskReadStdout () : System.Threading.Tasks.Task =
+        let separator = "---------------------------------------------------------------------" // see file prism/PrismLog.java/printSeparator()
         System.Threading.Tasks.Task.Factory.StartNew(
             fun () -> 
                 while this.proc.StandardOutput.EndOfStream <> true  do
                     let newLine = this.proc.StandardOutput.ReadLine()
-                    this.stdoutOutputBuffer.AppendLine newLine |> ignore
+                    if newLine = separator then
+                        let newEntry = this.stdoutOutputBuffer.ToString()
+                        this.stdoutOutputBuffer.Clear() |> ignore
+                        this.completeResults.Add((newEntry,false))
+                    else
+                        this.stdoutOutputBuffer.AppendLine newLine |> ignore
+                let lastEntry = this.stdoutOutputBuffer.ToString()
+                this.stdoutOutputBuffer.Clear() |> ignore
+                this.completeResults.Add((lastEntry,true))
         )
 
     member private this.TaskWaitForEnd (timeInMs:int) : System.Threading.Tasks.Task<bool> =
