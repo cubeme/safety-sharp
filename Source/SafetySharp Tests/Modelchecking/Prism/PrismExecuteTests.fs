@@ -54,7 +54,7 @@ module PrismExecuteTestsBasic =
         let maximalVerbosityAndOutput = "-v -extraddinfo -extrareachinfo  -exportmodel stdout.all"
         let commandLine = sprintf "%s %s %s %s" exampleModel exampleProperties maximalVerbosityAndOutput exampleFlags 
         let executePrism = ExecutePrism(commandLine)
-        let result = executePrism.GetNextResult()
+        let results = executePrism.GetAllResults()
         ()
 
         
@@ -64,13 +64,13 @@ module PrismExecuteTestsBasic =
         let exampleDir = System.IO.Path.Combine(prismDir,"examples","dice")
         let exampleModel = System.IO.Path.Combine(exampleDir,"dice.pm")
         let exampleProperties = System.IO.Path.Combine(exampleDir,"dice.pctl")
-        let maximalVerbosityAndOutput = "-v -extraddinfo -extrareachinfo"
+        let maximalVerbosityAndOutput = "-v -extraddinfo -extrareachinfo  -exportmodel stdout.all"
         let commandLine = sprintf "%s %s %s" exampleModel exampleProperties maximalVerbosityAndOutput
         let executePrism = ExecutePrism(commandLine)
-        let result = executePrism.GetNextResult()
+        let results = executePrism.GetAllResults()
         ()
-
+        
 
     // TODO: Catch errors like "Error: Undefined constant "x" must be defined."
-    // Command line arguments in "prism/PrismCL.java/parseArguments"
-    // -const a=1,b=5.6,c=true
+    // TODO: Command line arguments in "prism/PrismCL.java/parseArguments" -const a=1,b=5.6,c=true
+    

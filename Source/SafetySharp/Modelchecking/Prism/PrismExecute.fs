@@ -180,6 +180,14 @@ type internal ExecutePrism =
             if wasLastElement then
                 this.completeResults.CompleteAdding() //Do not allow adding. If 
             Some(nextResult)
+
+    member this.GetAllResults () : string list =
+        let rec collectAllResults acc =
+            match this.GetNextResult () with
+                | Some(entry) -> collectAllResults (entry::acc)
+                | None -> acc
+        collectAllResults [] |> List.rev
+        
                         
     member private this.TaskReadStdout () : System.Threading.Tasks.Task =
         let separator = "---------------------------------------------------------------------" // see file prism/PrismLog.java/printSeparator()
