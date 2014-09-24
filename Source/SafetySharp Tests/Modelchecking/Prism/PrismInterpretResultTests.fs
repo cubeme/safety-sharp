@@ -77,6 +77,7 @@ Result: true (property satisfied in the initial state)
     [<Test>]
     let ``Regex returns correct result`` () =
         let result = PrismInterpretResult.parseVerificationLog verificationResult
-        result =? "P>0.1 [ F s=7&d=x ]"
+        result.Property =? "P>0.1 [ F s=7&d=x ]"
+        result.Result =? PrismVerificationResult.True
         ()
         
