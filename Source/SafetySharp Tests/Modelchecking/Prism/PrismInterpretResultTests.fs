@@ -79,5 +79,8 @@ Result: true (property satisfied in the initial state)
         let result = PrismInterpretResult.parseVerificationLog verificationResult
         result.Property =? "P>0.1 [ F s=7&d=x ]"
         result.Result =? PrismVerificationResult.True
+        let (constantx,constantxvalue) = result.Constants.Head
+        constantx =? "x"
+        constantxvalue =? "1"
         ()
         

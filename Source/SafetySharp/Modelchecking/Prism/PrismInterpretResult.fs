@@ -45,7 +45,7 @@ type PrismVerificationResult =
 
 type PrismVerificationLog = {
     Property : string;
-    Constants : string;
+    Constants : (string*string) list;
     Prob0Time : string; //Prob0 calculates states with a fast algorithm, which do _not_ fulfill the property for sure
     Prob0States : int; //Number of States, which do _not_ fulfill the property for sure
     Prob1Time : string; //Prob0 calculates states with a fast algorithm, which _do_ fulfill the property for sure
@@ -101,14 +101,25 @@ type PrismInterpretResult () =
         let constants =
             let regexMatchOfConstant = regexMatch.Groups.Item "constants"
             if regexMatchOfConstant.Success then
-                regexMatchOfConstant.Value
+                let values = regexMatchOfConstant.Value
+                let assignments = values.Split(',')
+                assignments |> Array.toList
+                            |> List.map (fun elem -> let splitted = elem.Split('=')
+                                                     (splitted.[0],splitted.[1])
+                                         )
             else
-                failwith "NotImplementedYet"
+                []
         let prob0 = (regexMatch.Groups.Item "prob0").Value
         let prob1 = (regexMatch.Groups.Item "prob1").Value
-        let yes = (regexMatch.Groups.Item "yes").Value
-        let no = (regexMatch.Groups.Item "no").Value
-        let maybe = (regexMatch.Groups.Item "maybe").Value
+        let yes =
+            let value = (regexMatch.Groups.Item "yes").Value
+            Int32.Parse value
+        let no =
+            let value = (regexMatch.Groups.Item "no").Value
+            Int32.Parse value
+        let maybe =
+            let value = (regexMatch.Groups.Item "maybe").Value
+            Int32.Parse value
         let engine = (regexMatch.Groups.Item "engine").Value
         let enginestats = (regexMatch.Groups.Item "enginestats").Value
         let iterations = (regexMatch.Groups.Item "iterations").Value
@@ -126,11 +137,11 @@ type PrismInterpretResult () =
         {
             PrismVerificationLog.Property = formula;
             PrismVerificationLog.Constants = constants;
-            PrismVerificationLog.Prob0Time = ""; //TODO
-            PrismVerificationLog.Prob0States = 0; //TODO
-            PrismVerificationLog.Prob1Time = ""; //TODO
-            PrismVerificationLog.Prob1States = 0; //TODO
-            PrismVerificationLog.MaybeStates = 0; //TODO
+            PrismVerificationLog.Prob0Time = prob0;
+            PrismVerificationLog.Prob0States = no;
+            PrismVerificationLog.Prob1Time = prob1;
+            PrismVerificationLog.Prob1States = yes;
+            PrismVerificationLog.MaybeStates = maybe;
             PrismVerificationLog.Result = result;
         }
     
