@@ -75,13 +75,13 @@ type PrismInterpretResult () =
             + """Computing remaining probabilities[.][.][.]\k<nl>"""
             + """Engine: (?<engine>.*)\k<nl>"""
             + """\k<nl>"""
-            + """(?<enginestats>(.+\k<nl>)+)""" //Collect all lines, which at least contain one character. Stops when line starts with a newline.
+            + """(?<enginestats>(?>.+\k<nl>)+)""" //Collect all lines, which at least contain one character. Stops when line starts with a newline. To prevent an explosion (see http://www.rexegg.com/regex-explosive-quantifiers.html) we use an atomic group ?>.
             + """\k<nl>"""
             + """Starting iterations[.][.][.]\k<nl>"""
             + """\k<nl>"""
             + """(?<iterations>.*)\k<nl>"""
             + """\k<nl>"""
-            + """(?<probabilities>(.+\k<nl>)+)""" //Collect all lines, which at least contain one character. Stops when line starts with a newline.
+            + """(?<probabilities>(?>.+\k<nl>)+)""" //Collect all lines, which at least contain one character. Stops when line starts with a newline. To prevent an explosion (see http://www.rexegg.com/regex-explosive-quantifiers.html) we use an atomic group ?>.
             + """\k<nl>"""
             + """Number of states satisfying .*: (?<satisfyingStates>.*)\k<nl>"""
             + """\k<nl>"""
