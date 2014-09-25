@@ -91,10 +91,22 @@ type PrismInterpretResult () =
             + """\k<nl>"""
             + """Result: (?<result>.*)\k<nl>"""
         //TODO: There might also be a pattern for other results. E.g. if there are no maybe-states
-        
-        
         new System.Text.RegularExpressions.Regex(pattern)
 
+        
+    // TODO: Parse
+    //  - P=?
+    //  - R=?
+    //  - R>x
+    //  - AG ...
+    //  - ...
+    //  - Output needs no checking
+    //  - "Degraded" Mode, which only parses part of the content (success or no success) if other regex fail
+    // TODO: Is there a witness or counterexample on command line?!? Formula "E [ F s= 7]" in dice in GUI offers to show a witness.
+
+
+
+    // only works for P>x []...
     static member parseVerificationLog (str:string) = //: PrismVerificationLog =
         let regexMatch = PrismInterpretResult.templateOfVerificationLog.Match(str)
         let formula = (regexMatch.Groups.Item "formula").Value
