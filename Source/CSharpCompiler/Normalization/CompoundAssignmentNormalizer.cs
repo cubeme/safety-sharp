@@ -35,7 +35,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	///     once. The fact that x is evaluated only once is important in regular C# code; for instance, consider <c>M()[0] += 1</c>,
 	///     where M is a function returning an integer array. If M() returns a different array for each invocation, the difference
 	///     between evaluating M() once or twice when processing the compound assignment might be observable. Within components of
-	///     SafetySharp models, however, we only ever allow assignments to fields, locals, and paramaters of primitive types, such
+	///     SafetySharp models, however, we only ever allow assignments to fields, locals, and parameters of primitive types, such
 	///     as int, bool, or decimal while arrays and structs are immutable and therefore cannot be assigned to at all. This
 	///     simplifies the normalization of compound assignments, as we don't have to ensure that the expression on the left hand
 	///     side of the assignment is evaluated only once.
