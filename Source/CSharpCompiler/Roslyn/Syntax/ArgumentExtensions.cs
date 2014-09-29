@@ -42,7 +42,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="argument">The argument the method symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve the method symbol.</param>
-		public static IMethodSymbol GetMethodSymbol(this ArgumentSyntax argument, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static IMethodSymbol GetMethodSymbol([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -62,7 +63,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </typeparam>
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
-		public static bool HasAttribute<T>(this ArgumentSyntax argument, SemanticModel semanticModel)
+		[Pure]
+		public static bool HasAttribute<T>([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel)
 			where T : Attribute
 		{
 			Requires.NotNull(argument, () => argument);
@@ -79,7 +81,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The expected type of <paramref name="argument." /></typeparam>
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
-		public static bool IsOfType<T>(this ArgumentSyntax argument, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsOfType<T>([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -97,7 +100,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
 		/// <param name="argumentType">The expected type of <paramref name="argument." /></param>
-		public static bool IsOfType(this ArgumentSyntax argument, SemanticModel semanticModel, ITypeSymbol argumentType)
+		[Pure]
+		public static bool IsOfType([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel,
+									[NotNull] ITypeSymbol argumentType)
 		{
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -112,7 +117,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="argument">The argument that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
-		public static bool IsBooleanExpression(this ArgumentSyntax argument, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsBooleanExpression([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -129,7 +135,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     that contains the <paramref name="argument" />.
 		/// </summary>
 		/// <param name="argument">The argument the method call expression should be returned for.</param>
-		public static ExpressionSyntax GetMethodCallExpression(this ArgumentSyntax argument)
+		[Pure, NotNull]
+		public static ExpressionSyntax GetMethodCallExpression([NotNull] this ArgumentSyntax argument)
 		{
 			Requires.NotNull(argument, () => argument);
 
@@ -153,7 +160,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     There might be an official Roslyn API one day that should be used to replace this method
 		///     (see also https://roslyn.codeplex.com/discussions/541303).
 		/// </remarks>
-		public static IParameterSymbol GetParameterSymbol(this ArgumentSyntax argument, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static IParameterSymbol GetParameterSymbol([NotNull] this ArgumentSyntax argument, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);

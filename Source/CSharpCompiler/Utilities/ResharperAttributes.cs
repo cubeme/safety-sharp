@@ -29,6 +29,25 @@ namespace SafetySharp.CSharpCompiler.Utilities
 	// =================================================================================================================
 
 	/// <summary>
+	///     Indicates that the value of the marked element could be <c>null</c> sometimes,
+	///     so a check for <c>null</c> is necessary before its usage.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Property |
+					AttributeTargets.Delegate | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+	public sealed class CanBeNullAttribute : Attribute
+	{
+	}
+
+	/// <summary>
+	///     Indicates that the value of the marked element cannot be <c>null</c>.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter | AttributeTargets.Property |
+					AttributeTargets.Delegate | AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+	public sealed class NotNullAttribute : Attribute
+	{
+	}
+
+	/// <summary>
 	///     Specifies how the symbol is used implicitly when marked with <see cref="MeansImplicitUseAttribute" /> or
 	///     <see cref="UsedImplicitlyAttribute" />.
 	/// </summary>
@@ -234,5 +253,33 @@ namespace SafetySharp.CSharpCompiler.Utilities
 	[AttributeUsage(AttributeTargets.Method, Inherited = true)]
 	public sealed class PureAttribute : Attribute
 	{
+	}
+
+	/// <summary>
+	///     Describes the contract of a method.
+	/// </summary>
+	/// <remarks>
+	///     Syntax:
+	///     FDT      ::= FDTRow [;FDTRow]*
+	///     FDTRow   ::= Input =&gt; Output | Output &lt;= Input
+	///     Input    ::= ParameterName: Value [, Input]*
+	///     Output   ::= [ParameterName: Value]* {halt|stop|void|nothing|Value}
+	///     Value    ::= true | false | null | notnull | canbenull
+	///     If a method has single input parameter, it's name can be omitted. Using <c>halt</c> (or <c>void</c>/<c>nothing</c>,
+	///     which are the same) for method output means that the methods doesn't return normally. The <c>canbenull</c> annotation
+	///     is only applicable for output parameters. You can use multiple attributes for each FDT row, or
+	///     use single attribute with rows separated by semicolon.
+	/// </remarks>
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+	public sealed class ContractAnnotationAttribute : Attribute
+	{
+		public ContractAnnotationAttribute(string contract, bool forceFullStates = false)
+		{
+			Contract = contract;
+			ForceFullStates = forceFullStates;
+		}
+
+		public string Contract { get; private set; }
+		public bool ForceFullStates { get; private set; }
 	}
 }

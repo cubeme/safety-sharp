@@ -40,7 +40,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The expected type of the declared symbol.</typeparam>
 		/// <param name="variableDeclarator">The variable declarator the declared symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the declared symbol.</param>
-		public static T GetDeclaredSymbol<T>(this VariableDeclaratorSyntax variableDeclarator, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static T GetDeclaredSymbol<T>([NotNull] this VariableDeclaratorSyntax variableDeclarator, [NotNull] SemanticModel semanticModel)
 			where T : class, ISymbol
 		{
 			Requires.NotNull(variableDeclarator, () => variableDeclarator);
@@ -51,7 +52,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 
 			var typedSymbol = symbol as T;
 			Requires.That(typedSymbol != null, "Expected a symbol of type '{0}'. However, the actual symbol type for syntax node '{1}' is '{2}'.",
-						  typeof(T).FullName, variableDeclarator, symbol.GetType().FullName);
+				typeof(T).FullName, variableDeclarator, symbol.GetType().FullName);
 
 			return typedSymbol;
 		}

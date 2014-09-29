@@ -35,7 +35,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// </summary>
 		/// <param name="logType">The type of the log entry.</param>
 		/// <param name="message">The non-empty message of the log entry.</param>
-		internal LogEntry(LogType logType, string message)
+		internal LogEntry(LogType logType, [NotNull] string message)
 			: this()
 		{
 			Requires.InRange(logType, () => logType);
@@ -54,6 +54,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <summary>
 		///     Gets the message of the log entry.
 		/// </summary>
+		[NotNull]
 		public string Message { get; private set; }
 
 		/// <summary>

@@ -57,7 +57,7 @@ namespace SafetySharp.CSharpCompiler
 		/// <param name="projectFile">The file of the C# project that should be compiled.</param>
 		/// <param name="configuration">The configuration the C# project should be compiled in.</param>
 		/// <param name="platform">The platform the C# project should be compiled for.</param>
-		public static int Compile(string projectFile, string configuration, string platform)
+		public static int Compile([NotNull] string projectFile, [NotNull] string configuration, [NotNull] string platform)
 		{
 			Requires.NotNullOrWhitespace(projectFile, () => projectFile);
 			Requires.NotNullOrWhitespace(configuration, () => configuration);
@@ -124,7 +124,7 @@ namespace SafetySharp.CSharpCompiler
 		/// </summary>
 		/// <param name="diagnostics">The diagnostics that should be reported.</param>
 		/// <param name="errorsOnly">Indicates whether error diagnostics should be reported exclusively.</param>
-		private static bool Report(IEnumerable<Diagnostic> diagnostics, bool errorsOnly)
+		private static bool Report([NotNull] IEnumerable<Diagnostic> diagnostics, bool errorsOnly)
 		{
 			var containsError = false;
 			foreach (var diagnostic in diagnostics)
@@ -143,7 +143,7 @@ namespace SafetySharp.CSharpCompiler
 		/// <param name="message">The message of the diagnostic that should be reported.</param>
 		/// <param name="formatArgs">The format arguments of the message.</param>
 		[StringFormatMethod("message")]
-		private static int ReportError(string identifier, string message, params object[] formatArgs)
+		private static int ReportError([NotNull] string identifier, [NotNull] string message, params object[] formatArgs)
 		{
 			identifier = CSharpAnalyzer.Prefix + identifier;
 			message = String.Format(message, formatArgs);
@@ -160,7 +160,7 @@ namespace SafetySharp.CSharpCompiler
 		/// <param name="compilation">The compilation containing the code that should be output.</param>
 		/// <param name="path">The target path the code should be output to.</param>
 		[Conditional("DEBUG")]
-		private static void OutputCode(Compilation compilation, string path)
+		private static void OutputCode([NotNull] Compilation compilation, [NotNull] string path)
 		{
 			Directory.CreateDirectory(path);
 			var index = 0;
@@ -180,7 +180,7 @@ namespace SafetySharp.CSharpCompiler
 		///     <c>false</c> when at least one error diagnostic has been reported.
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be diagnosed.</param>
-		private static bool Diagnose(Compilation compilation)
+		private static bool Diagnose([NotNull] Compilation compilation)
 		{
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
@@ -194,7 +194,8 @@ namespace SafetySharp.CSharpCompiler
 		/// </summary>
 		/// <typeparam name="T">The type of the normalizer that should be applied to <paramref name="compilation" />.</typeparam>
 		/// <param name="compilation">The compilation that should be normalized.</param>
-		private static Compilation ApplyNormalizer<T>(Compilation compilation)
+		[NotNull]
+		private static Compilation ApplyNormalizer<T>([NotNull] Compilation compilation)
 			where T : CSharpNormalizer, new()
 		{
 			return new T().Normalize(compilation);
@@ -204,7 +205,8 @@ namespace SafetySharp.CSharpCompiler
 		///     Applies the required normalizations to the simulation code.
 		/// </summary>
 		/// <param name="compilation">The compilation that should be normalized.</param>
-		private static Compilation NormalizeSimulationCode(Compilation compilation)
+		[NotNull]
+		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation)
 		{
 			compilation = ApplyNormalizer<ExpressionLifter>(compilation);
 			compilation = ApplyNormalizer<ComponentRequiredPortNormalizer>(compilation);
@@ -220,7 +222,7 @@ namespace SafetySharp.CSharpCompiler
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be emitted.</param>
 		/// <param name="assemblyPath">The target path of the assembly that should be emitted.</param>
-		private static int Emit(Compilation compilation, string assemblyPath)
+		private static int Emit([NotNull] Compilation compilation, [NotNull] string assemblyPath)
 		{
 			using (var ilStream = new FileStream(assemblyPath, FileMode.OpenOrCreate))
 			using (var pdbStream = new FileStream(Path.ChangeExtension(assemblyPath, ".pdb"), FileMode.OpenOrCreate))

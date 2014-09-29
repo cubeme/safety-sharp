@@ -59,7 +59,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     Normalizes the C# code contained in <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation that contains the code that should be normalized.</param>
-		public Compilation Normalize(Compilation compilation)
+		[NotNull, Pure]
+		public Compilation Normalize([NotNull] Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 
@@ -74,7 +75,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// </summary>
 		/// <param name="compilation">The compilation that contains the <paramref name="syntaxTree." /></param>
 		/// <param name="syntaxTree">The syntax tree that should be normalized.</param>
-		private SyntaxTree Normalize(Compilation compilation, SyntaxTree syntaxTree)
+		[NotNull, Pure]
+		private SyntaxTree Normalize([NotNull] Compilation compilation, [NotNull] SyntaxTree syntaxTree)
 		{
 			SemanticModel = compilation.GetSemanticModel(syntaxTree);
 
@@ -91,7 +93,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     Ensures that the <paramref name="classDeclaration" /> is only normalized when the normalizer has the appropriate
 		///     <see cref="NormalizationScope" />.
 		/// </summary>
-		public override sealed SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		[NotNull, Pure]
+		public override sealed SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationSyntax classDeclaration)
 		{
 			if (_scope == NormalizationScope.ComponentInterfaces)
 				return classDeclaration;
@@ -106,7 +109,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     Ensures that the <paramref name="interfaceDeclaration" /> is only normalized when the normalizer has the appropriate
 		///     <see cref="NormalizationScope" />.
 		/// </summary>
-		public override sealed SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax interfaceDeclaration)
+		[NotNull, Pure]
+		public override sealed SyntaxNode VisitInterfaceDeclaration([NotNull] InterfaceDeclarationSyntax interfaceDeclaration)
 		{
 			if (_scope == NormalizationScope.Components || _scope == NormalizationScope.ComponentStatements)
 				return interfaceDeclaration;
@@ -121,7 +125,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     Ensures that the <paramref name="constructorDeclaration" /> is only normalized when the normalizer has the appropriate
 		///     <see cref="NormalizationScope" />.
 		/// </summary>
-		public override sealed SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax constructorDeclaration)
+		[NotNull, Pure]
+		public override sealed SyntaxNode VisitConstructorDeclaration([NotNull] ConstructorDeclarationSyntax constructorDeclaration)
 		{
 			if (_scope == NormalizationScope.Global)
 				return base.VisitConstructorDeclaration(constructorDeclaration);

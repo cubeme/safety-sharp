@@ -36,7 +36,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="propertySymbol">The symbol of the property that should be checked.</param>
 		/// <param name="overriddenProperty">The symbol of the property that should be overridden.</param>
-		public static bool Overrides(this IPropertySymbol propertySymbol, IPropertySymbol overriddenProperty)
+		[Pure]
+		public static bool Overrides([NotNull] this IPropertySymbol propertySymbol, [NotNull] IPropertySymbol overriddenProperty)
 		{
 			Requires.NotNull(propertySymbol, () => propertySymbol);
 			Requires.NotNull(overriddenProperty, () => overriddenProperty);

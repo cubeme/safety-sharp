@@ -59,8 +59,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// </summary>
 		/// <param name="message">The non-empty message that should be logged.</param>
 		/// <param name="arguments">The arguments that should be used to format <paramref name="message" />.</param>
-		[DebuggerHidden, StringFormatMethod("message")]
-		public static void Die(string message, params object[] arguments)
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("=> halt")]
+		public static void Die([NotNull] string message, params object[] arguments)
 		{
 			Requires.NotNull(message, () => message);
 
@@ -75,7 +75,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="message">The non-empty message that should be logged.</param>
 		/// <param name="arguments">The arguments that should be used to format <paramref name="message" />.</param>
 		[StringFormatMethod("message")]
-		public static void Error(string message, params object[] arguments)
+		public static void Error([NotNull] string message, params object[] arguments)
 		{
 			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Error, String.Format(message, arguments));
@@ -87,7 +87,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="message">The non-empty message that should be logged.</param>
 		/// <param name="arguments">The arguments that should be used to format <paramref name="message" />.</param>
 		[StringFormatMethod("message")]
-		public static void Warn(string message, params object[] arguments)
+		public static void Warn([NotNull] string message, params object[] arguments)
 		{
 			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Warning, String.Format(message, arguments));
@@ -99,7 +99,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="message">The non-empty message that should be logged.</param>
 		/// <param name="arguments">The arguments that should be used to format <paramref name="message" />.</param>
 		[StringFormatMethod("message")]
-		public static void Info(string message, params object[] arguments)
+		public static void Info([NotNull] string message, params object[] arguments)
 		{
 			Requires.NotNull(message, () => message);
 			RaiseLoggedEvent(LogType.Info, String.Format(message, arguments));
@@ -110,7 +110,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// </summary>
 		/// <param name="logType">The <see cref="LogType" /> of the <see cref="LogEntry" />.</param>
 		/// <param name="message">The message that the <see cref="LogEntry" /> should contain.</param>
-		private static void RaiseLoggedEvent(LogType logType, string message)
+		private static void RaiseLoggedEvent(LogType logType, [NotNull] string message)
 		{
 			if (Logged != null)
 				Logged(new LogEntry(logType, message));

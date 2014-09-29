@@ -37,7 +37,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="symbol">The symbol that should be checked.</param>
 		/// <param name="attribute">The symbol of the attribute that <paramref name="symbol" /> should be marked with.</param>
-		public static bool HasAttribute(this ISymbol symbol, INamedTypeSymbol attribute)
+		[Pure]
+		public static bool HasAttribute([NotNull] this ISymbol symbol, [NotNull] INamedTypeSymbol attribute)
 		{
 			Requires.NotNull(symbol, () => symbol);
 			Requires.NotNull(attribute, () => attribute);
@@ -51,7 +52,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="symbol">The symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve the type symbol for <typeparamref name="T" />.</param>
-		public static bool HasAttribute<T>(this ISymbol symbol, Compilation compilation)
+		[Pure]
+		public static bool HasAttribute<T>([NotNull] this ISymbol symbol, [NotNull] Compilation compilation)
 			where T : Attribute
 		{
 			Requires.NotNull(symbol, () => symbol);
@@ -66,7 +68,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="symbol">The symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve the type symbol for <typeparamref name="T" />.</param>
-		public static bool HasAttribute<T>(this ISymbol symbol, SemanticModel semanticModel)
+		[Pure]
+		public static bool HasAttribute<T>([NotNull] this ISymbol symbol, [NotNull] SemanticModel semanticModel)
 			where T : Attribute
 		{
 			Requires.NotNull(symbol, () => symbol);

@@ -39,7 +39,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="baseType">The base type interface or class that <paramref name="typeSymbol" /> should be derived from.</param>
-		public static bool IsDerivedFrom(this ITypeSymbol typeSymbol, ITypeSymbol baseType)
+		[Pure]
+		public static bool IsDerivedFrom([NotNull] this ITypeSymbol typeSymbol, [NotNull] ITypeSymbol baseType)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(baseType, () => baseType);
@@ -68,7 +69,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// <param name="compilation">
 		///     The compilation that should be used to resolve the type symbol for the <see cref="Component" /> class.
 		/// </param>
-		public static bool IsDerivedFromComponent(this ITypeSymbol typeSymbol, Compilation compilation)
+		[Pure]
+		public static bool IsDerivedFromComponent([NotNull] this ITypeSymbol typeSymbol, [NotNull] Compilation compilation)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(compilation, () => compilation);
@@ -84,7 +86,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// <param name="compilation">
 		///     The compilation that should be used to resolve the type symbol for the <see cref="IComponent" /> interface.
 		/// </param>
-		public static bool ImplementsIComponent(this ITypeSymbol typeSymbol, Compilation compilation)
+		[Pure]
+		public static bool ImplementsIComponent([NotNull] this ITypeSymbol typeSymbol, [NotNull] Compilation compilation)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(compilation, () => compilation);
@@ -100,7 +103,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// <param name="semanticModel">
 		///     The semantic model that should be used to resolve the type symbol for the <see cref="Component" /> class.
 		/// </param>
-		public static bool IsDerivedFromComponent(this ITypeSymbol typeSymbol, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsDerivedFromComponent([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -116,7 +120,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// <param name="semanticModel">
 		///     The semantic model that should be used to resolve the type symbol for the <see cref="IComponent" /> interface.
 		/// </param>
-		public static bool ImplementsIComponent(this ITypeSymbol typeSymbol, SemanticModel semanticModel)
+		[Pure]
+		public static bool ImplementsIComponent([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);

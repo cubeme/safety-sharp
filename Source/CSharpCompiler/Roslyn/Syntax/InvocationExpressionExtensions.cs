@@ -40,7 +40,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="invocationExpression">The invocation expression that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbols.</param>
-		public static bool IsFormulaFunctionInvocation(this InvocationExpressionSyntax invocationExpression, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsFormulaFunctionInvocation([NotNull] this InvocationExpressionSyntax invocationExpression,
+													   [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(invocationExpression, () => invocationExpression);
 			Requires.NotNull(semanticModel, () => semanticModel);

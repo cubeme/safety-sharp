@@ -39,7 +39,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <typeparam name="T">The type the symbol should be returned for.</typeparam>
 		/// <param name="compilation">The compilation the type symbol should be returned for.</param>
-		public static INamedTypeSymbol GetTypeSymbol<T>(this Compilation compilation)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol<T>([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			return compilation.GetTypeByMetadataName(typeof(T).FullName);
@@ -51,7 +52,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="compilation">The compilation the type symbol should be returned for.</param>
 		/// <param name="type">The type the symbol should be returned for.</param>
-		public static INamedTypeSymbol GetTypeSymbol(this Compilation compilation, Type type)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol([NotNull] this Compilation compilation, [NotNull] Type type)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNull(type, () => type);
@@ -65,7 +67,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="compilation">The compilation the type symbol should be returned for.</param>
 		/// <param name="metadataName">The metadata name of the type the symbol should be returned for.</param>
-		public static INamedTypeSymbol GetTypeSymbol(this Compilation compilation, string metadataName)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol([NotNull] this Compilation compilation, [NotNull] string metadataName)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNullOrWhitespace(metadataName, () => metadataName);
@@ -78,7 +81,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the class symbol should be returned for.</param>
-		public static INamedTypeSymbol GetComponentClassSymbol(this Compilation compilation)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetComponentClassSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			return compilation.GetTypeSymbol<Component>();
@@ -89,7 +93,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the interface symbol should be returned for.</param>
-		public static INamedTypeSymbol GetComponentInterfaceSymbol(this Compilation compilation)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetComponentInterfaceSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			return compilation.GetTypeSymbol<IComponent>();
@@ -100,7 +105,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
-		public static IMethodSymbol GetUpdateMethodSymbol(this Compilation compilation)
+		[Pure, NotNull]
+		public static IMethodSymbol GetUpdateMethodSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 

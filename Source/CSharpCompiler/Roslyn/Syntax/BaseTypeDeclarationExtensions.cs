@@ -41,7 +41,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="typeDeclaration">The type declaration the declared symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the declared symbol.</param>
-		public static INamedTypeSymbol GetTypeSymbol(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol([NotNull] this BaseTypeDeclarationSyntax typeDeclaration,
+													 [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeDeclaration, () => typeDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -62,7 +64,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     The semantic model that should be used to resolve the type symbol of the <paramref name="typeDeclaration" />.
 		/// </param>
 		/// <param name="baseType">The base type interface or class that <paramref name="typeDeclaration" /> should be derived from.</param>
-		public static bool IsDerivedFrom(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel, ITypeSymbol baseType)
+		[Pure]
+		public static bool IsDerivedFrom([NotNull] this BaseTypeDeclarationSyntax typeDeclaration, [NotNull] SemanticModel semanticModel,
+										 [NotNull] ITypeSymbol baseType)
 		{
 			Requires.NotNull(typeDeclaration, () => typeDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -79,7 +83,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="semanticModel">
 		///     The semantic model that should be used to resolve the type symbol for the <see cref="Component" /> class.
 		/// </param>
-		public static bool IsDerivedFromComponent(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsDerivedFromComponent([NotNull] this BaseTypeDeclarationSyntax typeDeclaration, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeDeclaration, () => typeDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -95,7 +100,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="semanticModel">
 		///     The semantic model that should be used to resolve the type symbol for the <see cref="IComponent" /> interface.
 		/// </param>
-		public static bool ImplementsIComponent(this BaseTypeDeclarationSyntax typeDeclaration, SemanticModel semanticModel)
+		[Pure]
+		public static bool ImplementsIComponent([NotNull] this BaseTypeDeclarationSyntax typeDeclaration, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(typeDeclaration, () => typeDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);

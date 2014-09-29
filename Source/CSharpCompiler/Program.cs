@@ -168,7 +168,7 @@ namespace SafetySharp.CSharpCompiler
 		/// </summary>
 		/// <param name="color">The color that should be used to write <paramref name="message" /> to the console.</param>
 		/// <param name="message">The message that should be written to the console.</param>
-		private static void WriteToConsole(ConsoleColor color, string message)
+		private static void WriteToConsole(ConsoleColor color, [NotNull] string message)
 		{
 			var currentColor = Console.ForegroundColor;
 

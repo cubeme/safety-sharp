@@ -38,7 +38,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <typeparam name="T">The type the symbol should be returned for.</typeparam>
 		/// <param name="semanticModel">The semantic model the type symbol should be returned for.</param>
-		public static INamedTypeSymbol GetTypeSymbol<T>(this SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol<T>([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetTypeByMetadataName(typeof(T).FullName);
@@ -50,7 +51,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the type symbol should be returned for.</param>
 		/// <param name="type">The type the symbol should be returned for.</param>
-		public static INamedTypeSymbol GetTypeSymbol(this SemanticModel semanticModel, Type type)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol([NotNull] this SemanticModel semanticModel, [NotNull] Type type)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			Requires.NotNull(type, () => type);
@@ -64,7 +66,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the type symbol should be returned for.</param>
 		/// <param name="metadataName">The metadata name of the type the symbol should be returned for.</param>
-		public static INamedTypeSymbol GetTypeSymbol(this SemanticModel semanticModel, string metadataName)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetTypeSymbol([NotNull] this SemanticModel semanticModel, [NotNull] string metadataName)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			Requires.NotNullOrWhitespace(metadataName, () => metadataName);
@@ -77,7 +80,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the class symbol should be returned for.</param>
-		public static INamedTypeSymbol GetComponentClassSymbol(this SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetComponentClassSymbol([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetTypeSymbol<Component>();
@@ -88,7 +92,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the interface symbol should be returned for.</param>
-		public static INamedTypeSymbol GetComponentInterfaceSymbol(this SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetComponentInterfaceSymbol([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetTypeSymbol<IComponent>();
@@ -99,7 +104,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the attribute symbol should be returned for.</param>
-		public static IMethodSymbol GetUpdateMethodSymbol(this SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static IMethodSymbol GetUpdateMethodSymbol([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			return semanticModel.Compilation.GetUpdateMethodSymbol();

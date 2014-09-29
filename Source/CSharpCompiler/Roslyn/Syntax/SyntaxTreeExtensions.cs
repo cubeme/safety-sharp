@@ -39,7 +39,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
 		/// <param name="syntaxTree">The syntax tree whose descendents should be returned.</param>
-		public static IEnumerable<T> Descendants<T>(this SyntaxTree syntaxTree)
+		[Pure, NotNull]
+		public static IEnumerable<T> Descendants<T>([NotNull] this SyntaxTree syntaxTree)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxTree, () => syntaxTree);
@@ -52,7 +53,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
 		/// <param name="syntaxTree">The syntax tree whose descendents should be returned.</param>
-		public static IEnumerable<T> DescendantsAndSelf<T>(this SyntaxTree syntaxTree)
+		[Pure, NotNull]
+		public static IEnumerable<T> DescendantsAndSelf<T>([NotNull] this SyntaxTree syntaxTree)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxTree, () => syntaxTree);

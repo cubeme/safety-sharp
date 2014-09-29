@@ -45,8 +45,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <exception cref="ArgumentNullException">
 		///     Thrown if the value of <paramref name="argument" /> or <paramref name="argumentName" /> is <c>null</c>.
 		/// </exception>
-		[DebuggerHidden]
-		public static void NotNull<T>(T argument, Expression<Func<T>> argumentName)
+		[DebuggerHidden, ContractAnnotation("argument: null => halt")]
+		public static void NotNull<T>(T argument, [NotNull] Expression<Func<T>> argumentName)
 			where T : class
 		{
 			if (argumentName == null)
@@ -71,8 +71,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <exception cref="ArgumentException">
 		///     Thrown if the value of <paramref name="argument" /> is empty or consists of whitespace only.
 		/// </exception>
-		[DebuggerHidden]
-		public static void NotNullOrWhitespace(string argument, Expression<Func<string>> argumentName)
+		[DebuggerHidden, ContractAnnotation("argument: null => halt")]
+		public static void NotNullOrWhitespace(string argument, [NotNull] Expression<Func<string>> argumentName)
 		{
 			NotNull(argumentName, () => argumentName);
 
@@ -100,7 +100,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		///     Thrown if the value of <paramref name="argument" /> is outside the range of valid enumeration literals.
 		/// </exception>
 		[DebuggerHidden]
-		public static void InRange<TEnum>(TEnum argument, Expression<Func<TEnum>> argumentName)
+		public static void InRange<TEnum>(TEnum argument, [NotNull] Expression<Func<TEnum>> argumentName)
 			where TEnum : struct
 		{
 			NotNull(argumentName, () => argumentName);
@@ -134,12 +134,12 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		///     the same as or exceeds <paramref name="upperBound" />.
 		/// </exception>
 		[DebuggerHidden]
-		public static void InRange<T>(T argument, Expression<Func<T>> argumentName, T lowerBound, T upperBound)
+		public static void InRange<T>(T argument, [NotNull] Expression<Func<T>> argumentName, T lowerBound, T upperBound)
 			where T : IComparable<T>
 		{
 			NotNull(argumentName, () => argumentName);
 			ArgumentSatisfies(lowerBound.CompareTo(upperBound) <= 0, () => lowerBound,
-							  "lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
+				"lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
 
 			if (argument.CompareTo(lowerBound) < 0)
 				throw new ArgumentOutOfRangeException(GetArgumentName(argumentName), argument, "Lower bound range violation.");
@@ -165,7 +165,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		///     Thrown if the value of <paramref name="indexArgument" /> is smaller than 0 or exceeds <c>collection.Count</c>.
 		/// </exception>
 		[DebuggerHidden]
-		public static void InRange(int indexArgument, Expression<Func<int>> argumentName, ICollection collection)
+		public static void InRange(int indexArgument, [NotNull] Expression<Func<int>> argumentName, ICollection collection)
 		{
 			NotNull(argumentName, () => argumentName);
 			NotNull(collection, () => collection);
@@ -185,8 +185,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
 		/// <exception cref="ArgumentNullException">Thrown if <paramref name="argumentName" /> is <c>null</c>.</exception>
 		/// <exception cref="ArgumentException">Thrown if <paramref name="condition" /> is <c>false</c>.</exception>
-		[DebuggerHidden, StringFormatMethod("message")]
-		public static void ArgumentSatisfies<T>(bool condition, Expression<Func<T>> argumentName,
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("condition: false => halt")]
+		public static void ArgumentSatisfies<T>(bool condition, [NotNull] Expression<Func<T>> argumentName,
 												string message = null, params object[] parameters)
 		{
 			NotNull(argumentName, () => argumentName);
@@ -215,7 +215,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// </exception>
 		/// <exception cref="ArgumentException">Thrown if <paramref name="argument" /> is not of type <typeparamref name="T" />.</exception>
 		[DebuggerHidden, StringFormatMethod("message")]
-		public static void OfType<T>(object argument, Expression<Func<object>> argumentName,
+		public static void OfType<T>(object argument, [NotNull] Expression<Func<object>> argumentName,
 									 string message = null, params object[] parameters)
 			where T : class
 		{
@@ -227,7 +227,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 
 			message = message == null
 				? String.Format("Expected an instance of type '{0}' but found an instance of type '{1}'.",
-								typeof(T).FullName, argument.GetType().FullName)
+					typeof(T).FullName, argument.GetType().FullName)
 				: String.Format(message, parameters);
 
 			throw new ArgumentException(message, GetArgumentName(argumentName));
@@ -239,8 +239,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="condition">The condition that, if <c>false</c>, causes the exception to be raised.</param>
 		/// <param name="message">A message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[DebuggerHidden, StringFormatMethod("message")]
-		public static void That(bool condition, string message, params object[] parameters)
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("condition: false => halt")]
+		public static void That(bool condition, [NotNull] string message, params object[] parameters)
 		{
 			NotNullOrWhitespace(message, () => message);
 
@@ -254,7 +254,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// </summary>
 		/// <param name="argumentName"></param>
 		/// <returns>Returns the name of the member or local variable accessed by the expression.</returns>
-		private static string GetArgumentName<T>(Expression<Func<T>> argumentName)
+		private static string GetArgumentName<T>([NotNull] Expression<Func<T>> argumentName)
 		{
 			Assert.OfType<MemberExpression>(argumentName.Body, "Expected a lambda expression of the form '() => argument'.");
 			return ((MemberExpression)argumentName.Body).Member.Name;

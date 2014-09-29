@@ -42,7 +42,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="syntaxTree">The syntaxTree that should be analyzed.</param>
 		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
-		public void AnalyzeSyntaxTree(SyntaxTree syntaxTree, Action<Diagnostic> addDiagnostic, CancellationToken cancellationToken)
+		public void AnalyzeSyntaxTree([NotNull] SyntaxTree syntaxTree, [NotNull] Action<Diagnostic> addDiagnostic,
+									  CancellationToken cancellationToken)
 		{
 			Requires.NotNull(syntaxTree, () => syntaxTree);
 			Requires.NotNull(addDiagnostic, () => addDiagnostic);
@@ -56,7 +57,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     Analyzes the <paramref name="syntaxNode" />.
 		/// </summary>
 		/// <param name="syntaxNode">The syntax node that should be analyzed.</param>
-		protected abstract void Analyze(T syntaxNode);
+		protected abstract void Analyze([NotNull] T syntaxNode);
 
 		/// <summary>
 		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the diagnostic
@@ -64,7 +65,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// </summary>
 		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SyntaxNode syntaxNode, params object[] messageArgs)
+		protected void EmitDiagnostic([NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
 		{
 			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
 		}

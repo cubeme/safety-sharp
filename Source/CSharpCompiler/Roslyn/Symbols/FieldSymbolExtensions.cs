@@ -36,7 +36,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		///     Note that it is sufficient to check whether the type implements IComponent, as all
 		///     Component derived classes implement IComponent as well.
 		/// </summary>
-		private static bool IsSubcomponentField(IFieldSymbol fieldSymbol, ITypeSymbol componentInterfaceSymbol)
+		[Pure]
+		private static bool IsSubcomponentField([NotNull] IFieldSymbol fieldSymbol, [NotNull] ITypeSymbol componentInterfaceSymbol)
 		{
 			return fieldSymbol.Type.IsDerivedFrom(componentInterfaceSymbol) || fieldSymbol.Type.Equals(componentInterfaceSymbol);
 		}
@@ -46,7 +47,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="fieldSymbol">The field symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
-		public static bool IsSubcomponentField(this IFieldSymbol fieldSymbol, Compilation compilation)
+		[Pure]
+		public static bool IsSubcomponentField([NotNull] this IFieldSymbol fieldSymbol, [NotNull] Compilation compilation)
 		{
 			Requires.NotNull(fieldSymbol, () => fieldSymbol);
 			Requires.NotNull(compilation, () => compilation);
@@ -59,7 +61,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="fieldSymbol">The field symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		public static bool IsSubcomponentField(this IFieldSymbol fieldSymbol, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsSubcomponentField([NotNull] this IFieldSymbol fieldSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(fieldSymbol, () => fieldSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);

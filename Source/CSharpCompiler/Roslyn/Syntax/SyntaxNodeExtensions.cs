@@ -40,7 +40,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
 		/// <param name="syntaxNode">The syntax node whose descendents should be returned.</param>
-		public static IEnumerable<T> Descendants<T>(this SyntaxNode syntaxNode)
+		[Pure, NotNull]
+		public static IEnumerable<T> Descendants<T>([NotNull] this SyntaxNode syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -53,7 +54,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
 		/// <param name="syntaxNode">The syntax node whose descendents should be returned.</param>
-		public static IEnumerable<T> DescendantsAndSelf<T>(this SyntaxNode syntaxNode)
+		[Pure, NotNull]
+		public static IEnumerable<T> DescendantsAndSelf<T>([NotNull] this SyntaxNode syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -66,7 +68,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="syntaxNode">The node the referenced symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the referenced symbol.</param>
-		public static ISymbol GetReferencedSymbol(this SyntaxNode syntaxNode, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static ISymbol GetReferencedSymbol([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -84,7 +87,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The expected type of the referenced symbol.</typeparam>
 		/// <param name="syntaxNode">The node the referenced symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the referenced symbol.</param>
-		public static T GetReferencedSymbol<T>(this SyntaxNode syntaxNode, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static T GetReferencedSymbol<T>([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
 			where T : class, ISymbol
 		{
 			var symbol = syntaxNode.GetReferencedSymbol(semanticModel);
@@ -102,7 +106,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the attribute <paramref name="syntaxNode" /> should be marked with.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		public static bool HasAttribute<T>(this SyntaxNode syntaxNode, SemanticModel semanticModel)
+		[Pure]
+		public static bool HasAttribute<T>([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
 			where T : Attribute
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -119,7 +124,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax node that should have all of its end-of-line trivia removed.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its end-of-line trivia removed.</param>
-		public static T AsSingleLine<T>(this T syntaxNode)
+		[Pure, NotNull]
+		public static T AsSingleLine<T>([NotNull] this T syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -137,7 +143,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="newLineCount">
 		///     The number of end-of-line trivia tokens that should be appended to <paramref name="syntaxNode" />.
 		/// </param>
-		private static T WithTrailingNewLines<T>(this T syntaxNode, int newLineCount)
+		[Pure, NotNull]
+		private static T WithTrailingNewLines<T>([NotNull] this T syntaxNode, int newLineCount)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -159,7 +166,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="templateNode">
 		///     The syntax node that is used to determine the desired line count of <paramref name="syntaxNode" />.
 		/// </param>
-		public static T EnsureSameLineCount<T>(this T syntaxNode, SyntaxNode templateNode)
+		[Pure, NotNull]
+		public static T EnsureSameLineCount<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -190,7 +198,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its trivia removed.</param>
-		public static T RemoveTrivia<T>(this T syntaxNode)
+		[Pure, NotNull]
+		public static T RemoveTrivia<T>([NotNull] this T syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -205,7 +214,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="syntaxNode">The syntax node that should have all of its trivia replaced.</param>
 		/// <param name="leadingTrivia">The leading trivia of the returned syntax node.</param>
 		/// <param name="trailingTrivia">The trailing trivia of the returned syntax node.</param>
-		public static T WithTrivia<T>(this T syntaxNode, SyntaxTriviaList leadingTrivia, SyntaxTriviaList trailingTrivia)
+		[Pure, NotNull]
+		public static T WithTrivia<T>([NotNull] this T syntaxNode, SyntaxTriviaList leadingTrivia, SyntaxTriviaList trailingTrivia)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -219,7 +229,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its trivia replaced.</param>
 		/// <param name="templateNode">The syntax node the leading and trailing trivia should be copied from.</param>
-		public static T WithTrivia<T>(this T syntaxNode, SyntaxNode templateNode)
+		[Pure, NotNull]
+		public static T WithTrivia<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -235,7 +246,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its trivia replaced.</param>
 		/// <param name="syntaxToken">The syntax token the leading and trailing trivia should be copied from.</param>
-		public static T WithTrivia<T>(this T syntaxNode, SyntaxToken syntaxToken)
+		[Pure, NotNull]
+		public static T WithTrivia<T>([NotNull] this T syntaxNode, SyntaxToken syntaxToken)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -249,7 +261,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its leading trivia replaced.</param>
 		/// <param name="templateNode">The syntax node the leading trivia should be copied from.</param>
-		public static T WithLeadingTrivia<T>(this T syntaxNode, SyntaxNode templateNode)
+		[Pure, NotNull]
+		public static T WithLeadingTrivia<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -264,7 +277,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its leading trivia replaced.</param>
 		/// <param name="syntaxToken">The syntax token the leading trivia should be copied from.</param>
-		public static T WithLeadingTrivia<T>(this T syntaxNode, SyntaxToken syntaxToken)
+		[Pure, NotNull]
+		public static T WithLeadingTrivia<T>([NotNull] this T syntaxNode, SyntaxToken syntaxToken)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -278,7 +292,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its trailing trivia replaced.</param>
 		/// <param name="templateNode">The syntax node the trailing trivia should be copied from.</param>
-		public static T WithTrailingTrivia<T>(this T syntaxNode, SyntaxNode templateNode)
+		[Pure, NotNull]
+		public static T WithTrailingTrivia<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -293,7 +308,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <typeparam name="T">The type of the syntax node.</typeparam>
 		/// <param name="syntaxNode">The syntax node that should have all of its trailing trivia replaced.</param>
 		/// <param name="syntaxToken">The syntax token the trailing trivia should be copied from.</param>
-		public static T WithTrailingTrivia<T>(this T syntaxNode, SyntaxToken syntaxToken)
+		[Pure, NotNull]
+		public static T WithTrailingTrivia<T>([NotNull] this T syntaxNode, SyntaxToken syntaxToken)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -304,7 +320,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Returns a copy of <paramref name="syntaxNode" /> with all leading and trailing trivia replaced by a single space token.
 		/// </summary>
 		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
-		public static T WithLeadingAndTrailingSpace<T>(this T syntaxNode)
+		[Pure, NotNull]
+		public static T WithLeadingAndTrailingSpace<T>([NotNull] this T syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -315,7 +332,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Returns a copy of <paramref name="syntaxNode" /> with all leading trivia replaced by a single space token.
 		/// </summary>
 		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
-		public static T WithLeadingSpace<T>(this T syntaxNode)
+		[Pure, NotNull]
+		public static T WithLeadingSpace<T>([NotNull] this T syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
@@ -326,7 +344,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Returns a copy of <paramref name="syntaxNode" /> with all trailing trivia replaced by a single space token.
 		/// </summary>
 		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
-		public static T WithTrailingSpace<T>(this T syntaxNode)
+		[Pure, NotNull]
+		public static T WithTrailingSpace<T>([NotNull] this T syntaxNode)
 			where T : SyntaxNode
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);

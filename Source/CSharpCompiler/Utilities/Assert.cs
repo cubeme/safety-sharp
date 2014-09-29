@@ -39,7 +39,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
 		/// <exception cref="InvalidOperationException">Thrown if <paramref name="obj" /> is not <c>null</c>.</exception>
-		[DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("obj: notnull => halt")]
 		public static void IsNull<T>(T obj, string message = null, params object[] parameters)
 			where T : class
 		{
@@ -58,7 +58,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
 		/// <exception cref="NullReferenceException">Thrown if <paramref name="obj" /> is <c>null</c>.</exception>
-		[DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("obj: null => halt")]
 		public static void NotNull<T>(T obj, string message = null, params object[] parameters)
 			where T : class
 		{
@@ -76,7 +76,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="s">The string that should be checked.</param>
 		/// <exception cref="NullReferenceException">Thrown if <paramref name="s" /> is <c>null</c>.</exception>
 		/// <exception cref="InvalidOperationException">Thrown if <paramref name="s" /> is empty or consists of whitespace only.</exception>
-		[DebuggerHidden]
+		[DebuggerHidden, ContractAnnotation("s: null => halt")]
 		public static void NotNullOrWhitespace(string s)
 		{
 			if (s == null)
@@ -92,8 +92,8 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// <param name="condition">The condition that, if <c>false</c>, causes the exception to be raised.</param>
 		/// <param name="message">A message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[DebuggerHidden, StringFormatMethod("message")]
-		public static void That(bool condition, string message, params object[] parameters)
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("condition: false => halt")]
+		public static void That(bool condition, [NotNull] string message, params object[] parameters)
 		{
 			Requires.NotNullOrWhitespace(message, () => message);
 
@@ -108,7 +108,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 		/// </summary>
 		/// <param name="message">An optional message providing further details about the assertion.</param>
 		/// <param name="parameters">The parameters for formatting <paramref name="message" />.</param>
-		[DebuggerHidden, StringFormatMethod("message")]
+		[DebuggerHidden, StringFormatMethod("message"), ContractAnnotation("=> halt")]
 		public static void NotReached(string message = null, params object[] parameters)
 		{
 			message = message == null ? "Control flow should not have reached this point." : String.Format(message, parameters);
@@ -158,7 +158,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 			where T : IComparable<T>
 		{
 			Requires.ArgumentSatisfies(lowerBound.CompareTo(upperBound) <= 0, () => lowerBound,
-									   "lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
+				"lowerBound '{0}' does not precede upperBound '{1}'.", lowerBound, upperBound);
 
 			if (value.CompareTo(lowerBound) < 0)
 				throw new InvalidOperationException(
@@ -204,7 +204,7 @@ namespace SafetySharp.CSharpCompiler.Utilities
 
 			message = message == null
 				? String.Format("Expected an instance of type '{0}' but found an instance of type '{1}'.",
-								typeof(T).FullName, obj.GetType().FullName)
+					typeof(T).FullName, obj.GetType().FullName)
 				: String.Format(message, parameters);
 
 			throw new InvalidCastException(message);

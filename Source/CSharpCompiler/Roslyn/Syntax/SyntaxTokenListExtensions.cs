@@ -41,6 +41,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     The default visibility that should be returned if <paramref name="tokenList" /> does not
 		///     contain any visibility modifiers.
 		/// </param>
+		[Pure]
 		public static Visibility GetVisibility(this SyntaxTokenList tokenList, Visibility defaultVisibility = Visibility.Private)
 		{
 			Requires.InRange(defaultVisibility, () => defaultVisibility);

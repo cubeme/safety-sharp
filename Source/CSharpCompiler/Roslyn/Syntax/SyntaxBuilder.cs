@@ -40,6 +40,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     <paramref name="visibility" />.
 		/// </summary>
 		/// <param name="visibility">The visibility the <see cref="SyntaxTokenList" /> should be created for.</param>
+		[Pure]
 		private static SyntaxTokenList VisibilityModifier(Visibility visibility)
 		{
 			switch (visibility)
@@ -70,6 +71,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     The visibility of the accessor. A value of <c>null</c> indicates that no visibility modifier should
 		///     be added to the accessor.
 		/// </param>
+		[Pure, NotNull]
 		private static AccessorDeclarationSyntax Accessor(SyntaxKind accessorType, Visibility? visibility)
 		{
 			Requires.InRange(accessorType, () => accessorType);
@@ -96,8 +98,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     The visibility of the property's setter. A value of <c>null</c> indicates that no visibility
 		///     modifier should be added to the setter.
 		/// </param>
-		public static PropertyDeclarationSyntax AutoProperty(string propertyName, string propertyType, Visibility visibility,
-															 Visibility? getterVisibility, Visibility? setterVisibility)
+		[Pure, NotNull]
+		public static PropertyDeclarationSyntax AutoProperty([NotNull] string propertyName, [NotNull] string propertyType,
+															 Visibility visibility, Visibility? getterVisibility, Visibility? setterVisibility)
 		{
 			Requires.NotNullOrWhitespace(propertyName, () => propertyName);
 			Requires.NotNullOrWhitespace(propertyType, () => propertyType);
@@ -119,7 +122,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// <param name="propertyType">The type of the property.</param>
 		/// <param name="hasGetter">A value indicating whether the property has a getter.</param>
 		/// <param name="hasSetter">A value indicating whether the property has a setter.</param>
-		public static PropertyDeclarationSyntax InterfaceProperty(string propertyName, string propertyType, bool hasGetter, bool hasSetter)
+		[Pure, NotNull]
+		public static PropertyDeclarationSyntax InterfaceProperty([NotNull] string propertyName, [NotNull] string propertyType,
+																  bool hasGetter, bool hasSetter)
 		{
 			Requires.NotNullOrWhitespace(propertyName, () => propertyName);
 			Requires.NotNullOrWhitespace(propertyType, () => propertyType);
@@ -148,7 +153,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="parameters">The parameters of the lambda function.</param>
 		/// <param name="body">The body of the lambda function.</param>
-		public static ExpressionSyntax Lambda(IEnumerable<ParameterSyntax> parameters, CSharpSyntaxNode body)
+		[Pure, NotNull]
+		public static ExpressionSyntax Lambda([NotNull] IEnumerable<ParameterSyntax> parameters, [NotNull] CSharpSyntaxNode body)
 		{
 			Requires.NotNull(parameters, () => parameters);
 			Requires.NotNull(body, () => body);

@@ -23,7 +23,6 @@
 namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -41,7 +40,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration the declared symbol should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to determine the declared symbol.</param>
-		public static IMethodSymbol GetMethodSymbol(this BaseMethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static IMethodSymbol GetMethodSymbol([NotNull] this BaseMethodDeclarationSyntax methodDeclaration,
+													[NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(methodDeclaration, () => methodDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
@@ -56,7 +57,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		///     Gets the visibility of the <paramref name="methodDeclaration" />.
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration the visibility should be returned for.</param>
-		public static Visibility GetVisibility(this MethodDeclarationSyntax methodDeclaration)
+		[Pure]
+		public static Visibility GetVisibility([NotNull] this MethodDeclarationSyntax methodDeclaration)
 		{
 			Requires.NotNull(methodDeclaration, () => methodDeclaration);
 
@@ -70,14 +72,15 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		/// </summary>
 		/// <param name="methodDeclaration">The method declaration the delegate type should be returned for.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve type information.</param>
-		public static string GetDelegateType(this MethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
+		[Pure, NotNull]
+		public static string GetDelegateType([NotNull] this MethodDeclarationSyntax methodDeclaration, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(methodDeclaration, () => methodDeclaration);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			Func<string, IEnumerable<string>, string> generateType = (delegateType, arguments) =>
+			Func<string, string[], string> generateType = (delegateType, arguments) =>
 			{
-				if (!arguments.Any())
+				if (arguments.Length == 0)
 					return "System.Action";
 
 				return String.Format("{0}<{1}>", delegateType, String.Join(", ", arguments));
@@ -87,10 +90,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 			var returnType = methodDeclaration.ReturnType.GetReferencedSymbol<INamedTypeSymbol>(semanticModel);
 
 			if (returnType.SpecialType == SpecialType.System_Void)
-				return generateType("System.Action", argumentTypes);
+				return generateType("System.Action", argumentTypes.ToArray());
 
 			argumentTypes = argumentTypes.Concat(new[] { methodDeclaration.ReturnType.ToString() });
-			return generateType("System.Func", argumentTypes);
+			return generateType("System.Func", argumentTypes.ToArray());
 		}
 	}
 }

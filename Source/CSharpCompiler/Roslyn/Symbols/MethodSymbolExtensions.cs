@@ -37,7 +37,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="methodSymbol">The symbol of the method that should be checked.</param>
 		/// <param name="overriddenMethod">The symbol of the method that should be overridden.</param>
-		public static bool Overrides(this IMethodSymbol methodSymbol, IMethodSymbol overriddenMethod)
+		[Pure]
+		public static bool Overrides([NotNull] this IMethodSymbol methodSymbol, [NotNull] IMethodSymbol overriddenMethod)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(overriddenMethod, () => overriddenMethod);
@@ -60,7 +61,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="compilation">The compilation that should be used to resolve symbol information.</param>
-		public static bool IsUpdateMethod(this IMethodSymbol methodSymbol, Compilation compilation)
+		[Pure]
+		public static bool IsUpdateMethod([NotNull] this IMethodSymbol methodSymbol, [NotNull] Compilation compilation)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(compilation, () => compilation);
@@ -74,7 +76,8 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		/// </summary>
 		/// <param name="methodSymbol">The method symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		public static bool IsUpdateMethod(this IMethodSymbol methodSymbol, SemanticModel semanticModel)
+		[Pure]
+		public static bool IsUpdateMethod([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
