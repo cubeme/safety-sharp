@@ -85,6 +85,19 @@ module OptionalArgumentNormalizer =
             "class X : Component { void M(System.DateTime a = default(System.DateTime)) { M(a: default (global::System.DateTime)); }}"
 
     [<Test>]
+    let ``adds ommitted arguments for methods with params arguments within a component`` () =
+        normalize "class X : Component { void M(params int[] a) { M(); }}" =? "class X : Component { void M(params int[] a) { M(); }}"
+        normalize "class X : Component { void M(params int[] a) { M(1); }}" =? "class X : Component { void M(params int[] a) { M(1); }}"
+        normalize "class X : Component { void M(params int[] a) { M(1, 2); }}" =? "class X : Component { void M(params int[] a) { M(1, 2); }}"
+        normalize "class X : Component { void M(params int[] a) { M(a: 1); }}" =? "class X : Component { void M(params int[] a) { M(a: 1); }}"
+        normalize "class X : Component { void M(int a = 0, params int[] b) { M(); }}" =? 
+            "class X : Component { void M(int a = 0, params int[] b) { M(a: 0); }}"
+        normalize "class X : Component { void M(int a = 0, params int[] b) { M(b: 1); }}" =? 
+            "class X : Component { void M(int a = 0, params int[] b) { M(b: 1, a: 0); }}"
+        normalize "class X : Component { void M(int a = 0, params int[] b) { M(b: 1, a: 2); }}" =? 
+            "class X : Component { void M(int a = 0, params int[] b) { M(b: 1, a: 2); }}"
+
+    [<Test>]
     let ``adds omitted arguments to invocation with named arguments within a component`` () =
         normalize "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(c: 3, a: 2); }}" =? 
             "class X : Component { void M(int a = 0, int b = 17, int c = 2) { M(c: 3, a: 2, b: 17); }}"

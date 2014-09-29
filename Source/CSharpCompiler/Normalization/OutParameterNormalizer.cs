@@ -32,7 +32,8 @@ namespace SafetySharp.CSharpCompiler.Normalization
 
 	/// <summary>
 	///     Replaces all out parameters of a method declaration or method invocation with ref parameters. This normalization assumes
-	///     that the variable is definitely assigned before the method invocation; otherwise, invalid C# code is generated.
+	///     that variables passed to a method by reference are definitely assigned before the method invocation; otherwise, invalid
+	///     C# code is generated.
 	/// 
 	///     For instance:
 	///     <code>
@@ -56,7 +57,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 		}
 
 		/// <summary>
-		///     Replaces the <paramref name="parameter" />'s out modifier with a ref modifier.
+		///     Replaces the <paramref name="parameter" />'s <c>out</c> modifier with a <c>ref</c> modifier.
 		/// </summary>
 		public override SyntaxNode VisitParameter(ParameterSyntax parameter)
 		{
@@ -69,7 +70,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 		}
 
 		/// <summary>
-		///     Replaces the <paramref name="argument" />'s out modifier with a ref modifier.
+		///     Replaces the <paramref name="argument" />'s <c>out</c> modifier with a <c>ref</c> modifier.
 		/// </summary>
 		public override SyntaxNode VisitArgument(ArgumentSyntax argument)
 		{

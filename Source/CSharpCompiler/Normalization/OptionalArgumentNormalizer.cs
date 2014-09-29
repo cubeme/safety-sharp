@@ -80,15 +80,16 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			invocation = (InvocationExpressionSyntax)base.VisitInvocationExpression(invocation);
 			var arguments = invocation.ArgumentList.Arguments;
 
-			// Add the default values of all omitted optional arguments as named arguments to the end of the argument list
-			foreach (var omittedParameter in omittedParameters)
+			// Add the default values of all omitted optional arguments as named arguments to the end of the argument list;
+			// we can safely ignore param arrays here
+			foreach (var omittedParameter in omittedParameters.Where(omittedParameter => !omittedParameter.IsParams))
 			{
 				Assert.That(omittedParameter.HasExplicitDefaultValue, "Expected an implicit default value.");
 				Assert.That(omittedParameter.RefKind == RefKind.None, "Optional parameter cannot be ref or out.");
 
 				// Determine the default value; only structs, decimal, int, and bool are supported
-				var value = omittedParameter.ExplicitDefaultValue;
 				var defaultValue = String.Empty;
+				var value = omittedParameter.ExplicitDefaultValue;
 				if (value == null)
 					defaultValue = String.Format("default({0})", omittedParameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
 				else if (value is decimal)

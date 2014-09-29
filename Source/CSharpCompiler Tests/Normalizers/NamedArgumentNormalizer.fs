@@ -70,3 +70,16 @@ module NamedArgumentNormalizer =
             "class X : Component { int M(int a, int b) { return M(M(1, 17), 2); }}"
         normalize "class X : Component { int M(int a, int b) { return M(b: M(17, b: 1), a: 2); }}" =?
             "class X : Component { int M(int a, int b) { return M(2, M(17, 1)); }}"
+
+    [<Test>]
+    let ``reorders named arguments for methods with params arguments within a component`` () =
+        normalize "class X : Component { void M(params int[] a) { M(); }}" =? "class X : Component { void M(params int[] a) { M(); }}"
+        normalize "class X : Component { void M(params int[] a) { M(1); }}" =? "class X : Component { void M(params int[] a) { M(1); }}"
+        normalize "class X : Component { void M(params int[] a) { M(1, 2); }}" =? "class X : Component { void M(params int[] a) { M(1, 2); }}"
+        normalize "class X : Component { void M(params int[] a) { M(a: 1); }}" =? "class X : Component { void M(params int[] a) { M(1); }}"
+        normalize "class X : Component { void M(int a = 0, params int[] b) { M(); }}" =? 
+            "class X : Component { void M(int a = 0, params int[] b) { M(); }}"
+        normalize "class X : Component { void M(int a = 0, params int[] b) { M(a: 2, b: 1); }}" =? 
+            "class X : Component { void M(int a = 0, params int[] b) { M(2, 1); }}"
+        normalize "class X : Component { void M(int a = 0, params int[] b) { M(b: 1, a: 2); }}" =? 
+            "class X : Component { void M(int a = 0, params int[] b) { M(2, 1); }}"
