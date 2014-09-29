@@ -21,27 +21,27 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Internal.CSharp.Transformation
-
-open System.Collections.Immutable
-open SafetySharp.Internal.CSharp
-open SafetySharp.Internal.Metamodel
-open SafetySharp.Modeling
-open SafetySharp.Internal.Utilities
-open Microsoft.CodeAnalysis
-
-module internal ModelTransformation =
-
-    /// Transforms a modeling compilation and a model instance to the metamodel types.
-    let Transform (compilation : Compilation) (model : Model) (formulas : CSharpFormula list) =
-        nullArg model "model"
-        invalidArg (not model.IsMetadataFinalized) "model" "The model metadata has not yet been finalized."
-
-        let symbolResolver = SymbolTransformation.Transform compilation model
-        let objectResolver = ObjectTransformation.Transform model symbolResolver
-
-        {
-            ModelSymbol = symbolResolver.ModelSymbol
-            ModelObject = objectResolver.ModelObject
-            Formulas = formulas |> List.map (FormulaTransformation.Transform symbolResolver objectResolver)
-            MethodBodyResolver = StatementTransformation.TransformMethodBodies compilation symbolResolver
-        }
+//
+//open System.Collections.Immutable
+//open SafetySharp.Internal.CSharp
+//open SafetySharp.Internal.Metamodel
+//open SafetySharp.Modeling
+//open SafetySharp.Internal.Utilities
+//open Microsoft.CodeAnalysis
+//
+//module internal ModelTransformation =
+//
+//    /// Transforms a modeling compilation and a model instance to the metamodel types.
+//    let Transform (compilation : Compilation) (model : Model) (formulas : CSharpFormula list) =
+//        nullArg model "model"
+//        invalidArg (not model.IsMetadataFinalized) "model" "The model metadata has not yet been finalized."
+//
+//        let symbolResolver = SymbolTransformation.Transform compilation model
+//        let objectResolver = ObjectTransformation.Transform model symbolResolver
+//
+//        {
+//            ModelSymbol = symbolResolver.ModelSymbol
+//            ModelObject = objectResolver.ModelObject
+//            Formulas = formulas |> List.map (FormulaTransformation.Transform symbolResolver objectResolver)
+//            MethodBodyResolver = StatementTransformation.TransformMethodBodies compilation symbolResolver
+//        }

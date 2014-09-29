@@ -27,8 +27,6 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.Internal.CSharp
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling

@@ -33,7 +33,6 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1003 : SymbolAnalyzer<ISymbol>
 	{
 		/// <summary>

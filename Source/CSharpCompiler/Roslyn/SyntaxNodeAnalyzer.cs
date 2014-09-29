@@ -41,9 +41,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// </summary>
 		/// <param name="syntaxTree">The syntaxTree that should be analyzed.</param>
 		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
+		/// <param name="options">A set of options passed in by the host.</param>
 		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
 		public void AnalyzeSyntaxTree([NotNull] SyntaxTree syntaxTree, [NotNull] Action<Diagnostic> addDiagnostic,
-									  CancellationToken cancellationToken)
+									  AnalyzerOptions options, CancellationToken cancellationToken)
 		{
 			Requires.NotNull(syntaxTree, () => syntaxTree);
 			Requires.NotNull(addDiagnostic, () => addDiagnostic);

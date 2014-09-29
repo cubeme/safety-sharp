@@ -33,20 +33,20 @@ type SpinModelChecker (model : Model) =
     do model.FinalizeMetadata ()
 
     member this.Check (formula : LtlFormula) =
-        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
-        let formulas = [formula.Formula]
-        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
-        
-        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela configuration
-        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile ()
-
-        let converted = converter.transformConfiguration
-        FileSystem.WriteToAsciiFile "Modelchecking/Spin.promela" (astWriter.Export converted)
-
-        let converter = SafetySharp.Internal.Modelchecking.NuXmv.MetamodelToNuXmv configuration
-        let astWriter = SafetySharp.Internal.Modelchecking.NuXmv.ExportNuXmvAstToFile ()
-
-        let converted = converter.transformConfiguration
-        FileSystem.WriteToAsciiFile "Modelchecking/NuXmv.smv" (astWriter.ExportNuXmvProgram converted)
+//        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
+//        let formulas = [formula.Formula]
+//        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
+//        
+//        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela configuration
+//        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile ()
+//
+//        let converted = converter.transformConfiguration
+//        FileSystem.WriteToAsciiFile "Modelchecking/Spin.promela" (astWriter.Export converted)
+//
+//        let converter = SafetySharp.Internal.Modelchecking.NuXmv.MetamodelToNuXmv configuration
+//        let astWriter = SafetySharp.Internal.Modelchecking.NuXmv.ExportNuXmvAstToFile ()
+//
+//        let converted = converter.transformConfiguration
+//        FileSystem.WriteToAsciiFile "Modelchecking/NuXmv.smv" (astWriter.ExportNuXmvProgram converted)
 
         ()

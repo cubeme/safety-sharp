@@ -34,7 +34,6 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     <see cref="RequiredAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1001 : SymbolAnalyzer<IMethodSymbol>
 	{
 		/// <summary>

@@ -271,7 +271,8 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
     /// Checks whether the given C# code has any diagnostics.
     static member GetDiagnostic analyzer csharpCode =
         let compilation = TestCompilation csharpCode
-        let diagnostics = AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| analyzer |], new CancellationToken(), false)
+        let options = AnalyzerOptions (Enumerable.Empty<AdditionalStream> (), Dictionary<string, string> ())
+        let diagnostics = AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| analyzer |], options, CancellationToken (), false)
         let diagnostics = Array.ofSeq diagnostics
 
         if diagnostics.Length > 1 then

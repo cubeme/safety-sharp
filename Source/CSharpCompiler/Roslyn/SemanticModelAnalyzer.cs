@@ -38,9 +38,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// </summary>
 		/// <param name="semanticModel">The semanticModel that should be analyzed.</param>
 		/// <param name="addDiagnostic">The delegate that should be used to emit diagnostics.</param>
+		/// <param name="options">A set of options passed in by the host.</param>
 		/// <param name="cancellationToken">The token that should be checked for cancelling the analysis.</param>
 		public void AnalyzeSemanticModel([NotNull] SemanticModel semanticModel, [NotNull] Action<Diagnostic> addDiagnostic,
-										 CancellationToken cancellationToken)
+										 AnalyzerOptions options, CancellationToken cancellationToken)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
 			Requires.NotNull(addDiagnostic, () => addDiagnostic);

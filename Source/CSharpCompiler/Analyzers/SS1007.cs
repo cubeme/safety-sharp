@@ -34,7 +34,6 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1007 : SemanticModelAnalyzer
 	{
 		/// <summary>

@@ -21,96 +21,96 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Internal.CSharp.Diagnostics
-
-open System
-open System.Collections.Immutable
-open System.Linq.Expressions
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Internal.Utilities
-open SafetySharp.Modeling
-open SafetySharp.Internal.CSharp.Roslyn
-
-/// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
-type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback<SyntaxNode>) =
-    inherit CSharpSyntaxVisitor ()
-
-    /// Reports the node as a use of an unsupported C# feature.
-    override this.DefaultVisit node = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
-
-    (* Supported C# syntax elements *)
-    override this.VisitIdentifierName node            = ()
-    override this.VisitQualifiedName node             = ()
-    override this.VisitLiteralExpression node         = ()
-    override this.VisitMemberAccessExpression node    = ()
-    override this.VisitParenthesizedExpression node   = ()
-    override this.VisitPredefinedType node            = ()
-
-    // For now, allow method invocations only when the result is immediately assigned to a variable 
-    // as well as invocations of void returning methods.
-    override this.VisitInvocationExpression node =
-        let methodSymbol = semanticModel.GetReferencedSymbol<IMethodSymbol> node
-            
-        // Choose methods are always ok
-        if methodSymbol.ContainingType = semanticModel.GetTypeSymbol<Choose> () then
-            ()
-        else
-            match node.Parent with
-            // A single invocation on the right hand side of an assignment is ok
-            | :? BinaryExpressionSyntax as binaryExpression 
-                when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
-                        (binaryExpression.Parent :? ExpressionStatementSyntax) ->
-                ()
-            // Invocations of methods as a single statement are also ok
-            | :? ExpressionStatementSyntax -> ()
-            // All other invocations are not supported at the moment
-            | _ -> this.DefaultVisit node
-
-    override this.VisitBinaryExpression node = 
-        match node.CSharpKind () with
-        | SyntaxKind.AddExpression 
-        | SyntaxKind.SubtractExpression
-        | SyntaxKind.MultiplyExpression
-        | SyntaxKind.DivideExpression
-        | SyntaxKind.ModuloExpression
-        | SyntaxKind.LogicalAndExpression
-        | SyntaxKind.BitwiseAndExpression
-        | SyntaxKind.LogicalOrExpression
-        | SyntaxKind.BitwiseOrExpression
-        | SyntaxKind.EqualsExpression
-        | SyntaxKind.NotEqualsExpression
-        | SyntaxKind.LessThanExpression
-        | SyntaxKind.LessThanOrEqualExpression
-        | SyntaxKind.GreaterThanExpression
-        | SyntaxKind.GreaterThanOrEqualExpression -> ()
-        | SyntaxKind.SimpleAssignmentExpression when (node.Parent :? ExpressionStatementSyntax) -> ()
-        | _ -> this.DefaultVisit node
-
-    override this.VisitPrefixUnaryExpression node = 
-        match node.CSharpKind () with
-        | SyntaxKind.UnaryMinusExpression
-        | SyntaxKind.UnaryPlusExpression
-        | SyntaxKind.LogicalNotExpression -> ()
-        | _ -> this.DefaultVisit node
-
-/// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
-[<DiagnosticAnalyzer>]
-[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression, LanguageNames.CSharp)>]
-type internal ExpressionSideEffectAnalyzer () as this =
-    inherit SemanticModelAnalyzer ()
-
-    do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression
-        "For the moment, expressions may not have side effects."
-        "For the moment, expressions may not have side effects: Cannot use {0} here as it has (potential) side effects."
-
-    override this.Analyze semanticModel addDiagnostic cancellationToken =
-        let formulaVisitor = ExpressionSideEffectAnalyzerVisitor (semanticModel, addDiagnostic)
-
-        semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
-        |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
-        |> Seq.collect (fun classDeclaration -> classDeclaration.Descendants<MethodDeclarationSyntax> ())
-        |> Seq.where (fun methodDeclaration -> methodDeclaration.Body <> null)
-        |> Seq.collect (fun methodDeclaration -> methodDeclaration.Body.Descendants<ExpressionSyntax> ())
-        |> Seq.iter formulaVisitor.Visit
+//
+//open System
+//open System.Collections.Immutable
+//open System.Linq.Expressions
+//open Microsoft.CodeAnalysis
+//open Microsoft.CodeAnalysis.CSharp
+//open Microsoft.CodeAnalysis.CSharp.Syntax
+//open Microsoft.CodeAnalysis.Diagnostics
+//open SafetySharp.Internal.Utilities
+//open SafetySharp.Modeling
+//open SafetySharp.Internal.CSharp.Roslyn
+//
+///// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
+//type internal ExpressionSideEffectAnalyzerVisitor (semanticModel : SemanticModel, emitDiagnostic : DiagnosticCallback<SyntaxNode>) =
+//    inherit CSharpSyntaxVisitor ()
+//
+//    /// Reports the node as a use of an unsupported C# feature.
+//    override this.DefaultVisit node = emitDiagnostic.Invoke (node, node.CSharpKind().ToDescription ())
+//
+//    (* Supported C# syntax elements *)
+//    override this.VisitIdentifierName node            = ()
+//    override this.VisitQualifiedName node             = ()
+//    override this.VisitLiteralExpression node         = ()
+//    override this.VisitMemberAccessExpression node    = ()
+//    override this.VisitParenthesizedExpression node   = ()
+//    override this.VisitPredefinedType node            = ()
+//
+//    // For now, allow method invocations only when the result is immediately assigned to a variable 
+//    // as well as invocations of void returning methods.
+//    override this.VisitInvocationExpression node =
+//        let methodSymbol = semanticModel.GetReferencedSymbol<IMethodSymbol> node
+//            
+//        // Choose methods are always ok
+//        if methodSymbol.ContainingType = semanticModel.GetTypeSymbol<Choose> () then
+//            ()
+//        else
+//            match node.Parent with
+//            // A single invocation on the right hand side of an assignment is ok
+//            | :? BinaryExpressionSyntax as binaryExpression 
+//                when binaryExpression.CSharpKind () = SyntaxKind.SimpleAssignmentExpression &&
+//                        (binaryExpression.Parent :? ExpressionStatementSyntax) ->
+//                ()
+//            // Invocations of methods as a single statement are also ok
+//            | :? ExpressionStatementSyntax -> ()
+//            // All other invocations are not supported at the moment
+//            | _ -> this.DefaultVisit node
+//
+//    override this.VisitBinaryExpression node = 
+//        match node.CSharpKind () with
+//        | SyntaxKind.AddExpression 
+//        | SyntaxKind.SubtractExpression
+//        | SyntaxKind.MultiplyExpression
+//        | SyntaxKind.DivideExpression
+//        | SyntaxKind.ModuloExpression
+//        | SyntaxKind.LogicalAndExpression
+//        | SyntaxKind.BitwiseAndExpression
+//        | SyntaxKind.LogicalOrExpression
+//        | SyntaxKind.BitwiseOrExpression
+//        | SyntaxKind.EqualsExpression
+//        | SyntaxKind.NotEqualsExpression
+//        | SyntaxKind.LessThanExpression
+//        | SyntaxKind.LessThanOrEqualExpression
+//        | SyntaxKind.GreaterThanExpression
+//        | SyntaxKind.GreaterThanOrEqualExpression -> ()
+//        | SyntaxKind.SimpleAssignmentExpression when (node.Parent :? ExpressionStatementSyntax) -> ()
+//        | _ -> this.DefaultVisit node
+//
+//    override this.VisitPrefixUnaryExpression node = 
+//        match node.CSharpKind () with
+//        | SyntaxKind.UnaryMinusExpression
+//        | SyntaxKind.UnaryPlusExpression
+//        | SyntaxKind.LogicalNotExpression -> ()
+//        | _ -> this.DefaultVisit node
+//
+///// Ensures that an expression is side effect free. TODO: Remove this and normalize later.
+//[<DiagnosticAnalyzer>]
+//[<ExportDiagnosticAnalyzer(DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression, LanguageNames.CSharp)>]
+//type internal ExpressionSideEffectAnalyzer () as this =
+//    inherit SemanticModelAnalyzer ()
+//
+//    do this.Error DiagnosticIdentifiers.IllegalCSharpSyntaxElementInExpression
+//        "For the moment, expressions may not have side effects."
+//        "For the moment, expressions may not have side effects: Cannot use {0} here as it has (potential) side effects."
+//
+//    override this.Analyze semanticModel addDiagnostic cancellationToken =
+//        let formulaVisitor = ExpressionSideEffectAnalyzerVisitor (semanticModel, addDiagnostic)
+//
+//        semanticModel.SyntaxTree.Descendants<ClassDeclarationSyntax>()
+//        |> Seq.where (fun classDeclaration -> classDeclaration.IsComponentDeclaration semanticModel)
+//        |> Seq.collect (fun classDeclaration -> classDeclaration.Descendants<MethodDeclarationSyntax> ())
+//        |> Seq.where (fun methodDeclaration -> methodDeclaration.Body <> null)
+//        |> Seq.collect (fun methodDeclaration -> methodDeclaration.Body.Descendants<ExpressionSyntax> ())
+//        |> Seq.iter formulaVisitor.Visit

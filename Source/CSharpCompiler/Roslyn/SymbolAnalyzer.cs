@@ -54,9 +54,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
 		/// <param name="addDiagnostic">A delegate to be used to emit diagnostics.</param>
+		/// <param name="options">A set of options passed in by the host.</param>
 		/// <param name="cancellationToken">A token for cancelling the computation.</param>
 		public void AnalyzeSymbol([NotNull] ISymbol symbol, [NotNull] Compilation compilation, [NotNull] Action<Diagnostic> addDiagnostic,
-								  CancellationToken cancellationToken)
+								  AnalyzerOptions options, CancellationToken cancellationToken)
 		{
 			Requires.NotNull(symbol, () => symbol);
 			Requires.NotNull(compilation, () => compilation);

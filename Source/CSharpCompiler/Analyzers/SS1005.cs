@@ -35,7 +35,6 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     corresponding interface method or property.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	[ExportDiagnosticAnalyzer("", LanguageNames.CSharp)]
 	public class SS1005 : SymbolAnalyzer<INamedTypeSymbol>
 	{
 		/// <summary>

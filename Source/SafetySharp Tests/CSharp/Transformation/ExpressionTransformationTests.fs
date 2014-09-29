@@ -22,175 +22,175 @@
 
 namespace SafetySharp.Tests.CSharp.Transformation
 
-open System.Linq
-open NUnit.Framework
-open SafetySharp.Internal.CSharp
-open SafetySharp.Internal.Metamodel
-open SafetySharp.Tests
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp.Transformation
-open SafetySharp.Internal.CSharp.Roslyn
-
-[<AutoOpen>]
-module private ExpressionTransformationTestsHelper = 
-    let mutable fieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Boolean }
-
-    let transform csharpCode =
-        let csharpCode = "
-            class C : Component 
-            {
-                private bool boolField;
-                void M()
-                {
-                    var x = " + csharpCode + ";
-                }
-            }"
-
-        let compilation = TestCompilation csharpCode
-        let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value
-        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
-        fieldSymbol <- symbolResolver.ModelSymbol.ComponentSymbols.[0].Fields.[0]
-
-        ExpressionTransformation.Transform symbolResolver compilation.SemanticModel expression
-
-module ExpressionTransformationTests =
-
-    [<Test>]
-    let ``boolean literals`` () =
-        transform "false" =? BooleanLiteral false
-        transform "true" =? BooleanLiteral true
-
-    [<Test>]
-    let ``integer literals`` () =
-       transform "0" =? IntegerLiteral 0
-       transform "1" =? IntegerLiteral 1
-       transform "10" =? IntegerLiteral 10
-       transform "41223" =? IntegerLiteral 41223
-
-    [<Test>]
-    let ``decimal literals`` () =
-        transform "0m" =? DecimalLiteral 0m
-        transform "10m" =? DecimalLiteral 10m
-        transform "0.5m" =? DecimalLiteral 0.5m
-        transform "17.412m" =? DecimalLiteral 17.412m
-
-    [<Test>]
-    let ``minus expressions`` () =
-        transform "-.50m" =? UnaryExpression(DecimalLiteral(0.50m), UnaryOperator.Minus)
-        transform "-10m" =? UnaryExpression(DecimalLiteral(10m), UnaryOperator.Minus)
-        transform "-4" =? UnaryExpression(IntegerLiteral 4, UnaryOperator.Minus)
-        transform "-0" =? UnaryExpression(IntegerLiteral 0, UnaryOperator.Minus)
-
-    [<Test>]
-    let ``not expressions`` () =
-        transform "!true" =? UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot)
-        transform "!false" =? UnaryExpression(BooleanLiteral false, UnaryOperator.LogicalNot)
-
-    [<Test>]
-    let ``nested unary expressions`` () =
-        transform "-+1" =? UnaryExpression(IntegerLiteral 1, UnaryOperator.Minus)
-        transform "!!true" =? UnaryExpression(UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), UnaryOperator.LogicalNot)
-
-    [<Test>]
-    let ``plus expressions`` () =
-        transform "+.50m" =? DecimalLiteral(0.50m)
-        transform "+10m" =? DecimalLiteral(10m)
-        transform "+4" =? IntegerLiteral 4
-        transform "+0" =? IntegerLiteral 0
-
-    [<Test>]
-    let ``add expressions`` () =
-        transform "1 + 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 1)
-        transform "13m + 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Add, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``subtract expressions`` () =
-        transform "1 - 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Subtract, IntegerLiteral 1)
-        transform "13m - 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Subtract, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``multiply expressions`` () =
-        transform "1 * 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Multiply, IntegerLiteral 1)
-        transform "13m * 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Multiply, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``divide expressions`` () =
-        transform "1 / 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Divide, IntegerLiteral 1)
-        transform "13m / 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Divide, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``modulo expressions`` () =
-        transform "1 % 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Modulo, IntegerLiteral 1)
-        transform "13m %17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Modulo, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``equal expressions`` () =
-        transform "1 == 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Equals, IntegerLiteral 1)
-        transform "13m == 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Equals, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``not equal expressions`` () =
-        transform "1 != 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.NotEquals, IntegerLiteral 1)
-        transform "13m != 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.NotEquals, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``greater than expressions`` () =
-        transform "1 > 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.GreaterThan, IntegerLiteral 1)
-        transform "13m > 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.GreaterThan, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``greater than or equal expressions`` () =
-        transform "1 >= 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.GreaterThanOrEqual, IntegerLiteral 1)
-        transform "13m >= 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.GreaterThanOrEqual, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``less than expressions`` () =
-        transform "1 < 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.LessThan, IntegerLiteral 1)
-        transform "13m < 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.LessThan, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``less than or equal expressions`` () =
-        transform "1 <= 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.LessThanOrEqual, IntegerLiteral 1)
-        transform "13m <= 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.LessThanOrEqual, DecimalLiteral 17.2m)
-
-    [<Test>]
-    let ``logical and expressions`` () =
-        transform "false && true" =? BinaryExpression (BooleanLiteral false, BinaryOperator.LogicalAnd, BooleanLiteral true)
-        transform "true && true" =? BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalAnd, BooleanLiteral true)
-
-    [<Test>]
-    let ``logical or expressions`` () =
-        transform "false || true" =? BinaryExpression (BooleanLiteral false, BinaryOperator.LogicalOr, BooleanLiteral true)
-        transform "true || true" =? BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral true)
-
-    [<Test>]
-    let ``field access expressions`` () =
-        transform "boolField" =? ReadField(fieldSymbol, None)
-
-    [<Test>]
-    let ``field access in binary expression`` () =
-        transform "boolField == false" =? BinaryExpression(ReadField(fieldSymbol, None), BinaryOperator.Equals, BooleanLiteral false)
-
-    [<Test>]
-    let ``nested binary expressions`` () =
-        let add = BinaryExpression(IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 2)
-        let multiply = BinaryExpression(add, BinaryOperator.Multiply, IntegerLiteral(10))
-        transform "(1 + 2) * 10" =? multiply
-
-        let multiply = BinaryExpression(IntegerLiteral 1, BinaryOperator.Multiply, IntegerLiteral(10))
-        let add = BinaryExpression(multiply, BinaryOperator.Add, IntegerLiteral 2)
-        transform "1 * 10 + 2" =? add
-
-        let left = BinaryExpression(IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 2)
-        let right = BinaryExpression(IntegerLiteral 4, BinaryOperator.Add, IntegerLiteral 5)
-        let multiply = BinaryExpression(left, BinaryOperator.Multiply, right)
-        transform "(1 + 2) * (4 + 5)" =? multiply
-
-    [<Test>]
-    let ``nested unary and binary expressions`` () =
-        let minusOne = UnaryExpression(IntegerLiteral 1, UnaryOperator.Minus)
-        let left = BinaryExpression(minusOne, BinaryOperator.Add, IntegerLiteral 2)
-        let right = BinaryExpression(IntegerLiteral 4, BinaryOperator.Add, IntegerLiteral 5)
-        let multiply = BinaryExpression(UnaryExpression(left, UnaryOperator.Minus), BinaryOperator.Multiply, right)
-
-        transform "-(-1 + 2) * (4 + +5)" =? multiply
+//open System.Linq
+//open NUnit.Framework
+//open SafetySharp.Internal.CSharp
+//open SafetySharp.Internal.Metamodel
+//open SafetySharp.Tests
+//open Microsoft.CodeAnalysis.CSharp.Syntax
+//open SafetySharp.Internal.CSharp.Transformation
+//open SafetySharp.Internal.CSharp.Roslyn
+//
+//[<AutoOpen>]
+//module private ExpressionTransformationTestsHelper = 
+//    let mutable fieldSymbol = { FieldSymbol.Name = ""; Type = TypeSymbol.Boolean }
+//
+//    let transform csharpCode =
+//        let csharpCode = "
+//            class C : Component 
+//            {
+//                private bool boolField;
+//                void M()
+//                {
+//                    var x = " + csharpCode + ";
+//                }
+//            }"
+//
+//        let compilation = TestCompilation csharpCode
+//        let expression = compilation.SyntaxRoot.Descendants<EqualsValueClauseSyntax>().Single().Value
+//        let symbolResolver = SymbolTransformation.TransformComponentSymbols compilation.CSharpCompilation
+//        fieldSymbol <- symbolResolver.ModelSymbol.ComponentSymbols.[0].Fields.[0]
+//
+//        ExpressionTransformation.Transform symbolResolver compilation.SemanticModel expression
+//
+//module ExpressionTransformationTests =
+//
+//    [<Test>]
+//    let ``boolean literals`` () =
+//        transform "false" =? BooleanLiteral false
+//        transform "true" =? BooleanLiteral true
+//
+//    [<Test>]
+//    let ``integer literals`` () =
+//       transform "0" =? IntegerLiteral 0
+//       transform "1" =? IntegerLiteral 1
+//       transform "10" =? IntegerLiteral 10
+//       transform "41223" =? IntegerLiteral 41223
+//
+//    [<Test>]
+//    let ``decimal literals`` () =
+//        transform "0m" =? DecimalLiteral 0m
+//        transform "10m" =? DecimalLiteral 10m
+//        transform "0.5m" =? DecimalLiteral 0.5m
+//        transform "17.412m" =? DecimalLiteral 17.412m
+//
+//    [<Test>]
+//    let ``minus expressions`` () =
+//        transform "-.50m" =? UnaryExpression(DecimalLiteral(0.50m), UnaryOperator.Minus)
+//        transform "-10m" =? UnaryExpression(DecimalLiteral(10m), UnaryOperator.Minus)
+//        transform "-4" =? UnaryExpression(IntegerLiteral 4, UnaryOperator.Minus)
+//        transform "-0" =? UnaryExpression(IntegerLiteral 0, UnaryOperator.Minus)
+//
+//    [<Test>]
+//    let ``not expressions`` () =
+//        transform "!true" =? UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot)
+//        transform "!false" =? UnaryExpression(BooleanLiteral false, UnaryOperator.LogicalNot)
+//
+//    [<Test>]
+//    let ``nested unary expressions`` () =
+//        transform "-+1" =? UnaryExpression(IntegerLiteral 1, UnaryOperator.Minus)
+//        transform "!!true" =? UnaryExpression(UnaryExpression(BooleanLiteral true, UnaryOperator.LogicalNot), UnaryOperator.LogicalNot)
+//
+//    [<Test>]
+//    let ``plus expressions`` () =
+//        transform "+.50m" =? DecimalLiteral(0.50m)
+//        transform "+10m" =? DecimalLiteral(10m)
+//        transform "+4" =? IntegerLiteral 4
+//        transform "+0" =? IntegerLiteral 0
+//
+//    [<Test>]
+//    let ``add expressions`` () =
+//        transform "1 + 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 1)
+//        transform "13m + 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Add, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``subtract expressions`` () =
+//        transform "1 - 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Subtract, IntegerLiteral 1)
+//        transform "13m - 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Subtract, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``multiply expressions`` () =
+//        transform "1 * 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Multiply, IntegerLiteral 1)
+//        transform "13m * 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Multiply, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``divide expressions`` () =
+//        transform "1 / 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Divide, IntegerLiteral 1)
+//        transform "13m / 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Divide, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``modulo expressions`` () =
+//        transform "1 % 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Modulo, IntegerLiteral 1)
+//        transform "13m %17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Modulo, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``equal expressions`` () =
+//        transform "1 == 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.Equals, IntegerLiteral 1)
+//        transform "13m == 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.Equals, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``not equal expressions`` () =
+//        transform "1 != 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.NotEquals, IntegerLiteral 1)
+//        transform "13m != 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.NotEquals, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``greater than expressions`` () =
+//        transform "1 > 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.GreaterThan, IntegerLiteral 1)
+//        transform "13m > 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.GreaterThan, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``greater than or equal expressions`` () =
+//        transform "1 >= 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.GreaterThanOrEqual, IntegerLiteral 1)
+//        transform "13m >= 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.GreaterThanOrEqual, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``less than expressions`` () =
+//        transform "1 < 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.LessThan, IntegerLiteral 1)
+//        transform "13m < 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.LessThan, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``less than or equal expressions`` () =
+//        transform "1 <= 1" =? BinaryExpression (IntegerLiteral 1, BinaryOperator.LessThanOrEqual, IntegerLiteral 1)
+//        transform "13m <= 17.2m" =? BinaryExpression (DecimalLiteral 13m, BinaryOperator.LessThanOrEqual, DecimalLiteral 17.2m)
+//
+//    [<Test>]
+//    let ``logical and expressions`` () =
+//        transform "false && true" =? BinaryExpression (BooleanLiteral false, BinaryOperator.LogicalAnd, BooleanLiteral true)
+//        transform "true && true" =? BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalAnd, BooleanLiteral true)
+//
+//    [<Test>]
+//    let ``logical or expressions`` () =
+//        transform "false || true" =? BinaryExpression (BooleanLiteral false, BinaryOperator.LogicalOr, BooleanLiteral true)
+//        transform "true || true" =? BinaryExpression (BooleanLiteral true, BinaryOperator.LogicalOr, BooleanLiteral true)
+//
+//    [<Test>]
+//    let ``field access expressions`` () =
+//        transform "boolField" =? ReadField(fieldSymbol, None)
+//
+//    [<Test>]
+//    let ``field access in binary expression`` () =
+//        transform "boolField == false" =? BinaryExpression(ReadField(fieldSymbol, None), BinaryOperator.Equals, BooleanLiteral false)
+//
+//    [<Test>]
+//    let ``nested binary expressions`` () =
+//        let add = BinaryExpression(IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 2)
+//        let multiply = BinaryExpression(add, BinaryOperator.Multiply, IntegerLiteral(10))
+//        transform "(1 + 2) * 10" =? multiply
+//
+//        let multiply = BinaryExpression(IntegerLiteral 1, BinaryOperator.Multiply, IntegerLiteral(10))
+//        let add = BinaryExpression(multiply, BinaryOperator.Add, IntegerLiteral 2)
+//        transform "1 * 10 + 2" =? add
+//
+//        let left = BinaryExpression(IntegerLiteral 1, BinaryOperator.Add, IntegerLiteral 2)
+//        let right = BinaryExpression(IntegerLiteral 4, BinaryOperator.Add, IntegerLiteral 5)
+//        let multiply = BinaryExpression(left, BinaryOperator.Multiply, right)
+//        transform "(1 + 2) * (4 + 5)" =? multiply
+//
+//    [<Test>]
+//    let ``nested unary and binary expressions`` () =
+//        let minusOne = UnaryExpression(IntegerLiteral 1, UnaryOperator.Minus)
+//        let left = BinaryExpression(minusOne, BinaryOperator.Add, IntegerLiteral 2)
+//        let right = BinaryExpression(IntegerLiteral 4, BinaryOperator.Add, IntegerLiteral 5)
+//        let multiply = BinaryExpression(UnaryExpression(left, UnaryOperator.Minus), BinaryOperator.Multiply, right)
+//
+//        transform "-(-1 + 2) * (4 + +5)" =? multiply

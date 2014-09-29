@@ -30,7 +30,6 @@ namespace SafetySharp.CSharpCompiler
 	using System.Threading;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Microsoft.CodeAnalysis.MSBuild;
 	using Normalization;
 	using Roslyn;
 	using Utilities;
@@ -72,21 +71,25 @@ namespace SafetySharp.CSharpCompiler
 			if (String.IsNullOrWhiteSpace(platform))
 				return ReportError("0003", "Invalid compilation platform: Platform name cannot be the empty string.");
 
-			var msBuildProperties = new Dictionary<string, string> { { "Configuration", configuration }, { "Platform", platform } };
+			//var msBuildProperties = new Dictionary<string, string> { { "Configuration", configuration }, { "Platform", platform } };
 
-			var workspace = MSBuildWorkspace.Create(msBuildProperties);
-			var project = workspace.OpenProjectAsync(projectFile).Result;
+			//var workspace = MSBuildWorkspace.Create(msBuildProperties);
+			//var project = workspace.OpenProjectAsync(projectFile).Result;
 
-			var compilation = project.GetCompilationAsync().Result;
-			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
-			var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
-			compilation = compilation.WithOptions(options);
+			//var compilation = project.GetCompilationAsync().Result;
+			//var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
+			//var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
+			//compilation = compilation.WithOptions(options);
 
-			if (!Diagnose(compilation))
-				return -1;
+			//if (!Diagnose(compilation))
+			//	return -1;
 
-			compilation = NormalizeSimulationCode(compilation);
-			return Emit(compilation, project.OutputFilePath);
+			//compilation = NormalizeSimulationCode(compilation);
+			//return Emit(compilation, project.OutputFilePath);
+
+			// TODO: Figure out how to do this, might required VS 14
+
+			return -1;
 		}
 
 		/// <summary>
@@ -185,7 +188,8 @@ namespace SafetySharp.CSharpCompiler
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
 
-			var diagnostics = AnalyzerDriver.GetDiagnostics(compilation, GetAnalyzers(), new CancellationToken(), false).ToArray();
+			var options = new AnalyzerOptions(Enumerable.Empty<AdditionalStream>(), new Dictionary<string, string>());
+			var diagnostics = AnalyzerDriver.GetDiagnostics(compilation, GetAnalyzers(), options, new CancellationToken(), false).ToArray();
 			return Report(diagnostics, false);
 		}
 

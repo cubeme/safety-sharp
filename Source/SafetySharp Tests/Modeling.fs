@@ -29,7 +29,6 @@ open System.Reflection
 open SafetySharp.Modeling
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Internal.Utilities
-open SafetySharp.Tests
 
 [<AutoOpen>]
 module ModelingShared =
