@@ -5,34 +5,32 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>acdba456-3b21-480d-b739-dcc7eae6d233</ProjectGuid>
+    <ProjectGuid>38baa192-42c4-44c2-ad10-ab8eabf7badd</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Tests</RootNamespace>
-    <AssemblyName>SafetySharp.Tests</AssemblyName>
+    <RootNamespace>SafetySharp_ModelChecker_Tests</RootNamespace>
+    <AssemblyName>SafetySharp.MCTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>SafetySharp Tests</Name>
+    <Name>SafetySharp ModelChecker Tests</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <OutputPath>..\..\Binaries\Debug</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>bin\Debug\SafetySharp_ModelChecker_Tests.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <OutputPath>..\..\Binaries\Release</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>bin\Release\SafetySharp_ModelChecker_Tests.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -49,22 +47,29 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
-  <ItemGroup>
-    <Compile Include="..\TestHelpers.fs">
-      <Link>TestHelpers.fs</Link>
-    </Compile>
-    <Compile Include="Modeling.fs" />
-    <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\ObjectTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\FormulaTransformationTests.fs" />
-    <Compile Include="Modeling\ComponentTests.fs" />
-    <Compile Include="Modeling\ModelTests.fs" />
-    <None Include="app.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
+  <ItemGroup>
+    <Compile Include="TestHelpers.fs" />
+    <Compile Include="Modelchecking\Common\TestCase1.fs" />
+    <Compile Include="Modelchecking\Common\SimplifiedMetamodelTests.fs" />
+    <Compile Include="Modelchecking\Common\WriteOnceMetamodelTests.fs" />
+    <Compile Include="Modelchecking\Common\TestCase1.fs" />
+    <Compile Include="Modelchecking\Common\SimplifiedMetamodelTests.fs" />
+    <Compile Include="Modelchecking\Common\WriteOnceMetamodelTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvModels.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvInterpretResultTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvExecuteTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodelTests.fs" />
+    <Compile Include="Modelchecking\Promela\PromelaAstToFileTests.fs" />
+    <Compile Include="Modelchecking\Promela\PromelaExecuteTests.fs" />
+    <Compile Include="Modelchecking\Promela\PromelaTransformMetamodelTests.fs" />
+    <Compile Include="Modelchecking\Prism\PrismAstToFileTests.fs" />
+    <Compile Include="Modelchecking\Prism\PrismExecuteTests.fs" />
+    <Compile Include="Modelchecking\Prism\PrismInterpretResultTests.fs" />
+    <Content Include="app.config" />
+    <Content Include="packages.config" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
       <HintPath>..\packages\FParsec.1.0.1\lib\net40-client\FParsec.dll</HintPath>

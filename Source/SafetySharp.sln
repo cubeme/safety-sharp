@@ -11,6 +11,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "Safety
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CSharpCompiler Tests", "CSharpCompiler Tests\CSharpCompiler Tests.fsproj", "{A52B489B-5B02-4FF3-B335-171C4C92C2DC}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp ModelChecker Tests", "SafetySharp ModelChecker Tests\SafetySharp ModelChecker Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{A52B489B-5B02-4FF3-B335-171C4C92C2DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A52B489B-5B02-4FF3-B335-171C4C92C2DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A52B489B-5B02-4FF3-B335-171C4C92C2DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
