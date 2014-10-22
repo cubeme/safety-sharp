@@ -104,6 +104,7 @@
     <Compile Include="Modelchecking\Prism\PrismCommandsToString.fs" />
     <Compile Include="Modelchecking\Prism\PrismInterpretResult.fs" />
     <Compile Include="Modelchecking\Prism\PrismExecute.fs" />
+    <Compile Include="Analysis\Stochastic\FailureRate.fs" />
     <Compile Include="Verification\SpinModelChecker.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />

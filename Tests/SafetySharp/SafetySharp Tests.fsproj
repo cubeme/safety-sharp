@@ -62,6 +62,7 @@
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
     <None Include="app.config" />
+    <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
