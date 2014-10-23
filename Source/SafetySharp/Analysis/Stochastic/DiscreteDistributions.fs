@@ -25,9 +25,76 @@ namespace SafetySharp.Internal.Analysis.Stochastic
 
 open SafetySharp.Internal.Analysis
 
-
-
 (* discrete distributions *)
 
+// Literature
+//    [SCSS]: Safety Critical Computer Systems
+//    [FTH]: Fault Tree Handbook
+//    [FTHAA]: Fault Tree Handbook Aerospace Application
+//    [BW]: Bolze, Werner: Grundlagen der Stochastik
+//    [WikiExp]: http://en.wikipedia.org/wiki/Exponential_distribution
+//    [WikiGeo]: http://en.wikipedia.org/wiki/Geometric_distribution
+
+type GeometricDistribution () = 
+    // Field of application in safety analysis:
+    //    Discrete Model Checkers cannot use Continuous Distributions. So Continuous Distributions have to
+    //    be approximated by Discrete Distributions. The mathematical background model of MTTF (Mean
+    //    Time To Failure) of a safety critical component is the Continuous Exponential Distribution.
+    //    Reliability(t) = Probability[No occurrences of system failure until point of time t].
+    //    For further details of MTTF see ContinuousDistributions.fs/ExponentialDistribution.
+    // Detailed description in:
+    //    Inference of the formula [BW page 57,61]
+    // Relationship to continuous Distribution:
+    //    The continuous Exponential Distribution is also memoryless [WikiExp,WikiGeo].
+    //    http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution    
+    // P (X < k)    (analogue to Cumulative Distribution Function):
+    //    P (X >= k) = (1-p)^(k-1)
+    //    P (X < k) = 1 - P (X >= k) = 1 - (1-p)^(k-1)
+    // P (X = k)    (analogue to Probability Density Function):
+    //    P(X = k) = p * (1 -p)^(k-1)
+    // Expected Value of P:
+    //    E(X) = 1/p
+    // Variance of P:
+    //    V(X) = (1-p)/(p^2)
+    // Note:
+    //    \Omega\prime = \mathbb{N}. Sample Space are the Natural Numbers.
+    member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
+        // another idea: show graph of quality of approximation
+        ""
+    
+    member this.calculateFailureRate (time:PointOfTime) =
+        ""
+    member this.calculateTimeToFailure () =
+        ""
+    member this.calculateProbabilityOfFailureAtTimePoint (time:PointOfTime) =
+        // _at_ time point
+        // In the continuous case the probability at a specific
+        // time point is 0 [BW comment 10.28]
+        0        
+
+    member this.calculateProbabilityOfFailureUntilTimePoint (time:PointOfTime) =
+        // CDF. "Cumulative Distribution Function"
+        // _until_ time point. Mathematically F(x) = ... (integral of f(x)). Sometimes also denoted Q(x)
+        ""
+        
+    member this.calculateDerivateOfProbabilityOfFailureUntilTimePoint (time:PointOfTime) =
+        // pdf: "Probability Density Function"
+        // Mathematically f(x) = ... (derivate of F(x))
+        // is not equal to probability _at_ time point in a discrete distribution, because
+        // in the continuous case the probability is 0
+        ""
+
+    member this.calculateProbabilityOfReliableOperationUntilTimePoint (time:PointOfTime) =
+        // _until_ time point. Mathematically R(x) = 1 - F(x)...
+        ""
+
+    member this.createFormulaForCASMaxima = ""
+
+    member this.createFormulaForRProgramming = ""
+
+
+(*
 type BinominalDistribution () =
     let a = "2"
+
+*)

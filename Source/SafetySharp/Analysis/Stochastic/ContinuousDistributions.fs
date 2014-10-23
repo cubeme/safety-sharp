@@ -32,6 +32,8 @@ open SafetySharp.Internal.Analysis
 //    [FTH]: Fault Tree Handbook
 //    [FTHAA]: Fault Tree Handbook Aerospace Application
 //    [BW]: Bolze, Werner: Grundlagen der Stochastik
+//    [WikiExp]: http://en.wikipedia.org/wiki/Exponential_distribution
+//    [WikiGeo]: http://en.wikipedia.org/wiki/Geometric_distribution
 
 type ExponentialDistribution () = 
     // Field of application in safety analysis:
@@ -41,13 +43,14 @@ type ExponentialDistribution () =
     //    is independent of the point of time t, memoryless). We denote this constant failure rate with \lambda.
     //    "[...] the majority of reliability analysis is based on an assumption of a constant failure rate"
     //    [SCSS page 165].
-    //    "The failure rat of a device is the number of failures within a given period of time" [SCSS page 164].
+    //    "The failure rate of a device is the number of failures within a given period of time" [SCSS page 164].
     // Detailed description in:
     //    Inference of the formula [FTH page X-20]
     //    Transformation to DTMC given in [SCSS page 186]
     //    Mathematical description given in [BW page 106]
     // Relationship to discrete Distribution:
-    //    The discrete Geometric Distribution is also memoryless.
+    //    The discrete Geometric Distribution is also memoryless [WikiExp,WikiGeo].
+    //    http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution
     // Cumulative Distribution Function:
     //    F(t) = Failure(t) = 1 - e^(- \lambda * t) (if t > 0)
     //    Reliability(t) = e^(- \lambda * t)
