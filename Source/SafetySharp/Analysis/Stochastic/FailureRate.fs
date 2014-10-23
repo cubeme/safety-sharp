@@ -25,7 +25,7 @@ namespace SafetySharp.Internal.Analysis.Stochastic
 
 open SafetySharp.Internal.Analysis
 
-// TODO: Move content into own files "DiscreteDistributions" "ContinuousDistributions" and "TransformationOfDistributions"
+// TODO: Maybe rename to "TransformationOfDistributions"
 
 (*
 
@@ -43,78 +43,6 @@ Example "Bathtub Curve" (Fault Tree Handbook page X-24):
     Consequence of Aging
     Can be modeled with the Normal Distribution
 *)
-
-(* continuous distributions *)
-
-type RayleighDistribution () =
-    member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
-        // another idea: show graph of quality of approximation
-        ""
-    
-    member this.calculateFailureRate (time:PointOfTime) =
-        ""
-    member this.calculateTimeToFailure () =
-        ""
-    member this.calculateProbabilityOfFailureAtTimePoint (time:PointOfTime) =
-        // _at_ time point
-        // In the continuous case the probability at a specific
-        // time point is 0 (see comment 10.28 of "Bolze, Werner: Grundlagen der Stochastik")
-        0        
-
-    member this.calculateProbabilityOfFailureUntilTimePoint (time:PointOfTime) =
-        // CDF. "Cumulative Distribution Function"
-        // _until_ time point. Mathematically F(x) = ... (integral of f(x)). Sometimes also denoted Q(x)
-        ""
-        
-    member this.calculateDerivateOfProbabilityOfFailureUntilTimePoint (time:PointOfTime) =
-        // pdf: "Probability Density Function"
-        // Mathematically f(x) = ... (derivate of F(x))
-        // is not equal to probability _at_ time point in a discrete distribution, because
-        // in the continuous case the probability is 0
-        ""
-
-    member this.calculateProbabilityOfReliableOperationUntilTimePoint (time:PointOfTime) =
-        // _until_ time point. Mathematically R(x) = 1 - F(x)...
-        ""
-
-    member this.createFormulaForCASMaxima = ""
-
-    member this.createFormulaForRProgramming = ""
-
-
-type ExponentialDistribution () = 
-    // Described in FTH and 
-    // Transformation to DTMC given in "Safety Critical Computer Systems" page 186
-    let a = ""
-
-    
-    
-type WeibullDistribution () =
-    // Field of application:
-    // Detailed description in:
-    //    ...
-    // Note:
-    //    parameter
-    
-    let a = ""
-
-
-type PoissonDistribution () =
-    let a = ""
-    
-type NormalDistribution () =
-    let a = ""
-
-type GammaDistribution () =
-    let a = ""
-    
-
-type GaussianDistribution = NormalDistribution
-
-type DistributionWithLinearIncreasingFailureRate () =
-    let a = ""    
-
-(* discrete distributions *)
 
 (*
 "Transformation" of a Distribution from discrete <-> continuous is called "Limiting forms"
