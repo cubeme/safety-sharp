@@ -29,15 +29,16 @@ open SafetySharp.Internal.Analysis
 
 // Literature
 //    [SCSS]: Safety Critical Computer Systems
-//    [FTH]:
-//    [FTHAA]:
+//    [FTH]: Fault Tree Handbook
+//    [FTHAA]: Fault Tree Handbook Aerospace Application
 //    [BW]: Bolze, Werner: Grundlagen der Stochastik
 
 type ExponentialDistribution () = 
     // Field of application in safety analysis:
-    //    When the failure rate of a component is constant (i.e. the probability that a component fails
-    //    in the time period [t,t+c] (where c is a constant) is independent from the point of time t).
-    //    We denote this constant failure rate with \lambda.
+    //    Reliability(t) = Probability[No occurrences of system failure until point of time t].
+    //    Used to determine the reliability of a component when the failure rate of a component is _constant_ 
+    //    (i.e. the probability that a component fails in the time period [t,t+c] (where c is a constant)
+    //    is independent of the point of time t). We denote this constant failure rate with \lambda.
     //    "[...] the majority of reliability analysis is based on an assumption of a constant failure rate"
     //    [SCSS page 165].
     //    "The failure rat of a device is the number of failures within a given period of time" [SCSS page 164].
