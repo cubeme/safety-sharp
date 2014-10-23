@@ -37,27 +37,29 @@ open SafetySharp.Internal.Analysis
 
 type GeometricDistribution () = 
     // Field of application in safety analysis:
+    //    We use the convention "first 'success' (in our case failure) in step number k (for k in 1,2,3,...)
     //    Discrete Model Checkers cannot use Continuous Distributions. So Continuous Distributions have to
     //    be approximated by Discrete Distributions. The mathematical background model of MTTF (Mean
-    //    Time To Failure) of a safety critical component is the Continuous Exponential Distribution.
+    //    Time To Failure of a safety critical component) is the Continuous Exponential Distribution.
     //    Reliability(t) = Probability[No occurrences of system failure until point of time t].
-    //    For further details of MTTF see ContinuousDistributions.fs/ExponentialDistribution.
+    //    For further details on MTTF see ContinuousDistributions.fs/ExponentialDistribution.
     // Detailed description in:
     //    Inference of the formula [BW page 57,61]
     // Relationship to continuous Distribution:
     //    The continuous Exponential Distribution is also memoryless [WikiExp,WikiGeo].
     //    http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution    
     // P (X < k)    (analogue to Cumulative Distribution Function):
-    //    P (X >= k) = (1-p)^(k-1)
-    //    P (X < k) = 1 - P (X >= k) = 1 - (1-p)^(k-1)
-    // P (X = k)    (analogue to Probability Density Function):
-    //    P(X = k) = p * (1 -p)^(k-1)
+    //    P (X >= k) = (1-p)^(k-1)  <--- p is the probability of a failure in one step. This formula says "nothing went wrong in the first k-1 steps, the 'coin' flipped to 'no failure'"
+    //    P (X < k) = 1 - P (X >= k) = 1 - (1-p)^(k-1)   <---- This describes the probability of a failure within the first k-1 steps
+    // Probability Mass Function (pmf)    (P (X = k), analogue to Probability Density Function):
+    //    P(X = k) = p * (1-p)^(k-1)     <---- a failure occurred exactly in step number k the first time
     // Expected Value of P:
-    //    E(X) = 1/p
+    //    E(X) = 1/p <---- average number of the step, where the first time
     // Variance of P:
     //    V(X) = (1-p)/(p^2)
     // Note:
     //    \Omega\prime = \mathbb{N}. Sample Space are the Natural Numbers.
+    //    In the initial state k=0 the probability of an error should be 0
     member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
         // another idea: show graph of quality of approximation
         ""

@@ -84,7 +84,7 @@ type ExponentialDistribution () =
         ""
         
     member this.calculateDerivateOfProbabilityOfFailureUntilTimePoint (time:PointOfTime) =
-        // pdf: "Probability Density Function"
+        // PDF: "Probability Density Function"
         // Mathematically f(x) = ... (derivate of F(x))
         // is not equal to probability _at_ time point in a discrete distribution, because
         // in the continuous case the probability is 0
