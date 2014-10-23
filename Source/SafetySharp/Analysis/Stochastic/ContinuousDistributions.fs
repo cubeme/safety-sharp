@@ -98,6 +98,9 @@ type ExponentialDistribution () =
 
     member this.createFormulaForRProgramming = ""
 
+    member this.generateDiscreteApproximation (numberOfStatesToApproximate:int) (durationOfOneStep:int) = // : GeometricDistribution =
+        ""
+
 
 (*
 type RayleighDistribution () =
