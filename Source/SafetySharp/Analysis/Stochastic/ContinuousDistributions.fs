@@ -38,23 +38,29 @@ type ExponentialDistribution () =
     //    Reliability(t) = Probability[No occurrences of system failure until point of time t].
     //    Used to determine the reliability of a component when the failure rate of a component is _constant_ 
     //    (i.e. the probability that a component fails in the time period [t,t+c] (where c is a constant)
-    //    is independent of the point of time t). We denote this constant failure rate with \lambda.
+    //    is independent of the point of time t, memoryless). We denote this constant failure rate with \lambda.
     //    "[...] the majority of reliability analysis is based on an assumption of a constant failure rate"
     //    [SCSS page 165].
     //    "The failure rat of a device is the number of failures within a given period of time" [SCSS page 164].
     // Detailed description in:
     //    Inference of the formula [FTH page X-20]
     //    Transformation to DTMC given in [SCSS page 186]
+    //    Mathematical description given in [BW page 106]
     // Relationship to discrete Distribution:
+    //    The discrete Geometric Distribution is also memoryless.
     // Cumulative Distribution Function:
-    //      Reliability(t) = e^(- \lambda * t)
-    //      Failure(t) = 1 - e^(- \lambda * t)
+    //    F(t) = Failure(t) = 1 - e^(- \lambda * t) (if t > 0)
+    //    Reliability(t) = e^(- \lambda * t)
     // Probability Density Function:
-    //      f(t) = \lambda * e^(- \lambda * t)
+    //    f(t) = \lambda * e^(- \lambda * t)
+    // Expected Value of f(t):
+    //    1/\lambda (also called Mean Time To Failure or \theta) [SCSS page 165, FTH page X-20, BW page 112]
+    // Variance of f(t):
+    //    1/(\lambda^2) 
     // Note:
-    //    Mean Time To Failure (\theta):
-    //          \theta = \int_0^\infty Reliability(t) dt
-    //       => \theta = 1 / \lambda [SCSS page 165, FTH page X-20]
+    //    The Exponential Distribution itself only talks about F(t) (cdf) and f(t) (pdf).
+    //    F(t) is also not called Failure(t) in general. We do it here, because we have a strong focus on
+    //    safety analysis. Thats also the reason we defined here Reliability(t) for convenience.
     member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
         // another idea: show graph of quality of approximation
         ""
