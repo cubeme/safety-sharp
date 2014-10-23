@@ -46,9 +46,7 @@ Example "Bathtub Curve" (Fault Tree Handbook page X-24):
 
 (* continuous distributions *)
 
-type RayleighDistribution () =    
-    let a = ""    
-    
+type RayleighDistribution () =
     member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
         // another idea: show graph of quality of approximation
         ""
