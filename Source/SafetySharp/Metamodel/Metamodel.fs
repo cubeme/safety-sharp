@@ -22,20 +22,11 @@
 
 module Test
 
-type Var = 
-    | Var of string
-
-type Field = 
-    | Field of string
-
-type ReqPort =
-    | ReqPort of string
-
-type ProvPort = 
-    | ProvPort of string
-
-type Comp = 
-    | Comp of string
+type Var = Var of string
+type Field = Field of string
+type ReqPort = ReqPort of string
+type ProvPort = ProvPort of string
+type Comp = Comp of string
 
 type UOp =
     | Minus
@@ -105,11 +96,14 @@ type ProvPortSym = {
     Stm : Stm
 }
 
+type BindingType = Instantaneous | Delayed
+
 type BindingSym = {
     ReqPort : ReqPort
     ProvPort : ProvPort
     ReqComp : Comp
     ProvComp : Comp
+    Type : BindingType
 }
 
 type CompSym = {
@@ -119,5 +113,6 @@ type CompSym = {
     ReqPorts : ReqPortSym list
     ProvPorts : ProvPortSym list
     Bindings : BindingSym list
+    Locals : VarSym list
     Stm : Stm
 }

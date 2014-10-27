@@ -84,5 +84,22 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 			return methodSymbol.Overrides(semanticModel.GetUpdateMethodSymbol());
 		}
+
+		/// <summary>
+		///     Checks whether <paramref name="methodSymbol" /> represents a built-in operator of the <see cref="int" />,
+		///     <see cref="bool" />, or <see cref="decimal" /> types.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsBuiltInOperator([NotNull] this IMethodSymbol methodSymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return methodSymbol.ContainingType == semanticModel.GetTypeSymbol<int>() ||
+				   methodSymbol.ContainingType == semanticModel.GetTypeSymbol<bool>() ||
+				   methodSymbol.ContainingType == semanticModel.GetTypeSymbol<decimal>();
+		}
 	}
 }

@@ -128,5 +128,22 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 			return typeSymbol.IsDerivedFrom(semanticModel.GetComponentInterfaceSymbol());
 		}
+
+		/// <summary>
+		///     Checks whether <paramref name="typeSymbol" /> represents the <see cref="int" />,
+		///     <see cref="bool" />, or <see cref="decimal" /> types.
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool IsBuiltType([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			return typeSymbol == semanticModel.GetTypeSymbol<int>() ||
+				   typeSymbol == semanticModel.GetTypeSymbol<bool>() ||
+				   typeSymbol == semanticModel.GetTypeSymbol<decimal>();
+		}
 	}
 }
