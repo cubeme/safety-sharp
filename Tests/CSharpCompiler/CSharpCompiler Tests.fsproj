@@ -96,25 +96,20 @@
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">
-      <Name>SafetySharp</Name>
-      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="Microsoft.CodeAnalysis">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp.Desktop">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.CSharp.Desktop.dll</HintPath>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.CSharp.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Desktop">
-      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.Desktop.dll</HintPath>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.0.7.4080704-beta\lib\net45\Microsoft.CodeAnalysis.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
@@ -122,25 +117,32 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+      <HintPath>..\..\Dependencies\Packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable">
-      <HintPath>..\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\CSharpCompiler\CSharpCompiler.csproj">
+    <Reference Include="System.Reflection.Metadata">
+      <HintPath>..\..\Dependencies\Packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\CSharpCompiler\CSharpCompiler.csproj">
       <Name>CSharpCompiler</Name>
       <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <Reference Include="System.Reflection.Metadata">
-      <HintPath>..\packages\Microsoft.Bcl.Metadata.1.0.12-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
+      <Name>SafetySharp</Name>
+      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Private>True</Private>
-    </Reference>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

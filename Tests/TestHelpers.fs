@@ -211,7 +211,7 @@ module private ObjectDumper =
         dump object'
         writer.ToString ()
 
-    /// Checks whether the given function raises an exception of the given type.
+/// Checks whether the given function raises an exception of the given type.
 let raisesWith<'T when 'T :> Exception> func =
     let mutable thrownException : Exception option = None
     try 

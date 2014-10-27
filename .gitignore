@@ -71,6 +71,7 @@ _ReSharper*/
 # Nuget
 .nuget
 packages
+Dependencies/Packages
 
 # Backup & report files from converting an old project file to a newer Visual Studio version
 _UpgradeReport_Files/

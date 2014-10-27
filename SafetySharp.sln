@@ -3,15 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpCompiler", "CSharpCompiler\CSharpCompiler.csproj", "{8823091C-387F-4F4D-ABCD-8F71D1528CBB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpCompiler", "Source\CSharpCompiler\CSharpCompiler.csproj", "{8823091C-387F-4F4D-ABCD-8F71D1528CBB}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp", "Source\SafetySharp\SafetySharp.fsproj", "{18DFC311-4633-4B22-AB2F-FF42901C6438}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "SafetySharp Tests\SafetySharp Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "Tests\SafetySharp\SafetySharp Tests.fsproj", "{ACDBA456-3B21-480D-B739-DCC7EAE6D233}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CSharpCompiler Tests", "CSharpCompiler Tests\CSharpCompiler Tests.fsproj", "{A52B489B-5B02-4FF3-B335-171C4C92C2DC}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CSharpCompiler Tests", "Tests\CSharpCompiler\CSharpCompiler Tests.fsproj", "{A52B489B-5B02-4FF3-B335-171C4C92C2DC}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Modelchecking Tests", "Modelchecking Tests\Modelchecking Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Modelchecking Tests", "Tests\Modelchecking\Modelchecking Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{17ADA692-CD6C-4F50-84FD-008F09179BC8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{C5F3E271-22DA-4FD8-A830-7E0A8BFD430F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,5 +46,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8823091C-387F-4F4D-ABCD-8F71D1528CBB} = {C5F3E271-22DA-4FD8-A830-7E0A8BFD430F}
+		{18DFC311-4633-4B22-AB2F-FF42901C6438} = {C5F3E271-22DA-4FD8-A830-7E0A8BFD430F}
+		{ACDBA456-3B21-480D-B739-DCC7EAE6D233} = {17ADA692-CD6C-4F50-84FD-008F09179BC8}
+		{A52B489B-5B02-4FF3-B335-171C4C92C2DC} = {17ADA692-CD6C-4F50-84FD-008F09179BC8}
+		{38BAA192-42C4-44C2-AD10-AB8EABF7BADD} = {17ADA692-CD6C-4F50-84FD-008F09179BC8}
 	EndGlobalSection
 EndGlobal
