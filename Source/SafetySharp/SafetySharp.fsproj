@@ -105,8 +105,6 @@
     <Compile Include="Modelchecking\Prism\PrismInterpretResult.fs" />
     <Compile Include="Modelchecking\Prism\PrismExecute.fs" />
     <Compile Include="Analysis\UnitsOfMeasurement.fs" />
-    <Compile Include="Analysis\Stochastic\FailureRate.fs" />
-    <Compile Include="Analysis\UnitsOfMeasurement.fs" />
     <Compile Include="Analysis\Stochastic\DiscreteDistributions.fs" />
     <Compile Include="Analysis\Stochastic\ContinuousDistributions.fs" />
     <Compile Include="Analysis\Stochastic\FailureRate.fs" />
