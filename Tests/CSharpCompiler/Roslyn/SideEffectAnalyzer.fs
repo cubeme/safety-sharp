@@ -37,7 +37,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Syntax
 module SideEffectAnalyzer =
 
     let isSideEffectFree expression = 
-        let compilation = TestCompilation (sprintf "
+        let compilation = TestCompilation ("
             struct S 
             {
                 public static S operator+(S s) { return s; }
@@ -48,7 +48,7 @@ module SideEffectAnalyzer =
                 public static S operator-(S s1, S s2) { return s1; }
                 public static S operator*(S s1, S s2) { return s1; }
                 public static S operator/(S s1, S s2) { return s1; }
-                public static S operator%%(S s1, S s2) { return s1; }
+                public static S operator%(S s1, S s2) { return s1; }
                 public static bool operator==(S s1, S s2) { return false; }
                 public static bool operator!=(S s1, S s2) { return false; }
                 public static bool operator>=(S s1, S s2) { return false; }
@@ -74,10 +74,10 @@ module SideEffectAnalyzer =
                     int a = 0, b = 0;
                     bool c = false, d = false;
                     decimal e = 1, f = 3;
-                    var result = %s; 
+                    var result = " + expression + "; 
                 }
             }
-        " expression)
+        ")
 
         let methodDeclaration = compilation.FindMethodDeclaration "X" "M"
         let lastStatement = methodDeclaration.Body.Statements.Last () :?> LocalDeclarationStatementSyntax
