@@ -50,7 +50,8 @@ type GeometricDistribution () =
     //    http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution    
     // P (X < k)    (analogue to Cumulative Distribution Function):
     //    P (X >= k) = (1-p)^(k-1)  <--- p is the probability of a failure in one step. This formula says "nothing went wrong in the first k-1 steps, the 'coin' flipped to 'no failure'"
-    //    P (X < k) = 1 - P (X >= k) = 1 - (1-p)^(k-1)   <---- This describes the probability of a failure within the first k-1 steps
+    //    P (X < k) = 1 - P (X >= k) = 1 - (1-p)^(k-1)   <---- This describes the probability of a failure within the first k-1 steps ("something went wrong in the first k-1 steps")
+    //    P (X <= k) = P(X < k+1) = 1 - P (X >= k+1) = 1 - (1-p)^k   <---- This describes the probability of a failure within the first k steps ("something went wrong in the first k steps")
     // Probability Mass Function (pmf)    (P (X = k), analogue to Probability Density Function):
     //    P(X = k) = p * (1-p)^(k-1)     <---- a failure occurred exactly in step number k the first time
     // Expected Value of P:
