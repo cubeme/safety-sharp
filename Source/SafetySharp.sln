@@ -11,7 +11,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp Tests", "Safety
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CSharpCompiler Tests", "CSharpCompiler Tests\CSharpCompiler Tests.fsproj", "{A52B489B-5B02-4FF3-B335-171C4C92C2DC}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SafetySharp ModelChecker Tests", "SafetySharp ModelChecker Tests\SafetySharp ModelChecker Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Modelchecking Tests", "Modelchecking Tests\Modelchecking Tests.fsproj", "{38BAA192-42C4-44C2-AD10-AB8EABF7BADD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

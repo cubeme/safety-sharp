@@ -38,7 +38,7 @@ module internal AssemblyInfo =
     [<assembly: AssemblyFileVersion("0.1.0.0")>]
     [<assembly: ComVisible(false)>]
     [<assembly: InternalsVisibleTo("SafetySharp.Tests")>]
-    [<assembly: InternalsVisibleTo("SafetySharp.MCTests")>]
+    [<assembly: InternalsVisibleTo("SafetySharp.Tests.Modelchecking")>]
     [<assembly: InternalsVisibleTo("ssc")>]
 
     do ()

@@ -8,29 +8,31 @@
     <ProjectGuid>38baa192-42c4-44c2-ad10-ab8eabf7badd</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>SafetySharp_ModelChecker_Tests</RootNamespace>
-    <AssemblyName>SafetySharp.MCTests</AssemblyName>
+    <AssemblyName>SafetySharp.Tests.Modelchecking</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>SafetySharp ModelChecker Tests</Name>
+    <Name>Modelchecking Tests</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\Binaries\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\SafetySharp_ModelChecker_Tests.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\BinariesRelease\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\SafetySharp_ModelChecker_Tests.XML</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -49,7 +51,9 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
-    <Compile Include="TestHelpers.fs" />
+    <Compile Include="..\TestHelpers.fs">
+      <Link>TestHelpers.fs</Link>
+    </Compile>
     <Compile Include="Modelchecking\Common\TestCase1.fs" />
     <Compile Include="Modelchecking\Common\SimplifiedMetamodelTests.fs" />
     <Compile Include="Modelchecking\Common\WriteOnceMetamodelTests.fs" />

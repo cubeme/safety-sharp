@@ -110,10 +110,11 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 		{
 			Requires.NotNull(compilation, () => compilation);
 
-			return compilation.GetTypeSymbol<Component>()
-							  .GetMembers("Update")
-							  .OfType<IMethodSymbol>()
-							  .Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
+			return compilation
+				.GetTypeSymbol<Component>()
+				.GetMembers("Update")
+				.OfType<IMethodSymbol>()
+				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
 		}
 	}
 }

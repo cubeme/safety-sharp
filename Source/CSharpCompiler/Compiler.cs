@@ -53,7 +53,7 @@ namespace SafetySharp.CSharpCompiler
 		///     Compiles the SafetySharp modeling project identified by the <paramref name="projectFile" /> for the given
 		///     <paramref name="configuration" /> and <paramref name="platform" />.
 		/// </summary>
-		/// <param name="projectFile">The file of the C# project that should be compiled.</param>
+		/// <param name="projectFile">The C# project file that should be compiled.</param>
 		/// <param name="configuration">The configuration the C# project should be compiled in.</param>
 		/// <param name="platform">The platform the C# project should be compiled for.</param>
 		public static int Compile([NotNull] string projectFile, [NotNull] string configuration, [NotNull] string platform)
@@ -87,7 +87,8 @@ namespace SafetySharp.CSharpCompiler
 			//compilation = NormalizeSimulationCode(compilation);
 			//return Emit(compilation, project.OutputFilePath);
 
-			// TODO: Figure out how to do this, might required VS 14
+			// TODO: Figure out how to do this as it has a dependency on the next version MSBuild which is not
+			// TODO: available on the build server
 
 			return -1;
 		}

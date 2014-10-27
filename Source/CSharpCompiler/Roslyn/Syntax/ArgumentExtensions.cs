@@ -174,14 +174,16 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 				return methodSymbol.Parameters.Single(parameter => parameter.Name == argument.NameColon.Name.Identifier.ValueText);
 
 			// Otherwise, get the corresponding invocation or object creation expression and match the argument.
-			SeparatedSyntaxList<ArgumentSyntax> arguments;
+			var arguments = default(SeparatedSyntaxList<ArgumentSyntax>);
 			var invocationExpression = methodCallExpression as InvocationExpressionSyntax;
 			var objectCreationExpression = methodCallExpression as ObjectCreationExpressionSyntax;
 
 			if (invocationExpression != null)
 				arguments = invocationExpression.ArgumentList.Arguments;
-			else
+			else if (objectCreationExpression != null)
 				arguments = objectCreationExpression.ArgumentList.Arguments;
+			else
+				Assert.NotReached("Expected an invocation expression or an object creation expression.");
 
 			for (var i = 0; i < arguments.Count; ++i)
 			{
