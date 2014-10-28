@@ -41,6 +41,7 @@ module SS1007 =
     let ss1007 location length =
         Diagnostic ("SS1007", (1, location), (1, location + length), "Enum 'E' must not explicitly declare an underlying type.")
         |> Some
+
     [<Test>]
     let ``implicit underlying type is valid`` () =
         getDiagnostic "enum E { A }" =? None

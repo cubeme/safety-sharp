@@ -25,29 +25,42 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 	using System;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
-	using Syntax;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
 	/// <summary>
-	///     A base class for SafetySharp C# <see cref="SyntaxNode" /> analyzers.
+	///     Synthesizes unique variable or type identifier names for specific locations within a C# <see cref="SyntaxTree" />.
 	/// </summary>
-	public abstract class SyntaxNodeAnalyzer<T> : SyntaxTreeAnalyzer
-		where T : CSharpSyntaxNode
+	public static class IdentifierNameSynthesizer
 	{
 		/// <summary>
-		///     Analyzes the <paramref name="syntaxTree" />.
+		///     Gets a value indicating whether <paramref name="name" /> is a synthesized name.
 		/// </summary>
-		/// <param name="syntaxTree">The syntax tree that should be analyzed.</param>
-		protected override sealed void Analyze(SyntaxTree syntaxTree)
+		/// <param name="name">The name that should be checked.</param>
+		public static bool IsSynthesized(string name)
 		{
-			foreach (var node in syntaxTree.DescendantsAndSelf<T>())
-				Analyze(node);
+			return name.StartsWith("__") && name.EndsWith("__");
 		}
 
 		/// <summary>
-		///     Analyzes the <paramref name="syntaxNode" />.
+		///     Gets a value indicating whether <paramref name="identifier" /> is a synthesized name.
 		/// </summary>
-		/// <param name="syntaxNode">The syntax node that should be analyzed.</param>
-		protected abstract void Analyze([NotNull] T syntaxNode);
+		/// <param name="identifier">The identifier that should be checked.</param>
+		public static bool IsSynthesized(SyntaxToken identifier)
+		{
+			return IsSynthesized(identifier.ValueText);
+		}
+
+		/// <summary>
+		///     Converts <paramref name="name" /> to a synthesized name.
+		/// </summary>
+		/// <param name="name">The name that should be converted.</param>
+		private static IdentifierNameSyntax ToSynthesizedName(string name)
+		{
+			Requires.NotNullOrWhitespace(name, () => name);
+			Requires.ArgumentSatisfies(!IsSynthesized(name), () => name, "The name has already been escaped.");
+
+			return SyntaxFactory.IdentifierName(String.Format("__{0}__", name));
+		}
 	}
 }

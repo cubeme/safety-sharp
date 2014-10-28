@@ -23,31 +23,37 @@
 namespace SafetySharp.CSharpCompiler.Roslyn
 {
 	using System;
+	using System.Threading;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Syntax;
+	using Microsoft.CodeAnalysis.Diagnostics;
 	using Utilities;
 
 	/// <summary>
-	///     A base class for SafetySharp C# <see cref="SyntaxNode" /> analyzers.
+	///     A base class for SafetySharp C# <see cref="SyntaxTree" /> analyzers.
 	/// </summary>
-	public abstract class SyntaxNodeAnalyzer<T> : SyntaxTreeAnalyzer
-		where T : CSharpSyntaxNode
+	public abstract class SyntaxTreeAnalyzer : CSharpAnalyzer, ISyntaxTreeAnalyzer
 	{
 		/// <summary>
 		///     Analyzes the <paramref name="syntaxTree" />.
 		/// </summary>
-		/// <param name="syntaxTree">The syntax tree that should be analyzed.</param>
-		protected override sealed void Analyze(SyntaxTree syntaxTree)
+		/// <param name="syntaxTree">The syntaxTree that should be analyzed.</param>
+		/// <param name="addDiagnostic">A delegate that should be used to emit diagnostics.</param>
+		/// <param name="options">A set of options passed in by the host.</param>
+		/// <param name="cancellationToken">A token that should be checked for cancelling the analysis.</param>
+		public void AnalyzeSyntaxTree([NotNull] SyntaxTree syntaxTree, [NotNull] Action<Diagnostic> addDiagnostic,
+									  AnalyzerOptions options, CancellationToken cancellationToken)
 		{
-			foreach (var node in syntaxTree.DescendantsAndSelf<T>())
-				Analyze(node);
+			Requires.NotNull(syntaxTree, () => syntaxTree);
+			Requires.NotNull(addDiagnostic, () => addDiagnostic);
+
+			DiagnosticCallback = addDiagnostic;
+			Analyze(syntaxTree);
 		}
 
 		/// <summary>
-		///     Analyzes the <paramref name="syntaxNode" />.
+		///     Analyzes the <paramref name="syntaxTree" />.
 		/// </summary>
-		/// <param name="syntaxNode">The syntax node that should be analyzed.</param>
-		protected abstract void Analyze([NotNull] T syntaxNode);
+		/// <param name="syntaxTree">The syntax tree that should be analyzed.</param>
+		protected abstract void Analyze([NotNull] SyntaxTree syntaxTree);
 	}
 }

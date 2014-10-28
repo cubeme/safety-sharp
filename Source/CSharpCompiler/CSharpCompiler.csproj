@@ -74,6 +74,7 @@
     <Compile Include="Analyzers\SS1005.cs" />
     <Compile Include="Analyzers\SS1006.cs" />
     <Compile Include="Analyzers\SS1007.cs" />
+    <Compile Include="Analyzers\SS1008.cs" />
     <Compile Include="Normalization\ComponentRequiredPortNormalizer.cs" />
     <Compile Include="Normalization\CompoundAssignmentNormalizer.cs" />
     <Compile Include="Normalization\BooleanConditionalNormalizer.cs" />
@@ -103,6 +104,7 @@
     <Compile Include="Roslyn\Symbols\SemanticModelExtensions.cs" />
     <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />
     <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.cs" />
+    <Compile Include="Roslyn\SyntaxTreeAnalyzer.cs" />
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.cs" />
@@ -114,6 +116,7 @@
     <Compile Include="Roslyn\Syntax\SyntaxTokenExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
     <Compile Include="Roslyn\Syntax\Visibility.cs" />
+    <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
     <Compile Include="Utilities\Assert.cs" />
     <Compile Include="Utilities\Log.cs" />
     <Compile Include="Utilities\LogEntry.cs" />

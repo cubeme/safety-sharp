@@ -97,5 +97,38 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 			Descriptor = new DiagnosticDescriptor(Prefix + identifier, description, messageFormat, Category, severity, true);
 			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
 		}
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic([NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
+		{
+			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+		}
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="syntaxToken" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="syntaxToken">The syntax token the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic(SyntaxToken syntaxToken, params object[] messageArgs)
+		{
+			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
+		}
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="symbol" /> using the <paramref name="messageArgs" /> to format the diagnostic
+		///     message.
+		/// </summary>
+		/// <param name="symbol">The symbol the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic([NotNull] ISymbol symbol, params object[] messageArgs)
+		{
+			DiagnosticCallback(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
+		}
 	}
 }

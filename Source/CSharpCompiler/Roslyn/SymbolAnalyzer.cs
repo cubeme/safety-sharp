@@ -78,16 +78,5 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
 		protected abstract void Analyze([NotNull] T symbol, [NotNull] Compilation compilation);
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="symbol" /> using the <paramref name="messageArgs" /> to format the diagnostic
-		///     message.
-		/// </summary>
-		/// <param name="symbol">The symbol the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic([NotNull] ISymbol symbol, params object[] messageArgs)
-		{
-			DiagnosticCallback(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
-		}
 	}
 }
