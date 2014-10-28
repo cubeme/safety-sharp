@@ -35,15 +35,15 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	/// 
 	///     For instance:
 	///     <code>
-	///     		public int X { get; private set }
-	///     		// becomes:
-	/// 			int __BackingField_X__;
-	///     		public int X { get { return __BackingField_X__; } private set { __BackingField_X__ = value; } }
-	///     		
-	///     		[A] int I.X { [B] get; set; }
-	///     		// becomes:
-	/// 			int __I_BackingField_X__;
-	///     		[A] int I.X { [B] get { return __I_BackingField_X__; } set { __I_BackingField_X__ = value; } }
+	///     	public int X { get; private set }
+	///     	// becomes:
+	/// 		int __BackingField_X__;
+	///     	public int X { get { return __BackingField_X__; } private set { __BackingField_X__ = value; } }
+	///     	
+	///     	[A] int I.X { [B] get; set; }
+	///     	// becomes:
+	/// 		int __I_BackingField_X__;
+	///     	[A] int I.X { [B] get { return __I_BackingField_X__; } set { __I_BackingField_X__ = value; } }
 	///    	</code>
 	/// </summary>
 	public class AutoPropertyNormalizer : CSharpNormalizer

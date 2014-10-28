@@ -24,6 +24,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 {
 	using System;
 	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn;
 	using Roslyn.Syntax;
@@ -33,15 +34,13 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	/// 
 	///     For instance:
 	///     <code>
-	///     		public int X { get; private set }
-	///     		// becomes:
-	/// 			int __BackingField_X__;
-	///     		public int X { get { return __BackingField_X__; } private set { __BackingField_X__ = value; } }
-	///     		
-	///     		[A] int I.X { [B] get; set; }
-	///     		// becomes:
-	/// 			int __I_BackingField_X__;
-	///     		[A] int I.X { [B] get { return __I_BackingField_X__; } set { __I_BackingField_X__ = value; } }
+	///     	public int X => 1;
+	///     	// becomes:
+	///     	public int X { get { return 1; } }
+	///     	
+	///     	[A] bool I.X => false;
+	///     	// becomes:
+	///     	[A] bool I.X { get { return false; } }
 	///    	</code>
 	/// </summary>
 	public class ExpressionPropertyNormalizer : CSharpNormalizer
@@ -80,6 +79,20 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			// Nothing to do here for properties without expression bodies
 			if (propertyDeclaration.ExpressionBody == null)
 				return classDeclaration;
+
+			var members = classDeclaration.Members;
+			members = members.Remove(propertyDeclaration);
+
+			var returnStatement = SyntaxFactory.ReturnStatement(propertyDeclaration.ExpressionBody.Expression).NormalizeWhitespace();
+			var getterBlock = SyntaxFactory.Block(returnStatement.WithLeadingAndTrailingSpace()).WithLeadingAndTrailingSpace();
+			var getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, getterBlock).WithLeadingAndTrailingSpace();
+			var accessors = SyntaxFactory.AccessorList(SyntaxFactory.List(new[] { getter }));
+
+			propertyDeclaration = propertyDeclaration.WithSemicolon(default(SyntaxToken)).WithExpressionBody(null).WithAccessorList(accessors);
+			propertyDeclaration = propertyDeclaration.WithTrailingSpace();
+
+			members = members.Add(propertyDeclaration);
+			return classDeclaration.WithMembers(members);
 		}
 	}
 }

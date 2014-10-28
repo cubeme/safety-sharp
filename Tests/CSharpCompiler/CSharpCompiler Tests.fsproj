@@ -83,7 +83,7 @@
     <Compile Include="Analyzers\SS1006.fs" />
     <Compile Include="Analyzers\SS1007.fs" />
     <Compile Include="Analyzers\SS1008.fs" />
-	  <Compile Include="Normalizers\AutoPropertyNormalizer.fs" />
+    <Compile Include="Normalizers\AutoPropertyNormalizer.fs" />
     <Compile Include="Normalizers\BooleanConditionalNormalizer.fs" />
     <Compile Include="Normalizers\ClassPropertyDeclarationNormalizer.fs" />
     <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
@@ -91,6 +91,7 @@
     <Compile Include="Normalizers\EnumLiteralNormalizer.fs" />
     <Compile Include="Normalizers\EnumTypeNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
+    <Compile Include="Normalizers\ExpressionPropertyNormalizer.fs" />
     <Compile Include="Normalizers\InitializationNormalizer.fs" />
     <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\LocalDeclarationNormalizer.fs" />
