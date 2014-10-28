@@ -72,7 +72,6 @@
     <Compile Include="Modelchecking\Prism\PrismExecuteTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismInterpretResultTests.fs" />
     <Content Include="app.config" />
-    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

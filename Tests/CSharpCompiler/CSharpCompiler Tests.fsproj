@@ -94,7 +94,6 @@
     <Compile Include="Normalizers\NamedArgumentNormalizer.fs" />
     <Compile Include="Normalizers\OptionalArgumentNormalizer.fs" />
     <Compile Include="Normalizers\OutParameterNormalizer.fs" />
-    <None Include="packages.config" />
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
