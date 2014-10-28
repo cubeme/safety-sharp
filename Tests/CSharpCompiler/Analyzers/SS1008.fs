@@ -31,6 +31,7 @@ open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Tests
 open SafetySharp.Modeling
 open SafetySharp.CSharpCompiler.Analyzers
+open SafetySharp.CSharpCompiler.Roslyn
 open SafetySharp.CSharpCompiler.Roslyn.Syntax
 open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
@@ -54,23 +55,31 @@ module SS1008 =
 
     [<Test>]
     let ``reserved names are invalid`` () =
-        getDiagnostic "enum __E__ : byte { A }" =? ss1008 5 "__E__"
-        getDiagnostic "enum E : byte { __A__ }" =? ss1008 16 "__A__"
-        getDiagnostic "interface __I__ { void M(int a); int P { get; set; } }" =? ss1008 10 "__I__"
-        getDiagnostic "interface I { void __M__(int a); int P { get; set; } }" =? ss1008 19 "__M__"
-        getDiagnostic "interface I { void M(int __a__); int P { get; set; } }" =? ss1008 25 "__a__"
-        getDiagnostic "interface I { void M(int a); int __P__ { get; set; } }" =? ss1008 33 "__P__"
-        getDiagnostic "class __C__ { void M(int a) { int b = a; } int P { get; set; } }" =? ss1008 6 "__C__"
-        getDiagnostic "class C { void __M__(int a) { int b = a; } int P { get; set; } }" =? ss1008 15 "__M__"
-        getDiagnostic "class C { void M(int __a__) { int b = __a__; } int P { get; set; } }" =? ss1008 21 "__a__"
-        getDiagnostic "class C { void M(int a) { int __b__ = a; } int P { get; set; } }" =? ss1008 30 "__b__"
-        getDiagnostic "class C { void M(int a) { int b = a; } int __P__ { get; set; } }" =? ss1008 43 "__P__"
-        getDiagnostic "class C { event System.EventHandler __E__; }" =? ss1008 36 "__E__"
-        getDiagnostic "struct __S__ { void M(int a) { int b = a; } int P { get; set; } }" =? ss1008 7 "__S__"
-        getDiagnostic "struct S { void __M__(int a) { int b = a; } int P { get; set; } }" =? ss1008 16 "__M__"
-        getDiagnostic "struct S { void M(int __a__) { int b = __a__; } int P { get; set; } }" =? ss1008 22 "__a__"
-        getDiagnostic "struct S { void M(int a) { int __b__ = a; } int P { get; set; } }" =? ss1008 31 "__b__"
-        getDiagnostic "struct S { void M(int a) { int b = a; } int __P__ { get; set; } }" =? ss1008 44 "__P__"
-        getDiagnostic "namespace __N__ {}" =? ss1008 10 "__N__"
-        getDiagnostic "namespace __N__.M {}" =? ss1008 10 "__N__"
-        getDiagnostic "namespace N.__M__ {}" =? ss1008 12 "__M__"
+        let invalidName = IdentifierNameSynthesizer.ToSynthesizedName "Name"
+        getDiagnostic (sprintf "enum %s : byte { A }" invalidName) =? ss1008 5 invalidName
+        getDiagnostic (sprintf "enum E : byte { %s }"  invalidName)=? ss1008 16 invalidName
+        getDiagnostic (sprintf "interface %s { void M(int a); int P { get; set; } }"  invalidName)=? ss1008 10 invalidName
+        getDiagnostic (sprintf "interface I { void %s(int a); int P { get; set; } }"  invalidName)=? ss1008 19 invalidName
+        getDiagnostic (sprintf "interface I { void M(int %s); int P { get; set; } }"  invalidName)=? ss1008 25 invalidName
+        getDiagnostic (sprintf "interface I { void M(int a); int %s { get; set; } }"  invalidName)=? ss1008 33 invalidName
+        getDiagnostic (sprintf "class %s { void M(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 6 invalidName
+        getDiagnostic (sprintf "class C { void %s(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 15 invalidName
+        getDiagnostic (sprintf "class C { void M(int %s) { int b = 1; } int P { get; set; } }" invalidName) =? ss1008 21 invalidName
+        getDiagnostic (sprintf "class C { void M(int a) { int %s = a; } int P { get; set; } }" invalidName) =? ss1008 30 invalidName
+        getDiagnostic (sprintf "class C { void M(int a) { int b = a; } int %s { get; set; } }" invalidName) =? ss1008 43 invalidName
+        getDiagnostic (sprintf "class C { event System.EventHandler %s; }" invalidName) =? ss1008 36 invalidName
+        getDiagnostic (sprintf "struct %s { void M(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 7 invalidName
+        getDiagnostic (sprintf "struct S { void %s(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 16 invalidName
+        getDiagnostic (sprintf "struct S { void M(int %s) { int b = 1; } int P { get; set; } }" invalidName) =? ss1008 22 invalidName
+        getDiagnostic (sprintf "struct S { void M(int a) { int %s = a; } int P { get; set; } }" invalidName) =? ss1008 31 invalidName
+        getDiagnostic (sprintf "struct S { void M(int a) { int b = a; } int %s { get; set; } }" invalidName) =? ss1008 44 invalidName
+        getDiagnostic (sprintf "namespace %s {}" invalidName) =? ss1008 10 invalidName
+        getDiagnostic (sprintf "namespace %s.M {}" invalidName) =? ss1008 10 invalidName
+        getDiagnostic (sprintf "namespace N.%s {}" invalidName) =? ss1008 12 invalidName
+
+    [<Test>]
+    let ``reserved names within expressions are valid`` () =
+        // Only emits a diagnostic for the declaration of the method parameter, but not for the usages of the parameter.
+        let invalidName = IdentifierNameSynthesizer.ToSynthesizedName "Name"
+        getDiagnostic (sprintf "class X { void M(int %s) { int b = %s + %s; } }" invalidName invalidName invalidName) =? ss1008 21 invalidName
+        getDiagnostic (sprintf "class %s { void M() { var t = typeof(%s); } }" invalidName invalidName) =? ss1008 6 invalidName

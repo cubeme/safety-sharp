@@ -55,12 +55,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     Converts <paramref name="name" /> to a synthesized name.
 		/// </summary>
 		/// <param name="name">The name that should be converted.</param>
-		private static IdentifierNameSyntax ToSynthesizedName(string name)
+		public static string ToSynthesizedName(string name)
 		{
 			Requires.NotNullOrWhitespace(name, () => name);
 			Requires.ArgumentSatisfies(!IsSynthesized(name), () => name, "The name has already been escaped.");
 
-			return SyntaxFactory.IdentifierName(String.Format("__{0}__", name));
+			return String.Format("__{0}__", name);
 		}
 	}
 }
