@@ -75,12 +75,14 @@
     <Compile Include="Analyzers\SS1006.cs" />
     <Compile Include="Analyzers\SS1007.cs" />
     <Compile Include="Analyzers\SS1008.cs" />
+    <Compile Include="Normalization\AutoPropertyNormalizer.cs" />
     <Compile Include="Normalization\ComponentRequiredPortNormalizer.cs" />
     <Compile Include="Normalization\CompoundAssignmentNormalizer.cs" />
     <Compile Include="Normalization\BooleanConditionalNormalizer.cs" />
     <Compile Include="Normalization\EnumLiteralNormalizer.cs" />
     <Compile Include="Normalization\EnumTypeNormalizer.cs" />
     <Compile Include="Normalization\ExpressionLifter.cs" />
+    <Compile Include="Normalization\ExpressionPropertyNormalizer.cs" />
     <Compile Include="Normalization\InitializationNormalizer.cs" />
     <Compile Include="Normalization\InterfaceRequiredPortNormalizer.cs" />
     <Compile Include="Normalization\NamedArgumentNormalizer.cs" />
