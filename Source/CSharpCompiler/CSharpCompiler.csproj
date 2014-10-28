@@ -90,7 +90,7 @@
     <Compile Include="Normalization\OptionalArgumentNormalizer.cs" />
     <Compile Include="Normalization\OutParameterNormalizer.cs" />
     <Compile Include="Normalization\LocalDeclarationNormalizer.cs" />
-    <Compile Include="Normalization\ClassPropertyDeclarationNormalizer.cs" />
+    <Compile Include="Normalization\PropertyDeclarationNormalizer.cs" />
     <Compile Include="Roslyn\CSharpAnalyzer.cs" />
     <Compile Include="Roslyn\CSharpNormalizer.cs" />
     <Compile Include="Roslyn\NormalizationScope.cs" />

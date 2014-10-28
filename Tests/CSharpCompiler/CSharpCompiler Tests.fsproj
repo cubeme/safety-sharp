@@ -85,7 +85,6 @@
     <Compile Include="Analyzers\SS1008.fs" />
     <Compile Include="Normalizers\AutoPropertyNormalizer.fs" />
     <Compile Include="Normalizers\BooleanConditionalNormalizer.fs" />
-    <Compile Include="Normalizers\ClassPropertyDeclarationNormalizer.fs" />
     <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\CompoundAssignmentNormalizer.fs" />
     <Compile Include="Normalizers\EnumLiteralNormalizer.fs" />
@@ -99,6 +98,7 @@
     <Compile Include="Normalizers\NamedArgumentNormalizer.fs" />
     <Compile Include="Normalizers\OptionalArgumentNormalizer.fs" />
     <Compile Include="Normalizers\OutParameterNormalizer.fs" />
+    <Compile Include="Normalizers\PropertyDeclarationNormalizer.fs" />
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>

@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharpCompiler.Normalization
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,10 +32,10 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	using Utilities;
 
 	/// <summary>
-	///     Replaces all property declarations with getter and setter method declarations. Assumes that there are no
-	///     auto-properties or properties with expression bodies.
+	///     Replaces all property declarations with getter and setter method declarations within component classes or interfaces.
+	///     Assumes that there are no auto-properties or properties with expression bodies.
 	/// 
-	///     For instance:
+	///     For instance, within component classes:
 	///     <code>
 	///    		public int X { get { return 1; } }
 	///    		// becomes:
@@ -45,14 +46,25 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	///    		[A] [B] int I.__GetX__() { return 1; }
 	///  		[A] void I.__SetX__(int value) { Console.WriteLine(value); }
 	///   	</code>
+	///     For instance, within component interfaces:
+	///     <code>
+	///    		int X { get; }
+	///    		// becomes:
+	///    		int __GetX__();
+	///    		
+	///    		[A] int X { [B] get; set; }
+	///    		// becomes:
+	///    		[A] [B] int __GetX__();
+	///  		[A] void __SetX__(int value);
+	///   	</code>
 	/// </summary>
-	public class ClassPropertyDeclarationNormalizer : CSharpNormalizer
+	public class PropertyDeclarationNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public ClassPropertyDeclarationNormalizer()
-			: base(NormalizationScope.Components)
+		public PropertyDeclarationNormalizer()
+			: base(NormalizationScope.Components | NormalizationScope.ComponentInterfaces)
 		{
 		}
 
@@ -65,29 +77,45 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			if (!ShouldNormalizeClassDeclaration(classDeclaration))
 				return classDeclaration;
 
-			foreach (var propertyDeclaration in classDeclaration.Descendants<PropertyDeclarationSyntax>())
-				classDeclaration = NormalizeProperty(classDeclaration, propertyDeclaration);
+			return classDeclaration
+				.Descendants<PropertyDeclarationSyntax>()
+				.Aggregate(classDeclaration, (type, property) => NormalizeProperty(type, property, (members, t) => t.WithMembers(members)));
+		}
 
-			return classDeclaration;
+		/// <summary>
+		///     Ensures that the <paramref name="interfaceDeclaration" /> is only normalized when the normalizer has the appropriate
+		///     <see cref="NormalizationScope" />.
+		/// </summary>
+		public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax interfaceDeclaration)
+		{
+			if (!ShouldNormalizeInterfaceDeclaration(interfaceDeclaration))
+				return interfaceDeclaration;
+
+			return interfaceDeclaration
+				.Descendants<PropertyDeclarationSyntax>()
+				.Aggregate(interfaceDeclaration, (type, property) => NormalizeProperty(type, property, (members, t) => t.WithMembers(members)));
 		}
 
 		/// <summary>
 		///     Replaces <paramref name="propertyDeclaration" /> with getter and/or setter methods.
 		/// </summary>
-		/// <param name="classDeclaration">The class declaration the <paramref name="propertyDeclaration" /> belongs to.</param>
+		/// <param name="typeDeclaration">The type declaration the <paramref name="propertyDeclaration" /> belongs to.</param>
 		/// <param name="propertyDeclaration">The property declaration that should be normalized.</param>
-		private static ClassDeclarationSyntax NormalizeProperty(ClassDeclarationSyntax classDeclaration,
-																PropertyDeclarationSyntax propertyDeclaration)
+		/// <param name="update">Updates the member's of the <paramref name="typeDeclaration" />.</param>
+		private static T NormalizeProperty<T>(T typeDeclaration, PropertyDeclarationSyntax propertyDeclaration,
+											  Func<SyntaxList<MemberDeclarationSyntax>, T, T> update)
+			where T : TypeDeclarationSyntax
 		{
 			Assert.IsNull(propertyDeclaration.ExpressionBody, "Unexpected property with expression body.");
 
+			var inInterface = typeof(T) == typeof(InterfaceDeclarationSyntax);
 			var attributes = propertyDeclaration.AttributeLists;
-			var members = classDeclaration.Members;
+			var members = typeDeclaration.Members;
 			members = members.Remove(propertyDeclaration);
 
 			foreach (var accessor in propertyDeclaration.AccessorList.Accessors)
 			{
-				Assert.NotNull(accessor.Body, "Unexpected auto-implemented property.");
+				Assert.That(inInterface || accessor.Body != null, "Unexpected auto-implemented property.");
 
 				var accessorType = accessor.CSharpKind();
 				var methodAttributes = attributes.AddRange(accessor.AttributeLists);
@@ -125,13 +153,13 @@ namespace SafetySharp.CSharpCompiler.Normalization
 					typeParameterList: null,
 					parameterList: parameterList,
 					constraintClauses: SyntaxFactory.List<TypeParameterConstraintClauseSyntax>(),
-					body: accessor.Body.WithLeadingSpace(),
-					semicolonToken: default(SyntaxToken));
+					body: accessor.Body == null ? null : accessor.Body.WithLeadingSpace(),
+					semicolonToken: inInterface ? SyntaxFactory.Token(SyntaxKind.SemicolonToken).WithTrailingSpace() : default(SyntaxToken));
 
 				members = members.Add(method);
 			}
 
-			return classDeclaration.WithMembers(members);
+			return update(members, typeDeclaration);
 		}
 	}
 }
