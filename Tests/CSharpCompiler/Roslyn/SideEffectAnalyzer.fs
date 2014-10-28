@@ -62,9 +62,19 @@ module SideEffectAnalyzer =
                 public static S operator>>(S s, int x) { return s; }
                 public static bool operator true(S s) { return false; }
                 public static bool operator false(S s) { return false; }
+                public int this[int i] { get { return 1; } set { } }
+                public static explicit operator int(S s) { return 1; }
+                public static explicit operator S(int i) { return new S(); }
             }
 
-            class X 
+            class Y 
+            {
+                public int _baseField;
+                public int BaseProperty { get; set; }
+                public Y Self { get; set; }
+            }
+
+            class X : Y
             { 
                 int _field;
                 bool Property { get; set; }
@@ -74,6 +84,8 @@ module SideEffectAnalyzer =
                     int a = 0, b = 0;
                     bool c = false, d = false;
                     decimal e = 1, f = 3;
+                    var array = new int[3];
+                    var x = new X();
                     var result = " + expression + "; 
                 }
             }
@@ -106,6 +118,27 @@ module SideEffectAnalyzer =
         isSideEffectFree "a" =? true
         isSideEffectFree "c" =? true
         isSideEffectFree "e" =? true
+
+    [<Test>]
+    let ``reads of fields are side effect free`` () =
+        isSideEffectFree "_field" =? true
+        isSideEffectFree "x._field" =? true
+        isSideEffectFree "this._field" =? true
+        isSideEffectFree "_baseField" =? true
+        isSideEffectFree "x._baseField" =? true
+        isSideEffectFree "base._baseField" =? true
+        isSideEffectFree "this._baseField" =? true
+
+    [<Test>]
+    let ``reads of properties are not side effect free`` () =
+        isSideEffectFree "Property" =? false
+        isSideEffectFree "x.Property" =? false
+        isSideEffectFree "this.Property" =? false
+        isSideEffectFree "BaseProperty" =? false
+        isSideEffectFree "x.BaseProperty" =? false
+        isSideEffectFree "this.BaseProperty" =? false
+        isSideEffectFree "base.BaseProperty" =? false
+        isSideEffectFree "base.Self._baseField" =? false
 
     [<Test>]
     let ``unary expressions on literals are side effect free`` () =
@@ -217,3 +250,58 @@ module SideEffectAnalyzer =
         isSideEffectFree "s > s" =? false
         isSideEffectFree "s <= s" =? false
         isSideEffectFree "s < s" =? false
+
+    [<Test>]
+    let ``invocation expressions are always considered to have side effects`` () =
+        isSideEffectFree "ToString()" =? false
+        isSideEffectFree "GetHashCode()" =? false
+
+    [<Test>]
+    let ``object creation expressions are always considered to have side effects`` () =
+        isSideEffectFree "new S()" =? false
+        isSideEffectFree "new object()" =? false
+
+    [<Test>]
+    let ``array read accesses are always considered to be side effect free`` () =
+        isSideEffectFree "array[0]" =? true
+
+    [<Test>]
+    let ``indexer read accesses are always considered to be side effect free`` () =
+        isSideEffectFree "s[0]" =? false
+
+    [<Test>]
+    let ``assignments are archetypical side effects`` () =
+        isSideEffectFree "a = 3" =? false
+        isSideEffectFree "a = b = 12" =? false
+        isSideEffectFree "c = false" =? false
+        isSideEffectFree "array[1] = 3" =? false
+        isSideEffectFree "s[1] = 3" =? false
+        isSideEffectFree "_field = 1" =? false
+        isSideEffectFree "x._field = 2" =? false
+        isSideEffectFree "this._field = 3" =? false
+        isSideEffectFree "_baseField = 2" =? false
+        isSideEffectFree "x._baseField = 3" =? false
+        isSideEffectFree "this._baseField = 1" =? false
+        isSideEffectFree "base._baseField = 2" =? false
+        isSideEffectFree "Property = true" =? false
+        isSideEffectFree "x.Property = true" =? false
+        isSideEffectFree "this.Property = true" =? false
+        isSideEffectFree "BaseProperty = 2" =? false
+        isSideEffectFree "x.BaseProperty = 3" =? false
+        isSideEffectFree "this.BaseProperty = 3" =? false
+        isSideEffectFree "base.BaseProperty = 4" =? false
+
+    [<Test>]
+    let ``built-in conversions are side effect free`` () =
+        isSideEffectFree "(int)e" =? true
+        isSideEffectFree "(decimal)a" =? true
+
+    [<Test>]
+    let ``built-in casts are side effect free`` () =
+        isSideEffectFree "(Y)x" =? true
+        isSideEffectFree "(X)((Y)x)" =? true
+
+    [<Test>]
+    let ``user-defined conversions are considered to have side effects`` () =
+        isSideEffectFree "(int)s" =? false
+        isSideEffectFree "(S)a" =? false

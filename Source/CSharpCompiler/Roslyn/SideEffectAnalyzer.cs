@@ -91,7 +91,13 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 
 			public override bool VisitIdentifierName(IdentifierNameSyntax node)
 			{
-				return true;
+				var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+				Assert.NotNull(symbol, "Expected a valid symbol.");
+
+				if (symbol is ILocalSymbol || symbol is IFieldSymbol)
+					return true;
+
+				return false;
 			}
 
 			public override bool VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
@@ -130,7 +136,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 						return false;
 				}
 			}
-			 
+
 			public override bool VisitBinaryExpression(BinaryExpressionSyntax node)
 			{
 				switch (node.CSharpKind())
@@ -166,9 +172,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 						var rightType = _semanticModel.GetTypeInfo(node.Left).Type;
 
 						if (leftType.IsBuiltType(_semanticModel) && rightType.IsBuiltType(_semanticModel))
-							return Visit(node.Left) && Visit(node.Right);;
+							return Visit(node.Left) && Visit(node.Right);
+						;
 
 						goto case SyntaxKind.AddExpression;
+					case SyntaxKind.SimpleAssignmentExpression:
+						return false;
 					default:
 						Assert.NotReached("Encountered an unexpected binary operator: {0}.", node.CSharpKind());
 						return false;
@@ -177,12 +186,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 
 			public override bool VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
 			{
-				return base.VisitMemberAccessExpression(node);
-			}
-
-			public override bool VisitConditionalExpression(ConditionalExpressionSyntax node)
-			{
-				return base.VisitConditionalExpression(node);
+				return Visit(node.Name) && Visit(node.Expression);
 			}
 
 			public override bool VisitParenthesizedExpression(ParenthesizedExpressionSyntax node)
@@ -190,44 +194,48 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 				return Visit(node.Expression);
 			}
 
-			public override bool VisitBaseExpression(BaseExpressionSyntax node)
+			public override bool VisitInvocationExpression(InvocationExpressionSyntax node)
 			{
-				return base.VisitBaseExpression(node);
+				return false;
 			}
 
 			public override bool VisitThisExpression(ThisExpressionSyntax node)
 			{
-				return base.VisitThisExpression(node);
+				return true;
 			}
 
-			public override bool VisitInvocationExpression(InvocationExpressionSyntax node)
+			public override bool VisitBaseExpression(BaseExpressionSyntax node)
 			{
-				return base.VisitInvocationExpression(node);
+				return true;
 			}
 
 			public override bool VisitElementAccessExpression(ElementAccessExpressionSyntax node)
 			{
-				return base.VisitElementAccessExpression(node);
-			}
+				var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IPropertySymbol;
 
-			public override bool VisitArgumentList(ArgumentListSyntax node)
-			{
-				return base.VisitArgumentList(node);
-			}
+				// If we get a symbol, this element access refers to a user-defined indexer. Always assume side effects.
+				if (symbol != null)
+					return false;
 
-			public override bool VisitArgument(ArgumentSyntax node)
-			{
-				return base.VisitArgument(node);
+				// Otherwise, it is an array access, which is considered to be side effect free.
+				return true;
 			}
 
 			public override bool VisitCastExpression(CastExpressionSyntax node)
 			{
-				return base.VisitCastExpression(node);
+				var symbol = _semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
+
+				// If we get a symbol, this cast is a user-defined conversion. Always assume side effects.
+				if (symbol != null)
+					return false;
+
+				// Otherwise, it is a built-in conversion, which is considered to be side effect free.
+				return true;
 			}
 
 			public override bool VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
 			{
-				return base.VisitObjectCreationExpression(node);
+				return false;
 			}
 		}
 	}
