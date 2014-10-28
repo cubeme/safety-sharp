@@ -82,6 +82,7 @@
     <Compile Include="Analyzers\SS1005.fs" />
     <Compile Include="Analyzers\SS1006.fs" />
     <Compile Include="Analyzers\SS1007.fs" />
+    <Compile Include="Normalizers\BooleanConditionalNormalizer.fs" />
     <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\CompoundAssignmentNormalizer.fs" />
     <Compile Include="Normalizers\EnumLiteralNormalizer.fs" />

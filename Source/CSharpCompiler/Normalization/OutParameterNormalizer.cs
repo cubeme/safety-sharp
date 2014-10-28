@@ -31,9 +31,9 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces all out parameters of a method declaration or method invocation with ref parameters. This normalization assumes
-	///     that variables passed to a method by reference are definitely assigned before the method invocation; otherwise, invalid
-	///     C# code is generated.
+	///     Replaces all <c>out</c> parameters of a method declaration or method invocation with <c>ref</c> parameters. This
+	///     normalization assumes that variables passed to a method by reference are definitely assigned before the method
+	///     invocation; otherwise, invalid C# code is generated.
 	/// 
 	///     For instance:
 	///     <code>

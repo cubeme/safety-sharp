@@ -54,7 +54,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes the <paramref name="expression" />, if it represents a compound assignment.
+		///     Normalizes the <paramref name="expression" /> if it represents a compound assignment.
 		/// </summary>
 		public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax expression)
 		{

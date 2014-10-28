@@ -97,9 +97,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			return methodSymbol.ContainingType == semanticModel.GetTypeSymbol<int>() ||
-				   methodSymbol.ContainingType == semanticModel.GetTypeSymbol<bool>() ||
-				   methodSymbol.ContainingType == semanticModel.GetTypeSymbol<decimal>();
+			return methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<int>()) ||
+				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<bool>()) ||
+				   methodSymbol.ContainingType.Equals(semanticModel.GetTypeSymbol<decimal>());
 		}
 	}
 }
