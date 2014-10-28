@@ -69,7 +69,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 
 		/// <summary>
 		///     Checks whether the <paramref name="symbol" />'s implementing member for <paramref name="interfaceMember" /> has the
-		///     correct port type..
+		///     correct port type.
 		/// </summary>
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
@@ -77,8 +77,6 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		private void CheckMember(INamedTypeSymbol symbol, Compilation compilation, ISymbol interfaceMember)
 		{
 			var implementingMember = symbol.FindImplementationForInterfaceMember(interfaceMember);
-			if (!Equals(implementingMember.ContainingSymbol, symbol))
-				return;
 
 			var interfaceIsRequired = interfaceMember.HasAttribute<RequiredAttribute>(compilation);
 			var interfaceIsProvided = interfaceMember.HasAttribute<ProvidedAttribute>(compilation);

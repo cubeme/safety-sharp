@@ -94,6 +94,17 @@ module SS1005 =
             =? ss1005 42 2 "C.J.In" "J.In" "required" "provided"
 
     [<Test>]
+    let ``Implementations of interface members in base class with wrong port type are invalid`` () =
+        getDiagnostic "class C : Component { extern public void In(); extern public void Out(); } class X : C, I {}" 
+            =? ss1005 66 3 "C.Out()" "I.Out()" "provided" "required"
+        getDiagnostic "class C : Component { [Provided] public void In() {} [Provided] public void Out() {}} class X : C, I {}" 
+            =? ss1005 45 2 "C.In()" "I.In()" "required" "provided"
+        getDiagnostic "class C : Component { extern public int In { get; set; } [Required] extern public int Out { get; set; }} class X : C, J {}" 
+            =? ss1005 86 3 "C.Out" "J.Out" "provided" "required"
+        getDiagnostic "class C : Component { [Provided] public int In { get; set; } [Provided] public int Out { get; set; }} class X : C, J {}" 
+            =? ss1005 44 2 "C.In" "J.In" "required" "provided"
+
+    [<Test>]
     let ``Implementations with unknown port type are ignored`` () =
         getDiagnostic "class C : Component, I { [Provided] extern public void In(); [Required] public void Out() {}}" =? None
         getDiagnostic "class C : Component, J { [Provided] extern public int In { get; set; } [Required] public int Out { get; set; }}" =? None
