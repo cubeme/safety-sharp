@@ -30,25 +30,25 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Replaces all property declarations with expression bodies with regular getter-only property declarations.
+	///     Replaces all method declarations with expression bodies with regular method declarations.
 	/// 
 	///     For instance:
 	///     <code>
-	///     	public int X => 1;
+	///     	public int X() => 1;
 	///     	// becomes:
-	///     	public int X { get { return 1; } }
+	///     	public int X() { return 1; }
 	///     	
-	///     	[A] bool I.X => false;
+	///     	[A] bool I.X(bool b) => !b;
 	///     	// becomes:
-	///     	[A] bool I.X { get { return false; } }
+	///     	[A] bool I.X(bool b) { return !b; }
 	///    	</code>
 	/// </summary>
-	public class ExpressionPropertyNormalizer : CSharpNormalizer
+	public class ExpressionMethodNormalizer : CSharpNormalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public ExpressionPropertyNormalizer()
+		public ExpressionMethodNormalizer()
 			: base(NormalizationScope.Components)
 		{
 		}
@@ -62,36 +62,33 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			if (!ShouldNormalizeClassDeclaration(classDeclaration))
 				return classDeclaration;
 
-			foreach (var propertyDeclaration in classDeclaration.Descendants<PropertyDeclarationSyntax>())
-				classDeclaration = NormalizeProperty(classDeclaration, propertyDeclaration);
+			foreach (var methodDeclaration in classDeclaration.Descendants<MethodDeclarationSyntax>())
+				classDeclaration = NormalizeMethod(classDeclaration, methodDeclaration);
 
 			return classDeclaration;
 		}
 
 		/// <summary>
-		///     Replaces <paramref name="propertyDeclaration" />'s expressino body with a getter.
+		///     Replaces <paramref name="methodDeclaration" />'s expression body with a regular method body.
 		/// </summary>
-		/// <param name="classDeclaration">The class declaration the <paramref name="propertyDeclaration" /> belongs to.</param>
-		/// <param name="propertyDeclaration">The property declaration that should be normalized.</param>
-		private static ClassDeclarationSyntax NormalizeProperty(ClassDeclarationSyntax classDeclaration,
-																PropertyDeclarationSyntax propertyDeclaration)
+		/// <param name="classDeclaration">The class declaration the <paramref name="methodDeclaration" /> belongs to.</param>
+		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
+		private static ClassDeclarationSyntax NormalizeMethod(ClassDeclarationSyntax classDeclaration, MethodDeclarationSyntax methodDeclaration)
 		{
-			// Nothing to do here for properties without expression bodies
-			if (propertyDeclaration.ExpressionBody == null)
+			// Nothing to do here for methods without expression bodies
+			if (methodDeclaration.ExpressionBody == null)
 				return classDeclaration;
 
 			var members = classDeclaration.Members;
-			members = members.Remove(propertyDeclaration);
+			members = members.Remove(methodDeclaration);
 
-			var returnStatement = SyntaxFactory.ReturnStatement(propertyDeclaration.ExpressionBody.Expression).NormalizeWhitespace();
-			var getterBlock = SyntaxFactory.Block(returnStatement.WithLeadingAndTrailingSpace()).WithLeadingAndTrailingSpace();
-			var getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, getterBlock).WithLeadingAndTrailingSpace();
-			var accessors = SyntaxFactory.AccessorList(SyntaxFactory.List(new[] { getter }));
+			var returnStatement = SyntaxFactory.ReturnStatement(methodDeclaration.ExpressionBody.Expression).NormalizeWhitespace();
+			var body = SyntaxFactory.Block(returnStatement.WithLeadingAndTrailingSpace()).WithTrailingSpace();
 
-			propertyDeclaration = propertyDeclaration.WithSemicolon(default(SyntaxToken)).WithExpressionBody(null).WithAccessorList(accessors);
-			propertyDeclaration = propertyDeclaration.WithTrailingSpace();
+			methodDeclaration = methodDeclaration.WithSemicolonToken(default(SyntaxToken)).WithExpressionBody(null).WithBody(body);
+			methodDeclaration = methodDeclaration.WithTrailingSpace();
 
-			members = members.Add(propertyDeclaration);
+			members = members.Add(methodDeclaration);
 			return classDeclaration.WithMembers(members);
 		}
 	}

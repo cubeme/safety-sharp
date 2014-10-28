@@ -72,7 +72,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 		}
 
 		/// <summary>
-		///     Replaces <paramref name="propertyDeclaration" /> with a getter and/or setter methods.
+		///     Replaces <paramref name="propertyDeclaration" /> with getter and/or setter methods.
 		/// </summary>
 		/// <param name="classDeclaration">The class declaration the <paramref name="propertyDeclaration" /> belongs to.</param>
 		/// <param name="propertyDeclaration">The property declaration that should be normalized.</param>

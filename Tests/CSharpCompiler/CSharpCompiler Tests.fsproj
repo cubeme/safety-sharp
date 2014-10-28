@@ -91,6 +91,7 @@
     <Compile Include="Normalizers\EnumLiteralNormalizer.fs" />
     <Compile Include="Normalizers\EnumTypeNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
+    <Compile Include="Normalizers\ExpressionMethodNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionPropertyNormalizer.fs" />
     <Compile Include="Normalizers\InitializationNormalizer.fs" />
     <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />

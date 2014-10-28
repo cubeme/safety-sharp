@@ -53,7 +53,7 @@ module ExpressionPropertyNormalizer =
             =? "class X : Component { bool B { get { return false; } set { } } }"
 
     [<Test>]
-    let ``normalize properties with expression bodies`` () =
+    let ``normalizes properties with expression bodies`` () =
         normalize "class X : Component { bool B => true; }" =? "class X : Component { bool B { get { return true; } } }"
         normalize "class X : Component { public int B => 1; }" =? "class X : Component { public int B { get { return 1; } } }"
         normalize "class X : Component { [Required] public int B => 1; }" =? 
@@ -64,7 +64,7 @@ module ExpressionPropertyNormalizer =
             "class X : Component { [Required] [Provided] public int B { get { return 1; } } }"
 
     [<Test>]
-    let ``normalize explicitly implemented properties with expression bodies`` () =
+    let ``normalizes explicitly implemented properties with expression bodies`` () =
         normalize "class X : Component, I { int I.B => 13; }" =? "class X : Component, I { int I.B { get { return 13; } } }"
         normalize "class X : Component, N.I { int N.I.B => 1; }" =? "class X : Component, N.I { int N.I.B { get { return 1; } } }"
         normalize "class X : Component, N.I { [Required] int N.I.B => 1; }" =? 
