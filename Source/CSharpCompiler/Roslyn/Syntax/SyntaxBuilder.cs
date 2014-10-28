@@ -36,6 +36,16 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 	public static class SyntaxBuilder
 	{
 		/// <summary>
+		///     The type node for the C# integer type.
+		/// </summary>
+		public static readonly TypeSyntax IntType = SyntaxFactory.ParseTypeName("int");
+
+		/// <summary>
+		///     The type node for the C# void type.
+		/// </summary>
+		public static readonly TypeSyntax VoidType = SyntaxFactory.ParseTypeName("void");
+
+		/// <summary>
 		///     Creates a <see cref="SyntaxTokenList" /> containing the appropriate modifier(s) for the desired
 		///     <paramref name="visibility" />.
 		/// </summary>

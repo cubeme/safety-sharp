@@ -46,7 +46,6 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <param name="scope">The scope of the normalizer.</param>
 		protected CSharpNormalizer(NormalizationScope scope)
 		{
-			Requires.InRange(scope, () => scope);
 			_scope = scope;
 		}
 
@@ -94,15 +93,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     <see cref="NormalizationScope" />.
 		/// </summary>
 		[NotNull, Pure]
-		public override sealed SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationSyntax classDeclaration)
+		public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationSyntax classDeclaration)
 		{
-			if (_scope == NormalizationScope.ComponentInterfaces)
-				return classDeclaration;
+			if (ShouldNormalizeClassDeclaration(classDeclaration))
+				return base.VisitClassDeclaration(classDeclaration);
 
-			if (_scope != NormalizationScope.Global && !classDeclaration.IsDerivedFromComponent(SemanticModel))
-				return classDeclaration;
-
-			return base.VisitClassDeclaration(classDeclaration);
+			return classDeclaration;
 		}
 
 		/// <summary>
@@ -110,15 +106,12 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     <see cref="NormalizationScope" />.
 		/// </summary>
 		[NotNull, Pure]
-		public override sealed SyntaxNode VisitInterfaceDeclaration([NotNull] InterfaceDeclarationSyntax interfaceDeclaration)
+		public override SyntaxNode VisitInterfaceDeclaration([NotNull] InterfaceDeclarationSyntax interfaceDeclaration)
 		{
-			if (_scope == NormalizationScope.Components || _scope == NormalizationScope.ComponentStatements)
-				return interfaceDeclaration;
+			if (ShouldNormalizeInterfaceDeclaration(interfaceDeclaration))
+				return base.VisitInterfaceDeclaration(interfaceDeclaration);
 
-			if (_scope != NormalizationScope.Global && !interfaceDeclaration.ImplementsIComponent(SemanticModel))
-				return interfaceDeclaration;
-
-			return base.VisitInterfaceDeclaration(interfaceDeclaration);
+			return interfaceDeclaration;
 		}
 
 		/// <summary>
@@ -126,12 +119,48 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		///     <see cref="NormalizationScope" />.
 		/// </summary>
 		[NotNull, Pure]
-		public override sealed SyntaxNode VisitConstructorDeclaration([NotNull] ConstructorDeclarationSyntax constructorDeclaration)
+		public override SyntaxNode VisitConstructorDeclaration([NotNull] ConstructorDeclarationSyntax constructorDeclaration)
 		{
-			if (_scope == NormalizationScope.Global)
+			if (ShouldNormalizeConstructorDeclaration(constructorDeclaration))
 				return base.VisitConstructorDeclaration(constructorDeclaration);
 
 			return constructorDeclaration;
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="classDeclaration" /> should be normalized.
+		/// </summary>
+		[Pure]
+		protected bool ShouldNormalizeClassDeclaration([NotNull] ClassDeclarationSyntax classDeclaration)
+		{
+			if (_scope.HasFlag(NormalizationScope.Global))
+				return true;
+
+			if (!_scope.HasFlag(NormalizationScope.Components) && !_scope.HasFlag(NormalizationScope.ComponentStatements))
+				return false;
+
+			return classDeclaration.IsDerivedFromComponent(SemanticModel);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="interfaceDeclaration" /> should be normalized.
+		/// </summary>
+		[Pure]
+		protected bool ShouldNormalizeInterfaceDeclaration([NotNull] InterfaceDeclarationSyntax interfaceDeclaration)
+		{
+			if (_scope.HasFlag(NormalizationScope.Global))
+				return true;
+
+			return _scope.HasFlag(NormalizationScope.ComponentInterfaces) && interfaceDeclaration.ImplementsIComponent(SemanticModel);
+		}
+
+		/// <summary>
+		///     Checks whether <paramref name="constructorDeclaration" /> should be normalized.
+		/// </summary>
+		[Pure]
+		protected bool ShouldNormalizeConstructorDeclaration([NotNull] ConstructorDeclarationSyntax constructorDeclaration)
+		{
+			return _scope.HasFlag(NormalizationScope.Global) || !_scope.HasFlag(NormalizationScope.ComponentStatements);
 		}
 	}
 }

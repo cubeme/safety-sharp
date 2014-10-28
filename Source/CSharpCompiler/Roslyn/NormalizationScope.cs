@@ -28,29 +28,30 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 	/// <summary>
 	///     Indicates which parts of the code are affected by a <see cref="CSharpNormalizer" />.
 	/// </summary>
+	[Flags]
 	public enum NormalizationScope
 	{
 		/// <summary>
 		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all members of all classes derived from
 		///     <see cref="Component" />.
 		/// </summary>
-		Components,
+		Components = 1,
 
 		/// <summary>
 		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all members of all interfaces derived from
 		///     <see cref="IComponent" />.
 		/// </summary>
-		ComponentInterfaces,
+		ComponentInterfaces = 2,
 
 		/// <summary>
 		///     Limits the scope of the <see cref="CSharpNormalizer" /> to all statements (excluding those of the constructors) of
 		///     all classes derived from <see cref="Component" />.
 		/// </summary>
-		ComponentStatements,
+		ComponentStatements = 4,
 
 		/// <summary>
 		///     Does not limit the scope of the <see cref="CSharpNormalizer" />.
 		/// </summary>
-		Global
+		Global = 8
 	}
 }

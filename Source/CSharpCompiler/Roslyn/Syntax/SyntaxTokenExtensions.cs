@@ -115,5 +115,25 @@ namespace SafetySharp.CSharpCompiler.Roslyn.Syntax
 		{
 			return token.WithTrailingTrivia(SyntaxFactory.Space).WithLeadingTrivia(SyntaxFactory.Space);
 		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="token" /> with all leading trivia replaced by a single space token.
+		/// </summary>
+		/// <param name="token">The syntax token that should have its trivia replaced.</param>
+		[Pure]
+		public static SyntaxToken WithLeadingSpace(this SyntaxToken token)
+		{
+			return token.WithLeadingTrivia(SyntaxFactory.Space);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="token" /> with all trailing trivia replaced by a single space token.
+		/// </summary>
+		/// <param name="token">The syntax token that should have its trivia replaced.</param>
+		[Pure]
+		public static SyntaxToken WithTrailingSpace(this SyntaxToken token)
+		{
+			return token.WithTrailingTrivia(SyntaxFactory.Space);
+		}
 	}
 }

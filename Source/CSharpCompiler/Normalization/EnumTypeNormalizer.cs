@@ -24,7 +24,6 @@ namespace SafetySharp.CSharpCompiler.Normalization
 {
 	using System;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Roslyn;
 	using Roslyn.Syntax;
@@ -34,11 +33,6 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	/// </summary>
 	public class EnumTypeNormalizer : CSharpNormalizer
 	{
-		/// <summary>
-		///     The syntax node for the C# integer type.
-		/// </summary>
-		private readonly TypeSyntax _intType = SyntaxFactory.ParseTypeName("int");
-
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
@@ -57,7 +51,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			if (symbol == null || symbol.TypeKind != TypeKind.Enum)
 				return nameSyntax;
 
-			return _intType.WithTrivia(nameSyntax);
+			return SyntaxBuilder.IntType.WithTrivia(nameSyntax);
 		}
 
 		/// <summary>
