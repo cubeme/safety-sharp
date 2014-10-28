@@ -24,8 +24,6 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 {
 	using System;
 	using Microsoft.CodeAnalysis;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Utilities;
 
 	/// <summary>

@@ -66,13 +66,30 @@ module SS1008 =
         getDiagnostic (sprintf "class C { void %s(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 15 invalidName
         getDiagnostic (sprintf "class C { void M(int %s) { int b = 1; } int P { get; set; } }" invalidName) =? ss1008 21 invalidName
         getDiagnostic (sprintf "class C { void M(int a) { int %s = a; } int P { get; set; } }" invalidName) =? ss1008 30 invalidName
+        getDiagnostic (sprintf "class C { void M(int a) { int %s = a, x; } int P { get; set; } }" invalidName) =? ss1008 30 invalidName
+        getDiagnostic (sprintf "class C { void M(int a) { int x, %s = a; } int P { get; set; } }" invalidName) =? ss1008 33 invalidName
         getDiagnostic (sprintf "class C { void M(int a) { int b = a; } int %s { get; set; } }" invalidName) =? ss1008 43 invalidName
+        getDiagnostic (sprintf "class C { int %s; }" invalidName) =? ss1008 14 invalidName
+        getDiagnostic (sprintf "class C { int %s, a; }" invalidName) =? ss1008 14 invalidName
+        getDiagnostic (sprintf "class C { int a, %s; }" invalidName) =? ss1008 17 invalidName
         getDiagnostic (sprintf "class C { event System.EventHandler %s; }" invalidName) =? ss1008 36 invalidName
+        getDiagnostic (sprintf "class C { event System.EventHandler %s, a; }" invalidName) =? ss1008 36 invalidName
+        getDiagnostic (sprintf "class C { event System.EventHandler a, %s; }" invalidName) =? ss1008 39 invalidName
+        getDiagnostic (sprintf "class C { event System.EventHandler %s { add {} remove {} } }" invalidName) =? ss1008 36 invalidName
         getDiagnostic (sprintf "struct %s { void M(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 7 invalidName
         getDiagnostic (sprintf "struct S { void %s(int a) { int b = a; } int P { get; set; } }" invalidName) =? ss1008 16 invalidName
         getDiagnostic (sprintf "struct S { void M(int %s) { int b = 1; } int P { get; set; } }" invalidName) =? ss1008 22 invalidName
         getDiagnostic (sprintf "struct S { void M(int a) { int %s = a; } int P { get; set; } }" invalidName) =? ss1008 31 invalidName
+        getDiagnostic (sprintf "struct S { void M(int a) { int %s = a, x; } int P { get; set; } }" invalidName) =? ss1008 31 invalidName
+        getDiagnostic (sprintf "struct S { void M(int a) { int x, %s = a; } int P { get; set; } }" invalidName) =? ss1008 34 invalidName
         getDiagnostic (sprintf "struct S { void M(int a) { int b = a; } int %s { get; set; } }" invalidName) =? ss1008 44 invalidName
+        getDiagnostic (sprintf "struct S { int %s; }" invalidName) =? ss1008 15 invalidName
+        getDiagnostic (sprintf "struct S { int %s, a; }" invalidName) =? ss1008 15 invalidName
+        getDiagnostic (sprintf "struct S { int a, %s; }" invalidName) =? ss1008 18 invalidName
+        getDiagnostic (sprintf "struct S { event System.EventHandler %s; }" invalidName) =? ss1008 37 invalidName
+        getDiagnostic (sprintf "struct S { event System.EventHandler %s, a; }" invalidName) =? ss1008 37 invalidName
+        getDiagnostic (sprintf "struct S { event System.EventHandler a, %s; }" invalidName) =? ss1008 40 invalidName
+        getDiagnostic (sprintf "struct S { event System.EventHandler %s { add {} remove {} } }" invalidName) =? ss1008 37 invalidName
         getDiagnostic (sprintf "namespace %s {}" invalidName) =? ss1008 10 invalidName
         getDiagnostic (sprintf "namespace %s.M {}" invalidName) =? ss1008 10 invalidName
         getDiagnostic (sprintf "namespace N.%s {}" invalidName) =? ss1008 12 invalidName
