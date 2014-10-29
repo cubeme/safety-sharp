@@ -38,8 +38,9 @@ open SafetySharp.Internal.Analysis
 type GeometricDistribution () = 
     // Field of application in safety analysis:
     //    We use the convention "first 'success' (in our case failure) in step number k (for k in 1,2,3,...)
-    //    Discrete Model Checkers cannot use Continuous Distributions. So Continuous Distributions have to
-    //    be approximated by Discrete Distributions. The mathematical background model of MTTF (Mean
+    //    The ExponentialDistribution can only be used in the CTMC-Mode of Prism. But in many cases we
+    //    want to use the DTMC-Mode where the Discrete Distribution can be used (see Note below). So Continuous Distributions
+    //    have to be approximated by Discrete Distributions. The mathematical background model of MTTF (Mean
     //    Time To Failure of a safety critical component) is the Continuous Exponential Distribution.
     //    Reliability(t) = Probability[No occurrences of system failure until point of time t].
     //    For further details on MTTF see ContinuousDistributions.fs/ExponentialDistribution.
@@ -48,7 +49,7 @@ type GeometricDistribution () =
     // Relationship to continuous Distribution:
     //    The continuous Exponential Distribution is also memoryless [WikiExp,WikiGeo].
     //    http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution    
-    // P (X < k)    (analogue to Cumulative Distribution Function):
+    // Cumulative Distribution Function P (X <= k) :
     //    P (X >= k) = (1-p)^(k-1)  <--- p is the probability of a failure in one step. This formula says "nothing went wrong in the first k-1 steps, the 'coin' flipped to 'no failure'"
     //    P (X < k) = 1 - P (X >= k) = 1 - (1-p)^(k-1)   <---- This describes the probability of a failure within the first k-1 steps ("something went wrong in the first k-1 steps")
     //    P (X <= k) = P(X < k+1) = 1 - P (X >= k+1) = 1 - (1-p)^k   <---- This describes the probability of a failure within the first k steps ("something went wrong in the first k steps")
@@ -59,8 +60,15 @@ type GeometricDistribution () =
     // Variance of P:
     //    V(X) = (1-p)/(p^2)
     // Note:
-    //    \Omega\prime = \mathbb{N}. Sample Space are the Natural Numbers.
-    //    In the initial state k=0 the probability of an error should be 0
+    //    * \Omega\prime = \mathbb{N}. Sample Space are the Natural Numbers.
+    //    * In the initial state k=0 the probability of an error should be 0
+    //    * In CTMCs, the values of the different possibilities for the next state from a source state do not need to sum to one
+    //      because they are meant as "race conditions". I.e. "[] state = 1 -> 1:(state'=1) + 0.2:(state'=2) + 333:(state'=3);" is
+    //      perfectly fine. Thus deterministic time delays are not that easy to add to a model in CTMCs. This is actually the main
+    //      reason we make this approximation.
+    //    * One advantage of DTMCs for system models can be found in the prism FAQ
+    //      "How can I add deterministic time delays to a CTMC model?"
+    //      http://www.prismmodelchecker.org/manual/FrequentlyAskedQuestions/PRISMModelling#det_delay
     member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
         // another idea: show graph of quality of approximation
         ""
