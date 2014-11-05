@@ -50,10 +50,11 @@ type ExponentialDistribution () =
     //    Mathematical description given in [BW page 106]
     // Relationship to discrete Distribution:
     //    The discrete Geometric Distribution is also memoryless [WikiExp,WikiGeo].
-    //    http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution
+    //    Geometric Distribution converges to Exponential Distribution
+    //    see: http://math.stackexchange.com/questions/93098/how-does-a-geometric-distribution-converge-to-an-exponential-distribution
     // Cumulative Distribution Function:
     //    F(t) = Failure(t) = 1 - e^(- \lambda * t) (if t > 0)
-    //    Reliability(t) = e^(- \lambda * t)
+    //    Reliability(t) = e^(- \lambda * t) //Also called the Complementary Cumulative Probability in statistical terminology
     // Probability Density Function:
     //    f(t) = \lambda * e^(- \lambda * t)
     // Expected Value of f(t):

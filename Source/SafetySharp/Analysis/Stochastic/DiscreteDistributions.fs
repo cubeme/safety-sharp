@@ -63,11 +63,11 @@ type GeometricDistribution () =
     //    * \Omega\prime = \mathbb{N}. Sample Space are the Natural Numbers.
     //    * In the initial state k=0 the probability of an error should be 0
     //    * In CTMCs, the values of the different possibilities for the next state from a source state do not need to sum to one
-    //      because they are meant as "race conditions". I.e. "[] state = 1 -> 1:(state'=1) + 0.2:(state'=2) + 333:(state'=3);" is
-    //      perfectly fine. Thus deterministic time delays are not that easy to add to a model in CTMCs. This is actually the main
+    //      because they are meant as lambdas of exponential distributions. I.e. "[] state = 1 -> 1:(state'=1) + 0.2:(state'=2) + 333:(state'=3);"
+    //      is perfectly fine. Thus deterministic time delays are not that easy to add to a model in CTMCs. This is actually the main
     //      reason we make this approximation.
-    //    * One advantage of DTMCs for system models can be found in the prism FAQ
-    //      "How can I add deterministic time delays to a CTMC model?"
+    //    * The prism FAQ shows a way to approximate deterministic time delays (~ steps in DTMCs) using an "Erlang distribution".
+    //      See FAQ entry "How can I add deterministic time delays to a CTMC model?"
     //      http://www.prismmodelchecker.org/manual/FrequentlyAskedQuestions/PRISMModelling#det_delay
     member this.generateDtmc (numberOfStatesToApproximate:int,durationOfOneStep) =
         // another idea: show graph of quality of approximation
