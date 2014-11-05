@@ -25,7 +25,7 @@ namespace Z3Parser
 open System
 open System.IO
 open FParsec
-open ParsingResult
+open SmtLib2ParsingResult
 open SMTLIB2DataStructures.Ast
 open Z3DataStructures.Ast
 open SMTLIB2Parser

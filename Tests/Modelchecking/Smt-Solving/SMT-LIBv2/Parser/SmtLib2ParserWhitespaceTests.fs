@@ -20,10 +20,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module SmtLib2ParsingResult
+namespace SMTLIB2Parser.Tests
 
+open System
+open NUnit.Framework
+open FParsec
 
-type ParsingResult<'a> =
-    | Ast of 'a
-    | Error of string
+open TestHelpers
+open SMTLIB2DataStructures.Ast
+open AstTestHelpers
+open SmtLib2ParsingResult
 
+type SMTWhitespaceExampleTests() =
+    let parser = new SMTLIB2Parser.SMTCommonParser()
+    
+    let inAstFloat = inAst<float>
+    let inAstAttribute  = inAst<Attribute>
+
+    let parseWithParser parser str =
+        match run parser str with
+        | Success(result, _, _)   -> (Ast result)
+        | Failure(errorMsg, _, _) -> (Error errorMsg)
+        
+    let parseFloat str = parseWithParser pfloat str
+    let parseAttribute  str = parseWithParser (parser.parseAttribute .>> eof) str
+    
+    [<Test>]
+    member this.``comments are threated as whitespaces``() =
+        false =? true
+
+    //let exampleAttribute1String = 

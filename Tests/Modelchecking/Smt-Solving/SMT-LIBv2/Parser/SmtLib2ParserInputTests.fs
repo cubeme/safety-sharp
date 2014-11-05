@@ -20,10 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module SmtLib2ParsingResult
+namespace SMTLIB2Parser.Tests
 
+open System
+open NUnit.Framework
+open FParsec
 
-type ParsingResult<'a> =
-    | Ast of 'a
-    | Error of string
+open TestHelpers
+open AstTestHelpers
+open SMTLIB2DataStructures.Ast
+open SmtLib2ParsingResult
 
+type SMTInputExampleTests() =
+    //let parser = new ObjectCodeEntryParser()
+    
+    let inAstFloat = inAst<float>
+
+    let parseWithParser parser str =
+        match run parser str with
+        | Success(result, _, _)   -> (Ast result)
+        | Failure(errorMsg, _, _) -> (Error errorMsg)
+
+    let parseFloat str = parseWithParser pfloat str
+       
+    
+    [<Test>]
+    member this.``Datastructure ParsingResult works with convenience function returnAstFloat``() =
+        (ParsingResult<float>.Ast 1.25) =? inAstFloat 1.25
+
+    [<Test>]
+    member this.``a simple float should parse correctly``() =
+        parseFloat "1.25" =? inAstFloat 1.25
+
+    [<Test>]
+    member this.``a term should be parsed correctly``() =
+        parseFloat "1.25" = inAstFloat 1.25

@@ -20,10 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module SmtLib2ParsingResult
+namespace Z3ExecuteExternal.Tests
 
+open System
+open NUnit.Framework
+open Z3ExecuteExternal
 
-type ParsingResult<'a> =
-    | Ast of 'a
-    | Error of string
+open SmtLib2ParsingResult
+open AstTestHelpers
 
+type Z3InteractiveModeTests() = 
+    
+    let isOfTypeSExpr obj =
+        match box obj with
+                            | :? SMTLIB2DataStructures.Ast.SExpr as correctType -> true
+                            | _                                                 -> false
+
+    [<Test>]
+    member this.``interactive mode works (start,help,quit)``() =
+        let z3 = new ExecuteZ3Interactive()
+        z3.Start ()
+        let output = z3.ExecuteCustomCommand "(help)"
+        z3.Shutdown ()
+        isOfTypeSExpr output  =? true
