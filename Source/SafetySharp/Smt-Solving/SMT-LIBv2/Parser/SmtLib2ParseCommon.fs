@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SMTLIB2Parser
+namespace SafetySharp.Internal.SmtSolving.SmtLib2.Parser
 
 open System
 open System.IO
 open FParsec
-open SMTLIB2DataStructures.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
 open ParseSMTLIB2Whitespace
 
-type SMTCommonParser() =        
+type internal SMTCommonParser() =        
     // forward parser declarations
     let parseSExprIntern, parseSExprRefIntern = createParserForwardedToRef()
     let parseSortIntern, parseSortRefIntern = createParserForwardedToRef()

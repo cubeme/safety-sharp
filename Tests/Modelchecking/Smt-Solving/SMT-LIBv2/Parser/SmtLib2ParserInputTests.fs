@@ -28,8 +28,8 @@ open FParsec
 
 open TestHelpers
 open AstTestHelpers
-open SMTLIB2DataStructures.Ast
-open SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
 
 type SMTInputExampleTests() =
     //let parser = new ObjectCodeEntryParser()

@@ -26,18 +26,18 @@ open System
 open NUnit.Framework
 
 open TestHelpers
-open SMTLIB2DataStructures.Ast
-open Z3DataStructures.Ast
-open Z3DataStructures.Predefined
-open Z3ExamplesFiles
-open Z3ExecuteExternal
-
-open Z3AstToFile
-
-open Z3ExamplesFiles
-
-open SmtLib2ParsingResult
 open AstTestHelpers
+
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.SMTLIB2Convenience
+open SafetySharp.Internal.SmtSolving.Z3.Ast
+open SafetySharp.Internal.SmtSolving.Z3.Parser
+open SafetySharp.Internal.SmtSolving.Z3.AstToString
+open SafetySharp.Internal.SmtSolving.Z3.Execute
+
+open Z3ExamplesFiles
 
 type Z3ExportExampleTests() =
     

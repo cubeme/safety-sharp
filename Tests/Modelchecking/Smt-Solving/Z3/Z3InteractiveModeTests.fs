@@ -24,17 +24,17 @@ namespace Z3ExecuteExternal.Tests
 
 open System
 open NUnit.Framework
-open Z3ExecuteExternal
-
-open SmtLib2ParsingResult
 open AstTestHelpers
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.SmtShortTypes
+open SafetySharp.Internal.SmtSolving.Z3.Execute
 
 type Z3InteractiveModeTests() = 
     
     let isOfTypeSExpr obj =
         match box obj with
-                            | :? SMTLIB2DataStructures.Ast.SExpr as correctType -> true
-                            | _                                                 -> false
+                            | :? Smt2SExpr as correctType -> true
+                            | _                           -> false
 
     [<Test>]
     member this.``interactive mode works (start,help,quit)``() =

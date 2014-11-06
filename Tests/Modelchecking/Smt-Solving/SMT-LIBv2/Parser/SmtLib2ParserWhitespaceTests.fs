@@ -27,12 +27,13 @@ open NUnit.Framework
 open FParsec
 
 open TestHelpers
-open SMTLIB2DataStructures.Ast
 open AstTestHelpers
-open SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
 
 type SMTWhitespaceExampleTests() =
-    let parser = new SMTLIB2Parser.SMTCommonParser()
+    let parser = new SMTCommonParser()
     
     let inAstFloat = inAst<float>
     let inAstAttribute  = inAst<Attribute>

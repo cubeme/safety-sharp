@@ -20,10 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module SmtLib2ParsingResult
+namespace SafetySharp.Internal.SmtSolving.SmtLib2.Parser
 
+module SmtLib2ParsingResult =
 
-type ParsingResult<'a> =
-    | Ast of 'a
-    | Error of string
+    type internal ParsingResult<'a> =
+        | Ast of 'a
+        | Error of string
 

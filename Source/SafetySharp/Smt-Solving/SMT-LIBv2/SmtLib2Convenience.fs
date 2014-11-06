@@ -20,15 +20,69 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module SMTLIB2Convenience
+namespace SafetySharp.Internal.SmtSolving.SmtLib2
 
-open SMTLIB2DataStructures.Ast
+module internal SmtShortTypes =
+    open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
 
-let IdentifierFromString str = 
-    Identifier.IdSymbol(Symbol.Symbol(str))
+    type Smt2Numeral = Numeral
+    type Smt2Decimal = Decimal
+    type Smt2Hexadecimal = Hexadecimal
+    type Smt2Binary = Binary
+    type Smt2String = String
+    type Smt2ReservedWords = ReservedWords
+    type Smt2Symbol = Symbol
+    type Smt2Keyword = Keyword            
+    type Smt2SpecConstant = SpecConstant
+    type Smt2SExpr = SExpr
+    type Smt2Identifier = Identifier
+    type Smt2AttributeValue = AttributeValue
+    type Smt2Attribute = Attribute
+    type Smt2Sort = Sort
+    type Smt2QualIdentifier = QualIdentifier
+    type Smt2VarBinding = VarBinding
+    type Smt2SortedVar = SortedVar
+    type Smt2Term = Term
+    type Smt2SortSymbolDecl = SortSymbolDecl
+    type Smt2MetaSpecConstant = MetaSpecConstant
+    type Smt2FunSymbolDecl = FunSymbolDecl
+    type Smt2ParFunSymbolDecl = ParFunSymbolDecl
+    type Smt2TheoryAttribute = TheoryAttribute
+    type Smt2TheoryDecl = TheoryDecl
+    type Smt2LogicAttribute = LogicAttribute
+    type Smt2Logic = Logic
+    type Smt2InfoFlag = InfoFlag
+    type Smt2Option = Option
+    type Smt2ICommand = ICommand
+    type Smt2Command = Command
+    type Smt2Script = Script
+    type Smt2GenResponse = GenResponse
+    type Smt2ErrorBehavior = ErrorBehavior
+    type Smt2ReasonUnknown = ReasonUnknown
+    type Smt2Status = Status
+    type Smt2InfoResponse = InfoResponse
+    type Smt2GetInfoResponse = GetInfoResponse
+    type Smt2CheckSatResponse = CheckSatResponse
+    type Smt2GetAssertionsResponse = GetAssertionsResponse
+    type Smt2Proof = Proof
+    type Smt2GetProofResponse = GetProofResponse
+    type Smt2GetUnsatCoreResponse = GetUnsatCoreResponse
+    type Smt2ValuationPair = ValuationPair
+    type Smt2GetValueResponse = GetValueResponse
+    type Smt2TValuationPair = TValuationPair
+    type Smt2GetAssignmentResponse = GetAssignmentResponse
+    type Smt2GetOptionResponse = GetOptionResponse
 
-let SortFromString str =
-    Sort.SortSimple(IdentifierFromString str)
 
-let QualifiedIdentifierFromString str=
-    QualIdentifier.QualIdentifier(IdentifierFromString str)
+module internal SMTLIB2Convenience =
+
+    open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+
+    let IdentifierFromString str = 
+        Identifier.IdSymbol(Symbol.Symbol(str))
+
+    let SortFromString str =
+        Sort.SortSimple(IdentifierFromString str)
+
+    let QualifiedIdentifierFromString str=
+        QualIdentifier.QualIdentifier(IdentifierFromString str)

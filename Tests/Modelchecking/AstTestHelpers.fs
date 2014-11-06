@@ -1,9 +1,9 @@
-﻿module AstTestHelpers
+﻿module internal AstTestHelpers
 
 open System
 open NUnit.Framework
 
-open SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
 
 let selectAst = function
     | Ast(ast) -> ast :> obj 
@@ -14,7 +14,7 @@ let selectParseError = function
     | _ -> Assert.Fail("Parsing succeeded even though error was expected."); false :> obj
 
 
-let inAst<'a> ast = SmtLib2ParsingResult.ParsingResult<'a>.Ast(ast)
+let inAst<'a> ast = ParsingResult<'a>.Ast(ast)
 
 type Invalid = | InvalidAst
 

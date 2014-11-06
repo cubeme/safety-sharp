@@ -26,18 +26,17 @@ open System
 open NUnit.Framework
 open FParsec
 
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.SMTLIB2Convenience
+open SafetySharp.Internal.SmtSolving.Z3.Ast
+open SafetySharp.Internal.SmtSolving.Z3.Parser
+
 open TestHelpers
-open SMTLIB2Parser
-open SMTLIB2DataStructures.Ast
-open Z3Parser
-open Z3DataStructures.Ast
-
-open Z3DataStructures.Predefined
-open Z3ExamplesFiles
-
-
-open SmtLib2ParsingResult
 open AstTestHelpers
+
+open Z3ExamplesFiles
 
 type Z3OutputExampleTests() =
     let parser = new Z3Parser()

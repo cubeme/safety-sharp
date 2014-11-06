@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SMTLIB2AstToFile
+namespace SafetySharp.Internal.SmtSolving.SmtLib2.AstToString
 
-open SMTLIB2DataStructures.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.SmtShortTypes
 open System
 
 exception NotImplementedYetException
 
-type ExportSMTLIB2AstToFile() =
+type internal ExportSMTLIB2AstToFile() =
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()
@@ -56,19 +56,19 @@ type ExportSMTLIB2AstToFile() =
             | None -> ""
     
     // 3.1 Lexicon
-    member this.ExportNumeral (numeral : SMTLIB2DataStructures.Ast.Numeral) : string =
+    member this.ExportNumeral (numeral : Smt2Numeral) : string =
         numeral.ToString()
 
-    member this.ExportDecimal (decimal : SMTLIB2DataStructures.Ast.Decimal) : string =
+    member this.ExportDecimal (decimal : Smt2Decimal) : string =
         decimal
 
-    member this.ExportHexadecimal (hex : SMTLIB2DataStructures.Ast.Hexadecimal) : string =
+    member this.ExportHexadecimal (hex : Smt2Hexadecimal) : string =
         hex
 
-    member this.ExportBinary (bin : SMTLIB2DataStructures.Ast.Binary) : string =
+    member this.ExportBinary (bin : Smt2Binary) : string =
         bin
 
-    member this.ExportString (str : SMTLIB2DataStructures.Ast.String) : string =
+    member this.ExportString (str : Smt2String) : string =
         let a= "\"" + str + "\""
         // TODO: escape Characters
         let escaper (c:char) : string =
@@ -91,178 +91,178 @@ type ExportSMTLIB2AstToFile() =
             | true -> "true"
             | false -> "false"
 
-    member this.ExportReservedWords (resword : SMTLIB2DataStructures.Ast.ReservedWords) : string =
+    member this.ExportReservedWords (resword : Smt2ReservedWords) : string =
         match resword with 
-            | ReservedWord_par             -> "par"
-            | ReservedWord_NUMERAL         -> "NUMERAL"
-            | ReservedWord_DECIMAL         -> "DECIMAL"
-            | ReservedWord_STRING          -> "STRING"
-            | ReservedWord_Underscore      -> "_"
-            | ReservedWord_ExclamationMark -> "!"
-            | ReservedWord_as              -> "as"
-            | ReservedWord_let             -> "let"
-            | ReservedWord_forall          -> "forall"
-            | ReservedWord_exists          -> "exists"
+            | Smt2ReservedWords.ReservedWord_par             -> "par"
+            | Smt2ReservedWords.ReservedWord_NUMERAL         -> "NUMERAL"
+            | Smt2ReservedWords.ReservedWord_DECIMAL         -> "DECIMAL"
+            | Smt2ReservedWords.ReservedWord_STRING          -> "STRING"
+            | Smt2ReservedWords.ReservedWord_Underscore      -> "_"
+            | Smt2ReservedWords.ReservedWord_ExclamationMark -> "!"
+            | Smt2ReservedWords.ReservedWord_as              -> "as"
+            | Smt2ReservedWords.ReservedWord_let             -> "let"
+            | Smt2ReservedWords.ReservedWord_forall          -> "forall"
+            | Smt2ReservedWords.ReservedWord_exists          -> "exists"
 
-    member this.ExportSymbol (symbol : SMTLIB2DataStructures.Ast.Symbol) : string =
+    member this.ExportSymbol (symbol : Smt2Symbol) : string =
         match symbol with
-            | Symbol.Symbol str -> str
+            | Smt2Symbol.Symbol str -> str
 
-    member this.ExportKeyword (keyword : SMTLIB2DataStructures.Ast.Keyword) : string =
+    member this.ExportKeyword (keyword : Smt2Keyword) : string =
         match keyword with
-            | Keyword.Keyword str -> ":" + str
+            | Smt2Keyword.Keyword str -> ":" + str
     
 
     // 3.2 S-expressions
-    member this.ExportSpecConstant (specconst : SMTLIB2DataStructures.Ast.SpecConstant) : string =
+    member this.ExportSpecConstant (specconst : Smt2SpecConstant) : string =
         match specconst with 
-            | SpecConstantNumeral num     -> this.ExportNumeral num
-            | SpecConstantDecimal dec     -> this.ExportDecimal dec
-            | SpecConstantHexadecimal hex -> this.ExportHexadecimal hex
-            | SpecConstantBinary bin      -> this.ExportBinary bin
-            | SpecConstantString str      -> this.ExportString str
+            | Smt2SpecConstant.SpecConstantNumeral num     -> this.ExportNumeral num
+            | Smt2SpecConstant.SpecConstantDecimal dec     -> this.ExportDecimal dec
+            | Smt2SpecConstant.SpecConstantHexadecimal hex -> this.ExportHexadecimal hex
+            | Smt2SpecConstant.SpecConstantBinary bin      -> this.ExportBinary bin
+            | Smt2SpecConstant.SpecConstantString str      -> this.ExportString str
 
-    member this.ExportSExpr (sexpr : SMTLIB2DataStructures.Ast.SExpr) : string =
+    member this.ExportSExpr (sexpr : Smt2SExpr) : string =
         match sexpr with 
-            | SExprSpecConstant specconst -> this.ExportSpecConstant specconst
-            | SExprSymbol symbol          -> this.ExportSymbol symbol
-            | SExprKeyword keyword        -> this.ExportKeyword keyword
-            | SExprSExprList sexprs       -> "(" + (sexprs |> List.fold (fun acc sexpr -> acc + " " + this.ExportSExpr sexpr) "" ) + " )"
+            | Smt2SExpr.SExprSpecConstant specconst -> this.ExportSpecConstant specconst
+            | Smt2SExpr.SExprSymbol symbol          -> this.ExportSymbol symbol
+            | Smt2SExpr.SExprKeyword keyword        -> this.ExportKeyword keyword
+            | Smt2SExpr.SExprSExprList sexprs       -> "(" + (sexprs |> List.fold (fun acc sexpr -> acc + " " + this.ExportSExpr sexpr) "" ) + " )"
 
 
     // 3.3 Identifiers
-    member this.ExportIdentifier (identifier : SMTLIB2DataStructures.Ast.Identifier) : string =
+    member this.ExportIdentifier (identifier : Smt2Identifier) : string =
         match identifier with 
-            | IdSymbol symbol             -> this.ExportSymbol symbol
-            | IdIndexed (symbol, numlist) -> "( _ " + this.ExportSymbol symbol + "" + (numlist |> List.fold (fun acc numeral -> acc + " " + this.ExportNumeral numeral) "" ) + " )"
+            | Smt2Identifier.IdSymbol symbol             -> this.ExportSymbol symbol
+            | Smt2Identifier.IdIndexed (symbol, numlist) -> "( _ " + this.ExportSymbol symbol + "" + (numlist |> List.fold (fun acc numeral -> acc + " " + this.ExportNumeral numeral) "" ) + " )"
             
 
     // 3.4 Attributes
-    member this.ExportAttributeValue (atrrvalue : SMTLIB2DataStructures.Ast.AttributeValue) : string =
+    member this.ExportAttributeValue (atrrvalue : Smt2AttributeValue) : string =
         match atrrvalue with 
-            | AttributeValueSpecConstant specconst -> this.ExportSpecConstant specconst
-            | AttributeValueSymbol symbol          -> this.ExportSymbol symbol
-            | AttributeValueSExprList sexprs       -> "(" + (sexprs |> List.fold (fun acc sexpr -> acc + " " + this.ExportSExpr sexpr) "" ) + " )"
+            | Smt2AttributeValue.AttributeValueSpecConstant specconst -> this.ExportSpecConstant specconst
+            | Smt2AttributeValue.AttributeValueSymbol symbol          -> this.ExportSymbol symbol
+            | Smt2AttributeValue.AttributeValueSExprList sexprs       -> "(" + (sexprs |> List.fold (fun acc sexpr -> acc + " " + this.ExportSExpr sexpr) "" ) + " )"
 
-    member this.ExportAttribute (attribute : SMTLIB2DataStructures.Ast.Attribute) : string =
+    member this.ExportAttribute (attribute : Smt2Attribute) : string =
         match attribute with 
-            | AttributeKeyword keyword                      -> this.ExportKeyword keyword
-            | AttributeKeywordWithValue (keyword,attrvalue) -> this.ExportKeyword keyword + " " + this.ExportAttributeValue attrvalue
+            | Smt2Attribute.AttributeKeyword keyword                      -> this.ExportKeyword keyword
+            | Smt2Attribute.AttributeKeywordWithValue (keyword,attrvalue) -> this.ExportKeyword keyword + " " + this.ExportAttributeValue attrvalue
 
     // 3.5 Sorts
-    member this.ExportSort (sort : SMTLIB2DataStructures.Ast.Sort) : string =
+    member this.ExportSort (sort : Smt2Sort) : string =
         match sort with
-            | SortSimple identifier -> this.ExportIdentifier identifier
-            | SortAdvanced (identifier, sorts) -> "( " + this.ExportIdentifier identifier + "" + (sorts |> List.fold (fun acc sort -> acc + " " + this.ExportSort sort) "" ) + " )"
+            | Smt2Sort.SortSimple identifier -> this.ExportIdentifier identifier
+            | Smt2Sort.SortAdvanced (identifier, sorts) -> "( " + this.ExportIdentifier identifier + "" + (sorts |> List.fold (fun acc sort -> acc + " " + this.ExportSort sort) "" ) + " )"
 
 
     // 3.6 Terms and Formulas
-    member this.ExportQualIdentifier (qualid : SMTLIB2DataStructures.Ast.QualIdentifier) : string =
+    member this.ExportQualIdentifier (qualid : Smt2QualIdentifier) : string =
         match qualid with 
-            | QualIdentifier identifier -> this.ExportIdentifier identifier
-            | QualIdentifierOfSort (identifier, sort) -> "( as " + this.ExportIdentifier identifier + " " + this.ExportSort sort + " )"
+            | Smt2QualIdentifier.QualIdentifier identifier -> this.ExportIdentifier identifier
+            | Smt2QualIdentifier.QualIdentifierOfSort (identifier, sort) -> "( as " + this.ExportIdentifier identifier + " " + this.ExportSort sort + " )"
 
-    member this.ExportVarBinding ( (symbol, term) : SMTLIB2DataStructures.Ast.VarBinding) : string =
+    member this.ExportVarBinding ( (symbol, term) : Smt2VarBinding) : string =
         "( " + this.ExportSymbol symbol + " " + this.ExportTerm term + " )"
 
-    member this.ExportSortedVar ((symbol, sort) : SMTLIB2DataStructures.Ast.SortedVar) : string =
+    member this.ExportSortedVar ((symbol, sort) : Smt2SortedVar) : string =
         "( " + this.ExportSymbol symbol + " " + this.ExportSort sort + " )"
 
-    member this.ExportTerm (term : SMTLIB2DataStructures.Ast.Term) : string =
+    member this.ExportTerm (term : Smt2Term) : string =
         let ExportTerms terms = (terms |> List.fold (fun acc term -> acc + " " + this.ExportTerm term) "" )
         let ExportVarbindings varbindings = (varbindings |> List.fold (fun acc varbinding -> acc + " " + this.ExportVarBinding varbinding ) "" )
         let ExportSortedVars sortedvars = (sortedvars |> List.fold (fun acc sortedvar -> acc + " " + this.ExportSortedVar sortedvar ) "" )
         let ExportAttributes attributes = (attributes |> List.fold (fun acc attribute -> acc + " " + this.ExportAttribute attribute ) "" )
         match term with
-            | TermSpecConstant specconstant         -> this.ExportSpecConstant specconstant
-            | TermQualIdentifier qualidentifier     -> this.ExportQualIdentifier qualidentifier
-            | TermQualIdTerm (qualidentifier,terms) -> "( " + this.ExportQualIdentifier qualidentifier + "" + ExportTerms terms  + " )"
-            | TermLetTerm (varbindings, term)       -> "( let "    + ExportVarbindings varbindings + "" + this.ExportTerm term + " )"
-            | TermForAllTerm (sortedvars,term)      -> "( forall " + ExportSortedVars sortedvars   + "" + this.ExportTerm term + " )"
-            | TermExistsTerm (sortedvars,term)      -> "( exists " + ExportSortedVars sortedvars   + "" + this.ExportTerm term + " )"
-            | TermExclimationPt (term,attributes)   -> "( ! " + this.ExportTerm term + " " + ExportAttributes attributes + " )"
+            | Smt2Term.TermSpecConstant specconstant         -> this.ExportSpecConstant specconstant
+            | Smt2Term.TermQualIdentifier qualidentifier     -> this.ExportQualIdentifier qualidentifier
+            | Smt2Term.TermQualIdTerm (qualidentifier,terms) -> "( " + this.ExportQualIdentifier qualidentifier + "" + ExportTerms terms  + " )"
+            | Smt2Term.TermLetTerm (varbindings, term)       -> "( let "    + ExportVarbindings varbindings + "" + this.ExportTerm term + " )"
+            | Smt2Term.TermForAllTerm (sortedvars,term)      -> "( forall " + ExportSortedVars sortedvars   + "" + this.ExportTerm term + " )"
+            | Smt2Term.TermExistsTerm (sortedvars,term)      -> "( exists " + ExportSortedVars sortedvars   + "" + this.ExportTerm term + " )"
+            | Smt2Term.TermExclimationPt (term,attributes)   -> "( ! " + this.ExportTerm term + " " + ExportAttributes attributes + " )"
 
 
     // 3.7 Theory Declarations
-    member this.ExportSortSymbolDecl (sortsymboldecl : SMTLIB2DataStructures.Ast.SortSymbolDecl) : string =
+    member this.ExportSortSymbolDecl (sortsymboldecl : Smt2SortSymbolDecl) : string =
         raise NotImplementedYetException
 
-    member this.ExportMetaSpecConstant (metaspecconstant : SMTLIB2DataStructures.Ast.MetaSpecConstant) : string =
+    member this.ExportMetaSpecConstant (metaspecconstant : Smt2MetaSpecConstant) : string =
         raise NotImplementedYetException
 
-    member this.ExportFunSymbolDecl (funsymboldecl : SMTLIB2DataStructures.Ast.FunSymbolDecl) : string =
+    member this.ExportFunSymbolDecl (funsymboldecl : Smt2FunSymbolDecl) : string =
         raise NotImplementedYetException
 
-    member this.ExportParFunSymbolDecl (parfunsymboldecl : SMTLIB2DataStructures.Ast.ParFunSymbolDecl) : string =
+    member this.ExportParFunSymbolDecl (parfunsymboldecl : Smt2ParFunSymbolDecl) : string =
         raise NotImplementedYetException
 
-    member this.ExportTheoryAttribute (theoryattribute : SMTLIB2DataStructures.Ast.TheoryAttribute) : string =
+    member this.ExportTheoryAttribute (theoryattribute : Smt2TheoryAttribute) : string =
         raise NotImplementedYetException
 
-    member this.ExportTheoryDecl (theorydecl : SMTLIB2DataStructures.Ast.TheoryDecl) : string =
+    member this.ExportTheoryDecl (theorydecl : Smt2TheoryDecl) : string =
         raise NotImplementedYetException
         
 
     // 3.8 Logic Declarations
-    member this.ExportLogicAttribute (logicattribute : SMTLIB2DataStructures.Ast.LogicAttribute) : string =
+    member this.ExportLogicAttribute (logicattribute : Smt2LogicAttribute) : string =
         raise NotImplementedYetException
-    member this.ExportLogic (logic : SMTLIB2DataStructures.Ast.Logic) : string =
+    member this.ExportLogic (logic : Smt2Logic) : string =
         raise NotImplementedYetException
 
     // 3.9 Scripts, Part 1: Commands
-    member this.ExportInfoFlag (infoflag : SMTLIB2DataStructures.Ast.InfoFlag) : string =
+    member this.ExportInfoFlag (infoflag : Smt2InfoFlag) : string =
         match infoflag with
-            | InfoFlagErrorBehavior   -> ":error-behavior"
-            | InfoFlagName            -> ":name"
-            | InfoFlagAuthors         -> ":authors"
-            | InfoFlagVersion         -> ":version"
-            | InfoFlagStatus          -> ":status"
-            | InfoFlagReasonUnknown   -> ":reason-unknown"
-            | InfoFlagKeyword keyword -> this.ExportKeyword keyword
-            | InfoFlagAllStatistics   -> ":all-statistics"
+            | Smt2InfoFlag.InfoFlagErrorBehavior   -> ":error-behavior"
+            | Smt2InfoFlag.InfoFlagName            -> ":name"
+            | Smt2InfoFlag.InfoFlagAuthors         -> ":authors"
+            | Smt2InfoFlag.InfoFlagVersion         -> ":version"
+            | Smt2InfoFlag.InfoFlagStatus          -> ":status"
+            | Smt2InfoFlag.InfoFlagReasonUnknown   -> ":reason-unknown"
+            | Smt2InfoFlag.InfoFlagKeyword keyword -> this.ExportKeyword keyword
+            | Smt2InfoFlag.InfoFlagAllStatistics   -> ":all-statistics"
 
-    member this.ExportOption (option : SMTLIB2DataStructures.Ast.Option) : string =
+    member this.ExportOption (option : Smt2Option) : string =
         match option with
-            | OptionPrintSuccess boolvalue       -> ":print-success"             + " " + this.ExportBValue boolvalue
-            | OptionExpandDefinitions boolvalue  -> ":expand-definitions"        + " " + this.ExportBValue boolvalue
-            | OptionInteractiveMode boolvalue    -> ":interactive-mode"          + " " + this.ExportBValue boolvalue
-            | OptionProduceProofs boolvalue      -> ":produce-proofs"            + " " + this.ExportBValue boolvalue
-            | OptionProduceUnsatCores boolvalue  -> ":produce-unsat-cores"       + " " + this.ExportBValue boolvalue
-            | OptionProduceModels boolvalue      -> ":produce-models"            + " " + this.ExportBValue boolvalue
-            | OptionProduceAssignments boolvalue -> ":produce-assignments"       + " " + this.ExportBValue boolvalue
-            | OptionRegularOutputChannel str     -> ":regular-output-channel"    + " " + this.ExportString str
-            | OptionDiagnosticOutputChannel str  -> ":diagnostic-output-channel" + " " + this.ExportString str
-            | OptionRandomSeed numeral           -> ":random-seed"               + " " + this.ExportNumeral numeral
-            | OptionVerbosity numeral            -> ":verbosity"                 + " " + this.ExportNumeral numeral
-            | OptionAttribute attribute          -> this.ExportAttribute attribute
+            | Smt2Option.OptionPrintSuccess boolvalue       -> ":print-success"             + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionExpandDefinitions boolvalue  -> ":expand-definitions"        + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionInteractiveMode boolvalue    -> ":interactive-mode"          + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionProduceProofs boolvalue      -> ":produce-proofs"            + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionProduceUnsatCores boolvalue  -> ":produce-unsat-cores"       + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionProduceModels boolvalue      -> ":produce-models"            + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionProduceAssignments boolvalue -> ":produce-assignments"       + " " + this.ExportBValue boolvalue
+            | Smt2Option.OptionRegularOutputChannel str     -> ":regular-output-channel"    + " " + this.ExportString str
+            | Smt2Option.OptionDiagnosticOutputChannel str  -> ":diagnostic-output-channel" + " " + this.ExportString str
+            | Smt2Option.OptionRandomSeed numeral           -> ":random-seed"               + " " + this.ExportNumeral numeral
+            | Smt2Option.OptionVerbosity numeral            -> ":verbosity"                 + " " + this.ExportNumeral numeral
+            | Smt2Option.OptionAttribute attribute          -> this.ExportAttribute attribute
 
-    member this.ExportCommand (command : SMTLIB2DataStructures.Ast.Command) : string =
+    member this.ExportCommand (command : Smt2Command) : string =
         let ExportSymbols symbols = (symbols |> List.fold (fun acc symbol -> acc + " " + this.ExportSymbol symbol ) "" )
         let ExportSorts sorts  = (sorts |> List.fold (fun acc sort -> acc + " " + this.ExportSort sort) "" )
         let ExportSortedVars sortedvars = (sortedvars |> List.fold (fun acc sortedvar -> acc + " " + this.ExportSortedVar sortedvar ) "" )
         let ExportTerms terms = (terms |> List.fold (fun acc term -> acc + " " + this.ExportTerm term) "" )
         match command with
-            | CommandSetLogic symbol                         -> "( "+ "set-logic"      + " " + this.ExportSymbol symbol + " )"
-            | CommandSetOption option                        -> "( "+ "set-option"     + " " + this.ExportOption option + " )"
-            | CommandSetInfo attribute                       -> "( "+ "set-info"       + " " + this.ExportAttribute attribute + " )"
-            | CommandDeclareSort (symbol,numeral)            -> "( "+ "declare-sort"   + " " + this.ExportSymbol symbol + " " + this.ExportNumeral numeral + " )"
-            | CommandDefineSort (symbol,symbols,sort)        -> "( "+ "define-sort"    + " " + this.ExportSymbol symbol + " " + "(" + ExportSymbols symbols       + " ) " + this.ExportSort sort + " )"
-            | CommandDeclareFun(symbol,sorts,sort)           -> "( "+ "declare-fun"    + " " + this.ExportSymbol symbol + " " + "(" + ExportSorts sorts           + " ) " + this.ExportSort sort + " )"
-            | CommandDefineFun (symbol,sortedvars,sort,term) -> "( "+ "define-fun"     + " " + this.ExportSymbol symbol + " " + "(" + ExportSortedVars sortedvars + " ) " + this.ExportSort sort + " " + this.ExportTerm term + " )"
-            | CommandPush numeral                            -> "( "+ "push"           + " " + this.ExportNumeral numeral + " )"
-            | CommandPop numeral                             -> "( "+ "pop"            + " " + this.ExportNumeral numeral + " )"
-            | CommandAssert term                             -> "( "+ "assert"         + " " + this.ExportTerm term + " )"
-            | CommandCheckSat                                -> "( "+ "check-sat"      + " )"
-            | CommandGetAssertions                           -> "( "+ "get-assertions" + " )"
-            | CommandGetProof                                -> "( "+ "get-proof"      + " )"
-            | CommandGetUnsatCore                            -> "( "+ "get-unsat-core" + " )"
-            | CommandGetValue terms                          -> "( "+ "get-value"      + " " + "(" + ExportTerms terms + " )" + " )"
-            | CommandGetAssignment                           -> "( "+ "get-assignment" + " )"
-            | CommandGetOption keyword                       -> "( "+ "get-option"     + " " + this.ExportKeyword keyword + " )"
-            | CommandGetInfo infoflag                        -> "( "+ "get-info"       + " " + this.ExportInfoFlag infoflag + " )"
-            | CommandExit                                    -> "( "+ "exit"           + " )"
+            | Smt2Command.CommandSetLogic symbol                         -> "( "+ "set-logic"      + " " + this.ExportSymbol symbol + " )"
+            | Smt2Command.CommandSetOption option                        -> "( "+ "set-option"     + " " + this.ExportOption option + " )"
+            | Smt2Command.CommandSetInfo attribute                       -> "( "+ "set-info"       + " " + this.ExportAttribute attribute + " )"
+            | Smt2Command.CommandDeclareSort (symbol,numeral)            -> "( "+ "declare-sort"   + " " + this.ExportSymbol symbol + " " + this.ExportNumeral numeral + " )"
+            | Smt2Command.CommandDefineSort (symbol,symbols,sort)        -> "( "+ "define-sort"    + " " + this.ExportSymbol symbol + " " + "(" + ExportSymbols symbols       + " ) " + this.ExportSort sort + " )"
+            | Smt2Command.CommandDeclareFun(symbol,sorts,sort)           -> "( "+ "declare-fun"    + " " + this.ExportSymbol symbol + " " + "(" + ExportSorts sorts           + " ) " + this.ExportSort sort + " )"
+            | Smt2Command.CommandDefineFun (symbol,sortedvars,sort,term) -> "( "+ "define-fun"     + " " + this.ExportSymbol symbol + " " + "(" + ExportSortedVars sortedvars + " ) " + this.ExportSort sort + " " + this.ExportTerm term + " )"
+            | Smt2Command.CommandPush numeral                            -> "( "+ "push"           + " " + this.ExportNumeral numeral + " )"
+            | Smt2Command.CommandPop numeral                             -> "( "+ "pop"            + " " + this.ExportNumeral numeral + " )"
+            | Smt2Command.CommandAssert term                             -> "( "+ "assert"         + " " + this.ExportTerm term + " )"
+            | Smt2Command.CommandCheckSat                                -> "( "+ "check-sat"      + " )"
+            | Smt2Command.CommandGetAssertions                           -> "( "+ "get-assertions" + " )"
+            | Smt2Command.CommandGetProof                                -> "( "+ "get-proof"      + " )"
+            | Smt2Command.CommandGetUnsatCore                            -> "( "+ "get-unsat-core" + " )"
+            | Smt2Command.CommandGetValue terms                          -> "( "+ "get-value"      + " " + "(" + ExportTerms terms + " )" + " )"
+            | Smt2Command.CommandGetAssignment                           -> "( "+ "get-assignment" + " )"
+            | Smt2Command.CommandGetOption keyword                       -> "( "+ "get-option"     + " " + this.ExportKeyword keyword + " )"
+            | Smt2Command.CommandGetInfo infoflag                        -> "( "+ "get-info"       + " " + this.ExportInfoFlag infoflag + " )"
+            | Smt2Command.CommandExit                                    -> "( "+ "exit"           + " )"
 
-    member this.ExportScript (script : SMTLIB2DataStructures.Ast.Script) : string =
+    member this.ExportScript (script : Smt2Script) : string =
         script |> List.fold (fun acc command -> this.ExportCommand command + nl ) ""
 
 

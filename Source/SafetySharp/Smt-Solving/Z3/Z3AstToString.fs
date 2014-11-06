@@ -20,17 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Z3AstToFile
+namespace SafetySharp.Internal.SmtSolving.Z3.AstToString
 
-open Z3DataStructures.Ast
-open SMTLIB2DataStructures.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.Z3.Ast
 open System
 
 exception NotImplementedYetException
 exception UnsupportedICommand
 
-type ExportZ3AstToFile() =
-    let smt2exporter = SMTLIB2AstToFile.ExportSMTLIB2AstToFile()
+type internal ExportZ3AstToFile() =
+    let smt2exporter = SafetySharp.Internal.SmtSolving.SmtLib2.AstToString.ExportSMTLIB2AstToFile()
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()

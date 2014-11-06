@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Z3DataStructures.Predefined
+namespace SafetySharp.Internal.SmtSolving.Z3.Predefined
 
-open Z3DataStructures.Ast
-open SMTLIB2DataStructures.Ast
+open SafetySharp.Internal.SmtSolving.Z3.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
 
 //For Convenience: Predefined Symbols in Z3 (TODO: make it depend on the theory)
-type Z3Predefined (theory:string) = 
+type internal Z3Predefined (theory:string) = 
     // Core theory (with bool)
     class end

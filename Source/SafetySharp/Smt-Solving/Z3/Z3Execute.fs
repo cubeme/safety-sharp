@@ -20,24 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Z3ExecuteExternal
+namespace SafetySharp.Internal.SmtSolving.Z3.Execute
 
 open System.Diagnostics
-open Z3DataStructures.Ast
-open SMTLIB2DataStructures.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+open SafetySharp.Internal.SmtSolving.Z3.Ast
 
 open FParsec
 
 exception NotImplementedYetException
 
-type Z3Result = Successful of string * string
-              | Failed of string * string
-              with
-                member this.HasSucceeded
-                    with get () =
-                        match this with
-                            | Successful (_,_) -> true
-                            | Failed (_,_) -> false
+type internal Z3Result =
+    | Successful of string * string
+    | Failed of string * string
+     with
+       member this.HasSucceeded
+           with get () =
+               match this with
+                   | Successful (_,_) -> true
+                   | Failed (_,_) -> false
 
 // TODO: - Möglichkeit schaffen einer Environment-Variable, die den Pfad enthält
 //       - FindPath-Funktion, die versucht den Ort geschickt zu erraten
@@ -49,7 +51,7 @@ type Z3Result = Successful of string * string
 // http://stackoverflow.com/questions/415620/redirect-console-output-to-textbox-in-separate-program-c-sharp
 // http://stackoverflow.com/questions/353601/capturing-nslookup-shell-output-with-c-sharp
 
-type ExecuteZ3Script() = 
+type internal ExecuteZ3Script() = 
     static member ExecuteZ3Script (arguments:string) : Z3Result =
         let stdoutOutputBuffer = new System.Text.StringBuilder ()
         let stderrOutputBuffer = new System.Text.StringBuilder ()
@@ -87,17 +89,18 @@ type ExecuteZ3Script() =
             | _ -> Failed(stdoutOutputBuffer.ToString(), stderrOutputBuffer.ToString())
 
 
-type Z3InteractiveState = Z3StateOff
-                        | Z3ShuttingDown
-                        | Z3StateIdle
-                        | Z3StateCalculating
+type internal Z3InteractiveState =
+    | Z3StateOff
+    | Z3ShuttingDown
+    | Z3StateIdle
+    | Z3StateCalculating
 
-type ExecuteZ3Interactive() =
+type internal ExecuteZ3Interactive() =
     let state : Z3InteractiveState ref = ref Z3StateOff
     let mutable proc : Process = null
     let stdoutOutputBuffer = new System.Text.StringBuilder ()
     let stderrOutputBuffer = new System.Text.StringBuilder ()
-    let smt2common = new SMTLIB2Parser.SMTCommonParser ()
+    let smt2common = new SMTCommonParser ()
         
     let ShutdownIntern  = (fun () -> System.Threading.Monitor.Enter state
                                      if !state <> Z3StateOff && !state <> Z3ShuttingDown then
@@ -176,7 +179,7 @@ type ExecuteZ3Interactive() =
 
     member this.ExecuteCustomCommand (input:string) : SExpr =
         let readCompleteSExpr strmreader : string =
-            let seprtokenizer = new SMTLIB2Parser.SMTSExpressionTokenizer()
+            let seprtokenizer = new SMTSExpressionTokenizer()
             let mutable completed = false
             while completed <> true do
                 let output = proc.StandardOutput.ReadLine () + "\n"

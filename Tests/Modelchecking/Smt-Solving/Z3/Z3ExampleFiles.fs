@@ -23,10 +23,12 @@
 module Z3ExamplesFiles
 
 
-open SMTLIB2DataStructures.Ast
-open Z3DataStructures.Ast
-open Z3DataStructures.Predefined
-open SMTLIB2Convenience
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.SMTLIB2Convenience
+open SafetySharp.Internal.SmtSolving.Z3.Ast
+open SafetySharp.Internal.SmtSolving.Z3.Parser
 
 let exampleOutputEmptyGoalString =
     "(goal\n  :precision precise :depth 4)"

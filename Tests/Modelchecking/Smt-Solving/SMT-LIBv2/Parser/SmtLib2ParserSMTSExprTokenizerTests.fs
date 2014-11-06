@@ -27,9 +27,9 @@ open NUnit.Framework
 open FParsec
 
 open TestHelpers
-open SMTLIB2Parser
-open SMTLIB2DataStructures.Ast
-open SmtLib2ParsingResult
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
 
 type SMTSExprTokenizerExampleTests() =
     // returns, whether the tokenizer finishes or not

@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SMTLIB2DataStructures.Predefined
+namespace SafetySharp.Internal.SmtSolving.SmtLib2.Predefined
 
-open SMTLIB2DataStructures.Ast
+open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
 
 //For Convenience: Predefined Symbols in Z3 (TODO: make it depend on the theory)
-type Z3Predefined (theory:string) =
+type internal Smt2Predefined (theory:string) =
     // Core Theory: Source http://smtlib.cs.uiowa.edu/theories/Core.smt2 ("2010-04-17")
     member this.True  =        Symbol.Symbol("true")
     member this.False =        Symbol.Symbol("false")
