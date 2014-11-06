@@ -22,9 +22,9 @@
 
 namespace SafetySharp.Internal.SmtSolving.SmtLib2.Parser
 
-module SmtLib2ParsingResult =
+module internal SmtLib2ParsingResult =
 
-    type internal ParsingResult<'a> =
+    type ParsingResult<'a> =
         | Ast of 'a
         | Error of string
 

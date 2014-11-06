@@ -68,7 +68,7 @@ let exampleOutputFileUnsat =
     "unsat"
 
 
-let exampleFileSimplify1bAst : ICommand list=
+let internal exampleFileSimplify1bAst : ICommand list=
     [ CommandZ3.CommandZ3DeclareDatatypes {DeclareDataTypes.formalParameters=[];
                                            DeclareDataTypes.datatypes=[{DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("SE");
                                                                         DatatypeDeclaration.constructors=[{ConstructorDecl.constructorName=Symbol.Symbol("BROKEN");ConstructorDecl.content=[]};

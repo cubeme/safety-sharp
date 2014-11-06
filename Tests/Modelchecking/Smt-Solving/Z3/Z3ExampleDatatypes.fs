@@ -31,7 +31,7 @@ open SafetySharp.Internal.SmtSolving.Z3.Parser
 
 
 //I think this isn't exported correctly at location "(Tree leaf (node (..."
-let exampleTutorialMutuallyRecursiveDatatypes : DeclareDataTypes =
+let internal exampleTutorialMutuallyRecursiveDatatypes : DeclareDataTypes =
     { DeclareDataTypes.formalParameters=[Symbol.Symbol("T")];
       DeclareDataTypes.datatypes=[{ DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("Tree");
                                     DatatypeDeclaration.constructors=[ {ConstructorDecl.constructorName=Symbol.Symbol("leaf");
