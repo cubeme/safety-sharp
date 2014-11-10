@@ -131,10 +131,10 @@ module FIL
 
 	rule
 		<k> ((true ->> { Stmt:StmFil } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
-		<gcCurrentCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfullCandidates:Set </gcCurrentCandidates>
+		<gcCurrentCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </gcCurrentCandidates>
 	
 	rule
 		<k> (.GuardedCommands => Stmt) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
-		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfullCandidates:Set => .Set) </gcCurrentCandidates> [transition]
+		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </gcCurrentCandidates> [transition]
 
 endmodule
