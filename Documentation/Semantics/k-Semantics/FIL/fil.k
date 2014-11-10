@@ -10,6 +10,7 @@ module FIL-SYNTAX
 //	* [strict(2] means that the second term is evaluated first. Then the operator-rule is used (common example use-case: lazy evaluation of "Expr && false"; short-circuit-semantics. We use it to emphasize, that to evaluate an assignment-Statement, we first have to evaluate the expression)
 //	* [seqstrict] means that all operations with the same precedence have to be evaluated from left to right (deterministic order)
 //	* For many details on the see http://www.kframework.org/language-pdfs/new/imp.pdf which shares a lot of common concepts with FIL and has a very detailed documentation.
+//	* [transition] is necessary to show k, that a rule leads to non-determinism, which should explored
 
 // Chapter 2.1: Domains
 	syntax Var ::= Id
@@ -135,5 +136,6 @@ module FIL
 	
 	rule
 		<k> (.GuardedCommands => Stmt) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
-		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfullCandidates:Set => .Set) </gcCurrentCandidates>
+		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfullCandidates:Set => .Set) </gcCurrentCandidates> [transition]
+
 endmodule
