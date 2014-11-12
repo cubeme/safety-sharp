@@ -84,10 +84,6 @@ module SAFETYSHARP-CONFIGURATION
 
 	//TODO: Find better place	
 	syntax K ::= "#chooseInitialValue" "(" HierarchicalAccess "," Id ")" //for a specific Field. FullPath to Component, FieldId
-	syntax K ::= "#possibleValues" "(" Set ")"
-
-	// Chapter 2.1: Domains, variable environment
-
 
 	configuration
 		<execution>
@@ -104,7 +100,7 @@ module SAFETYSHARP-CONFIGURATION
 				<providedPort> .Set </providedPort>
 				<bindings> .Map </bindings>
 				<behaviour> .K </behaviour>
-				<fields> .Map </fields>	//TODO: Remove Fields?
+				<fields> .Map </fields>
 			</component>
 		</static>
 
@@ -128,7 +124,7 @@ module SAFETYSHARP-CONFIGURATION
 				<requiredPort> .Set </requiredPort>
 				<providedPort> .Set </providedPort>
 				<bindings> .Map </bindings>
-				<behaviour> .K </behaviour>
+				<behaviour> ComponentBehaviour </behaviour>
 				<fields> .Map </fields>
 			</component>
 			...
@@ -151,36 +147,18 @@ module SAFETYSHARP-CONFIGURATION
 
 
 	// initialize Fields in the <execution>-Environment
-	// case, variable exists in map. We add the new value in the map
+	// variable does not exist in map. We add an entry for the variable in the map with the value as first entry		
+	//TODO rephrase: case, we already processed all values of one variable.  We also say, that the initial values of this field should be chosen. Because this is a structural rule and choosing an initial value may be indeterministic, we do not choose the Initial Values here. Instead we create a command in the k-Cell to do this work
 	rule
 		<loadComponents>
-			(#loadFields ( FullPath:HierarchicalAccess , (FieldId:Id = (Val:Value OtherValues:Values ) ) OtherFields:Fields, FieldId |-> #possibleValues(ValueSet) FieldMap:Map ))
-			=>
-			(#loadFields ( FullPath , (FieldId = OtherValues) OtherFields, FieldId |-> #possibleValues (SetItem(Val) ValueSet ) FieldMap ))
-			...
-		</loadComponents>	[structural]
-
-	// case, variable does not exist in map. We add an entry for the variable in the map with the value as first entry
-	rule
-		<loadComponents>
-			(#loadFields ( FullPath:HierarchicalAccess , (FieldId:Id = (Val:Value OtherValues:Values ) ) OtherFields:Fields, FieldMap:Map ))
-			=>
-			(#loadFields ( FullPath , (FieldId = OtherValues) OtherFields, FieldId |-> #possibleValues(SetItem(Val)) FieldMap ))
-			...
-		</loadComponents>	when notBool ( FieldId in keys(FieldMap) )  [structural]
-
-	// case, we already processed all values of one variable.  We also say, that the initial values of this field should be chosen. Because this is a structural rule and choosing an initial value may be indeterministic, we do not choose the Initial Values here. Instead we create a command in the k-Cell to do this work
-	rule
-		<loadComponents>
-			(#loadFields ( FullPath:HierarchicalAccess , (FieldId:Id = .Values) OtherFields:Fields, ResultMap:Map ))
-			=>
-			(#loadFields ( FullPath , OtherFields, ResultMap ))
+			(#loadFields (	FullPath:HierarchicalAccess ,
+					(FieldId:Id = (Values:Values ) ) OtherFields:Fields => OtherFields,
+					(.Map => FieldId |-> Values) FieldMap:Map ))
 			...
 		</loadComponents>
 		<k>
 			.K => #chooseInitialValue( FullPath, FieldId ) ...
-		</k>
-		[structural]
+		</k>	[structural]
 
 	// case, we processed all variables. Remove Entry and update Component FieldMap.
 	rule
@@ -200,20 +178,26 @@ module SAFETYSHARP-SEMANTICS
 	imports SAFETYSHARP-SYNTAX
 	imports SAFETYSHARP-CONFIGURATION	
 
-	// initialize values (may be indeterministic)
-	// hangs, if value already assigned
+	// use of anyElementOf may lead to indeterminism
+	syntax Value ::= "anyElementOf" "(" Values ")" [function]
+	rule anyElementOf ( Element1:Value Element2:Value Rest:Values ) => anyElementOf ( Element2 Rest)
+	rule anyElementOf ( Element:Value Rest:Values) => Element
+
+
+	// initialize values (may be indeterministic, indeterminism is hidden in "anyElementOf")
+	// leads to (sometimes inconsistent) double assignments in <currentFieldValue>, if value already assigned
 	rule
 		<k>			
 			#chooseInitialValue( FullPath:HierarchicalAccess, FieldId:Id ) => . ...
 		</k>
 		<component>
 			<path> FullPath </path>
-			<fields> (FieldId |-> #possibleValues(SetItem(ChosenValue:Value) OtherValues:Set )) ... </fields>
+<fields> (FieldId |-> PossibleValues) ... </fields>
 			...
 		</component>
 		<currentFieldValues>
-			.Map => (FullPath . FieldId) |-> ChosenValue ...
-		</currentFieldValues>	[transition]
+			.Map => (FullPath . FieldId) |-> anyElementOf(PossibleValues) ...
+		</currentFieldValues>
 
 /*
 // Chapter 2.2: Expressions
