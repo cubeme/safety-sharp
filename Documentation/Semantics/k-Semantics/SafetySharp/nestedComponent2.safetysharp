@@ -1,0 +1,30 @@
+component simple {
+	component nested_n1 {
+		component nested_n12 {
+			behaviour {
+				;
+				skip
+			}
+		}
+		behaviour {
+			;
+			skip
+		}
+	}
+	component nested_n2 {
+		component nested_n22 {
+			behaviour {
+				;
+				skip
+			}
+		}
+		behaviour {
+			;
+			skip
+		}
+	}
+	behaviour {
+		;
+		skip
+	}
+}

@@ -68,28 +68,31 @@ module SAFETYSHARP-SYNTAX
 	syntax Values ::= List{Value,""}
 	syntax IdList ::= List{Id,","}
 
-	syntax HierarchicalAccess ::= "#root" | HierarchicalAccess "." Id		[left]
+	syntax HierarchicalAccess ::=	  Id 
+					| HierarchicalAccess "." Id		[left]
 	syntax K ::= Component
 endmodule
 
 module SAFETYSHARP-CONFIGURATION
 	imports SAFETYSHARP-SYNTAX
 
-	syntax LoadComponent ::= "#loadComponent" "(" Component "," HierarchicalAccess "," Set ")" //second argument are the parents of the component to load, third argument are the HierarchicalAccesss' of previously loaded Subcomponents of Component
+	syntax LoadComponent ::= "#loadRootComponent" "(" Component ")"
+
+	syntax LoadComponent ::= "#loadComponent" "(" Component "," HierarchicalAccess "," Set ")" //second argument is the full Path of the component to load, third argument are the HierarchicalAccesss' of previously loaded Subcomponents of Component
 	// Chapter 2.1: Domains, variable environment
 	syntax K ::= LoadComponent
 
 
 	configuration
 		<execution>
-			<loadComponents multiplicity="?"> #loadComponent ( $PGM:Component, #root , .Set ) </loadComponents>
+			<loadComponents multiplicity="?"> #loadRootComponent ( $PGM:Component ) </loadComponents>
 			<k> .K  </k>
 			<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
 			<currentFieldValues> .Map </currentFieldValues>  // (<path>:HierarchicalAccess).FieldName |-> Value
 		</execution>
 		<static>
 			<component multiplicity="*">
-				<path> #root </path> // n1.n2.n3... where n1=parent(n2), root=n1, n2=parent(n3), 
+				<path> .K </path> // Type should be HierarchicalAccess. Example n1.n2.n3... where n1=parent(n2), root=n1, n2=parent(n3), 
 				<subcomponents> .Set </subcomponents> //Set of paths of subcomponents
 				<requiredPort> .Set </requiredPort>
 				<providedPort> .Set </providedPort>
@@ -98,14 +101,23 @@ module SAFETYSHARP-CONFIGURATION
 				<fields> .List </fields>
 			</component>
 		</static>
+
+
+
+
+	rule
+		<loadComponents>
+			#loadRootComponent ( component ComponentName:Id { Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } )
+			=>
+			#loadComponent ( component ComponentName:Id { Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , ComponentName , .Set ) ... </loadComponents>
 	
 	// loadComponents initially contains the main component, with the following structural rules, we load the components in their corresponding cells in <static> and initialize the main behavior
 	rule
-		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , Path:HierarchicalAccess , SubComponents:Set ) => .K ... </loadComponents>
+		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ) => .K ... </loadComponents>
 		<static>
 			. =>
 			<component>
-				<path> '_._(Path,,ComponentName) </path> //use quoted notation to omit parsing ambiguities
+				<path> FullPath </path> //use quoted notation to omit parsing ambiguities
 				<subcomponents> SubComponents </subcomponents> 
 				<requiredPort> .Set </requiredPort>
 				<providedPort> .Set </providedPort>
@@ -122,11 +134,11 @@ module SAFETYSHARP-CONFIGURATION
 			(#loadComponent ( component ComponentName:Id {(
 				component SubComponentName:Id { SubComponentComponents:Components SubComponentFields:Fields SubComponentRequiredPorts:RequiredPorts SubComponentProvidedPorts:ProvidedPorts SubComponentBindings:Bindings SubComponentBehaviour:ComponentBehaviour }
 
-				OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , Path:HierarchicalAccess , SubComponents:Set ))
+				OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ))
 			=>
-			(#loadComponent ( component SubComponentName { SubComponentComponents SubComponentFields SubComponentRequiredPorts SubComponentProvidedPorts SubComponentBindings SubComponentBehaviour } , Path . ComponentName, .Set )) // first load the first subcomponent (and thus by recursion all subcomponents)
+			(#loadComponent ( component SubComponentName { SubComponentComponents SubComponentFields SubComponentRequiredPorts SubComponentProvidedPorts SubComponentBindings SubComponentBehaviour } , FullPath . SubComponentName, .Set )) // first load the first subcomponent (and thus by recursion all subcomponents)
 			~>
-			(#loadComponent ( component ComponentName { (OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , Path:HierarchicalAccess , SetItem( (Path . ComponentName) . SubComponentName) SubComponents ))   // and then the component itself
+			(#loadComponent ( component ComponentName { (OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath , SetItem( FullPath . SubComponentName) SubComponents ))   // and then the component itself
 		...
 		</loadComponents>	[structural] //Here we load the SubComponent of a component, thus we need to unwrap a component two times. Hard to read for the first time, but we can spare auxiliary functions, syntax and rules
 
