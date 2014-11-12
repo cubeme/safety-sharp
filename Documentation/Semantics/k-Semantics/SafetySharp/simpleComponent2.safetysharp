@@ -1,0 +1,12 @@
+component simple {
+	boolValue1 = true
+	boolValue2 = true false
+	boolValue3 = false
+	intValue1 = 0 1 2 3
+	intValue2 = 4
+	
+	behaviour {
+		;	
+		skip
+	}
+}

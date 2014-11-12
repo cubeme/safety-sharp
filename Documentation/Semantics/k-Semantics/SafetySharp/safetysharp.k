@@ -77,10 +77,16 @@ module SAFETYSHARP-CONFIGURATION
 	imports SAFETYSHARP-SYNTAX
 
 	syntax LoadComponent ::= "#loadRootComponent" "(" Component ")"
-
 	syntax LoadComponent ::= "#loadComponent" "(" Component "," HierarchicalAccess "," Set ")" //second argument is the full Path of the component to load, third argument are the HierarchicalAccesss' of previously loaded Subcomponents of Component
-	// Chapter 2.1: Domains, variable environment
+	syntax LoadComponent ::= "#loadFields" "(" HierarchicalAccess "," Fields "," Map ")"  //First Argument: FullPath of the Component of the Field; Second Argument: A List of Fields to move into the third argument; Third Argument: a Map with a Set of FieldValues ( e.g.: a |-> SetItem(1) SetItem(2))
+	
 	syntax K ::= LoadComponent
+
+	//TODO: Find better place	
+	syntax K ::= "#chooseInitialValue" "(" HierarchicalAccess "," Id ")" //for a specific Field. FullPath to Component, FieldId
+	syntax K ::= "#possibleValues" "(" Set ")"
+
+	// Chapter 2.1: Domains, variable environment
 
 
 	configuration
@@ -98,7 +104,7 @@ module SAFETYSHARP-CONFIGURATION
 				<providedPort> .Set </providedPort>
 				<bindings> .Map </bindings>
 				<behaviour> .K </behaviour>
-				<fields> .List </fields>
+				<fields> .Map </fields>	//TODO: Remove Fields?
 			</component>
 		</static>
 
@@ -109,11 +115,11 @@ module SAFETYSHARP-CONFIGURATION
 		<loadComponents>
 			#loadRootComponent ( component ComponentName:Id { Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } )
 			=>
-			#loadComponent ( component ComponentName:Id { Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , ComponentName , .Set ) ... </loadComponents>
+			#loadComponent ( component ComponentName:Id { Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , ComponentName , .Set ) ... </loadComponents>	[structural]
 	
 	// loadComponents initially contains the main component, with the following structural rules, we load the components in their corresponding cells in <static> and initialize the main behavior
 	rule
-		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ) => .K ... </loadComponents>
+		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ) => (#loadFields (FullPath, Fields, .Map) ) ... </loadComponents>
 		<static>
 			. =>
 			<component>
@@ -123,7 +129,7 @@ module SAFETYSHARP-CONFIGURATION
 				<providedPort> .Set </providedPort>
 				<bindings> .Map </bindings>
 				<behaviour> .K </behaviour>
-				<fields> .List </fields>
+				<fields> .Map </fields>
 			</component>
 			...
 		</static>	[structural]
@@ -141,13 +147,73 @@ module SAFETYSHARP-CONFIGURATION
 			(#loadComponent ( component ComponentName { (OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath , SetItem( FullPath . SubComponentName) SubComponents ))   // and then the component itself
 		...
 		</loadComponents>	[structural] //Here we load the SubComponent of a component, thus we need to unwrap a component two times. Hard to read for the first time, but we can spare auxiliary functions, syntax and rules
+	
 
+
+	// initialize Fields in the <execution>-Environment
+	// case, variable exists in map. We add the new value in the map
+	rule
+		<loadComponents>
+			(#loadFields ( FullPath:HierarchicalAccess , (FieldId:Id = (Val:Value OtherValues:Values ) ) OtherFields:Fields, FieldId |-> #possibleValues(ValueSet) FieldMap:Map ))
+			=>
+			(#loadFields ( FullPath , (FieldId = OtherValues) OtherFields, FieldId |-> #possibleValues (SetItem(Val) ValueSet ) FieldMap ))
+			...
+		</loadComponents>	[structural]
+
+	// case, variable does not exist in map. We add an entry for the variable in the map with the value as first entry
+	rule
+		<loadComponents>
+			(#loadFields ( FullPath:HierarchicalAccess , (FieldId:Id = (Val:Value OtherValues:Values ) ) OtherFields:Fields, FieldMap:Map ))
+			=>
+			(#loadFields ( FullPath , (FieldId = OtherValues) OtherFields, FieldId |-> #possibleValues(SetItem(Val)) FieldMap ))
+			...
+		</loadComponents>	when notBool ( FieldId in keys(FieldMap) )  [structural]
+
+	// case, we already processed all values of one variable.  We also say, that the initial values of this field should be chosen. Because this is a structural rule and choosing an initial value may be indeterministic, we do not choose the Initial Values here. Instead we create a command in the k-Cell to do this work
+	rule
+		<loadComponents>
+			(#loadFields ( FullPath:HierarchicalAccess , (FieldId:Id = .Values) OtherFields:Fields, ResultMap:Map ))
+			=>
+			(#loadFields ( FullPath , OtherFields, ResultMap ))
+			...
+		</loadComponents>
+		<k>
+			.K => #chooseInitialValue( FullPath, FieldId ) ...
+		</k>
+		[structural]
+
+	// case, we processed all variables. Remove Entry and update Component FieldMap.
+	rule
+		<loadComponents>
+			(#loadFields ( FullPath:HierarchicalAccess , .Fields, FieldMap:Map ))
+			=> . ...
+		</loadComponents>
+		<component>
+			<path> FullPath </path>
+			<fields> .Map => FieldMap</fields>
+			...
+		</component>	[structural]
 
 endmodule
 
-module SAFETYSHARP
+module SAFETYSHARP-SEMANTICS
 	imports SAFETYSHARP-SYNTAX
-	imports SAFETYSHARP-CONFIGURATION
+	imports SAFETYSHARP-CONFIGURATION	
+
+	// initialize values (may be indeterministic)
+	// hangs, if value already assigned
+	rule
+		<k>			
+			#chooseInitialValue( FullPath:HierarchicalAccess, FieldId:Id ) => . ...
+		</k>
+		<component>
+			<path> FullPath </path>
+			<fields> (FieldId |-> #possibleValues(SetItem(ChosenValue:Value) OtherValues:Set )) ... </fields>
+			...
+		</component>
+		<currentFieldValues>
+			.Map => (FullPath . FieldId) |-> ChosenValue ...
+		</currentFieldValues>	[transition]
 
 /*
 // Chapter 2.2: Expressions
@@ -214,4 +280,15 @@ module SAFETYSHARP
 		<k> (.GuardedCommands => Stmt) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
 		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </gcCurrentCandidates> [transition]
 */
+
+endmodule
+
+
+module SAFETYSHARP
+	imports SAFETYSHARP-SYNTAX
+	imports SAFETYSHARP-CONFIGURATION
+	
+	// if you just want to know how initialization of all cells works and looks like for a specific program, just comment out the following line
+	imports SAFETYSHARP-SEMANTICS
+
 endmodule
