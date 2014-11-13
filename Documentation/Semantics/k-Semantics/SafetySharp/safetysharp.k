@@ -1,13 +1,12 @@
 // Notes:
 // 	* SafetySharp uses a lot of FIL. For information how [strict], context, [left], [strict(2)], and [transition] works, see fil.k
 //	* "'A`(_;_`)(Parameter1,,Parameter2)" is another form to write down "A(Parameter1;Parameter2)" to omit parsing ambiguities. To escape '(' we write '`)'. To escape '{' we write '`{'
-
+//	* Alternative way to express "(.GuardedCommands => Stmt) ..." is "(.GuardedCommands => Stmt) ~> OtherCalculations:K"
 
 // The semantics document describes a semantics, which is sometimes typed explicitly and sometimes not. For now, this k-Semantics is as a whole not typed explicitly.
 
 module SAFETYSHARP-SYNTAX
 // Chapter 2.1: Domains
-	syntax LocalVar ::= Id
 	syntax Value ::= Bool | Int
 
 // Chapter 2.2: Expressions
@@ -30,21 +29,23 @@ module SAFETYSHARP-SYNTAX
 			| "(" Expr ")"		[bracket]
 
 // Chapter 2.3: Statements
-	syntax GuardedCommand ::= Expr "->>" "{" StmFil "}"
+	syntax GuardedCommand ::= Expr "->>" "{" Stmnt "}"
 	
 	syntax GuardedCommands ::= List{GuardedCommand,","}
 
-	context ((HOLE ->> { Stmnt:StmFil }), OtherCandidates:GuardedCommands)
+	context ((HOLE ->> { Stmnt:Stmnt }), OtherCandidates:GuardedCommands)
 
-	syntax StmFil ::= "skip"
-			| LocalVar ":=" Expr	[strict(2)]
-			| StmFil ";" StmFil	[left]
-			| GuardedCommands
+	syntax Stmnt ::= "skip"			// do nothing
+			| Id ":=" Expr	[strict(2)]	// assignment to Variable or Field
+			| Stmnt ";" Stmnt	[left]	// Sequential Composition
+			| GuardedCommands		// Guarded Commands (generalized if-then-else; see wikipedia http://en.wikipedia.org/wiki/Guarded_Command_Language)
+			| Id "(" IdList ";" IdList ")"	// Call a required port or a provided port
+			| Id "(" ")"			// Call behaviour of sub-component
 
-	syntax LocalVarDecl ::= List{LocalVar, ","}
-	syntax MiniProgram ::= LocalVarDecl ";" StmFil
+	syntax LocalVarDecl ::= List{ Id, ","}
+	syntax MiniProgram ::= LocalVarDecl ";" Stmnt
 
-	syntax K ::= StmFil
+	syntax K ::= Stmnt
 	syntax K ::= Expr
 	syntax KResult ::= Value
 
@@ -76,6 +77,7 @@ module SAFETYSHARP-SYNTAX
 	syntax HierarchicalAccess ::=	  Id 
 					| HierarchicalAccess "." Id		[left]
 	syntax K ::= Component
+	syntax IdList ::= List{Id,","}
 endmodule
 
 module SAFETYSHARP-CONFIGURATION
@@ -95,10 +97,13 @@ module SAFETYSHARP-CONFIGURATION
 
 	configuration
 		<execution>
+			// The corresponding elements to the Configuration of Chapter 3.3 in the semantics document are written in "[~= _ ]"
 			<loadComponents multiplicity="?"> #loadRootComponent ( $PGM:Component ) </loadComponents>
-			<k> .K  </k>
+			<k> .K  </k>	// [~= S \in Stm_{fm}]  (plus initialisation of fields)
+			<currentFieldValues> .Map </currentFieldValues>  // (<path>:HierarchicalAccess).FieldName |-> Value. [~= \phi \in \Phi]
+			<currentVarValues> .Map </currentVarValues> // (<path>:HierarchicalAccess).VarName |-> Value (without hierarchie). Full Path is needed (TODO: explain why) [~= \varsigma \in \Sigma_{fm}]
+			<currentContext> .K </currentContext> // Path to current component (HierarchicalAccess) [~= c^+]
 			<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
-			<currentFieldValues> .Map </currentFieldValues>  // (<path>:HierarchicalAccess).FieldName |-> Value
 		</execution>
 		<static>
 			<component multiplicity="*">
@@ -148,11 +153,7 @@ module SAFETYSHARP-CONFIGURATION
 			<component>
 				<path> FullPath </path> //use quoted notation to omit parsing ambiguities
 				<subcomponents> SubComponents </subcomponents> 
-				//<requiredPorts> .Map </requiredPorts>
-				//<providedPorts> .Map </providedPorts>
-				//<bindings> .Map </bindings>
 				<behaviour> ComponentBehaviour </behaviour>
-				//<fields> .Map </fields>
 			</component>
 			...
 		</static>	[structural]
@@ -289,7 +290,7 @@ module SAFETYSHARP-CONFIGURATION
 	// We know everything is done, when the <loadComponents>-Cell is empty
 	rule
 		(<loadComponents> .K </loadComponents> => .)
-		<k> ... (.K => "TODO: load program") </k>		[structural]
+		<k> ... (.K => "TODO: load program, set Context") </k>		[structural]
 		
 
 endmodule
@@ -330,8 +331,6 @@ module SAFETYSHARP-SEMANTICS
 		</currentFieldValues>
 
 
-
-/*
 // Chapter 2.2: Expressions
 	// Common interpretation of Boolean and Arithmetical operators
 	rule I1:Int / I2:Int => I1 /Int I2  when I2 =/=Int 0
@@ -351,30 +350,38 @@ module SAFETYSHARP-SEMANTICS
 	rule B1:Bool || B2:Bool => B1 orBool B2
 	rule B1:Bool =/= B2:Bool => B1 =/=Bool B2
 	
-	// FIL-specific interpretation of expressions
+	// Expressions: variable access
 	rule
-		<k> V:Var => Val:Value ... </k>
-		<varEnvNow> V |-> Val ... </varEnvNow>
+		<k> Var:Id => Val ... </k>
+		<currentVarValues> ((Context . Var) |-> Val:Value) ... </currentVarValues>
+		<currentContext> Context:HierarchicalAccess </currentContext>
 
-	// Chapter 2.3: Statements
+	// Expressions: field access
+	rule
+		<k> Field:Id => Val ... </k>
+		<currentFieldValues>  ((Context . Field) |-> Val:Value) ... </currentFieldValues>
+		<currentContext> Context:HierarchicalAccess </currentContext>
+
+
 	// (skip)
 	rule
 		<k> skip => . ... </k>
 	
-	// (assign)
-	// create new Variable in varEnv, if not existent
-	rule
-		<k> (Var := Val:Value) => . ... </k>
-		<varEnvNow> AlreadyDeclared:Map (.Map => Var |-> Val) </varEnvNow>
-			when notBool (Var in keys(AlreadyDeclared))
 
-	// overwrite Variable in varEnv, if already existent
+	// (assign local variable)
 	rule
-		<k> (Var := Val:Value) => . ... </k>
-		<varEnvNow> Var |-> (OldVar => Val) ...  </varEnvNow>
+		<k> (Var:Id := Val:Value) => . ... </k>
+		<currentVarValues> ((Context .Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
+		<currentContext> Context:HierarchicalAccess </currentContext>
+
+	// (assign field)
+	rule
+		<k> (Field:Id := Val:Value) => . ... </k>
+		<currentFieldValues> ( (Context . Field) |-> (OldVal:Value => Val)) ... </currentFieldValues>
+		<currentContext> Context:HierarchicalAccess </currentContext>
 
 	// (seq)
-	rule S1:StmFil ; S2:StmFil => S1 ~> S2
+	rule S1:Stmnt ; S2:Stmnt => S1 ~> S2	
 	
 
 	// (cmd)
@@ -386,15 +393,31 @@ module SAFETYSHARP-SEMANTICS
 	//   * 4)  When every GuardedCommand is evaluated, the current k-Cell contains .GuardedCommands. Now replace .GuardedCommands with any candidate from the list and delete all candidates
 
 	rule
-		<k> ((false ->> { Stmt:StmFil } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
+		<k> ((false ->> { Stmt:Stmnt } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
 
 	rule
-		<k> ((true ->> { Stmt:StmFil } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
+		<k> ((true ->> { Stmt:Stmnt } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
 		<gcCurrentCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </gcCurrentCandidates>
 	
 	rule
-		<k> (.GuardedCommands => Stmt) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
+		<k> (.GuardedCommands => Stmt) ... </k>
 		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </gcCurrentCandidates> [transition]
+
+	// (call)
+	
+/*
+	// (beh)
+
+	//TODO: Convenience Functions for (call) and (beh)
+	rule
+		<currentVarValues> .Map </currentVarValues> //TODO: Important: Full Path is used for local variables, because current var Values need to be conserved and must be accessible, when (beh) or (call) returns! TODO: Write Test, which tests it
+		<k> (SubComponentId:Id) ( ) => . ... </k>
+		<currentContext> CurrentContext:HierarchicalAccess => ( CurrentContext . SubComponentId ) </currentContext>
+		<component>
+			<path> ( CurrentContext . SubComponentId ) </path>
+			<behaviour>  </behaviour>
+			...
+		</component>
 */
 
 endmodule
