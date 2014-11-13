@@ -1,0 +1,11 @@
+component simple {
+	pport1 p( a: int; b:bool) {
+		;
+		skip
+	}
+	
+	behaviour {
+		;
+		skip
+	}
+}

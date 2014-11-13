@@ -1,0 +1,8 @@
+component simple {
+	rport1 r( a: int; b:bool)
+	
+	behaviour {
+		;
+		skip
+	}
+}

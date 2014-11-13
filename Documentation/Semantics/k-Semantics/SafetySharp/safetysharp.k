@@ -1,4 +1,7 @@
-// SafetySharp uses a lot of FIL. For information how [strict], context, [left], [strict(2)], and [transition] works, see fil.k
+// Notes:
+// 	* SafetySharp uses a lot of FIL. For information how [strict], context, [left], [strict(2)], and [transition] works, see fil.k
+//	* "'A`(_;_`)(Parameter1,,Parameter2)" is another form to write down "A(Parameter1;Parameter2)" to omit parsing ambiguities. To escape '(' we write '`)'. To escape '{' we write '`{'
+
 
 // The semantics document describes a semantics, which is sometimes typed explicitly and sometimes not. For now, this k-Semantics is as a whole not typed explicitly.
 
@@ -43,7 +46,7 @@ module SAFETYSHARP-SYNTAX
 
 	syntax K ::= StmFil
 	syntax K ::= Expr
-	syntax KResult ::= Value 
+	syntax KResult ::= Value
 
 // Chapter 3: Component Structure
 	// First step is to parse the Component Structure and write its content into the corresponding k-Cells. Most of the syntactic stuff here is only necessary to for this first step and not necessary to describe the details of the semantics. But it cannot be extracted into an own module, because if "syntax Component" is not defined in "module SAFETYSHARP-SYNTAX" (or whatever is defined as syntax-module with "kompile --syntax-module"  it cannot be used in the configuration.
@@ -53,8 +56,8 @@ module SAFETYSHARP-SYNTAX
 //	syntax Component ::= "component" Id //"{" "}"	
 
 	syntax Field ::= Id "=" Values
-	syntax RequiredPort ::= Id "r(" IdList ";" IdList ")" //actually the names are not important, just the number of parameters. Actually, if Id is unique, even their number is not important.
-	syntax ProvidedPort ::= Id "p(" IdList ";" IdList ")" "{" MiniProgram "}"
+	syntax RequiredPort ::= Id "r(" TypedParameters ";" TypedParameters ")" //for this untyped semantics: actually the names are not important, just the number of parameters. Actually, if Id is unique, even their number is not important.
+	syntax ProvidedPort ::= Id "p(" TypedParameters ";" TypedParameters ")" "{" MiniProgram "}"
 	syntax DelayedBinding ::= HierarchicalAccess "<-d-" HierarchicalAccess // First Argument is RequiredPort, second Argument is ProvidedPort
 	syntax InstantaneousBinding ::= HierarchicalAccess "<-i-" HierarchicalAccess // First Argument is RequiredPort, second Argument is ProvidedPort
 	syntax Binding ::= DelayedBinding | InstantaneousBinding
@@ -66,7 +69,9 @@ module SAFETYSHARP-SYNTAX
 	syntax ProvidedPorts ::= List{ProvidedPort,""}
 	syntax Bindings ::= List{Binding,""}
 	syntax Values ::= List{Value,""}
-	syntax IdList ::= List{Id,","}
+	syntax TypedParameter ::= Id ":" Type
+	syntax TypedParameters ::= List{TypedParameter,","}
+	syntax Type ::= "bool" | "int"
 
 	syntax HierarchicalAccess ::=	  Id 
 					| HierarchicalAccess "." Id		[left]
@@ -78,7 +83,10 @@ module SAFETYSHARP-CONFIGURATION
 
 	syntax LoadComponent ::= "#loadRootComponent" "(" Component ")"
 	syntax LoadComponent ::= "#loadComponent" "(" Component "," HierarchicalAccess "," Set ")" //second argument is the full Path of the component to load, third argument are the HierarchicalAccesss' of previously loaded Subcomponents of Component
-	syntax LoadComponent ::= "#loadFields" "(" HierarchicalAccess "," Fields "," Map ")"  //First Argument: FullPath of the Component of the Field; Second Argument: A List of Fields to move into the third argument; Third Argument: a Map with a Set of FieldValues ( e.g.: a |-> SetItem(1) SetItem(2))
+	syntax LoadComponent ::= "#loadFields" "(" HierarchicalAccess "," Fields")"  //First Argument: FullPath of the Component of the Field; Second Argument: A List of Fields
+	syntax LoadComponent ::= "#loadProvidedPorts" "(" HierarchicalAccess "," ProvidedPorts ")"
+	syntax LoadComponent ::= "#loadRequiredPorts" "(" HierarchicalAccess "," RequiredPorts ")"
+	syntax LoadComponent ::= "#loadBindings" "(" HierarchicalAccess "," Bindings ")"  
 	
 	syntax K ::= LoadComponent
 
@@ -96,11 +104,30 @@ module SAFETYSHARP-CONFIGURATION
 			<component multiplicity="*">
 				<path> .K </path> // Type should be HierarchicalAccess. Example n1.n2.n3... where n1=parent(n2), root=n1, n2=parent(n3), 
 				<subcomponents> .Set </subcomponents> //Set of paths of subcomponents
-				<requiredPort> .Set </requiredPort>
-				<providedPort> .Set </providedPort>
-				<bindings> .Map </bindings>
+				<requiredPort multiplicity="*">
+					<rpIdentifier> .K </rpIdentifier>
+					<rpInputs> .TypedParameters </rpInputs>
+					<rpInouts> .TypedParameters </rpInouts>
+				</requiredPort>
+				<providedPort multiplicity="*">
+					<ppIdentifier> .K </ppIdentifier>
+					<ppInputs> .TypedParameters </ppInputs>
+					<ppInouts> .TypedParameters </ppInouts>
+					<ppCode> .K </ppCode>
+				</providedPort>
+				<delayedBinding multiplicity="*">
+					<dbFromIdentifier> .K </dbFromIdentifier> //From is usually a Provided Port
+					<dbToIdentifier> .K </dbToIdentifier> //To is a RequiredPort
+				</delayedBinding>
+				<instantBinding multiplicity="*">
+					<ibFromIdentifier> .K </ibFromIdentifier> //From is usually a Provided Port
+					<ibToIdentifier> .K </ibToIdentifier> //To is a RequiredPort
+				</instantBinding>
+				<field multiplicity="*">
+					<fiIdentifier> .K </fiIdentifier>
+					<fiPossibleValues> .Values </fiPossibleValues>
+				</field>
 				<behaviour> .K </behaviour>
-				<fields> .Map </fields>
 			</component>
 		</static>
 
@@ -115,17 +142,17 @@ module SAFETYSHARP-CONFIGURATION
 	
 	// loadComponents initially contains the main component, with the following structural rules, we load the components in their corresponding cells in <static> and initialize the main behavior
 	rule
-		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ) => (#loadFields (FullPath, Fields, .Map) ) ... </loadComponents>
+		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ) => (#loadFields (FullPath, Fields) ) ~> (#loadRequiredPorts (FullPath, RequiredPorts)) ~> (#loadProvidedPorts (FullPath, ProvidedPorts)) ~> (#loadBindings (FullPath, Bindings))... </loadComponents>
 		<static>
 			. =>
 			<component>
 				<path> FullPath </path> //use quoted notation to omit parsing ambiguities
 				<subcomponents> SubComponents </subcomponents> 
-				<requiredPort> .Set </requiredPort>
-				<providedPort> .Set </providedPort>
-				<bindings> .Map </bindings>
+				//<requiredPorts> .Map </requiredPorts>
+				//<providedPorts> .Map </providedPorts>
+				//<bindings> .Map </bindings>
 				<behaviour> ComponentBehaviour </behaviour>
-				<fields> .Map </fields>
+				//<fields> .Map </fields>
 			</component>
 			...
 		</static>	[structural]
@@ -145,44 +172,144 @@ module SAFETYSHARP-CONFIGURATION
 		</loadComponents>	[structural] //Here we load the SubComponent of a component, thus we need to unwrap a component two times. Hard to read for the first time, but we can spare auxiliary functions, syntax and rules
 	
 
+	///// Moving Values into their cells:
 
+	// initialize Fields
 	// initialize Fields in the <execution>-Environment
-	// variable does not exist in map. We add an entry for the variable in the map with the value as first entry		
+	// variable does not exist in map. We add an entry for the variable in the map with the value as first entry
 	//TODO rephrase: case, we already processed all values of one variable.  We also say, that the initial values of this field should be chosen. Because this is a structural rule and choosing an initial value may be indeterministic, we do not choose the Initial Values here. Instead we create a command in the k-Cell to do this work
 	rule
 		<loadComponents>
 			(#loadFields (	FullPath:HierarchicalAccess ,
-					(FieldId:Id = (Values:Values ) ) OtherFields:Fields => OtherFields,
-					(.Map => FieldId |-> Values) FieldMap:Map ))
+					(FieldId:Id = (Values:Values ) ) OtherFields:Fields => OtherFields))
 			...
 		</loadComponents>
+		<component>
+			<path> FullPath </path>
+			(. =><field>
+				<fiIdentifier> FieldId </fiIdentifier>
+				<fiPossibleValues> Values </fiPossibleValues>
+			</field>)
+			...
+		</component>
 		<k>
 			.K => #chooseInitialValue( FullPath, FieldId ) ...
 		</k>	[structural]
 
-	// case, we processed all variables. Remove Entry and update Component FieldMap.
 	rule
 		<loadComponents>
-			(#loadFields ( FullPath:HierarchicalAccess , .Fields, FieldMap:Map ))
+			(#loadFields ( FullPath:HierarchicalAccess , .Fields ))
 			=> . ...
+		</loadComponents>	[structural]
+
+	// Initialize Required Ports
+	rule
+		<loadComponents>
+			(#loadRequiredPorts (	FullPath:HierarchicalAccess ,
+			('_r`(_;_`)(Identifier:Id,,Inputs:TypedParameters,,Inouts:TypedParameters)) OtherPorts:RequiredPorts => OtherPorts))	// for the meaning of the escaping see note in the beginning
+			...
 		</loadComponents>
 		<component>
 			<path> FullPath </path>
-			<fields> .Map => FieldMap</fields>
+			(. => <requiredPort>
+				<rpIdentifier> Identifier </rpIdentifier>
+				<rpInputs> Inputs </rpInputs>
+				<rpInouts> Inouts </rpInouts>
+			</requiredPort>)
 			...
 		</component>	[structural]
+
+	rule
+		<loadComponents>
+			(#loadRequiredPorts ( FullPath:HierarchicalAccess , .RequiredPorts ))
+			=> . ...
+		</loadComponents>	[structural]
+
+
+
+	// Initialize Provided Ports
+	rule
+		<loadComponents>
+			(#loadProvidedPorts (	FullPath:HierarchicalAccess ,
+			('_p`(_;_`)`{_`}(Identifier:Id,,Inputs:TypedParameters,,Inouts:TypedParameters,,Code:MiniProgram)) OtherPorts:ProvidedPorts => OtherPorts))	// for the meaning of the escaping see note in the beginning
+			...
+		</loadComponents>
+		<component>
+			<path> FullPath </path>
+			(. => <providedPort>
+				<ppIdentifier> Identifier </ppIdentifier>
+				<ppInputs> Inputs </ppInputs>
+				<ppInouts> Inouts </ppInouts>
+				<ppCode> Code </ppCode>
+			</providedPort>)
+			...
+		</component>	[structural]
+
+	rule
+		<loadComponents>
+			(#loadProvidedPorts ( FullPath:HierarchicalAccess , .ProvidedPorts ))
+			=> . ...
+		</loadComponents>	[structural]
+
+	// Initialize Bindings
+	rule
+		<loadComponents>
+			(#loadBindings ( FullPath:HierarchicalAccess , (ToRequired:HierarchicalAccess <-d- FromProvided:HierarchicalAccess) OtherBindings:Bindings => OtherBindings ))
+		</loadComponents>
+		<component>
+			<path> FullPath </path>
+			(. => <delayedBinding>
+				<dbFromIdentifier>FromProvided</dbFromIdentifier>
+				<dbToIdentifier>ToRequired</dbToIdentifier>
+			</delayedBinding>)
+			... 
+		</component>	[structural]
+
+	rule
+		<loadComponents>
+			(#loadBindings ( FullPath:HierarchicalAccess , (ToRequired:HierarchicalAccess <-i- FromProvided:HierarchicalAccess) OtherBindings:Bindings => OtherBindings ))
+		</loadComponents>
+		<component>
+			<path> FullPath </path>
+			(. => <instantBinding>
+				<ibFromIdentifier>FromProvided</ibFromIdentifier>
+				<ibToIdentifier>ToRequired</ibToIdentifier>
+			</instantBinding>)
+			... 
+		</component>	[structural]
+
+	rule
+		<loadComponents>
+			(#loadBindings ( FullPath:HierarchicalAccess , .Bindings ))
+			=> . ...
+		</loadComponents>	[structural]
+
+
+	/// Everything done, now load the main Program into the k-Cell
+	// We know everything is done, when the <loadComponents>-Cell is empty
+	rule
+		(<loadComponents> .K </loadComponents> => .)
+		<k> ... (.K => "TODO: load program") </k>		[structural]
+		
+
+endmodule
+
+module SAFETYSHARP-SEMANTICS-CONVENIENCE
+	imports SAFETYSHARP-SYNTAX
+	imports SAFETYSHARP-CONFIGURATION	
+
+	// use of anyValueOf may lead to indeterminism
+	syntax Value ::= "anyValueOf" "(" Values ")" [function]
+	rule anyValueOf ( Element1:Value Element2:Value Rest:Values ) => anyValueOf ( Element2 Rest)	[transition]
+	rule anyValueOf ( Element:Value Rest:Values) => Element	[transition]
+
 
 endmodule
 
 module SAFETYSHARP-SEMANTICS
 	imports SAFETYSHARP-SYNTAX
-	imports SAFETYSHARP-CONFIGURATION	
-
-	// use of anyElementOf may lead to indeterminism
-	syntax Value ::= "anyElementOf" "(" Values ")" [function]
-	rule anyElementOf ( Element1:Value Element2:Value Rest:Values ) => anyElementOf ( Element2 Rest)
-	rule anyElementOf ( Element:Value Rest:Values) => Element
-
+	imports SAFETYSHARP-CONFIGURATION
+	imports SAFETYSHARP-SEMANTICS-CONVENIENCE
 
 	// initialize values (may be indeterministic, indeterminism is hidden in "anyElementOf")
 	// leads to (sometimes inconsistent) double assignments in <currentFieldValue>, if value already assigned
@@ -192,12 +319,17 @@ module SAFETYSHARP-SEMANTICS
 		</k>
 		<component>
 			<path> FullPath </path>
-<fields> (FieldId |-> PossibleValues) ... </fields>
+			<field>
+				<fiIdentifier> FieldId </fiIdentifier>
+				<fiPossibleValues> PossibleValues </fiPossibleValues>...
+			</field>
 			...
 		</component>
 		<currentFieldValues>
-			.Map => (FullPath . FieldId) |-> anyElementOf(PossibleValues) ...
+			.Map => (FullPath . FieldId) |-> anyValueOf(PossibleValues) ...
 		</currentFieldValues>
+
+
 
 /*
 // Chapter 2.2: Expressions

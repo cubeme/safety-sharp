@@ -1,0 +1,17 @@
+component simple {
+	rport1 r( a1 : int, a2 : int ; b:bool)
+	rport2 r( a1 : int, a2 : int; b:bool)
+	
+	pport1 p( a1 : int, a2 : int; b:bool) {
+		;
+		skip
+	}
+	
+	rport1 <-i- pport1
+	rport2 <-d- pport1
+	
+	behaviour {
+		;
+		skip
+	}
+}
