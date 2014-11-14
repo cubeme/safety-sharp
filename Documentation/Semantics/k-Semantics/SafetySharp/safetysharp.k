@@ -405,10 +405,39 @@ module SAFETYSHARP-SEMANTICS
 
 	// (call)
 	
-/*
+
 	// (beh)
 
 	//TODO: Convenience Functions for (call) and (beh)
+
+	// There are three possible ways to implement this rule:
+	//	1) change the configuration to look somehow like that and create two rules: The first creates a new execution-Context and the second removes this context, when calculation is done
+	//		<currentContext> .HierarchicalAccess </currentContext>
+	//		<execution mulitplicity="*">
+	//			<contextPath> . HierarchicalAccess </contextPath>
+	//		</execution>
+	//	   Pros:
+	//		+ resembles the written semantics more closely
+	//		+ allows implementation of recursion
+	//		+ could also be used to describe (seq)-Rule
+	//	   Cons:
+	//		- overkill, makes semantics harder to read
+	//	2) change the way local variables work: Only one global map for variables. When a new variable-context for (call) or (beh) is needed, prefix the corresponding key of this variable in the map <currentVarValues> with the path of the component and the function-call hierarchy. Also introduce an element in <execution> for the function-call hierarchy. When a function is called, all its current values are flushed away in <currentVarValues>. Also need to adapt the rule (assign_v) and the rule (getting the value of a variable in an expression) )
+	//	   Pros:
+	//		+ allows implementation of recursion
+	//		+ semantics easier to read
+	//		+ easier to implement here in k
+	//		+ transformation of the model checker also needs to do something similar,
+	//		  because variables cannot be introduced there arbitrarily
+	//	3) change the way local variables work: But in contrast to way 2 do not keep trac of the function-call hierarchy. This leads to way less variables in the <currentVarValues>-map, but it also disallows recursion.
+	//	   Pros:
+	//		+ easy to implement and read
+	//		+ no "stack" required
+	//	   Cons:
+	//		- less powerful (no recursion)
+	//		- further away from regular imperative programming languages
+
+/*
 	rule
 		<currentVarValues> .Map </currentVarValues> //TODO: Important: Full Path is used for local variables, because current var Values need to be conserved and must be accessible, when (beh) or (call) returns! TODO: Write Test, which tests it
 		<k> (SubComponentId:Id) ( ) => . ... </k>
