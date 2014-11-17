@@ -33,7 +33,12 @@ namespace SafetySharp.CSharpCompiler.Normalization
 
 	/// <summary>
 	///     Replaces all property declarations with getter and setter method declarations within component classes or interfaces.
-	///     Assumes that there are no auto-properties or properties with expression bodies.
+	///     Assumes that there are no auto-properties or properties with expression bodies. Property reads and writes are updated
+	///     accordingly to call the appropriate methods.
+	///     Note that this normalizer will create non-compilable C# code if:
+	///		- an attribute is applied to a property that cannot be applied to methods as well;
+	///		- a property is written and the result value is used again (e.g., x = Prop = 1);
+	///		- a property is used in a compound assignment, increment, or decrement expression (e.g., Prop++, Prop += 3);
 	/// 
 	///     For instance, within component classes:
 	///     <code>
@@ -161,5 +166,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 
 			return update(members, typeDeclaration);
 		}
+
+		// TODO: Rewrite usages of property getters and setters
 	}
 }

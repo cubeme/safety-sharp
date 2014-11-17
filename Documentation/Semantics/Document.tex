@@ -54,7 +54,7 @@ Throughout the remainder of this report, we use the following conventions in all
 		g(a') = \begin{cases}
 			a & \text{if } \quad a = f(a') \\
 			\bot & \text{if } \quad \missing = f(a')
-		\end{cases}
+		\end{cases} 
 		&&&
 		g(a') = \begin{cases}
 			\liftMissing{a} & \text{if } \quad \liftMissing{a} = f(a') \wedge \liftMissing{a} \neq \missing	\\
@@ -886,6 +886,7 @@ to transform into a formal model.
 	\item Variables of enum type are replaced by \texttt{int}, enum values are replaced by their underlying integer value.
 	\item Compound assignment operators (\texttt{+=}, \texttt{-=}, etc.) are replaced by the appropriate expression and a simple
 	assignment.
+	\item Chained assignments must be split into several ones.
 	\item Multiple local variables declared by the same declaration are split into multiple declarations.
 	\item All locally declared variables that are not initialized during declaration are initialized to their default value.
 	\item Additional required ports must be introduced for all provided ports of subcomponents invoked by the parent component. The

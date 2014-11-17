@@ -173,7 +173,6 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 
 						if (leftType.IsBuiltType(_semanticModel) && rightType.IsBuiltType(_semanticModel))
 							return Visit(node.Left) && Visit(node.Right);
-						;
 
 						goto case SyntaxKind.AddExpression;
 					case SyntaxKind.SimpleAssignmentExpression:
