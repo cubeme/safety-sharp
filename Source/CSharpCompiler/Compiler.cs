@@ -193,6 +193,7 @@ namespace SafetySharp.CSharpCompiler
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
 
+			// TODO: Use Compilation.GetDiagnosticsAsync instead once available
 			Compilation newCompilation;
 			var options = new AnalyzerOptions(Enumerable.Empty<AdditionalStream>(), new Dictionary<string, string>());
 			AnalyzerDriver.Create(compilation, GetAnalyzers(), options, out newCompilation, new CancellationToken());

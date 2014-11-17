@@ -273,6 +273,8 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
         let compilation = TestCompilation csharpCode
         let options = AnalyzerOptions (Enumerable.Empty<AdditionalStream> (), Dictionary<string, string> ())
         let analyzer = ImmutableArray.Create analyzer
+
+        // TODO: Use Compilation.GetDiagnosticsAsync instead once available
         let mutable compilation = compilation.CSharpCompilation :> Compilation
         let analyzerDriver = AnalyzerDriver.Create (compilation, analyzer, options, &compilation, CancellationToken ())
         compilation.GetDiagnostics () |> ignore

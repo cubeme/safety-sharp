@@ -80,10 +80,10 @@ module ExpressionMethodNormalizer =
         normalize "class X : Component { [Provided] T B<T>(T t) => t; }" =? 
             "class X : Component { [Provided] T B<T>(T t) { return t; } }"
 
-    [<Test; Ignore("Roslyn bug (will be fixed with next release): https://roslyn.codeplex.com/workitem/266")>]
+    [<Test>]
     let ``normalizes generic methods with expression bodies and type constraints`` () =
-        normalize "class X : Component { public bool B<T>() where T : class => null; }" =? 
-            "class X : Component { public bool B<T>() where T : class { return null; } }"
+        normalize "class X : Component { public bool B<T>() where T : class => false; }" =? 
+            "class X : Component { public bool B<T>() where T : class { return false; } }"
 
     [<Test>]
     let ``normalizes explicitly implemented generic methods with expression bodies`` () =
