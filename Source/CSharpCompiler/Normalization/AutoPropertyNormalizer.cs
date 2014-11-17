@@ -115,7 +115,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			var getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration, getterBlock);
 			getter = getter.WithAttributeLists(declaredGetter.AttributeLists).WithLeadingSpace();
 
-			var assignment = SyntaxFactory.BinaryExpression(SyntaxKind.SimpleAssignmentExpression, fieldIdentifier, value);
+			var assignment = SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, fieldIdentifier, value);
 			var setterBody = SyntaxFactory.ExpressionStatement(assignment).NormalizeWhitespace().WithLeadingAndTrailingSpace();
 			var setterBlock = SyntaxFactory.Block(setterBody).WithLeadingAndTrailingSpace();
 			var setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration, setterBlock);

@@ -57,9 +57,9 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
     let csharpCompilation = 
         CSharpCompilation
             .Create(TestCompilation.CompilationName)
-            .AddReferences(MetadataFileReference typeof<obj>.Assembly.Location)
-            .AddReferences(MetadataFileReference typeof<Component>.Assembly.Location)
-            .AddReferences(MetadataFileReference typeof<System.Linq.Expressions.Expression>.Assembly.Location)
+            .AddReferences(MetadataReference.CreateFromAssembly typeof<obj>.Assembly)
+            .AddReferences(MetadataReference.CreateFromAssembly typeof<Component>.Assembly)
+            .AddReferences(MetadataReference.CreateFromAssembly typeof<System.Linq.Expressions.Expression>.Assembly)
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
 
@@ -269,11 +269,14 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
 
     /// Checks whether the given C# code has any diagnostics.
-    static member GetDiagnostic analyzer csharpCode =
+    static member GetDiagnostic (analyzer : DiagnosticAnalyzer) csharpCode =
         let compilation = TestCompilation csharpCode
         let options = AnalyzerOptions (Enumerable.Empty<AdditionalStream> (), Dictionary<string, string> ())
-        let diagnostics = AnalyzerDriver.GetDiagnostics (compilation.CSharpCompilation, [| analyzer |], options, CancellationToken (), false)
-        let diagnostics = Array.ofSeq diagnostics
+        let analyzer = ImmutableArray.Create analyzer
+        let mutable compilation = compilation.CSharpCompilation :> Compilation
+        let analyzerDriver = AnalyzerDriver.Create (compilation, analyzer, options, &compilation, CancellationToken ())
+        compilation.GetDiagnostics () |> ignore
+        let diagnostics = analyzerDriver.GetDiagnosticsAsync().Result
 
         if diagnostics.Length > 1 then
             raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))

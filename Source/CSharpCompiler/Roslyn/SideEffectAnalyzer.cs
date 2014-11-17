@@ -175,12 +175,15 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 							return Visit(node.Left) && Visit(node.Right);
 
 						goto case SyntaxKind.AddExpression;
-					case SyntaxKind.SimpleAssignmentExpression:
-						return false;
 					default:
 						Assert.NotReached("Encountered an unexpected binary operator: {0}.", node.CSharpKind());
 						return false;
 				}
+			}
+
+			public override bool VisitAssignmentExpression(AssignmentExpressionSyntax node)
+			{
+				return false;
 			}
 
 			public override bool VisitMemberAccessExpression(MemberAccessExpressionSyntax node)

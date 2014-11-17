@@ -34,13 +34,12 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     the <see cref="RequiredAttribute" /> or <see cref="ProvidedAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1004 : SymbolAnalyzer<ISymbol>
+	public class SS1004 :CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1004()
-			: base(SymbolKind.Method, SymbolKind.Property)
 		{
 			Error(1004,
 				String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
@@ -50,14 +49,23 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 					typeof(RequiredAttribute).FullName,
 					typeof(ProvidedAttribute).FullName));
 		}
-
 		/// <summary>
-		///     Analyzes the <paramref name="symbol" />.
+		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="symbol">The symbol that should be analyzed.</param>
-		/// <param name="compilation">The compilation the symbol is declared in.</param>
-		protected override void Analyze(ISymbol symbol, Compilation compilation)
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		public override void Initialize(AnalysisContext context)
 		{
+			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+		}
+		/// <summary>
+		///     Performs the analysis.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private void Analyze(SymbolAnalysisContext context)
+		{
+			var compilation = context.Compilation;
+			var symbol = context.Symbol;
+
 			if (symbol.ContainingType.TypeKind != TypeKind.Interface || !symbol.ContainingType.ImplementsIComponent(compilation))
 				return;
 
@@ -70,7 +78,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
 
 			if (!hasProvidedAttribute && !hasRequiredAttribute)
-				EmitDiagnostic(symbol, symbol.ToDisplayString());
+				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

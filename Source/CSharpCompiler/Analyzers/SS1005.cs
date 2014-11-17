@@ -35,13 +35,12 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     corresponding interface method or property.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1005 : SymbolAnalyzer<INamedTypeSymbol>
+	public class SS1005 : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1005()
-			: base(SymbolKind.NamedType)
 		{
 			Error(1005,
 				"Method or property does not implement the corresponding interface method or property, as the port types are different.",
@@ -49,12 +48,23 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		}
 
 		/// <summary>
-		///     Analyzes the <paramref name="symbol" />.
+		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="symbol">The symbol that should be analyzed.</param>
-		/// <param name="compilation">The compilation the symbol is declared in.</param>
-		protected override void Analyze(INamedTypeSymbol symbol, Compilation compilation)
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		public override void Initialize(AnalysisContext context)
 		{
+			context.RegisterSymbolAction(Analyze, SymbolKind.NamedType);
+		}
+
+		/// <summary>
+		///     Performs the analysis.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private void Analyze(SymbolAnalysisContext context)
+		{
+			var compilation = context.Compilation;
+			var symbol = (INamedTypeSymbol)context.Symbol;
+
 			if (symbol.TypeKind != TypeKind.Class || !symbol.IsDerivedFromComponent(compilation))
 				return;
 
@@ -64,17 +74,18 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 				.SelectMany(interfaceSymbol => interfaceSymbol.GetMembers());
 
 			foreach (var interfaceMember in interfaceMembers)
-				CheckMember(symbol, compilation, interfaceMember);
+				CheckMember(context, symbol, compilation, interfaceMember);
 		}
 
 		/// <summary>
 		///     Checks whether the <paramref name="symbol" />'s implementing member for <paramref name="interfaceMember" /> has the
 		///     correct port type.
 		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
 		/// <param name="interfaceMember">The interface member that should be checked.</param>
-		private void CheckMember(INamedTypeSymbol symbol, Compilation compilation, ISymbol interfaceMember)
+		private void CheckMember(SymbolAnalysisContext context, ITypeSymbol symbol, Compilation compilation, ISymbol interfaceMember)
 		{
 			var implementingMember = symbol.FindImplementationForInterfaceMember(interfaceMember);
 
@@ -90,11 +101,11 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 				return;
 
 			if (interfaceIsRequired && !implementationIsRequired)
-				EmitDiagnostic(implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
+				EmitDiagnostic(context, implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
 					"required", "provided");
 
 			if (interfaceIsProvided && !implementationIsProvided)
-				EmitDiagnostic(implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
+				EmitDiagnostic(context, implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
 					"provided", "required");
 		}
 	}

@@ -31,7 +31,7 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 	/// <summary>
 	///     A base class for SafetySharp C# code analyzers.
 	/// </summary>
-	public abstract class CSharpAnalyzer : IDiagnosticAnalyzer
+	public abstract class CSharpAnalyzer : DiagnosticAnalyzer
 	{
 		/// <summary>
 		///     The prefix that is used for all diagnostic identifiers.
@@ -44,9 +44,9 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		public const string Category = "SafetySharp";
 
 		/// <summary>
-		///     A callback that can be used to emit a diagnostic.
+		///     The set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
-		protected Action<Diagnostic> DiagnosticCallback { get; set; }
+		private ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
 
 		/// <summary>
 		///     Gets the descriptor for the diagnostic emitted by the analyzer.
@@ -56,7 +56,10 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 		/// <summary>
 		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
-		public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; private set; }
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+		{
+			get { return _supportedDiagnostics; }
+		}
 
 		/// <summary>
 		///     Describes the error diagnostic of the analyzer.
@@ -95,40 +98,67 @@ namespace SafetySharp.CSharpCompiler.Roslyn
 			Requires.InRange(severity, () => severity);
 
 			Descriptor = new DiagnosticDescriptor(Prefix + identifier, description, messageFormat, Category, severity, true);
-			SupportedDiagnostics = ImmutableArray.Create(Descriptor);
+			_supportedDiagnostics = ImmutableArray.Create(Descriptor);
 		}
 
 		/// <summary>
 		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
 		///     diagnostic message.
 		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
 		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic([NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
+		protected void EmitDiagnostic(SyntaxTreeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
 		{
-			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
 		///     Emits a diagnostic for <paramref name="syntaxToken" /> using the <paramref name="messageArgs" /> to format the
 		///     diagnostic message.
 		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
 		/// <param name="syntaxToken">The syntax token the diagnostic is emitted for.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SyntaxToken syntaxToken, params object[] messageArgs)
+		protected void EmitDiagnostic(SyntaxTreeAnalysisContext context, SyntaxToken syntaxToken, params object[] messageArgs)
 		{
-			DiagnosticCallback(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
+		}
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
+		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic(SemanticModelAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
+		{
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+		}
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="syntaxToken" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
+		/// <param name="syntaxToken">The syntax token the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic(SemanticModelAnalysisContext context, SyntaxToken syntaxToken, params object[] messageArgs)
+		{
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
 		}
 
 		/// <summary>
 		///     Emits a diagnostic for <paramref name="symbol" /> using the <paramref name="messageArgs" /> to format the diagnostic
 		///     message.
 		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
 		/// <param name="symbol">The symbol the diagnostic is emitted for.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic([NotNull] ISymbol symbol, params object[] messageArgs)
+		protected void EmitDiagnostic(SymbolAnalysisContext context, [NotNull] ISymbol symbol, params object[] messageArgs)
 		{
-			DiagnosticCallback(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
 		}
 	}
 }

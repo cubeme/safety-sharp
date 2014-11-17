@@ -24,7 +24,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 {
 	using System;
 	using System.Linq;
-	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
@@ -34,7 +34,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1007 : SemanticModelAnalyzer
+	public class SS1007 : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
@@ -47,17 +47,27 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		}
 
 		/// <summary>
-		///     Analyzes the <paramref name="semanticModel" />.
+		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="semanticModel">The semantic model that should be analyzed.</param>
-		protected override void Analyze(SemanticModel semanticModel)
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		public override void Initialize(AnalysisContext context)
 		{
-			var enumDeclarations = semanticModel
+			context.RegisterSemanticModelAction(Analyze);
+		}
+
+		/// <summary>
+		///     Performs the analysis.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private void Analyze(SemanticModelAnalysisContext context)
+		{
+			var enumDeclarations = context
+				.SemanticModel
 				.SyntaxTree.Descendants<EnumDeclarationSyntax>()
 				.Where(enumDeclatation => enumDeclatation.BaseList != null);
 
 			foreach (var enumDeclaration in enumDeclarations)
-				EmitDiagnostic(enumDeclaration.BaseList.Types.First(), semanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
+				EmitDiagnostic(context, enumDeclaration.BaseList.Types.First(), context.SemanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
 		}
 	}
 }

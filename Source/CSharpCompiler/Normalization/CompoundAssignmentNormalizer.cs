@@ -56,7 +56,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 		/// <summary>
 		///     Normalizes the <paramref name="expression" /> if it represents a compound assignment.
 		/// </summary>
-		public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax expression)
+		public override SyntaxNode VisitAssignmentExpression(AssignmentExpressionSyntax expression)
 		{
 			SyntaxKind expressionKind;
 			switch (expression.CSharpKind())
@@ -98,7 +98,7 @@ namespace SafetySharp.CSharpCompiler.Normalization
 			var originalRightHand = (ExpressionSyntax)base.Visit(expression.Right);
 			var parenthesizedExpression = SyntaxFactory.ParenthesizedExpression(originalRightHand).WithLeadingSpace();
 			var rightHandExpression = SyntaxFactory.BinaryExpression(expressionKind, expression.Left.WithLeadingSpace(), parenthesizedExpression);
-			var simpleAssignment = SyntaxFactory.BinaryExpression(SyntaxKind.SimpleAssignmentExpression, expression.Left, rightHandExpression);
+			var simpleAssignment = SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, expression.Left, rightHandExpression);
 			return simpleAssignment.WithTrivia(expression);
 		}
 	}

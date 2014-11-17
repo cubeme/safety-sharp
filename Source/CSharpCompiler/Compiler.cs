@@ -24,6 +24,7 @@ namespace SafetySharp.CSharpCompiler
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.Immutable;
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
@@ -42,11 +43,13 @@ namespace SafetySharp.CSharpCompiler
 		/// <summary>
 		///     Gets the diagnostic analyzers that are used to diagnose the C# code before compilation.
 		/// </summary>
-		private static IEnumerable<IDiagnosticAnalyzer> GetAnalyzers()
+		private static ImmutableArray<DiagnosticAnalyzer> GetAnalyzers()
 		{
-			return from type in typeof(Compiler).Assembly.GetTypes()
-				   where type.IsClass && !type.IsAbstract && typeof(IDiagnosticAnalyzer).IsAssignableFrom(type)
-				   select (IDiagnosticAnalyzer)Activator.CreateInstance(type);
+			return typeof(Compiler)
+				.Assembly.GetTypes()
+				.Where(type => type.IsClass && !type.IsAbstract && typeof(DiagnosticAnalyzer).IsAssignableFrom(type))
+				.Select(type => (DiagnosticAnalyzer)Activator.CreateInstance(type))
+				.ToImmutableArray();
 		}
 
 		/// <summary>
@@ -152,7 +155,8 @@ namespace SafetySharp.CSharpCompiler
 			identifier = CSharpAnalyzer.Prefix + identifier;
 			message = String.Format(message, formatArgs);
 
-			var diagnostic = Diagnostic.Create(identifier, CSharpAnalyzer.Category, message, DiagnosticSeverity.Error, true, 0, false);
+			var diagnostic = Diagnostic.Create(identifier, CSharpAnalyzer.Category, message, DiagnosticSeverity.Error,
+				DiagnosticSeverity.Error, true, 0);
 			Report(diagnostic, true);
 			return -1;
 		}
@@ -189,9 +193,11 @@ namespace SafetySharp.CSharpCompiler
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
 
+			Compilation newCompilation;
 			var options = new AnalyzerOptions(Enumerable.Empty<AdditionalStream>(), new Dictionary<string, string>());
-			var diagnostics = AnalyzerDriver.GetDiagnostics(compilation, GetAnalyzers(), options, new CancellationToken(), false).ToArray();
-			return Report(diagnostics, false);
+			AnalyzerDriver.Create(compilation, GetAnalyzers(), options, out newCompilation, new CancellationToken());
+
+			return Report(newCompilation.GetDiagnostics(), false);
 		}
 
 		/// <summary>

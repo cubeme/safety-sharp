@@ -33,13 +33,12 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1003 : SymbolAnalyzer<ISymbol>
+	public class SS1003 : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public SS1003()
-			: base(SymbolKind.Method, SymbolKind.Property)
 		{
 			Error(1003,
 				String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
@@ -47,12 +46,23 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		}
 
 		/// <summary>
-		///     Analyzes the <paramref name="symbol" />.
+		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="symbol">The symbol that should be analyzed.</param>
-		/// <param name="compilation">The compilation the symbol is declared in.</param>
-		protected override void Analyze(ISymbol symbol, Compilation compilation)
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		public override void Initialize(AnalysisContext context)
 		{
+			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+		}
+
+		/// <summary>
+		///     Performs the analysis.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private void Analyze(SymbolAnalysisContext context)
+		{
+			var compilation = context.Compilation;
+			var symbol = context.Symbol;
+
 			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
 				return;
 
@@ -62,7 +72,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 				return;
 
 			if (!symbol.IsExtern && symbol.HasAttribute<RequiredAttribute>(compilation))
-				EmitDiagnostic(symbol, symbol.ToDisplayString());
+				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

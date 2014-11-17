@@ -35,7 +35,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     Ensures that no type, type member, variable, etc. uses a name reserved for synthesized variables.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1008 : SyntaxTreeAnalyzer
+	public class SS1008 : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
@@ -48,19 +48,29 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		}
 
 		/// <summary>
-		///     Checks whether the <paramref name="syntaxTree" /> contains any types, type members, variables, etc. that use a name
-		///     reserved for synthesized variables.
+		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="syntaxTree">The syntax tree that should be checked.</param>
-		protected override void Analyze(SyntaxTree syntaxTree)
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		public override void Initialize(AnalysisContext context)
 		{
-			CheckIdentifiers<BaseTypeDeclarationSyntax>(syntaxTree, t => t.Identifier);
-			CheckIdentifiers<EnumMemberDeclarationSyntax>(syntaxTree, e => e.Identifier);
-			CheckIdentifiers<ParameterSyntax>(syntaxTree, p => p.Identifier);
-			CheckIdentifiers<VariableDeclaratorSyntax>(syntaxTree, v => v.Identifier);
-			CheckIdentifiers<MethodDeclarationSyntax>(syntaxTree, m => m.Identifier);
-			CheckIdentifiers<EventDeclarationSyntax>(syntaxTree, e => e.Identifier);
-			CheckIdentifiers<PropertyDeclarationSyntax>(syntaxTree, p => p.Identifier);
+			context.RegisterSyntaxTreeAction(Analyze);
+		}
+
+		/// <summary>
+		///     Performs the analysis.
+		/// </summary>
+		/// <param name="context">The context in which the analysis should be performed.</param>
+		private void Analyze(SyntaxTreeAnalysisContext context)
+		{
+			var syntaxTree = context.Tree;
+
+			CheckIdentifiers<BaseTypeDeclarationSyntax>(context, syntaxTree, t => t.Identifier);
+			CheckIdentifiers<EnumMemberDeclarationSyntax>(context, syntaxTree, e => e.Identifier);
+			CheckIdentifiers<ParameterSyntax>(context, syntaxTree, p => p.Identifier);
+			CheckIdentifiers<VariableDeclaratorSyntax>(context, syntaxTree, v => v.Identifier);
+			CheckIdentifiers<MethodDeclarationSyntax>(context, syntaxTree, m => m.Identifier);
+			CheckIdentifiers<EventDeclarationSyntax>(context, syntaxTree, e => e.Identifier);
+			CheckIdentifiers<PropertyDeclarationSyntax>(context, syntaxTree, p => p.Identifier);
 
 			var invalidNamespaces = syntaxTree
 				.Descendants<NamespaceDeclarationSyntax>()
@@ -68,7 +78,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 				.Where(identifierName => IdentifierNameSynthesizer.IsSynthesized(identifierName.Identifier));
 
 			foreach (var invalidNamespace in invalidNamespaces)
-				EmitDiagnostic(invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
+				EmitDiagnostic(context, invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
 		}
 
 		/// <summary>
@@ -77,12 +87,13 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		///     <see cref="SyntaxToken" /> from the <see cref="SyntaxNode" />.
 		/// </summary>
 		/// <typeparam name="T">The type of the <see cref="SyntaxNode" />s that should be checked.</typeparam>
+		/// <param name="context">The context in which the analysis should be performed.</param>
 		/// <param name="syntaxTree">The <see cref="SyntaxTree" /> that should be checked.</param>
 		/// <param name="getIdentifier">
 		///     A function that gets the <see cref="SyntaxToken" /> representing the identifier of a
 		///     <see cref="SyntaxNode" /> of type <typeparamref name="T" />.
 		/// </param>
-		private void CheckIdentifiers<T>(SyntaxTree syntaxTree, Func<T, SyntaxToken> getIdentifier)
+		private void CheckIdentifiers<T>(SyntaxTreeAnalysisContext context, SyntaxTree syntaxTree, Func<T, SyntaxToken> getIdentifier)
 			where T : CSharpSyntaxNode
 		{
 			var invalidIdentifiers = syntaxTree
@@ -91,7 +102,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 				.Where(IdentifierNameSynthesizer.IsSynthesized);
 
 			foreach (var identifier in invalidIdentifiers)
-				EmitDiagnostic(identifier, identifier.ValueText);
+				EmitDiagnostic(context, identifier, identifier.ValueText);
 		}
 	}
 }
