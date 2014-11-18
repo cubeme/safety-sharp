@@ -330,10 +330,13 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	rule copyEntries (	( ( ToContext . ToId) |-> (OldValue => NewValue) ) ( ( FromContext . FromId) |-> NewValue:Value ) FieldMap:Map,
 				source:  FromContext:HierarchicalAccess , (FromId:Id , OtherFroms => OtherFroms),
 				target:  ToContext:HierarchicalAccess   , (ToId:Id , OtherTos => OtherTos))
+	rule copyEntries (	( .Map => ( ( ToContext . ToId) |-> NewValue )) ( ( FromContext . FromId) |-> NewValue:Value ) FieldMap:Map,
+				source:  FromContext:HierarchicalAccess , (FromId:Id , OtherFroms => OtherFroms),
+				target:  ToContext:HierarchicalAccess   , (ToId:Id , OtherTos => OtherTos))	when notBool ((ToContext . ToId) in keys(FieldMap)) 
 	rule copyEntries (	FieldMap:Map ,
 				source:  FromContext:HierarchicalAccess , .IdList ,
 				target:  FromContext:HierarchicalAccess , .IdList ) => FieldMap
-	
+
 	syntax Map ::= "assignValues" "("
 				Map ","
 				"values:" ExprList "," // ExprList should be already evaluated Expressions (thus a list of Values)
@@ -341,6 +344,9 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	rule assignValues (	( ( ToContext . Var) |-> (OldValue => Value) ) FieldMap:Map ,
 				values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
 				target:  ToContext:HierarchicalAccess , (Var:Id  , OtherVars:IdList => OtherVars ) )
+	rule assignValues (	( .Map => ( ( ToContext . Var) |->  Value) ) FieldMap:Map ,
+				values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
+				target:  ToContext:HierarchicalAccess , (Var:Id  , OtherVars:IdList => OtherVars ) )	when notBool ((ToContext . Var) in keys(FieldMap))
 
 	rule assignValues (	FieldMap:Map ,
 				values:  .ExprList ,
@@ -517,8 +523,8 @@ module SAFETYSHARP-SEMANTICS
 				to:   CurrentContext , CurrentCall , InoutsOfCurrentContext)
 			...
 		</k>
-		<currentCall> CurrentCall => ProvidedPort </currentCall>
-		<currentContext> (CurrentContext:HierarchicalAccess) </currentContext>
+		<currentCall> CurrentCall:K => ProvidedPort </currentCall>
+		<currentContext> CurrentContext:HierarchicalAccess </currentContext>
 		<component>
 			<path> CurrentContext </path>
 			<instantBinding multiplicity="*">
@@ -545,12 +551,59 @@ module SAFETYSHARP-SEMANTICS
 						source: (CurrentContext @ CurrentCall ) , InoutsOfCurrentContext ,
 						target: (CurrentContext @ FromProvided ) , extractIds(InoutsOfNextContext)
 					)
-					, ( CurrentContext @ CurrentCall ), LocalVars )
+					, ( CurrentContext @ ProvidedPort ), LocalVars )
 		</currentVarValues>
 
 
 
-	// (call (part different component))
+	// (call (instantaneous from provided port in subComponent to required port in the current component))
+	rule
+		<k> 
+			(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))
+			=>
+			(LocalVars ; CodeOfProvidedPort) ~>
+			#restoreContextAndWriteBackVariables (
+				from: extractIds(InoutsOfNextContext) ,
+				to:   CurrentContext, CurrentCall , InoutsOfCurrentContext)
+			...
+		</k>
+		<currentCall> CurrentCall:K => ProvidedPort </currentCall>
+		<currentContext> CurrentContext:HierarchicalAccess => CurrentContext . SubComponent </currentContext>
+		<component>
+			<path> CurrentContext  </path>
+			<instantBinding multiplicity="*">
+				<ibFromIdentifier> SubComponent:Id . ProvidedPort:Id </ibFromIdentifier>
+				<ibToIdentifier> RequiredPortName:Id </ibToIdentifier>
+			</instantBinding>
+			...
+		</component>
+		<component>
+			<path> CurrentContext . SubComponent </path>
+			<providedPort multiplicity="*">
+				<ppIdentifier> FromProvided </ppIdentifier>
+				<ppInputs> PpInputs:TypedVarDeclarations </ppInputs>
+				<ppInouts> InoutsOfNextContext:TypedVarDeclarations </ppInouts>
+				<ppCode> LocalVars:TypedVarDeclarations ; CodeOfProvidedPort:Stmnt </ppCode>
+			</providedPort>
+			...
+		</component>
+		<currentVarValues> CurrentValuation:Map =>
+			// first copy inputs and inouts, then remove Entries 
+			removeVarEntries(
+					copyEntries( //inouts
+						assignValues (	//inputs
+							CurrentValuation,
+							values: InputValues , // InputValues have already been evaluated (because we declared the call-expression as strict)
+							target: ( ( CurrentContext . SubComponent) @ FromProvided ) , extractIds(PpInputs)
+						),
+						source: (CurrentContext @ CurrentCall ) , InoutsOfCurrentContext ,
+						target: ( ( CurrentContext . SubComponent) @ FromProvided ) , extractIds(InoutsOfNextContext)
+					)
+					, ( ( CurrentContext . SubComponent) @ ProvidedPort ), LocalVars )
+		</currentVarValues>
+
+	// (call (instantaneous from provided port in current Component to required port in a sub component))
+	// (call (instantaneous from provided port in sub component 1 to required port in a different sub component 2))
 
 	// (call (part write-back))
 	// Note: The context is different from the context of
