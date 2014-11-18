@@ -6,7 +6,7 @@ component simple {
 	intValue2 = 4
 	
 	behaviour {
-		;	
+		.
 		skip
 	}
 }

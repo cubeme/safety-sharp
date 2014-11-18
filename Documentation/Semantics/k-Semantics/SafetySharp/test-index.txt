@@ -13,7 +13,9 @@ simpleComponent6.safetysharp: 1 Component with do-nothing behaviour and 1 provid
 simple Statements Tests
 (everything except (beh) and (call))
 ==========================
-simpleStatement1.safetysharp:
+simpleStatement1.safetysharp: 1 Component with one local variable, assignment to variable
+simpleStatement2.safetysharp: 1 Component with one field, assignment to field with current field value
+simpleStatement3.safetysharp: 1 Component with one local variable, assignment to local variable, reading from local variable
 
 
 
@@ -22,4 +24,8 @@ simpleStatement1.safetysharp:
 
 
 (call)-Tests
+==========================
+
+
+(cmd)-Tests
 ==========================

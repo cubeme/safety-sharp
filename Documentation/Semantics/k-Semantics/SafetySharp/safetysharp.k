@@ -45,7 +45,7 @@ module SAFETYSHARP-SYNTAX
 
 	syntax ExprList ::= List{Expr,","}	[strict]	//List of expressions should be evaluated automatically, when a list like this appears in the first k-Cell. Todo: Rename to Exprs to remain consistent
 	
-	syntax MiniProgram ::= TypedVarDeclarations ";" Stmnt
+	syntax MiniProgram ::= TypedVarDeclarations "." Stmnt
 
 	syntax K ::= Stmnt
 	syntax K ::= Expr
@@ -302,7 +302,7 @@ module SAFETYSHARP-CONFIGURATION
 		(<loadComponents> .K </loadComponents> => .)
 		<component>
 			<path> Component:Id </path> // the only component, which has an Id as path (and not a more level Path), is the main component
-			<behaviour> LocalVars:TypedVarDeclarations ; Code:Stmnt </behaviour>
+			<behaviour> LocalVars:TypedVarDeclarations . Code:Stmnt </behaviour>
 			...
 		</component>
 		<currentVarValues> .Map => freshVarEntries ( .Map , Component , LocalVars ) </currentVarValues>
@@ -320,15 +320,6 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	syntax Value ::= "anyValueOf" "(" Values ")" [function]
 	rule anyValueOf ( Element1:Value Element2:Value Rest:Values ) => anyValueOf ( Element2 Rest)	[transition]
 	rule anyValueOf ( Element:Value Rest:Values) => Element	[transition]
-	
-	/*
-	//((Context . Var) |-> Val:Value)
-	syntax Map ::= "removeVarEntries" "(" Map "," Path "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
-
-	rule removeVarEntries ( ((Path . Var) |-> Value:Value ) FieldMap:Map => FieldMap, Path:Path , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)
-	rule removeVarEntries ( FieldMap:Map , Path:Path , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)	when notBool ((Path . Var) in keys(FieldMap)) 
-	rule removeVarEntries ( FieldMap:Map , Path:Path , .TypedVarDeclarations ) => FieldMap
-	*/	
 
 	syntax Map ::= "freshVarEntries" "(" Map "," Path "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
 
@@ -402,7 +393,6 @@ module SAFETYSHARP-SEMANTICS
 		</currentFieldValues>
 
 
-// Chapter 2.2: Expressions
 	// Common interpretation of Boolean and Arithmetical operators
 	rule I1:Int / I2:Int => I1 /Int I2  when I2 =/=Int 0
 	rule I1:Int * I2:Int => I1 *Int I2
@@ -565,7 +555,7 @@ module SAFETYSHARP-SEMANTICS
 				<ppIdentifier> ProvidedPortName </ppIdentifier>
 				<ppInputs> PpInputs:TypedVarDeclarations </ppInputs>
 				<ppInouts> InoutsOfNextContext:TypedVarDeclarations </ppInouts>
-				<ppCode> LocalVars:TypedVarDeclarations ; CodeOfProvidedPort:Stmnt </ppCode>
+				<ppCode> LocalVars:TypedVarDeclarations . CodeOfProvidedPort:Stmnt </ppCode>
 			</providedPort>
 			...
 		</component>
@@ -615,7 +605,7 @@ module SAFETYSHARP-SEMANTICS
 		<currentComponent> CurrentComponent:Path => ( CurrentComponent . SubComponentId ) </currentComponent>
 		<component>
 			<path> ( CurrentComponent . SubComponentId ) </path>
-			<behaviour> Vars:TypedVarDeclarations ; Stmnt:Stmnt </behaviour>
+			<behaviour> Vars:TypedVarDeclarations . Stmnt:Stmnt </behaviour>
 			...
 		</component>
 

@@ -1,12 +1,12 @@
 component simple {
 	component nested {
 		behaviour {
-			;
+			.
 			skip
 		}
 	}
 	behaviour {
-		;
+		.
 		skip
 	}
 }
