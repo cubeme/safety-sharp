@@ -105,7 +105,7 @@ module SAFETYSHARP-CONFIGURATION
 			<k> .K  </k>	// [~= S \in Stm_{fm}]  (plus initialisation of fields)
 			<currentFieldValues> .Map </currentFieldValues>  // (<path>:HierarchicalAccess).FieldName |-> Value. [~= \phi \in \Phi]
 			<currentVarValues> .Map </currentVarValues> // (<path>:HierarchicalAccess).VarName |-> Value (without hierarchie). Full Path is needed (TODO: explain why) [~= \varsigma \in \Sigma_{fm}]
-			<currentContext> .K </currentContext> // Path to current component (HierarchicalAccess) [~= c^+]
+			<currentComponent> .K </currentComponent> // Path to current component (HierarchicalAccess) [~= c^+]
 			<currentCall> .K </currentCall>
 			<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
 		</execution>
@@ -407,14 +407,15 @@ module SAFETYSHARP-SEMANTICS
 	// Expressions: variable access
 	rule
 		<k> Var:Id => Val ... </k>
-		<currentVarValues> ((Context . Var) |-> Val:Value) ... </currentVarValues>
-		<currentContext> Context:HierarchicalAccess </currentContext>
+		<currentVarValues> (((CurrentComponent @ CurrentCall) . Var) |-> Val:Value) ... </currentVarValues>
+		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
+		<currentCall> CurrentCall </currentCall>
 
 	// Expressions: field access
 	rule
 		<k> Field:Id => Val ... </k>
-		<currentFieldValues>  ((Context . Field) |-> Val:Value) ... </currentFieldValues>
-		<currentContext> Context:HierarchicalAccess </currentContext>
+		<currentFieldValues>  ((CurrentComponent . Field) |-> Val:Value) ... </currentFieldValues>
+		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
 
 
 	// (skip)
@@ -425,14 +426,15 @@ module SAFETYSHARP-SEMANTICS
 	// (assign local variable)
 	rule
 		<k> (Var:Id := Val:Value) => . ... </k>
-		<currentVarValues> ((Context .Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
-		<currentContext> Context:HierarchicalAccess </currentContext>
+		<currentVarValues> (((CurrentComponent @ CurrentCall) . Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
+		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
+		<currentCall> CurrentCall </currentCall>
 
 	// (assign field)
 	rule
 		<k> (Field:Id := Val:Value) => . ... </k>
-		<currentFieldValues> ( (Context . Field) |-> (OldVal:Value => Val)) ... </currentFieldValues>
-		<currentContext> Context:HierarchicalAccess </currentContext>
+		<currentFieldValues> ( (CurrentComponent . Field) |-> (OldVal:Value => Val)) ... </currentFieldValues>
+		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
 
 	// (seq)
 	rule S1:Stmnt ; S2:Stmnt => S1 ~> S2	
@@ -461,7 +463,7 @@ module SAFETYSHARP-SEMANTICS
 	// (call) and (beh)
 	// There are three possible ways to implement these rules:
 	//	1) change the configuration to look somehow like that and create two rules: The first creates a new execution-Context and the second removes this context, when calculation is done
-	//		<currentContext> .HierarchicalAccess </currentContext>
+	//		<currentComponent> .HierarchicalAccess </currentComponent>
 	//		<execution mulitplicity="*">
 	//			<contextPath> . HierarchicalAccess </contextPath>
 	//		</execution>
@@ -510,8 +512,9 @@ module SAFETYSHARP-SEMANTICS
 	// 	* parent(RequiredPortComponent) = ProvidedPortComponent)
 	// 	* parent(RequiredPortComponent) = parent(ProvidedPortComponent; RequiredPortComponent!=ProvidedPortComponent)
 	// 	* RequiredPortComponent = parent(ProvidedPortComponent)
-	// CurrentContext = RequiredPortContext
+	// CurrentComponent = RequiredPortContext
 	// could be called in a behaviour or in a provided port
+	// Context depends on Component and Call
 	rule
 		<k> 
 			(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))
@@ -523,7 +526,7 @@ module SAFETYSHARP-SEMANTICS
 			...
 		</k>
 		<currentCall> CurrentCall:K => ProvidedPortName </currentCall>
-		<currentContext> CurrentComponent:HierarchicalAccess => ProvidedPortComponent </currentContext>
+		<currentComponent> CurrentComponent:HierarchicalAccess => ProvidedPortComponent </currentComponent>
 		<instantBindings> ( (CurrentComponent . RequiredPortName) |-> (ProvidedPortComponent:HierarchicalAccess . ProvidedPortName:Id ) ) OtherBindings:Map </instantBindings>
 		<component>
 			<path> ProvidedPortComponent </path>
@@ -556,16 +559,16 @@ module SAFETYSHARP-SEMANTICS
 	rule
 		<k> #restoreContextAndWriteBackVariables (
 				from: SourceInouts:IdList ,
-				to:   ContextToRestore:HierarchicalAccess , CallToRestore:K , TargetInouts:IdList) => .K ... </k>
-		<currentCall> CurrentCall:K => CallToRestore </currentCall>
-		<currentContext> CurrentComponent:HierarchicalAccess => ContextToRestore </currentContext>
+				to:   BackToComponent:HierarchicalAccess , BackToCall:K , TargetInouts:IdList) => .K ... </k>
+		<currentCall> CurrentCall:K => BackToCall </currentCall>
+		<currentComponent> CurrentComponent:HierarchicalAccess => BackToComponent </currentComponent>
 		<currentVarValues>
 			CurrentValuation:Map
 			=> 
 			copyEntries (
 				CurrentValuation ,
 				source: (CurrentComponent @ CurrentCall) , SourceInouts ,
-				target: (ContextToRestore @ CallToRestore) , TargetInouts
+				target: (BackToComponent @ BackToCall) , TargetInouts
 			)
 		</currentVarValues>
 
@@ -575,10 +578,10 @@ module SAFETYSHARP-SEMANTICS
 	// (beh)
 	rule
 		<k> (SubComponentId:Id) ( ) => Stmnt ... </k>
-		<currentVarValues> CurrentValuation:Map => removeVarEntries (CurrentValuation , (CurrentContext . SubComponentId ) , Vars ) </currentVarValues>
-		<currentContext> CurrentContext:HierarchicalAccess => ( CurrentContext . SubComponentId ) </currentContext>
+		<currentVarValues> CurrentValuation:Map => removeVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars ) </currentVarValues>
+		<currentComponent> CurrentComponent:HierarchicalAccess => ( CurrentComponent . SubComponentId ) </currentComponent>
 		<component>
-			<path> ( CurrentContext . SubComponentId ) </path>
+			<path> ( CurrentComponent . SubComponentId ) </path>
 			<behaviour> Vars:TypedVarDeclarations ; Stmnt:Stmnt </behaviour>
 			...
 		</component>
