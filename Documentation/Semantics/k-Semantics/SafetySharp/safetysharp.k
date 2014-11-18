@@ -61,8 +61,8 @@ module SAFETYSHARP-SYNTAX
 	syntax Field ::= Id "=" Values
 	syntax RequiredPort ::= Id "r(" TypedVarDeclarations ";" TypedVarDeclarations ")" //for this untyped semantics: actually the names are not important, just the number of parameters. Actually, if Id is unique, even their number is not important.
 	syntax ProvidedPort ::= Id "p(" TypedVarDeclarations ";" TypedVarDeclarations ")" "{" MiniProgram "}"
-	syntax DelayedBinding ::= HierarchicalAccess "<-d-" HierarchicalAccess // First Argument is RequiredPort, second Argument is ProvidedPort
-	syntax InstantaneousBinding ::= HierarchicalAccess "<-i-" HierarchicalAccess // First Argument is RequiredPort, second Argument is ProvidedPort
+	syntax DelayedBinding ::= BindingLink "<-d-" BindingLink // First Argument is RequiredPort, second Argument is ProvidedPort
+	syntax InstantaneousBinding ::= BindingLink "<-i-" BindingLink // First Argument is RequiredPort, second Argument is ProvidedPort
 	syntax Binding ::= DelayedBinding | InstantaneousBinding
 	syntax ComponentBehaviour ::= "behaviour" "{" MiniProgram "}"
 
@@ -76,8 +76,12 @@ module SAFETYSHARP-SYNTAX
 	syntax TypedVarDeclarations ::= List{TypedVarDeclaration,","}
 	syntax Type ::= "bool" | "int"
 
-	syntax HierarchicalAccess ::=	  Id 
-					| HierarchicalAccess "." Id		[left]
+	syntax BindingLink ::=	  Id		// reference to port named Id in this Component
+				| Id "." Id	// reference to port named Id (second) in subcomponent named Id (first)
+
+	syntax Path ::=	  Id 
+					| Path "." Id		[left]
+	
 	syntax K ::= Component
 	syntax IdList ::= List{Id,","}	//TODO: Rename to Ids to remain consistent
 endmodule
@@ -87,35 +91,35 @@ module SAFETYSHARP-CONFIGURATION
 	imports SAFETYSHARP-SEMANTICS-CONVENIENCE
 
 	syntax LoadComponent ::= "#loadRootComponent" "(" Component ")"
-	syntax LoadComponent ::= "#loadComponent" "(" Component "," HierarchicalAccess "," Set ")" //second argument is the full Path of the component to load, third argument are the HierarchicalAccesss' of previously loaded Subcomponents of Component
-	syntax LoadComponent ::= "#loadFields" "(" HierarchicalAccess "," Fields")"  //First Argument: FullPath of the Component of the Field; Second Argument: A List of Fields
-	syntax LoadComponent ::= "#loadProvidedPorts" "(" HierarchicalAccess "," ProvidedPorts ")"
-	syntax LoadComponent ::= "#loadRequiredPorts" "(" HierarchicalAccess "," RequiredPorts ")"
-	syntax LoadComponent ::= "#loadBindings" "(" HierarchicalAccess "," Bindings ")"  
+	syntax LoadComponent ::= "#loadComponent" "(" Component "," Path "," Set ")" //second argument is the full Path of the component to load, third argument are the Paths' of previously loaded Subcomponents of Component
+	syntax LoadComponent ::= "#loadFields" "(" Path "," Fields")"  //First Argument: FullPath of the Component of the Field; Second Argument: A List of Fields
+	syntax LoadComponent ::= "#loadProvidedPorts" "(" Path "," ProvidedPorts ")"
+	syntax LoadComponent ::= "#loadRequiredPorts" "(" Path "," RequiredPorts ")"
+	syntax LoadComponent ::= "#loadBindings" "(" Path "," Bindings ")"  
 	
 	syntax K ::= LoadComponent
 
 	//TODO: Find better place	
-	syntax K ::= "#chooseInitialValue" "(" HierarchicalAccess "," Id ")" //for a specific Field. FullPath to Component, FieldId
+	syntax K ::= "#chooseInitialValue" "(" Path "," Id ")" //for a specific Field. FullPath to Component, FieldId
 
 	configuration
 		<execution>
 			// The corresponding elements to the Configuration of Chapter 3.3 in the semantics document are written in "[~= _ ]"
 			<loadComponents multiplicity="?"> #loadRootComponent ( $PGM:Component ) </loadComponents>
 			<k> .K  </k>	// [~= S \in Stm_{fm}]  (plus initialisation of fields)
-			<currentFieldValues> .Map </currentFieldValues>  // (<path>:HierarchicalAccess).FieldName |-> Value. [~= \phi \in \Phi]
-			<currentVarValues> .Map </currentVarValues> // (<path>:HierarchicalAccess).VarName |-> Value (without hierarchie). Full Path is needed (TODO: explain why) [~= \varsigma \in \Sigma_{fm}]
-			<currentComponent> .K </currentComponent> // Path to current component (HierarchicalAccess) [~= c^+]
+			<currentFieldValues> .Map </currentFieldValues>  // (<path>:Path).FieldName |-> Value. [~= \phi \in \Phi]
+			<currentVarValues> .Map </currentVarValues> // (<path>:Path).VarName |-> Value (without hierarchie). Full Path is needed (TODO: explain why) [~= \varsigma \in \Sigma_{fm}]
+			<currentComponent> .K </currentComponent> // Path to current component (Path) [~= c^+]
 			<currentCall> .K </currentCall>
 			<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
 		</execution>
 		<static>
 			// Extracting the bindings from the component-hierarchy makes the semantics easier to read. Formerly, when bindings had their cell in the bindings, there were several restrictions, where bindings in the source file could be declared. Also it shrank down the number of rules to call a required port. Now we only need to differentiate between two cases (required port in the same component vs. in a different component) for delayed ports. E.g. it was not that easy to connect in component c1 the required port p1 of c1.c2 to provided port p2 of c1.c2.
 			// And it also fits to the idea that components are declared independent from bindings and bindings are "injected" afterwards.
-			<instantBindings> .Map </instantBindings>	// to_required:HierarchicalAccess |-> from_provided:HierarchicalAccess
-			<delayedBindings> .Map </delayedBindings>
+			<instantBindings> .Map </instantBindings>	// component1:Path @ to_required:Id |-> component2:Path @ from_provided:Id
+			<delayedBindings> .Map </delayedBindings>	// component1:Path @ to_required:Id |-> component2:Path @ from_provided:Id
 			<component multiplicity="*">
-				<path> .K </path> // Type should be HierarchicalAccess. Example n1.n2.n3... where n1=parent(n2), root=n1, n2=parent(n3), 
+				<path> .K </path> // Type should be Path. Example n1.n2.n3... where n1=parent(n2), root=n1, n2=parent(n3), 
 				<subcomponents> .Set </subcomponents> //Set of paths of subcomponents
 				<requiredPort multiplicity="*">
 					<rpIdentifier> .K </rpIdentifier>
@@ -151,7 +155,16 @@ module SAFETYSHARP-CONFIGURATION
 	
 	// loadComponents initially contains the main component, with the following structural rules, we load the components in their corresponding cells in <static> and initialize the main behavior
 	rule
-		<loadComponents> #loadComponent ( component ComponentName:Id { .Components Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ) => (#loadFields (FullPath, Fields) ) ~> (#loadRequiredPorts (FullPath, RequiredPorts)) ~> (#loadProvidedPorts (FullPath, ProvidedPorts)) ~> (#loadBindings (FullPath, Bindings))... </loadComponents>
+		<loadComponents> #loadComponent (
+				component ComponentName:Id {
+					.Components
+					Fields
+					RequiredPorts
+					ProvidedPorts
+					Bindings
+					behaviour { ComponentBehaviour }
+				} ,
+				FullPath:Path , SubComponents:Set ) => (#loadFields (FullPath, Fields) ) ~> (#loadRequiredPorts (FullPath, RequiredPorts)) ~> (#loadProvidedPorts (FullPath, ProvidedPorts)) ~> (#loadBindings (FullPath, Bindings))... </loadComponents>
 		<static>
 			. =>
 			<component>
@@ -168,7 +181,7 @@ module SAFETYSHARP-CONFIGURATION
 			(#loadComponent ( component ComponentName:Id {(
 				component SubComponentName:Id { SubComponentComponents:Components SubComponentFields:Fields SubComponentRequiredPorts:RequiredPorts SubComponentProvidedPorts:ProvidedPorts SubComponentBindings:Bindings SubComponentBehaviour:ComponentBehaviour }
 
-				OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:HierarchicalAccess , SubComponents:Set ))
+				OtherSubComponents:Components) Fields RequiredPorts ProvidedPorts Bindings ComponentBehaviour } , FullPath:Path , SubComponents:Set ))
 			=>
 			(#loadComponent ( component SubComponentName { SubComponentComponents SubComponentFields SubComponentRequiredPorts SubComponentProvidedPorts SubComponentBindings SubComponentBehaviour } , FullPath . SubComponentName, .Set )) // first load the first subcomponent (and thus by recursion all subcomponents)
 			~>
@@ -185,7 +198,7 @@ module SAFETYSHARP-CONFIGURATION
 	//TODO rephrase: case, we already processed all values of one variable.  We also say, that the initial values of this field should be chosen. Because this is a structural rule and choosing an initial value may be indeterministic, we do not choose the Initial Values here. Instead we create a command in the k-Cell to do this work
 	rule
 		<loadComponents>
-			(#loadFields (	FullPath:HierarchicalAccess ,
+			(#loadFields (	FullPath:Path ,
 					(FieldId:Id = (Values:Values ) ) OtherFields:Fields => OtherFields))
 			...
 		</loadComponents>
@@ -203,14 +216,14 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadFields ( FullPath:HierarchicalAccess , .Fields ))
+			(#loadFields ( FullPath:Path , .Fields ))
 			=> . ...
 		</loadComponents>	[structural]
 
 	// Initialize Required Ports
 	rule
 		<loadComponents>
-			(#loadRequiredPorts (	FullPath:HierarchicalAccess ,
+			(#loadRequiredPorts (	FullPath:Path ,
 			('_r`(_;_`)(Identifier:Id,,Inputs:TypedVarDeclarations,,Inouts:TypedVarDeclarations)) OtherPorts:RequiredPorts => OtherPorts))	// for the meaning of the escaping see note in the beginning
 			...
 		</loadComponents>
@@ -226,7 +239,7 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadRequiredPorts ( FullPath:HierarchicalAccess , .RequiredPorts ))
+			(#loadRequiredPorts ( FullPath:Path , .RequiredPorts ))
 			=> . ...
 		</loadComponents>	[structural]
 
@@ -235,7 +248,7 @@ module SAFETYSHARP-CONFIGURATION
 	// Initialize Provided Ports
 	rule
 		<loadComponents>
-			(#loadProvidedPorts (	FullPath:HierarchicalAccess ,
+			(#loadProvidedPorts (	FullPath:Path ,
 			('_p`(_;_`)`{_`}(Identifier:Id,,Inputs:TypedVarDeclarations,,Inouts:TypedVarDeclarations,,Code:MiniProgram)) OtherPorts:ProvidedPorts => OtherPorts))	// for the meaning of the escaping see note in the beginning
 			...
 		</loadComponents>
@@ -252,14 +265,14 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadProvidedPorts ( FullPath:HierarchicalAccess , .ProvidedPorts ))
+			(#loadProvidedPorts ( FullPath:Path , .ProvidedPorts ))
 			=> . ...
 		</loadComponents>	[structural]
 
 	// Initialize Bindings
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:HierarchicalAccess , (ToRequired:HierarchicalAccess <-d- FromProvided:HierarchicalAccess) OtherBindings:Bindings => OtherBindings ))
+			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-d- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings ))
 		</loadComponents>
 		<delayedBindings>
 			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
@@ -268,7 +281,7 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:HierarchicalAccess , (ToRequired:HierarchicalAccess <-i- FromProvided:HierarchicalAccess) OtherBindings:Bindings => OtherBindings ))
+			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-i- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings ))
 		</loadComponents>
 		<instantBindings>
 			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
@@ -277,7 +290,7 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:HierarchicalAccess , .Bindings ))
+			(#loadBindings ( FullPath:Path , .Bindings ))
 			=> . ...
 		</loadComponents>	[structural]
 
@@ -288,13 +301,13 @@ module SAFETYSHARP-CONFIGURATION
 	rule
 		(<loadComponents> .K </loadComponents> => .)
 		<component>
-			<path> Component:Id </path> // the only component, which has an Id as path (and not a more level HierarchicalAccess), is the main component
+			<path> Component:Id </path> // the only component, which has an Id as path (and not a more level Path), is the main component
 			<behaviour> LocalVars:TypedVarDeclarations ; Code:Stmnt </behaviour>
 			...
 		</component>
 		<currentVarValues> .Map => freshVarEntries ( .Map , Component , LocalVars ) </currentVarValues>
-		<currentComponent> _ => Component </currentComponent>
-		<k> ... (.K => Code ) </k>		[structural]
+		<currentComponent> .K => Component </currentComponent>
+		<k> (.K => Code ) </k>		[structural]
 		
 
 endmodule
@@ -310,61 +323,58 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	
 	/*
 	//((Context . Var) |-> Val:Value)
-	syntax Map ::= "removeVarEntries" "(" Map "," HierarchicalAccess "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
+	syntax Map ::= "removeVarEntries" "(" Map "," Path "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
 
-	rule removeVarEntries ( ((Path . Var) |-> Value:Value ) FieldMap:Map => FieldMap, Path:HierarchicalAccess , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)
-	rule removeVarEntries ( FieldMap:Map , Path:HierarchicalAccess , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)	when notBool ((Path . Var) in keys(FieldMap)) 
-	rule removeVarEntries ( FieldMap:Map , Path:HierarchicalAccess , .TypedVarDeclarations ) => FieldMap
+	rule removeVarEntries ( ((Path . Var) |-> Value:Value ) FieldMap:Map => FieldMap, Path:Path , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)
+	rule removeVarEntries ( FieldMap:Map , Path:Path , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)	when notBool ((Path . Var) in keys(FieldMap)) 
+	rule removeVarEntries ( FieldMap:Map , Path:Path , .TypedVarDeclarations ) => FieldMap
 	*/	
 
-	syntax Map ::= "freshVarEntries" "(" Map "," HierarchicalAccess "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
+	syntax Map ::= "freshVarEntries" "(" Map "," Path "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
 
-	rule freshVarEntries ( ((Path . Var) |-> (Value:Value => #missingElement ) ) FieldMap:Map , Path:HierarchicalAccess , ((Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))
-	rule freshVarEntries (( .Map => (Path . Var) |-> #missingElement ) FieldMap:Map , Path:HierarchicalAccess , ( (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))	when notBool ((Path . Var) in keys(FieldMap)) 
-	rule freshVarEntries ( FieldMap:Map , Path:HierarchicalAccess , .TypedVarDeclarations ) => FieldMap
+	rule freshVarEntries ( ((Path . Var) |-> (Value:Value => #missingElement ) ) FieldMap:Map , Path:Path , ((Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))
+	rule freshVarEntries (( .Map => (Path . Var) |-> #missingElement ) FieldMap:Map , Path:Path , ( (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))	when notBool ((Path . Var) in keys(FieldMap)) 
+	rule freshVarEntries ( FieldMap:Map , Path:Path , .TypedVarDeclarations ) => FieldMap
 		
 	syntax Map ::= "copyEntries" "("
 				Map ","
-				"source:" HierarchicalAccess "," IdList ","
-				"target:" HierarchicalAccess "," IdList ")"	[function]
+				"source:" Path "," IdList ","
+				"target:" Path "," IdList ")"	[function]
 	rule copyEntries (	( ( ToContext . ToId) |-> (OldValue => NewValue) ) ( ( FromContext . FromId) |-> NewValue:Value ) FieldMap:Map,
-				source:  FromContext:HierarchicalAccess , (FromId:Id , OtherFroms => OtherFroms),
-				target:  ToContext:HierarchicalAccess   , (ToId:Id , OtherTos => OtherTos))
+				source:  FromContext:Path , (FromId:Id , OtherFroms => OtherFroms),
+				target:  ToContext:Path   , (ToId:Id , OtherTos => OtherTos))
 	rule copyEntries (	( .Map => ( ( ToContext . ToId) |-> NewValue )) ( ( FromContext . FromId) |-> NewValue:Value ) FieldMap:Map,
-				source:  FromContext:HierarchicalAccess , (FromId:Id , OtherFroms => OtherFroms),
-				target:  ToContext:HierarchicalAccess   , (ToId:Id , OtherTos => OtherTos))	when notBool ((ToContext . ToId) in keys(FieldMap)) 
+				source:  FromContext:Path , (FromId:Id , OtherFroms => OtherFroms),
+				target:  ToContext:Path   , (ToId:Id , OtherTos => OtherTos))	when notBool ((ToContext . ToId) in keys(FieldMap)) 
 	rule copyEntries (	FieldMap:Map ,
-				source:  FromContext:HierarchicalAccess , .IdList ,
-				target:  FromContext:HierarchicalAccess , .IdList ) => FieldMap
+				source:  FromContext:Path , .IdList ,
+				target:  FromContext:Path , .IdList ) => FieldMap
 
 	syntax Map ::= "assignValues" "("
 				Map ","
 				"values:" ExprList "," // ExprList should be already evaluated Expressions (thus a list of Values)
-				"target:" HierarchicalAccess "," IdList ")"	[function]
+				"target:" Path "," IdList ")"	[function]
 	rule assignValues (	( ( ToContext . Var) |-> (OldValue => Value) ) FieldMap:Map ,
 				values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
-				target:  ToContext:HierarchicalAccess , (Var:Id  , OtherVars:IdList => OtherVars ) )
+				target:  ToContext:Path , (Var:Id  , OtherVars:IdList => OtherVars ) )
 	rule assignValues (	( .Map => ( ( ToContext . Var) |->  Value) ) FieldMap:Map ,
 				values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
-				target:  ToContext:HierarchicalAccess , (Var:Id  , OtherVars:IdList => OtherVars ) )	when notBool ((ToContext . Var) in keys(FieldMap))
+				target:  ToContext:Path , (Var:Id  , OtherVars:IdList => OtherVars ) )	when notBool ((ToContext . Var) in keys(FieldMap))
 
 	rule assignValues (	FieldMap:Map ,
 				values:  .ExprList ,
-				target:  ToContext:HierarchicalAccess , .IdList ) => FieldMap
-		
-	
-	syntax HierarchicalAccess ::= HierarchicalAccess "@" K [function]
-	rule Path:HierarchicalAccess @ .K => Path
-	rule Path:HierarchicalAccess @ Id:Id => Path . Id
-	rule Path:HierarchicalAccess @ (Id1:Id . Id2:Id) => (Path . Id1) . Id2
+				target:  ToContext:Path , .IdList ) => FieldMap
 
-	
 	syntax IdList ::= "extractIds" "(" TypedVarDeclarations ")" [function]
 
 	rule extractIds ( ( Id:Id : Type:Type ) , OtherVars:TypedVarDeclarations) => (Id , extractIds ( OtherVars ) )
 
 	rule extractIds ( .TypedVarDeclarations ) => .IdList
 
+
+	syntax Path ::= Path "@" BindingLink [function] // Path:Path @@ Link:BindingLink
+	rule Path:Path @ PortName:Id => Path . PortName
+	rule Path:Path @ (SubComponent:Id . PortName:Id)  => (Path . SubComponent) . PortName
 
 endmodule
 
@@ -377,7 +387,7 @@ module SAFETYSHARP-SEMANTICS
 	// leads to (sometimes inconsistent) double assignments in <currentFieldValue>, if value already assigned
 	rule
 		<k>			
-			#chooseInitialValue( FullPath:HierarchicalAccess, FieldId:Id ) => . ...
+			#chooseInitialValue( FullPath:Path, FieldId:Id ) => . ...
 		</k>
 		<component>
 			<path> FullPath </path>
@@ -414,15 +424,23 @@ module SAFETYSHARP-SEMANTICS
 	// Expressions: variable access
 	rule
 		<k> Var:Id => Val ... </k>
-		<currentVarValues> (((CurrentComponent @ CurrentCall) . Var) |-> Val:Value) ... </currentVarValues>
-		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
-		<currentCall> CurrentCall </currentCall>
+		<currentVarValues> (((CurrentComponent . CurrentCall) . Var) |-> Val:Value) ... </currentVarValues>
+		<currentComponent> CurrentComponent:Path </currentComponent>
+		<currentCall> CurrentCall:Id </currentCall>  //called from provided
+
+	rule
+		<k> Var:Id => Val ... </k>
+		<currentVarValues> ((CurrentComponent . Var) |-> Val:Value) ... </currentVarValues>
+		<currentComponent> CurrentComponent:Path </currentComponent>
+		<currentCall> .K </currentCall>	//called from behaviour
+
+
 
 	// Expressions: field access
 	rule
 		<k> Field:Id => Val ... </k>
 		<currentFieldValues>  ((CurrentComponent . Field) |-> Val:Value) ... </currentFieldValues>
-		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
+		<currentComponent> CurrentComponent:Path </currentComponent>
 
 
 	// (skip)
@@ -433,15 +451,21 @@ module SAFETYSHARP-SEMANTICS
 	// (assign local variable)
 	rule
 		<k> (Var:Id := Val:Value) => . ... </k>
-		<currentVarValues> (((CurrentComponent @ CurrentCall) . Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
-		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
-		<currentCall> CurrentCall </currentCall>
+		<currentVarValues> (((CurrentComponent . CurrentCall) . Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
+		<currentComponent> CurrentComponent:Path </currentComponent>
+		<currentCall> CurrentCall:Id </currentCall> //called from provided
+
+	rule
+		<k> (Var:Id := Val:Value) => . ... </k>
+		<currentVarValues> ((CurrentComponent . Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
+		<currentComponent> CurrentComponent:Path </currentComponent>
+		<currentCall> .K </currentCall>	//called from behaviour
 
 	// (assign field)
 	rule
 		<k> (Field:Id := Val:Value) => . ... </k>
 		<currentFieldValues> ( (CurrentComponent . Field) |-> (OldVal:Value => Val)) ... </currentFieldValues>
-		<currentComponent> CurrentComponent:HierarchicalAccess </currentComponent>
+		<currentComponent> CurrentComponent:Path </currentComponent>
 
 	// (seq)
 	rule S1:Stmnt ; S2:Stmnt => S1 ~> S2	
@@ -470,9 +494,9 @@ module SAFETYSHARP-SEMANTICS
 	// (call) and (beh)
 	// There are three possible ways to implement these rules:
 	//	1) change the configuration to look somehow like that and create two rules: The first creates a new execution-Context and the second removes this context, when calculation is done
-	//		<currentComponent> .HierarchicalAccess </currentComponent>
+	//		<currentComponent> .Path </currentComponent>
 	//		<execution mulitplicity="*">
-	//			<contextPath> . HierarchicalAccess </contextPath>
+	//			<contextPath> . Path </contextPath>
 	//		</execution>
 	//	   Pros:
 	//		+ resembles the written semantics more closely
@@ -512,7 +536,7 @@ module SAFETYSHARP-SEMANTICS
 	// Because we applied the [strict] rules on the call-Statment and the ExprList, the Inputs are already evaluated, when this Statement appears in the first k-Cell
 	syntax K ::= "#restoreContextAndWriteBackVariables" "(" 
 			"from:" IdList "," // SourceInouts:TypedVarDeclarations
-			"to:" HierarchicalAccess "," K "," IdList ")" // ( Component:HierarchicalAccess , Call:K , TargetInouts:TypedVarDeclarations
+			"to:" Path "," K "," IdList ")" // ( Component:Path , Call:K , TargetInouts:TypedVarDeclarations
 
 	// (call instantaneous)
 	//	* RequiredPortComponent = ProvidedPortComponent (= CurrentComponent)
@@ -533,8 +557,8 @@ module SAFETYSHARP-SEMANTICS
 			...
 		</k>
 		<currentCall> CurrentCall:K => ProvidedPortName </currentCall>
-		<currentComponent> CurrentComponent:HierarchicalAccess => ProvidedPortComponent </currentComponent>
-		<instantBindings> ( (CurrentComponent . RequiredPortName) |-> (ProvidedPortComponent:HierarchicalAccess . ProvidedPortName:Id ) ) OtherBindings:Map </instantBindings>
+		<currentComponent> CurrentComponent:Path => ProvidedPortComponent </currentComponent>
+		<instantBindings> ( (CurrentComponent . RequiredPortName) |-> (ProvidedPortComponent:Path . ProvidedPortName:Id ) ) OtherBindings:Map </instantBindings>
 		<component>
 			<path> ProvidedPortComponent </path>
 			<providedPort multiplicity="*">
@@ -566,9 +590,9 @@ module SAFETYSHARP-SEMANTICS
 	rule
 		<k> #restoreContextAndWriteBackVariables (
 				from: SourceInouts:IdList ,
-				to:   BackToComponent:HierarchicalAccess , BackToCall:K , TargetInouts:IdList) => .K ... </k>
+				to:   BackToComponent:Path , BackToCall:K , TargetInouts:IdList) => .K ... </k>
 		<currentCall> CurrentCall:K => BackToCall </currentCall>
-		<currentComponent> CurrentComponent:HierarchicalAccess => BackToComponent </currentComponent>
+		<currentComponent> CurrentComponent:Path => BackToComponent </currentComponent>
 		<currentVarValues>
 			CurrentValuation:Map
 			=> 
@@ -588,7 +612,7 @@ module SAFETYSHARP-SEMANTICS
 		<currentVarValues>
 			CurrentValuation:Map => freshVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars )
 		</currentVarValues>
-		<currentComponent> CurrentComponent:HierarchicalAccess => ( CurrentComponent . SubComponentId ) </currentComponent>
+		<currentComponent> CurrentComponent:Path => ( CurrentComponent . SubComponentId ) </currentComponent>
 		<component>
 			<path> ( CurrentComponent . SubComponentId ) </path>
 			<behaviour> Vars:TypedVarDeclarations ; Stmnt:Stmnt </behaviour>
