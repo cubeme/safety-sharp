@@ -3,7 +3,7 @@
 //	* "'A`(_;_`)(Parameter1,,Parameter2)" is another form to write down "A(Parameter1;Parameter2)" to omit parsing ambiguities. To escape '(' we write '`)'. To escape '{' we write '`{'
 //	* Alternative way to express "(.GuardedCommands => Stmt) ..." is "(.GuardedCommands => Stmt) ~> OtherCalculations:K"
 //	* Starting with k-Framework release 3.4.1 (not officially released yet), the map operations could be expressed more concisely
-
+//	* When two different cells are written down (in his example two times <component>), k assumes, that these _are_ actually different cells, so we have to write a rule for the case, when it is actually one cell
 // The semantics document describes a semantics, which is sometimes typed explicitly and sometimes not. For now, this k-Semantics is as a whole not typed explicitly.
 
 module SAFETYSHARP-SYNTAX
@@ -84,6 +84,7 @@ endmodule
 
 module SAFETYSHARP-CONFIGURATION
 	imports SAFETYSHARP-SYNTAX
+	imports SAFETYSHARP-SEMANTICS-CONVENIENCE
 
 	syntax LoadComponent ::= "#loadRootComponent" "(" Component ")"
 	syntax LoadComponent ::= "#loadComponent" "(" Component "," HierarchicalAccess "," Set ")" //second argument is the full Path of the component to load, third argument are the HierarchicalAccesss' of previously loaded Subcomponents of Component
@@ -109,6 +110,10 @@ module SAFETYSHARP-CONFIGURATION
 			<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
 		</execution>
 		<static>
+			// Extracting the bindings from the component-hierarchy makes the semantics easier to read. Formerly, when bindings had their cell in the bindings, there were several restrictions, where bindings in the source file could be declared. Also it shrank down the number of rules to call a required port. Now we only need to differentiate between two cases (required port in the same component vs. in a different component) for delayed ports. E.g. it was not that easy to connect in component c1 the required port p1 of c1.c2 to provided port p2 of c1.c2.
+			// And it also fits to the idea that components are declared independent from bindings and bindings are "injected" afterwards.
+			<instantBindings> .Map </instantBindings>	// to_required:HierarchicalAccess |-> from_provided:HierarchicalAccess
+			<delayedBindings> .Map </delayedBindings>
 			<component multiplicity="*">
 				<path> .K </path> // Type should be HierarchicalAccess. Example n1.n2.n3... where n1=parent(n2), root=n1, n2=parent(n3), 
 				<subcomponents> .Set </subcomponents> //Set of paths of subcomponents
@@ -123,10 +128,6 @@ module SAFETYSHARP-CONFIGURATION
 					<ppInouts> .TypedVarDeclarations </ppInouts>
 					<ppCode> .K </ppCode>
 				</providedPort>
-				<delayedBinding multiplicity="*">
-					<dbFromIdentifier> .K </dbFromIdentifier> //From is usually a Provided Port
-					<dbToIdentifier> .K </dbToIdentifier> //To is a RequiredPort
-				</delayedBinding>
 				<instantBinding multiplicity="*">
 					<ibFromIdentifier> .K </ibFromIdentifier> //From is usually a Provided Port
 					<ibToIdentifier> .K </ibToIdentifier> //To is a RequiredPort
@@ -260,27 +261,19 @@ module SAFETYSHARP-CONFIGURATION
 		<loadComponents>
 			(#loadBindings ( FullPath:HierarchicalAccess , (ToRequired:HierarchicalAccess <-d- FromProvided:HierarchicalAccess) OtherBindings:Bindings => OtherBindings ))
 		</loadComponents>
-		<component>
-			<path> FullPath </path>
-			(. => <delayedBinding>
-				<dbFromIdentifier>FromProvided</dbFromIdentifier>
-				<dbToIdentifier>ToRequired</dbToIdentifier>
-			</delayedBinding>)
-			... 
-		</component>	[structural]
+		<delayedBindings>
+			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
+			OtherAlreadyAddedBindings:Map
+		</delayedBindings>	[structural]
 
 	rule
 		<loadComponents>
 			(#loadBindings ( FullPath:HierarchicalAccess , (ToRequired:HierarchicalAccess <-i- FromProvided:HierarchicalAccess) OtherBindings:Bindings => OtherBindings ))
 		</loadComponents>
-		<component>
-			<path> FullPath </path>
-			(. => <instantBinding>
-				<ibFromIdentifier>FromProvided</ibFromIdentifier>
-				<ibToIdentifier>ToRequired</ibToIdentifier>
-			</instantBinding>)
-			... 
-		</component>	[structural]
+		<instantBindings>
+			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
+			OtherAlreadyAddedBindings:Map
+		</instantBindings>	[structural]
 
 	rule
 		<loadComponents>
@@ -356,6 +349,7 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	syntax HierarchicalAccess ::= HierarchicalAccess "@" K [function]
 	rule Path:HierarchicalAccess @ .K => Path
 	rule Path:HierarchicalAccess @ Id:Id => Path . Id
+	rule Path:HierarchicalAccess @ (Id1:Id . Id2:Id) => (Path . Id1) . Id2
 
 	
 	syntax IdList ::= "extractIds" "(" TypedVarDeclarations ")" [function]
@@ -505,14 +499,19 @@ module SAFETYSHARP-SEMANTICS
 
 	// (call)
 	// This is a call of a Required Port. Provided Ports cannot be called (according to the full semantics)
-	// We split this up into two rules here.
-	// Note: When two different cells are written down (in his example two times <component>), k assumes, that these _are_ actually different cells, so we have to write a rule for the case, when it is actually one cell
+	// We split up the call into two rules. TODO: describe
 	// Because we applied the [strict] rules on the call-Statment and the ExprList, the Inputs are already evaluated, when this Statement appears in the first k-Cell
 	syntax K ::= "#restoreContextAndWriteBackVariables" "(" 
 			"from:" IdList "," // SourceInouts:TypedVarDeclarations
 			"to:" HierarchicalAccess "," K "," IdList ")" // ( Component:HierarchicalAccess , Call:K , TargetInouts:TypedVarDeclarations
 
-	// (call (instantaneous from provided port in current component to required port in the current component))
+	// (call instantaneous)
+	//	* RequiredPortComponent = ProvidedPortComponent (= CurrentComponent)
+	// 	* parent(RequiredPortComponent) = ProvidedPortComponent)
+	// 	* parent(RequiredPortComponent) = parent(ProvidedPortComponent; RequiredPortComponent!=ProvidedPortComponent)
+	// 	* RequiredPortComponent = parent(ProvidedPortComponent)
+	// CurrentContext = RequiredPortContext
+	// could be called in a behaviour or in a provided port
 	rule
 		<k> 
 			(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))
@@ -520,19 +519,16 @@ module SAFETYSHARP-SEMANTICS
 			(LocalVars ; CodeOfProvidedPort) ~>
 			#restoreContextAndWriteBackVariables (
 				from: extractIds(InoutsOfNextContext) ,
-				to:   CurrentContext , CurrentCall , InoutsOfCurrentContext)
+				to:   CurrentComponent, CurrentCall , InoutsOfCurrentContext)
 			...
 		</k>
-		<currentCall> CurrentCall:K => ProvidedPort </currentCall>
-		<currentContext> CurrentContext:HierarchicalAccess </currentContext>
+		<currentCall> CurrentCall:K => ProvidedPortName </currentCall>
+		<currentContext> CurrentComponent:HierarchicalAccess => ProvidedPortComponent </currentContext>
+		<instantBindings> ( (CurrentComponent . RequiredPortName) |-> (ProvidedPortComponent:HierarchicalAccess . ProvidedPortName:Id ) ) OtherBindings:Map </instantBindings>
 		<component>
-			<path> CurrentContext </path>
-			<instantBinding multiplicity="*">
-				<ibFromIdentifier> ProvidedPort:Id </ibFromIdentifier>
-				<ibToIdentifier> RequiredPortName:Id </ibToIdentifier>
-			</instantBinding>
+			<path> ProvidedPortComponent </path>
 			<providedPort multiplicity="*">
-				<ppIdentifier> FromProvided </ppIdentifier>
+				<ppIdentifier> ProvidedPortName </ppIdentifier>
 				<ppInputs> PpInputs:TypedVarDeclarations </ppInputs>
 				<ppInouts> InoutsOfNextContext:TypedVarDeclarations </ppInouts>
 				<ppCode> LocalVars:TypedVarDeclarations ; CodeOfProvidedPort:Stmnt </ppCode>
@@ -546,64 +542,14 @@ module SAFETYSHARP-SEMANTICS
 						assignValues (	//inputs
 							CurrentValuation,
 							values: InputValues , // InputValues have already been evaluated (because we declared the call-expression as strict)
-							target: (CurrentContext @ FromProvided ) , extractIds(PpInputs)
+							target: ( ProvidedPortComponent . ProvidedPortName ) , extractIds(PpInputs)
 						),
-						source: (CurrentContext @ CurrentCall ) , InoutsOfCurrentContext ,
-						target: (CurrentContext @ FromProvided ) , extractIds(InoutsOfNextContext)
+						source: (CurrentComponent @ CurrentCall ) , InoutsOfCurrentContext ,
+						target: ( ProvidedPortComponent . ProvidedPortName ) , extractIds(InoutsOfNextContext)
 					)
-					, ( CurrentContext @ ProvidedPort ), LocalVars )
+					, ( ProvidedPortComponent . ProvidedPortName ), LocalVars )
 		</currentVarValues>
 
-
-
-	// (call (instantaneous from provided port in subComponent to required port in the current component))
-	rule
-		<k> 
-			(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))
-			=>
-			(LocalVars ; CodeOfProvidedPort) ~>
-			#restoreContextAndWriteBackVariables (
-				from: extractIds(InoutsOfNextContext) ,
-				to:   CurrentContext, CurrentCall , InoutsOfCurrentContext)
-			...
-		</k>
-		<currentCall> CurrentCall:K => ProvidedPort </currentCall>
-		<currentContext> CurrentContext:HierarchicalAccess => CurrentContext . SubComponent </currentContext>
-		<component>
-			<path> CurrentContext  </path>
-			<instantBinding multiplicity="*">
-				<ibFromIdentifier> SubComponent:Id . ProvidedPort:Id </ibFromIdentifier>
-				<ibToIdentifier> RequiredPortName:Id </ibToIdentifier>
-			</instantBinding>
-			...
-		</component>
-		<component>
-			<path> CurrentContext . SubComponent </path>
-			<providedPort multiplicity="*">
-				<ppIdentifier> FromProvided </ppIdentifier>
-				<ppInputs> PpInputs:TypedVarDeclarations </ppInputs>
-				<ppInouts> InoutsOfNextContext:TypedVarDeclarations </ppInouts>
-				<ppCode> LocalVars:TypedVarDeclarations ; CodeOfProvidedPort:Stmnt </ppCode>
-			</providedPort>
-			...
-		</component>
-		<currentVarValues> CurrentValuation:Map =>
-			// first copy inputs and inouts, then remove Entries 
-			removeVarEntries(
-					copyEntries( //inouts
-						assignValues (	//inputs
-							CurrentValuation,
-							values: InputValues , // InputValues have already been evaluated (because we declared the call-expression as strict)
-							target: ( ( CurrentContext . SubComponent) @ FromProvided ) , extractIds(PpInputs)
-						),
-						source: (CurrentContext @ CurrentCall ) , InoutsOfCurrentContext ,
-						target: ( ( CurrentContext . SubComponent) @ FromProvided ) , extractIds(InoutsOfNextContext)
-					)
-					, ( ( CurrentContext . SubComponent) @ ProvidedPort ), LocalVars )
-		</currentVarValues>
-
-	// (call (instantaneous from provided port in current Component to required port in a sub component))
-	// (call (instantaneous from provided port in sub component 1 to required port in a different sub component 2))
 
 	// (call (part write-back))
 	// Note: The context is different from the context of
@@ -612,13 +558,13 @@ module SAFETYSHARP-SEMANTICS
 				from: SourceInouts:IdList ,
 				to:   ContextToRestore:HierarchicalAccess , CallToRestore:K , TargetInouts:IdList) => .K ... </k>
 		<currentCall> CurrentCall:K => CallToRestore </currentCall>
-		<currentContext> CurrentContext:HierarchicalAccess => ContextToRestore </currentContext>
+		<currentContext> CurrentComponent:HierarchicalAccess => ContextToRestore </currentContext>
 		<currentVarValues>
 			CurrentValuation:Map
 			=> 
 			copyEntries (
 				CurrentValuation ,
-				source: (CurrentContext @ CurrentCall) , SourceInouts ,
+				source: (CurrentComponent @ CurrentCall) , SourceInouts ,
 				target: (ContextToRestore @ CallToRestore) , TargetInouts
 			)
 		</currentVarValues>
