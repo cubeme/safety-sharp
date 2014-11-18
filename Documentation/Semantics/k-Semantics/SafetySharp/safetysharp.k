@@ -284,9 +284,17 @@ module SAFETYSHARP-CONFIGURATION
 
 	/// Everything done, now load the main Program into the k-Cell
 	// We know everything is done, when the <loadComponents>-Cell is empty
+	// this is somehow the main()-method
 	rule
 		(<loadComponents> .K </loadComponents> => .)
-		<k> ... (.K => "TODO: load program, set Context") </k>		[structural]
+		<component>
+			<path> Component:Id </path> // the only component, which has an Id as path (and not a more level HierarchicalAccess), is the main component
+			<behaviour> LocalVars:TypedVarDeclarations ; Code:Stmnt </behaviour>
+			...
+		</component>
+		<currentVarValues> .Map => freshVarEntries ( .Map , Component , LocalVars ) </currentVarValues>
+		<currentComponent> _ => Component </currentComponent>
+		<k> ... (.K => Code ) </k>		[structural]
 		
 
 endmodule
@@ -300,22 +308,21 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	rule anyValueOf ( Element1:Value Element2:Value Rest:Values ) => anyValueOf ( Element2 Rest)	[transition]
 	rule anyValueOf ( Element:Value Rest:Values) => Element	[transition]
 	
-
+	/*
 	//((Context . Var) |-> Val:Value)
 	syntax Map ::= "removeVarEntries" "(" Map "," HierarchicalAccess "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
 
 	rule removeVarEntries ( ((Path . Var) |-> Value:Value ) FieldMap:Map => FieldMap, Path:HierarchicalAccess , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)
 	rule removeVarEntries ( FieldMap:Map , Path:HierarchicalAccess , (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter)	when notBool ((Path . Var) in keys(FieldMap)) 
 	rule removeVarEntries ( FieldMap:Map , Path:HierarchicalAccess , .TypedVarDeclarations ) => FieldMap
+	*/	
 
-	/*	
 	syntax Map ::= "freshVarEntries" "(" Map "," HierarchicalAccess "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
 
 	rule freshVarEntries ( ((Path . Var) |-> (Value:Value => #missingElement ) ) FieldMap:Map , Path:HierarchicalAccess , ((Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))
-	rule freshVarEntries ( .Map => ((Path . Var) |-> #missingElement ) ) FieldMap:Map , Path:HierarchicalAccess , ( (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))	when notBool ((Path . Var) in keys(FieldMap)) 
+	rule freshVarEntries (( .Map => (Path . Var) |-> #missingElement ) FieldMap:Map , Path:HierarchicalAccess , ( (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))	when notBool ((Path . Var) in keys(FieldMap)) 
 	rule freshVarEntries ( FieldMap:Map , Path:HierarchicalAccess , .TypedVarDeclarations ) => FieldMap
-	*/
-	
+		
 	syntax Map ::= "copyEntries" "("
 				Map ","
 				"source:" HierarchicalAccess "," IdList ","
@@ -519,7 +526,7 @@ module SAFETYSHARP-SEMANTICS
 		<k> 
 			(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))
 			=>
-			(LocalVars ; CodeOfProvidedPort) ~>
+			CodeOfProvidedPort ~>
 			#restoreContextAndWriteBackVariables (
 				from: extractIds(InoutsOfNextContext) ,
 				to:   CurrentComponent, CurrentCall , InoutsOfCurrentContext)
@@ -539,8 +546,8 @@ module SAFETYSHARP-SEMANTICS
 			...
 		</component>
 		<currentVarValues> CurrentValuation:Map =>
-			// first copy inputs and inouts, then remove Entries 
-			removeVarEntries(
+			// first copy inputs and inouts, then set every local entry to the #missingElement
+			freshVarEntries(
 					copyEntries( //inouts
 						assignValues (	//inputs
 							CurrentValuation,
@@ -578,7 +585,9 @@ module SAFETYSHARP-SEMANTICS
 	// (beh)
 	rule
 		<k> (SubComponentId:Id) ( ) => Stmnt ... </k>
-		<currentVarValues> CurrentValuation:Map => removeVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars ) </currentVarValues>
+		<currentVarValues>
+			CurrentValuation:Map => freshVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars )
+		</currentVarValues>
 		<currentComponent> CurrentComponent:HierarchicalAccess => ( CurrentComponent . SubComponentId ) </currentComponent>
 		<component>
 			<path> ( CurrentComponent . SubComponentId ) </path>

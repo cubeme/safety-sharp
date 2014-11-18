@@ -1,0 +1,25 @@
+parsing Tests
+==========================
+nestedComponent1.safetysharp: 2 Components with do-nothing behaviour: 1 parent with 1 subcomponent.
+nestedComponent2.safetysharp: 5 Components with do-nothing behaviour: 1 parent with 2 subcomponents. Each subcomponent has 1 subcomponent
+simpleComponent1.safetysharp: 1 Component with do-nothing behaviour
+simpleComponent2.safetysharp: 1 Component with do-nothing behaviour and 5 fields with indeterministic initialization
+simpleComponent3.safetysharp: 1 Component with do-nothing behaviour and 2 fields with the same name (incorrect program)
+simpleComponent4.safetysharp: 1 Component with do-nothing behaviour and 1 required port
+simpleComponent5.safetysharp: 1 Component with do-nothing behaviour and 1 provided port
+simpleComponent6.safetysharp: 1 Component with do-nothing behaviour and 1 provided port, 2 required ports, 1 instantaneous binding, 1 delayed binding
+
+
+simple Statements Tests
+(everything except (beh) and (call))
+==========================
+simpleStatement1.safetysharp:
+
+
+
+(beh)-Tests
+==========================
+
+
+(call)-Tests
+==========================
