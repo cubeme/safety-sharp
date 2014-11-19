@@ -1,0 +1,35 @@
+component simple {
+	component nested_n1 {
+		component nested_n12 {
+			intValue1 = 1
+			behaviour {
+				.
+				skip
+			}
+		}
+		intValue1 = 2
+		behaviour {
+			.
+			skip
+		}
+	}
+	component nested_n2 {
+		component nested_n22 {
+			intValue1 = 3
+			behaviour {
+				.
+				skip
+			}
+		}
+		intValue1 = 4
+		behaviour {
+			.
+			skip
+		}
+	}
+	intValue1 = 5
+	behaviour {
+		.
+		skip
+	}
+}

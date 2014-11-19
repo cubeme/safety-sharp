@@ -520,6 +520,39 @@ module SAFETYSHARP-SEMANTICS
 
 	// We ensure on the call of a behaviour or a port, that all variables which might be accessed are "fresh"
 
+	// explain (beh) first, because it is easier to comprehend and (call) contains parts of its thoughts
+
+	// Note: Behaviour should only be called by other behaviours (and never from provided ports)!!!!!!!!!!!!!
+	// TODO: Pop back stack
+	// (beh)
+	syntax K ::= "#restoreContext" "(" 
+			"to:" Path ")" // Component:Path 
+
+	rule
+		<k>
+			(SubComponentId:Id) ( )
+			=>
+			Stmnt ~>
+			#restoreContext ( to: CurrentComponent)
+			...
+		</k>
+		<currentVarValues>
+			CurrentValuation:Map => freshVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars )
+		</currentVarValues>
+		<currentComponent> CurrentComponent:Path => ( CurrentComponent . SubComponentId ) </currentComponent>
+		<component>
+			<path> ( CurrentComponent . SubComponentId ) </path>
+			<behaviour> Vars:TypedVarDeclarations . Stmnt:Stmnt </behaviour>
+			...
+		</component>
+
+	// (beh (part write-back))
+	// Note: The context is different from the context of
+	rule
+		<k> #restoreContext (
+				to:   BackToComponent:Path) => .K ... </k>
+		<currentComponent> CurrentComponent:Path => BackToComponent </currentComponent>
+
 	// (call)
 	// This is a call of a Required Port. Provided Ports cannot be called (according to the full semantics)
 	// We split up the call into two rules. TODO: describe
@@ -592,22 +625,6 @@ module SAFETYSHARP-SEMANTICS
 				target: (BackToComponent @ BackToCall) , TargetInouts
 			)
 		</currentVarValues>
-
-
-	// Note: Behaviour should only be called by other behaviours (and never from provided ports)!!!!!!!!!!!!!
-
-	// (beh)
-	rule
-		<k> (SubComponentId:Id) ( ) => Stmnt ... </k>
-		<currentVarValues>
-			CurrentValuation:Map => freshVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars )
-		</currentVarValues>
-		<currentComponent> CurrentComponent:Path => ( CurrentComponent . SubComponentId ) </currentComponent>
-		<component>
-			<path> ( CurrentComponent . SubComponentId ) </path>
-			<behaviour> Vars:TypedVarDeclarations . Stmnt:Stmnt </behaviour>
-			...
-		</component>
 
 
 endmodule

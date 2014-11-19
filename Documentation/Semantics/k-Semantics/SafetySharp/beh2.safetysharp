@@ -1,0 +1,17 @@
+component simple {	
+	component nested {
+		fieldInt2 = 0
+		behaviour {
+			.
+			fieldInt2 := fieldInt2 + 1
+		}
+	}
+	fieldInt1 = 0
+	fieldInt3 = 0	
+	behaviour {
+		.
+		fieldInt1 := fieldInt1 + 1 ;
+		nested () ;
+		fieldInt3 := fieldInt1 + 1
+	}
+}
