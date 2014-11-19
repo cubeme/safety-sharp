@@ -8,7 +8,6 @@ simpleComponent3.safetysharp: 1 Component with do-nothing behaviour and 2 fields
 simpleComponent4.safetysharp: 1 Component with do-nothing behaviour and 1 required port
 simpleComponent5.safetysharp: 1 Component with do-nothing behaviour and 1 provided port
 simpleComponent6.safetysharp: 1 Component with do-nothing behaviour and 1 provided port, 2 required ports, 1 instantaneous binding, 1 delayed binding
-simpleComponent7.safetysharp: 1 Component with do-nothing behaviour and 1 provided port, 2 required ports, 1 instantaneous binding, 1 delayed binding. Every component has a field
 
 
 simple Statements Tests
@@ -19,31 +18,42 @@ simpleStatement2.safetysharp: 1 Component with one field, assignment to field wi
 simpleStatement3.safetysharp: 1 Component with one local variable, assignment to local variable, reading from local variable
 
 
-
-(beh)-Tests
-==========================
-beh1.safetysharp: nested 
-beh2.safetysharp: nested with fields
-
-
-(call)-Tests
-==========================
-
-
 (cmd)-Tests
 ==========================
 
 
+
+(beh)-Tests
+==========================
+beh1.safetysharp: 2 Components. 1 parent with 1 subcomponent. Parent calls behaviour of its subcomponent
+beh2.safetysharp: Like beh1. Additionally  the behaviours of both components make field assignments
+beh3.safetysharp: Like beh2. Additionally  the behaviours of both components make local variable assignments
+
+
+(call)-Tests (instantaneous)
+==========================
+callInstFromBeh1.safetysharp: just call from behaviour a requiredPort inside the same Component
+callInstFromBeh2.safetysharp: call from _behaviour_ a requiredPort which calls a required Port inside the same Component
+callInstFromBeh3.safetysharp: like callInst1, but with field assignments
+callInstFromBeh4.safetysharp: like callInst3, but with input-parameters
+callInstFromBeh5.safetysharp: like callInst1, but with an inout-parameter, which was preassigned (field) and gets a value (incorrect program)
+callInstFromBeh6.safetysharp: like callInst1, but with an inout-parameter, which was preassigned (local) and gets a value
+callInstFromBeh7.safetysharp: like callInst1, but with an inout-parameter, which was not preassigned and gets no value
+callInstFromBeh8.safetysharp: like callInst1, but with an inout-parameter, which was not preassigned and gets a value
+callInstFromProv1.safetysharp: tests, if inout- reading/writing works with Required Ports, if called within an provided port
+
+
+
+(call)-Tests (delayed)
+==========================
+
+
+
 TODO:
-- Nested Beh-Calls
-- Nested Provided-Calls
 - Writeback to Beh (when behaviour port gets value from provided-port)
 - Writeback of Inout to Provided (when provided port  gets value from provided-port)
 - Reading of writeback
 - Context 
-- Reading of Local Var in Provided
-- Reading of Local Var in Beh
-- Reading of Inout Var in Provided
 - Position of provided port same/different, correctly differentiated
 
 - always differentiate between these two cases: CurrentCall:K is an Id of a provided Port/ is empty, because source is a component-behaviour

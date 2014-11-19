@@ -1,0 +1,16 @@
+component simple {
+	rport1 r( ; )
+	
+	pport1 p( ; ) {
+		.
+		skip
+	}
+	
+	rport1 <-i- pport1
+	
+	behaviour {
+		.
+		rport1 ( ; )
+		
+	}
+}

@@ -339,7 +339,8 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 				target:  ToContext:Path   , (ToId:Id , OtherTos => OtherTos))	when notBool ((ToContext . ToId) in keys(FieldMap)) 
 	rule copyEntries (	FieldMap:Map ,
 				source:  FromContext:Path , .IdList ,
-				target:  FromContext:Path , .IdList ) => FieldMap
+				target:  ToContext:Path , .IdList ) => FieldMap
+
 
 	syntax Map ::= "assignValues" "("
 				Map ","
@@ -362,10 +363,15 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 
 	rule extractIds ( .TypedVarDeclarations ) => .IdList
 
-
+	
+	// @ is used in initialization and for (beh) and (call)
+	// only use @ on the right side of a rewrite rule (=>). On the left it isn't evaluated
 	syntax Path ::= Path "@" BindingLink [function] // Path:Path @@ Link:BindingLink
 	rule Path:Path @ PortName:Id => Path . PortName
 	rule Path:Path @ (SubComponent:Id . PortName:Id)  => (Path . SubComponent) . PortName
+	
+	syntax Path ::= Path "@" K [function]
+	rule Path:Path @ .K => Path // for the case, when we need to write back to (beh)-Variables (there is <currentCall> .K </currentCall>)
 
 endmodule
 

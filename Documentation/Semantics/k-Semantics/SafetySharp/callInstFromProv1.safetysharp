@@ -1,0 +1,27 @@
+component simple {
+	intField = 1
+	
+	rport1 r( ; )
+	rport2 r(  ; r_inout  : int )
+	
+	pport1 p( ; ) {
+		localVar : int
+		.
+		localVar := 3 ;
+		rport2 ( ; localVar ) ;
+		intField := localVar
+	}
+	
+	pport2 p( ; p_inout  : int  ) {
+		.
+		p_inout := p_inout + 1
+	}
+	
+	rport1 <-i- pport1 
+	rport2 <-i- pport2
+	
+	behaviour {
+		.
+		rport1 ( ; )		
+	}
+}

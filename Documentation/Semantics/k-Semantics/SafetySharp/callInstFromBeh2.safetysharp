@@ -1,0 +1,23 @@
+component simple {
+	rport1 r( ; )
+	rport2 r( ; )
+	
+	pport1 p( ; ) {
+		.
+		rport2 ( ; )
+	}
+	
+	pport2 p( ; ) {
+		.
+		skip
+	}
+	
+	rport1 <-i- pport1 
+	rport2 <-i- pport2
+	
+	behaviour {
+		.
+		rport1 ( ; )
+		
+	}
+}

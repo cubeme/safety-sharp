@@ -1,0 +1,17 @@
+component simple {
+
+	rport1 r( ; r_inout  : int )
+	
+	pport1 p( ; p_inout  : int ) {
+		.
+		skip
+	}
+	
+	rport1 <-i- pport1 
+	
+	behaviour {
+		localField1 : int
+		.
+		rport1 (  ; localField1 )
+	}
+}
