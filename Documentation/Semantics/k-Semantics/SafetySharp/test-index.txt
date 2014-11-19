@@ -54,5 +54,5 @@ callInstHierarchy5.safetysharp: tests hierarchical case: parent(RequiredPortComp
 
 Examples which combine several aspects
 ==========================
-exampleDocumentationSimplified1.safetysharp
-exampleDocumentationFull.safetysharp
+exampleDocumentationFull.safetysharp: Test from the semantics-pdf
+exampleDocumentationSimplified1.safetysharp: like exampleDocumentationFull, but with instantaneous binding instead of delayed

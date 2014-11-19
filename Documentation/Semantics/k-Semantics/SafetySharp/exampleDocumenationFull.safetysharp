@@ -1,0 +1,46 @@
+component C {
+	component D {
+		b = false
+		
+		Y r(;)
+		
+		X p(p1 : int, p2 : int; r1 : bool, r2 : bool) {
+			.
+			Y(;) ;
+			r1 := false ;
+			r2 := b
+		}
+				
+		behaviour {
+			.
+			skip
+		}
+	}
+
+	x = 1 2 3
+	b = true false
+		
+	M r(input1 : int, input2 : int; inout1: bool, inout2 : bool)
+		
+	X p(p1 : int, p2 : int ; r1 : bool, r2 : bool) {
+		.
+		r1 := p1 > 1 ;
+		r2 := p2 > x && b
+	}	
+	
+	Y p(;) {
+		.
+		skip
+	}
+		
+	M <-d- D.X
+	D.Y <-i- Y
+	
+	behaviour {
+		l1 : bool, l2 : bool
+		.
+		M(x, x - 1; l1, l2) ;
+		l1 ->> { x := x - 1 }, l2 ->> { b := true } ;
+		D()
+	}
+}
