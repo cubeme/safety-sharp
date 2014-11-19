@@ -1,0 +1,24 @@
+component simple {	
+	component nested {
+		fieldInt = 0
+		
+		pport1 p( ; ) {
+			.
+			fieldInt := 1
+		}	
+		
+		behaviour {
+			.
+			skip
+		}
+	}
+	
+	rport1 r( ; )
+		
+	rport1 <-i- nested.pport1
+	
+	behaviour {
+		.
+		rport1 ( ; )
+	}
+}

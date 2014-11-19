@@ -1,0 +1,31 @@
+component simple {	
+	component nestedProvided {
+		fieldInt = 0
+		
+		pport1 p( ; ) {
+			.
+			fieldInt := 1
+		}	
+		
+		behaviour {
+			.
+			skip
+		}
+	}
+	
+	component nestedRequired {
+		rport1 r( ; )
+		
+		behaviour {
+			.
+			rport1 ( ; )
+		}
+	}
+		
+	nestedRequired.rport1 <-i- nestedProvided.pport1
+	
+	behaviour {
+		.
+		nestedRequired ( )
+	}
+}

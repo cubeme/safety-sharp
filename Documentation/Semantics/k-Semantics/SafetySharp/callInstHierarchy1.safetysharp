@@ -1,0 +1,18 @@
+component simple {
+	fieldInt = 0
+	
+	rport1 r( ; )
+	
+	pport1 p( ; ) {
+		.
+		fieldInt := 1
+	}
+	
+	rport1 <-i- pport1
+	
+	behaviour {
+		.
+		rport1 ( ; )
+		
+	}
+}
