@@ -4,7 +4,20 @@
 //	* Alternative way to express "(.GuardedCommands => Stmt) ..." is "(.GuardedCommands => Stmt) ~> OtherCalculations:K"
 //	* Starting with k-Framework release 3.4.1 (not officially released yet), the map operations could be expressed more concisely
 //	* When two different cells are written down (in his example two times <component>), k assumes, that these _are_ actually different cells, so we have to write a rule for the case, when it is actually one cell
-// The semantics document describes a semantics, which is sometimes typed explicitly and sometimes not. For now, this k-Semantics is as a whole not typed explicitly.
+//	* The semantics document describes a semantics, which is sometimes typed explicitly and sometimes not. For now, this k-Semantics is as a whole not typed explicitly.
+////	* Be careful: when two comma-separated expressions are in the first k-Cell,
+//	  k might mistake it for a ExprList, where the first term before the comma needs
+//	  to be evaluated (because of the [strict]. Thus ensure, that comma-separated
+//	  values occur in the first k-Cell only when they need to be evaluated.
+//	  We use the [strict] to evaluate the inputs of a required-port. An alternative
+//	  would be to declare a better "context"-rule
+//	  That is the reason, we could not use "," as separator in guarded commands.
+//	  It lead to a HOLE, which stopped the interpretation in example "cmd1.safetysharp"
+//	  "<k> true ->> { fieldInt := 20 } ~> HOLE, (6 > 4) ->> { fieldInt := 30 }, ..."
+//	  A context rule might look like this (incomplete)
+//		context Id:Id ( HOLE , OtherExpr:ExprList ; IdList )
+//		context Id:Id ( Value:KResult , (HOLE, OtherExpr:ExprList) ; IdList )
+//	  Recall: "HOLE designates the position to be evaluated first" (k-primer 2012 p.14)
 
 module SAFETYSHARP-SYNTAX
 // Chapter 2.1: Domains
@@ -32,9 +45,9 @@ module SAFETYSHARP-SYNTAX
 // Chapter 2.3: Statements
 	syntax GuardedCommand ::= Expr "->>" "{" Stmnt "}"
 	
-	syntax GuardedCommands ::= List{GuardedCommand,","}
+	syntax GuardedCommands ::= List{GuardedCommand,"|||"}
 
-	context ((HOLE ->> { Stmnt:Stmnt }), OtherCandidates:GuardedCommands)
+	context ((HOLE ->> { Stmnt:Stmnt }) ||| OtherCandidates:GuardedCommands)
 
 	syntax Stmnt ::= "skip"			// do nothing
 			| Id ":=" Expr	[strict(2)]	// assignment to Variable or Field
@@ -80,7 +93,7 @@ module SAFETYSHARP-SYNTAX
 				| Id "." Id	// reference to port named Id (second) in subcomponent named Id (first)
 
 	syntax Path ::=	  Id 
-					| Path "." Id		[left]
+			| Path "." Id		[left]
 	
 	syntax K ::= Component
 	syntax IdList ::= List{Id,","}	//TODO: Rename to Ids to remain consistent
@@ -111,7 +124,7 @@ module SAFETYSHARP-CONFIGURATION
 			<currentVarValues> .Map </currentVarValues> // (<path>:Path).VarName |-> Value (without hierarchie). Full Path is needed (TODO: explain why) [~= \varsigma \in \Sigma_{fm}]
 			<currentComponent> .K </currentComponent> // Path to current component (Path) [~= c^+]
 			<currentCall> .K </currentCall>
-			<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
+			<cmdCandidates> .Set </cmdCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
 		</execution>
 		<static>
 			// Extracting the bindings from the component-hierarchy makes the semantics easier to read. Formerly, when bindings had their cell in the bindings, there were several restrictions, where bindings in the source file could be declared. Also it shrank down the number of rules to call a required port. Now we only need to differentiate between two cases (required port in the same component vs. in a different component) for delayed ports. E.g. it was not that easy to connect in component c1 the required port p1 of c1.c2 to provided port p2 of c1.c2.
@@ -471,20 +484,26 @@ module SAFETYSHARP-SEMANTICS
 	// 4 Steps to evaluate a GuardedCommand
 	//   * 1)  evaluate the guard of the first GuardedCommand in the current Cell (done by [strict(1)])
 	//   * 2a) if this guard is false, throw away the first GuardedCommand
-	//   * 2b) if this guard is true, put the Command into the list of gcCurrentCandidates
+	//   * 2b) if this guard is true, put the Command into the list of cmdCandidates
 	//   * 3) Repeat until all GuardedCommands are evaluated
 	//   * 4)  When every GuardedCommand is evaluated, the current k-Cell contains .GuardedCommands. Now replace .GuardedCommands with any candidate from the list and delete all candidates
+	rule
+		<k> ((false ->> { Stmt:Stmnt } ) ||| OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
 
 	rule
-		<k> ((false ->> { Stmt:Stmnt } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
-
-	rule
-		<k> ((true ->> { Stmt:Stmnt } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
-		<gcCurrentCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </gcCurrentCandidates>
+		<execution>
+			<k>
+				((true ->> { Stmt:Stmnt } ) ||| OtherCandidates:GuardedCommands) => OtherCandidates  ...
+			</k>
+			<cmdCandidates>
+				(.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set
+			</cmdCandidates>
+		...
+		</execution>
 	
 	rule
 		<k> (.GuardedCommands => Stmt) ... </k>
-		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </gcCurrentCandidates> [transition]
+		<cmdCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </cmdCandidates> [transition]
 
 
 	// (call) and (beh)
