@@ -1,8 +1,8 @@
 component simple {
-	fieldInt1 = 0 1
+	intField1 = 0 1
 	
 	behaviour {
 		.
-		fieldInt1 := fieldInt1 + 3
+		intField1 := intField1 + 3
 	}
 }

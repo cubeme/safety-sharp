@@ -1,20 +1,20 @@
 component simple {
-	fieldInt = 1
+	intField = 1
 	
 	rport1 r( r_input1 : int, r_input2 : int ; )
 	
 	pport1 p( p_input1 : int, p_input2  : int ; ) {
 		.
-		fieldInt := fieldInt + p_input1 + p_input2
+		intField := intField + p_input1 + p_input2
 		
 	}
 	
 	rport1 <-i- pport1 
 	
 	behaviour {
-		localField1 : int
+		intLocal : int
 		.
-		localField1 := 4 ;
-		rport1 ( 5 + 7 , localField1 ; )		
+		intLocal := 4 ;
+		rport1 ( 5 + 7 , intLocal ; )		
 	}
 }

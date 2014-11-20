@@ -10,9 +10,9 @@ component simple {
 	rport1 <-i- pport1 
 	
 	behaviour {
-		localField1 : int
+		intLocal : int
 		.
-		localField1 := 4 ;
-		rport1 (  ; localField1 )
+		intLocal := 4 ;
+		rport1 (  ; intLocal )
 	}
 }

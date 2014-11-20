@@ -1,13 +1,13 @@
 component simple {
 	component nested_n1 {
 		component nested_n12 {
-			intValue1 = 1
+			intField1 = 1
 			behaviour {
 				.
 				skip
 			}
 		}
-		intValue1 = 2
+		intField1 = 2
 		behaviour {
 			.
 			skip
@@ -15,19 +15,19 @@ component simple {
 	}
 	component nested_n2 {
 		component nested_n22 {
-			intValue1 = 3
+			intField1 = 3
 			behaviour {
 				.
 				skip
 			}
 		}
-		intValue1 = 4
+		intField1 = 4
 		behaviour {
 			.
 			skip
 		}
 	}
-	intValue1 = 5
+	intField1 = 5
 	behaviour {
 		.
 		skip

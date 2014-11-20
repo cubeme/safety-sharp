@@ -1,10 +1,10 @@
 component simple {	
 	component nestedProvided {
-		fieldInt = 0
+		intField = 0
 		
 		pport1 p( ; ) {
 			.
-			fieldInt := 1
+			intField := 1
 		}	
 		
 		behaviour {

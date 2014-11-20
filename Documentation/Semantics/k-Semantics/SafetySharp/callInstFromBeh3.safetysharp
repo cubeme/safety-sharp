@@ -1,11 +1,11 @@
 component simple {
-	fieldInt = 1
+	intField = 1
 	
 	rport1 r( ; )
 	
 	pport1 p( ; ) {
 		.
-		fieldInt := fieldInt + 3		
+		intField := intField + 3		
 	}
 	
 	rport1 <-i- pport1 

@@ -1,5 +1,5 @@
 component simple {
-	fieldInt = 1
+	intField = 1
 	
 	rport1 r( ; r_inout  : int )
 	
@@ -12,6 +12,6 @@ component simple {
 	
 	behaviour {
 		.
-		rport1 (  ; fieldInt)		
+		rport1 (  ; intField)		
 	}
 }

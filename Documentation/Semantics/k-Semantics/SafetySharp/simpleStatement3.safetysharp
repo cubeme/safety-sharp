@@ -1,7 +1,7 @@
 component simple {	
 	behaviour {
-		localInt : int .
-		localInt := 7 + 3 ;
-		localInt := localInt * localInt
+		intLocal : int .
+		intLocal := 7 + 3 ;
+		intLocal := intLocal * intLocal
 	}
 }

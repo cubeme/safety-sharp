@@ -5,11 +5,11 @@ component simple {
 	rport2 r(  ; r_inout  : int )
 	
 	pport1 p( ; ) {
-		localVar : int
+		intLocal : int
 		.
-		localVar := 3 ;
-		rport2 ( ; localVar ) ;
-		intField := localVar
+		intLocal := 3 ;
+		rport2 ( ; intLocal ) ;
+		intField := intLocal
 	}
 	
 	pport2 p( ; p_inout  : int  ) {

@@ -20,7 +20,7 @@ simpleStatement3.safetysharp: 1 Component with one local variable, assignment to
 
 (cmd)-Tests
 ==========================
-
+cmd1.safetysharp: 1 Component with one guardedCommand, which makes an indeterministic field assignment. Use "krun cmd1.safetysharp --search-final" to get all results
 
 
 (beh)-Tests

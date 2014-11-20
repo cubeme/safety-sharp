@@ -1,21 +1,21 @@
 component simple {	
 	component nested {
-		fieldInt2 = 0
+		intField2 = 0
 		behaviour {
-			localInt2 : int
+			intLocal2 : int
 			.
-			fieldInt2 := fieldInt2 + 1 ;
-			localInt2 := fieldInt2
+			intField2 := intField2 + 1 ;
+			intLocal2 := intField2
 		}
 	}
-	fieldInt1 = 0
-	fieldInt3 = 0	
+	intField1 = 0
+	intField3 = 0	
 	behaviour {
-		localInt1 : int
+		intLocal1 : int
 		.
-		fieldInt1 := fieldInt1 + 1 ;
+		intField1 := intField1 + 1 ;
 		nested () ;
-		localInt1 := fieldInt1 ;
-		fieldInt3 := fieldInt1 + 1
+		intLocal1 := intField1 ;
+		intField3 := intField1 + 1
 	}
 }

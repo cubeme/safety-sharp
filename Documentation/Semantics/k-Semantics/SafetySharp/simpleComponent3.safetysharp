@@ -1,6 +1,6 @@
 component simple {
-	intValue1 = 0 1 2 3
-	intValue1 = 7
+	intField1 = 0 1 2 3
+	intField1 = 7
 	
 	behaviour {
 		.

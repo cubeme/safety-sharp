@@ -9,11 +9,11 @@ component simple {
 			rport1 ( ; )
 		}
 	}
-	fieldInt = 0
+	intField = 0
 	
 	pport1 p( ; ) {
 		.
-		fieldInt := 1
+		intField := 1
 	}
 	
 	nested.rport1 <-i- pport1
