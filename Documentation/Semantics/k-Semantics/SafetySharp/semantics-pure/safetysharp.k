@@ -110,22 +110,25 @@ module SAFETYSHARP-CONFIGURATION
 	syntax LoadComponent ::= "#loadRequiredPorts" "(" Path "," RequiredPorts ")"
 	syntax LoadComponent ::= "#loadBindings" "(" Path "," Bindings ")"  
 	
+	syntax LoadComponent ::= "#createInitialExecutionContext"
+
 	syntax K ::= LoadComponent
 
 	//TODO: Find better place	
 	syntax K ::= "#chooseInitialValue" "(" Path "," Id ")" //for a specific Field. FullPath to Component, FieldId
 
 	configuration
-		<loadComponents multiplicity="?"> #loadRootComponent ( $PGM:Component ) </loadComponents>
-		<execution>
+		<loadComponents multiplicity="?"> #createInitialExecutionContext ~> #loadRootComponent ( $PGM:Component ) </loadComponents>
+		<execution multiplicity="*">
+			<executionContextId> 0 </executionContextId>
 			// The corresponding elements to the Configuration of Chapter 3.3 in the semantics document are written in "[~= _ ]"			
 			<k> .K  </k>	// [~= S \in Stm_{fm}]  (plus initialisation of fields)
 			<currentFieldValues> .Map </currentFieldValues>  // (<path>:Path).FieldName |-> Value. [~= \phi \in \Phi]
-			<currentVarValues> .Map </currentVarValues> // (<path>:Path).VarName |-> Value (without hierarchie). Full Path is needed (TODO: explain why) [~= \varsigma \in \Sigma_{fm}]
+			<currentVarValues> .Map </currentVarValues> // (VarName |-> Value (without hierarchie).  [~= \varsigma \in \Sigma_{fm}]
 			<currentComponent> .K </currentComponent> // Path to current component (Path) [~= c^+]
-			<currentCall> .K </currentCall>
 			<cmdCandidates> .Set </cmdCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc)
 		</execution>
+		<nextFreeContext>1</nextFreeContext>
 		<static>
 			// Extracting the bindings from the component-hierarchy makes the semantics easier to read. Formerly, when bindings had their cell in the bindings, there were several restrictions, where bindings in the source file could be declared. Also it shrank down the number of rules to call a required port. Now we only need to differentiate between two cases (required port in the same component vs. in a different component) for delayed ports. E.g. it was not that easy to connect in component c1 the required port p1 of c1.c2 to provided port p2 of c1.c2.
 			// And it also fits to the idea that components are declared independent from bindings and bindings are "injected" afterwards.
@@ -154,7 +157,18 @@ module SAFETYSHARP-CONFIGURATION
 		</static>
 
 
-
+	rule
+		<loadComponents> #createInitialExecutionContext => . ... </loadComponents>
+		(.
+		=>
+		<execution>
+			<executionContextId> 0 </executionContextId>			
+			<k> .K  </k>
+			<currentFieldValues> .Map </currentFieldValues>
+			<currentVarValues> .Map </currentVarValues>
+			<currentComponent> .K </currentComponent>
+			<cmdCandidates> .Set </cmdCandidates>
+		</execution>)
 
 	rule
 		<loadComponents>
@@ -219,9 +233,13 @@ module SAFETYSHARP-CONFIGURATION
 			</field>)
 			...
 		</component>
-		<k>
-			.K => #chooseInitialValue( FullPath, FieldId ) ...
-		</k>	[structural]
+		<execution>
+			<executionContextId> 0 </executionContextId>
+			<k>
+				.K => #chooseInitialValue( FullPath, FieldId ) ...
+			</k>
+			...
+		</execution>	[structural]
 
 	rule
 		<loadComponents>
@@ -314,9 +332,13 @@ module SAFETYSHARP-CONFIGURATION
 			<behaviour> LocalVars:TypedVarDeclarations . Code:Stmnt </behaviour>
 			...
 		</component>
-		<currentVarValues> .Map => freshVarEntries ( .Map , Component , LocalVars ) </currentVarValues>
+		<currentVarValues> .Map => freshVarEntries ( target: .Map , LocalVars ) </currentVarValues>
 		<currentComponent> .K => Component </currentComponent>
-		<k> (.K => Code ) </k>		[structural]
+		<execution>
+			<executionContextId> 0 </executionContextId>
+			<k> (.K => Code ) </k>
+			...
+		</execution>	[structural]
 		
 
 endmodule
@@ -330,41 +352,45 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	rule anyValueOf ( Element1:Value Element2:Value Rest:Values ) => anyValueOf ( Element2 Rest)	[transition]
 	rule anyValueOf ( Element:Value Rest:Values) => Element	[transition]
 
-	syntax Map ::= "freshVarEntries" "(" Map "," Path "," TypedVarDeclarations ")"	[function] //Map to delete entries from; prefix of Path, which values should be deleted; Variables to delete
 
-	rule freshVarEntries ( ((Path . Var) |-> (Value:Value => #missingElement ) ) FieldMap:Map , Path:Path , ((Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))
-	rule freshVarEntries (( .Map => (Path . Var) |-> #missingElement ) FieldMap:Map , Path:Path , ( (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))	when notBool ((Path . Var) in keys(FieldMap)) 
-	rule freshVarEntries ( FieldMap:Map , Path:Path , .TypedVarDeclarations ) => FieldMap
+	syntax Map ::= "freshVarEntries" "(" "target:" Map "," TypedVarDeclarations ")"	[function] //Map to delete entries from; Variables to delete
+
+	rule freshVarEntries ( target: ( .Map => Var |-> #missingElement ) FieldMap:Map , ( (Var:Id : Type:Type) , OtherParameter:TypedVarDeclarations => OtherParameter))	when notBool (Var in keys(FieldMap)) 
+	rule freshVarEntries ( target: FieldMap:Map , .TypedVarDeclarations ) => FieldMap
 		
 	syntax Map ::= "copyEntries" "("
-				Map ","
-				"source:" Path "," IdList ","
-				"target:" Path "," IdList ")"	[function]
-	rule copyEntries (	( ( ToContext . ToId) |-> (OldValue => NewValue) ) ( ( FromContext . FromId) |-> NewValue:Value ) FieldMap:Map,
-				source:  FromContext:Path , (FromId:Id , OtherFroms => OtherFroms),
-				target:  ToContext:Path   , (ToId:Id , OtherTos => OtherTos))
-	rule copyEntries (	( .Map => ( ( ToContext . ToId) |-> NewValue )) ( ( FromContext . FromId) |-> NewValue:Value ) FieldMap:Map,
-				source:  FromContext:Path , (FromId:Id , OtherFroms => OtherFroms),
-				target:  ToContext:Path   , (ToId:Id , OtherTos => OtherTos))	when notBool ((ToContext . ToId) in keys(FieldMap)) 
-	rule copyEntries (	FieldMap:Map ,
-				source:  FromContext:Path , .IdList ,
-				target:  ToContext:Path , .IdList ) => FieldMap
+				"source:" Map "," IdList ","	//SourceMap:Map
+				"target:" Map "," IdList ")"	[function] //TargetMap:Map
+
+	rule copyEntries (	source: (FromId |-> NewValue:Value)  FromFieldMap:Map ,
+				(FromId:Id , OtherFroms => OtherFroms),
+				target: (ToId |-> (OldValue => NewValue)) ToFieldMap:Map ,
+				(ToId:Id , OtherTos => OtherTos))
+
+	rule copyEntries (	source: (FromId |-> NewValue:Value)  FromFieldMap:Map ,
+				(FromId:Id , OtherFroms => OtherFroms),
+				target: (. => (ToId |-> NewValue)) ToFieldMap:Map ,
+				(ToId:Id , OtherTos => OtherTos))	when notBool (ToId in keys(ToFieldMap)) 
+	rule copyEntries (	source:  FromFieldMap:Map , .IdList ,
+				target:  ToFieldMap:Map , .IdList ) => ToFieldMap
 
 
 	syntax Map ::= "assignValues" "("
-				Map ","
 				"values:" ExprList "," // ExprList should be already evaluated Expressions (thus a list of Values)
-				"target:" Path "," IdList ")"	[function]
-	rule assignValues (	( ( ToContext . Var) |-> (OldValue => Value) ) FieldMap:Map ,
-				values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
-				target:  ToContext:Path , (Var:Id  , OtherVars:IdList => OtherVars ) )
-	rule assignValues (	( .Map => ( ( ToContext . Var) |->  Value) ) FieldMap:Map ,
-				values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
-				target:  ToContext:Path , (Var:Id  , OtherVars:IdList => OtherVars ) )	when notBool ((ToContext . Var) in keys(FieldMap))
+				"target:" Map "," IdList ")"	[function] //TargetMap:Map
 
-	rule assignValues (	FieldMap:Map ,
-				values:  .ExprList ,
-				target:  ToContext:Path , .IdList ) => FieldMap
+	rule assignValues (	values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
+				target:  ( Var |-> (OldValue => Value) ) FieldMap:Map,
+				(Var:Id  , OtherVars:IdList => OtherVars ) )
+
+	rule assignValues (	values:  (( Value:Value , OtherExprs:ExprList ) => OtherExprs),
+				target:  ( .Map =>  Var |-> Value ) FieldMap:Map,
+				(Var:Id  , OtherVars:IdList => OtherVars ) )	when notBool (Var in keys(FieldMap))
+
+	rule assignValues (	values:  .ExprList ,
+				target:  FieldMap:Map ,
+				.IdList ) => FieldMap
+
 
 	syntax IdList ::= "extractIds" "(" TypedVarDeclarations ")" [function]
 
@@ -379,8 +405,6 @@ module SAFETYSHARP-SEMANTICS-CONVENIENCE
 	rule Path:Path @ PortName:Id => Path . PortName
 	rule Path:Path @ (SubComponent:Id . PortName:Id)  => (Path . SubComponent) . PortName
 	
-	syntax Path ::= Path "@" K [function]
-	rule Path:Path @ .K => Path // for the case, when we need to write back to (beh)-Variables (there is <currentCall> .K </currentCall>)
 
 endmodule
 
@@ -392,9 +416,15 @@ module SAFETYSHARP-SEMANTICS
 	// initialize values (may be indeterministic, indeterminism is hidden in "anyElementOf")
 	// leads to (sometimes inconsistent) double assignments in <currentFieldValue>, if value already assigned
 	rule
-		<k>			
-			#chooseInitialValue( FullPath:Path, FieldId:Id ) => . ...
-		</k>
+		<execution>		
+			<k>			
+				#chooseInitialValue( FullPath:Path, FieldId:Id ) => . ...
+			</k>
+			<currentFieldValues>
+				.Map => (FullPath . FieldId) |-> anyValueOf(PossibleValues) ...
+			</currentFieldValues>
+			...
+		</execution>
 		<component>
 			<path> FullPath </path>
 			<field>
@@ -403,9 +433,6 @@ module SAFETYSHARP-SEMANTICS
 			</field>
 			...
 		</component>
-		<currentFieldValues>
-			.Map => (FullPath . FieldId) |-> anyValueOf(PossibleValues) ...
-		</currentFieldValues>
 
 
 	// Common interpretation of Boolean and Arithmetical operators
@@ -428,53 +455,55 @@ module SAFETYSHARP-SEMANTICS
 	
 	// Expressions: variable access
 	rule
-		<k> Var:Id => Val ... </k>
-		<currentVarValues> (((CurrentComponent . CurrentCall) . Var) |-> Val:Value) ... </currentVarValues>
-		<currentComponent> CurrentComponent:Path </currentComponent>
-		<currentCall> CurrentCall:Id </currentCall>  //called from provided
-
-	rule
-		<k> Var:Id => Val ... </k>
-		<currentVarValues> ((CurrentComponent . Var) |-> Val:Value) ... </currentVarValues>
-		<currentComponent> CurrentComponent:Path </currentComponent>
-		<currentCall> .K </currentCall>	//called from behaviour
+		<execution>
+			<k> Var:Id => Val ... </k>
+			<currentVarValues> (Var |-> Val:Value) ... </currentVarValues>
+			...
+		</execution>
 
 
 
 	// Expressions: field access
 	rule
-		<k> Field:Id => Val ... </k>
-		<currentFieldValues>  ((CurrentComponent . Field) |-> Val:Value) ... </currentFieldValues>
-		<currentComponent> CurrentComponent:Path </currentComponent>
+		<execution>
+			<k> Field:Id => Val ... </k>
+			<currentFieldValues>  ((CurrentComponent . Field) |-> Val:Value) ... </currentFieldValues>
+			<currentComponent> CurrentComponent:Path </currentComponent>
+			...
+		</execution>
 
 
 	// (skip)
 	rule
-		<k> skip => . ... </k>
+		<execution>
+			<k> skip => . ... </k>
+			...
+		</execution>
 	
 
 	// (assign local variable)
 	rule
-		<k> (Var:Id := Val:Value) => . ... </k>
-		<currentVarValues> (((CurrentComponent . CurrentCall) . Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
-		<currentComponent> CurrentComponent:Path </currentComponent>
-		<currentCall> CurrentCall:Id </currentCall> //called from provided
-
-	rule
-		<k> (Var:Id := Val:Value) => . ... </k>
-		<currentVarValues> ((CurrentComponent . Var) |-> (OldVal:Value => Val)) ...</currentVarValues>
-		<currentComponent> CurrentComponent:Path </currentComponent>
-		<currentCall> .K </currentCall>	//called from behaviour
+		<execution>
+			<k> (Var:Id := Val:Value) => . ... </k>
+			<currentVarValues> ( Var |-> (OldVal:Value => Val)) ...</currentVarValues>
+			...
+		</execution>
 
 	// (assign field)
 	rule
-		<k> (Field:Id := Val:Value) => . ... </k>
-		<currentFieldValues> ( (CurrentComponent . Field) |-> (OldVal:Value => Val)) ... </currentFieldValues>
-		<currentComponent> CurrentComponent:Path </currentComponent>
+		<execution>
+			<k> (Field:Id := Val:Value) => . ... </k>
+			<currentFieldValues> ( (CurrentComponent . Field) |-> (OldVal:Value => Val)) ... </currentFieldValues>
+			<currentComponent> CurrentComponent:Path </currentComponent>
+			...
+		</execution>
 
 	// (seq)
 	rule
-		<k> S1:Stmnt ; S2:Stmnt => S1 ~> S2 ... </k>
+		<execution>
+			<k> S1:Stmnt ; S2:Stmnt => S1 ~> S2 ... </k>
+			...
+		</execution>
 	
 
 	// (cmd)
@@ -495,16 +524,18 @@ module SAFETYSHARP-SEMANTICS
 			<cmdCandidates>
 				(.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set
 			</cmdCandidates>
-		...
+			...
 		</execution>
 	
 	rule
-		<k> (.GuardedCommands => Stmt) ... </k>
-		<cmdCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </cmdCandidates> [transition]
-
+		<execution>
+			<k> (.GuardedCommands => Stmt) ... </k>
+			<cmdCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </cmdCandidates>
+			...
+		</execution> [transition]
 
 	// (call) and (beh)
-	// In this file we implemented way 3
+	// In this file we implemented way 1
 	
 	// TODO: If a delayed binding gets called more times? Need to keep track of the execution call -> add to configuration
 	
@@ -518,21 +549,31 @@ module SAFETYSHARP-SEMANTICS
 	// Note: Behaviour should only be called by other behaviours (and never from provided ports)!!!!!!!!!!!!!
 	// TODO: Pop back stack
 	// (beh)
-	syntax K ::= "#restoreContext" "(" 
-			"to:" Path ")" // Component:Path 
+	syntax K ::= "#continueWithResult" "(" "contextId:" Int ")"
 
 	rule
-		<k>
-			(SubComponentId:Id) ( )
-			=>
-			Stmnt ~>
-			#restoreContext ( to: CurrentComponent)
-			...
-		</k>
-		<currentVarValues>
-			CurrentValuation:Map => freshVarEntries (CurrentValuation , (CurrentComponent . SubComponentId ) , Vars )
-		</currentVarValues>
-		<currentComponent> CurrentComponent:Path => ( CurrentComponent . SubComponentId ) </currentComponent>
+		<execution>
+			<executionContextId> Origin:Int </executionContextId>
+			<k>
+				(SubComponentId:Id) ( )
+				=>
+				#continueWithResult ( contextId: FreeContext)
+				...
+			</k>
+			<currentFieldValues> CurrentFieldValues:Map </currentFieldValues>
+			<currentVarValues> CurrentValuation:Map	</currentVarValues>
+			<currentComponent> CurrentComponent:Path </currentComponent>
+			...		
+		</execution>
+		<nextFreeContext>FreeContext:Int => FreeContext +Int 1</nextFreeContext>
+		(.=> <execution>
+			<executionContextId> FreeContext </executionContextId>			
+			<k> Stmnt  </k>
+			<currentFieldValues> CurrentFieldValues </currentFieldValues>
+			<currentVarValues> freshVarEntries ( target: .Map, Vars) </currentVarValues>
+			<currentComponent> CurrentComponent . SubComponentId </currentComponent>
+			<cmdCandidates> .Set </cmdCandidates>
+		</execution>)
 		<component>
 			<path> ( CurrentComponent . SubComponentId ) </path>
 			<behaviour> Vars:TypedVarDeclarations . Stmnt:Stmnt </behaviour>
@@ -541,18 +582,28 @@ module SAFETYSHARP-SEMANTICS
 
 	// (beh (part write-back))
 	// Note: The context is different from the context of
-	rule
-		<k> #restoreContext (
-				to:   BackToComponent:Path) => .K ... </k>
-		<currentComponent> CurrentComponent:Path => BackToComponent </currentComponent>
+	rule		
+		<execution>
+			<k> #continueWithResult ( contextId: NewContext:Int) => .K ... </k>
+			<currentFieldValues> OldFieldValues:Map => NewFieldValues </currentFieldValues>
+			...
+		</execution>
+		(<execution>
+			<executionContextId> NewContext </executionContextId>			
+			<k> .K </k>	// Cell was processed completely
+			<currentFieldValues> NewFieldValues:Map </currentFieldValues>
+			...
+		</execution> => .)
+
+
 
 	// (call)
 	// This is a call of a Required Port. Provided Ports cannot be called (according to the full semantics)
 	// We split up the call into two rules. TODO: describe
 	// Because we applied the [strict] rules on the call-Statment and the ExprList, the Inputs are already evaluated, when this Statement appears in the first k-Cell
-	syntax K ::= "#restoreContextAndWriteBackVariables" "(" 
-			"from:" IdList "," // SourceInouts:TypedVarDeclarations
-			"to:" Path "," K "," IdList ")" // ( Component:Path , Call:K , TargetInouts:TypedVarDeclarations
+	syntax K ::= "#continueWithResultAndCopyVariables" "(" 
+			"contextId:" Int "," IdList "," // ContextToCopyFrom:Int SourceInouts:TypedVarDeclarations
+			"to:" IdList ")" // TargetInouts:TypedVarDeclarations
 
 	// (call instantaneous)
 	//	* RequiredPortComponent = ProvidedPortComponent (= CurrentComponent)
@@ -563,17 +614,19 @@ module SAFETYSHARP-SEMANTICS
 	// could be called in a behaviour or in a provided port
 	// Context depends on Component and Call
 	rule
-		<k> 
-			(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))
-			=>
-			CodeOfProvidedPort ~>
-			#restoreContextAndWriteBackVariables (
-				from: extractIds(InoutsOfNextContext) ,
-				to:   CurrentComponent, CurrentCall , InoutsOfCurrentContext)
+		<execution>
+			<k> 
+				(RequiredPortName:Id ( InputValues:ExprList ; InoutsOfCurrentContext:IdList ))				=>
+				#continueWithResultAndCopyVariables (
+					contextId: FreeContext , extractIds(InoutsOfNextContext) ,
+					to:   InoutsOfCurrentContext)
+				...
+			</k>
+			<currentComponent> CurrentComponent:Path </currentComponent>
+			<currentFieldValues> CurrentFieldValues:Map </currentFieldValues>
+			<currentVarValues> CurrentValuation:Map	</currentVarValues>
 			...
-		</k>
-		<currentCall> CurrentCall:K => ProvidedPortName </currentCall>
-		<currentComponent> CurrentComponent:Path => ProvidedPortComponent </currentComponent>
+		</execution>
 		<instantBindings> ( (CurrentComponent . RequiredPortName) |-> (ProvidedPortComponent:Path . ProvidedPortName:Id ) ) OtherBindings:Map </instantBindings>
 		<component>
 			<path> ProvidedPortComponent </path>
@@ -585,42 +638,55 @@ module SAFETYSHARP-SEMANTICS
 			</providedPort>
 			...
 		</component>
-		<currentVarValues> CurrentValuation:Map =>
-			// first copy inputs and inouts, then set every local entry to the #missingElement
-			freshVarEntries(
-					copyEntries( //inouts
-						assignValues (	//inputs
-							CurrentValuation,
-							values: InputValues , // InputValues have already been evaluated (because we declared the call-expression as strict)
-							target: ( ProvidedPortComponent . ProvidedPortName ) , extractIds(PpInputs)
-						),
-						source: (CurrentComponent @ CurrentCall ) , InoutsOfCurrentContext ,
-						target: ( ProvidedPortComponent . ProvidedPortName ) , extractIds(InoutsOfNextContext)
-					)
-					, ( ProvidedPortComponent . ProvidedPortName ), LocalVars )
-		</currentVarValues>
-
+		<nextFreeContext>FreeContext:Int => FreeContext +Int 1</nextFreeContext>
+		(.=> <execution>
+			<executionContextId> FreeContext </executionContextId>			
+			<k> CodeOfProvidedPort  </k>
+			<currentFieldValues> CurrentFieldValues </currentFieldValues>
+			<currentVarValues>
+				// first copy inputs and inouts, then set every local entry to the #missingElement
+				freshVarEntries(					
+					target: copyEntries( //inouts
+							source: CurrentValuation , InoutsOfCurrentContext ,
+							target: assignValues (	//inputs
+									values: InputValues , // InputValues have already been evaluated (because we declared the call-expression as strict)
+									target: .Map , extractIds(PpInputs))	
+							, extractIds(InoutsOfNextContext)
+						)
+					,
+					LocalVars )
+			</currentVarValues>
+			<currentComponent> ProvidedPortComponent </currentComponent>
+			<cmdCandidates> .Set </cmdCandidates>
+		</execution>)
 
 	// (call (part write-back))
 	// Note: The context is different from the context of
 	rule
-		<k> #restoreContextAndWriteBackVariables (
-				from: SourceInouts:IdList ,
-				to:   BackToComponent:Path , BackToCall:K , TargetInouts:IdList) => .K ... </k>
-		<currentCall> CurrentCall:K => BackToCall </currentCall>
-		<currentComponent> CurrentComponent:Path => BackToComponent </currentComponent>
-		<currentVarValues>
-			CurrentValuation:Map
-			=> 
-			copyEntries (
-				CurrentValuation ,
-				source: (CurrentComponent @ CurrentCall) , SourceInouts ,
-				target: (BackToComponent @ BackToCall) , TargetInouts
-			)
-		</currentVarValues>
+		<execution>
+			<k> #continueWithResultAndCopyVariables (
+					contextId: NewContext:Int , SourceInouts:IdList ,
+					to:   TargetInouts:IdList) => .K ... </k>
+			<currentFieldValues> OldFieldValues:Map => NewFieldValues </currentFieldValues>
+			<currentVarValues>
+				OldVarValues:Map
+				=> 
+				copyEntries (
+					source: NewVarValues , SourceInouts ,
+					target: OldVarValues , TargetInouts
+				)
+			</currentVarValues>
+		...
+		</execution>
+		(<execution>
+			<executionContextId> NewContext </executionContextId>			
+			<k> .K </k>	// Cell was processed completely
+			<currentFieldValues> NewFieldValues:Map </currentFieldValues>
+			<currentVarValues> NewVarValues:Map </currentVarValues>
+			...
+		</execution> => .)
 
 	// (call delayed)
-
 
 endmodule
 
