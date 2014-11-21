@@ -40,10 +40,10 @@ module FIL-SYNTAX
 // Chapter 2.3: Statements
 	syntax GuardedCommand ::= Expr "->>" "{" StmFil "}" //[strict(1)] //evaluate Guard, but not Statement. Strictness not necessary, because context rule takes care of it
 	
-	syntax GuardedCommands ::= List{GuardedCommand,","}
+	syntax GuardedCommands ::= List{GuardedCommand,"|||"}
 
 	//we need a context to express, that even in a list of GuardedCommands (eg: Guard1:Stmt1 , Guard2:Stmt2, ...), the first Guard should be evaluated (see K-Primer 2012 page 14). Context is similar to strictness
-	context ((HOLE ->> { Stmnt:StmFil }), OtherCandidates:GuardedCommands)
+	context ((HOLE ->> { Stmnt:StmFil }) ||| OtherCandidates:GuardedCommands)
 
 	syntax StmFil ::= "skip"
 			| Var ":=" Expr		[strict(2)]
@@ -128,10 +128,10 @@ module FIL
 	//   * 4)  When every GuardedCommand is evaluated, the current k-Cell contains .GuardedCommands. Now replace .GuardedCommands with any candidate from the list and delete all candidates
 
 	rule
-		<k> ((false ->> { Stmt:StmFil } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
+		<k> ((false ->> { Stmt:StmFil } ) ||| OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
 
 	rule
-		<k> ((true ->> { Stmt:StmFil } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
+		<k> ((true ->> { Stmt:StmFil } ) ||| OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
 		<cmdCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </cmdCandidates>
 	
 	rule
