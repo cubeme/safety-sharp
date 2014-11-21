@@ -1,7 +1,7 @@
 module FIL-SYNTAX
 // This is just a simple demo-parser to read programs in FIL. We just
 // assign some syntax to define the domains and to describe the semantics.
-// Precedence rules makes it easier to write demo-programms. FIL itself is
+// Precedence rules makes it easier to write demo-programs. FIL itself is
 // syntax-independent.
 
 // Notes:
@@ -62,7 +62,7 @@ module FIL-CONFIGURATION
 		<k> $PGM:StmFil </k>
 		<varEnvNow> .Map </varEnvNow> //Map from Var to Value. Current Valuation
 		<varEnvStep> .Map </varEnvStep> //Map from Var to Value. Valuation from the beginning of the current Step
-		<gcCurrentCandidates> .Set </gcCurrentCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc) other name <gcPossibleDecisions>
+		<cmdCandidates> .Set </cmdCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc) other name <gcPossibleDecisions>
 endmodule
 
 module FIL
@@ -115,7 +115,8 @@ module FIL
 		<varEnvNow> Var |-> (OldVar => Val) ...  </varEnvNow>
 
 	// (seq)
-	rule S1:StmFil ; S2:StmFil => S1 ~> S2
+	rule
+		<k> S1:StmFil ; S2:StmFil => S1 ~> S2 ... </k>
 	
 
 	// (cmd)
@@ -131,10 +132,10 @@ module FIL
 
 	rule
 		<k> ((true ->> { Stmt:StmFil } ) , OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
-		<gcCurrentCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </gcCurrentCandidates>
+		<cmdCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </cmdCandidates>
 	
 	rule
 		<k> (.GuardedCommands => Stmt) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
-		<gcCurrentCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </gcCurrentCandidates> [transition]
+		<cmdCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </cmdCandidates> [transition]
 
 endmodule
