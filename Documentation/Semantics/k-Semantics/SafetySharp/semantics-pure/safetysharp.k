@@ -332,10 +332,10 @@ module SAFETYSHARP-CONFIGURATION
 			<behaviour> LocalVars:TypedVarDeclarations . Code:Stmnt </behaviour>
 			...
 		</component>
-		<currentVarValues> .Map => freshVarEntries ( target: .Map , LocalVars ) </currentVarValues>
-		<currentComponent> .K => Component </currentComponent>
 		<execution>
 			<executionContextId> 0 </executionContextId>
+			<currentComponent> .K => Component </currentComponent>
+			<currentVarValues> .Map => freshVarEntries ( target: .Map , LocalVars ) </currentVarValues>
 			<k> (.K => Code ) </k>
 			...
 		</execution>	[structural]
