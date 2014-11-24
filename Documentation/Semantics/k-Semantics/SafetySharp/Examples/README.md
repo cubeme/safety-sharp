@@ -58,3 +58,12 @@
 
 * exampleDocumentationFull.safetysharp: Test from the semantics-pdf
 * exampleDocumentationSimplified1.safetysharp: like exampleDocumentationFull, but with instantaneous binding instead of delayed
+* exampleBackupRecovery1.safetysharp: Source [1,2]. Only use inouts, avoid behaviours
+
+
+
+
+##Literature of Case Studies
+
+* [1] Martin Walker, Leonardo Bottaci, and Yiannis Papadopoulos. Compositional Temporal Fault Tree Analysis. SAFECOMP 2007, LNCS 4680, pp. 106–119, 2007. Springer-Verlag Berlin Heidelberg.
+* [2] Matthias Güdemann. Qualitative and Quantitative Formal Model-Based Safety Analysis.

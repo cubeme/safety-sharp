@@ -1,0 +1,168 @@
+component backupRecoverySystem {
+	component in {
+		sourceValueField = 1
+		
+		determineSourceValueR r( ; )
+		
+		determineSourceValueP p( ; ) {
+			.
+			    true ->> { outputValueField := 1 }
+			||| true ->> { outputValueField := 2 }
+			||| true ->> { outputValueField := 3 }
+			||| true ->> { outputValueField := 4 }
+			||| true ->> { outputValueField := 5 }
+		}
+		
+		getSourceValueP p( ; sourceValueInout : int ) {
+			.
+			sourceValueInout := sourceValueField
+		}
+		
+		determineSourceValueR <-i- determineSourceValueP
+		
+		behaviour {
+			.
+			determineSourceValueR ( )
+		}
+	}
+
+	component s1 {		
+		senseSourceValueR r( ; sourceValueInout : int )
+	
+		getSensorValueP p( ; sensorValueInout : int ) {
+			.
+			senseSourceValueR ( ; sensorValueInout )
+		}
+		
+		behaviour {	. skip }
+	}
+	
+	component s2 {		
+		senseSourceValueR r( ; sourceValueInout : int )
+	
+		getSensorValueP p( ; sensorValueInout : int ) {
+			.
+			senseSourceValueR ( ; sensorValueInout )
+		}
+		
+		behaviour {	. skip }
+	}
+	
+	component a1 {
+		isActiveField = true
+		
+		getSensorValue1R r( ; sensorValueInout : int )
+		getSensorValue2R r( ; sensorValueInout : int )
+		
+	
+		getArithmeticalValueP p( ; arithmeticalValueInout : int ) {
+			sensorValue1Local : int ,
+			sensorValue2Local : int
+			.
+			getSensorValue1R ( ; sensorValue1Local ) ;
+			getSensorValue2R ( ; sensorValue2Local ) ;
+			arithmeticalValueInout := sensorValue1Local
+		}
+		
+		doSensorValuesMatchP p( ; sensorValuesMatchInout : bool ) {
+			sensorValue1Local : int ,
+			sensorValue2Local : int
+			.
+			getSensorValue1R ( ; sensorValue1Local ) ;
+			getSensorValue2R ( ; sensorValue2Local ) ;
+			sensorValuesMatchInout := sensorValue1Local == sensorValue2Local
+		}
+		
+		deactivateP p( ; deactivateA1In : bool ) {
+			.
+				(isActiveField && deactivateA1In) ->> { isActiveField := false }
+			||| !(isActiveField && deactivateA1In) ->> { skip }
+		}
+						
+		behaviour {	. skip }
+	}
+	
+	component a2 {
+		isActiveField = false
+		
+		activateR r( ; activateA2Inout : int )
+		getSensorValueR r( ; sensorValueInout : int )
+	
+		getArithmeticalValueP p( ; arithmeticalValueInout : int ) {
+			.
+			getSensorValueR ( ; arithmeticalValueInout ) 
+		}
+		
+		activateP p( ; activateA2Inout : bool ) {
+			.
+			    (isActiveField && activateA2Inout) ->> { isActiveField := false }
+			||| !(isActiveField && activateA2Inout) ->> { skip }
+		}
+		
+		activateR <-i- activateP
+		
+		behaviour {	. skip }
+	}
+	
+	component monitor {
+		doSensorValuesMatchR r( ; sensorValuesMatchInout : int )
+		switchArithmeticalUnitR_PartActivate r( ; )
+		switchArithmeticalUnitR_PartDeactivate r( ; )
+		switchArithmeticalUnitR_PartSwitchOutput r( ; )
+	
+		
+		behaviour {
+			doSensorValuesMatchLocal : bool
+			.
+			doSensorValuesMatchR ( ; doSensorValuesMatchLocal) ;
+			    doSensorValuesMatchLocal ->> { skip } 
+			||| ! doSensorValuesMatchLocal ->> {
+						switchArithmeticalUnitR_PartActivate ( ; ) ;
+						switchArithmeticalUnitR_PartDeactivate ( ; ) ;
+						switchArithmeticalUnitR_PartSwitchOutput ( ; )
+				}
+			
+		}
+	}
+
+	component out {
+		useA1 = true
+		result = 1
+		
+		getArithmeticalValue1R r( ; arithmeticalValueInout : int )
+		getArithmeticalValue2R r( ; arithmeticalValueInout : int )
+		
+		switchArithmeticalUnitP p( ; ) {
+			.
+			useA1 := ! useA1
+		}
+		
+		behaviour {
+			arithmeticalValueLocal : int
+			.
+			    useA1 ->> {getArithmeticalValue1R ( ; arithmeticalValueLocal ) }
+			||| ! useA1 ->>  {getArithmeticalValue2R ( ; arithmeticalValueLocal ) } ;
+			
+			result := arithmeticalValueLocal
+		}
+	}
+	
+		
+	s1.senseSourceValueR <-i- in.getSourceValueP
+	s2.senseSourceValueR <-i- in.getSourceValueP
+	a1.getSensorValue1R <-i- s1.getSensorValueP
+	a1.getSensorValue2R <-i- s2.getSensorValueP
+	monitor.doSensorValuesMatchR <-i- a1.doSensorValuesMatchP	
+	switchArithmeticalUnitR_PartActivate <-i- a2.activateP
+	switchArithmeticalUnitR_PartDeactivate <-i- a1.deactivateP
+	switchArithmeticalUnitR_PartSwitchOutput <-i- out.switchArithmeticalUnitP
+	out.getArithmeticalValue1R <-i- a1.getArithmeticalValueP
+	out.getArithmeticalValue2R <-i- a2.getArithmeticalValueP
+	
+	behaviour {
+		.
+		in ( ) ;
+		monitor ( ) ;
+		out ( )
+	}
+}
