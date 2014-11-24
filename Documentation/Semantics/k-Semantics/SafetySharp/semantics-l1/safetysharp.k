@@ -281,7 +281,7 @@ module SAFETYSHARP-CONFIGURATION
 	// Initialize Bindings
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-d- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings ))
+			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-d- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings )) ...
 		</loadComponents>
 		<delayedBindings>
 			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
@@ -290,7 +290,7 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-i- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings ))
+			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-i- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings )) ...
 		</loadComponents>
 		<instantBindings>
 			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )

@@ -299,7 +299,7 @@ module SAFETYSHARP-CONFIGURATION
 	// Initialize Bindings
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-d- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings ))
+			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-d- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings )) ...
 		</loadComponents>
 		<delayedBindings>
 			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
@@ -308,7 +308,7 @@ module SAFETYSHARP-CONFIGURATION
 
 	rule
 		<loadComponents>
-			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-i- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings ))
+			(#loadBindings ( FullPath:Path , (ToRequired:BindingLink <-i- FromProvided:BindingLink) OtherBindings:Bindings => OtherBindings )) ...
 		</loadComponents>
 		<instantBindings>
 			(.Map => (FullPath @ ToRequired) |-> (FullPath @ FromProvided) )
@@ -322,6 +322,8 @@ module SAFETYSHARP-CONFIGURATION
 		</loadComponents>	[structural]
 
 
+
+	// 		INITIALIZE FIRST EXECUTION CONTEXT
 	/// Everything done, now load the main Program into the k-Cell
 	// We know everything is done, when the <loadComponents>-Cell is empty
 	// this is somehow the main()-method
