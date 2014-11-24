@@ -32,7 +32,7 @@
 \author{Axel Habermaier, Johannes Leupolz}
 
 \begin{document}
-
+ 
 \maketitle
 
 \section{Conventions}
@@ -127,7 +127,7 @@ value.
 During execution, the \textit{variable environment} stores the values of all variables, provided that a value has previously been
 assigned to a variable:
 \begin{align*}
-	\varEnvFil \in \VarEnvFil := \Var \rightarrow \liftMissing{\Val}
+	\varEnvFil \in \VarEnvFil := \Var \rightarrow \liftFailure{\Val}
 \end{align*}
 
 \subsection{Expressions}
@@ -140,7 +140,7 @@ variable at the beginning of the current step.
 	\\
     \bop \in \Bop & := {} + {} \mid {} - {} \mid {} \ast {} \mid {} / {}
                        \mid {} \% {} \mid {} > {} \mid {} < {} \mid {} \geq {} 
-                       \mid {} \leq {} \mid {} = {} \mid {} \neq {}
+                       \mid {} \leq {} \mid {} = {} \mid {} \neq {} \mid {} \wedge {} \mid {} \vee {}
 	\\
 	\expr \in \Expr & := 
 		\val \mid
@@ -150,8 +150,8 @@ variable at the beginning of the current step.
 		\binaryExpr{\;\bop\;}{\expr_1}{\expr_2}
 \end{align*}
 
-The function $\ExprSem{-} \colon \Expr \rightarrow \VarEnvFil \rightarrow \VarEnvFil \rightarrow \Val$ defines the semantics of
-expressions. It is given the current variable environment and the one at the beginning of the current step.
+The function $\ExprSem{-} \colon \Expr \rightarrow \VarEnvFil \rightarrow \VarEnvFil \rightarrow \liftFailure{\Val}$ defines the
+semantics of expressions. It is given the current variable environment and the one at the beginning of the current step.
 \begin{align*}
 	\ExprSem{\val} \varEnvFil \varEnvFil' &= \val \\
 	\ExprSem{\var} \varEnvFil \varEnvFil' &= \varEnvFil(\var) \\
@@ -174,7 +174,7 @@ compositions and guarded commands.
 		\guardedStm{\guardedClause{\expr}{\stmFil}}
 \end{align*}
 
-The nondeterministic rule system $\stmArrowFil$ defines the natural semantics of statements.
+The nondeterministic rule system $\stmArrowFil$ defines the natural (big-step) semantics of statements.
 \begin{align*}
 	\mathit{Configurations} \colon & \;\configurationFil{\stmFil, \varEnvFil, \varEnvFil'} \in \StmFil \times \VarEnvFil \times
 	\VarEnvFil, \; \varEnvFil \in \VarEnvFil
@@ -262,7 +262,7 @@ Alternatively, we could define the semantic relation $\StmSem{-}$ by reusing rul
 \subsection{Semantics of \Fil Programs}
 
 \Fil programs have a set of global and local variables. A \Fil program is executed in a series of steps, with each step executing
-the exact same sequence of statements. There are global variables that are initialized once and whose values are preserved between
+the same statement. There are global variables that are initialized once and whose values are preserved between
 different steps of the program. Additionally, there are step-local variables whose values are not preserved between different
 program steps.
 \begin{equation*}
@@ -305,17 +305,17 @@ component C
 	{
 		// fields
 		b : bool = false
-			 
+			 		
+		// required port
+		Y(;)
+		
 		// provided port
 		X(p1 : int, p2 : int; r1 : bool, r2 : bool)
 		{
 			Y(;)
 			r1 := false
-			r2 := b1
+			r2 := b
 		}
-				
-		// required port
-		Y(;)
 	}
 
 	// fields
@@ -353,7 +353,7 @@ component C
 
 \subsection{Domains of Formal Models}
 We assume a domain of variables that represent provided port input and output parameters as well as local variables with a default
-initial value. Fields, on the other hand, represent component-global variables with one or more initial value. Required and
+initial value. Fields, on the other hand, represent component-global variables with one or more initial values. Required and
 provided ports allow different components to communicate with each other.
 \begin{align*}
 	\var &\in \Var \\
@@ -412,7 +412,7 @@ and fields as well as a small set of unary and binary operator applications.
 	\\
     \bop \in \Bop & := {} + {} \mid {} - {} \mid {} \ast {} \mid {} / {}
                        \mid {} \% {} \mid {} > {} \mid {} < {} \mid {} \geq {} 
-                       \mid {} \leq {} \mid {} = {} \mid {} \neq {}
+                       \mid {} \leq {} \mid {} = {} \mid {} \neq {} \mid {} \wedge {} \mid {} \vee {}
 	\\
 	\expr \in \Expr & := 
 		\val \mid
@@ -438,6 +438,9 @@ evaluation might fail.
 \subsubsection{Statements}
 Formal models support skip statements, variable and field assignments, sequential compositions, guarded commands, and
 invocations of required ports. Only variables but not fields are allowed as output parameters of required port invocations.
+
+We currently also explicitly allow for an invocation of a subcomponent's behavior. We have yet to determine if that is actually
+needed.
 \begin{align*}
 	\guardedCmd \in \GuardedCmd &:= \guardedClause{\expr}{\stmFm} \\
 	\stmFm \in \StmFm &:=
@@ -453,8 +456,8 @@ invocations of required ports. Only variables but not fields are allowed as outp
 \subsubsection{Variable and Field Declarations}
 A variable declaration introduces typed local variables or parameters.
 A field declaration declares component fields with a non-empty set of initial values, one of which is chosen
-nondeterministically when the component is executed. Fields are global within the context of the component, but cannot be accessed
-by parent components or subcomponents. Variables and parameters are only in scope within a the context of a component behavior or
+nondeterministically when the component hierarchy is initialized. Fields are global within the context of the component, but
+cannot be accessed by parent components or subcomponents. Variables and parameters are only in scope within the context of a component behavior or
 a provided port.
 \begin{align*}
 	\varDecl \in \VarDecl &:= \varDeclSyn{\var}{\type} \\
@@ -471,7 +474,7 @@ on lists of variable and field declarations, applying the function to each eleme
 \cons \ldots \cons \varDecl_n) = \varof(\varDecl_1) \cons \ldots \cons \varof(\varDecl_n)$.
 
 \subsubsection{Required and Provided Ports}
-A required port of a component has a possibly empty list of input parameters and a possible empty list of input/output parameters. 
+A required port of a component has a possibly empty list of input parameters and a possibly empty list of input/output parameters. 
 Provided ports are defined similarly. However, they also introduce local names for their input and input/output parameters and
 declare a behavior in form of a statement, optionally also introducing additional local variables. 
 \begin{align*}
@@ -551,7 +554,8 @@ $\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}
 
 We are allowed to substitute a subcomponent declaration of some component declaration, provided that
 the original subcomponent declaration $\compDecl'$ and the new subcomponent declaration $\compDecl''$ are port-equivalent, that is
-$\reqsof(\compDecl') = \reqsof(\compDecl'')$ and $\provsof(\compDecl') = \provsof(\compDecl'')$.
+$\signature(\reqsof(\compDecl')) = \signature(\reqsof(\compDecl''))$ and $\signature(\provsof(\compDecl')) =
+\signature(\provsof(\compDecl''))$.
 We use the notation $\compDecl[\compDecl' \mapsto \compDecl'']$ to obtain a new component declaration
 where $\compDecl'$ has been replaced with $\compDecl''$. Consequently,
 $(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})[\compDecl'
@@ -559,7 +563,8 @@ $(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortD
 \compDeclSyn{\comp}{\toList{\compDecl}[\compDecl'
 \mapsto \compDecl'']}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}[\compDecl'
 \mapsto \compDecl'']}{\toList{\varDecl}}{\stmFm}$. We also allow for simultaneous substitution of multiple subcomponents, written as
-$\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compDecl_n']$.
+$\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compDecl_n']$. On the other hand, we have
+$\compDecl[\compDecl' \mapsto \compDecl''] = \compDecl''$ if $\compDecl = \compDecl'$.
 
 We can also select a subcomponent declaration at some level of the component hierarchy using the subcomponent selector $.[.]
 \colon \CompDecl \times \ToListNE{\Comp} \rightarrow \liftFailure{\CompDecl}$, defined as
@@ -568,7 +573,7 @@ We can also select a subcomponent declaration at some level of the component hie
 		\compDecl & \text{if } \compof(\compDecl) = \comp \\
 		\failure & \text{otherwise}
 	\end{cases} \\
-	\compDecl[\comp1 \cons \comp_2 \cons \toList{\comp}] &= 
+	\compDecl[\comp_1 \cons \comp_2 \cons \toList{\comp}] &= 
 		\begin{cases}
 			\compDecl'[\comp_2 \cons \toList{\comp}] & \text{if } 
 				\compof(\compDecl) = \comp_1 \wedge \exists \compDecl' \in \compDecl \colon \compof(\compDecl') = \comp_2 \\
@@ -603,7 +608,8 @@ We only consider components that are well-formed according to the following crit
 	anyway. However, the purpose of the well-formedness property is to guarantee that the resulting \Fil program
 	has infinite traces only. If we don't require definite assignment, infinite traces cannot be guaranteed. Note that parameters
 	of a required port are always definitely assigned (it is illegal to call a required port without the correct number and type of
-	parameters) and fields always have at least one initial value, so they're also always definitely assigned.
+	parameters) and fields always have at least one initial value, so they're also always definitely assigned. Therefore, the easiest thing to do might be to require explicit initial values for
+	local variable declarations.
 	\item Note that we do not have to check for component cycles (i.e., a component being its own parent), as that simply cannot be
 	expressed with the domains we have defined.
 \end{itemize}
@@ -645,7 +651,7 @@ obtained from the evaluation of the assigned expression.
 	\configurationFm{\fieldEnv[\toListNE{\comp}, \field \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm], \varEnvFm}
 \end{equation*}
 
-Sequential composition executes two statements sequentially, carrying along the modified variable environment.
+Sequential composition executes two statements sequentially, carrying along the modified variable and field environments.
 \begin{equation*}
 	\tag{seq}
 	\dfrac
@@ -711,7 +717,7 @@ port as follows:
 When a required port is called that is instantaneously bound to a provided port, we execute the bound port's statement.
 While the field environment remains unchanged, the component context might change and the port is executed in a new, empty
 variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
-done with the execution of the port, we restore our previous variable environment, just taking over the port's output values.
+done with the execution of the port, we restore our previous variable environment, taking over the port's output values.
 \begin{multline*}
 	\tag{call${}$}
 	\dfrac
