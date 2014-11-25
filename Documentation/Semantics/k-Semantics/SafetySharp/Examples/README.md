@@ -59,6 +59,8 @@
 * exampleDocumentationFull.safetysharp: Test from the semantics-pdf
 * exampleDocumentationSimplified1.safetysharp: like exampleDocumentationFull, but with instantaneous binding instead of delayed
 * exampleBackupRecovery1.safetysharp: Source [1,2]. Only use inouts, avoid behaviours
+* exampleBackupRecovery2.safetysharp: Like exampleBackupRecovery1, but extract function "doValuesMatchP" into an extra port (to have a case, where we can use input parameters). Combine "deactivate" and "activate" into a common port with input parameter
+* exampleBackupRecovery3.safetysharp: Like exampleBackupRecovery1, but do the major work in the behaviours of every component. Use ports just for value transmitting. Save output values of every component in its fields. Ports are only called in behaviours. Order of behaviour-call matters. 
 
 
 

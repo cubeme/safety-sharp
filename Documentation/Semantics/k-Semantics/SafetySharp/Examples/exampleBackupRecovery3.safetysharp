@@ -2,9 +2,12 @@ component backupRecoverySystem {
 	component in {
 		sourceValueField = 1
 		
-		determineSourceValueR r( ; )
+		getSourceValueP p( ; sourceValueInout : int ) {
+			.
+			sourceValueInout := sourceValueField
+		}
 		
-		determineSourceValueP p( ; ) {
+		behaviour {
 			.
 			    true ->> { sourceValueField := 1 }
 			||| true ->> { sourceValueField := 2 }
@@ -12,84 +15,95 @@ component backupRecoverySystem {
 			||| true ->> { sourceValueField := 4 }
 			||| true ->> { sourceValueField := 5 }
 		}
-		
-		getSourceValueP p( ; sourceValueInout : int ) {
-			.
-			sourceValueInout := sourceValueField
-		}
-		
-		determineSourceValueR <-i- determineSourceValueP
-		
-		behaviour {
-			.
-			determineSourceValueR ( ; )
-		}
 	}
 
-	component s1 {		
+	component s1 {
+		sensorValueField = 1
+
 		senseSourceValueR r( ; sourceValueInout : int )
 	
 		getSensorValueP p( ; sensorValueInout : int ) {
 			.
-			senseSourceValueR ( ; sensorValueInout )
+			sensorValueInout := sensorValueField
 		}
 		
-		behaviour {	. skip }
+		behaviour {
+			sensorValueInout : int
+			.
+			senseSourceValueR ( ; sensorValueInout ) ;
+			sensorValueField := sensorValueInout
+		}
 	}
 	
-	component s2 {		
+	component s2 {
+		sensorValueField = 1
+
 		senseSourceValueR r( ; sourceValueInout : int )
 	
 		getSensorValueP p( ; sensorValueInout : int ) {
 			.
-			senseSourceValueR ( ; sensorValueInout )
+			sensorValueInout := sensorValueField
 		}
 		
-		behaviour {	. skip }
+		behaviour {
+			sensorValueInout : int
+			.
+			senseSourceValueR ( ; sensorValueInout ) ;
+			sensorValueField := sensorValueInout
+		}
 	}
 	
 	component a1 {
 		isActiveField = true
-		
+		arithmeticalValueField = 1
+		doSensorValuesMatchField = true
+	
 		getSensorValue1R r( ; sensorValueInout : int )
 		getSensorValue2R r( ; sensorValueInout : int )
 		
 	
 		getArithmeticalValueP p( ; arithmeticalValueInout : int ) {
-			sensorValue1Local : int ,
-			sensorValue2Local : int
 			.
-			getSensorValue1R ( ; sensorValue1Local ) ;
-			getSensorValue2R ( ; sensorValue2Local ) ;
-			arithmeticalValueInout := sensorValue1Local
+			arithmeticalValueInout := arithmeticalValueField
 		}
 		
 		doSensorValuesMatchP p( ; sensorValuesMatchInout : bool ) {
-			sensorValue1Local : int ,
-			sensorValue2Local : int
 			.
-			getSensorValue1R ( ; sensorValue1Local ) ;
-			getSensorValue2R ( ; sensorValue2Local ) ;
-			sensorValuesMatchInout := sensorValue1Local == sensorValue2Local
+			sensorValuesMatchInout := doSensorValuesMatchField
 		}
 		
 		deactivateP p( ; ) {
 			.
-			     (isActiveField ) ->> { isActiveField := false }
-			||| !(isActiveField ) ->> { skip }
+			     (isActiveField) ->> { isActiveField := false }
+			||| !(isActiveField) ->> { skip }
 		}
 						
-		behaviour {	. skip }
+		behaviour {
+			sensorValue1Local : int ,
+			sensorValue2Local : int
+			.
+			     (isActiveField) ->> {
+				getSensorValue1R ( ; sensorValue1Local ) ;
+				getSensorValue2R ( ; sensorValue2Local ) ;
+				arithmeticalValueField := sensorValue1Local ;
+				doSensorValuesMatchField := sensorValue1Local == sensorValue2Local
+			    }
+			||| !(isActiveField) ->> {
+				skip
+			    }
+			
+		}
 	}
 	
 	component a2 {
 		isActiveField = false
+		arithmeticalValueField = 1
 		
 		getSensorValueR r( ; sensorValueInout : int )
 	
 		getArithmeticalValueP p( ; arithmeticalValueInout : int ) {
 			.
-			getSensorValueR ( ; arithmeticalValueInout ) 
+			arithmeticalValueInout := arithmeticalValueField
 		}
 		
 		activateP p( ; ) {
@@ -98,7 +112,17 @@ component backupRecoverySystem {
 			||| !(isActiveField) ->> { isActiveField := false }
 		}
 		
-		behaviour {	. skip }
+		behaviour {
+			arithmeticalValueInout : int
+			.
+			     (isActiveField) ->> {
+				getSensorValueR ( ; arithmeticalValueInout ) ;
+				arithmeticalValueField := arithmeticalValueInout
+			    }
+			||| !(isActiveField) ->> {
+				skip
+			    }
+		}
 	}
 	
 	component monitor {
@@ -112,7 +136,7 @@ component backupRecoverySystem {
 			doSensorValuesMatchLocal : bool
 			.
 			doSensorValuesMatchR ( ; doSensorValuesMatchLocal) ;
-			    doSensorValuesMatchLocal ->> { skip } 
+			      doSensorValuesMatchLocal ->> { skip } 
 			||| ! doSensorValuesMatchLocal ->> {
 						switchArithmeticalUnitR_PartActivate ( ; ) ;
 						switchArithmeticalUnitR_PartDeactivate ( ; ) ;
@@ -159,7 +183,11 @@ component backupRecoverySystem {
 	behaviour {
 		.
 		in ( ) ;
+		s1 ( ) ;
+		s2 ( ) ;
+		a1 ( ) ;
 		monitor ( ) ;
+		a2 ( ) ;
 		out ( )
 	}
 }

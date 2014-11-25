@@ -53,7 +53,7 @@ component backupRecoverySystem {
 		
 		getSensorValue1R r( ; sensorValueInout : int )
 		getSensorValue2R r( ; sensorValueInout : int )
-		
+		doValuesMatchR r( value1In : int , value2In : int; matchInout : bool)
 	
 		getArithmeticalValueP p( ; arithmeticalValueInout : int ) {
 			sensorValue1Local : int ,
@@ -63,6 +63,11 @@ component backupRecoverySystem {
 			getSensorValue2R ( ; sensorValue2Local ) ;
 			arithmeticalValueInout := sensorValue1Local
 		}
+
+		doValuesMatchP p( value1In : int , value2In : int; matchInout : bool) {
+			.
+			matchInout := value1In == value2In
+		}
 		
 		doSensorValuesMatchP p( ; sensorValuesMatchInout : bool ) {
 			sensorValue1Local : int ,
@@ -70,15 +75,17 @@ component backupRecoverySystem {
 			.
 			getSensorValue1R ( ; sensorValue1Local ) ;
 			getSensorValue2R ( ; sensorValue2Local ) ;
-			sensorValuesMatchInout := sensorValue1Local == sensorValue2Local
+			doValuesMatchR ( sensorValue1Local , sensorValue2Local ; sensorValuesMatchInout)
 		}
 		
-		deactivateP p( ; ) {
+		setActiveArithmeticalUnitP p( unitNo : int ; ) {
 			.
-			     (isActiveField ) ->> { isActiveField := false }
-			||| !(isActiveField ) ->> { skip }
+			    unitNo==1 ->> { isActiveField := true }
+			||| unitNo==2 ->> { isActiveField := false }
 		}
-						
+		
+		doValuesMatchR <-i- doValuesMatchP
+
 		behaviour {	. skip }
 	}
 	
@@ -92,10 +99,10 @@ component backupRecoverySystem {
 			getSensorValueR ( ; arithmeticalValueInout ) 
 		}
 		
-		activateP p( ; ) {
+		setActiveArithmeticalUnitP p( unitNo : int ; ) {
 			.
-			     (isActiveField) ->> { skip }
-			||| !(isActiveField) ->> { isActiveField := false }
+			    unitNo==1 ->> { isActiveField := false }
+			||| unitNo==2 ->> { isActiveField := true }
 		}
 		
 		behaviour {	. skip }
@@ -103,43 +110,42 @@ component backupRecoverySystem {
 	
 	component monitor {
 		doSensorValuesMatchR r( ; sensorValuesMatchInout : bool )
-		switchArithmeticalUnitR_PartActivate r( ; )
-		switchArithmeticalUnitR_PartDeactivate r( ; )
-		switchArithmeticalUnitR_PartSwitchOutput r( ; )
+		switchArithmeticalUnitR_PartA r( unitNo : int ; )
+		switchArithmeticalUnitR_PartB r( unitNo : int ; )
+		switchArithmeticalUnitR_PartC r( unitNo : int ; )
 	
 		
 		behaviour {
 			doSensorValuesMatchLocal : bool
 			.
 			doSensorValuesMatchR ( ; doSensorValuesMatchLocal) ;
-			    doSensorValuesMatchLocal ->> { skip } 
+			      doSensorValuesMatchLocal ->> { skip } 
 			||| ! doSensorValuesMatchLocal ->> {
-						switchArithmeticalUnitR_PartActivate ( ; ) ;
-						switchArithmeticalUnitR_PartDeactivate ( ; ) ;
-						switchArithmeticalUnitR_PartSwitchOutput ( ; )
+						switchArithmeticalUnitR_PartA ( 2 ; ) ;
+						switchArithmeticalUnitR_PartB ( 2 ; ) ;
+						switchArithmeticalUnitR_PartC ( 2 ; )
 				}
 			
 		}
 	}
 
 	component out {
-		useA1 = true
+		arithUnitNoField = 1
 		result = 1
 		
 		getArithmeticalValue1R r( ; arithmeticalValueInout : int )
 		getArithmeticalValue2R r( ; arithmeticalValueInout : int )
 		
-		switchArithmeticalUnitP p( ; ) {
+		setActiveArithmeticalUnitP p( unitNo : int ; ) {
 			.
-			useA1 := ! useA1
+			arithUnitNoField := unitNo
 		}
 		
 		behaviour {
 			arithmeticalValueLocal : int
 			.
-			    useA1 ->> {getArithmeticalValue1R ( ; arithmeticalValueLocal ) }
-			||| ! useA1 ->>  {getArithmeticalValue2R ( ; arithmeticalValueLocal ) } ;
-			
+			    arithUnitNoField==1 ->> {getArithmeticalValue1R ( ; arithmeticalValueLocal ) }
+			||| arithUnitNoField==2 ->> {getArithmeticalValue2R ( ; arithmeticalValueLocal ) }; 
 			result := arithmeticalValueLocal
 		}
 	}
@@ -150,9 +156,9 @@ component backupRecoverySystem {
 	a1.getSensorValue1R <-i- s1.getSensorValueP
 	a1.getSensorValue2R <-i- s2.getSensorValueP
 	monitor.doSensorValuesMatchR <-i- a1.doSensorValuesMatchP	
-	monitor.switchArithmeticalUnitR_PartActivate <-i- a2.activateP
-	monitor.switchArithmeticalUnitR_PartDeactivate <-i- a1.deactivateP
-	monitor.switchArithmeticalUnitR_PartSwitchOutput <-i- out.switchArithmeticalUnitP
+	monitor.switchArithmeticalUnitR_PartA <-i- a2.setActiveArithmeticalUnitP
+	monitor.switchArithmeticalUnitR_PartB <-i- a1.setActiveArithmeticalUnitP
+	monitor.switchArithmeticalUnitR_PartC <-i- out.setActiveArithmeticalUnitP
 	out.getArithmeticalValue1R <-i- a1.getArithmeticalValueP
 	out.getArithmeticalValue2R <-i- a2.getArithmeticalValueP
 	
