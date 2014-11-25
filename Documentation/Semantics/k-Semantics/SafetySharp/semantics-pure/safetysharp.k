@@ -37,7 +37,7 @@ module SAFETYSHARP-SYNTAX
 			| Expr ">=" Expr	[left,strict]
 			| Expr ">" Expr		[left,strict]
 			| Expr "<" Expr		[left,strict]
-			| "!" Expr                  
+			| "!" Expr              [strict]
 			> Expr "&&" Expr	[left,strict] 
 			> Expr "||" Expr	[left,strict]
 			| "(" Expr ")"		[bracket]

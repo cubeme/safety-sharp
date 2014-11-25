@@ -6,11 +6,11 @@ component backupRecoverySystem {
 		
 		determineSourceValueP p( ; ) {
 			.
-			    true ->> { outputValueField := 1 }
-			||| true ->> { outputValueField := 2 }
-			||| true ->> { outputValueField := 3 }
-			||| true ->> { outputValueField := 4 }
-			||| true ->> { outputValueField := 5 }
+			    true ->> { sourceValueField := 1 }
+			||| true ->> { sourceValueField := 2 }
+			||| true ->> { sourceValueField := 3 }
+			||| true ->> { sourceValueField := 4 }
+			||| true ->> { sourceValueField := 5 }
 		}
 		
 		getSourceValueP p( ; sourceValueInout : int ) {
@@ -22,7 +22,7 @@ component backupRecoverySystem {
 		
 		behaviour {
 			.
-			determineSourceValueR ( )
+			determineSourceValueR ( ; )
 		}
 	}
 
