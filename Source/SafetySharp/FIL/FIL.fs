@@ -71,21 +71,22 @@ type internal Expression =
 
     /// Represents a read operation of the previous value of a variable.
     | ReadVariablePrev of Variable : Identifier
-    
+
+type internal GuardedCommandClause =
+    | GuardedCommandClause of Guard:Expression * Statement:Statement
 
 /// Represents statements contained within method bodies.
-type internal Statement =
+and internal Statement =
     /// Represents the empty statement that does nothing.
     | EmptyStatement
 
-    /// Represents a block of statements that are executed sequentially. Within the statement block, the 
-    /// local variables are defined and can be accessed by read and write operations.
-    | BlockStatement of Statements : Statement list
+    /// Represents two statements that are executed sequentially.
+    | SeqStatement of Left:Statement * Right:Statement
     
     /// Represents a guarded command statement. The body of at most one clause of the guarded command is
     /// executed. For a body to be executed, its guard must evaluate to true. If multiple guards hold, one
     /// clause is chosen nondeterministically.
-    | GuardedCommandStatement of Clauses : (Expression * Statement) list
+    | GuardedCommandStatement of Clauses : GuardedCommandClause list
 
     /// Represents the assignment of a variable.
-    | WriteVariable of Variable : Identifier
+    | WriteVariable of Variable:Identifier * Expression:Expression

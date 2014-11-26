@@ -36,8 +36,8 @@ module internal ParseFIL =
 
     // parses the Boolean constants //TODO:, but not, e.g., truee or false1, 
     let boolean : Parser<_,unit> =
-        (trueKeyword <|> falseKeyword) 
-                    //TODO .>>? (notFollowedBy (many1Satisfy isIdentifierChar))
+        let isIdentifierChar c = isLetter c || isDigit c || c = '_'
+        (trueKeyword <|> falseKeyword) .>>? (notFollowedBy (many1Satisfy isIdentifierChar))
 
     // parses a number
     let number : Parser<_,unit> =
@@ -49,11 +49,12 @@ module internal ParseFIL =
         ((identifier (IdentifierOptions())) |>> Identifier.Identifier)
 
     // parsers with space afterwards
+    let pstring_ws s = pstring s .>> spaces
     let boolean_ws = boolean .>> spaces
     let number_ws = number .>> spaces
     let variable_ws = variable .>> spaces
-    let parentOpen_ws = pstring "(" .>> spaces
-    let parentClose_ws = pstring ")" .>> spaces
+    let parentOpen_ws = pstring_ws "("
+    let parentClose_ws = pstring_ws ")"
 
     // parses an expression
     let expression : Parser<_,unit> =
@@ -82,12 +83,41 @@ module internal ParseFIL =
 
         // parses a read operation of the previous value of a variable
         let prevExpr_ws =
-            (pstring "prev") >>. spaces >>. parentOpen_ws >>. variable_ws .>> parentClose_ws
+            (pstring_ws "prev") >>. parentOpen_ws >>. variable_ws .>> parentClose_ws
 
         // recursive term parser for expressions
-        opp.TermParser <- boolean <|> (prevExpr_ws |>> Expression.ReadVariablePrev) <|> (number_ws |>> Expression.NumberLiteral) <|> (variable_ws |>> Expression.ReadVariable) <|> parenExpr_ws
+        opp.TermParser <- boolean_ws <|> (prevExpr_ws |>> Expression.ReadVariablePrev) <|> (number_ws |>> Expression.NumberLiteral) <|> (variable_ws |>> Expression.ReadVariable) <|> parenExpr_ws
         opp.ExpressionParser
-
-
-
         
+    let guardedCommandClause,guardedCommandClauseRef = createParserForwardedToRef()
+    let statement,statementRef = createParserForwardedToRef()
+    
+    let expression_ws = expression .>> spaces
+    let guardedCommandClause_ws = guardedCommandClause .>> spaces
+    let statement_ws = statement .>> spaces
+
+
+    do guardedCommandClauseRef :=
+       (expression_ws .>>. ((pstring_ws "->>") >>. (pstring_ws "{") >>. statement_ws .>> (pstring_ws "}"))) |>> GuardedCommandClause
+        
+    do statementRef :=
+        let parseSkip =
+            stringReturn "skip" Statement.EmptyStatement        //pstring_ws "skip" >>% Statement.EmptyStatement
+        let parseGuardedCommand =
+            attempt (sepBy (guardedCommandClause_ws) (pstring_ws "|||")) |>> Statement.GuardedCommandStatement
+        let parseAssignment =
+            attempt variable_ws .>>. (pstring_ws ":=" >>. expression) |>> Statement.WriteVariable            
+        
+        // a; b; c == (a ; b) ; c  //left associative (in semantics)
+        let allExceptSeq = parseSkip <|> parseGuardedCommand <|> parseAssignment
+        let allExceptSeq_ws = allExceptSeq .>> spaces
+        
+        let refurbishResult (stmnts : Statement list ) =
+            let rec convertToSeqStmnt (stmnts : Statement list) (leftNode : Statement) =
+                if stmnts.IsEmpty then
+                    leftNode
+                else
+                    let newLeft = Statement.SeqStatement(leftNode,stmnts.Head)
+                    convertToSeqStmnt (stmnts.Tail) (newLeft)
+            convertToSeqStmnt (stmnts.Tail) (stmnts.Head)
+        sepBy1 (allExceptSeq_ws) (pstring_ws ";") |>> refurbishResult
