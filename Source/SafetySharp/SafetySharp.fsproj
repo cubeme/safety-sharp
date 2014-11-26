@@ -78,6 +78,9 @@
     <Compile Include="CSharp\Transformation\FormulaTransformation.fs" />
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
+    <Compile Include="FIL\FIL.fs" />
+    <Compile Include="FIL\FILFileParser.fs" />
+    <Compile Include="ModelFile\ModelFileParser.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
@@ -92,7 +95,6 @@
     <Compile Include="Smt-Solving\Z3\Z3AstToString.fs" />
     <Compile Include="Smt-Solving\Z3\Z3Parser.fs" />
     <Compile Include="Smt-Solving\Z3\Z3Execute.fs" />
-    <Compile Include="Modelchecking\Common\SimplifiedMetamodel.fs" />
     <Compile Include="Modelchecking\Common\TransformationToSimplifiedMetamodel.fs" />
     <Compile Include="Modelchecking\Common\WriteOnceMetamodel.fs" />
     <Compile Include="Modelchecking\Common\TransformationToWriteOnceMetamodel.fs" />
