@@ -1,3 +1,16 @@
+# Examples
+
+You can find examples in [\Examples\ModelFile](https://github.com/isse-augsburg/safety-sharp/tree/master/Examples/ModelFile).
+
+You can create a symbolic link for more convenience when trying out one of the semantics: 
+
+* ```ln -s Examples ../../../../../Examples/ModelFile``` (Linux) 
+* ```mklink /d Examples ..\..\..\..\..\Examples\ModelFile``` (Windows)
+
+
+
+# About the two different 
+
 Here we suggest two possible ways to describe the semantics of safety sharp in the notation of the k Framework: The *pure* way and the *derived* way. The pure way sticks close to the written semantics of the semantics document. The derived way is easier to implement in a model checker and it is easier to reproduce what happens in small example models.
 
 ## pure way

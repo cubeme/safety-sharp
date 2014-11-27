@@ -1,3 +1,13 @@
+# Examples
+
+You can find examples in [\Examples\FIL](https://github.com/isse-augsburg/safety-sharp/tree/master/Examples/FIL).
+
+You can create a symbolic link for more convenience when trying out one of the semantics: 
+
+* ```ln -s Examples ../../../../../Examples/FIL``` (Linux) 
+* ```mklink /d Examples ..\..\..\..\..\Examples\FIL``` (Windows)
+
+
 # How to work with k-Semantics
 1. Download and install the k-Framework from http://www.kframework.org/ or https://github.com/kframework/k
 2. Make sure path to fil.k is not to long and does not contain any white spaces or special characters
