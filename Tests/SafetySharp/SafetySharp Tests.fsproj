@@ -53,6 +53,9 @@
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
     </Compile>
+    <Compile Include="..\AstTestHelpers.fs">
+      <Link>AstTestHelpers.fs</Link>
+    </Compile>
     <Compile Include="Modeling.fs" />
     <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
     <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
@@ -61,8 +64,9 @@
     <Compile Include="CSharp\Transformation\FormulaTransformationTests.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
-    <None Include="app.config" />
+    <Compile Include="FIL\FILParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
