@@ -23,12 +23,75 @@
 namespace SafetySharp.Tests.FIL.FILParserTests
 
 
+open System
 open NUnit.Framework
+open FParsec
+
+open TestHelpers
+open AstTestHelpers
 
 [<TestFixture>]
-module ExampleFiles =
+type ExampleFiles() =
+
+    let parseWithParser parser str =
+        match run parser str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, _, _) -> failwith errorMsg
+
+    let parseFIL str = parseWithParser (SafetySharp.Internal.FIL.Parser.ParseFIL.filFile) str
+
     [<Test>]
-    let ``Example simpleArithmetical1 parses correctly`` () =
+    member this.``Example simpleArithmetical1 parses correctly`` () =
         let inputFile = """..\..\Examples\FIL\simpleArithmetical1.fil"""
-        let input = System.IO.File.ReadAllText (inputFile)
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simpleArithmetical2 parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simpleArithmetical2.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simpleBoolean1 parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simpleBoolean1.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simpleGuardedCommands1 parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simpleGuardedCommands1.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simpleGuardedCommands2 parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simpleGuardedCommands2.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simpleGuardedCommands3 parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simpleGuardedCommands3.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simpleGuardedCommands4 parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simpleGuardedCommands4.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
+        ()
+
+    [<Test>]
+    member this.``Example simplePrev parses correctly`` () =
+        let inputFile = """..\..\Examples\FIL\simplePrev.fil"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseFIL input
         ()

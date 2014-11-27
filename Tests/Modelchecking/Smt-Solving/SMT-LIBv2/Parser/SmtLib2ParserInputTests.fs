@@ -31,7 +31,7 @@ open AstTestHelpers
 open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
 open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
 
-type internal SMTInputExampleTests() =
+type SMTInputExampleTests() =
     //let parser = new ObjectCodeEntryParser()
     
     let inAstFloat = inAst<float>

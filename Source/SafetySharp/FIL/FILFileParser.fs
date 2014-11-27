@@ -121,3 +121,5 @@ module internal ParseFIL =
                     convertToSeqStmnt (stmnts.Tail) (newLeft)
             convertToSeqStmnt (stmnts.Tail) (stmnts.Head)
         sepBy1 (allExceptSeq_ws) (pstring_ws ";") |>> refurbishResult
+
+    let filFile = spaces >>. statement_ws
