@@ -38,59 +38,59 @@ type ExampleFiles() =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let parseFIL str = parseWithParser (SafetySharp.Internal.FIL.Parser.ParseFIL.filFile) str
+    let parseFIL str = parseWithParser (SafetySharp.Internal.FIL.Parser.ParseFIL.filFile .>> eof) str
 
     [<Test>]
-    member this.``Example simpleArithmetical1 parses correctly`` () =
+    member this.``Example simpleArithmetical1 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleArithmetical1.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simpleArithmetical2 parses correctly`` () =
+    member this.``Example simpleArithmetical2 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleArithmetical2.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simpleBoolean1 parses correctly`` () =
+    member this.``Example simpleBoolean1 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleBoolean1.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simpleGuardedCommands1 parses correctly`` () =
+    member this.``Example simpleGuardedCommands1 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleGuardedCommands1.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simpleGuardedCommands2 parses correctly`` () =
+    member this.``Example simpleGuardedCommands2 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleGuardedCommands2.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simpleGuardedCommands3 parses correctly`` () =
+    member this.``Example simpleGuardedCommands3 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleGuardedCommands3.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simpleGuardedCommands4 parses correctly`` () =
+    member this.``Example simpleGuardedCommands4 parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simpleGuardedCommands4.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input
         ()
 
     [<Test>]
-    member this.``Example simplePrev parses correctly`` () =
+    member this.``Example simplePrev parses successfully`` () =
         let inputFile = """..\..\Examples\FIL\simplePrev.fil"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseFIL input

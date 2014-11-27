@@ -64,7 +64,7 @@ module internal ParseFIL =
         opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
         // >
         opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("-"   , spaces , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))        
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">>" , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))        
         // >
         opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
         opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
@@ -106,7 +106,7 @@ module internal ParseFIL =
         let parseGuardedCommand =
             attempt (sepBy (guardedCommandClause_ws) (pstring_ws "|||")) |>> Statement.GuardedCommandStatement
         let parseAssignment =
-            attempt variable_ws .>>. (pstring_ws ":=" >>. expression) |>> Statement.WriteVariable            
+            attempt (variable_ws .>>. (pstring_ws ":=" >>. expression)) |>> Statement.WriteVariable            
         
         // a; b; c == (a ; b) ; c  //left associative (in semantics)
         let allExceptSeq = parseSkip <|> parseGuardedCommand <|> parseAssignment
