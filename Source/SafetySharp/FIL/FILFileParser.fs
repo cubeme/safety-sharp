@@ -25,6 +25,8 @@ namespace SafetySharp.Internal.FIL.Parser
 
 module internal ParseFIL =
 
+    // The statement and expression parser is similar to the FIL-parser, but the Data Structures are different.
+
     open FParsec
     open SafetySharp.Internal.FIL
 
@@ -32,9 +34,9 @@ module internal ParseFIL =
     let trueKeyword : Parser<_,unit> =
         stringReturn "true" (Expression.BooleanLiteral true)
     let falseKeyword  : Parser<_,unit> =
-        stringReturn "false" (Expression.BooleanLiteral true)
+        stringReturn "false" (Expression.BooleanLiteral false)
 
-    // parses the Boolean constants //TODO:, but not, e.g., truee or false1, 
+    // parses the Boolean constants, but not, e.g., truee or false1, 
     let boolean : Parser<_,unit> =
         let isIdentifierChar c = isLetter c || isDigit c || c = '_'
         (trueKeyword <|> falseKeyword) .>>? (notFollowedBy (many1Satisfy isIdentifierChar))
@@ -60,23 +62,23 @@ module internal ParseFIL =
     let expression : Parser<_,unit> =
         let opp = new OperatorPrecedenceParser<_,_,_>()        
         opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
+        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Multiply, e2)))
+        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Modulo, e2)))
         // >
-        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">>" , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))        
+        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Add, e2)))
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">>" , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Subtract, e2)))        
         // >
-        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
+        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LessThanOrEqual, e2)))
+        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Equals, e2)))
+        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.NotEquals, e2)))
+        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.GreaterThanOrEqual, e2)))
+        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.GreaterThan, e2)))
+        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LessThan, e2)))
         opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> UnaryExpression(e,UnaryOperator.LogicalNot)))
         //>
-        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
+        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LogicalAnd, e2)))
         //>
-        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
+        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LogicalOr, e2)))
 
         // parses an expression between ( and )
         let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
@@ -113,13 +115,19 @@ module internal ParseFIL =
         let allExceptSeq_ws = allExceptSeq .>> spaces
         
         let refurbishResult (stmnts : Statement list ) =
-            let rec convertToSeqStmnt (stmnts : Statement list) (leftNode : Statement) =
+            (*let rec convertToSeqStmnt (stmnts : Statement list) (leftNode : Statement) =
                 if stmnts.IsEmpty then
                     leftNode
                 else
                     let newLeft = Statement.SeqStatement(leftNode,stmnts.Head)
                     convertToSeqStmnt (stmnts.Tail) (newLeft)
             convertToSeqStmnt (stmnts.Tail) (stmnts.Head)
+            *)
+            if stmnts.Length = 1 then
+                    stmnts.Head
+                else
+                    Statement.BlockStatement stmnts
+
         sepBy1 (allExceptSeq_ws) (pstring_ws ";") |>> refurbishResult
 
     let filFile = spaces >>. statement_ws

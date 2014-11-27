@@ -80,8 +80,8 @@ and internal Statement =
     /// Represents the empty statement that does nothing.
     | EmptyStatement
 
-    /// Represents two statements that are executed sequentially.
-    | SeqStatement of Left:Statement * Right:Statement
+    /// Represents a list of statements that are executed sequentially.
+    | BlockStatement of Statements: Statement list
     
     /// Represents a guarded command statement. The body of at most one clause of the guarded command is
     /// executed. For a body to be executed, its guard must evaluate to true. If multiple guards hold, one
