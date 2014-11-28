@@ -100,7 +100,8 @@ module internal ParseModelFile =
                     Reply(ReplyStatus.Error,mergeErrors identifier.Error error)
             else
                 Reply(identifier.Status,identifier.Error)
-                
+    
+    // TODO: write test, which confuses the state (subcomponent with field "x" , which was a localVar of a behaviour)
     let pushUserStateStackComponent : Parser<_,UserState> =
         spaces // TODO
      
@@ -210,7 +211,9 @@ module internal ParseModelFile =
         let parseVariableAssignment =
             attempt (varIdInst_ws .>>. (pstring_ws ":=" >>. expression)) |>> Stm.AssignVar
         let parsePortCall =
-            attempt (tuple3 (reqPortId_ws .>> parentOpen_ws) (expressions_ws .>> (pstring_ws ";")) (varIdInsts_ws .>> parentClose_ws)) |>> Stm.CallPort
+            attempt (tuple3 (reqPortId_ws .>> parentOpen_ws)
+                            (expressions_ws .>> (pstring_ws ";"))
+                            (varIdInsts_ws .>> parentClose_ws)) |>> Stm.CallPort
         let parseBehCall =
             attempt (compId_ws.>> parentOpen_ws .>> parentClose_ws) |>> Stm.CallComp
 
@@ -248,19 +251,21 @@ module internal ParseModelFile =
               (type_ws)
               createVarSym
 
-    let typedVarDeclSection_ws =
+    let typedVarDecls_ws =
         sepBy typedVarDecl_ws (pstring_ws ",")
     
+    let varsAndCode_ws = 
+        tuple2 (typedVarDecls_ws .>> (pstring_ws ".")) (statement_ws)
+    
     let behaviour =
-        tuple2 ((pstring_ws "behaviour")>>. (pstring_ws "{")  >>. typedVarDeclSection_ws .>> (pstring_ws "."))
-               ((statement_ws) .>> (pstring "}"))
+        (pstring_ws "behaviour") >>. (pstring_ws "{") .>> pushUserStateStackCall >>. varsAndCode_ws .>> (pstring "}") .>> popUserStateStackCall
 
     let behaviour_ws = behaviour .>> spaces
     
     let (comp:Parser<_,UserState>), compRef = createParserForwardedToRef()
     let comp_ws = comp .>> spaces
 
-    let typedFieldDecl_ws : Parser<_,UserState> =        
+    let typedFieldDecl_ws : Parser<_,UserState> =
         let createFieldSym var (init:Val list) =
             let _type = 
                 match init.Head with
@@ -275,25 +280,56 @@ module internal ParseModelFile =
                        (many1 value_ws)
                        createFieldSym)
 
+    //getSensorValue1R r( ; sensorValueInout : int )
+    let reqPortDecl_ws : Parser<_,UserState> =
+        let extractTypes (vars:VarSym list) = vars |> List.map (fun var -> var.Type)
+        let createReqPortSym name inParms outParms =
+            {
+                ReqPortSym.ReqPort = name;
+                ReqPortSym.InParams = extractTypes inParms ;
+                ReqPortSym.InOutParams = extractTypes outParms ;
+            }
+        attempt (pipe3 (reqPortId_ws .>> (pstring_ws "r(") .>> pushUserStateStackCall)
+                       (typedVarDecls_ws .>> (pstring_ws ";"))
+                       (typedVarDecls_ws .>> parentClose_ws .>> popUserStateStackCall)
+                       createReqPortSym)
+
+    let provPortDecl_ws : Parser<_,UserState> =
+        let extractTypes (vars:VarSym list) = vars |> List.map (fun var -> var.Type)
+        let createProvPortSym name inParms outParms (locals,stm) =
+            {
+                ProvPortSym.ProvPort = name;
+                ProvPortSym.InParams = inParms ;
+                ProvPortSym.InOutParams = outParms ;
+                ProvPortSym.Locals = locals;
+                ProvPortSym.Stm = stm;
+            }
+        attempt (pipe4 (provPortId_ws .>> (pstring_ws "p(") .>> pushUserStateStackCall)
+                       (typedVarDecls_ws .>> (pstring_ws ";"))
+                       (typedVarDecls_ws .>> parentClose_ws .>> (pstring_ws "{"))
+                       (varsAndCode_ws .>> (pstring_ws "}"))
+                       createProvPortSym)
+
+
     do compRef :=
         let createComponent comp subcomp fields reqPorts provPorts bindings (locals,stm) =
             {
                 CompSym.Comp = comp;
                 CompSym.Subcomp = subcomp;
                 CompSym.Fields = fields;
-                CompSym.ReqPorts = []; // TODO:  reqPorts;
+                CompSym.ReqPorts = reqPorts;
                 CompSym.ProvPorts = []; // TODO:  provPorts;
                 CompSym.Bindings = []; // TODO:  bindings;
                 CompSym.Locals = locals;
                 CompSym.Stm = stm;
             }
-        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws .>> (pstring_ws "{"))
+        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws .>> (pstring_ws "{") .>> pushUserStateStackComponent)
               (many comp_ws)
               (many typedFieldDecl_ws)
+              (many reqPortDecl_ws)
+              (many provPortDecl_ws)
               (spaces)
-              (spaces)
-              (spaces)
-              (behaviour_ws .>> (pstring "}"))
+              (behaviour_ws .>> (pstring "}") .>> popUserStateStackComponent)
               createComponent
         
     let modelFile = comp_ws
