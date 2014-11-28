@@ -62,8 +62,6 @@ type ParsingUserStateWorks () =
         ()
 
 
-
-(*
 [<TestFixture>]
 type ExampleFiles() =
 
@@ -74,12 +72,18 @@ type ExampleFiles() =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let parseFIL str = parseWithParser (SafetySharp.Internal.FIL.Parser.ParseFIL.filFile .>> eof) str
+    let parseModelFile str = parseWithParser (ParseModelFile.modelFile .>> eof) str
 
     [<Test>]
-    member this.``Example simpleArithmetical1 parses successfully`` () =
-        let inputFile = """..\..\Examples\FIL\simpleArithmetical1.fil"""
+    member this.``Example simpleComponent1 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\simpleComponent1.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseModelFile input
         ()
-*)
+
+    [<Test>]
+    member this.``Example simpleComponent2 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\simpleComponent2.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()

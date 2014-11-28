@@ -34,6 +34,8 @@ module internal ParseModelFile =
         | Var
         | NotDeclared
 
+
+    // TODO: Remove, when context changes (i.e. switch to push, pop)
     type UserState = {
         TypeOfIdentifier : Map<string,IdentifierType> ;
     }
@@ -53,6 +55,10 @@ module internal ParseModelFile =
     
     type GuardedCommandClause = Expr * Stm
     
+    let pipe7 p1 p2 p3 p4 p5 p6 p7 f =
+        pipe4 p1 p2 p3 (tuple4 p4 p5 p6 p7)
+            (fun x1 x2 x3 (x4, x5, x6, x7) -> f x1 x2 x3 x4 x5 x6 x7)
+
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,UserState> =
@@ -113,19 +119,21 @@ module internal ParseModelFile =
     let compId : Parser<_,UserState> =
         ((identifier (IdentifierOptions())) |>> Comp.Comp)
 
-(*
     // parsers with space afterwards
-    let pstring_ws s = pstring s .>> spaces
+    let pstring_ws s : Parser<_,UserState> =
+        pstring s .>> spaces
     let boolVal_ws = boolVal .>> spaces
     let number_ws = number .>> spaces
-    let varId_ws = varId .>> spaces
-    let fieldId_ws = fieldId .>> spaces
+    let varIdDecl_ws = varIdDecl .>> spaces
+    let varIdInst_ws = varIdInst .>> spaces
+    let fieldIdDecl_ws = fieldIdDecl .>> spaces
+    let fieldIdInst_ws = fieldIdInst .>> spaces
     let reqPortId_ws = reqPortId .>> spaces
     let provPortId_ws = provPortId .>> spaces
     let compId_ws = compId .>> spaces
     let parentOpen_ws = pstring_ws "("
     let parentClose_ws = pstring_ws ")"
-
+    
     // parses an expression
     let expression : Parser<_,UserState> =
         let opp = new OperatorPrecedenceParser<_,_,_>()        
@@ -151,41 +159,111 @@ module internal ParseModelFile =
         // parses an expression between ( and )
         let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
         
-        let parseFieldParameterOrLocal =
+        //let parseFieldParameterOrLocal =
             
 
         // recursive term parser for expressions
-        opp.TermParser <- boolVal_ws <|> number_ws <|> (variable_ws |>> Expression.ReadVariable) <|> parenExpr_ws
+        opp.TermParser <-
+            (boolVal_ws) <|> 
+            (number_ws) <|>
+            (fieldIdInst_ws |>> Expr.ReadField) <|>
+            (varIdInst_ws |>> Expr.ReadVar) <|> 
+            (parenExpr_ws)
+
         opp.ExpressionParser
         
-    let guardedCommandClause,guardedCommandClauseRef = createParserForwardedToRef()
-    let statement,statementRef = createParserForwardedToRef()
+    let (guardedCommandClause:Parser<_,UserState>),guardedCommandClauseRef = createParserForwardedToRef()
+    let (statement:Parser<_,UserState>),statementRef = createParserForwardedToRef()
     
     let expression_ws = expression .>> spaces
     let guardedCommandClause_ws = guardedCommandClause .>> spaces
     let statement_ws = statement .>> spaces
 
+    let expressions_ws = sepBy expression_ws (pstring_ws ",")
+    let varIdInsts_ws = sepBy varIdInst_ws (pstring_ws ",")
 
     do guardedCommandClauseRef :=
        (expression_ws .>>. ((pstring_ws "->>") >>. (pstring_ws "{") >>. statement_ws .>> (pstring_ws "}"))) |>> (fun (guard,stmnt) -> (guard,stmnt) )
         
     do statementRef :=
         let parseSkip =
-            stringReturn "skip" Statement.EmptyStatement        //pstring_ws "skip" >>% Statement.EmptyStatement
+            stringReturn "skip" Stm.Skip
         let parseGuardedCommand =
-            attempt (sepBy (guardedCommandClause_ws) (pstring_ws "|||")) |>> Statement.GuardedCommandStatement
-        let parseAssignment =
-            attempt (variable_ws .>>. (pstring_ws ":=" >>. expression)) |>> Statement.WriteVariable            
-        
+            attempt (sepBy (guardedCommandClause_ws) (pstring_ws "|||")) |>> Stm.GrdCmd
+        let parseFieldAssignment =
+            attempt (fieldIdInst_ws .>>. (pstring_ws ":=" >>. expression)) |>> Stm.AssignField
+        let parseVariableAssignment =
+            attempt (varIdInst_ws .>>. (pstring_ws ":=" >>. expression)) |>> Stm.AssignVar
+        let parsePortCall =
+            attempt (tuple3 (reqPortId_ws .>> parentOpen_ws) (expressions_ws .>> (pstring_ws ";")) (varIdInsts_ws .>> parentClose_ws)) |>> Stm.CallPort
+        let parseBehCall =
+            attempt (compId_ws.>> parentOpen_ws .>> parentClose_ws) |>> Stm.CallComp
+
+
         // a; b; c == (a ; b) ; c  //left associative (in semantics)
-        let allExceptSeq = parseSkip <|> parseGuardedCommand <|> parseAssignment
+        let allExceptSeq =
+            parseSkip <|>
+            parseGuardedCommand <|>
+            parseFieldAssignment <|>
+            parseVariableAssignment <|>
+            parsePortCall <|>
+            parseBehCall
+
         let allExceptSeq_ws = allExceptSeq .>> spaces
         
-        let refurbishResult (stmnts : Statement list ) =            
+        let refurbishResult (stmnts : Stm list ) =
             if stmnts.Length = 1 then
                     stmnts.Head
                 else
-                    Statement.BlockStatement stmnts
+                    Stm.Block stmnts
         sepBy1 (allExceptSeq_ws) (pstring_ws ";") |>> refurbishResult
 
-        *)
+    let type_ws =
+        let boolType = stringReturn "bool" Type.BoolType
+        let intType = stringReturn "int"  Type.IntType
+        (boolType <|> intType) .>> spaces
+    
+    let typedVarDecl_ws : Parser<_,UserState> =
+        let createVarSym (var,_type) =
+            {
+                VarSym.Var = var ;
+                VarSym.Type = _type ;
+            }
+        (varIdDecl_ws .>> (pstring_ws ":" )) .>>. (type_ws) |>> createVarSym
+
+    let typedVarDeclSection_ws =
+        sepBy typedVarDecl_ws (pstring_ws ",")
+    
+    let behaviour =
+        tuple2 ((pstring_ws "behaviour")>>. (pstring_ws "{")  >>. typedVarDeclSection_ws .>> (pstring_ws "."))
+               ((statement_ws) .>> (pstring "}"))
+
+    let behaviour_ws = behaviour .>> spaces
+    
+    let (comp:Parser<_,UserState>), compRef = createParserForwardedToRef()
+
+    do compRef :=
+        let createComponent comp subcomp fields reqPorts provPorts bindings (locals,stm) =
+            {
+                CompSym.Comp = comp;
+                CompSym.Subcomp = []; // TODO: subcomp;
+                CompSym.Fields = []; // TODO:  fields;
+                CompSym.ReqPorts = []; // TODO:  reqPorts;
+                CompSym.ProvPorts = []; // TODO:  provPorts;
+                CompSym.Bindings = []; // TODO:  bindings;
+                CompSym.Locals = locals;
+                CompSym.Stm = stm;
+            }
+        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws)
+              (spaces)
+              (spaces)
+              (spaces)
+              (spaces)
+              (spaces)
+              ((pstring_ws "{")  >>. behaviour_ws .>> (pstring "}"))
+              createComponent
+        
+
+    let comp_ws = comp .>> spaces
+
+    let modelFile = comp_ws

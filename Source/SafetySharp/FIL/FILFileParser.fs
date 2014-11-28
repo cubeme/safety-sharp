@@ -91,8 +91,8 @@ module internal ParseFIL =
         opp.TermParser <- boolean_ws <|> (prevExpr_ws |>> Expression.ReadVariablePrev) <|> (number_ws |>> Expression.NumberLiteral) <|> (variable_ws |>> Expression.ReadVariable) <|> parenExpr_ws
         opp.ExpressionParser
         
-    let guardedCommandClause,guardedCommandClauseRef = createParserForwardedToRef()
-    let statement,statementRef = createParserForwardedToRef()
+    let (guardedCommandClause:Parser<_,unit>),guardedCommandClauseRef = createParserForwardedToRef()
+    let (statement:Parser<_,unit>),statementRef = createParserForwardedToRef()
     
     let expression_ws = expression .>> spaces
     let guardedCommandClause_ws = guardedCommandClause .>> spaces
