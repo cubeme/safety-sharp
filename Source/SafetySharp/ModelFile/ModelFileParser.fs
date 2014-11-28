@@ -20,28 +20,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.ModelFile
+namespace SafetySharp.Internal.ModelFile.Parser
 
 
-module internal ParseFIL =
+module internal ParseModelFile =
 
     open FParsec
     open Test
     
+    [<RequireQualifiedAccess>]
+    type IdentifierType =
+        | Field
+        | Var
+        | NotDeclared
+
     type UserState = {
-        Fields : string Set;
-        LocalVar: string Set;
-        Parameter: string Set;
+        TypeOfIdentifier : Map<string,IdentifierType> ;
     }
         with
-            static member containsField str (us:UserState) = us.Fields.Contains str
-            static member containsLocalVar str (us:UserState) = us.LocalVar.Contains str
-            static member containsParameter str (us:UserState) = us.Parameter.Contains str
+            member us.IsIdentifierOfType str (id_type:IdentifierType) =
+                if us.TypeOfIdentifier.ContainsKey str then
+                    if (us.TypeOfIdentifier.Item str) = id_type then
+                        true
+                    else
+                        false
+                else
+                    false
             static member initialUserState =
                 {
-                    UserState.Fields = Set.empty<string>;
-                    UserState.LocalVar = Set.empty<string>;
-                    UserState.Parameter = Set.empty<string>;
+                    UserState.TypeOfIdentifier = Map.empty<string,IdentifierType>;
                 }
     
     type GuardedCommandClause = Expr * Stm
@@ -61,42 +68,49 @@ module internal ParseFIL =
     // parses a number
     let number : Parser<_,UserState> =
         many1Satisfy isDigit |>> ( fun value -> (bigint.Parse value |> int32 |> Val.IntVal |> Expr.Literal ))
-
-    // parse identifier of variables, fields, ports and components
-    let varIdDecl: Parser<_,UserState> =        
+        
+    let parseIdentifierDecl (id_type:IdentifierType) : Parser<_,UserState> =        
         let parseIdentifier = identifier (IdentifierOptions())
         fun stream ->
             let identifier = (parseIdentifier stream)
             if identifier.Status = ReplyStatus.Ok then
-                stream.UserState <- { stream.UserState with UserState.Fields = stream.UserState.Fields.Add(identifier.Result)}
+                stream.UserState <- { stream.UserState with UserState.TypeOfIdentifier = stream.UserState.TypeOfIdentifier.Add(identifier.Result, id_type)}
                 Reply(identifier.Status,identifier.Result,identifier.Error)
             else
                 Reply(identifier.Status,identifier.Error)
-            
+
+    let parseIdentifierInst (id_type:IdentifierType) : Parser<_,UserState> =        
+        let parseIdentifier = identifier (IdentifierOptions())
+        fun stream ->
+            let identifier = (parseIdentifier stream)
+            if identifier.Status = ReplyStatus.Ok then
+                if stream.UserState.IsIdentifierOfType identifier.Result id_type then
+                    Reply(identifier.Status,identifier.Result,identifier.Error)
+                else
+                    let error = messageError (sprintf "Identifier '%s' has not been declared or the kind of access is wrong" identifier.Result)
+                    Reply(ReplyStatus.Error,mergeErrors identifier.Error error)
+            else
+                Reply(identifier.Status,identifier.Error)
 
 
+    // parse identifier of variables, fields, ports and components
+    let varIdDecl: Parser<_,UserState> =
+        parseIdentifierDecl IdentifierType.Var |>> Var.Var
     let varIdInst: Parser<_,UserState> =
-        userStateSatisfies (UserState.containsLocalVar "") >>. ((identifier (IdentifierOptions())) |>> Var.Var)
+        parseIdentifierInst IdentifierType.Var |>> Var.Var
     
 
     let fieldIdDecl: Parser<_,UserState> =
-        ((identifier (IdentifierOptions())) |>> Field.Field)
+        parseIdentifierDecl IdentifierType.Field |>> Field.Field
     let fieldIdInst: Parser<_,UserState> =
-        ((identifier (IdentifierOptions())) |>> Field.Field)
+        parseIdentifierInst IdentifierType.Field |>> Field.Field
+
                 
-    let reqPortIdDecl: Parser<_,UserState> =
-        ((identifier (IdentifierOptions())) |>> ReqPort.ReqPort)
-    let reqPortIdInst: Parser<_,UserState> =
-        ((identifier (IdentifierOptions())) |>> ReqPort.ReqPort)
-                
-    let provPortIdDecl: Parser<_,UserState> =
+    let reqPortId: Parser<_,UserState> =
+        ((identifier (IdentifierOptions())) |>> ReqPort.ReqPort)                
+    let provPortId: Parser<_,UserState> =
         ((identifier (IdentifierOptions())) |>> ProvPort.ProvPort)
-    let provPortIdInst: Parser<_,UserState> =
-        ((identifier (IdentifierOptions())) |>> ProvPort.ProvPort)
-                
-    let compIdDecl : Parser<_,UserState> =
-        ((identifier (IdentifierOptions())) |>> Comp.Comp)
-    let compIdInst : Parser<_,UserState> =
+    let compId : Parser<_,UserState> =
         ((identifier (IdentifierOptions())) |>> Comp.Comp)
 
 (*
