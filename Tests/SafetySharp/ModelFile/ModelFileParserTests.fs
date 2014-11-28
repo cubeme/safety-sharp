@@ -74,16 +74,60 @@ type ExampleFiles() =
 
     let parseModelFile str = parseWithParser (ParseModelFile.modelFile .>> eof) str
 
+    // Tests in order of Examples/ModelFile/README.md
+    // Keep this order here!
+    
+    [<Test>]
+    member this.``Example nestedComponent1 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\nestedComponent1.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example nestedComponent2 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\nestedComponent2.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
     [<Test>]
     member this.``Example simpleComponent1 parses successfully`` () =
         let inputFile = """..\..\Examples\ModelFile\simpleComponent1.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseModelFile input
         ()
-
+        
     [<Test>]
     member this.``Example simpleComponent2 parses successfully`` () =
         let inputFile = """..\..\Examples\ModelFile\simpleComponent2.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example simpleComponent3 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\simpleComponent3.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+    [<Test>]
+    member this.``Example simpleComponent4 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\simpleComponent4.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example simpleComponent5 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\simpleComponent5.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example simpleComponent6 parses successfully`` () =
+        let inputFile = """..\..\Examples\ModelFile\simpleComponent6.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseModelFile input
         ()
