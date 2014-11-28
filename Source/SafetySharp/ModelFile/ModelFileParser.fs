@@ -62,9 +62,9 @@ module internal ParseModelFile =
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,UserState> =
-        stringReturn "true" (Val.BoolVal true |> Expr.Literal)
+        stringReturn "true" (Val.BoolVal true)
     let falseKeyword  : Parser<_,UserState> =
-        stringReturn "false" (Val.BoolVal false |> Expr.Literal)
+        stringReturn "false" (Val.BoolVal false)
 
     // parses the Boolean constants, but not, e.g., truee or false1, 
     let boolVal : Parser<_,UserState> =
@@ -72,8 +72,11 @@ module internal ParseModelFile =
         (trueKeyword <|> falseKeyword) .>>? (notFollowedBy (many1Satisfy isIdentifierChar))
 
     // parses a number
-    let number : Parser<_,UserState> =
-        many1Satisfy isDigit |>> ( fun value -> (bigint.Parse value |> int32 |> Val.IntVal |> Expr.Literal ))
+    let numberVal : Parser<_,UserState> =
+        many1Satisfy isDigit |>> ( fun value -> (bigint.Parse value |> int32 |> Val.IntVal ))
+
+    let value : Parser<_,UserState> =
+        boolVal <|> numberVal        
         
     let parseIdentifierDecl (id_type:IdentifierType) : Parser<_,UserState> =        
         let parseIdentifier = identifier (IdentifierOptions())
@@ -97,7 +100,18 @@ module internal ParseModelFile =
                     Reply(ReplyStatus.Error,mergeErrors identifier.Error error)
             else
                 Reply(identifier.Status,identifier.Error)
+                
+    let pushUserStateStackComponent : Parser<_,UserState> =
+        spaces // TODO
+     
+    let popUserStateStackComponent : Parser<_,UserState> =
+        spaces // TODO
 
+    let pushUserStateStackCall : Parser<_,UserState> =
+        spaces // TODO
+     
+    let popUserStateStackCall : Parser<_,UserState> =
+        spaces // TODO
 
     // parse identifier of variables, fields, ports and components
     let varIdDecl: Parser<_,UserState> =
@@ -123,7 +137,8 @@ module internal ParseModelFile =
     let pstring_ws s : Parser<_,UserState> =
         pstring s .>> spaces
     let boolVal_ws = boolVal .>> spaces
-    let number_ws = number .>> spaces
+    let numberVal_ws = numberVal .>> spaces
+    let value_ws = value .>> spaces
     let varIdDecl_ws = varIdDecl .>> spaces
     let varIdInst_ws = varIdInst .>> spaces
     let fieldIdDecl_ws = fieldIdDecl .>> spaces
@@ -164,8 +179,8 @@ module internal ParseModelFile =
 
         // recursive term parser for expressions
         opp.TermParser <-
-            (boolVal_ws) <|> 
-            (number_ws) <|>
+            (boolVal_ws |>> Expr.Literal) <|> 
+            (numberVal_ws |>> Expr.Literal) <|>
             (fieldIdInst_ws |>> Expr.ReadField) <|>
             (varIdInst_ws |>> Expr.ReadVar) <|> 
             (parenExpr_ws)
@@ -224,12 +239,14 @@ module internal ParseModelFile =
         (boolType <|> intType) .>> spaces
     
     let typedVarDecl_ws : Parser<_,UserState> =
-        let createVarSym (var,_type) =
+        let createVarSym var _type =
             {
                 VarSym.Var = var ;
                 VarSym.Type = _type ;
             }
-        (varIdDecl_ws .>> (pstring_ws ":" )) .>>. (type_ws) |>> createVarSym
+        pipe2 (varIdDecl_ws .>> (pstring_ws ":" )) 
+              (type_ws)
+              createVarSym
 
     let typedVarDeclSection_ws =
         sepBy typedVarDecl_ws (pstring_ws ",")
@@ -241,29 +258,42 @@ module internal ParseModelFile =
     let behaviour_ws = behaviour .>> spaces
     
     let (comp:Parser<_,UserState>), compRef = createParserForwardedToRef()
+    let comp_ws = comp .>> spaces
+
+    let typedFieldDecl_ws : Parser<_,UserState> =        
+        let createFieldSym var (init:Val list) =
+            let _type = 
+                match init.Head with
+                    | Val.BoolVal(_) -> Type.BoolType
+                    | Val.IntVal(_) -> Type.IntType
+            {
+                FieldSym.Field = var ;
+                FieldSym.Type = _type ;
+                FieldSym.Init = init ;
+            }
+        attempt (pipe2 (fieldIdDecl_ws .>> (pstring_ws "="))
+                       (many1 value_ws)
+                       createFieldSym)
 
     do compRef :=
         let createComponent comp subcomp fields reqPorts provPorts bindings (locals,stm) =
             {
                 CompSym.Comp = comp;
-                CompSym.Subcomp = []; // TODO: subcomp;
-                CompSym.Fields = []; // TODO:  fields;
+                CompSym.Subcomp = subcomp;
+                CompSym.Fields = fields;
                 CompSym.ReqPorts = []; // TODO:  reqPorts;
                 CompSym.ProvPorts = []; // TODO:  provPorts;
                 CompSym.Bindings = []; // TODO:  bindings;
                 CompSym.Locals = locals;
                 CompSym.Stm = stm;
             }
-        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws)
+        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws .>> (pstring_ws "{"))
+              (many comp_ws)
+              (many typedFieldDecl_ws)
               (spaces)
               (spaces)
               (spaces)
-              (spaces)
-              (spaces)
-              ((pstring_ws "{")  >>. behaviour_ws .>> (pstring "}"))
+              (behaviour_ws .>> (pstring "}"))
               createComponent
         
-
-    let comp_ws = comp .>> spaces
-
     let modelFile = comp_ws
