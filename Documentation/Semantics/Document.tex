@@ -338,8 +338,8 @@ component C
 	}
 		
 	// bindings
-	C.M (* $\rightarrow_\mathtt{d}$ *) D.X // delayed
-	D.Y (* $\rightarrow_\mathtt{i}$ *) C.Y // instantaneous
+	M (* $\delayedBinding$ *) D.X // delayed
+	D.Y (* $\instantBinding$ *) Y // instantaneous
 	
 	// behavior
 	{
@@ -498,31 +498,44 @@ $\signature(\provPortDeclSyn{\provPort}{\toList{\varDecl}_\mathit{in}}{\toList{\
 = (\typeof(\toList{\var_{\mathit{in}}}), \typeof(\toList{\var_{\mathit{io}}}))$.
 
 \subsubsection{Bindings}
-A binding binds a required port to a provided port. The binding must be either between two components on the
+A \textit{binding} binds a required port to a provided port. The binding must be either between two components on the
 same level within the hierarchy or must span at most one level of the hierarchy. A binding can be either
-instantaneous or delayed. When a required port with a delayed binding is invoked, the corresponding provided port is executed
-at the beginning of the next step with the provided parameters, the computed results are cached and the results of the invocation
-of the previous state are returned. If the same provided port is invoked multiple times in a delayed fashion, the results are also
-cached multiple times, always returning the computed values during the next step that corresponds to the appropriate invocation
-during the current step. If the provided port does not have any incoming parameters, it suffices to cache the results once.
+\textit{instantaneous} or \textit{delayed}.
 
-To uniquely identify a port of a component or a subcomponent, a binding must qualify a port with the component the port belongs
-to. The component can be any of the parent component's subcomponents or to the parent component itself.
-\begin{equation*} 
-	\bindingDecl \in \BindingDecl :=
-		\bindingDeclSyn{\qualifiedName{\comp_\reqPort}{\reqPort}}{\qualifiedName{\comp_\provPort}{\provPort}}{\instantBinding}
-		\mid
-		\bindingDeclSyn{\qualifiedName{\comp_\reqPort}{\reqPort}}{\qualifiedName{\comp_\provPort}{\provPort}}{\delayedBinding}
-\end{equation*}
+When a required port is invoked, the provided port bound to it is executed. Therefore, there must be exactly one binding for every
+required port; on the other hand, there can be multiple or no bindings for provided ports. If the binding is instantaneous, the
+bound provided port is executed using the current field environment. Delayed bindings, however, evaluate the provided port using
+the state of the field environment at the end of the previous execution step. During a delayed computation, no required ports with
+delayed bindings are allowed to be invoked. Also, the field environment is not allowed to change, therefore all assignments to
+fields are illegal. Otherwise, it would be possible to ``rewrite history''.
+
+Formally, a binding binds a \textit{binding source} to a \textit{binding target}; either instantaneously or delayed. A
+binding source uniquely identifies a provided port of some component; if no component is given, the ``current'' component is
+implied. Otherwise the component must be a direct subcomponent of the ``current'' component. Similarly, a binding target uniquely
+identifies a required port of some component.
+\begin{align*} 
+	\bindingSrc \in \BindingSrc &:=
+		\provPort \mid \qualifiedName{\comp}{\provPort}
+	\\
+	\bindingTarget \in \BindingTarget &:=
+		\reqPort \mid \qualifiedName{\comp}{\reqPort} 
+	\\
+	\bindingType \in \BindingType &:=
+		\instantBinding \mid \delayedBinding
+	\\
+	\bindingDecl \in \BindingDecl &:=
+		\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType}
+\end{align*}
 
 We define a substitution operation for components used within bindings as follows: Given a component $\comp$ that is to be
-replaced by component $\comp'$, we update a binding $\bindingDecl$ using the notation $\bindingDecl\left[\comp \mapsto
-\comp'\right]$, such that
-$(\bindingDeclSyn{\qualifiedName{\comp_\reqPort}{\reqPort}}{\qualifiedName{\comp_\provPort}{\provPort}}{\anyBinding})[\comp
-\mapsto \comp'] = \bindingDeclSyn{\qualifiedName{\comp_1}{\reqPort}}{\qualifiedName{\comp_2}{\provPort}}{\anyBinding}$ where
-$\comp_1 = \comp_\reqPort$ if $\comp_1 \neq \comp$ and $\comp_1 = \comp'$ otherwise; and $\comp_2 = \comp_\provPort$ if $\comp_2
-\neq \comp$ and $\comp_2 = \comp'$ otherwise.
-For a list of bindings $\toList{\bindingDecl}$ we use the notational convention
+replaced by component $\comp'$, we update a binding source $\bindingSrc$ using the notation $\bindingSrc[\comp
+\mapsto \comp']$, such that $(\provPort)[\comp \mapsto \comp'] = \provPort$ and $(\qualifiedName{\comp_1}{\provPort})[\comp
+\mapsto \comp'] = \comp_2$ where $\comp_2 = \comp$ if $\comp \neq \comp'$ and $\comp_2 = \comp'$ otherwise. We define a
+corresponding component substitution operation for binding targets as well. For bindings $\bindingDecl$, we then use the
+notation $\bindingDecl[\comp \mapsto \comp']$, such that
+$(\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType})[\comp
+\mapsto \comp'] = \bindingDeclSyn{\bindingTarget[\comp \mapsto \comp']}{\bindingSrc[\comp \mapsto \comp']}{\bindingType}$.
+For a list of bindings $\toList{\bindingDecl}$, we use the notational convention
 $\toList{\bindingDecl}[\comp \mapsto \comp']$ to substitute the component in all bindings contained in the list.
 
 \subsubsection{Components}
@@ -587,8 +600,7 @@ We only consider components that are well-formed according to the following crit
 	\item To decide: Should we restrict calls to subcomponent behaviors to exactly one invocation per step?
 	\item All expressions and statements are typed correctly.
 	\item All fields, required ports, and provided ports within a component have a unique name.
-	\item All subcomponents of a component have unique names; additionally, a parent component has a name that is different from the
-	names of all of its subcomponents.
+	\item All subcomponents of a component have unique names.
 	\item All statements and expressions respect the scoping of parameters, locals, fields, and required ports.
 	\item All bindings respect the component hierarchy: A binding connecting two ports of components $\comp_1$ and $\comp_2$ within
 	the context of component $\comp$ with subcomponents $\toSet{s}$ is only well-formed if $\comp_1, \comp_2 \in \{ \comp \} \cup
@@ -596,8 +608,15 @@ We only consider components that are well-formed according to the following crit
 	\item There are no circular bindings, resulting in a provided port indirectly invoking itself. Such a circle can only be allowed
 	if at least one of the involved bindings is delayed.
 	\item There is exactly one binding for each required port; there can be none, one, or multiple bindings for a provided port.
+	\item A binding source or target within a component $\comp$ may reference $\comp$ if and only if $\comp$ has a subcomponent also
+	named $\comp$.
 	\item The ports of a binding are compatible, that is, they have the same signature (= type, order, and number of input and
 	output parameters).
+	\item A provided port can only be part of a delayed binding if it does not assign to any fields. This requirement is transitive,
+	meaning that all ports called by such a provided port are also not allowed to write to fields.
+	\item A provided port can only be part of a delayed binding if it does not invoke any required ports with a delayed binding. This
+	requirement is transitive, meaning that all ports called by such a provided port are also not allowed invoke required ports with
+	a delayed binding.
 	\item Required ports are invoked with the correct parameters (both in type and number).
 	\item All ports mentioned in a binding are actually declared in the respective component.
 	\item All invoked required ports are actually declared in the component.
@@ -618,17 +637,20 @@ We only consider components that are well-formed according to the following crit
 The nondeterministic rule system $\stmArrowFm$ is parametrized over a component declaration or hierarchy $\compDecl$. It defines
 the natural semantics of statements.
 \begin{align*}
-	\mathit{Configurations} \colon & \;\configurationFm{\stmFm, \fieldEnv, \varEnvFm, \toListNE{\comp}} \in \StmFm \times \FieldEnv \times
-	\VarEnvFm \times \ToListNE{\Comp}, \; \configurationFm{\fieldEnv, \varEnvFm} \in \FieldEnv \times \VarEnvFm
+	\mathit{Configurations} \colon & \;\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}} \in \StmFm
+	\times \FieldEnv \times \FieldEnv \times \VarEnvFm \times \ToListNE{\Comp}, \; \configurationFm{\fieldEnv, \varEnvFm} \in
+	\FieldEnv
+	\times
+	\VarEnvFm
 	\\
-	\mathit{Transitions} \colon & \;\configurationFm{\stmFm, \fieldEnv, \varEnvFm, \toListNE{\comp}} \stmArrowFm
+	\mathit{Transitions} \colon & \;\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}} \stmArrowFm
 	\configurationFm{\fieldEnv', \varEnvFm'}
 \end{align*}
 
 The skip statement has no effect and is therefore simply discarded.
 \begin{equation*}
 	\tag{skip}
-	\configurationFm{\skipStm, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\skipStm, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv, \varEnvFm}
 \end{equation*}
@@ -637,7 +659,7 @@ Assignments to a variable update the variable environment accordingly, replacing
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign${}_\text{v}$}
-	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv, \varEnvFm[\var \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm]}
 \end{equation*}
@@ -646,7 +668,7 @@ Assignments to a field update the field environment accordingly, replacing the f
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign${}_\text{f}$}
-	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv[\toListNE{\comp}, \field \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm], \varEnvFm}
 \end{equation*}
@@ -656,16 +678,16 @@ Sequential composition executes two statements sequentially, carrying along the 
 	\tag{seq}
 	\dfrac
 	{
-		\configurationFm{\stmFm_1, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\stmFm_1, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv_1, \varEnvFm_1}
 		\qquad
-		\configurationFm{\stmFm_2, \fieldEnv_1, \varEnvFm_1, \toListNE{\comp}}
+		\configurationFm{\stmFm_2, \fieldEnv_1, \fieldEnvOld, \varEnvFm_1, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv_2, \varEnvFm_2}
 	}
 	{
-		\configurationFm{\seqStm{\stmFm_1}{\stmFm_2}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\seqStm{\stmFm_1}{\stmFm_2}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv_2, \varEnvFm_2}
 	}
@@ -677,12 +699,13 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\tag{cmd}
 	\dfrac
 	{
-		\configurationFm{\stmFm_i, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\stmFm_i, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}, \fieldEnv, \varEnvFm,
+		\configurationFm{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}, \fieldEnv, \fieldEnvOld,
+		\varEnvFm,
 		\toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
@@ -690,27 +713,27 @@ evaluates to true, the rule cannot be applied and hence the program is ``stuck''
 	\qquad \text{if} \quad \ExprSem{e_i} \fieldEnv(\toListNE{\comp}) \varEnvFm = \true
 \end{equation*}
 
-We define a helper function $\boundof_\compDecl \colon \ToListNE{\Comp} \times \ReqPort \rightarrow \liftFailure{(\ToListNE{\Comp}
-\times \ProvPort)}$ parametrized over a component hierarchy $\compDecl$ that returns the provided port bound to a required
-port as follows:
+We define a helper function $\boundof_{\compDecl, \bindingType} \colon \ToListNE{\Comp} \rightarrow \ReqPort
+\rightarrow \liftFailure{(\ToListNE{\Comp} \times \ProvPort)}$ that is parametrized over a component hierarchy $\compDecl$ and a
+binding type $\bindingType$. It returns the provided port bound to a required port as follows:
 \begin{align*}
-	\boundof_\compDecl(\toList{\comp} \cons \comp, \reqPort) &=
+	\boundof_{\compDecl, \bindingType}(\toList{\comp} \cons \comp, \reqPort) &=
 		\begin{cases}
 			(\toList{\comp} \cons \comp, \provPort) & \; \, \text{if } 
-				\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp}{\provPort}}{\instantBinding} \in
+				\bindingDeclSyn{\reqPort}{\provPort}{\bindingType} \in
 				\compDecl[\toList{\comp} \cons \comp] \\
 			(\toList{\comp} \cons \comp \cons \comp', \provPort) & \; \, \text{if } 
-				\bindingDeclSyn{\qualifiedName{\comp}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\instantBinding} \in
-				\compDecl[\toList{\comp} \cons \comp] \wedge \comp' \neq \comp
+				\bindingDeclSyn{\reqPort}{\qualifiedName{\comp'}{\provPort}}{\bindingType} \in
+				\compDecl[\toList{\comp} \cons \comp]
 		\end{cases} \\
-	\boundof_\compDecl(\toList{\comp} \cons \comp_1 \cons \comp_2, \reqPort) &=
+	\boundof_{\compDecl, \bindingType}(\toList{\comp} \cons \comp_1 \cons \comp_2, \reqPort) &=
 		\begin{cases}
 			(\toList{\comp} \cons \comp_1, \provPort) & \text{if } 
-				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\qualifiedName{\comp_1}{\provPort}}{\instantBinding} \in
+				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\provPort}{\bindingType} \in
 				\compDecl[\toList{\comp} \cons \comp_1] \\
 			(\toList{\comp} \cons \comp_1 \cons \comp', \provPort) & \text{if } 
-				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\instantBinding} \in
-				\compDecl[\toList{\comp} \cons \comp_1] \wedge \comp' \neq \comp_2
+				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\bindingType} \in
+				\compDecl[\toList{\comp} \cons \comp_1]
 		\end{cases}
 \end{align*}
 
@@ -719,21 +742,47 @@ While the field environment remains unchanged, the component context might chang
 variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
 done with the execution of the port, we restore our previous variable environment, taking over the port's output values.
 \begin{multline*}
-	\tag{call${}$}
+	\tag{call${_\instantBinding}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}), \varof(\toList{\varDecl}_\mathit{io}) \mapsto
-		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
+		\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}),
+		\varof(\toList{\varDecl}_\mathit{io}) \mapsto \ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
 	}
-	\\ \text{if} \quad \boundof_\compDecl(\toListNE{\comp},
+	\\ \text{if} \quad \boundof_{\compDecl, \instantBinding}(\toListNE{\comp},
+	\reqPort) = (\toListNE{\comp}_\provPort, \provPort) \wedge
+	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm})
+	\in \compDecl[\toListNE{\comp}_\provPort]
+\end{multline*}
+
+When a required port with a delayed binding to a provided port is called, we execute the bound port's statement in the context of
+the \textit{previous field environment}. The component context might change and the port is executed in a new, empty
+variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
+done with the execution of the port, we restore our previous variable and field environments, only taking over the port's output
+values.
+\begin{multline*}
+	\tag{call${_\delayedBinding}$}
+	\dfrac
+	{
+		\configurationFm{\stmFm, \fieldEnvOld, \fieldEnvOld, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}),
+		\varof(\toList{\varDecl}_\mathit{io}) \mapsto \ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
+		\toListNE{\comp}_\provPort}
+			\stmArrowFm
+		\configurationFm{\fieldEnv', \varEnvFm'}
+	}
+	{
+		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+			\stmArrowFm
+		\configurationFm{\fieldEnv, \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
+	}
+	\\ \text{if} \quad \boundof_{\compDecl, \delayedBinding}(\toListNE{\comp},
 	\reqPort) = (\toListNE{\comp}_\provPort, \provPort) \wedge
 	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm})
 	\in \compDecl[\toListNE{\comp}_\provPort]
@@ -746,13 +795,13 @@ variable environment.
 	\tag{beh}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \varEnvFmEmpty, \toListNE{\comp}
+		\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFmEmpty, \toListNE{\comp}
 		\cons \comp}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\invokeBeh{\comp}, \fieldEnv, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\invokeBeh{\comp}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm}
 	}
