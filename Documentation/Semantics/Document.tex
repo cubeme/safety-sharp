@@ -8,6 +8,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[T1,hyphens]{url}
 \usepackage[pdftex]{hyperref}
+\usepackage{soul}
 \usepackage{mathrsfs}
 \usepackage{amsfonts}
 \usepackage{stmaryrd}
@@ -288,87 +289,66 @@ values for each variable. The statement of a program is executed once during eac
 \subsection{Well-Formedness of \Fil Programs}
 \begin{itemize}
 	\item All expressions and statements are typed correctly.
-	\item All variables are written to before they are assigned (definitely assigned, see also discussion of well-formedness of
-	formal models).
+	\item \st{All variables are written to before they are assigned (definitely assigned, see also discussion of well-formedness of
+	formal models).} Now guaranteed as all variables are default-initialized.
 \end{itemize}
 
-\section{Formal Models}
+\section{Safety Component Model}
 We're now going to define the syntactic and semantic
-domains for formal models. The basic structure of a formal model is shown in~\cref{FormalModelOverview}.
+domains of the Safety Component Metamodel. The basic structure of a Safety Component Model (\Scm) is shown
+in~\cref{FormalModelOverview}.
+The models can be parsed in one step, as the models follow a declare-before-use paradigm.
 
 \begin{lstlisting}[tabsize=4,basicstyle=\footnotesize\ttfamily,label=FormalModelOverview,caption={Basic Structure of a
-Formal Model},escapeinside={(*}{*)}]
+Safety Component Model},escapeinside={(*}{*)}]
 component C
 {
 	// subcomponents
 	component D
 	{
 		// fields
-		bool b = false;
+		b : bool = false; // deterministic initial value
 			 		
 		// required port
-		Y(;);
+		Y();
 		
 		// provided port
-		X(int p1, int p2; bool r1, bool r2)
+		X(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool)
 		{
-			Y(;);
+			Y();
 			r1 = false;
 			r2 = b;
 		}
 	}
 	
 	// fields
-	int x = { 1, 2, 3 };
-	bool b = { true, false };
+	x : int = 1, 2, 3; // nondeterministic initial value
+	b : bool = true, false;
+	stuckValue : bool = b; // initial value depends on initial value of other field
 	
-	// Fault
-	fault F
-	{
-		// fields
-		val : bool = true, false
-		demand : int = 0
-		
-		//ondemand
-		//{
-		//	demand := demand + 1
-		//}
-		
-		step
-		{
-			(true (* $\guardedArrow$ *) F := enabled; true (* $\guardedArrow$ *) F := disabled)
-		}
-	}
-	
-	bool stuckValue = b;
+	// Faults
 	fault Stuck
 	{
 		step
 		{
 			choice
 			{
-				true => 
-				{
-					Stuck = true;
-					stuckValue = b;
-				} 
-				true =>
-				{
-					Stuck = false;
-				}
+				true => { Stuck = true; stuckValue = b; } // accesses to fields 
+				true => { Stuck = false; }                // of declaring component
 			}
 		}
 	}
 			
-	// required port
-	M(in: int p1, int p2, inout: bool r1, bool r2);
+	// required ports
+	M(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool);
 		
-	// provided port
+	// provided ports; overloaded on fault expressions
 	[NoFaults]
-	X(in: int p1, int p2, inout: bool r1, bool r2)
+	X(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool);
 	{
 		locals
 		{
+			// Default initialization: int = 0, bool = false
 			int x;
 			int y;
 		}
@@ -377,36 +357,23 @@ component C
 		r2 = p2 > x && b;
 	}
 	
-	[Stuck1]
-	X(in: int p1, int p2, inout: bool r1, bool r2) 
+	[Stuck] // or more complex fault expression like [F1 && F2 && !F3 && !F4]
+	X(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool);
 	{
 		r1 = stuckValue;
 		r2 = stuckValue;
 	}
 	
-	[Stuck2]
-	X(in: int p1, int p2, inout: bool r1, bool r2)
-	{
-		r1 = 1;
-	}
-	
-	[F && F2 && !Stuck1 && !Stuck2]
-	X(in: int p1, int p2, inout: bool r1, bool r2)
-	{
-		r1 = val + valF2;
-		r2 = true;
-	}	
-		
 	[NoFaults]
 	Y()
 	{
 	}
 		
 	// bindings
-	M = delayed D.X 
-	D.Y = Y
+	M = delayed D.X;  // ok as D.X has no side-effects
+	D.Y = Y; // by default, bindings are instantaneous
 	
-	// behavior
+	// step behavior; overloaded on fault expressions
 	[NoFaults]
 	step
 	{
@@ -429,17 +396,20 @@ component C
 		step F;
 	}
 	
-	[CompleteFailure]
+	[Stuck]
 	step
 	{
+		locals { bool l1; }
+		M(in: x, x - 1, inout: l1, l2);
 	}
 }
 \end{lstlisting}
 
-\subsection{Domains of Formal Models}
-We assume a domain of variables that represent provided port input and output parameters as well as local variables with a default
-initial value. Fields, on the other hand, represent component-global variables with one or more initial values. Required and
-provided ports allow different components to communicate with each other.
+\subsection{Domains of Safety Component Models}
+We assume a domain of \textit{variables} that represent provided port input and output parameters as well as local variables with
+a default initial value. \textit{Fields}, on the other hand, represent component-global variables with one or more initial values.
+\textit{Required} and \textit{provided ports} allow different components to communicate with each other. A component can
+optionally be affected by one or more \textit{faults}.
 \begin{align*}
 	\var &\in \Var \\
 	\field &\in \Field \\
@@ -449,7 +419,7 @@ provided ports allow different components to communicate with each other.
 	\comp&\in \Comp
 \end{align*}
 
-Similar to \Fil, formal models have values of Boolean and integer type; we also have a domain of types
+Similar to \Fil programs, Safety Component Models have values of Boolean and integer type; we also have a domain of types
 for those values.
 \begin{align*}
     \bool \in \Bool &:= \{ \true, \false \}
@@ -463,18 +433,21 @@ for those values.
 
 During execution, a \textit{variable environment} stores the values of all local variables as well as all input and output
 parameters of a provided port.
-A \textit{field environment} stores the values of all fields of all components in the hierarchy. Since fields are only unique
-within the context of a single component, the field environment needs to know the the concrete component the field is declared
-in. A component is uniquely identified by the path through the component hierarchy starting at the root and proceeding down to the
-component. We occasionally use field environments in a curried form where the component path has already been provided.
+A \textit{field environment} stores the values of all fields of all components in the hierarchy. Similarly, a \textit{fault
+environment} is used to determine whether a component fault occurs. Since fields and faults are only unique within the context of
+a single component, the field and fault environments need to know the the concrete component the field or fault is declared in.
+A component is uniquely identified by the path through the component hierarchy starting at the root and proceeding down to the
+component. We occasionally use field and fault environments in a curried form where the component path has already been provided.
 \begin{align*}
+	\varEnvFm \in \VarEnvFm &:= \Var \rightarrow \liftFailure{\Val} \\
 	\fieldEnv \in \FieldEnv &:= \ToListNE{\Comp} \rightarrow \liftFailure{(\Field \rightarrow \liftFailure{\Val})} \\
 	\fieldEnvCurried \in \FieldEnvCurried &:= \Field \rightarrow \liftFailure{\Val} \\
-	\varEnvFm \in \VarEnvFm &:= \Var \rightarrow \liftFailure{\Val}
+	\faultEnv \in \FaultEnv &:= \ToListNE{\Comp} \rightarrow \liftFailure{(\Fault \rightarrow \liftFailure{\Bool})} \\
+	\faultEnvCurried \in \FaultEnvCurried &:= \Fault \rightarrow \liftFailure{\Bool}
 \end{align*}
 
-$\varEnvFmEmpty$ and $\fieldEnvEmpty$ denote the empty variable and field environments, respectively. We use the standard
-notation $\varEnvFm\left[\var \mapsto \val \right]$ to update the value of a variable $\var$ and also allow for simultaneous
+$\varEnvFmEmpty$, $\fieldEnvEmpty$ and $\faultEnvEmpty$ denote the empty variable, field, and fault environments, respectively. We
+use the standard notation $\varEnvFm\left[\var \mapsto \val \right]$ to update the value of a variable $\var$ and also allow for simultaneous
 updates, written as $\varEnvFm\left[\var_1, \ldots, \var_n \mapsto \val_1, \ldots, \val_n\right]$.
 For field environments, the notation $\fieldEnv\left[\toListNE{\comp}, \field \mapsto \val \right]$ is used to update the value of
 some field $\field$ within the hierarchy of components at location $\toListNE{\comp}$, where
@@ -488,17 +461,18 @@ some field $\field$ within the hierarchy of components at location $\toListNE{\c
 
 We also allow for simultaneous updates of multiple fields of the same component, written as $\fieldEnv\left[\toListNE{\comp},
 \field_1, \ldots, \field_n \mapsto \val_1, \ldots, \val_n \right]$ or $\fieldEnv\left[\toListNE{\comp}, \field_1, \ldots, \field_n
-\mapsto \val \right]$ if all fields are updated to the same value.
+\mapsto \val \right]$ if all fields are updated to the same value. Similar notational conventions are used to update fault
+environments.
 
 \subsubsection{Expressions}
 Formal models support only side effect free expressions. Expressions consist of literal values, read operations of variables
 and fields as well as a small set of unary and binary operator applications.
 \begin{align*}
-	\uop \in \Uop & := - \mid \neg
+	\uop \in \Uop & := \minusExprSym \mid \negateExprSym
 	\\
-    \bop \in \Bop & := {} + {} \mid {} - {} \mid {} \ast {} \mid {} / {}
-                       \mid {} \% {} \mid {} > {} \mid {} < {} \mid {} \geq {} 
-                       \mid {} \leq {} \mid {} = {} \mid {} \neq {} \mid {} \wedge {} \mid {} \vee {}
+    \bop \in \Bop & := \plusExprSym \mid \minusExprSym \mid \multExprSym \mid \divExprSym \mid \modExprSym
+    				   \mid \lessExprSym \mid \greaterExprSym \mid \leqExprSym \mid \geqExprSym
+    				   \mid \equalsExprSym \mid \notEqualsExprSym \mid \andExprSym \mid \orExprSym
 	\\
 	\expr \in \Expr & := 
 		\val \mid
@@ -509,7 +483,7 @@ and fields as well as a small set of unary and binary operator applications.
 \end{align*}
 
 The function $\ExprSem{-} \colon \Expr \rightarrow \FieldEnvCurried \rightarrow \VarEnvFm \rightarrow \liftFailure{\Val}$ defines the
-semantics of expressions. Since an expression of a non well-formed model might potentially accessed an undefined variable, the expression
+semantics of expressions. Since an expression of a non well-formed model might potentially access an undefined variable, the expression
 evaluation might fail. 
 \begin{align*}
 	\ExprSem{\val} \fieldEnvCurried \varEnvFm &= \val \\
@@ -521,23 +495,45 @@ evaluation might fail.
 	(\ExprSem{\expr_1} \fieldEnvCurried \varEnvFm, \ExprSem{\expr_2} \fieldEnvCurried \varEnvFm)
 \end{align*}
 
-\subsubsection{Statements}
-Formal models support skip statements, variable and field assignments, sequential compositions, guarded commands, and
-invocations of required ports. Only variables but not fields are allowed as output parameters of required port invocations.
+\subsubsection{Fault Expressions}
+Fault expressions are used to select different overloads of component behaviors and provided ports, modeling the effects of
+component faults on the behavior of the component itself or to zero, one, or more of its ports.
+\begin{equation*}
+	\faultExpr \in \FaultExpr := \fault \mid \negateExpr{\faultExpr} \mid \andExpr{\faultExpr_1}{\faultExpr_2}
+\end{equation*}
 
-We currently also explicitly allow for an invocation of a subcomponent's behavior. We have yet to determine if that is actually
-needed.
+The function $\FaultExprSem{-} \colon \FaultExpr \rightarrow \FaultEnvCurried \rightarrow \liftFailure{\Bool}$ defines the
+semantics of fault expression. Since a fault expression of a non well-formed model might potentially access an undefined fault,
+the expression evaluation might fail.
 \begin{align*}
-	\guardedCmd \in \GuardedCmd &:= \guardedClause{\expr}{\stmFm} \\
+	\FaultExprSem{\fault} \faultEnvCurried &= \faultEnvCurried(\fault) \\
+	\FaultExprSem{\negateExpr{\faultExpr}} \faultEnvCurried &= \neg \FaultExprSem{\faultExpr} \faultEnvCurried \\
+	\FaultExprSem{\andExpr{\faultExpr_1}{\faultExpr_2}} \faultEnvCurried &= \FaultExprSem{\faultExpr_1} \faultEnvCurried \wedge
+	\FaultExprSem{\faultExpr_2} \faultEnvCurried
+\end{align*}
+
+\subsubsection{Statements}
+An \Scm supports variable and field assignments, sequential composition, guarded commands,
+invocations of required ports, as well as invocation of step behaviors of subcomponents and faults. Only variables but not fields
+are allowed as output parameters of required port invocations.
+\begin{align*}
+	\guardedCmd \in \GuardedCmd &:= \guardedClause{\expr}{\blockStm{\stmFm}} \\
 	\stmFm \in \StmFm &:=
-		\skipStm \mid 
 		\assignVarStm{\var}{\expr} \mid
 		\assignVarStm{\field}{\expr} \mid
-		\seqStm{\stmFm_1}{\stmFm_2} \mid
-		\toListNE{\guardedCmd} \mid
-		\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}} \mid
-		\invokeBeh{\comp}
+		\assignVarStm{\fault}{\expr} \mid
+		\seqStm{\stmFm}{\toList{\stmFm}} \mid
+		\\&\phantom{:= \;} \mid 
+		\guardedStm{\toListNE{\guardedCmd}}
+		\\&\phantom{:= \;} \mid
+		\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}
+		\\&\phantom{:= \;} \mid
+		\stepStm{\comp} \mid \stepStm{\fault}
 \end{align*}
+
+By convention, the list of input parameters or the list of input/output parameters of a required port invocation can simply be
+omitted if both or either of them are empty. For instance, the statements $\invokePortNoIn{\reqPort}{\toList{\var}}$ and
+$\invokePort{\reqPort}{\missing}{\toList{\var}}$ are considered equivalent in the following.
 
 \subsubsection{Variable and Field Declarations}
 A variable declaration introduces typed local variables or parameters.
@@ -551,7 +547,7 @@ a provided port.
 \end{align*}
 
 We assume two functions $\varof \colon \VarDecl \rightarrow \Var$ and $\typeof \colon \VarDecl \rightarrow \Type$ with
-$\varof(\varDeclSyn{\var}{\type}) = \var$ and $\typeof(\varDeclSyn{\var}{\type}) = \type$. Similarly for fields, we define
+$\varof(\varDeclSyn{\var}{\type}) = \var$ and $\typeof(\varDeclSyn{\var}{\type}) = \type$. Similarly for fields,
 $\fieldof \colon \FieldDecl \rightarrow \Field$, $\typeof \colon \FieldDecl \rightarrow \Type$, and $\init \colon \FieldDecl \rightarrow
 \ToSet{\Val}$ such that $\fieldof(\fieldDeclSyn{\field}{\type}{\toListNE{\val}}) = \field$,
 $\typeof(\fieldDeclSyn{\field}{\type}{\toListNE{\val}}) = \type$, and
@@ -559,29 +555,43 @@ $\init(\fieldDeclSyn{\field}{\type}{\toListNE{\val}}) = \asSet(\toListNE{\val})$
 on lists of variable and field declarations, applying the function to each element of the list; for instance, $\varof(\varDecl_1
 \cons \ldots \cons \varDecl_n) = \varof(\varDecl_1) \cons \ldots \cons \varof(\varDecl_n)$.
 
+\subsubsection{Behaviors}
+A behavior resembles a function body of a programming language such as C with all local variables declared at the beginning of the
+function. All local variables of Safety Component Models are default-initialized, i.e., a local variable of type $\intType$ is
+initialized to $\texttt{0}$ and a local variable of type $\boolType$ is initialized to $\false$.
+\begin{equation*}
+	\behavior \in \Behavior := \blockStm{\localsStm{\toList{\varDecl}} \; \stmFm}
+\end{equation*}
+
+The function $\locals \colon \behavior \rightarrow \ToList{\VarDecl}$ is used to select the local variables defined by a behavior:
+$\locals(\blockStm{\localsStm{\toList{\varDecl}} \; \stmFm}) = \toList{\varDecl}$. To select the statement of a behavior, we use
+the function $\stmof \colon \behavior \rightarrow \StmFm$ with $\stmof(\blockStm{\localsStm{\toList{\varDecl}} \; \stmFm}) =
+\stmFm$.
+
 \subsubsection{Required and Provided Ports}
 A required port of a component has a possibly empty list of input parameters and a possibly empty list of input/output parameters. 
 Provided ports are defined similarly. However, they also introduce local names for their input and input/output parameters and
 declare a behavior in form of a statement, optionally also introducing additional local variables. 
 \begin{align*}
 	\reqPortDecl \in \ReqPortDecl &:=
-		\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}}
+		\reqPortDeclSyn{\reqPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}
 	\\
 	\provPortDecl \in \ProvPortDecl &:= \provPortDeclSyn{\provPort}
 		{\toList{\varDecl}_\mathit{in}}
 		{\toList{\varDecl}_\mathit{io}}
-		{\toList{\varDecl}_\mathit{loc}}
-		{\stmFm}
+		{\behavior}
 \end{align*}
 
 The functions $\signature \colon
 \ReqPortDecl \rightarrow \ToList{\Type} \times \ToList{\Type}$ and $\signature \colon \ProvPortDecl \rightarrow \ToList{\Type} \times
 \ToList{\Type}$ return the signature of a required or provided port declaration, that is, the lists of input and input/output
-parameter types:
-$\signature(\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}}) = (\toList{\type_\mathit{in}},
-\toList{\type_\mathit{io}})$ and
-$\signature(\provPortDeclSyn{\provPort}{\toList{\varDecl}_\mathit{in}}{\toList{\varDecl}_\mathit{io}}{\toList{\varDecl}_\mathit{loc}}{\stmFm})
-= (\typeof(\toList{\var_{\mathit{in}}}), \typeof(\toList{\var_{\mathit{io}}}))$.
+parameter types. Therefore,
+$\signature(\reqPortDeclSyn{\reqPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}) =
+(\typeof(\toList{\type_\mathit{in}}), \typeof(\toList{\type_\mathit{io}}))$ and
+$\signature(\provPortDeclSyn{\provPort}{\toList{\varDecl}_\mathit{in}}{\toList{\varDecl}_\mathit{io}}{\behavior})
+= (\typeof(\toList{\var_{\mathit{in}}}), \typeof(\toList{\var_{\mathit{io}}}))$. The behavior declared by a provided port is
+selected using the function $\behaviorof \colon \ProvPortDecl \rightarrow \Behavior$, defined as
+$\behaviorof(\provPortDeclSyn{\provPort} {\toList{\varDecl}_\mathit{in}}{\toList{\varDecl}_\mathit{io}}{\behavior}) = \behavior$.
 
 \subsubsection{Bindings}
 A \textit{binding} binds a required port to a provided port. The binding must be either between two components on the
@@ -606,11 +616,8 @@ identifies a required port of some component.
 	\bindingTarget \in \BindingTarget &:=
 		\reqPort \mid \qualifiedName{\comp}{\reqPort} 
 	\\
-	\bindingType \in \BindingType &:=
-		\instantBinding \mid \delayedBinding
-	\\
 	\bindingDecl \in \BindingDecl &:=
-		\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType}
+		\instantBindingDeclSyn{\bindingTarget}{\bindingSrc} \mid \delayedBindingDeclSyn{\bindingTarget}{\bindingSrc} 
 \end{align*}
 
 We define a substitution operation for components used within bindings as follows: Given a component $\comp$ that is to be
@@ -619,22 +626,23 @@ replaced by component $\comp'$, we update a binding source $\bindingSrc$ using t
 \mapsto \comp'] = \comp_2$ where $\comp_2 = \comp$ if $\comp \neq \comp'$ and $\comp_2 = \comp'$ otherwise. We define a
 corresponding component substitution operation for binding targets as well. For bindings $\bindingDecl$, we then use the
 notation $\bindingDecl[\comp \mapsto \comp']$, such that
-$(\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType})[\comp
-\mapsto \comp'] = \bindingDeclSyn{\bindingTarget[\comp \mapsto \comp']}{\bindingSrc[\comp \mapsto \comp']}{\bindingType}$.
+$(\instantBindingDeclSyn{\bindingTarget}{\bindingSrc})[\comp
+\mapsto \comp'] = \instantBindingDeclSyn{\bindingTarget[\comp \mapsto \comp']}{\bindingSrc[\comp \mapsto \comp']}$ and similar
+for delayed bindings.
 For a list of bindings $\toList{\bindingDecl}$, we use the notational convention
 $\toList{\bindingDecl}[\comp \mapsto \comp']$ to substitute the component in all bindings contained in the list.
 
 \subsubsection{Faults}
-A \textit{fault} defines the the occurrence behavior of undesired or erroneous component behavior. Faults affect provided ports
-such that the behavior of the model with faults is a conservative extension of the model without the occurrence of any faults. A
-fault has to define at least the Boolean field \texttt{faulted}. It can optionally have further fields and a step behavior.
+A \textit{fault} defines the the occurrence behavior of undesired or erroneous component behavior. Faults potentially affect
+provided ports and component step behavior; the integration of such faults is guaranteed to be conservative in the sense that the
+integration of faults into a model does not affect the behavior of the model if the faults do not occur. A fault can read and
+write all of the declaring component's fields.
 \begin{equation*}
-	\faultDecl \in \FaultDecl := \faultDeclSyn{\fault}{\toListNE{\field}}{\toList{\varDecl}}{\stmFm}
+	\faultDecl \in \FaultDecl := \faultDeclSyn{\fault}{\behavior}
 \end{equation*} 
 
-The fields declared by a fault can be read by the component only within the context of fault statements. The fault, on the
-other hand, is free to read all component fields. The component has to explicitly invoke the fault's step function in the
-component's behavior.
+We assume two functions $\faultof \colon \FaultDecl \rightarrow \Fault$ and $\behaviorof \colon \FaultDecl \rightarrow \Behavior$
+with $\faultof(\faultDeclSyn{\fault}{\behavior}) = \fault$ and $\behaviorof(\faultDeclSyn{\fault}{\behavior}) = \behavior$.
 
 \subsubsection{Components}
 A \textit{component} declares sets of required and provided ports, fields, port bindings and subcomponents. They have a behavior

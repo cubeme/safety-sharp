@@ -2,6 +2,7 @@
 \newcommand{\CSharp}{{\settoheight{\dimen0}{C}C\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}\xspace}
 \newcommand{\SSharp}{{\settoheight{\dimen0}{S}S\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}\xspace}
 \newcommand{\SafetySharp}{Safety\-Sharp\xspace}
+\newcommand{\Scm}{\textsc{Scm}\xspace}
 \newcommand{\DotNet}{\textsc{.Net}\xspace}
 \newcommand{\Fil}{\textsc{Fil}\xspace}
 \newcommand{\Fm}{\textsc{Fm}\xspace}
@@ -21,6 +22,8 @@
 \newcommand{\VarEnvFm}{\Sigma_\Fm}
 \newcommand{\FieldEnv}{\Phi}
 \newcommand{\FieldEnvCurried}{\Phi\urcorner}
+\newcommand{\FaultEnv}{\Delta}
+\newcommand{\FaultEnvCurried}{\Delta\urcorner}
 \newcommand{\Val}{\mathit{Value}}
 \newcommand{\stmArrowFil}{\rightarrow_{\Fil}}
 \newcommand{\stmArrowFm}{\xrightarrow{\compDecl}_\Fm}
@@ -42,6 +45,8 @@
 \newcommand{\BindingTarget}{\mathit{BndTarget}}
 \newcommand{\BindingType}{\mathit{BndType}}
 \newcommand{\Fault}{\mathit{Fault}}
+\newcommand{\FaultExpr}{\mathit{FaultExpr}}
+\newcommand{\Behavior}{\mathit{Behavior}}
 
 % Meta variables
 \newcommand{\bool}{b}
@@ -58,9 +63,12 @@
 \newcommand{\varEnvFm}{\varsigma}
 \newcommand{\varEnvFmEmpty}{\varEnvFm_{{}_\failure}}
 \newcommand{\fieldEnv}{\varphi}
+\newcommand{\faultEnv}{\delta}
 \newcommand{\fieldEnvOld}{\varphi_p}
 \newcommand{\fieldEnvCurried}{\phi}
+\newcommand{\faultEnvCurried}{\delta}
 \newcommand{\fieldEnvEmpty}{\fieldEnv_{{}_\failure}}
+\newcommand{\faultEnvEmpty}{\delta_{{}_\failure}}
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
 \newcommand{\type}{\tau}
@@ -81,37 +89,59 @@
 \newcommand{\bindingTarget}{\mathit{bt}}
 \newcommand{\bindingType}{\mathtt{\rightarrowtail}}
 \newcommand{\fault}{\mathit{flt}}
+\newcommand{\faultExpr}{\mathit{fe}}
+\newcommand{\behavior}{\mathit{bhv}}
 
 %Expressions
 \newcommand{\unaryExpr}[2]{#1 #2}
 \newcommand{\binaryExpr}[3]{#2 #1 #3}
 \newcommand{\prev}[1]{\mathtt{prev} \,#1}
-\newcommand{\true}{\mathit{tt}}
-\newcommand{\false}{\mathit{ff}}
+\newcommand{\true}{\texttt{true}}
+\newcommand{\false}{\texttt{false}}
+\newcommand{\negateExprSym}{\texttt{!}}
+\newcommand{\andExprSym}{\texttt{\&\&}}
+\newcommand{\orExprSym}{\texttt{||}}
+\newcommand{\geqExprSym}{\texttt{>=}}
+\newcommand{\leqExprSym}{\texttt{<=}}
+\newcommand{\greaterExprSym}{\texttt{>}}
+\newcommand{\lessExprSym}{\texttt{<}}
+\newcommand{\equalsExprSym}{\texttt{=}}
+\newcommand{\plusExprSym}{\texttt{+}}
+\newcommand{\minusExprSym}{\texttt{-}}
+\newcommand{\multExprSym}{\texttt{*}}
+\newcommand{\divExprSym}{\texttt{/}}
+\newcommand{\modExprSym}{\texttt{\%}}
+\newcommand{\notEqualsExprSym}{\texttt{!=}}
+\newcommand{\negateExpr}[1]{\negateExprSym #1}
+\newcommand{\andExpr}[2]{#1 \; \andExprSym \; #2}
+\newcommand{\valSetExpr}[1]{ \texttt{\{} \; #1 \; \texttt{\}}}
 
 % Statements
-\newcommand{\skipStm}{\mathtt{skip}}
-\newcommand{\assignVarStm}[2]{#1\; \mathtt{:=}\; #2}
-\newcommand{\invokePort}[3]{#1 (#2; #3)}
-\newcommand{\invokeBeh}[1]{#1 ()}
-\newcommand{\seqStm}[2]{#1 \; \mathtt{;} \; #2}
-\newcommand{\guardedArrow}{\mathtt{\twoheadrightarrow}}
+\newcommand{\skipStm}{\texttt{skip;}}
+\newcommand{\assignVarStm}[2]{#1\; \texttt{=}\; #2 \texttt{;}}
+\newcommand{\invokePort}[3]{#1 \texttt{(}\texttt{in:} \; #2, \texttt{inout:} \; #3\texttt{)} \texttt{;}}
+\newcommand{\invokePortNoIn}[2]{#1 \texttt{(}\texttt{inout:} \; #2\texttt{)} \texttt{;}}
+\newcommand{\invokePortNoInOut}[2]{#1 \texttt{(}\texttt{in:} \; #2\texttt{)} \texttt{;}}
+\newcommand{\invokeBeh}[1]{#1 \texttt{()} \texttt{;}}
+\newcommand{\seqStm}[2]{#1 \; #2}
+\newcommand{\guardedArrow}{\texttt{=>}}
 \newcommand{\guardedClause}[2]{#1 \; \guardedArrow \; #2}
-\newcommand{\guardedStm}[1]{(#1)^*}
+\newcommand{\guardedStm}[1]{\texttt{choice} \; \blockStm{#1}} 
+\newcommand{\blockStm}[1]{ \texttt{\{} \; #1 \; \texttt{\}}}
+\newcommand{\stepStm}[1]{ \texttt{step} \; #1 \texttt{;}}
+\newcommand{\localsStm}[1]{ \texttt{locals} \; \texttt{\{} \; #1 \; \texttt{\}}}
 
 % Formal model
-\newcommand{\varDeclSyn}[2]{#1 \; \mathtt{:} \; #2}
-\newcommand{\fieldDeclSyn}[3]{#1 \; \mathtt{:} \; #2 \; \mathtt{=} \; #3}
-\newcommand{\reqPortDeclSyn}[3]{#1 \mathtt{(} #2 \; \mathtt{;} \; #3 \mathtt{)}}
-\newcommand{\provPortDeclSyn}[5]{#1 \mathtt{(} #2 \; \mathtt{;} \; #3 \mathtt{) \; \{} \; #4 \; #5 \; \mathtt{\}}}
-\newcommand{\bindingDeclSyn}[3]{#1 \; #3 \; #2}
-\newcommand{\instantBinding}{\mathtt{\bindingType_i}}
-\newcommand{\delayedBinding}{\mathtt{\bindingType_d}}
-\newcommand{\qualifiedName}[2]{#1\mathtt{.}#2}
-\newcommand{\compDeclSyn}[9]{\texttt{component} \; #1 \; \mathtt{\{} \; #2 \; #3 \; #4 \; #5 \; #6 \; #7 \; \mathtt{\{} \; #8 \;
-#9 \; \mathtt{\}} \; \mathtt{\}}}
-\newcommand{\faultDeclSyn}[4]{\texttt{fault} \; #1 \; \mathtt{\{} \; #2 \; \mathtt{step} \; \mathtt{\{} \; #3 \; #4 \; \mathtt{\}}
-\; \mathtt{\}}}
+\newcommand{\varDeclSyn}[2]{#1 \; \texttt{:} \; #2 \texttt{;}}
+\newcommand{\fieldDeclSyn}[3]{#1 \; \texttt{:} \; #2 \; \texttt{=} \; #3 \texttt{;}}
+\newcommand{\reqPortDeclSyn}[3]{#1 \texttt{(}\texttt{in:} \; #2, \; \texttt{inout:} \; \; #3 \texttt{)} \texttt{;}}
+\newcommand{\provPortDeclSyn}[4]{#1 \texttt{(}\texttt{in:} \; #2, \; \texttt{inout:} \; #3 \texttt{)} \; #4}
+\newcommand{\instantBindingDeclSyn}[2]{#1 \; \texttt{=} \; #2 \texttt{;}}
+\newcommand{\delayedBindingDeclSyn}[2]{#1 \; \texttt{=} \; \texttt{delayed} \; #2 \texttt{;}}
+\newcommand{\qualifiedName}[2]{#1\texttt{.}#2}
+\newcommand{\compDeclSyn}[9]{\texttt{component} \; #1 \; \texttt{\{} \; #2 \; #3 \; #4 \; #5 \; #6 \; #7 \; \texttt{\{} \; #8 \;
+#9 \; \texttt{\}} \; \texttt{\}}}
+\newcommand{\faultDeclSyn}[2]{\texttt{fault} \; #1 \; \texttt{\{} \; \texttt{step} \; #2 \; \texttt{\}}}
 
 % Lifting
 \newcommand{\failure}{\bot}
@@ -131,6 +161,7 @@
 % Functions
 \newcommand{\asSet}{\mathit{set}}
 \newcommand{\ExprSem}[1]{\mathcal{E} \llbracket #1 \rrbracket}
+\newcommand{\FaultExprSem}[1]{\mathcal{F} \llbracket #1 \rrbracket}
 \newcommand{\StmSem}[1]{\mathcal{S} \llbracket #1 \rrbracket}
 \newcommand{\ProgSem}[1]{\mathcal{P} \llbracket #1 \rrbracket}
 \newcommand{\cons}{\circ}
@@ -144,6 +175,8 @@
 \newcommand{\outputs}{\mathit{out}}
 \newcommand{\locals}{\mathit{loc}}
 \newcommand{\stmof}{\mathit{stm}}
+\newcommand{\behaviorof}{\mathit{behavior}}
+\newcommand{\faultof}{\mathit{fault}}
 \newcommand{\req}{\mathit{req}}
 \newcommand{\prov}{\mathit{prov}}
 \newcommand{\delayed}{\mathit{delayed}}
@@ -155,6 +188,7 @@
 \newcommand{\init}{\mathit{init}}
 \newcommand{\defaultof}{\mathit{default}}
 \newcommand{\boundof}{\mathit{bound}}
+\newcommand{\faultField}{\mathit{field}}
 
 % Values
 \newcommand{\mkTuple}[1]{\left( #1 \right)}
