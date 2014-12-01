@@ -1,0 +1,19 @@
+component simple {
+	component nestet {
+		rport1 p( ; inout1 : int )
+		behaviour {
+			.
+			skip
+		}
+	}
+	pport1 p( ; inout2 : int  ) {
+		.
+		inout1 :=5
+	}
+	
+	
+	behaviour {
+		.
+		skip		
+	}
+}

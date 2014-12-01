@@ -61,6 +61,9 @@ type ParsingUserStateWorks () =
             | Failure(errorMsg, _, _) -> failwith errorMsg
         ()
 
+    [<Test>]
+    member this.``popStack works as expected`` () =
+
 
 [<TestFixture>]
 type ExampleFiles() =
@@ -128,6 +131,34 @@ type ExampleFiles() =
     [<Test>]
     member this.``Example simpleComponent6 parses successfully`` () =
         let inputFile = """..\..\Examples\ModelFile\simpleComponent6.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example undeclaredIdentifier1 cannot be parsed`` () =
+        let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier1.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example undeclaredIdentifier2 cannot be parsed`` () =
+        let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier2.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example undeclaredIdentifier3 cannot be parsed`` () =
+        let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier3.safetysharp"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseModelFile input
+        ()
+
+    [<Test>]
+    member this.``Example undeclaredIdentifier4 cannot be parsed`` () =
+        let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier4.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseModelFile input
         ()

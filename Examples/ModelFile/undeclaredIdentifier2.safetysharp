@@ -1,0 +1,15 @@
+component simple {
+	
+	rport1 p( ; inout1 : int )
+
+	pport1 p( ; inout2 : int  ) {
+		.
+		inout1 :=5
+	}
+	
+	
+	behaviour {
+		.
+		skip		
+	}
+}

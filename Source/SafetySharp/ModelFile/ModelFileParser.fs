@@ -38,6 +38,7 @@ module internal ParseModelFile =
     // TODO: Remove, when context changes (i.e. switch to push, pop)
     type UserState = {
         TypeOfIdentifier : Map<string,IdentifierType> ;
+        TypeOfIdentifierStack : (Map<string,IdentifierType>) list;
     }
         with
             member us.IsIdentifierOfType str (id_type:IdentifierType) =
@@ -48,9 +49,18 @@ module internal ParseModelFile =
                         false
                 else
                     false
+            member us.``create copy of TypeOfIdentifier and push old to stack`` =
+                
+            member us.``create fresh TypeOfIdentifier and push old to stack`` =
+                
+            member us.``pop stack and get old TypeOfIdentifier`` =
+            
+            static member freshTypeOfIdentifier =
+                 Map.empty<string,IdentifierType>;                
             static member initialUserState =
                 {
-                    UserState.TypeOfIdentifier = Map.empty<string,IdentifierType>;
+                    UserState.TypeOfIdentifier = UserState.freshTypeOfIdentifier;
+                    UserState.TypeOfIdentifierStack = [];
                 }
     
     type GuardedCommandClause = Expr * Stm
@@ -103,16 +113,16 @@ module internal ParseModelFile =
     
     // TODO: write test, which confuses the state (subcomponent with field "x" , which was a localVar of a behaviour)
     let pushUserStateStackComponent : Parser<_,UserState> =
-        spaces // TODO
+        spaces // TODO ``create fresh TypeOfIdentifier and push old to stack``
      
     let popUserStateStackComponent : Parser<_,UserState> =
-        spaces // TODO
+        spaces // TODO ``pop stack and get old TypeOfIdentifier``
 
     let pushUserStateStackCall : Parser<_,UserState> =
-        spaces // TODO
+        spaces // TODO ``create fresh TypeOfIdentifier and push old to stack``
      
     let popUserStateStackCall : Parser<_,UserState> =
-        spaces // TODO
+        spaces // TODO ``pop stack and get old TypeOfIdentifier``
 
     // parse identifier of variables, fields, ports and components
     let varIdDecl: Parser<_,UserState> =

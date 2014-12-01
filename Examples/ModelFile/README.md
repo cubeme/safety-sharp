@@ -8,6 +8,10 @@
 * simpleComponent4.safetysharp: 1 Component with do-nothing behaviour and 1 required port
 * simpleComponent5.safetysharp: 1 Component with do-nothing behaviour and 1 provided port
 * simpleComponent6.safetysharp: 1 Component with do-nothing behaviour and 1 provided port, 2 required ports, 1 instantaneous binding, 1 delayed binding
+* undeclaredIdentifier1.safetysharp: Assignment to a inout, which is out of scope, because it was declared in a previous provided port (incorrect program)
+* undeclaredIdentifier2.safetysharp: Assignment to a inout, which is out of scope, because it was declared in a previous required port (incorrect program)
+* undeclaredIdentifier3.safetysharp: Assignment to a inout, which is out of scope, because it was declared in a port of a nested component (incorrect program)
+* undeclaredIdentifier4.safetysharp: Assignment to a field in a nested class, which is out of scope (incorrect program)
 
 
 ## simple Statements Tests

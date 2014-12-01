@@ -1,0 +1,19 @@
+component simple {
+	component nested {
+		nestedIntField = 5
+		behaviour {
+			.
+			skip
+		}
+	}
+	pport1 p( ; ) {
+		.
+		nestedIntField :=5
+	}
+	
+	
+	behaviour {
+		.
+		skip		
+	}
+}
