@@ -96,14 +96,22 @@ type ProvPortSym = {
     Stm : Stm
 }
 
-type BindingType = Instantaneous | Delayed
+[<RequireQualifiedAccess>]
+type BndSrc =
+    | SameCmp of ProvPort:ProvPort
+    | ChildCmp of Comp:Comp * ProvPort:ProvPort
+    
+[<RequireQualifiedAccess>]
+type BndTarget =
+    | SameCmp of ReqPort:ReqPort
+    | ChildCmp of Comp:Comp * ReqPort:ReqPort
+
+type BndType = Instantaneous | Delayed
 
 type BindingSym = {
-    ReqPort : ReqPort
-    ProvPort : ProvPort
-    ReqComp : Comp
-    ProvComp : Comp
-    Type : BindingType
+    ReqPort : BndTarget
+    ProvPort : BndSrc
+    Type : BndType
 }
 
 type CompSym = {

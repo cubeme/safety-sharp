@@ -63,6 +63,7 @@ type ParsingUserStateWorks () =
 
     [<Test>]
     member this.``popStack works as expected`` () =
+        ()
 
 
 [<TestFixture>]
@@ -74,8 +75,15 @@ type ExampleFiles() =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
-
+        
     let parseModelFile str = parseWithParser (ParseModelFile.modelFile .>> eof) str
+        
+    let parseWithParserAndExpectFailure parser str =
+        match runWithUserState parser str with
+        | Success(result, _, _)   -> failwith "parsed successfully but expected a parsing failure"
+        | Failure(errorMsg, _, _) -> ()
+
+    let parseModelFileAndExpectFailure str = parseWithParserAndExpectFailure (ParseModelFile.modelFile .>> eof) str
 
     // Tests in order of Examples/ModelFile/README.md
     // Keep this order here!
@@ -139,26 +147,23 @@ type ExampleFiles() =
     member this.``Example undeclaredIdentifier1 cannot be parsed`` () =
         let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier1.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
-        ()
-
+        parseModelFileAndExpectFailure input
+        
     [<Test>]
+    //[<Test;Ignore("functionality not implemented yet")>]
     member this.``Example undeclaredIdentifier2 cannot be parsed`` () =
         let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier2.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
-        ()
+        parseModelFileAndExpectFailure input
 
     [<Test>]
     member this.``Example undeclaredIdentifier3 cannot be parsed`` () =
         let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier3.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
-        ()
+        parseModelFileAndExpectFailure input
 
     [<Test>]
     member this.``Example undeclaredIdentifier4 cannot be parsed`` () =
         let inputFile = """..\..\Examples\ModelFile\undeclaredIdentifier4.safetysharp"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
-        ()
+        parseModelFileAndExpectFailure input

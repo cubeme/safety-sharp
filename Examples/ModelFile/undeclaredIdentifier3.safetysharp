@@ -1,6 +1,6 @@
 component simple {
-	component nestet {
-		rport1 p( ; inout1 : int )
+	component nested {
+		rport1 r( ; inout1 : int )
 		behaviour {
 			.
 			skip

@@ -1,6 +1,6 @@
 component simple {
 	
-	rport1 p( ; inout1 : int )
+	rport1 r( ; inout1 : int )
 
 	pport1 p( ; inout2 : int  ) {
 		.

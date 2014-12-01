@@ -33,34 +33,73 @@ module internal ParseModelFile =
         | Field
         | Var
         | NotDeclared
+        
+    [<RequireQualifiedAccess>]
+    type Scope =
+        | Component
+        | Call
 
 
-    // TODO: Remove, when context changes (i.e. switch to push, pop)
     type UserState = {
-        TypeOfIdentifier : Map<string,IdentifierType> ;
-        TypeOfIdentifierStack : (Map<string,IdentifierType>) list;
+        IdentifiersComponentScope : Map<string,IdentifierType> ;
+        IdentifiersComponentScopeStack : (Map<string,IdentifierType>) list;
+        IdentifiersCallScope : Map<string,IdentifierType> ;
+        IdentifiersCallScopeStack : (Map<string,IdentifierType>) list;
     }
         with
             member us.IsIdentifierOfType str (id_type:IdentifierType) =
-                if us.TypeOfIdentifier.ContainsKey str then
-                    if (us.TypeOfIdentifier.Item str) = id_type then
-                        true
-                    else
-                        false
+                if us.IdentifiersComponentScope.ContainsKey str && (us.IdentifiersComponentScope.Item str) = id_type then
+                    true
+                elif us.IdentifiersCallScope.ContainsKey str && (us.IdentifiersCallScope.Item str) = id_type then
+                    true
                 else
                     false
-            member us.``create copy of TypeOfIdentifier and push old to stack`` =
+            member us.pushComponentScope : UserState =
+                { us with
+                    UserState.IdentifiersComponentScope = UserState.freshScope ;
+                    UserState.IdentifiersComponentScopeStack = us.IdentifiersComponentScope :: us.IdentifiersComponentScopeStack ;
+                }
                 
-            member us.``create fresh TypeOfIdentifier and push old to stack`` =
+            member us.popComponentScope : UserState =
+                { us with
+                    UserState.IdentifiersComponentScope = us.IdentifiersComponentScopeStack.Head ;
+                    UserState.IdentifiersComponentScopeStack = us.IdentifiersComponentScopeStack.Tail ;
+                }                
+            member us.addToComponentScope (identifier:string) (id_type:IdentifierType) : UserState =
+                { us with
+                    UserState.IdentifiersComponentScope = us.IdentifiersComponentScope.Add(identifier, id_type) ;
+                }
                 
-            member us.``pop stack and get old TypeOfIdentifier`` =
+            member us.pushCallScope : UserState =
+                { us with
+                    UserState.IdentifiersCallScope = UserState.freshScope ;
+                    UserState.IdentifiersCallScopeStack = us.IdentifiersCallScope :: us.IdentifiersCallScopeStack ;
+                }
+                
+            member us.popCallScope : UserState =
+                { us with
+                    UserState.IdentifiersCallScope = us.IdentifiersCallScopeStack.Head ;
+                    UserState.IdentifiersCallScopeStack = us.IdentifiersCallScopeStack.Tail ;
+                }
+
+            member us.addToCallScope (identifier:string) (id_type:IdentifierType) : UserState =
+                { us with
+                    UserState.IdentifiersCallScope = us.IdentifiersCallScope.Add(identifier, id_type) ;
+                }
+
+            member us.addToScope (identifier:string) (id_type:IdentifierType) (scope:Scope) : UserState =
+                match scope with
+                    | Scope.Call -> us.addToCallScope identifier id_type
+                    | Scope.Component -> us.addToComponentScope identifier id_type
             
-            static member freshTypeOfIdentifier =
+            static member freshScope =
                  Map.empty<string,IdentifierType>;                
             static member initialUserState =
                 {
-                    UserState.TypeOfIdentifier = UserState.freshTypeOfIdentifier;
-                    UserState.TypeOfIdentifierStack = [];
+                    UserState.IdentifiersComponentScope = UserState.freshScope;
+                    UserState.IdentifiersComponentScopeStack = [];
+                    UserState.IdentifiersCallScope = UserState.freshScope;
+                    UserState.IdentifiersCallScopeStack = [];
                 }
     
     type GuardedCommandClause = Expr * Stm
@@ -88,12 +127,12 @@ module internal ParseModelFile =
     let value : Parser<_,UserState> =
         boolVal <|> numberVal        
         
-    let parseIdentifierDecl (id_type:IdentifierType) : Parser<_,UserState> =        
+    let parseIdentifierDecl (scope:Scope) (id_type:IdentifierType) : Parser<_,UserState> =        
         let parseIdentifier = identifier (IdentifierOptions())
         fun stream ->
             let identifier = (parseIdentifier stream)
             if identifier.Status = ReplyStatus.Ok then
-                stream.UserState <- { stream.UserState with UserState.TypeOfIdentifier = stream.UserState.TypeOfIdentifier.Add(identifier.Result, id_type)}
+                stream.UserState <- stream.UserState.addToScope identifier.Result id_type scope
                 Reply(identifier.Status,identifier.Result,identifier.Error)
             else
                 Reply(identifier.Status,identifier.Error)
@@ -112,27 +151,27 @@ module internal ParseModelFile =
                 Reply(identifier.Status,identifier.Error)
     
     // TODO: write test, which confuses the state (subcomponent with field "x" , which was a localVar of a behaviour)
-    let pushUserStateStackComponent : Parser<_,UserState> =
-        spaces // TODO ``create fresh TypeOfIdentifier and push old to stack``
+    let pushUserStateComponentStack : Parser<_,UserState> =
+        updateUserState (fun userstate -> userstate.pushComponentScope)
      
-    let popUserStateStackComponent : Parser<_,UserState> =
-        spaces // TODO ``pop stack and get old TypeOfIdentifier``
+    let popUserStateComponentStack : Parser<_,UserState> =
+        updateUserState (fun userstate -> userstate.popComponentScope)
 
-    let pushUserStateStackCall : Parser<_,UserState> =
-        spaces // TODO ``create fresh TypeOfIdentifier and push old to stack``
+    let pushUserStateCallStack : Parser<_,UserState> =
+        updateUserState (fun userstate -> userstate.pushCallScope)
      
-    let popUserStateStackCall : Parser<_,UserState> =
-        spaces // TODO ``pop stack and get old TypeOfIdentifier``
+    let popUserStateCallStack : Parser<_,UserState> =
+        updateUserState (fun userstate -> userstate.popCallScope)
 
     // parse identifier of variables, fields, ports and components
     let varIdDecl: Parser<_,UserState> =
-        parseIdentifierDecl IdentifierType.Var |>> Var.Var
+        parseIdentifierDecl Scope.Call IdentifierType.Var |>> Var.Var
     let varIdInst: Parser<_,UserState> =
         parseIdentifierInst IdentifierType.Var |>> Var.Var
     
 
     let fieldIdDecl: Parser<_,UserState> =
-        parseIdentifierDecl IdentifierType.Field |>> Field.Field
+        parseIdentifierDecl Scope.Component IdentifierType.Field |>> Field.Field
     let fieldIdInst: Parser<_,UserState> =
         parseIdentifierInst IdentifierType.Field |>> Field.Field
 
@@ -268,7 +307,7 @@ module internal ParseModelFile =
         tuple2 (typedVarDecls_ws .>> (pstring_ws ".")) (statement_ws)
     
     let behaviour =
-        (pstring_ws "behaviour") >>. (pstring_ws "{") .>> pushUserStateStackCall >>. varsAndCode_ws .>> (pstring "}") .>> popUserStateStackCall
+        (pstring_ws "behaviour") >>. (pstring_ws "{") .>> pushUserStateCallStack >>. varsAndCode_ws .>> (pstring "}") .>> popUserStateCallStack
 
     let behaviour_ws = behaviour .>> spaces
     
@@ -299,9 +338,9 @@ module internal ParseModelFile =
                 ReqPortSym.InParams = extractTypes inParms ;
                 ReqPortSym.InOutParams = extractTypes outParms ;
             }
-        attempt (pipe3 (reqPortId_ws .>> (pstring_ws "r(") .>> pushUserStateStackCall)
+        attempt (pipe3 (reqPortId_ws .>> (pstring_ws "r(") .>> pushUserStateCallStack)
                        (typedVarDecls_ws .>> (pstring_ws ";"))
-                       (typedVarDecls_ws .>> parentClose_ws .>> popUserStateStackCall)
+                       (typedVarDecls_ws .>> parentClose_ws .>> popUserStateCallStack)
                        createReqPortSym)
 
     let provPortDecl_ws : Parser<_,UserState> =
@@ -314,12 +353,44 @@ module internal ParseModelFile =
                 ProvPortSym.Locals = locals;
                 ProvPortSym.Stm = stm;
             }
-        attempt (pipe4 (provPortId_ws .>> (pstring_ws "p(") .>> pushUserStateStackCall)
+        attempt (pipe4 (provPortId_ws .>> (pstring_ws "p(") .>> pushUserStateCallStack)
                        (typedVarDecls_ws .>> (pstring_ws ";"))
                        (typedVarDecls_ws .>> parentClose_ws .>> (pstring_ws "{"))
-                       (varsAndCode_ws .>> (pstring_ws "}"))
+                       (varsAndCode_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
                        createProvPortSym)
+                                                  
+    let binding_ws : Parser<_,UserState> =
+        let bindingsrc_ws =
+            let samecmp_ws = provPortId_ws |>> BndSrc.SameCmp
+            let childcmp_ws = attempt (compId_ws .>>. (pstring_ws "." >>. provPortId_ws)) |>> BndSrc.ChildCmp
+            samecmp_ws <|> childcmp_ws
 
+        let bindingtarget_ws =
+            let samecmp_ws = reqPortId_ws |>> BndTarget.SameCmp
+            let childcmp_ws = attempt (compId_ws .>>. (pstring_ws "." >>. reqPortId_ws)) |>> BndTarget.ChildCmp
+            samecmp_ws <|> childcmp_ws
+        
+        let instantbinding_ws =
+            let createBinding (req) (prov) =
+                {
+                    BindingSym.ReqPort = req;
+                    BindingSym.ProvPort = prov;
+                    BindingSym.Type = BndType.Instantaneous;
+                }
+            attempt (pipe2 (bindingtarget_ws .>> (pstring_ws "<-i-")) (bindingsrc_ws) createBinding)
+           
+        let delayedbinding_ws =
+            let createBinding (req) (prov) =
+                {
+                    BindingSym.ReqPort = req;
+                    BindingSym.ProvPort = prov;
+                    BindingSym.Type = BndType.Instantaneous;
+                }
+            attempt (pipe2 (bindingtarget_ws .>> (pstring_ws "<-d-")) (bindingsrc_ws) createBinding)
+
+        instantbinding_ws <|> delayedbinding_ws
+
+        
 
     do compRef :=
         let createComponent comp subcomp fields reqPorts provPorts bindings (locals,stm) =
@@ -328,18 +399,18 @@ module internal ParseModelFile =
                 CompSym.Subcomp = subcomp;
                 CompSym.Fields = fields;
                 CompSym.ReqPorts = reqPorts;
-                CompSym.ProvPorts = []; // TODO:  provPorts;
-                CompSym.Bindings = []; // TODO:  bindings;
+                CompSym.ProvPorts = provPorts;
+                CompSym.Bindings = bindings;
                 CompSym.Locals = locals;
                 CompSym.Stm = stm;
             }
-        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws .>> (pstring_ws "{") .>> pushUserStateStackComponent)
+        pipe7 ((pstring "component") >>. spaces1 >>. compId_ws .>> (pstring_ws "{") .>> pushUserStateComponentStack)
               (many comp_ws)
               (many typedFieldDecl_ws)
               (many reqPortDecl_ws)
               (many provPortDecl_ws)
-              (spaces)
-              (behaviour_ws .>> (pstring "}") .>> popUserStateStackComponent)
+              (many binding_ws)
+              (behaviour_ws .>> (pstring "}") .>> popUserStateComponentStack)
               createComponent
         
     let modelFile = comp_ws

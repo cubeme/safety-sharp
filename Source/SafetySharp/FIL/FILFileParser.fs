@@ -115,14 +115,6 @@ module internal ParseFIL =
         let allExceptSeq_ws = allExceptSeq .>> spaces
         
         let refurbishResult (stmnts : Statement list ) =
-            (*let rec convertToSeqStmnt (stmnts : Statement list) (leftNode : Statement) =
-                if stmnts.IsEmpty then
-                    leftNode
-                else
-                    let newLeft = Statement.SeqStatement(leftNode,stmnts.Head)
-                    convertToSeqStmnt (stmnts.Tail) (newLeft)
-            convertToSeqStmnt (stmnts.Tail) (stmnts.Head)
-            *)
             if stmnts.Length = 1 then
                     stmnts.Head
                 else
