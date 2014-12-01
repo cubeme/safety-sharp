@@ -25,7 +25,7 @@
 \newcommand{\stmArrowFil}{\rightarrow_{\Fil}}
 \newcommand{\stmArrowFm}{\xrightarrow{\compDecl}_\Fm}
 \newcommand{\Type}{\mathit{Type}}
-\newcommand{\Field}{\mathit{Field}}
+\newcommand{\Field}{\mathit{FieldVar}}
 \newcommand{\Local}{\mathit{Local}}
 \newcommand{\ReqPort}{\mathit{ReqPort}}
 \newcommand{\ProvPort}{\mathit{ProvPort}}
@@ -36,10 +36,12 @@
 \newcommand{\FieldDecl}{\mathit{FieldDecl}}
 \newcommand{\ReqPortDecl}{\mathit{ReqPortDecl}}
 \newcommand{\ProvPortDecl}{\mathit{ProvPortDecl}}
+\newcommand{\FaultDecl}{\mathit{FaultDecl}}
 \newcommand{\CompDecl}{\mathit{CompDecl}}
 \newcommand{\BindingSrc}{\mathit{BndSrc}}
 \newcommand{\BindingTarget}{\mathit{BndTarget}}
 \newcommand{\BindingType}{\mathit{BndType}}
+\newcommand{\Fault}{\mathit{Fault}}
 
 % Meta variables
 \newcommand{\bool}{b}
@@ -62,7 +64,7 @@
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
 \newcommand{\type}{\tau}
-\newcommand{\field}{f}
+\newcommand{\field}{\mathit{f}}
 \newcommand{\local}{l}
 \newcommand{\reqPort}{r}
 \newcommand{\provPort}{p}
@@ -73,10 +75,12 @@
 \newcommand{\fieldDecl}{F}
 \newcommand{\reqPortDecl}{R}
 \newcommand{\provPortDecl}{P}
+\newcommand{\faultDecl}{Flt}
 \newcommand{\compDecl}{C}
 \newcommand{\bindingSrc}{\mathit{bs}}
 \newcommand{\bindingTarget}{\mathit{bt}}
 \newcommand{\bindingType}{\mathtt{\rightarrowtail}}
+\newcommand{\fault}{\mathit{flt}}
 
 %Expressions
 \newcommand{\unaryExpr}[2]{#1 #2}
@@ -91,7 +95,8 @@
 \newcommand{\invokePort}[3]{#1 (#2; #3)}
 \newcommand{\invokeBeh}[1]{#1 ()}
 \newcommand{\seqStm}[2]{#1 \; \mathtt{;} \; #2}
-\newcommand{\guardedClause}[2]{#1 \; \mathtt{\twoheadrightarrow} \; #2}
+\newcommand{\guardedArrow}{\mathtt{\twoheadrightarrow}}
+\newcommand{\guardedClause}[2]{#1 \; \guardedArrow \; #2}
 \newcommand{\guardedStm}[1]{(#1)^*}
 
 % Formal model
@@ -103,8 +108,10 @@
 \newcommand{\instantBinding}{\mathtt{\bindingType_i}}
 \newcommand{\delayedBinding}{\mathtt{\bindingType_d}}
 \newcommand{\qualifiedName}[2]{#1\mathtt{.}#2}
-\newcommand{\compDeclSyn}[8]{\texttt{component} \; #1 \; \mathtt{\{} \; #2 \; #3 \; #4 \; #5 \; #6 \; \mathtt{\{} \; #7 \; #8 \;
-\mathtt{\}} \; \mathtt{\}}}
+\newcommand{\compDeclSyn}[9]{\texttt{component} \; #1 \; \mathtt{\{} \; #2 \; #3 \; #4 \; #5 \; #6 \; #7 \; \mathtt{\{} \; #8 \;
+#9 \; \mathtt{\}} \; \mathtt{\}}}
+\newcommand{\faultDeclSyn}[4]{\texttt{fault} \; #1 \; \mathtt{\{} \; #2 \; \mathtt{step} \; \mathtt{\{} \; #3 \; #4 \; \mathtt{\}}
+\; \mathtt{\}}}
 
 % Lifting
 \newcommand{\failure}{\bot}

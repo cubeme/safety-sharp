@@ -304,49 +304,134 @@ component C
 	component D
 	{
 		// fields
-		b : bool = false
+		bool b = false;
 			 		
 		// required port
-		Y(;)
+		Y(;);
 		
 		// provided port
-		X(p1 : int, p2 : int; r1 : bool, r2 : bool)
+		X(int p1, int p2; bool r1, bool r2)
 		{
-			Y(;)
-			r1 := false
-			r2 := b
+			Y(;);
+			r1 = false;
+			r2 = b;
 		}
 	}
-
+	
 	// fields
-	x : int = 1, 2, 3
-	b : bool = true, false
+	int x = { 1, 2, 3 };
+	bool b = { true, false };
+	
+	// Fault
+	fault F
+	{
+		// fields
+		val : bool = true, false
+		demand : int = 0
 		
+		//ondemand
+		//{
+		//	demand := demand + 1
+		//}
+		
+		step
+		{
+			(true (* $\guardedArrow$ *) F := enabled; true (* $\guardedArrow$ *) F := disabled)
+		}
+	}
+	
+	bool stuckValue = b;
+	fault Stuck
+	{
+		step
+		{
+			choice
+			{
+				true => 
+				{
+					Stuck = true;
+					stuckValue = b;
+				} 
+				true =>
+				{
+					Stuck = false;
+				}
+			}
+		}
+	}
+			
 	// required port
-	M(int, int; bool, bool)
+	M(in: int p1, int p2, inout: bool r1, bool r2);
 		
 	// provided port
-	X(p1 : int, p2 : int; r1 : bool, r2 : bool)
+	[NoFaults]
+	X(in: int p1, int p2, inout: bool r1, bool r2)
 	{
-		r1 := p1 > 1
-		r2 := p2 > x && b
-	}	
+		locals
+		{
+			int x;
+			int y;
+		}
+		
+		r1 = p1 > 1;
+		r2 = p2 > x && b;
+	}
 	
-	Y(;)
+	[Stuck1]
+	X(in: int p1, int p2, inout: bool r1, bool r2) 
 	{
-		skip
+		r1 = stuckValue;
+		r2 = stuckValue;
+	}
+	
+	[Stuck2]
+	X(in: int p1, int p2, inout: bool r1, bool r2)
+	{
+		r1 = 1;
+	}
+	
+	[F && F2 && !Stuck1 && !Stuck2]
+	X(in: int p1, int p2, inout: bool r1, bool r2)
+	{
+		r1 = val + valF2;
+		r2 = true;
+	}	
+		
+	[NoFaults]
+	Y()
+	{
 	}
 		
 	// bindings
-	M (* $\delayedBinding$ *) D.X // delayed
-	D.Y (* $\instantBinding$ *) Y // instantaneous
+	M = delayed D.X 
+	D.Y = Y
 	
 	// behavior
+	[NoFaults]
+	step
 	{
-		l1 : bool, l2 : bool
-		M(x, x - 1; l1, l2)
-		(l1 (* $\twoheadrightarrow$ *) x = x - 1; l2 (* $\twoheadrightarrow$ *) b = true)
-		D() // invoke behavior of subcomponent D
+		locals
+		{
+			bool l1;
+			bool l2;
+		}
+		
+		M(in: x, x - 1, inout: l1, l2);
+		
+		choice
+		{
+			l1 => { x = x - 1; }
+			l2 => { b = true; }
+		}
+		
+		step D;
+		step Stuck;
+		step F;
+	}
+	
+	[CompleteFailure]
+	step
+	{
 	}
 }
 \end{lstlisting}
@@ -360,6 +445,7 @@ provided ports allow different components to communicate with each other.
 	\field &\in \Field \\
 	\reqPort &\in \ReqPort \\
 	\provPort &\in \ProvPort \\
+	\fault &\in \Fault \\
 	\comp&\in \Comp
 \end{align*}
 
@@ -538,14 +624,27 @@ $(\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType})[\comp
 For a list of bindings $\toList{\bindingDecl}$, we use the notational convention
 $\toList{\bindingDecl}[\comp \mapsto \comp']$ to substitute the component in all bindings contained in the list.
 
+\subsubsection{Faults}
+A \textit{fault} defines the the occurrence behavior of undesired or erroneous component behavior. Faults affect provided ports
+such that the behavior of the model with faults is a conservative extension of the model without the occurrence of any faults. A
+fault has to define at least the Boolean field \texttt{faulted}. It can optionally have further fields and a step behavior.
+\begin{equation*}
+	\faultDecl \in \FaultDecl := \faultDeclSyn{\fault}{\toListNE{\field}}{\toList{\varDecl}}{\stmFm}
+\end{equation*} 
+
+The fields declared by a fault can be read by the component only within the context of fault statements. The fault, on the
+other hand, is free to read all component fields. The component has to explicitly invoke the fault's step function in the
+component's behavior.
+
 \subsubsection{Components}
-Components declare sets of required and provided ports, fields, port bindings and subcomponents. They have a behavior described by
-a statement with optional local variables.
+A \textit{component} declares sets of required and provided ports, fields, port bindings and subcomponents. They have a behavior
+described by a statement with optional local variables.
 \begin{equation*}
 	\compDecl \in \CompDecl :=  
 		\compDeclSyn{\comp}
 			{\toList{\compDecl}}
 			{\toList{\fieldDecl}}
+			{\toList{\faultDecl}}
 			{\toList{\reqPortDecl}}{\toList{\provPortDecl}}
 			{\toList{\bindingDecl}}
 			{\toList{\varDecl}}
@@ -565,18 +664,17 @@ $\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}
 (\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})
 \Leftrightarrow \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in \toList{\reqPortDecl}$.
 
-We are allowed to substitute a subcomponent declaration of some component declaration, provided that
-the original subcomponent declaration $\compDecl'$ and the new subcomponent declaration $\compDecl''$ are port-equivalent, that is
+We are allowed to substitute a subcomponent declaration of some component declaration, provided that the original subcomponent
+declaration $\compDecl'$ and the new subcomponent declaration $\compDecl''$ are port-equivalent, that is
 $\signature(\reqsof(\compDecl')) = \signature(\reqsof(\compDecl''))$ and $\signature(\provsof(\compDecl')) =
 \signature(\provsof(\compDecl''))$.
-We use the notation $\compDecl[\compDecl' \mapsto \compDecl'']$ to obtain a new component declaration
-where $\compDecl'$ has been replaced with $\compDecl''$. Consequently,
-$(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})[\compDecl'
-\mapsto \compDecl''] =
-\compDeclSyn{\comp}{\toList{\compDecl}[\compDecl'
-\mapsto \compDecl'']}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}[\compDecl'
-\mapsto \compDecl'']}{\toList{\varDecl}}{\stmFm}$. We also allow for simultaneous substitution of multiple subcomponents, written as
-$\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compDecl_n']$. On the other hand, we have
+We use the notation $\compDecl[\compDecl' \mapsto \compDecl'']$ to obtain a new component declaration where $\compDecl'$ has been
+replaced with $\compDecl''$. Consequently,
+$(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})[\compDecl'
+\mapsto \compDecl''] = \compDeclSyn{\comp}{\toList{\compDecl}[\compDecl' \mapsto
+\compDecl'']}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}[\compDecl'
+\mapsto \compDecl'']}{\toList{\varDecl}}{\stmFm}$. We also allow for simultaneous substitution of multiple subcomponents, written
+as $\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compDecl_n']$. On the other hand, we have
 $\compDecl[\compDecl' \mapsto \compDecl''] = \compDecl''$ if $\compDecl = \compDecl'$.
 
 We can also select a subcomponent declaration at some level of the component hierarchy using the subcomponent selector $.[.]
@@ -631,6 +729,12 @@ We only consider components that are well-formed according to the following crit
 	local variable declarations.
 	\item Note that we do not have to check for component cycles (i.e., a component being its own parent), as that simply cannot be
 	expressed with the domains we have defined.
+	\item All faults of a component have unique names.
+	\item All fields within a component have unique names; their names do not overlap with any names of the component.
+	\item Fault expressions only occur within fault statements.
+	\item The fields of a fault are only written by the fault itself.
+	\item Faults can read from, but not write to component fields.
+	\item Statements and expressions in a \texttt{nofault} context cannot access any faults.
 \end{itemize}
 
 \subsection{Semantics of Formal Models}
@@ -792,7 +896,7 @@ field environment; if it does, the rule cannot be applied and execution is ``stu
 When the behavior of a subcomponent is invoked, the subcomponent is added to the component path and an empty variable environment
 is used to execute the behavior. Execution of the current behavior or port continues with the new field environment and the old
 variable environment.
-\begin{equation*}
+\begin{multline*}
 	\tag{beh}
 	\dfrac
 	{
@@ -806,10 +910,10 @@ variable environment.
 			\stmArrowFm
 		\configurationFm{\fieldEnv', \varEnvFm}
 	}
-	\quad \text{if} \quad
-	\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm}
+	\\ \text{if} \quad
+	\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm}
 	\in \compDecl[\toListNE{\comp}]
-\end{equation*}
+\end{multline*}
 
 % \begin{equation*}
 % 	\tag{call${}_2$}
