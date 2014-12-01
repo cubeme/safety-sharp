@@ -45,6 +45,7 @@ module internal ParseModelFile =
         IdentifiersComponentScopeStack : (Map<string,IdentifierType>) list;
         IdentifiersCallScope : Map<string,IdentifierType> ;
         IdentifiersCallScopeStack : (Map<string,IdentifierType>) list;
+        PositionMap : (System.Collections.Immutable.ImmutableDictionary<obj,int*int>)
     }
         with
             member us.IsIdentifierOfType str (id_type:IdentifierType) =
@@ -100,6 +101,7 @@ module internal ParseModelFile =
                     UserState.IdentifiersComponentScopeStack = [];
                     UserState.IdentifiersCallScope = UserState.freshScope;
                     UserState.IdentifiersCallScopeStack = [];
+                    UserState.PositionMap = System.Collections.Immutable.ImmutableDictionary<obj,int*int>.Empty;
                 }
     
     type GuardedCommandClause = Expr * Stm
