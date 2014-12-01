@@ -765,8 +765,9 @@ done with the execution of the port, we restore our previous variable environmen
 When a required port with a delayed binding to a provided port is called, we execute the bound port's statement in the context of
 the \textit{previous field environment}. The component context might change and the port is executed in a new, empty
 variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
-done with the execution of the port, we restore our previous variable and field environments, only taking over the port's output
-values.
+done with the execution of the port, we restore the field and variable environments we started with, only
+taking over the port's output values. Note that the rules requires that the execution of the provided port does not change the
+field environment; if it does, the rule cannot be applied and execution is ``stuck''.
 \begin{multline*}
 	\tag{call${_\delayedBinding}$}
 	\dfrac
@@ -775,7 +776,7 @@ values.
 		\varof(\toList{\varDecl}_\mathit{io}) \mapsto \ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm'}
+		\configurationFm{\fieldEnvOld, \varEnvFm'}
 	}
 	{
 		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
