@@ -499,7 +499,7 @@ evaluation might fail.
 Fault expressions are used to select different overloads of component behaviors and provided ports, modeling the effects of
 component faults on the behavior of the component itself or to zero, one, or more of its ports.
 \begin{equation*}
-	\faultExpr \in \FaultExpr := \trueExpr \mid \falseExpr \mid \fault \mid \negateExpr{\faultExpr} \mid
+	\faultExpr \in \FaultExpr := \fault \mid \negateExpr{\faultExpr} \mid
 	\andExpr{\faultExpr_1}{\faultExpr_2}
 \end{equation*}
 
@@ -507,8 +507,6 @@ The function $\FaultExprSem{-} \colon \FaultExpr \rightarrow \FaultEnvCurried \r
 semantics of fault expression. Since a fault expression of a non well-formed model might potentially access an undefined fault,
 the expression evaluation might fail.
 \begin{align*}
-	\FaultExprSem{\trueExpr} \faultEnvCurried &= \true \\
-	\FaultExprSem{\falseExpr} \faultEnvCurried &= \false \\
 	\FaultExprSem{\fault} \faultEnvCurried &= \faultEnvCurried(\fault) \\
 	\FaultExprSem{\negateExpr{\faultExpr}} \faultEnvCurried &= \neg \FaultExprSem{\faultExpr} \faultEnvCurried \\
 	\FaultExprSem{\andExpr{\faultExpr_1}{\faultExpr_2}} \faultEnvCurried &= \FaultExprSem{\faultExpr_1} \faultEnvCurried \wedge
@@ -672,7 +670,7 @@ A \textit{component} declares sets of required and provided ports, fields, fault
 step behavior with optional local variables. Similar to provided ports, the step behavior can be overloaded for different fault
 situations.
 \begin{align*}
-	\stepDecl \in \StepDecl &:= \stepDeclSyn{\behavior}{\faultExpr}
+	\stepDecl \in \StepDecl &:= \stepDeclSyn{\behavior}{\liftMissing{\faultExpr}}
 	\\
 	\compDecl \in \CompDecl &:=  
 		\compDeclSyn{\comp}

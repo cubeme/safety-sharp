@@ -44,7 +44,7 @@ module internal FileSystem =
         | AMD64
         | I386
         | Unknown 
-        | Other of Type:uint16
+        | Other of uint16
             with
                 override this.ToString() : string =
                     match this with
