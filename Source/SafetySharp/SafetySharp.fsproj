@@ -80,7 +80,7 @@
     <Compile Include="FIL\FIL.fs" />
     <Compile Include="FIL\FILFileParser.fs" />
     <Compile Include="ModelFile\SafetyComponentModel.fs" />
-    <Compile Include="ModelFile\ModelFileParser.fs" />
+    <Compile Include="ModelFile\SafetyComponentModelParser.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />

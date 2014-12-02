@@ -20,10 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SafetyComponentModel.Parser
 
-
-module internal ParseSCM =
+module internal SafetySharp.Internal.ParseSCM
 
     open FParsec
     open SafetySharp.Internal.SafetyComponentModel
