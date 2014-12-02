@@ -43,10 +43,13 @@
 \newcommand{\CompDecl}{\mathit{CompDecl}}
 \newcommand{\BindingSrc}{\mathit{BndSrc}}
 \newcommand{\BindingTarget}{\mathit{BndTarget}}
-\newcommand{\BindingType}{\mathit{BndType}}
+\newcommand{\BindingType}{\mathit{BndKind}}
 \newcommand{\Fault}{\mathit{Fault}}
 \newcommand{\FaultExpr}{\mathit{FaultExpr}}
 \newcommand{\Behavior}{\mathit{Behavior}}
+\newcommand{\FaultAttr}{\mathit{FaultAttrib}}
+\newcommand{\ParameterDecl}{\mathit{ParamDecl}}
+\newcommand{\StepDecl}{\mathit{StepDecl}}
 
 % Meta variables
 \newcommand{\bool}{b}
@@ -64,11 +67,12 @@
 \newcommand{\varEnvFmEmpty}{\varEnvFm_{{}_\failure}}
 \newcommand{\fieldEnv}{\varphi}
 \newcommand{\faultEnv}{\delta}
-\newcommand{\fieldEnvOld}{\varphi_p}
 \newcommand{\fieldEnvCurried}{\phi}
 \newcommand{\faultEnvCurried}{\delta}
 \newcommand{\fieldEnvEmpty}{\fieldEnv_{{}_\failure}}
 \newcommand{\faultEnvEmpty}{\delta_{{}_\failure}}
+\newcommand{\fieldEnvPrev}{\fieldEnv_{-1}}
+\newcommand{\faultEnvPrev}{\delta_{-1}}
 \newcommand{\val}{\nu}
 \newcommand{\emptyList}{\varepsilon}
 \newcommand{\type}{\tau}
@@ -81,23 +85,26 @@
 \newcommand{\procedure}{\mathit{proc}}
 \newcommand{\varDecl}{V}
 \newcommand{\fieldDecl}{F}
-\newcommand{\reqPortDecl}{R}
-\newcommand{\provPortDecl}{P}
+\newcommand{\reqPortDecl}{Req}
+\newcommand{\provPortDecl}{Prov}
 \newcommand{\faultDecl}{Flt}
 \newcommand{\compDecl}{C}
 \newcommand{\bindingSrc}{\mathit{bs}}
 \newcommand{\bindingTarget}{\mathit{bt}}
-\newcommand{\bindingType}{\mathtt{\rightarrowtail}}
+\newcommand{\bindingType}{\mathit{bk}}
 \newcommand{\fault}{\mathit{flt}}
 \newcommand{\faultExpr}{\mathit{fe}}
 \newcommand{\behavior}{\mathit{bhv}}
+\newcommand{\faultAttr}{\mathit{fa}}
+\newcommand{\parameterDecl}{\mathit{P}}
+\newcommand{\stepDecl}{\mathit{Step}}
 
 %Expressions
 \newcommand{\unaryExpr}[2]{#1 #2}
 \newcommand{\binaryExpr}[3]{#2 #1 #3}
 \newcommand{\prev}[1]{\mathtt{prev} \,#1}
-\newcommand{\true}{\texttt{true}}
-\newcommand{\false}{\texttt{false}}
+\newcommand{\trueExpr}{\texttt{true}}
+\newcommand{\falseExpr}{\texttt{false}}
 \newcommand{\negateExprSym}{\texttt{!}}
 \newcommand{\andExprSym}{\texttt{\&\&}}
 \newcommand{\orExprSym}{\texttt{||}}
@@ -119,10 +126,7 @@
 % Statements
 \newcommand{\skipStm}{\texttt{skip;}}
 \newcommand{\assignVarStm}[2]{#1\; \texttt{=}\; #2 \texttt{;}}
-\newcommand{\invokePort}[3]{#1 \texttt{(}\texttt{in:} \; #2, \texttt{inout:} \; #3\texttt{)} \texttt{;}}
-\newcommand{\invokePortNoIn}[2]{#1 \texttt{(}\texttt{inout:} \; #2\texttt{)} \texttt{;}}
-\newcommand{\invokePortNoInOut}[2]{#1 \texttt{(}\texttt{in:} \; #2\texttt{)} \texttt{;}}
-\newcommand{\invokeBeh}[1]{#1 \texttt{()} \texttt{;}}
+\newcommand{\invokeReqPort}[2]{#1 \texttt{(}#2\texttt{)} \texttt{;}}
 \newcommand{\seqStm}[2]{#1 \; #2}
 \newcommand{\guardedArrow}{\texttt{=>}}
 \newcommand{\guardedClause}[2]{#1 \; \guardedArrow \; #2}
@@ -130,18 +134,22 @@
 \newcommand{\blockStm}[1]{ \texttt{\{} \; #1 \; \texttt{\}}}
 \newcommand{\stepStm}[1]{ \texttt{step} \; #1 \texttt{;}}
 \newcommand{\localsStm}[1]{ \texttt{locals} \; \texttt{\{} \; #1 \; \texttt{\}}}
+\newcommand{\faultAttrSyn}[1]{ \texttt{[} \; #1 \; \texttt{]}}
+\newcommand{\inoutSyn}[1]{\texttt{inout} \; #1}
 
 % Formal model
 \newcommand{\varDeclSyn}[2]{#1 \; \texttt{:} \; #2 \texttt{;}}
 \newcommand{\fieldDeclSyn}[3]{#1 \; \texttt{:} \; #2 \; \texttt{=} \; #3 \texttt{;}}
-\newcommand{\reqPortDeclSyn}[3]{#1 \texttt{(}\texttt{in:} \; #2, \; \texttt{inout:} \; \; #3 \texttt{)} \texttt{;}}
-\newcommand{\provPortDeclSyn}[4]{#1 \texttt{(}\texttt{in:} \; #2, \; \texttt{inout:} \; #3 \texttt{)} \; #4}
-\newcommand{\instantBindingDeclSyn}[2]{#1 \; \texttt{=} \; #2 \texttt{;}}
-\newcommand{\delayedBindingDeclSyn}[2]{#1 \; \texttt{=} \; \texttt{delayed} \; #2 \texttt{;}}
+\newcommand{\reqPortDeclSyn}[2]{#1 \texttt{(} #2\texttt{)} \texttt{;}}
+\newcommand{\provPortDeclSyn}[4]{\faultAttrSyn{#4} \; #1 \texttt{(} #2 \texttt{)} \; #3}
+\newcommand{\provPortDeclSynDefault}[3]{#1 \texttt{(} #2 \texttt{)} \; #3}
+\newcommand{\bindingDeclSyn}[3]{#1 \; \texttt{=} \; #3 \; #2 \texttt{;}}
 \newcommand{\qualifiedName}[2]{#1\texttt{.}#2}
-\newcommand{\compDeclSyn}[9]{\texttt{component} \; #1 \; \texttt{\{} \; #2 \; #3 \; #4 \; #5 \; #6 \; #7 \; \texttt{\{} \; #8 \;
-#9 \; \texttt{\}} \; \texttt{\}}}
+\newcommand{\compDeclSyn}[8]{\texttt{component} \; #1 \; \texttt{\{} \; #2 \; #3 \; #4 \; #5 \; #6 \; #7 \; #8 \; \texttt{\}}}
 \newcommand{\faultDeclSyn}[2]{\texttt{fault} \; #1 \; \texttt{\{} \; \texttt{step} \; #2 \; \texttt{\}}}
+\newcommand{\instantBindingType}{\texttt{instantly}}
+\newcommand{\delayedBindingType}{\texttt{delayed}}
+\newcommand{\stepDeclSyn}[2]{\texttt{[} \; #2 \; \texttt{]} \; \texttt{step} \; #1}
 
 % Lifting
 \newcommand{\failure}{\bot}
@@ -177,6 +185,7 @@
 \newcommand{\stmof}{\mathit{stm}}
 \newcommand{\behaviorof}{\mathit{behavior}}
 \newcommand{\faultof}{\mathit{fault}}
+\newcommand{\faultexprof}{\mathit{faultExpr}}
 \newcommand{\req}{\mathit{req}}
 \newcommand{\prov}{\mathit{prov}}
 \newcommand{\delayed}{\mathit{delayed}}
@@ -189,6 +198,10 @@
 \newcommand{\defaultof}{\mathit{default}}
 \newcommand{\boundof}{\mathit{bound}}
 \newcommand{\faultField}{\mathit{field}}
+\newcommand{\copyout}{\mathit{copy}}
+\newcommand{\isinout}{\mathit{inout}}
+\newcommand{\select}{\mathit{select}}
+\newcommand{\selectStep}{\mathit{selectStep}}
 
 % Values
 \newcommand{\mkTuple}[1]{\left( #1 \right)}
@@ -198,6 +211,8 @@
 \newcommand{\intType}{\mathtt{int}}
 \newcommand{\arrayType}[1]{#1\mathtt{[]}}
 \newcommand{\tupleType}[1]{\left(#1\right)}
+\newcommand{\true}{\mathit{tt}}
+\newcommand{\false}{\mathit{ff}}
 
 % Layout
 \newcommand{\header}[1]{\addvspace{7pt}\textbf{{#1}}.}

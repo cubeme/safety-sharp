@@ -36,78 +36,6 @@
  
 \maketitle
 
-\section{Conventions}
-Throughout the remainder of this report, we use the following conventions in all formal definitions wherever appropriate:
-
-\header{Optional Elements and Failure Elements}
-	We use $\missing$ and $\failure$ to denote the missing element and the failure element respectively. For some domain $A$, it is
-	always true that $\missing \notin A$ and $\failure \notin A$. We define the liftings $\liftMissing{A} := A \cup
-	\missing$, $\liftFailure{A} := A \cup \failure$, and $\liftMissingFailure{A} := A \cup \varepsilon \cup	\bot$.
-	For some $a \in A$, we know that $a \neq \missing$ and $a \neq \failure$, whereas for $\liftMissing{a} \in
-	\liftMissing{A}$, we only know that $\liftMissing{a} \neq \failure$, but $\liftMissing{a}$ might be $\missing$ or
-	any element of $A$. When we write $a \in \liftMissing{A}$ or $a = f(a')$ for some function $f \colon A \rightarrow
-	\liftMissing{A}$, $a$ cannot be $\missing$, so the selection or assignment is only possible if the selected or
-	returned value is not $\missing$. For example, this allows us to shorten some side conditions in function definitions with case
-	distinctions. The following two definitions of function $g \colon A \rightarrow \liftFailure{A}$ illustrate the usage of this
-	convention.
-	With function $f$ defined as above, the following two definitions of $g$ are equivalent:
-	\begin{align*}
-		g(a') = \begin{cases}
-			a & \text{if } \quad a = f(a') \\
-			\bot & \text{if } \quad \missing = f(a')
-		\end{cases} 
-		&&&
-		g(a') = \begin{cases}
-			\liftMissing{a} & \text{if } \quad \liftMissing{a} = f(a') \wedge \liftMissing{a} \neq \missing	\\
-			\bot & \text{if } \quad \missing = f(a')
-		\end{cases}
-	\end{align*}
-
-\header{Functions}
-	Oftentimes, the codomain of some function includes the failure element. Usually the definitions of those functions contain case distinctions.
-	Whenever we do not specify all cases for such a function, the remaining cases are implicitly assumed to return $\failure$.
-	Alternatively, we use the word ``otherwise'' to denote a side condition that is true if the side conditions of all other cases are not true. We do not use partial functions.
-
-	It is sometimes necessary to change the value a function returns for a specific input. We establish the notation $f[a \mapsto b]$
-	for some function $f \colon A \rightarrow B$ that serves this purpose and is defined as follows:
-	\begin{equation*}
-	f[a \mapsto b](a') = \begin{cases}
-		b & \text{if } \quad a' = a \\
-		f(a') & \text{otherwise}
-	\end{cases}
-	\end{equation*}
-
-	For convenience, we use the following notations to update several values at the same time: 
-	$f[a_1 \; a_2 \mapsto b] = f[a_1 \mapsto b][a_2 \mapsto b]$, $f[a_1 \; a_2 \mapsto b_1 \; b_2] = f[a_1 \mapsto b_1][a_2 \mapsto b_2]$, and $\_$ represents all
-	input values, such that $f[ \_ \mapsto b](a)$ returns $b$ for all input values $a$.	This is only well-defined if all updated input values are
-	mutually distinct.
-
-\header{Metavariables}
-	Words starting with a capital letter denote a semantic domain. For instance, the set of two-dimensional vectors might be defined as 
-	$\mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. To denote a single element of a domain, we use metavariables that are identical to the domain's
-	name starting with a lower-case letter; in this example, $\mathit{vector2}$. 
-	The default metavariable for a domain can be overridden by explicitly specifying the metavariable 
-	when defining the domain, such as $v \in \mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. In this case, $v$ denotes an element of domain $\mathit{Vector2}$.
-	We also use metavariables in variously decorated forms such as $v'$, $v''$, $v_0$, $v_1$, and so on. 
-	We adorn a domain's metavariable with an arrow at the top to denote a list of elements of the domain, for example
-	$\toList{v} \in \ToList{\mathit{Vector2}}$.
- 
-\header{Handling of Tuples}
-	Most of the semantic domains we deal with in the following chapters consist of several subdomains. 
-	Let $X = A \times B \times C \times D \times \ToList{E}$ be a domain and $x \in X$ be
-	an element of that domain. To get the projection of $x$ to one of its subdomains, we subscript $x$ with the metavariable of the
-	domain we want to project to. For instance, to get $x$'s projection to domain $D$, we write $x_d$. We use the same convention if the projected subdomain is
-	a list, so $x_{\toList{e}}$ projects $x$ to the element in $\ToList{E}$.
-	
-	We often have a complex tuple type instance like $(a, b, c, d, \toList{e}) \in X$, but in a rule or
-	function we actually only need a few of the variables. For example, suppose we only need to use $c$ and $\toList{e}$ in a rule. In that case,
-	we write $x \triangleright c, \toList{e}$.
-	This way, we can reference the entire tuple with $x$ and do not need any projections to access $x$'s subdomains. When using this projection syntax, we list the
-	metavariables of the subdomains in the order they were specified in the definition of $X$. If this notational convention causes any ambiguities, we either
-	resort to the standard tuple notation or list all subdomains in our projection notation. We use a notation similar to the
-	projection syntax to update only some of a tuple's values: If $x \triangleright a, b, c, d, \toList{e}$, we write $x' = x
-	\triangleleft a', \toList{e'}$ as an alternative to $x' = (a', b, c, d, \toList{e'})$.  
-
 \section{Formal Intermediate Language}
 The Formal Intermediate Language, simply called \Fil from now on, is a low-level representation of a formal model. Transformations
 to model checker input languages are defined over \Fil.
@@ -116,7 +44,7 @@ to model checker input languages are defined over \Fil.
 \Fil support integers and Boolean literals as well as variables of those types. A value is either a Boolean or integer
 value.
 \begin{align*}
-    \bool \in \Bool &:= \{ \true, \false \}
+    \bool \in \Bool &:= \{ \trueExpr, \; \falseExpr \}
     \\
     \integer \in \Integer &:= \{ \ldots, -2, -1, 0, 1, 2, \ldots \}
     \\
@@ -293,6 +221,78 @@ values for each variable. The statement of a program is executed once during eac
 	formal models).} Now guaranteed as all variables are default-initialized.
 \end{itemize}
 
+\section{Conventions}
+Throughout the remainder of this report, we use the following conventions in all formal definitions wherever appropriate:
+
+\header{Optional Elements and Failure Elements}
+	We use $\missing$ and $\failure$ to denote the missing element and the failure element respectively. For some domain $A$, it is
+	always true that $\missing \notin A$ and $\failure \notin A$. We define the liftings $\liftMissing{A} := A \cup
+	\missing$, $\liftFailure{A} := A \cup \failure$, and $\liftMissingFailure{A} := A \cup \varepsilon \cup	\bot$.
+	For some $a \in A$, we know that $a \neq \missing$ and $a \neq \failure$, whereas for $\liftMissing{a} \in
+	\liftMissing{A}$, we only know that $\liftMissing{a} \neq \failure$, but $\liftMissing{a}$ might be $\missing$ or
+	any element of $A$. When we write $a \in \liftMissing{A}$ or $a = f(a')$ for some function $f \colon A \rightarrow
+	\liftMissing{A}$, $a$ cannot be $\missing$, so the selection or assignment is only possible if the selected or
+	returned value is not $\missing$. For example, this allows us to shorten some side conditions in function definitions with case
+	distinctions. The following two definitions of function $g \colon A \rightarrow \liftFailure{A}$ illustrate the usage of this
+	convention.
+	With function $f$ defined as above, the following two definitions of $g$ are equivalent:
+	\begin{align*}
+		g(a') = \begin{cases}
+			a & \text{if } \quad a = f(a') \\
+			\bot & \text{if } \quad \missing = f(a')
+		\end{cases} 
+		&&&
+		g(a') = \begin{cases}
+			\liftMissing{a} & \text{if } \quad \liftMissing{a} = f(a') \wedge \liftMissing{a} \neq \missing	\\
+			\bot & \text{if } \quad \missing = f(a')
+		\end{cases}
+	\end{align*}
+
+\header{Functions}
+	Oftentimes, the codomain of some function includes the failure element. Usually the definitions of those functions contain case distinctions.
+	Whenever we do not specify all cases for such a function, the remaining cases are implicitly assumed to return $\failure$.
+	Alternatively, we use the word ``otherwise'' to denote a side condition that is true if the side conditions of all other cases are not true. We do not use partial functions.
+
+	It is sometimes necessary to change the value a function returns for a specific input. We establish the notation $f[a \mapsto b]$
+	for some function $f \colon A \rightarrow B$ that serves this purpose and is defined as follows:
+	\begin{equation*}
+	f[a \mapsto b](a') = \begin{cases}
+		b & \text{if } \quad a' = a \\
+		f(a') & \text{otherwise}
+	\end{cases}
+	\end{equation*}
+
+	For convenience, we use the following notations to update several values at the same time: 
+	$f[a_1 \; a_2 \mapsto b] = f[a_1 \mapsto b][a_2 \mapsto b]$, $f[a_1 \; a_2 \mapsto b_1 \; b_2] = f[a_1 \mapsto b_1][a_2 \mapsto b_2]$, and $\_$ represents all
+	input values, such that $f[ \_ \mapsto b](a)$ returns $b$ for all input values $a$.	This is only well-defined if all updated input values are
+	mutually distinct.
+
+\header{Metavariables}
+	Words starting with a capital letter denote a semantic domain. For instance, the set of two-dimensional vectors might be defined as 
+	$\mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. To denote a single element of a domain, we use metavariables that are identical to the domain's
+	name starting with a lower-case letter; in this example, $\mathit{vector2}$. 
+	The default metavariable for a domain can be overridden by explicitly specifying the metavariable 
+	when defining the domain, such as $v \in \mathit{Vector2} = \mathbb{R} \times \mathbb{R}$. In this case, $v$ denotes an element of domain $\mathit{Vector2}$.
+	We also use metavariables in variously decorated forms such as $v'$, $v''$, $v_0$, $v_1$, and so on. 
+	We adorn a domain's metavariable with an arrow at the top to denote a list of elements of the domain, for example
+	$\toList{v} \in \ToList{\mathit{Vector2}}$.
+ 
+\header{Handling of Tuples}
+	Most of the semantic domains we deal with in the following chapters consist of several subdomains. 
+	Let $X = A \times B \times C \times D \times \ToList{E}$ be a domain and $x \in X$ be
+	an element of that domain. To get the projection of $x$ to one of its subdomains, we subscript $x$ with the metavariable of the
+	domain we want to project to. For instance, to get $x$'s projection to domain $D$, we write $x_d$. We use the same convention if the projected subdomain is
+	a list, so $x_{\toList{e}}$ projects $x$ to the element in $\ToList{E}$.
+	
+	We often have a complex tuple type instance like $(a, b, c, d, \toList{e}) \in X$, but in a rule or
+	function we actually only need a few of the variables. For example, suppose we only need to use $c$ and $\toList{e}$ in a rule. In that case,
+	we write $x \triangleright c, \toList{e}$.
+	This way, we can reference the entire tuple with $x$ and do not need any projections to access $x$'s subdomains. When using this projection syntax, we list the
+	metavariables of the subdomains in the order they were specified in the definition of $X$. If this notational convention causes any ambiguities, we either
+	resort to the standard tuple notation or list all subdomains in our projection notation. We use a notation similar to the
+	projection syntax to update only some of a tuple's values: If $x \triangleright a, b, c, d, \toList{e}$, we write $x' = x
+	\triangleleft a', \toList{e'}$ as an alternative to $x' = (a', b, c, d, \toList{e'})$.  
+
 \section{Safety Component Model}
 We're now going to define the syntactic and semantic
 domains of the Safety Component Metamodel. The basic structure of a Safety Component Model (\Scm) is shown
@@ -313,7 +313,7 @@ component C
 		Y();
 		
 		// provided port
-		X(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool)
+		X(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool)
 		{
 			Y();
 			r1 = false;
@@ -340,11 +340,10 @@ component C
 	}
 			
 	// required ports
-	M(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool);
+	M(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool);
 		
 	// provided ports; overloaded on fault expressions
-	[NoFaults]
-	X(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool);
+	X(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool)
 	{
 		locals
 		{
@@ -358,23 +357,21 @@ component C
 	}
 	
 	[Stuck] // or more complex fault expression like [F1 && F2 && !F3 && !F4]
-	X(in: p1 : int, p2 : int, inout: r1 : bool, r2 : bool);
+	X(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool)
 	{
 		r1 = stuckValue;
 		r2 = stuckValue;
 	}
 	
-	[NoFaults]
 	Y()
 	{
 	}
 		
 	// bindings
 	M = delayed D.X;  // ok as D.X has no side-effects
-	D.Y = Y; // by default, bindings are instantaneous
+	D.Y = instantly Y;
 	
 	// step behavior; overloaded on fault expressions
-	[NoFaults]
 	step
 	{
 		locals
@@ -383,7 +380,8 @@ component C
 			bool l2;
 		}
 		
-		M(in: x, x - 1, inout: l1, l2);
+		M(x, inout l1, x - 1, inout l2);
+		Y();
 		
 		choice
 		{
@@ -400,7 +398,7 @@ component C
 	step
 	{
 		locals { bool l1; }
-		M(in: x, x - 1, inout: l1, l2);
+		M(x, x - 1; l1, l2);
 	}
 }
 \end{lstlisting}
@@ -446,8 +444,10 @@ component. We occasionally use field and fault environments in a curried form wh
 	\faultEnvCurried \in \FaultEnvCurried &:= \Fault \rightarrow \liftFailure{\Bool}
 \end{align*}
 
-$\varEnvFmEmpty$, $\fieldEnvEmpty$ and $\faultEnvEmpty$ denote the empty variable, field, and fault environments, respectively. We
-use the standard notation $\varEnvFm\left[\var \mapsto \val \right]$ to update the value of a variable $\var$ and also allow for simultaneous
+$\fieldEnvPrev$ and $\faultEnvPrev$ denote the field and fault environments at the end of the previous execution step.
+$\varEnvFmEmpty$, $\fieldEnvEmpty$ and $\faultEnvEmpty$, on the other hand, denote the empty variable, field, and fault
+environments, respectively.
+We use the standard notation $\varEnvFm\left[\var \mapsto \val \right]$ to update the value of a variable $\var$ and also allow for simultaneous
 updates, written as $\varEnvFm\left[\var_1, \ldots, \var_n \mapsto \val_1, \ldots, \val_n\right]$.
 For field environments, the notation $\fieldEnv\left[\toListNE{\comp}, \field \mapsto \val \right]$ is used to update the value of
 some field $\field$ within the hierarchy of components at location $\toListNE{\comp}$, where
@@ -495,17 +495,20 @@ evaluation might fail.
 	(\ExprSem{\expr_1} \fieldEnvCurried \varEnvFm, \ExprSem{\expr_2} \fieldEnvCurried \varEnvFm)
 \end{align*}
 
-\subsubsection{Fault Expressions}
+\subsubsection{Fault Expressions and Fault Attributes}
 Fault expressions are used to select different overloads of component behaviors and provided ports, modeling the effects of
 component faults on the behavior of the component itself or to zero, one, or more of its ports.
 \begin{equation*}
-	\faultExpr \in \FaultExpr := \fault \mid \negateExpr{\faultExpr} \mid \andExpr{\faultExpr_1}{\faultExpr_2}
+	\faultExpr \in \FaultExpr := \trueExpr \mid \falseExpr \mid \fault \mid \negateExpr{\faultExpr} \mid
+	\andExpr{\faultExpr_1}{\faultExpr_2}
 \end{equation*}
 
 The function $\FaultExprSem{-} \colon \FaultExpr \rightarrow \FaultEnvCurried \rightarrow \liftFailure{\Bool}$ defines the
 semantics of fault expression. Since a fault expression of a non well-formed model might potentially access an undefined fault,
 the expression evaluation might fail.
 \begin{align*}
+	\FaultExprSem{\trueExpr} \faultEnvCurried &= \true \\
+	\FaultExprSem{\falseExpr} \faultEnvCurried &= \false \\
 	\FaultExprSem{\fault} \faultEnvCurried &= \faultEnvCurried(\fault) \\
 	\FaultExprSem{\negateExpr{\faultExpr}} \faultEnvCurried &= \neg \FaultExprSem{\faultExpr} \faultEnvCurried \\
 	\FaultExprSem{\andExpr{\faultExpr_1}{\faultExpr_2}} \faultEnvCurried &= \FaultExprSem{\faultExpr_1} \faultEnvCurried \wedge
@@ -515,7 +518,8 @@ the expression evaluation might fail.
 \subsubsection{Statements}
 An \Scm supports variable and field assignments, sequential composition, guarded commands,
 invocations of required ports, as well as invocation of step behaviors of subcomponents and faults. Only variables but not fields
-are allowed as output parameters of required port invocations.
+are allowed as output parameters of required port invocations. The expression on the right-hand side of an assignment to a fault
+must be of type Boolean with a value evaluating to $\true$ indicating that the fault is currently occurring/active.
 \begin{align*}
 	\guardedCmd \in \GuardedCmd &:= \guardedClause{\expr}{\blockStm{\stmFm}} \\
 	\stmFm \in \StmFm &:=
@@ -526,14 +530,10 @@ are allowed as output parameters of required port invocations.
 		\\&\phantom{:= \;} \mid 
 		\guardedStm{\toListNE{\guardedCmd}}
 		\\&\phantom{:= \;} \mid
-		\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}
+		\invokeReqPort{\reqPort}{\toList{\expr}}
 		\\&\phantom{:= \;} \mid
 		\stepStm{\comp} \mid \stepStm{\fault}
 \end{align*}
-
-By convention, the list of input parameters or the list of input/output parameters of a required port invocation can simply be
-omitted if both or either of them are empty. For instance, the statements $\invokePortNoIn{\reqPort}{\toList{\var}}$ and
-$\invokePort{\reqPort}{\missing}{\toList{\var}}$ are considered equivalent in the following.
 
 \subsubsection{Variable and Field Declarations}
 A variable declaration introduces typed local variables or parameters.
@@ -557,8 +557,10 @@ on lists of variable and field declarations, applying the function to each eleme
 
 \subsubsection{Behaviors}
 A behavior resembles a function body of a programming language such as C with all local variables declared at the beginning of the
-function. All local variables of Safety Component Models are default-initialized, i.e., a local variable of type $\intType$ is
-initialized to $\texttt{0}$ and a local variable of type $\boolType$ is initialized to $\false$.
+function. All local variables of Safety Component Models are uninitialized by default. The effects of reading an
+uninitialized value are undefined. A \CSharp-like check for definitive assignment could be performed to check for such a
+situation; however, definite assignment is a complex property, requiring control flow analysis. If the safety component model is
+generated from a \SafetySharp model, definitive assignment is already guaranteed by the \CSharp compiler.
 \begin{equation*}
 	\behavior \in \Behavior := \blockStm{\localsStm{\toList{\varDecl}} \; \stmFm}
 \end{equation*}
@@ -568,30 +570,49 @@ $\locals(\blockStm{\localsStm{\toList{\varDecl}} \; \stmFm}) = \toList{\varDecl}
 the function $\stmof \colon \behavior \rightarrow \StmFm$ with $\stmof(\blockStm{\localsStm{\toList{\varDecl}} \; \stmFm}) =
 \stmFm$.
 
+By convention, the $\localsStm{}$ declaration can be omitted entirely if a behavior does not wish to declare any local variables.
+Therefore, we consider the behaviors $\blockStm{\stmFm}$ and $\blockStm{\localsStm{\empty} \; \stmFm}$ to be equivalent.
+
 \subsubsection{Required and Provided Ports}
-A required port of a component has a possibly empty list of input parameters and a possibly empty list of input/output parameters. 
-Provided ports are defined similarly. However, they also introduce local names for their input and input/output parameters and
-declare a behavior in form of a statement, optionally also introducing additional local variables. 
+A required port of a component has a possibly empty list of input and input/output parameters.
+Provided ports are defined similarly. However, they also
+declare a behavior in form of a statement, optionally also introducing additional local variables. A provided port is prefixed
+with a fault expression; the fault expression is used to overload the provided port based on the component's current fault state.
+Whenever a provided port is invoked, one of the overloads of the ports is chosen nondeterministically for which the fault
+expression evaluates to $\true$. If no such overload exists, the default implementation is chosen. It is an error to define an
+overloaded provided port without also defining the default implementation. 
 \begin{align*}
+	\parameterDecl \in \ParameterDecl &:=
+		\varDecl \mid \inoutSyn{\varDecl}
+	\\
 	\reqPortDecl \in \ReqPortDecl &:=
-		\reqPortDeclSyn{\reqPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}
+		\reqPortDeclSyn{\reqPort}{\toList{\parameterDecl}}
 	\\
 	\provPortDecl \in \ProvPortDecl &:= \provPortDeclSyn{\provPort}
-		{\toList{\varDecl}_\mathit{in}}
-		{\toList{\varDecl}_\mathit{io}}
+		{\toList{\parameterDecl}}
 		{\behavior}
+		{\liftMissing{\faultExpr}}
 \end{align*}
 
-The functions $\signature \colon
-\ReqPortDecl \rightarrow \ToList{\Type} \times \ToList{\Type}$ and $\signature \colon \ProvPortDecl \rightarrow \ToList{\Type} \times
-\ToList{\Type}$ return the signature of a required or provided port declaration, that is, the lists of input and input/output
-parameter types. Therefore,
-$\signature(\reqPortDeclSyn{\reqPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}) =
-(\typeof(\toList{\type_\mathit{in}}), \typeof(\toList{\type_\mathit{io}}))$ and
-$\signature(\provPortDeclSyn{\provPort}{\toList{\varDecl}_\mathit{in}}{\toList{\varDecl}_\mathit{io}}{\behavior})
-= (\typeof(\toList{\var_{\mathit{in}}}), \typeof(\toList{\var_{\mathit{io}}}))$. The behavior declared by a provided port is
+If the fault expression is missing, the brackets can also be omitted and we consider the provided port declarations
+$\provPortDeclSyn{\provPort} {\toList{\parameterDecl}}{\behavior}{\missing}$ and $\provPortDeclSynDefault{\provPort}{\toList{\parameterDecl}}{\behavior}$ to be
+equivalent.
+The parameter function $\isinout \colon \ParameterDecl \rightarrow \Bool$ returns $\true$ for an input/output parameter. We also
+lift the $\varof$ and $\typeof$ functions to parameter declarations, selecting the variable declaration and the type of the
+variable declaration of a parameter declaration, respectively.
+The functions $\signature \colon \ReqPortDecl \rightarrow \ReqPort \times \ToList{\Type} \times \toList{\Bool}$ and $\signature
+\colon \ProvPortDecl \rightarrow \ProvPort \times \ToList{\Type} \times \toList{\Bool}$ return the signature of a required or
+provided port declaration, that is, the name of the port, the lists of the types of the parameters declared by the port, and for
+each parameter a Boolean value indicating whether the parameter is an input/output parameter.
+Therefore, $\signature(\reqPortDeclSyn{\reqPort}{\toList{\parameterDecl}}) = (\reqPort, \typeof(\toList{\parameterDecl}),
+\isinout(\toList{\parameterDecl}))$ and
+$\signature(\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\liftMissing{\faultExpr}}) =
+(\provPort, \typeof(\toList{\parameterDecl}),
+\isinout(\toList{\parameterDecl}))$. The behavior declared by a provided port is
 selected using the function $\behaviorof \colon \ProvPortDecl \rightarrow \Behavior$, defined as
-$\behaviorof(\provPortDeclSyn{\provPort} {\toList{\varDecl}_\mathit{in}}{\toList{\varDecl}_\mathit{io}}{\behavior}) = \behavior$.
+$\behaviorof(\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\liftMissing{\faultExpr}}) =
+\behavior$. The potentially omitted fault expression of a provided port is selected by the function $\faultexprof \colon
+\ProvPortDecl \rightarrow \liftMissing{\FaultExpr}$.
 
 \subsubsection{Bindings}
 A \textit{binding} binds a required port to a provided port. The binding must be either between two components on the
@@ -616,8 +637,11 @@ identifies a required port of some component.
 	\bindingTarget \in \BindingTarget &:=
 		\reqPort \mid \qualifiedName{\comp}{\reqPort} 
 	\\
+	\bindingType \in \BindingType &:=
+		\instantBindingType \mid \delayedBindingType
+	\\
 	\bindingDecl \in \BindingDecl &:=
-		\instantBindingDeclSyn{\bindingTarget}{\bindingSrc} \mid \delayedBindingDeclSyn{\bindingTarget}{\bindingSrc} 
+		\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType} 
 \end{align*}
 
 We define a substitution operation for components used within bindings as follows: Given a component $\comp$ that is to be
@@ -626,9 +650,8 @@ replaced by component $\comp'$, we update a binding source $\bindingSrc$ using t
 \mapsto \comp'] = \comp_2$ where $\comp_2 = \comp$ if $\comp \neq \comp'$ and $\comp_2 = \comp'$ otherwise. We define a
 corresponding component substitution operation for binding targets as well. For bindings $\bindingDecl$, we then use the
 notation $\bindingDecl[\comp \mapsto \comp']$, such that
-$(\instantBindingDeclSyn{\bindingTarget}{\bindingSrc})[\comp
-\mapsto \comp'] = \instantBindingDeclSyn{\bindingTarget[\comp \mapsto \comp']}{\bindingSrc[\comp \mapsto \comp']}$ and similar
-for delayed bindings.
+$(\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType})[\comp
+\mapsto \comp'] = \bindingDeclSyn{\bindingTarget[\comp \mapsto \comp']}{\bindingSrc[\comp \mapsto \comp']}{\bindingType}$.
 For a list of bindings $\toList{\bindingDecl}$, we use the notational convention
 $\toList{\bindingDecl}[\comp \mapsto \comp']$ to substitute the component in all bindings contained in the list.
 
@@ -645,19 +668,21 @@ We assume two functions $\faultof \colon \FaultDecl \rightarrow \Fault$ and $\be
 with $\faultof(\faultDeclSyn{\fault}{\behavior}) = \fault$ and $\behaviorof(\faultDeclSyn{\fault}{\behavior}) = \behavior$.
 
 \subsubsection{Components}
-A \textit{component} declares sets of required and provided ports, fields, port bindings and subcomponents. They have a behavior
-described by a statement with optional local variables.
-\begin{equation*}
-	\compDecl \in \CompDecl :=  
+A \textit{component} declares sets of required and provided ports, fields, faults, port bindings, and subcomponents. They have a
+step behavior with optional local variables. Similar to provided ports, the step behavior can be overloaded for different fault
+situations.
+\begin{align*}
+	\stepDecl \in \StepDecl &:= \stepDeclSyn{\behavior}{\faultExpr}
+	\\
+	\compDecl \in \CompDecl &:=  
 		\compDeclSyn{\comp}
 			{\toList{\compDecl}}
 			{\toList{\fieldDecl}}
 			{\toList{\faultDecl}}
 			{\toList{\reqPortDecl}}{\toList{\provPortDecl}}
 			{\toList{\bindingDecl}}
-			{\toList{\varDecl}}
-			{\stmFm}
-\end{equation*}
+			{\toList{\stepDecl}}
+\end{align*}
 
 We define a couple of selector methods: $\compof \colon \CompDecl \rightarrow \Comp$ yields the component declared by the
 component declaration, whereas the functions $\reqsof \colon \CompDecl \rightarrow \ToSet{\ReqPortDecl}$ and $\provsof \colon
@@ -669,7 +694,7 @@ We use the $\in$ operator to check whether a component declaration declares a sp
 field, or binding.
 For instance, for required port declarations we have
 $\reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in
-(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})
+(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\behavior})
 \Leftrightarrow \reqPortDeclSyn{\reqPort}{\toList{\type_\mathit{in}}}{\toList{\type_\mathit{io}}} \in \toList{\reqPortDecl}$.
 
 We are allowed to substitute a subcomponent declaration of some component declaration, provided that the original subcomponent
@@ -678,10 +703,10 @@ $\signature(\reqsof(\compDecl')) = \signature(\reqsof(\compDecl''))$ and $\signa
 \signature(\provsof(\compDecl''))$.
 We use the notation $\compDecl[\compDecl' \mapsto \compDecl'']$ to obtain a new component declaration where $\compDecl'$ has been
 replaced with $\compDecl''$. Consequently,
-$(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm})[\compDecl'
+$(\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\behavior})[\compDecl'
 \mapsto \compDecl''] = \compDeclSyn{\comp}{\toList{\compDecl}[\compDecl' \mapsto
 \compDecl'']}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}[\compDecl'
-\mapsto \compDecl'']}{\toList{\varDecl}}{\stmFm}$. We also allow for simultaneous substitution of multiple subcomponents, written
+\mapsto \compDecl'']}{\behavior[\compDecl'\mapsto \compDecl'']}$. We also allow for simultaneous substitution of multiple subcomponents, written
 as $\compDecl[\compDecl_1, \ldots, \compDecl_n \mapsto \compDecl_1', \ldots, \compDecl_n']$. On the other hand, we have
 $\compDecl[\compDecl' \mapsto \compDecl''] = \compDecl''$ if $\compDecl = \compDecl'$.
 
@@ -738,40 +763,30 @@ We only consider components that are well-formed according to the following crit
 	\item Note that we do not have to check for component cycles (i.e., a component being its own parent), as that simply cannot be
 	expressed with the domains we have defined.
 	\item All faults of a component have unique names.
-	\item All fields within a component have unique names; their names do not overlap with any names of the component.
-	\item Fault expressions only occur within fault statements.
-	\item The fields of a fault are only written by the fault itself.
-	\item Faults can read from, but not write to component fields.
-	\item Statements and expressions in a \texttt{nofault} context cannot access any faults.
+	\item All faults within a component have unique names; their names do not overlap with any names of the component.
+	\item Assignments to faults only occur within the fault itself.
+	\item If there is a provided port or step method with a fault attribute, there must also be a declaration of the provided port or
+	step method without a fault attribute (or a fault attribute with expression $\trueExpr$).
 \end{itemize}
 
 \subsection{Semantics of Formal Models}
 The nondeterministic rule system $\stmArrowFm$ is parametrized over a component declaration or hierarchy $\compDecl$. It defines
-the natural semantics of statements.
+the natural semantics of Safety Component Model statements.
 \begin{align*}
-	\mathit{Configurations} \colon & \;\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}} \in \StmFm
-	\times \FieldEnv \times \FieldEnv \times \VarEnvFm \times \ToListNE{\Comp}, \; \configurationFm{\fieldEnv, \varEnvFm} \in
-	\FieldEnv
-	\times
-	\VarEnvFm
+	\mathit{Configurations} \colon & \;\configurationFm{\stmFm, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}} \in \StmFm
+	\times \FieldEnv \times \FaultEnv \times \VarEnvFm \times \ToListNE{\Comp},
 	\\
-	\mathit{Transitions} \colon & \;\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}} \stmArrowFm
-	\configurationFm{\fieldEnv', \varEnvFm'}
+	& \; \configurationFm{\fieldEnv, \faultEnv, \varEnvFm} \in \FieldEnv \times \FaultEnv \times \VarEnvFm
+	\\
+	\mathit{Transitions} \colon & \;\configurationFm{\stmFm, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}} \stmArrowFm
+	\configurationFm{\fieldEnv', \faultEnv', \varEnvFm'}
 \end{align*}
-
-The skip statement has no effect and is therefore simply discarded.
-\begin{equation*}
-	\tag{skip}
-	\configurationFm{\skipStm, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
-		\stmArrowFm
-	\configurationFm{\fieldEnv, \varEnvFm}
-\end{equation*}
 
 Assignments to a variable update the variable environment accordingly, replacing the variable's current value with the value
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign${}_\text{v}$}
-	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, faultEnvd, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv, \varEnvFm[\var \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm]}
 \end{equation*}
@@ -780,148 +795,223 @@ Assignments to a field update the field environment accordingly, replacing the f
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign${}_\text{f}$}
-	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, faultEnvd, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv[\toListNE{\comp}, \field \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm], \varEnvFm}
 \end{equation*}
 
-Sequential composition executes two statements sequentially, carrying along the modified variable and field environments.
+Sequential composition executes all statements sequentially, carrying along the modified variable, field, and fault environments.
+If the statement list is empty, no changes are made to those environments.
 \begin{equation*}
 	\tag{seq}
 	\dfrac
 	{
-		\configurationFm{\stmFm_1, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\stmFm_1, \fieldEnv_0, \faultEnv_0, \varEnvFm_0, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv_1, \varEnvFm_1}
-		\qquad
-		\configurationFm{\stmFm_2, \fieldEnv_1, \fieldEnvOld, \varEnvFm_1, \toListNE{\comp}}
+		\configurationFm{\fieldEnv_1, \faultEnv_1, \varEnvFm_1}
+		\;
+		\ldots
+		\;
+		\configurationFm{\stmFm_n, \fieldEnv_{n-1}, \faultEnv_{n-1}, \varEnvFm_{n-1}, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv_2, \varEnvFm_2}
+		\configurationFm{\fieldEnv_n, \faultEnv_n, \varEnvFm_n}
 	}
 	{
-		\configurationFm{\seqStm{\stmFm_1}{\stmFm_2}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\stmFm_1 \ldots \stmFm_n, \fieldEnv_0, \faultEnv_0, \varEnvFm_0, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv_2, \varEnvFm_2}
+		\configurationFm{\fieldEnv_n, \faultEnv_n, \varEnvFm_n}
 	}
 \end{equation*}
 
 Guarded commands nondeterministically choose and execute a statement whose corresponding guard evaluates to true. If no guard
 evaluates to true, the rule cannot be applied and hence the program is ``stuck''.
 \begin{equation*}
-	\tag{cmd}
+	\tag{choice}
 	\dfrac
 	{
-		\configurationFm{\stmFm_i, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\stmFm_i, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm'}
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}, \fieldEnv, \fieldEnvOld,
-		\varEnvFm,
+		\configurationFm{\guardedStm{\guardedClause{\expr_1}{\stmFm_1} \; \ldots \; \guardedClause{\expr_n}{\stmFm_n}}, \fieldEnv,
+		\faultEnv, \varEnvFm,
 		\toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm'}
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm'}
 	}
 	\qquad \text{if} \quad \ExprSem{e_i} \fieldEnv(\toListNE{\comp}) \varEnvFm = \true
 \end{equation*}
 
-We define a helper function $\boundof_{\compDecl, \bindingType} \colon \ToListNE{\Comp} \rightarrow \ReqPort
+We define a helper function $\copyout \colon \FieldEnv \times \FaultEnv \times \VarEnvFm \times 
+\toListNE{\Comp} \times \toList{\Val} \times \toList{\Bool} \times \toList{\Expr} \rightarrow \liftFailure{(\FieldEnv \times
+\FaultEnv \times \VarEnvFm)}$ that copies the values of the input/output parameters of a port invocation to the field or variable environments, depending on the expression that was used to
+invoke the port. This function fails when a non ``l-value'' expression was passed to an
+input/output parameter or the lengths of the different lists do not match, etc.
+\begin{align*}
+	\copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}, \missing, \missing, \missing) &= (\fieldEnv, \faultEnv,
+	\varEnvFm)
+	\\
+	\copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}, \val \cons \toList{\val}, \false \cons
+	\toList{\mathit{io}}, \expr \cons \toList{\expr}) &= \copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp},
+	\toList{\val}, \toList{\mathit{io}}, \toList{\expr})
+	\\
+	\copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}, \val \cons \toList{\val}, \true \cons
+	\toList{\mathit{io}}, \var \cons \toList{\expr}) &= \copyout(\fieldEnv, \faultEnv, \varEnvFm[\var \mapsto \val],
+	\toListNE{\comp}, \toList{\val}, \toList{\mathit{io}}, \toList{\expr})
+	\\
+	\copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}, \val \cons \toList{\val}, \true \cons
+	\toList{\mathit{io}}, \field \cons \toList{\expr}) &= \copyout(\fieldEnv[\toListNE{\comp}, \field \mapsto \val],
+	\faultEnv, \varEnvFm, \toListNE{\comp}, \toList{\val}, \toList{\mathit{io}}, \toList{\expr})
+\end{align*}
+
+We also define a helper function $\boundof_{\compDecl, \bindingType} \colon \ToListNE{\Comp} \rightarrow \ReqPort
 \rightarrow \liftFailure{(\ToListNE{\Comp} \times \ProvPort)}$ that is parametrized over a component hierarchy $\compDecl$ and a
-binding type $\bindingType$. It returns the provided port bound to a required port as follows:
+binding kind $\bindingType$. It returns the provided port bound to a required port as follows:
 \begin{align*}
 	\boundof_{\compDecl, \bindingType}(\toList{\comp} \cons \comp, \reqPort) &=
 		\begin{cases}
-			(\toList{\comp} \cons \comp, \provPort) & \; \, \text{if } 
+			(\toList{\comp} \cons \comp, \provPort) & \; \, \text{if }
 				\bindingDeclSyn{\reqPort}{\provPort}{\bindingType} \in
 				\compDecl[\toList{\comp} \cons \comp] \\
-			(\toList{\comp} \cons \comp \cons \comp', \provPort) & \; \, \text{if } 
+			(\toList{\comp} \cons \comp \cons \comp', \provPort) & \; \, \text{if }
 				\bindingDeclSyn{\reqPort}{\qualifiedName{\comp'}{\provPort}}{\bindingType} \in
 				\compDecl[\toList{\comp} \cons \comp]
 		\end{cases} \\
 	\boundof_{\compDecl, \bindingType}(\toList{\comp} \cons \comp_1 \cons \comp_2, \reqPort) &=
 		\begin{cases}
-			(\toList{\comp} \cons \comp_1, \provPort) & \text{if } 
+			(\toList{\comp} \cons \comp_1, \provPort) & \text{if }
 				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\provPort}{\bindingType} \in
 				\compDecl[\toList{\comp} \cons \comp_1] \\
-			(\toList{\comp} \cons \comp_1 \cons \comp', \provPort) & \text{if } 
+			(\toList{\comp} \cons \comp_1 \cons \comp', \provPort) & \text{if }
 				\bindingDeclSyn{\qualifiedName{\comp_2}{\reqPort}}{\qualifiedName{\comp'}{\provPort}}{\bindingType} \in
 				\compDecl[\toList{\comp} \cons \comp_1]
 		\end{cases}
 \end{align*}
 
+An additional helper function is $\select \colon \CompDecl \times \FaultEnvCurried \times \ProvPort \rightarrow
+\liftFailure{\ProvPortDecl}$. It returns a provided port to call by choosing one of the port's overloads for which the fault
+expression holds nondeterministically. If no such overload exists, the port's default implementation is returned.
+\begin{equation*}
+	\select(\compDecl, \faultEnvCurried, \provPort) =
+	\begin{cases}
+		(\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\faultExpr}) \in \compDecl & \text{if } \FaultExprSem{\faultExpr} \faultEnvCurried
+		\\
+		\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\missing} & \text{otherwise}
+	\end{cases} 
+\end{equation*}
+
 When a required port is called that is instantaneously bound to a provided port, we execute the bound port's statement.
 While the field environment remains unchanged, the component context might change and the port is executed in a new, empty
 variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
-done with the execution of the port, we restore our previous variable environment, taking over the port's output values.
+done with the execution of the port, we restore our previous variable environment, taking over the port's output values as well
+as the updated field and fault environments. Depending on the faults currently active within the provided port's
+declaring component, the port's default implementation or one of its overloads are invoked.
 \begin{multline*}
-	\tag{call${_\instantBinding}$}
+	\tag{call${_i}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}),
-		\varof(\toList{\varDecl}_\mathit{io}) \mapsto \ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
+		\configurationFm{\stmFm, \fieldEnv, \faultEnv, \varEnvFmEmpty[\varof(\toList{\parameterDecl}) \mapsto
+		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm'}
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\invokeReqPort{\reqPort}{\toList{\expr}}, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
+		\copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp},
+		\varEnvFm'(\varof(\toList{\parameterDecl})), \isinout(\toList{\parameterDecl}), \toList{\expr}) 
 	}
-	\\ \text{if} \quad \boundof_{\compDecl, \instantBinding}(\toListNE{\comp},
+	\\ \text{if} \quad \boundof_{\compDecl, \instantBindingType}(\toListNE{\comp},
 	\reqPort) = (\toListNE{\comp}_\provPort, \provPort) \wedge
-	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm})
-	\in \compDecl[\toListNE{\comp}_\provPort]
+	\select(\compDecl[\toListNE{\comp}_\provPort], \faultEnv(\toListNE{\comp}_\provPort),
+	\provPort) = (\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\liftMissing{\faultExpr}})
 \end{multline*}
 
 When a required port with a delayed binding to a provided port is called, we execute the bound port's statement in the context of
-the \textit{previous field environment}. The component context might change and the port is executed in a new, empty
+the \textit{previous} field and fault environments. The component context might change and the port is executed in a new, empty
 variable environment in which only the values of the port's parameters are set; the values of the port's local variables remain undefined. Once we're
-done with the execution of the port, we restore the field and variable environments we started with, only
-taking over the port's output values. Note that the rules requires that the execution of the provided port does not change the
-field environment; if it does, the rule cannot be applied and execution is ``stuck''.
+done with the execution of the port, we restore the field, fault, and variable environments we started with, only
+taking over the port's output values. Note that the rule requires that the execution of the provided port does not change the
+field and fault environments; if it does, the rule cannot be applied and execution is ``stuck''. Depending on the faults that have
+been active at the end of the previous step in the provided port's declaring component, the port's default
+implementation or one of its overloads are invoked.
 \begin{multline*}
-	\tag{call${_\delayedBinding}$}
+	\tag{call${_d}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnvOld, \fieldEnvOld, \varEnvFmEmpty[\varof(\toList{\varDecl}_\mathit{in}),
-		\varof(\toList{\varDecl}_\mathit{io}) \mapsto \ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm, \varEnvFm(\toList{\var})],
+		\configurationFm{\stmFm, \fieldEnvPrev, \faultEnvPrev, \varEnvFmEmpty[\varof(\toList{\parameterDecl}) \mapsto
+		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm
-		\configurationFm{\fieldEnvOld, \varEnvFm'}
+		\configurationFm{\fieldEnvPrev, \faultEnvPrev, \varEnvFm'}
 	}
 	{
-		\configurationFm{\invokePort{\reqPort}{\toList{\expr}}{\toList{\var}}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\invokeReqPort{\reqPort}{\toList{\expr}}, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv, \varEnvFm[\toList{\var} \mapsto \varEnvFm'(\varof(\toList{\varDecl_\mathit{io}}))]}
+		\copyout(\fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp},
+		\varEnvFm'(\varof(\toList{\parameterDecl})), \isinout(\toList{\parameterDecl}), \toList{\expr})
 	}
-	\\ \text{if} \quad \boundof_{\compDecl, \delayedBinding}(\toListNE{\comp},
+	\\ \text{if} \quad \boundof_{\compDecl, \delayedBindingType}(\toListNE{\comp},
 	\reqPort) = (\toListNE{\comp}_\provPort, \provPort) \wedge
-	\provPortDeclSyn{\provPort}{\toList{\varDecl_\mathit{in}}}{\toList{\varDecl_\mathit{io}}}{\toList{\varDecl_\mathit{loc}}}{\stmFm})
-	\in \compDecl[\toListNE{\comp}_\provPort]
+	\select(\compDecl[\toListNE{\comp}_\provPort], \faultEnvPrev(\toListNE{\comp}_\provPort),
+	\provPort) = (\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\liftMissing{\faultExpr}})
 \end{multline*}
 
-When the behavior of a subcomponent is invoked, the subcomponent is added to the component path and an empty variable environment
-is used to execute the behavior. Execution of the current behavior or port continues with the new field environment and the old
-variable environment.
-\begin{multline*}
-	\tag{beh}
+The helper function $\selectStep \colon \CompDecl \times \FaultEnvCurried \rightarrow
+\liftFailure{(\StmFm)}$ returns the statements of a step behavior depending on the component's current fault state. Analogous to
+how provided ports are selected, one of the component step behavior's overloads is chosen nondeterministically for which the fault
+expression holds. If no such overload exists, the step behavior's default implementation is returned.
+\begin{equation*}
+	\selectStep(\compDecl, \faultEnvCurried) =
+	\begin{cases}
+		\stepDeclSyn{\behavior}{\faultExpr} \in \compDecl & \text{if } \FaultExprSem{\faultExpr} \faultEnvCurried
+		\\
+		\stepDeclSyn{\behavior}{\missing} & \text{otherwise}
+	\end{cases} 
+\end{equation*}
+
+When the step behavior of a subcomponent is invoked, the subcomponent is added to the component path and an empty variable
+environment is used to execute the behavior. Execution of the current behavior or port continues with the new field and fault environments and
+the old variable environment. Depending on the faults currently active within the subcomponent, the component's default step
+behavior or one of its overloads are invoked.
+\begin{equation*}
+	\tag{step$_{\comp}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \fieldEnvOld, \varEnvFmEmpty, \toListNE{\comp}
+		\configurationFm{\stmFm, \fieldEnv, \faultEnv, \varEnvFmEmpty, \toListNE{\comp}
 		\cons \comp}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm'}
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm'}
 	}
 	{
-		\configurationFm{\invokeBeh{\comp}, \fieldEnv, \fieldEnvOld, \varEnvFm, \toListNE{\comp}}
+		\configurationFm{\stepStm{\comp}, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
 			\stmArrowFm
-		\configurationFm{\fieldEnv', \varEnvFm}
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm}
 	}
-	\\ \text{if} \quad
-	\compDeclSyn{\comp}{\toList{\compDecl}}{\toList{\fieldDecl}}{\toList{\faultDecl}}{\toList{\reqPortDecl}}{\toList{\provPortDecl}}{\toList{\bindingDecl}}{\toList{\varDecl}}{\stmFm}
-	\in \compDecl[\toListNE{\comp}]
-\end{multline*}
+	\qquad \text{if} \quad
+	\selectStep(\compDecl[\toListNE{\comp}], \faultEnv(\toListNE{\comp} \cons \comp)) = \stmFm 
+\end{equation*}
+
+When the step behavior of a fault is invoked, execution is transferred directly to the fault's step behavior as the step behavior
+of a fault cannot be overloaded.
+\begin{equation*}
+	\tag{step$_{\fault}$}
+	\dfrac
+	{
+		\configurationFm{\stmof(\behavior), \fieldEnv, \faultEnv, \varEnvFmEmpty, \toListNE{\comp}}
+			\stmArrowFm
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm'}
+	}
+	{
+		\configurationFm{\stepStm{\fault}, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
+			\stmArrowFm
+		\configurationFm{\fieldEnv', \faultEnv', \varEnvFm}
+	}
+	\qquad \text{if} \quad
+	\faultDeclSyn{\fault}{\behavior} \in \compDecl[\toListNE{\comp}] 
+\end{equation*}
 
 % \begin{equation*}
 % 	\tag{call${}_2$}
