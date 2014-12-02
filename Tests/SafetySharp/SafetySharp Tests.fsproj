@@ -49,6 +49,7 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+  <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
@@ -68,8 +69,8 @@
     <Compile Include="ModelFile\ModelFileParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
+    <Content Include="packages.config" />
   </ItemGroup>
-  <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Reference Include="FParsec">
       <HintPath>..\..\Dependencies\Packages\FParsec.1.0.1\lib\net40-client\FParsec.dll</HintPath>
@@ -88,10 +89,12 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.32-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
       <Name>SafetySharp</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
