@@ -1,0 +1,5 @@
+component simple {
+	step {
+		locals{}
+	}
+}
