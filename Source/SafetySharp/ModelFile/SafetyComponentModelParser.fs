@@ -312,9 +312,10 @@ module internal SafetySharp.Internal.ParseSCM
     let varIdInsts_ws = sepBy varIdInst_ws (pstring_ws ",")
 
     let param_ws =
-        let inoutParam = attempt (pstring_ws1 "inout") >>. varIdInst_ws |>> Param.InOutParam
+        let inoutVarParam = attempt (pstring_ws1 "inout") >>. varIdInst_ws |>> Param.InOutVarParam
+        let inoutFieldParam = attempt (pstring_ws1 "inout") >>. fieldIdDecl_ws |>> Param.InOutFieldParam
         let exprParam = attempt expression_ws |>> Param.ExprParam
-        inoutParam <|> exprParam
+        inoutVarParam <|> inoutFieldParam <|> exprParam
     let params_ws = sepBy (param_ws) (pstring_ws ",")
 
     do guardedCommandClauseRef :=
@@ -421,24 +422,19 @@ module internal SafetySharp.Internal.ParseSCM
               createBehavior
     
     let faultExpr_ws  : Parser<_,UserState> =
-        let faultExprTerminal_ws =
-            (faultIdInst_ws |>> (fun field -> ("yes", field ))) <|>
-            ((pstring_ws "!") >>. faultIdInst_ws |>>  (fun field -> ("no", field)))
-        let refurbishResult (faults:(string*Fault) list) : FaultExpr =
-            let mustAppear =
-                faults |> List.filter ( fun (whichList,_) -> whichList="yes")
-                       |> List.map (fun (_,fault) -> fault)
-            let mustNotAppear =
-                faults |> List.filter ( fun (whichList,_) -> whichList="no")
-                       |> List.map (fun (_,fault) -> fault)
-            {
-                FaultExpr.MustAppear = mustAppear;
-                FaultExpr.MustNotAppear = mustNotAppear;
-            }
-        let faultExprComplete =
-            sepBy1 faultExprTerminal_ws (pstring_ws "&&") |>> refurbishResult
-        faultExprComplete
-
+        let opp = new OperatorPrecedenceParser<_,_,_>()
+        opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> FaultExpr.NotFault(e)))
+        //>
+        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> FaultExpr.AndFault(e1,e2)))
+        //>
+        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> FaultExpr.OrFault(e1,e2)))
+        // parses an expression between ( and )
+        let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)        
+        // recursive term parser for expressions
+        opp.TermParser <-
+            (faultIdInst_ws |>> FaultExpr.Fault) <|> 
+            (parenExpr_ws)
+        opp.ExpressionParser
 
     let faultExprOpt_ws =
         let foundSomething = (pstring_ws "[") >>. faultExpr_ws .>> (pstring_ws "]")

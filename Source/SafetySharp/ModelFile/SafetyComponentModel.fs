@@ -59,14 +59,16 @@ type internal Expr =
     | UExpr of Expr * UOp
     | BExpr of Expr * BOp * Expr
 
-type internal FaultExpr = {
-    MustAppear : Fault list ;
-    MustNotAppear : Fault list ;
-}
+type internal FaultExpr =
+    | Fault of Fault
+    | NotFault of FaultExpr
+    | AndFault of FaultExpr * FaultExpr
+    | OrFault of FaultExpr * FaultExpr
 
 type internal Param =
     | ExprParam of Expr
-    | InOutParam of Var
+    | InOutVarParam of Var
+    | InOutFieldParam of Field
 
 type internal Stm =
     | AssignVar of Var * Expr
