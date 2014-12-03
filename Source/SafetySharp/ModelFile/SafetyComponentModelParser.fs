@@ -115,10 +115,12 @@ module internal SafetySharp.Internal.ParseSCM
                 }
 
             member us.addPositionOfNode (pos:FParsec.Position) (node:obj) : UserState =
+                (*
                 System.Console.Out.WriteLine(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode node)
                 System.Console.Out.WriteLine(node)
                 System.Console.Out.WriteLine(pos)
                 System.Console.Out.WriteLine("--")
+                *)
                 { us with
                     UserState.PositionMap = us.PositionMap.Add (node,pos)
                 }
@@ -467,8 +469,8 @@ module internal SafetySharp.Internal.ParseSCM
                 FieldDecl.Init = init ;
             }
         attempt (pipe3 (fieldIdDecl_ws .>> (pstring_ws ":"))
-                       (type_ws1)
-                       (many1 value_ws)
+                       (type_ws1 .>> (pstring_ws "="))
+                       ((sepBy1 value_ws (pstring_ws ",")) .>> (pstring_ws ";"))
                        createFieldDecl)
 
     let faultDecls_ws : Parser<_,UserState> =
@@ -487,8 +489,8 @@ module internal SafetySharp.Internal.ParseSCM
                 ReqPortDecl.ReqPort = name;
                 ReqPortDecl.Params = parms ;
             }
-        attempt (pipe2 (reqPortId_ws .>> (pstring_ws "(") .>> pushUserStateCallStack)
-                       (paramDecls_ws .>> parentClose_ws .>> popUserStateCallStack)
+        attempt (pipe2 (reqPortId_ws .>> parentOpen_ws .>> pushUserStateCallStack)
+                       (paramDecls_ws .>> parentClose_ws .>> popUserStateCallStack .>> (pstring_ws ";"))
                        createReqPortDecl)
 
     let provPortDecl_ws : Parser<_,UserState> =
@@ -500,7 +502,7 @@ module internal SafetySharp.Internal.ParseSCM
                 ProvPortDecl.FaultExpr = faultExpr;
             }
         attempt (pipe4 (faultExprOpt_ws)
-                       (provPortId_ws .>> (pstring_ws "(") .>> pushUserStateCallStack)
+                       (provPortId_ws .>> parentOpen_ws .>> pushUserStateCallStack)
                        (paramDecls_ws .>> parentClose_ws .>> (pstring_ws "{"))
                        (behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
                        createProvPortDecl)
@@ -552,7 +554,7 @@ module internal SafetySharp.Internal.ParseSCM
                 CompDecl.Comp = comp;
                 CompDecl.Subs = subcomp;
                 CompDecl.Fields = fields;
-                CompDecl.Faults = [];
+                CompDecl.Faults = faults;
                 CompDecl.ReqPorts = reqPorts;
                 CompDecl.ProvPorts = provPorts;
                 CompDecl.Bindings = bindings;
@@ -568,4 +570,4 @@ module internal SafetySharp.Internal.ParseSCM
               (many stepDecl_ws .>> (pstring "}") .>> popUserStateComponentStack)
               createComponent
         
-    let modelFile = comp_ws
+    let scmFile = comp_ws

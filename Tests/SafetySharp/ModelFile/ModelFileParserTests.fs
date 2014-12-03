@@ -72,95 +72,93 @@ type ExampleFiles() =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
         
-    let parseModelFile str = parseWithParser (ParseSCM.modelFile .>> eof) str
+    let parseSCM str = parseWithParser (ParseSCM.scmFile .>> eof) str
         
     let parseWithParserAndExpectFailure parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> failwith "parsed successfully but expected a parsing failure"
         | Failure(errorMsg, _, _) -> ()
 
-    let parseModelFileAndExpectFailure str = parseWithParserAndExpectFailure (ParseSCM.modelFile .>> eof) str
+    let parseSCMAndExpectFailure str = parseWithParserAndExpectFailure (ParseSCM.scmFile .>> eof) str
 
-    // Tests in order of Examples/ModelFile/README.md
-    // Keep this order here!
-    (*
+    // Tests in order of Examples/SCM/README.md
+    // The tests here are in the same order as in the README.md (Note: If you add a new test, keep the order)
     [<Test>]
     member this.``Example nestedComponent1 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/nestedComponent1.safetysharp"""
+        let inputFile = """../../Examples/SCM/nestedComponent1.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
 
     [<Test>]
     member this.``Example nestedComponent2 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/nestedComponent2.safetysharp"""
+        let inputFile = """../../Examples/SCM/nestedComponent2.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
 
     [<Test>]
     member this.``Example simpleComponent1 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/simpleComponent1.safetysharp"""
+        let inputFile = """../../Examples/SCM/simpleComponent1.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
         
     [<Test>]
     member this.``Example simpleComponent2 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/simpleComponent2.safetysharp"""
+        let inputFile = """../../Examples/SCM/simpleComponent2.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
 
     [<Test>]
     member this.``Example simpleComponent3 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/simpleComponent3.safetysharp"""
+        let inputFile = """../../Examples/SCM/simpleComponent3.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
     [<Test>]
     member this.``Example simpleComponent4 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/simpleComponent4.safetysharp"""
+        let inputFile = """../../Examples/SCM/simpleComponent4.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
 
     [<Test>]
     member this.``Example simpleComponent5 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/simpleComponent5.safetysharp"""
+        let inputFile = """../../Examples/SCM/simpleComponent5.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
 
     [<Test>]
     member this.``Example simpleComponent6 parses successfully`` () =
-        let inputFile = """../../Examples/ModelFile/simpleComponent6.safetysharp"""
+        let inputFile = """../../Examples/SCM/simpleComponent6.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseModelFile input
+        let result = parseSCM input
         ()
 
     [<Test>]
     member this.``Example undeclaredIdentifier1 cannot be parsed`` () =
-        let inputFile = """../../Examples/ModelFile/undeclaredIdentifier1.safetysharp"""
+        let inputFile = """../../Examples/SCM/undeclaredIdentifier1.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        parseModelFileAndExpectFailure input
+        parseSCMAndExpectFailure input
         
     [<Test>]
     //[<Test;Ignore("functionality not implemented yet")>]
     member this.``Example undeclaredIdentifier2 cannot be parsed`` () =
-        let inputFile = """../../Examples/ModelFile/undeclaredIdentifier2.safetysharp"""
+        let inputFile = """../../Examples/SCM/undeclaredIdentifier2.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        parseModelFileAndExpectFailure input
+        parseSCMAndExpectFailure input
 
     [<Test>]
     member this.``Example undeclaredIdentifier3 cannot be parsed`` () =
-        let inputFile = """../../Examples/ModelFile/undeclaredIdentifier3.safetysharp"""
+        let inputFile = """../../Examples/SCM/undeclaredIdentifier3.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        parseModelFileAndExpectFailure input
+        parseSCMAndExpectFailure input
 
     [<Test>]
     member this.``Example undeclaredIdentifier4 cannot be parsed`` () =
-        let inputFile = """../../Examples/ModelFile/undeclaredIdentifier4.safetysharp"""
+        let inputFile = """../../Examples/SCM/undeclaredIdentifier4.scm"""
         let input = System.IO.File.ReadAllText inputFile
-        parseModelFileAndExpectFailure input
-        *)
+        parseSCMAndExpectFailure input
