@@ -501,6 +501,7 @@ component faults on the behavior of the component itself or to zero, one, or mor
 \begin{equation*}
 	\faultExpr \in \FaultExpr := \fault \mid \negateExpr{\faultExpr} \mid
 	\andExpr{\faultExpr_1}{\faultExpr_2}
+	\mid \orExpr{\faultExpr_1}{\faultExpr_2}
 \end{equation*}
 
 The function $\FaultExprSem{-} \colon \FaultExpr \rightarrow \FaultEnvCurried \rightarrow \liftFailure{\Bool}$ defines the
@@ -510,6 +511,8 @@ the expression evaluation might fail.
 	\FaultExprSem{\fault} \faultEnvCurried &= \faultEnvCurried(\fault) \\
 	\FaultExprSem{\negateExpr{\faultExpr}} \faultEnvCurried &= \neg \FaultExprSem{\faultExpr} \faultEnvCurried \\
 	\FaultExprSem{\andExpr{\faultExpr_1}{\faultExpr_2}} \faultEnvCurried &= \FaultExprSem{\faultExpr_1} \faultEnvCurried \wedge
+	\FaultExprSem{\faultExpr_2} \faultEnvCurried \\
+	\FaultExprSem{\orExpr{\faultExpr_1}{\faultExpr_2}} \faultEnvCurried &= \FaultExprSem{\faultExpr_1} \faultEnvCurried \vee
 	\FaultExprSem{\faultExpr_2} \faultEnvCurried
 \end{align*}
 
