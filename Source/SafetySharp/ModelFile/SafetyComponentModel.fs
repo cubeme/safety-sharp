@@ -59,10 +59,14 @@ type internal Expr =
     | UExpr of Expr * UOp
     | BExpr of Expr * BOp * Expr
 
-type internal FaultExpr =
-    | Fault of Fault
-    | NotFault of Fault
-    | AndFault of Fault * Fault
+type internal FaultExpr = {
+    MustAppear : Fault list ;
+    MustNotAppear : Fault list ;
+}
+
+type internal Param =
+    | ExprParam of Expr
+    | InOutParam of Var
 
 type internal Stm =
     | AssignVar of Var * Expr
@@ -70,7 +74,7 @@ type internal Stm =
     | AssignFault of Fault * Expr
     | Block of Stm list
     | Choice of (Expr * Stm) list
-    | CallPort of ReqPort * Expr list
+    | CallPort of ReqPort * Param list
     | StepComp of Comp
     | StepFault of Fault
 
@@ -141,7 +145,7 @@ type internal FaultDecl = {
 }
 
 type internal StepDecl = {
-    FaultExpr : FaultExpr
+    FaultExpr : FaultExpr option
     Behavior : BehaviorDecl
 }
 
