@@ -77,10 +77,10 @@
     <Compile Include="CSharp\Transformation\FormulaTransformation.fs" />
     <Compile Include="CSharp\Transformation\ModelTransformation.fs" />
     <Compile Include="CSharp\ModelingAssembly.fs" />
-    <Compile Include="FIL\FIL.fs" />
-    <Compile Include="FIL\FILFileParser.fs" />
-    <Compile Include="ModelFile\SafetyComponentModel.fs" />
-    <Compile Include="ModelFile\SafetyComponentModelParser.fs" />
+    <Compile Include="Fil\Fil.fs" />
+    <Compile Include="Fil\FilFileParser.fs" />
+    <Compile Include="Scm\SafetyComponentModel.fs" />
+    <Compile Include="Scm\SafetyComponentModelParser.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
