@@ -100,7 +100,6 @@
     <Compile Include="Normalizers\OutParameterNormalizer.fs" />
     <Compile Include="Normalizers\PropertyDeclarationNormalizer.fs" />
     <Content Include="app.config" />
-    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis">
