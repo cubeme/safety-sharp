@@ -115,7 +115,7 @@ namespace SafetySharp.CSharpCompiler
 			Log.Info("the MIT license (see http://opensource.org/licenses/MIT).");
 
 			Log.Info("");
-
+		    return 0;
 			// Start the compilation process.
 			try
 			{
