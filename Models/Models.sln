@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elbtunnel", "Elbtunnel\Elbtunnel.csproj", "{6AE088BD-212E-4F38-96A1-B16C4F95D243}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedComponents", "SharedComponents\SharedComponents.csproj", "{C7377EF7-E8FE-4864-802F-B2DAB535D20C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PressureTank", "PressureTank\PressureTank.csproj", "{2834343C-5D3A-4673-9F58-F869F4E3CC01}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{C7377EF7-E8FE-4864-802F-B2DAB535D20C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7377EF7-E8FE-4864-802F-B2DAB535D20C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7377EF7-E8FE-4864-802F-B2DAB535D20C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2834343C-5D3A-4673-9F58-F869F4E3CC01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2834343C-5D3A-4673-9F58-F869F4E3CC01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2834343C-5D3A-4673-9F58-F869F4E3CC01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2834343C-5D3A-4673-9F58-F869F4E3CC01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
