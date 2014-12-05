@@ -4,7 +4,7 @@ int resetTimerPin = 2;
 // digital output
 int triggerTimeoutPin = 3;
 
-#define timeout 60
+#define timeout 600
 int currentTime = 0;
 int resetTimerState;
 
@@ -24,5 +24,5 @@ void loop() {
   } else {
     digitalWrite(triggerTimeoutPin, LOW);
   }
-  delay(1000);
+  delay(100);
 }
