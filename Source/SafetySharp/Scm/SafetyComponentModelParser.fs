@@ -312,8 +312,8 @@ module internal SafetySharp.Internal.ParseSCM
     let varIdInsts_ws = sepBy varIdInst_ws (pstring_ws ",")
 
     let param_ws =
-        let inoutVarParam = attempt (pstring_ws1 "inout") >>. varIdInst_ws |>> Param.InOutVarParam
-        let inoutFieldParam = attempt (pstring_ws1 "inout") >>. fieldIdDecl_ws |>> Param.InOutFieldParam
+        let inoutVarParam = attempt ((pstring_ws1 "inout") >>. varIdInst_ws) |>> Param.InOutVarParam
+        let inoutFieldParam = attempt ((pstring_ws1 "inout") >>. fieldIdInst_ws) |>> Param.InOutFieldParam
         let exprParam = attempt expression_ws |>> Param.ExprParam
         inoutVarParam <|> inoutFieldParam <|> exprParam
     let params_ws = sepBy (param_ws) (pstring_ws ",")

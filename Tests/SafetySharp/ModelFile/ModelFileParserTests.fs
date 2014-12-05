@@ -325,6 +325,7 @@ type ExampleFiles() =
     // ## (call)-Tests (delayed)
         
     // ## Examples which combine several aspects
+    (*
     [<Test>]
     member this.``Example exampleDocumentationFull parses successfully`` () =
         let inputFile = """../../Examples/SCM/exampleDocumentationFull.scm"""
@@ -344,7 +345,7 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
-
+    *)
     [<Test>]
     member this.``Example exampleBackupRecovery1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
