@@ -70,7 +70,7 @@ type ExampleFiles() =
     let parseWithParser parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
-        | Failure(errorMsg, _, _) -> failwith errorMsg
+        | Failure(errorMsg, a, b) -> failwith errorMsg
         
     let parseSCM str = parseWithParser (ParseSCM.scmFile .>> eof) str
         

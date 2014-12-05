@@ -11,7 +11,7 @@ component simple {
 		step { locals{} }
 	}
 	
-	rport1 ( )
+	rport1 ( );
 		
 	rport1 = instantly nested.pport1
 	

@@ -19,7 +19,7 @@ component simple {
 	step {
 		locals{
 		}
-		rport1 ( )
+		rport1 ( );
 		
 	}
 }

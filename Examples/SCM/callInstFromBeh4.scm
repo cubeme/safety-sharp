@@ -1,7 +1,7 @@
 component simple {
 	intField : int = 1;
 	
-	rport1 ( r_input1 : int, r_input2 : int )
+	rport1 ( r_input1 : int, r_input2 : int );
 	
 	pport1 ( p_input1 : int, p_input2  : int ) {
 		locals{

@@ -15,7 +15,7 @@ component simple {
 	}
 	
 	component nestedRequired {
-		rport1 ( ; )
+		rport1 ( );
 		
 		step {
 			locals{}

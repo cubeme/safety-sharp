@@ -1,6 +1,6 @@
 component simple {	
 	component nested {		
-		rport1 ( )
+		rport1 ( );
 			
 		step {
 			locals{

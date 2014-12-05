@@ -3,7 +3,7 @@ component simple {
 		locals{
 			int intLocal;
 		}
-		intLocal := 7 + 3 ;
 		intLocal := intLocal * intLocal;
+		intLocal := 7 + 3;
 	}
 }

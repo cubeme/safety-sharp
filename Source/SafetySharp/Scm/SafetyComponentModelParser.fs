@@ -295,8 +295,8 @@ module internal SafetySharp.Internal.ParseSCM
         opp.TermParser <-
             (boolVal_ws |>> Expr.Literal) <|> 
             (numberVal_ws |>> Expr.Literal) <|>
-            (fieldIdInst_ws |>> Expr.ReadField) <|>
-            (varIdInst_ws |>> Expr.ReadVar) <|> 
+            (attempt fieldIdInst_ws |>> Expr.ReadField) <|>
+            (attempt varIdInst_ws |>> Expr.ReadVar) <|> 
             (parenExpr_ws)
 
         opp.ExpressionParser
@@ -320,24 +320,24 @@ module internal SafetySharp.Internal.ParseSCM
 
     do guardedCommandClauseRef :=
        tuple2 (expression_ws .>> (pstring_ws "=>") .>> (pstring_ws "{") )
-              (statement_ws .>> (pstring_ws "}"))
+              ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
         
     do statementRef :=
         let parseVariableAssignment =
             attempt (tuple2 (varIdInst_ws .>> (pstring_ws ":="))
-                            (expression .>> (pstring_ws ";")) |>> Stm.AssignVar)
+                            (expression_ws .>> (pstring_ws ";")) |>> Stm.AssignVar)
         let parseFieldAssignment =
             attempt (tuple2 (fieldIdInst_ws .>> (pstring_ws ":="))
-                            (expression .>> (pstring_ws ";")) |>> Stm.AssignField)
+                            (expression_ws .>> (pstring_ws ";")) |>> Stm.AssignField)
         let parseFaultAssignment =
             // note: should only appear in a FaultDecl (fault {})
             attempt (tuple2 (faultIdInst_ws .>> (pstring_ws ":="))
-                            (expression .>> (pstring_ws ";")) |>> Stm.AssignFault)
+                            (expression_ws .>> (pstring_ws ";")) |>> Stm.AssignFault)
         let parseBlock =
             attempt (pstring_ws "{") >>. many statement_ws .>> (pstring_ws "}") |>> Stm.Block
         let parseChoice =
             attempt (pstring_ws "choice") >>. (pstring_ws "{") >>.
-                    ((sepBy (guardedCommandClause_ws) spaces) |>> Stm.Choice ) .>>
+                    ((many guardedCommandClause_ws) |>> Stm.Choice ) .>>
                     (pstring_ws "}")
         let parsePortCall =
             attempt (tuple2 (reqPortId_ws .>> parentOpen_ws)
@@ -409,7 +409,7 @@ module internal SafetySharp.Internal.ParseSCM
               createVarDecl
 
     let varDecls2_ws =
-        sepBy varDecl2_ws (pstring_ws ";")
+        many (varDecl2_ws .>> (pstring_ws ";"))
 
     let behaviorDecl_ws  =
         let createBehavior locals body =
@@ -509,14 +509,14 @@ module internal SafetySharp.Internal.ParseSCM
             let createProvPortChild (comp,srcPort) = {BndSrc.Comp = Some(comp); BndSrc.ProvPort=srcPort}
             let samecmp_ws = provPortId_ws |>> createProvPortSame
             let childcmp_ws = attempt (compIdInst_ws .>>. (pstring_ws "." >>. provPortId_ws)) |>> createProvPortChild
-            samecmp_ws <|> childcmp_ws
+            (attempt childcmp_ws) <|> samecmp_ws
 
         let bindingtarget_ws =
             let createReqPortSame targetPort = {BndTarget.Comp = None; BndTarget.ReqPort=targetPort}
             let createReqPortChild (comp,targetPort) = {BndTarget.Comp = Some(comp); BndTarget.ReqPort=targetPort}
             let samecmp_ws = reqPortId_ws |>> createReqPortSame
             let childcmp_ws = attempt (compIdInst_ws .>>. (pstring_ws "." >>. reqPortId_ws)) |>> createReqPortChild
-            samecmp_ws <|> childcmp_ws
+            (attempt childcmp_ws) <|> samecmp_ws
         
         let instantbinding_ws =
             let createBinding (req) (prov) =

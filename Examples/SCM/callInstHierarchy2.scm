@@ -2,7 +2,7 @@ component simple {
 	component nested {
 		intField : int = 0;
 		
-		rport1 ( )
+		rport1 ( );
 		
 		pport1 ( ) {
 			locals{
@@ -13,7 +13,7 @@ component simple {
 		step {
 			locals{
 			}
-			rport1 ( )
+			rport1 ( );
 		}
 	}
 	

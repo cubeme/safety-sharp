@@ -1,8 +1,8 @@
 component simple {
 	intField : int = 1 ;
 	
-	rport1 ( )
-	rport2 ( inout r_inout  : int )
+	rport1 ( );
+	rport2 ( inout r_inout  : int );
 	
 	pport1 ( ) {
 		locals{
@@ -25,6 +25,6 @@ component simple {
 	step {
 		locals{
 		}
-		rport1 ( )
+		rport1 ();
 	}
 }

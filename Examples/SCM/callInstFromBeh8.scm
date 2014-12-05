@@ -1,5 +1,5 @@
 component simple {
-	rport1 ( inout r_inout  : int )
+	rport1 ( inout r_inout  : int );
 	
 	pport1 ( inout p_inout  : int ) {
 		locals{
@@ -13,6 +13,6 @@ component simple {
 		locals{
 			int intLocal;
 		}
-		rport1 (  inout intLocal )
+		rport1 (  inout intLocal );
 	}
 }
