@@ -347,7 +347,6 @@ component C
 	{
 		locals
 		{
-			// Default initialization: int = 0, bool = false
 			int x;
 			int y;
 		}
@@ -495,7 +494,7 @@ evaluation might fail.
 	(\ExprSem{\expr_1} \fieldEnvCurried \varEnvFm, \ExprSem{\expr_2} \fieldEnvCurried \varEnvFm)
 \end{align*}
 
-\subsubsection{Fault Expressions and Fault Attributes}
+\subsubsection{Fault Expressions}
 Fault expressions are used to select different overloads of component behaviors and provided ports, modeling the effects of
 component faults on the behavior of the component itself or to zero, one, or more of its ports.
 \begin{equation*}
@@ -787,7 +786,7 @@ Assignments to a variable update the variable environment accordingly, replacing
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign${}_\text{v}$}
-	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, faultEnvd, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\assignVarStm{\var}{\expr}, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv, \varEnvFm[\var \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm]}
 \end{equation*}
@@ -796,7 +795,7 @@ Assignments to a field update the field environment accordingly, replacing the f
 obtained from the evaluation of the assigned expression.
 \begin{equation*}
 	\tag{assign${}_\text{f}$}
-	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, faultEnvd, \varEnvFm, \toListNE{\comp}}
+	\configurationFm{\assignVarStm{\field}{\expr}, \fieldEnv, \faultEnv, \varEnvFm, \toListNE{\comp}}
 		\stmArrowFm
 	\configurationFm{\fieldEnv[\toListNE{\comp}, \field \mapsto \ExprSem{\expr} \fieldEnv(\toListNE{\comp}) \varEnvFm], \varEnvFm}
 \end{equation*}
@@ -898,7 +897,7 @@ expression holds nondeterministically. If no such overload exists, the port's de
 	\begin{cases}
 		(\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\faultExpr}) \in \compDecl & \text{if } \FaultExprSem{\faultExpr} \faultEnvCurried
 		\\
-		\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\missing} & \text{otherwise}
+		\provPortDeclSyn{\provPort}{\toList{\parameterDecl}}{\behavior}{\missing} \in \compDecl & \text{otherwise}
 	\end{cases} 
 \end{equation*}
 
@@ -969,7 +968,7 @@ expression holds. If no such overload exists, the step behavior's default implem
 	\begin{cases}
 		\stepDeclSyn{\behavior}{\faultExpr} \in \compDecl & \text{if } \FaultExprSem{\faultExpr} \faultEnvCurried
 		\\
-		\stepDeclSyn{\behavior}{\missing} & \text{otherwise}
+		\stepDeclSyn{\behavior}{\missing} \in \compDecl & \text{otherwise}
 	\end{cases} 
 \end{equation*}
 
