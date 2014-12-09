@@ -5,10 +5,10 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{8823091C-387F-4F4D-ABCD-8F71D1528CBB}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SafetySharp.CSharpCompiler</RootNamespace>
-    <AssemblyName>SafetySharp.CSharpCompiler</AssemblyName>
+    <RootNamespace>SafetySharp.CSharp.Compiler</RootNamespace>
+    <AssemblyName>SafetySharp.CSharp.Compiler</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Binaries\Debug\</OutputPath>
+    <OutputPath>..\..\..\Binaries\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -26,10 +26,13 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\Binaries\Release\</OutputPath>
+    <OutputPath>..\..\..\Binaries\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CommandLine">
@@ -61,11 +64,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Dependencies\Packages\System.Reflection.Metadata.1.0.17-beta\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analyzers\SS1000.cs" />
@@ -127,13 +127,17 @@
     <Compile Include="Utilities\ResharperAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">
-      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
-      <Name>SafetySharp</Name>
-    </ProjectReference>
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <ProjectReference Include="..\..\Runtime\Runtime.fsproj">
+      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
+      <Name>Runtime</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CodeModel\Code Model.csproj">
+      <Project>{b94ff6da-70a7-496a-a2d7-b0bbe75b7f92}</Project>
+      <Name>Code Model</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -21,11 +21,10 @@
 // THE SOFTWARE.
 
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("SafetySharp Compiler")]
-[assembly: AssemblyDescription("SafetySharp Compiler")]
+[assembly: AssemblyTitle("SafetySharp C# Analyzers")]
+[assembly: AssemblyDescription("SafetySharp C# Analyzers")]
 [assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
 [assembly: AssemblyProduct("SafetySharp")]
 [assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
@@ -33,4 +32,3 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("0.1.0.0")]
 [assembly: AssemblyFileVersion("0.1.0.0")]
 [assembly: ComVisible(false)]
-[assembly: InternalsVisibleTo("SafetySharp.CSharpCompiler.Tests")]

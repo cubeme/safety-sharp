@@ -8,10 +8,10 @@
     <ProjectGuid>a52b489b-5b02-4ff3-b335-171c4c92c2dc</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>CSharpCompiler_Tests</RootNamespace>
-    <AssemblyName>SafetySharp.CSharpCompiler.Tests</AssemblyName>
+    <AssemblyName>SafetySharp.CSharp.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>CSharpCompiler Tests</Name>
+    <Name>CSharp Tests</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -102,6 +102,10 @@
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Core">
+      <HintPath>..\..\Dependencies\Packages\FSharp.Core.3.1.2\lib\net40\FSharp.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0-beta1-20141031-01\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
@@ -119,9 +123,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\..\Dependencies\Packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
@@ -139,13 +140,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\CSharpCompiler\CSharpCompiler.csproj">
-      <Name>CSharpCompiler</Name>
+    <ProjectReference Include="..\..\Source\CSharp\Compiler\Compiler.csproj">
+      <Name>Compiler</Name>
       <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
-      <Name>SafetySharp</Name>
+    <ProjectReference Include="..\..\Source\Runtime\Runtime.fsproj">
+      <Name>Runtime</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Private>True</Private>
     </ProjectReference>

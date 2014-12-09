@@ -16,7 +16,7 @@
 				var c2 = new BooleanComponent(false);
 				var lb = new LightBarrier();
 				var t = new Test2();
-				var timer = new Timer();
+				var timer = new Timer(20);
 				SetPartitions(new InterfacedSubcomponent(new LightBarrier()));
 
 				var unknown = new LightBarrier();

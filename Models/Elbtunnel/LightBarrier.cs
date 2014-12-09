@@ -33,29 +33,32 @@ namespace Elbtunnel
 
 		[Provided]
 		bool IsTriggered();
-		//bool X { get; [Provided]set; }
+	}
+
+	internal enum X : byte
+	{
 	}
 
 	internal class InterfacedSubcomponent : Component
 	{
-		private readonly ISensor _sensor;
 		private bool _triggered;
+		private readonly ISensor _sensor;
 
 		public InterfacedSubcomponent(ISensor sensor)
 		{
 			_sensor = sensor;
 		}
-	
+
 		public override void Update()
 		{
 			_triggered = _sensor.IsTriggered();
-		} 
+		}
 	}
 
 	public class LightBarrier : Component, ISensor
 	{
-		public bool Triggered = false;
 		private int _i = 1;
+		public bool Triggered = false;
 
 		[Required]
 		public extern void SendData(int position);
@@ -65,7 +68,7 @@ namespace Elbtunnel
 			return false;
 		}
 
-		[Provided] 
+		[Provided]
 		public int Do()
 		{
 			SendData(22);
@@ -84,8 +87,8 @@ namespace Elbtunnel
 
 	internal class Test2 : Component
 	{
-		public readonly BooleanComponent Boolean2;
 		private BooleanComponent _boolean1;
+		public readonly BooleanComponent Boolean2;
 
 		public Test2()
 		{
@@ -109,8 +112,8 @@ namespace Elbtunnel
 			//Update();
 			//Bind(Q2, Provided);
 		}
-		public extern void Test(); // ---> public Action Test { private get; set; }
 
+		public extern void Test(); // ---> public Action Test { private get; set; }
 		protected internal extern int Q();
 		protected internal extern int Q2(bool f);
 
@@ -121,7 +124,8 @@ namespace Elbtunnel
 		}
 
 		[DebuggerNonUserCode]
-		[DebuggerHidden][Required]
+		[DebuggerHidden]
+		[Required]
 		private extern void P(int a,
 							  int b);
 

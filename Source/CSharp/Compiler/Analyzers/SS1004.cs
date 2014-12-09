@@ -34,7 +34,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 	///     the <see cref="RequiredAttribute" /> or <see cref="ProvidedAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1004 :CSharpAnalyzer
+	public class SS1004 : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
@@ -49,6 +49,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 					typeof(RequiredAttribute).FullName,
 					typeof(ProvidedAttribute).FullName));
 		}
+
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
@@ -57,6 +58,7 @@ namespace SafetySharp.CSharpCompiler.Analyzers
 		{
 			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
 		}
+
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>

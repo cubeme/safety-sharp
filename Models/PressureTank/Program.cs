@@ -27,6 +27,7 @@ namespace PressureTank
 {
 	using System;
 	using System.Diagnostics;
+	using NUnit.Framework;
 	using SafetySharp.Modeling;
 
 	internal class PressureSensor : Component
@@ -151,6 +152,17 @@ namespace PressureTank
 			Bind(_pump.Fill(),_pt.Fill());
 			Bind(_sensor.SensePressure(),_pt.CurrentPressure());
 
+		}
+
+		[Test]
+		void TimerShouldPreventRuptureIfSensorFails()
+		{
+			var model = ;// configure the model
+			var simulation = new Simulation(model);
+			simulation.EnableFault<PressureSensor.ReportOk>(after: 10 /* seconds */);
+
+			simulation.Advance(70 /* seconds */);
+			Assert.That(!model.PressureTank.IsRuptured);
 		}
 	}
 }

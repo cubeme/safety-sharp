@@ -5,20 +5,20 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>38baa192-42c4-44c2-ad10-ab8eabf7badd</ProjectGuid>
+    <ProjectGuid>acdba456-3b21-480d-b739-dcc7eae6d233</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>SafetySharp_ModelChecker_Tests</RootNamespace>
-    <AssemblyName>SafetySharp.Tests.Modelchecking</AssemblyName>
+    <RootNamespace>Tests</RootNamespace>
+    <AssemblyName>SafetySharp.Runtime.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>Modelchecking Tests</Name>
+    <Name>Runtime Tests</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <OutputPath>..\..\Binaries\Debug\</OutputPath>
+    <OutputPath>..\..\Binaries\Debug</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>
@@ -28,7 +28,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <OutputPath>..\..\Binaries\Release\</OutputPath>
+    <OutputPath>..\..\Binaries\Release</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>
@@ -57,37 +57,18 @@
     <Compile Include="..\AstTestHelpers.fs">
       <Link>AstTestHelpers.fs</Link>
     </Compile>
-    <Compile Include="Modelchecking\Common\TestCase1.fs" />
-    <Compile Include="Modelchecking\Common\SimplifiedMetamodelTests.fs" />
-    <Compile Include="Modelchecking\Common\WriteOnceMetamodelTests.fs" />
-    <Compile Include="Modelchecking\Common\TestCase1.fs" />
-    <Compile Include="Modelchecking\Common\SimplifiedMetamodelTests.fs" />
-    <Compile Include="Modelchecking\Common\WriteOnceMetamodelTests.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvModels.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvInterpretResultTests.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvExecuteTests.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodelTests.fs" />
-    <Compile Include="Modelchecking\Promela\PromelaAstToFileTests.fs" />
-    <Compile Include="Modelchecking\Promela\PromelaExecuteTests.fs" />
-    <Compile Include="Modelchecking\Promela\PromelaTransformMetamodelTests.fs" />
-    <Compile Include="Modelchecking\Prism\PrismAstToFileTests.fs" />
-    <Compile Include="Modelchecking\Prism\PrismExecuteTests.fs" />
-    <Compile Include="Modelchecking\Prism\PrismInterpretResultTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserInputTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserSExprTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserLexiconTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserSpecConstantTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserTermAndFormulaTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserAttributesTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserWhitespaceTests.fs" />
-    <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserSMTSExprTokenizerTests.fs" />
-    <Compile Include="Smt-Solving\Z3\Z3ExampleFiles.fs" />
-    <Compile Include="Smt-Solving\Z3\Z3ExampleDatatypes.fs" />
-    <Compile Include="Smt-Solving\Z3\Z3ExportExamples.fs" />
-    <Compile Include="Smt-Solving\Z3\Z3InteractiveModeTests.fs" />
-    <Compile Include="Smt-Solving\Z3\Z3ParserTests.fs" />
-    <Content Include="app.config" />
+    <Compile Include="Modeling.fs" />
+    <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\ObjectTransformationTests.fs" />
+    <Compile Include="CSharp\Transformation\FormulaTransformationTests.fs" />
+    <Compile Include="Modeling\ComponentTests.fs" />
+    <Compile Include="Modeling\ModelTests.fs" />
+    <Compile Include="FIL\FILParserTests.fs" />
+    <Compile Include="ModelFile\ModelFileParserTests.fs" />
+    <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
@@ -98,21 +79,26 @@
       <HintPath>..\..\Dependencies\Packages\FParsec.1.0.1\lib\net40-client\FParsecCS.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <Reference Include="FSharp.Core">
+      <HintPath>..\..\Dependencies\Packages\FSharp.Core.3.1.2\lib\net40\FSharp.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="mscorlib" />
     <Reference Include="nunit.framework">
       <HintPath>..\..\Dependencies\Packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.32-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
-      <Name>SafetySharp</Name>
+    <ProjectReference Include="..\..\Source\Runtime\Runtime.fsproj">
+      <Name>Runtime</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Private>True</Private>
     </ProjectReference>
