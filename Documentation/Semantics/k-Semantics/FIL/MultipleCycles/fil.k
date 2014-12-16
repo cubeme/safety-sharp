@@ -38,17 +38,21 @@ module FIL-SYNTAX
 			| "prev" "(" Var ")"
 			| "(" Expr ")"		[bracket]
 // Chapter 2.3: Statements
-	syntax GuardedCommand ::= Expr "->>" "{" StmFil "}" //[strict(1)] //evaluate Guard, but not Statement. Strictness not necessary, because context rule takes care of it
+	syntax GuardedCommand ::= Expr "=>" "{" StmFils "}" //[strict(1)] //evaluate Guard, but not Statement. Strictness not necessary, because context rule takes care of it
 	
-	syntax GuardedCommands ::= List{GuardedCommand,"|||"}
+	syntax GuardedCommands ::= List{GuardedCommand,""}
 
 	//we need a context to express, that even in a list of GuardedCommands (eg: Guard1:Stmt1 , Guard2:Stmt2, ...), the first Guard should be evaluated (see K-Primer 2012 page 14). Context is similar to strictness
-	context ((HOLE ->> { Stmnt:StmFil }) ||| OtherCandidates:GuardedCommands)
+	context (choice { (HOLE => { Stmnt:StmFil }) OtherCandidates:GuardedCommands } )
 
-	syntax StmFil ::= "skip"
-			| Var ":=" Expr		[strict(2)]
-			| StmFil ";" StmFil	[left] //could also be [left,seqstrict], but this is more efficient, because the terms get expanded only when required (see rule (seq)
-			| GuardedCommands
+	syntax StmFil ::= Var ":=" Expr	";"	[strict(2)]
+			| "{" StmFils "}"	[bracket]
+			| "choice" "{" GuardedCommands "}"
+
+	//[left] //could also be [left,seqstrict], but this is more efficient, because the terms get expanded only when required (see rule (seq)
+
+	syntax StmFils ::= List{StmFil,""}
+
 
 	syntax K ::= StmFil
 	syntax K ::= Expr
@@ -61,16 +65,16 @@ module FIL-CONFIGURATION
 	syntax K ::= "#newCycle" "(" Int ")"
 	rule
 		<k> #newCycle ( NumberOfRemainingCycles:Int ) => Pgm ~> #newCycle ( NumberOfRemainingCycles -Int 1 ) </k>
-		<pgm> Pgm:StmFil </pgm>	when (NumberOfRemainingCycles >Int 0)	[structural]
+		<pgm> Pgm:StmFils </pgm>	when (NumberOfRemainingCycles >Int 0)	[structural]
 	rule
 		<k> #newCycle ( -1 ) => Pgm ~> #newCycle ( -1 ) </k>
-		<pgm> Pgm:StmFil </pgm>		[structural]
+		<pgm> Pgm:StmFils </pgm>		[structural]
 
 
 // Chapter 2.1: Domains, variable environment
 	configuration
 		<k> #newCycle ( 1 ) </k>
-		<pgm> $PGM:StmFil </pgm>
+		<pgm> $PGM:StmFils </pgm>
 		<varEnvNow> .Map </varEnvNow> //Map from Var to Value. Current Valuation
 		<varEnvStep> .Map </varEnvStep> //Map from Var to Value. Valuation from the beginning of the current Step
 		<cmdCandidates> .Set </cmdCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc) other name <gcPossibleDecisions>
@@ -111,23 +115,23 @@ module FIL
 	// Chapter 2.3: Statements
 	// (skip)
 	rule
-		<k> skip => . ... </k>
+		<k> .StmFils => .K ... </k>
 	
 	// (assign)
 	// create new Variable in varEnv, if not existent
 	rule
-		<k> (Var := Val:Value) => . ... </k>
+		<k> (Var := Val:Value ;) => . ... </k>
 		<varEnvNow> AlreadyDeclared:Map (.Map => Var |-> Val) </varEnvNow>
 			when notBool (Var in keys(AlreadyDeclared))
 
 	// overwrite Variable in varEnv, if already existent
 	rule
-		<k> (Var := Val:Value) => . ... </k>
+		<k> (Var := Val:Value ;) => . ... </k>
 		<varEnvNow> Var |-> (OldVar => Val) ...  </varEnvNow>
 
 	// (seq)
 	rule
-		<k> S1:StmFil ; S2:StmFil => S1 ~> S2 ... </k>
+		<k> S:StmFil OtherStmnts:StmFils => S ~> OtherStmnts ... </k>
 	
 
 	// (cmd)
@@ -139,14 +143,14 @@ module FIL
 	//   * 4)  When every GuardedCommand is evaluated, the current k-Cell contains .GuardedCommands. Now replace .GuardedCommands with any candidate from the list and delete all candidates
 
 	rule
-		<k> ((false ->> { Stmt:StmFil } ) ||| OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
+		<k> (choice { (false => { Stmts:StmFils } ) OtherCandidates:GuardedCommands => OtherCandidates } ) ... </k>
 
 	rule
-		<k> ((true ->> { Stmt:StmFil } ) ||| OtherCandidates:GuardedCommands) => OtherCandidates  ... </k>
-		<cmdCandidates> (.Set => SetItem(Stmt) ) OtherSuccessfulCandidates:Set </cmdCandidates>
+		<k> (choice { (true => { Stmts:StmFils } ) OtherCandidates:GuardedCommands => OtherCandidates } ) ... </k>
+		<cmdCandidates> (.Set => SetItem(Stmts) ) OtherSuccessfulCandidates:Set </cmdCandidates>
 	
 	rule
-		<k> (.GuardedCommands => Stmt) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
-		<cmdCandidates> (SetItem(Stmt) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </cmdCandidates> [transition]
+		<k> (choice { .GuardedCommands } => Stmts) ... </k>		//Alternative way to express (may become handy): <k> (.GuardedCommands => Stmt) ~> OtherCalculations:K </k>
+		<cmdCandidates> (SetItem(Stmts) => .Set ) (OtherSuccessfulCandidates:Set => .Set) </cmdCandidates> [transition]
 
 endmodule

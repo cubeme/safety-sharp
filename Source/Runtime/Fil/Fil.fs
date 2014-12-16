@@ -23,11 +23,11 @@
 namespace SafetySharp.Internal.FIL
 
 /// Represents the operator in an unary expression.
-type internal UnaryOperator =
-    | LogicalNot
+type internal UOp =
+    | Not
 
 /// Represents the operator in a binary expression. (same as SafetySharp.Internal.Metamodel.UnaryOperatorBinaryOperator)
-type internal BinaryOperator =
+type internal BOp =
     // Arithmetic operators
     | Add
     | Subtract
@@ -36,57 +36,57 @@ type internal BinaryOperator =
     | Modulo
     
     // Logical operators
-    | LogicalAnd
-    | LogicalOr
+    | And
+    | Or
     
     // Equality operators
     | Equals
     | NotEquals
     
     // Comparison operators
-    | LessThan
-    | LessThanOrEqual
-    | GreaterThan
-    | GreaterThanOrEqual
+    | Less
+    | LessEqual
+    | Greater
+    | GreaterEqual
 
-type internal Identifier =
-    | Identifier of string
+type internal Id =
+    | Id of string
+        
+type internal Val = 
+    /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
+    | BoolVal of bool
+    /// Represents a number value.
+    | NumbVal of Value : bigint
 
 /// Represents side-effect free expressions within a FIL model. (not the same as SafetySharp.Internal.Metamodel.Expression)
-type internal Expression =
-    /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
-    | BooleanLiteral of Value : bool
-
-    /// Represents a number value.
-    | NumberLiteral of Value : bigint
+type internal Expr =
+    /// Represents a literal
+    | Literal of Val
 
     /// Represents the application of an unary operator to an expression.
-    | UnaryExpression of Operand : Expression * Operator : UnaryOperator
+    | UExpr of Operand : Expr * Operator : UOp
 
     /// Represents the application of a binary operator to two subexpressions.
-    | BinaryExpression of LeftExpression : Expression * Operator : BinaryOperator * RightExpression : Expression
+    | BExpr of LeftExpression : Expr * Operator : BOp * RightExpression : Expr
     
     /// Represents a read operation of a variable.
-    | ReadVariable of Variable : Identifier
+    | Read of Variable : Id
 
     /// Represents a read operation of the previous value of a variable.
-    | ReadVariablePrev of Variable : Identifier
+    | ReadOld of Variable : Id
 
-type internal GuardedCommandClause =
-    | GuardedCommandClause of Guard:Expression * Statement:Statement
+type internal Clause =
+    | Clause of Guard:Expr * Statement:Stm
 
 /// Represents statements contained within method bodies.
-and internal Statement =
-    /// Represents the empty statement that does nothing.
-    | EmptyStatement
-
+and internal Stm =
     /// Represents a list of statements that are executed sequentially.
-    | BlockStatement of Statements: Statement list
+    | Block of Statements: Stm list
     
     /// Represents a guarded command statement. The body of at most one clause of the guarded command is
     /// executed. For a body to be executed, its guard must evaluate to true. If multiple guards hold, one
     /// clause is chosen nondeterministically.
-    | GuardedCommandStatement of Clauses : GuardedCommandClause list
+    | Choice of Clauses : Clause list
 
     /// Represents the assignment of a variable.
-    | WriteVariable of Variable:Identifier * Expression:Expression
+    | Write of Variable:Id * Expression:Expr

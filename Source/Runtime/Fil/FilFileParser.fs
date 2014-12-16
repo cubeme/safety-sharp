@@ -32,9 +32,9 @@ module internal ParseFIL =
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,unit> =
-        stringReturn "true" (Expression.BooleanLiteral true)
+        stringReturn "true" (Expr.Literal (Val.BoolVal true))
     let falseKeyword  : Parser<_,unit> =
-        stringReturn "false" (Expression.BooleanLiteral false)
+        stringReturn "false" (Expr.Literal (Val.BoolVal false))
 
     // parses the Boolean constants, but not, e.g., truee or false1, 
     let boolean : Parser<_,unit> =
@@ -43,12 +43,12 @@ module internal ParseFIL =
 
     // parses a number
     let number : Parser<_,unit> =
-        many1Satisfy isDigit |>> bigint.Parse
+        many1Satisfy isDigit |>> (fun value -> value |> bigint.Parse |> Val.NumbVal)
 
 
     // parses an identifier of a variable 
     let variable : Parser<_,unit> =
-        ((identifier (IdentifierOptions())) |>> Identifier.Identifier)
+        ((identifier (IdentifierOptions())) |>> Id.Id)
 
     // parsers with space afterwards
     let pstring_ws s = pstring s .>> spaces
@@ -61,24 +61,24 @@ module internal ParseFIL =
     // parses an expression
     let expression : Parser<_,unit> =
         let opp = new OperatorPrecedenceParser<_,_,_>()        
-        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Divide, e2)))
-        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Multiply, e2)))
-        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Modulo, e2)))
+        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Divide, e2)))
+        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Multiply, e2)))
+        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Modulo, e2)))
         // >
-        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Add, e2)))
-        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">>" , 4, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Subtract, e2)))        
+        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Add, e2)))
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">>" , 4, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Subtract, e2)))        
         // >
-        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LessThanOrEqual, e2)))
-        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.Equals, e2)))
-        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.NotEquals, e2)))
-        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.GreaterThanOrEqual, e2)))
-        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.GreaterThan, e2)))
-        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LessThan, e2)))
-        opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> UnaryExpression(e,UnaryOperator.LogicalNot)))
+        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.LessEqual, e2)))
+        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Equals, e2)))
+        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.NotEquals, e2)))
+        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.GreaterEqual, e2)))
+        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Greater, e2)))
+        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Less, e2)))
+        opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> UExpr(e,UOp.Not)))
         //>
-        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LogicalAnd, e2)))
+        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.And, e2)))
         //>
-        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> BinaryExpression(e1, BinaryOperator.LogicalOr, e2)))
+        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> BExpr(e1, BOp.Or, e2)))
 
         // parses an expression between ( and )
         let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
@@ -88,7 +88,7 @@ module internal ParseFIL =
             (pstring_ws "prev") >>. parentOpen_ws >>. variable_ws .>> parentClose_ws
 
         // recursive term parser for expressions
-        opp.TermParser <- boolean_ws <|> (prevExpr_ws |>> Expression.ReadVariablePrev) <|> (number_ws |>> Expression.NumberLiteral) <|> (variable_ws |>> Expression.ReadVariable) <|> parenExpr_ws
+        opp.TermParser <- boolean_ws <|> (prevExpr_ws |>> Expr.Read) <|> (number_ws |>> Expr.Literal) <|> (variable_ws |>> Expr.Read) <|> parenExpr_ws
         opp.ExpressionParser
         
     let (guardedCommandClause:Parser<_,unit>),guardedCommandClauseRef = createParserForwardedToRef()
@@ -97,29 +97,27 @@ module internal ParseFIL =
     let expression_ws = expression .>> spaces
     let guardedCommandClause_ws = guardedCommandClause .>> spaces
     let statement_ws = statement .>> spaces
-
-
+    
     do guardedCommandClauseRef :=
-       (expression_ws .>>. ((pstring_ws "->>") >>. (pstring_ws "{") >>. statement_ws .>> (pstring_ws "}"))) |>> GuardedCommandClause
+       pipe2 (expression_ws .>> (pstring_ws "=>") .>> (pstring_ws "{") )
+             ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
+             (fun guard stm -> Clause.Clause(guard,stm))
         
     do statementRef :=
-        let parseSkip =
-            stringReturn "skip" Statement.EmptyStatement        //pstring_ws "skip" >>% Statement.EmptyStatement
-        let parseGuardedCommand =
-            attempt (sepBy (guardedCommandClause_ws) (pstring_ws "|||")) |>> Statement.GuardedCommandStatement
+        let parseBlock =
+            attempt (pstring_ws "{") >>. many statement_ws .>> (pstring_ws "}") |>> Stm.Block
+        let parseChoice =
+            attempt (pstring_ws "choice") >>. (pstring_ws "{") >>.
+                    ((many guardedCommandClause_ws) |>> Stm.Choice ) .>>
+                    (pstring_ws "}")        
         let parseAssignment =
-            attempt (variable_ws .>>. (pstring_ws ":=" >>. expression)) |>> Statement.WriteVariable            
-        
-        // a; b; c == (a ; b) ; c  //left associative (in semantics)
-        let allExceptSeq = parseSkip <|> parseGuardedCommand <|> parseAssignment
-        let allExceptSeq_ws = allExceptSeq .>> spaces
-        
-        let refurbishResult (stmnts : Statement list ) =
-            if stmnts.Length = 1 then
-                    stmnts.Head
-                else
-                    Statement.BlockStatement stmnts
+            attempt (tuple2 (variable_ws .>> (pstring_ws ":="))
+                            (expression_ws .>> (pstring_ws ";")) |>> Stm.Write)     
+        let allKindsOfStatements =
+            parseAssignment <|>
+            parseBlock <|>
+            parseChoice
+        allKindsOfStatements
 
-        sepBy1 (allExceptSeq_ws) (pstring_ws ";") |>> refurbishResult
-
-    let filFile = spaces >>. statement_ws
+    let filFile =
+        spaces >>. (many statement_ws |>> Stm.Block ) 
