@@ -50,7 +50,9 @@ type internal BOp =
     | GreaterEqual
 
 type internal Id =
-    | Id of string
+    interface
+        abstract Name : string
+    end
         
 type internal Val = 
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
@@ -90,3 +92,15 @@ and internal Stm =
 
     /// Represents the assignment of a variable.
     | Write of Variable:Id * Expression:Expr
+
+
+    
+type internal SimpleId = {
+    Name : string;
+} with
+    static member createId (name:string) : Id =
+        {
+            SimpleId.Name = name;
+        } :> Id
+    interface Id with
+       member self.Name = self.Name

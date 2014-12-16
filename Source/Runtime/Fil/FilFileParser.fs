@@ -48,7 +48,7 @@ module internal ParseFIL =
 
     // parses an identifier of a variable 
     let variable : Parser<_,unit> =
-        ((identifier (IdentifierOptions())) |>> Id.Id)
+        ((identifier (IdentifierOptions())) |>> SimpleId.createId)
 
     // parsers with space afterwards
     let pstring_ws s = pstring s .>> spaces

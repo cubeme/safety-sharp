@@ -79,8 +79,10 @@
     <Compile Include="CSharp\ModelingAssembly.fs" />
     <Compile Include="Fil\Fil.fs" />
     <Compile Include="Fil\FilFileParser.fs" />
+    <Compile Include="Fil\FilConvenience.fs" />
     <Compile Include="Scm\SafetyComponentModel.fs" />
     <Compile Include="Scm\SafetyComponentModelParser.fs" />
+    <Compile Include="Scm\ScmConvenience.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
@@ -97,7 +99,6 @@
     <Compile Include="Smt-Solving\Z3\Z3Execute.fs" />
     <Compile Include="Modelchecking\Common\TransformationToSimplifiedMetamodel.fs" />
     <Compile Include="Modelchecking\Common\WriteOnceMetamodel.fs" />
-    <Compile Include="Modelchecking\Common\TransformationToWriteOnceMetamodel.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAst.fs" />
     <Compile Include="Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
