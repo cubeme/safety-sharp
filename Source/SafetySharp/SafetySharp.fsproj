@@ -64,6 +64,7 @@
     <Compile Include="Models\Sam\Sam.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamTypedefs.fs" />
+    <Compile Include="Models\Transformations\Ssm-Scm.fs" />
     <Compile Include="Analysis\Metamodel\Symbols.fs" />
     <Compile Include="Analysis\Metamodel\Expressions.fs" />
     <Compile Include="Analysis\Metamodel\Formulas.fs" />
@@ -114,7 +115,6 @@
     <Compile Include="Analysis\SpinModelChecker.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />
-    <Compile Include="Models\Transformations\Ssm-Scm.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

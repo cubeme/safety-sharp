@@ -1,7 +1,7 @@
-module FIL-SYNTAX
-// This is just a simple demo-parser to read programs in FIL. We just
+module SAM-SYNTAX
+// This is just a simple demo-parser to read programs in SAM. We just
 // assign some syntax to define the domains and to describe the semantics.
-// Precedence rules makes it easier to write demo-programs. FIL itself is
+// Precedence rules makes it easier to write demo-programs. SAM itself is
 // syntax-independent.
 
 // Notes:
@@ -9,7 +9,7 @@ module FIL-SYNTAX
 //	* [strict] means that all terms are evaluated first (in indeterministic order), and then the operator-rule is used
 //	* [strict(2] means that the second term is evaluated first. Then the operator-rule is used (common example use-case: lazy evaluation of "Expr && false"; short-circuit-semantics. We use it to emphasize, that to evaluate an assignment-Statement, we first have to evaluate the expression)
 //	* [seqstrict] means that all operations with the same precedence have to be evaluated from left to right (deterministic order)
-//	* For many details on the see http://www.kframework.org/language-pdfs/new/imp.pdf which shares a lot of common concepts with FIL and has a very detailed documentation.
+//	* For many details on the see http://www.kframework.org/language-pdfs/new/imp.pdf which shares a lot of common concepts with SAM and has a very detailed documentation.
 //	* [transition] is necessary to show k, that a rule leads to non-determinism, which should explored
 
 // Chapter 2.1: Domains
@@ -59,8 +59,8 @@ module FIL-SYNTAX
 	syntax KResult ::= Value // necessary, so K knows, that evaluation of the current calculationi cell cannot go any further, when a Value is in the first calculation cell. K can now put the result of the first calculation cell into the HOLE of the next calculation cell. (Example. Assume term "12 ~> i := HOLE". K knows, that 12 is a result, so K can put 12 into HOLE. So the result is "i := 12".
 endmodule
 
-module FIL-CONFIGURATION
-	imports FIL-SYNTAX
+module SAM-CONFIGURATION
+	imports SAM-SYNTAX
 	
 	syntax K ::= "#newCycle" "(" Int ")"
 	rule
@@ -80,9 +80,9 @@ module FIL-CONFIGURATION
 		<cmdCandidates> .Set </cmdCandidates> //Set of possibilities, which can be taken for the next step of a guarded Command (gc) other name <gcPossibleDecisions>
 endmodule
 
-module FIL
-	imports FIL-SYNTAX
-	imports FIL-CONFIGURATION
+module SAM
+	imports SAM-SYNTAX
+	imports SAM-CONFIGURATION
 // Chapter 2.2: Expressions
 	// Common interpretation of Boolean and Arithmetical operators
 	rule I1:Int / I2:Int => I1 /Int I2  when I2 =/=Int 0
@@ -103,7 +103,7 @@ module FIL
 	rule B1:Bool || B2:Bool => B1 orBool B2
 	rule B1:Bool =/= B2:Bool => B1 =/=Bool B2
 	
-	// FIL-specific interpretation of expressions
+	// SAM-specific interpretation of expressions
 	rule
 		<k> V:Var => Val:Value ... </k>
 		<varEnvNow> V |-> Val ... </varEnvNow>

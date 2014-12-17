@@ -118,5 +118,5 @@ module internal Parser =
             parseChoice
         allKindsOfStatements
 
-    let filFile =
+    let samFile =
         spaces >>. (many statement_ws |>> Stm.Block ) 
