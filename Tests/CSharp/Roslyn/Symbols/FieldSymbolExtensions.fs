@@ -27,7 +27,6 @@ open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Tests
 open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]

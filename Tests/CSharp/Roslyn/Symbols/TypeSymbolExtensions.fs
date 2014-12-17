@@ -27,7 +27,6 @@ open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharpCompiler.Roslyn.Symbols
-open SafetySharp.Tests
 
 [<TestFixture>]
 module ``IsDerivedFrom method`` =

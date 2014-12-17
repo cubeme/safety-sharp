@@ -54,7 +54,9 @@
     <Compile Include="..\TestHelpers.fs">
       <Link>TestHelpers.fs</Link>
     </Compile>
-    <Compile Include="TestCompilation.fs" />
+    <Compile Include="..\TestCompilation.fs">
+      <Link>TestCompilation.fs</Link>
+    </Compile>
     <Compile Include="Utilities\Assert.fs" />
     <Compile Include="Utilities\Log.fs" />
     <Compile Include="Utilities\Requires.fs" />

@@ -20,37 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Analyzers
+namespace Ssm
 
-open System
-open System.Linq
 open NUnit.Framework
-open SafetySharp.Modeling
-open SafetySharp.CSharpCompiler.Analyzers
-open SafetySharp.CSharpCompiler.Roslyn.Syntax
-open SafetySharp.CSharpCompiler.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1006 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1006 ())
-
-    let ss1006 location memberName =
-        Diagnostic ("SS1006", (1, location), (1, location + 1),
-            sprintf "Value of enum member 'E.%s' cannot be declared explicitly." memberName)
-        |> Some
+module CilToSsmManual =
+    let transform csharpCode = 
+        let compilation = TestCompilation csharpCode
+        ()
 
     [<Test>]
-    let ``enum declaration without explicit member values is valid`` () =
-        getDiagnostic "enum E { A, B, C }" =? None
-
-    [<Test>]
-    let ``enum declaration with explicit value on first member is invalid`` () =
-        getDiagnostic "enum E { A = 1, B, C }" =? ss1006 13 "A"
-
-    [<Test>]
-    let ``enum declaration with explicit value on second member is invalid`` () =
-        getDiagnostic "enum E { A, B = 1, C }" =? ss1006 16 "B"
-
-    [<Test>]
-    let ``enum declaration with explicit value on third member is invalid`` () =
-        getDiagnostic "enum E { A, B, C = 3 }" =? ss1006 19 "C"
+    let ``does not normalize conditional expression not declared within a component class`` () =
+        ()

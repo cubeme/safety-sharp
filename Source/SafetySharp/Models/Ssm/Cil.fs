@@ -23,7 +23,7 @@
 namespace SafetySharp.Models
 
 /// Defines types and functions for working with common intermediate language (CIL or MSIL) instructions.
-module Cil =
+module internal Cil =
     open Mono.Cecil
     open Mono.Cecil.Cil
     open Mono.Cecil.Rocks

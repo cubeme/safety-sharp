@@ -25,11 +25,6 @@ namespace Analyzers
 open System
 open System.Linq
 open NUnit.Framework
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.CSharp.Syntax
-open Microsoft.CodeAnalysis.Diagnostics
-open SafetySharp.Tests
-open SafetySharp.Modeling
 open SafetySharp.CSharpCompiler.Analyzers
 open SafetySharp.CSharpCompiler.Roslyn.Syntax
 open SafetySharp.CSharpCompiler.Roslyn.Symbols

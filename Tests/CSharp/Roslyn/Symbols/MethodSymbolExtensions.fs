@@ -30,7 +30,6 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open SafetySharp.CSharpCompiler.Roslyn.Symbols
 open SafetySharp.Modeling
-open SafetySharp.Tests
 
 [<TestFixture>]
 module ``Overrides method`` =

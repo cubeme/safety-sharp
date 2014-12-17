@@ -20,7 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests
+[<AutoOpen>]
+module RoslynTestHelper
 
 open System
 open System.Collections.Generic
