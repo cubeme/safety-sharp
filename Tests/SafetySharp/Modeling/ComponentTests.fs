@@ -334,7 +334,7 @@ module ``Subcomponents property`` =
         component'.Subcomponents.[0].Name =? fsharpFieldName "Root._component1"
         component'.Subcomponents.[1].Name =? fsharpFieldName "Root._component2"
 
-// These tests assume that the F# compile generates a property named 'x' and a backing field with
+// These tests assume that the F# compiler generates a property named 'x' and a backing field with
 // some internal name for a 'val x : type' expression within a class.
 [<TestFixture>]
 module ``Access method`` =

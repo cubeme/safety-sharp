@@ -140,13 +140,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\CSharp\Compiler\Compiler.csproj">
+    <ProjectReference Include="..\..\Source\Compiler\Compiler.csproj">
       <Name>Compiler</Name>
       <Project>{8823091c-387f-4f4d-abcd-8f71d1528cbb}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\..\Source\Runtime\Runtime.fsproj">
-      <Name>Runtime</Name>
+    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
+      <Name>SafetySharp</Name>
       <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
       <Private>True</Private>
     </ProjectReference>
