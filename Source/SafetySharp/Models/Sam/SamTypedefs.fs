@@ -20,34 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Scm
+namespace SafetySharp.Models.Sam
 
-module internal ScmShortTypes =
-    type ScmVar = Var
-    type ScmField = Field
-    type ScmReqPort = ReqPort
-    type ScmProvPort = ProvPort
-    type ScmFault = Fault
-    type ScmComp = Comp
-    type ScmUOp = UOp
-    type ScmBOp = BOp
-    type ScmVal = Val
-    type ScmExpr = Expr
-    type ScmFaultExpr = FaultExpr
-    type ScmParam = Param
-    type ScmStm = Stm
-    type ScmType = Type
-    type ScmVarDecl = VarDecl
-    type ScmFieldDecl = FieldDecl
-    type ScmBehaviorDecl = BehaviorDecl
-    type ScmParamDir = ParamDir
-    type ScmParamDecl = ParamDecl
-    type ScmReqPortDecl = ReqPortDecl
-    type ScmProvPortDecl = ProvPortDecl
-    type ScmBndSrc = BndSrc
-    type ScmBndTarget = BndTarget
-    type ScmBndKind = BndKind
-    type ScmBndDecl = BndDecl
-    type ScmFaultDecl = FaultDecl
-    type ScmStepDecl = StepDecl
-    type ScmCompDecl = CompDecl
+module internal Typedefs =
+    type SamUOp = UOp
+    type SamBOp = BOp
+    type SamId = Id
+    type SamVal = Val
+    type SamExpr = Expr
+    type SamClause = Clause
+    type SamStm = Stm
+    type SamSimpleId = SimpleId

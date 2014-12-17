@@ -60,10 +60,10 @@
     <Compile Include="Modeling.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
-    <Compile Include="Models\Fil\FilParserTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
+    <Compile Include="Models\Sam\SamParserTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

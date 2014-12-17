@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Fil
+namespace SafetySharp.Models.Sam
 
 /// Represents the operator in an unary expression.
 type internal UOp =
