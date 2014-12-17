@@ -25,7 +25,7 @@ namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
 
 open NUnit.Framework
 open SafetySharp.Tests.Modelchecking
-open SafetySharp.Internal.Utilities
+open SafetySharp
 open SafetySharp.Internal.Modelchecking
 open SafetySharp.Internal.Modelchecking.NuXmv
 

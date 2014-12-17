@@ -23,7 +23,7 @@
 namespace SafetySharp.Modeling.CompilerServices
 
 open System
-open SafetySharp.Internal.Utilities
+open SafetySharp
 
 /// When applied to a method parameter, instructs the SafetySharp compiler to lift an expression 'expr'
 /// to a lambda function of the form '() => expr'.

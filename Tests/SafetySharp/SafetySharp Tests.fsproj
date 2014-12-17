@@ -60,8 +60,8 @@
     <Compile Include="Modeling.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
-    <Compile Include="FIL\FILParserTests.fs" />
-    <Compile Include="ModelFile\ModelFileParserTests.fs" />
+    <Compile Include="Models\Fil\FilParserTests.fs" />
+    <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
   </ItemGroup>

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module SafetySharp.Internal.SafetyComponentModel
+namespace SafetySharp.Models.Scm
 
 type internal Var = Var of string
 type internal Field = Field of string

@@ -23,7 +23,6 @@
 namespace SafetySharp.Modeling
 
 open System
-open SafetySharp.Internal.Utilities
 
 /// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
 /// marks the method or property as a provided port.

@@ -109,7 +109,6 @@
     <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.cs" />
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
-    <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.cs" />
     <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />

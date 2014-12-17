@@ -39,7 +39,7 @@ module ``GetMethodSymbol method`` =
         let symbol = compilation.FindMethodSymbol typeName methodName
 
         declaration.GetMethodSymbol compilation.SemanticModel =? symbol
-
+        
     [<Test>]
     let ``throws when method declaration is null`` () =
         let compilation = TestCompilation ""

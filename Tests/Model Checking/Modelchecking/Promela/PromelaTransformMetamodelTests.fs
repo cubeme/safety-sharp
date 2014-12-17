@@ -25,7 +25,7 @@ namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformMetamodelTests
 open NUnit.Framework
 open SafetySharp.Tests.Modelchecking
 
-open SafetySharp.Internal.Utilities
+open SafetySharp
 open SafetySharp.Internal.Modelchecking
 open SafetySharp.Internal.Modelchecking.PromelaSpin
 

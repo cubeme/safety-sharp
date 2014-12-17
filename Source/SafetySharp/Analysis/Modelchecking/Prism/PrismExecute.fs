@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Internal.Modelchecking.Prism
 
-open SafetySharp.Internal.Utilities
+open SafetySharp
 
 type internal ExecutePrism =
     val private arguments : string

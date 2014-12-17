@@ -23,24 +23,28 @@
 namespace SafetySharp.Modeling
 
 open System
-open System.Linq.Expressions
-open SafetySharp.Internal.Metamodel
+open SafetySharp
 
-/// Represents a linear temporal logic formula provided by a C# model.
-type internal CSharpFormula =
-    /// Represents a state formula that is evaluated in a single model state.
-    | CSharpStateFormula of StateExpression : Expression<Func<bool>>
-
-    /// Represents the application of an unary formula operator to a formula.
-    | CSharpUnaryFormula of Operand : CSharpFormula * Operator : UnaryFormulaOperator
-
-    /// Represents the application of a binary formula operator to two subformulas.
-    | CSharpBinaryFormula of LeftFormula : CSharpFormula * Operator : BinaryFormulaOperator * RightFormula : CSharpFormula
-
-/// Raised when a component referenced in a formula is not contained within the model the formula is created for.
 [<Sealed>]
-type UnknownComponentException internal (unknownComponent : IComponent) =
-    inherit Exception ("The formula references a component that is not contained within the model the formula is created for.")
+type SpinModelChecker (model : Model) =
+    do nullArg model "model"
+    do model.FinalizeMetadata ()
 
-    /// Gets the unknown component instances that was found in the formula.
-    member this.UnknownComponent = unknownComponent
+//    member this.Check (formula : LtlFormula) =
+//        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)
+//        let formulas = [formula.Formula]
+//        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
+//        
+//        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela configuration
+//        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile ()
+//
+//        let converted = converter.transformConfiguration
+//        FileSystem.WriteToAsciiFile "Modelchecking/Spin.promela" (astWriter.Export converted)
+//
+//        let converter = SafetySharp.Internal.Modelchecking.NuXmv.MetamodelToNuXmv configuration
+//        let astWriter = SafetySharp.Internal.Modelchecking.NuXmv.ExportNuXmvAstToFile ()
+//
+//        let converted = converter.transformConfiguration
+//        FileSystem.WriteToAsciiFile "Modelchecking/NuXmv.smv" (astWriter.ExportNuXmvProgram converted)
+
+//        ()

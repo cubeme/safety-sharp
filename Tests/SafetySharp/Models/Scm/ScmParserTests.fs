@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.ParseSCM
+namespace SafetySharp.Tests.Models.Scm.ParserTests
 
 
 open System
@@ -30,25 +30,25 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 open SafetySharp.Internal
-open SafetySharp.Internal.SafetyComponentModel
+open SafetySharp.Models.Scm
 
 [<TestFixture>]
 type ParsingUserStateWorks () =
 
-    let runWithUserState parser str = runParserOnString parser ParseSCM.UserState.initialUserState "" str
+    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
     
     let parseWithParser parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
         
-    let parseVarIdDecl str = parseWithParser (ParseSCM.varIdDecl ) str
-    let parseVarIdInst str = parseWithParser (ParseSCM.varIdInst ) str
+    let parseVarIdDecl str = parseWithParser (Parser.varIdDecl ) str
+    let parseVarIdInst str = parseWithParser (Parser.varIdInst ) str
 
     
     [<Test>]
     member this.``Field declaration has an effect on the user state of the parser`` () =
-        let customParser = ParseSCM.varIdDecl .>>. (spaces >>. ParseSCM.varIdInst .>> eof)
+        let customParser = Parser.varIdDecl .>>. (spaces >>. Parser.varIdInst .>> eof)
         
         let input = "int1Var int1Var"
         let fullResult = runWithUserState customParser input
@@ -57,7 +57,7 @@ type ParsingUserStateWorks () =
                 let (decl,inst) = result
                 decl =? Var.Var("int1Var")
                 inst =? Var.Var("int1Var")
-                userState.IsIdentifierOfType "int1Var" ParseSCM.IdentifierType.Var =? true
+                userState.IsIdentifierOfType "int1Var" Parser.IdentifierType.Var =? true
             | Failure(errorMsg, _, _) -> failwith errorMsg
         ()
 
@@ -65,21 +65,21 @@ type ParsingUserStateWorks () =
 [<TestFixture>]
 type ExampleFiles() =
 
-    let runWithUserState parser str = runParserOnString parser SafetySharp.Internal.ParseSCM.UserState.initialUserState "" str
+    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
 
     let parseWithParser parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
-    let parseSCM str = parseWithParser (ParseSCM.scmFile .>> eof) str
+    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
         
     let parseWithParserAndExpectFailure parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> failwith "parsed successfully but expected a parsing failure"
         | Failure(errorMsg, _, _) -> ()
 
-    let parseSCMAndExpectFailure str = parseWithParserAndExpectFailure (ParseSCM.scmFile .>> eof) str
+    let parseSCMAndExpectFailure str = parseWithParserAndExpectFailure (Parser.scmFile .>> eof) str
     
     //[<Test;Ignore("functionality not implemented yet")>]
 

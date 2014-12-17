@@ -26,9 +26,9 @@ open System
 open System.Linq
 open System.Linq.Expressions
 open System.Reflection
+open SafetySharp
 open SafetySharp.Modeling
 open SafetySharp.Internal.Metamodel
-open SafetySharp.Internal.Utilities
 
 [<AutoOpen>]
 module ModelingShared =

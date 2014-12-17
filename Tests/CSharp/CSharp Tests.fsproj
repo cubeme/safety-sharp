@@ -67,7 +67,6 @@
     <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.fs" />
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.fs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.fs" />
-    <Compile Include="Roslyn\Syntax\InvocationExpressionExtensions.fs" />
     <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.fs" />
     <Compile Include="Roslyn\Syntax\SyntaxBuilder.fs" />
     <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.fs" />

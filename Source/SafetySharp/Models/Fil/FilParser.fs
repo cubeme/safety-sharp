@@ -20,15 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.FIL.Parser
+namespace SafetySharp.Models.Fil
 
 
-module internal ParseFIL =
+module internal Parser =
 
     // The statement and expression parser is similar to the FIL-parser, but the Data Structures are different.
 
     open FParsec
-    open SafetySharp.Internal.FIL
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,unit> =
