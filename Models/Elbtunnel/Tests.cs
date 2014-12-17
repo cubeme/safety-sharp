@@ -8,6 +8,7 @@
 	[TestFixture]
 	public class Tests
 	{
+		// Model non-abstract? Model config in test's SetUp method?
 		private class Elbtunnel : Model
 		{
 			public Elbtunnel(bool nondeterministicInitialValue)
@@ -32,6 +33,12 @@
 							.Implies(Ltl.Finally(!value == false || value2 == true || lb.Triggered && t.Boolean2.Value));
 
 				Hazard2 = Ctl.AllPaths.Globally(value != false || unknown.Triggered);
+
+				//Hazard = Ltl($"{value} != {b} || F !{value} <-> {lb}.Triggered -> {lb.Triggered}");
+				// G {lb}.Triggered -> G $lb_triggered
+				// G {lb.Triggered} -> G false
+				// allowed in holes: components, component member accesses for constants/readonly fields, int/bool constants or vars
+				// {lb.Triggered} should be forbidden _unless_ Triggered is const, a readonly/immutable field or property
 			}
 
 			public LtlFormula Hazard { get; private set; }
