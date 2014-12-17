@@ -77,8 +77,8 @@ module internal Ssm =
     /// have more than one successor. Return statements don't have any successor at all.
     let private getSuccessors methodBody pc =
         let succs = function
-            | GotoStm (BoolExpr true, pc) -> Set.singleton pc
-            | GotoStm (_, pc) -> [pc; pc + 1] |> Set.ofList
+            | GotoStm (BoolExpr true, pc') -> Set.singleton pc'
+            | GotoStm (_, pc') -> [pc'; pc + 1] |> Set.ofList
             | RetStm _ -> Set.empty
             | _ -> pc + 1 |> Set.singleton
 

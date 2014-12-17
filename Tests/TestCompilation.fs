@@ -34,6 +34,7 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
+open Mono.Cecil
 open SafetySharp.CSharpCompiler.Roslyn.Syntax
 open SafetySharp.CSharpCompiler.Roslyn
 open SafetySharp.Modeling
@@ -108,6 +109,19 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
                 failed "Assembly compilation failed."
 
         assembly
+
+    /// Emits an in-memory assembly for the compilation and returns a Mono.Cecil assembly definition for the compiled assembly.
+    member this.GetAssemblyDefinition () =
+        use stream = new MemoryStream ()
+        let emitResult = csharpCompilation.Emit stream
+
+        if (emitResult.Success) then
+            stream.Seek (0L, SeekOrigin.Begin) |> ignore
+            AssemblyDefinition.ReadAssembly stream
+        else
+            emitResult.Diagnostics |> Seq.iter (fun diagnostic -> printf "%A" diagnostic)
+            failed "Assembly compilation failed."
+            null
 
     /// Finds the <see cref="TypeDeclarationSyntax" /> for the type with the given name in the compilation.
     /// Throws an exception if more than one type with the given name was found.

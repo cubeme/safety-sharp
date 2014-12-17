@@ -25,25 +25,36 @@ namespace SafetySharp
 open System
 open System.Text
 
-/// Generates code in an in-memory buffer.
-type CodeWriter () =
-    let output = new StringBuilder()
+/// Generates structured strings in an in-memory buffer.
+type StructuredWriter () =
+    let output = StringBuilder ()
     let mutable atBeginningOfLine = true
     let mutable indent = 0
 
     /// Appends the given format string to the current line.
-    member public this.Append (s, [<ParamArray>] args) =
+    member public this.AppendFormatted (s, [<ParamArray>] args) =
         this.AddIndentation ()
         output.AppendFormat (s, args) |> ignore
 
     /// Appends the given format string to the current line and starts a new line.
-    member public this.AppendLine (s, [<ParamArray>] args) =
-        this.Append (s, args)
+    member public this.AppendFormattedLine (s, [<ParamArray>] args) =
+        this.AppendFormatted (s, args)
         this.NewLine ()
+
+     /// Appends the given string to the current line.
+    member public this.Append s =
+        this.AddIndentation ()
+        Printf.bprintf output s
+
+    /// Appends the given string to the current line and starts a new line.
+    member public this.AppendLine s =
+        let result = this.Append s
+        this.NewLine ()
+        result
 
     /// Appends a new line to the buffer.
     member public this.NewLine () =
-        output.AppendLine () |> ignore
+        output.Append ("\n") |> ignore
         atBeginningOfLine <- true
 
     /// Appends the given content to the buffer, enclosed in parentheses.
@@ -66,6 +77,27 @@ type CodeWriter () =
         this.Append "}"
 
         this.NewLine ()
+        
+    /// Appends a block statement to the buffer with configurable block begin and end delimiters, i.e., generates a set of,
+    /// for instance, parenthesis on separate lines, increases the indentation and generates the given content within the block.
+    member this.AppendBlock content front back =
+        this.EnsureNewLine ()
+        this.AppendLine front
+        this.IncreaseIndent ()
+        content ()
+        this.EnsureNewLine ()
+        this.DecreaseIndent ()
+        this.Append back
+
+    /// Appends the given elements using the given content generator, using the given separator to separate each element.
+    member this.AppendRepeated elements content separator =
+        let mutable first = true
+        for element in elements do
+            if not first then
+                separator ()
+            else
+                first <- false
+            content element
 
     /// Increases the indentation level, starting with the next line.
     member public this.IncreaseIndent() = indent <- indent + 1
@@ -81,8 +113,8 @@ type CodeWriter () =
         if not atBeginningOfLine then
             this.NewLine ()
 
-    member private this.AddIndentation() =
-        if atBeginningOfLine then
+    member private this.AddIndentation () =
+        if atBeginningOfLine then 
             atBeginningOfLine <- false
-        for i = 1 to indent do
-            output.Append (" ") |> ignore
+            for i = 1 to indent do
+                output.Append "    " |> ignore

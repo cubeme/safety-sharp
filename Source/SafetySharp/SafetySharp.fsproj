@@ -51,7 +51,7 @@
   <ItemGroup>
     <Compile Include="Utilities\Exceptions.fs" />
     <Compile Include="Utilities\FileSystem.fs" />
-    <Compile Include="Utilities\CodeWriter.fs" />
+    <Compile Include="Utilities\StructuredWriter.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />

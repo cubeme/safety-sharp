@@ -35,6 +35,7 @@ open System.IO
 open System.Text
 open System.Reflection
 open System.Runtime.CompilerServices
+open SafetySharp
 open SafetySharp.Modeling
 open SafetySharp.Internal.Metamodel
 open Microsoft.FSharp.Reflection
@@ -42,69 +43,6 @@ open NUnit.Framework
 
 module private ObjectDumper =
  
-    /// Outputs object trees.
-    type private ObjectWriter () =
-        let output = StringBuilder ()
-        let mutable atBeginningOfLine = true
-        let mutable indent = 0
-
-        /// Appends the given string to the current line.
-        member this.Append s =
-            this.AddIndentation()
-            Printf.bprintf output s
-
-        /// Appends the given string to the current line and starts a new line.
-        member this.AppendLine s =
-            let result = this.Append s
-            this.NewLine ()
-            result
-
-        /// Appends a new line to the buffer.
-        member this.NewLine() =
-            output.AppendLine () |> ignore
-            atBeginningOfLine <- true
-
-        /// Appends a block statement to the buffer, i.e., generates a set of curly braces on separate lines,
-        /// increases the indentation and generates the given content within the block.
-        member this.AppendBlockStatement content front back =
-            this.EnsureNewLine ()
-            this.AppendLine front
-            this.IncreaseIndent ()
-            content ()
-            this.EnsureNewLine ()
-            this.DecreaseIndent ()
-            this.Append back
-
-        /// Appends the given elements using the given content generator, using the given separator to separate each element.
-        member this.AppendRepeated elements content separator =
-            let mutable first = true
-            for element in elements do
-                if not first then
-                    separator ()
-                else
-                    first <- false
-                content element
-                
-        member private this.EnsureNewLine () =
-            if not atBeginningOfLine then
-                this.NewLine ()
-
-        member private this.AddIndentation () =
-            if atBeginningOfLine then 
-                atBeginningOfLine <- false
-                for i = 1 to indent do
-                    output.Append ("    ") |> ignore
-
-        /// Increases the indentation level, starting with the next line.
-        member this.IncreaseIndent() = indent <- indent + 1
-
-        /// Decreases the indentation level, starting with the next line.
-        member this.DecreaseIndent() = indent <- indent - 1
-            
-        /// Returns the generated output.
-        override this.ToString () =
-            output.ToString ()
-
     /// Dumps the given object for debugging purposes.
     let dump (object' : obj) =
         
@@ -117,12 +55,12 @@ module private ObjectDumper =
 
         let maxLevel = 5
         let currentLevel = ref 0
-        let writer = ObjectWriter ()
+        let writer = StructuredWriter ()
         let asEnumerable (object' : obj) = 
             (object' :?> IEnumerable).Cast<obj> ()
 
         let rec dumpEnumerable (elements : obj seq) front back =
-            writer.AppendBlockStatement (fun () -> writer.AppendRepeated elements dump (fun () -> writer.Append ", ")) front back
+            writer.AppendBlock (fun () -> writer.AppendRepeated elements dump (fun () -> writer.Append ", ")) front back
 
         and dumpMap (elements : obj seq) =
             let elements = Array.ofSeq elements
@@ -137,9 +75,9 @@ module private ObjectDumper =
                 writer.NewLine ()
                 for element in elements do
                     writer.AppendBlockStatement (fun () ->
-                        writer.AppendBlockStatement (fun () -> dump (keyProperty.GetValue element)) "Key =" ""
-                        writer.AppendBlockStatement (fun () -> dump (valueProperty.GetValue element)) "Value =" ""
-                    ) "{" "}"
+                        writer.AppendBlock (fun () -> dump (keyProperty.GetValue element)) "Key =" ""
+                        writer.AppendBlock (fun () -> dump (valueProperty.GetValue element)) "Value =" ""
+                    ) 
                     writer.NewLine ()
                 writer.DecreaseIndent ()
                 writer.Append "]"
@@ -148,7 +86,7 @@ module private ObjectDumper =
             let dumpProperties typeName (properties : PropertyInfo array) =
                 writer.Append "%s" typeName
                 if properties.Length > 0 then
-                    writer.AppendBlockStatement (fun () ->
+                    writer.AppendBlock (fun () ->
                         writer.AppendRepeated properties (fun property -> 
                             writer.Append "%s = " property.Name 
                             dump (property.GetValue object')
@@ -163,7 +101,7 @@ module private ObjectDumper =
                     writer.Append " "
                     dump values.[0]
                 elif values.Length > 1 then
-                    writer.AppendBlockStatement (fun () -> writer.AppendRepeated values dump (fun () -> writer.AppendLine ", ")) "(" ")"
+                    writer.AppendBlock (fun () -> writer.AppendRepeated values dump (fun () -> writer.AppendLine ", ")) "(" ")"
             elif FSharpType.IsRecord (objectType, true) then
                 dumpProperties objectType.Name <| FSharpType.GetRecordFields (objectType, true)
             elif FSharpType.IsTuple objectType then

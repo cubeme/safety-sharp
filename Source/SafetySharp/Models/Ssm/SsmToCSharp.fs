@@ -28,7 +28,7 @@ module internal SsmToCSharp =
 
     /// Transforms the given SSM statement to C# code.
     let transform stm =
-        let writer = CodeWriter ()
+        let writer = StructuredWriter ()
 
         let uop = function
             | Not   -> writer.Append "!"
@@ -39,7 +39,7 @@ module internal SsmToCSharp =
             | Sub -> writer.Append "-"
             | Mul -> writer.Append "*"
             | Div -> writer.Append "/"
-            | Mod -> writer.Append "%"
+            | Mod -> writer.Append "%%"
             | Gt  -> writer.Append ">"
             | Ge  -> writer.Append ">="
             | Lt  -> writer.Append "<"
@@ -50,13 +50,13 @@ module internal SsmToCSharp =
             | Or  -> writer.Append "|"
 
         let var = function
-            | Arg a   -> writer.Append a
-            | Local l -> writer.Append l
-            | Field f -> writer.Append f
+            | Arg a   -> writer.Append "%s" a
+            | Local l -> writer.Append "%s" l
+            | Field f -> writer.Append "%s" f
 
         let rec expr = function
             | BoolExpr b         -> writer.Append <| if b then "true" else "false"
-            | IntExpr i          -> writer.Append ("{0}", i)
+            | IntExpr i          -> writer.Append "%i" i
             | VarExpr v          -> var v
             | UExpr (op, e)      -> uop op; writer.AppendParenthesized (fun () -> expr e)
             | BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> expr e1; bop op; expr e2)

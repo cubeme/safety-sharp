@@ -92,7 +92,7 @@ module internal CilToSsm =
                 | BrType.Gt -> Gt
                 | BrType.Le -> Le
                 | BrType.Lt -> Lt
-                | _ -> invalidOp "Unsupported branch type '%A'." op
+                | _ -> invalidOp "Unsupported branch type '%+A'." op
             (GotoStm (BExpr (e2, op, e1), t), [], s)
         | (Instr.Dup, e :: s) -> (NopStm, [], e :: e :: s)
         | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, And, e1)) :: s)
@@ -106,7 +106,7 @@ module internal CilToSsm =
         | (Instr.Div, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, Div, e1)) :: s)
         | (Instr.Ret, e :: s) -> (RetStm (Some e), [], s)
         | (Instr.Ret, []) -> (RetStm None, [], [])
-        | _ -> invalidOp "Failed to transform instruction '%A' for stack '%A'." instr stack
+        | _ -> invalidOp "Failed to transform instruction '%+A' for stack '%+A'." instr stack
 
     /// Transforms all instructions of the method body to list of SSM statements with unstructured control flow.
     /// This function corresponds to the BC2BIR function in the Demange paper.
@@ -146,7 +146,7 @@ module internal CilToSsm =
                 let stack = if isJumpTarget pc then getJumpStack pc else stack
                 let (stm, vars, stack') = transformInstr pc instr stack
                 outStacks.[pc] <- stack'
-
+                
                 if stack' <> [] && succ pc |> Set.exists (fun pc' -> pc' < pc) then 
                     invalidOp "Invalid control flow detected: Backward jump (with non-empty stack). Loops are not supported by S#."
 

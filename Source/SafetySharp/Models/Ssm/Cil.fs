@@ -124,7 +124,7 @@ module internal Cil =
             | Code.Rem      -> Rem
             | Code.Dup      -> Dup
             | Code.Pop      -> Pop
-            | _             -> invalidOp "MSIL instruction '%A' is unsupported." instr
+            | _             -> invalidOp "MSIL instruction '%+A' is unsupported." instr
         ) 
         |> Array.ofSeq
 
@@ -143,8 +143,8 @@ module internal Cil =
     /// have more than one successor. Return instructions don't have any successor at all.
     let getSuccessors methodBody pc =
         let succs = function
-            | Br (Always, pc) -> Set.singleton pc
-            | Br (_, pc) -> [pc; pc + 1] |> Set.ofList
+            | Br (Always, pc') -> Set.singleton pc'
+            | Br (_, pc') -> [pc'; pc + 1] |> Set.ofList
             | Ret -> Set.empty
             | _ -> pc + 1 |> Set.singleton
 

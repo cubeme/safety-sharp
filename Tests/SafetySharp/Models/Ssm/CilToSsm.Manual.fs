@@ -22,14 +22,35 @@
 
 namespace Ssm
 
+open System.Linq
 open NUnit.Framework
+open Mono.Cecil
+open SafetySharp.Models
+open SafetySharp.Models.Ssm
 
 [<TestFixture>]
 module CilToSsmManual =
-    let transform csharpCode = 
+    let private transform csharpCode = 
+        let t = "TestType"
+        let csharpCode = sprintf "class %s { %s }" t csharpCode
         let compilation = TestCompilation csharpCode
-        ()
+        let assembly = compilation.GetAssemblyDefinition ()
+        let typeDef = assembly.MainModule.GetType t
+        let methodDef = typeDef.Methods.Single (fun m' -> m'.Name = "M")
 
-    [<Test>]
-    let ``does not normalize conditional expression not declared within a component class`` () =
-        ()
+        methodDef 
+        |> Cil.getMethodBody 
+        |> CilToSsm.transform
+
+    [<Test; Ignore("Failing")>]
+    let ``simple control flow`` () =
+        let varName = "__tmp_6_0"
+        let condition = BExpr (VarExpr (Arg "x"), Gt, IntExpr 0)
+        let thenStm = AsgnStm (Local varName, IntExpr -1)
+        let elseStm = AsgnStm (Local varName, IntExpr 1)
+        let ifStm = IfStm (condition, thenStm, Some elseStm)
+        let assignStm = AsgnStm (Local "y", VarExpr (Local varName))
+        let retStm = RetStm <| Some (BExpr (VarExpr (Local "y"), Sub, IntExpr 1))
+        transform "int M(int x) { var y = x > 0 ? -1 : 1; return y - 1; }" =?
+            
+            SeqStm (ifStm, SeqStm (assignStm, retStm))
