@@ -27,7 +27,6 @@ open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.Internal.CSharp
 open SafetySharp.Modeling
 open SafetySharp.CSharpCompiler.Roslyn.Syntax
 open SafetySharp.Tests

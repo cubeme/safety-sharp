@@ -58,11 +58,6 @@
       <Link>AstTestHelpers.fs</Link>
     </Compile>
     <Compile Include="Modeling.fs" />
-    <Compile Include="CSharp\Transformation\SymbolTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\ExpressionTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\StatementTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\ObjectTransformationTests.fs" />
-    <Compile Include="CSharp\Transformation\FormulaTransformationTests.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
     <Compile Include="FIL\FILParserTests.fs" />

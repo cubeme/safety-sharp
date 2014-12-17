@@ -27,11 +27,9 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open SafetySharp.Internal.CSharp
 open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests
-open SafetySharp.Tests.CSharp
 
 type private TestEnum =
     | Default = 0
