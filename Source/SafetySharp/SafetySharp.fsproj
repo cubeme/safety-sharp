@@ -51,19 +51,24 @@
   <ItemGroup>
     <Compile Include="Utilities\Exceptions.fs" />
     <Compile Include="Utilities\FileSystem.fs" />
+    <Compile Include="Utilities\CodeWriter.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
     <Compile Include="Modeling\OverflowBehavior.fs" />
     <Compile Include="Modeling\Attributes.fs" />
+    <Compile Include="Models\Ssm\Cil.fs" />
     <Compile Include="Models\Ssm\Ssm.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.fs" />
+    <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
     <Compile Include="Models\Scm\ScmTypedefs.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamTypedefs.fs" />
+    <Compile Include="Models\Transformations\SsmToScm.fs" />
     <Compile Include="Analysis\Metamodel\Symbols.fs" />
     <Compile Include="Analysis\Metamodel\Expressions.fs" />
     <Compile Include="Analysis\Metamodel\Formulas.fs" />
@@ -114,7 +119,6 @@
     <Compile Include="Analysis\SpinModelChecker.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />
-    <Compile Include="Models\Transformations\Ssm-Scm.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
