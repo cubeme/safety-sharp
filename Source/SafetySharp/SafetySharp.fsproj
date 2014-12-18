@@ -65,6 +65,8 @@
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
     <Compile Include="Models\Scm\ScmTypedefs.fs" />
+    <Compile Include="Models\Scm\ScmHelpers.fs" />
+    <Compile Include="Models\Scm\ScmRewriter.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamTypedefs.fs" />
