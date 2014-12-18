@@ -69,6 +69,7 @@ module internal SsmToCSharp =
             | IntExpr i          -> writer.Append "%i" i
             | DoubleExpr d       -> writer.Append "%f" d
             | VarExpr v          -> var v
+            | VarRefExpr v       -> writer.Append "&"; var v
             | UExpr (op, e)      -> uop op; writer.AppendParenthesized (fun () -> expr e)
             | BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
 
@@ -100,10 +101,15 @@ module internal SsmToCSharp =
         | Some t -> varType t
 
         writer.Append " %s(" m.Name
-        writer.AppendRepeated m.Params (fun p -> varDecl p.Var) (fun () -> writer.Append ", ")
+        writer.AppendRepeated m.Params (fun p ->
+            if p.InOut then writer.Append "ref "
+            varDecl p.Var
+        ) (fun () -> writer.Append ", ")
         writer.Append ")"
         writer.AppendBlockStatement (fun () -> 
             m.Locals |> List.iter (fun var -> varDecl var; writer.AppendLine ";")
+            writer.NewLine ()
+
             toCSharp m.Body
         )
         writer.ToString ()

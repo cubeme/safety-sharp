@@ -46,11 +46,13 @@ module internal Cil =
     /// Represents the CIL instructions supported by S#.
     type Instr =
         | Nop
+        | Ldind
         | Ldfld of FieldDefinition
         | Ldloc of VariableDefinition
         | Ldarg of ParameterDefinition
         | Ldci of int
         | Ldcd of double
+        | Stind
         | Stfld of FieldDefinition
         | Stloc of VariableDefinition
         | Starg of ParameterDefinition
@@ -94,11 +96,15 @@ module internal Cil =
             
             match instr.OpCode.Code with
             | Code.Nop      -> Nop
+            | Code.Ldind_I4 -> Ldind
+            | Code.Ldind_U1 -> Ldind
             | Code.Ldfld    -> toInstr  Ldfld
             | Code.Ldloc    -> toInstr  Ldloc
             | Code.Ldarg    -> toInstr  Ldarg
             | Code.Ldc_I4   -> toInstr  Ldci
             | Code.Ldc_R8   -> toInstr  Ldcd
+            | Code.Stind_I1 -> Stind
+            | Code.Stind_I4 -> Stind
             | Code.Stfld    -> toInstr  Stfld
             | Code.Stloc    -> toInstr  Stloc
             | Code.Starg    -> toInstr  Starg

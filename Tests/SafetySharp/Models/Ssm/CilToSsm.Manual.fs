@@ -37,14 +37,159 @@ module ``CilToSsm (manual tests)`` =
         let assembly = compilation.GetAssemblyDefinition ()
         let typeDef = assembly.MainModule.GetType t
         let methodDef = typeDef.Methods.Single (fun m' -> m'.Name = "M")
-        let m = CilToSsm.transformMethod methodDef
 
+        printfn "MSIL of method body:"
+        methodDef.Body.Instructions |> Seq.iteri (printfn "%3i: %A")
+
+        printfn ""
+        printfn "Transformed method:"
+        let m = CilToSsm.transformMethod methodDef
         SsmToCSharp.transform m |> printfn "%s"
         m
 
     let private arg name t = Arg (name, t)
     let private local name t = Local (name, t)
     let private tmp = CilToSsm.freshLocal
+
+    [<Test>]
+    let ``read from ref parameter`` () =
+        transform "int M(ref int x) { return x; }" =?
+            {
+                Name = "M"
+                Return = Some IntType
+                Params = [ { Var = arg "x" IntType; InOut = true } ]
+                Locals = []
+                Body = RetStm (Some (VarExpr (arg "x" IntType)))
+            }
+
+    [<Test>]
+    let ``write to ref parameter`` () =
+        transform "void M(ref int x) { x = 17; }" =?
+            {
+                Name = "M"
+                Return = None
+                Params = [ { Var = arg "x" IntType; InOut = true } ]
+                Locals = []
+                Body = SeqStm [AsgnStm (arg "x" IntType, IntExpr 17); RetStm None]
+            }
+
+    [<Test>]
+    let ``method with in, inout, and out parameters`` () =
+        transform "double M(double x, ref bool y, out int z) { z = y ? 1 : 0; return 3.0; }" =?
+            {
+                Name = "M"
+                Return = Some DoubleType
+                Params = 
+                    [ 
+                        { Var = arg "x" DoubleType; InOut = false }
+                        { Var = arg "y" BoolType; InOut = true } 
+                        { Var = arg "z" IntType; InOut = true } 
+                    ]
+                Locals = [tmp 7 0 IntType]
+                Body =
+                    SeqStm [
+                        IfStm (
+                            VarExpr (arg "y" BoolType),
+                            AsgnStm (tmp 7 0 IntType, IntExpr 1),
+                            AsgnStm (tmp 7 0 IntType, IntExpr 0) |> Some
+                        )
+                        AsgnStm (arg "z" IntType, VarExpr (tmp 7 0 IntType))
+                        RetStm (Some (DoubleExpr 3.0))
+                    ]
+            }
+
+    [<Test>]
+    let ``method with complex side effects`` () =
+        transform "void M(int z) { z *= z-- * --z; }" =?
+            {
+                Name = "M"
+                Return = None
+                Params = [ { Var = arg "z" IntType; InOut = false } ]
+                Locals = [tmp 5 0 IntType; tmp 10 0 IntType]
+                Body =
+                    SeqStm [
+                        AsgnStm (tmp 5 0 IntType, VarExpr (arg "z" IntType))
+                        AsgnStm (arg "z" IntType, BExpr (VarExpr (arg "z" IntType), Sub, IntExpr 1))
+                        AsgnStm (tmp 10 0 IntType, VarExpr (arg "z" IntType))
+                        AsgnStm (arg "z" IntType, BExpr (VarExpr (arg "z" IntType), Sub, IntExpr 1))
+                        AsgnStm (arg "z" IntType, 
+                            BExpr (VarExpr (tmp 5 0 IntType), Mul, 
+                                BExpr (VarExpr (tmp 5 0 IntType), Mul, BExpr (VarExpr (tmp 10 0 IntType), Sub, IntExpr 1))))
+                        RetStm None
+                    ]
+            }
+
+    [<Test>]
+    let ``method with complex side effects when parameter is byref`` () =
+        transform "void M(ref int z) { z *= z-- * --z; }" =?
+            let local = local "__loc_0" IntType
+            {
+                Name = "M"
+                Return = None
+                Params = [ { Var = arg "z" IntType; InOut = true } ]
+                Locals = [local; tmp 10 0 IntType; tmp 17 0 IntType; tmp 19 0 IntType]
+                Body =
+                    SeqStm [
+                        AsgnStm (local, VarExpr (arg "z" IntType))
+                        AsgnStm (tmp 10 0 IntType, VarExpr (arg "z" IntType))
+                        AsgnStm (arg "z" IntType, BExpr (VarExpr local, Sub, IntExpr 1))
+                        AsgnStm (tmp 17 0 IntType, VarExpr local)
+                        AsgnStm (local, BExpr (VarExpr (arg "z" IntType), Sub, IntExpr 1))
+                        AsgnStm (tmp 19 0 IntType, VarExpr (arg "z" IntType))
+                        AsgnStm (arg "z" IntType, VarExpr local)
+                        AsgnStm (arg "z" IntType, 
+                            BExpr (VarExpr (tmp 10 0 IntType), Mul, 
+                                BExpr (VarExpr (tmp 17 0 IntType), Mul, VarExpr local)))
+                        RetStm None
+                    ]
+            }
+
+    [<Test>]
+    let ``method with in and inout parameters, side effects, and complex control flow`` () =
+        transform "void M(ref bool y, ref int z) { z = y ? z++ : ((y = !y) ? z-- : --z); }" =?
+            let local0 = local "__loc_0" BoolType
+            let local1 = local "__loc_1" IntType
+            let argY = arg "y" BoolType
+            let argZ = arg "z" IntType
+            {
+                Name = "M"
+                Return = None
+                Params = [ { Var = arg "y" BoolType; InOut = true }; { Var = arg "z" IntType; InOut = true } ]
+                Locals = [local1; tmp 41 0 IntType; tmp 43 0 IntType; local0; tmp 31 0 IntType; tmp 21 0 IntType]
+                Body =
+                    SeqStm [
+                        IfStm (
+                            VarExpr argY,
+                            SeqStm [
+                                AsgnStm (local1, VarExpr argZ)
+                                AsgnStm (tmp 41 0 IntType, VarExpr argZ)
+                                AsgnStm (argZ, BExpr (VarExpr local1, Add, IntExpr 1))
+                                AsgnStm (tmp 43 0 IntType, VarExpr local1)
+                            ],
+                            SeqStm [
+                                   AsgnStm (local0, BExpr (VarExpr argY, Eq, BoolExpr false))
+                                   AsgnStm (argY, BExpr (VarExpr argY, Eq, BoolExpr false))
+                                   IfStm (
+                                       VarExpr (local0),
+                                       SeqStm [
+                                           AsgnStm (local1, VarExpr argZ)
+                                           AsgnStm (tmp 31 0 IntType, VarExpr argZ)
+                                           AsgnStm (argZ, BExpr (VarExpr local1, Sub, IntExpr 1))
+                                           AsgnStm (tmp 43 0 IntType, VarExpr local1)
+                                       ],
+                                       SeqStm [
+                                           AsgnStm (local1, BExpr (VarExpr argZ, Sub, IntExpr 1))
+                                           AsgnStm (tmp 21 0 IntType, VarExpr argZ)
+                                           AsgnStm (argZ, VarExpr local1)
+                                           AsgnStm (tmp 43 0 IntType, VarExpr local1)
+                                       ] |> Some
+                                   )
+                            ] |> Some
+                        )
+                        AsgnStm (argZ, VarExpr (tmp 43 0 IntType))
+                        RetStm None
+                    ]
+            }
 
     [<Test>]
     let ``ternary operator before return`` () =
@@ -57,7 +202,7 @@ module ``CilToSsm (manual tests)`` =
             let retStm = RetStm <| Some (BExpr (VarExpr tmp, Sub, IntExpr 1))
             { 
                 Name = "M" 
-                Params = [ { Var = Arg ("x", IntType); InOut = false } ]
+                Params = [ { Var = arg "x" IntType; InOut = false } ]
                 Body = SeqStm [ifStm; retStm]
                 Return = Some IntType
                 Locals = [tmp]
@@ -71,7 +216,7 @@ module ``CilToSsm (manual tests)`` =
             let elseStm = RetStm (Some (IntExpr -1))
             { 
                 Name = "M" 
-                Params = [ { Var = Arg ("x", BoolType); InOut = false }; { Var = Arg ("y", BoolType); InOut = false } ]
+                Params = [ { Var = arg "x" BoolType; InOut = false }; { Var = arg "y" BoolType; InOut = false } ]
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = Some IntType
                 Locals = []
@@ -85,7 +230,7 @@ module ``CilToSsm (manual tests)`` =
             let elseStm = RetStm (Some (IntExpr -1))
             { 
                 Name = "M" 
-                Params = [ { Var = Arg ("x", BoolType); InOut = false }; { Var = Arg ("y", BoolType); InOut = false } ]
+                Params = [ { Var = arg "x" BoolType; InOut = false }; { Var = arg "y" BoolType; InOut = false } ]
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = Some IntType
                 Locals = []
@@ -107,9 +252,9 @@ module ``CilToSsm (manual tests)`` =
                 Name = "M" 
                 Params = 
                     [ 
-                        { Var = Arg ("x", IntType); InOut = false }
-                        { Var = Arg ("y", IntType); InOut = false } 
-                        { Var = Arg ("z", IntType); InOut = false } 
+                        { Var = arg "x" IntType; InOut = false }
+                        { Var = arg "y" IntType; InOut = false } 
+                        { Var = arg "z" IntType; InOut = false } 
                     ]
                 Body = SeqStm [ifStm; assignStm; RetStm None]
                 Return = None
@@ -132,9 +277,9 @@ module ``CilToSsm (manual tests)`` =
                 Name = "M" 
                 Params = 
                     [ 
-                        { Var = Arg ("x", IntType); InOut = false }
-                        { Var = Arg ("y", IntType); InOut = false } 
-                        { Var = Arg ("z", IntType); InOut = false } 
+                        { Var = arg "x" IntType; InOut = false }
+                        { Var = arg "y" IntType; InOut = false } 
+                        { Var = arg "z" IntType; InOut = false } 
                     ]
                 Body = SeqStm [ifStm; assignStm; RetStm None]
                 Return = None
@@ -146,7 +291,7 @@ module ``CilToSsm (manual tests)`` =
         transform "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" =? 
             { 
                 Name = "M" 
-                Params = [ { Var = Arg ("b", BoolType); InOut = false }; { Var = Arg ("c", BoolType); InOut = false } ]
+                Params = [ { Var = arg "b" BoolType; InOut = false }; { Var = arg "c" BoolType; InOut = false } ]
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 5 0 IntType, IntExpr 1)

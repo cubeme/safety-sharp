@@ -26,6 +26,7 @@ namespace SafetySharp.Models
 /// For details on how parts of the transformation work, see the paper by D. Demange et. al, entitled
 /// "A provably correct stackless intermediate representation for Java bytecode"
 module internal CilToSsm =
+    open System
     open SafetySharp
     open SafetySharp.Modeling
     open Cil
@@ -39,7 +40,8 @@ module internal CilToSsm =
 
     /// Tries to map the metadata type of a variable to a S# type, if possible.
     let private tryMapVarType (typeRef : TypeReference) =
-        match typeRef.MetadataType with
+        let metadataType = if typeRef.IsByReference then typeRef.GetElementType().MetadataType else typeRef.MetadataType
+        match metadataType with
         | MetadataType.Boolean -> Some BoolType
         | MetadataType.Int32   -> Some IntType
         | MetadataType.Double  -> Some DoubleType
@@ -55,6 +57,16 @@ module internal CilToSsm =
     let private createVar constr name typeRef =
         constr (name, mapVarType typeRef)
 
+    /// Normalizes binary expressions where one side is of type Boolean and the other side is an integer
+    /// literal such that the integer literal is replaced by the corresponding Boolean literal.
+    let private normalizeIntToBool bexpr =
+        match bexpr with
+        | BExpr (IntExpr 0, op, e2) when Ssm.deduceType e2 = BoolType -> BExpr (BoolExpr false, op, e2)
+        | BExpr (e1, op, IntExpr 0) when Ssm.deduceType e1 = BoolType -> BExpr (e1, op, BoolExpr false)
+        | BExpr (IntExpr i, op, e2) when Ssm.deduceType e2 = BoolType -> BExpr (BoolExpr true, op, e2)
+        | BExpr (e1, op, IntExpr i) when Ssm.deduceType e1 = BoolType -> BExpr (e1, op, BoolExpr true)
+        | e -> e
+
     /// Inspects the given symbolic stack to transform the given CIL instruction to a triple
     /// of the corresponding SSM instruction, a list of assignments to temporary variables,
     /// and a new symbolic stack.
@@ -64,6 +76,7 @@ module internal CilToSsm =
         let checkStack pred stack =
             let rec check = function
                 | VarExpr v -> pred v
+                | VarRefExpr v -> pred v
                 | UExpr (_, e) -> check e
                 | BExpr (e1, _, e2) -> check e1 || check e2
                 | _ -> false
@@ -74,6 +87,7 @@ module internal CilToSsm =
         let replaceVar pred var stack =
             let rec replace = function
                 | VarExpr v -> if pred v then VarExpr var else VarExpr v
+                | VarRefExpr v -> VarRefExpr v
                 | UExpr (op, e) -> UExpr (op, replace e)
                 | BExpr (e1, op, e2) -> BExpr (replace e1, op, replace e2)
                 | e -> e
@@ -83,30 +97,37 @@ module internal CilToSsm =
         let localVarPred l = function | Local (l', t) -> l = l' | _ -> false
         let argVarPred a = function | Arg (a', t) -> a = a' | _ -> false
 
-        let containsLocal l = checkStack (localVarPred l)
+        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i" l.Index else l.Name
+        let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
+        let arg (a : ParameterDefinition) = createVar Arg a.Name a.ParameterType
+
+        let containsLocal l = checkStack (localVarPred (localName l))
         let containsArg a = checkStack (argVarPred a)
 
-        let replaceLocal l = replaceVar (localVarPred l)
+        let replaceLocal l = replaceVar (localVarPred (localName l))
         let replaceArg a = replaceVar (argVarPred a)
-
-        let local (l : VariableDefinition) = createVar Local l.Name l.VariableType
-        let arg (a : ParameterDefinition) = createVar Arg a.Name a.ParameterType
 
         // Corresponds to the tabular specification of BC2BIR_instr
         match instr, stack with
         | (Instr.Nop, s) -> (NopStm, [], s)
+        | (Instr.Ldind, (VarRefExpr v) :: s) -> (NopStm, [], (VarExpr v) :: s)
         | (Instr.Ldci c, s) -> (NopStm, [], (IntExpr c) :: s)
         | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
+        | (Instr.Ldarg a, s) when a.ParameterType.IsByReference -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
         | (Instr.Ldloc l, s) -> (NopStm, [], (VarExpr (local l)) :: s)
+        | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) when not (containsArg a s) -> (AsgnStm (Arg (a, t), e), [], s)
+        | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> 
+            let tmp = freshLocal pc 0 t
+            (AsgnStm (Arg (a, t), e), [AsgnStm (tmp, VarExpr (Arg (a, t)))], replaceArg a tmp s)
         | (Instr.Starg a, e :: s) when not (containsArg a.Name s) -> (AsgnStm (arg a, e), [], s)
         | (Instr.Starg a, e :: s) when containsArg a.Name s -> 
             let tmp = freshLocal pc 0 (mapVarType a.ParameterType)
             (AsgnStm (arg a, e), [AsgnStm (tmp, VarExpr (arg a))], replaceArg a.Name tmp s)
-        | (Instr.Stloc l, e :: s) when not (containsLocal l.Name s) -> (AsgnStm (local l, e), [], s)
-        | (Instr.Stloc l, e :: s) when containsLocal l.Name s -> 
+        | (Instr.Stloc l, e :: s) when not (containsLocal l s) -> (AsgnStm (local l, e), [], s)
+        | (Instr.Stloc l, e :: s) when containsLocal l s -> 
             let tmp = freshLocal pc 0 (mapVarType l.VariableType)
-            (AsgnStm (local l, e), [AsgnStm (tmp, VarExpr (local l))], replaceLocal l.Name tmp s)
+            (AsgnStm (local l, e), [AsgnStm (tmp, VarExpr (local l))], replaceLocal l tmp s)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)
@@ -120,11 +141,11 @@ module internal CilToSsm =
                 | BrType.Le -> Le
                 | BrType.Lt -> Lt
                 | _ -> invalidOp "Unsupported branch type '%+A'." op
-            (GotoStm (BExpr (e2, op, e1), t), [], s)
+            (GotoStm (normalizeIntToBool (BExpr (e2, op, e1)), t), [], s)
         | (Instr.Dup, e :: s) -> (NopStm, [], e :: e :: s)
-        | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, And, e1)) :: s)
-        | (Instr.Or, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, Or, e1)) :: s)
-        | (Instr.Ceq, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, Eq, e1)) :: s)
+        | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, And, e1))) :: s)
+        | (Instr.Or, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Or, e1))) :: s)
+        | (Instr.Ceq, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Eq, e1))) :: s)
         | (Instr.Cgt, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, Gt, e1)) :: s)
         | (Instr.Clt, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, Lt, e1)) :: s)
         | (Instr.Add, e1 :: e2 :: s) -> (NopStm, [], (BExpr (e2, Add, e1)) :: s)
@@ -148,21 +169,41 @@ module internal CilToSsm =
         // it has been inferred that the function checks that all of its predecessors 
         // have a stack of the same size and then generates a stack with a temporary
         // variable for each expression on the stack. 
+        // Also, the function has been extended to handle references to variables: For such
+        // var refs, no temporary variables are introduced; instead, we always use the 
+        // actual value on the symbol stack. For that to work, we require that the same
+        // var ref lies on the stack regardless of the path taken to the join point. So far,
+        // the C# compiler seems to respect that limitation.
         let getJumpStack pc =
+            let extractVarRefs stack =
+                stack
+                |> List.mapi (fun idx expr -> (idx, expr))
+                |> List.filter (fun (idx, expr) -> match expr with VarRefExpr _ -> true | _ -> false)
+
             match [0..pc] |> List.filter (fun pc' -> succ pc' |> Set.contains pc) with
             | [] -> []
             | p :: preds ->
                 let stackSize = List.length outStacks.[p]
+                let varRefs = extractVarRefs outStacks.[p]
                 if preds |> List.exists (fun p' -> (List.length outStacks.[p']) <> stackSize) then
                     invalidOp "Invalid control flow detected: A join point can be reached with different stack sizes."
-                outStacks.[p] |> List.mapi (fun idx expr -> VarExpr (freshLocal pc idx (Ssm.deduceType expr)))
+                if preds |> List.exists (fun p' -> varRefs <> (extractVarRefs outStacks.[p'])) then
+                    invalidOp "Invalid control flow detected: A join point can be reached with different var refs on the stack."
+                outStacks.[p] 
+                |> List.mapi (fun idx expr -> 
+                    match expr with
+                    | VarRefExpr v -> VarRefExpr v
+                    | expr -> VarExpr (freshLocal pc idx (Ssm.deduceType expr))
+                )
 
         // Corresponds to the TAssign function in the Demange paper; creates a fresh local
-        // variable with a unique name for each element on the symbolic stack.
+        // variable with a unique name for each element on the symbolic stack (except for var refs).
         let tmpAssigns pcs stack =
             pcs 
             |> Set.map (fun pc ->
-                stack |> List.mapi (fun idx expr -> AsgnStm (freshLocal pc idx (Ssm.deduceType expr), expr))
+                stack 
+                |> List.filter (function | VarRefExpr _ -> false | _ -> true)
+                |> List.mapi (fun idx expr -> AsgnStm (freshLocal pc idx (Ssm.deduceType expr), expr))
             ) 
             |> List.ofSeq 
             |> List.collect id
@@ -177,6 +218,7 @@ module internal CilToSsm =
                 if stack' <> [] && succ pc |> Set.exists (fun pc' -> pc' < pc) then 
                     invalidOp "Invalid control flow detected: Backward jump (with non-empty stack). Loops are not supported by S#."
 
+                //printfn "%3i: %+A -> %+A" pc instr stack'
                 let smts = stms @ [vars @ (tmpAssigns (Set.intersect (succ pc) (jumpTargets)) stack') @ [stm]]
                 let stack' =  if succ pc |> Set.contains (pc + 1) && not (isJumpTarget (pc + 1)) then stack' else []
                 (pc + 1, stack', smts)
@@ -244,7 +286,7 @@ module internal CilToSsm =
             Body = body
             Params =
                 m.Parameters 
-                |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); InOut = false })
+                |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); InOut = p.ParameterType.IsByReference })
                 |> Seq.toList
             Return = tryMapVarType m.ReturnType
             Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList

@@ -66,6 +66,7 @@ module internal Ssm =
         | IntExpr of int
         | DoubleExpr of double
         | VarExpr of Var
+        | VarRefExpr of Var
         | UExpr of UOp * Expr
         | BExpr of Expr * BOp * Expr
 
@@ -196,13 +197,15 @@ module internal Ssm =
 
     /// Gets all local variables referenced by the given expression.
     let rec getLocalsOfExpr = function
-        | BoolExpr _             -> []
-        | IntExpr _              -> []
-        | DoubleExpr _           -> []
-        | VarExpr (Local (l, t)) -> [Local (l, t)]
-        | VarExpr _              -> []
-        | UExpr (_, e)           -> getLocalsOfExpr e
-        | BExpr (e1, _, e2)      -> (getLocalsOfExpr e1) @ (getLocalsOfExpr e2)
+        | BoolExpr _                -> []
+        | IntExpr _                 -> []
+        | DoubleExpr _              -> []
+        | VarExpr (Local (l, t))    -> [Local (l, t)]
+        | VarExpr _                 -> []
+        | VarRefExpr (Local (l, t)) -> [Local (l, t)]
+        | VarRefExpr _              -> []
+        | UExpr (_, e)              -> getLocalsOfExpr e
+        | BExpr (e1, _, e2)         -> (getLocalsOfExpr e1) @ (getLocalsOfExpr e2)
 
     /// Gets all local variables referenced by the given statement.
     let rec getLocalsOfStm = function
