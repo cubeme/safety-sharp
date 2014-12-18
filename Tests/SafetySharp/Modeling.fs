@@ -60,6 +60,25 @@ type internal EmptyComponent () =
 
     static member Symbol = emptyComponentSymbol "EmptyComponent"
 
+type internal OneFieldComponent =
+    inherit Component
+
+    new () = { _field = 0 }
+    val private _field : int
+
+type internal TwoFieldsComponent =
+    inherit Component
+
+    new () = { _field1 = 0; _field2 = false }
+    val private _field1 : int
+    val private _field2 : bool
+
+type internal GenericComponent<'T> =
+    inherit Component 
+
+    new () = { _field = Unchecked.defaultof<'T> }
+    val private _field : 'T
+
 type internal FieldComponent<'T> =
     inherit Component 
     

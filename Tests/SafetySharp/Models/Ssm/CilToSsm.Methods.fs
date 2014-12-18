@@ -29,7 +29,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm (manual tests)`` =
+module ``CilToSsm Method Transformations`` =
     let private transform csharpCode = 
         let t = "TestType"
         let csharpCode = sprintf "class %s { %s }" t csharpCode
