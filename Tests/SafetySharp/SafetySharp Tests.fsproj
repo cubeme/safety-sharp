@@ -64,6 +64,7 @@
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Manual.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.Random.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />

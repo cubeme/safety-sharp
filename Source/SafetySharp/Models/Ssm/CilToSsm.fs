@@ -27,13 +27,34 @@ namespace SafetySharp.Models
 /// "A provably correct stackless intermediate representation for Java bytecode"
 module internal CilToSsm =
     open SafetySharp
+    open SafetySharp.Modeling
     open Cil
     open Ssm
+    open Mono.Cecil
+    open Mono.Cecil.Cil
 
     /// Generates a fresh local variable (see also the Demange paper)
-    let private freshLocal pc idx =
-        sprintf "__tmp_%i_%i" pc idx |> Local
+    let freshLocal pc idx t =
+        Local (sprintf "__tmp_%i_%i" pc idx, t)
+
+    /// Tries to map the metadata type of a variable to a S# type, if possible.
+    let private tryMapVarType (typeRef : TypeReference) =
+        match typeRef.MetadataType with
+        | MetadataType.Boolean -> Some BoolType
+        | MetadataType.Int32   -> Some IntType
+        | MetadataType.Double  -> Some DoubleType
+        | _                    -> None
+
+    /// Maps the metadata type of a variable to a S# type.
+    let private mapVarType typeRef =
+        match tryMapVarType typeRef with
+        | None   -> invalidOp "Unsupported variable type '%A'." typeRef
+        | Some t -> t
     
+    /// Creates a variable using the given constructor with the given name and type.
+    let private createVar constr name typeRef =
+        constr (name, mapVarType typeRef)
+
     /// Inspects the given symbolic stack to transform the given CIL instruction to a triple
     /// of the corresponding SSM instruction, a list of assignments to temporary variables,
     /// and a new symbolic stack.
@@ -59,27 +80,33 @@ module internal CilToSsm =
 
             stack |> List.map replace
 
-        let localVarPred l = function | Local l' -> l = l' | _ -> false
-        let argVarPred a = function | Arg a' -> a = a' | _ -> false
+        let localVarPred l = function | Local (l', t) -> l = l' | _ -> false
+        let argVarPred a = function | Arg (a', t) -> a = a' | _ -> false
+
         let containsLocal l = checkStack (localVarPred l)
-        let replaceLocal l = replaceVar (localVarPred l)
         let containsArg a = checkStack (argVarPred a)
+
+        let replaceLocal l = replaceVar (localVarPred l)
         let replaceArg a = replaceVar (argVarPred a)
+
+        let local (l : VariableDefinition) = createVar Local l.Name l.VariableType
+        let arg (a : ParameterDefinition) = createVar Arg a.Name a.ParameterType
 
         // Corresponds to the tabular specification of BC2BIR_instr
         match instr, stack with
         | (Instr.Nop, s) -> (NopStm, [], s)
-        | (Instr.Ldc c, s) -> (NopStm, [], (IntExpr c) :: s)
-        | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (Arg a.Name)) :: s)
-        | (Instr.Ldloc l, s) -> (NopStm, [], (VarExpr (Local l.Name)) :: s)
-        | (Instr.Starg a, e :: s) when not (containsArg a.Name s) -> (AsgnStm (Arg a.Name, e), [], s)
+        | (Instr.Ldci c, s) -> (NopStm, [], (IntExpr c) :: s)
+        | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
+        | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
+        | (Instr.Ldloc l, s) -> (NopStm, [], (VarExpr (local l)) :: s)
+        | (Instr.Starg a, e :: s) when not (containsArg a.Name s) -> (AsgnStm (arg a, e), [], s)
         | (Instr.Starg a, e :: s) when containsArg a.Name s -> 
-            let tmp = freshLocal pc 0
-            (AsgnStm (Arg a.Name, e), [AsgnStm (tmp, VarExpr (Arg a.Name))], replaceArg a.Name tmp s)
-        | (Instr.Stloc l, e :: s) when not (containsLocal l.Name s) -> (AsgnStm (Local l.Name, e), [], s)
+            let tmp = freshLocal pc 0 (mapVarType a.ParameterType)
+            (AsgnStm (arg a, e), [AsgnStm (tmp, VarExpr (arg a))], replaceArg a.Name tmp s)
+        | (Instr.Stloc l, e :: s) when not (containsLocal l.Name s) -> (AsgnStm (local l, e), [], s)
         | (Instr.Stloc l, e :: s) when containsLocal l.Name s -> 
-            let tmp = freshLocal pc 0
-            (AsgnStm (Local l.Name, e), [AsgnStm (tmp, VarExpr (Local l.Name))], replaceLocal l.Name tmp s)
+            let tmp = freshLocal pc 0 (mapVarType l.VariableType)
+            (AsgnStm (local l, e), [AsgnStm (tmp, VarExpr (local l))], replaceLocal l.Name tmp s)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)
@@ -110,7 +137,7 @@ module internal CilToSsm =
 
     /// Transforms all instructions of the method body to list of SSM statements with unstructured control flow.
     /// This function corresponds to the BC2BIR function in the Demange paper.
-    let private transformMethod methodBody =
+    let private transformMethodBody methodBody =
         let jumpTargets = getJumpTargets methodBody
         let isJumpTarget pc = Set.contains pc jumpTargets
         let succ = Cil.getSuccessors methodBody
@@ -128,14 +155,14 @@ module internal CilToSsm =
                 let stackSize = List.length outStacks.[p]
                 if preds |> List.exists (fun p' -> (List.length outStacks.[p']) <> stackSize) then
                     invalidOp "Invalid control flow detected: A join point can be reached with different stack sizes."
-                outStacks.[p] |> List.mapi (fun idx _ -> VarExpr (freshLocal pc idx))
+                outStacks.[p] |> List.mapi (fun idx expr -> VarExpr (freshLocal pc idx (Ssm.deduceType expr)))
 
         // Corresponds to the TAssign function in the Demange paper; creates a fresh local
         // variable with a unique name for each element on the symbolic stack.
         let tmpAssigns pcs stack =
             pcs 
             |> Set.map (fun pc ->
-                stack |> List.mapi (fun idx expr -> AsgnStm (freshLocal pc idx, expr))
+                stack |> List.mapi (fun idx expr -> AsgnStm (freshLocal pc idx (Ssm.deduceType expr), expr))
             ) 
             |> List.ofSeq 
             |> List.collect id
@@ -189,9 +216,46 @@ module internal CilToSsm =
         |> List.filter (fun stm -> stm <> NopStm)
         |> Array.ofList
 
+    /// Transforms the fields of a component.
+    let private transformFields (comp : TypeDefinition) =
+        comp.Fields 
+        |> Seq.map (fun f -> 
+            match f.FieldType.MetadataType with
+            | MetadataType.Boolean -> (f, Some BoolType)
+            | MetadataType.Int32   -> (f, Some IntType)
+            | MetadataType.Double  -> (f, Some DoubleType)
+            | _                    -> (f, None)
+        )
+        |> Seq.filter (fun (f, t) -> t <> None)
+        |> Seq.map (fun (f, t) -> Field (f.Name, t.Value))
+        |> Seq.toList
+
     /// Transforms the given CIL method body to an SSM statement with structured control flow.
-    let transform methodBody =
-        methodBody
-        |> transformMethod
-        |> compress
-        |> Ssm.replaceGotos
+    let transformMethod (m : MethodDefinition) =
+        let body =
+            m
+            |> Cil.getMethodBody
+            |> transformMethodBody
+            |> compress
+            |> Ssm.replaceGotos
+
+        {
+            Name = m.Name
+            Body = body
+            Params =
+                m.Parameters 
+                |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); InOut = false })
+                |> Seq.toList
+            Return = tryMapVarType m.ReturnType
+            Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
+        }
+
+    /// Transforms the model to a S# model.
+    let transformModel (model : Model) =
+        let metadataProvider = Cil.initializeMetadataProvider (model.Components |> List.map (fun c -> c.GetType ()))
+        let rec transform (comp : Component) =
+            let metadata = metadataProvider comp
+            let metadata = metadata.Resolve ()
+            { Fields = transformFields metadata; Methods = []; Subs = [] }
+
+        transform model.Components.Head

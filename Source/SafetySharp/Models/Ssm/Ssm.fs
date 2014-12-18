@@ -48,16 +48,23 @@ module internal Ssm =
         | Gt
         | Ge
 
+    /// Represents the type of a variable.
+    type internal Type = 
+        | BoolType
+        | IntType
+        | DoubleType
+
     /// Represents a variable accessed by an expression.
     type internal Var =
-        | Arg of string
-        | Local of string
-        | Field of string
+        | Arg of string * Type
+        | Local of string * Type
+        | Field of string * Type
 
     /// Represents an expression within the body of a S# method.
     type internal Expr = 
         | BoolExpr of bool
         | IntExpr of int
+        | DoubleExpr of double
         | VarExpr of Var
         | UExpr of UOp * Expr
         | BExpr of Expr * BOp * Expr
@@ -70,6 +77,25 @@ module internal Ssm =
         | SeqStm of Stm list
         | RetStm of Expr option
         | IfStm of Expr * Stm * Stm option
+
+    type internal Param = {
+        Var : Var
+        InOut : bool
+    }
+
+    type internal Method = {
+        Name : string
+        Params : Param list
+        Body : Stm
+        Return : Type option
+        Locals : Var list
+    }
+
+    type internal Comp = {
+        Fields : Var list
+        Methods : Method list
+        Subs : Comp list
+    }
 
     /// Gets the set of statement program counters that can be executed following the execution of the
     /// statement at the given program counter. For non-branching statements, the successor is always
@@ -122,6 +148,73 @@ module internal Ssm =
         let common = Set.difference common (Set.singleton pc)
         if Set.isEmpty common then None
         else Set.minElement common |> Some
+
+    /// Deduces the type of the expression.
+    let rec deduceType expr =
+        let deduceResultingNonBoolType e1 e2 =
+            match (deduceType e1, deduceType e2) with
+            | (IntType, IntType)       -> IntType
+            | (DoubleType, IntType)    -> DoubleType
+            | (IntType, DoubleType)    -> DoubleType
+            | (DoubleType, DoubleType) -> DoubleType
+            | _                        -> invalidOp "Type deduction failure."
+
+        let bothAreBool e1 e2 =
+            match (deduceType e1, deduceType e2) with
+            | (BoolType, BoolType) -> true
+            | _                    -> false
+
+        let bothAreNonBool e1 e2 =
+            match (deduceType e1, deduceType e2) with
+            | (BoolType, _) -> false
+            | (_, BoolType) -> false
+            | _             -> true
+
+        match expr with
+        | BoolExpr _ -> BoolType
+        | IntExpr _ -> IntType
+        | VarExpr (Arg (_, t)) -> t
+        | VarExpr (Local (_, t)) -> t
+        | VarExpr (Field (_, t)) -> t
+        | UExpr (Minus, e) when deduceType e = IntType -> IntType
+        | UExpr (Minus, e) when deduceType e = DoubleType -> DoubleType
+        | UExpr (Not, e) when deduceType e = BoolType -> BoolType
+        | BExpr (e1, Add, e2) -> deduceResultingNonBoolType e1 e2
+        | BExpr (e1, Sub, e2) -> deduceResultingNonBoolType e1 e2
+        | BExpr (e1, Mul, e2) -> deduceResultingNonBoolType e1 e2
+        | BExpr (e1, Div, e2) -> deduceResultingNonBoolType e1 e2
+        | BExpr (e1, Mod, e2) -> deduceResultingNonBoolType e1 e2
+        | BExpr (e1, And, e2) when bothAreBool e1 e2 -> BoolType
+        | BExpr (e1, Or, e2) when bothAreBool e1 e2 -> BoolType
+        | BExpr (e1, Eq, e2) when bothAreBool e1 e2 || bothAreNonBool e1 e2 -> BoolType
+        | BExpr (e1, Ne, e2) when bothAreBool e1 e2 || bothAreNonBool e1 e2 -> BoolType
+        | BExpr (e1, Lt, e2) when bothAreNonBool e1 e2 -> BoolType
+        | BExpr (e1, Le, e2) when bothAreNonBool e1 e2 -> BoolType
+        | BExpr (e1, Gt, e2) when bothAreNonBool e1 e2 -> BoolType
+        | BExpr (e1, Ge, e2) when bothAreNonBool e1 e2 -> BoolType
+        | _ -> invalidOp "Type deduction failure."
+
+    /// Gets all local variables referenced by the given expression.
+    let rec getLocalsOfExpr = function
+        | BoolExpr _             -> []
+        | IntExpr _              -> []
+        | DoubleExpr _           -> []
+        | VarExpr (Local (l, t)) -> [Local (l, t)]
+        | VarExpr _              -> []
+        | UExpr (_, e)           -> getLocalsOfExpr e
+        | BExpr (e1, _, e2)      -> (getLocalsOfExpr e1) @ (getLocalsOfExpr e2)
+
+    /// Gets all local variables referenced by the given statement.
+    let rec getLocalsOfStm = function
+        | NopStm                    -> []
+        | AsgnStm (Local (l, t), e) -> (Local (l, t)) :: getLocalsOfExpr e
+        | AsgnStm (v, e)            -> getLocalsOfExpr e
+        | GotoStm (e, t)            -> getLocalsOfExpr e
+        | SeqStm stms               -> stms |> List.map getLocalsOfStm |> List.collect id
+        | RetStm None               -> []
+        | RetStm (Some e)           -> getLocalsOfExpr e
+        | IfStm (e, s, None)        -> (getLocalsOfExpr e) @ (getLocalsOfStm s)
+        | IfStm (e, s1, Some s2)    -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
 
     /// Replaces all goto statements in the given method body with structured control flow statements.
     /// If a goto cannot be removed, the method body is invalid.

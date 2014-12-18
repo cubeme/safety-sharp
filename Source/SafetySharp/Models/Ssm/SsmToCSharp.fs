@@ -26,9 +26,14 @@ module internal SsmToCSharp =
     open SafetySharp
     open SafetySharp.Models.Ssm
 
-    /// Transforms the given SSM statement to C# code.
-    let transform stm =
+    /// Transforms the given SSM method to C# code.
+    let transform m =
         let writer = StructuredWriter ()
+
+        let varType = function
+            | BoolType   -> writer.Append "bool"
+            | IntType    -> writer.Append "int"
+            | DoubleType -> writer.Append "double"
 
         let uop = function
             | Not   -> writer.Append "!"
@@ -50,13 +55,19 @@ module internal SsmToCSharp =
             | Or  -> writer.Append "|"
 
         let var = function
-            | Arg a   -> writer.Append "%s" a
-            | Local l -> writer.Append "%s" l
-            | Field f -> writer.Append "%s" f
+            | Arg (a, _)   -> writer.Append "%s" a
+            | Local (l, _) -> writer.Append "%s" l
+            | Field (f, _) -> writer.Append "%s" f
+
+        let varDecl = function
+            | Arg (a, t)   -> varType t; writer.Append " %s" a
+            | Local (l, t) -> varType t; writer.Append " %s" l
+            | Field (f, t) -> varType t; writer.Append " %s" f
 
         let rec expr = function
             | BoolExpr b         -> writer.Append <| if b then "true" else "false"
             | IntExpr i          -> writer.Append "%i" i
+            | DoubleExpr d       -> writer.Append "%f" d
             | VarExpr v          -> var v
             | UExpr (op, e)      -> uop op; writer.AppendParenthesized (fun () -> expr e)
             | BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
@@ -84,5 +95,15 @@ module internal SsmToCSharp =
                 writer.Append "else"
                 writer.AppendBlockStatement (fun () -> toCSharp s2)
         
-        toCSharp stm
+        match m.Return with
+        | None -> writer.Append "void"
+        | Some t -> varType t
+
+        writer.Append " %s(" m.Name
+        writer.AppendRepeated m.Params (fun p -> varDecl p.Var) (fun () -> writer.Append ", ")
+        writer.Append ")"
+        writer.AppendBlockStatement (fun () -> 
+            m.Locals |> List.iter (fun var -> varDecl var; writer.AppendLine ";")
+            toCSharp m.Body
+        )
         writer.ToString ()

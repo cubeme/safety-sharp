@@ -24,6 +24,8 @@ namespace SafetySharp.Models
 
 /// Defines types and functions for working with common intermediate language (CIL or MSIL) instructions.
 module internal Cil =
+    open System
+    open System.Reflection
     open Mono.Cecil
     open Mono.Cecil.Cil
     open Mono.Cecil.Rocks
@@ -47,7 +49,8 @@ module internal Cil =
         | Ldfld of FieldDefinition
         | Ldloc of VariableDefinition
         | Ldarg of ParameterDefinition
-        | Ldc of int
+        | Ldci of int
+        | Ldcd of double
         | Stfld of FieldDefinition
         | Stloc of VariableDefinition
         | Starg of ParameterDefinition
@@ -94,7 +97,8 @@ module internal Cil =
             | Code.Ldfld    -> toInstr  Ldfld
             | Code.Ldloc    -> toInstr  Ldloc
             | Code.Ldarg    -> toInstr  Ldarg
-            | Code.Ldc_I4   -> toInstr  Ldc
+            | Code.Ldc_I4   -> toInstr  Ldci
+            | Code.Ldc_R8   -> toInstr  Ldcd
             | Code.Stfld    -> toInstr  Stfld
             | Code.Stloc    -> toInstr  Stloc
             | Code.Starg    -> toInstr  Starg
@@ -154,3 +158,14 @@ module internal Cil =
         |> Array.get methodBody
         |> succs
         |> Set.remove (methodBody.Length)
+
+    /// Gets the initial, empty metadata provider.
+    let initializeMetadataProvider (types : Type seq) =
+        types 
+        |> Seq.distinctBy (fun t -> t.Assembly)
+        |> Seq.map (fun t -> (t.Assembly, AssemblyDefinition.ReadAssembly t.Assembly.Location))
+        |> Seq.fold (fun provider (assembly, assemblyDef) ->
+            fun t -> 
+                if assembly = t.GetType().Assembly then assemblyDef.MainModule.Import (t.GetType ()) 
+                else provider t
+        ) (fun _ -> null)

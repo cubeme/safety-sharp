@@ -29,7 +29,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module CilToSsmManual =
+module ``CilToSsm (manual tests)`` =
     let private transform csharpCode = 
         let t = "TestType"
         let csharpCode = sprintf "class %s { %s }" t csharpCode
@@ -37,95 +37,142 @@ module CilToSsmManual =
         let assembly = compilation.GetAssemblyDefinition ()
         let typeDef = assembly.MainModule.GetType t
         let methodDef = typeDef.Methods.Single (fun m' -> m'.Name = "M")
+        let m = CilToSsm.transformMethod methodDef
 
-        let ssm = 
-            methodDef 
-            |> Cil.getMethodBody 
-            |> CilToSsm.transform
+        SsmToCSharp.transform m |> printfn "%s"
+        m
 
-        SsmToCSharp.transform ssm |> printfn "%s"
-        ssm
+    let private arg name t = Arg (name, t)
+    let private local name t = Local (name, t)
+    let private tmp = CilToSsm.freshLocal
 
     [<Test>]
     let ``ternary operator before return`` () =
         transform "int M(int x) { var y = x > 0 ? -1 : 1; return y - 1; }" =? 
-            let varName = "__tmp_6_0"
-            let condition = BExpr (VarExpr (Arg "x"), Gt, IntExpr 0)
-            let thenStm = AsgnStm (Local varName, IntExpr -1)
-            let elseStm = AsgnStm (Local varName, IntExpr 1)
+            let tmp = tmp 6 0 IntType
+            let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
+            let thenStm = AsgnStm (tmp, IntExpr -1)
+            let elseStm = AsgnStm (tmp, IntExpr 1)
             let ifStm = IfStm (condition, thenStm, Some elseStm)
-            let retStm = RetStm <| Some (BExpr (VarExpr (Local varName), Sub, IntExpr 1))
-            SeqStm [ifStm; retStm]
+            let retStm = RetStm <| Some (BExpr (VarExpr tmp, Sub, IntExpr 1))
+            { 
+                Name = "M" 
+                Params = [ { Var = Arg ("x", IntType); InOut = false } ]
+                Body = SeqStm [ifStm; retStm]
+                Return = Some IntType
+                Locals = [tmp]
+            }
 
     [<Test>]
     let ``short-circuit 'or' for Boolean variables and return`` () = 
         transform "int M(bool x, bool y) { if (x || y) return -1; return 0; }" =? 
-            let condition = UExpr (Not, BExpr (VarExpr (Arg "x"), Or, VarExpr (Arg "y")))
+            let condition = UExpr (Not, BExpr (VarExpr (arg "x" BoolType), Or, VarExpr (arg "y" BoolType)))
             let thenStm = RetStm (Some (IntExpr 0))
             let elseStm = RetStm (Some (IntExpr -1))
-            IfStm (condition, thenStm, Some elseStm)
+            { 
+                Name = "M" 
+                Params = [ { Var = Arg ("x", BoolType); InOut = false }; { Var = Arg ("y", BoolType); InOut = false } ]
+                Body = IfStm (condition, thenStm, Some elseStm)
+                Return = Some IntType
+                Locals = []
+            }
 
     [<Test>]
     let ``short-circuit 'and' for Boolean variables and return`` () = 
         transform "int M(bool x, bool y) { if (x && y) return -1; return 0; }" =? 
-            let condition = UExpr (Not, BExpr (VarExpr (Arg "x"), And, VarExpr (Arg "y")))
+            let condition = UExpr (Not, BExpr (VarExpr (arg "x" BoolType), And, VarExpr (arg "y" BoolType)))
             let thenStm = RetStm (Some (IntExpr 0))
             let elseStm = RetStm (Some (IntExpr -1))
-            IfStm (condition, thenStm, Some elseStm)
+            { 
+                Name = "M" 
+                Params = [ { Var = Arg ("x", BoolType); InOut = false }; { Var = Arg ("y", BoolType); InOut = false } ]
+                Body = IfStm (condition, thenStm, Some elseStm)
+                Return = Some IntType
+                Locals = []
+            }
 
     [<Test>]
     let ``tenary operator with preincrement side effect`` () =
         transform "void M(int x, int y, int z) { z = x > 0 ? ++y : 0; }" =? 
-            let condition = BExpr (VarExpr (Arg "x"), Gt, IntExpr 0)
+            let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
             let thenStm = 
-                let assignStm1 = AsgnStm (Local "__tmp_9_0", VarExpr (Arg "y"))
-                let assignStm2 = AsgnStm (Local "__tmp_10_0", BExpr (VarExpr (Local "__tmp_9_0"), Add, IntExpr 1))
-                let assignStm3 = AsgnStm (Arg "y", BExpr (VarExpr (Arg "y"), Add, IntExpr 1))
+                let assignStm1 = AsgnStm (tmp 9 0 IntType, VarExpr (arg "y" IntType))
+                let assignStm2 = AsgnStm (tmp 10 0 IntType, BExpr (VarExpr (tmp 9 0 IntType), Add, IntExpr 1))
+                let assignStm3 = AsgnStm (arg "y" IntType, BExpr (VarExpr (arg "y" IntType), Add, IntExpr 1))
                 SeqStm [assignStm1; assignStm2; assignStm3]
-            let elseStm = AsgnStm (Local "__tmp_10_0", IntExpr 0)
+            let elseStm = AsgnStm (tmp 10 0 IntType, IntExpr 0)
             let ifStm = IfStm (condition, thenStm, Some elseStm)
-            let assignStm = AsgnStm (Arg "z", VarExpr (Local "__tmp_10_0"))
-            SeqStm [ifStm; assignStm; RetStm None]
+            let assignStm = AsgnStm (arg "z" IntType, VarExpr (tmp 10 0 IntType))
+            { 
+                Name = "M" 
+                Params = 
+                    [ 
+                        { Var = Arg ("x", IntType); InOut = false }
+                        { Var = Arg ("y", IntType); InOut = false } 
+                        { Var = Arg ("z", IntType); InOut = false } 
+                    ]
+                Body = SeqStm [ifStm; assignStm; RetStm None]
+                Return = None
+                Locals = [ tmp 9 0 IntType; tmp 10 0 IntType ]
+            }
 
     [<Test>]
     let ``tenary operator with postdecrement side effect`` () =
         transform "void M(int x, int y, int z) { z = x > 0 ? y-- : 0; }" =? 
-            let condition = BExpr (VarExpr (Arg "x"), Gt, IntExpr 0)
+            let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
             let thenStm = 
-                let assignStm1 = AsgnStm (Local "__tmp_9_0", VarExpr (Arg "y"))
-                let assignStm2 = AsgnStm (Local "__tmp_10_0", VarExpr (Local "__tmp_9_0"))
-                let assignStm3 = AsgnStm (Arg "y", BExpr (VarExpr (Arg "y"), Sub, IntExpr 1))
+                let assignStm1 = AsgnStm (tmp 9 0 IntType, VarExpr (arg "y" IntType))
+                let assignStm2 = AsgnStm (tmp 10 0 IntType, VarExpr (tmp 9 0 IntType))
+                let assignStm3 = AsgnStm (arg "y" IntType, BExpr (VarExpr (arg "y" IntType), Sub, IntExpr 1))
                 SeqStm [assignStm1; assignStm2; assignStm3]
-            let elseStm = AsgnStm (Local "__tmp_10_0", IntExpr 0)
+            let elseStm = AsgnStm (tmp 10 0 IntType, IntExpr 0)
             let ifStm = IfStm (condition, thenStm, Some elseStm)
-            let assignStm = AsgnStm (Arg "z", VarExpr (Local "__tmp_10_0"))
-            SeqStm [ifStm; assignStm; RetStm None]
+            let assignStm = AsgnStm (arg "z" IntType, VarExpr (tmp 10 0 IntType))
+            { 
+                Name = "M" 
+                Params = 
+                    [ 
+                        { Var = Arg ("x", IntType); InOut = false }
+                        { Var = Arg ("y", IntType); InOut = false } 
+                        { Var = Arg ("z", IntType); InOut = false } 
+                    ]
+                Body = SeqStm [ifStm; assignStm; RetStm None]
+                Return = None
+                Locals = [ tmp 9 0 IntType; tmp 10 0 IntType ]
+            }
 
     [<Test>]
     let ``nested ternary operator`` () =
         transform "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" =? 
-            SeqStm [
-                AsgnStm (Local "__tmp_5_0", IntExpr 1)
-                IfStm (
-                    VarExpr (Arg "b"),
+            { 
+                Name = "M" 
+                Params = [ { Var = Arg ("b", BoolType); InOut = false }; { Var = Arg ("c", BoolType); InOut = false } ]
+                Body = 
                     SeqStm [
-                        AsgnStm (Local "__tmp_9_0", VarExpr (Local "__tmp_5_0"))
+                        AsgnStm (tmp 5 0 IntType, IntExpr 1)
                         IfStm (
-                            VarExpr (Arg "c"),
+                            VarExpr (arg "b" BoolType),
                             SeqStm [
-                                AsgnStm (Local "__tmp_10_0", IntExpr 4)
-                                AsgnStm (Local "__tmp_10_1", VarExpr (Local "__tmp_9_0"))
+                                AsgnStm (tmp 9 0 IntType, VarExpr (tmp 5 0 IntType))
+                                IfStm (
+                                    VarExpr (arg "c" BoolType),
+                                    SeqStm [
+                                        AsgnStm (tmp 10 0 IntType, IntExpr 4)
+                                        AsgnStm (tmp 10 1 IntType, VarExpr (tmp 9 0 IntType))
+                                    ],
+                                    SeqStm [
+                                        AsgnStm (tmp 10 0 IntType, IntExpr 2)
+                                        AsgnStm (tmp 10 1 IntType, VarExpr (tmp 5 0 IntType))
+                                    ] |> Some
+                                )
                             ],
                             SeqStm [
-                                AsgnStm (Local "__tmp_10_0", IntExpr 2)
-                                AsgnStm (Local "__tmp_10_1", VarExpr (Local "__tmp_5_0"))
+                                AsgnStm (tmp 10 0 IntType, IntExpr 3)
+                                AsgnStm (tmp 10 1 IntType, IntExpr 1)
                             ] |> Some
                         )
-                    ],
-                    SeqStm [
-                        AsgnStm (Local "__tmp_10_0", IntExpr 3)
-                        AsgnStm (Local "__tmp_10_1", IntExpr 1)
-                    ] |> Some
-                )
-                RetStm (Some (BExpr (VarExpr (Local "__tmp_10_1"), Add, VarExpr (Local "__tmp_10_0"))))
-            ]
+                        RetStm (Some (BExpr (VarExpr (tmp 10 1 IntType), Add, VarExpr (tmp 10 0 IntType))))
+                    ]
+                Return = Some IntType
+                Locals = [ tmp 5 0 IntType; tmp 9 0 IntType; tmp 10 0 IntType; tmp 10 1 IntType ]
+            }
