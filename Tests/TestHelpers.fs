@@ -120,7 +120,7 @@ module private ObjectDumper =
 
         and dump (object' : obj) : unit =
             try
-                if duplicationCheck.Add object' = false then
+                if duplicationCheck.Add object' = false && not (object' :? string) && not (FSharpType.IsUnion (object'.GetType (), true)) then
                     writer.Append "#object has already been dumped elsewhere#"
                 elif object' = null then
                     writer.Append "null"

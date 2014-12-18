@@ -67,7 +67,7 @@ module internal Ssm =
         | NopStm
         | AsgnStm of Var * Expr
         | GotoStm of Expr * int
-        | SeqStm of Stm * Stm
+        | SeqStm of Stm list
         | RetStm of Expr option
         | IfStm of Expr * Stm * Stm option
 
@@ -128,6 +128,12 @@ module internal Ssm =
     let replaceGotos methodBody =
         let cfg = getCfg methodBody
 
+        let append stm stm' =
+            match stm' with
+            | NopStm      -> stm
+            | SeqStm stm' -> SeqStm (stm :: stm')
+            | stm'        -> SeqStm [stm; stm']
+
         // Transforms all statements in the range [pc, last-1]
         let rec transform pc last =
             let getJoinPoint () =
@@ -147,18 +153,18 @@ module internal Ssm =
                     let elseStm = None
                     let ifStm = IfStm (BoolExpr true, thenStm, elseStm)
                     let joinedStm = transform joinPoint last
-                    SeqStm (ifStm, joinedStm)
+                    append ifStm joinedStm
                 | GotoStm (e, t) ->
                     let joinPoint = getJoinPoint ()
                     // There might be no then-stm if the goto represents an 'if' without an 'else'
                     // (note that the C# compiler inverts the condition and switches the original then and else statements)
                     let thenStm = if cfg.[pc] |> Set.contains joinPoint then NopStm else transform t joinPoint
                     let elseStm = transform (pc + 1) joinPoint |> Some
-                    let ifStm = IfStm (BoolExpr true, thenStm, elseStm)
+                    let ifStm = IfStm (e, thenStm, elseStm)
                     let joinedStm = transform joinPoint last
-                    SeqStm (ifStm, joinedStm)
+                    append ifStm joinedStm
                 | RetStm e -> RetStm e
-                | stm -> SeqStm (stm, transform (pc + 1) last)
+                | stm -> append stm (transform (pc + 1) last)
 
         let last = Array.length methodBody
         transform 0 last

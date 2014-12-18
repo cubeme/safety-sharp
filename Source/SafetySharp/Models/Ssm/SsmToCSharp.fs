@@ -59,7 +59,7 @@ module internal SsmToCSharp =
             | IntExpr i          -> writer.Append "%i" i
             | VarExpr v          -> var v
             | UExpr (op, e)      -> uop op; writer.AppendParenthesized (fun () -> expr e)
-            | BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> expr e1; bop op; expr e2)
+            | BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
 
         let rec toCSharp stm = 
             match stm with
@@ -70,7 +70,7 @@ module internal SsmToCSharp =
                 expr e
                 writer.AppendLine ";"
             | GotoStm _              -> invalidOp "'goto' statements are not supported when generating C# code."
-            | SeqStm (s1, s2)        -> toCSharp s1; toCSharp s2
+            | SeqStm s               -> s |> List.iter toCSharp
             | RetStm None            -> writer.AppendLine "return;"
             | RetStm (Some e)        -> writer.Append "return "; expr e; writer.AppendLine(";")
             | IfStm (e, s, None)     -> 

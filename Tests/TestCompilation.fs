@@ -63,7 +63,7 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
             .AddReferences(MetadataReference.CreateFromAssembly typeof<Component>.Assembly)
             .AddReferences(MetadataReference.CreateFromAssembly typeof<System.Linq.Expressions.Expression>.Assembly)
             .AddSyntaxTrees(syntaxTree)
-            .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithOptimizationLevel OptimizationLevel.Release)
 
     let rec addExternAliases (compilation : CSharpCompilation) (externAliases : (string * CSharpCompilation) list) =
         match externAliases with
