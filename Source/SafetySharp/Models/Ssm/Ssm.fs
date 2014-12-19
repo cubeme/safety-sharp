@@ -150,6 +150,12 @@ module internal Ssm =
         if Set.isEmpty common then None
         else Set.minElement common |> Some
 
+    /// Gets the type of the given variable.
+    let getVarType = function
+        | Arg (a, t)   -> t
+        | Local (l, t) -> t
+        | Field (f, t) -> t
+
     /// Deduces the type of the expression.
     let rec deduceType expr =
         let deduceResultingNonBoolType e1 e2 =
@@ -174,6 +180,7 @@ module internal Ssm =
         match expr with
         | BoolExpr _ -> BoolType
         | IntExpr _ -> IntType
+        | DoubleExpr _ -> DoubleType
         | VarExpr (Arg (_, t)) -> t
         | VarExpr (Local (_, t)) -> t
         | VarExpr (Field (_, t)) -> t

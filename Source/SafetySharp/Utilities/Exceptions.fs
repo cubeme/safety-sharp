@@ -75,3 +75,7 @@ module internal Exceptions =
             if condition then
                 Operators.invalidOp message
         ) description
+
+    /// Throws a <see cref="System.InvalidOperationException" /> if invoked.
+    let inline notReached () =
+        Operators.invalidOp "This program location was expected to be unreachable."

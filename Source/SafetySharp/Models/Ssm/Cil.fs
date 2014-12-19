@@ -125,7 +125,9 @@ module internal Cil =
             | Code.Not      -> Not
             | Code.Ceq      -> Ceq
             | Code.Cgt      -> Cgt
+            | Code.Cgt_Un   -> Cgt
             | Code.Clt      -> Clt
+            | Code.Clt_Un   -> Clt
             | Code.Neg      -> Neg
             | Code.Add      -> Add
             | Code.Sub      -> Sub

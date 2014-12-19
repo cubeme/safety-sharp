@@ -92,6 +92,16 @@ module TestHelpers =
 
         abstract member M : 'p1 -> 'p2 -> 'r
 
+    [<AbstractClass>]
+    type FourValParams<'p1, 'p2, 'p3, 'p4, 'r when 'p1 : equality and 'p2 : equality and 'p3 : equality and 'p4 : equality and 'r : equality> () =
+        static member Test (original : FourValParams<'p1, 'p2, 'p3, 'p4, 'r>, transformed : FourValParams<'p1, 'p2, 'p3, 'p4, 'r>) p1 p2 p3 p4 =
+            let originalResult = original.M p1 p2 p3 p4
+            let transformedResult = transformed.M p1 p2 p3 p4
+
+            originalResult =? transformedResult
+
+        abstract member M : 'p1 -> 'p2 -> 'p3 -> 'p4 -> 'r
+
 [<TestFixture>]
 module ``CilToSsm Method Semantic Equality`` =
 
@@ -109,6 +119,11 @@ module ``CilToSsm Method Semantic Equality`` =
     let sideEffectsRef = OneRefParam<bool, int>.Test (compile "OneRefParam<bool, int>" "int M(ref bool b) { return 1 + ((b = (!b ? (b = !b) : b)) ? 17 : 8); }")
     let shortCircuitOrBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x || y) return -1; return 0; }")
     let shortCircuitAndBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x && y) return -1; return 0; }")
+    let controlFlowAndSideEffects1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { var r = x + y / 2; if ((r *= 2) == y++ || y-- == --y) r += y * x; else r--; return r; }")
+    let controlFlowAndSideEffects2 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += x) > y || --y == 0) x++; else if (x - 2 < y + 1 || --y == 0) { --y; if (++x == --y) --y; } else x -= 1; return x *= y * 2; }")
+    let controlFlowAndSideEffects3 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x + x) > y || y == 0) x++; else if (x - 2 < y + 1 || y - 1 == 0) { --y; if (x == y) --y; } else x -= 1; return x *= y * 2; }")
+    let controlFlowAndSideEffects4 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 && arg3; var loc3 = arg4 && !loc2 && loc1; var loc4 = arg4 && loc2 && loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }")
+    let controlFlowAndSideEffects5 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 & arg3; var loc3 = arg4 & !loc2 & loc1; var loc4 = arg4 & loc2 & loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }")
 
     [<Test>]
     let ``read from ref parameter`` ([<Range (-5, 5)>] p) =
@@ -165,3 +180,23 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``complex control flow and side effects with ref params`` ([<Values (true, false)>] p1) ([<Range (-5, 5)>] p2) =
         complexControlFlowAndSideEffectsRef p1 p2
+
+    [<Test>]
+    let ``control flow and side effects 1`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        controlFlowAndSideEffects1 p1 p2
+
+    [<Test>]
+    let ``control flow and side effects 2`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        controlFlowAndSideEffects2 p1 p2
+
+    [<Test>]
+    let ``control flow and side effects 3`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        controlFlowAndSideEffects3 p1 p2
+
+    [<Test>]
+    let ``control flow and side effects 4`` ([<Range (-5, 5)>] p1) ([<Values (true, false)>] p2) ([<Values (true, false)>] p3) ([<Values (true, false)>] p4) =
+        controlFlowAndSideEffects4 p1 p2 p3 p4
+
+    [<Test>]
+    let ``control flow and side effects 5`` ([<Range (-5, 5)>] p1) ([<Values (true, false)>] p2) ([<Values (true, false)>] p3) ([<Values (true, false)>] p4) =
+        controlFlowAndSideEffects5 p1 p2 p3 p4

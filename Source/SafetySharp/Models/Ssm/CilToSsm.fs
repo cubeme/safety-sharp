@@ -228,6 +228,37 @@ module internal CilToSsm =
 
         stms
 
+    /// Fixes up the CLR's handling of Booleans as integers. The CLR represents 'false' as 0 and 'true' as non-0, similar to C.
+    /// It also allows implicit "conversion" of ints to bools. C# and the SSM, however, don't allow that, so we have to fix
+    /// that in a couple of places.
+    let private fixIntIsBool returnsBool methodBody =
+        // Makes all implict conversions of ints or doubles to bool within an expression explicit
+        let rec fixExpr e isBool =
+            match Ssm.deduceType e with
+            | IntType when isBool    -> BExpr (e, Ne, IntExpr 0)
+            | DoubleType when isBool -> BExpr (e, Ne, DoubleExpr 0.0)
+            | _                      -> e
+
+        // We also have to check if there is a local variable of type bool that is also defined as a local
+        // of type int or double. If so, there is probably a boolean assignment of the form 'var = 0' somewhere 
+        // that we have to replace with 'var = false'. Otherwise, we have no idea what might be going on and
+        // simply ignore this problem, letting later steps deal with the inconsistency.
+        let locals = methodBody |> Seq.map Ssm.getLocalsOfStm |> Seq.collect id |> Seq.distinct |> Seq.toList
+        let shouldBeBool l =
+            locals |> List.exists (function Local (l', t) when l' = l && t = BoolType -> true | _ -> false)
+
+        Array.map (fun stm ->
+            match stm with
+            | NopStm -> NopStm
+            | AsgnStm (Local (l, t), e) when t <> BoolType && shouldBeBool l && Ssm.deduceType e <> BoolType ->
+                AsgnStm (Local (l, BoolType), fixExpr e true)
+            | AsgnStm (v, e) -> AsgnStm (v, fixExpr e (Ssm.getVarType v = BoolType))
+            | GotoStm (e, t) -> GotoStm (fixExpr e true, t)
+            | RetStm None -> RetStm None
+            | RetStm (Some e) -> RetStm (Some (fixExpr e returnsBool))
+            | _ -> invalidOp "Unsupported statement '%A'." stm
+        ) methodBody
+
     /// Compresses the statement array, removing all nops. The targets of gotos are updated accordingly. This step
     /// merely simplifies debugging and is not required for the transformation to be correct.
     let private compress methodBody =
@@ -281,6 +312,7 @@ module internal CilToSsm =
             |> Cil.getMethodBody
             |> transformMethodBody
             |> compress
+            |> fixIntIsBool (m.ReturnType.MetadataType = MetadataType.Boolean)
             |> Ssm.replaceGotos
 
         {
