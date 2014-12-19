@@ -71,7 +71,7 @@ module internal ScmRewriter =
             m
 
     let scmRewrite = new ScmRewriter()
-    //TODO: let scmRewriteFixpoint = new ScmRewriteFixpoint. (fixpoint Computation Expression. Repeat something, until fixpoint is reached)
+    let scmRewriteFixpoint = new ScmRewriter() //new ScmRewriteFixpoint. (fixpoint Computation Expression. Repeat something, until fixpoint is reached)
 
 
     // here the partial rewrite rules
@@ -97,8 +97,7 @@ module internal ScmRewriter =
                     let transformedFieldDecl = 
                         {fieldDecl with
                             FieldDecl.Field = transformedField;
-                        }
-                    
+                        }                    
                     let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
                                                           .addField(transformedFieldDecl)
                     let newModel = state.Model.replaceDescendant parentPath newParentCompDecl
@@ -111,42 +110,73 @@ module internal ScmRewriter =
                         }
                     return! putState modifiedState
         }
+        
+    let selectSubComponent : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+    let levelUpFault : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+    let levelUpReqPort : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+    let levelUpProvPort : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+    let levelUpAndRewriteBinding : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+    let convertStepToPort : ScmRewriteFunction<unit> = scmRewrite {
+            // replace step to required port and provided port and binding, add a link from subcomponent path to new required port
+            return ()
+        }
+    let rewriteParentStep : ScmRewriteFunction<unit> = scmRewrite {
+            //here instead of "step subcomponent" the converted step must be called
+            return ()
+        }
+    let rewriteProvPort : ScmRewriteFunction<unit> = scmRewrite {
+            // replace reqPorts and fields by their proper names
+            return ()
+        }
+    let assertSubcomponentEmpty : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+    let removeSubComponent : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+        
+    let assertNoSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+        
+    let inlineMainStep : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
+
 
     let levelUpSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
-            do! levelUpField
+            // idea: first level up every item of a component,
+            //       then rewrite every code accessing to some specific element of it
+            do! selectSubComponent
+            do! scmRewriteFixpoint {do! levelUpField}
+            do! scmRewriteFixpoint {do! levelUpFault}
+            do! scmRewriteFixpoint {do! convertStepToPort}
+            do! scmRewriteFixpoint {do! levelUpReqPort}
+            do! scmRewriteFixpoint {do! levelUpProvPort}
+            do! scmRewriteFixpoint {do! levelUpAndRewriteBinding}
+            do! scmRewriteFixpoint {do! rewriteParentStep}
+            do! scmRewriteFixpoint {do! rewriteProvPort}
+            do! assertSubcomponentEmpty
+            do! removeSubComponent
         }
 
     // here the workflow, which defines a globalglobal rewrite rule, whic
     let levelUpWorkflow =
         let s : ScmRewriteFunction<unit> =
             scmRewrite {
-                do! levelUpSubcomponent
+                do! scmRewriteFixpoint {do! levelUpSubcomponent}
+                do! assertNoSubcomponent
+                do! inlineMainStep
             }
         runState s
-(*
-
-Requirements
-* Generic
-    - A rule _must_ change something (otherwise infinite execution)
-    - Unfinished Element
-* Rules
-    - Identify some parts
-    - Only read some parts
-    - Modify some parts
-* Helpers
-    - Concatenation of Lists
-* Subrules
-    - List of things to do, before a target is really "written"
-
-Later:
- - F# Type Provider, which offers a K-like way to define rules
- - Rule-Apply-Strategy e.g. [Rule1*,[Rule2*,Rule3*]*]*
- - Taint-Flag, if a rule could be applied
-
-
-Example:
- - 
-
-
-*)
 
