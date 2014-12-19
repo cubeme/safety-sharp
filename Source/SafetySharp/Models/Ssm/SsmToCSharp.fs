@@ -34,6 +34,7 @@ module internal SsmToCSharp =
             | BoolType   -> writer.Append "bool"
             | IntType    -> writer.Append "int"
             | DoubleType -> writer.Append "double"
+            | ClassType  -> writer.Append "object"
 
         let uop = function
             | Not   -> writer.Append "!"

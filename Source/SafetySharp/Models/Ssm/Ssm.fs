@@ -53,6 +53,7 @@ module internal Ssm =
         | BoolType
         | IntType
         | DoubleType
+        | ClassType
 
     /// Represents a variable accessed by an expression.
     type internal Var =
@@ -152,9 +153,15 @@ module internal Ssm =
 
     /// Gets the type of the given variable.
     let getVarType = function
-        | Arg (a, t)   -> t
-        | Local (l, t) -> t
-        | Field (f, t) -> t
+        | Arg (_, t)   -> t
+        | Local (_, t) -> t
+        | Field (_, t) -> t
+
+    /// Gets the name of the given variable.
+    let getVarName = function
+        | Arg (a, _)   -> a
+        | Local (l, _) -> l
+        | Field (f, _) -> f
 
     /// Deduces the type of the expression.
     let rec deduceType expr =

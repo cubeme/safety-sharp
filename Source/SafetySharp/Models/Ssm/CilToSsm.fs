@@ -45,6 +45,7 @@ module internal CilToSsm =
         | MetadataType.Boolean -> Some BoolType
         | MetadataType.Int32   -> Some IntType
         | MetadataType.Double  -> Some DoubleType
+        | MetadataType.Class   -> Some ClassType
         | _                    -> None
 
     /// Maps the metadata type of a variable to a S# type.
@@ -94,40 +95,47 @@ module internal CilToSsm =
 
             stack |> List.map replace
 
-        let localVarPred l = function | Local (l', t) -> l = l' | _ -> false
-        let argVarPred a = function | Arg (a', t) -> a = a' | _ -> false
+        // Introduces a unique temporary variable that stores the value of the given expression and replaces
+        // all references to the variable on the symbol stack with the new temporary variable
+        let replaceWithTempVar pc v e replace s = 
+            let tmp = freshLocal pc 0 (Ssm.getVarType v)
+            (AsgnStm (v, e), [AsgnStm (tmp, VarExpr v)], replace (Ssm.getVarName v) tmp s)
+
+        let localVarPred l = function Local (l', _) -> l = l' | _ -> false
+        let argVarPred a = function Arg (a', _) -> a = a' | _ -> false
+        let fieldVarPred f = function Field (f', _) -> f = f' | _ -> false
 
         let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i" l.Index else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
         let arg (a : ParameterDefinition) = createVar Arg a.Name a.ParameterType
+        let field (f : FieldReference) = createVar Field f.Name f.FieldType
 
         let containsLocal l = checkStack (localVarPred (localName l))
         let containsArg a = checkStack (argVarPred a)
+        let containsField f = checkStack (fieldVarPred f)
 
-        let replaceLocal l = replaceVar (localVarPred (localName l))
+        let replaceLocal l = replaceVar (localVarPred l)
         let replaceArg a = replaceVar (argVarPred a)
+        let replaceField f = replaceVar (fieldVarPred f)
 
         // Corresponds to the tabular specification of BC2BIR_instr
         match instr, stack with
         | (Instr.Nop, s) -> (NopStm, [], s)
         | (Instr.Ldind, (VarRefExpr v) :: s) -> (NopStm, [], (VarExpr v) :: s)
+        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> (NopStm, [], (VarExpr (field f)) :: s)
         | (Instr.Ldci c, s) -> (NopStm, [], (IntExpr c) :: s)
         | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
         | (Instr.Ldarg a, s) when a.ParameterType.IsByReference -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
         | (Instr.Ldloc l, s) -> (NopStm, [], (VarExpr (local l)) :: s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) when not (containsArg a s) -> (AsgnStm (Arg (a, t), e), [], s)
-        | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> 
-            let tmp = freshLocal pc 0 t
-            (AsgnStm (Arg (a, t), e), [AsgnStm (tmp, VarExpr (Arg (a, t)))], replaceArg a tmp s)
+        | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> replaceWithTempVar pc (Arg (a, t)) e replaceArg s  
+        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType && not (containsField f.Name s) -> (AsgnStm (field f, e), [], s)
+        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> replaceWithTempVar pc (field f) e replaceField s  
         | (Instr.Starg a, e :: s) when not (containsArg a.Name s) -> (AsgnStm (arg a, e), [], s)
-        | (Instr.Starg a, e :: s) when containsArg a.Name s -> 
-            let tmp = freshLocal pc 0 (mapVarType a.ParameterType)
-            (AsgnStm (arg a, e), [AsgnStm (tmp, VarExpr (arg a))], replaceArg a.Name tmp s)
+        | (Instr.Starg a, e :: s) when containsArg a.Name s -> replaceWithTempVar pc (arg a) e replaceArg s  
         | (Instr.Stloc l, e :: s) when not (containsLocal l s) -> (AsgnStm (local l, e), [], s)
-        | (Instr.Stloc l, e :: s) when containsLocal l s -> 
-            let tmp = freshLocal pc 0 (mapVarType l.VariableType)
-            (AsgnStm (local l, e), [AsgnStm (tmp, VarExpr (local l))], replaceLocal l tmp s)
+        | (Instr.Stloc l, e :: s) when containsLocal l s -> replaceWithTempVar pc (local l) e replaceLocal s         
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)

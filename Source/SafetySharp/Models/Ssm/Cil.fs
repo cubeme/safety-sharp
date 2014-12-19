@@ -47,13 +47,13 @@ module internal Cil =
     type Instr =
         | Nop
         | Ldind
-        | Ldfld of FieldDefinition
+        | Ldfld of FieldReference
         | Ldloc of VariableDefinition
         | Ldarg of ParameterDefinition
         | Ldci of int
         | Ldcd of double
         | Stind
-        | Stfld of FieldDefinition
+        | Stfld of FieldReference
         | Stloc of VariableDefinition
         | Starg of ParameterDefinition
         | Call of MethodDefinition
