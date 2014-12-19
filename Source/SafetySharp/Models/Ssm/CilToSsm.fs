@@ -190,11 +190,13 @@ module internal CilToSsm =
                 if preds |> List.exists (fun p' -> varRefs <> (extractVarRefs outStacks.[p'])) then
                     invalidOp "Invalid control flow detected: A join point can be reached with different var refs on the stack."
                 outStacks.[p] 
-                |> List.mapi (fun idx expr -> 
+                |> List.fold (fun (stack, idx) expr -> 
                     match expr with
-                    | VarRefExpr v -> VarRefExpr v
-                    | expr -> VarExpr (freshLocal pc idx (Ssm.deduceType expr))
-                )
+                    | VarRefExpr v -> ((VarRefExpr v) :: stack, idx)
+                    | expr         -> ((VarExpr (freshLocal pc idx (Ssm.deduceType expr))) :: stack, idx + 1)
+                ) ([], 0)
+                |> fst
+                |> List.rev
 
         // Corresponds to the TAssign function in the Demange paper; creates a fresh local
         // variable with a unique name for each element on the symbolic stack (except for var refs).

@@ -77,10 +77,9 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
     let csharpCompilation = addExternAliases csharpCompilation externAliases
 
     let diagnostics = csharpCompilation.GetDiagnostics() |> Seq.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
-    do diagnostics |> Seq.iter (fun d -> printfn "%A" d)
 
     do if not <| Seq.isEmpty diagnostics then
-        failed "Failed to create compilation."
+        failed "Failed to create compilation:\n%s\n\n%s" (diagnostics |> Seq.fold (fun s d -> sprintf "%s\n%A" s d) "") csharpCode
 
     /// Gets the name of the compilation.
     static member CompilationName = "TestCompilation"

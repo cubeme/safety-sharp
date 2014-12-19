@@ -104,6 +104,9 @@ module ``CilToSsm Method Semantic Equality`` =
     let ternaryOperatorWithSideEffect1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return x > 0 ? ++y : 0; }")
     let ternaryOperatorWithSideEffect2 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return x > 0 ? y-- : 0; }")
     let nestedTernaryOperator = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }")
+    let complexControlFlowAndSideEffects = TwoValParams<bool, int, int>.Test (compile "TwoValParams<bool, int, int>" "int M(bool b, int c) { var x = 1 + ((b = !b) ? (c++ > 2 ? c-- : --c) : ((b = (!b ? (b = !b) : b)) ? c += 17 : c -= 8)); return x; }")
+    let complexControlFlowAndSideEffectsRef = TwoRefParams<bool, int, int>.Test (compile "TwoRefParams<bool, int, int>" "int M(ref bool b, ref int c) { var x = 1 + ((b = !b) ? (c++ > 2 ? c-- : --c) : ((b = (!b ? (b = !b) : b)) ? c += 17 : c -= 8)); return x; }")
+    let sideEffectsRef = OneRefParam<bool, int>.Test (compile "OneRefParam<bool, int>" "int M(ref bool b) { return 1 + ((b = (!b ? (b = !b) : b)) ? 17 : 8); }")
     let shortCircuitOrBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x || y) return -1; return 0; }")
     let shortCircuitAndBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x && y) return -1; return 0; }")
 
@@ -150,3 +153,15 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``nested ternary operator`` ([<Values (true, false)>] p1) ([<Values (true, false)>] p2) =
         nestedTernaryOperator p1 p2
+
+    [<Test>]
+    let ``side effects on ref parameters`` ([<Values (true, false)>] p) =
+        sideEffectsRef p
+
+    [<Test>]
+    let ``complex control flow and side effects`` ([<Values (true, false)>] p1) ([<Range (-5, 5)>] p2) =
+        complexControlFlowAndSideEffects p1 p2
+
+    [<Test>]
+    let ``complex control flow and side effects with ref params`` ([<Values (true, false)>] p1) ([<Range (-5, 5)>] p2) =
+        complexControlFlowAndSideEffectsRef p1 p2
