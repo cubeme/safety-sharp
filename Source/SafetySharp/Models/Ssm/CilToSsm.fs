@@ -38,10 +38,11 @@ module internal CilToSsm =
     let freshLocal pc idx t =
         Local (sprintf "__tmp_%i_%i" pc idx, t)
 
-    /// Tries to map the metadata type of a variable to a S# type, if possible.
-    let private tryMapVarType (typeRef : TypeReference) =
+    /// Tries to map the given metadata type to a S# type, if possible.
+    let private tryMapType (typeRef : TypeReference) =
         let metadataType = if typeRef.IsByReference then typeRef.GetElementType().MetadataType else typeRef.MetadataType
         match metadataType with
+        | MetadataType.Void    -> Some VoidType
         | MetadataType.Boolean -> Some BoolType
         | MetadataType.Int32   -> Some IntType
         | MetadataType.Double  -> Some DoubleType
@@ -50,9 +51,17 @@ module internal CilToSsm =
 
     /// Maps the metadata type of a variable to a S# type.
     let private mapVarType typeRef =
-        match tryMapVarType typeRef with
-        | None   -> invalidOp "Unsupported variable type '%A'." typeRef
-        | Some t -> t
+        match tryMapType typeRef with
+        | None 
+        | Some VoidType -> invalidOp "Unsupported variable type '%A'." typeRef
+        | Some t        -> t
+
+    /// Maps the metadata type of a variable to a S# type.
+    let private mapReturnType typeRef =
+        match tryMapType typeRef with
+        | None 
+        | Some ClassType -> invalidOp "Unsupported method return type '%A'." typeRef
+        | Some t         -> t
     
     /// Creates a variable using the given constructor with the given name and type.
     let private createVar constr name typeRef =
@@ -136,6 +145,17 @@ module internal CilToSsm =
         | (Instr.Starg a, e :: s) when containsArg a.Name s -> replaceWithTempVar pc (arg a) e replaceArg s  
         | (Instr.Stloc l, e :: s) when not (containsLocal l s) -> (AsgnStm (local l, e), [], s)
         | (Instr.Stloc l, e :: s) when containsLocal l s -> replaceWithTempVar pc (local l) e replaceLocal s         
+        | (Instr.Call m, s) when List.length s >= m.Parameters.Count + 1 ->
+            let argCount = m.Parameters.Count
+            let returnType = mapReturnType m.ReturnType
+            let paramTypes = m.Parameters |> Seq.map (fun p -> mapVarType p.ParameterType) |> Seq.toList
+            let args = s |> Seq.take argCount |> Seq.toList |> List.rev
+            let s = s |> Seq.skip (argCount + 1) |> Seq.toList
+
+            if returnType = VoidType then
+                (CallStm (m.Name, paramTypes, returnType, args), [], s)
+            else
+                (NopStm, [], (CallExpr (m.Name, paramTypes, returnType, args)) :: s)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)
@@ -151,6 +171,8 @@ module internal CilToSsm =
                 | _ -> invalidOp "Unsupported branch type '%+A'." op
             (GotoStm (normalizeIntToBool (BExpr (e2, op, e1)), t), [], s)
         | (Instr.Dup, e :: s) -> (NopStm, [], e :: e :: s)
+        | (Instr.Pop, CallExpr (m, p, t, e) :: s) -> (CallStm (m, p, t, e), [], s)
+        | (Instr.Pop, e :: s) -> (NopStm, [], s)
         | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, And, e1))) :: s)
         | (Instr.Or, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Or, e1))) :: s)
         | (Instr.Ceq, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Eq, e1))) :: s)
@@ -242,10 +264,19 @@ module internal CilToSsm =
     let private fixIntIsBool returnsBool methodBody =
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
-            match Ssm.deduceType e with
-            | IntType when isBool    -> BExpr (e, Ne, IntExpr 0)
-            | DoubleType when isBool -> BExpr (e, Ne, DoubleExpr 0.0)
-            | _                      -> e
+            match e with
+            | IntExpr 0 when isBool -> BoolExpr false
+            | IntExpr _ when isBool -> BoolExpr true
+            | CallExpr (m, p, t, e) -> CallExpr (m, p, t, fixCallExprs p e)
+            | e when isBool         -> 
+                match Ssm.deduceType e with
+                | IntType    -> BExpr (e, Ne, IntExpr 0)
+                | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
+                | _          -> e
+            | e -> e
+
+        and fixCallExprs p e =
+            List.zip p e |> List.map (fun (t, e) -> fixExpr e (t = BoolType))
 
         // We also have to check if there is a local variable of type bool that is also defined as a local
         // of type int or double. If so, there is probably a boolean assignment of the form 'var = 0' somewhere 
@@ -264,6 +295,7 @@ module internal CilToSsm =
             | GotoStm (e, t) -> GotoStm (fixExpr e true, t)
             | RetStm None -> RetStm None
             | RetStm (Some e) -> RetStm (Some (fixExpr e returnsBool))
+            | CallStm (m, p, r, e) -> CallStm (m, p, r, fixCallExprs p e)
             | _ -> invalidOp "Unsupported statement '%A'." stm
         ) methodBody
 
@@ -330,7 +362,7 @@ module internal CilToSsm =
                 m.Parameters 
                 |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); InOut = p.ParameterType.IsByReference })
                 |> Seq.toList
-            Return = tryMapVarType m.ReturnType
+            Return = mapReturnType m.ReturnType
             Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
         }
 

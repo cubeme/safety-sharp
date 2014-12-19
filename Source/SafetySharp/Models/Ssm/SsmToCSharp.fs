@@ -30,7 +30,8 @@ module internal SsmToCSharp =
     let transform m =
         let writer = StructuredWriter ()
 
-        let varType = function
+        let typeRef = function
+            | VoidType   -> writer.Append "void"
             | BoolType   -> writer.Append "bool"
             | IntType    -> writer.Append "int"
             | DoubleType -> writer.Append "double"
@@ -61,18 +62,22 @@ module internal SsmToCSharp =
             | Field (f, _) -> writer.Append "%s" f
 
         let varDecl = function
-            | Arg (a, t)   -> varType t; writer.Append " %s" a
-            | Local (l, t) -> varType t; writer.Append " %s" l
-            | Field (f, t) -> varType t; writer.Append " %s" f
+            | Arg (a, t)   -> typeRef t; writer.Append " %s" a
+            | Local (l, t) -> typeRef t; writer.Append " %s" l
+            | Field (f, t) -> typeRef t; writer.Append " %s" f
 
-        let rec expr = function
-            | BoolExpr b         -> writer.Append <| if b then "true" else "false"
-            | IntExpr i          -> writer.Append "%i" i
-            | DoubleExpr d       -> writer.Append "%f" d
-            | VarExpr v          -> var v
-            | VarRefExpr v       -> writer.Append "&"; var v
-            | UExpr (op, e)      -> uop op; writer.AppendParenthesized (fun () -> expr e)
-            | BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+        let rec call m e =
+            writer.Append "%s(" m; writer.AppendRepeated e (fun e -> expr e) (fun () -> writer.Append ", "); writer.Append ")"
+
+        and expr = function
+            | BoolExpr b            -> writer.Append <| if b then "true" else "false"
+            | IntExpr i             -> writer.Append "%i" i
+            | DoubleExpr d          -> writer.Append "%f" d
+            | VarExpr v             -> var v
+            | VarRefExpr v          -> writer.Append "&"; var v
+            | UExpr (op, e)         -> uop op; writer.AppendParenthesized (fun () -> expr e)
+            | BExpr (e1, op, e2)    -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+            | CallExpr (m, _, _, e) -> call m e
 
         let rec toCSharp stm = 
             match stm with
@@ -96,11 +101,9 @@ module internal SsmToCSharp =
                 writer.AppendBlockStatement (fun () -> toCSharp s1)
                 writer.Append "else"
                 writer.AppendBlockStatement (fun () -> toCSharp s2)
-        
-        match m.Return with
-        | None -> writer.Append "void"
-        | Some t -> varType t
+            | CallStm (m, _, _, e)   -> call m e; writer.AppendLine ";"
 
+        typeRef m.Return
         writer.Append " %s(" m.Name
         writer.AppendRepeated m.Params (fun p ->
             if p.InOut then writer.Append "ref "

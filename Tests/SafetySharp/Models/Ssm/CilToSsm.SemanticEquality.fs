@@ -30,15 +30,15 @@ open SafetySharp.Models.Ssm
 
 [<AutoOpen>]
 module TestHelpers =
-    let compile baseClass csharpCode = 
-        let csharpCode = sprintf "class O : Ssm.TestHelpers.%s { public override %s }" baseClass csharpCode
+    let compile baseClass csharpCode funcs = 
+        let csharpCode = sprintf "class O : Ssm.TestHelpers.%s { public override %s %s }" baseClass csharpCode funcs
         let compilation = TestCompilation csharpCode
         let assembly = compilation.GetAssemblyDefinition ()
         let typeDef = assembly.MainModule.GetType "O"
         let methodDef = typeDef.Methods.Single (fun m' -> m'.Name = "M")
         let transformedMethod = methodDef |> CilToSsm.transformMethod |> SsmToCSharp.transform
 
-        let csharpCode = sprintf "%s class T : Ssm.TestHelpers.%s { public override %s }" csharpCode baseClass transformedMethod
+        let csharpCode = sprintf "%s class T : Ssm.TestHelpers.%s { public override %s %s }" csharpCode baseClass transformedMethod funcs
         let compilation = TestCompilation csharpCode
         compilation.Compile () |> ignore
         (compilation.CreateObject<'a> "O", compilation.CreateObject<'a> "T")
@@ -113,34 +113,37 @@ module TestHelpers =
 [<TestFixture>]
 module ``CilToSsm Method Semantic Equality`` =
 
-    let readField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return _f + x; }")
-    let writeField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; return _f; }")
-    let readFieldWithRefParam = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { x = _f; return x; }")
-    let writeFieldWithRefParam = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { _f = x; return _f; }")
-    let fieldAccessWithSideEffects1 = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { x += _f + ((x = _f = ++_f) > 0 ? ++_f : ((_f += _f) + _f)); return x; }")
-    let fieldAccessWithSideEffects2 = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return x *=  _f + (x * 2 - ((_f = --_f) > 0 ? ++_f : (_f += _f)) + _f); }")    
-    let readFromRef = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { return x; }")
-    let writeToRef = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { x = 17; return x; }")
-    let complexSideEffects = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int z) { z *= z-- * --z; return z; }")
-    let complexSideEffectsRef = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int z) { z *= z-- * --z; return z; }")
-    let refParamsComplexControlFlow = TwoRefParams<bool, int, int>.Test (compile "TwoRefParams<bool, int, int>" "int M(ref bool y, ref int z) { z = y ? z++ : ((y = !y) ? z-- : --z); return z; }")
-    let ternaryOperatorBeforeReturn = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { var y = x > 0 ? -1 : 1; return y - 1; }")
-    let ternaryOperatorBeforeReturnOnField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { var y = x + _f > 0 ? -1 : 1; return y - 1 - _f; }")
-    let ternaryOperatorWithSideEffect1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return x > 0 ? ++y : 0; }")
-    let ternaryOperatorWithSideEffect2 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return x > 0 ? y-- : 0; }")
-    let nestedTernaryOperator = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }")
-    let complexControlFlowAndSideEffects = TwoValParams<bool, int, int>.Test (compile "TwoValParams<bool, int, int>" "int M(bool b, int c) { var x = 1 + ((b = !b) ? (c++ > 2 ? c-- : --c) : ((b = (!b ? (b = !b) : b)) ? c += 17 : c -= 8)); return x; }")
-    let complexControlFlowAndSideEffectsRef = TwoRefParams<bool, int, int>.Test (compile "TwoRefParams<bool, int, int>" "int M(ref bool b, ref int c) { var x = 1 + ((b = !b) ? (c++ > 2 ? c-- : --c) : ((b = (!b ? (b = !b) : b)) ? c += 17 : c -= 8)); return x; }")
-    let sideEffectsRef = OneRefParam<bool, int>.Test (compile "OneRefParam<bool, int>" "int M(ref bool b) { return 1 + ((b = (!b ? (b = !b) : b)) ? 17 : 8); }")
-    let shortCircuitOrBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x || y) return -1; return 0; }")
-    let shortCircuitWithField = TwoValParams<bool, int, int>.Test (compile "TwoValParams<bool, int, int>" "int M(bool x, int y) { _f1 = y; if (x || _f1 < 1) return -1; return 0; }")
-    let shortCircuitAndBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x && y) return -1; return 0; }")
-    let controlFlowAndSideEffects1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { var r = x + y / 2; if ((r *= 2) == y++ || y-- == --y) r += y * x; else r--; return r; }")
-    let controlFlowAndSideEffects2 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += x) > y || --y == 0) x++; else if (x - 2 < y + 1 || --y == 0) { --y; if (++x == --y) --y; } else x -= 1; return x *= y * 2; }")
-    let controlFlowAndSideEffects3 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x + x) > y || y == 0) x++; else if (x - 2 < y + 1 || y - 1 == 0) { --y; if (x == y) --y; } else x -= 1; return x *= y * 2; }")
-    let controlFlowAndSideEffects4 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 && arg3; var loc3 = arg4 && !loc2 && loc1; var loc4 = arg4 && loc2 && loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }")
-    let controlFlowAndSideEffects5 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 & arg3; var loc3 = arg4 & !loc2 & loc1; var loc4 = arg4 & loc2 & loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }")
-    let controlFlowAndSideEffects6 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += _f1 = x) > y || --y == 0) x++; else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - --_f2) --y; } else x -= 1; return x *=  _f1 + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2)) + _f2); }")
+    let readField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return _f + x; }" "")
+    let writeField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; return _f; }" "")
+    let callMethodWithoutParameters = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { F(); return _f + x; }" "void F() { _f = 3; }")
+    let callMethodWithParameter = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x + 2; return F(x); }" "int F(int x) { return x + _f; }")
+    let readFieldWithRefParam = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { x = _f; return x; }" "")
+    let writeFieldWithRefParam = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { _f = x; return _f; }" "")
+    let fieldAccessWithSideEffects1 = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { x += _f + ((x = _f = ++_f) > 0 ? ++_f : ((_f += _f) + _f)); return x; }" "")
+    let fieldAccessWithSideEffects2 = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return x *=  _f + (x * 2 - ((_f = --_f) > 0 ? ++_f : (_f += _f)) + _f); }" "")    
+    let readFromRef = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { return x; }" "")
+    let writeToRef = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { x = 17; return x; }" "")
+    let complexSideEffects = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int z) { z *= z-- * --z; return z; }" "")
+    let complexSideEffectsRef = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int z) { z *= z-- * --z; return z; }" "")
+    let refParamsComplexControlFlow = TwoRefParams<bool, int, int>.Test (compile "TwoRefParams<bool, int, int>" "int M(ref bool y, ref int z) { z = y ? z++ : ((y = !y) ? z-- : --z); return z; }" "")
+    let ternaryOperatorBeforeReturn = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { var y = x > 0 ? -1 : 1; return y - 1; }" "")
+    let ternaryOperatorBeforeReturnOnField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { var y = x + _f > 0 ? -1 : 1; return y - 1 - _f; }" "")
+    let ternaryOperatorWithSideEffect1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return x > 0 ? ++y : 0; }" "")
+    let ternaryOperatorWithSideEffect2 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return x > 0 ? y-- : 0; }" "")
+    let nestedTernaryOperator = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" "")
+    let complexControlFlowAndSideEffects = TwoValParams<bool, int, int>.Test (compile "TwoValParams<bool, int, int>" "int M(bool b, int c) { var x = 1 + ((b = !b) ? (c++ > 2 ? c-- : --c) : ((b = (!b ? (b = !b) : b)) ? c += 17 : c -= 8)); return x; }" "")
+    let complexControlFlowAndSideEffectsRef = TwoRefParams<bool, int, int>.Test (compile "TwoRefParams<bool, int, int>" "int M(ref bool b, ref int c) { var x = 1 + ((b = !b) ? (c++ > 2 ? c-- : --c) : ((b = (!b ? (b = !b) : b)) ? c += 17 : c -= 8)); return x; }" "")
+    let sideEffectsRef = OneRefParam<bool, int>.Test (compile "OneRefParam<bool, int>" "int M(ref bool b) { return 1 + ((b = (!b ? (b = !b) : b)) ? 17 : 8); }" "")
+    let shortCircuitOrBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x || y) return -1; return 0; }" "")
+    let shortCircuitWithField = TwoValParams<bool, int, int>.Test (compile "TwoValParams<bool, int, int>" "int M(bool x, int y) { _f1 = y; if (x || _f1 < 1) return -1; return 0; }" "")
+    let shortCircuitAndBool = TwoValParams<bool, bool, int>.Test (compile "TwoValParams<bool, bool, int>" "int M(bool x, bool y) { if (x && y) return -1; return 0; }" "")
+    let controlFlowAndSideEffects1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { var r = x + y / 2; if ((r *= 2) == y++ || y-- == --y) r += y * x; else r--; return r; }" "")
+    let controlFlowAndSideEffects2 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += x) > y || --y == 0) x++; else if (x - 2 < y + 1 || --y == 0) { --y; if (++x == --y) --y; } else x -= 1; return x *= y * 2; }" "")
+    let controlFlowAndSideEffects3 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x + x) > y || y == 0) x++; else if (x - 2 < y + 1 || y - 1 == 0) { --y; if (x == y) --y; } else x -= 1; return x *= y * 2; }" "")
+    let controlFlowAndSideEffects4 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 && arg3; var loc3 = arg4 && !loc2 && loc1; var loc4 = arg4 && loc2 && loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }" "")
+    let controlFlowAndSideEffects5 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 & arg3; var loc3 = arg4 & !loc2 & loc1; var loc4 = arg4 & loc2 & loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }" "")
+    let controlFlowAndSideEffects6 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += _f1 = x) > y || --y == 0) x++; else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - --_f2) --y; } else x -= 1; return x *=  _f1 + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2)) + _f2); }" "")
+//    let controlFlowAndSideEffects7 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { F3(); if ((x += _f1 = x) > y || --y == 0) { F3(); x++; } else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - (_f2 = (--_f2 + F1(_f2)))) --y; } else x -= 1; return x *=  _f1 * F1(_f1 < 0 ? --_f1 : ++_f2) + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2 + F1(_f2--))) + _f2); }" "int F1(int x) { ++_f1; _f2 += x; return x; } int F2() { return ++_f1; } void F3() { --_f2; }")
 
     [<Test>]
     let ``read field`` ([<Range (-1, 1)>] p) =
@@ -149,6 +152,14 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``write field`` ([<Range (-1, 1)>] p) =
         writeField p
+
+    [<Test>]
+    let ``call method without parameters`` ([<Range (0, 1)>] p) =
+        callMethodWithParameter p
+
+    [<Test>]
+    let ``call method with parameter`` ([<Range (-1, 1)>] p) =
+        callMethodWithParameter p
 
     [<Test>]
     let ``read field with ref param`` ([<Range (-1, 1)>] p) =
@@ -253,3 +264,7 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``control flow and side effects 6`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
         controlFlowAndSideEffects6 p1 p2
+
+//    [<Test>]
+//    let ``control flow and side effects 7`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+//        controlFlowAndSideEffects7 p1 p2

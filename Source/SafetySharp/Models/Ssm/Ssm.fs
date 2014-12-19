@@ -50,6 +50,7 @@ module internal Ssm =
 
     /// Represents the type of a variable.
     type internal Type = 
+        | VoidType
         | BoolType
         | IntType
         | DoubleType
@@ -70,6 +71,7 @@ module internal Ssm =
         | VarRefExpr of Var
         | UExpr of UOp * Expr
         | BExpr of Expr * BOp * Expr
+        | CallExpr of string * Type list * Type * Expr list
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
@@ -79,6 +81,7 @@ module internal Ssm =
         | SeqStm of Stm list
         | RetStm of Expr option
         | IfStm of Expr * Stm * Stm option
+        | CallStm of string * Type list * Type * Expr list
 
     type internal Param = {
         Var : Var
@@ -89,7 +92,7 @@ module internal Ssm =
         Name : string
         Params : Param list
         Body : Stm
-        Return : Type option
+        Return : Type
         Locals : Var list
     }
 
@@ -207,6 +210,7 @@ module internal Ssm =
         | BExpr (e1, Le, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Gt, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Ge, e2) when bothAreNonBool e1 e2 -> BoolType
+        | CallExpr (_, _, t, _) -> t
         | _ -> invalidOp "Type deduction failure."
 
     /// Gets all local variables referenced by the given expression.
@@ -220,6 +224,7 @@ module internal Ssm =
         | VarRefExpr _              -> []
         | UExpr (_, e)              -> getLocalsOfExpr e
         | BExpr (e1, _, e2)         -> (getLocalsOfExpr e1) @ (getLocalsOfExpr e2)
+        | CallExpr (_, _, _, e)     -> e |> List.map getLocalsOfExpr |> List.collect id
 
     /// Gets all local variables referenced by the given statement.
     let rec getLocalsOfStm = function
@@ -232,6 +237,7 @@ module internal Ssm =
         | RetStm (Some e)           -> getLocalsOfExpr e
         | IfStm (e, s, None)        -> (getLocalsOfExpr e) @ (getLocalsOfStm s)
         | IfStm (e, s1, Some s2)    -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
+        | CallStm (_, _, _, e)      -> e |> List.map getLocalsOfExpr |> List.collect id
 
     /// Replaces all goto statements in the given method body with structured control flow statements.
     /// If a goto cannot be removed, the method body is invalid.
