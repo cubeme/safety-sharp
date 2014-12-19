@@ -23,6 +23,7 @@
 namespace SafetySharp.Models.Scm
 
 module internal ScmRewriter =
+    open ScmHelpers
 
     type ScmModel = CompDecl //may change, but I hope it does not
 
@@ -64,9 +65,9 @@ module internal ScmRewriter =
             m
 
     let scmRewrite = new ScmRewriter()
+    //TODO: let scmRewriteFixpoint = new ScmRewriteFixpoint. (fixpoint Computation Expression. Repeat something, until fixpoint is reached)
 
 
-    (*
     // here the partial rewrite rules
     let levelUpField : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
@@ -74,17 +75,27 @@ module internal ScmRewriter =
                 // do not modify old tainted state here
                 return! putState state
             else
-                let sourceCompDecl = ScmHelpers.getCompDeclFromPath state.Model state.ComponentToRemove.Value
-                let targetCompDecl = ScmHelpers.getCompDeclFromPath state.Model state.ComponentToRemove.Value
-
-                if sourceCompDecl.Fields.IsEmpty then
+                let childPath = state.ComponentToRemove.Value
+                let parentPath = state.ComponentToRemove.Value.Tail
+                let childCompDecl = state.Model.getDescendantUsingPath childPath
+                let parentCompDecl = state.Model.getDescendantUsingPath parentPath
+                // parent is target, child is source
+                if childCompDecl.Fields.IsEmpty then
                     // do not modify old tainted state here
                     return! putState state
                 else
-                    let modifiedState = state //work to be done is defined here
-                    let targetCompDecl
-                    // if tainted, set tainted true
-                    // else use _old_ tainted state (not false)
+                    let field = childCompDecl.Fields.Head
+                    let newChildCompDecl = childCompDecl.removeField field
+                    let transformedField = field //TODO: ensure unique name. Add forwarder. Add mapping between old and new field
+                    
+                    let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
+                                                          .addField(transformedField)
+                    let newModel = state.Model.replaceDescendant parentPath newParentCompDecl
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.Model = newModel;
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
                     return! putState modifiedState
         }
 
@@ -98,10 +109,7 @@ module internal ScmRewriter =
             scmRewrite {
                 do! levelUpSubcomponent
             }
-        runState s 
-    *)
-
-
+        runState s
 (*
 
 Requirements

@@ -31,10 +31,11 @@ open TestHelpers
 open AstTestHelpers
 open SafetySharp.Internal
 open SafetySharp.Models.Scm
-
+open ScmHelpers
 
 [<TestFixture>]
-type ExampleFiles() =
+type ExtensionMethods () =
+
 
     let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
 
@@ -51,7 +52,7 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         let path = Comp("nested_n22") :: Comp("nested_n2") :: Comp("simple") :: []
-        let subNode = ScmHelpers.getCompDeclFromPath model  path
+        let subNode = model.getDescendantUsingPath path
         subNode.Comp =? Comp("nested_n22")
         ()
           
@@ -61,7 +62,8 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         let path = Comp("nested_n22") :: Comp("nested_n2") :: Comp("simple") :: []
-        let subNode = ScmHelpers.getCompDeclParentFromPath model  path
+        let parentPath = path.Tail
+        let subNode = model.getDescendantUsingPath parentPath
         subNode.Comp =? Comp("nested_n2")
         ()
           
@@ -71,7 +73,7 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         let path = Comp("nested_n2") :: Comp("simple") :: []
-        let subNode = ScmHelpers.getCompDeclFromPath model  path
+        let subNode = model.getDescendantUsingPath path
         subNode.Comp =? Comp("nested_n2")
         ()
                 
@@ -81,7 +83,8 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         let path = Comp("nested_n2") :: Comp("simple") :: []
-        let subNode = ScmHelpers.getCompDeclParentFromPath model  path
+        let parentPath = path.Tail
+        let subNode = model.getDescendantUsingPath  parentPath
         subNode.Comp =? Comp("simple")
         ()
           
@@ -93,11 +96,11 @@ type ExampleFiles() =
         let model = parseSCM input
         let pathTarget = Comp("simple") :: []
         let pathSource = Comp("nested_n2") :: Comp("simple") :: []
-        let nodeSource = ScmHelpers.getCompDeclFromPath model  pathSource
-        let newModel = ScmHelpers.replaceComp model pathTarget nodeSource
+        let nodeSource = model.getDescendantUsingPath  pathSource
+        let newModel = model.replaceDescendant  pathTarget nodeSource
         printf "%+A" newModel
         let newModelPath = Comp("nested_n2") :: []
-        let newModelNode = ScmHelpers.getCompDeclFromPath newModel  newModelPath
+        let newModelNode = newModel.getDescendantUsingPath newModelPath
         newModelNode.Comp =? Comp("nested_n2")
         ()
           
@@ -108,11 +111,11 @@ type ExampleFiles() =
         let model = parseSCM input
         let pathTarget =Comp("nested_n1") :: Comp("simple") :: []
         let pathSource = Comp("nested_n22") :: Comp("nested_n2") :: Comp("simple") :: []
-        let nodeSource = ScmHelpers.getCompDeclFromPath model  pathSource
-        let newModel = ScmHelpers.replaceComp model pathTarget nodeSource
+        let nodeSource = model.getDescendantUsingPath pathSource
+        let newModel = model.replaceDescendant pathTarget nodeSource
         printf "%+A" newModel
         let newModelPath = Comp("nested_n22") :: Comp("simple") :: []
-        let newModelNode = ScmHelpers.getCompDeclFromPath newModel  newModelPath
+        let newModelNode = newModel.getDescendantUsingPath newModelPath
         newModelNode.Comp =? Comp("nested_n22")
         ()
 
@@ -123,11 +126,11 @@ type ExampleFiles() =
         let model = parseSCM input
         let pathTarget = Comp("nested_n12") :: Comp("nested_n1") :: Comp("simple") :: []
         let pathSource = Comp("nested_n2") :: Comp("simple") :: []
-        let nodeSource = ScmHelpers.getCompDeclFromPath model  pathSource
-        let newModel = ScmHelpers.replaceComp model pathTarget nodeSource
+        let nodeSource = model.getDescendantUsingPath pathSource
+        let newModel = model.replaceDescendant pathTarget nodeSource
         printf "%+A" newModel
         let newModelPath = Comp("nested_n22") :: Comp("nested_n2") :: Comp("nested_n1") :: Comp("simple"):: []
-        let newModelNode = ScmHelpers.getCompDeclFromPath newModel  newModelPath
+        let newModelNode = newModel.getDescendantUsingPath newModelPath
         newModelNode.Comp =? Comp("nested_n22")
         ()
           
