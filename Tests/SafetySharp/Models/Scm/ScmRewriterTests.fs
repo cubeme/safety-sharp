@@ -60,6 +60,8 @@ type SingleRewriterTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.ComponentToRemove = Some(pathOfChild);
+                ScmRewriteState.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
+                ScmRewriteState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
                 ScmRewriteState.Tainted = false;
             }
         let (_,resultingState) = ScmRewriter.runState ScmRewriter.levelUpField initialState
@@ -71,4 +73,56 @@ type SingleRewriterTests () =
         newChildNode.Fields.Length =? 0
         newParentNode.Fields.Length =? 2        
         ()
-          
+        
+    [<Test>]
+    member this.``A simple field in a sub component gets leveled up`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested_n2") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.Fields.Length =? 1
+        parentNode.Fields.Length =? 1
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ComponentToRemove = Some(pathOfChild);
+                ScmRewriteState.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
+                ScmRewriteState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                ScmRewriteState.Tainted = false;
+            }
+        let (_,resultingState) = ScmRewriter.runState ScmRewriter.levelUpField initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.Fields.Length =? 0
+        newParentNode.Fields.Length =? 2        
+        ()
+
+    (*
+    [<Test>]
+    member this.``A root component is never selected to be removed`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfRoot = Comp("simple") :: []
+        let rootNode = model.getDescendantUsingPath pathOfRoot
+        rootNode.Fields.Length =? 1
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ComponentToRemove = Some(pathOfRoot);
+                ScmRewriteState.Tainted = false;
+            }
+        let (_,resultingState) = ScmRewriter.runState ScmRewriter.levelUpField initialState
+        let newModel = resultingState.Model
+        let newRootNode = newModel.getDescendantUsingPath pathOfRoot
+        printf "%+A" newModel
+        resultingState.Tainted =? false
+        newRootNode.Fields.Length =? 1     
+        ()
+      *)    

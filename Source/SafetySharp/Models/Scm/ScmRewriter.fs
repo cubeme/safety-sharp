@@ -26,10 +26,14 @@ module internal ScmRewriter =
     open ScmHelpers
 
     type ScmModel = CompDecl //may change, but I hope it does not
-
+    
     type ScmRewriteState = {
         Model : ScmModel;
         ComponentToRemove : (Comp list) option;
+        // Forwarder
+        ArtificialFieldsOldToNew : Map<FieldPath,FieldPath> //Map from old path to new path (TODO: when not necessary, delete)
+        ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> //Map from new path to old path (TODO: when not necessary, delete)
+        // Flag, which determines, if something was changed (needed for fixpoint iteration)
         Tainted : bool;
     }
         with
@@ -37,6 +41,8 @@ module internal ScmRewriter =
                 {
                     ScmRewriteState.Model = scm;
                     ScmRewriteState.ComponentToRemove = None;
+                    ScmRewriteState.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
+                    ScmRewriteState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
                     ScmRewriteState.Tainted = false;
                 }
                 
@@ -50,8 +56,8 @@ module internal ScmRewriter =
 
 
     let runState (ScmRewriteFunction s) a = s a
-    let getState = ScmRewriteFunction (fun s -> (s,s))
-    let putState s = ScmRewriteFunction (fun _ -> ((),s))
+    let getState = ScmRewriteFunction (fun s -> (s,s)) //Called in workflow: (implicitly) gets state (s) from workflow; assign this State s to the let!; and set (in this case keep)State of workflow to s
+    let putState s = ScmRewriteFunction (fun _ -> ((),s)) //Called in workflow: ignore state (_) from workflow; assign nothing () to the let!; and set (in this case keep)State of workflow to the new state s
 
     // the computational expression "scmRewrite" is defined here
     type ScmRewriter() =
@@ -84,16 +90,23 @@ module internal ScmRewriter =
                     // do not modify old tainted state here
                     return! putState state
                 else
-                    let field = childCompDecl.Fields.Head
+                    let fieldDecl = childCompDecl.Fields.Head
+                    let field = fieldDecl.Field
                     let newChildCompDecl = childCompDecl.removeField field
-                    let transformedField = field //TODO: ensure unique name. Add forwarder. Add mapping between old and new field
+                    let transformedField = parentCompDecl.getUnusedFieldName (sprintf "%s_%s" childCompDecl.getName field.getName)
+                    let transformedFieldDecl = 
+                        {fieldDecl with
+                            FieldDecl.Field = transformedField;
+                        }
                     
                     let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
-                                                          .addField(transformedField)
+                                                          .addField(transformedFieldDecl)
                     let newModel = state.Model.replaceDescendant parentPath newParentCompDecl
                     let modifiedState =
                         { state with
                             ScmRewriteState.Model = newModel;
+                            ScmRewriteState.ArtificialFieldsOldToNew = state.ArtificialFieldsOldToNew.Add( (childPath,field), (parentPath,transformedField) );
+                            ScmRewriteState.ArtificialFieldsNewToOld = state.ArtificialFieldsNewToOld.Add( (parentPath,transformedField), (childPath,field) );
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState

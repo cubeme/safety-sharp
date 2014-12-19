@@ -24,8 +24,25 @@ namespace SafetySharp.Models.Scm
 
 module internal ScmHelpers =
 
+    type CompPath = Comp list
+    type FieldPath = CompPath * Field
+    
+    // Extension methods
+    type Field with
+        member field.getName =
+            match field with
+                | Field.Field (name) -> name
+
+    // Extension methods
+    type FieldDecl with
+        member field.getName =
+            field.Field.getName
+    
     // Extension methods
     type CompDecl with
+        member node.getName =
+            match node.Comp with
+                | Comp.Comp (name) -> name
 
         // rev_path = root :: ... :: parent_of_leaf :: leaf
         member node.getDescendantUsingRevPath (rev_path: Comp list) : CompDecl =
@@ -50,15 +67,35 @@ module internal ScmHelpers =
             assert (reverseList.Head = node.Comp)
             node.getDescendantUsingRevPath reverseList.Tail
         *)
-
+        
         member node.removeField (field:FieldDecl) =
             { node with
                 CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field));
+            }
+        member node.removeField (field:Field) =
+            { node with
+                CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field.Field));
             }
         member node.addField (field:FieldDecl) =
             { node with
                 CompDecl.Fields = field::node.Fields
             }
+        member node.getUnusedFieldName (basedOn:string) : Field =
+            let existsName name : bool =
+                node.Fields |> List.exists (fun field -> field.getName = name)
+            let rec inventName numberSuffix : Field =            
+                // If desired name does not exist, get name with the lowest numberSuffix.
+                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
+                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
+                if existsName nameCandidate = false then
+                    Field(nameCandidate)
+                else
+                    inventName (numberSuffix+1)
+            if existsName basedOn = false then
+                Field(basedOn)
+            else
+                inventName 0
+                    
         member node.replaceChild (childToReplace:CompDecl, newChild:CompDecl) =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child=childToReplace then newChild else child));
