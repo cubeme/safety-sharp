@@ -65,6 +65,7 @@
     <Compile Include="Modeling\ModelTests.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Fields.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.SemanticEquality.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Models\Scm\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />

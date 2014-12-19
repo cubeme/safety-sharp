@@ -62,6 +62,7 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
             .AddReferences(MetadataReference.CreateFromAssembly typeof<obj>.Assembly)
             .AddReferences(MetadataReference.CreateFromAssembly typeof<Component>.Assembly)
             .AddReferences(MetadataReference.CreateFromAssembly typeof<System.Linq.Expressions.Expression>.Assembly)
+            .AddReferences(MetadataReference.CreateFromAssembly typeof<TestCompilation>.Assembly)
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithOptimizationLevel OptimizationLevel.Release)
 

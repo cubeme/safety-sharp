@@ -195,18 +195,18 @@ let nothrow func =
         Assert.Fail (message, e.GetType().FullName, ObjectDumper.dump e)
 
 /// Asserts that the two values are equal.
-let (=?) left right =
-    let result = left = right
+let (=?) actual expected =
+    let result = actual = expected
     if not result then
-        let actual = ObjectDumper.dump left
-        let expected = ObjectDumper.dump right
+        let actual = ObjectDumper.dump actual
+        let expected = ObjectDumper.dump expected
         Assert.Fail ("Objects are not equal, even though they are expected to be equal.\n\nExpected:\n{0}\n\nActual:\n{1}", expected, actual)
 
 /// Asserts that the two values are not equal.
-let (<>?) left right =
-    let result = left <> right
+let (<>?) actual expected =
+    let result = actual <> expected
     if not result then
-        Assert.Fail ("Objects are equal, even though they are expected to be different.\n\n{0}", ObjectDumper.dump left)
+        Assert.Fail ("Objects are equal, even though they are expected to be different.\n\n{0}", ObjectDumper.dump expected)
 
 /// Normalizes all new lines to '\n' only.
 let normalizeNewLines (str : string) =

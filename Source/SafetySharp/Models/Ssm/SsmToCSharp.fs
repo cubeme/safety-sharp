@@ -108,7 +108,7 @@ module internal SsmToCSharp =
         writer.Append ")"
         writer.AppendBlockStatement (fun () -> 
             m.Locals |> List.iter (fun var -> varDecl var; writer.AppendLine ";")
-            writer.NewLine ()
+            if not <| List.isEmpty m.Locals then writer.NewLine ()
 
             toCSharp m.Body
         )
