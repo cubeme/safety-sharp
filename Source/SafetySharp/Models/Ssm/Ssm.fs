@@ -213,18 +213,27 @@ module internal Ssm =
         | CallExpr (_, _, t, _) -> t
         | _ -> invalidOp "Type deduction failure."
 
-    /// Gets all local variables referenced by the given expression.
-    let rec getLocalsOfExpr = function
+    /// Gets all variables referenced by the given expression fulfilling the given predicate.
+    let rec private getVarsOfExpr pred expr =
+        match expr with
         | BoolExpr _                -> []
         | IntExpr _                 -> []
         | DoubleExpr _              -> []
-        | VarExpr (Local (l, t))    -> [Local (l, t)]
+        | VarExpr v when pred v     -> [v]
         | VarExpr _                 -> []
-        | VarRefExpr (Local (l, t)) -> [Local (l, t)]
+        | VarRefExpr v when pred v  -> [v]
         | VarRefExpr _              -> []
-        | UExpr (_, e)              -> getLocalsOfExpr e
-        | BExpr (e1, _, e2)         -> (getLocalsOfExpr e1) @ (getLocalsOfExpr e2)
-        | CallExpr (_, _, _, e)     -> e |> List.map getLocalsOfExpr |> List.collect id
+        | UExpr (_, e)              -> getVarsOfExpr pred e
+        | BExpr (e1, _, e2)         -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
+        | CallExpr (_, _, _, e)     -> e |> List.map (getVarsOfExpr pred) |> List.collect id
+
+    /// Gets all local variables referenced by the given expression.
+    let rec getLocalsOfExpr = 
+        getVarsOfExpr (function Local (l, t) -> true | _ -> false)
+
+    /// Gets all field variables referenced by the given expression.
+    let rec getFieldsOfExpr = 
+        getVarsOfExpr (function Field (f, t) -> true | _ -> false)
 
     /// Gets all local variables referenced by the given statement.
     let rec getLocalsOfStm = function

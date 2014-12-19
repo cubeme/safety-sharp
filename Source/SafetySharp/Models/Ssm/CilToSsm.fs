@@ -114,9 +114,10 @@ module internal CilToSsm =
         let argVarPred a = function Arg (a', _) -> a = a' | _ -> false
         let fieldVarPred f = function Field (f', _) -> f = f' | _ -> false
 
+        let argName (a : ParameterDefinition) = if a.Index = -1 then "this" else a.Name
         let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i" l.Index else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
-        let arg (a : ParameterDefinition) = createVar Arg a.Name a.ParameterType
+        let arg (a : ParameterDefinition) = createVar Arg (argName a) a.ParameterType
         let field (f : FieldReference) = createVar Field f.Name f.FieldType
 
         let containsLocal l = checkStack (localVarPred (localName l))
@@ -141,8 +142,8 @@ module internal CilToSsm =
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> replaceWithTempVar pc (Arg (a, t)) e replaceArg s  
         | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType && not (containsField f.Name s) -> (AsgnStm (field f, e), [], s)
         | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> replaceWithTempVar pc (field f) e replaceField s  
-        | (Instr.Starg a, e :: s) when not (containsArg a.Name s) -> (AsgnStm (arg a, e), [], s)
-        | (Instr.Starg a, e :: s) when containsArg a.Name s -> replaceWithTempVar pc (arg a) e replaceArg s  
+        | (Instr.Starg a, e :: s) when not (containsArg (argName a) s) -> (AsgnStm (arg a, e), [], s)
+        | (Instr.Starg a, e :: s) when containsArg (argName a) s -> replaceWithTempVar pc (arg a) e replaceArg s  
         | (Instr.Stloc l, e :: s) when not (containsLocal l s) -> (AsgnStm (local l, e), [], s)
         | (Instr.Stloc l, e :: s) when containsLocal l s -> replaceWithTempVar pc (local l) e replaceLocal s         
         | (Instr.Call m, s) when List.length s >= m.Parameters.Count + 1 ->
@@ -152,10 +153,20 @@ module internal CilToSsm =
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
             let s = s |> Seq.skip (argCount + 1) |> Seq.toList
 
+            // Save the current value of all fields that are currently on the stack; the function that is being 
+            // called might change the values of those fields
+            let fields = s |> List.map Ssm.getFieldsOfExpr |> List.collect id |> Seq.distinct
+            let (idx, vars, stack) = 
+                fields |> Seq.fold (fun (idx, vars, s) field ->
+                    let tmp = freshLocal pc idx (Ssm.getVarType field)
+                    (idx + 1, (AsgnStm (tmp, VarExpr field)) :: vars, replaceField (Ssm.getVarName field) tmp s)
+                ) (0, [], s)
+
             if returnType = VoidType then
-                (CallStm (m.Name, paramTypes, returnType, args), [], s)
+                (CallStm (m.Name, paramTypes, returnType, args), vars, stack)
             else
-                (NopStm, [], (CallExpr (m.Name, paramTypes, returnType, args)) :: s)
+                let tmp = freshLocal pc idx returnType
+                (NopStm, vars @ [AsgnStm (tmp, CallExpr (m.Name, paramTypes, returnType, args))], (VarExpr tmp) :: stack)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)

@@ -114,8 +114,8 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M"
                 Return = VoidType
                 Params = []
-                Locals = []
-                Body = SeqStm [CallStm ("F", [IntType], IntType, [IntExpr 4]); RetStm None]                    
+                Locals = [tmp 2 0 IntType]
+                Body = SeqStm [AsgnStm (tmp 2 0 IntType, CallExpr ("F", [IntType], IntType, [IntExpr 4])); RetStm None]                    
             }
 
     [<Test>]
@@ -125,12 +125,12 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M"
                 Return = VoidType
                 Params = [ { Var = arg "b" BoolType; InOut = false } ]
-                Locals = []
+                Locals = [tmp 9 0 IntType; tmp 4 0 IntType]
                 Body = 
                     IfStm (
                         UExpr (Not, VarExpr (arg "b" BoolType)),
-                        SeqStm [CallStm ("F", [IntType], IntType, [IntExpr 1]); RetStm None],
-                        SeqStm [CallStm ("F", [IntType], IntType, [IntExpr 4]); RetStm None] |> Some
+                        SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr ("F", [IntType], IntType, [IntExpr 1])); RetStm None],
+                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr ("F", [IntType], IntType, [IntExpr 4])); RetStm None] |> Some
                     )
             }
 
@@ -160,8 +160,12 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M"
                 Return = IntType
                 Params = [ { Var = arg "a" IntType; InOut = false }; { Var = arg "b" BoolType; InOut = false } ]
-                Locals = []
-                Body = RetStm (Some (CallExpr ("F", [IntType; BoolType; BoolType], IntType, [IntExpr 1; BoolExpr false; BoolExpr true])))
+                Locals = [tmp 4 0 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 4 0 IntType, CallExpr ("F", [IntType; BoolType; BoolType], IntType, [IntExpr 1; BoolExpr false; BoolExpr true]))
+                        RetStm (Some (VarExpr (tmp 4 0 IntType)))
+                    ]
             }
 
     [<Test>]
@@ -306,13 +310,22 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M" 
                 Params = [ { Var = arg "x" IntType; InOut = false } ]
                 Body = 
-                    IfStm (
-                        CallExpr ("F1", [BoolType], BoolType, [BoolExpr false]),
-                        RetStm (Some (CallExpr ("F2", [BoolType], IntType, [BoolExpr false]))),
-                        RetStm (Some (CallExpr ("F3", [IntType], IntType, [IntExpr 2]))) |> Some
-                    )
+                    SeqStm [
+                        AsgnStm (tmp 2 0 BoolType, CallExpr ("F1", [BoolType], BoolType, [BoolExpr false]))
+                        IfStm (
+                            VarExpr (tmp 2 0 BoolType),
+                            SeqStm [
+                                AsgnStm (tmp 10 0 IntType, CallExpr ("F2", [BoolType], IntType, [BoolExpr false]))
+                                RetStm (Some (VarExpr (tmp 10 0 IntType)))
+                            ],
+                            SeqStm [
+                                AsgnStm (tmp 6 0 IntType, CallExpr ("F3", [IntType], IntType, [IntExpr 2]))
+                                RetStm (Some (VarExpr (tmp 6 0 IntType)))
+                            ] |> Some
+                        )
+                    ]
                 Return = IntType
-                Locals = []
+                Locals = [tmp 2 0 BoolType; tmp 10 0 IntType; tmp 6 0 IntType]
             }
 
     [<Test>]
@@ -322,17 +335,23 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M" 
                 Params = [ { Var = arg "x" IntType; InOut = false } ]
                 Body = 
-                    IfStm (
-                        CallExpr ("F1", [BoolType], BoolType, [BoolExpr false]),
-                        RetStm (Some (IntExpr 1)),
+                    SeqStm [
+                        AsgnStm (tmp 2 0 BoolType, CallExpr ("F1", [BoolType], BoolType, [BoolExpr false]))
                         IfStm (
-                            UExpr (Not, CallExpr ("F2", [IntType], BoolType, [IntExpr 1])),
-                            RetStm (Some (IntExpr -1)),
-                            RetStm (Some (IntExpr 1)) |> Some
-                        ) |> Some
-                    )
+                            VarExpr (tmp 2 0 BoolType),
+                            RetStm (Some (IntExpr 1)),
+                            SeqStm [
+                                AsgnStm (tmp 6 0 BoolType, CallExpr ("F2", [IntType], BoolType, [IntExpr 1]))
+                                IfStm (
+                                    UExpr (Not, VarExpr (tmp 6 0 BoolType)),
+                                    RetStm (Some (IntExpr -1)),
+                                    RetStm (Some (IntExpr 1)) |> Some
+                                )
+                            ] |> Some
+                        )
+                    ]
                 Return = IntType
-                Locals = []
+                Locals = [tmp 2 0 BoolType; tmp 6 0 BoolType]
             }
 
     [<Test>]

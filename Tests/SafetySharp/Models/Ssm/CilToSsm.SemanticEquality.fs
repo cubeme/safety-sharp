@@ -117,6 +117,7 @@ module ``CilToSsm Method Semantic Equality`` =
     let writeField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; return _f; }" "")
     let callMethodWithoutParameters = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { F(); return _f + x; }" "void F() { _f = 3; }")
     let callMethodWithParameter = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x + 2; return F(x); }" "int F(int x) { return x + _f; }")
+    let callMethodHandleFieldAssignment = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f += _f > 0 ? F(2) : F(1); return _f; }" "int F(int x) { return x + (_f += 1); }")
     let readFieldWithRefParam = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { x = _f; return x; }" "")
     let writeFieldWithRefParam = OneRefParam<int, int>.Test (compile "OneRefParam<int, int>" "int M(ref int x) { _f = x; return _f; }" "")
     let fieldAccessWithSideEffects1 = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { x += _f + ((x = _f = ++_f) > 0 ? ++_f : ((_f += _f) + _f)); return x; }" "")
@@ -143,7 +144,8 @@ module ``CilToSsm Method Semantic Equality`` =
     let controlFlowAndSideEffects4 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 && arg3; var loc3 = arg4 && !loc2 && loc1; var loc4 = arg4 && loc2 && loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }" "")
     let controlFlowAndSideEffects5 = FourValParams<int, bool, bool, bool, int>.Test (compile "FourValParams<int, bool, bool, bool, int>" "int M(int arg1, bool arg2, bool arg3, bool arg4) { var loc0 = 0; if (arg1 > 0) loc0 += arg1; var loc1 = loc0 != 0; var loc2 = !arg2 & arg3; var loc3 = arg4 & !loc2 & loc1; var loc4 = arg4 & loc2 & loc1; if (loc3) --loc0; if (loc4) --loc0; return loc0; }" "")
     let controlFlowAndSideEffects6 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += _f1 = x) > y || --y == 0) x++; else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - --_f2) --y; } else x -= 1; return x *=  _f1 + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2)) + _f2); }" "")
-//    let controlFlowAndSideEffects7 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { F3(); if ((x += _f1 = x) > y || --y == 0) { F3(); x++; } else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - (_f2 = (--_f2 + F1(_f2)))) --y; } else x -= 1; return x *=  _f1 * F1(_f1 < 0 ? --_f1 : ++_f2) + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2 + F1(_f2--))) + _f2); }" "int F1(int x) { ++_f1; _f2 += x; return x; } int F2() { return ++_f1; } void F3() { --_f2; }")
+    let controlFlowAndSideEffects7 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return _f1 += F1(_f2--); }" "int F1(int x) { ++_f1; _f2 += x; return x; } int F2() { return ++_f1; } void F3() { --_f2; }")
+    let controlFlowAndSideEffects8 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { F3(); if ((x += _f1 = x) > y || --y == 0) { F3(); x++; } else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - (_f2 = (--_f2 + F1(_f2)))) --y; } else x -= 1; return x *=  _f1 * F1(_f1 < 0 ? --_f1 : ++_f2) + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2 + F1(_f2--))) + _f2); }" "int F1(int x) { ++_f1; _f2 += x; return x; } int F2() { return ++_f1; } void F3() { --_f2; }")
 
     [<Test>]
     let ``read field`` ([<Range (-1, 1)>] p) =
@@ -160,6 +162,10 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``call method with parameter`` ([<Range (-1, 1)>] p) =
         callMethodWithParameter p
+
+    [<Test>]
+    let ``call method and handle field assignment during method`` ([<Range (-1, 1)>] p) =
+        callMethodHandleFieldAssignment p
 
     [<Test>]
     let ``read field with ref param`` ([<Range (-1, 1)>] p) =
@@ -265,6 +271,10 @@ module ``CilToSsm Method Semantic Equality`` =
     let ``control flow and side effects 6`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
         controlFlowAndSideEffects6 p1 p2
 
-//    [<Test>]
-//    let ``control flow and side effects 7`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
-//        controlFlowAndSideEffects7 p1 p2
+    [<Test>]
+    let ``control flow and side effects 7`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        controlFlowAndSideEffects7 p1 p2
+
+    [<Test>]
+    let ``control flow and side effects 8`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        controlFlowAndSideEffects8 p1 p2
