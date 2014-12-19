@@ -24,53 +24,60 @@ namespace SafetySharp.Models.Scm
 
 module internal ScmHelpers =
 
-    // path = leaf :: parent_of_leaf :: ... :: root
-    let getCompDeclFromPath (model:CompDecl) (path: Comp list) : CompDecl =
-        let rec getCompDeclFromRevPath (current_component:CompDecl) (rev_path: Comp list) : CompDecl =
+    // Extension methods
+    type CompDecl with
+
+        // rev_path = root :: ... :: parent_of_leaf :: leaf
+        member node.getDescendantUsingRevPath (rev_path: Comp list) : CompDecl =
             if rev_path.IsEmpty then
-                current_component
+                node
             else
                 let subComponent =
-                    current_component.Subs |> List.find (fun elem -> elem.Comp = rev_path.Head)
-                getCompDeclFromRevPath subComponent rev_path.Tail
-        let reverseList = List.rev path
-        assert (reverseList.Head = model.Comp)
-        getCompDeclFromRevPath model reverseList.Tail
+                    node.Subs |> List.find (fun elem -> elem.Comp = rev_path.Head)
+                subComponent.getDescendantUsingRevPath rev_path.Tail
+    
+        // path = leaf :: parent_of_leaf :: ... :: root
+        member node.getDescendantUsingPath (path: Comp list) : CompDecl =
+            let reverseList = List.rev path
+            assert (reverseList.Head = node.Comp)
+            node.getDescendantUsingRevPath reverseList.Tail
+        
+        (*
+        member node.getParentOfDescendantUsingPath (path: Comp list) : CompDecl =
+            // minimal path size is 2
+            let listWithoutChild = path.Tail
+            let reverseList = List.rev listWithoutChild
+            assert (reverseList.Head = node.Comp)
+            node.getDescendantUsingRevPath reverseList.Tail
+        *)
 
-    let getCompDeclParentFromPath (model:CompDecl) (path: Comp list) : CompDecl =
-        // minimal path size is 2
-        let rec getCompDeclFromRevPath (current_component:CompDecl) (rev_path: Comp list) : CompDecl =
-            if rev_path.IsEmpty then
-                current_component
+        member node.removeField (field:FieldDecl) =
+            { node with
+                CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field));
+            }
+        member node.addField (field:FieldDecl) =
+            { node with
+                CompDecl.Fields = field::node.Fields
+            }
+        member node.replaceChild (childToReplace:CompDecl, newChild:CompDecl) =
+            { node with
+                CompDecl.Subs = (node.Subs |> List.map (fun child -> if child=childToReplace then newChild else child));
+            }
+        member node.replaceChild (childToReplace:Comp, newChild:CompDecl) =
+            { node with
+                CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
+            }
+        
+        // Complete model        
+        member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
+            if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
+                //root should be replaced
+                newComponent
             else
-                let subComponent =
-                    current_component.Subs |> List.find (fun elem -> elem.Comp = rev_path.Head)
-                getCompDeclFromRevPath subComponent rev_path.Tail
-        let listWithoutChild = path.Tail
-        let reverseList = List.rev listWithoutChild
-        assert (reverseList.Head = model.Comp)
-        getCompDeclFromRevPath model reverseList.Tail
-
-    let rec replaceComp (model:CompDecl) (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
-        if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
-            //root should be replaced
-            newComponent
-        else
-            //parent: We get the parent, where we correct the old node with the new node
-            let parentNode = getCompDeclParentFromPath model pathToReplace
-            let nodeToReplace = pathToReplace.Head
-            let replaceSubNode (element:CompDecl) =
-                if element.Comp = pathToReplace.Head then
-                    newComponent
-                else
-                    element
-            let newSubs = parentNode.Subs |> List.map replaceSubNode
-            let newParent =
-                { parentNode with
-                    CompDecl.Subs = newSubs;
-                }
-            // recursively replace parent
-            replaceComp model pathToReplace.Tail newParent
-
-
-
+                //parent: We get the parent, where we correct the old node with the new node
+                let parentPath = pathToReplace.Tail
+                let parentNode = model.getDescendantUsingPath parentPath
+                let nodeToReplace = pathToReplace.Head
+                let newParent = parentNode.replaceChild(nodeToReplace,newComponent)
+                // recursively replace parent
+                model.replaceDescendant pathToReplace.Tail newParent
