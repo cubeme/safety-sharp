@@ -27,12 +27,32 @@ module internal ScmRewriter =
 
     type ScmModel = CompDecl //may change, but I hope it does not
     
-    type ScmRewriteState = {
-        Model : ScmModel;
-        ComponentToRemove : (Comp list) option;
+    type ScmRewriterCurrentSelection = {
+        ComponentPath : CompPath;
+        ParentPath : CompPath;
+        CompDecl : CompDecl;
+        ParentCompDecl : CompDecl;
         // Forwarder
         ArtificialFieldsOldToNew : Map<FieldPath,FieldPath> //Map from old path to new path (TODO: when not necessary, delete)
         ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> //Map from new path to old path (TODO: when not necessary, delete)
+    }
+        with
+            static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
+                {
+                    ScmRewriterCurrentSelection.ComponentPath = path;
+                    ScmRewriterCurrentSelection.ParentPath = path.Tail;
+                    ScmRewriterCurrentSelection.CompDecl = model.getDescendantUsingPath path;
+                    ScmRewriterCurrentSelection.ParentCompDecl = model.getDescendantUsingPath path.Tail;
+                    ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
+                    ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                }
+
+
+    type ScmRewriteState = {
+        Model : ScmModel;
+        ChangedSubcomponents : ScmRewriterCurrentSelection option;
+        // TODO: Optimization: Add parent of ComponentToRemove here. Thus, when a change to the componentToRemove is done, only its parent needs to be updated and not the whole model.
+        //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
         Tainted : bool;
     }
@@ -40,9 +60,7 @@ module internal ScmRewriter =
             static member initial (scm:ScmModel) = 
                 {
                     ScmRewriteState.Model = scm;
-                    ScmRewriteState.ComponentToRemove = None;
-                    ScmRewriteState.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
-                    ScmRewriteState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                    ScmRewriteState.ChangedSubcomponents = None;
                     ScmRewriteState.Tainted = false;
                 }
                 
@@ -74,17 +92,52 @@ module internal ScmRewriter =
     let scmRewriteFixpoint = new ScmRewriter() //new ScmRewriteFixpoint. (fixpoint Computation Expression. Repeat something, until fixpoint is reached)
 
 
-    // here the partial rewrite rules
+    // here the partial rewrite rules        
+    let selectSubComponent : ScmRewriteFunction<unit> = scmRewrite {
+            let! state = getState
+            if (state.ChangedSubcomponents.IsSome) then
+                // do not modify old tainted state here
+                return ()
+            else
+                if state.Model.Subs = [] then
+                // nothing to do, we are done
+                    return ()
+                else
+                    // find component with no subcomponent, which is not the root. there must exist at least one
+                    let rec findLeaf (parentPath:CompPath) (node:CompDecl) : CompPath =
+                        let nodePath = node.Comp::parentPath
+                        if node.Subs=[] then
+                            nodePath
+                        else
+                            let firstChild = node.Subs.Head
+                            findLeaf nodePath firstChild
+                    let leaf = findLeaf ([]) (state.Model)
+                    let componentToRemove = {
+                        ScmRewriterCurrentSelection.ComponentPath = leaf;
+                        ScmRewriterCurrentSelection.ParentPath = leaf.Tail;
+                        ScmRewriterCurrentSelection.CompDecl = state.Model.getDescendantUsingPath leaf;
+                        ScmRewriterCurrentSelection.ParentCompDecl = state.Model.getDescendantUsingPath leaf.Tail;
+                        ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
+                        ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                    }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(componentToRemove);                        
+                        }
+                    return! putState modifiedState
+        }
+
     let levelUpField : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ComponentToRemove.IsNone) then
+            if (state.ChangedSubcomponents.IsNone) then
                 // do not modify old tainted state here
-                return! putState state
+                return! putState state // (alternative is to "return ()"
             else
-                let childPath = state.ComponentToRemove.Value
-                let parentPath = state.ComponentToRemove.Value.Tail
-                let childCompDecl = state.Model.getDescendantUsingPath childPath
-                let parentCompDecl = state.Model.getDescendantUsingPath parentPath
+                let componentToRemove = state.ChangedSubcomponents.Value
+                let childPath = componentToRemove.ComponentPath
+                let parentPath = componentToRemove.ParentPath
+                let childCompDecl = componentToRemove.CompDecl
+                let parentCompDecl = componentToRemove.ParentCompDecl
                 // parent is target, child is source
                 if childCompDecl.Fields.IsEmpty then
                     // do not modify old tainted state here
@@ -100,19 +153,19 @@ module internal ScmRewriter =
                         }                    
                     let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
                                                           .addField(transformedFieldDecl)
-                    let newModel = state.Model.replaceDescendant parentPath newParentCompDecl
+                    let newChangedSubcomponents =
+                        { componentToRemove with
+                            ScmRewriterCurrentSelection.CompDecl = newChildCompDecl;
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = componentToRemove.ArtificialFieldsOldToNew.Add( (childPath,field), (parentPath,transformedField) );
+                            ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = componentToRemove.ArtificialFieldsNewToOld.Add( (parentPath,transformedField), (childPath,field) );
+                        }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.Model = newModel;
-                            ScmRewriteState.ArtificialFieldsOldToNew = state.ArtificialFieldsOldToNew.Add( (childPath,field), (parentPath,transformedField) );
-                            ScmRewriteState.ArtificialFieldsNewToOld = state.ArtificialFieldsNewToOld.Add( (parentPath,transformedField), (childPath,field) );
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
-        }
-        
-    let selectSubComponent : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
         }
     let levelUpFault : ScmRewriteFunction<unit> = scmRewrite {
             return ()
@@ -143,8 +196,23 @@ module internal ScmRewriter =
         }
     let removeSubComponent : ScmRewriteFunction<unit> = scmRewrite {
             return ()
+        }        
+    let writeBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let changedSubcomponents = state.ChangedSubcomponents.Value
+                let newModel = state.Model.replaceDescendant changedSubcomponents.ParentPath changedSubcomponents.ParentCompDecl
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.Model = newModel;
+                        //ScmRewriteState.ChangedSubcomponents = None; ///???
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
         }
-        
     let assertNoSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
             return ()
         }
@@ -152,13 +220,11 @@ module internal ScmRewriter =
     let inlineMainStep : ScmRewriteFunction<unit> = scmRewrite {
             return ()
         }
-
-
     let levelUpSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
             // idea: first level up every item of a component,
             //       then rewrite every code accessing to some specific element of it
             do! selectSubComponent
-            do! scmRewriteFixpoint {do! levelUpField}
+            do! scmRewriteFixpoint {do! levelUpField} //Invariant: Imagine ChangedSubcomponents are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
             do! scmRewriteFixpoint {do! levelUpFault}
             do! scmRewriteFixpoint {do! convertStepToPort}
             do! scmRewriteFixpoint {do! levelUpReqPort}
@@ -168,6 +234,7 @@ module internal ScmRewriter =
             do! scmRewriteFixpoint {do! rewriteProvPort}
             do! assertSubcomponentEmpty
             do! removeSubComponent
+            do! writeBackChangesIntoModel
         }
 
     // here the workflow, which defines a globalglobal rewrite rule, whic
