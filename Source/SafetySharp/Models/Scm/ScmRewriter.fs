@@ -280,9 +280,126 @@ module internal ScmRewriter =
                         }
                     return! putState modifiedState
         }
-    let levelUpAndRewriteBinding : ScmRewriteFunction<unit> = scmRewrite {
+       
+    let levelUpAndRewriteBindingDeclaredInChild : ScmRewriteFunction<unit> = scmRewrite {
+            // Cases: (view from parent, where sub1 is selected)                    
+            //   Declared in parent (done in rule rewriteBindingDeclaredInParent)
+            //    - x      -> x      (nothing to do)
+            //    - x      -> sub1.x (target)
+            //    - x      -> sub2.x (nothing to do)
+            //    - sub1.x -> x      (source)
+            //    - sub1.x -> sub1.x (source and target)
+            //    - sub1.x -> sub2.x (source)
+            //    - sub2.x -> x      (nothing to do)
+            //    - sub2.x -> sub1.x (target)
+            //    - sub2.x -> sub2.x (nothing to do)
+            //   Declared in child (done here)
+            //    - sub1.x -> sub1.x (source and target)
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                // parent is target, child is source
+                if infos.ChildCompDecl.Bindings.IsEmpty then
+                    // do not modify old tainted state here
+                    return! putState state
+                else
+                    let bindingDecl = infos.ChildCompDecl.Bindings.Head
+                    assert (bindingDecl.Source.Comp = None) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding from a subcomponent
+                    assert (bindingDecl.Target.Comp = None) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding to a subcomponent
+                    let newChildCompDecl = infos.ChildCompDecl.removeBinding bindingDecl
+                    let newTarget =
+                        let (path,newReqPort) = infos.ArtificialReqPortOldToNew.Item (infos.ChildPath,bindingDecl.Target.ReqPort)
+                        assert (path=infos.ParentPath)
+                        {
+                            BndTarget.Comp = None;
+                            BndTarget.ReqPort = newReqPort;
+                        }
+                    let newSource =
+                        let (path,newProvPort) = infos.ArtificialProvPortOldToNew.Item (infos.ChildPath,bindingDecl.Source.ProvPort)
+                        assert (path=infos.ParentPath)
+                        {
+                            BndSrc.Comp = None;
+                            BndSrc.ProvPort = newProvPort;
+                        }                    
+                    let transformedBinding = 
+                        {
+                            BndDecl.Target = newTarget;
+                            BndDecl.Source = newSource;
+                            BndDecl.Kind = bindingDecl.Kind;
+                        }                    
+                    
+                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
+                                                                .addBinding(transformedBinding)
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
+        }
+       
+    let rewriteBindingDeclaredInParent : ScmRewriteFunction<unit> = scmRewrite {
+            (*
+            // Cases: (view from parent, where sub1 is selected)                    
+            //   Declared in parent (done here)
+            //    - x      -> x      (nothing to do)
+            //    - x      -> sub1.x (target)
+            //    - x      -> sub2.x (nothing to do)
+            //    - sub1.x -> x      (source)
+            //    - sub1.x -> sub1.x (source and target)
+            //    - sub1.x -> sub2.x (source)
+            //    - sub2.x -> x      (nothing to do)
+            //    - sub2.x -> sub1.x (target)
+            //    - sub2.x -> sub2.x (nothing to do)
+            //   Declared in child (done in rule levelUpAndRewriteBindingDeclaredInChild)
+            //    - sub1.x -> sub1.x (source and target)
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                // parent is target, child is source
+                if infos.ChildCompDecl.Bindings.IsEmpty then
+                    // do not modify old tainted state here
+                    return! putState state
+                else
+
+
+
+                    let provPortDecl = infos.ChildCompDecl.ProvPorts.Head
+                    let provPort = provPortDecl.ProvPort
+                    let newChildCompDecl = infos.ChildCompDecl.removeProvPort provPort
+                    let transformedProvPort = infos.ParentCompDecl.getUnusedProvPortName (sprintf "%s_%s" infos.ChildCompDecl.getName provPort.getName)
+                    let transformedProvPortDecl = 
+                        {provPortDecl with
+                            ProvPortDecl.ProvPort = transformedProvPort;
+                        }                    
+                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
+                                                                .addProvPort(transformedProvPortDecl)
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
+            *)
             return ()
         }
+
     let convertStepToPort : ScmRewriteFunction<unit> = scmRewrite {
             // replace step to required port and provided port and binding, add a link from subcomponent path to new required port
             // TODO: rewrite names in faultExpression?!?
@@ -342,7 +459,8 @@ module internal ScmRewriter =
             do! scmRewriteFixpoint {do! convertStepToPort}
             do! scmRewriteFixpoint {do! levelUpReqPort}
             do! scmRewriteFixpoint {do! levelUpProvPort}
-            do! scmRewriteFixpoint {do! levelUpAndRewriteBinding}
+            do! scmRewriteFixpoint {do! levelUpAndRewriteBindingDeclaredInChild}
+            do! scmRewriteFixpoint {do! rewriteBindingDeclaredInParent}
             do! scmRewriteFixpoint {do! rewriteParentStep}
             do! scmRewriteFixpoint {do! rewriteProvPort}
             do! scmRewriteFixpoint {do! rewriteFaults}

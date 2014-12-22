@@ -64,8 +64,8 @@ type SingleRewriterTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            let! step1 = ScmRewriter.levelUpField
-            let! step2 = ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpField
+            do! ScmRewriter.writeBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -97,8 +97,8 @@ type SingleRewriterTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            let! step1 = ScmRewriter.levelUpField
-            let! step2 = ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpField
+            do! ScmRewriter.writeBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -131,8 +131,8 @@ type SingleRewriterTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            let! step1 = ScmRewriter.levelUpField
-            let! step2 = ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpFault
+            do! ScmRewriter.writeBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -165,8 +165,8 @@ type SingleRewriterTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            let! step1 = ScmRewriter.levelUpReqPort
-            let! step2 = ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpReqPort
+            do! ScmRewriter.writeBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -199,8 +199,8 @@ type SingleRewriterTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            let! step1 = ScmRewriter.levelUpProvPort
-            let! step2 = ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpProvPort
+            do! ScmRewriter.writeBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -211,4 +211,50 @@ type SingleRewriterTests () =
         resultingState.Tainted =? true
         newChildNode.ProvPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 1     
+        ()
+        
+    [<Test>]
+    member this.``A binding in a sub component gets leveled up and rewritten`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+
+        let inputFile = """../../Examples/SCM/callInstHierarchy6.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 1
+        childNode.Bindings.Length =? 1
+        parentNode.ReqPorts.Length =? 0
+        parentNode.ProvPorts.Length =? 0
+        parentNode.Bindings.Length =? 0
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! ScmRewriter.levelUpReqPort
+            do! ScmRewriter.levelUpProvPort
+            do! ScmRewriter.levelUpAndRewriteBindingDeclaredInChild
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newParentNode.ReqPorts.Length =? 1
+        newParentNode.ProvPorts.Length =? 1
+        newParentNode.Bindings.Length =? 1     
         ()

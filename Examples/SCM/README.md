@@ -52,6 +52,7 @@
 * callInstHierarchy3.scm: tests hierarchical case: parent(RequiredPortComponent) = ProvidedPortComponent). Binding declared in ProvidedPortComponent
 * callInstHierarchy4.scm: tests hierarchical case: RequiredPortComponent = parent(ProvidedPortComponent). Binding declared in RequiredPortComponent
 * callInstHierarchy5.scm: tests hierarchical case: parent(RequiredPortComponent) = parent(ProvidedPortComponent; RequiredPortComponent!=ProvidedPortComponent). Binding declared in common parent
+* callInstHierarchy6.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in subcomponent
 
 
 ## (call)-Tests (delayed)
