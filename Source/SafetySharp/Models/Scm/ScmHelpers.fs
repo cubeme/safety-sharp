@@ -26,6 +26,7 @@ module internal ScmHelpers =
 
     type CompPath = Comp list
     type FieldPath = CompPath * Field
+    type FaultPath = CompPath * Fault
     type ReqPortPath = CompPath * ReqPort
     type ProvPortPath = CompPath * ProvPort
     
