@@ -26,7 +26,19 @@ module internal ScmHelpers =
 
     type CompPath = Comp list
     type FieldPath = CompPath * Field
+    type ReqPortPath = CompPath * ReqPort
     
+    // Extension methods
+    type Var with
+        member var.getName =
+            match var with
+                | Var.Var (name) -> name
+
+    // Extension methods
+    type VarDecl with
+        member var.getName =
+            var.Var.getName
+
     // Extension methods
     type Field with
         member field.getName =
@@ -37,12 +49,50 @@ module internal ScmHelpers =
     type FieldDecl with
         member field.getName =
             field.Field.getName
-    
+        
+    // Extension methods
+    type ReqPort with
+        member reqPort.getName =
+            match reqPort with
+                | ReqPort.ReqPort (name) -> name
+
+    // Extension methods
+    type ReqPortDecl with
+        member reqPort.getName =
+            reqPort.ReqPort.getName
+            
+    // Extension methods
+    type ProvPort with
+        member provPort.getName =
+            match provPort with
+                | ProvPort.ProvPort (name) -> name
+
+    // Extension methods
+    type ProvPortDecl with
+        member provPort.getName =
+            provPort.ProvPort.getName
+            
+    // Extension methods
+    type Fault with
+        member fault.getName =
+            match fault with
+                | Fault.Fault (name) -> name
+
+    // Extension methods
+    type FaultDecl with
+        member fault.getName =
+            fault.Fault.getName
+            
+    // Extension methods
+    type Comp with
+        member comp.getName =
+            match comp with
+                | Comp.Comp (name) -> name
+                
     // Extension methods
     type CompDecl with
         member node.getName =
-            match node.Comp with
-                | Comp.Comp (name) -> name
+            node.Comp.getName
 
         // rev_path = root :: ... :: parent_of_leaf :: leaf
         member node.getDescendantUsingRevPath (rev_path: Comp list) : CompDecl =
@@ -67,11 +117,12 @@ module internal ScmHelpers =
             assert (reverseList.Head = node.Comp)
             node.getDescendantUsingRevPath reverseList.Tail
         *)
-        
+        (*
         member node.removeField (field:FieldDecl) =
             { node with
                 CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field));
             }
+        *)
         member node.removeField (field:Field) =
             { node with
                 CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field.Field));
@@ -93,6 +144,30 @@ module internal ScmHelpers =
                     inventName (numberSuffix+1)
             if existsName basedOn = false then
                 Field(basedOn)
+            else
+                inventName 0
+                
+        member node.removeReqPort (reqPort:ReqPort) =
+            { node with
+                CompDecl.ReqPorts = (node.ReqPorts |> List.filter (fun _reqPort -> reqPort<>_reqPort.ReqPort));
+            }
+        member node.addReqPort (reqPort:ReqPortDecl) =
+            { node with
+                CompDecl.ReqPorts = reqPort::node.ReqPorts
+            }
+        member node.getUnusedReqPortName (basedOn:string) : ReqPort =
+            let existsName name : bool =
+                node.ReqPorts |> List.exists (fun reqPort -> reqPort.getName = name)
+            let rec inventName numberSuffix : ReqPort =            
+                // If desired name does not exist, get name with the lowest numberSuffix.
+                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
+                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
+                if existsName nameCandidate = false then
+                    ReqPort(nameCandidate)
+                else
+                    inventName (numberSuffix+1)
+            if existsName basedOn = false then
+                ReqPort(basedOn)
             else
                 inventName 0
                     

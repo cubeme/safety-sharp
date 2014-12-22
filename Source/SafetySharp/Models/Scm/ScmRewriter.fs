@@ -28,23 +28,28 @@ module internal ScmRewriter =
     type ScmModel = CompDecl //may change, but I hope it does not
     
     type ScmRewriterCurrentSelection = {
-        ComponentPath : CompPath;
+        ChildPath : CompPath;
         ParentPath : CompPath;
-        CompDecl : CompDecl;
+        ChildCompDecl : CompDecl;
         ParentCompDecl : CompDecl;
         // Forwarder
         ArtificialFieldsOldToNew : Map<FieldPath,FieldPath> //Map from old path to new path (TODO: when not necessary, delete)
         ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> //Map from new path to old path (TODO: when not necessary, delete)
+
+        ArtificialReqPortOldToNew : Map<ReqPortPath,ReqPortPath> //Map from old path to new path (TODO: when not necessary, delete)
+        ArtificialReqPortNewToOld : Map<ReqPortPath,ReqPortPath> //Map from new path to old path (TODO: when not necessary, delete)
     }
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
                 {
-                    ScmRewriterCurrentSelection.ComponentPath = path;
+                    ScmRewriterCurrentSelection.ChildPath = path;
                     ScmRewriterCurrentSelection.ParentPath = path.Tail;
-                    ScmRewriterCurrentSelection.CompDecl = model.getDescendantUsingPath path;
+                    ScmRewriterCurrentSelection.ChildCompDecl = model.getDescendantUsingPath path;
                     ScmRewriterCurrentSelection.ParentCompDecl = model.getDescendantUsingPath path.Tail;
                     ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
                     ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                    ScmRewriterCurrentSelection.ArtificialReqPortOldToNew = Map.empty<ReqPortPath,ReqPortPath>;
+                    ScmRewriterCurrentSelection.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
                 }
 
 
@@ -112,17 +117,10 @@ module internal ScmRewriter =
                             let firstChild = node.Subs.Head
                             findLeaf nodePath firstChild
                     let leaf = findLeaf ([]) (state.Model)
-                    let componentToRemove = {
-                        ScmRewriterCurrentSelection.ComponentPath = leaf;
-                        ScmRewriterCurrentSelection.ParentPath = leaf.Tail;
-                        ScmRewriterCurrentSelection.CompDecl = state.Model.getDescendantUsingPath leaf;
-                        ScmRewriterCurrentSelection.ParentCompDecl = state.Model.getDescendantUsingPath leaf.Tail;
-                        ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = Map.empty<FieldPath,FieldPath>;
-                        ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
-                    }
+                    let selectedComponent = ScmRewriterCurrentSelection.createEmptyFromPath state.Model leaf
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(componentToRemove);                        
+                            ScmRewriteState.ChangedSubcomponents = Some(selectedComponent);       
                         }
                     return! putState modifiedState
         }
@@ -133,32 +131,28 @@ module internal ScmRewriter =
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let componentToRemove = state.ChangedSubcomponents.Value
-                let childPath = componentToRemove.ComponentPath
-                let parentPath = componentToRemove.ParentPath
-                let childCompDecl = componentToRemove.CompDecl
-                let parentCompDecl = componentToRemove.ParentCompDecl
+                let infos = state.ChangedSubcomponents.Value
                 // parent is target, child is source
-                if childCompDecl.Fields.IsEmpty then
+                if infos.ChildCompDecl.Fields.IsEmpty then
                     // do not modify old tainted state here
                     return! putState state
                 else
-                    let fieldDecl = childCompDecl.Fields.Head
+                    let fieldDecl = infos.ChildCompDecl.Fields.Head
                     let field = fieldDecl.Field
-                    let newChildCompDecl = childCompDecl.removeField field
-                    let transformedField = parentCompDecl.getUnusedFieldName (sprintf "%s_%s" childCompDecl.getName field.getName)
+                    let newChildCompDecl = infos.ChildCompDecl.removeField field
+                    let transformedField = infos.ParentCompDecl.getUnusedFieldName (sprintf "%s_%s" infos.ChildCompDecl.getName field.getName)
                     let transformedFieldDecl = 
                         {fieldDecl with
                             FieldDecl.Field = transformedField;
                         }                    
-                    let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
-                                                          .addField(transformedFieldDecl)
+                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
+                                                                .addField(transformedFieldDecl)
                     let newChangedSubcomponents =
-                        { componentToRemove with
-                            ScmRewriterCurrentSelection.CompDecl = newChildCompDecl;
+                        { infos with
+                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
                             ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = componentToRemove.ArtificialFieldsOldToNew.Add( (childPath,field), (parentPath,transformedField) );
-                            ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = componentToRemove.ArtificialFieldsNewToOld.Add( (parentPath,transformedField), (childPath,field) );
+                            ScmRewriterCurrentSelection.ArtificialFieldsOldToNew = infos.ArtificialFieldsOldToNew.Add( (infos.ChildPath,field), (infos.ParentPath,transformedField) );
+                            ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = infos.ArtificialFieldsNewToOld.Add( (infos.ParentPath,transformedField), (infos.ChildPath,field) );
                         }
                     let modifiedState =
                         { state with
@@ -171,7 +165,40 @@ module internal ScmRewriter =
             return ()
         }
     let levelUpReqPort : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                // parent is target, child is source
+                if infos.ChildCompDecl.ReqPorts.IsEmpty then
+                    // do not modify old tainted state here
+                    return! putState state
+                else
+                    let reqPortDecl = infos.ChildCompDecl.ReqPorts.Head
+                    let reqPort = reqPortDecl.ReqPort
+                    let newChildCompDecl = infos.ChildCompDecl.removeReqPort reqPort
+                    let transformedReqPort = infos.ParentCompDecl.getUnusedReqPortName (sprintf "%s_%s" infos.ChildCompDecl.getName reqPort.getName)
+                    let transformedReqPortDecl = 
+                        {reqPortDecl with
+                            ReqPortDecl.ReqPort = transformedReqPort;
+                        }                    
+                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
+                                                                .addReqPort(transformedReqPortDecl)
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterCurrentSelection.ArtificialReqPortOldToNew = infos.ArtificialReqPortOldToNew.Add( (infos.ChildPath,reqPort), (infos.ParentPath,transformedReqPort) );
+                            ScmRewriterCurrentSelection.ArtificialReqPortNewToOld = infos.ArtificialReqPortNewToOld.Add( (infos.ParentPath,transformedReqPort), (infos.ChildPath,reqPort) );
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
         }
     let levelUpProvPort : ScmRewriteFunction<unit> = scmRewrite {
             return ()
