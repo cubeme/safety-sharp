@@ -35,9 +35,12 @@ module internal ScmRewriter =
         // Forwarder
         ArtificialFieldsOldToNew : Map<FieldPath,FieldPath> //Map from old path to new path (TODO: when not necessary, delete)
         ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> //Map from new path to old path (TODO: when not necessary, delete)
-
+        
         ArtificialReqPortOldToNew : Map<ReqPortPath,ReqPortPath> //Map from old path to new path (TODO: when not necessary, delete)
         ArtificialReqPortNewToOld : Map<ReqPortPath,ReqPortPath> //Map from new path to old path (TODO: when not necessary, delete)
+
+        ArtificialProvPortOldToNew : Map<ProvPortPath,ProvPortPath> //Map from old path to new path (TODO: when not necessary, delete)
+        ArtificialProvPortNewToOld : Map<ProvPortPath,ProvPortPath> //Map from new path to old path (TODO: when not necessary, delete)
     }
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
@@ -50,6 +53,8 @@ module internal ScmRewriter =
                     ScmRewriterCurrentSelection.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
                     ScmRewriterCurrentSelection.ArtificialReqPortOldToNew = Map.empty<ReqPortPath,ReqPortPath>;
                     ScmRewriterCurrentSelection.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
+                    ScmRewriterCurrentSelection.ArtificialProvPortOldToNew = Map.empty<ProvPortPath,ProvPortPath>;
+                    ScmRewriterCurrentSelection.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
                 }
 
 
@@ -162,7 +167,44 @@ module internal ScmRewriter =
                     return! putState modifiedState
         }
     let levelUpFault : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
+            // TODO: No example and no test, yet
+            (*
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                // parent is target, child is source
+                if infos.ChildCompDecl.Faults.IsEmpty then
+                    // do not modify old tainted state here
+                    return! putState state
+                else
+                    let reqPortDecl = infos.ChildCompDecl.ReqPorts.Head
+                    let reqPort = reqPortDecl.ReqPort
+                    let newChildCompDecl = infos.ChildCompDecl.removeReqPort reqPort
+                    let transformedReqPort = infos.ParentCompDecl.getUnusedReqPortName (sprintf "%s_%s" infos.ChildCompDecl.getName reqPort.getName)
+                    let transformedReqPortDecl = 
+                        {reqPortDecl with
+                            FaultDecl. = transformedReqPort;
+                        }                    
+                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
+                                                                .addReqPort(transformedReqPortDecl)
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterCurrentSelection.ArtificialReqPortOldToNew = infos.ArtificialReqPortOldToNew.Add( (infos.ChildPath,reqPort), (infos.ParentPath,transformedReqPort) );
+                            ScmRewriterCurrentSelection.ArtificialReqPortNewToOld = infos.ArtificialReqPortNewToOld.Add( (infos.ParentPath,transformedReqPort), (infos.ChildPath,reqPort) );
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
+                *)
+                return ()
         }
     let levelUpReqPort : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
@@ -201,13 +243,47 @@ module internal ScmRewriter =
                     return! putState modifiedState
         }
     let levelUpProvPort : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                // parent is target, child is source
+                if infos.ChildCompDecl.ProvPorts.IsEmpty then
+                    // do not modify old tainted state here
+                    return! putState state
+                else
+                    let provPortDecl = infos.ChildCompDecl.ProvPorts.Head
+                    let provPort = provPortDecl.ProvPort
+                    let newChildCompDecl = infos.ChildCompDecl.removeProvPort provPort
+                    let transformedProvPort = infos.ParentCompDecl.getUnusedProvPortName (sprintf "%s_%s" infos.ChildCompDecl.getName provPort.getName)
+                    let transformedProvPortDecl = 
+                        {provPortDecl with
+                            ProvPortDecl.ProvPort = transformedProvPort;
+                        }                    
+                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
+                                                                .addProvPort(transformedProvPortDecl)
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterCurrentSelection.ArtificialProvPortOldToNew = infos.ArtificialProvPortOldToNew.Add( (infos.ChildPath,provPort), (infos.ParentPath,transformedProvPort) );
+                            ScmRewriterCurrentSelection.ArtificialProvPortNewToOld = infos.ArtificialProvPortNewToOld.Add( (infos.ParentPath,transformedProvPort), (infos.ChildPath,provPort) );
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
         }
     let levelUpAndRewriteBinding : ScmRewriteFunction<unit> = scmRewrite {
             return ()
         }
     let convertStepToPort : ScmRewriteFunction<unit> = scmRewrite {
             // replace step to required port and provided port and binding, add a link from subcomponent path to new required port
+            // TODO: rewrite names in faultExpression?!?
             return ()
         }
     let rewriteParentStep : ScmRewriteFunction<unit> = scmRewrite {
@@ -215,7 +291,15 @@ module internal ScmRewriter =
             return ()
         }
     let rewriteProvPort : ScmRewriteFunction<unit> = scmRewrite {
-            // replace reqPorts and fields by their proper names
+            // replace reqPorts and fields by their proper names, replace Fault Expressions
+            // caution: also take care, that no local var name has by accident the name of a _new_ field
+            
+            return ()
+        }
+    let rewriteFaults : ScmRewriteFunction<unit> = scmRewrite {
+            // replace reqPorts and fields by their proper names, replace Fault Expressions
+            // caution: also take care, that no local var name has by accident the name of a _new_ field
+            
             return ()
         }
     let assertSubcomponentEmpty : ScmRewriteFunction<unit> = scmRewrite {
@@ -259,6 +343,7 @@ module internal ScmRewriter =
             do! scmRewriteFixpoint {do! levelUpAndRewriteBinding}
             do! scmRewriteFixpoint {do! rewriteParentStep}
             do! scmRewriteFixpoint {do! rewriteProvPort}
+            do! scmRewriteFixpoint {do! rewriteFaults}
             do! assertSubcomponentEmpty
             do! removeSubComponent
             do! writeBackChangesIntoModel

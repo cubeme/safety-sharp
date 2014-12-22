@@ -144,3 +144,37 @@ type SingleRewriterTests () =
         newChildNode.ReqPorts.Length =? 0
         newParentNode.ReqPorts.Length =? 1     
         ()
+
+
+    [<Test>]
+    member this.``A provided Port in a sub component gets leveled up`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nestedProvided") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ProvPorts.Length =? 1
+        parentNode.ProvPorts.Length =? 0
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            let! step1 = ScmRewriter.levelUpProvPort
+            let! step2 = ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ProvPorts.Length =? 0
+        newParentNode.ProvPorts.Length =? 1     
+        ()

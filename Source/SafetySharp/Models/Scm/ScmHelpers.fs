@@ -27,6 +27,7 @@ module internal ScmHelpers =
     type CompPath = Comp list
     type FieldPath = CompPath * Field
     type ReqPortPath = CompPath * ReqPort
+    type ProvPortPath = CompPath * ProvPort
     
     // Extension methods
     type Var with
@@ -146,7 +147,31 @@ module internal ScmHelpers =
                 Field(basedOn)
             else
                 inventName 0
-                
+                                
+        member node.removeFault (fault:Fault) =
+            { node with
+                CompDecl.Faults = (node.Faults |> List.filter (fun _fault -> fault<>_fault.Fault));
+            }
+        member node.addFault (fault:FaultDecl) =
+            { node with
+                CompDecl.Faults = fault::node.Faults
+            }
+        member node.getUnusedFaultName (basedOn:string) : Fault =
+            let existsName name : bool =
+                node.Faults |> List.exists (fun fault -> fault.getName = name)
+            let rec inventName numberSuffix : Fault =            
+                // If desired name does not exist, get name with the lowest numberSuffix.
+                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
+                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
+                if existsName nameCandidate = false then
+                    Fault.Fault(nameCandidate)
+                else
+                    inventName (numberSuffix+1)
+            if existsName basedOn = false then
+                Fault.Fault(basedOn)
+            else
+                inventName 0
+
         member node.removeReqPort (reqPort:ReqPort) =
             { node with
                 CompDecl.ReqPorts = (node.ReqPorts |> List.filter (fun _reqPort -> reqPort<>_reqPort.ReqPort));
@@ -170,7 +195,40 @@ module internal ScmHelpers =
                 ReqPort(basedOn)
             else
                 inventName 0
-                    
+                
+        member node.removeProvPort (provPort:ProvPort) =
+            { node with
+                CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> provPort<>_provPort.ProvPort));
+            }
+        member node.addProvPort (fault:ProvPortDecl) =
+            { node with
+                CompDecl.ProvPorts = fault::node.ProvPorts
+            }
+        member node.getUnusedProvPortName (basedOn:string) : ProvPort =
+            let existsName name : bool =
+                node.ProvPorts |> List.exists (fun provPort -> provPort.getName = name)
+            let rec inventName numberSuffix : ProvPort =            
+                // If desired name does not exist, get name with the lowest numberSuffix.
+                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
+                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
+                if existsName nameCandidate = false then
+                    ProvPort(nameCandidate)
+                else
+                    inventName (numberSuffix+1)
+            if existsName basedOn = false then
+                ProvPort(basedOn)
+            else
+                inventName 0
+                
+        member node.removeBinding (bndg:BndDecl) =
+            { node with
+                CompDecl.Bindings = (node.Bindings |> List.filter (fun _binding -> _binding<>bndg));
+            }
+        member node.addBinding (bndg:BndDecl) =
+            { node with
+                CompDecl.Bindings = bndg::node.Bindings
+            }                    
+                                    
         member node.replaceChild (childToReplace:CompDecl, newChild:CompDecl) =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child=childToReplace then newChild else child));
