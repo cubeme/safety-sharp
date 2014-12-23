@@ -47,6 +47,7 @@ module internal ScmRewriter =
         
         FaultsToRewrite : FaultDecl list    //declared in parent
         ProvPortsToRewrite : ProvPortDecl list    //declared in parent
+        StepsToRewrite : StepDecl list    //declared in parent
         ArtificialStep : (ReqPort*ProvPort) option
     }
         with
@@ -66,6 +67,7 @@ module internal ScmRewriter =
                     ScmRewriterCurrentSelection.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
                     ScmRewriterCurrentSelection.FaultsToRewrite = [];
                     ScmRewriterCurrentSelection.ProvPortsToRewrite = [];
+                    ScmRewriterCurrentSelection.StepsToRewrite = [];
                     ScmRewriterCurrentSelection.ArtificialStep = None;
                 }
 
@@ -569,6 +571,7 @@ module internal ScmRewriter =
                             ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
                             ScmRewriterCurrentSelection.ProvPortsToRewrite = (newProvPortDecl)::infos.ProvPortsToRewrite;
                             ScmRewriterCurrentSelection.ArtificialStep = Some((reqPort,provPort));
+                            ScmRewriterCurrentSelection.StepsToRewrite = infos.ParentCompDecl.Steps;
                         }
                     let modifiedState =
                         { state with
@@ -579,8 +582,8 @@ module internal ScmRewriter =
                         
         }
 
-    let rewriteParentSteps : ScmRewriteFunction<unit> = scmRewrite {
-            //here, additionally instead of "step subcomponent" the converted step must be called
+    let rewriteParentStep : ScmRewriteFunction<unit> = scmRewrite {
+            // here, additionally instead of "step subcomponent" the converted step must be called
             
             let! state = getState
             if (state.ChangedSubcomponents.IsNone) then
@@ -590,46 +593,48 @@ module internal ScmRewriter =
                 return! putState state // (alternative is to "return ()"
             else
                 let infos = state.ChangedSubcomponents.Value
-                let (reqPort,_) = infos.ArtificialStep.Value
                 
-                let rewriteStep (step:StepDecl) : StepDecl =
-                    let rec rewriteStm (stm:Stm) : Stm =
-                        match stm with
-                            | Stm.Block (smnts) ->
-                                let newStmnts = smnts |> List.map rewriteStm
-                                Stm.Block(newStmnts)
-                            | Stm.Choice (choices:(Expr * Stm) list) ->
-                                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
-                                Stm.Choice(newChoices)
-                            | Stm.StepComp (comp) ->
-                                Stm.CallPort (reqPort,[])
-                            | _ -> stm
-                    let newBehavior =
-                        { step.Behavior with
-                            BehaviorDecl.Body = rewriteStm step.Behavior.Body;
+                if infos.StepsToRewrite.IsEmpty then
+                        // do not modify old tainted state here
+                        return! putState state
+                else
+                    let stepToRewrite = infos.StepsToRewrite.Head
+
+                    let (reqPort,_) = infos.ArtificialStep.Value
+                
+                    let rewriteStep (step:StepDecl) : StepDecl =
+                        let rec rewriteStm (stm:Stm) : Stm =
+                            match stm with
+                                | Stm.Block (smnts) ->
+                                    let newStmnts = smnts |> List.map rewriteStm
+                                    Stm.Block(newStmnts)
+                                | Stm.Choice (choices:(Expr * Stm) list) ->
+                                    let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
+                                    Stm.Choice(newChoices)
+                                | Stm.StepComp (comp) ->
+                                    Stm.CallPort (reqPort,[])
+                                | _ -> stm
+                        let newBehavior =
+                            { step.Behavior with
+                                BehaviorDecl.Body = rewriteStm step.Behavior.Body;
+                            }
+                        { step with
+                            StepDecl.Behavior = newBehavior;
                         }
-                    { step with
-                        StepDecl.Behavior = newBehavior;
-                    }
 
-                let newSteps = infos.ParentCompDecl.Steps |> List.map rewriteStep
-                
-                let newParentCompDecl =
-                    { infos.ParentCompDecl with
-                        CompDecl.Steps = newSteps;
-                    }
-
-                let newChangedSubcomponents =
-                    { infos with
-                        ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
-                        ScmRewriterCurrentSelection.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
-                    }
-                let modifiedState =
-                    { state with
-                        ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
-                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    }
-                return! putState modifiedState
+                    let newStep = rewriteStep stepToRewrite                
+                    let newParentCompDecl = infos.ParentCompDecl.replaceStep(stepToRewrite,newStep);
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterCurrentSelection.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
 
         }
 
@@ -779,7 +784,7 @@ module internal ScmRewriter =
             do! scmRewriteFixpoint {do! levelUpProvPort}
             do! scmRewriteFixpoint {do! levelUpAndRewriteBindingDeclaredInChild}
             do! scmRewriteFixpoint {do! rewriteBindingDeclaredInParent}
-            do! rewriteParentSteps
+            do! scmRewriteFixpoint {do! rewriteParentStep}
             do! scmRewriteFixpoint {do! rewriteProvPort}
             do! scmRewriteFixpoint {do! rewriteFaults}
             do! assertSubcomponentEmpty
@@ -788,7 +793,7 @@ module internal ScmRewriter =
         }
 
     // here the workflow, which defines a globalglobal rewrite rule, whic
-    let levelUpWorkflow : ScmRewriteFunction<unit> = scmRewrite {
+    let levelUpAndInline : ScmRewriteFunction<unit> = scmRewrite {
             do! scmRewriteFixpoint {do! levelUpSubcomponent}
             do! assertNoSubcomponent
             do! inlineMainStep
