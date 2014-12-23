@@ -114,6 +114,76 @@ module internal ScmRewriter =
     let scmRewriteFixpoint = new ScmRewriter() //new ScmRewriteFixpoint. (fixpoint Computation Expression. Repeat something, until fixpoint is reached)
 
 
+
+    // some local helpers
+    let rec rewriteFaultExpr (infos:ScmRewriterCurrentSelection) (faultExpr:FaultExpr) =
+        let rewriteFault (fault) : Fault =
+            let (path,newFault)=infos.ArtificialFaultsOldToNew.Item (infos.ChildPath,fault)
+            assert (path=infos.ParentPath)
+            newFault
+        match faultExpr with
+            | FaultExpr.Fault (fault) -> FaultExpr.Fault (rewriteFault fault)
+            | FaultExpr.NotFault (faultExpr) -> FaultExpr.NotFault(rewriteFaultExpr infos faultExpr)
+            | FaultExpr.AndFault (left,right) -> FaultExpr.AndFault (rewriteFaultExpr infos left, rewriteFaultExpr infos right)
+            | FaultExpr.OrFault (left,right) -> FaultExpr.OrFault (rewriteFaultExpr infos left, rewriteFaultExpr infos right)
+    let rewriteFaultExprOption (infos:ScmRewriterCurrentSelection) (faultExpr:FaultExpr option) =
+        match faultExpr with
+            | None -> None
+            | Some (faultExpr) -> Some (rewriteFaultExpr infos faultExpr)
+                    
+    let rewriteBehavior (infos:ScmRewriterCurrentSelection) (behavior:BehaviorDecl) =
+        let rec rewriteExpr (expr:Expr) : Expr=
+            match expr with
+                | Expr.Literal (_val) -> Expr.Literal(_val)
+                | Expr.ReadVar (_var) -> Expr.ReadVar (_var)
+                | Expr.ReadField (field) ->
+                    let (path,newField)=infos.ArtificialFieldsOldToNew.Item (infos.ChildPath,field)
+                    Expr.ReadField (newField)
+                | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr expr,uop)
+                | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr left,bop,rewriteExpr right)
+        let rewriteParam (_param:Param) : Param =
+            match _param with
+                | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr expr)
+                | Param.InOutVarParam (var) -> Param.InOutVarParam (var)
+                | Param.InOutFieldParam (field) ->                    
+                    let (path,newField) = infos.ArtificialFieldsOldToNew.Item(infos.ChildPath,field)
+                    Param.InOutFieldParam (newField)
+        let rec rewriteStm (stm:Stm) : Stm =
+            match stm with
+                | Stm.AssignVar (var,expr) ->
+                    let newExpr = rewriteExpr expr
+                    Stm.AssignVar (var, newExpr)
+                | Stm.AssignField (field, expr) ->
+                    let (path,newField) = infos.ArtificialFieldsOldToNew.Item(infos.ChildPath,field)
+                    let newExpr = rewriteExpr expr
+                    Stm.AssignField (newField, newExpr)
+                | Stm.AssignFault (fault, expr) ->
+                    let (path,newFault) = infos.ArtificialFaultsOldToNew.Item(infos.ChildPath,fault)
+                    let newExpr = rewriteExpr expr
+                    Stm.AssignFault (newFault, newExpr)
+                | Stm.Block (smnts) ->
+                    let newStmnts = smnts |> List.map rewriteStm
+                    Stm.Block(newStmnts)
+                | Stm.Choice (choices:(Expr * Stm) list) ->
+                    let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr expr,rewriteStm stm) )
+                    Stm.Choice(newChoices)
+                | Stm.CallPort (reqPort,_params) ->
+                    let (path,newReqPort) = infos.ArtificialReqPortOldToNew.Item (infos.ChildPath,reqPort)
+                    let newParams = _params |> List.map rewriteParam
+                    Stm.CallPort (newReqPort,newParams)
+                | Stm.StepComp (comp) ->
+                    Stm.StepComp (comp)
+                | Stm.StepFault (fault) ->
+                    let (path,newFault) = infos.ArtificialFaultsOldToNew.Item(infos.ChildPath,fault)
+                    Stm.StepFault (newFault)
+        {
+            BehaviorDecl.Locals= behavior.Locals; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any local variable. So we can keep it
+            BehaviorDecl.Body = rewriteStm behavior.Body;
+        }
+
+
+
+
     // here the partial rewrite rules        
     let selectSubComponent : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
@@ -519,8 +589,7 @@ module internal ScmRewriter =
     let rewriteProvPort : ScmRewriteFunction<unit> = scmRewrite {
             // replace reqPorts and fields by their proper names, replace Fault Expressions
             // caution: also take care, that no local var name has by accident the name of a _new_ field
-            return ()
-            (*
+            
             let! state = getState
             if (state.ChangedSubcomponents.IsNone) then
                 // do not modify old tainted state here
@@ -534,9 +603,14 @@ module internal ScmRewriter =
                     // we are in a parent Component!!!
                     let provPortToRewrite = infos.ProvPortsToRewrite.Head
 
-                    let rewrittenProvPort = provPortToRewrite
-                        (*{
-                        }*)aaaaaaaaaaaa
+
+                    let rewrittenProvPort =
+                        {
+                            ProvPortDecl.FaultExpr = rewriteFaultExprOption infos provPortToRewrite.FaultExpr;
+                            ProvPortDecl.ProvPort = provPortToRewrite.ProvPort;
+                            ProvPortDecl.Params = provPortToRewrite.Params; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any param. So we can keep it
+                            ProvPortDecl.Behavior = rewriteBehavior infos provPortToRewrite.Behavior;
+                        }
                     let newParentCompDecl = infos.ParentCompDecl.replaceProvPort(provPortToRewrite,rewrittenProvPort)
 
 
@@ -550,7 +624,7 @@ module internal ScmRewriter =
                             ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
-                    return! putState modifiedState*)
+                    return! putState modifiedState
         }
 
     let rewriteFaults : ScmRewriteFunction<unit> = scmRewrite {

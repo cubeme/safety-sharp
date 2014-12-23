@@ -24,6 +24,28 @@ namespace SafetySharp.Models.Scm
 
 module internal ScmHelpers =
 
+
+
+
+    // TODO:
+    //   - rewrite all getUnusedxxxName to ensure, that ensures, that e.g. a new field does not get the name of a fault
+    //     (if we assume, that the namespace of fields and faults may overlap, also assure, that this name does not exist as a
+    //      name of a local variable or a parameter (This makes a lot of things easier later))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     type CompPath = Comp list
     type FieldPath = CompPath * Field
     type FaultPath = CompPath * Fault
