@@ -33,17 +33,17 @@ module internal ScmRewriter =
         ChildCompDecl : CompDecl;
         ParentCompDecl : CompDecl;
         // Forwarder
-        ArtificialFieldsOldToNew : Map<FieldPath,FieldPath> //Map from old path to new path (TODO: when not necessary, delete)
-        ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> //Map from new path to old path (TODO: when not necessary, delete)
+        ArtificialFieldsOldToNew : Map<FieldPath,FieldPath>
+        ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> //Map from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
 
-        ArtificialFaultsOldToNew : Map<FaultPath,FaultPath> //Map from old path to new path (TODO: when not necessary, delete)
-        ArtificialFaultsNewToOld : Map<FaultPath,FaultPath> //Map from new path to old path (TODO: when not necessary, delete)
+        ArtificialFaultsOldToNew : Map<FaultPath,FaultPath>
+        ArtificialFaultsNewToOld : Map<FaultPath,FaultPath> //Map from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
         
-        ArtificialReqPortOldToNew : Map<ReqPortPath,ReqPortPath> //Map from old path to new path (TODO: when not necessary, delete)
-        ArtificialReqPortNewToOld : Map<ReqPortPath,ReqPortPath> //Map from new path to old path (TODO: when not necessary, delete)
+        ArtificialReqPortOldToNew : Map<ReqPortPath,ReqPortPath>
+        ArtificialReqPortNewToOld : Map<ReqPortPath,ReqPortPath> //Map from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
 
-        ArtificialProvPortOldToNew : Map<ProvPortPath,ProvPortPath> //Map from old path to new path (TODO: when not necessary, delete)
-        ArtificialProvPortNewToOld : Map<ProvPortPath,ProvPortPath> //Map from new path to old path (TODO: when not necessary, delete)
+        ArtificialProvPortOldToNew : Map<ProvPortPath,ProvPortPath>
+        ArtificialProvPortNewToOld : Map<ProvPortPath,ProvPortPath> //Map from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
     }
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
@@ -347,7 +347,6 @@ module internal ScmRewriter =
         }
        
     let rewriteBindingDeclaredInParent : ScmRewriteFunction<unit> = scmRewrite {
-            (*
             // Cases: (view from parent, where sub1 is selected)                    
             //   Declared in parent (done here)
             //    - x      -> x      (nothing to do)
@@ -368,26 +367,57 @@ module internal ScmRewriter =
             else
                 let infos = state.ChangedSubcomponents.Value
                 // parent is target, child is source
-                if infos.ChildCompDecl.Bindings.IsEmpty then
+                let bindingToRewrite : BndDecl option =
+                    let targetIsChild (bndDecl:BndDecl) =
+                        match bndDecl.Target.Comp with
+                            | None -> false
+                            | Some (comp) -> comp = infos.ChildCompDecl.Comp
+                    let sourceIsChild (bndDecl:BndDecl) =
+                        match bndDecl.Source.Comp with
+                            | None -> false
+                            | Some (comp) -> comp = infos.ChildCompDecl.Comp
+                    infos.ParentCompDecl.Bindings |> List.tryFind (fun bndDecl -> (targetIsChild bndDecl) || (sourceIsChild bndDecl) )
+                if bindingToRewrite.IsNone then
                     // do not modify old tainted state here
                     return! putState state
                 else
-
-
-
-                    let provPortDecl = infos.ChildCompDecl.ProvPorts.Head
-                    let provPort = provPortDecl.ProvPort
-                    let newChildCompDecl = infos.ChildCompDecl.removeProvPort provPort
-                    let transformedProvPort = infos.ParentCompDecl.getUnusedProvPortName (sprintf "%s_%s" infos.ChildCompDecl.getName provPort.getName)
-                    let transformedProvPortDecl = 
-                        {provPortDecl with
-                            ProvPortDecl.ProvPort = transformedProvPort;
-                        }                    
-                    let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
-                                                                .addProvPort(transformedProvPortDecl)
+                    let bindingToRewrite = bindingToRewrite.Value
+                    
+                    let newSource =
+                        match bindingToRewrite.Source.Comp with
+                            | None -> bindingToRewrite.Source
+                            | Some (comp) ->
+                                if comp = infos.ChildCompDecl.Comp then
+                                    let (path,port) = infos.ArtificialProvPortOldToNew.Item (infos.ChildPath,bindingToRewrite.Source.ProvPort)
+                                    assert (path = infos.ParentPath)
+                                    {
+                                        BndSrc.Comp = None;
+                                        BndSrc.ProvPort = port
+                                    }
+                                else
+                                    bindingToRewrite.Source
+                    let newTarget =
+                        match bindingToRewrite.Target.Comp with
+                            | None -> bindingToRewrite.Target
+                            | Some (comp) ->
+                                if comp = infos.ChildCompDecl.Comp then
+                                    let (path,port) = infos.ArtificialReqPortOldToNew.Item (infos.ChildPath,bindingToRewrite.Target.ReqPort)
+                                    assert (path = infos.ParentPath)
+                                    {
+                                        BndTarget.Comp = None;
+                                        BndTarget.ReqPort = port
+                                    }
+                                else
+                                    bindingToRewrite.Target
+                    let transformedBinding = 
+                        {
+                            BndDecl.Target = newTarget;
+                            BndDecl.Source = newSource;
+                            BndDecl.Kind = bindingToRewrite.Kind;
+                        }
+                    let newParentCompDecl = infos.ParentCompDecl.replaceBinding(bindingToRewrite,transformedBinding)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterCurrentSelection.ChildCompDecl = newChildCompDecl;
                             ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
                         }
                     let modifiedState =
@@ -396,8 +426,6 @@ module internal ScmRewriter =
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
-            *)
-            return ()
         }
 
     let convertStepToPort : ScmRewriteFunction<unit> = scmRewrite {
@@ -450,6 +478,9 @@ module internal ScmRewriter =
     let inlineMainStep : ScmRewriteFunction<unit> = scmRewrite {
             return ()
         }
+    let checkConsistency : ScmRewriteFunction<unit> = scmRewrite {
+            return ()
+        }
     let levelUpSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
             // idea: first level up every item of a component,
             //       then rewrite every code accessing to some specific element of it
@@ -470,12 +501,10 @@ module internal ScmRewriter =
         }
 
     // here the workflow, which defines a globalglobal rewrite rule, whic
-    let levelUpWorkflow =
-        let s : ScmRewriteFunction<unit> =
-            scmRewrite {
-                do! scmRewriteFixpoint {do! levelUpSubcomponent}
-                do! assertNoSubcomponent
-                do! inlineMainStep
-            }
-        runState s
+    let levelUpWorkflow : ScmRewriteFunction<unit> = scmRewrite {
+            do! scmRewriteFixpoint {do! levelUpSubcomponent}
+            do! assertNoSubcomponent
+            do! inlineMainStep
+            do! checkConsistency
+        }
 

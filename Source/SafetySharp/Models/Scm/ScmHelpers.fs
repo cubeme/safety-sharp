@@ -228,7 +228,11 @@ module internal ScmHelpers =
         member node.addBinding (bndg:BndDecl) =
             { node with
                 CompDecl.Bindings = bndg::node.Bindings
-            }                    
+            }  
+        member node.replaceBinding (bindingToReplace:BndDecl, newBinding:BndDecl) =
+            { node with
+                CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
+            }         
                                     
         member node.replaceChild (childToReplace:CompDecl, newChild:CompDecl) =
             { node with

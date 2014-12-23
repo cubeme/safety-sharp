@@ -258,3 +258,234 @@ type SingleRewriterTests () =
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1     
         ()
+        
+    [<Test>]
+    member this.``A binding in a parent component gets rewritten (source=parent;target=child)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 0
+        childNode.Bindings.Length =? 0
+        parentNode.ReqPorts.Length =? 0
+        parentNode.ProvPorts.Length =? 1
+        parentNode.Bindings.Length =? 1
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! ScmRewriter.levelUpReqPort
+            do! ScmRewriter.rewriteBindingDeclaredInParent
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newParentNode.ReqPorts.Length =? 1
+        newParentNode.ProvPorts.Length =? 1
+        newParentNode.Bindings.Length =? 1
+        newParentNode.Bindings.Head.Source.Comp =? None
+        newParentNode.Bindings.Head.Target.Comp =? None
+        ()
+
+    [<Test>]
+    member this.``A binding in a parent component gets rewritten (source=child;target=parent)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ReqPorts.Length =? 0
+        childNode.ProvPorts.Length =? 1
+        childNode.Bindings.Length =? 0
+        parentNode.ReqPorts.Length =? 1
+        parentNode.ProvPorts.Length =? 0
+        parentNode.Bindings.Length =? 1
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! ScmRewriter.levelUpProvPort
+            do! ScmRewriter.rewriteBindingDeclaredInParent
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newParentNode.ReqPorts.Length =? 1
+        newParentNode.ProvPorts.Length =? 1
+        newParentNode.Bindings.Length =? 1
+        newParentNode.Bindings.Head.Source.Comp =? None
+        newParentNode.Bindings.Head.Target.Comp =? None
+        ()
+        
+    [<Test>]
+    member this.``A binding in a parent component gets rewritten (source=child;target=child)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 1
+        childNode.Bindings.Length =? 0
+        parentNode.ReqPorts.Length =? 0
+        parentNode.ProvPorts.Length =? 0
+        parentNode.Bindings.Length =? 1
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! ScmRewriter.levelUpReqPort
+            do! ScmRewriter.levelUpProvPort
+            do! ScmRewriter.rewriteBindingDeclaredInParent
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newParentNode.ReqPorts.Length =? 1
+        newParentNode.ProvPorts.Length =? 1
+        newParentNode.Bindings.Length =? 1
+        newParentNode.Bindings.Head.Source.Comp =? None
+        newParentNode.Bindings.Head.Target.Comp =? None
+        ()
+        
+    [<Test>]
+    member this.``A binding in a parent component gets rewritten (source=child;target=different child)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nestedProvided") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ReqPorts.Length =? 0
+        childNode.ProvPorts.Length =? 1
+        childNode.Bindings.Length =? 0
+        parentNode.ReqPorts.Length =? 0
+        parentNode.ProvPorts.Length =? 0
+        parentNode.Bindings.Length =? 1
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! ScmRewriter.levelUpProvPort
+            do! ScmRewriter.rewriteBindingDeclaredInParent
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newParentNode.ReqPorts.Length =? 0
+        newParentNode.ProvPorts.Length =? 1
+        newParentNode.Bindings.Length =? 1
+        newParentNode.Bindings.Head.Source.Comp =? None
+        newParentNode.Bindings.Head.Target.Comp <>? None
+        ()
+
+    [<Test>]
+    member this.``A binding in a parent component gets rewritten (source=different child;target=child)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nestedRequired") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 0
+        childNode.Bindings.Length =? 0
+        parentNode.ReqPorts.Length =? 0
+        parentNode.ProvPorts.Length =? 0
+        parentNode.Bindings.Length =? 1
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! ScmRewriter.levelUpReqPort
+            do! ScmRewriter.rewriteBindingDeclaredInParent
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newParentNode.ReqPorts.Length =? 1
+        newParentNode.ProvPorts.Length =? 0
+        newParentNode.Bindings.Length =? 1
+        newParentNode.Bindings.Head.Source.Comp <>? None
+        newParentNode.Bindings.Head.Target.Comp =? None
+        ()
