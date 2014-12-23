@@ -579,11 +579,59 @@ module internal ScmRewriter =
                         
         }
 
-    let rewriteParentStep : ScmRewriteFunction<unit> = scmRewrite {
+    let rewriteParentSteps : ScmRewriteFunction<unit> = scmRewrite {
             //here, additionally instead of "step subcomponent" the converted step must be called
             // caution: also take care, that no local var name has by accident the name of a _new_ field
+            
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else if state.ChangedSubcomponents.Value.ArtificialStep.IsNone then
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                let (reqPort,_) = infos.ArtificialStep.Value
+                
+                let rewriteStep (step:StepDecl) : StepDecl =
+                    let rec rewriteStm (stm:Stm) : Stm =
+                        match stm with
+                            | Stm.Block (smnts) ->
+                                let newStmnts = smnts |> List.map rewriteStm
+                                Stm.Block(newStmnts)
+                            | Stm.Choice (choices:(Expr * Stm) list) ->
+                                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
+                                Stm.Choice(newChoices)
+                            | Stm.StepComp (comp) ->
+                                Stm.CallPort (reqPort,[])
+                            | _ -> stm
+                    let newBehavior =
+                        { step.Behavior with
+                            BehaviorDecl.Body = rewriteStm step.Behavior.Body;
+                        }
+                    { step with
+                        StepDecl.Behavior = newBehavior;
+                    }
 
-            return ()
+                let newSteps = infos.ParentCompDecl.Steps |> List.map rewriteStep
+                
+                let newParentCompDecl =
+                    { infos.ParentCompDecl with
+                        CompDecl.Steps = newSteps;
+                    }
+
+                let newChangedSubcomponents =
+                    { infos with
+                        ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                        ScmRewriterCurrentSelection.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                    }
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
+
         }
 
     let rewriteProvPort : ScmRewriteFunction<unit> = scmRewrite {
@@ -602,8 +650,7 @@ module internal ScmRewriter =
                 else
                     // we are in a parent Component!!!
                     let provPortToRewrite = infos.ProvPortsToRewrite.Head
-
-
+                    
                     let rewrittenProvPort =
                         {
                             ProvPortDecl.FaultExpr = rewriteFaultExprOption infos provPortToRewrite.FaultExpr;
@@ -612,7 +659,6 @@ module internal ScmRewriter =
                             ProvPortDecl.Behavior = rewriteBehavior infos provPortToRewrite.Behavior;
                         }
                     let newParentCompDecl = infos.ParentCompDecl.replaceProvPort(provPortToRewrite,rewrittenProvPort)
-
 
                     let newChangedSubcomponents =
                         { infos with
@@ -676,7 +722,7 @@ module internal ScmRewriter =
             do! scmRewriteFixpoint {do! levelUpProvPort}
             do! scmRewriteFixpoint {do! levelUpAndRewriteBindingDeclaredInChild}
             do! scmRewriteFixpoint {do! rewriteBindingDeclaredInParent}
-            do! scmRewriteFixpoint {do! rewriteParentStep}
+            do! rewriteParentSteps
             do! scmRewriteFixpoint {do! rewriteProvPort}
             do! scmRewriteFixpoint {do! rewriteFaults}
             do! assertSubcomponentEmpty
