@@ -24,28 +24,6 @@ namespace SafetySharp.Models.Scm
 
 module internal ScmHelpers =
 
-
-
-
-    // TODO:
-    //   - rewrite all getUnusedxxxName to ensure, that ensures, that e.g. a new field does not get the name of a fault
-    //     (if we assume, that the namespace of fields and faults may overlap, also assure, that this name does not exist as a
-    //      name of a local variable or a parameter (This makes a lot of things easier later))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     type CompPath = Comp list
     type FieldPath = CompPath * Field
     type FaultPath = CompPath * Fault
@@ -79,6 +57,11 @@ module internal ScmHelpers =
         member reqPort.getName =
             match reqPort with
                 | ReqPort.ReqPort (name) -> name
+
+    // Extension methods
+    type ParamDecl with
+        member param.getName =
+            param.Var.getName
 
     // Extension methods
     type ReqPortDecl with
@@ -133,6 +116,45 @@ module internal ScmHelpers =
             assert (reverseList.Head = node.Comp)
             node.getDescendantUsingRevPath reverseList.Tail
         
+        member node.getCompletlyFreshName (basedOn:string) : string =
+            // TODO: Buffering: Add a Set, which contains all names. This function can be altered to collect all names
+            let existsName name : bool =
+                let existsInFields = node.Fields |> List.exists (fun field -> field.getName = name)
+                let existsInFaults =
+                    let existsInFault (fault:FaultDecl) =
+                        let existsAsLocalVar = fault.Step.Locals |> List.exists (fun var -> var.getName = name)
+                        let isNameOfFault = fault.getName = name
+                        isNameOfFault || existsAsLocalVar
+                    node.Faults |> List.exists existsInFault
+                let existsInReqPorts = node.ReqPorts |> List.exists (fun reqPort -> reqPort.getName = name)
+                let existsInProvPorts =
+                    let existsInProvPort (provPort:ProvPortDecl) : bool =
+                        let existsAsParameter = provPort.Params |> List.exists (fun param -> param.getName = name)
+                        let existsAsLocalVar = provPort.Behavior.Locals |> List.exists (fun var -> var.getName = name)
+                        let isNameOfPort = provPort.getName = name
+                        isNameOfPort || existsAsParameter || existsAsLocalVar
+                    node.ProvPorts |> List.exists existsInProvPort
+                let existsInSteps =
+                    let existsInStep (step:StepDecl) =
+                        let existsAsLocalVar = step.Behavior.Locals |> List.exists (fun var -> var.getName = name)
+                        existsAsLocalVar
+                    node.Steps |> List.exists existsInStep
+                existsInFields || existsInFaults  || existsInReqPorts || existsInProvPorts || existsInSteps
+            let rec inventName numberSuffix : string =
+                // If desired name does not exist, get name with the lowest numberSuffix.
+                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
+                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
+                if existsName nameCandidate = false then
+                    nameCandidate
+                else
+                    inventName (numberSuffix+1)
+            if existsName basedOn = false then
+                basedOn
+            else
+                inventName 0
+            
+
+
         (*
         member node.getParentOfDescendantUsingPath (path: Comp list) : CompDecl =
             // minimal path size is 2
@@ -150,20 +172,7 @@ module internal ScmHelpers =
                 CompDecl.Fields = field::node.Fields
             }
         member node.getUnusedFieldName (basedOn:string) : Field =
-            let existsName name : bool =
-                node.Fields |> List.exists (fun field -> field.getName = name)
-            let rec inventName numberSuffix : Field =            
-                // If desired name does not exist, get name with the lowest numberSuffix.
-                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
-                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
-                if existsName nameCandidate = false then
-                    Field(nameCandidate)
-                else
-                    inventName (numberSuffix+1)
-            if existsName basedOn = false then
-                Field(basedOn)
-            else
-                inventName 0
+            Field(node.getCompletlyFreshName basedOn)
                                 
         member node.removeFault (fault:FaultDecl) =
             { node with
@@ -178,20 +187,7 @@ module internal ScmHelpers =
                 CompDecl.Faults = (node.Faults |> List.map (fun fault -> if fault=faultToReplace then newFault else fault));
             }
         member node.getUnusedFaultName (basedOn:string) : Fault =
-            let existsName name : bool =
-                node.Faults |> List.exists (fun fault -> fault.getName = name)
-            let rec inventName numberSuffix : Fault =            
-                // If desired name does not exist, get name with the lowest numberSuffix.
-                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
-                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
-                if existsName nameCandidate = false then
-                    Fault.Fault(nameCandidate)
-                else
-                    inventName (numberSuffix+1)
-            if existsName basedOn = false then
-                Fault.Fault(basedOn)
-            else
-                inventName 0
+            Fault.Fault(node.getCompletlyFreshName basedOn)
 
         member node.removeReqPort (reqPort:ReqPortDecl) =
             { node with
@@ -202,20 +198,7 @@ module internal ScmHelpers =
                 CompDecl.ReqPorts = reqPort::node.ReqPorts
             }
         member node.getUnusedReqPortName (basedOn:string) : ReqPort =
-            let existsName name : bool =
-                node.ReqPorts |> List.exists (fun reqPort -> reqPort.getName = name)
-            let rec inventName numberSuffix : ReqPort =            
-                // If desired name does not exist, get name with the lowest numberSuffix.
-                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
-                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
-                if existsName nameCandidate = false then
-                    ReqPort(nameCandidate)
-                else
-                    inventName (numberSuffix+1)
-            if existsName basedOn = false then
-                ReqPort(basedOn)
-            else
-                inventName 0
+            ReqPort(node.getCompletlyFreshName basedOn)
                 
         member node.removeProvPort (provPort:ProvPortDecl) =
             { node with
@@ -230,20 +213,7 @@ module internal ScmHelpers =
                 CompDecl.ProvPorts = (node.ProvPorts |> List.map (fun provPort -> if provPort=provPortToReplace then newProvPort else provPort));
             }
         member node.getUnusedProvPortName (basedOn:string) : ProvPort =
-            let existsName name : bool =
-                node.ProvPorts |> List.exists (fun provPort -> provPort.getName = name)
-            let rec inventName numberSuffix : ProvPort =            
-                // If desired name does not exist, get name with the lowest numberSuffix.
-                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
-                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
-                if existsName nameCandidate = false then
-                    ProvPort(nameCandidate)
-                else
-                    inventName (numberSuffix+1)
-            if existsName basedOn = false then
-                ProvPort(basedOn)
-            else
-                inventName 0
+            ProvPort(node.getCompletlyFreshName basedOn)
                 
         member node.removeBinding (bndg:BndDecl) =
             { node with
