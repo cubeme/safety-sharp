@@ -706,10 +706,39 @@ module internal ScmRewriter =
                     return! putState modifiedState
         }
     let assertSubcomponentEmpty : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                assert (infos.ChildCompDecl.Subs = [])
+                assert (infos.ChildCompDecl.Fields = [])
+                assert (infos.ChildCompDecl.Faults = [])
+                assert (infos.ChildCompDecl.ReqPorts = [])
+                assert (infos.ChildCompDecl.ProvPorts = [])
+                assert (infos.ChildCompDecl.Bindings = [])
+                return ()
         }
-    let removeSubComponent : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
+    let removeSubComponent : ScmRewriteFunction<unit> = scmRewrite {            
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                let newParentCompDecl = infos.ParentCompDecl.removeChild(infos.ChildCompDecl)
+                let newChangedSubcomponents =
+                    { infos with
+                        ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                    }
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
+                
         }        
     let writeBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
@@ -722,12 +751,14 @@ module internal ScmRewriter =
                 let modifiedState =
                     { state with
                         ScmRewriteState.Model = newModel;
-                        //ScmRewriteState.ChangedSubcomponents = None; ///???
+                        ScmRewriteState.ChangedSubcomponents = None;
                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                     }
                 return! putState modifiedState
         }
     let assertNoSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
+            let! state = getState
+            assert (state.Model.Subs=[])
             return ()
         }
         

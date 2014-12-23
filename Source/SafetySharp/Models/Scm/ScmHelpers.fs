@@ -237,6 +237,10 @@ module internal ScmHelpers =
                 CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));
             }     
                                     
+        member node.removeChild (child:CompDecl) =
+            { node with
+                CompDecl.Subs = (node.Subs |> List.filter (fun _child -> _child<>child));
+            }        
         member node.replaceChild (childToReplace:CompDecl, newChild:CompDecl) =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child=childToReplace then newChild else child));
