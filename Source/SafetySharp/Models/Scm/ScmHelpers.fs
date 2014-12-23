@@ -119,15 +119,9 @@ module internal ScmHelpers =
             assert (reverseList.Head = node.Comp)
             node.getDescendantUsingRevPath reverseList.Tail
         *)
-        (*
         member node.removeField (field:FieldDecl) =
             { node with
                 CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field));
-            }
-        *)
-        member node.removeField (field:Field) =
-            { node with
-                CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field.Field));
             }
         member node.addField (field:FieldDecl) =
             { node with
@@ -149,13 +143,17 @@ module internal ScmHelpers =
             else
                 inventName 0
                                 
-        member node.removeFault (fault:Fault) =
+        member node.removeFault (fault:FaultDecl) =
             { node with
-                CompDecl.Faults = (node.Faults |> List.filter (fun _fault -> fault<>_fault.Fault));
+                CompDecl.Faults = (node.Faults |> List.filter (fun _fault -> fault<>_fault));
             }
         member node.addFault (fault:FaultDecl) =
             { node with
                 CompDecl.Faults = fault::node.Faults
+            }
+        member node.replaceFault (faultToReplace:FaultDecl, newFault:FaultDecl) =
+            { node with
+                CompDecl.Faults = (node.Faults |> List.map (fun fault -> if fault=faultToReplace then newFault else fault));
             }
         member node.getUnusedFaultName (basedOn:string) : Fault =
             let existsName name : bool =
@@ -173,9 +171,9 @@ module internal ScmHelpers =
             else
                 inventName 0
 
-        member node.removeReqPort (reqPort:ReqPort) =
+        member node.removeReqPort (reqPort:ReqPortDecl) =
             { node with
-                CompDecl.ReqPorts = (node.ReqPorts |> List.filter (fun _reqPort -> reqPort<>_reqPort.ReqPort));
+                CompDecl.ReqPorts = (node.ReqPorts |> List.filter (fun _reqPort -> reqPort<>_reqPort));
             }
         member node.addReqPort (reqPort:ReqPortDecl) =
             { node with
@@ -197,13 +195,17 @@ module internal ScmHelpers =
             else
                 inventName 0
                 
-        member node.removeProvPort (provPort:ProvPort) =
+        member node.removeProvPort (provPort:ProvPortDecl) =
             { node with
-                CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> provPort<>_provPort.ProvPort));
+                CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> provPort<>_provPort));
             }
         member node.addProvPort (fault:ProvPortDecl) =
             { node with
                 CompDecl.ProvPorts = fault::node.ProvPorts
+            }
+        member node.replaceProvPort (provPortToReplace:ProvPortDecl, newProvPort:ProvPortDecl) =
+            { node with
+                CompDecl.ProvPorts = (node.ProvPorts |> List.map (fun provPort -> if provPort=provPortToReplace then newProvPort else provPort));
             }
         member node.getUnusedProvPortName (basedOn:string) : ProvPort =
             let existsName name : bool =
@@ -232,17 +234,27 @@ module internal ScmHelpers =
         member node.replaceBinding (bindingToReplace:BndDecl, newBinding:BndDecl) =
             { node with
                 CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
-            }         
+            }
+            
+        member node.removeStep (step:StepDecl) =
+            { node with
+                CompDecl.Steps = (node.Steps |> List.filter (fun _step -> _step<>step));
+            }    
+        member node.replaceStep (stepToReplace:StepDecl, newStep:StepDecl) =
+            { node with
+                CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));
+            }     
                                     
         member node.replaceChild (childToReplace:CompDecl, newChild:CompDecl) =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child=childToReplace then newChild else child));
             }
+
         member node.replaceChild (childToReplace:Comp, newChild:CompDecl) =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
             }
-        
+
         // Complete model        
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
             if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
