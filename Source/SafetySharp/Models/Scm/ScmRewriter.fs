@@ -581,7 +581,6 @@ module internal ScmRewriter =
 
     let rewriteParentSteps : ScmRewriteFunction<unit> = scmRewrite {
             //here, additionally instead of "step subcomponent" the converted step must be called
-            // caution: also take care, that no local var name has by accident the name of a _new_ field
             
             let! state = getState
             if (state.ChangedSubcomponents.IsNone) then
@@ -636,7 +635,6 @@ module internal ScmRewriter =
 
     let rewriteProvPort : ScmRewriteFunction<unit> = scmRewrite {
             // replace reqPorts and fields by their proper names, replace Fault Expressions
-            // caution: also take care, that no local var name has by accident the name of a _new_ field
             
             let! state = getState
             if (state.ChangedSubcomponents.IsNone) then
@@ -675,9 +673,37 @@ module internal ScmRewriter =
 
     let rewriteFaults : ScmRewriteFunction<unit> = scmRewrite {
             // replace reqPorts and fields by their proper names, replace Fault Expressions
-            // caution: also take care, that no local var name has by accident the name of a _new_ field
-            
-            return ()
+            let! state = getState
+            if (state.ChangedSubcomponents.IsNone) then
+                // do not modify old tainted state here
+                return! putState state // (alternative is to "return ()"
+            else
+                let infos = state.ChangedSubcomponents.Value
+                if infos.FaultsToRewrite.IsEmpty then
+                    // do not modify old tainted state here
+                    return! putState state
+                else
+                    // we are in a parent Component!!!
+                    let faultToRewrite = infos.FaultsToRewrite.Head
+                    
+                    let rewrittenFault =
+                        {
+                            FaultDecl.Fault = faultToRewrite.Fault;
+                            FaultDecl.Step = rewriteBehavior infos faultToRewrite.Step;
+                        }
+                    let newParentCompDecl = infos.ParentCompDecl.replaceFault(faultToRewrite,rewrittenFault)
+
+                    let newChangedSubcomponents =
+                        { infos with
+                            ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterCurrentSelection.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                        }
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
         }
     let assertSubcomponentEmpty : ScmRewriteFunction<unit> = scmRewrite {
             return ()
