@@ -2,6 +2,8 @@
 
 * nestedComponent1.scm: 2 Components with do-nothing behaviour: 1 parent with 1 subcomponent.
 * nestedComponent2.scm: 5 Components with do-nothing behaviour: 1 parent with 2 subcomponents. Each subcomponent has 1 subcomponent
+* nestedComponent3.scm: like nestedComponent2 but with fields.
+* nestedComponent4.scm: Like nestedComponent1 but with several fields
 * simpleComponent1.scm: 1 Component with do-nothing behaviour
 * simpleComponent2.scm: 1 Component with do-nothing behaviour and 5 fields with indeterministic initialization. Use "krun simpleComponent2.scm --search-final" to get all results
 * simpleComponent3.scm: 1 Component with do-nothing behaviour and 2 fields with the same name (incorrect program)

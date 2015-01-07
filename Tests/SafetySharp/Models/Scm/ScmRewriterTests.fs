@@ -489,3 +489,38 @@ type SingleRewriterTests () =
         newParentNode.Bindings.Head.Source.Comp <>? None
         newParentNode.Bindings.Head.Target.Comp =? None
         ()
+
+    [<Test>]
+    member this.``Several fields get leveled up by using levelUpFields with the iterateToFixpoint function`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.Fields.Length =? 3
+        parentNode.Fields.Length =? 1
+        let componentToChange = ScmRewriterCurrentSelection.createEmptyFromPath model pathOfChild
+        let initialState =
+            {
+                ScmRewriteState.Model = model;
+                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
+                ScmRewriteState.Tainted = false;
+            }
+        let workFlow = scmRewrite {
+            do! (iterateToFixpoint levelUpField) 
+            do! ScmRewriter.writeBackChangesIntoModel
+            return ()
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.Fields.Length =? 0
+        newParentNode.Fields.Length =? 4
+        ()

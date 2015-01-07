@@ -90,6 +90,36 @@ module internal ScmRewriter =
                 
     type ScmRewriteFunction<'a> = ScmRewriteFunction of (ScmRewriteState -> 'a * ScmRewriteState)
     
+    let iterateToFixpoint (s:ScmRewriteFunction<unit>) =
+        match s with
+            | ScmRewriteFunction (functionToIterate) ->            
+                let adjust_tainted_and_call (state:ScmRewriteState) : (bool*ScmRewriteState) =
+                    // 1) Tainted is set to false
+                    // 2) function is called
+                    // 3) Tainted is set to true, if (at least one option applies)
+                    //      a) it was true before the function call
+                    //      b) the functionToIterate sets tainted to true 
+                    let wasTaintedBefore = state.Tainted
+                    let stateButUntainted =
+                        { state with
+                            ScmRewriteState.Tainted = false;
+                        }
+                    let (_,stateAfterCall) = functionToIterate stateButUntainted
+                    let taintedByCall = stateAfterCall.Tainted
+                    let newState =
+                        { stateAfterCall with
+                            ScmRewriteState.Tainted = wasTaintedBefore || taintedByCall;
+                        }
+                    (taintedByCall,newState)
+                let rec iterate (state:ScmRewriteState) : (unit*ScmRewriteState) =                    
+                    let (taintedByCall,stateAfterOneCall) = adjust_tainted_and_call state
+                    if taintedByCall then
+                        //((),stateAfterOneCall)
+                        iterate stateAfterOneCall
+                    else
+                        ((),stateAfterOneCall)
+                ScmRewriteFunction (iterate)
+
     // TODO:
     //   - RewriteElement should return, if it made a change
     //   - smallest element only gets called once
@@ -777,16 +807,16 @@ module internal ScmRewriter =
             // idea: first level up every item of a component,
             //       then rewrite every code accessing to some specific element of it
             do! selectSubComponent
-            do! scmRewriteFixpoint {do! levelUpField} //Invariant: Imagine ChangedSubcomponents are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
-            do! scmRewriteFixpoint {do! levelUpFault}
-            do! scmRewriteFixpoint {do! convertStepToPort}
-            do! scmRewriteFixpoint {do! levelUpReqPort}
-            do! scmRewriteFixpoint {do! levelUpProvPort}
-            do! scmRewriteFixpoint {do! levelUpAndRewriteBindingDeclaredInChild}
-            do! scmRewriteFixpoint {do! rewriteBindingDeclaredInParent}
-            do! scmRewriteFixpoint {do! rewriteParentStep}
-            do! scmRewriteFixpoint {do! rewriteProvPort}
-            do! scmRewriteFixpoint {do! rewriteFaults}
+            do! (iterateToFixpoint levelUpField) //Invariant: Imagine ChangedSubcomponents are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
+            do! (iterateToFixpoint levelUpFault)
+            do! (iterateToFixpoint convertStepToPort)
+            do! (iterateToFixpoint levelUpReqPort)
+            do! (iterateToFixpoint levelUpProvPort)
+            do! (iterateToFixpoint levelUpAndRewriteBindingDeclaredInChild)
+            do! (iterateToFixpoint rewriteBindingDeclaredInParent)
+            do! (iterateToFixpoint rewriteParentStep)
+            do! (iterateToFixpoint rewriteProvPort)
+            do! (iterateToFixpoint rewriteFaults)
             do! assertSubcomponentEmpty
             do! removeSubComponent
             do! writeBackChangesIntoModel
