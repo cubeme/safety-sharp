@@ -143,9 +143,6 @@ module internal ScmRewriter =
             m
 
     let scmRewrite = new ScmRewriter()
-    let scmRewriteFixpoint = new ScmRewriter() //new ScmRewriteFixpoint. (fixpoint Computation Expression. Repeat something, until fixpoint is reached)
-
-
 
     // some local helpers
     let rec rewriteFaultExpr (infos:ScmRewriterCurrentSelection) (faultExpr:FaultExpr) =
@@ -657,7 +654,7 @@ module internal ScmRewriter =
                     let newChangedSubcomponents =
                         { infos with
                             ScmRewriterCurrentSelection.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterCurrentSelection.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                            ScmRewriterCurrentSelection.StepsToRewrite = infos.StepsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
@@ -822,9 +819,8 @@ module internal ScmRewriter =
             do! writeBackChangesIntoModel
         }
 
-    // here the workflow, which defines a globalglobal rewrite rule, whic
     let levelUpAndInline : ScmRewriteFunction<unit> = scmRewrite {
-            do! scmRewriteFixpoint {do! levelUpSubcomponent}
+            do! (iterateToFixpoint levelUpSubcomponent)
             do! assertNoSubcomponent
             do! inlineMainStep
             do! checkConsistency
