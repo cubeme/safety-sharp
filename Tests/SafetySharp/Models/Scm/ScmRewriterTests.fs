@@ -34,7 +34,7 @@ open ScmHelpers
 open ScmRewriter
 
 [<TestFixture>]
-type SingleRewriterTests () =
+type SingleLevelUpTests () =
 
     let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
 
@@ -489,6 +489,19 @@ type SingleRewriterTests () =
         newParentNode.Bindings.Head.Source.Comp <>? None
         newParentNode.Bindings.Head.Target.Comp =? None
         ()
+        
+
+[<TestFixture>]
+type FixpointIteratorTests () =
+
+    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
+
+    let parseWithParser parser str =
+        match runWithUserState parser str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, a, b) -> failwith errorMsg
+        
+    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
 
     [<Test>]
     member this.``Several fields get leveled up by using levelUpFields with the iterateToFixpoint function`` () =
@@ -524,3 +537,65 @@ type SingleRewriterTests () =
         newChildNode.Fields.Length =? 0
         newParentNode.Fields.Length =? 4
         ()
+        
+[<TestFixture>]
+type CompleteLevelUpTests () =
+
+    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
+
+    let parseWithParser parser str =
+        match runWithUserState parser str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, a, b) -> failwith errorMsg
+        
+    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
+
+    [<Test>]
+    member this.``Example nestedComponent2 gets leveled up completely`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/nestedComponent2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = scmRewrite {
+            do! (iterateToFixpoint levelUpSubcomponent)
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        // 4 Artificial Prov Ports, which contain the code of the previous nested steps
+        newModel.ProvPorts.Length =? 4
+        ()
+(*       
+        
+[<TestFixture>]
+type InliningTests () =
+
+    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
+
+    let parseWithParser parser str =
+        match runWithUserState parser str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, a, b) -> failwith errorMsg
+        
+    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
+
+    
+        
+[<TestFixture>]
+type CompleteRewriteTests () =
+
+    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
+
+    let parseWithParser parser str =
+        match runWithUserState parser str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, a, b) -> failwith errorMsg
+        
+    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
+
+*)
