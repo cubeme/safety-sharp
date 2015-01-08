@@ -29,7 +29,35 @@ module internal ScmHelpers =
     type FaultPath = CompPath * Fault
     type ReqPortPath = CompPath * ReqPort
     type ProvPortPath = CompPath * ProvPort
+
+    type StmPath = int list // index1::index2::[] -> Blockstatement2=Blockstatement1.[index2] ; Stm=Blockstatement2.[index1] ; Stm=Blockstatement1.[index2].[index1]
     
+    
+    // Extension methods
+    type Stm with
+        member stm.getSubStatement (path:StmPath) : Stm =
+            if path = [] then
+                stm
+            else
+                match stm with
+                    | Stm.Block (stmts) ->
+                        let subStatement = List.nth stmts path.Head
+                        subStatement.getSubStatement path.Tail
+                    | _ -> failwith "Try to get a SubStatement from a non Block Statement"
+        member stm.replaceSubStatement (path:StmPath) (replaceBy:Stm) : Stm =
+            if path = [] then
+                replaceBy
+            else
+                match stm with
+                    | Stm.Block (stmts) ->
+                        let stmIndex = path.Head
+                        let subStatement = List.nth stmts stmIndex
+                        let newSubStatement = subStatement.replaceSubStatement path.Tail replaceBy
+                        let newStmnts = ( List.map2 (fun index stm -> if stm=subStatement then stm else newSubStatement) ([0..(stmts.Length-1)]) (stmts) );
+                        Stm.Block (newStmnts)
+                    | _ -> failwith "Try to replace a SubStatement from a non Block Statement"
+               
+
     // Extension methods
     type Var with
         member var.getName =
@@ -211,7 +239,9 @@ module internal ScmHelpers =
         member node.replaceProvPort (provPortToReplace:ProvPortDecl, newProvPort:ProvPortDecl) =
             { node with
                 CompDecl.ProvPorts = (node.ProvPorts |> List.map (fun provPort -> if provPort=provPortToReplace then newProvPort else provPort));
-            }
+            }            
+        member node.getProvPortDecls (provPort:ProvPort) : ProvPortDecl list =
+            node.ProvPorts |> List.filter (fun _provPort -> _provPort.ProvPort = provPort)
         member node.getUnusedProvPortName (basedOn:string) : ProvPort =
             ProvPort(node.getCompletlyFreshName basedOn)
                 
@@ -227,6 +257,8 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
             }
+        member node.getBinding (reqPort:ReqPort) : BndDecl=
+            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
             
         member node.removeStep (step:StepDecl) =
             { node with
