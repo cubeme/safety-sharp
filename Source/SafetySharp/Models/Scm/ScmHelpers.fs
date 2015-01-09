@@ -257,7 +257,7 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
             }
-        member node.getBinding (reqPort:ReqPort) : BndDecl=
+        member node.getBindingOfLocalReqPort (reqPort:ReqPort) : BndDecl=
             node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
             
         member node.removeStep (step:StepDecl) =

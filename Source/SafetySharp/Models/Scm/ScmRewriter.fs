@@ -70,25 +70,33 @@ module internal ScmRewriter =
                     ScmRewriterSubcomponent.StepsToRewrite = [];
                     ScmRewriterSubcomponent.ArtificialStep = None;
                 }
-
+                
+    [<RequireQualifiedAccess>]
+    type BehaviorWithLocation = 
+        // only inline statements in the root-component. Thus we do not need a path to a subcomponent
+        | InProvPort of ProvPortDecl * BehaviorDecl
+        | InFault of FaultDecl * BehaviorDecl
+        | InStep of StepDecl * BehaviorDecl
+            with
+                member beh.Behavior =
+                    match beh with
+                        | InProvPort (_,beh) -> beh
+                        | InFault (_,beh) -> beh
+                        | InStep (_,beh) -> beh
 
     type ScmRewriterInlineBehavior = {
-        BehaviorToReplace : BehaviorDecl;
+        BehaviorToReplace : BehaviorWithLocation;
         InlinedBehavior : BehaviorDecl;
         CallToReplace : StmPath option;
         (*ArtificialLocalVarOldToNew : Map<VarDecl,VarDecl>;*)
     }
-    (*
-        with static member initial =
-            {
-                ScmRewriterInlineBehavior.SelectedStep = None;
-                ScmRewriterInlineBehavior.CurrentLocals = [];
-                ScmRewriterInlineBehavior.CurrentBody = Stm.Block([]);
-                ScmRewriterInlineBehavior.CallToReplace = [];
-                ScmRewriterInlineBehavior.ArtificialLocalVarOldToNew = Map.empty<VarDecl,VarDecl>;
-                ScmRewriterInlineBehavior.StepsToRewrite = [];
-            }
-       *)
+        with
+            static member createEmptyFromBehavior (behaviorWithLocaltion:BehaviorWithLocation) =
+                {
+                    ScmRewriterInlineBehavior.BehaviorToReplace = behaviorWithLocaltion;
+                    ScmRewriterInlineBehavior.InlinedBehavior = behaviorWithLocaltion.Behavior;
+                    ScmRewriterInlineBehavior.CallToReplace = None;
+                }
             
     type ScmRewriteState = {
         Model : ScmModel;
@@ -833,6 +841,11 @@ module internal ScmRewriter =
             do! writeBackChangesIntoModel
         }
                 
+
+
+
+
+
     let findBehaviorToInline : ScmRewriteFunction<unit> = scmRewrite {    
         let! state = getState
 
@@ -857,7 +870,7 @@ module internal ScmRewriter =
                         choices |> List.map (fun (expr,stm) -> stm)
                     maxLevel stmnts currentLevel          
                 | Stm.CallPort (reqPort,_params) ->
-                    let binding = state.Model.getBinding reqPort
+                    let binding = state.Model.getBindingOfLocalReqPort reqPort
                     //if binding.Kind= BndKind.Delayed then
                     //    failwith "Delayed Bindings cannot be inlined yet" // doesn't matter for depth
                     let provPortsStmts =
@@ -876,16 +889,50 @@ module internal ScmRewriter =
         if (state.BehaviorToInline.IsSome) then
             return ()
         else
-            // try to find a behavior, which only contains port calls, which themselves do not call ports
+            // try to find a behavior, which only contains port calls, which themselves do not call ports            
+            // (level calculated by "callingDepth" is exactly 1)            
+            let tryFindInProvPorts () : BehaviorWithLocation option =
+                let encapsulateResult (port:ProvPortDecl option) : BehaviorWithLocation option =
+                    match port with
+                        | None -> None
+                        | Some (portDecl) -> Some(BehaviorWithLocation.InProvPort(portDecl,portDecl.Behavior))
+                state.Model.ProvPorts |> List.tryFind (fun port -> (callingDepth port.Behavior.Body 0 2)=1)
+                                      |> encapsulateResult
 
-            
-            (*
-                        let modifiedState =
-                    { state with
-                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    }
-                return! putState modifiedState*)
-            return ()
+            let tryFindInFaultDecls () : BehaviorWithLocation option =
+                let encapsulateResult (port:FaultDecl option) : BehaviorWithLocation option =
+                    match port with
+                        | None -> None
+                        | Some (faultDecl) -> Some(BehaviorWithLocation.InFault(faultDecl,faultDecl.Step))
+                state.Model.Faults|> List.tryFind (fun fault -> (callingDepth fault.Step.Body 0 2)=1)
+                                  |> encapsulateResult
+
+            let tryFindInStep () : BehaviorWithLocation option =
+                let encapsulateResult (port:StepDecl option) : BehaviorWithLocation option =
+                    match port with
+                        | None -> None
+                        | Some (stepDecl) -> Some(BehaviorWithLocation.InStep(stepDecl,stepDecl.Behavior))
+                state.Model.Steps|> List.tryFind (fun step -> (callingDepth step.Behavior.Body 0 2)=1)
+                                 |> encapsulateResult
+
+            let candidateToInline : BehaviorWithLocation option =
+                match tryFindInProvPorts () with
+                    | Some(x) -> Some(x)
+                    | None ->
+                        match tryFindInFaultDecls () with
+                            | Some(x) -> Some(x)
+                            | None -> tryFindInStep ()
+
+            match candidateToInline with
+                | None -> return ()
+                | Some (behaviorToInline) ->
+                    let rewriterBehaviorToInline = ScmRewriterInlineBehavior.createEmptyFromBehavior behaviorToInline
+                    let modifiedState =
+                        { state with
+                            ScmRewriteState.BehaviorToInline = Some(rewriterBehaviorToInline);
+                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                        }
+                    return! putState modifiedState
         }
     
     let findCallToInline : ScmRewriteFunction<unit> = scmRewrite {
@@ -897,6 +944,8 @@ module internal ScmRewriter =
         }   
 
     let inlineBehavior : ScmRewriteFunction<unit> = scmRewrite {
+            // Assert: only inline statements in the root-component
+
             do! (iterateToFixpoint (scmRewrite {
                 do! findCallToInline
                 do! inlineCall
@@ -904,12 +953,45 @@ module internal ScmRewriter =
         }
 
     let writeBackChangedBehavior : ScmRewriteFunction<unit> = scmRewrite {
-            return ()
+            // Assert: only inline statements in the root-component 
+            let! state = getState
+            if (state.BehaviorToInline.IsNone) then
+                return ()
+            else
+                let behaviorToInline = state.BehaviorToInline.Value
+                let newModel =
+                    match behaviorToInline.BehaviorToReplace with
+                        | BehaviorWithLocation.InProvPort (provPortDecl,beh) ->
+                            let newProvPort =
+                                { provPortDecl with
+                                    ProvPortDecl.Behavior = behaviorToInline.InlinedBehavior;
+                                }
+                            state.Model.replaceProvPort(provPortDecl,newProvPort) 
+                        | BehaviorWithLocation.InFault (faultDecl,beh) ->
+                            let newFault =
+                                { faultDecl with
+                                    FaultDecl.Step = behaviorToInline.InlinedBehavior;
+                                }
+                            state.Model.replaceFault(faultDecl,newFault) 
+                        | BehaviorWithLocation.InStep (stepDecl,beh) ->
+                            let newStep =
+                                { stepDecl with
+                                    StepDecl.Behavior = behaviorToInline.InlinedBehavior;
+                                }
+                            state.Model.replaceStep (stepDecl,newStep) 
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.Model = newModel;
+                        ScmRewriteState.BehaviorToInline = None;
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
         }
 
 
         
     let findAndInlineBehavior : ScmRewriteFunction<unit> = scmRewrite {
+            // Assert: only inline statements in the root-component
             do! findBehaviorToInline            
             do! inlineBehavior
             do! writeBackChangedBehavior
