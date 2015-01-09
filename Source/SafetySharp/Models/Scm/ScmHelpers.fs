@@ -42,8 +42,11 @@ module internal ScmHelpers =
                 match stm with
                     | Stm.Block (stmts) ->
                         let subStatement = List.nth stmts path.Head
-                        subStatement.getSubStatement path.Tail
-                    | _ -> failwith "Try to get a SubStatement from a non Block Statement"
+                        subStatement.getSubStatement path.Tail                        
+                    | Stm.Choice (choices:(Expr * Stm) list) ->
+                        let (expr,stm) = List.nth choices path.Head
+                        stm.getSubStatement path.Tail
+                    | _ -> failwith "Try to get a SubStatement from a non Block/Choice Statement"
         member stm.replaceSubStatement (path:StmPath) (replaceBy:Stm) : Stm =
             if path = [] then
                 replaceBy
@@ -53,9 +56,15 @@ module internal ScmHelpers =
                         let stmIndex = path.Head
                         let subStatement = List.nth stmts stmIndex
                         let newSubStatement = subStatement.replaceSubStatement path.Tail replaceBy
-                        let newStmnts = ( List.map2 (fun index stm -> if stm=subStatement then stm else newSubStatement) ([0..(stmts.Length-1)]) (stmts) );
+                        let newStmnts = ( List.map2 (fun index stm -> if index<>stmIndex then stm else newSubStatement) ([0..(stmts.Length-1)]) (stmts) );
                         Stm.Block (newStmnts)
-                    | _ -> failwith "Try to replace a SubStatement from a non Block Statement"
+                    | Stm.Choice (choices:(Expr * Stm) list) ->
+                        let stmIndex = path.Head
+                        let (expr,subStatement) = List.nth choices stmIndex
+                        let newSubStatement = subStatement.replaceSubStatement path.Tail replaceBy
+                        let newChoices = ( List.map2 (fun index (guard,stm) -> if index<>stmIndex then (guard,stm) else (guard,newSubStatement)) ([0..(choices.Length-1)]) (choices) );
+                        Stm.Choice(newChoices)
+                    | _ -> failwith "Try to replace a SubStatement from a non Block/Choice Statement"
                
 
     // Extension methods
