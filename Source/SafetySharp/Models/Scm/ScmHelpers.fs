@@ -292,6 +292,9 @@ module internal ScmHelpers =
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
             }
 
+        member node.getUnusedVarName (basedOn:string) : Var =
+            Var(node.getCompletlyFreshName basedOn)
+
         // Complete model        
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
             if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
@@ -305,3 +308,78 @@ module internal ScmHelpers =
                 let newParent = parentNode.replaceChild(nodeToReplace,newComponent)
                 // recursively replace parent
                 model.replaceDescendant pathToReplace.Tail newParent
+
+
+                
+    // some local helpers
+    let rec rewriteFaultExpr (faultMap:Map<Fault,Fault>) (faultExpr:FaultExpr) = //from->to
+        let rewriteFault (fault) : Fault =
+            faultMap.Item fault
+        match faultExpr with
+            | FaultExpr.Fault (fault) -> FaultExpr.Fault (rewriteFault fault)
+            | FaultExpr.NotFault (faultExpr) -> FaultExpr.NotFault(rewriteFaultExpr faultMap faultExpr)
+            | FaultExpr.AndFault (left,right) -> FaultExpr.AndFault (rewriteFaultExpr faultMap left, rewriteFaultExpr faultMap right)
+            | FaultExpr.OrFault (left,right) -> FaultExpr.OrFault (rewriteFaultExpr faultMap left, rewriteFaultExpr faultMap right)
+
+    let rewriteFaultExprOption (faultMap:Map<Fault,Fault>) (faultExpr:FaultExpr option) =
+        match faultExpr with
+            | None -> None
+            | Some (faultExpr) -> Some (rewriteFaultExpr faultMap faultExpr)
+                    
+    let rec rewriteExpr (varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (expr:Expr) : Expr=
+        match expr with
+            | Expr.Literal (_val) -> Expr.Literal(_val)
+            | Expr.ReadVar (_var) ->
+                let newVar=varMap.Item _var
+                Expr.ReadVar (newVar)
+            | Expr.ReadField (field) ->
+                let newField=fieldMap.Item field
+                Expr.ReadField (newField)
+            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr (varMap,fieldMap) expr,uop)
+            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr (varMap,fieldMap) left,bop,rewriteExpr (varMap,fieldMap) right)
+
+    let rewriteParam (varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (_param:Param) : Param =
+        match _param with
+            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr (varMap,fieldMap) expr)
+            | Param.InOutVarParam (var) ->
+                let newVar = varMap.Item var
+                Param.InOutVarParam (newVar)
+            | Param.InOutFieldParam (field) ->                    
+                let newField = fieldMap.Item(field)
+                Param.InOutFieldParam (newField)
+
+    let rec rewriteStm (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (stm:Stm) : Stm =
+        match stm with
+            | Stm.AssignVar (var,expr) ->
+                let newExpr = rewriteExpr (varMap,fieldMap) expr
+                let newVar = varMap.Item var
+                Stm.AssignVar (newVar, newExpr)
+            | Stm.AssignField (field, expr) ->
+                let newField = fieldMap.Item(field)
+                let newExpr = rewriteExpr (varMap,fieldMap) expr
+                Stm.AssignField (newField, newExpr)
+            | Stm.AssignFault (fault, expr) ->
+                let newFault = faultMap.Item(fault)
+                let newExpr = rewriteExpr (varMap,fieldMap)  expr
+                Stm.AssignFault (newFault, newExpr)
+            | Stm.Block (smnts) ->
+                let newStmnts = smnts |> List.map (rewriteStm (reqPortMap,faultMap,varMap,fieldMap))
+                Stm.Block(newStmnts)
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr (varMap,fieldMap)  expr,rewriteStm (reqPortMap,faultMap,varMap,fieldMap) stm) )
+                Stm.Choice(newChoices)
+            | Stm.CallPort (reqPort,_params) ->
+                let newReqPort = reqPortMap.Item (reqPort)
+                let newParams = _params |> List.map (rewriteParam (varMap,fieldMap) )
+                Stm.CallPort (newReqPort,newParams)
+            | Stm.StepComp (comp) ->
+                Stm.StepComp (comp)
+            | Stm.StepFault (fault) ->
+                let newFault = faultMap.Item(fault)
+                Stm.StepFault (newFault)
+
+    let rewriteBehavior (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (behavior:BehaviorDecl) =
+        {
+            BehaviorDecl.Locals= behavior.Locals; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any local variable. So we can keep it
+            BehaviorDecl.Body = rewriteStm (reqPortMap,faultMap,varMap,fieldMap) behavior.Body;
+        }

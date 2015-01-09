@@ -65,7 +65,7 @@ type internal FaultExpr =
     | AndFault of FaultExpr * FaultExpr
     | OrFault of FaultExpr * FaultExpr
 
-type internal Param =
+type internal Param = //TODO: maybe better to split apart ExprParam (as this one may contain the same string as InOutVarParam, but gets evaluated)
     | ExprParam of Expr
     | InOutVarParam of Var
     | InOutFieldParam of Field
@@ -143,7 +143,7 @@ type internal BndDecl = {
 
 type internal FaultDecl = {
     Fault : Fault
-    Step : BehaviorDecl
+    Step : BehaviorDecl //TODO: maybe rename to Behavior to be consistent
 }
 
 type internal StepDecl = {
