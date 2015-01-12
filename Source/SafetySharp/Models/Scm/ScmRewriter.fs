@@ -231,11 +231,22 @@ module internal ScmRewriter =
             let! name = getCompletlyFreshName basedOn
             return ProvPort(name)
         }
-
+        
     let getUnusedVarName (basedOn:string) : ScmRewriteFunction<Var> = scmRewrite {
             let! name = getCompletlyFreshName basedOn
             return Var(name)
         }
+
+    let getUnusedVarNames (basedOn:string list) : ScmRewriteFunction<Var list> = 
+        let newUnusedVarNames (state) : (Var list * ScmRewriteState) =
+            let mutable varState = state
+            let mutable newVars = []
+            for i in basedOn do
+                let (newVar,newState) = runState (getUnusedVarName i) varState
+                varState <- newState
+                newVars <- newVar::newVars
+            (List.rev newVars, varState)
+        ScmRewriteFunction (newUnusedVarNames)
 
 
 
@@ -285,6 +296,7 @@ module internal ScmRewriter =
                     let field = fieldDecl.Field
                     let newChildCompDecl = infos.ChildCompDecl.removeField fieldDecl
                     let! transformedField = getUnusedFieldName (sprintf "%s_%s" infos.ChildCompDecl.getName field.getName)
+                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let transformedFieldDecl = 
                         {fieldDecl with
                             FieldDecl.Field = transformedField;
@@ -322,6 +334,7 @@ module internal ScmRewriter =
                     let fault = faultDecl.Fault
                     let newChildCompDecl = infos.ChildCompDecl.removeFault faultDecl
                     let! transformedFault = getUnusedFaultName (sprintf "%s_%s" infos.ChildCompDecl.getName fault.getName)
+                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let transformedFaultDecl = 
                         {faultDecl with
                             FaultDecl.Fault = transformedFault;
@@ -359,6 +372,7 @@ module internal ScmRewriter =
                     let reqPort = reqPortDecl.ReqPort
                     let newChildCompDecl = infos.ChildCompDecl.removeReqPort reqPortDecl
                     let! transformedReqPort = getUnusedReqPortName (sprintf "%s_%s" infos.ChildCompDecl.getName reqPort.getName)
+                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let transformedReqPortDecl = 
                         {reqPortDecl with
                             ReqPortDecl.ReqPort = transformedReqPort;
@@ -395,6 +409,7 @@ module internal ScmRewriter =
                     let provPort = provPortDecl.ProvPort
                     let newChildCompDecl = infos.ChildCompDecl.removeProvPort provPortDecl
                     let! transformedProvPort = getUnusedProvPortName (sprintf "%s_%s" infos.ChildCompDecl.getName provPort.getName)
+                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let transformedProvPortDecl = 
                         {provPortDecl with
                             ProvPortDecl.ProvPort = transformedProvPort;
@@ -575,7 +590,8 @@ module internal ScmRewriter =
                     else
                         if infos.ArtificialStep = None then
                             let! reqPort = getUnusedReqPortName  (sprintf "%s_step" infos.ChildCompDecl.Comp.getName)
-                            let! provPort = getUnusedProvPortName (sprintf "%s_step" infos.ChildCompDecl.Comp.getName) // TODO: create  and
+                            let! provPort = getUnusedProvPortName (sprintf "%s_step" infos.ChildCompDecl.Comp.getName)
+                            let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                             
                             let newReqPortDecl = 
                                 {
@@ -993,8 +1009,6 @@ module internal ScmRewriter =
         }
 
     let inlineCall : ScmRewriteFunction<unit> = scmRewrite {
-        return ()
-        (*
             let! state = getState
             if (state.BehaviorToInline.IsNone) then
                 return ()
@@ -1005,77 +1019,127 @@ module internal ScmRewriter =
                 else
                     let pathToCallToReplace = behaviorToInline.CallToReplace.Value
                     let body = behaviorToInline.InlinedBehavior.Body
-                    let callToReplace = body.getSubStatement pathToCallToReplace
-                    let (addedLocals,newStatement) = 
-                        match callToReplace with
-                            | Stm.AssignVar (_) -> failwith "BUG: Nothing to be inlined at desired position"
-                            | Stm.AssignField (_) -> failwith "BUG: Nothing to be inlined at desired position"
-                            | Stm.AssignFault (_) -> failwith "BUG: Nothing to be inlined at desired position"
-                            | Stm.Block (_) -> failwith "BUG: Nothing to be inlined at desired position"
-                            | Stm.Choice (_) -> failwith "BUG: Nothing to be inlined at desired position"  
-                            | Stm.CallPort (reqPort,_params) ->
-                                let binding = state.Model.getBindingOfLocalReqPort reqPort
-                                if binding.Kind= BndKind.Delayed then
-                                    failwith "Delayed Bindings cannot be inlined yet"
+                    let callToReplace = body.getSubStatement pathToCallToReplace 
+                    match callToReplace with
+                        | Stm.AssignVar (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                        | Stm.AssignField (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                        | Stm.AssignFault (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                        | Stm.Block (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                        | Stm.Choice (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                        | Stm.StepComp (comp) ->
+                            failwith "BUG: In this phase Stm.StepComp should not be in any statement"; return ()
+                        | Stm.StepFault (fault) ->
+                            failwith "BUG: In this phase Stm.StepFault should not be in any statement"; return ()
+                        | Stm.CallPort (reqPort,_params) ->
+                            let binding = state.Model.getBindingOfLocalReqPort reqPort
+                            if binding.Kind= BndKind.Delayed then
+                                failwith "TODO: Delayed Bindings cannot be inlined yet"
+                                return ()
+                            else
                                 let provPortDecls = binding.Source.ProvPort |> state.Model.getProvPortDecls
                                 assert (provPortDecls.Length = 1) //exactly one provPortDecl should exist. Assume uniteProvPortDecls was called
                                 let provPortDecl = provPortDecls.Head
-                                let newLocalFieldsTuple =
                                     // Note: assure, no name clashes and inside always fresh names are used
-                                    let! transformedVarName (var:VarDecl) = 
-                                        getUnusedVarName (sprintf "%s_%s" provPortDecl.getName var.getName)
-                                    provPortDecl.Behavior.Locals |> List.map (fun varDecl -> (varDecl,transformedVarName varDecl) )
-                                let newLocalFieldsMap =
-                                    newLocalFieldsTuple |> List.map (fun (oldVarDecl,newVar) -> (oldVarDecl.Var,newVar))
-                                                        |> Map.ofList
-                                let newLocalFieldDecls =
+                                //let transformLocal  =
+                                //    let! newName = getUnusedVarName (sprintf "%s_%s" provPortDecl.getName var.getName)
+                                //provPortDecl.Behavior.Locals |> List.iter (fun varDecl -> (varDecl,transformedVarName varDecl) )
+
+                                
+                                // Step 1: replace Local:VarDecl by new Local:VarDecl in Statement
+
+                                let! newLocalVarDecls =                                    
+                                    let newNameSuggestionsForNewVars =
+                                        provPortDecl.Behavior.Locals |> List.map (fun varDecl -> (sprintf "%s_%s" provPortDecl.getName varDecl.getName))
+                                    getUnusedVarNames newNameSuggestionsForNewVars
+                                let listOldVarDeclsToNewVars =
+                                    List.zip provPortDecl.Behavior.Locals newLocalVarDecls
+                                let mapOldVarsToNewVars =
+                                    listOldVarDeclsToNewVars |> List.map (fun (oldVarDecl,newVar) -> (oldVarDecl.Var,newVar))
+                                                             |> Map.ofList                                                                    
+                                let newLocalVarDecls =
                                     let createNewVarDecl (oldVarDecl:VarDecl,newVar:Var) : VarDecl =
                                         { oldVarDecl with
                                             VarDecl.Var = newVar
                                         }
-                                    newLocalFieldsTuple |> List.map (fun entry -> createNewVarDecl entry)
-                                // replace Local:VarDecl by new Local:VarDecl in Statement
-                                let newStatement = rewriteStm (Map.empty,Map.empty,newLocalFieldsMap,Map.empty) (provPortDecl.Behavior.Body)
-                                // replace Params by their actual Fields or LocalVars declared in the parameters of the caller
+                                    listOldVarDeclsToNewVars |> List.map createNewVarDecl
+
+                                let newStatementStep1 = rewriteStm_onlyVars mapOldVarsToNewVars (provPortDecl.Behavior.Body)
                                 
-                                // here we need to take a close look: if an expression was used as parameter, add an assignment to a local variable
-                                // add this local variable to the other local variables.
-                                // Otherwise replace the names in-text. Also replace a varCall to a FieldCall in expressions and assignments
-                                let zippedParameters =
-                                    List.zip _params provPortDecl.Params
-                                //let (newStatementsFromParam,newLocalFieldsFromParam) =
-                                (*
-                                let temp =
-                                    let transform (reqParam:Param) (provParam:ParamDecl) =
-                                        match 
-                                        ()
-                                    zippedParameters |> List.map (fun (reqParam,provParam) -> transform reqParam provParam)                                    
-                                *)
-                                let newStatement =
-                                    newStatement
-                                (newLocalFieldDecls,newStatement)
-                            | Stm.StepComp (comp) ->
-                                failwith "BUG: In this phase Stm.StepComp should not be in any statement"
-                            | Stm.StepFault (fault) ->
-                                failwith "BUG: In this phase Stm.StepFault should not be in any statement"
-                    let newBody = body.replaceSubStatement pathToCallToReplace newStatement
-                    let newBehavior =
-                        {
-                            BehaviorDecl.Body = newBody;
-                            BehaviorDecl.Locals = behaviorToInline.InlinedBehavior.Locals @ addedLocals;
-                        }
-                    let newRewriterBehaviorToInline =
-                        { behaviorToInline with
-                            ScmRewriterInlineBehavior.CallToReplace = None;
-                            ScmRewriterInlineBehavior.InlinedBehavior = newBehavior;
-                        }
-                    let modifiedState =
-                        { state with
-                            ScmRewriteState.BehaviorToInline = Some(newRewriterBehaviorToInline);
-                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                        }
-                    return! putState modifiedState
-                       *)
+                                // Step 2-4: Replace the local vars in the signature.
+                                //   replace Params by their actual Fields or LocalVars or declared in the parameters of the caller
+                                //   here we need to take a close look: if an expression was used as parameter, add an assignment to a local variable
+                                //   add this local variable to the other local variables.
+                                //   Otherwise replace the names in-text. Also replace a varCall to a FieldCall in expressions and assignments
+                                let localVarToReqPortParam =
+                                    List.zip provPortDecl.Params _params
+
+                                // Step 2: ParamExpr.ExprParam
+                                //   Every time the localVar with the name of ExprParam is called, it is replaced by its real expression
+                                //   Note: InParam may never be written to!
+                                //         The Var of an InParam may never be used as InOutParam of a call. (Try to indirectly relief the rule above)
+                                let localVarToReqPortExprParamMap =
+                                    localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
+                                                              (
+                                                                match paramReq with
+                                                                    | Param.ExprParam (expr) -> [(localVarParamDecl.Var.Var,expr)]
+                                                                    | _ -> []
+                                                              ) )
+                                                            |> Map.ofList
+                                let newStatementStep2 =
+                                    rewriteStm_varsToExpr localVarToReqPortExprParamMap newStatementStep1 
+
+                                // Step 3: ParamExpr.InOutVarParam:
+                                //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadVar
+                                //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignVar
+                                //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutVarParam
+                                let localVarToReqPortInOutVarParamMap =
+                                    localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
+                                                              (
+                                                                match paramReq with
+                                                                    | Param.InOutVarParam (var) -> [(localVarParamDecl.Var.Var,var)]
+                                                                    | _ -> []
+                                                              ) )
+                                                            |> Map.ofList
+                                let newStatementStep3 =
+                                    rewriteStm_onlyVars localVarToReqPortInOutVarParamMap (newStatementStep2) 
+
+
+                                // Step 4: ParamExpr.InOutFieldParam:
+                                //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadField
+                                //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignField
+                                //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutFieldParam
+                                let localVarToReqPortInOutFieldMap =
+                                    localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
+                                                              (
+                                                                match paramReq with
+                                                                    | Param.InOutFieldParam (field) -> [(localVarParamDecl.Var.Var,field)]
+                                                                    | _ -> []
+                                                              ) )
+                                                            |> Map.ofList
+                                let newStatementStep4 =
+                                    rewriteStm_varsToFields localVarToReqPortInOutFieldMap newStatementStep3
+
+                                
+
+                                // Step 5: Write back changes into state
+                                let newBody = body.replaceSubStatement pathToCallToReplace newStatementStep4
+                                let newBehavior =
+                                    {
+                                        BehaviorDecl.Body = newBody;
+                                        BehaviorDecl.Locals = behaviorToInline.InlinedBehavior.Locals @ newLocalVarDecls;
+                                    }
+                                let newRewriterBehaviorToInline =
+                                    { behaviorToInline with
+                                        ScmRewriterInlineBehavior.CallToReplace = None;
+                                        ScmRewriterInlineBehavior.InlinedBehavior = newBehavior;
+                                    }
+                                let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                                let modifiedState =
+                                    { state with
+                                        ScmRewriteState.BehaviorToInline = Some(newRewriterBehaviorToInline);
+                                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                                    }
+                                return! putState modifiedState
         }   
 
     let inlineBehavior : ScmRewriteFunction<unit> = scmRewrite {

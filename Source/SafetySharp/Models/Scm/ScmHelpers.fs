@@ -94,7 +94,23 @@ module internal ScmHelpers =
         member reqPort.getName =
             match reqPort with
                 | ReqPort.ReqPort (name) -> name
+                
+    // Extension methods
+    type Param with
+        member param.IsExpr =
+            match param with
+                | ExprParam (_) -> true
+                | _ -> false
+        member param.IsInOutVar =
+            match param with
+                | InOutVarParam (_) -> true
+                | _ -> false
+        member param.IsInOutField =
+            match param with
+                | InOutFieldParam (_) -> true
+                | _ -> false
 
+    
     // Extension methods
     type ParamDecl with
         member param.getName =
@@ -351,9 +367,115 @@ module internal ScmHelpers =
             | Stm.StepFault (fault) ->
                 let newFault = faultMap.Item(fault)
                 Stm.StepFault (newFault)
-
+                
     let rewriteBehavior (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (behavior:BehaviorDecl) =
         {
             BehaviorDecl.Locals= behavior.Locals; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any local variable. So we can keep it
             BehaviorDecl.Body = rewriteStm (reqPortMap,faultMap,varMap,fieldMap) behavior.Body;
         }
+
+
+    let rewriteStm_onlyVars (varMap:Map<Var,Var>) =
+        rewriteStm (Map.empty<ReqPort,ReqPort>,Map.empty<Fault,Fault>,varMap,Map.empty<Field,Field>)
+    
+    
+    let rec rewriteExpr_varsToFields (varMap:Map<Var,Field>) (expr:Expr) : Expr=
+        match expr with
+            | Expr.Literal (_val) -> Expr.Literal(_val)
+            | Expr.ReadVar (_var) ->
+                if varMap.ContainsKey _var then
+                    Expr.ReadField(varMap.Item _var)
+                else
+                    Expr.ReadVar (_var)
+            | Expr.ReadField (field) -> Expr.ReadField (field)
+            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr_varsToFields (varMap) expr,uop)
+            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr_varsToFields (varMap) left,bop,rewriteExpr_varsToFields (varMap) right)
+            
+    let rewriteParam_varsToFields (varMap:Map<Var,Field>) (_param:Param) : Param =
+        match _param with
+            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr_varsToFields (varMap) expr)
+            | Param.InOutVarParam (var) ->
+                if varMap.ContainsKey var then
+                    Param.InOutFieldParam (varMap.Item var)
+                else
+                    Param.InOutVarParam (var)
+            | Param.InOutFieldParam (field) -> 
+                Param.InOutFieldParam (field)
+
+    let rec rewriteStm_varsToFields (varMap:Map<Var,Field>) (stm:Stm) : Stm =
+        match stm with
+            | Stm.AssignVar (var,expr) ->
+                let newExpr = rewriteExpr_varsToFields (varMap) expr                
+                if varMap.ContainsKey var then              
+                    Stm.AssignField (varMap.Item var, newExpr)
+                else
+                    Stm.AssignVar (var, newExpr)                
+            | Stm.AssignField (field, expr) ->
+                Stm.AssignField (field, expr)
+            | Stm.AssignFault (fault, expr) ->
+                Stm.AssignFault (fault, expr)
+            | Stm.Block (smnts) ->
+                let newStmnts = smnts |> List.map (rewriteStm_varsToFields (varMap))
+                Stm.Block(newStmnts)
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToFields (varMap)  expr,rewriteStm_varsToFields (varMap) stm) )
+                Stm.Choice(newChoices)
+            | Stm.CallPort (reqPort,_params) ->
+                let newParams = _params |> List.map (rewriteParam_varsToFields (varMap) )
+                Stm.CallPort (reqPort,newParams)
+            | Stm.StepComp (comp) ->
+                Stm.StepComp (comp)
+            | Stm.StepFault (fault) ->
+                Stm.StepFault (fault)
+    
+
+
+
+    let rec rewriteExpr_varsToExpr (varMap:Map<Var,Expr>) (expr:Expr) : Expr=
+        match expr with
+            | Expr.Literal (_val) -> Expr.Literal(_val)
+            | Expr.ReadVar (_var) ->
+                if varMap.ContainsKey _var then
+                    varMap.Item _var
+                else
+                    Expr.ReadVar (_var)
+            | Expr.ReadField (field) -> Expr.ReadField (field)
+            | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr_varsToExpr (varMap) expr,uop)
+            | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr_varsToExpr (varMap) left,bop,rewriteExpr_varsToExpr (varMap) right)
+            
+    let rewriteParam_varsToExpr (varMap:Map<Var,Expr>) (_param:Param) : Param =
+        match _param with
+            | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr_varsToExpr (varMap) expr)
+            | Param.InOutVarParam (var) ->
+                if varMap.ContainsKey var then
+                    failwith "BUG: ExprParam may never be used as InoutVarParam of another Call"
+                else
+                    Param.InOutVarParam (var)
+            | Param.InOutFieldParam (field) -> 
+                Param.InOutFieldParam (field)
+
+    let rec rewriteStm_varsToExpr (varMap:Map<Var,Expr>) (stm:Stm) : Stm =
+        match stm with
+            | Stm.AssignVar (var,expr) ->
+                let newExpr = rewriteExpr_varsToExpr (varMap) expr                
+                if varMap.ContainsKey var then              
+                    failwith "BUG: ExprParam may never be assigned to"
+                else
+                    Stm.AssignVar (var, newExpr)                
+            | Stm.AssignField (field, expr) ->
+                Stm.AssignField (field, expr)
+            | Stm.AssignFault (fault, expr) ->
+                Stm.AssignFault (fault, expr)
+            | Stm.Block (smnts) ->
+                let newStmnts = smnts |> List.map (rewriteStm_varsToExpr (varMap))
+                Stm.Block(newStmnts)
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToExpr (varMap)  expr,rewriteStm_varsToExpr (varMap) stm) )
+                Stm.Choice(newChoices)
+            | Stm.CallPort (reqPort,_params) ->
+                let newParams = _params |> List.map (rewriteParam_varsToExpr (varMap) )
+                Stm.CallPort (reqPort,newParams)
+            | Stm.StepComp (comp) ->
+                Stm.StepComp (comp)
+            | Stm.StepFault (fault) ->
+                Stm.StepFault (fault)
