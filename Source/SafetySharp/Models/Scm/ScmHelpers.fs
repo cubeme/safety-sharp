@@ -153,44 +153,28 @@ module internal ScmHelpers =
             assert (reverseList.Head = node.Comp)
             node.getDescendantUsingRevPath reverseList.Tail
         
-        member node.getCompletlyFreshName (basedOn:string) : string =
-            // TODO: Buffering: Add a Set, which contains all names. This function can be altered to collect all names
-            let existsName name : bool =
-                let existsInFields = node.Fields |> List.exists (fun field -> field.getName = name)
-                let existsInFaults =
-                    let existsInFault (fault:FaultDecl) =
-                        let existsAsLocalVar = fault.Step.Locals |> List.exists (fun var -> var.getName = name)
-                        let isNameOfFault = fault.getName = name
-                        isNameOfFault || existsAsLocalVar
-                    node.Faults |> List.exists existsInFault
-                let existsInReqPorts = node.ReqPorts |> List.exists (fun reqPort -> reqPort.getName = name)
-                let existsInProvPorts =
-                    let existsInProvPort (provPort:ProvPortDecl) : bool =
-                        let existsAsParameter = provPort.Params |> List.exists (fun param -> param.getName = name)
-                        let existsAsLocalVar = provPort.Behavior.Locals |> List.exists (fun var -> var.getName = name)
-                        let isNameOfPort = provPort.getName = name
-                        isNameOfPort || existsAsParameter || existsAsLocalVar
-                    node.ProvPorts |> List.exists existsInProvPort
-                let existsInSteps =
-                    let existsInStep (step:StepDecl) =
-                        let existsAsLocalVar = step.Behavior.Locals |> List.exists (fun var -> var.getName = name)
-                        existsAsLocalVar
-                    node.Steps |> List.exists existsInStep
-                existsInFields || existsInFaults  || existsInReqPorts || existsInProvPorts || existsInSteps
-            let rec inventName numberSuffix : string =
-                // If desired name does not exist, get name with the lowest numberSuffix.
-                // This is not really beautiful, but finally leads to a free name, (because domain is finite).
-                let nameCandidate = sprintf "%s_art%i" basedOn numberSuffix
-                if existsName nameCandidate = false then
-                    nameCandidate
-                else
-                    inventName (numberSuffix+1)
-            if existsName basedOn = false then
-                basedOn
-            else
-                inventName 0
+        member node.getTakenNames () : string list =
+            let namesInFields = node.Fields |> List.map(fun field -> field.getName)
+            let namesInFaults =
+                let nameInFault (fault:FaultDecl) =
+                    let nameOfLocalVar = fault.Step.Locals |> List.map (fun var -> var.getName )
+                    let nameOfFault = fault.getName
+                    nameOfFault:: nameOfLocalVar
+                node.Faults |> List.collect nameInFault
+            let namesInReqPorts = node.ReqPorts |> List.map (fun reqPort -> reqPort.getName)
+            let namesInProvPorts =
+                let namesInProvPort (provPort:ProvPortDecl) : string list =
+                    let namesInParameter = provPort.Params |> List.map (fun param -> param.getName )
+                    let namesInLocalVar = provPort.Behavior.Locals |> List.map (fun var -> var.getName)
+                    let nameOfPort = provPort.getName
+                    nameOfPort :: namesInParameter @ namesInLocalVar
+                node.ProvPorts |> List.collect namesInProvPort
+            let namesInSteps =
+                let namesInStep (step:StepDecl) =
+                    step.Behavior.Locals |> List.map (fun var -> var.getName )
+                node.Steps |> List.collect namesInStep
+            namesInFields @ namesInFaults @ namesInReqPorts @ namesInProvPorts @ namesInSteps
             
-
 
         (*
         member node.getParentOfDescendantUsingPath (path: Comp list) : CompDecl =
@@ -208,8 +192,6 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Fields = field::node.Fields
             }
-        member node.getUnusedFieldName (basedOn:string) : Field =
-            Field(node.getCompletlyFreshName basedOn)
                                 
         member node.removeFault (fault:FaultDecl) =
             { node with
@@ -223,8 +205,6 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Faults = (node.Faults |> List.map (fun fault -> if fault=faultToReplace then newFault else fault));
             }
-        member node.getUnusedFaultName (basedOn:string) : Fault =
-            Fault.Fault(node.getCompletlyFreshName basedOn)
 
         member node.removeReqPort (reqPort:ReqPortDecl) =
             { node with
@@ -234,8 +214,6 @@ module internal ScmHelpers =
             { node with
                 CompDecl.ReqPorts = reqPort::node.ReqPorts
             }
-        member node.getUnusedReqPortName (basedOn:string) : ReqPort =
-            ReqPort(node.getCompletlyFreshName basedOn)
                 
         member node.removeProvPort (provPort:ProvPortDecl) =
             { node with
@@ -251,8 +229,6 @@ module internal ScmHelpers =
             }            
         member node.getProvPortDecls (provPort:ProvPort) : ProvPortDecl list =
             node.ProvPorts |> List.filter (fun _provPort -> _provPort.ProvPort = provPort)
-        member node.getUnusedProvPortName (basedOn:string) : ProvPort =
-            ProvPort(node.getCompletlyFreshName basedOn)
                 
         member node.removeBinding (bndg:BndDecl) =
             { node with
@@ -292,8 +268,6 @@ module internal ScmHelpers =
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
             }
 
-        member node.getUnusedVarName (basedOn:string) : Var =
-            Var(node.getCompletlyFreshName basedOn)
 
         // Complete model        
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =

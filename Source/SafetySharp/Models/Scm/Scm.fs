@@ -65,7 +65,7 @@ type internal FaultExpr =
     | AndFault of FaultExpr * FaultExpr
     | OrFault of FaultExpr * FaultExpr
 
-type internal Param = //TODO: maybe better to split apart ExprParam (as this one may contain the same string as InOutVarParam, but gets evaluated)
+type internal Param =
     | ExprParam of Expr
     | InOutVarParam of Var
     | InOutFieldParam of Field

@@ -60,6 +60,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -94,6 +95,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -163,6 +165,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -198,6 +201,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -239,6 +243,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -285,6 +290,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -332,6 +338,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -379,6 +386,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -427,6 +435,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -474,6 +483,7 @@ type SingleLevelUpTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
@@ -530,6 +540,7 @@ type FixpointIteratorTests () =
         let initialState =
             {
                 ScmRewriteState.Model = model;
+                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
                 ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
                 ScmRewriteState.BehaviorToInline = None;
                 ScmRewriteState.Tainted = false;
