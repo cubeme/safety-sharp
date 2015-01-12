@@ -626,7 +626,8 @@ type InliningTests () =
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
     let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
-
+    
+*)
     
         
 [<TestFixture>]
@@ -640,5 +641,20 @@ type CompleteRewriteTests () =
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
     let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
-
-*)
+    
+    [<Test>]
+    member this.``Example callInstHierarchy1 gets rewritten (leveled up and inlined) completely`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()

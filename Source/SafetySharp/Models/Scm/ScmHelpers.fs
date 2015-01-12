@@ -304,7 +304,10 @@ module internal ScmHelpers =
     // some local helpers
     let rec rewriteFaultExpr (faultMap:Map<Fault,Fault>) (faultExpr:FaultExpr) = //from->to
         let rewriteFault (fault) : Fault =
-            faultMap.Item fault
+            if faultMap.ContainsKey fault then
+                faultMap.Item fault
+            else
+                fault
         match faultExpr with
             | FaultExpr.Fault (fault) -> FaultExpr.Fault (rewriteFault fault)
             | FaultExpr.NotFault (faultExpr) -> FaultExpr.NotFault(rewriteFaultExpr faultMap faultExpr)
@@ -315,15 +318,21 @@ module internal ScmHelpers =
         match faultExpr with
             | None -> None
             | Some (faultExpr) -> Some (rewriteFaultExpr faultMap faultExpr)
+
+    let itemOrOld<'a when 'a:comparison> (map:Map<'a,'a>) (item:'a) : 'a  =
+        if map.ContainsKey item then
+            map.Item item
+        else
+            item
                     
     let rec rewriteExpr (varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (expr:Expr) : Expr=
         match expr with
             | Expr.Literal (_val) -> Expr.Literal(_val)
             | Expr.ReadVar (_var) ->
-                let newVar=varMap.Item _var
+                let newVar = itemOrOld varMap _var
                 Expr.ReadVar (newVar)
             | Expr.ReadField (field) ->
-                let newField=fieldMap.Item field
+                let newField = itemOrOld fieldMap field
                 Expr.ReadField (newField)
             | Expr.UExpr (expr,uop) -> Expr.UExpr(rewriteExpr (varMap,fieldMap) expr,uop)
             | Expr.BExpr (left, bop, right) -> Expr.BExpr(rewriteExpr (varMap,fieldMap) left,bop,rewriteExpr (varMap,fieldMap) right)
@@ -332,24 +341,24 @@ module internal ScmHelpers =
         match _param with
             | Param.ExprParam (expr) -> Param.ExprParam(rewriteExpr (varMap,fieldMap) expr)
             | Param.InOutVarParam (var) ->
-                let newVar = varMap.Item var
+                let newVar = itemOrOld varMap var
                 Param.InOutVarParam (newVar)
             | Param.InOutFieldParam (field) ->                    
-                let newField = fieldMap.Item(field)
+                let newField = itemOrOld fieldMap (field)
                 Param.InOutFieldParam (newField)
 
     let rec rewriteStm (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (stm:Stm) : Stm =
         match stm with
             | Stm.AssignVar (var,expr) ->
                 let newExpr = rewriteExpr (varMap,fieldMap) expr
-                let newVar = varMap.Item var
+                let newVar = itemOrOld varMap var
                 Stm.AssignVar (newVar, newExpr)
             | Stm.AssignField (field, expr) ->
-                let newField = fieldMap.Item(field)
+                let newField = itemOrOld fieldMap (field)
                 let newExpr = rewriteExpr (varMap,fieldMap) expr
                 Stm.AssignField (newField, newExpr)
             | Stm.AssignFault (fault, expr) ->
-                let newFault = faultMap.Item(fault)
+                let newFault = itemOrOld faultMap (fault)
                 let newExpr = rewriteExpr (varMap,fieldMap)  expr
                 Stm.AssignFault (newFault, newExpr)
             | Stm.Block (smnts) ->
@@ -359,13 +368,13 @@ module internal ScmHelpers =
                 let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr (varMap,fieldMap)  expr,rewriteStm (reqPortMap,faultMap,varMap,fieldMap) stm) )
                 Stm.Choice(newChoices)
             | Stm.CallPort (reqPort,_params) ->
-                let newReqPort = reqPortMap.Item (reqPort)
+                let newReqPort = itemOrOld reqPortMap (reqPort)
                 let newParams = _params |> List.map (rewriteParam (varMap,fieldMap) )
                 Stm.CallPort (newReqPort,newParams)
             | Stm.StepComp (comp) ->
                 Stm.StepComp (comp)
             | Stm.StepFault (fault) ->
-                let newFault = faultMap.Item(fault)
+                let newFault = itemOrOld faultMap (fault)
                 Stm.StepFault (newFault)
                 
     let rewriteBehavior (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (behavior:BehaviorDecl) =
