@@ -887,7 +887,7 @@ module internal ScmRewriter =
                     stopAtLevel //early quit: Stop searching at depth stopAtLevel
                 else
                     let headLevel = callingDepth stmnts.Head currentLevel stopAtLevel
-                    let head_or_acc = max currentLevel accMaxLevel
+                    let head_or_acc = max headLevel accMaxLevel
                     maxLevel stmnts.Tail head_or_acc
             match stm with
                 | Stm.AssignVar (_) -> currentLevel
