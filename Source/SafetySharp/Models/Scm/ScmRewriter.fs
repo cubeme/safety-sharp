@@ -96,8 +96,15 @@ module internal ScmRewriter =
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
         ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
-
     }
+        with
+            static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
+                {
+                    ScmRewriterConvertFaults.CompPath = path;
+                    ScmRewriterConvertFaults.CompDecl = model.getDescendantUsingPath path;
+                    ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
+                    ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
+                }
 
     (*
     type ScmRewriterConvertDelayedBindings = {
@@ -122,12 +129,12 @@ module internal ScmRewriter =
     type ScmRewriteState = {
         Model : ScmModel;
         TakenNames : Set<string>;
-        ChangedSubcomponents : ScmRewriterLevelUp option;
+        LevelUp : ScmRewriterLevelUp option;
         // TODO: Optimization: Add parent of ComponentToRemove here. Thus, when a change to the componentToRemove is done, only its parent needs to be updated and not the whole model.
         //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
-        BehaviorToInline : ScmRewriterInlineBehavior option;
-        FaultsToReplace : ScmRewriterConvertFaults option;
+        InlineBehavior : ScmRewriterInlineBehavior option;
+        ConvertFaults : ScmRewriterConvertFaults option;
         Tainted : bool;
     }
         with
@@ -135,9 +142,9 @@ module internal ScmRewriter =
                 {
                     ScmRewriteState.Model = scm;
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
-                    ScmRewriteState.ChangedSubcomponents = None;
-                    ScmRewriteState.BehaviorToInline = None;
-                    ScmRewriteState.FaultsToReplace = None;
+                    ScmRewriteState.LevelUp = None;
+                    ScmRewriteState.InlineBehavior = None;
+                    ScmRewriteState.ConvertFaults = None;
                     ScmRewriteState.Tainted = false;
                 }
 
@@ -168,7 +175,6 @@ module internal ScmRewriter =
                 let rec iterate (state:ScmRewriteState) : (unit*ScmRewriteState) =                    
                     let (taintedByCall,stateAfterOneCall) = adjust_tainted_and_call state
                     if taintedByCall then
-                        //((),stateAfterOneCall)
                         iterate stateAfterOneCall
                     else
                         ((),stateAfterOneCall)
@@ -267,12 +273,16 @@ module internal ScmRewriter =
 
 
 
-    // real rewriting rules
+    
 
-    // here the partial rewrite rules        
-    let selectSubComponent : ScmRewriteFunction<unit> = scmRewrite {
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Leveling up
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    let selectSubComponentForLevelingUp : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ChangedSubcomponents.IsSome) then
+            if (state.LevelUp.IsSome) then
                 // do not modify old tainted state here
                 return ()
             else
@@ -292,18 +302,18 @@ module internal ScmRewriter =
                     let selectedComponent = ScmRewriterLevelUp.createEmptyFromPath state.Model leaf
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(selectedComponent);       
+                            ScmRewriteState.LevelUp = Some(selectedComponent);       
                         }
                     return! putState modifiedState
         }
 
     let levelUpField : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 // parent is target, child is source
                 if infos.ChildCompDecl.Fields.IsEmpty then
                     // do not modify old tainted state here
@@ -320,7 +330,7 @@ module internal ScmRewriter =
                         }                    
                     let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
                                                                 .addField(transformedFieldDecl)
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
@@ -329,7 +339,7 @@ module internal ScmRewriter =
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -337,11 +347,11 @@ module internal ScmRewriter =
     let levelUpFault : ScmRewriteFunction<unit> = scmRewrite {
             // TODO: No example and no test, yet
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 // parent is target, child is source
                 if infos.ChildCompDecl.Faults.IsEmpty then
                     // do not modify old tainted state here
@@ -358,7 +368,7 @@ module internal ScmRewriter =
                         }                    
                     let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
                                                                 .addFault(transformedFaultDecl)
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
@@ -368,18 +378,18 @@ module internal ScmRewriter =
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
         }
     let levelUpReqPort : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 // parent is target, child is source
                 if infos.ChildCompDecl.ReqPorts.IsEmpty then
                     // do not modify old tainted state here
@@ -396,7 +406,7 @@ module internal ScmRewriter =
                         }                    
                     let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
                                                                 .addReqPort(transformedReqPortDecl)
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
@@ -405,18 +415,18 @@ module internal ScmRewriter =
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
         }
     let levelUpProvPort : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 // parent is target, child is source
                 if infos.ChildCompDecl.ProvPorts.IsEmpty then
                     // do not modify old tainted state here
@@ -433,7 +443,7 @@ module internal ScmRewriter =
                         }                    
                     let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
                                                                 .addProvPort(transformedProvPortDecl)
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
@@ -443,7 +453,7 @@ module internal ScmRewriter =
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -464,11 +474,11 @@ module internal ScmRewriter =
             //   Declared in child (done here)
             //    - sub1.x -> sub1.x (source and target)
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 // parent is target, child is source
                 if infos.ChildCompDecl.Bindings.IsEmpty then
                     // do not modify old tainted state here
@@ -499,14 +509,14 @@ module internal ScmRewriter =
                     
                     let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
                                                                 .addBinding(transformedBinding)
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -527,11 +537,11 @@ module internal ScmRewriter =
             //   Declared in child (done in rule levelUpAndRewriteBindingDeclaredInChild)
             //    - sub1.x -> sub1.x (source and target)
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 // parent is target, child is source
                 let bindingToRewrite : BndDecl option =
                     let targetIsChild (bndDecl:BndDecl) =
@@ -580,14 +590,14 @@ module internal ScmRewriter =
                             BndDecl.Kind = bindingToRewrite.Kind;
                         }
                     let newParentCompDecl = infos.ParentCompDecl.replaceBinding(bindingToRewrite,transformedBinding)
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                             //Note: Child really stayed the same
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -596,11 +606,11 @@ module internal ScmRewriter =
     let convertStepToPort : ScmRewriteFunction<unit> = scmRewrite {
             let createArtificialStep : ScmRewriteFunction<unit> = scmRewrite {
                 let! state = getState
-                if (state.ChangedSubcomponents.IsNone) then
+                if (state.LevelUp.IsNone) then
                     // do not modify old tainted state here
                     return! putState state // (alternative is to "return ()"
                 else
-                    let infos = state.ChangedSubcomponents.Value
+                    let infos = state.LevelUp.Value
                     if infos.ChildCompDecl.Steps.IsEmpty then
                         // do not modify old tainted state here
                         return! putState state
@@ -633,7 +643,7 @@ module internal ScmRewriter =
                                 }
                             let modifiedState =
                                 { state with
-                                    ScmRewriteState.ChangedSubcomponents = Some(newInfos);
+                                    ScmRewriteState.LevelUp = Some(newInfos);
                                     ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                                 }
                             return! putState modifiedState
@@ -645,11 +655,11 @@ module internal ScmRewriter =
             
             // replace step to required port and provided port and binding, add a link from subcomponent path to new required port
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 if infos.ChildCompDecl.Steps.IsEmpty then
                     // do not modify old tainted state here
                     return! putState state
@@ -668,7 +678,7 @@ module internal ScmRewriter =
                                                               .addProvPort(newProvPortDecl)
                     let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
 
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
@@ -677,7 +687,7 @@ module internal ScmRewriter =
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -688,13 +698,13 @@ module internal ScmRewriter =
             // here, additionally instead of "step subcomponent" the converted step must be called
             
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
-            else if state.ChangedSubcomponents.Value.ArtificialStep.IsNone then
+            else if state.LevelUp.Value.ArtificialStep.IsNone then
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 
                 if infos.StepsToRewrite.IsEmpty then
                         // do not modify old tainted state here
@@ -727,14 +737,14 @@ module internal ScmRewriter =
 
                     let newStep = rewriteStep stepToRewrite                
                     let newParentCompDecl = infos.ParentCompDecl.replaceStep(stepToRewrite,newStep);
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                             ScmRewriterLevelUp.StepsToRewrite = infos.StepsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -745,11 +755,11 @@ module internal ScmRewriter =
             // replace reqPorts and fields by their proper names, replace Fault Expressions
             
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 if infos.ProvPortsToRewrite.IsEmpty then
                     // do not modify old tainted state here
                     return! putState state
@@ -766,14 +776,14 @@ module internal ScmRewriter =
                         }
                     let newParentCompDecl = infos.ParentCompDecl.replaceProvPort(provPortToRewrite,rewrittenProvPort)
 
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                             ScmRewriterLevelUp.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -782,11 +792,11 @@ module internal ScmRewriter =
     let rewriteFaults : ScmRewriteFunction<unit> = scmRewrite {
             // replace reqPorts and fields by their proper names, replace Fault Expressions
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 if infos.FaultsToRewrite.IsEmpty then
                     // do not modify old tainted state here
                     return! putState state
@@ -801,25 +811,25 @@ module internal ScmRewriter =
                         }
                     let newParentCompDecl = infos.ParentCompDecl.replaceFault(faultToRewrite,rewrittenFault)
 
-                    let newChangedSubcomponents =
+                    let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                             ScmRewriterLevelUp.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
-                            ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                            ScmRewriteState.LevelUp = Some(newLevelUp);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
         }
     let assertSubcomponentEmpty : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 assert (infos.ChildCompDecl.Subs = [])
                 assert (infos.ChildCompDecl.Fields = [])
                 assert (infos.ChildCompDecl.Faults = [])
@@ -830,19 +840,19 @@ module internal ScmRewriter =
         }
     let removeSubComponent : ScmRewriteFunction<unit> = scmRewrite {            
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let infos = state.ChangedSubcomponents.Value
+                let infos = state.LevelUp.Value
                 let newParentCompDecl = infos.ParentCompDecl.removeChild(infos.ChildCompDecl)
-                let newChangedSubcomponents =
+                let newLevelUp =
                     { infos with
                         ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                     }
                 let modifiedState =
                     { state with
-                        ScmRewriteState.ChangedSubcomponents = Some(newChangedSubcomponents);
+                        ScmRewriteState.LevelUp = Some(newLevelUp);
                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                     }
                 return! putState modifiedState
@@ -850,16 +860,16 @@ module internal ScmRewriter =
         }        
     let writeBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.ChangedSubcomponents.IsNone) then
+            if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
                 return! putState state // (alternative is to "return ()"
             else
-                let changedSubcomponents = state.ChangedSubcomponents.Value
-                let newModel = state.Model.replaceDescendant changedSubcomponents.ParentPath changedSubcomponents.ParentCompDecl
+                let levelUp = state.LevelUp.Value
+                let newModel = state.Model.replaceDescendant levelUp.ParentPath levelUp.ParentCompDecl
                 let modifiedState =
                     { state with
                         ScmRewriteState.Model = newModel;
-                        ScmRewriteState.ChangedSubcomponents = None;
+                        ScmRewriteState.LevelUp = None;
                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                     }
                 return! putState modifiedState
@@ -873,8 +883,8 @@ module internal ScmRewriter =
     let levelUpSubcomponent : ScmRewriteFunction<unit> = scmRewrite {
             // idea: first level up every item of a component,
             //       then rewrite every code accessing to some specific element of it
-            do! selectSubComponent
-            do! (iterateToFixpoint levelUpField) //Invariant: Imagine ChangedSubcomponents are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
+            do! selectSubComponentForLevelingUp
+            do! (iterateToFixpoint levelUpField) //Invariant: Imagine LevelUp are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
             do! (iterateToFixpoint levelUpFault)
             do! (iterateToFixpoint convertStepToPort)
             do! (iterateToFixpoint levelUpReqPort)
@@ -890,11 +900,55 @@ module internal ScmRewriter =
         }
                 
 
+                
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Converting Faults
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    let selectRootComponentForConvertingFaults : ScmRewriteFunction<unit> = scmRewrite {
+        let! state = getState
+        if (state.InlineBehavior.IsNone) then
+            return ()
+        else
+            let convertFaults = ScmRewriterConvertFaults.createEmptyFromPath state.Model []
+            let modifiedState =
+                { state with
+                    ScmRewriteState.ConvertFaults = Some(convertFaults);
+                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                }
+            return! putState modifiedState
+    }
+    
+    let replaceFaultsByPortsAndFields : ScmRewriteFunction<unit> = scmRewrite {
+        return ()
+    }
+
+    let replaceStepFaultByCallPort : ScmRewriteFunction<unit> = scmRewrite {
+        return ()
+    }
+
+    let uniteProvPortDecls  : ScmRewriteFunction<unit> = scmRewrite {
+        //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
+        return ()
+    }    
+    
+    let uniteStep : ScmRewriteFunction<unit> = scmRewrite {
+          //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
+        return ()
+    }
 
 
 
 
-    let findBehaviorToInline : ScmRewriteFunction<unit> = scmRewrite {    
+
+
+
+                
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Inline Behavior
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let findInlineBehavior : ScmRewriteFunction<unit> = scmRewrite {    
         let! state = getState
 
         let rec callingDepth (stm:Stm) (currentLevel:int) (stopAtLevel:int) : int =
@@ -934,7 +988,7 @@ module internal ScmRewriter =
                             |> List.map (fun fault -> fault.Step.Body)
                     maxLevel faultStmts (currentLevel+1)
 
-        if (state.BehaviorToInline.IsSome) then
+        if (state.InlineBehavior.IsSome) then
             return ()
         else
             // try to find a behavior, which only contains port calls, which themselves do not call ports            
@@ -973,11 +1027,11 @@ module internal ScmRewriter =
 
             match candidateToInline with
                 | None -> return ()
-                | Some (behaviorToInline) ->
-                    let rewriterBehaviorToInline = ScmRewriterInlineBehavior.createEmptyFromBehavior behaviorToInline
+                | Some (inlineBehavior) ->
+                    let rewriterInlineBehavior = ScmRewriterInlineBehavior.createEmptyFromBehavior inlineBehavior
                     let modifiedState =
                         { state with
-                            ScmRewriteState.BehaviorToInline = Some(rewriterBehaviorToInline);
+                            ScmRewriteState.InlineBehavior = Some(rewriterInlineBehavior);
                             ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                         }
                     return! putState modifiedState
@@ -985,11 +1039,11 @@ module internal ScmRewriter =
     
     let findCallToInline : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.BehaviorToInline.IsNone) then
+            if (state.InlineBehavior.IsNone) then
                 return ()
             else
-                let behaviorToInline = state.BehaviorToInline.Value
-                if behaviorToInline.CallToReplace.IsSome then
+                let inlineBehavior = state.InlineBehavior.Value
+                if inlineBehavior.CallToReplace.IsSome then
                     return ()
                 else
                     let rec findCall (stm:Stm) (currentPath:StmPath) : (StmPath option) =
@@ -1010,17 +1064,17 @@ module internal ScmRewriter =
                                 Some(currentPath)
                             | Stm.StepFault (_) ->
                                 Some(currentPath)                    
-                    let callToInline = findCall behaviorToInline.InlinedBehavior.Body []
+                    let callToInline = findCall inlineBehavior.InlinedBehavior.Body []
                     match callToInline with
                         | None -> return ()
                         | Some (path:StmPath) ->
-                            let newBehaviorToInline =
-                                { behaviorToInline with
+                            let newInlineBehavior =
+                                { inlineBehavior with
                                     ScmRewriterInlineBehavior.CallToReplace=Some(path);
                                 }
                             let modifiedState =
                                 { state with
-                                    ScmRewriteState.BehaviorToInline = Some(newBehaviorToInline);
+                                    ScmRewriteState.InlineBehavior = Some(newInlineBehavior);
                                     ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                                 }
                             return! putState modifiedState
@@ -1028,15 +1082,15 @@ module internal ScmRewriter =
 
     let inlineCall : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
-            if (state.BehaviorToInline.IsNone) then
+            if (state.InlineBehavior.IsNone) then
                 return ()
             else
-                let behaviorToInline = state.BehaviorToInline.Value
-                if behaviorToInline.CallToReplace.IsNone then
+                let inlineBehavior = state.InlineBehavior.Value
+                if inlineBehavior.CallToReplace.IsNone then
                     return ()
                 else
-                    let pathToCallToReplace = behaviorToInline.CallToReplace.Value
-                    let body = behaviorToInline.InlinedBehavior.Body
+                    let pathToCallToReplace = inlineBehavior.CallToReplace.Value
+                    let body = inlineBehavior.InlinedBehavior.Body
                     let callToReplace = body.getSubStatement pathToCallToReplace 
                     match callToReplace with
                         | Stm.AssignVar (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
@@ -1144,17 +1198,17 @@ module internal ScmRewriter =
                                 let newBehavior =
                                     {
                                         BehaviorDecl.Body = newBody;
-                                        BehaviorDecl.Locals = behaviorToInline.InlinedBehavior.Locals @ newLocalVarDecls;
+                                        BehaviorDecl.Locals = inlineBehavior.InlinedBehavior.Locals @ newLocalVarDecls;
                                     }
-                                let newRewriterBehaviorToInline =
-                                    { behaviorToInline with
+                                let newRewriterInlineBehavior =
+                                    { inlineBehavior with
                                         ScmRewriterInlineBehavior.CallToReplace = None;
                                         ScmRewriterInlineBehavior.InlinedBehavior = newBehavior;
                                     }
                                 let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                                 let modifiedState =
                                     { state with
-                                        ScmRewriteState.BehaviorToInline = Some(newRewriterBehaviorToInline);
+                                        ScmRewriteState.InlineBehavior = Some(newRewriterInlineBehavior);
                                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                                     }
                                 return! putState modifiedState
@@ -1172,34 +1226,34 @@ module internal ScmRewriter =
     let writeBackChangedBehavior : ScmRewriteFunction<unit> = scmRewrite {
             // Assert: only inline statements in the root-component 
             let! state = getState
-            if (state.BehaviorToInline.IsNone) then
+            if (state.InlineBehavior.IsNone) then
                 return ()
             else
-                let behaviorToInline = state.BehaviorToInline.Value
+                let inlineBehavior = state.InlineBehavior.Value
                 let newModel =
-                    match behaviorToInline.BehaviorToReplace with
+                    match inlineBehavior.BehaviorToReplace with
                         | BehaviorWithLocation.InProvPort (provPortDecl,beh) ->
                             let newProvPort =
                                 { provPortDecl with
-                                    ProvPortDecl.Behavior = behaviorToInline.InlinedBehavior;
+                                    ProvPortDecl.Behavior = inlineBehavior.InlinedBehavior;
                                 }
                             state.Model.replaceProvPort(provPortDecl,newProvPort) 
                         | BehaviorWithLocation.InFault (faultDecl,beh) ->
                             let newFault =
                                 { faultDecl with
-                                    FaultDecl.Step = behaviorToInline.InlinedBehavior;
+                                    FaultDecl.Step = inlineBehavior.InlinedBehavior;
                                 }
                             state.Model.replaceFault(faultDecl,newFault) 
                         | BehaviorWithLocation.InStep (stepDecl,beh) ->
                             let newStep =
                                 { stepDecl with
-                                    StepDecl.Behavior = behaviorToInline.InlinedBehavior;
+                                    StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                                 }
                             state.Model.replaceStep (stepDecl,newStep) 
                 let modifiedState =
                     { state with
                         ScmRewriteState.Model = newModel;
-                        ScmRewriteState.BehaviorToInline = None;
+                        ScmRewriteState.InlineBehavior = None;
                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                     }
                 return! putState modifiedState
@@ -1209,7 +1263,7 @@ module internal ScmRewriter =
         
     let findAndInlineBehavior : ScmRewriteFunction<unit> = scmRewrite {
             // Assert: only inline statements in the root-component
-            do! findBehaviorToInline            
+            do! findInlineBehavior            
             do! inlineBehavior
             do! writeBackChangedBehavior
         }
@@ -1219,8 +1273,10 @@ module internal ScmRewriter =
 
 
 
-
-
+        
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Check Consistency
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let checkConsistency : ScmRewriteFunction<unit> = scmRewrite {
             return ()
         }
@@ -1230,7 +1286,10 @@ module internal ScmRewriter =
 
 
 
-
+        
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Complete Procedure
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let levelUpAndInline : ScmRewriteFunction<unit> = scmRewrite {
             // level up everything
             do! (iterateToFixpoint levelUpSubcomponent)
@@ -1238,11 +1297,12 @@ module internal ScmRewriter =
             do! checkConsistency
             
             // convert faults
-            // do! replaceFaultsByPortsAndFields
-            // do! replaceStepFaultByCallPort
-            // do! uniteProvPortDecls //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
-            // do! uniteStep  //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
-            // do! checkConsistency
+            do! selectRootComponentForConvertingFaults
+            do! replaceFaultsByPortsAndFields
+            do! replaceStepFaultByCallPort
+            do! uniteProvPortDecls //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
+            do! uniteStep  //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
+            do! checkConsistency
             
             // inline everything beginning with the main step
             do! (iterateToFixpoint findAndInlineBehavior)

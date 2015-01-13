@@ -61,9 +61,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -100,9 +100,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -139,9 +139,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -178,9 +178,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -218,9 +218,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -264,9 +264,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -315,9 +315,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -367,9 +367,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -419,9 +419,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -472,9 +472,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -524,9 +524,9 @@ type SingleLevelUpTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
@@ -583,9 +583,9 @@ type FixpointIteratorTests () =
             {
                 ScmRewriteState.Model = model;
                 ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.ChangedSubcomponents = Some(componentToChange);
-                ScmRewriteState.BehaviorToInline = None;
-                ScmRewriteState.FaultsToReplace = None;
+                ScmRewriteState.LevelUp = Some(componentToChange);
+                ScmRewriteState.InlineBehavior = None;
+                ScmRewriteState.ConvertFaults = None;
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
