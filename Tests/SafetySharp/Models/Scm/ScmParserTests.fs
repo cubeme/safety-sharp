@@ -403,4 +403,25 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
+
+    [<Test>]
+    member this.``Example callInstFromBehWithFaults1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBehWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()        
+        
+    [<Test>]
+    member this.``Example callInstFromProvWithFaults1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstFromProvWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchyWithFaults1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
         
