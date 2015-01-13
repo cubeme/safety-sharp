@@ -105,7 +105,7 @@ module internal CilToSsm =
             stack |> List.map replace
 
         // Introduces a unique temporary variable that stores the value of the given expression and replaces
-        // all references to the variable on the symbol stack with the new temporary variable
+        // all references to the variable on the symbolic stack with the new temporary variable
         let replaceWithTempVar pc v e replace s = 
             let tmp = freshLocal pc 0 (Ssm.getVarType v)
             (AsgnStm (v, e), [AsgnStm (tmp, VarExpr v)], replace (Ssm.getVarName v) tmp s)
