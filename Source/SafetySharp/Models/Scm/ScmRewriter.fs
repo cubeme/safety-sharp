@@ -95,7 +95,8 @@ module internal ScmRewriter =
         CompDecl : CompDecl;
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
-        ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
+        ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;        
+        ProvPortToRewrite : ProvPortDecl option;
     }
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
@@ -104,6 +105,7 @@ module internal ScmRewriter =
                     ScmRewriterConvertFaults.CompDecl = model.getDescendantUsingPath path;
                     ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
                     ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
+                    ScmRewriterConvertFaults.ProvPortToRewrite = None;
                 }
 
     (*
@@ -616,8 +618,8 @@ module internal ScmRewriter =
                         return! putState state
                     else
                         if infos.ArtificialStep = None then
-                            let! reqPort = getUnusedReqPortName  (sprintf "%s_step" infos.ChildCompDecl.Comp.getName)
-                            let! provPort = getUnusedProvPortName (sprintf "%s_step" infos.ChildCompDecl.Comp.getName)
+                            let! reqPort = getUnusedReqPortName  (sprintf "%s_step_req" infos.ChildCompDecl.Comp.getName)
+                            let! provPort = getUnusedProvPortName (sprintf "%s_step_prov" infos.ChildCompDecl.Comp.getName)
                             let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                             
                             let newReqPortDecl = 
@@ -858,7 +860,7 @@ module internal ScmRewriter =
                 return! putState modifiedState
                 
         }        
-    let writeBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
+    let levelUpWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
             let! state = getState
             if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
@@ -896,9 +898,12 @@ module internal ScmRewriter =
             do! (iterateToFixpoint rewriteFaults)
             do! assertSubcomponentEmpty
             do! removeSubComponent
-            do! writeBackChangesIntoModel
+            do! levelUpWriteBackChangesIntoModel
         }
                 
+    let levelUpSubcomponents : ScmRewriteFunction<unit> = scmRewrite {
+            do! (iterateToFixpoint levelUpSubcomponent)
+    }
 
                 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -908,37 +913,136 @@ module internal ScmRewriter =
 
     let selectRootComponentForConvertingFaults : ScmRewriteFunction<unit> = scmRewrite {
         let! state = getState
-        if (state.InlineBehavior.IsNone) then
+        if (state.ConvertFaults.IsSome) then
             return ()
         else
-            let convertFaults = ScmRewriterConvertFaults.createEmptyFromPath state.Model []
+            let convertFaultsState = ScmRewriterConvertFaults.createEmptyFromPath state.Model []
             let modifiedState =
                 { state with
-                    ScmRewriteState.ConvertFaults = Some(convertFaults);
+                    ScmRewriteState.ConvertFaults = Some(convertFaultsState);
                     ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                 }
             return! putState modifiedState
     }
     
-    let replaceFaultsByPortsAndFields : ScmRewriteFunction<unit> = scmRewrite {
-        return ()
+    let replaceFaultByPortsAndFields : ScmRewriteFunction<unit> = scmRewrite {
+        let! state = getState
+        if (state.ConvertFaults.IsNone) then
+            return ()
+        else
+            let convertFaultsState = state.ConvertFaults.Value
+            if convertFaultsState.CompDecl.Faults = [] then
+                return ()
+            else
+                let faultToConvert = convertFaultsState.CompDecl.Faults.Head
+
+                let! reqPort = getUnusedReqPortName  (sprintf "fault_%s_req" faultToConvert.getName)
+                let! provPort = getUnusedProvPortName (sprintf "fault_%s_prov" faultToConvert.getName)
+                let! field = getUnusedFieldName (sprintf "fault_%s" faultToConvert.getName)
+
+                let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                            
+                let newFieldDecl =
+                    {
+                        FieldDecl.Field = field;
+                        FieldDecl.Type = Type.BoolType;
+                        FieldDecl.Init = [Val.BoolVal(false)] ; //TODO: semantics: a failure is always initially false
+                    }
+                let newReqPortDecl = 
+                    {
+                        ReqPortDecl.ReqPort = reqPort;
+                        ReqPortDecl.Params = [];
+                    }                    
+                let newProvPortDecl =
+                    {
+                        ProvPortDecl.FaultExpr = None;
+                        ProvPortDecl.ProvPort = provPort;
+                        ProvPortDecl.Params = [];
+                        ProvPortDecl.Behavior = faultToConvert.Step;
+                    }
+                let newBindingDecl = 
+                    {
+                        BndDecl.Target = {BndTarget.Comp = None; BndTarget.ReqPort = reqPort};
+                        BndDecl.Source = {BndSrc.Comp = None; BndSrc.ProvPort = provPort};
+                        BndDecl.Kind = BndKind.Instantaneous;
+                    }                                
+                let newCompDecl = convertFaultsState.CompDecl.addField(newFieldDecl)
+                                                             .addReqPort(newReqPortDecl)
+                                                             .addProvPort(newProvPortDecl)
+                                                             .addBinding(newBindingDecl)
+                                                             .removeFault(faultToConvert)
+                let newConvertFaultsState =
+                    { convertFaultsState with
+                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                        ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = convertFaultsState.ArtificialFaultOldToFieldNew.Add ( (faultToConvert.Fault,field) ) ;
+                        ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = convertFaultsState.ArtificialFaultOldToPortNew.Add ( (faultToConvert.Fault,(newProvPortDecl.ProvPort,newReqPortDecl.ReqPort)) );
+                    }
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }                
+                return! putState modifiedState
     }
 
     let replaceStepFaultByCallPort : ScmRewriteFunction<unit> = scmRewrite {
-        return ()
+        let! state = getState
+        if (state.ConvertFaults.IsNone) then
+            return ()
+        else
+            let convertFaultsState = state.ConvertFaults.Value
+            return ()
     }
 
     let uniteProvPortDecls  : ScmRewriteFunction<unit> = scmRewrite {
         //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
-        return ()
+        let! state = getState
+        if (state.ConvertFaults.IsNone) then
+            return ()
+        else
+            let convertFaultsState = state.ConvertFaults.Value
+            return ()
     }    
     
     let uniteStep : ScmRewriteFunction<unit> = scmRewrite {
           //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
-        return ()
+        let! state = getState
+        if (state.ConvertFaults.IsNone) then
+            return ()
+        else
+            let convertFaultsState = state.ConvertFaults.Value
+            let modifiedState =
+                { state with
+                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                }
+            return! putState modifiedState
     }
-
-
+    
+    let convertFaultsWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
+        let! state = getState
+        if (state.ConvertFaults.IsNone) then
+            return ()
+        else
+            let convertFaultsState = state.ConvertFaults.Value
+            let newModel = state.Model.replaceDescendant convertFaultsState.CompPath convertFaultsState.CompDecl
+            let modifiedState =
+                { state with
+                    ScmRewriteState.Model = newModel;
+                    ScmRewriteState.ConvertFaults = None;
+                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                }
+            return! putState modifiedState
+    }
+       
+    
+    let convertFaults : ScmRewriteFunction<unit> = scmRewrite {        
+        do! selectRootComponentForConvertingFaults
+        do! (iterateToFixpoint replaceFaultByPortsAndFields)
+        do! (iterateToFixpoint replaceStepFaultByCallPort)
+        do! (iterateToFixpoint uniteProvPortDecls)
+        do! uniteStep
+        do! convertFaultsWriteBackChangesIntoModel
+    }
 
 
 
@@ -1268,6 +1372,10 @@ module internal ScmRewriter =
             do! writeBackChangedBehavior
         }
 
+    let inlineBehaviors : ScmRewriteFunction<unit> = scmRewrite {
+            do! (iterateToFixpoint findAndInlineBehavior)
+        }
+
 
 
 
@@ -1292,19 +1400,17 @@ module internal ScmRewriter =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let levelUpAndInline : ScmRewriteFunction<unit> = scmRewrite {
             // level up everything
-            do! (iterateToFixpoint levelUpSubcomponent)
+            do! levelUpSubcomponents
             do! assertNoSubcomponent
             do! checkConsistency
             
             // convert faults
-            do! selectRootComponentForConvertingFaults
-            do! replaceFaultsByPortsAndFields
-            do! replaceStepFaultByCallPort
-            do! uniteProvPortDecls //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
-            do! uniteStep  //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
+            do! convertFaults
+            //do! assertNoFault
             do! checkConsistency
-            
+
             // inline everything beginning with the main step
-            do! (iterateToFixpoint findAndInlineBehavior)
+            do! inlineBehaviors
+            //do! assertNoPortCall
             do! checkConsistency
         }
