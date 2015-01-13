@@ -685,7 +685,8 @@ module internal ScmRewriter =
                 else
                     let stepToRewrite = infos.StepsToRewrite.Head
 
-                    let (reqPort,_) = infos.ArtificialStep.Value
+                    let (stepReqPortPreviouslyInChild,_) = infos.ArtificialStep.Value
+                    let stepReqPortNowInParent = infos.ArtificialReqPortOldToNew.Item stepReqPortPreviouslyInChild  // port (virtual step) was leveled up before, but infos.ArtificialStep.Value was not updated yet
                 
                     let rewriteStep (step:StepDecl) : StepDecl =
                         let rec rewriteStm (stm:Stm) : Stm =
@@ -697,7 +698,7 @@ module internal ScmRewriter =
                                     let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
                                     Stm.Choice(newChoices)
                                 | Stm.StepComp (comp) ->
-                                    Stm.CallPort (reqPort,[])
+                                    Stm.CallPort (stepReqPortNowInParent,[])
                                 | _ -> stm
                         let newBehavior =
                             { step.Behavior with

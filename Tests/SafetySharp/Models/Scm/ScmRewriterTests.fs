@@ -74,6 +74,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
@@ -109,6 +112,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
@@ -143,6 +149,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
@@ -179,6 +188,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -215,6 +227,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ProvPorts.Length =? 0
@@ -259,6 +274,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -305,6 +323,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -353,6 +374,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -402,6 +426,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -450,6 +477,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -498,6 +528,9 @@ type SingleLevelUpTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
@@ -525,8 +558,6 @@ type FixpointIteratorTests () =
 
     [<Test>]
     member this.``Several fields get leveled up by using levelUpFields with the iterateToFixpoint function`` () =
-        // this function needs the map entries of provided and required ports
-        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
@@ -554,6 +585,9 @@ type FixpointIteratorTests () =
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
@@ -574,8 +608,6 @@ type CompleteLevelUpTests () =
     
     [<Test>]
     member this.``Example nestedComponent1 gets leveled up completely`` () =
-        // this function needs the map entries of provided and required ports
-        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/nestedComponent1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
@@ -586,6 +618,9 @@ type CompleteLevelUpTests () =
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newModel.Subs =? []
@@ -595,8 +630,6 @@ type CompleteLevelUpTests () =
 
     [<Test>]
     member this.``Example nestedComponent2 gets leveled up completely`` () =
-        // this function needs the map entries of provided and required ports
-        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/nestedComponent2.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
@@ -607,11 +640,34 @@ type CompleteLevelUpTests () =
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newModel.Subs =? []
         // 4 Artificial Prov Ports, which contain the code of the previous nested steps
         newModel.ProvPorts.Length =? 4
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy2 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = scmRewrite {
+            do! (iterateToFixpoint levelUpSubcomponent)
+        }
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
         ()
 (*       
         
@@ -643,9 +699,173 @@ type CompleteRewriteTests () =
     let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
     
     [<Test>]
+    member this.``Example callInstFromBeh1 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstFromBeh2 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstFromBeh3 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstFromBeh4 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+        
+    [<Test>]
+    member this.``Example callInstFromBeh5 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstFromBeh6 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh6.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstFromBeh7 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh7.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstFromBeh8 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBeh8.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+        
+
+    [<Test>]
+    member this.``Example callInstFromProv1 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromProv1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+
+
+    [<Test>]
     member this.``Example callInstHierarchy1 gets rewritten (leveled up and inlined) completely`` () =
-        // this function needs the map entries of provided and required ports
-        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
@@ -654,6 +874,99 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy2 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy3 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy4 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy5 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy6 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy6.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
         printf "%+A" newModel
         resultingState.Tainted =? true
         newModel.Subs =? []

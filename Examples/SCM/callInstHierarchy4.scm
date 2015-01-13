@@ -18,5 +18,6 @@ component simple {
 	step {
 		locals{}
 		rport1 ( );
+		step nested;
 	}
 }

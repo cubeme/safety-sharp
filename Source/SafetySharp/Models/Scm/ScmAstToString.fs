@@ -159,10 +159,10 @@ module internal ScmAstToString =
         let faultExpr =
             match provPortDecl.FaultExpr with
                 | None -> ""
-                | Some (faultExpr) -> exportFaultExpr faultExpr
+                | Some (faultExpr) -> sprintf "[%s]\n" (exportFaultExpr faultExpr)
         let _params = provPortDecl.Params |> List.map exportParamDecl
                                           |> String.concat ","
-        sprintf "[%s]%s(%s) {%s}" faultExpr (exportProvPort provPortDecl.ProvPort) (_params) (exportBehaviorDecl provPortDecl.Behavior)
+        sprintf "%s%s(%s) {%s}" faultExpr (exportProvPort provPortDecl.ProvPort) (_params) (exportBehaviorDecl provPortDecl.Behavior)
 
 
     let exportBndSrc (bndSrc:BndSrc) : string =
@@ -190,19 +190,19 @@ module internal ScmAstToString =
         let faultExpr =
             match stepDecl.FaultExpr with
                 | None -> ""
-                | Some (faultExpr) -> exportFaultExpr faultExpr
-        sprintf "step %s { %s }" (faultExpr) (exportBehaviorDecl stepDecl.Behavior)
+                | Some (faultExpr) -> sprintf "[%s]\n" (exportFaultExpr faultExpr)
+        sprintf "%sstep { %s }" (faultExpr) (exportBehaviorDecl stepDecl.Behavior)
 
 
     let rec exportCompDecl (compDecl:CompDecl) : string =
-        sprintf "%s %s %s %s %s %s %s %s"
+        sprintf "%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s"
                 (exportComp compDecl.Comp)
-                (compDecl.Subs |> List.map exportCompDecl |> String.concat "")
-                (compDecl.Fields |> List.map exportFieldDecl |> String.concat "")
-                (compDecl.Faults |> List.map exportFaultDecl |> String.concat "")
-                (compDecl.ReqPorts |> List.map exportReqPortDecl |> String.concat "")
-                (compDecl.ProvPorts |> List.map exportProvPortDecl |> String.concat "")
-                (compDecl.Bindings |> List.map exportBndDecl |> String.concat "")
-                (compDecl.Steps |> List.map exportStepDecl |> String.concat "")
+                (compDecl.Subs |> List.map (fun comp -> sprintf "{\n%s\n}" (exportCompDecl comp)) |> String.concat "\n")
+                (compDecl.Fields |> List.map exportFieldDecl |> String.concat "\n")
+                (compDecl.Faults |> List.map exportFaultDecl |> String.concat "\n")
+                (compDecl.ReqPorts |> List.map exportReqPortDecl |> String.concat "\n")
+                (compDecl.ProvPorts |> List.map exportProvPortDecl |> String.concat "\n")
+                (compDecl.Bindings |> List.map exportBndDecl |> String.concat "\n")
+                (compDecl.Steps |> List.map exportStepDecl |> String.concat "\n")
      
      
