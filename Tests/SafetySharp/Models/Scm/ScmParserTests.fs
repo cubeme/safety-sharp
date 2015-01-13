@@ -359,10 +359,26 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
-
+        
     [<Test>]
     member this.``Example exampleBackupRecovery3 parses successfully`` () =
         let inputFile = """../../Examples/SCM/exampleBackupRecovery3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+
+        
+    [<Test>]
+    member this.``Example nestedComponentWithFaults1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/nestedComponentWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+    [<Test>]
+    member this.``Example simpleComponentWithFaults1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/simpleComponentWithFaults1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()

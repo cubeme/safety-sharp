@@ -27,7 +27,7 @@ module internal ScmRewriter =
 
     type ScmModel = CompDecl //may change, but I hope it does not
     
-    type ScmRewriterSubcomponent = {
+    type ScmRewriterLevelUp = {
         ChildPath : CompPath;
         ParentPath : CompPath;
         ChildCompDecl : CompDecl;
@@ -55,22 +55,22 @@ module internal ScmRewriter =
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
                 {
-                    ScmRewriterSubcomponent.ChildPath = path;
-                    ScmRewriterSubcomponent.ParentPath = path.Tail;
-                    ScmRewriterSubcomponent.ChildCompDecl = model.getDescendantUsingPath path;
-                    ScmRewriterSubcomponent.ParentCompDecl = model.getDescendantUsingPath path.Tail;
-                    ScmRewriterSubcomponent.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
-                    ScmRewriterSubcomponent.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
-                    ScmRewriterSubcomponent.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
-                    ScmRewriterSubcomponent.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
-                    ScmRewriterSubcomponent.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
-                    ScmRewriterSubcomponent.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
-                    ScmRewriterSubcomponent.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
-                    ScmRewriterSubcomponent.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
-                    ScmRewriterSubcomponent.FaultsToRewrite = [];
-                    ScmRewriterSubcomponent.ProvPortsToRewrite = [];
-                    ScmRewriterSubcomponent.StepsToRewrite = [];
-                    ScmRewriterSubcomponent.ArtificialStep = None;
+                    ScmRewriterLevelUp.ChildPath = path;
+                    ScmRewriterLevelUp.ParentPath = path.Tail;
+                    ScmRewriterLevelUp.ChildCompDecl = model.getDescendantUsingPath path;
+                    ScmRewriterLevelUp.ParentCompDecl = model.getDescendantUsingPath path.Tail;
+                    ScmRewriterLevelUp.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
+                    ScmRewriterLevelUp.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
+                    ScmRewriterLevelUp.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
+                    ScmRewriterLevelUp.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
+                    ScmRewriterLevelUp.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                    ScmRewriterLevelUp.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
+                    ScmRewriterLevelUp.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
+                    ScmRewriterLevelUp.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
+                    ScmRewriterLevelUp.FaultsToRewrite = [];
+                    ScmRewriterLevelUp.ProvPortsToRewrite = [];
+                    ScmRewriterLevelUp.StepsToRewrite = [];
+                    ScmRewriterLevelUp.ArtificialStep = None;
                 }
             member infos.oldToNewMaps1 =                
                     (infos.ArtificialReqPortOldToNew,infos.ArtificialFaultsOldToNew,Map.empty<Var,Var>,infos.ArtificialFieldsOldToNew)
@@ -89,7 +89,22 @@ module internal ScmRewriter =
                         | InProvPort (_,beh) -> beh
                         | InFault (_,beh) -> beh
                         | InStep (_,beh) -> beh
+                        
+    type ScmRewriterConvertFaults = {
+        CompPath : CompPath;
+        CompDecl : CompDecl;
+        // Forwarder
+        ArtificialFaultOldToFieldNew : Map<Fault,Field>;
+        ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
 
+    }
+
+    (*
+    type ScmRewriterConvertDelayedBindings = {
+        A: unit;
+    }
+    *)
+    
     type ScmRewriterInlineBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
         InlinedBehavior : BehaviorDecl;
@@ -107,11 +122,12 @@ module internal ScmRewriter =
     type ScmRewriteState = {
         Model : ScmModel;
         TakenNames : Set<string>;
-        ChangedSubcomponents : ScmRewriterSubcomponent option;
+        ChangedSubcomponents : ScmRewriterLevelUp option;
         // TODO: Optimization: Add parent of ComponentToRemove here. Thus, when a change to the componentToRemove is done, only its parent needs to be updated and not the whole model.
         //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
         BehaviorToInline : ScmRewriterInlineBehavior option;
+        FaultsToReplace : ScmRewriterConvertFaults option;
         Tainted : bool;
     }
         with
@@ -121,6 +137,7 @@ module internal ScmRewriter =
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.ChangedSubcomponents = None;
                     ScmRewriteState.BehaviorToInline = None;
+                    ScmRewriteState.FaultsToReplace = None;
                     ScmRewriteState.Tainted = false;
                 }
 
@@ -272,7 +289,7 @@ module internal ScmRewriter =
                             let firstChild = node.Subs.Head
                             findLeaf nodePath firstChild
                     let leaf = findLeaf ([]) (state.Model)
-                    let selectedComponent = ScmRewriterSubcomponent.createEmptyFromPath state.Model leaf
+                    let selectedComponent = ScmRewriterLevelUp.createEmptyFromPath state.Model leaf
                     let modifiedState =
                         { state with
                             ScmRewriteState.ChangedSubcomponents = Some(selectedComponent);       
@@ -305,10 +322,10 @@ module internal ScmRewriter =
                                                                 .addField(transformedFieldDecl)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ArtificialFieldsOldToNew = infos.ArtificialFieldsOldToNew.Add( field,transformedField );
-                            ScmRewriterSubcomponent.ArtificialFieldsNewToOld = infos.ArtificialFieldsNewToOld.Add( (infos.ParentPath,transformedField), (infos.ChildPath,field) );
+                            ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ArtificialFieldsOldToNew = infos.ArtificialFieldsOldToNew.Add( field,transformedField );
+                            ScmRewriterLevelUp.ArtificialFieldsNewToOld = infos.ArtificialFieldsNewToOld.Add( (infos.ParentPath,transformedField), (infos.ChildPath,field) );
                         }
                     let modifiedState =
                         { state with
@@ -343,11 +360,11 @@ module internal ScmRewriter =
                                                                 .addFault(transformedFaultDecl)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ArtificialFaultsOldToNew = infos.ArtificialFaultsOldToNew.Add( fault,transformedFault );
-                            ScmRewriterSubcomponent.ArtificialFaultsNewToOld = infos.ArtificialFaultsNewToOld.Add( (infos.ParentPath,transformedFault), (infos.ChildPath,fault) );
-                            ScmRewriterSubcomponent.FaultsToRewrite = transformedFaultDecl::infos.FaultsToRewrite;
+                            ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ArtificialFaultsOldToNew = infos.ArtificialFaultsOldToNew.Add( fault,transformedFault );
+                            ScmRewriterLevelUp.ArtificialFaultsNewToOld = infos.ArtificialFaultsNewToOld.Add( (infos.ParentPath,transformedFault), (infos.ChildPath,fault) );
+                            ScmRewriterLevelUp.FaultsToRewrite = transformedFaultDecl::infos.FaultsToRewrite;
                         }
                     let modifiedState =
                         { state with
@@ -381,10 +398,10 @@ module internal ScmRewriter =
                                                                 .addReqPort(transformedReqPortDecl)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ArtificialReqPortOldToNew = infos.ArtificialReqPortOldToNew.Add( reqPort,transformedReqPort );
-                            ScmRewriterSubcomponent.ArtificialReqPortNewToOld = infos.ArtificialReqPortNewToOld.Add( (infos.ParentPath,transformedReqPort), (infos.ChildPath,reqPort) );
+                            ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ArtificialReqPortOldToNew = infos.ArtificialReqPortOldToNew.Add( reqPort,transformedReqPort );
+                            ScmRewriterLevelUp.ArtificialReqPortNewToOld = infos.ArtificialReqPortNewToOld.Add( (infos.ParentPath,transformedReqPort), (infos.ChildPath,reqPort) );
                         }
                     let modifiedState =
                         { state with
@@ -418,11 +435,11 @@ module internal ScmRewriter =
                                                                 .addProvPort(transformedProvPortDecl)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ArtificialProvPortOldToNew = infos.ArtificialProvPortOldToNew.Add( provPort,transformedProvPort );
-                            ScmRewriterSubcomponent.ArtificialProvPortNewToOld = infos.ArtificialProvPortNewToOld.Add( (infos.ParentPath,transformedProvPort), (infos.ChildPath,provPort) );
-                            ScmRewriterSubcomponent.ProvPortsToRewrite = transformedProvPortDecl::infos.ProvPortsToRewrite;
+                            ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ArtificialProvPortOldToNew = infos.ArtificialProvPortOldToNew.Add( provPort,transformedProvPort );
+                            ScmRewriterLevelUp.ArtificialProvPortNewToOld = infos.ArtificialProvPortNewToOld.Add( (infos.ParentPath,transformedProvPort), (infos.ChildPath,provPort) );
+                            ScmRewriterLevelUp.ProvPortsToRewrite = transformedProvPortDecl::infos.ProvPortsToRewrite;
                         }
                     let modifiedState =
                         { state with
@@ -484,8 +501,8 @@ module internal ScmRewriter =
                                                                 .addBinding(transformedBinding)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                         }
                     let modifiedState =
                         { state with
@@ -565,7 +582,7 @@ module internal ScmRewriter =
                     let newParentCompDecl = infos.ParentCompDecl.replaceBinding(bindingToRewrite,transformedBinding)
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                             //Note: Child really stayed the same
                         }
                     let modifiedState =
@@ -610,9 +627,9 @@ module internal ScmRewriter =
                             let newParentCompDecl = infos.ParentCompDecl.replaceChild(infos.ChildCompDecl,newChildCompDecl)
                             let newInfos =
                                 { infos with
-                                    ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                                    ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                                    ScmRewriterSubcomponent.ArtificialStep = Some((reqPort,provPort))
+                                    ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                                    ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                                    ScmRewriterLevelUp.ArtificialStep = Some((reqPort,provPort))
                                 }
                             let modifiedState =
                                 { state with
@@ -653,10 +670,10 @@ module internal ScmRewriter =
 
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ChildCompDecl = newChildCompDecl;
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ProvPortsToRewrite = (newProvPortDecl)::infos.ProvPortsToRewrite;
-                            ScmRewriterSubcomponent.StepsToRewrite = infos.ParentCompDecl.Steps; //It is necessary to set this once. But it seems, that it does not harm to set it multiple times
+                            ScmRewriterLevelUp.ChildCompDecl = newChildCompDecl;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ProvPortsToRewrite = (newProvPortDecl)::infos.ProvPortsToRewrite;
+                            ScmRewriterLevelUp.StepsToRewrite = infos.ParentCompDecl.Steps; //It is necessary to set this once. But it seems, that it does not harm to set it multiple times
                         }
                     let modifiedState =
                         { state with
@@ -712,8 +729,8 @@ module internal ScmRewriter =
                     let newParentCompDecl = infos.ParentCompDecl.replaceStep(stepToRewrite,newStep);
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.StepsToRewrite = infos.StepsToRewrite.Tail;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.StepsToRewrite = infos.StepsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
@@ -751,8 +768,8 @@ module internal ScmRewriter =
 
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
@@ -786,8 +803,8 @@ module internal ScmRewriter =
 
                     let newChangedSubcomponents =
                         { infos with
-                            ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterSubcomponent.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                            ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
+                            ScmRewriterLevelUp.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
@@ -821,7 +838,7 @@ module internal ScmRewriter =
                 let newParentCompDecl = infos.ParentCompDecl.removeChild(infos.ChildCompDecl)
                 let newChangedSubcomponents =
                     { infos with
-                        ScmRewriterSubcomponent.ParentCompDecl = newParentCompDecl;
+                        ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
                     }
                 let modifiedState =
                     { state with

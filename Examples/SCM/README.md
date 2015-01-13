@@ -60,6 +60,14 @@
 ## (call)-Tests (delayed)
 
 
+## fault-Tests
+* nestedComponentWithFaults1.scm: like nestedComponent4 but with several faults and affected steps
+* simpleComponentWithFaults1.scm: like simpleComponent5 but with several faults and affected ports and steps
+* behWithFaults (TODO)
+* callInstFromBehWithFaults (TODO)
+* callInstFromProvWithFaults (TODO)
+* callInstHierarchyWithFaults (TODO)
+
 
 ## Examples which combine several aspects
 
