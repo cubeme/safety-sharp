@@ -68,7 +68,7 @@ type SingleLevelUpTests () =
             }
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpField
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -107,7 +107,7 @@ type SingleLevelUpTests () =
             }
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpField
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -146,7 +146,7 @@ type SingleLevelUpTests () =
             }
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpFault
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -185,7 +185,7 @@ type SingleLevelUpTests () =
             }
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpReqPort
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -225,7 +225,7 @@ type SingleLevelUpTests () =
             }
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpProvPort
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -273,7 +273,7 @@ type SingleLevelUpTests () =
             do! ScmRewriter.levelUpReqPort
             do! ScmRewriter.levelUpProvPort
             do! ScmRewriter.levelUpAndRewriteBindingDeclaredInChild
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -323,7 +323,7 @@ type SingleLevelUpTests () =
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpReqPort
             do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -375,7 +375,7 @@ type SingleLevelUpTests () =
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpProvPort
             do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -428,7 +428,7 @@ type SingleLevelUpTests () =
             do! ScmRewriter.levelUpReqPort
             do! ScmRewriter.levelUpProvPort
             do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -480,7 +480,7 @@ type SingleLevelUpTests () =
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpProvPort
             do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -532,7 +532,7 @@ type SingleLevelUpTests () =
         let workFlow = scmRewrite {
             do! ScmRewriter.levelUpReqPort
             do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
@@ -590,7 +590,7 @@ type FixpointIteratorTests () =
             }
         let workFlow = scmRewrite {
             do! (iterateToFixpoint levelUpField) 
-            do! ScmRewriter.writeBackChangesIntoModel
+            do! ScmRewriter.levelUpWriteBackChangesIntoModel
             return ()
         }
         let (_,resultingState) = ScmRewriter.runState workFlow initialState

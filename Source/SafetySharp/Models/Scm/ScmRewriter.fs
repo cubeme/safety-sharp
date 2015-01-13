@@ -95,8 +95,9 @@ module internal ScmRewriter =
         CompDecl : CompDecl;
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
-        ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;        
-        ProvPortToRewrite : ProvPortDecl option;
+        ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
+        StepsToRewrite : StepDecl list;
+        ProvPortsToRewrite : ProvPortDecl list;
     }
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
@@ -105,7 +106,8 @@ module internal ScmRewriter =
                     ScmRewriterConvertFaults.CompDecl = model.getDescendantUsingPath path;
                     ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
                     ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
-                    ScmRewriterConvertFaults.ProvPortToRewrite = None;
+                    ScmRewriterConvertFaults.StepsToRewrite = model.Steps;
+                    ScmRewriterConvertFaults.ProvPortsToRewrite = model.ProvPorts;
                 }
 
     (*
@@ -718,7 +720,7 @@ module internal ScmRewriter =
                     let stepReqPortNowInParent = infos.ArtificialReqPortOldToNew.Item stepReqPortPreviouslyInChild  // port (virtual step) was leveled up before, but infos.ArtificialStep.Value was not updated yet
                 
                     let rewriteStep (step:StepDecl) : StepDecl =
-                        let rec rewriteStm (stm:Stm) : Stm =
+                        let rec rewriteStm (stm:Stm) : Stm = //TODO: Move to ScmHelpers.fs. There are already similar functions
                             match stm with
                                 | Stm.Block (smnts) ->
                                     let newStmnts = smnts |> List.map rewriteStm
@@ -916,7 +918,7 @@ module internal ScmRewriter =
         if (state.ConvertFaults.IsSome) then
             return ()
         else
-            let convertFaultsState = ScmRewriterConvertFaults.createEmptyFromPath state.Model []
+            let convertFaultsState = ScmRewriterConvertFaults.createEmptyFromPath state.Model [state.Model.Comp]
             let modifiedState =
                 { state with
                     ScmRewriteState.ConvertFaults = Some(convertFaultsState);
@@ -990,8 +992,46 @@ module internal ScmRewriter =
         if (state.ConvertFaults.IsNone) then
             return ()
         else
-            let convertFaultsState = state.ConvertFaults.Value
-            return ()
+            let convertFaultsState = state.ConvertFaults.Value            
+            if convertFaultsState.StepsToRewrite.IsEmpty then
+                // do not modify old tainted state here
+                return ()
+            else
+                let stepToRewrite = convertFaultsState.StepsToRewrite.Head       
+                let rewriteStep (step:StepDecl) : StepDecl =
+                    let rec rewriteStm (stm:Stm) : Stm =  //TODO: Move to ScmHelpers.fs. There are already similar functions
+                        match stm with
+                            | Stm.Block (smnts) ->
+                                let newStmnts = smnts |> List.map rewriteStm
+                                Stm.Block(newStmnts)
+                            | Stm.Choice (choices:(Expr * Stm) list) ->
+                                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
+                                Stm.Choice(newChoices)
+                            | Stm.StepFault (fault) ->
+                                let (_,artificialReqPort) = convertFaultsState.ArtificialFaultOldToPortNew.Item fault
+                                Stm.CallPort (artificialReqPort,[])
+                            | _ -> stm
+                    let newBehavior =
+                        { step.Behavior with
+                            BehaviorDecl.Body = rewriteStm step.Behavior.Body;
+                        }
+                    { step with
+                        StepDecl.Behavior = newBehavior;
+                    }
+
+                let newStep = rewriteStep stepToRewrite                
+                let newCompDecl = convertFaultsState.CompDecl.replaceStep(stepToRewrite,newStep);
+                let newConvertFaultsState =
+                    { convertFaultsState with
+                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                        ScmRewriterConvertFaults.StepsToRewrite = convertFaultsState.StepsToRewrite.Tail;
+                    }
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
     }
 
     let uniteProvPortDecls  : ScmRewriteFunction<unit> = scmRewrite {
@@ -1001,6 +1041,15 @@ module internal ScmRewriter =
             return ()
         else
             let convertFaultsState = state.ConvertFaults.Value
+
+            // TODO: Assume semantics:
+            //     - For every ProvPort, _exactly_ 1 ProvPortDecl without FaultExpr exists
+            
+            let provPortToUniteCandidates =
+                convertFaultsState.CompDecl.ProvPorts |> List.filter (fun provPortDecl -> provPortDecl.FaultExpr <> None)
+
+
+            // TODO: Implement
             return ()
     }    
     
@@ -1011,11 +1060,29 @@ module internal ScmRewriter =
             return ()
         else
             let convertFaultsState = state.ConvertFaults.Value
-            let modifiedState =
-                { state with
-                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                }
-            return! putState modifiedState
+            
+            // TODO: Assume semantics:
+            //     - _exactly_ 1 Step without FaultExpr exists
+            let needToUnite =
+                if convertFaultsState.CompDecl.Steps.Length > 1 then
+                    true
+                else if convertFaultsState.CompDecl.Steps.Length = 0 then
+                    failwith "BUG: CompDecl needs at least one step"
+                else
+                    false
+
+            if (needToUnite=false) then
+                // TODO: is && in F# lazy evaluated?!?
+                // nothing to do
+                return ()
+            else
+            
+                // TODO: Implement
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
     }
     
     let convertFaultsWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
@@ -1055,7 +1122,7 @@ module internal ScmRewriter =
     let findInlineBehavior : ScmRewriteFunction<unit> = scmRewrite {    
         let! state = getState
 
-        let rec callingDepth (stm:Stm) (currentLevel:int) (stopAtLevel:int) : int =
+        let rec callingDepth (stm:Stm) (currentLevel:int) (stopAtLevel:int) : int =  //TODO: Move to ScmHelpers.fs. May be useful for later applications.
             let rec maxLevel (stmnts:Stm list) (accMaxLevel:int) : int =
                 if (stmnts=[]) then
                     accMaxLevel
