@@ -27,8 +27,8 @@
 
 ## (cmd)-Tests
 
-* cmd1.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. Use "krun cmd1.scm --search-final" to get all results
-
+* cmd1.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. Always only one statement. Use "krun cmd1.scm --search-final" to get all results
+* cmd2.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. More statements.
 
 ## (beh)-Tests
 
@@ -63,7 +63,8 @@
 ## fault-Tests
 * nestedComponentWithFaults1.scm: like nestedComponent4 but with several faults and affected steps
 * simpleComponentWithFaults1.scm: like simpleComponent5 but with several faults and affected ports and steps
-* behWithFaults (TODO)
+* simpleComponentWithFaults2.scm: like simpleComponentWithFaults1 but with fault behavior and assignments to faults
+* behWithFaults1.scm: like beh3.scm but with several faults and affected ports and steps
 * callInstFromBehWithFaults (TODO)
 * callInstFromProvWithFaults (TODO)
 * callInstHierarchyWithFaults (TODO)
