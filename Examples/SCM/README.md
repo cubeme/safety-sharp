@@ -64,6 +64,7 @@
 * nestedComponentWithFaults1.scm: like nestedComponent4 but with several faults and affected steps
 * simpleComponentWithFaults1.scm: like simpleComponent5 but with several faults and affected ports and steps
 * simpleComponentWithFaults2.scm: like simpleComponentWithFaults1 but with fault behavior and assignments to faults
+* simpleComponentWithFaults3.scm: 1 component with 2 transient failures and 3 steps, where each assigns a different int-value to a field.
 * behWithFaults1.scm: like beh3.scm but with several faults and affected ports and steps
 * callInstFromBehWithFaults1.scm: like callInstFromBeh3 but with several faults and affected ports and steps
 * callInstFromProvWithFaults1.scm: like callInstFromProv1 but with several faults and affected ports and steps

@@ -376,6 +376,24 @@ type CompleteRewriteTests () =
         ()
 
     [<Test>]
+    member this.``Example simpleComponentWithFaults3 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriter.levelUpAndInline
+        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
     member this.``Example behWithFaults1 gets rewritten (leveled up and inlined) completely`` () =
         let inputFile = """../../Examples/SCM/behWithFaults1.scm"""
         let input = System.IO.File.ReadAllText inputFile
