@@ -35,7 +35,7 @@ module internal ScmAstToString =
 
     type AstToStringState = {
         Indent : int;
-        NewLines : int;
+        NewLineStyle : NewLineStyle;
         CurrentLine : string;
         TextBuffer : string list;
     }
@@ -43,7 +43,7 @@ module internal ScmAstToString =
             static member initial =
                 {
                     AstToStringState.Indent = 0;
-                    AstToStringState.NewLines = 0;
+                    AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
                     AstToStringState.CurrentLine = "";
                     AstToStringState.TextBuffer = [];
                 }                
@@ -71,24 +71,43 @@ module internal ScmAstToString =
             AstToStringState.Indent = state.Indent - 1;
         }
     let newLine (state:AstToStringState) : AstToStringState =
+        let newLineStyle =
+            match state.NewLineStyle with
+                | NewLineStyle.NoNewLine -> NewLine
+                | NewLineStyle.NewLine -> NewLine
+                | NewLineStyle.NewParagraph -> NewParagraph //NewParagraph is stronger
         { state with
-            AstToStringState.Indent = state.Indent + 1;
-        }
-    let newLineAndIncreaseIndent (state:AstToStringState) : AstToStringState =
-        { state with
-            AstToStringState.Indent = state.Indent + 1;
-        }
-    let newLineAndDecreaseIndent (state:AstToStringState) : AstToStringState =
-        { state with
-            AstToStringState.Indent = state.Indent + 1;
+            AstToStringState.NewLineStyle = newLineStyle;
         }
     let newParagraph (state:AstToStringState) : AstToStringState =
         { state with
-            AstToStringState.Indent = state.Indent + 1;
+            AstToStringState.NewLineStyle = NewLineStyle.NewParagraph;
         }
+        
+    // this one gets executed automatically, when append is executed (see definition of append )
+    // (it would also be possible to add it to (>>=) )
+    let appendTrail (state:AstToStringState) : AstToStringState =
+        match (state.NewLineStyle) with
+            | NewLineStyle.NoNewLine ->
+                state
+            | NewLineStyle.NewLine ->
+                { state with
+                    AstToStringState.TextBuffer = state.CurrentLine::state.TextBuffer
+                    AstToStringState.CurrentLine = String.replicate state.Indent "  ";
+                    AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
+                }
+            | NewLineStyle.NewParagraph ->
+                { state with
+                    AstToStringState.TextBuffer = ""::""::state.CurrentLine::state.TextBuffer
+                    AstToStringState.CurrentLine = String.replicate state.Indent "  ";
+                    AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
+                }
+        
+
     let append (str:string) (state:AstToStringState) : AstToStringState =
-        { state with
-            AstToStringState.CurrentLine = state.CurrentLine + str;
+        let newState = appendTrail state
+        { newState with
+            AstToStringState.CurrentLine = newState.CurrentLine + str;
         }
 
     let rec foreach (elements:'a list) (writer: 'a -> AstToStringState -> AstToStringState) (state:AstToStringState): AstToStringState =
@@ -115,12 +134,6 @@ module internal ScmAstToString =
             failwith "the writerRef needs to be replaced by a real implementation"
         let w = ref dummyWriter
         ((fun state -> !w state), w) : AstToStringStateFunction * AstToStringStateFunction ref
-
-    // this one gets executed automatically (see definition of (>>=) )
-    let appendTrail (state:AstToStringState) : AstToStringState =
-        { state with
-            AstToStringState.Indent = state.Indent + 1;
-        }
     
 
     // Inspired by http://fsharpforfunandprofit.com/posts/computation-expressions-bind/
@@ -128,9 +141,24 @@ module internal ScmAstToString =
               (f:AstToStringStateFunction)
               (state:AstToStringState) : AstToStringState =
         let newState = m state
-        let newStateWithTrail = appendTrail newState
-        f newStateWithTrail
+        f newState
+        // alternative:
+        //  let newStateWithTrail = appendTrail newState
+        //  f newStateWithTrail
     
+
+    
+    // convenience    
+    let whitespace : AstToStringStateFunction =
+        append " "
+
+        
+    let newLineAndIncreaseIndent : AstToStringStateFunction =
+        newLine >>= increaseIndent
+
+    let newLineAndDecreaseIndent : AstToStringStateFunction =
+        newLine >>= decreaseIndent
+
     //////////////////////////////////////////////////////////////////////////////
     // actual export
     //////////////////////////////////////////////////////////////////////////////
@@ -294,19 +322,19 @@ module internal ScmAstToString =
 
     let exportVarDecl (varDecl:VarDecl) : AstToStringStateFunction =
         (exportType varDecl.Type) >>=
-        (append " ") >>=
+        (whitespace) >>=
         (exportVar varDecl.Var)
 
     let exportFieldDecl (fieldDecl:FieldDecl): AstToStringStateFunction =
         (exportType fieldDecl.Type) >>=
-        (append " ") >>=
+        (whitespace) >>=
         (exportField fieldDecl.Field) >>=
-        (append " ") >>=
+        (whitespace) >>=
         (foreachWithSep fieldDecl.Init exportVal (append ",") )
     
     let exportBehaviorDecl (behaviorDecl:BehaviorDecl) : AstToStringStateFunction =
         (foreach behaviorDecl.Locals (fun var -> exportVarDecl var >>= (append ";")) ) >>=
-        (append " ") >>=
+        (whitespace) >>=
         (exportStm behaviorDecl.Body)
         
 
@@ -317,7 +345,7 @@ module internal ScmAstToString =
             
     let exportParamDecl (paramDecl:ParamDecl) : AstToStringStateFunction = 
         (exportParamDir paramDecl.Dir) >>=
-        append " " >>=
+        whitespace >>=
         (exportVarDecl paramDecl.Var)
 
     let exportReqPortDecl (reqPortDecl:ReqPortDecl) : AstToStringStateFunction =
@@ -367,7 +395,7 @@ module internal ScmAstToString =
         (exportBndTarget bndDecl.Target) >>=
         (append " = ") >>=
         (exportBndKind bndDecl.Kind) >>=
-        (append " ")>>=
+        (whitespace)>>=
         (exportBndSrc bndDecl.Source) >>=
         (append ";")
 
@@ -390,14 +418,16 @@ module internal ScmAstToString =
 
         
     let rec exportCompDecl (compDecl:CompDecl) : AstToStringStateFunction =
-        (exportComp compDecl.Comp) >>= (newParagraph) >>=
+        (exportComp compDecl.Comp) >>= whitespace >>= (append "{") >>= newLineAndIncreaseIndent >>=
         (foreachWithSep compDecl.Subs       exportCompDecl     (newParagraph) ) >>
         (foreachWithSep compDecl.Fields     exportFieldDecl    (newParagraph) ) >>=
         (foreachWithSep compDecl.Faults     exportFaultDecl    (newParagraph) ) >>=
         (foreachWithSep compDecl.ReqPorts   exportReqPortDecl  (newParagraph) ) >>=
         (foreachWithSep compDecl.ProvPorts  exportProvPortDecl (newParagraph) ) >>=
         (foreachWithSep compDecl.Bindings   exportBndDecl      (newParagraph) ) >>=
-        (foreachWithSep compDecl.Steps      exportStepDecl     (newParagraph) )
+        (foreachWithSep compDecl.Steps      exportStepDecl     (newParagraph) ) >>=
+        decreaseIndent >>=
+        (append "}")
 
 
     let exportModel (compDecl:CompDecl) : string =
