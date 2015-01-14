@@ -1045,12 +1045,68 @@ module internal ScmRewriter =
             // TODO: Assume semantics:
             //     - For every ProvPort, _exactly_ 1 ProvPortDecl without FaultExpr exists
             
+            let provPortDecls = convertFaultsState.CompDecl.ProvPorts
+
             let provPortToUniteCandidates =
-                convertFaultsState.CompDecl.ProvPorts |> List.filter (fun provPortDecl -> provPortDecl.FaultExpr <> None)
-
-
-            // TODO: Implement
-            return ()
+                provPortDecls |> List.filter (fun provPortDecl -> provPortDecl.FaultExpr <> None)
+            
+            if provPortToUniteCandidates.IsEmpty then
+                return ()
+            else
+                let provPortToUnite =
+                    // Take the first Candidate
+                    provPortToUniteCandidates.Head.ProvPort
+                let provPortDeclsToUnite =
+                    provPortDecls |> List.filter (fun provPortDecl -> provPortDecl.ProvPort = provPortToUnite)
+                let provPortDeclWithNominalBehavior =
+                    let provPortDecl =
+                        provPortDeclsToUnite |> List.filter (fun provPortDecl -> provPortDecl.FaultExpr = None)
+                    provPortDecl.Head //must exist, see assumption
+                let provPortDeclsWithErrorBehavior =
+                    provPortDeclsToUnite |> List.filter (fun provPortDecl -> provPortDecl.FaultExpr <> None)
+                let unitedVars =
+                    provPortDeclsToUnite |> List.collect (fun provPortDecl -> provPortDecl.Behavior.Locals)
+                                         |> Set.ofList //to remove double entries
+                                         |> Set.toList
+                let guardStmTuplesOfErrorBehaviors =
+                    provPortDeclsWithErrorBehavior
+                        |> List.map (fun provPortDecl ->
+                                        let faultExprAsExpr =
+                                            provPortDecl.FaultExpr.Value.rewrite_toExpr convertFaultsState.ArtificialFaultOldToFieldNew
+                                        (faultExprAsExpr,provPortDecl.Behavior.Body)
+                                    )
+                let guardStmTupleOfNominalBehavior =
+                    let elseGuard =
+                        let (errorBehaviorGuards,_) = guardStmTuplesOfErrorBehaviors |> List.unzip
+                        let oredErrorBehaviorGuards = Expr.createOredExpr errorBehaviorGuards
+                        Expr.UExpr(oredErrorBehaviorGuards,UOp.Not)
+                    (elseGuard,provPortDeclWithNominalBehavior.Behavior.Body)
+                
+                let guardedCommand =
+                    Stm.Choice(guardStmTupleOfNominalBehavior::guardStmTuplesOfErrorBehaviors)                
+                let newBehavior =
+                    {
+                        BehaviorDecl.Locals = unitedVars;
+                        BehaviorDecl.Body = guardedCommand;
+                    }
+                let newProvPort =
+                    { provPortDeclWithNominalBehavior with
+                        ProvPortDecl.Behavior = newBehavior;
+                    }
+                let newCompDecl =
+                    convertFaultsState.CompDecl.removeProvPorts(provPortDeclsToUnite)
+                                               .addProvPort(newProvPort)
+                let newConvertFaultsState =
+                    { convertFaultsState with
+                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                        ScmRewriterConvertFaults.StepsToRewrite = convertFaultsState.StepsToRewrite.Tail;
+                    }
+                let modifiedState =
+                    { state with
+                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
+                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    }
+                return! putState modifiedState
     }    
     
     let uniteStep : ScmRewriteFunction<unit> = scmRewrite {
@@ -1076,7 +1132,6 @@ module internal ScmRewriter =
                 // nothing to do
                 return ()
             else
-            
                 // TODO: Implement
                 let modifiedState =
                     { state with

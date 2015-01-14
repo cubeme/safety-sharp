@@ -143,6 +143,20 @@ module internal ScmHelpers =
         member fault.getName =
             fault.Fault.getName
             
+            
+    // Extension methods    
+    type FaultExpr with
+        member faultExpr.rewrite_toExpr (faultMap:Map<Fault,Field>) : Expr =
+            match faultExpr with
+                | Fault (fault) ->
+                    Expr.ReadField(faultMap.Item fault)
+                | NotFault (faultExpr) ->
+                    Expr.UExpr(faultExpr.rewrite_toExpr faultMap,UOp.Not)
+                | AndFault (leftFaultExpr,rightFaultExpr) ->
+                    Expr.BExpr(leftFaultExpr.rewrite_toExpr faultMap,BOp.And,rightFaultExpr.rewrite_toExpr faultMap)
+                | OrFault (leftFaultExpr,rightFaultExpr) ->
+                    Expr.BExpr(leftFaultExpr.rewrite_toExpr faultMap,BOp.Or,rightFaultExpr.rewrite_toExpr faultMap)
+
     // Extension methods
     type Comp with
         member comp.getName =
@@ -235,6 +249,11 @@ module internal ScmHelpers =
             { node with
                 CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> provPort<>_provPort));
             }
+        member node.removeProvPorts (provPorts:ProvPortDecl list) =
+            let provPortsSet = provPorts |> Set.ofList
+            { node with
+                CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> (provPortsSet.Contains _provPort) = false));
+            }
         member node.addProvPort (fault:ProvPortDecl) =
             { node with
                 CompDecl.ProvPorts = fault::node.ProvPorts
@@ -264,7 +283,12 @@ module internal ScmHelpers =
         member node.removeStep (step:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.filter (fun _step -> _step<>step));
-            }    
+            }
+        member node.removeSteps (steps:StepDecl list) =
+            let stepsSet = steps |> Set.ofList
+            { node with
+                CompDecl.Steps = (node.Steps |> List.filter (fun _step -> (stepsSet.Contains _step) = false));
+            }
         member node.replaceStep (stepToReplace:StepDecl, newStep:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));
@@ -298,7 +322,25 @@ module internal ScmHelpers =
                 let newParent = parentNode.replaceChild(nodeToReplace,newComponent)
                 // recursively replace parent
                 model.replaceDescendant pathToReplace.Tail newParent
-
+                
+    // Extension methods    
+    type Expr with
+        static member createOredExpr (exprs:Expr list) : Expr =
+            if exprs.IsEmpty then
+                Expr.Literal(Val.BoolVal(false))
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                Expr.BExpr(exprs.Head,BOp.Or,Expr.createOredExpr exprs.Tail)
+        static member createAndedExpr (exprs:Expr list) : Expr =
+            if exprs.IsEmpty then
+                Expr.Literal(Val.BoolVal(true))
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                Expr.BExpr(exprs.Head,BOp.And,Expr.createOredExpr exprs.Tail)
 
                 
     // some local helpers
