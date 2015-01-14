@@ -30,8 +30,17 @@ module internal ScmHelpers =
     type ReqPortPath = CompPath * ReqPort
     type ProvPortPath = CompPath * ProvPort
 
-    type StmPath = int list // index1::index2::[] -> Blockstatement2=Blockstatement1.[index2] ; Stm=Blockstatement2.[index1] ; Stm=Blockstatement1.[index2].[index1]
-    
+    type StmPath = int list
+        // index1::index2::[]
+        // Example:
+        //    Block{
+        //       Stm1;              // 0::[]
+        //       Stm2;              // 1::[]
+        //       Stm3;              // 2::[]
+        //       Choice {           // 3::[]
+        //           Guard,Stm 4.1  // 3::0::[]
+        //           Guard,Stm 4.2  // 3::1::[]
+        //       }
     
     // Extension methods
     type Stm with
@@ -534,3 +543,17 @@ module internal ScmHelpers =
                 Stm.StepComp (comp)
             | Stm.StepFault (fault) ->
                 Stm.StepFault (fault)
+
+                
+    let rec rewriteStm_stepFaultToPortCall (faultMap:Map<Fault,ProvPort*ReqPort>) (stm:Stm) : Stm =
+        match stm with
+            | Stm.Block (smnts) ->
+                let newStmnts = smnts |> List.map (rewriteStm_stepFaultToPortCall faultMap)
+                Stm.Block(newStmnts)
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm_stepFaultToPortCall faultMap stm) )
+                Stm.Choice(newChoices)
+            | Stm.StepFault (fault) ->
+                let (_,artificialReqPort) = faultMap.Item fault
+                Stm.CallPort (artificialReqPort,[])
+            | _ -> stm

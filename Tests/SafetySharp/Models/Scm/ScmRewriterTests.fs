@@ -697,4 +697,5 @@ type InliningTests () =
     
 *)
     
-        
+// TODO: Write test, which ensures, that if a child component
+//       contains two ports with the same name, after leveling up, they keep the same name

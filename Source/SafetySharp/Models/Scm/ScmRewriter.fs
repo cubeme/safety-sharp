@@ -96,18 +96,25 @@ module internal ScmRewriter =
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
         ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
-        StepsToRewrite : StepDecl list;
-        ProvPortsToRewrite : ProvPortDecl list;
+        BehaviorsToRewrite : BehaviorWithLocation list;
     }
         with
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
+                let compDecl = model.getDescendantUsingPath path
+                let behaviorsToRewrite =
+                    let provPorts =
+                        compDecl.ProvPorts |> List.map (fun provPort -> BehaviorWithLocation.InProvPort(provPort,provPort.Behavior) )
+                    let steps =
+                        compDecl.Steps |> List.map (fun step -> BehaviorWithLocation.InStep(step,step.Behavior) )
+                    let faults =
+                        compDecl.Faults |> List.map (fun fault -> BehaviorWithLocation.InFault(fault,fault.Step) )
+                    provPorts @ steps @ faults
                 {
                     ScmRewriterConvertFaults.CompPath = path;
-                    ScmRewriterConvertFaults.CompDecl = model.getDescendantUsingPath path;
+                    ScmRewriterConvertFaults.CompDecl = compDecl;
                     ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
                     ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
-                    ScmRewriterConvertFaults.StepsToRewrite = model.Steps;
-                    ScmRewriterConvertFaults.ProvPortsToRewrite = model.ProvPorts;
+                    ScmRewriterConvertFaults.BehaviorsToRewrite = behaviorsToRewrite;
                 }
 
     (*
@@ -424,7 +431,16 @@ module internal ScmRewriter =
                         }
                     return! putState modifiedState
         }
-    let levelUpProvPort : ScmRewriteFunction<unit> = scmRewrite {
+    let levelUpProvPort : ScmRewriteFunction<unit> = scmRewrite {            
+            let getUnusedProvPortNameIfNotInMap (oldProv:ProvPort) (basedOn:string) : ScmRewriteFunction<ProvPort> = 
+                let getUnusedProvPortNameIfNotInMap (state) : (ProvPort * ScmRewriteState) =
+                    if state.LevelUp.Value.ArtificialProvPortOldToNew.ContainsKey oldProv then
+                        (state.LevelUp.Value.ArtificialProvPortOldToNew.Item oldProv,state)
+                    else
+                        runState (getUnusedProvPortName basedOn) state
+                ScmRewriteFunction (getUnusedProvPortNameIfNotInMap)
+            
+            
             let! state = getState
             if (state.LevelUp.IsNone) then
                 // do not modify old tainted state here
@@ -436,10 +452,15 @@ module internal ScmRewriter =
                     // do not modify old tainted state here
                     return! putState state
                 else
+                    /// Note:
+                    //    If a provided port with the same name was already leveled up, reuse this name.
+                    //    The names after leveling up should be the same in this case!
+                    
                     let provPortDecl = infos.ChildCompDecl.ProvPorts.Head
                     let provPort = provPortDecl.ProvPort
                     let newChildCompDecl = infos.ChildCompDecl.removeProvPort provPortDecl
-                    let! transformedProvPort = getUnusedProvPortName (sprintf "%s_%s" infos.ChildCompDecl.getName provPort.getName)
+                    
+                    let! transformedProvPort = getUnusedProvPortNameIfNotInMap provPort (sprintf "%s_%s" infos.ChildCompDecl.getName provPort.getName)
                     let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let transformedProvPortDecl = 
                         {provPortDecl with
@@ -818,7 +839,7 @@ module internal ScmRewriter =
                     let newLevelUp =
                         { infos with
                             ScmRewriterLevelUp.ParentCompDecl = newParentCompDecl;
-                            ScmRewriterLevelUp.ProvPortsToRewrite = infos.ProvPortsToRewrite.Tail;
+                            ScmRewriterLevelUp.FaultsToRewrite = infos.FaultsToRewrite.Tail;
                         }
                     let modifiedState =
                         { state with
@@ -993,46 +1014,73 @@ module internal ScmRewriter =
             return ()
         else
             let convertFaultsState = state.ConvertFaults.Value            
-            if convertFaultsState.StepsToRewrite.IsEmpty then
+            if convertFaultsState.BehaviorsToRewrite.IsEmpty then
                 // do not modify old tainted state here
                 return ()
             else
-                let stepToRewrite = convertFaultsState.StepsToRewrite.Head       
-                let rewriteStep (step:StepDecl) : StepDecl =
-                    let rec rewriteStm (stm:Stm) : Stm =  //TODO: Move to ScmHelpers.fs. There are already similar functions
-                        match stm with
-                            | Stm.Block (smnts) ->
-                                let newStmnts = smnts |> List.map rewriteStm
-                                Stm.Block(newStmnts)
-                            | Stm.Choice (choices:(Expr * Stm) list) ->
-                                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
-                                Stm.Choice(newChoices)
-                            | Stm.StepFault (fault) ->
-                                let (_,artificialReqPort) = convertFaultsState.ArtificialFaultOldToPortNew.Item fault
-                                Stm.CallPort (artificialReqPort,[])
-                            | _ -> stm
-                    let newBehavior =
-                        { step.Behavior with
-                            BehaviorDecl.Body = rewriteStm step.Behavior.Body;
-                        }
-                    { step with
-                        StepDecl.Behavior = newBehavior;
+                let behaviorToRewriteWithLocation = convertFaultsState.BehaviorsToRewrite.Head
+                let behaviorToRewrite = behaviorToRewriteWithLocation.Behavior
+
+                let newBehavior =
+                    { behaviorToRewrite with
+                        BehaviorDecl.Body = rewriteStm_stepFaultToPortCall convertFaultsState.ArtificialFaultOldToPortNew behaviorToRewrite.Body;
                     }
 
-                let newStep = rewriteStep stepToRewrite                
-                let newCompDecl = convertFaultsState.CompDecl.replaceStep(stepToRewrite,newStep);
-                let newConvertFaultsState =
-                    { convertFaultsState with
-                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
-                        ScmRewriterConvertFaults.StepsToRewrite = convertFaultsState.StepsToRewrite.Tail;
-                    }
-                let modifiedState =
-                    { state with
-                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
-                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    }
-                return! putState modifiedState
+                match behaviorToRewriteWithLocation with
+                    | BehaviorWithLocation.InProvPort (provPort,_) ->
+                        let newProvPort =
+                            { provPort with
+                                ProvPortDecl.Behavior = newBehavior;
+                            }
+                        let newCompDecl = convertFaultsState.CompDecl.replaceProvPort(provPort,newProvPort);
+                        let newConvertFaultsState =
+                            { convertFaultsState with
+                                ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                                ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
+                            }
+                        let modifiedState =
+                            { state with
+                                ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
+                                ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                            }
+                        return! putState modifiedState
+                    | BehaviorWithLocation.InFault (fault,_) ->
+                        let newFault =
+                            { fault with
+                                FaultDecl.Step = newBehavior;
+                            }
+                        let newCompDecl = convertFaultsState.CompDecl.replaceFault(fault,newFault);
+                        let newConvertFaultsState =
+                            { convertFaultsState with
+                                ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                                ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
+                            }
+                        let modifiedState =
+                            { state with
+                                ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
+                                ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                            }
+                        return! putState modifiedState
+                    | BehaviorWithLocation.InStep (step,_) ->
+                        let newStep =
+                            { step with
+                                StepDecl.Behavior = newBehavior;
+                            }
+                        let newCompDecl = convertFaultsState.CompDecl.replaceStep(step,newStep);
+                        let newConvertFaultsState =
+                            { convertFaultsState with
+                                ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                                ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
+                            }
+                        let modifiedState =
+                            { state with
+                                ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
+                                ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                            }
+                        return! putState modifiedState
     }
+
+    
 
     let uniteProvPortDecls  : ScmRewriteFunction<unit> = scmRewrite {
         //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
@@ -1099,7 +1147,6 @@ module internal ScmRewriter =
                 let newConvertFaultsState =
                     { convertFaultsState with
                         ScmRewriterConvertFaults.CompDecl = newCompDecl;
-                        ScmRewriterConvertFaults.StepsToRewrite = convertFaultsState.StepsToRewrite.Tail;
                     }
                 let modifiedState =
                     { state with
@@ -1173,7 +1220,6 @@ module internal ScmRewriter =
                 let newConvertFaultsState =
                     { convertFaultsState with
                         ScmRewriterConvertFaults.CompDecl = newCompDecl;
-                        ScmRewriterConvertFaults.StepsToRewrite = convertFaultsState.StepsToRewrite.Tail;
                     }
                 let modifiedState =
                     { state with
@@ -1322,17 +1368,17 @@ module internal ScmRewriter =
                             | Stm.AssignFault (_) -> None
                             | Stm.Block (stmnts) ->
                                 stmnts |> List.map2 (fun index stm -> (index,stm)) ([0..(stmnts.Length-1)])
-                                       |> List.tryPick( fun (index,stm) -> findCall stm (index::currentPath))
+                                       |> List.tryPick( fun (index,stm) -> findCall stm (currentPath@[index]))
                             | Stm.Choice (choices:(Expr * Stm) list) ->
                                 choices |> List.map2 (fun index stm -> (index,stm)) ([0..(choices.Length-1)])
-                                        |> List.tryPick( fun (index,(guard,stm)) -> findCall stm (index::currentPath))
+                                        |> List.tryPick( fun (index,(guard,stm)) -> findCall stm (currentPath@[index]))
                             | Stm.CallPort (_) ->
                                 Some(currentPath)
                             | Stm.StepComp (comp) ->
                                 failwith "BUG: In this phase Stm.StepComp should not be in any statement"
                                 Some(currentPath)
                             | Stm.StepFault (_) ->
-                                Some(currentPath)                    
+                                failwith "BUG: In this phase Stm.StepFault should not be in any statement";
                     let callToInline = findCall inlineBehavior.InlinedBehavior.Body []
                     match callToInline with
                         | None -> return ()
