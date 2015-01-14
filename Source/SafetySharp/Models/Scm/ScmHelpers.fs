@@ -289,6 +289,10 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Steps = (node.Steps |> List.filter (fun _step -> (stepsSet.Contains _step) = false));
             }
+        member node.addStep (step:StepDecl) =
+            { node with
+                CompDecl.Steps = step::node.Steps
+            }
         member node.replaceStep (stepToReplace:StepDecl, newStep:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));

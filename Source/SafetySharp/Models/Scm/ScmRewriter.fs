@@ -1126,15 +1126,58 @@ module internal ScmRewriter =
                     failwith "BUG: CompDecl needs at least one step"
                 else
                     false
-
             if (needToUnite=false) then
-                // TODO: is && in F# lazy evaluated?!?
                 // nothing to do
                 return ()
             else
-                // TODO: Implement
+                // now almost 1:1 copy of uniteProvPortDecls
+                let stepDecls = convertFaultsState.CompDecl.Steps
+                let stepDeclWithNominalBehavior =
+                    let stepDecl =
+                        stepDecls |> List.filter (fun stepDecl -> stepDecl.FaultExpr = None)
+                    stepDecl.Head //must exist, see assumption
+                let stepDeclsWithErrorBehavior =
+                    stepDecls |> List.filter (fun stepDecl -> stepDecl.FaultExpr <> None)
+                let unitedVars =
+                    stepDecls |> List.collect (fun stepDecl -> stepDecl.Behavior.Locals)
+                              |> Set.ofList //to remove double entries
+                              |> Set.toList
+                let guardStmTuplesOfErrorBehaviors =
+                    stepDeclsWithErrorBehavior
+                        |> List.map (fun stepDecl ->
+                                        let faultExprAsExpr =
+                                            stepDecl.FaultExpr.Value.rewrite_toExpr convertFaultsState.ArtificialFaultOldToFieldNew
+                                        (faultExprAsExpr,stepDecl.Behavior.Body)
+                                    )
+                let guardStmTupleOfNominalBehavior =
+                    let elseGuard =
+                        let (errorBehaviorGuards,_) = guardStmTuplesOfErrorBehaviors |> List.unzip
+                        let oredErrorBehaviorGuards = Expr.createOredExpr errorBehaviorGuards
+                        Expr.UExpr(oredErrorBehaviorGuards,UOp.Not)
+                    (elseGuard,stepDeclWithNominalBehavior.Behavior.Body)
+                
+                let guardedCommand =
+                    Stm.Choice(guardStmTupleOfNominalBehavior::guardStmTuplesOfErrorBehaviors)                
+                let newBehavior =
+                    {
+                        BehaviorDecl.Locals = unitedVars;
+                        BehaviorDecl.Body = guardedCommand;
+                    }
+                let newStep =
+                    { stepDeclWithNominalBehavior with
+                        StepDecl.Behavior = newBehavior;
+                    }
+                let newCompDecl =
+                    convertFaultsState.CompDecl.removeSteps(stepDecls)
+                                               .addStep(newStep)
+                let newConvertFaultsState =
+                    { convertFaultsState with
+                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
+                        ScmRewriterConvertFaults.StepsToRewrite = convertFaultsState.StepsToRewrite.Tail;
+                    }
                 let modifiedState =
                     { state with
+                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                     }
                 return! putState modifiedState
