@@ -28,181 +28,379 @@ namespace SafetySharp.Models.Scm
 
 module internal ScmAstToString =
     
-    let exportVar (var:Var) : string =
-        match var with
-            | Var(str) -> str
+    type NewLineStyle =
+        | NoNewLine
+        | NewLine
+        | NewParagraph
 
-    let exportField (field:Field) =
-        match field with
-            | Field (str) -> str
-            
-    let exportReqPort (reqPort:ReqPort) : string =
-        match reqPort with
-            | ReqPort (str) -> str
+    type AstToStringState = {
+        Indent : int;
+        NewLines : int;
+        CurrentLine : string;
+        TextBuffer : string list;
+    }
+        with
+            static member initial =
+                {
+                    AstToStringState.Indent = 0;
+                    AstToStringState.NewLines = 0;
+                    AstToStringState.CurrentLine = "";
+                    AstToStringState.TextBuffer = [];
+                }                
+            override state.ToString() : string =
+                (state.CurrentLine :: state.TextBuffer)
+                    |> List.rev
+                    |> String.concat System.Environment.NewLine
 
-    let exportProvPort (provPort:ProvPort) : string =
-        match provPort with
-            | ProvPort (str) -> str
+    type AstToStringStateFunction = AstToStringState -> AstToStringState
+    
+    
 
-    let exportFault (fault:Fault) : string =
-        match fault with
-            | Fault.Fault (str) -> str
+    //////////////////////////////////////////////////////////////////////////////
+    // helpers
+    //////////////////////////////////////////////////////////////////////////////
 
-    let exportComp (comp:Comp) : string =
-        match comp with 
-            | Comp (str) -> str
+    //elementary
 
-    let exportUOp (uop:UOp) : string =
-        match uop with
-            | UOp.Minus -> "-"
-            | UOp.Not -> "!"
+    let increaseIndent (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent + 1;
+        }
+    let decreaseIndent (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent - 1;
+        }
+    let newLine (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent + 1;
+        }
+    let newLineAndIncreaseIndent (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent + 1;
+        }
+    let newLineAndDecreaseIndent (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent + 1;
+        }
+    let newParagraph (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent + 1;
+        }
+    let append (str:string) (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.CurrentLine = state.CurrentLine + str;
+        }
 
-    let exportBOp (bop:BOp) : string =
-        match bop with
-            | BOp.Add -> "+"
-            | BOp.Subtract -> "-"
-            | BOp.Multiply -> "*"
-            | BOp.Divide -> "/"
-            | BOp.Modulo -> "%"
-            | BOp.And -> "&&"
-            | BOp.Or -> "||"
-            | BOp.Equals -> "=="
-            | BOp.NotEquals -> "!="
-            | BOp.Less -> "<"
-            | BOp.LessEqual -> "<="
-            | BOp.Greater -> ">"
-            | BOp.GreaterEqual -> ">="
+    let rec foreach (elements:'a list) (writer: 'a -> AstToStringState -> AstToStringState) (state:AstToStringState): AstToStringState =
+        if elements.IsEmpty then
+            state
+        else
+            let newState = writer elements.Head state
+            foreach elements.Tail writer newState
 
-    let exportVal (_val:Val) : string =
-        match _val with
-            | Val.BoolVal (_val) -> _val.ToString()
-            | Val.IntVal (_val) -> _val.ToString()
-
-    let rec exportExpr (expr:Expr) : string =
-        match expr with
-            | Expr.Literal (_val) -> exportVal _val
-            | Expr.ReadVar (_var) -> exportVar _var
-            | Expr.ReadField (field) -> exportField field
-            | Expr.UExpr (expr,uop) -> sprintf "%s(%s)" (exportUOp uop) (exportExpr expr)
-            | Expr.BExpr (exprLeft, bop, exprRight) -> sprintf "(%s) %s (%s)" (exportExpr exprLeft) (exportBOp bop) (exportExpr exprRight)
-
-    let rec exportFaultExpr (faultExpr:FaultExpr) : string =
-        match faultExpr with
-            | FaultExpr.Fault (fault) -> exportFault fault
-            | FaultExpr.NotFault (faultExpr) -> sprintf "!(%s)" (exportFaultExpr faultExpr)
-            | FaultExpr.AndFault (faultExprLeft,faultExprRight) -> sprintf "(%s) || (%s)" (exportFaultExpr faultExprLeft) (exportFaultExpr faultExprRight)
-            | FaultExpr.OrFault (faultExprLeft,faultExprRight) -> sprintf "(%s) || (%s)" (exportFaultExpr faultExprLeft) (exportFaultExpr faultExprRight)
-
-    let exportParam (_param:Param) : string =
-        match _param with
-            | Param.ExprParam (expr) -> sprintf "in %s" (exportExpr expr)
-            | Param.InOutVarParam (_var) -> sprintf "inout %s" (exportVar _var)
-            | Param.InOutFieldParam (field) -> sprintf "inout %s" (exportField field)
-
-    let rec exportStm (stm:Stm) : string =
-        match stm with
-            | Stm.AssignVar (var,expr) ->
-                sprintf "%s := %s;" (exportVar var) (exportExpr expr)
-            | Stm.AssignField (field,expr) ->
-                sprintf "%s := %s;" (exportField field) (exportExpr expr)
-            | Stm.AssignFault (fault,expr) ->
-                sprintf "%s := %s;" (exportFault fault) (exportExpr expr)
-            | Stm.Block (stmts) ->
-                let stmts = stmts |> List.map exportStm |> String.concat ";"
-                sprintf "{%s}" stmts
-            | Stm.Choice (choices:(Expr * Stm) list) ->
-                let choices = choices |> List.map (fun (guard,stm) -> sprintf "(%s) -> {%s}" (exportExpr guard) (exportStm stm))
-                                      |> String.concat ""
-                sprintf "choice { %s }" choices
-            | Stm.CallPort (reqPort, _params) ->
-                let _params = _params |> List.map exportParam
-                                      |> String.concat ","
-                sprintf "%s (%s);" (exportReqPort reqPort) (_params)
-            | Stm.StepComp (comp) ->
-                sprintf "step %s;" (exportComp comp)
-            | Stm.StepFault (fault) ->
-                sprintf "step %s;" (exportFault fault)
-      
-    let exportType (_type:Type) : string =
-        match _type with
-            | BoolType -> "bool"
-            | IntType -> "int"
-
-    let exportVarDecl (varDecl:VarDecl) : string =
-        sprintf "%s %s" (exportType varDecl.Type) (exportVar varDecl.Var)
-
-    let exportFieldDecl (fieldDecl:FieldDecl): string =
-        let initVars = fieldDecl.Init |> List.map exportVal |> String.concat ","
-        sprintf "%s %s = %s;" (exportType fieldDecl.Type) (exportField fieldDecl.Field) (initVars)
-
+    let rec foreachWithSep  (elements:'a list) (writer: 'a -> AstToStringState -> AstToStringState) (sep:AstToStringState -> AstToStringState) (state:AstToStringState): AstToStringState =
+        if elements.IsEmpty then
+            state
+        else if elements.Tail.IsEmpty then
+            writer elements.Head state
+        else
+            let newState1 = writer elements.Head state
+            let newState2 = sep newState1
+            foreach elements.Tail writer newState2
 
     
-    let exportBehaviorDecl (behaviorDecl:BehaviorDecl) : string =
-        let locals = behaviorDecl.Locals |> List.map exportVarDecl |> String.concat ";"        
-        sprintf "%s %s" (locals) (exportStm behaviorDecl.Body)
+    // Inspired by FParsec's createParserForwardedToRef (defined in FParsec/Primitives.fs)
+    let createWriterForwardedToRef() =
+        let dummyWriter = fun (state:AstToStringState) ->
+            failwith "the writerRef needs to be replaced by a real implementation"
+        let w = ref dummyWriter
+        ((fun state -> !w state), w) : AstToStringStateFunction * AstToStringStateFunction ref
 
-    let exportParamDir (paramDir:ParamDir) : string = 
+    // this one gets executed automatically (see definition of (>>=) )
+    let appendTrail (state:AstToStringState) : AstToStringState =
+        { state with
+            AstToStringState.Indent = state.Indent + 1;
+        }
+    
+
+    // Inspired by http://fsharpforfunandprofit.com/posts/computation-expressions-bind/
+    let (>>=) (m:AstToStringStateFunction)
+              (f:AstToStringStateFunction)
+              (state:AstToStringState) : AstToStringState =
+        let newState = m state
+        let newStateWithTrail = appendTrail newState
+        f newStateWithTrail
+    
+    //////////////////////////////////////////////////////////////////////////////
+    // actual export
+    //////////////////////////////////////////////////////////////////////////////
+     
+
+
+    let exportVar (var:Var) : AstToStringStateFunction =
+        let toAppend =
+            match var with
+                | Var(str) -> str
+        append toAppend
+
+    let exportField (field:Field) : AstToStringStateFunction =
+        let toAppend =
+            match field with
+                | Field (str) -> str
+        append toAppend
+            
+    let exportReqPort (reqPort:ReqPort) : AstToStringStateFunction =
+        let toAppend =
+            match reqPort with
+                | ReqPort (str) -> str
+        append toAppend
+
+    let exportProvPort (provPort:ProvPort) : AstToStringStateFunction =
+        let toAppend =
+            match provPort with
+                | ProvPort (str) -> str
+        append toAppend
+
+    let exportFault (fault:Fault) : AstToStringStateFunction =
+        let toAppend =
+            match fault with
+                | Fault.Fault (str) -> str
+        append toAppend
+
+    let exportComp (comp:Comp) : AstToStringStateFunction =
+        let toAppend =
+            match comp with 
+                | Comp (str) -> str
+        append toAppend
+
+    let exportUOp (uop:UOp) : AstToStringStateFunction =
+        let toAppend =
+            match uop with
+                | UOp.Minus -> "-"
+                | UOp.Not -> "!"
+        append toAppend
+
+    let exportBOp (bop:BOp) : AstToStringStateFunction =
+        let toAppend =
+            match bop with
+                | BOp.Add -> "+"
+                | BOp.Subtract -> "-"
+                | BOp.Multiply -> "*"
+                | BOp.Divide -> "/"
+                | BOp.Modulo -> "%"
+                | BOp.And -> "&&"
+                | BOp.Or -> "||"
+                | BOp.Equals -> "=="
+                | BOp.NotEquals -> "!="
+                | BOp.Less -> "<"
+                | BOp.LessEqual -> "<="
+                | BOp.Greater -> ">"
+                | BOp.GreaterEqual -> ">="
+        append toAppend
+
+    let exportVal (_val:Val) : AstToStringStateFunction =
+        let toAppend =
+            match _val with
+                | Val.BoolVal (_val) -> _val.ToString()
+                | Val.IntVal (_val) -> _val.ToString()
+        append toAppend
+
+    let rec exportExpr (expr:Expr) : AstToStringStateFunction =
+        match expr with
+            | Expr.Literal (_val) -> exportVal  _val
+            | Expr.ReadVar (_var) -> exportVar  _var
+            | Expr.ReadField (field) -> exportField  field
+            | Expr.UExpr (expr,uop) ->                
+                //sprintf "%s(%s)" (exportUOp state uop)  (exportExpr state expr)
+                (exportUOp uop) >>= (append "(") >>= (exportExpr expr) >>= (append ")")
+            | Expr.BExpr (exprLeft, bop, exprRight) ->
+                (append "(") >>= (exportExpr exprLeft) >>= (append ")")  >>=
+                (exportBOp bop) >>=
+                (append "(") >>= (exportExpr exprRight) >>= (append ")") 
+
+                
+    let rec exportFaultExpr (faultExpr:FaultExpr) : AstToStringStateFunction =
+        match faultExpr with
+            | FaultExpr.Fault (fault) -> exportFault fault
+            | FaultExpr.NotFault (faultExpr) ->
+                (append "!(") >>= (exportFaultExpr faultExpr) >>= (append ")")
+            | FaultExpr.AndFault (faultExprLeft,faultExprRight) ->
+                (append "(") >>= (exportFaultExpr faultExprLeft) >>= (append ")")  >>=
+                (append "&&") >>=
+                (append "(") >>= (exportFaultExpr faultExprRight) >>= (append ")")
+            | FaultExpr.OrFault (faultExprLeft,faultExprRight) ->
+                (append "(") >>= (exportFaultExpr faultExprLeft) >>= (append ")")  >>=
+                (append "||") >>=
+                (append "(") >>= (exportFaultExpr faultExprRight) >>= (append ")")
+
+    let exportParam (_param:Param) : AstToStringStateFunction =
+        match _param with
+            | Param.ExprParam (expr) ->
+                (append "in ") >>=
+                (exportExpr expr)
+            | Param.InOutVarParam (_var) ->
+                (append "inout ") >>=
+                (exportVar _var)
+            | Param.InOutFieldParam (field) ->
+                (append "inout ") >>=
+                (exportField field)
+            
+    let rec exportStm (stm:Stm) : AstToStringStateFunction =
+        match stm with
+            | Stm.AssignVar (var,expr) ->
+                (exportVar var) >>=
+                (append " := ") >>=
+                (exportExpr expr) >>=
+                (append "; ")
+            | Stm.AssignField (field,expr) ->
+                (exportField field) >>=
+                (append " := ") >>=
+                (exportExpr expr) >>=
+                (append "; ")
+            | Stm.AssignFault (fault,expr) ->
+                (exportFault fault) >>=
+                (append " := ") >>=
+                (exportExpr expr) >>=
+                (append "; ")
+            | Stm.Block (stmts) ->
+                (append " { ") >>= newLineAndIncreaseIndent >>=
+                (foreach stmts (fun stm -> exportStm stm >>= newLine)) >>=
+                (append " } ") >>= newLineAndDecreaseIndent
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                (append " choice {") >>= newLineAndIncreaseIndent >>=
+                (foreach choices (fun (guard,stm) -> 
+                                       exportExpr guard >>= append " => " >>= exportStm stm >>= newLine)
+                                 ) >>=
+                (append " choice }") >>= newLineAndDecreaseIndent
+                
+            | Stm.CallPort (reqPort, _params) ->
+                (exportReqPort reqPort) >>=
+                (append " ( ") >>=
+                (foreachWithSep _params exportParam (append ",") ) >>=
+                (append ");")
+            | Stm.StepComp (comp) ->
+                (append "step ") >>=
+                (exportComp comp) >>=
+                (append ";")
+            | Stm.StepFault (fault) ->
+                (append "step ") >>=
+                (exportFault fault) >>=
+                (append ";")
+      
+    let exportType (_type:Type) : AstToStringStateFunction =
+        match _type with
+            | BoolType -> append "bool"
+            | IntType -> append "int"
+
+    let exportVarDecl (varDecl:VarDecl) : AstToStringStateFunction =
+        (exportType varDecl.Type) >>=
+        (append " ") >>=
+        (exportVar varDecl.Var)
+
+    let exportFieldDecl (fieldDecl:FieldDecl): AstToStringStateFunction =
+        (exportType fieldDecl.Type) >>=
+        (append " ") >>=
+        (exportField fieldDecl.Field) >>=
+        (append " ") >>=
+        (foreachWithSep fieldDecl.Init exportVal (append ",") )
+    
+    let exportBehaviorDecl (behaviorDecl:BehaviorDecl) : AstToStringStateFunction =
+        (foreach behaviorDecl.Locals (fun var -> exportVarDecl var >>= (append ";")) ) >>=
+        (append " ") >>=
+        (exportStm behaviorDecl.Body)
+        
+
+    let exportParamDir (paramDir:ParamDir) : AstToStringStateFunction = 
         match paramDir with
-            | In -> "in"
-            | InOut -> "inout"
+            | In -> append "in"
+            | InOut -> append "inout"
+            
+    let exportParamDecl (paramDecl:ParamDecl) : AstToStringStateFunction = 
+        (exportParamDir paramDecl.Dir) >>=
+        append " " >>=
+        (exportVarDecl paramDecl.Var)
 
-    let exportParamDecl (paramDecl:ParamDecl) : string = 
-        sprintf "%s %s" (exportParamDir paramDecl.Dir) (exportVarDecl paramDecl.Var)
+    let exportReqPortDecl (reqPortDecl:ReqPortDecl) : AstToStringStateFunction =
+        (exportReqPort reqPortDecl.ReqPort) >>=
+        (append "(") >>=
+        (foreachWithSep reqPortDecl.Params exportParamDecl (append ",") ) >>=
+        (append ");")
 
-    let exportReqPortDecl (reqPortDecl:ReqPortDecl) : string =
-        let _params = reqPortDecl.Params |> List.map exportParamDecl
-                                         |> String.concat ","
-        sprintf "%s(%s);" (exportReqPort reqPortDecl.ReqPort) (_params)
-
-
-    let exportProvPortDecl (provPortDecl:ProvPortDecl) : string =
+    let exportProvPortDecl (provPortDecl:ProvPortDecl) : AstToStringStateFunction =
         let faultExpr =
             match provPortDecl.FaultExpr with
-                | None -> ""
-                | Some (faultExpr) -> sprintf "[%s]\n" (exportFaultExpr faultExpr)
-        let _params = provPortDecl.Params |> List.map exportParamDecl
-                                          |> String.concat ","
-        sprintf "%s%s(%s) {%s}" faultExpr (exportProvPort provPortDecl.ProvPort) (_params) (exportBehaviorDecl provPortDecl.Behavior)
+                | None -> id
+                | Some (faultExpr) -> (append "[") >>= (exportFaultExpr faultExpr) >>= (append "]")
+        faultExpr >>=
+        (exportProvPort provPortDecl.ProvPort) >>=
+        (append "(") >>=
+        (foreachWithSep provPortDecl.Params exportParamDecl (append ",") ) >>=
+        (append ") {")>>=
+        (exportBehaviorDecl provPortDecl.Behavior) >>=
+        (append "}")
 
-
-    let exportBndSrc (bndSrc:BndSrc) : string =
+        
+    let exportBndSrc (bndSrc:BndSrc) : AstToStringStateFunction =
         match bndSrc.Comp with
-            | None -> exportProvPort bndSrc.ProvPort
-            | Some (comp) -> sprintf "%s.%s" (exportComp comp) (exportProvPort bndSrc.ProvPort)
+            | None ->
+                exportProvPort bndSrc.ProvPort
+            | Some (comp) ->
+                (exportComp comp) >>=
+                (append ".") >>=
+                (exportProvPort bndSrc.ProvPort)
 
-    let exportBndTarget (bndTarget:BndTarget) : string =
+    let exportBndTarget (bndTarget:BndTarget) : AstToStringStateFunction =
         match bndTarget.Comp with
-            | None -> exportReqPort bndTarget.ReqPort
-            | Some (comp) -> sprintf "%s.%s" (exportComp comp) (exportReqPort bndTarget.ReqPort)
+            | None ->
+                exportReqPort bndTarget.ReqPort
+            | Some (comp) ->
+                (exportComp comp) >>=
+                (append ".") >>=
+                (exportReqPort bndTarget.ReqPort)
 
-    let exportBndKind (bndKind:BndKind) : string =
+    let exportBndKind (bndKind:BndKind) : AstToStringStateFunction =
         match bndKind with
-            | BndKind.Instantaneous -> "instantly"
-            | BndKind.Delayed -> "delayed"
+            | BndKind.Instantaneous -> append "instantly"
+            | BndKind.Delayed -> append "delayed"
+      
+    let exportBndDecl (bndDecl:BndDecl) : AstToStringStateFunction =
+        (exportBndTarget bndDecl.Target) >>=
+        (append " = ") >>=
+        (exportBndKind bndDecl.Kind) >>=
+        (append " ")>>=
+        (exportBndSrc bndDecl.Source) >>=
+        (append ";")
 
-    let exportBndDecl (bndDecl:BndDecl) : string =
-        sprintf "%s = %s %s;" (exportBndTarget bndDecl.Target) (exportBndKind bndDecl.Kind) (exportBndSrc bndDecl.Source)
-
-    let exportFaultDecl (faultDecl:FaultDecl) : string =
-        sprintf "fault %s { %s }" (exportFault faultDecl.Fault) (exportBehaviorDecl faultDecl.Step)
-
-    let exportStepDecl (stepDecl:StepDecl) : string =
+    let exportFaultDecl (faultDecl:FaultDecl) : AstToStringStateFunction =
+        (append "fault ") >>=
+        (exportFault faultDecl.Fault) >>=
+        (append " {")>>=
+        (exportBehaviorDecl faultDecl.Step) >>=
+        (append "}")
+              
+    let exportStepDecl (stepDecl:StepDecl) : AstToStringStateFunction =    
         let faultExpr =
             match stepDecl.FaultExpr with
-                | None -> ""
-                | Some (faultExpr) -> sprintf "[%s]\n" (exportFaultExpr faultExpr)
-        sprintf "%sstep { %s }" (faultExpr) (exportBehaviorDecl stepDecl.Behavior)
+                | None -> id
+                | Some (faultExpr) -> (append "[") >>= (exportFaultExpr faultExpr) >>= (append "]")
+        faultExpr >>=
+        (append "step {") >>=
+        (exportBehaviorDecl stepDecl.Behavior) >>=
+        (append " }")
+
+        
+    let rec exportCompDecl (compDecl:CompDecl) : AstToStringStateFunction =
+        (exportComp compDecl.Comp) >>= (newParagraph) >>=
+        (foreachWithSep compDecl.Subs       exportCompDecl     (newParagraph) ) >>
+        (foreachWithSep compDecl.Fields     exportFieldDecl    (newParagraph) ) >>=
+        (foreachWithSep compDecl.Faults     exportFaultDecl    (newParagraph) ) >>=
+        (foreachWithSep compDecl.ReqPorts   exportReqPortDecl  (newParagraph) ) >>=
+        (foreachWithSep compDecl.ProvPorts  exportProvPortDecl (newParagraph) ) >>=
+        (foreachWithSep compDecl.Bindings   exportBndDecl      (newParagraph) ) >>=
+        (foreachWithSep compDecl.Steps      exportStepDecl     (newParagraph) )
 
 
-    let rec exportCompDecl (compDecl:CompDecl) : string =
-        sprintf "%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n%s"
-                (exportComp compDecl.Comp)
-                (compDecl.Subs |> List.map (fun comp -> sprintf "{\n%s\n}" (exportCompDecl comp)) |> String.concat "\n")
-                (compDecl.Fields |> List.map exportFieldDecl |> String.concat "\n")
-                (compDecl.Faults |> List.map exportFaultDecl |> String.concat "\n")
-                (compDecl.ReqPorts |> List.map exportReqPortDecl |> String.concat "\n")
-                (compDecl.ProvPorts |> List.map exportProvPortDecl |> String.concat "\n")
-                (compDecl.Bindings |> List.map exportBndDecl |> String.concat "\n")
-                (compDecl.Steps |> List.map exportStepDecl |> String.concat "\n")
-     
-     
+    let exportModel (compDecl:CompDecl) : string =
+        let stateAfterExport =
+            exportCompDecl compDecl AstToStringState.initial
+        stateAfterExport.ToString()

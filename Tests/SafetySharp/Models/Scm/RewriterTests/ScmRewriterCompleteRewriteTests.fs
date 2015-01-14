@@ -55,7 +55,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -73,7 +73,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -91,7 +91,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -109,7 +109,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -127,7 +127,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -145,7 +145,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -163,7 +163,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -181,7 +181,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -201,7 +201,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -221,7 +221,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -239,7 +239,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -257,7 +257,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -275,7 +275,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -293,7 +293,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -311,7 +311,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -331,7 +331,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -349,7 +349,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -367,7 +367,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -385,7 +385,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -403,7 +403,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -421,7 +421,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -439,7 +439,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
@@ -457,7 +457,7 @@ type CompleteRewriteTests () =
         let workFlow = ScmRewriter.levelUpAndInline
         let (_,resultingState) = ScmRewriter.runState workFlow initialState
         let newModel = resultingState.Model
-        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportCompDecl newModel)
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel

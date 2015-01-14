@@ -204,6 +204,7 @@ module internal ScmRewriter =
     let putStateAndReturn s returnValue = ScmRewriteFunction (fun _ -> (returnValue,s))//Called in workflow: ignore state (_) from workflow; assign returnValue to the let!; and set State of workflow to the new state s
 
     // the computational expression "scmRewrite" is defined here
+    // inspired by http://fsharpforfunandprofit.com/posts/computation-expressions-intro/ (StateBuilder, now offline)
     type ScmRewriter() =
         member this.Return(a) = 
             ScmRewriteFunction (fun s -> (a,s))
