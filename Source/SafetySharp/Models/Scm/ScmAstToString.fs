@@ -98,7 +98,7 @@ module internal ScmAstToString =
                 }
             | NewLineStyle.NewParagraph ->
                 { state with
-                    AstToStringState.TextBuffer = ""::""::state.CurrentLine::state.TextBuffer
+                    AstToStringState.TextBuffer = ""::state.CurrentLine::state.TextBuffer
                     AstToStringState.CurrentLine = String.replicate state.Indent "  ";
                     AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
                 }
@@ -125,7 +125,7 @@ module internal ScmAstToString =
         else
             let newState1 = writer elements.Head state
             let newState2 = sep newState1
-            foreach elements.Tail writer newState2
+            foreachWithSep elements.Tail writer sep newState2
 
     
     // Inspired by FParsec's createParserForwardedToRef (defined in FParsec/Primitives.fs)
@@ -294,15 +294,15 @@ module internal ScmAstToString =
                 (exportExpr expr) >>=
                 (append "; ")
             | Stm.Block (stmts) ->
-                (append " { ") >>= newLineAndIncreaseIndent >>=
+                newLine >>= (append "{") >>= newLineAndIncreaseIndent >>= 
                 (foreach stmts (fun stm -> exportStm stm >>= newLine)) >>=
-                (append "}") >>= newLineAndDecreaseIndent
+                decreaseIndent >>= (append "}") >>= newLine
             | Stm.Choice (choices:(Expr * Stm) list) ->
-                (append " choice {") >>= newLineAndIncreaseIndent >>=
+                newLine >>= (append "choice {") >>= newLineAndIncreaseIndent >>= 
                 (foreach choices (fun (guard,stm) -> 
                                        exportExpr guard >>= append " => " >>= exportStm stm >>= newLine)
                                  ) >>=
-                (append "}") >>= newLineAndDecreaseIndent
+                decreaseIndent >>= (append "}") >>= newLine
                 
             | Stm.CallPort (reqPort, _params) ->
                 (exportReqPort reqPort) >>=
@@ -335,11 +335,12 @@ module internal ScmAstToString =
         (exportField fieldDecl.Field) >>=
         (whitespace) >>=
         (foreachWithSep fieldDecl.Init exportVal (append ",") ) >>=
-        (append ";") >>= newLine
+        (append ";")
     
     let exportBehaviorDecl (behaviorDecl:BehaviorDecl) : AstToStringStateFunction =
+        newLine >>= (append "locals {") >>= newLineAndIncreaseIndent >>=
         (foreach behaviorDecl.Locals (fun var -> exportVarDecl var )) >>=
-        (whitespace) >>=
+        newLineAndDecreaseIndent >>= (append "}") >>=
         (exportStm behaviorDecl.Body)
         
 
@@ -357,7 +358,7 @@ module internal ScmAstToString =
         (exportReqPort reqPortDecl.ReqPort) >>=
         (append "(") >>=
         (foreachWithSep reqPortDecl.Params exportParamDecl (append ",") ) >>=
-        (append ");") >>= newLine
+        (append ");")
 
     let exportProvPortDecl (provPortDecl:ProvPortDecl) : AstToStringStateFunction =
         let faultExpr =
@@ -368,9 +369,9 @@ module internal ScmAstToString =
         (exportProvPort provPortDecl.ProvPort) >>=
         (append "(") >>=
         (foreachWithSep provPortDecl.Params exportParamDecl (append ",") ) >>=
-        (append ") {")>>= newLine >>=
+        (append ") {")>>= newLineAndIncreaseIndent >>=
         (exportBehaviorDecl provPortDecl.Behavior) >>=
-        (append "}")  >>= newParagraph
+        newLineAndDecreaseIndent >>= (append "}")
 
         
     let exportBndSrc (bndSrc:BndSrc) : AstToStringStateFunction =
@@ -402,14 +403,14 @@ module internal ScmAstToString =
         (exportBndKind bndDecl.Kind) >>=
         (whitespace)>>=
         (exportBndSrc bndDecl.Source) >>=
-        (append ";") >>= newLine
+        (append ";")
 
     let exportFaultDecl (faultDecl:FaultDecl) : AstToStringStateFunction =
         (append "fault ") >>=
         (exportFault faultDecl.Fault) >>=
-        (append " {") >>= newLine >>=
+        (append " {") >>= newLineAndIncreaseIndent >>=
         (exportBehaviorDecl faultDecl.Step) >>=
-        (append "}")  >>= newParagraph
+        newLineAndDecreaseIndent >>= (append "}")
               
     let exportStepDecl (stepDecl:StepDecl) : AstToStringStateFunction =    
         let faultExpr =
@@ -417,21 +418,28 @@ module internal ScmAstToString =
                 | None -> id
                 | Some (faultExpr) -> (append "[") >>= (exportFaultExpr faultExpr) >>= (append "]")
         faultExpr >>=
-        (append "step {") >>= newLine >>=
-        (exportBehaviorDecl stepDecl.Behavior) >>= newLine >>=
-        (append "}") >>= newParagraph
+        (append "step {") >>= newLineAndIncreaseIndent >>=
+        (exportBehaviorDecl stepDecl.Behavior) >>=
+        newLineAndDecreaseIndent >>= (append "}")
 
         
     let rec exportCompDecl (compDecl:CompDecl) : AstToStringStateFunction =
-        (exportComp compDecl.Comp) >>= whitespace >>= (append "{") >>= newLineAndIncreaseIndent >>=
-        (foreachWithSep compDecl.Subs       exportCompDecl     (newParagraph) ) >>
-        (foreachWithSep compDecl.Fields     exportFieldDecl    (newParagraph) ) >>=
+        (exportComp compDecl.Comp) >>= whitespace >>= (append "{") >>=
+        increaseIndent >>= newParagraph >>=
+        (foreachWithSep compDecl.Subs       exportCompDecl     (newParagraph) ) >>=
+        newParagraph >>=
+        (foreachWithSep compDecl.Fields     exportFieldDecl    (newLine) ) >>=
+        newParagraph >>=
         (foreachWithSep compDecl.Faults     exportFaultDecl    (newParagraph) ) >>=
-        (foreachWithSep compDecl.ReqPorts   exportReqPortDecl  (newParagraph) ) >>=
+        newParagraph >>=
+        (foreachWithSep compDecl.ReqPorts   exportReqPortDecl  (newLine) ) >>=
+        newParagraph >>=
         (foreachWithSep compDecl.ProvPorts  exportProvPortDecl (newParagraph) ) >>=
-        (foreachWithSep compDecl.Bindings   exportBndDecl      (newParagraph) ) >>=
+        newParagraph >>=
+        (foreachWithSep compDecl.Bindings   exportBndDecl      (newLine) ) >>=
+        newParagraph >>=
         (foreachWithSep compDecl.Steps      exportStepDecl     (newParagraph) ) >>=
-        decreaseIndent >>=
+        decreaseIndent >>= newParagraph >>=
         (append "}")
 
 
