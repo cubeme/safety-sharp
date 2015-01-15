@@ -31,7 +31,7 @@ open AstTestHelpers
 open SafetySharp.Internal
 open SafetySharp.Models.Scm
 open ScmHelpers
-open ScmRewriter
+open ScmRewriterBase
 
 [<TestFixture>]
 type CompleteRewriteTests () =
@@ -52,8 +52,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -70,8 +70,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -88,8 +88,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -106,8 +106,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -124,8 +124,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -142,8 +142,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -160,8 +160,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -178,8 +178,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -198,8 +198,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -218,8 +218,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -236,8 +236,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -254,8 +254,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -272,8 +272,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -290,8 +290,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -308,8 +308,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -328,8 +328,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -346,8 +346,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -364,8 +364,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -382,8 +382,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -400,8 +400,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -418,8 +418,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -436,8 +436,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -454,8 +454,8 @@ type CompleteRewriteTests () =
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
-        let workFlow = ScmRewriter.levelUpAndInline
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""

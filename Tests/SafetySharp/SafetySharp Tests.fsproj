@@ -69,10 +69,10 @@
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Models\Scm\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
+    <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
-    <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

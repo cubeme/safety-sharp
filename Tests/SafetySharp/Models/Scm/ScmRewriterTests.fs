@@ -31,7 +31,12 @@ open AstTestHelpers
 open SafetySharp.Internal
 open SafetySharp.Models.Scm
 open ScmHelpers
-open ScmRewriter
+
+open ScmRewriterBase
+open ScmRewriterLevelUp
+open ScmRewriterConvertFaults
+open ScmRewriterInlineBehavior
+open ScmRewriterFlattenModel
 
 [<TestFixture>]
 type SingleLevelUpTests () =
@@ -67,11 +72,11 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpField
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -106,11 +111,11 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpField
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -145,11 +150,11 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpFault
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpFault
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -184,11 +189,11 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpReqPort
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -224,11 +229,11 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpProvPort
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -270,13 +275,13 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpReqPort
-            do! ScmRewriter.levelUpProvPort
-            do! ScmRewriter.levelUpAndRewriteBindingDeclaredInChild
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -321,12 +326,12 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpReqPort
-            do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -373,12 +378,12 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpProvPort
-            do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -425,13 +430,13 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpReqPort
-            do! ScmRewriter.levelUpProvPort
-            do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -478,12 +483,12 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpProvPort
-            do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -530,12 +535,12 @@ type SingleLevelUpTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! ScmRewriter.levelUpReqPort
-            do! ScmRewriter.rewriteBindingDeclaredInParent
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -589,11 +594,11 @@ type FixpointIteratorTests () =
                 ScmRewriteState.Tainted = false;
             }
         let workFlow = scmRewrite {
-            do! (iterateToFixpoint levelUpField) 
-            do! ScmRewriter.levelUpWriteBackChangesIntoModel
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpField) 
+            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
@@ -626,9 +631,9 @@ type CompleteLevelUpTests () =
         model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
         let workFlow = scmRewrite {
-            do! (iterateToFixpoint levelUpSubcomponent)
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -648,9 +653,9 @@ type CompleteLevelUpTests () =
         model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
         let workFlow = scmRewrite {
-            do! (iterateToFixpoint levelUpSubcomponent)
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
@@ -670,9 +675,9 @@ type CompleteLevelUpTests () =
         model.ProvPorts.Length =? 0
         let initialState = ScmRewriteState.initial model
         let workFlow = scmRewrite {
-            do! (iterateToFixpoint levelUpSubcomponent)
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
-        let (_,resultingState) = ScmRewriter.runState workFlow initialState
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         printfn ""
