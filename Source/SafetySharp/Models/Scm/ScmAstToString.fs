@@ -229,7 +229,10 @@ module internal ScmAstToString =
     let exportVal (_val:Val) : AstToStringStateFunction =
         let toAppend =
             match _val with
-                | Val.BoolVal (_val) -> _val.ToString()
+                | Val.BoolVal (_val) ->
+                    match _val with
+                        | true -> "true"
+                        | false -> "false"
                 | Val.IntVal (_val) -> _val.ToString()
         append toAppend
 
@@ -293,13 +296,13 @@ module internal ScmAstToString =
             | Stm.Block (stmts) ->
                 (append " { ") >>= newLineAndIncreaseIndent >>=
                 (foreach stmts (fun stm -> exportStm stm >>= newLine)) >>=
-                (append " } ") >>= newLineAndDecreaseIndent
+                (append "}") >>= newLineAndDecreaseIndent
             | Stm.Choice (choices:(Expr * Stm) list) ->
                 (append " choice {") >>= newLineAndIncreaseIndent >>=
                 (foreach choices (fun (guard,stm) -> 
                                        exportExpr guard >>= append " => " >>= exportStm stm >>= newLine)
                                  ) >>=
-                (append " choice }") >>= newLineAndDecreaseIndent
+                (append "}") >>= newLineAndDecreaseIndent
                 
             | Stm.CallPort (reqPort, _params) ->
                 (exportReqPort reqPort) >>=
@@ -323,17 +326,19 @@ module internal ScmAstToString =
     let exportVarDecl (varDecl:VarDecl) : AstToStringStateFunction =
         (exportType varDecl.Type) >>=
         (whitespace) >>=
-        (exportVar varDecl.Var)
+        (exportVar varDecl.Var) >>=
+        (append ";") >>= newLine
 
     let exportFieldDecl (fieldDecl:FieldDecl): AstToStringStateFunction =
         (exportType fieldDecl.Type) >>=
         (whitespace) >>=
         (exportField fieldDecl.Field) >>=
         (whitespace) >>=
-        (foreachWithSep fieldDecl.Init exportVal (append ",") )
+        (foreachWithSep fieldDecl.Init exportVal (append ",") ) >>=
+        (append ";") >>= newLine
     
     let exportBehaviorDecl (behaviorDecl:BehaviorDecl) : AstToStringStateFunction =
-        (foreach behaviorDecl.Locals (fun var -> exportVarDecl var >>= (append ";")) ) >>=
+        (foreach behaviorDecl.Locals (fun var -> exportVarDecl var )) >>=
         (whitespace) >>=
         (exportStm behaviorDecl.Body)
         
@@ -352,7 +357,7 @@ module internal ScmAstToString =
         (exportReqPort reqPortDecl.ReqPort) >>=
         (append "(") >>=
         (foreachWithSep reqPortDecl.Params exportParamDecl (append ",") ) >>=
-        (append ");")
+        (append ");") >>= newLine
 
     let exportProvPortDecl (provPortDecl:ProvPortDecl) : AstToStringStateFunction =
         let faultExpr =
@@ -363,9 +368,9 @@ module internal ScmAstToString =
         (exportProvPort provPortDecl.ProvPort) >>=
         (append "(") >>=
         (foreachWithSep provPortDecl.Params exportParamDecl (append ",") ) >>=
-        (append ") {")>>=
+        (append ") {")>>= newLine >>=
         (exportBehaviorDecl provPortDecl.Behavior) >>=
-        (append "}")
+        (append "}")  >>= newParagraph
 
         
     let exportBndSrc (bndSrc:BndSrc) : AstToStringStateFunction =
@@ -397,14 +402,14 @@ module internal ScmAstToString =
         (exportBndKind bndDecl.Kind) >>=
         (whitespace)>>=
         (exportBndSrc bndDecl.Source) >>=
-        (append ";")
+        (append ";") >>= newLine
 
     let exportFaultDecl (faultDecl:FaultDecl) : AstToStringStateFunction =
         (append "fault ") >>=
         (exportFault faultDecl.Fault) >>=
-        (append " {")>>=
+        (append " {") >>= newLine >>=
         (exportBehaviorDecl faultDecl.Step) >>=
-        (append "}")
+        (append "}")  >>= newParagraph
               
     let exportStepDecl (stepDecl:StepDecl) : AstToStringStateFunction =    
         let faultExpr =
@@ -412,9 +417,9 @@ module internal ScmAstToString =
                 | None -> id
                 | Some (faultExpr) -> (append "[") >>= (exportFaultExpr faultExpr) >>= (append "]")
         faultExpr >>=
-        (append "step {") >>=
-        (exportBehaviorDecl stepDecl.Behavior) >>=
-        (append " }")
+        (append "step {") >>= newLine >>=
+        (exportBehaviorDecl stepDecl.Behavior) >>= newLine >>=
+        (append "}") >>= newParagraph
 
         
     let rec exportCompDecl (compDecl:CompDecl) : AstToStringStateFunction =
