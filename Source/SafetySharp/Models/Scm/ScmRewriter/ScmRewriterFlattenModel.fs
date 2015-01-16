@@ -30,6 +30,12 @@ module internal ScmRewriterFlattenModel =
     open ScmRewriterInlineBehavior
 
     
+    // flatten model means
+    //  * flatten hierarchy
+    //  * convert faults
+    //  * convert delayed ports
+    //  * inline behaviors
+
     let levelUpAndInline : ScmRewriteFunction<unit> = scmRewrite {
             // level up everything
             do! levelUpSubcomponents

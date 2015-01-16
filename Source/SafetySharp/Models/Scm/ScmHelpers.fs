@@ -23,12 +23,27 @@
 namespace SafetySharp.Models.Scm
 
 module internal ScmHelpers =
-
+    
+    
     type CompPath = Comp list
+        // index1::index2::root::[]
+        // root {
+        //   index2 {
+        //     index1 {
+        //       ...
+        //     }
+        //     ...
+        //   }
+        //   ...
+        // }
+
     type FieldPath = CompPath * Field
     type FaultPath = CompPath * Fault
     type ReqPortPath = CompPath * ReqPort
     type ProvPortPath = CompPath * ProvPort
+    type BndDeclPath = CompPath * BndDecl
+
+
 
     type StmPath = int list
         // index1::index2::[]
@@ -215,14 +230,6 @@ module internal ScmHelpers =
             namesInFields @ namesInFaults @ namesInReqPorts @ namesInProvPorts @ namesInSteps
             
 
-        (*
-        member node.getParentOfDescendantUsingPath (path: Comp list) : CompDecl =
-            // minimal path size is 2
-            let listWithoutChild = path.Tail
-            let reverseList = List.rev listWithoutChild
-            assert (reverseList.Head = node.Comp)
-            node.getDescendantUsingRevPath reverseList.Tail
-        *)
         member node.removeField (field:FieldDecl) =
             { node with
                 CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field));
@@ -287,6 +294,9 @@ module internal ScmHelpers =
                 CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
             }
         member node.getBindingOfLocalReqPort (reqPort:ReqPort) : BndDecl=
+            // Only works, if binding was declared in current node.
+            // If binding might also be declared in the parent node, maybe
+            // the function tryFindProvPortOfReqPort is what you want.
             node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
             
         member node.removeStep (step:StepDecl) =
@@ -320,8 +330,7 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
             }
-
-
+            
         // Complete model        
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
             if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
@@ -334,8 +343,48 @@ module internal ScmHelpers =
                 let nodeToReplace = pathToReplace.Head
                 let newParent = parentNode.replaceChild(nodeToReplace,newComponent)
                 // recursively replace parent
-                model.replaceDescendant pathToReplace.Tail newParent
+                model.replaceDescendant pathToReplace.Tail newParent  
+        
+        // search in the model        
+        member model.tryFindBindingOfReqPort (pathOfReqPort:ReqPortPath) : BndDeclPath option =
+            // option, because it might not be in the model (binding is not declared, or declared in the parent node
+            // of "model"
+            let compPath,reqPort = pathOfReqPort
+            let node = model.getDescendantUsingPath compPath
+            // Try to find the binding in node
+            let binding =
+                node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
+            match binding with
+                | Some (binding) ->
+                    // case 1: Binding found in the node
+                    Some (compPath,binding)
+                | None ->                    
+                    // Try to find binding in the parent of node
+                    if compPath = [] then
+                        // case 2: the binding was not declared in the model or model is not the real root component. We
+                        //         cannot search in the parent of node
+                        None
+                    else
+                        let parentPath = compPath.Tail
+                        let parentNode = model.getDescendantUsingPath parentPath                        
+                        let binding =
+                            node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=Some(compPath.Head))
+                        match binding with
+                            | Some (binding) ->
+                                // case 3: Binding found in the parent
+                                Some (parentPath,binding)
+                            | None ->
+                                // case 4: Binding not found in the parent, and not found in the node itself
+                                None
                 
+        member model.tryGetProvPort (bndDeclPath:BndDeclPath) : ProvPortPath option =
+            let compPath,bndDecl = bndDeclPath
+            let node = model.getDescendantUsingPath compPath
+            if bndDecl.Source.Comp=None then
+                Some (compPath,bndDecl.Source.ProvPort)
+            else
+                Some (bndDecl.Source.Comp.Value::compPath,bndDecl.Source.ProvPort)
+    
     // Extension methods    
     type Expr with
         static member createOredExpr (exprs:Expr list) : Expr =

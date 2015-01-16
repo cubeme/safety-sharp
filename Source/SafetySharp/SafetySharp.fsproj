@@ -67,9 +67,11 @@
     <Compile Include="Models\Scm\ScmTypedefs.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmAstToString.fs" />
+    <Compile Include="Models\Scm\ScmConsistencyCheck.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterBase.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterLevelUp.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterConvertFaults.fs" />
+    <Compile Include="Models\Scm\ScmRewriter\ScmRewriterConvertDelayedBindings.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterInlineBehavior.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
