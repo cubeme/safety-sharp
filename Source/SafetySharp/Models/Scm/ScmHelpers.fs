@@ -613,56 +613,56 @@ module internal ScmHelpers =
     
     // Statement walker
     
-    type WalkerAtomarAssessor<'a> = (Stm*'a)->(bool*'a) // (statement,oldValue) -> (keepOnWalking,newValue)    
-    type WalkerReductionAssessor<'a> = (Stm -> 'a) -> Stm list -> 'a
+    type WalkerAtomarAssessor<'a> = (Stm*'a)->(bool*'a) // (statement,oldState) -> (keepOnWalking,newState)
+    type WalkerReductionAssessor<'a> = (Stm -> 'a) -> Stm list -> 'a //assessor -> list of statements -> state
 
                 
     // see ScmConsistencyCheck.fs for a usage example
-    let rec stmWalker<'a> (assessor:WalkerAtomarAssessor<'a>) (selectValue:WalkerReductionAssessor<'a>) (neutralValue:'a) (model:CompDecl)
-                       (compPath:CompPath) (oldValue:'a) (stm:Stm): 'a =
+    let rec stmWalker<'a> (assessor:WalkerAtomarAssessor<'a>) (assessAndMergeStates:WalkerReductionAssessor<'a>) (neutralState:'a) (model:CompDecl)
+                       (compPath:CompPath) (oldState:'a) (stm:Stm): 'a =
         
         // need the complete model, because a relevant binding might be declared in the parent node
         // Note: selectValue on empty list should return neutralValue (selectValue (fun stm -> 'a) [] = neutralValue:'a)
 
-        let keepOnWalking,newValue = assessor (stm,oldValue)
+        let keepOnWalking,newState = assessor (stm,oldState)
         if keepOnWalking = false then
-            newValue
+            newState
         else
-            let walkMe = stmWalker assessor selectValue neutralValue model  // these stay the same in the whole recursiv Call
+            let walkMe = stmWalker assessor assessAndMergeStates neutralState model // these parameters stay the same in the remainder, so use an abbrev.
             match stm with
                 | Stm.Block (stmts) ->
-                    stmts |> selectValue (fun stm -> walkMe compPath newValue stm)
+                    stmts |> assessAndMergeStates (fun stm -> walkMe compPath newState stm)
                 | Stm.Choice (choices:(Expr * Stm) list) ->
                     choices |> List.map (fun (guard,stm) -> stm )
-                            |> selectValue (fun stm -> walkMe compPath newValue stm)                  
+                            |> assessAndMergeStates (fun stm -> walkMe compPath newState stm)                  
                 | Stm.StepComp (comp) ->
                     let newPath = comp::compPath
                     let compDecl = model.getDescendantUsingPath newPath
                     compDecl.Steps |> List.map (fun step -> step.Behavior.Body )
-                                   |> selectValue (fun stm -> walkMe newPath newValue stm)
+                                   |> assessAndMergeStates (fun stm -> walkMe newPath newState stm)
                 | Stm.StepFault (fault) ->
                     let compDecl = model.getDescendantUsingPath compPath
                     compDecl.Faults |> List.filter (fun faultDecl -> faultDecl.Fault = fault)
                                     |> List.map (fun fault -> fault.Step.Body)
-                                    |> selectValue (fun stm -> walkMe compPath newValue stm)
+                                    |> assessAndMergeStates (fun stm -> walkMe compPath newState stm)
                 | Stm.CallPort (reqPort,_params) ->
                     let bndDeclPath = model.tryFindBindingOfReqPort (compPath,reqPort)
                     match bndDeclPath with
                         | None ->
                             // Binding could not be found: Model is incomplete. But: it is not because of (checker)
-                            neutralValue
+                            neutralState
                         | Some(bndDeclCompPath,binding) ->
                             let provPortPath = model.tryGetProvPort (bndDeclCompPath,binding)
                             match provPortPath with
                                 | None ->
-                                    neutralValue  // Binding could not be found: Model is incomplete. But: it is not because of (checker)
+                                    neutralState  // Binding could not be found: Model is incomplete. But: it is not because of (checker)
                                 | Some(provPortPath,provPort) ->
                                     let provPortCompDecl = model.getDescendantUsingPath provPortPath
                                     let provPortDecls = provPortCompDecl.getProvPortDecls(provPort)
                                     provPortDecls |> List.map (fun provPortDecl -> provPortDecl.Behavior.Body)
-                                                  |> selectValue (fun stm -> walkMe provPortPath newValue stm)
+                                                  |> assessAndMergeStates (fun stm -> walkMe provPortPath newState stm)
                 | _ ->
                      // Return calculated value, when no further walking is possible.
                      // This is used, when the assessor returns keepOnWalking=true, but the statement to examine
                      // is an assignment or something similar.
-                    newValue
+                    newState

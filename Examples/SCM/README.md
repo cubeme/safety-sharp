@@ -58,6 +58,13 @@
 
 
 ## (call)-Tests (delayed)
+* callDelayedCaution1.scm: example, which demonstrates following issue: Simply calculating the outputs of a delayed port in the beginning of a step is not enough, because the step might be nested. For more details consult the file "ScmRewriterConvertDelayedBindings.fs"
+* callDelayedSimple1.scm: simple example with delayed call
+* callDelayedInvalid1.scm example, where a delayed call calls another delayed call
+* callDelayedInvalid2.scm example, invalid, because a delayed port call has an input variable
+* callDelayedInvalid3.scm example, invalid, because a delayed port call has an inout variable and reads it (note: the behavior may read localvars not in the parameter)
+* callDelayedInvalid4.scm example, invalid, because a delayed port call makes directly a field assignment
+* callDelayedInvalid5.scm example, invalid, because a delayed port call makes indirectly a field assignment
 
 
 ## fault-Tests
@@ -69,7 +76,7 @@
 * callInstFromBehWithFaults1.scm: like callInstFromBeh3 but with several faults and affected ports and steps
 * callInstFromProvWithFaults1.scm: like callInstFromProv1 but with several faults and affected ports and steps
 * callInstHierarchyWithFaults1.scm: like callInstHierarchy2 but with several faults and affected ports and steps
-
+* callDelayedSimpleWithFaults1.scm: like callDelayedSimple1 but with one fault and an affected port
 
 ## Examples which combine several aspects
 

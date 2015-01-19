@@ -329,8 +329,64 @@ type ExampleFiles() =
         let result = parseSCM input
         ()
         
-    // ## (call)-Tests (delayed)
+    [<Test>]
+    member this.``Example callInstHierarchy6 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy6.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
         
+    // ## (call)-Tests (delayed)
+    [<Test>]
+    member this.``Example callDelayedCaution1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedCaution1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callDelayedSimple1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedSimple1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+    [<Test>]
+    member this.``Example callDelayedInvalid1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedInvalid1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callDelayedInvalid2 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedInvalid2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callDelayedInvalid3 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedInvalid3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callDelayedInvalid4 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedInvalid4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+    [<Test>]
+    member this.``Example callDelayedInvalid5 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedInvalid5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+
+
     // ## Examples which combine several aspects
     (*
     [<Test>]
@@ -374,7 +430,8 @@ type ExampleFiles() =
         let result = parseSCM input
         ()
         
-
+        
+    // ## fault-Tests
         
     [<Test>]
     member this.``Example nestedComponentWithFaults1 parses successfully`` () =
@@ -428,6 +485,13 @@ type ExampleFiles() =
     [<Test>]
     member this.``Example callInstHierarchyWithFaults1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+    [<Test>]
+    member this.``Example callDelayedSimpleWithFaults1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedSimpleWithFaults1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
