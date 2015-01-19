@@ -49,4 +49,7 @@ module internal ScmRewriterConvertDelayedBindings =
     //       Do we expect the former or the latter?
     //     * Difference between making it "Pre-Step" (described here) or "Post-Step" (with better initial values)
 
-        
+    type ConvertDelayedBindings = {
+        PreSteps:Map<CompPath,Stm list>;
+
+    }

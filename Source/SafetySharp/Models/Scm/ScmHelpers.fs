@@ -377,13 +377,26 @@ module internal ScmHelpers =
                                 // case 4: Binding not found in the parent, and not found in the node itself
                                 None
                 
-        member model.tryGetProvPort (bndDeclPath:BndDeclPath) : ProvPortPath option =
+        member model.tryGetProvPort (bndDeclPath:BndDeclPath) : ProvPortPath option = //TODO: option useful? where is it used?
             let compPath,bndDecl = bndDeclPath
             let node = model.getDescendantUsingPath compPath
             if bndDecl.Source.Comp=None then
                 Some (compPath,bndDecl.Source.ProvPort)
             else
                 Some (bndDecl.Source.Comp.Value::compPath,bndDecl.Source.ProvPort)
+
+        member model.collectDelayedProvPorts : ProvPortPath list =
+            let rec collectDelayedProvPortsInSub (path:CompPath) (compDecl:CompDecl) =
+                let subs = compDecl.Subs |> List.collect (fun compDecl -> collectDelayedProvPortsInSub (compDecl.Comp::path) compDecl  )
+                let local =
+                    compDecl.Bindings |> List.filter (fun bndDecl -> bndDecl.Kind = BndKind.Delayed) // now only delayed bindings
+                                      |> List.map (fun bndDecl -> (path,bndDecl)) // now we have got the bindings with path
+                                      |> List.map (model.tryGetProvPort) // now we have got the prov ports
+                                      |> List.filter (fun provPortOpt -> provPortOpt.IsSome) // filter out entries, where the target port was not found
+                                      |> List.map (fun provPortOpt -> provPortOpt.Value) // exactly what we want
+                local@subs
+            let compPath= [model.Comp]
+            collectDelayedProvPortsInSub compPath model
     
     // Extension methods    
     type Expr with
@@ -618,7 +631,7 @@ module internal ScmHelpers =
 
                 
     // see ScmConsistencyCheck.fs for a usage example
-    let rec stmWalker<'a> (assessor:WalkerAtomarAssessor<'a>) (assessAndMergeStates:WalkerReductionAssessor<'a>) (neutralState:'a) (model:CompDecl)
+    let rec stmTransitiveWalker<'a> (assessor:WalkerAtomarAssessor<'a>) (assessAndMergeStates:WalkerReductionAssessor<'a>) (neutralState:'a) (model:CompDecl)
                        (compPath:CompPath) (oldState:'a) (stm:Stm): 'a =
         
         // need the complete model, because a relevant binding might be declared in the parent node
@@ -628,7 +641,7 @@ module internal ScmHelpers =
         if keepOnWalking = false then
             newState
         else
-            let walkMe = stmWalker assessor assessAndMergeStates neutralState model // these parameters stay the same in the remainder, so use an abbrev.
+            let walkMe = stmTransitiveWalker assessor assessAndMergeStates neutralState model // these parameters stay the same in the remainder, so use an abbrev.
             match stm with
                 | Stm.Block (stmts) ->
                     stmts |> assessAndMergeStates (fun stm -> walkMe compPath newState stm)
@@ -666,3 +679,41 @@ module internal ScmHelpers =
                      // This is used, when the assessor returns keepOnWalking=true, but the statement to examine
                      // is an assignment or something similar.
                     newState
+
+
+                    
+    [<RequireQualifiedAccess>]
+    type BehaviorWithLocation = 
+        | InProvPort of CompPath * ProvPortDecl * BehaviorDecl
+        | InFault of CompPath * FaultDecl * BehaviorDecl
+        | InStep of CompPath * StepDecl * BehaviorDecl
+            with
+                member beh.Behavior =
+                    match beh with
+                        | InProvPort (_,_,beh) -> beh
+                        | InFault (_,_,beh) -> beh
+                        | InStep (_,_,beh) -> beh
+                member beh.Location =
+                    match beh with
+                        | InProvPort (path,_,_) -> path
+                        | InFault (path,_,_) -> path
+                        | InStep (path,_,_) -> path
+
+                static member collectAllBehaviorsInPath (model:CompDecl) (compPath:CompPath) : BehaviorWithLocation list =
+                    let compDecl = model.getDescendantUsingPath compPath
+                    let provPorts =
+                        compDecl.ProvPorts |> List.map (fun provPort -> BehaviorWithLocation.InProvPort(compPath,provPort,provPort.Behavior) )
+                    let steps =
+                        compDecl.Steps |> List.map (fun step -> BehaviorWithLocation.InStep(compPath,step,step.Behavior) )
+                    let faults =
+                        compDecl.Faults |> List.map (fun fault -> BehaviorWithLocation.InFault(compPath,fault,fault.Step) )
+                    provPorts @ steps @ faults
+
+                static member collectAllBehaviorsInModel (model:CompDecl) : BehaviorWithLocation list =
+                    let rec collectBehaviorsInSub (path:CompPath) (compDecl:CompDecl) =
+                        let subs = compDecl.Subs |> List.collect (fun compDecl -> collectBehaviorsInSub (compDecl.Comp::path) compDecl  )
+                        let local = BehaviorWithLocation.collectAllBehaviorsInPath model path
+                        local@subs
+                    let compPath= [model.Comp]
+                    collectBehaviorsInSub compPath model
+                                    

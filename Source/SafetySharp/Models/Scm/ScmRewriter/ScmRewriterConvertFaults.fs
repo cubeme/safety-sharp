@@ -125,7 +125,7 @@ module internal ScmRewriterConvertFaults =
                     }
 
                 match behaviorToRewriteWithLocation with
-                    | BehaviorWithLocation.InProvPort (provPort,_) ->
+                    | BehaviorWithLocation.InProvPort (_,provPort,_) ->
                         let newProvPort =
                             { provPort with
                                 ProvPortDecl.Behavior = newBehavior;
@@ -142,7 +142,7 @@ module internal ScmRewriterConvertFaults =
                                 ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                             }
                         return! putState modifiedState
-                    | BehaviorWithLocation.InFault (fault,_) ->
+                    | BehaviorWithLocation.InFault (_,fault,_) ->
                         let newFault =
                             { fault with
                                 FaultDecl.Step = newBehavior;
@@ -159,7 +159,7 @@ module internal ScmRewriterConvertFaults =
                                 ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                             }
                         return! putState modifiedState
-                    | BehaviorWithLocation.InStep (step,_) ->
+                    | BehaviorWithLocation.InStep (_,step,_) ->
                         let newStep =
                             { step with
                                 StepDecl.Behavior = newBehavior;

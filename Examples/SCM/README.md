@@ -59,6 +59,7 @@
 
 ## (call)-Tests (delayed)
 * callDelayedCaution1.scm: example, which demonstrates following issue: Simply calculating the outputs of a delayed port in the beginning of a step is not enough, because the step might be nested. For more details consult the file "ScmRewriterConvertDelayedBindings.fs"
+* callDelayedCaution2.scm: example, which demonstrates following issue: Simply calculating the outputs of a delayed port at the end of a step is not enough, because the step might be nested. For more details consult the file "ScmRewriterConvertDelayedBindings.fs"
 * callDelayedSimple1.scm: simple example with delayed call
 * callDelayedInvalid1.scm example, where a delayed call calls another delayed call
 * callDelayedInvalid2.scm example, invalid, because a delayed port call has an input variable

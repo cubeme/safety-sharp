@@ -32,6 +32,7 @@ module internal ScmRewriterInlineBehavior =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let findInlineBehavior : ScmRewriteFunction<unit> = scmRewrite {    
         let! state = getState
+        let compPath = [state.Model.Comp]
 
         let rec callingDepth (stm:Stm) (currentLevel:int) (stopAtLevel:int) : int =  //TODO: Move to ScmHelpers.fs. May be useful for later applications.
             let rec maxLevel (stmnts:Stm list) (accMaxLevel:int) : int =
@@ -79,7 +80,7 @@ module internal ScmRewriterInlineBehavior =
                 let encapsulateResult (port:ProvPortDecl option) : BehaviorWithLocation option =
                     match port with
                         | None -> None
-                        | Some (portDecl) -> Some(BehaviorWithLocation.InProvPort(portDecl,portDecl.Behavior))
+                        | Some (portDecl) -> Some(BehaviorWithLocation.InProvPort(compPath,portDecl,portDecl.Behavior))
                 state.Model.ProvPorts |> List.tryFind (fun port -> (callingDepth port.Behavior.Body 0 2)=1)
                                       |> encapsulateResult
 
@@ -87,7 +88,7 @@ module internal ScmRewriterInlineBehavior =
                 let encapsulateResult (port:FaultDecl option) : BehaviorWithLocation option =
                     match port with
                         | None -> None
-                        | Some (faultDecl) -> Some(BehaviorWithLocation.InFault(faultDecl,faultDecl.Step))
+                        | Some (faultDecl) -> Some(BehaviorWithLocation.InFault(compPath,faultDecl,faultDecl.Step))
                 state.Model.Faults|> List.tryFind (fun fault -> (callingDepth fault.Step.Body 0 2)=1)
                                   |> encapsulateResult
 
@@ -95,7 +96,7 @@ module internal ScmRewriterInlineBehavior =
                 let encapsulateResult (port:StepDecl option) : BehaviorWithLocation option =
                     match port with
                         | None -> None
-                        | Some (stepDecl) -> Some(BehaviorWithLocation.InStep(stepDecl,stepDecl.Behavior))
+                        | Some (stepDecl) -> Some(BehaviorWithLocation.InStep(compPath,stepDecl,stepDecl.Behavior))
                 state.Model.Steps|> List.tryFind (fun step -> (callingDepth step.Behavior.Body 0 2)=1)
                                  |> encapsulateResult
 
@@ -315,19 +316,19 @@ module internal ScmRewriterInlineBehavior =
                 let inlineBehavior = state.InlineBehavior.Value
                 let newModel =
                     match inlineBehavior.BehaviorToReplace with
-                        | BehaviorWithLocation.InProvPort (provPortDecl,beh) ->
+                        | BehaviorWithLocation.InProvPort (_,provPortDecl,beh) ->
                             let newProvPort =
                                 { provPortDecl with
                                     ProvPortDecl.Behavior = inlineBehavior.InlinedBehavior;
                                 }
                             state.Model.replaceProvPort(provPortDecl,newProvPort) 
-                        | BehaviorWithLocation.InFault (faultDecl,beh) ->
+                        | BehaviorWithLocation.InFault (_,faultDecl,beh) ->
                             let newFault =
                                 { faultDecl with
                                     FaultDecl.Step = inlineBehavior.InlinedBehavior;
                                 }
                             state.Model.replaceFault(faultDecl,newFault) 
-                        | BehaviorWithLocation.InStep (stepDecl,beh) ->
+                        | BehaviorWithLocation.InStep (_,stepDecl,beh) ->
                             let newStep =
                                 { stepDecl with
                                     StepDecl.Behavior = inlineBehavior.InlinedBehavior;

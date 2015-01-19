@@ -77,20 +77,7 @@ module internal ScmRewriterBase =
                     (infos.ArtificialReqPortOldToNew,infos.ArtificialFaultsOldToNew,Map.empty<Var,Var>,infos.ArtificialFieldsOldToNew)
             member infos.oldToNewMaps2 =                
                     (infos.ArtificialFaultsOldToNew)
-                
-    [<RequireQualifiedAccess>]
-    type BehaviorWithLocation = 
-        // only inline statements in the root-component. Thus we do not need a path to a subcomponent
-        | InProvPort of ProvPortDecl * BehaviorDecl
-        | InFault of FaultDecl * BehaviorDecl
-        | InStep of StepDecl * BehaviorDecl
-            with
-                member beh.Behavior =
-                    match beh with
-                        | InProvPort (_,beh) -> beh
-                        | InFault (_,beh) -> beh
-                        | InStep (_,beh) -> beh
-                        
+                                        
     type ScmRewriterConvertFaults = {
         CompPath : CompPath;
         CompDecl : CompDecl;
@@ -103,13 +90,7 @@ module internal ScmRewriterBase =
             static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
                 let compDecl = model.getDescendantUsingPath path
                 let behaviorsToRewrite =
-                    let provPorts =
-                        compDecl.ProvPorts |> List.map (fun provPort -> BehaviorWithLocation.InProvPort(provPort,provPort.Behavior) )
-                    let steps =
-                        compDecl.Steps |> List.map (fun step -> BehaviorWithLocation.InStep(step,step.Behavior) )
-                    let faults =
-                        compDecl.Faults |> List.map (fun fault -> BehaviorWithLocation.InFault(fault,fault.Step) )
-                    provPorts @ steps @ faults
+                    BehaviorWithLocation.collectAllBehaviorsInPath model path
                 {
                     ScmRewriterConvertFaults.CompPath = path;
                     ScmRewriterConvertFaults.CompDecl = compDecl;

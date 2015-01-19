@@ -32,7 +32,7 @@ module internal ScmConsistencyCheck =
     
     type CheckerAtomarAssessor = Stm->(bool*bool) // statement -> (keepOnWalking,result)
     
-    let ``generic function to check if statement satisfies condition (transitiv)``
+    let ``generic function to check if statement satisfies condition (transitive)``
            (assessor:CheckerAtomarAssessor) (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
         
         let walkerAssessor (stm:Stm,oldValue:bool) : (bool*bool) =
@@ -40,15 +40,15 @@ module internal ScmConsistencyCheck =
         let neutralValue = true // List.forall (fun ...) [] = true
         let selectValue = List.forall //everything in the sub nodes must be true, that the checker returns true.
         let oldValue = true // we ignore the old value. could also be "false"
-        stmWalker walkerAssessor selectValue neutralValue model compPath oldValue stm
+        stmTransitiveWalker walkerAssessor selectValue neutralValue model compPath oldValue stm
     
 
             
     /////////////
-    // single checks
+    // single checks for statements
     ////////////
     
-    let ``check if Stm makes no delayed call (transitiv)`` (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
+    let ``check if Stm makes no delayed call (transitive)`` (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
         // Return true, if at no DelayedPort is called.    
         let walkerAssessor (stm:Stm,oldValue:bool) : (bool*bool) = //returns (keepOnWalking,newValue)
             match stm with                
@@ -73,18 +73,10 @@ module internal ScmConsistencyCheck =
         let neutralValue = true // List.forall (fun ...) [] = true
         let selectValue = List.forall //everything in the sub nodes must be true, that the checker returns true.
         let oldValue = true // we ignore the old value. could also be "false"
-        stmWalker walkerAssessor selectValue neutralValue model compPath oldValue stm
+        stmTransitiveWalker walkerAssessor selectValue neutralValue model compPath oldValue stm
 
         
-        
-            
-    let ``check if ProvPort makes no delayed call (transitiv)`` (model:CompDecl) (compPath:CompPath) (provPort:ProvPort) =
-        let provPortCompDecl = model.getDescendantUsingPath compPath
-        provPortCompDecl.getProvPortDecls(provPort)
-            |> List.forall (fun provPort -> ``check if Stm makes no delayed call (transitiv)`` model compPath provPort.Behavior.Body)
-            
-        
-    let ``check if Stm makes at most one delayed call (transitiv)`` (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
+    let ``check if Stm makes at most one delayed call (transitive)`` (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
         // Return true, if at most one DelayedPort is called.    
         // first construct every continuation for the stmWalker
         // the walker should return the maximal depth of calls of delayed bindings. But it should also stop
@@ -130,15 +122,13 @@ module internal ScmConsistencyCheck =
         let oldValue = 0 // initially 0 delayed ports where called
         // now call the stmWalker with all values and continuations
         let depthUntilStopValue =   
-            stmWalker walkerAssessor selectValue neutralValue model compPath oldValue stm
+            stmTransitiveWalker walkerAssessor selectValue neutralValue model compPath oldValue stm
         // use the result of the walker to determine if our check succeeded
         (depthUntilStopValue <= 1)
 
 
-    
 
-
-    let ``check if ProvPort never writes to a field/fault and never reads a variable (Transient)`` (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
+    let ``check if Stm never writes to a field/fault and never reads a variable (transitive)`` (model:CompDecl) (compPath:CompPath) (stm:Stm) : bool =
         // return true, if never written to a field and never reading a variable
         // also need to check expressions
         let rec checkExpression (expr:Expr) : bool =
@@ -167,5 +157,71 @@ module internal ScmConsistencyCheck =
                     (true,paramsAreOkay)
                 | StepComp (comp) -> true,true
                 | StepFault (fault) -> true,true
-        ``generic function to check if statement satisfies condition (transitiv)`` walkerAssessor model compPath stm 
+        ``generic function to check if statement satisfies condition (transitive)`` walkerAssessor model compPath stm 
+
+
+    (*
+    TODO: Remove, if no use
+    /////////////
+    // single checks for ProvPorts
+    ////////////
         
+    let ``check ProvPorts of model's root with stm-checker (transitive)`` (checkStm:CompDecl->CompPath->Stm->bool) (model:CompDecl) =
+        let checkStm = checkStm model [model.Comp] //abbrev
+        model.ProvPorts |> List.forall (fun step -> checkStm step.Behavior.Body)
+
+        
+    let ``check if ProvPort in compPath makes no delayed call (transitive)`` (model:CompDecl) (compPath:CompPath) (provPort:ProvPort) =
+        let provPortCompDecl = model.getDescendantUsingPath compPath
+        provPortCompDecl.getProvPortDecls(provPort)
+            |> List.forall (fun provPort -> ``check if Stm makes no delayed call (transitive)`` model compPath provPort.Behavior.Body)
+            
+    let ``check if ProvPorts of model's root make at most one delayed call (transitive)`` (model:CompDecl) : bool =
+        ``check ProvPorts of model's root with stm-checker (transitive)`` ``check if Stm makes at most one delayed call (transitive)`` model
+    *)  
+
+
+
+    /////////////
+    // single checks for the Main Steps
+    ////////////
+    
+    let ``check Steps of model's root with stm-checker (transitive)`` (checkStm:CompDecl->CompPath->Stm->bool) (model:CompDecl) =
+        let checkStm = checkStm model [model.Comp] //abbrev
+        model.Steps |> List.forall (fun step -> checkStm step.Behavior.Body)
+        
+    let ``check if Main Steps make at most one delayed call (transitive)`` (model:CompDecl) : bool =
+        ``check Steps of model's root with stm-checker (transitive)`` ``check if Stm makes at most one delayed call (transitive)`` model
+        
+    //let ``check if Delay Port Main Steps make at most one delayed call (transitive)`` (model:CompDecl) : bool =
+    //    ``check Steps of model's root with stm-checker (transitive)`` ``check if Stm never writes to a field/fault and never reads a variable (transitive)`` model
+        
+               
+
+    /////////////
+    // single checks for BehaviorWithLocation
+    ////////////
+    
+    // generic
+    
+    let ``check BehaviorOfLocation with stm-checker (transitive)`` (checkStm:CompDecl->CompPath->Stm->bool) (model:CompDecl) (locBeh:BehaviorWithLocation) =
+        checkStm model locBeh.Location locBeh.Behavior.Body
+
+    let ``check BehaviorOfLocations with stm-checker (transitive)`` (checkStm:CompDecl->CompPath->Stm->bool) (model:CompDecl) (locBehs:BehaviorWithLocation list) =
+        locBehs |> List.forall (fun locBeh -> checkStm model locBeh.Location locBeh.Behavior.Body)
+                    
+    // actual
+    
+    let ``check if BehaviorOfLocations make at most one delayed call (transitive)`` (model:CompDecl) (locBeh:BehaviorWithLocation) =
+        ``check BehaviorOfLocations with stm-checker (transitive)`` ``check if Stm makes at most one delayed call (transitive)``
+
+    
+    /////////////
+    // single checks for ProvPorts
+    ////////////
+    
+    let ``check if ProvPort has no InExpr parameter`` =
+        true
+
+    let ``check if all ProvPortDecls with the same ProvPort have the same signature`` =
+        false
