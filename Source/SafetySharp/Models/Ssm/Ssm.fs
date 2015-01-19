@@ -48,6 +48,12 @@ module internal Ssm =
         | Gt
         | Ge
 
+    /// Describes the value flow direction of a method parameter.
+    type internal ParamDir =
+        | In
+        | InOut
+        | Out
+
     /// Represents the type of a variable.
     type internal Type = 
         | VoidType
@@ -71,7 +77,7 @@ module internal Ssm =
         | VarRefExpr of Var
         | UExpr of UOp * Expr
         | BExpr of Expr * BOp * Expr
-        | CallExpr of string * Type list * Type * Expr list
+        | CallExpr of string * Type list * ParamDir list * Type * Expr list
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
@@ -81,11 +87,11 @@ module internal Ssm =
         | SeqStm of Stm list
         | RetStm of Expr option
         | IfStm of Expr * Stm * Stm option
-        | CallStm of string * Type list * Type * Expr list
+        | CallStm of string * Type list * ParamDir list * Type * Expr list
 
     type internal Param = {
         Var : Var
-        InOut : bool
+        Direction : ParamDir
     }
 
     type internal Method = {
@@ -210,11 +216,11 @@ module internal Ssm =
         | BExpr (e1, Le, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Gt, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Ge, e2) when bothAreNonBool e1 e2 -> BoolType
-        | CallExpr (_, _, t, _) -> t
+        | CallExpr (_, _, _, t, _) -> t
         | _ -> invalidOp "Type deduction failure."
 
     /// Gets all variables referenced by the given expression fulfilling the given predicate.
-    let rec private getVarsOfExpr pred expr =
+    let rec getVarsOfExpr pred expr =
         match expr with
         | BoolExpr _                -> []
         | IntExpr _                 -> []
@@ -225,7 +231,7 @@ module internal Ssm =
         | VarRefExpr _              -> []
         | UExpr (_, e)              -> getVarsOfExpr pred e
         | BExpr (e1, _, e2)         -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
-        | CallExpr (_, _, _, e)     -> e |> List.map (getVarsOfExpr pred) |> List.collect id
+        | CallExpr (_, _, _, _, e)  -> e |> List.map (getVarsOfExpr pred) |> List.collect id
 
     /// Gets all local variables referenced by the given expression.
     let rec getLocalsOfExpr = 
@@ -246,7 +252,7 @@ module internal Ssm =
         | RetStm (Some e)           -> getLocalsOfExpr e
         | IfStm (e, s, None)        -> (getLocalsOfExpr e) @ (getLocalsOfStm s)
         | IfStm (e, s1, Some s2)    -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
-        | CallStm (_, _, _, e)      -> e |> List.map getLocalsOfExpr |> List.collect id
+        | CallStm (_, _, _, _, e)   -> e |> List.map getLocalsOfExpr |> List.collect id
 
     /// Replaces all goto statements in the given method body with structured control flow statements.
     /// If a goto cannot be removed, the method body is invalid.

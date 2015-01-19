@@ -66,18 +66,25 @@ module internal SsmToCSharp =
             | Local (l, t) -> typeRef t; writer.Append " %s" l
             | Field (f, t) -> typeRef t; writer.Append " %s" f
 
-        let rec call m e =
-            writer.Append "%s(" m; writer.AppendRepeated e (fun e -> expr e) (fun () -> writer.Append ", "); writer.Append ")"
+        let rec call m d e =
+            let writeArg (d, e) =
+                match d with
+                | In    -> ()
+                | InOut -> writer.Append "ref "
+                | Out -> writer.Append "out "
+                expr e
+            let args = List.zip d e
+            writer.Append "%s(" m; writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
 
         and expr = function
-            | BoolExpr b            -> writer.Append <| if b then "true" else "false"
-            | IntExpr i             -> writer.Append "%i" i
-            | DoubleExpr d          -> writer.Append "%f" d
-            | VarExpr v             -> var v
-            | VarRefExpr v          -> writer.Append "&"; var v
-            | UExpr (op, e)         -> uop op; writer.AppendParenthesized (fun () -> expr e)
-            | BExpr (e1, op, e2)    -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
-            | CallExpr (m, _, _, e) -> call m e
+            | BoolExpr b               -> writer.Append <| if b then "true" else "false"
+            | IntExpr i                -> writer.Append "%i" i
+            | DoubleExpr d             -> writer.Append "%f" d
+            | VarExpr v                -> var v
+            | VarRefExpr v             -> var v
+            | UExpr (op, e)            -> uop op; writer.AppendParenthesized (fun () -> expr e)
+            | BExpr (e1, op, e2)       -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+            | CallExpr (m, _, d, _, e) -> call m d e
 
         let rec toCSharp stm = 
             match stm with
@@ -101,12 +108,15 @@ module internal SsmToCSharp =
                 writer.AppendBlockStatement (fun () -> toCSharp s1)
                 writer.Append "else"
                 writer.AppendBlockStatement (fun () -> toCSharp s2)
-            | CallStm (m, _, _, e)   -> call m e; writer.AppendLine ";"
+            | CallStm (m, _, d, _, e)   -> call m d e; writer.AppendLine ";"
 
         typeRef m.Return
         writer.Append " %s(" m.Name
         writer.AppendRepeated m.Params (fun p ->
-            if p.InOut then writer.Append "ref "
+            match p.Direction with
+            | In    -> ()
+            | InOut -> writer.Append "ref "
+            | Out   -> writer.Append "out "
             varDecl p.Var
         ) (fun () -> writer.Append ", ")
         writer.Append ")"

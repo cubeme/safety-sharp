@@ -71,8 +71,12 @@ module TestHelpers =
             originalParam1 =? transformedParam1
             originalParam2 =? transformedParam2
             originalResult =? transformedResult
+            original._f1 =? transformed._f1
+            original._f2 =? transformed._f2
 
         abstract member M : 'p1 byref * 'p2 byref -> 'r
+        [<DefaultValue>] val mutable _f1 : int
+        [<DefaultValue>] val mutable _f2 : int
 
     [<AbstractClass>]
     type OneValParam<'p, 'r when 'p : equality and 'r : equality> () =
@@ -146,6 +150,12 @@ module ``CilToSsm Method Semantic Equality`` =
     let controlFlowAndSideEffects6 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { if ((x += _f1 = x) > y || --y == 0) x++; else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - --_f2) --y; } else x -= 1; return x *=  _f1 + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2)) + _f2); }" "")
     let controlFlowAndSideEffects7 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { return _f1 += F1(_f2--); }" "int F1(int x) { ++_f1; _f2 += x; return x; } int F2() { return ++_f1; } void F3() { --_f2; }")
     let controlFlowAndSideEffects8 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { F3(); if ((x += _f1 = x) > y || --y == 0) { F3(); x++; } else if (x + (_f1++) - 2 < y + 1 || --y == 0) { --y; if ((_f2 = ++x) == --y - (_f2 = (--_f2 + F1(_f2)))) --y; } else x -= 1; return x *=  _f1 * F1(_f1 < 0 ? --_f1 : ++_f2) + (y * 2 - ((_f1 = --_f1) > 0 ? ++_f1 : (_f1 += _f2 + F1(_f2--))) + _f2); }" "int F1(int x) { ++_f1; _f2 += x; return x; } int F2() { return ++_f1; } void F3() { --_f2; }")
+    let valParamByRef = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { F(ref x, out y); return x + y; }" "void F(ref int x, out int y) { x = x + 1; y = x; }")
+    let refParamByRef = TwoRefParams<int, int, int>.Test (compile "TwoRefParams<int, int, int>" "int M(ref int x, ref int y) { F(ref x, out y); return x + y; }" "void F(ref int x, out int y) { x = x + 1; y = x; }")
+    let localByRef = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { int y = x; int z = x + 1; F(ref y, out z); return z + x + y; }" "void F(ref int x, out int y) { x = x + 1; y = x; }")
+    let fieldByRef = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; F(ref _f, out _f); return _f; }" "void F(ref int x, out int y) { x = x + 1; y = x; }")
+    let complexControlFlowAndRefArgs1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { _f1 = x; if (x > 0 || F(ref x, out y) && !F(ref _f1, out _f2)) { F(ref y, out _f1); } return x + _f1 + _f2 + y + (_f1 > 0 && F(ref x, out x) ? (F(ref _f2, out y) ? 1 : 0) : F(ref x, out x) ? 0 : 1) + x + _f1 + _f2 + y; }" "bool F(ref int x, out int y) { x = x + 1; y = x; return y > 0; }")
+    let complexControlFlowAndRefArgs2 = TwoRefParams<int, int, int>.Test (compile "TwoRefParams<int, int, int>" "int M(ref int x, ref int y) { _f1 = x; if (x > 0 || F(ref x, out y) && !F(ref _f1, out _f2)) { F(ref y, out _f1); } return x + _f1 + _f2 + y + (_f1 > 0 && F(ref x, out x) ? (F(ref _f2, out y) ? 1 : 0) : F(ref x, out x) ? 0 : 1) + x + _f1 + _f2 + y; }" "bool F(ref int x, out int y) { x = x + 1; y = x; return y > 0; }")
 
     [<Test>]
     let ``read field`` ([<Range (-1, 1)>] p) =
@@ -278,3 +288,27 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``control flow and side effects 8`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
         controlFlowAndSideEffects8 p1 p2
+
+    [<Test>]
+    let ``value parameters are passed as ref and out parameters to function`` ([<Range (-2, 2)>] p1) ([<Range (-2, 2)>] p2) =
+        valParamByRef p1 p2
+
+    [<Test>]
+    let ``byref parameters are passed as ref and out parameters to function`` ([<Range (-2, 2)>] p1) ([<Range (-2, 2)>] p2) =
+        refParamByRef p1 p2
+
+    [<Test>]
+    let ``locals are passed as ref and out parameters to function`` ([<Range (-2, 2)>] p) =
+        localByRef p
+
+    [<Test>]
+    let ``field is passed as ref and out parameters to function`` ([<Range (-2, 2)>] p) =
+        fieldByRef p
+
+    [<Test>]
+    let ``complex control flow and arguments passed byref with value arguments`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        complexControlFlowAndRefArgs1 p1 p2
+
+    [<Test>]
+    let ``complex control flow and arguments passed byref with byref arguments`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
+        complexControlFlowAndRefArgs2 p1 p2

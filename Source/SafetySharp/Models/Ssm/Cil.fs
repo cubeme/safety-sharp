@@ -50,6 +50,9 @@ module internal Cil =
         | Ldfld of FieldReference
         | Ldloc of VariableDefinition
         | Ldarg of ParameterDefinition
+        | Ldflda of FieldReference
+        | Ldloca of VariableDefinition
+        | Ldarga of ParameterDefinition
         | Ldci of int
         | Ldcd of double
         | Stind
@@ -101,6 +104,9 @@ module internal Cil =
             | Code.Ldfld    -> toInstr  Ldfld
             | Code.Ldloc    -> toInstr  Ldloc
             | Code.Ldarg    -> toInstr  Ldarg
+            | Code.Ldflda    -> toInstr  Ldflda
+            | Code.Ldloca    -> toInstr  Ldloca
+            | Code.Ldarga    -> toInstr  Ldarga
             | Code.Ldc_I4   -> toInstr  Ldci
             | Code.Ldc_R8   -> toInstr  Ldcd
             | Code.Stind_I1 -> Stind

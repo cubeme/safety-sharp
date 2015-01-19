@@ -58,7 +58,7 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = IntType
-                Params = [ { Var = arg "x" IntType; InOut = true } ]
+                Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
                 Body = RetStm (Some (VarExpr (arg "x" IntType)))
             }
@@ -69,7 +69,18 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = VoidType
-                Params = [ { Var = arg "x" IntType; InOut = true } ]
+                Params = [ { Var = arg "x" IntType; Direction = InOut } ]
+                Locals = []
+                Body = SeqStm [AsgnStm (arg "x" IntType, IntExpr 17); RetStm None]
+            }
+
+    [<Test>]
+    let ``write to out parameter`` () =
+        transform "void M(out int x) { x = 17; }" =?
+            {
+                Name = "M"
+                Return = VoidType
+                Params = [ { Var = arg "x" IntType; Direction = Out } ]
                 Locals = []
                 Body = SeqStm [AsgnStm (arg "x" IntType, IntExpr 17); RetStm None]
             }
@@ -80,7 +91,7 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = IntType
-                Params = [ { Var = arg "x" IntType; InOut = true } ]
+                Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
                 Body = SeqStm [AsgnStm (field "_f" IntType, VarExpr (arg "x" IntType)); RetStm (Some (VarExpr (field "_f" IntType)))]
             }
@@ -93,7 +104,7 @@ module ``CilToSsm Method Transformations`` =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [CallStm ("F", [], VoidType, []); RetStm None]
+                Body = SeqStm [CallStm ("F", [], [], VoidType, []); RetStm None]
             }
 
     [<Test>]
@@ -104,7 +115,29 @@ module ``CilToSsm Method Transformations`` =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [CallStm ("F", [IntType], VoidType, [IntExpr 4]); RetStm None]
+                Body = SeqStm [CallStm ("F", [IntType], [In], VoidType, [IntExpr 4]); RetStm None]
+            }
+
+    [<Test>]
+    let ``call method with ref parameter`` () =
+        transform "void F(ref int x) {} void M(int x) { F(ref x); }" =?
+            {
+                Name = "M"
+                Return = VoidType
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
+                Locals = []
+                Body = SeqStm [CallStm ("F", [IntType], [InOut], VoidType, [VarRefExpr (arg "x" IntType)]); RetStm None]
+            }
+
+    [<Test>]
+    let ``call method with out parameter`` () =
+        transform "void F(out int x) { x = 0; } void M(int x) { F(out x); }" =?
+            {
+                Name = "M"
+                Return = VoidType
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
+                Locals = []
+                Body = SeqStm [CallStm ("F", [IntType], [Out], VoidType, [VarRefExpr (arg "x" IntType)]); RetStm None]
             }
 
     [<Test>]
@@ -115,7 +148,7 @@ module ``CilToSsm Method Transformations`` =
                 Return = VoidType
                 Params = []
                 Locals = [tmp 2 0 IntType]
-                Body = SeqStm [AsgnStm (tmp 2 0 IntType, CallExpr ("F", [IntType], IntType, [IntExpr 4])); RetStm None]                    
+                Body = SeqStm [AsgnStm (tmp 2 0 IntType, CallExpr ("F", [IntType], [In], IntType, [IntExpr 4])); RetStm None]                    
             }
 
     [<Test>]
@@ -124,13 +157,13 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = VoidType
-                Params = [ { Var = arg "b" BoolType; InOut = false } ]
+                Params = [ { Var = arg "b" BoolType; Direction = In } ]
                 Locals = [tmp 9 0 IntType; tmp 4 0 IntType]
                 Body = 
                     IfStm (
                         UExpr (Not, VarExpr (arg "b" BoolType)),
-                        SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr ("F", [IntType], IntType, [IntExpr 1])); RetStm None],
-                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr ("F", [IntType], IntType, [IntExpr 4])); RetStm None] |> Some
+                        SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr ("F", [IntType], [In], IntType, [IntExpr 1])); RetStm None],
+                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr ("F", [IntType], [In], IntType, [IntExpr 4])); RetStm None] |> Some
                     )
             }
 
@@ -140,12 +173,13 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = VoidType
-                Params = [ { Var = arg "a" IntType; InOut = false }; { Var = arg "b" BoolType; InOut = false } ]
+                Params = [ { Var = arg "a" IntType; Direction = In }; { Var = arg "b" BoolType; Direction = In } ]
                 Locals = []
                 Body = 
                     SeqStm [
                         CallStm ("F", 
                             [IntType; BoolType; IntType; BoolType; BoolType], 
+                            [In; In; In; In; In],
                             VoidType, 
                             [VarExpr (arg "a" IntType); VarExpr (arg "b" BoolType); IntExpr 2; BoolExpr false; BoolExpr true]
                         )
@@ -159,11 +193,12 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = IntType
-                Params = [ { Var = arg "a" IntType; InOut = false }; { Var = arg "b" BoolType; InOut = false } ]
+                Params = [ { Var = arg "a" IntType; Direction = In }; { Var = arg "b" BoolType; Direction = In } ]
                 Locals = [tmp 4 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 4 0 IntType, CallExpr ("F", [IntType; BoolType; BoolType], IntType, [IntExpr 1; BoolExpr false; BoolExpr true]))
+                        AsgnStm (tmp 4 0 IntType, 
+                            CallExpr ("F", [IntType; BoolType; BoolType], [In; In; In], IntType, [IntExpr 1; BoolExpr false; BoolExpr true]))
                         RetStm (Some (VarExpr (tmp 4 0 IntType)))
                     ]
             }
@@ -176,9 +211,9 @@ module ``CilToSsm Method Transformations`` =
                 Return = DoubleType
                 Params = 
                     [ 
-                        { Var = arg "x" DoubleType; InOut = false }
-                        { Var = arg "y" BoolType; InOut = true } 
-                        { Var = arg "z" IntType; InOut = true } 
+                        { Var = arg "x" DoubleType; Direction = In }
+                        { Var = arg "y" BoolType; Direction = InOut } 
+                        { Var = arg "z" IntType; Direction = Out } 
                     ]
                 Locals = [tmp 7 0 IntType]
                 Body =
@@ -199,7 +234,7 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = VoidType
-                Params = [ { Var = arg "z" IntType; InOut = false } ]
+                Params = [ { Var = arg "z" IntType; Direction = In } ]
                 Locals = [tmp 5 0 IntType; tmp 10 0 IntType]
                 Body =
                     SeqStm [
@@ -221,7 +256,7 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = VoidType
-                Params = [ { Var = arg "z" IntType; InOut = true } ]
+                Params = [ { Var = arg "z" IntType; Direction = InOut } ]
                 Locals = [local; tmp 10 0 IntType; tmp 17 0 IntType; tmp 19 0 IntType]
                 Body =
                     SeqStm [
@@ -249,7 +284,7 @@ module ``CilToSsm Method Transformations`` =
             {
                 Name = "M"
                 Return = VoidType
-                Params = [ { Var = arg "y" BoolType; InOut = true }; { Var = arg "z" IntType; InOut = true } ]
+                Params = [ { Var = arg "y" BoolType; Direction = InOut }; { Var = arg "z" IntType; Direction = InOut } ]
                 Locals = [local1; tmp 41 0 IntType; tmp 43 0 IntType; local0; tmp 31 0 IntType; tmp 21 0 IntType]
                 Body =
                     SeqStm [
@@ -297,7 +332,7 @@ module ``CilToSsm Method Transformations`` =
             let retStm = RetStm <| Some (BExpr (VarExpr tmp, Sub, IntExpr 1))
             { 
                 Name = "M" 
-                Params = [ { Var = arg "x" IntType; InOut = false } ]
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = SeqStm [ifStm; retStm]
                 Return = IntType
                 Locals = [tmp]
@@ -308,18 +343,18 @@ module ``CilToSsm Method Transformations`` =
         transform "int M(int x) { return F1(false) ? F2(false) : F3(2); } bool F1(bool v) { return v; } int F2(bool x) { return 1; } int F3(int x) { return x; }" =? 
             { 
                 Name = "M" 
-                Params = [ { Var = arg "x" IntType; InOut = false } ]
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 2 0 BoolType, CallExpr ("F1", [BoolType], BoolType, [BoolExpr false]))
+                        AsgnStm (tmp 2 0 BoolType, CallExpr ("F1", [BoolType], [In], BoolType, [BoolExpr false]))
                         IfStm (
                             VarExpr (tmp 2 0 BoolType),
                             SeqStm [
-                                AsgnStm (tmp 10 0 IntType, CallExpr ("F2", [BoolType], IntType, [BoolExpr false]))
+                                AsgnStm (tmp 10 0 IntType, CallExpr ("F2", [BoolType], [In], IntType, [BoolExpr false]))
                                 RetStm (Some (VarExpr (tmp 10 0 IntType)))
                             ],
                             SeqStm [
-                                AsgnStm (tmp 6 0 IntType, CallExpr ("F3", [IntType], IntType, [IntExpr 2]))
+                                AsgnStm (tmp 6 0 IntType, CallExpr ("F3", [IntType], [In], IntType, [IntExpr 2]))
                                 RetStm (Some (VarExpr (tmp 6 0 IntType)))
                             ] |> Some
                         )
@@ -333,15 +368,15 @@ module ``CilToSsm Method Transformations`` =
         transform "int M(int x) { if (F1(false) || F2(1)) return 1; return -1; } bool F1(bool x) { return false; } bool F2(int x) { return false; }" =? 
             { 
                 Name = "M" 
-                Params = [ { Var = arg "x" IntType; InOut = false } ]
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 2 0 BoolType, CallExpr ("F1", [BoolType], BoolType, [BoolExpr false]))
+                        AsgnStm (tmp 2 0 BoolType, CallExpr ("F1", [BoolType], [In], BoolType, [BoolExpr false]))
                         IfStm (
                             VarExpr (tmp 2 0 BoolType),
                             RetStm (Some (IntExpr 1)),
                             SeqStm [
-                                AsgnStm (tmp 6 0 BoolType, CallExpr ("F2", [IntType], BoolType, [IntExpr 1]))
+                                AsgnStm (tmp 6 0 BoolType, CallExpr ("F2", [IntType], [In], BoolType, [IntExpr 1]))
                                 IfStm (
                                     UExpr (Not, VarExpr (tmp 6 0 BoolType)),
                                     RetStm (Some (IntExpr -1)),
@@ -362,7 +397,7 @@ module ``CilToSsm Method Transformations`` =
             let elseStm = RetStm (Some (IntExpr -1))
             { 
                 Name = "M" 
-                Params = [ { Var = arg "x" BoolType; InOut = false }; { Var = arg "y" BoolType; InOut = false } ]
+                Params = [ { Var = arg "x" BoolType; Direction = In }; { Var = arg "y" BoolType; Direction = In } ]
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = IntType
                 Locals = []
@@ -376,7 +411,7 @@ module ``CilToSsm Method Transformations`` =
             let elseStm = RetStm (Some (IntExpr -1))
             { 
                 Name = "M" 
-                Params = [ { Var = arg "x" BoolType; InOut = false }; { Var = arg "y" BoolType; InOut = false } ]
+                Params = [ { Var = arg "x" BoolType; Direction = In }; { Var = arg "y" BoolType; Direction = In } ]
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = IntType
                 Locals = []
@@ -398,9 +433,9 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M" 
                 Params = 
                     [ 
-                        { Var = arg "x" IntType; InOut = false }
-                        { Var = arg "y" IntType; InOut = false } 
-                        { Var = arg "z" IntType; InOut = false } 
+                        { Var = arg "x" IntType; Direction = In }
+                        { Var = arg "y" IntType; Direction = In } 
+                        { Var = arg "z" IntType; Direction = In } 
                     ]
                 Body = SeqStm [ifStm; assignStm; RetStm None]
                 Return = VoidType
@@ -423,9 +458,9 @@ module ``CilToSsm Method Transformations`` =
                 Name = "M" 
                 Params = 
                     [ 
-                        { Var = arg "x" IntType; InOut = false }
-                        { Var = arg "y" IntType; InOut = false } 
-                        { Var = arg "z" IntType; InOut = false } 
+                        { Var = arg "x" IntType; Direction = In }
+                        { Var = arg "y" IntType; Direction = In } 
+                        { Var = arg "z" IntType; Direction = In } 
                     ]
                 Body = SeqStm [ifStm; assignStm; RetStm None]
                 Return = VoidType
@@ -437,7 +472,7 @@ module ``CilToSsm Method Transformations`` =
         transform "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" =? 
             { 
                 Name = "M" 
-                Params = [ { Var = arg "b" BoolType; InOut = false }; { Var = arg "c" BoolType; InOut = false } ]
+                Params = [ { Var = arg "b" BoolType; Direction = In }; { Var = arg "c" BoolType; Direction = In } ]
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 5 0 IntType, IntExpr 1)
@@ -466,4 +501,70 @@ module ``CilToSsm Method Transformations`` =
                     ]
                 Return = IntType
                 Locals = [ tmp 5 0 IntType; tmp 9 0 IntType; tmp 10 0 IntType; tmp 10 1 IntType ]
+            }
+
+    [<Test>]
+    let ``call method with local byref parameter should store local in temporary`` () =
+        transform "int F(ref int x) { return x; } int M() { int x = 0; return x + F(ref x); }" =?
+            let local = local "__loc_0" IntType
+            {
+                Name = "M"
+                Return = IntType
+                Params = []
+                Locals = [local; tmp 5 0 IntType; tmp 5 1 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (local, IntExpr 0)
+                        AsgnStm (tmp 5 0 IntType, VarExpr local)
+                        AsgnStm (tmp 5 1 IntType, CallExpr ("F", [IntType], [InOut], IntType, [VarRefExpr local]))
+                        RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
+                    ]
+            }
+
+    [<Test>]
+    let ``call method with field byref parameter should store local in temporary`` () =
+        transform "int F(ref int x) { return x; } int f; int M() { return f + F(ref f); }" =?
+            {
+                Name = "M"
+                Return = IntType
+                Params = []
+                Locals = [tmp 5 0 IntType; tmp 5 1 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 5 0 IntType, VarExpr (field "f" IntType))
+                        AsgnStm (tmp 5 1 IntType, CallExpr ("F", [IntType], [InOut], IntType, [VarRefExpr (field "f" IntType)]))
+                        RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
+                    ]
+            }
+
+    [<Test>]
+    let ``call method with value arg byref parameter should store local in temporary`` () =
+        transform "int F(ref int x) { return x; } int M(int x) { return x + F(ref x); }" =?
+            {
+                Name = "M"
+                Return = IntType
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
+                Locals = [tmp 3 0 IntType; tmp 3 1 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 3 0 IntType, VarExpr (arg "x" IntType))
+                        AsgnStm (tmp 3 1 IntType, CallExpr ("F", [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)]))
+                        RetStm (Some (BExpr (VarExpr (tmp 3 0 IntType), Add, VarExpr (tmp 3 1 IntType))))
+                    ]
+            }
+
+    [<Test>]
+    let ``call method with byref arg byref parameter should store local in temporary`` () =
+        transform "int F(ref int x) { return x; } int M(ref int x) { return x + F(ref x); }" =?
+            {
+                Name = "M"
+                Return = IntType
+                Params = [ { Var = arg "x" IntType; Direction = InOut } ]
+                Locals = [tmp 4 0 IntType; tmp 4 1 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 4 0 IntType, VarExpr (arg "x" IntType))
+                        AsgnStm (tmp 4 1 IntType, CallExpr ("F", [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)]))
+                        RetStm (Some (BExpr (VarExpr (tmp 4 0 IntType), Add, VarExpr (tmp 4 1 IntType))))
+                    ]
             }

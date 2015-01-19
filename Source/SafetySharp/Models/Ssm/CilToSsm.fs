@@ -38,6 +38,12 @@ module internal CilToSsm =
     let freshLocal pc idx t =
         Local (sprintf "__tmp_%i_%i" pc idx, t)
 
+    /// Gets the direction of a method parameter.
+    let getParamDir (p : ParameterDefinition) =
+        if not p.ParameterType.IsByReference then In
+        elif p.ParameterType.IsByReference && p.IsOut then Out
+        else InOut
+
     /// Tries to map the given metadata type to a S# type, if possible.
     let private tryMapType (typeRef : TypeReference) =
         let metadataType = if typeRef.IsByReference then typeRef.GetElementType().MetadataType else typeRef.MetadataType
@@ -133,11 +139,14 @@ module internal CilToSsm =
         | (Instr.Nop, s) -> (NopStm, [], s)
         | (Instr.Ldind, (VarRefExpr v) :: s) -> (NopStm, [], (VarExpr v) :: s)
         | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> (NopStm, [], (VarExpr (field f)) :: s)
-        | (Instr.Ldci c, s) -> (NopStm, [], (IntExpr c) :: s)
-        | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
+        | (Instr.Ldflda f, (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> (NopStm, [], (VarRefExpr (field f)) :: s)
         | (Instr.Ldarg a, s) when a.ParameterType.IsByReference -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
+        | (Instr.Ldarga a, s) -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldloc l, s) -> (NopStm, [], (VarExpr (local l)) :: s)
+        | (Instr.Ldloca l, s) -> (NopStm, [], (VarRefExpr (local l)) :: s)
+        | (Instr.Ldci c, s) -> (NopStm, [], (IntExpr c) :: s)
+        | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) when not (containsArg a s) -> (AsgnStm (Arg (a, t), e), [], s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> replaceWithTempVar pc (Arg (a, t)) e replaceArg s  
         | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType && not (containsField f.Name s) -> (AsgnStm (field f, e), [], s)
@@ -150,6 +159,7 @@ module internal CilToSsm =
             let argCount = m.Parameters.Count
             let returnType = mapReturnType m.ReturnType
             let paramTypes = m.Parameters |> Seq.map (fun p -> mapVarType p.ParameterType) |> Seq.toList
+            let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
             let s = s |> Seq.skip (argCount + 1) |> Seq.toList
 
@@ -162,11 +172,23 @@ module internal CilToSsm =
                     (idx + 1, (AsgnStm (tmp, VarExpr field)) :: vars, replaceField (Ssm.getVarName field) tmp s)
                 ) (0, [], s)
 
+            // We also have to save the current value of all locals and arguments that are currently on the stack if
+            // those are passed by reference to the function; the function will most likely change their value
+            let stackVars = stack |> List.map (Ssm.getVarsOfExpr (fun _ -> true)) |> List.collect id |> Seq.distinct |> List.ofSeq
+            let (idx, vars, stack) = 
+                 Seq.filter (fun a -> match a with VarRefExpr (Arg _) | VarRefExpr (Local _) -> true | _ -> false) args
+                 |> Seq.map (fun a -> match a with VarRefExpr v -> v | _ -> invalidOp "Unexpected expression type.")
+                 |> Seq.filter (fun a -> List.exists ((=) a) stackVars)
+                 |> Seq.fold (fun (idx, vars, s) v ->
+                    let tmp = freshLocal pc idx (Ssm.getVarType v)
+                    (idx + 1, (AsgnStm (tmp, VarExpr v)) :: vars, replaceVar ((=) v) tmp s)
+                 ) (idx, vars, stack)
+
             if returnType = VoidType then
-                (CallStm (m.Name, paramTypes, returnType, args), vars, stack)
+                (CallStm (m.Name, paramTypes, paramDirs, returnType, args), vars, stack)
             else
                 let tmp = freshLocal pc idx returnType
-                (NopStm, vars @ [AsgnStm (tmp, CallExpr (m.Name, paramTypes, returnType, args))], (VarExpr tmp) :: stack)
+                (NopStm, vars @ [AsgnStm (tmp, CallExpr (m.Name, paramTypes, paramDirs, returnType, args))], (VarExpr tmp) :: stack)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)
@@ -182,7 +204,7 @@ module internal CilToSsm =
                 | _ -> invalidOp "Unsupported branch type '%+A'." op
             (GotoStm (normalizeIntToBool (BExpr (e2, op, e1)), t), [], s)
         | (Instr.Dup, e :: s) -> (NopStm, [], e :: e :: s)
-        | (Instr.Pop, CallExpr (m, p, t, e) :: s) -> (CallStm (m, p, t, e), [], s)
+        | (Instr.Pop, CallExpr (m, p, d, t, e) :: s) -> (CallStm (m, p, d, t, e), [], s)
         | (Instr.Pop, e :: s) -> (NopStm, [], s)
         | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, And, e1))) :: s)
         | (Instr.Or, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Or, e1))) :: s)
@@ -276,10 +298,10 @@ module internal CilToSsm =
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
             match e with
-            | IntExpr 0 when isBool -> BoolExpr false
-            | IntExpr _ when isBool -> BoolExpr true
-            | CallExpr (m, p, t, e) -> CallExpr (m, p, t, fixCallExprs p e)
-            | e when isBool         -> 
+            | IntExpr 0 when isBool    -> BoolExpr false
+            | IntExpr _ when isBool    -> BoolExpr true
+            | CallExpr (m, p, d, t, e) -> CallExpr (m, p, d, t, fixCallExprs p e)
+            | e when isBool            -> 
                 match Ssm.deduceType e with
                 | IntType    -> BExpr (e, Ne, IntExpr 0)
                 | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
@@ -306,7 +328,7 @@ module internal CilToSsm =
             | GotoStm (e, t) -> GotoStm (fixExpr e true, t)
             | RetStm None -> RetStm None
             | RetStm (Some e) -> RetStm (Some (fixExpr e returnsBool))
-            | CallStm (m, p, r, e) -> CallStm (m, p, r, fixCallExprs p e)
+            | CallStm (m, p, d, r, e) -> CallStm (m, p, d, r, fixCallExprs p e)
             | _ -> invalidOp "Unsupported statement '%A'." stm
         ) methodBody
 
@@ -371,7 +393,7 @@ module internal CilToSsm =
             Body = body
             Params =
                 m.Parameters 
-                |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); InOut = p.ParameterType.IsByReference })
+                |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); Direction = getParamDir p })
                 |> Seq.toList
             Return = mapReturnType m.ReturnType
             Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
