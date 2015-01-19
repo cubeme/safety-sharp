@@ -448,7 +448,7 @@ module internal Parser =
                 StepDecl.Behavior = behavior;
             }
         pipe2 (faultExprOpt_ws .>> (pstring_ws "step") .>> (pstring_ws "{") .>> pushUserStateCallStack)
-              (behaviorDecl_ws .>> (pstring "}") .>> popUserStateCallStack)
+              (behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
               createStep
 
     let stepDecl_ws = stepDecl .>> spaces
@@ -475,7 +475,7 @@ module internal Parser =
                 FaultDecl.Step = behavior;
             }
         pipe2 ((pstring_ws1 "fault") >>. faultIdDecl_ws)
-              ( (pstring_ws "{") >>. pushUserStateCallStack >>. behaviorDecl_ws .>> (pstring "}") .>> popUserStateCallStack)
+              ( (pstring_ws "{") >>. (pstring_ws "step") >>. (pstring_ws "{") >>. pushUserStateCallStack >>. behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack .>> (pstring_ws "}"))
               createFaultDecl
 
     let reqPortDecl_ws : Parser<_,UserState> =

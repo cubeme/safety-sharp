@@ -23,15 +23,39 @@
 namespace SafetySharp.Models.Scm
 
 module internal ScmHelpers =
-
+    
+    
     type CompPath = Comp list
+        // index1::index2::root::[]
+        // root {
+        //   index2 {
+        //     index1 {
+        //       ...
+        //     }
+        //     ...
+        //   }
+        //   ...
+        // }
+
     type FieldPath = CompPath * Field
     type FaultPath = CompPath * Fault
     type ReqPortPath = CompPath * ReqPort
     type ProvPortPath = CompPath * ProvPort
+    type BndDeclPath = CompPath * BndDecl
 
-    type StmPath = int list // index1::index2::[] -> Blockstatement2=Blockstatement1.[index2] ; Stm=Blockstatement2.[index1] ; Stm=Blockstatement1.[index2].[index1]
-    
+
+
+    type StmPath = int list
+        // index1::index2::[]
+        // Example:
+        //    Block{
+        //       Stm1;              // 0::[]
+        //       Stm2;              // 1::[]
+        //       Stm3;              // 2::[]
+        //       Choice {           // 3::[]
+        //           Guard,Stm 4.1  // 3::0::[]
+        //           Guard,Stm 4.2  // 3::1::[]
+        //       }
     
     // Extension methods
     type Stm with
@@ -143,6 +167,20 @@ module internal ScmHelpers =
         member fault.getName =
             fault.Fault.getName
             
+            
+    // Extension methods    
+    type FaultExpr with
+        member faultExpr.rewrite_toExpr (faultMap:Map<Fault,Field>) : Expr =
+            match faultExpr with
+                | Fault (fault) ->
+                    Expr.ReadField(faultMap.Item fault)
+                | NotFault (faultExpr) ->
+                    Expr.UExpr(faultExpr.rewrite_toExpr faultMap,UOp.Not)
+                | AndFault (leftFaultExpr,rightFaultExpr) ->
+                    Expr.BExpr(leftFaultExpr.rewrite_toExpr faultMap,BOp.And,rightFaultExpr.rewrite_toExpr faultMap)
+                | OrFault (leftFaultExpr,rightFaultExpr) ->
+                    Expr.BExpr(leftFaultExpr.rewrite_toExpr faultMap,BOp.Or,rightFaultExpr.rewrite_toExpr faultMap)
+
     // Extension methods
     type Comp with
         member comp.getName =
@@ -192,14 +230,6 @@ module internal ScmHelpers =
             namesInFields @ namesInFaults @ namesInReqPorts @ namesInProvPorts @ namesInSteps
             
 
-        (*
-        member node.getParentOfDescendantUsingPath (path: Comp list) : CompDecl =
-            // minimal path size is 2
-            let listWithoutChild = path.Tail
-            let reverseList = List.rev listWithoutChild
-            assert (reverseList.Head = node.Comp)
-            node.getDescendantUsingRevPath reverseList.Tail
-        *)
         member node.removeField (field:FieldDecl) =
             { node with
                 CompDecl.Fields = (node.Fields |> List.filter (fun _field -> field<>_field));
@@ -235,6 +265,11 @@ module internal ScmHelpers =
             { node with
                 CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> provPort<>_provPort));
             }
+        member node.removeProvPorts (provPorts:ProvPortDecl list) =
+            let provPortsSet = provPorts |> Set.ofList
+            { node with
+                CompDecl.ProvPorts = (node.ProvPorts |> List.filter (fun _provPort -> (provPortsSet.Contains _provPort) = false));
+            }
         member node.addProvPort (fault:ProvPortDecl) =
             { node with
                 CompDecl.ProvPorts = fault::node.ProvPorts
@@ -259,12 +294,24 @@ module internal ScmHelpers =
                 CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
             }
         member node.getBindingOfLocalReqPort (reqPort:ReqPort) : BndDecl=
+            // Only works, if binding was declared in current node.
+            // If binding might also be declared in the parent node, maybe
+            // the function tryFindProvPortOfReqPort is what you want.
             node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
             
         member node.removeStep (step:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.filter (fun _step -> _step<>step));
-            }    
+            }
+        member node.removeSteps (steps:StepDecl list) =
+            let stepsSet = steps |> Set.ofList
+            { node with
+                CompDecl.Steps = (node.Steps |> List.filter (fun _step -> (stepsSet.Contains _step) = false));
+            }
+        member node.addStep (step:StepDecl) =
+            { node with
+                CompDecl.Steps = step::node.Steps
+            }
         member node.replaceStep (stepToReplace:StepDecl, newStep:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));
@@ -283,8 +330,7 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
             }
-
-
+            
         // Complete model        
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
             if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
@@ -297,8 +343,66 @@ module internal ScmHelpers =
                 let nodeToReplace = pathToReplace.Head
                 let newParent = parentNode.replaceChild(nodeToReplace,newComponent)
                 // recursively replace parent
-                model.replaceDescendant pathToReplace.Tail newParent
-
+                model.replaceDescendant pathToReplace.Tail newParent  
+        
+        // search in the model        
+        member model.tryFindBindingOfReqPort (pathOfReqPort:ReqPortPath) : BndDeclPath option =
+            // option, because it might not be in the model (binding is not declared, or declared in the parent node
+            // of "model"
+            let compPath,reqPort = pathOfReqPort
+            let node = model.getDescendantUsingPath compPath
+            // Try to find the binding in node
+            let binding =
+                node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
+            match binding with
+                | Some (binding) ->
+                    // case 1: Binding found in the node
+                    Some (compPath,binding)
+                | None ->                    
+                    // Try to find binding in the parent of node
+                    if compPath = [] then
+                        // case 2: the binding was not declared in the model or model is not the real root component. We
+                        //         cannot search in the parent of node
+                        None
+                    else
+                        let parentPath = compPath.Tail
+                        let parentNode = model.getDescendantUsingPath parentPath                        
+                        let binding =
+                            node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=Some(compPath.Head))
+                        match binding with
+                            | Some (binding) ->
+                                // case 3: Binding found in the parent
+                                Some (parentPath,binding)
+                            | None ->
+                                // case 4: Binding not found in the parent, and not found in the node itself
+                                None
+                
+        member model.tryGetProvPort (bndDeclPath:BndDeclPath) : ProvPortPath option =
+            let compPath,bndDecl = bndDeclPath
+            let node = model.getDescendantUsingPath compPath
+            if bndDecl.Source.Comp=None then
+                Some (compPath,bndDecl.Source.ProvPort)
+            else
+                Some (bndDecl.Source.Comp.Value::compPath,bndDecl.Source.ProvPort)
+    
+    // Extension methods    
+    type Expr with
+        static member createOredExpr (exprs:Expr list) : Expr =
+            if exprs.IsEmpty then
+                Expr.Literal(Val.BoolVal(false))
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                Expr.BExpr(exprs.Head,BOp.Or,Expr.createOredExpr exprs.Tail)
+        static member createAndedExpr (exprs:Expr list) : Expr =
+            if exprs.IsEmpty then
+                Expr.Literal(Val.BoolVal(true))
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                Expr.BExpr(exprs.Head,BOp.And,Expr.createOredExpr exprs.Tail)
 
                 
     // some local helpers
@@ -488,3 +592,77 @@ module internal ScmHelpers =
                 Stm.StepComp (comp)
             | Stm.StepFault (fault) ->
                 Stm.StepFault (fault)
+
+                
+    let rec rewriteStm_stepFaultToPortCall (faultMap:Map<Fault,ProvPort*ReqPort>) (stm:Stm) : Stm =
+        match stm with
+            | Stm.Block (smnts) ->
+                let newStmnts = smnts |> List.map (rewriteStm_stepFaultToPortCall faultMap)
+                Stm.Block(newStmnts)
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm_stepFaultToPortCall faultMap stm) )
+                Stm.Choice(newChoices)
+            | Stm.StepFault (fault) ->
+                let (_,artificialReqPort) = faultMap.Item fault
+                Stm.CallPort (artificialReqPort,[])
+            | _ -> stm
+
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    
+    // Statement walker
+    
+    type WalkerAtomarAssessor<'a> = (Stm*'a)->(bool*'a) // (statement,oldValue) -> (keepOnWalking,newValue)    
+    type WalkerReductionAssessor<'a> = (Stm -> 'a) -> Stm list -> 'a
+
+                
+    // see ScmConsistencyCheck.fs for a usage example
+    let rec stmWalker<'a> (assessor:WalkerAtomarAssessor<'a>) (selectValue:WalkerReductionAssessor<'a>) (neutralValue:'a) (model:CompDecl)
+                       (compPath:CompPath) (oldValue:'a) (stm:Stm): 'a =
+        
+        // need the complete model, because a relevant binding might be declared in the parent node
+        // Note: selectValue on empty list should return neutralValue (selectValue (fun stm -> 'a) [] = neutralValue:'a)
+
+        let keepOnWalking,newValue = assessor (stm,oldValue)
+        if keepOnWalking = false then
+            newValue
+        else
+            let walkMe = stmWalker assessor selectValue neutralValue model  // these stay the same in the whole recursiv Call
+            match stm with
+                | Stm.Block (stmts) ->
+                    stmts |> selectValue (fun stm -> walkMe compPath newValue stm)
+                | Stm.Choice (choices:(Expr * Stm) list) ->
+                    choices |> List.map (fun (guard,stm) -> stm )
+                            |> selectValue (fun stm -> walkMe compPath newValue stm)                  
+                | Stm.StepComp (comp) ->
+                    let newPath = comp::compPath
+                    let compDecl = model.getDescendantUsingPath newPath
+                    compDecl.Steps |> List.map (fun step -> step.Behavior.Body )
+                                   |> selectValue (fun stm -> walkMe newPath newValue stm)
+                | Stm.StepFault (fault) ->
+                    let compDecl = model.getDescendantUsingPath compPath
+                    compDecl.Faults |> List.filter (fun faultDecl -> faultDecl.Fault = fault)
+                                    |> List.map (fun fault -> fault.Step.Body)
+                                    |> selectValue (fun stm -> walkMe compPath newValue stm)
+                | Stm.CallPort (reqPort,_params) ->
+                    let bndDeclPath = model.tryFindBindingOfReqPort (compPath,reqPort)
+                    match bndDeclPath with
+                        | None ->
+                            // Binding could not be found: Model is incomplete. But: it is not because of (checker)
+                            neutralValue
+                        | Some(bndDeclCompPath,binding) ->
+                            let provPortPath = model.tryGetProvPort (bndDeclCompPath,binding)
+                            match provPortPath with
+                                | None ->
+                                    neutralValue  // Binding could not be found: Model is incomplete. But: it is not because of (checker)
+                                | Some(provPortPath,provPort) ->
+                                    let provPortCompDecl = model.getDescendantUsingPath provPortPath
+                                    let provPortDecls = provPortCompDecl.getProvPortDecls(provPort)
+                                    provPortDecls |> List.map (fun provPortDecl -> provPortDecl.Behavior.Body)
+                                                  |> selectValue (fun stm -> walkMe provPortPath newValue stm)
+                | _ ->
+                     // Return calculated value, when no further walking is possible.
+                     // This is used, when the assessor returns keepOnWalking=true, but the statement to examine
+                     // is an assignment or something similar.
+                    newValue

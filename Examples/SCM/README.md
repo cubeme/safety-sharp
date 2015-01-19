@@ -27,8 +27,8 @@
 
 ## (cmd)-Tests
 
-* cmd1.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. Use "krun cmd1.scm --search-final" to get all results
-
+* cmd1.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. Always only one statement. Use "krun cmd1.scm --search-final" to get all results
+* cmd2.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. More statements.
 
 ## (beh)-Tests
 
@@ -44,7 +44,7 @@
 * callInstFromBeh2.scm: call from _behaviour_ a requiredPort which calls a required Port inside the same Component
 * callInstFromBeh3.scm: like callInst1, but with field assignments
 * callInstFromBeh4.scm: like callInst3, but with input-parameters
-* callInstFromBeh5.scm: like callInst1, but with an inout-parameter, which was preassigned (field) and gets a value (incorrect program)
+* callInstFromBeh5.scm: like callInst1, but with an inout-parameter, which was preassigned (field) and gets a value
 * callInstFromBeh6.scm: like callInst1, but with an inout-parameter, which was preassigned (local) and gets a value
 * callInstFromBeh7.scm: like callInst1, but with an inout-parameter, which was not preassigned and gets no value
 * callInstFromBeh8.scm: like callInst1, but with an inout-parameter, which was not preassigned and gets a value
@@ -59,6 +59,16 @@
 
 ## (call)-Tests (delayed)
 
+
+## fault-Tests
+* nestedComponentWithFaults1.scm: like nestedComponent4 but with several faults and affected steps
+* simpleComponentWithFaults1.scm: like simpleComponent5 but with several faults and affected ports and steps
+* simpleComponentWithFaults2.scm: like simpleComponentWithFaults1 but with fault behavior and assignments to faults
+* simpleComponentWithFaults3.scm: 1 component with 2 transient failures and 3 steps, where each assigns a different int-value to a field.
+* behWithFaults1.scm: like beh3.scm but with several faults and affected ports and steps
+* callInstFromBehWithFaults1.scm: like callInstFromBeh3 but with several faults and affected ports and steps
+* callInstFromProvWithFaults1.scm: like callInstFromProv1 but with several faults and affected ports and steps
+* callInstHierarchyWithFaults1.scm: like callInstHierarchy2 but with several faults and affected ports and steps
 
 
 ## Examples which combine several aspects

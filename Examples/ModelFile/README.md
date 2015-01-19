@@ -42,7 +42,7 @@
 * callInstFromBeh2.safetysharp: call from _behaviour_ a requiredPort which calls a required Port inside the same Component
 * callInstFromBeh3.safetysharp: like callInst1, but with field assignments
 * callInstFromBeh4.safetysharp: like callInst3, but with input-parameters
-* callInstFromBeh5.safetysharp: like callInst1, but with an inout-parameter, which was preassigned (field) and gets a value (incorrect program)
+* callInstFromBeh5.safetysharp: like callInst1, but with an inout-parameter, which was preassigned (field) and gets a value
 * callInstFromBeh6.safetysharp: like callInst1, but with an inout-parameter, which was preassigned (local) and gets a value
 * callInstFromBeh7.safetysharp: like callInst1, but with an inout-parameter, which was not preassigned and gets no value
 * callInstFromBeh8.safetysharp: like callInst1, but with an inout-parameter, which was not preassigned and gets a value
