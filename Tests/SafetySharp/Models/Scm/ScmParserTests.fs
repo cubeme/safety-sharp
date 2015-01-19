@@ -345,6 +345,13 @@ type ExampleFiles() =
         ()
 
     [<Test>]
+    member this.``Example callDelayedCaution2 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callDelayedCaution2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
     member this.``Example callDelayedSimple1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/callDelayedSimple1.scm"""
         let input = System.IO.File.ReadAllText inputFile

@@ -319,6 +319,24 @@ type CompleteRewriteTests () =
         newModel.Subs =? []
         ()
 
+    [<Test>]
+    member this.``Example callDelayedSimple1 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callDelayedSimple1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
 
         
     [<Test>]
@@ -450,6 +468,24 @@ type CompleteRewriteTests () =
     [<Test>]
     member this.``Example callInstHierarchyWithFaults1 gets rewritten (leveled up and inlined) completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = ScmRewriteState.initial model
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callDelayedSimpleWithFaults1 gets rewritten (leveled up and inlined) completely`` () =
+        let inputFile = """../../Examples/SCM/callDelayedSimpleWithFaults1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         //model.ProvPorts.Length =? 0
