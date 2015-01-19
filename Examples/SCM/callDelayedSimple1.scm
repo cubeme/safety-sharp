@@ -16,7 +16,7 @@ component simple {
 		locals{
 			int intLocal1;
 		}
-		pport1(intLocal1);
+		rport1(inout intLocal1);
 		intField1 := intLocal1;
 	}
 }

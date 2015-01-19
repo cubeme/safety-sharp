@@ -1,40 +1,51 @@
 component simple {	
 	component nested {
-		intField_inner : int = 1;
+		intField_inner : int = 0;
 		
-		rport1 ( inout inout_r : int);
+		rport_Increase ( );
+		rport_GetOldFieldValue ( inout inout_p : int );
 		
-		pport1 (inout inout_p : int) {
+		pport_Increase () {
 			locals{
 			}
 			intField_inner := intField_inner + 1;
-		}	
+		}
 		
-		pport2 (inout inout_p : int) {
+		pport_GetFieldValue (inout inout_p : int) {
 			locals{
 			}
 			inout_p := intField_inner;
 		}	
 		
-		rport1 = delayed pport1
+		pport_FromExtern (inout inout_p : int) {
+			locals{
+			}
+			rport_GetOldFieldValue (inout_p ) ;
+		}	
+		
+		rport_Increase = instantly pport_Increase
+		rport_GetOldFieldValue = delayed pport_GetFieldValue
 		
 		step {
 			locals{
 			}
-			rport1 ( );
+			rport_Increase ( );
 		}
 	}
 	
 	intField_outer : int = 0;
 	
-	rport_toCallFirst ( inout inout_r : int);
+	rport_increaseBeforeNestedStep ( );
+	rport_getValue ( inout intField_outer : int);
 	
-	rport_toCallFirst = instantly nested.pport2
+	rport_increaseBeforeNestedStep = instantly nested.pport_Increase
+	rport_getValue = instantly nested.pport_FromExtern
 	
 	step {
 		locals{
 		}
-		rport_toCallFirst( intField_outer );
+		rport_increaseBeforeNestedStep( );
 		step nested;
+		rport_getValue( inout intField_outer );
 	}
 }

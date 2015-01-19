@@ -18,7 +18,7 @@ component simple {
 			int intLocal1;
 		}
 		intLocal1 := 1;
-		rport1(intLocal1);
+		rport1(inout intLocal1);
 		intField1 := intLocal1;
 	}
 }

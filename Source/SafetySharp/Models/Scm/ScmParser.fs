@@ -533,7 +533,7 @@ module internal Parser =
                 {
                     BndDecl.Target = req;
                     BndDecl.Source = prov;
-                    BndDecl.Kind = BndKind.Instantaneous;
+                    BndDecl.Kind = BndKind.Delayed;
                 }
             attempt (pipe2 (bindingtarget_ws .>> (pstring_ws "=").>> (pstring_ws "delayed"))
                            (bindingsrc_ws)

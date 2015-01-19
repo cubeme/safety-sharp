@@ -228,7 +228,8 @@ module internal ScmRewriterInlineBehavior =
                                     List.zip provPortDecl.Params _params
 
                                 // Step 2: ParamExpr.ExprParam
-                                //   Every time the localVar with the name of ExprParam is called, it is replaced by its real expression
+                                //   Every time a localVar is accessed, which is actually an in-parameter (ExprParam) of the ProvPort,
+                                //   the localVar is inlined: The localVar is replaced by the expression declared in the call of the provPort.
                                 //   Note: InParam may never be written to!
                                 //         The Var of an InParam may never be used as InOutParam of a call. (Try to indirectly relief the rule above)
                                 let localVarToReqPortExprParamMap =

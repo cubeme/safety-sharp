@@ -7,7 +7,7 @@ component simple {
 	pport1 (inout inout_p : int) {
 		locals{
 		}
-		rport2(inout_p);
+		rport2(inout inout_p);
 	}
 	
 	pport2 (inout inout_p : int) {
@@ -25,7 +25,7 @@ component simple {
 		locals{
 			int intLocal1;
 		}
-		rport1(intLocal1);
+		rport1(inout intLocal1);
 		intField1 := intLocal1;
 	}
 }

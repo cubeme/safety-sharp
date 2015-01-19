@@ -572,7 +572,7 @@ module internal ScmHelpers =
             | Stm.AssignVar (var,expr) ->
                 let newExpr = rewriteExpr_varsToExpr (varMap) expr                
                 if varMap.ContainsKey var then              
-                    failwith "BUG: ExprParam may never be assigned to"
+                    failwith "BUG: ExprParam may never be assigned to." // User tries to replace something like "localVar:=7+2" with "5+intField:=7+2"
                 else
                     Stm.AssignVar (var, newExpr)                
             | Stm.AssignField (field, expr) ->
