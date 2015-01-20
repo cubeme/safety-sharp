@@ -48,8 +48,3 @@ module internal ScmRewriterConvertDelayedBindings =
     //     * When are execution in the "Pre-Step" (Note 2) and execution as first statements of a step the same???
     //       Do we expect the former or the latter?
     //     * Difference between making it "Pre-Step" (described here) or "Post-Step" (with better initial values)
-
-    type ConvertDelayedBindings = {
-        PreSteps:Map<CompPath,Stm list>;
-
-    }

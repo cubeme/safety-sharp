@@ -61,17 +61,9 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 1
         parentNode.Fields.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpField
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
@@ -100,17 +92,9 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 1
         parentNode.Fields.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpField
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
@@ -139,17 +123,9 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Faults.Length =? 2
         parentNode.Faults.Length =? 0
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpFault
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
@@ -178,17 +154,9 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.ReqPorts.Length =? 1
         parentNode.ReqPorts.Length =? 0
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
@@ -218,17 +186,9 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.ProvPorts.Length =? 1
         parentNode.ProvPorts.Length =? 0
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
@@ -264,17 +224,9 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 0
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild
@@ -315,17 +267,9 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 1
         parentNode.Bindings.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
@@ -367,17 +311,9 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 1
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
@@ -419,17 +355,9 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
@@ -472,17 +400,9 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
@@ -524,17 +444,9 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
@@ -583,17 +495,9 @@ type FixpointIteratorTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 3
         parentNode.Fields.Length =? 1
-        let componentToChange = ScmRewriterLevelUp.createEmptyFromPath model pathOfChild
-        let initialState =
-            {
-                ScmRewriteState.Model = model;
-                ScmRewriteState.TakenNames = model.getTakenNames () |> Set.ofList;
-                ScmRewriteState.LevelUp = Some(componentToChange);
-                ScmRewriteState.InlineBehavior = None;
-                ScmRewriteState.ConvertFaults = None;
-                ScmRewriteState.Tainted = false;
-            }
+        let initialState = (ScmRewriteState.initial model) 
         let workFlow = scmRewrite {
+            do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpField) 
             do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()

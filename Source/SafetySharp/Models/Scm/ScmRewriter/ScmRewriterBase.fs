@@ -29,10 +29,9 @@ module internal ScmRewriterBase =
     type ScmModel = CompDecl //may change, but I hope it does not
     
     type ScmRewriterLevelUp = {
-        ChildPath : CompPath;
-        ParentPath : CompPath;
-        ChildCompDecl : CompDecl;
-        ParentCompDecl : CompDecl;
+        // child lives in parent. Things from the child are moved
+        // into the parent. The path to the parent is declared in the ScmRewriterState
+        NameOfChildToRewrite : Comp;
         
         // Forwarder
         // For each of these. Map goes from:old -> to:new. Old entity lives always in ChildPath, new in ParentPath
@@ -54,29 +53,12 @@ module internal ScmRewriterBase =
         ArtificialStep : (ReqPort*ProvPort) option
     }
         with
-            static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
-                {
-                    ScmRewriterLevelUp.ChildPath = path;
-                    ScmRewriterLevelUp.ParentPath = path.Tail;
-                    ScmRewriterLevelUp.ChildCompDecl = model.getDescendantUsingPath path;
-                    ScmRewriterLevelUp.ParentCompDecl = model.getDescendantUsingPath path.Tail;
-                    ScmRewriterLevelUp.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
-                    ScmRewriterLevelUp.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
-                    ScmRewriterLevelUp.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
-                    ScmRewriterLevelUp.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
-                    ScmRewriterLevelUp.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
-                    ScmRewriterLevelUp.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
-                    ScmRewriterLevelUp.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
-                    ScmRewriterLevelUp.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
-                    ScmRewriterLevelUp.FaultsToRewrite = [];
-                    ScmRewriterLevelUp.ProvPortsToRewrite = [];
-                    ScmRewriterLevelUp.StepsToRewrite = [];
-                    ScmRewriterLevelUp.ArtificialStep = None;
-                }
-            member infos.oldToNewMaps1 =                
-                    (infos.ArtificialReqPortOldToNew,infos.ArtificialFaultsOldToNew,Map.empty<Var,Var>,infos.ArtificialFieldsOldToNew)
-            member infos.oldToNewMaps2 =                
-                    (infos.ArtificialFaultsOldToNew)
+            member levelUp.oldToNewMaps1 =                
+                    (levelUp.ArtificialReqPortOldToNew,levelUp.ArtificialFaultsOldToNew,Map.empty<Var,Var>,levelUp.ArtificialFieldsOldToNew)
+            member levelUp.oldToNewMaps2 =                
+                    (levelUp.ArtificialFaultsOldToNew)
+            //member levelUp.ParentCompDecl =
+            //        levelUp.ParentCompDecl
                                         
     type ScmRewriterConvertFaults = {
         CompPath : CompPath;
@@ -98,12 +80,11 @@ module internal ScmRewriterBase =
                     ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
                     ScmRewriterConvertFaults.BehaviorsToRewrite = behaviorsToRewrite;
                 }
+                
+    type ConvertDelayedBindings = {
+        PreSteps:Map<CompPath,Stm list>;
 
-    (*
-    type ScmRewriterConvertDelayedBindings = {
-        A: unit;
     }
-    *)
     
     type ScmRewriterInlineBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
@@ -121,6 +102,10 @@ module internal ScmRewriterBase =
             
     type ScmRewriteState = {
         Model : ScmModel;
+
+        ChangingSubComponent : CompDecl;
+        PathOfChangingSubcomponent : CompPath;
+
         TakenNames : Set<string>;
         LevelUp : ScmRewriterLevelUp option;
         // TODO: Optimization: Add parent of ComponentToRemove here. Thus, when a change to the componentToRemove is done, only its parent needs to be updated and not the whole model.
@@ -134,6 +119,8 @@ module internal ScmRewriterBase =
             static member initial (scm:ScmModel) = 
                 {
                     ScmRewriteState.Model = scm;
+                    ChangingSubComponent = scm;
+                    PathOfChangingSubcomponent = [scm.Comp];
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.LevelUp = None;
                     ScmRewriteState.InlineBehavior = None;
@@ -265,8 +252,11 @@ module internal ScmRewriterBase =
             (List.rev newVars, varState)
         ScmRewriteFunction (newUnusedVarNames)
 
-
         
+
+    // TODO: Move every access to the model into a function here.
+    //       Here we can easily assure, that reading operations occur on the correct part of the model (which may
+    //       live in the rewritten part). Also buffering/caching operations can be implemented here more easily.
 
 
         

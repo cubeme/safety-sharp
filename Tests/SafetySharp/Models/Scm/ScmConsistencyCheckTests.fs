@@ -60,7 +60,7 @@ type ScmConsistencyCheckOfDelayedBindingsTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         ScmConsistencyCheck.``check if Main Steps make at most one delayed call (transitive)`` model =? true
-        ScmConsistencyCheck.``check if ProvPorts of model's root make at most one delayed call (transitive)`` model =? true
+        //ScmConsistencyCheck.``check if ProvPorts of model's root make at most one delayed call (transitive)`` model =? true
         ()
 
     [<Test>]
