@@ -104,7 +104,7 @@ module internal ScmRewriterConvertFaults =
                                           .addProvPort(newProvPortDecl)
                                           .addBinding(newBindingDecl)
                                           .removeFault(faultToConvert)
-                do! updateComponentToChange newCompDecl
+                do! updateSubComponentToChange newCompDecl
                 let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                 let newConvertFaultsState =
                     { convertFaultsState with
@@ -145,7 +145,7 @@ module internal ScmRewriterConvertFaults =
                                 ProvPortDecl.Behavior = newBehavior;
                             }
                         let newCompDecl = compDecl.replaceProvPort(provPort,newProvPort);
-                        do! updateComponentToChange newCompDecl
+                        do! updateSubComponentToChange newCompDecl
                         let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                         let newConvertFaultsState =
                             { convertFaultsState with
@@ -163,7 +163,7 @@ module internal ScmRewriterConvertFaults =
                                 FaultDecl.Step = newBehavior;
                             }
                         let newCompDecl = compDecl.replaceFault(fault,newFault);                        
-                        do! updateComponentToChange newCompDecl
+                        do! updateSubComponentToChange newCompDecl
                         let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                         let newConvertFaultsState =
                             { convertFaultsState with
@@ -181,7 +181,7 @@ module internal ScmRewriterConvertFaults =
                                 StepDecl.Behavior = newBehavior;
                             }
                         let newCompDecl = compDecl.replaceStep(step,newStep);                        
-                        do! updateComponentToChange newCompDecl
+                        do! updateSubComponentToChange newCompDecl
                         let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                         let newConvertFaultsState =
                             { convertFaultsState with
@@ -260,7 +260,7 @@ module internal ScmRewriterConvertFaults =
                 let newCompDecl =
                     compDecl.removeProvPorts(provPortDeclsToUnite)
                             .addProvPort(newProvPort)
-                do! updateComponentToChange newCompDecl
+                do! updateSubComponentToChange newCompDecl
     }    
     
     let uniteStep : ScmRewriteFunction<unit> = scmRewrite {
@@ -326,7 +326,7 @@ module internal ScmRewriterConvertFaults =
                     compDecl.removeSteps(stepDecls)
                             .addStep(newStep)
                 
-                do! updateComponentToChange newCompDecl
+                do! updateSubComponentToChange newCompDecl
     }
     
     let convertFaultsWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {

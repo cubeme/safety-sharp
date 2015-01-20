@@ -27,6 +27,7 @@ module internal ScmRewriterFlattenModel =
     open ScmRewriterBase
     open ScmRewriterLevelUp
     open ScmRewriterConvertFaults
+    open ScmRewriterConvertDelayedBindings
     open ScmRewriterInlineBehavior
 
     
@@ -45,6 +46,10 @@ module internal ScmRewriterFlattenModel =
             // convert faults
             do! convertFaults
             //do! assertNoFault
+            do! checkConsistency
+            
+            // convert delayed bindings            
+            do! convertDelayedBindings
             do! checkConsistency
 
             // inline everything beginning with the main step

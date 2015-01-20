@@ -33,7 +33,7 @@ module internal ScmRewriterLevelUp =
         ScmRewriterBase.getSubComponentToChange
         
     let updateParentCompDecl (newParent:CompDecl) : ScmRewriteFunction<unit> = 
-        ScmRewriterBase.updateComponentToChange newParent
+        ScmRewriterBase.updateSubComponentToChange newParent
 
     let getChildCompDecl : ScmRewriteFunction<CompDecl> = 
         let getChildCompDecl (state:ScmRewriteState) : (CompDecl * ScmRewriteState) =

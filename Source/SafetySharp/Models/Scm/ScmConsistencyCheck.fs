@@ -20,6 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+
+// TODO:
+// Checks can be divided into several groups
+//   * Something, which can be checked, without knowing "something" in the parent (Entity-Local)
+//   * Something, which needs the whole _component_, where it is defined (Component-Local)
+//   * Something, which needs the whole _model_ (Model-Global)
+//     In this group walkers over statements and collections are useful
+//     This group can also reuse elements from entity-local
+
 namespace SafetySharp.Models.Scm
 
 module internal ScmConsistencyCheck =
@@ -81,6 +90,7 @@ module internal ScmConsistencyCheck =
         // first construct every continuation for the stmWalker
         // the walker should return the maximal depth of calls of delayed bindings. But it should also stop
         // as soon as it reaches the depth 2
+        // Note: If this gets an efficiency bottleneck it can be implemented faster with the Floyd-Warshall-Algorithm
         let stopValue = 2
         let walkerAssessor (stm:Stm,oldValue:int) : (bool*int) = //returns (keepOnWalking,number of delayed Port Calls)
             match stm with                
@@ -220,8 +230,8 @@ module internal ScmConsistencyCheck =
     // single checks for ProvPorts
     ////////////
     
-    let ``check if ProvPort has no InExpr parameter`` =
-        true
-
-    let ``check if all ProvPortDecls with the same ProvPort have the same signature`` =
-        false
+    let ``check if ProvPortDecl has no In parameter`` (provPortDecl:ProvPortDecl) =
+        provPortDecl.Params |> List.forall (fun param -> param.Dir <> ParamDir.In)
+        
+    //let ``check if all ProvPortDecls with the same ProvPort have the same signature`` =
+    //    false

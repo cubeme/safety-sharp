@@ -101,6 +101,13 @@ module internal ScmHelpers =
     type VarDecl with
         member var.getName =
             var.Var.getName
+            
+    // Extension methods
+    type Type with
+        member _type.getDefaultInitVal =
+            match _type with
+                | Type.BoolType -> Val.BoolVal(true)
+                | Type.IntType -> Val.IntVal(0)
 
     // Extension methods
     type Field with
@@ -238,6 +245,10 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Fields = field::node.Fields
             }
+        member node.addFields (fields:FieldDecl list) =
+            { node with
+                CompDecl.Fields = fields@node.Fields
+            }
                                 
         member node.removeFault (fault:FaultDecl) =
             { node with
@@ -331,7 +342,8 @@ module internal ScmHelpers =
                 CompDecl.Subs = (node.Subs |> List.map (fun child -> if child.Comp=childToReplace then newChild else child));
             }
             
-        // Complete model        
+        // Complete model
+        // TODO: Move to rewriter
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
             if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
                 //root should be replaced
@@ -495,10 +507,16 @@ module internal ScmHelpers =
                 Stm.StepFault (newFault)
                 
     let rewriteBehavior (reqPortMap:Map<ReqPort,ReqPort>,faultMap:Map<Fault,Fault>,varMap:Map<Var,Var>,fieldMap:Map<Field,Field>) (behavior:BehaviorDecl) =
+        let newLocals =
+            behavior.Locals |> List.map (fun varDecl -> {varDecl with VarDecl.Var = itemOrOld varMap varDecl.Var})
         {
-            BehaviorDecl.Locals= behavior.Locals; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any local variable. So we can keep it
+            BehaviorDecl.Locals= newLocals;
             BehaviorDecl.Body = rewriteStm (reqPortMap,faultMap,varMap,fieldMap) behavior.Body;
         }
+    let prependStmBeforeStm (stm:Stm) (oldStm:Stm) =
+        match oldStm with
+            | Stm.Block (stmnts) -> Stm.Block (stm::stmnts) //prepend statement to existing Block
+            | _ -> Stm.Block (stm::oldStm::[]) //create a new Block with stm as first entry
 
 
     let rewriteStm_onlyVars (varMap:Map<Var,Var>) =

@@ -67,10 +67,7 @@ module internal ScmRewriterBase =
         BehaviorsToRewrite : BehaviorWithLocation list;
     }
                 
-    type ConvertDelayedBindings = {
-        PreSteps:Map<CompPath,Stm list>;
-
-    }
+    type ScmConvertDelayedBindings = unit
     
     type ScmRewriterInlineBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
@@ -98,6 +95,7 @@ module internal ScmRewriterBase =
         //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
         InlineBehavior : ScmRewriterInlineBehavior option;
+        ConvertDelayedBindings : ScmConvertDelayedBindings option;
         ConvertFaults : ScmRewriterConvertFaults option;
         Tainted : bool;
     }
@@ -110,6 +108,7 @@ module internal ScmRewriterBase =
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.LevelUp = None;
                     ScmRewriteState.InlineBehavior = None;
+                    ScmRewriteState.ConvertDelayedBindings = None;
                     ScmRewriteState.ConvertFaults = None;
                     ScmRewriteState.Tainted = false;
                 }
@@ -174,7 +173,11 @@ module internal ScmRewriterBase =
 
     
     // helpers
-
+    
+    // TODO:
+    // let! x = (stateFromLevelUp scmRewriteLevelUp{...})
+    // let fromBaseState = ... (execute and write back)
+    // let getUnusedFieldName = (fromBaseState ScmRewriterBase.getUnusedFieldName)
     
 
     let getCompletlyFreshName (basedOn:string) : ScmRewriteFunction<string> = scmRewrite {
@@ -238,6 +241,17 @@ module internal ScmRewriterBase =
             (List.rev newVars, varState)
         ScmRewriteFunction (newUnusedVarNames)
 
+    let getUnusedFieldNames (basedOn:string list) : ScmRewriteFunction<Field list> = 
+        let newUnusedFieldNames (state) : (Field list * ScmRewriteState) =
+            let mutable varState = state
+            let mutable newFields = []
+            for i in basedOn do
+                let (newField,newState) = runState (getUnusedFieldName i) varState
+                varState <- newState
+                newFields <- newField::newFields
+            (List.rev newFields, varState)
+        ScmRewriteFunction (newUnusedFieldNames)
+
         
     let getSubComponentToChange : ScmRewriteFunction<CompDecl> = 
         let getParentCompDecl (state:ScmRewriteState) : (CompDecl * ScmRewriteState) =
@@ -251,15 +265,15 @@ module internal ScmRewriterBase =
         ScmRewriteFunction (getPathOfSubComponentToChange)
 
         
-    let updateComponentToChange (updatedComponent:CompDecl) : ScmRewriteFunction<unit> = 
-        let updateComponentToChange (state:ScmRewriteState) : (unit * ScmRewriteState) =
+    let updateSubComponentToChange (updatedSubComponent:CompDecl) : ScmRewriteFunction<unit> = 
+        let updateSubComponentToChange (state:ScmRewriteState) : (unit * ScmRewriteState) =
             let newState =
                 { state with
-                    ScmRewriteState.ChangingSubComponent = updatedComponent;
+                    ScmRewriteState.ChangingSubComponent = updatedSubComponent;
                     ScmRewriteState.Tainted = true;
                 }
             (),newState
-        ScmRewriteFunction (updateComponentToChange)
+        ScmRewriteFunction (updateSubComponentToChange)
 
     // TODO: Move every access to the model into a function here.
     //       Here we can easily assure, that reading operations occur on the correct part of the model (which may

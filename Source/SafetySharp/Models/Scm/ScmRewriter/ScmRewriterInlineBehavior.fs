@@ -26,6 +26,7 @@ module internal ScmRewriterInlineBehavior =
     open ScmHelpers
     open ScmRewriterBase
     
+    // Currently only works in the root component
                 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inline Behavior

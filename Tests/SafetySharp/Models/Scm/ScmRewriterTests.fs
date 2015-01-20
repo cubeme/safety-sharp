@@ -548,7 +548,7 @@ type CompleteLevelUpTests () =
         // 1 Artificial Prov Port, which contains the code of the previous nested step
         newModel.ProvPorts.Length =? 1
         ()
-
+        
     [<Test>]
     member this.``Example nestedComponent2 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent2.scm"""
@@ -569,6 +569,63 @@ type CompleteLevelUpTests () =
         newModel.Subs =? []
         // 4 Artificial Prov Ports, which contain the code of the previous nested steps
         newModel.ProvPorts.Length =? 4
+        ()
+
+    [<Test>]
+    member this.``Example nestedComponent3 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let initialState = ScmRewriteState.initial model
+        let workFlow = scmRewrite {
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
+        }
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example nestedComponent4 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let initialState = ScmRewriteState.initial model
+        let workFlow = scmRewrite {
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
+        }
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example nestedComponent5 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let initialState = ScmRewriteState.initial model
+        let workFlow = scmRewrite {
+            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
+        }
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
+        let newModel = resultingState.Model
+        printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
         ()
 
     [<Test>]
