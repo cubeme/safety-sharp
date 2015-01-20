@@ -84,7 +84,7 @@ module internal ScmRewriterConvertDelayedBindings =
 
 
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
-                : ScmRewriteFunction<(VarDecl*Field) list> = scmRewrite {
+                : ScmRewriteFunction<Map<Var,Field>> = scmRewrite {
         let varList = provPortDecl.Params |> List.map (fun param -> param.Var )
         let fieldNamesBasedOn = varList |> List.map (fun var -> sprintf "%s_%s" fieldNamePrefix var.getName)
         let! newFieldList = getUnusedFieldNames fieldNamesBasedOn
@@ -100,23 +100,42 @@ module internal ScmRewriterConvertDelayedBindings =
         let! oldCompDecl = getSubComponentToChange
         let newCompDecl = oldCompDecl.addFields newFieldDecls        
         do! updateSubComponentToChange oldCompDecl        
-        return  varDeclToFieldList
+        let varToFieldMap = varDeclToFieldList |> List.map (fun (varDecl,field) -> varDecl.Var,field) |> Map.ofList
+        return  varToFieldMap
     }
 
-    let createPreStepOfProvPort (fieldNamePrefix:string)  (provPortDecl:ProvPortDecl) : ScmRewriteFunction<unit> = scmRewrite {
+    let createPreStepOfProvPort (fieldNamePrefix:string)  (provPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) : ScmRewriteFunction<unit> = scmRewrite {
         let varListOfBeh = provPortDecl.Behavior.Locals |> List.map (fun param -> param.Var )
         let newVarNamesOfBehBasedOn = varListOfBeh |> List.map (fun var -> sprintf "preStepVar_%s_%s" fieldNamePrefix var.getName)
         let! newVarsForBeh = getUnusedVarNames newVarNamesOfBehBasedOn
         
-        // replace localVars (use rewriteBehavior, because also the BehaviorDecl.Locals get exchanged)
-        let newBehavior1 = rewriteBehavior (Map.empty,Map.empty,varMap,Map.empty) provPortDecl.Behavior
+        // replace localVars in ProvPortDecl (use rewriteBehavior, because also the BehaviorDecl.Locals get exchanged)
+        let varMapLocals = List.zip varListOfBeh newVarsForBeh |> Map.ofList
+        let newBehavior1 = rewriteBehavior (Map.empty,Map.empty,varMapLocals,Map.empty) provPortDecl.Behavior
+        
 
         // replace outs in param with fields
-        //rewriteStm_varsToFields (varMap:Map<Var,Field>) (stm:Stm) : Stm =
+        let newBehavior2 =
+            {
+                BehaviorDecl.Locals = newBehavior1.Locals;
+                BehaviorDecl.Body = rewriteStm_varsToFields varToNewFieldMap newBehavior1.Body;
+            }
 
-        // add localVars to Step
-        // add stm to Step
-        //prependStmBeforeStm
+        // add prepend modified ProvPortDecl to Step
+        let! compDecl = getSubComponentToChange
+        // use As3
+        let step = compDecl.Steps.Head
+        let newBehavior3 =
+            {
+                BehaviorDecl.Locals = newBehavior2.Locals @step.Behavior.Locals; // add vars to Step
+                BehaviorDecl.Body = prependStmBeforeStm newBehavior2.Body step.Behavior.Body; //prepend new Stm before step
+            }
+        let newStep =
+            { step with
+                StepDecl.Behavior = newBehavior3;
+            }
+        let newCompDecl = compDecl.replaceStep(step,newStep)
+        do! updateSubComponentToChange newCompDecl
         return ()
     }
     
@@ -159,9 +178,9 @@ module internal ScmRewriterConvertDelayedBindings =
                 let! provPortDecl = findProvPortOfDelayedBinding bindingToConvert
                 let! newProvPort = getUnusedProvPortName (sprintf "%s_delayed" provPortDecl.getName)
                 let newNamePrefix = newProvPort.getName
-                let! varDeclToNewFieldList = createArtificialFieldsForProvPort newNamePrefix bindingToConvert provPortDecl
+                let! varToNewFieldMap = createArtificialFieldsForProvPort newNamePrefix bindingToConvert provPortDecl
                 // fields have been created
-                do! createPreStepOfProvPort newNamePrefix provPortDecl
+                do! createPreStepOfProvPort newNamePrefix provPortDecl varToNewFieldMap
                 do! createReflectionOfProvPort provPortDecl
                 do! replaceDelayedBinding bindingToConvert
                 return ()

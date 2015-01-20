@@ -102,6 +102,27 @@ type ExampleFiles() =
         ()
 
     [<Test>]
+    member this.``Example nestedComponent3 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example nestedComponent4 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example nestedComponent5 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/nestedComponent5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
     member this.``Example simpleComponent1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/simpleComponent1.scm"""
         let input = System.IO.File.ReadAllText inputFile
