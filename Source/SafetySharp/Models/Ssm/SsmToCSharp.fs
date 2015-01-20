@@ -30,6 +30,9 @@ module internal SsmToCSharp =
     let transform m =
         let writer = StructuredWriter ()
 
+        let mangledName (m : string) =
+            writer.Append "%s" (m.Replace("@", "").Replace("$", ""))
+
         let typeRef = function
             | VoidType    -> writer.Append "void"
             | BoolType    -> writer.Append "bool"
@@ -59,14 +62,14 @@ module internal SsmToCSharp =
         let var = function
             | Arg (a, _)   -> writer.Append "%s" a
             | Local (l, _) -> writer.Append "%s" l
-            | Field (f, _) -> writer.Append "%s" f
+            | Field (f, _) -> mangledName f
             | This _       -> writer.Append "this"
 
         let varDecl = function
             | Arg (a, t)   -> typeRef t; writer.Append " %s" a
             | Local (l, t) -> typeRef t; writer.Append " %s" l
             | Field (f, t) -> typeRef t; writer.Append " %s" f
-            | This _       -> invalidOp "Cannot declare this pointer."
+            | This _       -> invalidOp "Cannot declare 'this' pointer."
 
         let rec call t m d e =
             let writeArg (d, e) =
@@ -79,7 +82,9 @@ module internal SsmToCSharp =
             match t with
             | None -> writer.Append "%s." m.Type
             | Some t -> expr t; writer.Append "."
-            writer.Append "%s(" m.Name; writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
+            mangledName m.Name
+            writer.Append "("
+            writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
 
         and expr = function
             | BoolExpr b                  -> writer.Append <| if b then "true" else "false"
@@ -116,7 +121,9 @@ module internal SsmToCSharp =
             | CallStm (m, _, d, _, e, t) -> call t m d e; writer.AppendLine ";"
 
         typeRef m.Return
-        writer.Append " %s(" m.Name
+        writer.Append " "
+        mangledName m.Name
+        writer.Append "("
         writer.AppendRepeated m.Params (fun p ->
             match p.Direction with
             | In    -> ()

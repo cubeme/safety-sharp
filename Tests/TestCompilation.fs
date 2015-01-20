@@ -49,14 +49,14 @@ type Diagnostic =
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]
-type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * string) array) =
+type TestCompilation (csharpCode, [<ParamArray>] assemblies : Assembly array) =
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
     let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices;\n" + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
-    let assemblyPath = Path.GetTempFileName () + ".dll"
+    let assemblyPath = Path.Combine (Environment.CurrentDirectory, sprintf "tmp_%s.dll" (Guid.NewGuid().ToString ()))
 
     let csharpCompilation = 
         CSharpCompilation
@@ -68,15 +68,15 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
             .AddSyntaxTrees(syntaxTree)
             .WithOptions(CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithOptimizationLevel OptimizationLevel.Release)
 
+    let csharpCompilation =
+        assemblies |> Array.fold (fun (c : CSharpCompilation) a -> c.AddReferences (MetadataReference.CreateFromFile a.Location)) csharpCompilation
+
     let rec addExternAliases (compilation : CSharpCompilation) (externAliases : (string * CSharpCompilation) list) =
         match externAliases with
         | [] -> compilation
         | (name, externCompilation) :: externAliases -> 
             let compilation = compilation.AddReferences(externCompilation.ToMetadataReference(ImmutableArray.Create(name)))
             addExternAliases compilation externAliases
-
-    let externAliases = externAliases |> Array.map (fun (name, code) -> (name, TestCompilation(code).CSharpCompilation)) |> List.ofArray
-    let csharpCompilation = addExternAliases csharpCompilation externAliases
 
     let diagnostics = csharpCompilation.GetDiagnostics() |> Seq.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
 

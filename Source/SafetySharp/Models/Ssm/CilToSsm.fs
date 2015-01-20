@@ -41,19 +41,7 @@ module internal CilToSsm =
     /// Provides an extension method that returns all methods excluding all constructors.
     type private TypeDefinition with
         member this.GetMethods () = this.Methods |> Seq.filter (fun m -> not m.IsConstructor)
-     
-    /// Renames the given field based on the given inheritance level.
-    let internal renameField fieldName inheritanceLevel =
-        sprintf "%s%s" (String ('$', inheritanceLevel)) fieldName
-
-    /// Renames the given method based on the given inheritance level.
-    let internal renameMethod methodName inheritanceLevel =
-        sprintf "%s%s" (String ('$', inheritanceLevel)) methodName
-
-    /// Renames the given overloaded method based on the given overload index.
-    let internal renameOverloadedMethod methodName overloadIndex =
-        sprintf "%s@%d" methodName overloadIndex
-
+    
     /// Gets the C# compatiable full name.
     let private getCSharpType (fullName : string) =
         fullName.Replace("/", ".")
@@ -67,6 +55,31 @@ module internal CilToSsm =
             0
         else
             (getInheritanceLevel (t.BaseType.Resolve ())) + 1
+
+    /// Returns a unique name for the given field name and inheritance level.
+    let internal makeUniqueFieldName fieldName inheritanceLevel =
+        sprintf "%s%s" (String ('$', inheritanceLevel)) fieldName
+
+    /// Returns a unique name for the given method name, inheritance level and overload index.
+    let internal makeUniqueMethodName methodName inheritanceLevel overloadIndex =
+        sprintf "%s%s%s" (String ('$', inheritanceLevel)) methodName (String ('@', overloadIndex))
+
+     /// Gets a unique name for the given field within the declaring type's inheritance hierarchy.
+    let private getUniqueFieldName (f : FieldDefinition) =
+        let level = getInheritanceLevel f.DeclaringType
+        makeUniqueFieldName f.Name level
+
+    /// Gets a unique name for the given method within the declaring type's inheritance hierarchy. Overloaded methods
+    /// are also assigned unique names.
+    let private getUniqueMethodName (m : MethodDefinition) =
+        let level = getInheritanceLevel m.DeclaringType
+        let index = 
+            m.DeclaringType.GetMethods() 
+            |> Seq.filter (fun m' -> m'.Name = m.Name)
+            |> Seq.toList
+            |> List.findIndex ((=) m)
+
+        makeUniqueMethodName m.Name level index
 
     /// Generates a fresh local variable (see also the Demange paper)
     let freshLocal pc idx t =
@@ -158,7 +171,7 @@ module internal CilToSsm =
         let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i" l.Index else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
         let arg (a : ParameterDefinition) = createVar Arg (argName a) a.ParameterType
-        let field (f : FieldReference) = createVar Field f.Name f.FieldType
+        let field (f : FieldReference) = createVar Field (getUniqueFieldName (f.Resolve ())) f.FieldType
 
         let containsLocal l = checkStack (localVarPred (localName l))
         let containsArg a = checkStack (argVarPred a)
@@ -195,7 +208,7 @@ module internal CilToSsm =
             let paramTypes = m.Parameters |> Seq.map (fun p -> mapVarType p.ParameterType) |> Seq.toList
             let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
-            let methodId = { Type = getCSharpType m.DeclaringType.FullName; Name = m.Name }
+            let methodId = { Type = getCSharpType m.DeclaringType.FullName; Name = getUniqueMethodName m }
 
             // Determine the target of invocation, if any
             let target = 
@@ -419,7 +432,7 @@ module internal CilToSsm =
             | _                    -> (f, None)
         )
         |> Seq.filter (fun (f, t) -> t <> None)
-        |> Seq.map (fun (f, t) -> Field (f.Name, t.Value))
+        |> Seq.map (fun (f, t) -> Field (getUniqueFieldName f, t.Value))
         |> Seq.toList
 
     /// Transforms the given method to an SSM method with structured control flow.
@@ -433,7 +446,7 @@ module internal CilToSsm =
             |> Ssm.replaceGotos
 
         {
-            Name = m.Name
+            Name = getUniqueMethodName m
             Body = body
             Params =
                 m.Parameters 
@@ -464,56 +477,26 @@ module internal CilToSsm =
 
         transform t
 
-    /// Renames all members of the type based on the type's inheritance level. Overloaded methods also get unique names.
-    let applyRenamings (types : TypeDefinition seq) =
-        let renamed = HashSet<TypeDefinition> ()
-        let rec renameMembers (t : TypeDefinition) =
-            // Rename the members of the base type
-            if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
-                renameMembers (t.BaseType.Resolve ())
-
-            // First check if we've already renamed the type; we do not want to rename twice
-            if renamed.Add t then
-                let inheritanceLevel = getInheritanceLevel t
-
-                // Rename all fields soley based on the inheritance level
-                t.Fields |> Seq.iter (fun f -> f.Name <- renameField f.Name inheritanceLevel)
-
-                // Rename all methods based on the inheritance level first
-                t.GetMethods() |> Seq.iter (fun m -> m.Name <- renameMethod m.Name inheritanceLevel)
-
-                // Now check for overloaded methods and rename them
-                t.GetMethods() 
-                |> Seq.filter (fun m -> not m.IsConstructor)
-                |> Seq.groupBy (fun m -> m.Name) 
-                |> Seq.filter (fun (_, methods) -> Seq.length methods > 1)
-                |> Seq.iter (fun (_, methods) ->
-                    methods |> Seq.iteri (fun index m -> m.Name <- renameOverloadedMethod m.Name index)
-                )
-
-        types |> Seq.iter renameMembers
-
     /// Gets the type definitions for all given components.
     let getTypeDefinitions (components : Component list) =
-        if components |> Seq.map (fun o -> o.GetType().Assembly) |> Seq.distinct |> Seq.length <> 1 then
-            invalidOp "Expected all types to live in the same assembly."
-
-        let firstType = components.Head.GetType ()
-        let resolver = DefaultAssemblyResolver ()
-        resolver.AddSearchDirectory (Path.GetDirectoryName firstType.Assembly.Location)
-        let assemblyDefinition = AssemblyDefinition.ReadAssembly (firstType.Assembly.Location, ReaderParameters (AssemblyResolver = resolver))
         let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeDefinition> ()
 
         components 
+        |> Seq.map (fun c -> c.GetType ())
         |> Seq.distinct
-        |> Seq.iter (fun o -> dictionary.Add (o.GetType (), assemblyDefinition.MainModule.Import(o.GetType ()).Resolve ()))
+        |> Seq.iter (fun t -> 
+            let resolver = DefaultAssemblyResolver ()
+            resolver.AddSearchDirectory (Path.GetDirectoryName (t.Assembly.Location))
+
+            let assemblyDefinition = AssemblyDefinition.ReadAssembly (t.Assembly.Location, ReaderParameters (AssemblyResolver = resolver))
+            dictionary.Add (t, assemblyDefinition.MainModule.Import(t).Resolve ())
+        )
 
         dictionary.ToImmutableDictionary ()
 
     /// Transforms the model to a S# model.
     let transformModel (model : Model) =
         let typeDefinitions = getTypeDefinitions model.Components
-        applyRenamings typeDefinitions.Values
 
         let transform (comp : Component) =
             transformType typeDefinitions.[comp.GetType ()]

@@ -54,18 +54,18 @@ module ``CilToSsm Field Transformations`` =
 
     [<Test>]
     let ``component with single field`` () =
-        transform "class C : Component { int _field; }" "new C()" =? [ Field (CilToSsm.renameField "_field" 0, IntType) ]
+        transform "class C : Component { int _field; }" "new C()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, IntType) ]
 
     [<Test>]
     let ``component with two fields`` () =
         transform "class C : Component { int _field1; bool _field2; }" "new C()" =? 
-            [ Field (CilToSsm.renameField "_field1" 0, IntType); Field (CilToSsm.renameField "_field2" 0, BoolType) ]
+            [ Field (CilToSsm.makeUniqueFieldName "_field1" 0, IntType); Field (CilToSsm.makeUniqueFieldName "_field2" 0, BoolType) ]
 
     [<Test; Ignore("not yet implemented")>]
     let ``generic component with generic field of supported type`` () =
         let c = "class C<T> : Component { T _field; }"
-        transform c "new C<int>()" =? [ Field (CilToSsm.renameField "_field" 0, IntType) ]
-        transform c "new C<bool>()" =? [ Field (CilToSsm.renameField "_field" 0, BoolType) ]
+        transform c "new C<int>()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, IntType) ]
+        transform c "new C<bool>()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, BoolType) ]
 
     [<Test; Ignore("not yet implemented")>]
     let ``generic component with generic field of unsupported type`` () =
@@ -76,17 +76,17 @@ module ``CilToSsm Field Transformations`` =
     [<Test>]
     let ``renaming: inherited component with non-conflicting field names`` () =
         let c = "class C : Component { int _field; } class D : C { bool _otherField; }"
-        transform c "new D()" =? [ Field (CilToSsm.renameField "_field" 0, IntType); Field (CilToSsm.renameField "_otherField" 1, BoolType) ]
+        transform c "new D()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, IntType); Field (CilToSsm.makeUniqueFieldName "_otherField" 1, BoolType) ]
                                                                                             
     [<Test>]
     let ``renaming: inherited component with conflicting field names`` () =
         let c = "class C : Component { int _field1; bool _field2; } class D : C { bool _field1; bool _field2; }"
         transform c "new D()" =? 
             [ 
-                Field (CilToSsm.renameField "_field1" 0, IntType)
-                Field (CilToSsm.renameField "_field2" 0, BoolType) 
-                Field (CilToSsm.renameField "_field1" 1, BoolType)
-                Field (CilToSsm.renameField "_field2" 1, BoolType) 
+                Field (CilToSsm.makeUniqueFieldName "_field1" 0, IntType)
+                Field (CilToSsm.makeUniqueFieldName "_field2" 0, BoolType) 
+                Field (CilToSsm.makeUniqueFieldName "_field1" 1, BoolType)
+                Field (CilToSsm.makeUniqueFieldName "_field2" 1, BoolType) 
             ]
 
     [<Test>]
@@ -94,10 +94,10 @@ module ``CilToSsm Field Transformations`` =
         let c = "class A : Component { int a; } class B : A { bool b1; bool b2; } class C : B { bool c; } class D : C { int d; } class E : D { bool e; }"
         transform c "new E()" =? 
             [ 
-                Field (CilToSsm.renameField "a" 0, IntType)
-                Field (CilToSsm.renameField "b1" 1, BoolType) 
-                Field (CilToSsm.renameField "b2" 1, BoolType) 
-                Field (CilToSsm.renameField "c" 2, BoolType) 
-                Field (CilToSsm.renameField "d" 3, IntType) 
-                Field (CilToSsm.renameField "e" 4, BoolType) 
+                Field (CilToSsm.makeUniqueFieldName "a" 0, IntType)
+                Field (CilToSsm.makeUniqueFieldName "b1" 1, BoolType) 
+                Field (CilToSsm.makeUniqueFieldName "b2" 1, BoolType) 
+                Field (CilToSsm.makeUniqueFieldName "c" 2, BoolType) 
+                Field (CilToSsm.makeUniqueFieldName "d" 3, IntType) 
+                Field (CilToSsm.makeUniqueFieldName "e" 4, BoolType) 
             ]

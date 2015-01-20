@@ -73,6 +73,7 @@
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
+    <Compile Include="TestCleanup.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

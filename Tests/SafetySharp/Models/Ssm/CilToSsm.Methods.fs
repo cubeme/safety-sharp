@@ -22,9 +22,11 @@
 
 namespace Ssm
 
+open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
+open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 open SafetySharp.Tests
@@ -664,21 +666,21 @@ module ``CilToSsm Method Transformations`` =
         transform "class X : Component { void M() { } bool M(int i) { return true; } int M(bool b) { return 1; }}" "new X()" =?
             [
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 1
                     Return = BoolType
                     Params = [ { Var = arg "i" IntType; Direction = In } ]
                     Locals = []
                     Body = RetStm (Some (BoolExpr true))
                 }
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 2
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 2
                     Return = IntType
                     Params = [ { Var = arg "b" BoolType; Direction = In } ]
                     Locals = []
@@ -692,14 +694,14 @@ module ``CilToSsm Method Transformations`` =
         transform c "new D()" =? 
             [
                 {
-                    Name = CilToSsm.renameMethod "M" 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameMethod "N" 1
+                    Name = CilToSsm.makeUniqueMethodName "N" 1 0
                     Return = BoolType
                     Params = [ { Var = arg "n" BoolType; Direction = In } ]
                     Locals = []
@@ -713,28 +715,28 @@ module ``CilToSsm Method Transformations`` =
         transform c "new D()" =? 
             [
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 1
                     Return = VoidType
                     Params = [ { Var = arg "i" IntType; Direction = In } ]
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 1
                     Return = VoidType
                     Params = [ { Var = arg "b" BoolType; Direction = In } ]
                     Locals = []
@@ -748,28 +750,28 @@ module ``CilToSsm Method Transformations`` =
         transform c "new E()" =? 
              [
                 {
-                    Name = CilToSsm.renameMethod "M" 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameMethod "N" 2
+                    Name = CilToSsm.makeUniqueMethodName "N" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameMethod "M" 3
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 }
                 {
-                    Name = CilToSsm.renameMethod "Q" 4
+                    Name = CilToSsm.makeUniqueMethodName "Q" 4 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -783,11 +785,11 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B()" =? 
             [
                 {
-                    Name = CilToSsm.renameMethod "M" 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = IntType
                     Params = []
                     Locals = []
-                    Body = RetStm (Some (VarExpr (field (CilToSsm.renameField "x" 1) IntType)))
+                    Body = RetStm (Some (VarExpr (field (CilToSsm.makeUniqueFieldName "x" 1) IntType)))
                 } 
             ]
 
@@ -797,21 +799,21 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B()" =? 
             [
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = IntType
                     Params = [ { Var = arg "x" IntType; Direction = In } ]
                     Locals = []
                     Body = RetStm (Some (VarExpr (arg "x" IntType)))
                 } 
                 {
-                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 1
                     Return = IntType
                     Params = []
                     Locals = [tmp 2 0 IntType]
                     Body = 
                         SeqStm [
                             AsgnStm (tmp 2 0 IntType, 
-                                CallExpr ({ Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 0; Type = "B" }, [IntType], [In], IntType, [IntExpr 1], tthis "B"))
+                                CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [IntType], [In], IntType, [IntExpr 1], tthis "B"))
                             RetStm (Some (VarExpr (tmp 2 0 IntType)))
                     ]
                 } 
@@ -823,7 +825,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B(), new C()" =? 
             [
                 {
-                    Name = CilToSsm.renameMethod "M" 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -836,7 +838,7 @@ module ``CilToSsm Method Transformations`` =
                     Locals = []
                     Body = 
                         SeqStm [
-                            CallStm ({ Name = CilToSsm.renameMethod "M" 1; Type = "B" }, [], [], VoidType, [], Some (VarExpr (field "b" (ClassType "B"))))
+                            CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], Some (VarExpr (field "b" (ClassType "B"))))
                             RetStm None
                         ]
                 } 
@@ -848,18 +850,18 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B()" =? 
             [
                 {
-                    Name = CilToSsm.renameMethod "M" 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 } 
                 {
-                    Name = CilToSsm.renameMethod "M" 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.renameMethod "M" 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
                 } 
             ]
 
@@ -869,24 +871,51 @@ module ``CilToSsm Method Transformations`` =
         transform c "new C()" =? 
             [
                 {
-                    Name = CilToSsm.renameMethod "M" 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = RetStm None
                 } 
                 {
-                    Name = CilToSsm.renameMethod "M" 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.renameMethod "M" 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
                 } 
                 {
-                    Name = CilToSsm.renameMethod "M" 2
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name =CilToSsm.renameMethod "M" 1; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name =CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
+                } 
+            ]
+
+    [<Test; Ignore("Not yet working")>]
+    let ``multiple assemblies`` () =
+        let supportCompilation = TestCompilation "public class X : Component { public void M() {} }"
+        let supportAssembly = supportCompilation.Compile ()
+        let compilation = TestCompilation ("class T : Model { public T() { SetPartitions(new Y()); } } class Y : X { void N() { M(); }}", supportAssembly)
+        let assembly = compilation.Compile ()
+        let modelType = assembly.GetType "T"
+        let model = Activator.CreateInstance modelType :?> Model
+        model.FinalizeMetadata ()
+        CilToSsm.transformModel model |> List.collect (fun c -> c.Methods) =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                } 
+                {
+                    Name = CilToSsm.makeUniqueMethodName "N" 1 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], tthis "Y"); RetStm None]
                 } 
             ]
