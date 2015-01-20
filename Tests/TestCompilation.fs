@@ -56,9 +56,11 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
     let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices;\n" + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
+    let assemblyPath = Path.GetTempFileName () + ".dll"
+
     let csharpCompilation = 
         CSharpCompilation
-            .Create(TestCompilation.CompilationName)
+            .Create(Path.GetFileNameWithoutExtension assemblyPath)
             .AddReferences(MetadataReference.CreateFromAssembly typeof<obj>.Assembly)
             .AddReferences(MetadataReference.CreateFromAssembly typeof<Component>.Assembly)
             .AddReferences(MetadataReference.CreateFromAssembly typeof<System.Linq.Expressions.Expression>.Assembly)
@@ -81,9 +83,6 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
     do if not <| Seq.isEmpty diagnostics then
         failed "Failed to create compilation:\n%s\n\n%s" (diagnostics |> Seq.fold (fun s d -> sprintf "%s\n%A" s d) "") csharpCode
 
-    /// Gets the name of the compilation.
-    static member CompilationName = "TestCompilation"
-
     /// Gets the syntax tree of the compilation.
     member this.SyntaxTree = syntaxTree
 
@@ -99,11 +98,12 @@ type TestCompilation (csharpCode, [<ParamArray>] externAliases : (string * strin
     /// Emits an in-memory assembly for the compilation and loads the assembly into the app domain.
     member this.Compile () =
         if assembly = null then
-            use stream = new MemoryStream ()
-            let emitResult = csharpCompilation.Emit stream
+            // Create a temporary file and load the assembly from the file, as some
+            // tests require the assembly to be present on the file system
+            let emitResult = csharpCompilation.Emit (assemblyPath, (Path.ChangeExtension (assemblyPath, "pdb")))
 
             if (emitResult.Success) then
-                assembly <- stream.ToArray () |> Assembly.Load
+                assembly <- Assembly.LoadFile assemblyPath
             else
                 emitResult.Diagnostics |> Seq.iter (fun diagnostic -> printf "%A" diagnostic)
                 failed "Assembly compilation failed."

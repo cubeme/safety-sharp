@@ -55,6 +55,13 @@ module ModelingShared =
     let internal emptyComponentObject name symbol = 
         { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty; Bindings = Map.empty }
 
+    /// Compiles the given C# code and creates an instance of the "TestModel" class.
+    let internal createModel csharpCode =
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let modelType = assembly.GetType "TestModel"
+        Activator.CreateInstance modelType :?> Model
+
 type internal EmptyComponent () =
     inherit Component ()
 

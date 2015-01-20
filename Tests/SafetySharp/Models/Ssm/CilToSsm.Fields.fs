@@ -33,16 +33,9 @@ open SafetySharp.Tests
 
 [<TestFixture>]
 module ``CilToSsm Field Transformations`` =
-    type ComponentWithoutValidFields =
-        inherit Component
 
-        new () = { c = null; s = null }
-
-        val private c : Component
-        val private s : string
-
-    let private transform comp = 
-        let model = TestModel comp
+    let private transform componentCode initCode = 
+        let model = createModel (sprintf "%s class TestModel : Model { public TestModel() { SetPartitions(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
         let ssm = CilToSsm.transformModel model
         ssm.Fields
@@ -53,26 +46,45 @@ module ``CilToSsm Field Transformations`` =
 
     [<Test>]
     let ``component without fields`` () =
-        transform [| EmptyComponent () |] =? []
+        transform "class C : Component {}" "new C()" =? []
 
     [<Test>]
     let ``component without fields; fields with unsupported types are ignored`` () =
-        transform [| ComponentWithoutValidFields () |] =? []
+        transform "class C : Component { string s; Component c; }" "new C()" =? []
 
     [<Test>]
     let ``component with single field`` () =
-        transform [| OneFieldComponent () |] =? [ Field (fsharpFieldName "_field", IntType) ]
+        transform "class C : Component { int _field; }" "new C()" =? [ Field ("_field", IntType) ]
 
     [<Test>]
     let ``component with two fields`` () =
-        transform [| TwoFieldsComponent () |] =? [ Field (fsharpFieldName "_field1", IntType); Field (fsharpFieldName "_field2", BoolType) ]
+        transform "class C : Component { int _field1; bool _field2; }" "new C()" =? 
+            [ Field ("_field1", IntType); Field ("_field2", BoolType) ]
 
     [<Test; Ignore("not yet implemented")>]
     let ``generic component with generic field of supported type`` () =
-        transform [| GenericComponent<int> () |] =? [ Field (fsharpFieldName "_field", IntType) ]
-        transform [| GenericComponent<bool> () |] =? [ Field (fsharpFieldName "_field", BoolType) ]
+        let c = "class C<T> : Component { T _field; }"
+        transform c "new C<int>()" =? [ Field ("_field", IntType) ]
+        transform c "new C<bool>()" =? [ Field ("_field", BoolType) ]
 
-    [<Test>]
+    [<Test; Ignore("not yet implemented")>]
     let ``generic component with generic field of unsupported type`` () =
-        transform [| GenericComponent<Component> () |] =? []
-        transform [| GenericComponent<string> () |] =? []
+        let c = "class C<T> : Component { T _field; }"
+        transform c "new C<string>()" =? []
+        transform c "new C<Component>()" =? []
+
+    [<Test; Ignore("not yet implemented")>]
+    let ``inherited component with non-conflicting field names`` () =
+        let c = "class C : Component { int _field; } class D : C { bool _otherField; }"
+        transform c "new D()" =? [ Field ("_field", IntType); Field ("_otherField", BoolType) ]
+
+    [<Test; Ignore("not yet implemented")>]
+    let ``inherited component with conflicting field names`` () =
+        let c = "class C : Component { int _field1; bool _field2; } class D : C { bool _field1; bool _field2; }"
+        transform c "new D()" =? 
+            [ 
+                Field ("base._field1", IntType)
+                Field ("base._field2", BoolType) 
+                Field ("_field1", BoolType)
+                Field ("_field2", BoolType) 
+            ]
