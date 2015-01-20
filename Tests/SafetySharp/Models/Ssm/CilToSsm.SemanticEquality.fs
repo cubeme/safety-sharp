@@ -30,18 +30,18 @@ open SafetySharp.Models.Ssm
 
 [<AutoOpen>]
 module TestHelpers =
-    let compile baseClass csharpCode funcs = 
-        let csharpCode = sprintf "class O : Ssm.TestHelpers.%s { public override %s %s }" baseClass csharpCode funcs
-        let compilation = TestCompilation csharpCode
+    let compile baseClass csharpCode additionalMembers = 
+        let csharpCode = sprintf "Ssm.TestHelpers.%s { public override %s %s }" baseClass csharpCode additionalMembers
+        let compilation = TestCompilation (sprintf "class O : %s" csharpCode)
         let assembly = compilation.GetAssemblyDefinition ()
         let typeDef = assembly.MainModule.GetType "O"
         let methodDef = typeDef.Methods.Single (fun m' -> m'.Name = "M")
         let transformedMethod = methodDef |> CilToSsm.transformMethod |> SsmToCSharp.transform
 
-        let csharpCode = sprintf "%s class T : Ssm.TestHelpers.%s { public override %s %s }" csharpCode baseClass transformedMethod funcs
+        let csharpCode = sprintf "class T : %s class O : Ssm.TestHelpers.%s { public override %s %s }" csharpCode baseClass transformedMethod additionalMembers
         let compilation = TestCompilation csharpCode
         compilation.Compile () |> ignore
-        (compilation.CreateObject<'a> "O", compilation.CreateObject<'a> "T")
+        (compilation.CreateObject<'a> "T", compilation.CreateObject<'a> "O")
 
     [<AbstractClass>]
     type OneRefParam<'p, 'r when 'p : equality and 'r : equality> () =
@@ -156,6 +156,7 @@ module ``CilToSsm Method Semantic Equality`` =
     let fieldByRef = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; F(ref _f, out _f); return _f; }" "void F(ref int x, out int y) { x = x + 1; y = x; }")
     let complexControlFlowAndRefArgs1 = TwoValParams<int, int, int>.Test (compile "TwoValParams<int, int, int>" "int M(int x, int y) { _f1 = x; if (x > 0 || F(ref x, out y) && !F(ref _f1, out _f2)) { F(ref y, out _f1); } return x + _f1 + _f2 + y + (_f1 > 0 && F(ref x, out x) ? (F(ref _f2, out y) ? 1 : 0) : F(ref x, out x) ? 0 : 1) + x + _f1 + _f2 + y; }" "bool F(ref int x, out int y) { x = x + 1; y = x; return y > 0; }")
     let complexControlFlowAndRefArgs2 = TwoRefParams<int, int, int>.Test (compile "TwoRefParams<int, int, int>" "int M(ref int x, ref int y) { _f1 = x; if (x > 0 || F(ref x, out y) && !F(ref _f1, out _f2)) { F(ref y, out _f1); } return x + _f1 + _f2 + y + (_f1 > 0 && F(ref x, out x) ? (F(ref _f2, out y) ? 1 : 0) : F(ref x, out x) ? 0 : 1) + x + _f1 + _f2 + y; }" "bool F(ref int x, out int y) { x = x + 1; y = x; return y > 0; }")
+    let callStaticAndNonThisMethods = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return x + x > 0 ? q.M(ref x) + Q.S(ref x) : Q.S(ref x) - q.M(ref x); }" "Q q = new Q(); class Q { public int M(ref int x) { return x++; } public static int S (ref int x) { return x--; }}")
 
     [<Test>]
     let ``read field`` ([<Range (-1, 1)>] p) =
@@ -312,3 +313,7 @@ module ``CilToSsm Method Semantic Equality`` =
     [<Test>]
     let ``complex control flow and arguments passed byref with byref arguments`` ([<Range (-10, 10)>] p1) ([<Range (-10, 10)>] p2) =
         complexControlFlowAndRefArgs2 p1 p2
+
+    [<Test>]
+    let ``call static and non-this methods`` ([<Range (-3, 3)>] p) =
+        callStaticAndNonThisMethods p

@@ -31,11 +31,11 @@ module internal SsmToCSharp =
         let writer = StructuredWriter ()
 
         let typeRef = function
-            | VoidType   -> writer.Append "void"
-            | BoolType   -> writer.Append "bool"
-            | IntType    -> writer.Append "int"
-            | DoubleType -> writer.Append "double"
-            | ClassType  -> writer.Append "object"
+            | VoidType    -> writer.Append "void"
+            | BoolType    -> writer.Append "bool"
+            | IntType     -> writer.Append "int"
+            | DoubleType  -> writer.Append "double"
+            | ClassType t -> writer.Append "%s" t
 
         let uop = function
             | Not   -> writer.Append "!"
@@ -60,13 +60,15 @@ module internal SsmToCSharp =
             | Arg (a, _)   -> writer.Append "%s" a
             | Local (l, _) -> writer.Append "%s" l
             | Field (f, _) -> writer.Append "%s" f
+            | This _       -> writer.Append "this"
 
         let varDecl = function
             | Arg (a, t)   -> typeRef t; writer.Append " %s" a
             | Local (l, t) -> typeRef t; writer.Append " %s" l
             | Field (f, t) -> typeRef t; writer.Append " %s" f
+            | This _       -> invalidOp "Cannot declare this pointer."
 
-        let rec call m d e =
+        let rec call t m d e =
             let writeArg (d, e) =
                 match d with
                 | In    -> ()
@@ -74,17 +76,20 @@ module internal SsmToCSharp =
                 | Out -> writer.Append "out "
                 expr e
             let args = List.zip d e
-            writer.Append "%s(" m; writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
+            match t with
+            | None -> writer.Append "%s." m.Type
+            | Some t -> expr t; writer.Append "."
+            writer.Append "%s(" m.Name; writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
 
         and expr = function
-            | BoolExpr b               -> writer.Append <| if b then "true" else "false"
-            | IntExpr i                -> writer.Append "%i" i
-            | DoubleExpr d             -> writer.Append "%f" d
-            | VarExpr v                -> var v
-            | VarRefExpr v             -> var v
-            | UExpr (op, e)            -> uop op; writer.AppendParenthesized (fun () -> expr e)
-            | BExpr (e1, op, e2)       -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
-            | CallExpr (m, _, d, _, e) -> call m d e
+            | BoolExpr b                  -> writer.Append <| if b then "true" else "false"
+            | IntExpr i                   -> writer.Append "%i" i
+            | DoubleExpr d                -> writer.Append "%f" d
+            | VarExpr v                   -> var v
+            | VarRefExpr v                -> var v
+            | UExpr (op, e)               -> uop op; writer.AppendParenthesized (fun () -> expr e)
+            | BExpr (e1, op, e2)          -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+            | CallExpr (m, _, d, _, e, t) -> call t m d e
 
         let rec toCSharp stm = 
             match stm with
@@ -108,7 +113,7 @@ module internal SsmToCSharp =
                 writer.AppendBlockStatement (fun () -> toCSharp s1)
                 writer.Append "else"
                 writer.AppendBlockStatement (fun () -> toCSharp s2)
-            | CallStm (m, _, d, _, e)   -> call m d e; writer.AppendLine ";"
+            | CallStm (m, _, d, _, e, t) -> call t m d e; writer.AppendLine ";"
 
         typeRef m.Return
         writer.Append " %s(" m.Name

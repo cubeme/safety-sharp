@@ -54,6 +54,10 @@ module internal CilToSsm =
     let internal renameOverloadedMethod methodName overloadIndex =
         sprintf "%s@%d" methodName overloadIndex
 
+    /// Gets the C# compatiable full name.
+    let private getCSharpType (fullName : string) =
+        fullName.Replace("/", ".")
+
     /// Computes the inheritance level of a component, i.e., the distance to the SafetySharp.Modeling.Component base class
     /// in the inheritance chain minus 1.
     let rec internal getInheritanceLevel (t : TypeDefinition) =
@@ -82,7 +86,7 @@ module internal CilToSsm =
         | MetadataType.Boolean -> Some BoolType
         | MetadataType.Int32   -> Some IntType
         | MetadataType.Double  -> Some DoubleType
-        | MetadataType.Class   -> Some ClassType
+        | MetadataType.Class   -> Some (ClassType (getCSharpType typeRef.FullName))
         | _                    -> None
 
     /// Maps the metadata type of a variable to a S# type.
@@ -96,8 +100,8 @@ module internal CilToSsm =
     let private mapReturnType typeRef =
         match tryMapType typeRef with
         | None 
-        | Some ClassType -> invalidOp "Unsupported method return type '%A'." typeRef
-        | Some t         -> t
+        | Some (ClassType _) -> invalidOp "Unsupported method return type '%A'." typeRef
+        | Some t             -> t
     
     /// Creates a variable using the given constructor with the given name and type.
     let private createVar constr name typeRef =
@@ -168,8 +172,8 @@ module internal CilToSsm =
         match instr, stack with
         | (Instr.Nop, s) -> (NopStm, [], s)
         | (Instr.Ldind, (VarRefExpr v) :: s) -> (NopStm, [], (VarExpr v) :: s)
-        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> (NopStm, [], (VarExpr (field f)) :: s)
-        | (Instr.Ldflda f, (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> (NopStm, [], (VarRefExpr (field f)) :: s)
+        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.isClassType v -> (NopStm, [], (VarExpr (field f)) :: s)
+        | (Instr.Ldflda f, (VarExpr v) :: s) when Ssm.isClassType v -> (NopStm, [], (VarRefExpr (field f)) :: s)
         | (Instr.Ldarg a, s) when a.ParameterType.IsByReference -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
         | (Instr.Ldarga a, s) -> (NopStm, [], (VarRefExpr (arg a)) :: s)
@@ -179,19 +183,29 @@ module internal CilToSsm =
         | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) when not (containsArg a s) -> (AsgnStm (Arg (a, t), e), [], s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> replaceWithTempVar pc (Arg (a, t)) e replaceArg s  
-        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType && not (containsField f.Name s) -> (AsgnStm (field f, e), [], s)
-        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.getVarType v = ClassType -> replaceWithTempVar pc (field f) e replaceField s  
+        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v && not (containsField f.Name s) -> (AsgnStm (field f, e), [], s)
+        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v -> replaceWithTempVar pc (field f) e replaceField s  
         | (Instr.Starg a, e :: s) when not (containsArg (argName a) s) -> (AsgnStm (arg a, e), [], s)
         | (Instr.Starg a, e :: s) when containsArg (argName a) s -> replaceWithTempVar pc (arg a) e replaceArg s  
         | (Instr.Stloc l, e :: s) when not (containsLocal l s) -> (AsgnStm (local l, e), [], s)
         | (Instr.Stloc l, e :: s) when containsLocal l s -> replaceWithTempVar pc (local l) e replaceLocal s         
-        | (Instr.Call m, s) when List.length s >= m.Parameters.Count + 1 ->
+        | (Instr.Call m, s) when List.length s >= m.Parameters.Count + (if m.IsStatic then 0 else 1) ->
             let argCount = m.Parameters.Count
             let returnType = mapReturnType m.ReturnType
             let paramTypes = m.Parameters |> Seq.map (fun p -> mapVarType p.ParameterType) |> Seq.toList
             let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
-            let s = s |> Seq.skip (argCount + 1) |> Seq.toList
+            let methodId = { Type = getCSharpType m.DeclaringType.FullName; Name = m.Name }
+
+            // Determine the target of invocation, if any
+            let target = 
+                if m.IsStatic then None 
+                else match s.[m.Parameters.Count] with
+                     | VarExpr v when Ssm.isClassType v && Ssm.getVarName v = "this" -> Some (VarExpr (This (ClassType (Ssm.getClassType v))))
+                     | v -> Some v
+
+            // Pop the arguments from the symbolic stack, as well as the invocation target for non-static methods
+            let s = s |> Seq.skip (argCount + (if m.IsStatic then 0 else 1)) |> Seq.toList
 
             // Save the current value of all fields that are currently on the stack; the function that is being 
             // called might change the values of those fields
@@ -215,10 +229,10 @@ module internal CilToSsm =
                  ) (idx, vars, stack)
 
             if returnType = VoidType then
-                (CallStm (m.Name, paramTypes, paramDirs, returnType, args), vars, stack)
+                (CallStm (methodId, paramTypes, paramDirs, returnType, args, target), vars, stack)
             else
                 let tmp = freshLocal pc idx returnType
-                (NopStm, vars @ [AsgnStm (tmp, CallExpr (m.Name, paramTypes, paramDirs, returnType, args))], (VarExpr tmp) :: stack)
+                (NopStm, vars @ [AsgnStm (tmp, CallExpr (methodId, paramTypes, paramDirs, returnType, args, target))], (VarExpr tmp) :: stack)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)
@@ -234,7 +248,7 @@ module internal CilToSsm =
                 | _ -> invalidOp "Unsupported branch type '%+A'." op
             (GotoStm (normalizeIntToBool (BExpr (e2, op, e1)), t), [], s)
         | (Instr.Dup, e :: s) -> (NopStm, [], e :: e :: s)
-        | (Instr.Pop, CallExpr (m, p, d, t, e) :: s) -> (CallStm (m, p, d, t, e), [], s)
+        | (Instr.Pop, CallExpr (m, p, d, r, e, t) :: s) -> (CallStm (m, p, d, r, e, t), [], s)
         | (Instr.Pop, e :: s) -> (NopStm, [], s)
         | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, And, e1))) :: s)
         | (Instr.Or, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Or, e1))) :: s)
@@ -328,10 +342,10 @@ module internal CilToSsm =
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
             match e with
-            | IntExpr 0 when isBool    -> BoolExpr false
-            | IntExpr _ when isBool    -> BoolExpr true
-            | CallExpr (m, p, d, t, e) -> CallExpr (m, p, d, t, fixCallExprs p e)
-            | e when isBool            -> 
+            | IntExpr 0 when isBool       -> BoolExpr false
+            | IntExpr _ when isBool       -> BoolExpr true
+            | CallExpr (m, p, d, r, e, t) -> CallExpr (m, p, d, r, fixCallExprs p e, t)
+            | e when isBool               -> 
                 match Ssm.deduceType e with
                 | IntType    -> BExpr (e, Ne, IntExpr 0)
                 | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
@@ -358,7 +372,7 @@ module internal CilToSsm =
             | GotoStm (e, t) -> GotoStm (fixExpr e true, t)
             | RetStm None -> RetStm None
             | RetStm (Some e) -> RetStm (Some (fixExpr e returnsBool))
-            | CallStm (m, p, d, r, e) -> CallStm (m, p, d, r, fixCallExprs p e)
+            | CallStm (m, p, d, r, e, t) -> CallStm (m, p, d, r, fixCallExprs p e, t)
             | _ -> invalidOp "Unsupported statement '%A'." stm
         ) methodBody
 

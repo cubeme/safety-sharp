@@ -60,13 +60,20 @@ module internal Ssm =
         | BoolType
         | IntType
         | DoubleType
-        | ClassType
+        | ClassType of string
 
     /// Represents a variable accessed by an expression.
     type internal Var =
         | Arg of string * Type
         | Local of string * Type
         | Field of string * Type
+        | This of Type
+
+    /// Uniquely identifies a method.
+    type internal MethodId = {
+        Type : string
+        Name : string
+    }
 
     /// Represents an expression within the body of a S# method.
     type internal Expr = 
@@ -77,7 +84,7 @@ module internal Ssm =
         | VarRefExpr of Var
         | UExpr of UOp * Expr
         | BExpr of Expr * BOp * Expr
-        | CallExpr of string * Type list * ParamDir list * Type * Expr list
+        | CallExpr of MethodId * Type list * ParamDir list * Type * Expr list * Expr option
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
@@ -87,7 +94,7 @@ module internal Ssm =
         | SeqStm of Stm list
         | RetStm of Expr option
         | IfStm of Expr * Stm * Stm option
-        | CallStm of string * Type list * ParamDir list * Type * Expr list
+        | CallStm of MethodId * Type list * ParamDir list * Type * Expr list * Expr option
 
     /// Represents a method parameter.
     type internal Param = {
@@ -168,12 +175,26 @@ module internal Ssm =
         | Arg (_, t)   -> t
         | Local (_, t) -> t
         | Field (_, t) -> t
+        | This t       -> t
 
     /// Gets the name of the given variable.
     let getVarName = function
         | Arg (a, _)   -> a
         | Local (l, _) -> l
         | Field (f, _) -> f
+        | This _       -> "this"
+
+    /// Checks whether the variable is of a class type.
+    let isClassType v = 
+        match getVarType v with
+        | ClassType _ -> true
+        | _           -> false
+
+    /// Gets the class type of the object variable.
+    let getClassType v =
+        match getVarType v with
+        | ClassType t -> t
+        | _           -> invalidOp "The variable is not of a class type."
 
     /// Deduces the type of the expression.
     let rec deduceType expr =
@@ -219,22 +240,22 @@ module internal Ssm =
         | BExpr (e1, Le, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Gt, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Ge, e2) when bothAreNonBool e1 e2 -> BoolType
-        | CallExpr (_, _, _, t, _) -> t
+        | CallExpr (_, _, _, t, _, _) -> t
         | _ -> invalidOp "Type deduction failure."
 
     /// Gets all variables referenced by the given expression fulfilling the given predicate.
     let rec getVarsOfExpr pred expr =
         match expr with
-        | BoolExpr _                -> []
-        | IntExpr _                 -> []
-        | DoubleExpr _              -> []
-        | VarExpr v when pred v     -> [v]
-        | VarExpr _                 -> []
-        | VarRefExpr v when pred v  -> [v]
-        | VarRefExpr _              -> []
-        | UExpr (_, e)              -> getVarsOfExpr pred e
-        | BExpr (e1, _, e2)         -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
-        | CallExpr (_, _, _, _, e)  -> e |> List.map (getVarsOfExpr pred) |> List.collect id
+        | BoolExpr _                  -> []
+        | IntExpr _                   -> []
+        | DoubleExpr _                -> []
+        | VarExpr v when pred v       -> [v]
+        | VarExpr _                   -> []
+        | VarRefExpr v when pred v    -> [v]
+        | VarRefExpr _                -> []
+        | UExpr (_, e)                -> getVarsOfExpr pred e
+        | BExpr (e1, _, e2)           -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
+        | CallExpr (_, _, _, _, e, _) -> e |> List.map (getVarsOfExpr pred) |> List.collect id
 
     /// Gets all local variables referenced by the given expression.
     let rec getLocalsOfExpr = 
@@ -246,16 +267,16 @@ module internal Ssm =
 
     /// Gets all local variables referenced by the given statement.
     let rec getLocalsOfStm = function
-        | NopStm                    -> []
-        | AsgnStm (Local (l, t), e) -> (Local (l, t)) :: getLocalsOfExpr e
-        | AsgnStm (v, e)            -> getLocalsOfExpr e
-        | GotoStm (e, t)            -> getLocalsOfExpr e
-        | SeqStm stms               -> stms |> List.map getLocalsOfStm |> List.collect id
-        | RetStm None               -> []
-        | RetStm (Some e)           -> getLocalsOfExpr e
-        | IfStm (e, s, None)        -> (getLocalsOfExpr e) @ (getLocalsOfStm s)
-        | IfStm (e, s1, Some s2)    -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
-        | CallStm (_, _, _, _, e)   -> e |> List.map getLocalsOfExpr |> List.collect id
+        | NopStm                     -> []
+        | AsgnStm (Local (l, t), e)  -> (Local (l, t)) :: getLocalsOfExpr e
+        | AsgnStm (v, e)             -> getLocalsOfExpr e
+        | GotoStm (e, t)             -> getLocalsOfExpr e
+        | SeqStm stms                -> stms |> List.map getLocalsOfStm |> List.collect id
+        | RetStm None                -> []
+        | RetStm (Some e)            -> getLocalsOfExpr e
+        | IfStm (e, s, None)         -> (getLocalsOfExpr e) @ (getLocalsOfStm s)
+        | IfStm (e, s1, Some s2)     -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
+        | CallStm (_, _, _, _, e, _) -> e |> List.map getLocalsOfExpr |> List.collect id
 
     /// Replaces all goto statements in the given method body with structured control flow statements.
     /// If a goto cannot be removed, the method body is invalid.
