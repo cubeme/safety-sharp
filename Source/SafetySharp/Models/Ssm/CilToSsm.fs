@@ -27,12 +27,42 @@ namespace SafetySharp.Models
 /// "A provably correct stackless intermediate representation for Java bytecode"
 module internal CilToSsm =
     open System
+    open System.Collections.Generic
+    open System.Collections.Immutable
+    open System.IO
+    open System.Reflection
     open SafetySharp
     open SafetySharp.Modeling
     open Cil
     open Ssm
     open Mono.Cecil
     open Mono.Cecil.Cil
+
+    /// Provides an extension method that returns all methods excluding all constructors.
+    type private TypeDefinition with
+        member this.GetMethods () = this.Methods |> Seq.filter (fun m -> not m.IsConstructor)
+     
+    /// Renames the given field based on the given inheritance level.
+    let internal renameField fieldName inheritanceLevel =
+        sprintf "%s%s" (String ('$', inheritanceLevel)) fieldName
+
+    /// Renames the given method based on the given inheritance level.
+    let internal renameMethod methodName inheritanceLevel =
+        sprintf "%s%s" (String ('$', inheritanceLevel)) methodName
+
+    /// Renames the given overloaded method based on the given overload index.
+    let internal renameOverloadedMethod methodName overloadIndex =
+        sprintf "%s@%d" methodName overloadIndex
+
+    /// Computes the inheritance level of a component, i.e., the distance to the SafetySharp.Modeling.Component base class
+    /// in the inheritance chain minus 1.
+    let rec internal getInheritanceLevel (t : TypeDefinition) =
+        if t.FullName = typeof<obj>.FullName || t.FullName = typeof<Component>.FullName then
+            invalidOp "Expected a type derived from '%s'." typeof<Component>.FullName
+        elif t.BaseType.FullName = typeof<obj>.FullName || t.BaseType.FullName = typeof<Component>.FullName then
+            0
+        else
+            (getInheritanceLevel (t.BaseType.Resolve ())) + 1
 
     /// Generates a fresh local variable (see also the Demange paper)
     let freshLocal pc idx t =
@@ -365,8 +395,8 @@ module internal CilToSsm =
         |> Array.ofList
 
     /// Transforms the fields of a component.
-    let private transformFields (comp : TypeDefinition) =
-        comp.Fields 
+    let private transformFields (t : TypeDefinition) =
+        t.Fields 
         |> Seq.map (fun f -> 
             match f.FieldType.MetadataType with
             | MetadataType.Boolean -> (f, Some BoolType)
@@ -378,7 +408,7 @@ module internal CilToSsm =
         |> Seq.map (fun (f, t) -> Field (f.Name, t.Value))
         |> Seq.toList
 
-    /// Transforms the given CIL method body to an SSM statement with structured control flow.
+    /// Transforms the given method to an SSM method with structured control flow.
     let transformMethod (m : MethodDefinition) =
         let body =
             m
@@ -399,12 +429,79 @@ module internal CilToSsm =
             Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
         }
 
+    /// Transforms all methods of the given type to an SSM method with structured control flow.
+    let transformMethods (t : TypeDefinition) =
+        t.GetMethods()
+        |> Seq.map transformMethod
+        |> List.ofSeq
+
+    /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
+    let transformType (t : TypeDefinition) =
+        let rec transform (t : TypeDefinition) =
+            let transformed =
+                if t.BaseType.FullName <> "System.Object" && t.BaseType.FullName <> "SafetySharp.Modeling.Component" then
+                    transform (t.BaseType.Resolve ())
+                else { Fields = []; Methods = []; Subs = [] }
+
+            { transformed with 
+                Fields = transformed.Fields @ (transformFields t) 
+                Methods = transformed.Methods @ (transformMethods t)
+            }
+
+        transform t
+
+    /// Renames all members of the type based on the type's inheritance level. Overloaded methods also get unique names.
+    let applyRenamings (types : TypeDefinition seq) =
+        let renamed = HashSet<TypeDefinition> ()
+        let rec renameMembers (t : TypeDefinition) =
+            // Rename the members of the base type
+            if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
+                renameMembers (t.BaseType.Resolve ())
+
+            // First check if we've already renamed the type; we do not want to rename twice
+            if renamed.Add t then
+                let inheritanceLevel = getInheritanceLevel t
+
+                // Rename all fields soley based on the inheritance level
+                t.Fields |> Seq.iter (fun f -> f.Name <- renameField f.Name inheritanceLevel)
+
+                // Rename all methods based on the inheritance level first
+                t.GetMethods() |> Seq.iter (fun m -> m.Name <- renameMethod m.Name inheritanceLevel)
+
+                // Now check for overloaded methods and rename them
+                t.GetMethods() 
+                |> Seq.filter (fun m -> not m.IsConstructor)
+                |> Seq.groupBy (fun m -> m.Name) 
+                |> Seq.filter (fun (_, methods) -> Seq.length methods > 1)
+                |> Seq.iter (fun (_, methods) ->
+                    methods |> Seq.iteri (fun index m -> m.Name <- renameOverloadedMethod m.Name index)
+                )
+
+        types |> Seq.iter renameMembers
+
+    /// Gets the type definitions for all given components.
+    let getTypeDefinitions (components : Component list) =
+        if components |> Seq.map (fun o -> o.GetType().Assembly) |> Seq.distinct |> Seq.length <> 1 then
+            invalidOp "Expected all types to live in the same assembly."
+
+        let firstType = components.Head.GetType ()
+        let resolver = DefaultAssemblyResolver ()
+        resolver.AddSearchDirectory (Path.GetDirectoryName firstType.Assembly.Location)
+        let assemblyDefinition = AssemblyDefinition.ReadAssembly (firstType.Assembly.Location, ReaderParameters (AssemblyResolver = resolver))
+        let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeDefinition> ()
+
+        components 
+        |> Seq.distinct
+        |> Seq.iter (fun o -> dictionary.Add (o.GetType (), assemblyDefinition.MainModule.Import(o.GetType ()).Resolve ()))
+
+        dictionary.ToImmutableDictionary ()
+
     /// Transforms the model to a S# model.
     let transformModel (model : Model) =
-        let metadataProvider = Cil.initializeMetadataProvider (model.Components |> List.map (fun c -> c.GetType ()))
-        let rec transform (comp : Component) =
-            let metadata = metadataProvider comp
-            let metadata = metadata.Resolve ()
-            { Fields = transformFields metadata; Methods = []; Subs = [] }
+        let typeDefinitions = getTypeDefinitions model.Components
+        applyRenamings typeDefinitions.Values
 
-        transform model.Components.Head
+        let transform (comp : Component) =
+            transformType typeDefinitions.[comp.GetType ()]
+
+        model.Components |> List.map transform

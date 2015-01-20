@@ -25,7 +25,6 @@ namespace SafetySharp.Models
 /// Defines types and functions for working with common intermediate language (CIL or MSIL) instructions.
 module internal Cil =
     open System
-    open System.IO
     open System.Reflection
     open Mono.Cecil
     open Mono.Cecil.Cil
@@ -173,18 +172,3 @@ module internal Cil =
         |> Array.get methodBody
         |> succs
         |> Set.remove (methodBody.Length)
-
-    /// Gets the initial, empty metadata provider.
-    let initializeMetadataProvider (types : Type seq) =
-        types 
-        |> Seq.distinctBy (fun t -> t.Assembly)
-        |> Seq.map (fun t ->
-            let resolver = DefaultAssemblyResolver ()
-            resolver.AddSearchDirectory (Path.GetDirectoryName t.Assembly.Location)
-            (t.Assembly, AssemblyDefinition.ReadAssembly (t.Assembly.Location, ReaderParameters (AssemblyResolver = resolver)))
-        )
-        |> Seq.fold (fun provider (assembly, assemblyDef) ->
-            fun t -> 
-                if assembly = t.GetType().Assembly then assemblyDef.MainModule.Import(t.GetType ()).Resolve ()
-                else provider t
-        ) (fun _ -> null)

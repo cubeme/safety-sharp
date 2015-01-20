@@ -89,11 +89,13 @@ module internal Ssm =
         | IfStm of Expr * Stm * Stm option
         | CallStm of string * Type list * ParamDir list * Type * Expr list
 
+    /// Represents a method parameter.
     type internal Param = {
         Var : Var
         Direction : ParamDir
     }
 
+    /// Represents a method within a S# component.
     type internal Method = {
         Name : string
         Params : Param list
@@ -102,6 +104,7 @@ module internal Ssm =
         Locals : Var list
     }
 
+    /// Represents a S# component.
     type internal Comp = {
         Fields : Var list
         Methods : Method list

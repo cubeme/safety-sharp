@@ -27,16 +27,23 @@ open NUnit.Framework
 open Mono.Cecil
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
+open SafetySharp.Tests
 
 [<TestFixture>]
 module ``CilToSsm Method Transformations`` =
-    let private transform csharpCode = 
-        let t = "TestType"
-        let csharpCode = sprintf "class %s { %s }" t csharpCode
+    let private transform componentCode initCode = 
+        let model = createModel (sprintf "%s class TestModel : Model { public TestModel() { SetPartitions(%s); } }" componentCode initCode)
+        model.FinalizeMetadata ()
+        let ssm = CilToSsm.transformModel model
+        ssm |> List.collect (fun c -> c.Methods)
+
+    let private transformMethod methodDefinition= 
+        let className = "TestType"
+        let csharpCode = sprintf "class %s { %s }" className methodDefinition
         let compilation = TestCompilation csharpCode
         let assembly = compilation.GetAssemblyDefinition ()
-        let typeDef = assembly.MainModule.GetType t
-        let methodDef = typeDef.Methods.Single (fun m' -> m'.Name = "M")
+        let typeDef = assembly.MainModule.GetType className
+        let methodDef = typeDef.Methods.Single (fun m -> m.Name = "M")
 
         printfn "MSIL of method body:"
         methodDef.Body.Instructions |> Seq.iteri (printfn "%3i: %A")
@@ -54,7 +61,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``read from ref parameter`` () =
-        transform "int M(ref int x) { return x; }" =?
+        transformMethod "int M(ref int x) { return x; }" =?
             {
                 Name = "M"
                 Return = IntType
@@ -65,7 +72,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``write to ref parameter`` () =
-        transform "void M(ref int x) { x = 17; }" =?
+        transformMethod "void M(ref int x) { x = 17; }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -76,7 +83,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``write to out parameter`` () =
-        transform "void M(out int x) { x = 17; }" =?
+        transformMethod "void M(out int x) { x = 17; }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -87,7 +94,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``access field`` () =
-        transform "int _f; int M(ref int x) { _f = x; return _f; }" =?
+        transformMethod "int _f; int M(ref int x) { _f = x; return _f; }" =?
             {
                 Name = "M"
                 Return = IntType
@@ -98,7 +105,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method without parameters`` () =
-        transform "void F() {} void M() { F(); }" =?
+        transformMethod "void F() {} void M() { F(); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -109,7 +116,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with parameter`` () =
-        transform "void F(int x) {} void M() { F(4); }" =?
+        transformMethod "void F(int x) {} void M() { F(4); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -120,7 +127,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with ref parameter`` () =
-        transform "void F(ref int x) {} void M(int x) { F(ref x); }" =?
+        transformMethod "void F(ref int x) {} void M(int x) { F(ref x); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -131,7 +138,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with out parameter`` () =
-        transform "void F(out int x) { x = 0; } void M(int x) { F(out x); }" =?
+        transformMethod "void F(out int x) { x = 0; } void M(int x) { F(out x); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -142,7 +149,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method ignore return`` () =
-        transform "int F(int x) { return x; } void M() { F(4); }" =?
+        transformMethod "int F(int x) { return x; } void M() { F(4); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -153,7 +160,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method ignore return within if statement`` () =
-        transform "int F(int x) { return x; } void M(bool b) { if (b) F(4); else F(1); }" =?
+        transformMethod "int F(int x) { return x; } void M(bool b) { if (b) F(4); else F(1); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -169,7 +176,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with multiple parameters`` () =
-        transform "void F(int x, bool y, int z, bool w, bool q) {} void M(int a, bool b) { F(a, b, 2, false, true); }" =?
+        transformMethod "void F(int x, bool y, int z, bool w, bool q) {} void M(int a, bool b) { F(a, b, 2, false, true); }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -189,7 +196,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with multiple parameters and return value`` () =
-        transform "int F(int x, bool y, bool z) { return 0; } int M(int a, bool b) { return F(1, false, true); }" =?
+        transformMethod "int F(int x, bool y, bool z) { return 0; } int M(int a, bool b) { return F(1, false, true); }" =?
             {
                 Name = "M"
                 Return = IntType
@@ -205,7 +212,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``method with in, inout, and out parameters`` () =
-        transform "double M(double x, ref bool y, out int z) { z = y ? 1 : 0; return 3.0; }" =?
+        transformMethod "double M(double x, ref bool y, out int z) { z = y ? 1 : 0; return 3.0; }" =?
             {
                 Name = "M"
                 Return = DoubleType
@@ -230,7 +237,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``method with complex side effects`` () =
-        transform "void M(int z) { z *= z-- * --z; }" =?
+        transformMethod "void M(int z) { z *= z-- * --z; }" =?
             {
                 Name = "M"
                 Return = VoidType
@@ -251,7 +258,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``method with complex side effects when parameter is byref`` () =
-        transform "void M(ref int z) { z *= z-- * --z; }" =?
+        transformMethod "void M(ref int z) { z *= z-- * --z; }" =?
             let local = local "__loc_0" IntType
             {
                 Name = "M"
@@ -276,7 +283,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``method with in and inout parameters, side effects, and complex control flow`` () =
-        transform "void M(ref bool y, ref int z) { z = y ? z++ : ((y = !y) ? z-- : --z); }" =?
+        transformMethod "void M(ref bool y, ref int z) { z = y ? z++ : ((y = !y) ? z-- : --z); }" =?
             let local0 = local "__loc_0" BoolType
             let local1 = local "__loc_1" IntType
             let argY = arg "y" BoolType
@@ -323,7 +330,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``ternary operator before return`` () =
-        transform "int M(int x) { var y = x > 0 ? -1 : 1; return y - 1; }" =? 
+        transformMethod "int M(int x) { var y = x > 0 ? -1 : 1; return y - 1; }" =? 
             let tmp = tmp 6 0 IntType
             let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
             let thenStm = AsgnStm (tmp, IntExpr -1)
@@ -340,7 +347,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``ternary operator with method calls`` () =
-        transform "int M(int x) { return F1(false) ? F2(false) : F3(2); } bool F1(bool v) { return v; } int F2(bool x) { return 1; } int F3(int x) { return x; }" =? 
+        transformMethod "int M(int x) { return F1(false) ? F2(false) : F3(2); } bool F1(bool v) { return v; } int F2(bool x) { return 1; } int F3(int x) { return x; }" =? 
             { 
                 Name = "M" 
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
@@ -365,7 +372,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``short-circuit 'or' with method calls`` () =
-        transform "int M(int x) { if (F1(false) || F2(1)) return 1; return -1; } bool F1(bool x) { return false; } bool F2(int x) { return false; }" =? 
+        transformMethod "int M(int x) { if (F1(false) || F2(1)) return 1; return -1; } bool F1(bool x) { return false; } bool F2(int x) { return false; }" =? 
             { 
                 Name = "M" 
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
@@ -391,7 +398,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``short-circuit 'or' for Boolean variables and return`` () = 
-        transform "int M(bool x, bool y) { if (x || y) return -1; return 0; }" =? 
+        transformMethod "int M(bool x, bool y) { if (x || y) return -1; return 0; }" =? 
             let condition = UExpr (Not, BExpr (VarExpr (arg "x" BoolType), Or, VarExpr (arg "y" BoolType)))
             let thenStm = RetStm (Some (IntExpr 0))
             let elseStm = RetStm (Some (IntExpr -1))
@@ -405,7 +412,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``short-circuit 'and' for Boolean variables and return`` () = 
-        transform "int M(bool x, bool y) { if (x && y) return -1; return 0; }" =? 
+        transformMethod "int M(bool x, bool y) { if (x && y) return -1; return 0; }" =? 
             let condition = UExpr (Not, BExpr (VarExpr (arg "x" BoolType), And, VarExpr (arg "y" BoolType)))
             let thenStm = RetStm (Some (IntExpr 0))
             let elseStm = RetStm (Some (IntExpr -1))
@@ -419,7 +426,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``tenary operator with preincrement side effect`` () =
-        transform "void M(int x, int y, int z) { z = x > 0 ? ++y : 0; }" =? 
+        transformMethod "void M(int x, int y, int z) { z = x > 0 ? ++y : 0; }" =? 
             let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
             let thenStm = 
                 let assignStm1 = AsgnStm (tmp 9 0 IntType, VarExpr (arg "y" IntType))
@@ -444,7 +451,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``tenary operator with postdecrement side effect`` () =
-        transform "void M(int x, int y, int z) { z = x > 0 ? y-- : 0; }" =? 
+        transformMethod "void M(int x, int y, int z) { z = x > 0 ? y-- : 0; }" =? 
             let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
             let thenStm = 
                 let assignStm1 = AsgnStm (tmp 9 0 IntType, VarExpr (arg "y" IntType))
@@ -469,7 +476,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``nested ternary operator`` () =
-        transform "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" =? 
+        transformMethod "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" =? 
             { 
                 Name = "M" 
                 Params = [ { Var = arg "b" BoolType; Direction = In }; { Var = arg "c" BoolType; Direction = In } ]
@@ -505,7 +512,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with local byref parameter should store local in temporary`` () =
-        transform "int F(ref int x) { return x; } int M() { int x = 0; return x + F(ref x); }" =?
+        transformMethod "int F(ref int x) { return x; } int M() { int x = 0; return x + F(ref x); }" =?
             let local = local "__loc_0" IntType
             {
                 Name = "M"
@@ -523,7 +530,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with field byref parameter should store local in temporary`` () =
-        transform "int F(ref int x) { return x; } int f; int M() { return f + F(ref f); }" =?
+        transformMethod "int F(ref int x) { return x; } int f; int M() { return f + F(ref f); }" =?
             {
                 Name = "M"
                 Return = IntType
@@ -539,7 +546,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with value arg byref parameter should store local in temporary`` () =
-        transform "int F(ref int x) { return x; } int M(int x) { return x + F(ref x); }" =?
+        transformMethod "int F(ref int x) { return x; } int M(int x) { return x + F(ref x); }" =?
             {
                 Name = "M"
                 Return = IntType
@@ -555,7 +562,7 @@ module ``CilToSsm Method Transformations`` =
 
     [<Test>]
     let ``call method with byref arg byref parameter should store local in temporary`` () =
-        transform "int F(ref int x) { return x; } int M(ref int x) { return x + F(ref x); }" =?
+        transformMethod "int F(ref int x) { return x; } int M(ref int x) { return x + F(ref x); }" =?
             {
                 Name = "M"
                 Return = IntType
@@ -568,3 +575,231 @@ module ``CilToSsm Method Transformations`` =
                         RetStm (Some (BExpr (VarExpr (tmp 4 0 IntType), Add, VarExpr (tmp 4 1 IntType))))
                     ]
             }
+
+    [<Test>]
+    let ``renaming: overloaded methods without inheritance`` () =
+        transform "class X : Component { void M() { } bool M(int i) { return true; } int M(bool b) { return 1; }}" "new X()" =?
+            [
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 1
+                    Return = BoolType
+                    Params = [ { Var = arg "i" IntType; Direction = In } ]
+                    Locals = []
+                    Body = RetStm (Some (BoolExpr true))
+                }
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 2
+                    Return = IntType
+                    Params = [ { Var = arg "b" BoolType; Direction = In } ]
+                    Locals = []
+                    Body = RetStm (Some (IntExpr 1))
+                }
+            ]
+
+    [<Test>]
+    let ``renaming: inherited component with non-conflicting field names`` () =
+        let c = "class C : Component { void M() {} } class D : C { bool N(bool n) { return n; } }"
+        transform c "new D()" =? 
+            [
+                {
+                    Name = CilToSsm.renameMethod "M" 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameMethod "N" 1
+                    Return = BoolType
+                    Params = [ { Var = arg "n" BoolType; Direction = In } ]
+                    Locals = []
+                    Body = RetStm (Some (VarExpr (arg "n" BoolType)))
+                }
+            ]
+                                                                                            
+    [<Test>]
+    let ``renaming: inherited component with conflicting and overloaded methods`` () =
+        let c = "class C : Component { void M() {} void M(int i) {} } class D : C { void M() {} void M(bool b) {} }"
+        transform c "new D()" =? 
+            [
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 0) 1
+                    Return = VoidType
+                    Params = [ { Var = arg "i" IntType; Direction = In } ]
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 1
+                    Return = VoidType
+                    Params = [ { Var = arg "b" BoolType; Direction = In } ]
+                    Locals = []
+                    Body = RetStm None
+                }
+            ]
+
+    [<Test>]
+    let ``renaming: inherited component with deep inheritance hierarchy`` () =
+        let c = "class A : Component { void M() {} } class B : A { } class C : B { void N() {} } class D : C { void M() {} } class E : D { void Q() {} }"
+        transform c "new E()" =? 
+             [
+                {
+                    Name = CilToSsm.renameMethod "M" 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameMethod "N" 2
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameMethod "M" 3
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+                {
+                    Name = CilToSsm.renameMethod "Q" 4
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                }
+            ]
+
+    [<Test>]
+    let ``renaming: access to renamed fields`` () =
+        let c = "class A : Component {} class B : A { int x; int M() { return x; } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.renameMethod "M" 1
+                    Return = IntType
+                    Params = []
+                    Locals = []
+                    Body = RetStm (Some (VarExpr (field (CilToSsm.renameField "x" 1) IntType)))
+                } 
+            ]
+
+    [<Test>]
+    let ``renaming: access to renamed method of same component`` () =
+        let c = "class A : Component {} class B : A { int M(int x) { return x; } int M() { return M(1); } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 0
+                    Return = IntType
+                    Params = [ { Var = arg "x" IntType; Direction = In } ]
+                    Locals = []
+                    Body = RetStm (Some (VarExpr (arg "x" IntType)))
+                } 
+                {
+                    Name = CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 1
+                    Return = IntType
+                    Params = []
+                    Locals = [tmp 2 0 IntType]
+                    Body = 
+                        SeqStm [
+                            AsgnStm (tmp 2 0 IntType, 
+                                CallExpr (CilToSsm.renameOverloadedMethod (CilToSsm.renameMethod "M" 1) 0, [IntType], [In], IntType, [IntExpr 1]))
+                            RetStm (Some (VarExpr (tmp 2 0 IntType)))
+                    ]
+                } 
+            ]
+
+    [<Test>]
+    let ``renaming: access to renamed method of other component`` () =
+        let c = "class A : Component {} class B : A { public void M() {} } class C : Component { B b; void M() { b.M(); } }"
+        transform c "new B(), new C()" =? 
+            [
+                {
+                    Name = CilToSsm.renameMethod "M" 1
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                } 
+                {
+                    Name = "M"
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [CallStm (CilToSsm.renameMethod "M" 1, [], [], VoidType, []); RetStm None]
+                } 
+            ]
+
+    [<Test>]
+    let ``renaming: method redefinition`` () =
+        let c = "class A : Component { public void M() {} } class B : A { public new void M() { base.M(); } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.renameMethod "M" 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                } 
+                {
+                    Name = CilToSsm.renameMethod "M" 1
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [CallStm (CilToSsm.renameMethod "M" 0, [], [], VoidType, []); RetStm None]
+                } 
+            ]
+
+    [<Test>]
+    let ``renaming: method overloading chain`` () =
+        let c = "class A : Component { public virtual void M() {} } class B : A { public override void M() { base.M(); } } class C : B { public override void M() { base.M(); } }"
+        transform c "new C()" =? 
+            [
+                {
+                    Name = CilToSsm.renameMethod "M" 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                } 
+                {
+                    Name = CilToSsm.renameMethod "M" 1
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [CallStm (CilToSsm.renameMethod "M" 0, [], [], VoidType, []); RetStm None]
+                } 
+                {
+                    Name = CilToSsm.renameMethod "M" 2
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [CallStm (CilToSsm.renameMethod "M" 1, [], [], VoidType, []); RetStm None]
+                } 
+            ]
