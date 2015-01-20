@@ -61,25 +61,11 @@ module internal ScmRewriterBase =
             //        levelUp.ParentCompDecl
                                         
     type ScmRewriterConvertFaults = {
-        CompPath : CompPath;
-        CompDecl : CompDecl;
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
         ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
         BehaviorsToRewrite : BehaviorWithLocation list;
     }
-        with
-            static member createEmptyFromPath (model:CompDecl) (path:CompPath) =
-                let compDecl = model.getDescendantUsingPath path
-                let behaviorsToRewrite =
-                    BehaviorWithLocation.collectAllBehaviorsInPath model path
-                {
-                    ScmRewriterConvertFaults.CompPath = path;
-                    ScmRewriterConvertFaults.CompDecl = compDecl;
-                    ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
-                    ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
-                    ScmRewriterConvertFaults.BehaviorsToRewrite = behaviorsToRewrite;
-                }
                 
     type ConvertDelayedBindings = {
         PreSteps:Map<CompPath,Stm list>;
@@ -253,6 +239,27 @@ module internal ScmRewriterBase =
         ScmRewriteFunction (newUnusedVarNames)
 
         
+    let getSubComponentToChange : ScmRewriteFunction<CompDecl> = 
+        let getParentCompDecl (state:ScmRewriteState) : (CompDecl * ScmRewriteState) =
+            state.ChangingSubComponent,state
+        ScmRewriteFunction (getParentCompDecl)
+        
+        
+    let getPathOfSubComponentToChange : ScmRewriteFunction<CompPath> = 
+        let getPathOfSubComponentToChange (state:ScmRewriteState) : (CompPath * ScmRewriteState) =
+            state.PathOfChangingSubcomponent,state
+        ScmRewriteFunction (getPathOfSubComponentToChange)
+
+        
+    let updateComponentToChange (updatedComponent:CompDecl) : ScmRewriteFunction<unit> = 
+        let updateComponentToChange (state:ScmRewriteState) : (unit * ScmRewriteState) =
+            let newState =
+                { state with
+                    ScmRewriteState.ChangingSubComponent = updatedComponent;
+                    ScmRewriteState.Tainted = true;
+                }
+            (),newState
+        ScmRewriteFunction (updateComponentToChange)
 
     // TODO: Move every access to the model into a function here.
     //       Here we can easily assure, that reading operations occur on the correct part of the model (which may

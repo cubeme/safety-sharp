@@ -25,21 +25,32 @@ namespace SafetySharp.Models.Scm
 module internal ScmRewriterConvertFaults =
     open ScmHelpers
     open ScmRewriterBase
-
+    
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Converting Faults
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    
 
     let selectRootComponentForConvertingFaults : ScmRewriteFunction<unit> = scmRewrite {
         let! state = getState
         if (state.ConvertFaults.IsSome) then
             return ()
         else
-            let convertFaultsState = ScmRewriterConvertFaults.createEmptyFromPath state.Model [state.Model.Comp]
+            let rootComp = state.Model
+            let rootPath = [state.Model.Comp]
+            let convertFaultsState =
+                let behaviorsToRewrite =
+                    BehaviorWithLocation.collectAllBehaviorsInPath rootComp rootPath
+                {
+                    ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
+                    ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
+                    ScmRewriterConvertFaults.BehaviorsToRewrite = behaviorsToRewrite;
+                }
             let modifiedState =
                 { state with
+                    ScmRewriteState.ChangingSubComponent = rootComp;
+                    ScmRewriteState.PathOfChangingSubcomponent = rootPath;
                     ScmRewriteState.ConvertFaults = Some(convertFaultsState);
                     ScmRewriteState.Tainted = true; // if tainted, set tainted to true
                 }
@@ -52,10 +63,11 @@ module internal ScmRewriterConvertFaults =
             return ()
         else
             let convertFaultsState = state.ConvertFaults.Value
-            if convertFaultsState.CompDecl.Faults = [] then
+            let! compDecl = getSubComponentToChange
+            if compDecl.Faults = [] then
                 return ()
             else
-                let faultToConvert = convertFaultsState.CompDecl.Faults.Head
+                let faultToConvert = compDecl.Faults.Head
 
                 let! reqPort = getUnusedReqPortName  (sprintf "fault_%s_req" faultToConvert.getName)
                 let! provPort = getUnusedProvPortName (sprintf "fault_%s_prov" faultToConvert.getName)
@@ -87,14 +99,15 @@ module internal ScmRewriterConvertFaults =
                         BndDecl.Source = {BndSrc.Comp = None; BndSrc.ProvPort = provPort};
                         BndDecl.Kind = BndKind.Instantaneous;
                     }                                
-                let newCompDecl = convertFaultsState.CompDecl.addField(newFieldDecl)
-                                                             .addReqPort(newReqPortDecl)
-                                                             .addProvPort(newProvPortDecl)
-                                                             .addBinding(newBindingDecl)
-                                                             .removeFault(faultToConvert)
+                let newCompDecl = compDecl.addField(newFieldDecl)
+                                          .addReqPort(newReqPortDecl)
+                                          .addProvPort(newProvPortDecl)
+                                          .addBinding(newBindingDecl)
+                                          .removeFault(faultToConvert)
+                do! updateComponentToChange newCompDecl
+                let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                 let newConvertFaultsState =
                     { convertFaultsState with
-                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
                         ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = convertFaultsState.ArtificialFaultOldToFieldNew.Add ( (faultToConvert.Fault,field) ) ;
                         ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = convertFaultsState.ArtificialFaultOldToPortNew.Add ( (faultToConvert.Fault,(newProvPortDecl.ProvPort,newReqPortDecl.ReqPort)) );
                     }
@@ -116,6 +129,7 @@ module internal ScmRewriterConvertFaults =
                 // do not modify old tainted state here
                 return ()
             else
+                let! compDecl = getSubComponentToChange
                 let behaviorToRewriteWithLocation = convertFaultsState.BehaviorsToRewrite.Head
                 let behaviorToRewrite = behaviorToRewriteWithLocation.Behavior
 
@@ -130,10 +144,11 @@ module internal ScmRewriterConvertFaults =
                             { provPort with
                                 ProvPortDecl.Behavior = newBehavior;
                             }
-                        let newCompDecl = convertFaultsState.CompDecl.replaceProvPort(provPort,newProvPort);
+                        let newCompDecl = compDecl.replaceProvPort(provPort,newProvPort);
+                        do! updateComponentToChange newCompDecl
+                        let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                         let newConvertFaultsState =
                             { convertFaultsState with
-                                ScmRewriterConvertFaults.CompDecl = newCompDecl;
                                 ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
                             }
                         let modifiedState =
@@ -147,10 +162,11 @@ module internal ScmRewriterConvertFaults =
                             { fault with
                                 FaultDecl.Step = newBehavior;
                             }
-                        let newCompDecl = convertFaultsState.CompDecl.replaceFault(fault,newFault);
+                        let newCompDecl = compDecl.replaceFault(fault,newFault);                        
+                        do! updateComponentToChange newCompDecl
+                        let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                         let newConvertFaultsState =
                             { convertFaultsState with
-                                ScmRewriterConvertFaults.CompDecl = newCompDecl;
                                 ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
                             }
                         let modifiedState =
@@ -164,10 +180,11 @@ module internal ScmRewriterConvertFaults =
                             { step with
                                 StepDecl.Behavior = newBehavior;
                             }
-                        let newCompDecl = convertFaultsState.CompDecl.replaceStep(step,newStep);
+                        let newCompDecl = compDecl.replaceStep(step,newStep);                        
+                        do! updateComponentToChange newCompDecl
+                        let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                         let newConvertFaultsState =
                             { convertFaultsState with
-                                ScmRewriterConvertFaults.CompDecl = newCompDecl;
                                 ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
                             }
                         let modifiedState =
@@ -187,11 +204,12 @@ module internal ScmRewriterConvertFaults =
             return ()
         else
             let convertFaultsState = state.ConvertFaults.Value
+            let! compDecl = getSubComponentToChange
 
             // TODO: Assume semantics:
             //     - For every ProvPort, _exactly_ 1 ProvPortDecl without FaultExpr exists
             
-            let provPortDecls = convertFaultsState.CompDecl.ProvPorts
+            let provPortDecls = compDecl.ProvPorts
 
             let provPortToUniteCandidates =
                 provPortDecls |> List.filter (fun provPortDecl -> provPortDecl.FaultExpr <> None)
@@ -240,18 +258,9 @@ module internal ScmRewriterConvertFaults =
                         ProvPortDecl.Behavior = newBehavior;
                     }
                 let newCompDecl =
-                    convertFaultsState.CompDecl.removeProvPorts(provPortDeclsToUnite)
-                                               .addProvPort(newProvPort)
-                let newConvertFaultsState =
-                    { convertFaultsState with
-                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
-                    }
-                let modifiedState =
-                    { state with
-                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
-                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    }
-                return! putState modifiedState
+                    compDecl.removeProvPorts(provPortDeclsToUnite)
+                            .addProvPort(newProvPort)
+                do! updateComponentToChange newCompDecl
     }    
     
     let uniteStep : ScmRewriteFunction<unit> = scmRewrite {
@@ -261,13 +270,14 @@ module internal ScmRewriterConvertFaults =
             return ()
         else
             let convertFaultsState = state.ConvertFaults.Value
+            let! compDecl = getSubComponentToChange
             
             // TODO: Assume semantics:
             //     - _exactly_ 1 Step without FaultExpr exists
             let needToUnite =
-                if convertFaultsState.CompDecl.Steps.Length > 1 then
+                if compDecl.Steps.Length > 1 then
                     true
-                else if convertFaultsState.CompDecl.Steps.Length = 0 then
+                else if compDecl.Steps.Length = 0 then
                     failwith "BUG: CompDecl needs at least one step"
                 else
                     false
@@ -276,7 +286,7 @@ module internal ScmRewriterConvertFaults =
                 return ()
             else
                 // now almost 1:1 copy of uniteProvPortDecls
-                let stepDecls = convertFaultsState.CompDecl.Steps
+                let stepDecls = compDecl.Steps
                 let stepDeclWithNominalBehavior =
                     let stepDecl =
                         stepDecls |> List.filter (fun stepDecl -> stepDecl.FaultExpr = None)
@@ -313,18 +323,10 @@ module internal ScmRewriterConvertFaults =
                         StepDecl.Behavior = newBehavior;
                     }
                 let newCompDecl =
-                    convertFaultsState.CompDecl.removeSteps(stepDecls)
-                                               .addStep(newStep)
-                let newConvertFaultsState =
-                    { convertFaultsState with
-                        ScmRewriterConvertFaults.CompDecl = newCompDecl;
-                    }
-                let modifiedState =
-                    { state with
-                        ScmRewriteState.ConvertFaults = Some(newConvertFaultsState);
-                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    }
-                return! putState modifiedState
+                    compDecl.removeSteps(stepDecls)
+                            .addStep(newStep)
+                
+                do! updateComponentToChange newCompDecl
     }
     
     let convertFaultsWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
@@ -332,10 +334,13 @@ module internal ScmRewriterConvertFaults =
         if (state.ConvertFaults.IsNone) then
             return ()
         else
+            let! compDecl = getSubComponentToChange
             let convertFaultsState = state.ConvertFaults.Value
-            let newModel = state.Model.replaceDescendant convertFaultsState.CompPath convertFaultsState.CompDecl
+            let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent compDecl
             let modifiedState =
                 { state with
+                    ScmRewriteState.ChangingSubComponent = newModel;
+                    ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
                     ScmRewriteState.Model = newModel;
                     ScmRewriteState.ConvertFaults = None;
                     ScmRewriteState.Tainted = true; // if tainted, set tainted to true

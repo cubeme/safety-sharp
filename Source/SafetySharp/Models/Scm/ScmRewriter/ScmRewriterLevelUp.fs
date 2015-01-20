@@ -30,19 +30,10 @@ module internal ScmRewriterLevelUp =
     // helpers for leveling Up (they have return values)
     
     let getParentCompDecl : ScmRewriteFunction<CompDecl> = 
-        let getParentCompDecl (state:ScmRewriteState) : (CompDecl * ScmRewriteState) =
-            state.ChangingSubComponent,state
-        ScmRewriteFunction (getParentCompDecl)
+        ScmRewriterBase.getSubComponentToChange
         
     let updateParentCompDecl (newParent:CompDecl) : ScmRewriteFunction<unit> = 
-        let updateParentCompDecl (state:ScmRewriteState) : (unit * ScmRewriteState) =
-            let newState =
-                { state with
-                    ScmRewriteState.ChangingSubComponent = newParent;
-                    ScmRewriteState.Tainted = true;
-                }
-            (),newState
-        ScmRewriteFunction (updateParentCompDecl)
+        ScmRewriterBase.updateComponentToChange newParent
 
     let getChildCompDecl : ScmRewriteFunction<CompDecl> = 
         let getChildCompDecl (state:ScmRewriteState) : (CompDecl * ScmRewriteState) =
@@ -715,6 +706,8 @@ module internal ScmRewriterLevelUp =
                 let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent parentCompDecl
                 let modifiedState =
                     { state with
+                        ScmRewriteState.ChangingSubComponent = newModel;
+                        ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
                         ScmRewriteState.Model = newModel;
                         ScmRewriteState.LevelUp = None;
                         ScmRewriteState.Tainted = true; // if tainted, set tainted to true
