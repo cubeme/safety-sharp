@@ -3,17 +3,13 @@
 ------------------------------------
 
 active proctype System() {	
-	for each field f in FieldsOf(metamodel):#
+	for each field f in FieldsOf(sam):#
 		typeof(f) f; //declare
 		guarded command, which sets initial value nondeterministically
 
 	do
 		:: 
-			// for each partition p in partitions
-			{
-				execute updateStatement
-				execute bindings of partition				
-			}			
+			execute body
 	od		
 }
 
@@ -31,14 +27,10 @@ active proctype System() {
 	
 	do
 		:: 
-			// for each partition p in partitions
-			{
-				// execute updateStatement
 				if
 					:: true; _value = true;
 					:: true; _value = false;
 				fi
-				// execute bindings of partition
 			}			
 	od		
 }

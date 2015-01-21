@@ -35,6 +35,7 @@ type internal NuXmvSpecification = SafetySharp.Internal.Modelchecking.NuXmv.Spec
 type internal NuXmvModuleTypeSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.ModuleTypeSpecifier
 type internal NuXmvModuleDeclaration = SafetySharp.Internal.Modelchecking.NuXmv.ModuleDeclaration
 
+(*
 
 type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
     let toSimplifiedMetamodel = MetamodelToSimplifiedMetamodel(configuration)
@@ -444,4 +445,4 @@ type internal MetamodelToNuXmv (configuration:MMConfiguration)  =
             this.transFormCtlFormula formula |> Specification.CtlSpecification
         else
             failwith "NotImplementedYet"
-                    
+*)

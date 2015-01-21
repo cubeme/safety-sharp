@@ -38,6 +38,12 @@ module internal PromelaAstHelpers =
         let steps = stmnts |> List.map (fun elem -> Step.StmntStep(elem,None))
         Stmnt.AtomicStmnt(Sequence.Sequence(steps))
 
+    let coverStmInEndlessloop (stmnt:Stmnt) : Stmnt =
+        let step =  Step.StmntStep(stmnt,None)
+        let sequence = Sequence.Sequence([step]) //only one step
+        let options = Options.Options ([sequence]) //only one option
+        Stmnt.DoStmnt(options)
+
     let stmntToStep (stmnt:Stmnt) : Step =
         Step.StmntStep(stmnt,None)
     
