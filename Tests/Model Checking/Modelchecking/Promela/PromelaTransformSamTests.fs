@@ -1,6 +1,6 @@
 ﻿// The MIT License (MIT)
 // 
-// Copyright (c) 2014, Institute for Software & Systems Engineering
+// Copyright (c) 2015, Institute for Software & Systems Engineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,32 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformMetamodelTests
+namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformSamTests
 
+open System
 open NUnit.Framework
-open SafetySharp.Tests.Modelchecking
+open FParsec
 
-open SafetySharp
-open SafetySharp.Internal.Modelchecking
+open TestHelpers
+open AstTestHelpers
+
 open SafetySharp.Internal.Modelchecking.PromelaSpin
 
+
+
 [<TestFixture>]
-module TestCase1ToPromelaTests =
-    open TestCase1
-    (*
+module SamToPromelaTests =
+
+    let parseWithParser parser str =
+        match run parser str with
+        | Success(result, _, _)   -> result
+        | Failure(errorMsg, _, _) -> failwith errorMsg
+
+    let internal parseSam str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
+
+    let internal promelaWriter = ExportPromelaAstToFile()
+
+           
     [<Test>]
-    let ``transforms model without exception`` () =
-        let modelTransformer = MetamodelToPromela (testCase1Configuration)
-        let promelaCode = modelTransformer.transformConfiguration
-        ()
+    let ``simpleBoolean1.sam gets converted to promela`` () =
         
-    [<Test>]
-    let ``write transformed model to string`` () =
-        let modelTransformer = MetamodelToPromela (testCase1Configuration)        
-        let promelaCode = modelTransformer.transformConfiguration
-        let promelaWriter = ExportPromelaAstToFile()
-        let promelaCodeString = promelaWriter.Export promelaCode
+        let inputFile = """../../Examples/SAM/simpleBoolean1.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSam input
+        let promela = SamToPromela.transformConfiguration model
+
+        let promelaCodeString = promelaWriter.Export promela
+        printf "%s" promelaCodeString
         ()
+
+
+    (*
 
     [<Test>]
     let ``write transformed model to file`` () =

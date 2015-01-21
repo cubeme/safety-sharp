@@ -38,60 +38,60 @@ type ExampleFiles() =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let parseFIL str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
+    let parseSam str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
 
     [<Test>]
     member this.``Example simpleArithmetical1 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleArithmetical1.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simpleArithmetical2 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleArithmetical2.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simpleBoolean1 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleBoolean1.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simpleGuardedCommands1 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleGuardedCommands1.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simpleGuardedCommands2 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleGuardedCommands2.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simpleGuardedCommands3 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleGuardedCommands3.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simpleGuardedCommands4 parses successfully`` () =
         let inputFile = """../../Examples/SAM/simpleGuardedCommands4.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()
 
     [<Test>]
     member this.``Example simplePrev parses successfully`` () =
         let inputFile = """../../Examples/SAM/simplePrev.sam"""
         let input = System.IO.File.ReadAllText inputFile
-        let result = parseFIL input
+        let result = parseSam input
         ()

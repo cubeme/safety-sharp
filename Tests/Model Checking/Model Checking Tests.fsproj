@@ -57,15 +57,15 @@
     <Compile Include="..\AstTestHelpers.fs">
       <Link>AstTestHelpers.fs</Link>
     </Compile>
-    <Compile Include="Modelchecking\Common\TestCase1.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvModels.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvAstToFileTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvInterpretResultTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvExecuteTests.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvTransformMetamodelTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvTransformSamTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaAstToFileTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaExecuteTests.fs" />
-    <Compile Include="Modelchecking\Promela\PromelaTransformMetamodelTests.fs" />
+    <Compile Include="Modelchecking\Promela\PromelaTransformSamTests.fs" />
+    <Compile Include="Modelchecking\Promela\PromelaTransformScmTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismAstToFileTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismExecuteTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismInterpretResultTests.fs" />
@@ -83,6 +83,7 @@
     <Compile Include="Smt-Solving\Z3\Z3InteractiveModeTests.fs" />
     <Compile Include="Smt-Solving\Z3\Z3ParserTests.fs" />
     <Content Include="app.config" />
+    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
@@ -103,6 +104,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.32-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
   </ItemGroup>

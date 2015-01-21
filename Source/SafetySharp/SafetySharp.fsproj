@@ -103,7 +103,8 @@
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstToFile.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaExecute.fs" />
-    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransformMetamodel.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransformSam.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransformScm.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvOperators.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvAst.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvAstHelpers.fs" />
@@ -112,7 +113,7 @@
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvCommandsToString.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvInterpretResult.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvExecute.fs" />
-    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvTransformMetamodel.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvTransformSam.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismAst.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismAstHelpers.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismCommands.fs" />
