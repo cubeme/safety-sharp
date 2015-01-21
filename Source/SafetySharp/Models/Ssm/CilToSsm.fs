@@ -468,9 +468,10 @@ module internal CilToSsm =
             let transformed =
                 if t.BaseType.FullName <> "System.Object" && t.BaseType.FullName <> "SafetySharp.Modeling.Component" then
                     transform (t.BaseType.Resolve ())
-                else { Fields = []; Methods = []; Subs = [] }
+                else { Name = String.Empty; Fields = []; Methods = []; Subs = [] }
 
             { transformed with 
+                Name = t.FullName
                 Fields = transformed.Fields @ (transformFields t) 
                 Methods = transformed.Methods @ (transformMethods t)
             }

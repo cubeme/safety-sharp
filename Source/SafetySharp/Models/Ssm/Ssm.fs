@@ -113,6 +113,7 @@ module internal Ssm =
 
     /// Represents a S# component.
     type internal Comp = {
+        Name : string
         Fields : Var list
         Methods : Method list
         Subs : Comp list

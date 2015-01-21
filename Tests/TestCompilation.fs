@@ -49,7 +49,7 @@ type Diagnostic =
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]
-type TestCompilation (csharpCode, [<ParamArray>] assemblies : Assembly array) =
+type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (string * string) array) =
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
@@ -78,10 +78,16 @@ type TestCompilation (csharpCode, [<ParamArray>] assemblies : Assembly array) =
             let compilation = compilation.AddReferences(externCompilation.ToMetadataReference(ImmutableArray.Create(name)))
             addExternAliases compilation externAliases
 
+    let externAliases = externAliases |> Array.map (fun (name, code) -> (name, TestCompilation(code).CSharpCompilation)) |> List.ofArray
+    let csharpCompilation = addExternAliases csharpCompilation externAliases
+
     let diagnostics = csharpCompilation.GetDiagnostics() |> Seq.filter (fun diagnostic -> diagnostic.Severity = DiagnosticSeverity.Error)
 
     do if not <| Seq.isEmpty diagnostics then
         failed "Failed to create compilation:\n%s\n\n%s" (diagnostics |> Seq.fold (fun s d -> sprintf "%s\n%A" s d) "") csharpCode
+
+    new (csharpCode) = TestCompilation (csharpCode, [||], [||])
+    new (csharpCode, [<ParamArray>] assemblies) = TestCompilation (csharpCode, assemblies, [||])
 
     /// Gets the syntax tree of the compilation.
     member this.SyntaxTree = syntaxTree
@@ -315,7 +321,7 @@ type TestCompilation (csharpCode, [<ParamArray>] assemblies : Assembly array) =
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
     static member GetNormalizedSyntaxTreeWithExternAliases (normalizer : CSharpNormalizer) csharpCode externAliases =
-        let compilation = TestCompilation (csharpCode, externAliases |> Array.ofList)
+        let compilation = TestCompilation (csharpCode, [||], externAliases |> Array.ofList)
         normalizer.Normalize(compilation.CSharpCompilation).SyntaxTrees.Single ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.

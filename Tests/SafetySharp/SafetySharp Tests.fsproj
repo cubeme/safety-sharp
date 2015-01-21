@@ -66,6 +66,7 @@
     <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Fields.fs" />
     <Compile Include="Models\Ssm\CilToSsm.SemanticEquality.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Models\Scm\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
@@ -74,7 +75,6 @@
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
-    <Compile Include="TestCleanup.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">

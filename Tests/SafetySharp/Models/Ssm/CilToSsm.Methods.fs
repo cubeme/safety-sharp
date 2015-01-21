@@ -889,33 +889,6 @@ module ``CilToSsm Method Transformations`` =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name =CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
-                } 
-            ]
-
-    [<Test; Ignore("Not yet working")>]
-    let ``multiple assemblies`` () =
-        let supportCompilation = TestCompilation "public class X : Component { public void M() {} }"
-        let supportAssembly = supportCompilation.Compile ()
-        let compilation = TestCompilation ("class T : Model { public T() { SetPartitions(new Y()); } } class Y : X { void N() { M(); }}", supportAssembly)
-        let assembly = compilation.Compile ()
-        let modelType = assembly.GetType "T"
-        let model = Activator.CreateInstance modelType :?> Model
-        model.FinalizeMetadata ()
-        CilToSsm.transformModel model |> List.collect (fun c -> c.Methods) =? 
-            [
-                {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
-                    Return = VoidType
-                    Params = []
-                    Locals = []
-                    Body = RetStm None
-                } 
-                {
-                    Name = CilToSsm.makeUniqueMethodName "N" 1 0
-                    Return = VoidType
-                    Params = []
-                    Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], tthis "Y"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
                 } 
             ]

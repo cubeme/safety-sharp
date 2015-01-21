@@ -96,6 +96,10 @@ module internal Cil =
             // Creates an instruction that has an operand
             let toInstr instrType =
                 getOperand () |> instrType
+
+            // Creates a call instruction, resolving the referenced method
+            let toCall () =
+                (instr.Operand :?> MethodReference).Resolve () |> Call
             
             match instr.OpCode.Code with
             | Code.Nop      -> Nop
@@ -114,8 +118,8 @@ module internal Cil =
             | Code.Stfld    -> toInstr  Stfld
             | Code.Stloc    -> toInstr  Stloc
             | Code.Starg    -> toInstr  Starg
-            | Code.Call     -> toInstr  Call
-            | Code.Callvirt -> toInstr  Call
+            | Code.Call     -> toCall   ()
+            | Code.Callvirt -> toCall   ()
             | Code.Br       -> toBranch Always
             | Code.Bgt      -> toBranch Gt
             | Code.Bge      -> toBranch Ge
