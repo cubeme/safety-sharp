@@ -34,7 +34,7 @@ component simple {
 			int intLocal1;
 		}
 		step faultTransient;
-		rport1(intLocal1);
+		rport1(inout intLocal1);
 		intField1 := intLocal1;
 	}
 }

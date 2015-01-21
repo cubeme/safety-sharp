@@ -61,6 +61,7 @@ module internal ScmRewriterConvertDelayedBindings =
     //     * When are execution in the "Post-Step" (Note 2) and execution as last statements of a step the same???
     //     * Difference between making it "Pre-Step" or "Post-Step" (with declared output-values of the step before the
     //       First Step)
+    //     * Create example with indeterministic initialisazion
     
     
     let selectRootComponentForConvertingDelayedBindings : ScmRewriteFunction<unit> = scmRewrite {
@@ -99,7 +100,7 @@ module internal ScmRewriterConvertDelayedBindings =
             varDeclToFieldList |> List.map (fun entry -> createField entry)
         let! oldCompDecl = getSubComponentToChange
         let newCompDecl = oldCompDecl.addFields newFieldDecls        
-        do! updateSubComponentToChange oldCompDecl        
+        do! updateSubComponentToChange newCompDecl        
         let varToFieldMap = varDeclToFieldList |> List.map (fun (varDecl,field) -> varDecl.Var,field) |> Map.ofList
         return  varToFieldMap
     }
@@ -139,15 +140,45 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
     
-    let createReflectionOfProvPort (provPortDecl:ProvPortDecl) : ScmRewriteFunction<unit> = scmRewrite {        
-        let newProvPort = getUnusedProvPortName (sprintf "%s_delayed" provPortDecl.getName)
+    let createReflectionOfProvPort (oldProvPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) (newProvPort:ProvPort) : ScmRewriteFunction<unit> = scmRewrite {        
+        let assignments =
+            varToNewFieldMap |> Map.toList
+                             |> List.map (fun (var,field)-> Stm.AssignVar(var,Expr.ReadField(field)))
+        let newStep = Stm.Block (assignments)
+        let newBehavior =
+            { 
+                BehaviorDecl.Locals = oldProvPortDecl.Behavior.Locals;
+                BehaviorDecl.Body = newStep;
+            }
+        let newProvPort =
+            { oldProvPortDecl with
+                ProvPortDecl.ProvPort = newProvPort;
+                ProvPortDecl.Behavior = newBehavior;
+            }
+        
+        let! compDecl = getSubComponentToChange
+        let newCompDecl = compDecl.addProvPort(newProvPort) //Note: Only add and not replace! The old ProvPort might be necessary for other instant calls
+        do! updateSubComponentToChange newCompDecl
+
         return ()
-        //a
     }
 
-    let replaceDelayedBinding (bndDecl:BndDecl) : ScmRewriteFunction<unit> = scmRewrite {
+    let replaceDelayedBinding (bndDecl:BndDecl) (newProvPort:ProvPort) : ScmRewriteFunction<unit> = scmRewrite {
+        let! compDecl = getSubComponentToChange
+        let newBndSource =
+            {
+                BndSrc.Comp = None;
+                BndSrc.ProvPort = newProvPort;
+            }
+        let newInstantBinding =
+            {
+                BndDecl.Kind = BndKind.Instantaneous;
+                BndDecl.Source = newBndSource;
+                BndDecl.Target = bndDecl.Target;
+            }
+        let newCompDecl = compDecl.replaceBinding(bndDecl,newInstantBinding)
+        do! updateSubComponentToChange newCompDecl
         return ()
-        //a
     }
 
     let findProvPortOfDelayedBinding (bndDecl:BndDecl) : ScmRewriteFunction<ProvPortDecl> = scmRewrite {
@@ -181,8 +212,8 @@ module internal ScmRewriterConvertDelayedBindings =
                 let! varToNewFieldMap = createArtificialFieldsForProvPort newNamePrefix bindingToConvert provPortDecl
                 // fields have been created
                 do! createPreStepOfProvPort newNamePrefix provPortDecl varToNewFieldMap
-                do! createReflectionOfProvPort provPortDecl
-                do! replaceDelayedBinding bindingToConvert
+                do! createReflectionOfProvPort provPortDecl varToNewFieldMap newProvPort
+                do! replaceDelayedBinding bindingToConvert newProvPort
                 return ()
     }
     
