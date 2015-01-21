@@ -1,3 +1,8 @@
+globals {
+}
+locals {
+	i : int;
+}
 choice {
 	true => { i := 5+7; }
 }

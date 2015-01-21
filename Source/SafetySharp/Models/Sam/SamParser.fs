@@ -122,21 +122,21 @@ module internal Parser =
         allKindsOfStatements
 
         
-    let type_ws1 =
+    let type_ws =
         let boolType = stringReturn "bool" Type.BoolType
         let intType = stringReturn "int"  Type.IntType
-        (boolType <|> intType) .>> spaces1
+        (boolType <|> intType) .>> spaces
 
 
     let globalVarDecl_ws : Parser<_,unit> =
-        let createVarDecl _type var inits =
+        let createVarDecl var _type inits =
             {
                 GlobalVarDecl.Var = var ;
                 GlobalVarDecl.Type = _type ;
                 GlobalVarDecl.Init = inits;
             }
-        pipe3 (type_ws1)
-              (variable_ws ) 
+        pipe3 (variable_ws .>> (pstring_ws ":"))
+              (type_ws .>> (pstring_ws "="))
               ((sepBy1 value_ws (pstring_ws ",")) .>> (pstring_ws ";"))
               createVarDecl
               
@@ -144,13 +144,13 @@ module internal Parser =
         (many globalVarDecl_ws)
         
     let localVarDecl_ws : Parser<_,unit> =
-        let createVarDecl _type var=
+        let createVarDecl var _type =
             {
                 LocalVarDecl.Var = var ;
                 LocalVarDecl.Type = _type ;
             }
-        pipe2 (type_ws1)
-              (variable_ws .>> (pstring_ws ";" ))
+        pipe2 (variable_ws .>> (pstring_ws ":"))
+              (type_ws .>> (pstring_ws ";"))
               createVarDecl
 
     let localVarDecls_ws =

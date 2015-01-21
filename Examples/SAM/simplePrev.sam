@@ -1,3 +1,9 @@
+globals {
+	i : int = 1;
+}
+locals {
+	j : int;
+}
 i := 5+7;
 j := 12;
 i := prev(i) + 2;

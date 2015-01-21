@@ -81,6 +81,7 @@
     <Compile Include="Models\Sam\SamAstToString.fs" />
     <Compile Include="Models\Sam\SamConsistencyCheck.fs" />
     <Compile Include="Models\Transformations\SsmToScm.fs" />
+    <Compile Include="Models\Transformations\ScmToSam.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
