@@ -32,7 +32,7 @@ open SafetySharp.Internal.Modelchecking.PromelaSpin
 [<TestFixture>]
 module TestCase1ToPromelaTests =
     open TestCase1
-    
+    (*
     [<Test>]
     let ``transforms model without exception`` () =
         let modelTransformer = MetamodelToPromela (testCase1Configuration)
@@ -55,3 +55,4 @@ module TestCase1ToPromelaTests =
         let promelaCodeString = promelaWriter.Export promelaCode
         FileSystem.WriteToAsciiFile "Modelchecking/Promela/testcase1.pml" promelaCodeString
         ()
+    *)

@@ -77,12 +77,10 @@
     <Compile Include="Models\Sam\Sam.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamTypedefs.fs" />
+    <Compile Include="Models\Sam\SamHelpers.fs" />
+    <Compile Include="Models\Sam\SamAstToString.fs" />
+    <Compile Include="Models\Sam\SamConsistencyCheck.fs" />
     <Compile Include="Models\Transformations\SsmToScm.fs" />
-    <Compile Include="Analysis\Metamodel\Symbols.fs" />
-    <Compile Include="Analysis\Metamodel\Expressions.fs" />
-    <Compile Include="Analysis\Metamodel\Formulas.fs" />
-    <Compile Include="Analysis\Metamodel\Statements.fs" />
-    <Compile Include="Analysis\Metamodel\Objects.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
@@ -97,10 +95,10 @@
     <Compile Include="Analysis\Smt-Solving\Z3\Z3AstToString.fs" />
     <Compile Include="Analysis\Smt-Solving\Z3\Z3Parser.fs" />
     <Compile Include="Analysis\Smt-Solving\Z3\Z3Execute.fs" />
-    <Compile Include="Analysis\Modelchecking\Common\TransformationToSimplifiedMetamodel.fs" />
     <Compile Include="Analysis\Modelchecking\Common\WriteOnceMetamodel.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAst.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTypedefs.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstToFile.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaExecute.fs" />

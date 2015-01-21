@@ -325,7 +325,7 @@ module NuXmvExecuteTestsWithAstModels =
     let ``NuXmv validates valid ctl- and ltl-formulas and invariants with direct input`` () =
     *)
 
-
+(*
 [<TestFixture>]
 module NuXmvExecuteTestsWithModelFromSafetySharpMetamodel =
 
@@ -354,3 +354,4 @@ module NuXmvExecuteTestsWithModelFromSafetySharpMetamodel =
 
         result.Length > 0 =? true
         ()
+*)

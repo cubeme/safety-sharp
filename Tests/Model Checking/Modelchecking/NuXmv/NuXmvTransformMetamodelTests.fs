@@ -29,6 +29,7 @@ open SafetySharp
 open SafetySharp.Internal.Modelchecking
 open SafetySharp.Internal.Modelchecking.NuXmv
 
+(*
 [<TestFixture>]
 module TestCase1ToNuXmvTests =
     open TestCase1
@@ -55,3 +56,4 @@ module TestCase1ToNuXmvTests =
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmvCode
         FileSystem.WriteToAsciiFile "Modelchecking/NuXmv/testcase1.smv" nuXmvCodeString
         ()
+*)

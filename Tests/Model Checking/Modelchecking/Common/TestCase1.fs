@@ -22,15 +22,9 @@
 
 namespace SafetySharp.Tests.Modelchecking
 
-
-open SafetySharp.Internal.Modelchecking.PromelaSpin
-open SafetySharp.Internal.Metamodel
-
-type internal MMUnaryFormulaOperator = SafetySharp.Internal.Metamodel.UnaryFormulaOperator
-type internal MMBinaryOperator = SafetySharp.Internal.Metamodel.BinaryOperator
-
 module internal TestCase1 =    
-    
+    open SafetySharp
+(*    
     // Expressions I
     let booleanTrueExpression = Expression.BooleanLiteral(true)
     let booleanFalseExpression = Expression.BooleanLiteral(false)
@@ -114,3 +108,4 @@ module internal TestCase1Simplified =
     let fields = [field]
     let partitionFields = [field]
     let partitionUpdate = [guardedCommandStatement]
+*)

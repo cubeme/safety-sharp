@@ -23,8 +23,9 @@
 namespace SafetySharp.Internal.Modelchecking
 
 
-open SafetySharp.Internal.Modelchecking
+open SafetySharp.Models.Sam
 
+(*
 
 //TODO: Somehow enable the use of DEFINE?!?
 
@@ -399,3 +400,4 @@ type internal SimpleStatementsToWriteOnceStatements(initialFields:SimpleGlobalFi
     
     member this.getAllFields() : SimpleGlobalField list = 
         initialFields @ this.getAllArtificialFields()
+*)
