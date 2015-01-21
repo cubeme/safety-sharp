@@ -49,10 +49,8 @@ type internal BOp =
     | Greater
     | GreaterEqual
 
-type internal Id =
-    interface
-        abstract Name : string
-    end
+type internal Var =
+    | Var of string
         
 type internal Val = 
     /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
@@ -72,13 +70,15 @@ type internal Expr =
     | BExpr of LeftExpression : Expr * Operator : BOp * RightExpression : Expr
     
     /// Represents a read operation of a variable.
-    | Read of Variable : Id
+    | Read of Variable : Var
 
     /// Represents a read operation of the previous value of a variable.
-    | ReadOld of Variable : Id
+    | ReadOld of Variable : Var
 
-type internal Clause =
-    | Clause of Guard:Expr * Statement:Stm
+type internal Clause = {
+    Guard:Expr;
+    Statement:Stm;
+}
 
 /// Represents statements contained within method bodies.
 and internal Stm =
@@ -91,16 +91,26 @@ and internal Stm =
     | Choice of Clauses : Clause list
 
     /// Represents the assignment of a variable.
-    | Write of Variable:Id * Expression:Expr
+    | Write of Variable:Var * Expression:Expr
+
+type internal Type =
+    | BoolType
+    | IntType
+
+type internal GlobalVarDecl = {
+    Var : Var
+    Type : Type
+    Init : Val list 
+}
 
 
-    
-type internal SimpleId = {
-    Name : string;
-} with
-    static member createId (name:string) : Id =
-        {
-            SimpleId.Name = name;
-        } :> Id
-    interface Id with
-       member self.Name = self.Name
+type internal LocalVarDecl = {
+    Var : Var
+    Type : Type
+}
+
+type internal Pgm = {
+    Globals : GlobalVarDecl list
+    Locals : LocalVarDecl list
+    Body : Stm
+}

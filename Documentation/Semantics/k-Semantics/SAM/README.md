@@ -1,5 +1,7 @@
 # Examples
 
+Note: Not ported yet to example files after Dec 2014. Use a previous checkout from github.
+
 You can find examples in [\Examples\SAM](https://github.com/isse-augsburg/safety-sharp/tree/master/Examples/SAM).
 
 You can create a symbolic link for more convenience when trying out one of the semantics: 

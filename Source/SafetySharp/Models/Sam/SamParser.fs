@@ -31,9 +31,9 @@ module internal Parser =
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,unit> =
-        stringReturn "true" (Expr.Literal (Val.BoolVal true))
+        stringReturn "true" (Val.BoolVal true)
     let falseKeyword  : Parser<_,unit> =
-        stringReturn "false" (Expr.Literal (Val.BoolVal false))
+        stringReturn "false" (Val.BoolVal false)
 
     // parses the Boolean constants, but not, e.g., truee or false1, 
     let boolean : Parser<_,unit> =
@@ -44,15 +44,18 @@ module internal Parser =
     let number : Parser<_,unit> =
         many1Satisfy isDigit |>> (fun value -> value |> bigint.Parse |> Val.NumbVal)
 
+    let value : Parser<_,unit> =
+        boolean <|> number
 
     // parses an identifier of a variable 
     let variable : Parser<_,unit> =
-        ((identifier (IdentifierOptions())) |>> SimpleId.createId)
+        ((identifier (IdentifierOptions())) |>> Var)
 
     // parsers with space afterwards
     let pstring_ws s = pstring s .>> spaces
     let boolean_ws = boolean .>> spaces
     let number_ws = number .>> spaces
+    let value_ws = value .>> spaces
     let variable_ws = variable .>> spaces
     let parentOpen_ws = pstring_ws "("
     let parentClose_ws = pstring_ws ")"
@@ -87,7 +90,7 @@ module internal Parser =
             (pstring_ws "prev") >>. parentOpen_ws >>. variable_ws .>> parentClose_ws
 
         // recursive term parser for expressions
-        opp.TermParser <- boolean_ws <|> (prevExpr_ws |>> Expr.Read) <|> (number_ws |>> Expr.Literal) <|> (variable_ws |>> Expr.Read) <|> parenExpr_ws
+        opp.TermParser <- (boolean_ws |>> Expr.Literal) <|> (prevExpr_ws |>> Expr.Read) <|> (number_ws |>> Expr.Literal) <|> (variable_ws |>> Expr.Read) <|> parenExpr_ws
         opp.ExpressionParser
         
     let (guardedCommandClause:Parser<_,unit>),guardedCommandClauseRef = createParserForwardedToRef()
@@ -100,7 +103,7 @@ module internal Parser =
     do guardedCommandClauseRef :=
        pipe2 (expression_ws .>> (pstring_ws "=>") .>> (pstring_ws "{") )
              ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
-             (fun guard stm -> Clause.Clause(guard,stm))
+             (fun guard stm -> {Clause.Guard=guard;Clause.Statement=stm})
         
     do statementRef :=
         let parseBlock =
@@ -118,5 +121,52 @@ module internal Parser =
             parseChoice
         allKindsOfStatements
 
+        
+    let type_ws1 =
+        let boolType = stringReturn "bool" Type.BoolType
+        let intType = stringReturn "int"  Type.IntType
+        (boolType <|> intType) .>> spaces1
+
+
+    let globalVarDecl_ws : Parser<_,unit> =
+        let createVarDecl _type var inits =
+            {
+                GlobalVarDecl.Var = var ;
+                GlobalVarDecl.Type = _type ;
+                GlobalVarDecl.Init = inits;
+            }
+        pipe3 (type_ws1)
+              (variable_ws ) 
+              ((sepBy1 value_ws (pstring_ws ",")) .>> (pstring_ws ";"))
+              createVarDecl
+              
+    let globalVarDecls_ws =
+        (many globalVarDecl_ws)
+        
+    let localVarDecl_ws : Parser<_,unit> =
+        let createVarDecl _type var=
+            {
+                LocalVarDecl.Var = var ;
+                LocalVarDecl.Type = _type ;
+            }
+        pipe2 (type_ws1)
+              (variable_ws .>> (pstring_ws ";" ))
+              createVarDecl
+
+    let localVarDecls_ws =
+        (many localVarDecl_ws)
+
+    let pgm_ws =
+        let createPgm globals locals body =
+            {
+                Pgm.Globals = globals;
+                Pgm.Locals = locals;
+                Pgm.Body = body;
+            }
+        pipe3 (pstring_ws "globals" >>. pstring_ws "{" >>.  globalVarDecls_ws .>> pstring_ws "}")
+              (pstring_ws "locals" >>. pstring_ws "{" >>.  localVarDecls_ws .>> pstring_ws "}")
+              (many statement_ws |>> Stm.Block )
+              createPgm              
+    
     let samFile =
-        spaces >>. (many statement_ws |>> Stm.Block ) 
+        spaces >>. pgm_ws
