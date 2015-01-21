@@ -27,7 +27,6 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
-open SafetySharp.Internal.Metamodel
 open SafetySharp.Modeling
 open SafetySharp.Tests
 
@@ -54,7 +53,7 @@ module ``FinalizeMetadata method`` =
         model.IsMetadataFinalized =? true
 
 [<TestFixture>]
-module ``SetPartitionRoots method`` =
+module ``SetRootComponents method`` =
     let raisesSharedComponentsException func components =
         let e = raisesWith<SharedComponentsException> func 
         e.Components =? components
@@ -72,22 +71,22 @@ module ``SetPartitionRoots method`` =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
 
-        raises<InvalidOperationException> (fun () -> model.SetPartitions [| EmptyComponent () :> Component |] |> ignore)
+        raises<InvalidOperationException> (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
     let ``throws when method is called twice on same object`` () =
         let model = EmptyModel ()
-        model.SetPartitions [| EmptyComponent () :> Component |]
+        model.SetRootComponents [| EmptyComponent () :> Component |]
 
-        raises<InvalidOperationException> (fun () -> model.SetPartitions [| EmptyComponent () :> Component |] |> ignore)
+        raises<InvalidOperationException> (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
-    let ``throws when component is shared within the same partition root at the same level`` () =
+    let ``throws when component is shared within the same root at the same level`` () =
         let component1 = EmptyComponent ()
         raisesSharedComponentsException (fun () -> TestModel (component1, component1) |> ignore) [component1]
 
     [<Test>]
-    let ``throws when component is shared within the same partition root at different levels`` () =
+    let ``throws when component is shared within the same root at different levels`` () =
         let component1 = EmptyComponent ()
         let component2 = EmptyComponent ()
         let component3 = OneSubcomponent component2
@@ -225,11 +224,11 @@ module ``Components property`` =
         [name 0 []; name 0 ["_component"]; name 1 []; name 1 ["_component1"]; name 1 ["_component2"]; name 1 ["_component2"; "_component"]] 
 
 [<TestFixture>]
-module ``PartitionRoots property`` =
+module ``Roots property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let model = TestModel (EmptyComponent ())
-        raises<InvalidOperationException> (fun () -> model.PartitionRoots |> ignore)
+        raises<InvalidOperationException> (fun () -> model.Roots |> ignore)
 
     [<Test>]
     let ``contains single top-level component`` () =
@@ -237,7 +236,7 @@ module ``PartitionRoots property`` =
         let model = TestModel (component')
         model.FinalizeMetadata ()
 
-        model.PartitionRoots =? [component']
+        model.Roots =? [component']
 
     [<Test>]
     let ``contains multiple top-level components`` () =
@@ -247,7 +246,7 @@ module ``PartitionRoots property`` =
         let model = TestModel (component1, component2, component3)
         model.FinalizeMetadata ()
 
-        model.PartitionRoots =? [component1; component2; component3]
+        model.Roots =? [component1; component2; component3]
 
     [<Test>]
     let ``does not contain nested components`` () =
@@ -256,16 +255,16 @@ module ``PartitionRoots property`` =
         let model = TestModel component2
         model.FinalizeMetadata ()
 
-        model.PartitionRoots =? [component2]
+        model.Roots =? [component2]
 
     [<Test>]
     let ``contained partition roots have unique names`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
-        model.PartitionRoots.[0].Name =? "Root0"
+        model.Roots.[0].Name =? "Root0"
 
         let model = TestModel (EmptyComponent (), EmptyComponent (), EmptyComponent ())
         model.FinalizeMetadata ()
-        model.PartitionRoots.[0].Name =? "Root0"
-        model.PartitionRoots.[1].Name =? "Root1"
-        model.PartitionRoots.[2].Name =? "Root2"
+        model.Roots.[0].Name =? "Root0"
+        model.Roots.[1].Name =? "Root1"
+        model.Roots.[2].Name =? "Root2"

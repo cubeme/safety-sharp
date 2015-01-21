@@ -36,7 +36,7 @@ module ``CilToSsm Multiple Assemblies`` =
     let private transform supportingCode mainCode instantiations =
         let supportCompilation = TestCompilation supportingCode
         let supportAssembly = supportCompilation.Compile ()
-        let compilation = TestCompilation (sprintf "class T : Model { public T() { SetPartitions(%s); } } %s" instantiations mainCode, supportAssembly)
+        let compilation = TestCompilation (sprintf "class T : Model { public T() { SetRootComponents(%s); } } %s" instantiations mainCode, supportAssembly)
         let assembly = compilation.Compile ()
         let modelType = assembly.GetType "T"
         let model = Activator.CreateInstance modelType :?> Model
@@ -87,7 +87,7 @@ module ``CilToSsm Multiple Assemblies`` =
                     Name = "Y"
                     Fields = []
                     Subs = []
-                    Methods = 
+                    Methods =
                     [
                         {
                             Name = CilToSsm.makeUniqueMethodName "M" 0 0

@@ -35,7 +35,7 @@ open SafetySharp.Tests
 module ``CilToSsm Field Transformations`` =
 
     let private transform componentCode initCode = 
-        let model = createModel (sprintf "%s class TestModel : Model { public TestModel() { SetPartitions(%s); } }" componentCode initCode)
+        let model = createModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
         let ssm = CilToSsm.transformModel model
         ssm.[0].Fields

@@ -28,7 +28,6 @@ open System.Linq.Expressions
 open System.Reflection
 open SafetySharp
 open SafetySharp.Modeling
-open SafetySharp.Internal.Metamodel
 
 [<AutoOpen>]
 module ModelingShared =
@@ -42,19 +41,6 @@ module ModelingShared =
             InvalidOperationException (sprintf "Unable to find field '%s' in '%s'." field (o.GetType().FullName)) |> raise
         Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(o), fieldInfo))
 
-    /// Gets a component symbol with the given component name, with an empty update method and no fields or subcomponents.
-    let internal emptyComponentSymbol name = { 
-        Name = name
-        UpdateMethod = None
-        Fields = []
-        ProvidedPorts = []
-        RequiredPorts = []
-    } 
-
-    /// Gets a component object with the given name and component symbol, with no fields or subcomponents.
-    let internal emptyComponentObject name symbol = 
-        { Name = name; ComponentSymbol = symbol; Fields = Map.empty; Subcomponents = Map.empty; Bindings = Map.empty }
-
     /// Compiles the given C# code and creates an instance of the "TestModel" class.
     let internal createModel csharpCode =
         let compilation = TestCompilation csharpCode
@@ -64,8 +50,6 @@ module ModelingShared =
 
 type internal EmptyComponent () =
     inherit Component ()
-
-    static member Symbol = emptyComponentSymbol "EmptyComponent"
 
 type internal OneFieldComponent =
     inherit Component
@@ -136,8 +120,6 @@ type internal OneSubcomponent =
     new () = { _component = Unchecked.defaultof<Component> }
     new component' = { _component = component' }
 
-    static member Symbol = emptyComponentSymbol "OneSubcomponent"
-
 type internal TwoSubcomponents =
     inherit Component
 
@@ -145,8 +127,6 @@ type internal TwoSubcomponents =
     val _component2 : Component
 
     new (component1, component2) = { _component1 = component1; _component2 = component2 }
-
-    static member Symbol = emptyComponentSymbol "TwoSubcomponents"
 
 type internal ComplexComponent =
     inherit Component
@@ -163,4 +143,4 @@ type internal EmptyModel () =
 
 type internal TestModel ([<ParamArray>] components : Component array) as this =
     inherit Model ()
-    do this.SetPartitions components
+    do this.SetRootComponents components

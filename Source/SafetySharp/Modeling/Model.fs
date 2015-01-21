@@ -34,7 +34,7 @@ open SafetySharp
 type SharedComponentsException internal (components : Component list) =
     inherit Exception ("One or more components have been found in multiple locations of the component tree.")
 
-    /// Gets the component instances that was found in multiple locations of a component tree.
+    /// Gets the component instances that were found in multiple locations of a component tree.
     member this.Components = components
 
 /// Represents a base class for all models.
@@ -45,7 +45,7 @@ type Model () =
     // Model state and metadata
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    let mutable (partitionRoots : Component list) = []
+    let mutable (roots : Component list) = []
     let mutable (components : Component list) = []
     let mutable isSealed = false
 
@@ -65,8 +65,8 @@ type Model () =
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Sets the <paramref name="rootComponents" /> of the model's partitions.
-    member this.SetPartitions ([<ParamArray>] rootComponents : Component array) =
+    /// Sets the <paramref name="rootComponents" /> of the model.
+    member this.SetRootComponents ([<ParamArray>] rootComponents : Component array) =
         nullArg rootComponents "rootComponents"
         invalidArg (rootComponents.Length <= 0) "rootComponents" "There must be at least one partition root."
         invalidCall (components <> []) "This method can only be called once on any given model instance."
@@ -80,8 +80,8 @@ type Model () =
         )
 
         // Store the partition roots and collect all components of the model
-        partitionRoots <- rootComponents |> List.ofSeq
-        components <- partitionRoots |> Seq.collect getAllComponents |> List.ofSeq
+        roots <- rootComponents |> List.ofSeq
+        components <- roots |> Seq.collect getAllComponents |> List.ofSeq
 
         // Ensure that there are no shared components
         let sharedComponents =
@@ -105,11 +105,11 @@ type Model () =
     // Methods that can only be called after metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Gets the partition root <see cref="Component" />s of the configuration.
-    member internal this.PartitionRoots 
+    /// Gets the root <see cref="Component" />s of the configuration.
+    member internal this.Roots 
         with get () = 
             requiresIsSealed ()
-            partitionRoots
+            roots
 
     /// Gets all <see cref="Component" />s contained in the model configuration.
     member internal this.Components 
