@@ -102,6 +102,9 @@ module internal Ssm =
         Direction : ParamDir
     }
 
+    /// Indicates whether a method represents a port or a function.
+    type internal MethodKind = ReqPort | ProvPort | Function
+
     /// Represents a method within a S# component.
     type internal Method = {
         Name : string
@@ -109,6 +112,7 @@ module internal Ssm =
         Body : Stm
         Return : Type
         Locals : Var list
+        Kind : MethodKind
     }
 
     /// Represents a S# component.

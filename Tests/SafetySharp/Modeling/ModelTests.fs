@@ -40,7 +40,7 @@ module ``FinalizeMetadata method`` =
         raises<InvalidOperationException> (fun () -> model.FinalizeMetadata () |> ignore)
 
     [<Test>]
-    let ``throws when no partition root has been set`` () =
+    let ``throws when no root has been set`` () =
         let model = EmptyModel ()
         raises<InvalidOperationException> (fun () -> model.FinalizeMetadata () |> ignore)
 
@@ -152,7 +152,7 @@ module ``Components property`` =
         model.Components =? [component']
 
     [<Test>]
-    let ``contains partition roots`` () =
+    let ``contains roots`` () =
         let component1 = EmptyComponent ()
         let component2 = EmptyComponent ()
         let model = TestModel (component1, component2)
@@ -258,7 +258,7 @@ module ``Roots property`` =
         model.Roots =? [component2]
 
     [<Test>]
-    let ``contained partition roots have unique names`` () =
+    let ``contained roots have unique names`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
         model.Roots.[0].Name =? "Root0"

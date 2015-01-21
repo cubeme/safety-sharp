@@ -39,7 +39,7 @@ open SafetySharp.CSharpCompiler.Roslyn.Syntax
 open SafetySharp.CSharpCompiler.Roslyn
 open SafetySharp.Modeling
 
-/// Raises when a C# compilation problem occurred.
+/// Raised when a C# compilation problem occurred.
 type CompilationException (message : string) =
     inherit Exception (message)
 
@@ -101,7 +101,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Gets the semantic model for the compilation's syntax tree.
     member this.SemanticModel = csharpCompilation.GetSemanticModel syntaxTree
 
-    /// Emits an in-memory assembly for the compilation and loads the assembly into the app domain.
+    /// Emits an assembly for the compilation and loads the assembly into the app domain.
     member this.Compile () =
         if assembly = null then
             // Create a temporary file and load the assembly from the file, as some
@@ -116,7 +116,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
 
         assembly
 
-    /// Emits an in-memory assembly for the compilation and returns a Mono.Cecil assembly definition for the compiled assembly.
+    /// Returns a Mono.Cecil assembly definition for the compilation.
     member this.GetAssemblyDefinition () =
         use stream = new MemoryStream ()
         let emitResult = csharpCompilation.Emit stream

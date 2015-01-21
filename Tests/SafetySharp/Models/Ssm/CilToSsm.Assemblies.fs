@@ -59,6 +59,7 @@ module ``CilToSsm Multiple Assemblies`` =
                             Params = []
                             Locals = []
                             Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field ("x", ClassType "X")))); RetStm None]
+                            Kind = ProvPort
                         } 
                     ]
                 }
@@ -74,6 +75,7 @@ module ``CilToSsm Multiple Assemblies`` =
                             Params = []
                             Locals = []
                             Body = RetStm None
+                            Kind = ProvPort
                         } 
                     ]
                 } 
@@ -95,6 +97,7 @@ module ``CilToSsm Multiple Assemblies`` =
                             Params = []
                             Locals = []
                             Body = RetStm None
+                            Kind = ProvPort
                         } 
                         {
                             Name = CilToSsm.makeUniqueMethodName "N" 1 0
@@ -102,6 +105,7 @@ module ``CilToSsm Multiple Assemblies`` =
                             Params = []
                             Locals = []
                             Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y")))); RetStm None]
+                            Kind = ProvPort
                         } 
                     ]
                 }

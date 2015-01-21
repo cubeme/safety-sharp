@@ -36,6 +36,10 @@ module internal Exceptions =
     let inline notSupported message =
         Printf.ksprintf (fun message -> raise (NotSupportedException message)) message
 
+    /// Raises a <see cref="NotImplementedException" />.
+    let inline notImplemented () =
+        raise (NotImplementedException ())
+
     /// Raises a <see cref="NotSupportedException" /> with a message informing the user that another overload of the method
     /// should be called with lifted expression parameters.
     let inline invalidUnliftedCall () =

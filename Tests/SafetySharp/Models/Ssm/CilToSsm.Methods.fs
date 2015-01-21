@@ -66,6 +66,30 @@ module ``CilToSsm Method Transformations`` =
     let private name name = { Name = name; Type = className }
 
     [<Test>]
+    let ``extern method without return value and parameters should have kind required port`` () =
+        transformMethod "extern void M();" =?
+            {
+                Name = "M"
+                Return = VoidType
+                Params = []
+                Locals = []
+                Body = NopStm
+                Kind = ReqPort
+            }
+
+    [<Test>]
+    let ``extern method with return value and parameters should have kind required port`` () =
+        transformMethod "extern int M(int x);" =?
+            {
+                Name = "M"
+                Return = IntType
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
+                Locals = []
+                Body = NopStm
+                Kind = ReqPort
+            }
+
+    [<Test>]
     let ``read from ref parameter`` () =
         transformMethod "int M(ref int x) { return x; }" =?
             {
@@ -74,6 +98,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
                 Body = RetStm (Some (VarExpr (arg "x" IntType)))
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -85,6 +110,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
                 Body = SeqStm [AsgnStm (arg "x" IntType, IntExpr 17); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -96,6 +122,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = [ { Var = arg "x" IntType; Direction = Out } ]
                 Locals = []
                 Body = SeqStm [AsgnStm (arg "x" IntType, IntExpr 17); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -107,6 +134,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
                 Body = SeqStm [AsgnStm (field "_f" IntType, VarExpr (arg "x" IntType)); RetStm (Some (VarExpr (field "_f" IntType)))]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -118,6 +146,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = []
                 Locals = []
                 Body = SeqStm [CallStm (name "F", [], [], VoidType, [], None); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -133,6 +162,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 1 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], None))
                         RetStm (Some (VarExpr (tmp 1 0 IntType)))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -144,6 +174,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = []
                 Locals = []
                 Body = SeqStm [CallStm ({ Name = "F"; Type = className + ".Q" }, [], [], VoidType, [], Some (VarExpr (field "q" (ClassType (className + ".Q"))))); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -159,6 +190,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 3 0 IntType, CallExpr ({ Name = "F"; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], Some (VarExpr (field "q" (ClassType (className + ".Q"))))))
                         RetStm (Some (VarExpr (tmp 3 0 IntType)))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -170,6 +202,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = []
                 Locals = []
                 Body = SeqStm [CallStm ({ Name = "F"; Type = className + ".Q" }, [], [], VoidType, [], None); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -185,6 +218,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 1 0 IntType, CallExpr ({ Name = "F"; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], None))
                         RetStm (Some (VarExpr (tmp 1 0 IntType)))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -196,6 +230,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = []
                 Locals = []
                 Body = SeqStm [CallStm (name "F", [], [], VoidType, [], this); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -207,6 +242,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = []
                 Locals = []
                 Body = SeqStm [CallStm (name "F", [IntType], [In], VoidType, [IntExpr 4], this); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -218,6 +254,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
                 Body = SeqStm [CallStm (name "F", [IntType], [InOut], VoidType, [VarRefExpr (arg "x" IntType)], this); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -229,6 +266,7 @@ module ``CilToSsm Method Transformations`` =
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
                 Body = SeqStm [CallStm (name "F", [IntType], [Out], VoidType, [VarRefExpr (arg "x" IntType)], this); RetStm None]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -239,7 +277,8 @@ module ``CilToSsm Method Transformations`` =
                 Return = VoidType
                 Params = []
                 Locals = [tmp 2 0 IntType]
-                Body = SeqStm [AsgnStm (tmp 2 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this)); RetStm None]                    
+                Body = SeqStm [AsgnStm (tmp 2 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this)); RetStm None] 
+                Kind = ProvPort                   
             }
 
     [<Test>]
@@ -256,6 +295,7 @@ module ``CilToSsm Method Transformations`` =
                         SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 1], this)); RetStm None],
                         SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this)); RetStm None] |> Some
                     )
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -277,6 +317,7 @@ module ``CilToSsm Method Transformations`` =
                         )
                         RetStm None
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -293,6 +334,7 @@ module ``CilToSsm Method Transformations`` =
                             CallExpr (name "F", [IntType; BoolType; BoolType], [In; In; In], IntType, [IntExpr 1; BoolExpr false; BoolExpr true], this))
                         RetStm (Some (VarExpr (tmp 4 0 IntType)))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -318,6 +360,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (arg "z" IntType, VarExpr (tmp 7 0 IntType))
                         RetStm (Some (DoubleExpr 3.0))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -339,6 +382,7 @@ module ``CilToSsm Method Transformations`` =
                                 BExpr (VarExpr (tmp 5 0 IntType), Mul, BExpr (VarExpr (tmp 10 0 IntType), Sub, IntExpr 1))))
                         RetStm None
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -364,6 +408,7 @@ module ``CilToSsm Method Transformations`` =
                                 BExpr (VarExpr (tmp 17 0 IntType), Mul, VarExpr local)))
                         RetStm None
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -411,6 +456,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (argZ, VarExpr (tmp 43 0 IntType))
                         RetStm None
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -428,6 +474,7 @@ module ``CilToSsm Method Transformations`` =
                 Body = SeqStm [ifStm; retStm]
                 Return = IntType
                 Locals = [tmp]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -453,6 +500,7 @@ module ``CilToSsm Method Transformations`` =
                     ]
                 Return = IntType
                 Locals = [tmp 2 0 BoolType; tmp 10 0 IntType; tmp 6 0 IntType]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -479,6 +527,7 @@ module ``CilToSsm Method Transformations`` =
                     ]
                 Return = IntType
                 Locals = [tmp 2 0 BoolType; tmp 6 0 BoolType]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -493,6 +542,7 @@ module ``CilToSsm Method Transformations`` =
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = IntType
                 Locals = []
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -507,6 +557,7 @@ module ``CilToSsm Method Transformations`` =
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = IntType
                 Locals = []
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -532,6 +583,7 @@ module ``CilToSsm Method Transformations`` =
                 Body = SeqStm [ifStm; assignStm; RetStm None]
                 Return = VoidType
                 Locals = [ tmp 9 0 IntType; tmp 10 0 IntType ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -557,6 +609,7 @@ module ``CilToSsm Method Transformations`` =
                 Body = SeqStm [ifStm; assignStm; RetStm None]
                 Return = VoidType
                 Locals = [ tmp 9 0 IntType; tmp 10 0 IntType ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -593,6 +646,7 @@ module ``CilToSsm Method Transformations`` =
                     ]
                 Return = IntType
                 Locals = [ tmp 5 0 IntType; tmp 9 0 IntType; tmp 10 0 IntType; tmp 10 1 IntType ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -611,6 +665,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 5 1 IntType, CallExpr (name "F", [IntType], [InOut], IntType, [VarRefExpr local], this))
                         RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -627,6 +682,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 5 1 IntType, CallExpr (name "F", [IntType], [InOut], IntType, [VarRefExpr (field "f" IntType)], this))
                         RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -643,6 +699,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 3 1 IntType, CallExpr (name "F", [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)], this))
                         RetStm (Some (BExpr (VarExpr (tmp 3 0 IntType), Add, VarExpr (tmp 3 1 IntType))))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -659,6 +716,7 @@ module ``CilToSsm Method Transformations`` =
                         AsgnStm (tmp 4 1 IntType, CallExpr (name "F", [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)], this))
                         RetStm (Some (BExpr (VarExpr (tmp 4 0 IntType), Add, VarExpr (tmp 4 1 IntType))))
                     ]
+                Kind = ProvPort
             }
 
     [<Test>]
@@ -671,6 +729,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 0 1
@@ -678,6 +737,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = [ { Var = arg "i" IntType; Direction = In } ]
                     Locals = []
                     Body = RetStm (Some (BoolExpr true))
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 0 2
@@ -685,6 +745,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = [ { Var = arg "b" BoolType; Direction = In } ]
                     Locals = []
                     Body = RetStm (Some (IntExpr 1))
+                    Kind = ProvPort
                 }
             ]
 
@@ -699,6 +760,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "N" 1 0
@@ -706,6 +768,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = [ { Var = arg "n" BoolType; Direction = In } ]
                     Locals = []
                     Body = RetStm (Some (VarExpr (arg "n" BoolType)))
+                    Kind = ProvPort
                 }
             ]
                                                                                             
@@ -720,6 +783,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 0 1
@@ -727,6 +791,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = [ { Var = arg "i" IntType; Direction = In } ]
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 1 0
@@ -734,6 +799,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 1 1
@@ -741,6 +807,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = [ { Var = arg "b" BoolType; Direction = In } ]
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
             ]
 
@@ -755,6 +822,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "N" 2 0
@@ -762,6 +830,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 3 0
@@ -769,6 +838,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
                 {
                     Name = CilToSsm.makeUniqueMethodName "Q" 4 0
@@ -776,6 +846,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 }
             ]
 
@@ -790,6 +861,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm (Some (VarExpr (field (CilToSsm.makeUniqueFieldName "x" 1) IntType)))
+                    Kind = ProvPort
                 } 
             ]
 
@@ -804,6 +876,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = [ { Var = arg "x" IntType; Direction = In } ]
                     Locals = []
                     Body = RetStm (Some (VarExpr (arg "x" IntType)))
+                    Kind = ProvPort
                 } 
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 1 1
@@ -816,6 +889,7 @@ module ``CilToSsm Method Transformations`` =
                                 CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [IntType], [In], IntType, [IntExpr 1], tthis "B"))
                             RetStm (Some (VarExpr (tmp 2 0 IntType)))
                     ]
+                    Kind = ProvPort
                 } 
             ]
 
@@ -830,6 +904,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 } 
                 {
                     Name = "M"
@@ -841,6 +916,7 @@ module ``CilToSsm Method Transformations`` =
                             CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], Some (VarExpr (field "b" (ClassType "B"))))
                             RetStm None
                         ]
+                    Kind = ProvPort
                 } 
             ]
 
@@ -855,6 +931,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = RetStm None
+                    Kind = ProvPort
                 } 
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 1 0
@@ -862,6 +939,7 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
+                    Kind = ProvPort
                 } 
             ]
 
@@ -875,14 +953,16 @@ module ``CilToSsm Method Transformations`` =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = RetStm None
+                    Body = RetStm None                    
+                    Kind = ProvPort
                 } 
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 1 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]                   
+                    Kind = ProvPort
                 } 
                 {
                     Name = CilToSsm.makeUniqueMethodName "M" 2 0
@@ -890,5 +970,6 @@ module ``CilToSsm Method Transformations`` =
                     Params = []
                     Locals = []
                     Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
+                    Kind = ProvPort
                 } 
             ]

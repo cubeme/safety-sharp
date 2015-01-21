@@ -386,7 +386,7 @@ module internal CilToSsm =
             | RetStm None -> RetStm None
             | RetStm (Some e) -> RetStm (Some (fixExpr e returnsBool))
             | CallStm (m, p, d, r, e, t) -> CallStm (m, p, d, r, fixCallExprs p e, t)
-            | _ -> invalidOp "Unsupported statement '%A'." stm
+            | _ -> invalidOp "Unsupported statement '%+A'." stm
         ) methodBody
 
     /// Compresses the statement array, removing all nops. The targets of gotos are updated accordingly. This step
@@ -454,6 +454,7 @@ module internal CilToSsm =
                 |> Seq.toList
             Return = mapReturnType m.ReturnType
             Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
+            Kind = if m.RVA <> 0 then ProvPort else ReqPort
         }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
@@ -466,7 +467,7 @@ module internal CilToSsm =
     let transformType (t : TypeDefinition) =
         let rec transform (t : TypeDefinition) =
             let transformed =
-                if t.BaseType.FullName <> "System.Object" && t.BaseType.FullName <> "SafetySharp.Modeling.Component" then
+                if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
                     transform (t.BaseType.Resolve ())
                 else { Name = String.Empty; Fields = []; Methods = []; Subs = [] }
 
@@ -492,7 +493,7 @@ module internal CilToSsm =
 
         dictionary.ToImmutableDictionary ()
 
-    /// Transforms the model to a S# model.
+    /// Transforms the model to a SSM model.
     let transformModel (model : Model) =
         let typeDefinitions = getTypeDefinitions model.Components
 
