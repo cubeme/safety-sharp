@@ -486,10 +486,7 @@ module internal CilToSsm =
         |> Seq.map (fun c -> c.GetType ())
         |> Seq.distinct
         |> Seq.iter (fun t -> 
-            let resolver = DefaultAssemblyResolver ()
-            resolver.AddSearchDirectory (Path.GetDirectoryName (t.Assembly.Location))
-
-            let assemblyDefinition = AssemblyDefinition.ReadAssembly (t.Assembly.Location, ReaderParameters (AssemblyResolver = resolver))
+            let assemblyDefinition = AssemblyDefinition.ReadAssembly t.Assembly.Location
             dictionary.Add (t, assemblyDefinition.MainModule.Import(t).Resolve ())
         )
 
