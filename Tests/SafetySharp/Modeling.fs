@@ -35,11 +35,14 @@ module ModelingShared =
     let fsharpFieldName name = name + "@"
 
     /// Creates a Linq expression that accesses the field with the given name within the component instance.
-    let createFieldExpression<'T> (o : obj) field = 
-        let fieldInfo = o.GetType().GetField(fsharpFieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
-        if fieldInfo = null then
-            InvalidOperationException (sprintf "Unable to find field '%s' in '%s'." field (o.GetType().FullName)) |> raise
+    let createTypedFieldExpression<'T> (o : obj) field (typeInfo : Type) = 
+        let fieldInfo = typeInfo.GetField(fsharpFieldName field, BindingFlags.NonPublic ||| BindingFlags.Instance)
+        if fieldInfo = null then invalidOp "Unable to find field '%s' in '%s'." field (typeInfo.FullName)
         Expression.Lambda<Func<'T>>(Expression.MakeMemberAccess(Expression.Constant(o), fieldInfo))
+
+    /// Creates a Linq expression that accesses the field with the given name within the component instance.
+    let createFieldExpression<'T> (o : obj) field = 
+        createTypedFieldExpression<'T> o field (o.GetType ())
 
     /// Compiles the given C# code and creates an instance of the "TestModel" class.
     let internal createModel csharpCode =
@@ -78,10 +81,10 @@ type internal FieldComponent<'T> =
     new () = { _field = Unchecked.defaultof<'T> }
 
     new (value : 'T) as this = { _field = Unchecked.defaultof<'T> } then
-        this.SetInitialValues (createFieldExpression<'T> this "_field", value)
+        this.SetInitialValues (createTypedFieldExpression<'T> this "_field" typeof<FieldComponent<'T>>, value)
 
     new (value1 : 'T, value2 : 'T) as this = { _field = Unchecked.defaultof<'T> } then
-        this.SetInitialValues (createFieldExpression<'T> this "_field", value1, value2)
+        this.SetInitialValues (createTypedFieldExpression<'T> this "_field" typeof<FieldComponent<'T>>, value1, value2)
 
     member this.Field = this._field
 

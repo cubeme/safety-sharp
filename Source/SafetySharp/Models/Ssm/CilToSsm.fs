@@ -421,8 +421,16 @@ module internal CilToSsm =
         |> List.filter (fun stm -> stm <> NopStm)
         |> Array.ofList
 
+    /// Transforms the given field value.
+    let private transformFieldValue (v : obj) = 
+        match v with
+        | :? bool as b   -> BoolVal b
+        | :? int as i    -> IntVal i
+        | :? double as d -> DoubleVal d
+        | _              -> invalidOp "Unsupported initial field value of type '%s'." (v.GetType().FullName)
+
     /// Transforms the fields of a component.
-    let private transformFields (t : TypeDefinition) =
+    let private transformFields (c : Component) (t : TypeDefinition) =
         t.Fields 
         |> Seq.map (fun f -> 
             match f.FieldType.MetadataType with
@@ -432,7 +440,7 @@ module internal CilToSsm =
             | _                    -> (f, None)
         )
         |> Seq.filter (fun (f, t) -> t <> None)
-        |> Seq.map (fun (f, t) -> Field (getUniqueFieldName f, t.Value))
+        |> Seq.map (fun (f, t) -> { Var = Field (getUniqueFieldName f, t.Value); Init = c.GetInitialValuesOfField f |> List.map transformFieldValue })
         |> Seq.toList
 
     /// Transforms the given method to an SSM method with structured control flow.
@@ -464,7 +472,7 @@ module internal CilToSsm =
         |> List.ofSeq
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
-    let transformType (t : TypeDefinition) =
+    let transformType (c : Component) (t : TypeDefinition) =
         let rec transform (t : TypeDefinition) =
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
@@ -473,7 +481,7 @@ module internal CilToSsm =
 
             { transformed with 
                 Name = t.FullName
-                Fields = transformed.Fields @ (transformFields t) 
+                Fields = transformed.Fields @ (transformFields c t) 
                 Methods = transformed.Methods @ (transformMethods t)
             }
 
@@ -498,6 +506,6 @@ module internal CilToSsm =
         let typeDefinitions = getTypeDefinitions model.Components
 
         let transform (comp : Component) =
-            transformType typeDefinitions.[comp.GetType ()]
+            transformType comp typeDefinitions.[comp.GetType ()]
 
         model.Components |> List.map transform

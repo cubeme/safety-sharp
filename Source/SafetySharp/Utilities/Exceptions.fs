@@ -29,24 +29,24 @@ open System
 module internal Exceptions =
 
     /// Raises an <see cref="InvalidOperationException" /> with the given message.
-    let inline invalidOp message = 
+    let invalidOp message = 
         Printf.ksprintf invalidOp message
 
     /// Raises a <see cref="NotSupportedException" /> with the given message.
-    let inline notSupported message =
+    let notSupported message =
         Printf.ksprintf (fun message -> raise (NotSupportedException message)) message
 
     /// Raises a <see cref="NotImplementedException" />.
-    let inline notImplemented () =
+    let notImplemented () =
         raise (NotImplementedException ())
 
     /// Raises a <see cref="NotSupportedException" /> with a message informing the user that another overload of the method
     /// should be called with lifted expression parameters.
-    let inline invalidUnliftedCall () =
+    let invalidUnliftedCall () =
         notSupported "Call a lifted overload of the method instead." |> ignore
 
     /// Throws a <see cref="System.ArgumentNullException"/> if the given argument is <c>null</c>.
-    let inline nullArg<'T when 'T : null> (argument : 'T) argumentName =
+    let nullArg<'T when 'T : null> (argument : 'T) argumentName =
         if obj.ReferenceEquals(argument, null) then 
             nullArg argumentName
 
@@ -65,7 +65,7 @@ module internal Exceptions =
             Operators.invalidArg argumentName "The given string cannot consist of whitespace only."
 
     /// Throws a <see cref="System.ArgumentException" /> if the argument <paramref name="condition" /> is <c>true</c>.
-    let inline invalidArg condition argumentName description =
+    let invalidArg condition argumentName description =
         nullOrWhitespaceArg argumentName "argumentName"
 
         Printf.ksprintf (fun message ->
@@ -74,12 +74,12 @@ module internal Exceptions =
         ) description
 
     /// Throws a <see cref="System.InvalidOperationException" /> if <paramref name="condition" /> is <c>true</c>.
-    let inline invalidCall condition description =
+    let invalidCall condition description =
         Printf.ksprintf (fun message ->
             if condition then
                 Operators.invalidOp message
         ) description
 
     /// Throws a <see cref="System.InvalidOperationException" /> if invoked.
-    let inline notReached () =
+    let notReached () =
         Operators.invalidOp "This program location was expected to be unreachable."

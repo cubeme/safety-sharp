@@ -35,6 +35,13 @@ module internal SsmToScm =
         | Ssm.DoubleType -> notImplemented ()
         | _              -> invalidOp "Invalid type '%+A'." t
 
+    /// Maps the given SSM initial field value to a SCM literal
+    let private mapInitVal (v : Ssm.InitVal) : Scm.Val =
+        match v with
+        | Ssm.BoolVal b   -> Scm.BoolVal b
+        | Ssm.IntVal i    -> Scm.IntVal i
+        | Ssm.DoubleVal d -> notImplemented ()
+
     /// Maps the given SSM parameter direction to a SCM direction.
     let private mapDirection (d : Ssm.ParamDir) : Scm.ParamDir =
         match d with
@@ -98,9 +105,9 @@ module internal SsmToScm =
         | _                -> invalidOp "Expected a local variable."
 
     /// Transforms the given field variable.
-    let private transformField (f : Ssm.Var) : Scm.FieldDecl =
-        match f with
-        | Ssm.Field (n, t) -> { Field = Scm.Field n; Type = mapType t; Init = [] }
+    let private transformField (f : Ssm.Field) : Scm.FieldDecl =
+        match f.Var with
+        | Ssm.Field (n, t) -> { Field = Scm.Field n; Type = mapType t; Init = f.Init |> List.map mapInitVal }
         | _                -> invalidOp "Expected a field variable."
 
     /// Transforms the given method parameter.

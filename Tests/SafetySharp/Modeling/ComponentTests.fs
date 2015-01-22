@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modeling.ComponentTests
+namespace Modeling.``Component Tests``
 
 open System
 open System.Linq
@@ -29,6 +29,7 @@ open System.Reflection
 open NUnit.Framework
 open SafetySharp.Modeling
 open SafetySharp.Tests
+open Mono.Cecil
 
 type private TestEnum =
     | Default = 0
@@ -37,23 +38,6 @@ type private TestEnum =
 
 [<TestFixture>]
 module ``SetInitialValues method`` =
-    [<Test>]
-    let ``sets the value of field declared by the component`` () =
-        let component' = FieldComponent<int> 3
-        component'.Field =? 3
-
-        let component' = FieldComponent<int> (3, 182)
-        (component'.Field = 3 || component'.Field = 182) =? true
-
-    [<Test>]
-    let ``sets the value of inherited and non-inherited fields`` () =
-        let component' = InheritedComponent ()
-        component'.SetInitialValues (createFieldExpression<int> component' "_field", 51)
-        component'.SetInitialValues (createFieldExpression<int> component' "_otherField", 122)
-
-        component'.Field =? 51
-        component'.OtherField =? 122
-
     [<Test>]
     let ``throws when field expression is null`` () =
         let component' = FieldComponent<int>()
@@ -91,6 +75,29 @@ module ``SetInitialValues method`` =
         let component' = FieldComponent<TestEnum> ()
         raisesArgumentException "initialValues" (fun () -> component'.SetInitialValues (createFieldExpression<TestEnum> component' "_field", enum<TestEnum> 177) |> ignore)
 
+    [<Test>]
+    let ``does not throw when initial values are set multiple times for the same field`` () =
+        let component' = FieldComponent<int> ()
+        component'.SetInitialValues (createFieldExpression<int> component' "_field", 1, 2, 3)
+        nothrow (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", 1, 3))
+
+    [<Test>]
+    let ``sets the value of field declared by the component`` () =
+        let component' = FieldComponent<int> 3
+        component'.Field =? 3
+
+        let component' = FieldComponent<int> (3, 182)
+        (component'.Field = 3 || component'.Field = 182) =? true
+
+    [<Test>]
+    let ``sets the value of inherited and non-inherited fields`` () =
+        let component' = InheritedComponent ()
+        component'.SetInitialValues (createFieldExpression<int> component' "_field", 51)
+        component'.SetInitialValues (createFieldExpression<int> component' "_otherField", 122)
+
+        component'.Field =? 51
+        component'.OtherField =? 122
+
 [<TestFixture>]
 module ``FinalizeMetadata method`` =
     [<Test>]
@@ -110,118 +117,159 @@ module ``FinalizeMetadata method`` =
 
 [<TestFixture>]
 module ``GetInitialValuesOfField method`` =
+    let private getFieldDef field (declaringType : Type) = 
+        let fieldInfo = declaringType.GetField(field, BindingFlags.NonPublic ||| BindingFlags.Instance)
+        if fieldInfo = null then invalidOp (sprintf "Unable to find field '%s' in '%s'." field (declaringType.FullName))
+        let assemblyDef = AssemblyDefinition.ReadAssembly (declaringType.Assembly.Location)
+        let fieldDef = (assemblyDef.MainModule.Import fieldInfo).Resolve ()
+        if fieldDef = null then invalidOp (sprintf "Unable to find field '%s' in '%s' in assembly metadata." field (declaringType.FullName))
+        fieldDef
+
+    let private getTypedInitialValues (component' : Component) field (declaringType : Type) =
+        let fieldDef = getFieldDef field declaringType
+        component'.GetInitialValuesOfField fieldDef
+
+    let private getInitialValues component' field =
+        getTypedInitialValues component' (fsharpFieldName field) (component'.GetType ())
+
     [<Test>]
     let ``throws when null is passed`` () =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raisesArgumentNullException "fieldName" (fun () -> component'.GetInitialValuesOfField null |> ignore)
-
-    [<Test>]
-    let ``throws when empty string is passed`` () =
-        let component' = FieldComponent<int> 3
-        component'.FinalizeMetadata ()
-
-        raisesArgumentException "fieldName" (fun () -> component'.GetInitialValuesOfField "" |> ignore)
+        raisesArgumentNullException "field" (fun () -> component'.GetInitialValuesOfField null |> ignore)
 
     [<Test>]
     let ``throws for unknown field`` () =
         let component' = FieldComponent<int> 3
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" (fun () -> component'.GetInitialValuesOfField "abcd" |> ignore)
+        let unknownField = getFieldDef (fsharpFieldName "_field1") typeof<FieldComponent<int, bool>>
+        raisesArgumentException "field" (fun () -> component'.GetInitialValuesOfField unknownField |> ignore)
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> 3
-        raises<InvalidOperationException> (fun () -> component'.GetInitialValuesOfField <| fsharpFieldName "_field" |> ignore)
+        raises<InvalidOperationException> (fun () -> getInitialValues component' "_field" |> ignore)
 
     [<Test>]
     let ``throws for subcomponent field`` () =
         let component' = OneSubcomponent (FieldComponent<int> 3)
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "fieldName" (fun () -> component'.GetInitialValuesOfField <| fsharpFieldName "_component" |> ignore)
+        raisesArgumentException "field" (fun () -> getInitialValues component' "_component" |> ignore)
 
     [<Test>]
     let ``returns initial value of single field`` () =
         let integerComponent = FieldComponent<int> 17
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [17]
+        getInitialValues integerComponent "_field" =? [17]
     
         let integerComponent = FieldComponent<int> ()
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [0]
+        getInitialValues integerComponent "_field" =? [0]
     
         let booleanComponent = FieldComponent<bool> true
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [true]
+        getInitialValues booleanComponent "_field" =? [true]
     
         let booleanComponent = FieldComponent<bool> ()
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [false]
+        getInitialValues booleanComponent "_field" =? [false]
 
     [<Test>]
     let ``returns initial value of multiple fields`` () =
         let component' = FieldComponent<int, bool> (33, true)
         component'.FinalizeMetadata ()
         
-        component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [33]
-        component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [true]
+        getInitialValues component' "_field1" =? [33]
+        getInitialValues component' "_field2" =? [true]
         
         let component' = FieldComponent<int, bool> ()
         component'.FinalizeMetadata ()
         
-        component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [0]
-        component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [false]
+        getInitialValues component' "_field1" =? [0]
+        getInitialValues component' "_field2" =? [false]
 
     [<Test>]
     let ``returns nondeterministic initial values of single field`` () =
         let integerComponent = FieldComponent<int>(17)
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [17]
+        getInitialValues integerComponent "_field" =? [17]
 
         let integerComponent = FieldComponent<int>(17, 33)
         integerComponent.FinalizeMetadata ()
-        integerComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [17; 33]
+        getInitialValues integerComponent "_field" =? [17; 33]
 
         let booleanComponent = FieldComponent<bool>(true)
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [true]
+        getInitialValues booleanComponent "_field" =? [true]
 
         let booleanComponent = FieldComponent<bool>(true, false)
         booleanComponent.FinalizeMetadata ()
-        booleanComponent.GetInitialValuesOfField (fsharpFieldName "_field") =? [true; false]
+        getInitialValues booleanComponent "_field" =? [true; false]
         
     [<Test>]
     let ``returns nondeterministic initial values of multiple fields`` () =
         let component' = FieldComponent<int, bool>(158, 392, false, true)
         component'.FinalizeMetadata ()
 
-        component'.GetInitialValuesOfField (fsharpFieldName "_field1") =? [158; 392]
-        component'.GetInitialValuesOfField (fsharpFieldName "_field2") =? [false; true]
+        getInitialValues component' "_field1" =? [158; 392]
+        getInitialValues component' "_field2" =? [false; true]
 
     [<Test>]
     let ``returns integer values for fields of enumeration type`` () =
         let component' = FieldComponent<TestEnum> ()
         component'.FinalizeMetadata ()
-        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [0]
+        getInitialValues component' "_field" =? [0]
 
         let component' = FieldComponent<TestEnum> (TestEnum.A, TestEnum.B)
         component'.FinalizeMetadata ()
-        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [1; 2]
+        getInitialValues component' "_field" =? [1; 2]
 
     [<Test>]
     let ``returns latest initial values when previous initial values were overridden`` () =
         let component' = FieldComponent<int> (1, 2)
         component'.SetInitialValues (createFieldExpression component' "_field", 17)
         component'.FinalizeMetadata ()
-        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [17]
+        getInitialValues component' "_field" =? [17]
         
         let component' = FieldComponent<int> (17)
         component'.SetInitialValues (createFieldExpression component' "_field", 17, 93, 1)
         component'.FinalizeMetadata ()
-        component'.GetInitialValuesOfField (fsharpFieldName "_field") =? [17; 93; 1]
+        getInitialValues component' "_field" =? [17; 93; 1]
+
+    [<Test>]
+    let ``gets the latest value when initial values have been set multiple times`` () =
+        let component' = FieldComponent<int> ()
+        component'.SetInitialValues (createFieldExpression<int> component' "_field", 1, 2, 3)
+        component'.SetInitialValues (createFieldExpression<int> component' "_field", 44, -20)
+        component'.FinalizeMetadata ()
+        getInitialValues component' "_field" =? [44; -20]
+
+    [<Test>]
+    let ``gets the value of inherited and non-inherited fields with conflicting names with SetInitialValues called`` () =
+        let csharpCode = "class X : Component { int f; public X() { SetInitialValues(() => f, 1, 2, 3); } } class Y : X { bool f; public Y() { SetInitialValues(() => f, false, true); } }"
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let baseType = assembly.GetType "X"
+        let derivedType = assembly.GetType "Y"
+        let component' = Activator.CreateInstance derivedType :?> Component
+        component'.FinalizeMetadata ()
+        getTypedInitialValues component' "f" baseType =? [1; 2; 3]
+        getTypedInitialValues component' "f" derivedType =? [false; true]
+
+    [<Test>]
+    let ``gets the value of inherited and non-inherited fields with conflicting names without SetInitialValues called`` () =
+        let csharpCode = "class X : Component { int f; } class Y : X { bool f; }"
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let baseType = assembly.GetType "X"
+        let derivedType = assembly.GetType "Y"
+        let component' = Activator.CreateInstance derivedType :?> Component
+        component'.FinalizeMetadata ()
+        getTypedInitialValues component' "f" baseType =? [0]
+        getTypedInitialValues component' "f" derivedType =? [false]
 
 [<TestFixture>]
 module ``GetSubcomponent method`` = 

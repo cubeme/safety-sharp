@@ -43,6 +43,7 @@ module ``CilToSsm Field Transformations`` =
     let private arg name t = Arg (name, t)
     let private local name t = Local (name, t)
     let private tmp = CilToSsm.freshLocal
+    let private field f l t i = { Var = Field (CilToSsm.makeUniqueFieldName f l, t); Init = i }
 
     [<Test>]
     let ``component without fields`` () =
@@ -54,18 +55,18 @@ module ``CilToSsm Field Transformations`` =
 
     [<Test>]
     let ``component with single field`` () =
-        transform "class C : Component { int _field; }" "new C()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, IntType) ]
+        transform "class C : Component { int _field; }" "new C()" =? [ field "_field" 0 IntType [IntVal 0] ]
 
     [<Test>]
     let ``component with two fields`` () =
         transform "class C : Component { int _field1; bool _field2; }" "new C()" =? 
-            [ Field (CilToSsm.makeUniqueFieldName "_field1" 0, IntType); Field (CilToSsm.makeUniqueFieldName "_field2" 0, BoolType) ]
+            [ field "_field1" 0 IntType [IntVal 0]; field "_field2" 0 BoolType [BoolVal false] ]
 
     [<Test; Ignore("not yet implemented")>]
     let ``generic component with generic field of supported type`` () =
         let c = "class C<T> : Component { T _field; }"
-        transform c "new C<int>()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, IntType) ]
-        transform c "new C<bool>()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, BoolType) ]
+        transform c "new C<int>()" =? [ field "_field" 0 IntType [IntVal 0] ]
+        transform c "new C<bool>()" =? [ field "_field" 0 BoolType [BoolVal false] ]
 
     [<Test; Ignore("not yet implemented")>]
     let ``generic component with generic field of unsupported type`` () =
@@ -75,18 +76,18 @@ module ``CilToSsm Field Transformations`` =
 
     [<Test>]
     let ``renaming: inherited component with non-conflicting field names`` () =
-        let c = "class C : Component { int _field; } class D : C { bool _otherField; }"
-        transform c "new D()" =? [ Field (CilToSsm.makeUniqueFieldName "_field" 0, IntType); Field (CilToSsm.makeUniqueFieldName "_otherField" 1, BoolType) ]
+        let c = "class C : Component { int _field; } class D : C { bool _otherfield; }"
+        transform c "new D()" =? [ field "_field" 0 IntType [IntVal 0]; field "_otherfield" 1 BoolType [BoolVal false] ]
                                                                                             
     [<Test>]
     let ``renaming: inherited component with conflicting field names`` () =
         let c = "class C : Component { int _field1; bool _field2; } class D : C { bool _field1; bool _field2; }"
         transform c "new D()" =? 
             [ 
-                Field (CilToSsm.makeUniqueFieldName "_field1" 0, IntType)
-                Field (CilToSsm.makeUniqueFieldName "_field2" 0, BoolType) 
-                Field (CilToSsm.makeUniqueFieldName "_field1" 1, BoolType)
-                Field (CilToSsm.makeUniqueFieldName "_field2" 1, BoolType) 
+                field "_field1" 0 IntType [IntVal 0]
+                field "_field2" 0 BoolType [BoolVal false]
+                field "_field1" 1 BoolType [BoolVal false]
+                field "_field2" 1 BoolType [BoolVal false]
             ]
 
     [<Test>]
@@ -94,10 +95,55 @@ module ``CilToSsm Field Transformations`` =
         let c = "class A : Component { int a; } class B : A { bool b1; bool b2; } class C : B { bool c; } class D : C { int d; } class E : D { bool e; }"
         transform c "new E()" =? 
             [ 
-                Field (CilToSsm.makeUniqueFieldName "a" 0, IntType)
-                Field (CilToSsm.makeUniqueFieldName "b1" 1, BoolType) 
-                Field (CilToSsm.makeUniqueFieldName "b2" 1, BoolType) 
-                Field (CilToSsm.makeUniqueFieldName "c" 2, BoolType) 
-                Field (CilToSsm.makeUniqueFieldName "d" 3, IntType) 
-                Field (CilToSsm.makeUniqueFieldName "e" 4, BoolType) 
+                field "a" 0 IntType [IntVal 0]
+                field "b1" 1 BoolType [BoolVal false]
+                field "b2" 1 BoolType [BoolVal false]
+                field "c" 2 BoolType [BoolVal false]
+                field "d" 3 IntType [IntVal 0] 
+                field "e" 4 BoolType [BoolVal false]
+            ]
+
+    [<Test>]
+    let ``field with default initial value`` () =
+        transform "class X : Component { int _f; }" "new X()" =?
+            [field "_f" 0 IntType [IntVal 0]]
+
+        transform "class X : Component { bool _f; }" "new X()" =?
+            [field "_f" 0 BoolType [BoolVal false]]
+
+    [<Test>]
+    let ``field with explicitly set single initial value`` ([<Range (-1, 1)>] value) =
+        transform (sprintf "class X : Component { int _f = %d; }" value) "new X()" =?
+            [field "_f" 0 IntType [IntVal value]]
+
+        let value = if value = 0 then false else true
+        transform (sprintf "class X : Component { bool _f = %b; }" value) "new X()" =?
+            [field "_f" 0 BoolType [BoolVal value]]
+
+    [<Test>]
+    let ``field with explicitly set single initial value via constructor`` ([<Range (-1, 1)>] value) =
+        transform "class X : Component { int _f; public X(int f) { _f = f; } }" (sprintf "new X(%d)" value) =?
+            [field "_f" 0 IntType [IntVal value]]
+
+        let value = if value = 0 then false else true
+        transform "class X : Component { bool _f; public X(bool f) { _f = f; } }" (sprintf "new X(%b)" value) =?
+            [field "_f" 0 BoolType [BoolVal value]]
+
+    [<Test>]
+    let ``field with multiple initial values`` () =
+        transform "class X : Component { int _f; public X() { SetInitialValues(() => _f, -1, 0, 17); } }" "new X()" =?
+            [field "_f" 0 IntType [IntVal -1; IntVal 0; IntVal 17]]
+
+        transform "class X : Component { bool _f; public X() { SetInitialValues(() => _f, true, false); } }" "new X()" =?
+            [field "_f" 0 BoolType [BoolVal true; BoolVal false]]
+
+    [<Test>]
+    let ``inherited fields with initial values`` () =
+        let c = "class C : Component { int _field1 = 3; bool _field2; public C() { SetInitialValues(() => _field2, true, false); } } class D : C { bool _field1 = true; bool _field2; }"
+        transform c "new D()" =? 
+            [ 
+                field "_field1" 0 IntType [IntVal 3]
+                field "_field2" 0 BoolType [BoolVal true; BoolVal false]
+                field "_field1" 1 BoolType [BoolVal true]
+                field "_field2" 1 BoolType [BoolVal false]
             ]

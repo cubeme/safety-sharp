@@ -105,7 +105,7 @@ module internal Ssm =
     /// Indicates whether a method represents a port or a function.
     type internal MethodKind = ReqPort | ProvPort | Function
 
-    /// Represents a method within a S# component.
+    /// Represents a method of a S# component.
     type internal Method = {
         Name : string
         Params : Param list
@@ -115,10 +115,22 @@ module internal Ssm =
         Kind : MethodKind
     }
 
+    /// Represents an initial value of a S# field.
+    type internal InitVal =
+        | BoolVal of bool
+        | IntVal of int
+        | DoubleVal of double
+
+    /// Represents a field of a S# component with zero, one, or more initial values.
+    type internal Field = {
+        Var : Var
+        Init : InitVal list
+    }
+
     /// Represents a S# component.
     type internal Comp = {
         Name : string
-        Fields : Var list
+        Fields : Field list
         Methods : Method list
         Subs : Comp list
     }

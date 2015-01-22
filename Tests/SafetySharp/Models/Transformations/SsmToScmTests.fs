@@ -48,11 +48,14 @@ module ``SsmToScm Transformation`` =
         Bindings = []
     }
 
-    let private ssmFields : Ssm.Var list = [Ssm.Field ("f", Ssm.IntType); Ssm.Field ("b", Ssm.BoolType)]
+    let private ssmFields : Ssm.Field list = [
+        { Var = Ssm.Field ("f", Ssm.IntType); Init = [Ssm.IntVal 1; Ssm.IntVal 17; Ssm.IntVal -1] }
+        { Var = Ssm.Field ("b", Ssm.BoolType); Init = [Ssm.BoolVal false; Ssm.BoolVal true] }
+    ]
 
     let private scmFields : Scm.FieldDecl list = [
-        { Field = Scm.Field "f"; Type = Scm.IntType; Init = []}
-        { Field = Scm.Field "b"; Type = Scm.BoolType; Init = []}
+        { Field = Scm.Field "f"; Type = Scm.IntType; Init = [Scm.IntVal 1; Scm.IntVal 17; Scm.IntVal -1] }
+        { Field = Scm.Field "b"; Type = Scm.BoolType; Init = [Scm.BoolVal false; Scm.BoolVal true] }
     ]
 
     let private ssmReqPort : Ssm.Method = {

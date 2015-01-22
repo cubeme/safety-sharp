@@ -31,6 +31,7 @@ open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp
 open SafetySharp.Modeling.CompilerServices
+open Mono.Cecil
 
 /// Represents a marker interface for components.
 [<AllowNullLiteral>]
@@ -99,7 +100,7 @@ type Component () =
     let mutable isSealed = false
     let mutable name = String.Empty
     let mutable (subcomponents : Component list) = []
-    let fields = Dictionary<string, obj list> ()
+    let fields = Dictionary<FieldInfo, obj list> ()
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
@@ -159,7 +160,7 @@ type Component () =
             if not (fieldInfo.DeclaringType.IsAssignableFrom <| this.GetType ()) then
                 invalidArg true "field" "Expected a reference to a field of the component."
 
-            fields.[fieldInfo.Name] <-
+            fields.[fieldInfo] <-
                 if fieldInfo.FieldType.IsEnum then
                     let containsInvalidLiteral = initialValues |> Seq.tryFind (fun value -> not <| Enum.IsDefined (fieldInfo.FieldType, value))
                     if containsInvalidLiteral.IsSome then
@@ -179,16 +180,23 @@ type Component () =
         isSealed <- true
         name <- defaultArg componentName String.Empty
 
-        this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-        |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field.Name))
-        |> Seq.iter (fun field ->
-            let value =
-                if field.FieldType.IsEnum then
-                    (field.GetValue(this) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj
-                else
-                    field.GetValue this
-            fields.Add (field.Name, [value])
-        )
+        // Collects all fields of the component recursively, going up the inheritance chain; unfortunately, the GetFields()
+        // method does not return private fields of base classes, even with BindingFlags.FlattenHierarchy.
+        let rec collectFields (t : Type) =
+            if t.BaseType <> typeof<Component> then
+                collectFields t.BaseType
+
+            t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+            |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
+            |> Seq.iter (fun field ->
+                let value =
+                    if field.FieldType.IsEnum then
+                        (field.GetValue(this) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj
+                    else
+                        field.GetValue this
+                fields.Add (field, [value])
+            )
+        this.GetType () |> collectFields 
 
         let subcomponentMetadata = 
             this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
@@ -210,15 +218,17 @@ type Component () =
     // Methods that can only be called after metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Gets the initial values of the field with name <paramref name="fieldName" />.
-    member internal this.GetInitialValuesOfField fieldName =
-        nullOrWhitespaceArg fieldName "fieldName"
+    /// Gets the initial values of given field.
+    member internal this.GetInitialValuesOfField (field : FieldDefinition) =
+        nullArg field "field"
         requiresIsSealed ()
 
-        let (result, initialValues) = fields.TryGetValue fieldName
-        invalidArg (not result) "fieldName" "A field with name '%s' does not exist." fieldName
-
-        initialValues
+        // We have to find a FieldInfo instance that resolves to the given FieldDefinition
+        match fields.Keys |> Seq.tryFind (fun info -> (field.Module.Import(info).Resolve ()) = field) with
+        | Some f -> fields.[f]
+        | None   -> 
+            invalidArg true "field" "Unable to retrieve initial values for field '%s'." field.FullName
+            [] // Required, but cannot be reached
 
     /// Gets the subcomponent with the given name.
     member internal this.GetSubcomponent subcomponentName =
