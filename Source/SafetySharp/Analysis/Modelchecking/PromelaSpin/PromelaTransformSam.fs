@@ -39,8 +39,6 @@ open SafetySharp.Models.Sam.SamHelpers
 
 
 module internal SamToPromela =
-    exception EmptyModelException of string
-
     let generateGlobalVarDeclarations (varDecls:SamGlobalVarDecl list) : PrOneDecl list =
         let generateDecl (varDecl:SamGlobalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
@@ -127,10 +125,13 @@ module internal SamToPromela =
     let rec transformSamStm (statement:SamStm) : PrStatement =
         match statement with
             | SamStm.Block (statements:SamStm list) ->
-                statements |> List.map transformSamStm
-                           |> List.map (fun stm -> Step.StmntStep(stm,None))
-                           |> PrSequence.Sequence
-                           |> PrStatement.SequenceStmnt
+                if statements.IsEmpty then
+                    PrStatement.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
+                else
+                    statements |> List.map transformSamStm
+                               |> List.map (fun stm -> Step.StmntStep(stm,None))
+                               |> PrSequence.Sequence
+                               |> PrStatement.SequenceStmnt
             | SamStm.Choice (clauses:SamClause list) ->
                 let transformOption (clause : SamClause) =
                     let transformedGuard = transformSamExpr clause.Guard
@@ -167,24 +168,14 @@ module internal SamToPromela =
 
         let codeOfMetamodelInLoop =
             let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
-            if stmWithoutNestedBlocks = SamStm.Block([]) then
-                // a Block needs at least one Statement
-                []
-            else
-                let codeOfMetamodel = transformSamStm stmWithoutNestedBlocks
-                [coverStmInEndlessloop codeOfMetamodel]
+            let codeOfMetamodel = transformSamStm stmWithoutNestedBlocks
+            [coverStmInEndlessloop codeOfMetamodel]
         
         let systemModule =
             let systemCode = globalVarInitialisations @ codeOfMetamodelInLoop
-            if systemCode = [] then
-                // the code needs at least one Statement. If no code is given, the user might want just to test boolean formulas
-                // as we currently do not handle formulas, the model is wrong
-                raise (EmptyModelException("Tried to export empty model"))
-                []
-            else
-                let systemSequence : PrSequence = statementsToSequence (globalVarInitialisations @ codeOfMetamodelInLoop)
-                let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
-                [PrModule.ProcTypeModule(systemProctype)]
+            let systemSequence : PrSequence = statementsToSequence (globalVarInitialisations @ codeOfMetamodelInLoop)
+            let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
+            [PrModule.ProcTypeModule(systemProctype)]
         {
             PrSpec.Code = varModule @ systemModule;
             PrSpec.Formulas = [];

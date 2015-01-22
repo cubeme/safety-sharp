@@ -76,9 +76,8 @@ module SamToPromelaTests =
         let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
+        let promela = ScmToPromela.transformConfiguration model
 
-        let thisShouldFail () =
-            ScmToPromela.transformConfiguration model |> ignore
-        raises<SamToPromela.EmptyModelException> thisShouldFail
-        ()
+        let promelaCodeString = promelaWriter.Export promela
+        printf "%s" promelaCodeString
            
