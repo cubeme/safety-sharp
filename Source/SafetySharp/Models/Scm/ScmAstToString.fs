@@ -20,13 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Scm
 
-// TODO: syntax must be adapted and indention should be added (make it readable)
 // TODO: write tests
 
+namespace SafetySharp.Models
 
-module internal ScmAstToString =
+module internal GenericAstWriter =
     
     type NewLineStyle =
         | NoNewLine
@@ -158,6 +157,18 @@ module internal ScmAstToString =
 
     let newLineAndDecreaseIndent : AstToStringStateFunction =
         newLine >>= decreaseIndent
+
+
+
+
+
+
+
+namespace SafetySharp.Models.Scm
+
+open SafetySharp.Models.GenericAstWriter
+
+module internal ScmAstToString =
 
     //////////////////////////////////////////////////////////////////////////////
     // actual export
