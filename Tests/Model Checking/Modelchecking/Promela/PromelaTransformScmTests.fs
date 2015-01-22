@@ -81,3 +81,15 @@ module SamToPromelaTests =
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString
            
+        
+    [<Test>]
+    let ``simpleComponentWithFaults3.scm gets converted to promela`` () =
+
+        let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let promela = ScmToPromela.transformConfiguration model
+
+        let promelaCodeString = promelaWriter.Export promela
+        printf "%s" promelaCodeString
+           

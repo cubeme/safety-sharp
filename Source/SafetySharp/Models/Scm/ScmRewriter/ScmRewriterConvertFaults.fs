@@ -74,7 +74,12 @@ module internal ScmRewriterConvertFaults =
                 let! field = getUnusedFieldName (sprintf "fault_%s" faultToConvert.getName)
 
                 let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
-                            
+                
+                let convertedBehavior =
+                    { faultToConvert.Step with
+                        BehaviorDecl.Body = rewriteStm_assignFaultToAssignField (faultToConvert.Fault,field) faultToConvert.Step.Body;
+                    }
+
                 let newFieldDecl =
                     {
                         FieldDecl.Field = field;
@@ -91,7 +96,7 @@ module internal ScmRewriterConvertFaults =
                         ProvPortDecl.FaultExpr = None;
                         ProvPortDecl.ProvPort = provPort;
                         ProvPortDecl.Params = [];
-                        ProvPortDecl.Behavior = faultToConvert.Step;
+                        ProvPortDecl.Behavior = convertedBehavior;
                     }
                 let newBindingDecl = 
                     {

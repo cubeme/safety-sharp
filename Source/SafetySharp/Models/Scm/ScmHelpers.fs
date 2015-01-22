@@ -638,7 +638,21 @@ module internal ScmHelpers =
                 Stm.CallPort (artificialReqPort,[])
             | _ -> stm
 
-
+    let rec rewriteStm_assignFaultToAssignField (faultToConvert:Fault,field:Field) (stm:Stm) : Stm =
+        match stm with
+            | Stm.Block (smnts) ->
+                let newStmnts = smnts |> List.map (rewriteStm_assignFaultToAssignField (faultToConvert,field))
+                Stm.Block(newStmnts)
+            | Stm.Choice (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm_assignFaultToAssignField (faultToConvert,field) stm) )
+                Stm.Choice(newChoices)
+            | Stm.AssignFault (fault,expr) ->
+                if faultToConvert = fault then
+                    Stm.AssignField (field,expr)
+                else
+                    failwith "A fault value should only be assigned in the step of the fault (and in no other fault)"
+            | _ -> stm
+    
 
     ////////////////////////////////////////////////////////////////////////////
     

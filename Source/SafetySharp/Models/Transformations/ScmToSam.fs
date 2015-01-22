@@ -147,6 +147,7 @@ module internal ScmToSam =
         let workFlow = Scm.ScmRewriterFlattenModel.levelUpAndInline
         let (_,resultingState) = Scm.ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
+        //printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
 
         transformCompDeclToPgm newModel
         
