@@ -23,11 +23,11 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("SafetySharp C# Analyzers")]
-[assembly: AssemblyDescription("SafetySharp C# Analyzers")]
+[assembly: AssemblyTitle("S# Compiler Library")]
+[assembly: AssemblyDescription("S# Compiler Library")]
 [assembly: AssemblyCompany("Institute for Software & Systems Engineering")]
-[assembly: AssemblyProduct("SafetySharp")]
-[assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")]
+[assembly: AssemblyProduct("S#")]
+[assembly: AssemblyCopyright("Copyright (c) 2014-2015, Institute for Software & Systems Engineering")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyVersion("0.1.0.0")]
 [assembly: AssemblyFileVersion("0.1.0.0")]

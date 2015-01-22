@@ -28,17 +28,16 @@ module internal AssemblyInfo =
     open System.Runtime.CompilerServices
     open System.Runtime.InteropServices
 
-    [<assembly: AssemblyTitle("SafetySharp Library")>]
-    [<assembly: AssemblyDescription("SafetySharp Library")>]
+    [<assembly: AssemblyTitle("S# Library")>]
+    [<assembly: AssemblyDescription("S# Library")>]
     [<assembly: AssemblyCompany("Institute for Software & Systems Engineering")>]
-    [<assembly: AssemblyProduct("SafetySharp")>]
-    [<assembly: AssemblyCopyright("Copyright (c) 2014 Institute for Software & Systems Engineering")>]
+    [<assembly: AssemblyProduct("S#")>]
+    [<assembly: AssemblyCopyright("Copyright (c) 2014-2015, Institute for Software & Systems Engineering")>]
     [<assembly: AssemblyCulture("")>]
     [<assembly: AssemblyVersion("0.1.0.0")>]
     [<assembly: AssemblyFileVersion("0.1.0.0")>]
     [<assembly: ComVisible(false)>]
     [<assembly: InternalsVisibleTo("SafetySharp.Tests")>]
     [<assembly: InternalsVisibleTo("SafetySharp.ModelChecking.Tests")>]
-    [<assembly: InternalsVisibleTo("ssc")>]
 
     do ()
