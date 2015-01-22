@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{24C31B36-8ED2-4A2A-AC73-6539EC8CAE63}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SafetySharp.CSharp</RootNamespace>
+    <AssemblyName>SafetySharp.CSharp</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\Binaries\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\Binaries\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0.0-beta2\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.1.0.0.0-beta2\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Desktop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.CSharp.1.0.0.0-beta2\lib\net45\Microsoft.CodeAnalysis.CSharp.Desktop.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Desktop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0.0-beta2\lib\net45\Microsoft.CodeAnalysis.Desktop.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.1.32.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.32-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Reflection.Metadata, Version=1.0.17.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\Packages\System.Reflection.Metadata.1.0.17-beta\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Analyzers\SS1000.cs" />
+    <Compile Include="Analyzers\SS1001.cs" />
+    <Compile Include="Analyzers\SS1002.cs" />
+    <Compile Include="Analyzers\SS1003.cs" />
+    <Compile Include="Analyzers\SS1004.cs" />
+    <Compile Include="Analyzers\SS1005.cs" />
+    <Compile Include="Analyzers\SS1006.cs" />
+    <Compile Include="Analyzers\SS1007.cs" />
+    <Compile Include="Analyzers\SS1008.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Roslyn\CSharpAnalyzer.cs" />
+    <Compile Include="Roslyn\CSharpNormalizer.cs" />
+    <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
+    <Compile Include="Roslyn\NormalizationScope.cs" />
+    <Compile Include="Roslyn\SideEffectAnalyzer.cs" />
+    <Compile Include="Roslyn\Symbols\CompilationExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\FieldSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\MethodSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\PropertySymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\SemanticModelExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\SymbolExtensions.cs" />
+    <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTokenListExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\SyntaxTreeExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\VariableDeclaratorExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\Visibility.cs" />
+    <Compile Include="Utilities\Assert.cs" />
+    <Compile Include="Utilities\Log.cs" />
+    <Compile Include="Utilities\LogEntry.cs" />
+    <Compile Include="Utilities\LogType.cs" />
+    <Compile Include="Utilities\Requires.cs" />
+    <Compile Include="Utilities\ResharperAttributes.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SafetySharp\SafetySharp.fsproj">
+      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
+      <Name>SafetySharp</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

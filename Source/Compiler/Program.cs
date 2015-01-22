@@ -20,13 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler
+namespace SafetySharp.Compiler
 {
 	using System;
 	using System.Linq;
 	using CommandLine;
 	using CommandLine.Text;
-	using Utilities;
+	using CSharp.Utilities;
 
 	/// <summary>
 	///     Parses the command line arguments and starts the compilation process.

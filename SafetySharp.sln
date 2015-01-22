@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{17ADA692
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{C5F3E271-22DA-4FD8-A830-7E0A8BFD430F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers", "Source\Analyzers\Analyzers.csproj", "{24C31B36-8ED2-4A2A-AC73-6539EC8CAE63}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp", "Source\CSharp\CSharp.csproj", "{24C31B36-8ED2-4A2A-AC73-6539EC8CAE63}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

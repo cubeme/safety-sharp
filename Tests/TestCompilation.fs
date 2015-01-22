@@ -35,8 +35,8 @@ open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open Mono.Cecil
-open SafetySharp.CSharpCompiler.Roslyn.Syntax
-open SafetySharp.CSharpCompiler.Roslyn
+open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn
 open SafetySharp.Modeling
 
 /// Raised when a C# compilation problem occurred.
@@ -292,7 +292,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Checks whether the given C# code has any diagnostics.
     static member GetDiagnostic (analyzer : DiagnosticAnalyzer) csharpCode =
         let compilation = TestCompilation csharpCode
-        let options = AnalyzerOptions (Enumerable.Empty<AdditionalStream> (), Dictionary<string, string> ())
+        let options = AnalyzerOptions (ImmutableArray.Create<AdditionalStream> (), ImmutableDictionary.Create<string, string> ())
         let analyzer = ImmutableArray.Create analyzer
 
         // TODO: Use Compilation.GetDiagnosticsAsync instead once available

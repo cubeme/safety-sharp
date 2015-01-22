@@ -27,7 +27,7 @@ open System.Linq
 open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharpCompiler.Roslyn.Symbols
+open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
 module ``IsSubcomponentField methods`` =

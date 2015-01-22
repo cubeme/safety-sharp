@@ -25,7 +25,7 @@ namespace Utilities.Assert
 open System
 open System.Linq
 open NUnit.Framework
-open SafetySharp.CSharpCompiler.Utilities
+open SafetySharp.CSharp.Utilities
 
 [<TestFixture>]
 module ``IsNull method`` =

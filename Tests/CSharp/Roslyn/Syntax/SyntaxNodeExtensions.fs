@@ -30,8 +30,8 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.CSharp
 open SafetySharp.Modeling.CompilerServices
-open SafetySharp.CSharpCompiler.Roslyn.Syntax
-open SafetySharp.CSharpCompiler.Roslyn.Symbols
+open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn.Symbols
 
 [<AutoOpen>]
 module Helpers =

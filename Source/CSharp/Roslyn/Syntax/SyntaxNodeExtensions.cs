@@ -1,0 +1,355 @@
+﻿// The MIT License (MIT)
+// 
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+namespace SafetySharp.CSharp.Roslyn.Syntax
+{
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Symbols;
+	using Utilities;
+
+	/// <summary>
+	///     Provides extension methods for working with <see cref="SyntaxNode" /> instances.
+	/// </summary>
+	public static class SyntaxNodeExtensions
+	{
+		/// <summary>
+		///     Gets a list of descendant syntax nodes of type <typeparamref name="T" /> in prefix document order.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
+		/// <param name="syntaxNode">The syntax node whose descendents should be returned.</param>
+		[Pure, NotNull]
+		public static IEnumerable<T> Descendants<T>([NotNull] this SyntaxNode syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.DescendantNodes().OfType<T>();
+		}
+
+		/// <summary>
+		///     Gets a list of descendant syntax nodes (including <paramref name="syntaxNode" />) of type <typeparamref name="T" /> in
+		///     prefix document order.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax nodes that should be returned.</typeparam>
+		/// <param name="syntaxNode">The syntax node whose descendents should be returned.</param>
+		[Pure, NotNull]
+		public static IEnumerable<T> DescendantsAndSelf<T>([NotNull] this SyntaxNode syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.DescendantNodesAndSelf().OfType<T>();
+		}
+
+		/// <summary>
+		///     Gets the symbol referenced by <paramref name="syntaxNode" /> within the context of the
+		///     <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="syntaxNode">The node the referenced symbol should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the referenced symbol.</param>
+		[Pure, NotNull]
+		public static ISymbol GetReferencedSymbol([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			var symbolInfo = semanticModel.GetSymbolInfo(syntaxNode);
+			Assert.NotNull(symbolInfo.Symbol, "Unable to determine the symbol referenced by syntax node '{0}'.", syntaxNode);
+
+			return symbolInfo.Symbol;
+		}
+
+		/// <summary>
+		///     Gets the symbol referenced by <paramref name="syntaxNode" /> within the context of the
+		///     <paramref name="semanticModel" />.
+		/// </summary>
+		/// <typeparam name="T">The expected type of the referenced symbol.</typeparam>
+		/// <param name="syntaxNode">The node the referenced symbol should be returned for.</param>
+		/// <param name="semanticModel">The semantic model that should be used to determine the referenced symbol.</param>
+		[Pure, NotNull]
+		public static T GetReferencedSymbol<T>([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
+			where T : class, ISymbol
+		{
+			var symbol = syntaxNode.GetReferencedSymbol(semanticModel);
+			Assert.OfType<T>(symbol, "Expected a symbol of type '{0}'. However, the actual symbol type for syntax node '{1}' is '{2}'.",
+				typeof(T).FullName, syntaxNode, symbol.GetType().FullName);
+
+			return (T)symbol;
+		}
+
+		/// <summary>
+		///     Checks whether the <paramref name="syntaxNode" /> is marked with an attribute of type <typeparamref name="T" /> within
+		///     the context of the <paramref name="semanticModel" />. This method only succeeds if <paramref name="syntaxNode" />
+		///     declares a symbol.
+		/// </summary>
+		/// <typeparam name="T">The type of the attribute <paramref name="syntaxNode" /> should be marked with.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		[Pure]
+		public static bool HasAttribute<T>([NotNull] this SyntaxNode syntaxNode, [NotNull] SemanticModel semanticModel)
+			where T : Attribute
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			var declaredSymbol = semanticModel.GetDeclaredSymbol(syntaxNode);
+			Assert.NotNull(declaredSymbol, "Unable to determine symbol declared by syntax node '{0}'.", syntaxNode);
+
+			return declaredSymbol.HasAttribute<T>(semanticModel);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all end-of-line trivia replaced by single spaces.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node that should have all of its end-of-line trivia removed.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its end-of-line trivia removed.</param>
+		[Pure, NotNull]
+		public static T AsSingleLine<T>([NotNull] this T syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+
+			var trivia = syntaxNode.DescendantTrivia().Where(t => t.CSharpKind() == SyntaxKind.EndOfLineTrivia);
+			return syntaxNode.ReplaceTrivia(trivia, (t1, t2) => SyntaxFactory.Space);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with <paramref name="newLineCount" /> many end-of-line trivia tokens
+		///     appended to <paramref name="syntaxNode" />'s trailing trivia.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node that should have the end-of-line trivia appended.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have the end-of-line trivia appended.</param>
+		/// <param name="newLineCount">
+		///     The number of end-of-line trivia tokens that should be appended to <paramref name="syntaxNode" />.
+		/// </param>
+		[Pure, NotNull]
+		private static T WithTrailingNewLines<T>([NotNull] this T syntaxNode, int newLineCount)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+
+			if (newLineCount <= 0)
+				return syntaxNode;
+
+			var trivia = syntaxNode.GetTrailingTrivia().AddRange(Enumerable.Repeat(SyntaxFactory.EndOfLine("\n"), newLineCount));
+			return syntaxNode.WithTrailingTrivia(trivia);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> that has the same line count as <paramref name="templateNode" />. If
+		///     <paramref name="syntaxNode" /> has fewer lines, the appropriate number of empty lines are added. If it has more lines,
+		///     an exception is thrown.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node that should match the line count of <paramref name="templateNode" />.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should match the line count of <paramref name="templateNode" />.</param>
+		/// <param name="templateNode">
+		///     The syntax node that is used to determine the desired line count of <paramref name="syntaxNode" />.
+		/// </param>
+		[Pure, NotNull]
+		public static T EnsureSameLineCount<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(templateNode, () => templateNode);
+
+			Func<SyntaxNode, int> countLines = node =>
+			{
+				var lineSpan = node.GetLocation().GetLineSpan();
+				return lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line + 1;
+			};
+
+			var actualLineCount = countLines(syntaxNode);
+			var desiredLineCount = countLines(templateNode);
+
+			if (actualLineCount == desiredLineCount)
+				return syntaxNode;
+
+			if (actualLineCount < desiredLineCount)
+				return syntaxNode.WithTrailingNewLines(desiredLineCount - actualLineCount);
+
+			Assert.NotReached("The given syntax node occupies {0} lines, whereas it is only allowed to occupy {1} lines.",
+				actualLineCount, desiredLineCount);
+			return syntaxNode;
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all leading and trailing trivia removed.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its trivia removed.</param>
+		[Pure, NotNull]
+		public static T RemoveTrivia<T>([NotNull] this T syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia().WithLeadingTrivia();
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its leading and trailing trivia replaced with
+		///     <paramref name="leadingTrivia" /> and <paramref name="trailingTrivia" />, respectively.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its trivia replaced.</param>
+		/// <param name="leadingTrivia">The leading trivia of the returned syntax node.</param>
+		/// <param name="trailingTrivia">The trailing trivia of the returned syntax node.</param>
+		[Pure, NotNull]
+		public static T WithTrivia<T>([NotNull] this T syntaxNode, SyntaxTriviaList leadingTrivia, SyntaxTriviaList trailingTrivia)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia(trailingTrivia).WithLeadingTrivia(leadingTrivia);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its leading and trailing trivia replaced with
+		///     the leading and trailing trivia of <paramref name="templateNode" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its trivia replaced.</param>
+		/// <param name="templateNode">The syntax node the leading and trailing trivia should be copied from.</param>
+		[Pure, NotNull]
+		public static T WithTrivia<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(templateNode, () => templateNode);
+
+			return syntaxNode.WithTrailingTrivia(templateNode.GetTrailingTrivia()).WithLeadingTrivia(templateNode.GetLeadingTrivia());
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its leading and trailing trivia replaced with
+		///     the leading and trailing trivia of <paramref name="syntaxToken" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its trivia replaced.</param>
+		/// <param name="syntaxToken">The syntax token the leading and trailing trivia should be copied from.</param>
+		[Pure, NotNull]
+		public static T WithTrivia<T>([NotNull] this T syntaxNode, SyntaxToken syntaxToken)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia(syntaxToken.TrailingTrivia).WithLeadingTrivia(syntaxToken.LeadingTrivia);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its leading trivia replaced with
+		///     the leading trivia of <paramref name="templateNode" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its leading trivia replaced.</param>
+		/// <param name="templateNode">The syntax node the leading trivia should be copied from.</param>
+		[Pure, NotNull]
+		public static T WithLeadingTrivia<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(templateNode, () => templateNode);
+			return syntaxNode.WithLeadingTrivia(templateNode.GetLeadingTrivia());
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its leading trivia replaced with
+		///     the leading trivia of <paramref name="syntaxToken" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its leading trivia replaced.</param>
+		/// <param name="syntaxToken">The syntax token the leading trivia should be copied from.</param>
+		[Pure, NotNull]
+		public static T WithLeadingTrivia<T>([NotNull] this T syntaxNode, SyntaxToken syntaxToken)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithLeadingTrivia(syntaxToken.LeadingTrivia);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its trailing trivia replaced with
+		///     the trailing trivia of <paramref name="templateNode" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its trailing trivia replaced.</param>
+		/// <param name="templateNode">The syntax node the trailing trivia should be copied from.</param>
+		[Pure, NotNull]
+		public static T WithTrailingTrivia<T>([NotNull] this T syntaxNode, [NotNull] SyntaxNode templateNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			Requires.NotNull(templateNode, () => templateNode);
+			return syntaxNode.WithTrailingTrivia(templateNode.GetTrailingTrivia());
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all of its trailing trivia replaced with
+		///     the trailing trivia of <paramref name="syntaxToken" />.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its trailing trivia replaced.</param>
+		/// <param name="syntaxToken">The syntax token the trailing trivia should be copied from.</param>
+		[Pure, NotNull]
+		public static T WithTrailingTrivia<T>([NotNull] this T syntaxNode, SyntaxToken syntaxToken)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia(syntaxToken.TrailingTrivia);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all leading and trailing trivia replaced by a single space token.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
+		[Pure, NotNull]
+		public static T WithLeadingAndTrailingSpace<T>([NotNull] this T syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia(SyntaxFactory.Space).WithLeadingTrivia(SyntaxFactory.Space);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all leading trivia replaced by a single space token.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
+		[Pure, NotNull]
+		public static T WithLeadingSpace<T>([NotNull] this T syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithLeadingTrivia(SyntaxFactory.Space);
+		}
+
+		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all trailing trivia replaced by a single space token.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node that should have its trivia replaced.</param>
+		[Pure, NotNull]
+		public static T WithTrailingSpace<T>([NotNull] this T syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+			return syntaxNode.WithTrailingTrivia(SyntaxFactory.Space);
+		}
+	}
+}

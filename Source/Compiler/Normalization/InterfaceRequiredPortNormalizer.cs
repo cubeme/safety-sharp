@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Normalization
+namespace SafetySharp.Compiler.Normalization
 {
 	using System;
+	using CSharp.Roslyn;
+	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling;
-	using Roslyn;
-	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Replaces all required port method declarations within a component interface with a property of the appropriate

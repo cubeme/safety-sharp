@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Normalization
+namespace SafetySharp.Compiler.Normalization
 {
 	using System;
 	using System.Linq;
+	using CSharp.Roslyn;
+	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling.CompilerServices;
-	using Roslyn;
-	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Replaces the parameters of method invocations or object creations with a lifted lambda if the corresponding

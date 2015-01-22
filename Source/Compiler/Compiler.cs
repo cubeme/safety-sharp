@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler
+namespace SafetySharp.Compiler
 {
 	using System;
 	using System.Collections.Generic;
@@ -29,11 +29,11 @@ namespace SafetySharp.CSharpCompiler
 	using System.IO;
 	using System.Linq;
 	using System.Threading;
+	using CSharp.Roslyn;
+	using CSharp.Utilities;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Normalization;
-	using Roslyn;
-	using Utilities;
 
 	/// <summary>
 	///     Compiles a SafetySharp modeling project authored in C# to a SafetySharp modeling assembly.
@@ -195,7 +195,7 @@ namespace SafetySharp.CSharpCompiler
 
 			// TODO: Use Compilation.GetDiagnosticsAsync instead once available
 			Compilation newCompilation;
-			var options = new AnalyzerOptions(Enumerable.Empty<AdditionalStream>(), new Dictionary<string, string>());
+			var options = new AnalyzerOptions(ImmutableArray.Create<AdditionalStream>(), ImmutableDictionary.Create<string, string>());
 			AnalyzerDriver.Create(compilation, GetAnalyzers(), options, out newCompilation, new CancellationToken());
 
 			return Report(newCompilation.GetDiagnostics(), false);

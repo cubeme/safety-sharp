@@ -30,7 +30,7 @@ open NUnit.Framework
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp
 open Microsoft.CodeAnalysis.CSharp.Syntax
-open SafetySharp.CSharpCompiler.Roslyn.Symbols
+open SafetySharp.CSharp.Roslyn.Symbols
 open SafetySharp.Modeling
 
 [<TestFixture>]

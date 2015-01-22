@@ -29,9 +29,9 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.CSharp.Syntax
 open Microsoft.CodeAnalysis.Diagnostics
 open SafetySharp.Modeling
-open SafetySharp.CSharpCompiler.Normalization
-open SafetySharp.CSharpCompiler.Roslyn.Syntax
-open SafetySharp.CSharpCompiler.Roslyn.Symbols
+open SafetySharp.Compiler.Normalization
+open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
 module ComponentRequiredPortNormalizer =

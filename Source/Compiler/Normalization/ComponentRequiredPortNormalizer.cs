@@ -20,14 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharpCompiler.Normalization
+namespace SafetySharp.Compiler.Normalization
 {
 	using System;
+	using CSharp.Roslyn;
+	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Roslyn;
-	using Roslyn.Syntax;
 
 	/// <summary>
 	///     Replaces all extern method declarations within a component with a property of the appropriate

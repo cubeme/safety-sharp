@@ -26,10 +26,10 @@ open System
 open System.Linq
 open NUnit.Framework
 open SafetySharp.Modeling
-open SafetySharp.CSharpCompiler.Analyzers
-open SafetySharp.CSharpCompiler.Roslyn
-open SafetySharp.CSharpCompiler.Roslyn.Syntax
-open SafetySharp.CSharpCompiler.Roslyn.Symbols
+open SafetySharp.CSharp.Analyzers
+open SafetySharp.CSharp.Roslyn
+open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
 module SS1008 =
