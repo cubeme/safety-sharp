@@ -123,7 +123,7 @@ module internal SsmToScm =
         Behavior = 
         { 
             Locals = m.Locals |> List.map transformLocal
-            Body = Scm.Block [] 
+            Body = transformStm m.Body
         }
     }
 

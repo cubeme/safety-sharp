@@ -29,46 +29,129 @@ open SafetySharp.Models.Transformations
 
 [<TestFixture>]
 module ``SsmToScm Transformation`` =
+    
+    let private ssmComp : Ssm.Comp = {
+        Name = "X"
+        Subs = []
+        Fields = []
+        Methods = []
+    }
+
+    let private scmComp : Scm.CompDecl = {
+        Comp = Scm.Comp "X"
+        Subs = []
+        Fields = []
+        ProvPorts = []
+        ReqPorts = []
+        Steps = []
+        Faults = []
+        Bindings = []
+    }
+
+    let private ssmFields : Ssm.Var list = [Ssm.Field ("f", Ssm.IntType); Ssm.Field ("b", Ssm.BoolType)]
+
+    let private scmFields : Scm.FieldDecl list = [
+        { Field = Scm.Field "f"; Type = Scm.IntType; Init = []}
+        { Field = Scm.Field "b"; Type = Scm.BoolType; Init = []}
+    ]
+
+    let private ssmReqPort : Ssm.Method = {
+        Name = "M"
+        Params = [{ Var = Ssm.Arg ("a", Ssm.IntType); Direction = Ssm.InOut}; { Var = Ssm.Arg ("b", Ssm.BoolType); Direction = Ssm.In}]
+        Body = Ssm.NopStm
+        Return = Ssm.VoidType
+        Locals = []
+        Kind = Ssm.ReqPort
+    }
+
+    let private scmReqPort : Scm.ReqPortDecl = {
+        ReqPort = Scm.ReqPort "M"
+        Params = 
+            [
+                { Var = { Var = Scm.Var "a"; Type = Scm.IntType }; Dir = Scm.InOut }
+                { Var = { Var = Scm.Var "b"; Type = Scm.BoolType }; Dir = Scm.In }
+            ]
+    }
+
+    let private ssmProvPort : Ssm.Method = {
+        Name = "M"
+        Params = [{ Var = Ssm.Arg ("a", Ssm.IntType); Direction = Ssm.InOut}; { Var = Ssm.Arg ("b", Ssm.BoolType); Direction = Ssm.In}]
+        Body = 
+            Ssm.SeqStm [
+                Ssm.IfStm (
+                    Ssm.VarExpr (Ssm.Arg ("b", Ssm.BoolType)),
+                    Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr 1),
+                    Some (Ssm.SeqStm 
+                        [
+                            Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
+                            Ssm.AsgnStm (Ssm.Field ("f", Ssm.BoolType), Ssm.BoolExpr false)
+                        ])
+                )
+                Ssm.AsgnStm (Ssm.Arg ("a", Ssm.IntType), Ssm.VarExpr (Ssm.Local ("x", Ssm.IntType)))
+            ]
+        Return = Ssm.VoidType
+        Locals = [Ssm.Local ("x", Ssm.IntType)]
+        Kind = Ssm.ProvPort
+    }
+
+    let private scmProvPort : Scm.ProvPortDecl = {
+        FaultExpr = None
+        ProvPort = Scm.ProvPort "M"
+        Params = 
+            [
+                { Var = { Var = Scm.Var "a"; Type = Scm.IntType }; Dir = Scm.InOut }
+                { Var = { Var = Scm.Var "b"; Type = Scm.BoolType }; Dir = Scm.In }
+            ]
+        Behavior = 
+        {
+            Locals = [{ Var = Scm.Var "x"; Type = Scm.IntType }]
+            Body = Scm.Block 
+                [
+                    Scm.Choice [
+                        (Scm.ReadVar (Scm.Var "b"), Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal 1)))
+                        (Scm.UExpr (Scm.ReadVar (Scm.Var "b"), Scm.Not), 
+                            Scm.Block 
+                                [
+                                    Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal -1))
+                                    Scm.AssignField (Scm.Field "f", Scm.Literal (Scm.BoolVal false))
+                                ])
+                    ]
+                    Scm.AssignVar (Scm.Var "a", Scm.ReadVar (Scm.Var "x"))
+                ]
+        }
+    }
+
+    let private transform = SsmToScm.transform
 
     [<Test>]
-    let ``simple component without subcomponents`` () =
-        SsmToScm.transform {
-            Name = "X"
-            Subs = []
-            Fields = [Ssm.Field ("f", Ssm.IntType); Ssm.Field ("b", Ssm.BoolType)]
-            Methods = 
-            [
-                {
-                    Name = "M"
-                    Params = []
-                    Body = 
-                        Ssm.SeqStm [
-                            Ssm.RetStm None
-                        ]
-                    Return = Ssm.VoidType
-                    Locals = [Ssm.Local ("x", Ssm.IntType)]
-                    Kind = Ssm.ProvPort
-                }
-            ]
-        } =? {
-            Comp = Scm.Comp "X"
-            Subs = []
-            Fields = [{ Field = Scm.Field "f"; Type = Scm.IntType; Init = []};{ Field = Scm.Field "b"; Type = Scm.BoolType; Init = []}]
-            ProvPorts = 
-                [
-                    {
-                        FaultExpr = None
-                        ProvPort = Scm.ProvPort "M"
-                        Params = []
-                        Behavior = 
-                        {
-                            Locals = [{ Var = Scm.Var "x"; Type = Scm.IntType }]
-                            Body = Scm.Block []
-                        }
-                    }
-                ]
-            ReqPorts = []
-            Steps = []
-            Faults = []
-            Bindings = []
+    let ``field transformation`` () =
+        transform { ssmComp with Fields = ssmFields } =? { scmComp with Fields = scmFields }
+
+    [<Test>]
+    let ``required port transformation`` () =
+        transform { ssmComp with Methods = [ssmReqPort] } =? { scmComp with ReqPorts = [scmReqPort] }
+
+    [<Test>]
+    let ``provided port transformation`` () =
+        transform { ssmComp with Methods = [ssmProvPort] } =? { scmComp with ProvPorts = [scmProvPort] }
+
+    [<Test>]
+    let ``nested components`` () =
+        let ssm = {
+            ssmComp with
+             Fields = ssmFields
+             Methods = [ssmProvPort; ssmReqPort]
         }
+        let sub = { ssm with Subs = [ssm; ssm] }
+        let ssm = { ssm with Subs = [sub; ssm] }
+
+        let scm = {
+            scmComp with
+             Fields = scmFields
+             ReqPorts = [scmReqPort]
+             ProvPorts = [scmProvPort]
+        }
+        let sub = { scm with Subs = [scm; scm] }
+        let scm = { scm with Subs = [sub; scm] }
+
+        transform ssm =? scm
