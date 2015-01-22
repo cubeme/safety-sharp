@@ -83,7 +83,6 @@
     <Compile Include="Smt-Solving\Z3\Z3InteractiveModeTests.fs" />
     <Compile Include="Smt-Solving\Z3\Z3ParserTests.fs" />
     <Content Include="app.config" />
-    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
