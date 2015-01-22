@@ -140,7 +140,7 @@ type Component () =
     /// <param name="field">[LiftExpression] A field of the component.</param>
     /// <param name="initialValues">The initial values of the field.</param>
     member this.SetInitialValues<'T when 'T :> obj> ([<LiftExpression>] field : 'T, [<ParamArray>] initialValues : 'T array) =
-        invalidUnliftedCall
+        invalidUnliftedCall ()
 
     /// <summary>
     ///     Sets the initial values of a field of the component instance.

@@ -52,7 +52,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <Exec Command="&quot;$(TargetDir)SafetySharp.CSharpCompiler.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
+    <Exec Command="&quot;$(TargetDir)SafetySharp.Compiler.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
     <OnError ExecuteTargets="RemoveTargetAssembly" />
   </Target>
   <Target Name="RemoveTargetAssembly">

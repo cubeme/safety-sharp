@@ -11,6 +11,7 @@
     <AssemblyName>Elbtunnel</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,7 +39,6 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Core, Version=4.3.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="nunit.framework, Version=2.6.3.13283, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
@@ -58,20 +58,14 @@
     <Compile Include="Tests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\SharedComponents\SharedComponents.csproj">
       <Project>{c7377ef7-e8fe-4864-802f-b2dab535d20c}</Project>
       <Name>SharedComponents</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Analyzer Include="..\..\Binaries\Debug\SafetySharp.CSharpCompiler.dll" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <Exec Command="&quot;$(TargetDir)SafetySharp.CSharpCompiler.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
+    <Exec Command="&quot;$(TargetDir)SafetySharp.Compiler.exe&quot; --project &quot;$(ProjectPath)&quot; --configuration &quot;$(Configuration)&quot; --platform &quot;$(Platform)&quot; --silent" />
     <OnError ExecuteTargets="RemoveTargetAssembly" />
   </Target>
   <Target Name="RemoveTargetAssembly">

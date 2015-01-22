@@ -35,14 +35,10 @@ namespace Elbtunnel
 		bool IsTriggered();
 	}
 
-	internal enum X : byte
-	{
-	}
-
 	internal class InterfacedSubcomponent : Component
 	{
-		private bool _triggered;
 		private readonly ISensor _sensor;
+		private bool _triggered;
 
 		public InterfacedSubcomponent(ISensor sensor)
 		{
@@ -87,8 +83,8 @@ namespace Elbtunnel
 
 	internal class Test2 : Component
 	{
-		private BooleanComponent _boolean1;
 		public readonly BooleanComponent Boolean2;
+		private BooleanComponent _boolean1;
 
 		public Test2()
 		{

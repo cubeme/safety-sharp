@@ -295,12 +295,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         let options = AnalyzerOptions (ImmutableArray.Create<AdditionalStream> (), ImmutableDictionary.Create<string, string> ())
         let analyzer = ImmutableArray.Create analyzer
 
-        // TODO: Use Compilation.GetDiagnosticsAsync instead once available
-        let mutable compilation = compilation.CSharpCompilation :> Compilation
-        let analyzerDriver = AnalyzerDriver.Create (compilation, analyzer, options, &compilation, CancellationToken ())
-        compilation.GetDiagnostics () |> ignore
-        let diagnostics = analyzerDriver.GetDiagnosticsAsync().Result
-
+        let diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation.CSharpCompilation, analyzer).Result
         if diagnostics.Length > 1 then
             raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))
         elif diagnostics.Length = 0 then

@@ -85,7 +85,7 @@ namespace SafetySharp.CSharp.Roslyn
 			if (root == normalizedRoot)
 				return syntaxTree;
 
-			return syntaxTree.WithChangedText(normalizedRoot.GetText());
+			return syntaxTree.WithChangedText(normalizedRoot.GetText(syntaxTree.GetText().Encoding));
 		}
 
 		/// <summary>

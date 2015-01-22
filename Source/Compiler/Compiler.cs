@@ -28,24 +28,24 @@ namespace SafetySharp.Compiler
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
-	using System.Threading;
 	using CSharp.Roslyn;
 	using CSharp.Utilities;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Microsoft.CodeAnalysis.MSBuild;
 	using Normalization;
 
 	/// <summary>
 	///     Compiles a SafetySharp modeling project authored in C# to a SafetySharp modeling assembly.
 	/// </summary>
-	internal class Compiler
+	internal static class Compiler
 	{
 		/// <summary>
 		///     Gets the diagnostic analyzers that are used to diagnose the C# code before compilation.
 		/// </summary>
 		private static ImmutableArray<DiagnosticAnalyzer> GetAnalyzers()
 		{
-			return typeof(Compiler)
+			return typeof(CSharpAnalyzer)
 				.Assembly.GetTypes()
 				.Where(type => type.IsClass && !type.IsAbstract && typeof(DiagnosticAnalyzer).IsAssignableFrom(type))
 				.Select(type => (DiagnosticAnalyzer)Activator.CreateInstance(type))
@@ -74,26 +74,21 @@ namespace SafetySharp.Compiler
 			if (String.IsNullOrWhiteSpace(platform))
 				return ReportError("0003", "Invalid compilation platform: Platform name cannot be the empty string.");
 
-			//var msBuildProperties = new Dictionary<string, string> { { "Configuration", configuration }, { "Platform", platform } };
+			var msBuildProperties = new Dictionary<string, string> { { "Configuration", configuration }, { "Platform", platform } };
 
-			//var workspace = MSBuildWorkspace.Create(msBuildProperties);
-			//var project = workspace.OpenProjectAsync(projectFile).Result;
+			var workspace = MSBuildWorkspace.Create(msBuildProperties);
+			var project = workspace.OpenProjectAsync(projectFile).Result;
 
-			//var compilation = project.GetCompilationAsync().Result;
-			//var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
-			//var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
-			//compilation = compilation.WithOptions(options);
+			var compilation = project.GetCompilationAsync().Result;
+			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
+			var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
+			compilation = compilation.WithOptions(options);
 
-			//if (!Diagnose(compilation))
-			//	return -1;
+			if (!Diagnose(compilation))
+				return -1;
 
-			//compilation = NormalizeSimulationCode(compilation);
-			//return Emit(compilation, project.OutputFilePath);
-
-			// TODO: Figure out how to do this as it has a dependency on the next version MSBuild which is not
-			// TODO: available on the build server
-
-			return -1;
+			compilation = NormalizeSimulationCode(compilation);
+			return Emit(compilation, project.OutputFilePath);
 		}
 
 		/// <summary>
@@ -193,12 +188,8 @@ namespace SafetySharp.Compiler
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
 
-			// TODO: Use Compilation.GetDiagnosticsAsync instead once available
-			Compilation newCompilation;
-			var options = new AnalyzerOptions(ImmutableArray.Create<AdditionalStream>(), ImmutableDictionary.Create<string, string>());
-			AnalyzerDriver.Create(compilation, GetAnalyzers(), options, out newCompilation, new CancellationToken());
-
-			return Report(newCompilation.GetDiagnostics(), false);
+			var diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation, GetAnalyzers());
+			return Report(diagnostics.Result, false);
 		}
 
 		/// <summary>
@@ -236,17 +227,13 @@ namespace SafetySharp.Compiler
 		/// <param name="assemblyPath">The target path of the assembly that should be emitted.</param>
 		private static int Emit([NotNull] Compilation compilation, [NotNull] string assemblyPath)
 		{
-			using (var ilStream = new FileStream(assemblyPath, FileMode.OpenOrCreate))
-			using (var pdbStream = new FileStream(Path.ChangeExtension(assemblyPath, ".pdb"), FileMode.OpenOrCreate))
-			{
-				var emitResult = compilation.Emit(ilStream, pdbStream: pdbStream);
+			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"));
 
-				if (emitResult.Success)
-					return 0;
+			if (emitResult.Success)
+				return 0;
 
-				Report(emitResult.Diagnostics, true);
-				return -1;
-			}
+			Report(emitResult.Diagnostics, true);
+			return -1;
 		}
 	}
 }
