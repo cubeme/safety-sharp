@@ -37,10 +37,11 @@ open SafetySharp.Models.Sam.SamHelpers
 //         and put the field back to the pool it isn't used in the future
 //   - Remove temporary fields from state vector (if possible)
 
-           
-module internal SamToPromela =
 
-    let generateGlobalVarDeclarations (varDecls:SamGlobalVarDecl list) : PrModule =
+module internal SamToPromela =
+    exception EmptyModelException of string
+
+    let generateGlobalVarDeclarations (varDecls:SamGlobalVarDecl list) : PrOneDecl list =
         let generateDecl (varDecl:SamGlobalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
                             | SamType.BoolType -> PrTypename.Bool
@@ -50,10 +51,9 @@ module internal SamToPromela =
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
         varDecls |> List.map generateDecl
-                 |> PrDeclLst.DeclLst
-                 |> PrModule.GlobalVarsAndChans
                  
-    let generateLocalVarDeclarations (varDecls:SamLocalVarDecl list) : PrModule =
+                 
+    let generateLocalVarDeclarations (varDecls:SamLocalVarDecl list) : PrOneDecl list =
         let generateDecl (varDecl:SamLocalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
                             | SamType.BoolType -> PrTypename.Bool
@@ -63,8 +63,6 @@ module internal SamToPromela =
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
         varDecls |> List.map generateDecl
-                 |> PrDeclLst.DeclLst
-                 |> PrModule.GlobalVarsAndChans
                  
     let transformSamVarToVarref ( var:SamVar ) =
         let varName = var.getName
@@ -85,11 +83,10 @@ module internal SamToPromela =
                 let assignVarref = transformSamVarToVarref varDecl.Var
                 let assignExpr = transformSamVal initialValue
                 //also possible to add a "true" as a guard to the returned sequence
-                statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]
-                
+                statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]                
             varDecl.Init |> List.map generateSequence
                          |> PrOptions.Options
-                                      |> PrStatement.IfStmnt
+                         |> PrStatement.IfStmnt
         varDecls |> List.map generateInit
 
 
@@ -156,20 +153,40 @@ module internal SamToPromela =
         // declare both locals and globals
         let globalVarModule = generateGlobalVarDeclarations pgm.Globals
         let localVarModule = generateLocalVarDeclarations pgm.Locals
-        
+        let varModule =
+            if globalVarModule.IsEmpty && localVarModule.IsEmpty then
+                // A DeclList in Promela needs at least one member
+                []
+            else
+                [(globalVarModule@localVarModule) |> PrDeclLst.DeclLst |> PrModule.GlobalVarsAndChans]
+
+
         // initialize globals
         let globalVarInitialisations = generateGlobalVarInitialisations pgm.Globals
         
 
-
-        let codeOfMetamodel = transformSamStm pgm.Body
-        let codeOfMetamodelInLoop = coverStmInEndlessloop codeOfMetamodel
-        let systemSequence : PrSequence = statementsToSequence (globalVarInitialisations @ [codeOfMetamodelInLoop])
-        let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
-        let systemModule = PrModule.ProcTypeModule(systemProctype)
-
+        let codeOfMetamodelInLoop =
+            let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
+            if stmWithoutNestedBlocks = SamStm.Block([]) then
+                // a Block needs at least one Statement
+                []
+            else
+                let codeOfMetamodel = transformSamStm stmWithoutNestedBlocks
+                [coverStmInEndlessloop codeOfMetamodel]
+        
+        let systemModule =
+            let systemCode = globalVarInitialisations @ codeOfMetamodelInLoop
+            if systemCode = [] then
+                // the code needs at least one Statement. If no code is given, the user might want just to test boolean formulas
+                // as we currently do not handle formulas, the model is wrong
+                raise (EmptyModelException("Tried to export empty model"))
+                []
+            else
+                let systemSequence : PrSequence = statementsToSequence (globalVarInitialisations @ codeOfMetamodelInLoop)
+                let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
+                [PrModule.ProcTypeModule(systemProctype)]
         {
-            PrSpec.Code = [globalVarModule;localVarModule;systemModule];
+            PrSpec.Code = varModule @ systemModule;
             PrSpec.Formulas = [];
         }
     

@@ -57,4 +57,28 @@ module SamToPromelaTests =
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString
         ()
+        
+    [<Test>]
+    let ``callInstHierarchy1.scm gets converted to promela`` () =
+
+        let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let promela = ScmToPromela.transformConfiguration model
+
+        let promelaCodeString = promelaWriter.Export promela
+        printf "%s" promelaCodeString
+        ()
+        
+    [<Test>]
+    let ``callInstFromBeh2.scm gets converted to promela`` () =
+
+        let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+
+        let thisShouldFail () =
+            ScmToPromela.transformConfiguration model |> ignore
+        raises<SamToPromela.EmptyModelException> thisShouldFail
+        ()
            
