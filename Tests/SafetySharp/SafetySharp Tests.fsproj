@@ -73,6 +73,7 @@
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheckTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />
+    <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />

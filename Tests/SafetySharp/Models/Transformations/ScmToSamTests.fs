@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Models.Transformations.ScmToSamTests
+namespace Transformations
 
 open System
 open NUnit.Framework
@@ -34,7 +34,7 @@ open SafetySharp.Models.Transformations.ScmToSam
 
 
 [<TestFixture>]
-type TransformScmToSam () =
+type ``ScmToSam transformations`` () =
 
     let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
 
