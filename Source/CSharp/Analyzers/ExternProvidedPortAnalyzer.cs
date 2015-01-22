@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -30,30 +30,25 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a method or property is not marked with both the <see cref="ProvidedAttribute" /> and the
-	///     <see cref="RequiredAttribute" />.
+	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1000 : CSharpAnalyzer
+	public class ExternProvidedPortAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1000()
+		public ExternProvidedPortAnalyzer()
 		{
-			Error(1000,
-				String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName));
+			Error(1002,
+				String.Format("A method or property marked with '{0}' cannot be extern.", typeof(ProvidedAttribute).FullName),
+				"Provided port '{0}' cannot be extern.");
 		}
 
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="context" />
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
 		public override void Initialize(AnalysisContext context)
 		{
 			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
@@ -68,7 +63,7 @@ namespace SafetySharp.CSharp.Analyzers
 			var compilation = context.Compilation;
 			var symbol = context.Symbol;
 
-			if (!symbol.ContainingType.ImplementsIComponent(compilation))
+			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
 				return;
 
 			// Ignore getter and setter methods of properties
@@ -76,10 +71,16 @@ namespace SafetySharp.CSharp.Analyzers
 			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
 				return;
 
-			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
+			// If the provided port attribute is not applied, we've nothing to do here
+			if (!symbol.HasAttribute<ProvidedAttribute>(compilation))
+				return;
 
-			if (hasProvidedAttribute && hasRequiredAttribute)
+			// If the method is also marked as a required port, something is wrong; we'll let another 
+			// analyzer handle this situation
+			if (symbol.HasAttribute<RequiredAttribute>(compilation))
+				return;
+
+			if (symbol.IsExtern)
 				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
 		}
 	}

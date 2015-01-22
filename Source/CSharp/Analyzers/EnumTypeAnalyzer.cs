@@ -23,26 +23,27 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using System.Linq;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
-	using Roslyn.Symbols;
+	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
+	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1003 : CSharpAnalyzer
+	public class EnumTypeAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1003()
+		public EnumTypeAnalyzer()
 		{
-			Error(1003,
-				String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
-				"Required port '{0}' must be extern.");
+			Error(1007,
+				"Enumeration declarations must not explicitly declare an underlying type.",
+				"Enum '{0}' must not explicitly declare an underlying type.");
 		}
 
 		/// <summary>
@@ -51,28 +52,23 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSemanticModelAction(Analyze);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private void Analyze(SemanticModelAnalysisContext context)
 		{
-			var compilation = context.Compilation;
-			var symbol = context.Symbol;
+			var enumDeclarations = context
+				.SemanticModel
+				.SyntaxTree.Descendants<EnumDeclarationSyntax>()
+				.Where(enumDeclatation => enumDeclatation.BaseList != null);
 
-			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
-				return;
-
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
-			if (!symbol.IsExtern && symbol.HasAttribute<RequiredAttribute>(compilation))
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			foreach (var enumDeclaration in enumDeclarations)
+				EmitDiagnostic(context, enumDeclaration.BaseList.Types.First(),
+					context.SemanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
 		}
 	}
 }

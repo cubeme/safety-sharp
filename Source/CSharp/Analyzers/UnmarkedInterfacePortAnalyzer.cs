@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -30,22 +30,22 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a getter or setter of a property is not marked with either the <see cref="ProvidedAttribute" /> or the
-	///     <see cref="RequiredAttribute" />.
+	///     Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
+	///     the <see cref="RequiredAttribute" /> or <see cref="ProvidedAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1001 : CSharpAnalyzer
+	public class UnmarkedInterfacePortAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1001()
+		public UnmarkedInterfacePortAnalyzer()
 		{
-			Error(1001,
-				String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
+			Error(1004,
+				String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
 					typeof(RequiredAttribute).FullName,
 					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
+				String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
 					typeof(RequiredAttribute).FullName,
 					typeof(ProvidedAttribute).FullName));
 		}
@@ -56,7 +56,7 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method);
+			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
 		}
 
 		/// <summary>
@@ -68,17 +68,18 @@ namespace SafetySharp.CSharp.Analyzers
 			var compilation = context.Compilation;
 			var symbol = context.Symbol;
 
-			if (!symbol.ContainingType.ImplementsIComponent(compilation))
+			if (symbol.ContainingType.TypeKind != TypeKind.Interface || !symbol.ContainingType.ImplementsIComponent(compilation))
 				return;
 
-			var methodSymbol = (IMethodSymbol)symbol;
-			if (!(methodSymbol.AssociatedSymbol is IPropertySymbol))
+			// Ignore getter and setter methods of properties
+			var methodSymbol = symbol as IMethodSymbol;
+			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
 				return;
 
 			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
 			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
 
-			if (hasProvidedAttribute || hasRequiredAttribute)
+			if (!hasProvidedAttribute && !hasRequiredAttribute)
 				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
 		}
 	}

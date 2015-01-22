@@ -31,8 +31,8 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1001 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1001 ())
+module ``Property accessor marked with port attribute`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (PortPropertyAccessorAnalyzer ())
 
     let ss1001 location memberName =
         Diagnostic ("SS1001", (1, location), (1, location + 3), 

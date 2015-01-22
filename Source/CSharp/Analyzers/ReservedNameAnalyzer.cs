@@ -35,12 +35,12 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that no type, type member, variable, etc. uses a name reserved for synthesized variables.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1008 : CSharpAnalyzer
+	public class ReservedNameAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1008()
+		public ReservedNameAnalyzer()
 		{
 			Error(1008,
 				"The identifier name is reserved for internal use.",

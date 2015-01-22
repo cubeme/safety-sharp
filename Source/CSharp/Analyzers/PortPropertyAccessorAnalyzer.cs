@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -30,19 +30,24 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.
+	///     Ensures that a getter or setter of a property is not marked with either the <see cref="ProvidedAttribute" /> or the
+	///     <see cref="RequiredAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1002 : CSharpAnalyzer
+	public class PortPropertyAccessorAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1002()
+		public PortPropertyAccessorAnalyzer()
 		{
-			Error(1002,
-				String.Format("A method or property marked with '{0}' cannot be extern.", typeof(ProvidedAttribute).FullName),
-				"Provided port '{0}' cannot be extern.");
+			Error(1001,
+				String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName),
+				String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
@@ -51,7 +56,7 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSymbolAction(Analyze, SymbolKind.Method);
 		}
 
 		/// <summary>
@@ -63,15 +68,17 @@ namespace SafetySharp.CSharp.Analyzers
 			var compilation = context.Compilation;
 			var symbol = context.Symbol;
 
-			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
+			if (!symbol.ContainingType.ImplementsIComponent(compilation))
 				return;
 
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
+			var methodSymbol = (IMethodSymbol)symbol;
+			if (!(methodSymbol.AssociatedSymbol is IPropertySymbol))
 				return;
 
-			if (symbol.IsExtern && symbol.HasAttribute<ProvidedAttribute>(compilation))
+			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
+			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
+
+			if (hasProvidedAttribute || hasRequiredAttribute)
 				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
 		}
 	}

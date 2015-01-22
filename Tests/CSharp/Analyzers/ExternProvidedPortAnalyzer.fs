@@ -31,11 +31,11 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1003 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1003 ())
+module ``Provided ports cannot be extern`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (ExternProvidedPortAnalyzer ())
 
-    let ss1003 location memberName =
-        Diagnostic ("SS1003", (1, location), (1, location + 1), sprintf "Required port '%s' must be extern." memberName)
+    let ss1002 location memberName =
+        Diagnostic ("SS1002", (1, location), (1, location + 1), sprintf "Provided port '%s' cannot be extern." memberName)
         |> Some
 
     [<Test>]
@@ -46,16 +46,21 @@ module SS1003 =
         getDiagnostic "class C : Component { extern int M { get; set; }}" =? None
 
     [<Test>]
-    let ``Non-extern method or property with Required attribute is invalid`` () =
-        getDiagnostic "class C : Component { [Required] void M() {}}" =? ss1003 38 "C.M()"
-        getDiagnostic "class C : Component { [Required] int M { get; set; }}" =? ss1003 37 "C.M"
+    let ``Non-extern method or property with Provided attribute is valid`` () =
+        getDiagnostic "class C : Component { [Provided] void M() {}}" =? None
+        getDiagnostic "class C : Component { [Provided] int M { get; set; }}" =? None
 
     [<Test>]
-    let ``Extern method or property with Required attribute is valid`` () =
-        getDiagnostic "class C : Component { [Required] extern void M();}" =? None
-        getDiagnostic "class C : Component { [Required] extern int M { get; set; }}" =? None
+    let ``Extern method or property with Provided attribute is invalid`` () =
+        getDiagnostic "class C : Component { [Provided] extern void M();}" =? ss1002 45 "C.M()"
+        getDiagnostic "class C : Component { [Provided] extern int M { get; set; }}" =? ss1002 44 "C.M"
 
     [<Test>]
-    let ``Non-extern method or property with Required attribute outside of component classes is valid`` () =
-        getDiagnostic "class C { [Provided] void M() {}}" =? None
-        getDiagnostic "class C { [Provided] int M { get; set; }}" =? None
+    let ``Extern method or property with both attributes is valid`` () =
+        getDiagnostic "class C : Component { [Provided, Required] extern void M();}" =? None
+        getDiagnostic "class C : Component { [Provided, Required] extern int M { get; set; }}" =? None
+
+    [<Test>]
+    let ``Extern method or property with Provided attribute outside of component classes is valid`` () =
+        getDiagnostic "class C { [Provided] extern void M();}" =? None
+        getDiagnostic "class C { [Provided] extern int M { get; set; }}" =? None

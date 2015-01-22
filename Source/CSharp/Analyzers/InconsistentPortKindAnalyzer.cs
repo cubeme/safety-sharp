@@ -31,19 +31,19 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that the port type of an interface implementing method or property matches the port type of the
+	///     Ensures that the port kind of an interface implementing method or property matches the port kind of the
 	///     corresponding interface method or property.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1005 : CSharpAnalyzer
+	public class InconsistentPortKindAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1005()
+		public InconsistentPortKindAnalyzer()
 		{
 			Error(1005,
-				"Method or property does not implement the corresponding interface method or property, as the port types are different.",
+				"Method or property does not implement the corresponding interface method or property, as the port kinds are different.",
 				"'{0}' does not implement interface member '{1}'. '{1}' is declared as a {2} port, but is implemented as a {3} port.");
 		}
 
@@ -79,7 +79,7 @@ namespace SafetySharp.CSharp.Analyzers
 
 		/// <summary>
 		///     Checks whether the <paramref name="symbol" />'s implementing member for <paramref name="interfaceMember" /> has the
-		///     correct port type.
+		///     correct port kind.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
 		/// <param name="symbol">The symbol that should be analyzed.</param>
@@ -95,7 +95,7 @@ namespace SafetySharp.CSharp.Analyzers
 			var implementationIsRequired = implementingMember.HasAttribute<RequiredAttribute>(compilation) || implementingMember.IsExtern;
 			var implementationIsProvided = implementingMember.HasAttribute<ProvidedAttribute>(compilation) || !implementingMember.IsExtern;
 
-			// If we can't uniquely classify the port type of either the interface member or the implementation, 
+			// If we can't uniquely classify the port kind of either the interface member or the implementation, 
 			// there is another problem that another analyzer deals with. So let's just ignore it here.
 			if ((interfaceIsRequired && interfaceIsProvided) || (implementationIsProvided && implementationIsRequired))
 				return;

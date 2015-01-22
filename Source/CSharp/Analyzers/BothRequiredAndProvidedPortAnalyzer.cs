@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,52 +23,64 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
-	using System.Linq;
-	using Microsoft.CodeAnalysis.CSharp;
-	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
-	using Roslyn.Syntax;
+	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that no enumeration members explicitly declare a constant value.
+	///     Ensures that a method or property is not marked with both the <see cref="ProvidedAttribute" /> and the
+	///     <see cref="RequiredAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1007 : CSharpAnalyzer
+	public class BothRequiredAndProvidedPortAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1007()
+		public BothRequiredAndProvidedPortAnalyzer()
 		{
-			Error(1007,
-				"Enumeration declarations must not explicitly declare an underlying type.",
-				"Enum '{0}' must not explicitly declare an underlying type.");
+			Error(1000,
+				String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName),
+				String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
+					typeof(RequiredAttribute).FullName,
+					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		/// <param name="context" />
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSemanticModelAction(Analyze);
+			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SemanticModelAnalysisContext context)
+		private void Analyze(SymbolAnalysisContext context)
 		{
-			var enumDeclarations = context
-				.SemanticModel
-				.SyntaxTree.Descendants<EnumDeclarationSyntax>()
-				.Where(enumDeclatation => enumDeclatation.BaseList != null);
+			var compilation = context.Compilation;
+			var symbol = context.Symbol;
 
-			foreach (var enumDeclaration in enumDeclarations)
-				EmitDiagnostic(context, enumDeclaration.BaseList.Types.First(),
-					context.SemanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
+			if (!symbol.ContainingType.ImplementsIComponent(compilation))
+				return;
+
+			// Ignore getter and setter methods of properties
+			var methodSymbol = symbol as IMethodSymbol;
+			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
+				return;
+
+			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
+			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
+
+			if (hasProvidedAttribute && hasRequiredAttribute)
+				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

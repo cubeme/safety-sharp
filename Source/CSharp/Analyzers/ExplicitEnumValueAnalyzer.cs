@@ -34,12 +34,12 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class SS1006 : CSharpAnalyzer
+	public class ExplicitEnumValueAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public SS1006()
+		public ExplicitEnumValueAnalyzer()
 		{
 			Error(1006,
 				"Values of enumeration members must not be explicitly declared.",

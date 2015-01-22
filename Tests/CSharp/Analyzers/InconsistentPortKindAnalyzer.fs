@@ -30,13 +30,13 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1005 =
+module ``Implementation and interface port kinds are inconsistent`` =
     let getDiagnostic csharpCode = 
         let csharpCode = 
             "interface I : IComponent { [Required] void In(); [Provided] void Out(); }
             interface J : IComponent { [Required] int In { get; set; } [Provided] int Out { get; set; }}\n" 
             + csharpCode
-        TestCompilation.GetDiagnostic (SS1005 ()) csharpCode
+        TestCompilation.GetDiagnostic (InconsistentPortKindAnalyzer ()) csharpCode
 
     let ss1005 location length memberName interfaceMemberName declaredPortType actualPortType =
         Diagnostic ("SS1005", (3, location), (3, location + length), 

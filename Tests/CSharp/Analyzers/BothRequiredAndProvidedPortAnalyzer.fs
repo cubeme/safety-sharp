@@ -31,8 +31,8 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1000 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1000 ())
+module ``Marked with both provided and required port attribute`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (BothRequiredAndProvidedPortAnalyzer ())
 
     let ss1000 location memberName =
         Diagnostic ("SS1000", (1, location), (1, location + 1), 

@@ -31,8 +31,8 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1004 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1004 ())
+module ``Interface members must be marked with port attributes`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (UnmarkedInterfacePortAnalyzer ())
 
     let ss1004 location memberName =
         Diagnostic ("SS1004", (1, location), (1, location + 1), 

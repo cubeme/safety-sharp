@@ -31,31 +31,45 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1002 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1002 ())
+module ``Explicit enum type`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (EnumTypeAnalyzer ())
 
-    let ss1002 location memberName =
-        Diagnostic ("SS1002", (1, location), (1, location + 1), sprintf "Provided port '%s' cannot be extern." memberName)
+    let ss1007 location length =
+        Diagnostic ("SS1007", (1, location), (1, location + length), "Enum 'E' must not explicitly declare an underlying type.")
         |> Some
 
     [<Test>]
-    let ``Method or property without attributes is valid`` () =
-        getDiagnostic "class C : Component { void M() {}}" =? None
-        getDiagnostic "class C : Component { int M { get; set; }}" =? None
-        getDiagnostic "class C : Component { extern void M(); }" =? None
-        getDiagnostic "class C : Component { extern int M { get; set; }}" =? None
+    let ``implicit underlying type is valid`` () =
+        getDiagnostic "enum E { A }" =? None
 
     [<Test>]
-    let ``Non-extern method or property with Provided attribute is valid`` () =
-        getDiagnostic "class C : Component { [Provided] void M() {}}" =? None
-        getDiagnostic "class C : Component { [Provided] int M { get; set; }}" =? None
+    let ``byte as underlying type is invalid`` () =
+        getDiagnostic "enum E : byte { A }" =? ss1007 9 4
 
     [<Test>]
-    let ``Extern method or property with Provided attribute is invalid`` () =
-        getDiagnostic "class C : Component { [Provided] extern void M();}" =? ss1002 45 "C.M()"
-        getDiagnostic "class C : Component { [Provided] extern int M { get; set; }}" =? ss1002 44 "C.M"
+    let ``int as underlying type is invalid`` () =
+        getDiagnostic "enum E : int { A }" =? ss1007 9 3
 
     [<Test>]
-    let ``Extern method or property with Provided attribute outside of component classes is valid`` () =
-        getDiagnostic "class C { [Provided] extern void M();}" =? None
-        getDiagnostic "class C { [Provided] extern int M { get; set; }}" =? None
+    let ``long as underlying type is invalid`` () =
+        getDiagnostic "enum E : long { A }" =? ss1007 9 4
+
+    [<Test>]
+    let ``sbyte as underlying type is invalid`` () =
+        getDiagnostic "enum E : sbyte { A }" =? ss1007 9 5
+
+    [<Test>]
+    let ``short as underlying type is invalid`` () =
+        getDiagnostic "enum E : short { A }" =? ss1007 9 5
+
+    [<Test>]
+    let ``uint as underlying type is invalid`` () =
+        getDiagnostic "enum E : uint { A }" =? ss1007 9 4
+
+    [<Test>]
+    let ``ulong as underlying type is invalid`` () =
+        getDiagnostic "enum E : ulong { A }" =? ss1007 9 5
+
+    [<Test>]
+    let ``ushort as underlying type is invalid`` () =
+        getDiagnostic "enum E : ushort { A }" =? ss1007 9 6

@@ -32,8 +32,8 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module SS1008 =
-    let getDiagnostic = TestCompilation.GetDiagnostic (SS1008 ())
+module ``Use of reserved name`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (ReservedNameAnalyzer ())
 
     let ss1008 location identifierName =
         Diagnostic ("SS1008", (1, location), (1, location + String.length identifierName), 
