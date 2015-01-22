@@ -1,6 +1,6 @@
 ﻿// The MIT License (MIT)
 // 
-// Copyright (c) 2014, Institute for Software & Systems Engineering
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,32 +36,32 @@ namespace SafetySharp.CSharpCompiler.Normalization
 	///     Assumes that there are no auto-properties or properties with expression bodies. Property reads and writes are updated
 	///     accordingly to call the appropriate methods.
 	///     Note that this normalizer will create non-compilable C# code if:
-	///		- an attribute is applied to a property that cannot be applied to methods as well;
-	///		- a property is written and the result value is used again (e.g., x = Prop = 1);
-	///		- a property is used in a compound assignment, increment, or decrement expression (e.g., Prop++, Prop += 3);
+	///     - an attribute is applied to a property that cannot be applied to methods as well;
+	///     - a property is written and the result value is used again (e.g., x = Prop = 1);
+	///     - a property is used in a compound assignment, increment, or decrement expression (e.g., Prop++, Prop += 3);
 	/// 
 	///     For instance, within component classes:
 	///     <code>
-	///    		public int X { get { return 1; } }
-	///    		// becomes:
-	///    		public int __GetX__() { return 1; }
-	///    		
-	///    		[A] int I.X { [B] get { return 1; } set { Console.WriteLine(value); } }
-	///    		// becomes:
-	///    		[A] [B] int I.__GetX__() { return 1; }
-	///  		[A] void I.__SetX__(int value) { Console.WriteLine(value); }
-	///   	</code>
+	///     		public int X { get { return 1; } }
+	///     		// becomes:
+	///     		public int __GetX__() { return 1; }
+	///     		
+	///     		[A] int I.X { [B] get { return 1; } set { Console.WriteLine(value); } }
+	///     		// becomes:
+	///     		[A] [B] int I.__GetX__() { return 1; }
+	///   		[A] void I.__SetX__(int value) { Console.WriteLine(value); }
+	///    	</code>
 	///     For instance, within component interfaces:
 	///     <code>
-	///    		int X { get; }
-	///    		// becomes:
-	///    		int __GetX__();
-	///    		
-	///    		[A] int X { [B] get; set; }
-	///    		// becomes:
-	///    		[A] [B] int __GetX__();
-	///  		[A] void __SetX__(int value);
-	///   	</code>
+	///     		int X { get; }
+	///     		// becomes:
+	///     		int __GetX__();
+	///     		
+	///     		[A] int X { [B] get; set; }
+	///     		// becomes:
+	///     		[A] [B] int __GetX__();
+	///   		[A] void __SetX__(int value);
+	///    	</code>
 	/// </summary>
 	public class PropertyDeclarationNormalizer : CSharpNormalizer
 	{
@@ -166,7 +166,5 @@ namespace SafetySharp.CSharpCompiler.Normalization
 
 			return update(members, typeDeclaration);
 		}
-
-		// TODO: Rewrite usages of property getters and setters
 	}
 }
