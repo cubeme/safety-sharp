@@ -48,46 +48,48 @@ module ``CilToSsm Multiple Assemblies`` =
         transform "public class X : Component { public void M() {} }" "class Y : Component { X x = new X(); void N() { x.M(); }}" "new Y()" =?
             [
                 {
-                    Name = "Y"
+                    Name = "Root0"
                     Fields = []
-                    Subs = []
+                    Subs = 
+                        [
+                            {
+                                Name = "Root0.x"
+                                Fields = []
+                                Subs = []
+                                Methods = 
+                                [
+                                    {
+                                        Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                                        Return = VoidType
+                                        Params = []
+                                        Locals = []
+                                        Body = RetStm None
+                                        Kind = ProvPort
+                                    } 
+                                ]
+                            } 
+                        ]
                     Methods = 
-                    [
-                        {
-                            Name = CilToSsm.makeUniqueMethodName "N" 0 0
-                            Return = VoidType
-                            Params = []
-                            Locals = []
-                            Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field ("x", ClassType "X")))); RetStm None]
-                            Kind = ProvPort
-                        } 
-                    ]
+                        [
+                            {
+                                Name = CilToSsm.makeUniqueMethodName "N" 0 0
+                                Return = VoidType
+                                Params = []
+                                Locals = []
+                                Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field ("x", ClassType "X")))); RetStm None]
+                                Kind = ProvPort
+                            } 
+                        ]
                 }
-                {
-                    Name = "X"
-                    Fields = []
-                    Subs = []
-                    Methods = 
-                    [
-                        {
-                            Name = CilToSsm.makeUniqueMethodName "M" 0 0
-                            Return = VoidType
-                            Params = []
-                            Locals = []
-                            Body = RetStm None
-                            Kind = ProvPort
-                        } 
-                    ]
-                } 
             ]
 
     [<Test>]
     let ``inherit from type in other assembly`` () =
-        transform "public class X : Component { public void M() {} }" "class Y : X { void N() { M(); }}" "new Y()" =?
+        transform "public class X : Component { protected bool b; public void M() {} }" "class Y : X { void N() { M(); b = true; }}" "new Y()" =?
             [
                 {
-                    Name = "Y"
-                    Fields = []
+                    Name = "Root0"
+                    Fields = [{ Var = Field ("b", BoolType); Init = [BoolVal false] }]
                     Subs = []
                     Methods =
                     [
@@ -104,7 +106,12 @@ module ``CilToSsm Multiple Assemblies`` =
                             Return = VoidType
                             Params = []
                             Locals = []
-                            Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y")))); RetStm None]
+                            Body = SeqStm 
+                                [
+                                    CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y"))))
+                                    AsgnStm (Field ("b", BoolType), BoolExpr true)
+                                    RetStm None
+                                ]
                             Kind = ProvPort
                         } 
                     ]

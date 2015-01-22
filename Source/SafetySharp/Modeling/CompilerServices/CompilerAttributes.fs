@@ -25,12 +25,22 @@ namespace SafetySharp.Modeling.CompilerServices
 open System
 open SafetySharp
 
-/// When applied to a method parameter, instructs the SafetySharp compiler to lift an expression 'expr'
+/// When applied to a method parameter, instructs the S# compiler to lift an expression 'expr'
 /// to a lambda function of the form '() => expr'.
 [<AttributeUsage(AttributeTargets.Parameter, AllowMultiple = true, Inherited = false)>]
 [<Sealed>]
 type LiftExpressionAttribute () =
     inherit Attribute ()
+
+/// When applied to a S# component method, instructs the S# runtime to use the indicated method instead of 
+/// the marked one when transforming the method's body.
+[<AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)>]
+[<Sealed; AllowNullLiteral>]
+type OriginalMethodAttribute (m : string) =
+    inherit Attribute ()
+
+    /// Gets the name of the method that should be transformed instead of the marked method.
+    member this.Method = m
 
 ///// Provides metadata about a compilation unit within a SafetySharp modeling assembly.
 //[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]

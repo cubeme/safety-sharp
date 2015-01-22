@@ -33,6 +33,7 @@ module internal CilToSsm =
     open System.Reflection
     open SafetySharp
     open SafetySharp.Modeling
+    open SafetySharp.Modeling.CompilerServices
     open Cil
     open Ssm
     open Mono.Cecil
@@ -445,8 +446,20 @@ module internal CilToSsm =
 
     /// Transforms the given method to an SSM method with structured control flow.
     let transformMethod (m : MethodDefinition) =
+        let originalMethod = 
+            // Check whether the method's implementation was changed by the S# compiler and if so, 
+            // use the original implementation of the method during the transformation of the method body
+            match m.CustomAttributes |> Seq.tryFind (fun a -> a.AttributeType.FullName = typeof<OriginalMethodAttribute>.FullName) with
+            | Some attribute ->
+                let originalMethodName = attribute.ConstructorArguments.[0].Value :?> string
+                match m.DeclaringType.Methods |> Seq.filter (fun m' -> m'.Name = originalMethodName) |> Seq.toList with
+                | []      -> invalidOp "Failed to find original method implementation of '%s'." m.FullName
+                | m :: [] -> m
+                | _       -> invalidOp "Found more than one method with name '%s' while searching for original implementation of '%s'." originalMethodName m.FullName
+            | None -> m
+
         let body =
-            m
+            originalMethod
             |> Cil.getMethodBody
             |> transformMethodBody
             |> compress
@@ -472,7 +485,7 @@ module internal CilToSsm =
         |> List.ofSeq
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
-    let transformType (c : Component) (t : TypeDefinition) =
+    let rec transformType (c : Component) (typeDefinitions : ImmutableDictionary<System.Type, TypeDefinition>) =
         let rec transform (t : TypeDefinition) =
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
@@ -480,12 +493,13 @@ module internal CilToSsm =
                 else { Name = String.Empty; Fields = []; Methods = []; Subs = [] }
 
             { transformed with 
-                Name = t.FullName
+                Name = c.Name
                 Fields = transformed.Fields @ (transformFields c t) 
                 Methods = transformed.Methods @ (transformMethods t)
+                Subs = transformed.Subs @ (c.Subcomponents |> List.map (fun c -> transformType c typeDefinitions))
             }
 
-        transform t
+        transform (typeDefinitions.[c.GetType ()])
 
     /// Gets the type definitions for all given components.
     let getTypeDefinitions (components : Component list) =
@@ -506,6 +520,6 @@ module internal CilToSsm =
         let typeDefinitions = getTypeDefinitions model.Components
 
         let transform (comp : Component) =
-            transformType comp typeDefinitions.[comp.GetType ()]
+            transformType comp typeDefinitions
 
-        model.Components |> List.map transform
+        model.Roots |> List.map transform
