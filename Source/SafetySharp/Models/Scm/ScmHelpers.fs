@@ -94,8 +94,8 @@ module internal ScmHelpers =
     // Extension methods
     type Var with
         member var.getName =
-            match var with
-                | Var.Var (name) -> name
+            let (Var name) = var //get the parameter without matching
+            name
 
     // Extension methods
     type VarDecl with
