@@ -33,12 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="nunit.framework, Version=2.6.3.13283, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="SafetySharp, Version=0.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>$(TargetDir)SafetySharp.dll</HintPath>
+    <Reference Include="nunit.framework">
+      <HintPath>..\..\Dependencies\Packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -49,10 +45,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">
+      <Project>{18dfc311-4633-4b22-ab2f-ff42901c6438}</Project>
+      <Name>SafetySharp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SharedComponents\SharedComponents.csproj">
       <Project>{c7377ef7-e8fe-4864-802f-b2dab535d20c}</Project>
       <Name>SharedComponents</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\..\Binaries\Debug\SafetySharp.CSharp.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
