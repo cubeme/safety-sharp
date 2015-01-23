@@ -199,11 +199,12 @@ module internal ScmRewriterLevelUp =
         return ()
     }
     
-    let setStepsToRewrite (steps:StepDecl list) : ScmRewriteFunction<unit> = scmRewrite {
+    let allParentStepsShouldBeRewrittenLater : ScmRewriteFunction<unit> = scmRewrite {
         let! levelUp = getLevelUpState
+        let! parentCompDecl = getParentCompDecl
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.StepsToRewrite = steps;
+                ScmRewriterLevelUp.StepsToRewrite = parentCompDecl.Steps;
             }
         do! updateLevelUpState newLevelUp
         return ()
@@ -639,7 +640,7 @@ module internal ScmRewriterLevelUp =
                     let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
                     
                     do! updateParentCompDecl newParentCompDecl
-                    do! setStepsToRewrite parentCompDecl.Steps
+                    do! allParentStepsShouldBeRewrittenLater // all parent steps need to be rewritten later. The step comp must be replaced by the new reqport-call
                     do! pushProvPortToRewrite newProvPortDecl
         }
 
