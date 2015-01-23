@@ -24,11 +24,18 @@ namespace SafetySharp.Modeling
 
 open System
 open SafetySharp
+open SafetySharp.Models
+open SafetySharp.Models.Transformations
 
 [<Sealed>]
 type SpinModelChecker (model : Model) =
     do nullArg model "model"
     do model.FinalizeMetadata ()
+
+    let ssm = CilToSsm.transformModel model
+    let scm = SsmToScm.transform { Name = "Root"; Subs = ssm; Fields = []; Methods = []; }
+
+    do printf "%s" (Scm.ScmAstToString.exportModel scm)
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)

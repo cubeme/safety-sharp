@@ -52,7 +52,7 @@ module ``CilToSsm Component Transformation`` =
                 Methods = 
                 [
                     {
-                        Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                        Name = CilToSsm.makeUniqueMethodName "M" 2 0
                         Return = IntType
                         Params = []
                         Locals = []
@@ -79,7 +79,7 @@ module ``CilToSsm Component Transformation`` =
                             Methods = 
                             [
                                 {
-                                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                                     Return = VoidType
                                     Params = []
                                     Locals = []
@@ -92,11 +92,11 @@ module ``CilToSsm Component Transformation`` =
                 Methods = 
                     [
                         {
-                            Name = CilToSsm.makeUniqueMethodName "N" 0 0
+                            Name = CilToSsm.makeUniqueMethodName "N" 2 0
                             Return = VoidType
                             Params = []
                             Locals = []
-                            Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field ("x", ClassType "X")))); RetStm None]
+                            Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field (CilToSsm.makeUniqueFieldName "x" 2, ClassType "X")))); RetStm None]
                             Kind = ProvPort
                         } 
                     ]

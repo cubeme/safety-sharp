@@ -15,10 +15,10 @@
 			{
 				var c1 = new BooleanComponent(nondeterministicInitialValue);
 				var c2 = new BooleanComponent(false);
-				var lb = new LightBarrier();
-				var t = new Test2();
 				var timer = new Timer(20);
-				SetRootComponents(new InterfacedSubcomponent(new LightBarrier()));
+				var lb = new LightBarrier(timer);
+				var t = new Test2();
+				SetRootComponents(new InterfacedSubcomponent(new LightBarrier(timer)), new Timer(70));
 
 				//var unknown = new LightBarrier();
 				//var value = c1.Access<bool>("Value");

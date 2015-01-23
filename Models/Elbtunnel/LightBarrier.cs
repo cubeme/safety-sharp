@@ -25,6 +25,7 @@ namespace Elbtunnel
 	using System;
 	using System.Diagnostics;
 	using SafetySharp.Modeling;
+	using SharedComponents;
 
 	internal interface ISensor : IComponent
 	{
@@ -37,41 +38,47 @@ namespace Elbtunnel
 
 	internal class InterfacedSubcomponent : Component
 	{
-		private readonly ISensor _sensor;
+		private readonly LightBarrier _sensor;
 		private bool _triggered;
 
-		public InterfacedSubcomponent(ISensor sensor)
+		public InterfacedSubcomponent(LightBarrier sensor)
 		{
 			_sensor = sensor;
 		}
 
 		public override void Update()
 		{
-			_triggered = _sensor.IsTriggered();
+			_sensor.IsTriggered(out _triggered);
 		}
 	}
 
-	public class LightBarrier : Component, ISensor
+	public class LightBarrier : Component
 	{
 		private int _i = 1;
 		public bool Triggered = false;
+		private Timer _timer;
+		public LightBarrier(Timer timer)
+		{
+			_timer = timer;
+		}
 
 		[Required]
 		public extern void SendData(int position);
 
-		public bool IsTriggered()
+		public void IsTriggered(out bool t)
 		{
-			return false;
+			_timer.Update();
+			t= false;
 		}
 
 		[Provided]
-		public int Do()
+		public void Do()
 		{
 			SendData(22);
 			var q = 38;
-			q = Choose.Value(23, 4, 23, 55);
+			//q = Choose.Value(23, 4, 23, 55);
 			_i = _i + 1;
-			return _i + q;
+			//return _i + q;
 		}
 	}
 

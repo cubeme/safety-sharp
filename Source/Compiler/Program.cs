@@ -119,12 +119,11 @@ namespace SafetySharp.Compiler
 			// Start the compilation process.
 			try
 			{
-				var resultCode = Compiler.Compile(ProjectFile, Configuration, Platform);
+				if (!Compiler.Compile(ProjectFile, Configuration, Platform))
+					return -1;
 
-				if (resultCode == 0)
-					Log.Info("Compilation completed successfully.");
-
-				return resultCode;
+				Log.Info("Compilation completed successfully.");
+				return 0;
 			}
 			catch (Exception e)
 			{

@@ -33,6 +33,7 @@ namespace SafetySharp.Compiler
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.MSBuild;
+	using Models;
 	using Normalization;
 
 	/// <summary>
@@ -59,7 +60,7 @@ namespace SafetySharp.Compiler
 		/// <param name="projectFile">The C# project file that should be compiled.</param>
 		/// <param name="configuration">The configuration the C# project should be compiled in.</param>
 		/// <param name="platform">The platform the C# project should be compiled for.</param>
-		public static int Compile([NotNull] string projectFile, [NotNull] string configuration, [NotNull] string platform)
+		public static bool Compile([NotNull] string projectFile, [NotNull] string configuration, [NotNull] string platform)
 		{
 			Requires.NotNullOrWhitespace(projectFile, () => projectFile);
 			Requires.NotNullOrWhitespace(configuration, () => configuration);
@@ -78,17 +79,18 @@ namespace SafetySharp.Compiler
 
 			var workspace = MSBuildWorkspace.Create(msBuildProperties);
 			var project = workspace.OpenProjectAsync(projectFile).Result;
-
 			var compilation = project.GetCompilationAsync().Result;
+			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
+
+			if (!Diagnose(compilation) || !Emit(optimizedCompilation, project.OutputFilePath, embedOriginalAssembly: false))
+				return false;
+
 			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
 			var options = compilation.Options.WithSpecificDiagnosticOptions(diagnosticOptions);
 			compilation = compilation.WithOptions(options);
 
-			if (!Diagnose(compilation))
-				return -1;
-
 			compilation = NormalizeSimulationCode(compilation);
-			return Emit(compilation, project.OutputFilePath);
+			return Emit(compilation, project.OutputFilePath, embedOriginalAssembly: true);
 		}
 
 		/// <summary>
@@ -145,7 +147,7 @@ namespace SafetySharp.Compiler
 		/// <param name="message">The message of the diagnostic that should be reported.</param>
 		/// <param name="formatArgs">The format arguments of the message.</param>
 		[StringFormatMethod("message")]
-		private static int ReportError([NotNull] string identifier, [NotNull] string message, params object[] formatArgs)
+		private static bool ReportError([NotNull] string identifier, [NotNull] string message, params object[] formatArgs)
 		{
 			identifier = CSharpAnalyzer.Prefix + identifier;
 			message = String.Format(message, formatArgs);
@@ -153,7 +155,7 @@ namespace SafetySharp.Compiler
 			var diagnostic = Diagnostic.Create(identifier, CSharpAnalyzer.Category, message, DiagnosticSeverity.Error,
 				DiagnosticSeverity.Error, true, 0);
 			Report(diagnostic, true);
-			return -1;
+			return false;
 		}
 
 		/// <summary>
@@ -225,15 +227,28 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be emitted.</param>
 		/// <param name="assemblyPath">The target path of the assembly that should be emitted.</param>
-		private static int Emit([NotNull] Compilation compilation, [NotNull] string assemblyPath)
+		/// <param name="embedOriginalAssembly">
+		///     Indicates whether the original assembly should be embedded into the compiled assembly as a managed resource.
+		/// </param>
+		private static bool Emit([NotNull] Compilation compilation, [NotNull] string assemblyPath, bool embedOriginalAssembly)
 		{
-			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"));
+			IEnumerable<ResourceDescription> resources = null;
 
+			if (embedOriginalAssembly)
+			{
+				// Copy the original assembly so that we can later embed it into the newly compiled one
+				var tmpPath = Path.ChangeExtension(assemblyPath, ".tmp");
+				File.Copy(assemblyPath, tmpPath, overwrite: true);
+
+				resources = new[] { new ResourceDescription(Ssm.EmbeddedAssembly, () => new FileStream(tmpPath, FileMode.Open, FileAccess.Read), true) };
+			}
+
+			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"), manifestResources: resources);
 			if (emitResult.Success)
-				return 0;
+				return true;
 
 			Report(emitResult.Diagnostics, true);
-			return -1;
+			return false;
 		}
 	}
 }

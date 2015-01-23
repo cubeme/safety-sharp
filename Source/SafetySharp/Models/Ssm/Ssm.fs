@@ -27,6 +27,10 @@ namespace SafetySharp.Models
 /// of a .NET assembly.
 module internal Ssm =
 
+    /// The name of the resource that stores the embedded original S# assembly.
+    [<Literal>]
+    let EmbeddedAssembly = "OriginalAssembly"
+
     /// Represents the unary operators supported by S# models.
     type internal UOp =
         | Minus
@@ -238,9 +242,8 @@ module internal Ssm =
         | BoolExpr _ -> BoolType
         | IntExpr _ -> IntType
         | DoubleExpr _ -> DoubleType
-        | VarExpr (Arg (_, t)) -> t
-        | VarExpr (Local (_, t)) -> t
-        | VarExpr (Field (_, t)) -> t
+        | VarExpr v -> getVarType v
+        | VarRefExpr v -> getVarType v
         | UExpr (Minus, e) when deduceType e = IntType -> IntType
         | UExpr (Minus, e) when deduceType e = DoubleType -> DoubleType
         | UExpr (Not, e) when deduceType e = BoolType -> BoolType

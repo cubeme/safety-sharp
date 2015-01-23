@@ -39,6 +39,50 @@ module internal CilToSsm =
     open Mono.Cecil
     open Mono.Cecil.Cil
 
+    /// Provides assembly metadata, automatically looking for and using embedded S# assemblies.
+    type private AssemblyMetadataProvider () as this =
+        inherit DefaultAssemblyResolver ()
+
+        /// The assemblies that have been loaded by the metadata provider.
+        let loadedAssemblies = Dictionary<string, AssemblyDefinition> ()
+
+        /// Loads the assembly with the given name.
+        let loadAssembly name =
+            match loadedAssemblies.TryGetValue name with
+            | (true, assembly) -> assembly
+            | (false, _) ->
+                let assembly = Assembly.Load (AssemblyName name)
+                let parameters = ReaderParameters ()
+                parameters.AssemblyResolver <- this
+
+                let assembly = 
+                    use stream = assembly.GetManifestResourceStream Ssm.EmbeddedAssembly
+                    if stream = null then
+                        AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
+                    else
+                        AssemblyDefinition.ReadAssembly (stream, parameters)
+
+                loadedAssemblies.Add (name, assembly)
+                assembly
+
+        /// Resolves the assembly definition for the given assembly name.
+        override this.Resolve (name : AssemblyNameReference) : AssemblyDefinition = 
+            loadAssembly name.FullName            
+
+        /// Gets the type definitions for all given components.
+        member this.GetTypeDefinitions (components : Component list) =
+            let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeDefinition> ()
+
+            components 
+            |> Seq.map (fun c -> c.GetType ())
+            |> Seq.distinct
+            |> Seq.iter (fun t -> 
+                let assemblyDefinition = loadAssembly t.Assembly.FullName
+                dictionary.Add (t, assemblyDefinition.MainModule.Import(t).Resolve ())
+            )
+
+            dictionary.ToImmutableDictionary ()
+
     /// Provides an extension method that returns all methods excluding all constructors.
     type private TypeDefinition with
         member this.GetMethods () = this.Methods |> Seq.filter (fun m -> not m.IsConstructor)
@@ -47,12 +91,10 @@ module internal CilToSsm =
     let private getCSharpType (fullName : string) =
         fullName.Replace("/", ".")
 
-    /// Computes the inheritance level of a component, i.e., the distance to the SafetySharp.Modeling.Component base class
-    /// in the inheritance chain minus 1.
+    /// Computes the inheritance level of a component, i.e., the distance to the System.Object base class
+    /// in the inheritance chain.
     let rec internal getInheritanceLevel (t : TypeDefinition) =
-        if t.FullName = typeof<obj>.FullName || t.FullName = typeof<Component>.FullName then
-            invalidOp "Expected a type derived from '%s'." typeof<Component>.FullName
-        elif t.BaseType.FullName = typeof<obj>.FullName || t.BaseType.FullName = typeof<Component>.FullName then
+        if t.FullName = typeof<obj>.FullName then
             0
         else
             (getInheritanceLevel (t.BaseType.Resolve ())) + 1
@@ -66,7 +108,8 @@ module internal CilToSsm =
         sprintf "%s%s%s" (String ('$', inheritanceLevel)) methodName (String ('@', overloadIndex))
 
      /// Gets a unique name for the given field within the declaring type's inheritance hierarchy.
-    let private getUniqueFieldName (f : FieldDefinition) =
+    let private getUniqueFieldName (f : FieldReference) =
+        let f = f.Resolve ()
         let level = getInheritanceLevel f.DeclaringType
         makeUniqueFieldName f.Name level
 
@@ -172,7 +215,7 @@ module internal CilToSsm =
         let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i" l.Index else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
         let arg (a : ParameterDefinition) = createVar Arg (argName a) a.ParameterType
-        let field (f : FieldReference) = createVar Field (getUniqueFieldName (f.Resolve ())) f.FieldType
+        let field (f : FieldReference) = createVar Field (getUniqueFieldName f) f.FieldType
 
         let containsLocal l = checkStack (localVarPred (localName l))
         let containsArg a = checkStack (argVarPred a)
@@ -197,7 +240,7 @@ module internal CilToSsm =
         | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) when not (containsArg a s) -> (AsgnStm (Arg (a, t), e), [], s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> replaceWithTempVar pc (Arg (a, t)) e replaceArg s  
-        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v && not (containsField f.Name s) -> (AsgnStm (field f, e), [], s)
+        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v && not (containsField (getUniqueFieldName f) s) -> (AsgnStm (field f, e), [], s)
         | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v -> replaceWithTempVar pc (field f) e replaceField s  
         | (Instr.Starg a, e :: s) when not (containsArg (argName a) s) -> (AsgnStm (arg a, e), [], s)
         | (Instr.Starg a, e :: s) when containsArg (argName a) s -> replaceWithTempVar pc (arg a) e replaceArg s  
@@ -485,7 +528,7 @@ module internal CilToSsm =
         |> List.ofSeq
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
-    let rec transformType (c : Component) (typeDefinitions : ImmutableDictionary<System.Type, TypeDefinition>) =
+    let rec transformType (typeDefinitions : ImmutableDictionary<System.Type, TypeDefinition>) (c : Component) =
         let rec transform (t : TypeDefinition) =
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
@@ -496,30 +539,13 @@ module internal CilToSsm =
                 Name = c.Name
                 Fields = transformed.Fields @ (transformFields c t) 
                 Methods = transformed.Methods @ (transformMethods t)
-                Subs = transformed.Subs @ (c.Subcomponents |> List.map (fun c -> transformType c typeDefinitions))
+                Subs = transformed.Subs @ (c.Subcomponents |> List.map (transformType typeDefinitions))
             }
 
         transform (typeDefinitions.[c.GetType ()])
-
-    /// Gets the type definitions for all given components.
-    let getTypeDefinitions (components : Component list) =
-        let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeDefinition> ()
-
-        components 
-        |> Seq.map (fun c -> c.GetType ())
-        |> Seq.distinct
-        |> Seq.iter (fun t -> 
-            let assemblyDefinition = AssemblyDefinition.ReadAssembly t.Assembly.Location
-            dictionary.Add (t, assemblyDefinition.MainModule.Import(t).Resolve ())
-        )
-
-        dictionary.ToImmutableDictionary ()
-
-    /// Transforms the model to a SSM model.
+        
+    /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =
-        let typeDefinitions = getTypeDefinitions model.Components
-
-        let transform (comp : Component) =
-            transformType comp typeDefinitions
-
-        model.Roots |> List.map transform
+        let metadataProvider = AssemblyMetadataProvider ()
+        let typeDefinitions = metadataProvider.GetTypeDefinitions model.Components
+        model.Roots |> List.map (transformType typeDefinitions)

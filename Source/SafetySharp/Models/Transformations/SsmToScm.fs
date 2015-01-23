@@ -96,6 +96,7 @@ module internal SsmToScm =
             Scm.Choice [(e, transformStm s1); (Scm.UExpr (e, Scm.Not), transformStm s2)]
         | Ssm.CallStm (m, p, d, r, e, t)    -> 
             Scm.CallPort (Scm.ReqPort m.Name, []) // TODO
+        | Ssm.RetStm _                      -> Scm.Block [] // TODO: Remove
         | _                                 -> notSupported "Unsupported SSM statement '%+A'." s
 
     /// Transforms the given local variable.

@@ -59,7 +59,7 @@ module ``CilToSsm Multiple Assemblies`` =
                                 Methods = 
                                 [
                                     {
-                                        Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                                        Name = CilToSsm.makeUniqueMethodName "M" 2 0
                                         Return = VoidType
                                         Params = []
                                         Locals = []
@@ -72,11 +72,11 @@ module ``CilToSsm Multiple Assemblies`` =
                     Methods = 
                         [
                             {
-                                Name = CilToSsm.makeUniqueMethodName "N" 0 0
+                                Name = CilToSsm.makeUniqueMethodName "N" 2 0
                                 Return = VoidType
                                 Params = []
                                 Locals = []
-                                Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field ("x", ClassType "X")))); RetStm None]
+                                Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field (CilToSsm.makeUniqueFieldName "x" 2, ClassType "X")))); RetStm None]
                                 Kind = ProvPort
                             } 
                         ]
@@ -89,12 +89,12 @@ module ``CilToSsm Multiple Assemblies`` =
             [
                 {
                     Name = "Root0"
-                    Fields = [{ Var = Field ("b", BoolType); Init = [BoolVal false] }]
+                    Fields = [{ Var = Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType); Init = [BoolVal false] }]
                     Subs = []
                     Methods =
                     [
                         {
-                            Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
                             Return = VoidType
                             Params = []
                             Locals = []
@@ -102,14 +102,14 @@ module ``CilToSsm Multiple Assemblies`` =
                             Kind = ProvPort
                         } 
                         {
-                            Name = CilToSsm.makeUniqueMethodName "N" 1 0
+                            Name = CilToSsm.makeUniqueMethodName "N" 3 0
                             Return = VoidType
                             Params = []
                             Locals = []
                             Body = SeqStm 
                                 [
-                                    CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y"))))
-                                    AsgnStm (Field ("b", BoolType), BoolExpr true)
+                                    CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y"))))
+                                    AsgnStm (Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType), BoolExpr true)
                                     RetStm None
                                 ]
                             Kind = ProvPort

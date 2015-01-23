@@ -42,7 +42,7 @@ module ``CilToSsm Method Transformations`` =
         ssm |> List.collect (fun c -> c.Methods)
 
     let private transformMethod methodDefinition= 
-        let csharpCode = sprintf "class %s { %s }" className methodDefinition
+        let csharpCode = sprintf "class %s : Component { %s }" className methodDefinition
         let compilation = TestCompilation csharpCode
         let assembly = compilation.GetAssemblyDefinition ()
         let typeDef = assembly.MainModule.GetType className
@@ -59,17 +59,17 @@ module ``CilToSsm Method Transformations`` =
 
     let private arg name t = Arg (name, t)
     let private local name t = Local (name, t)
-    let private field name t = Field (name, t)
+    let private field name t = Field (CilToSsm.makeUniqueFieldName name 2, t)
     let private tmp = CilToSsm.freshLocal
     let private this = Some (VarExpr (This (ClassType className)))
     let private tthis t = Some (VarExpr (This (ClassType t)))
-    let private name name = { Name = name; Type = className }
+    let private name name = { Name = CilToSsm.makeUniqueMethodName name 2 0; Type = className }
 
     [<Test>]
     let ``method marked with OriginalMethodAttribute should be transformed using the indicated method`` () =
         transformMethod "[OriginalMethod(\"X\")] int M(int y) { return 0; } int X(int y) { return y + 1; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "y" IntType; Direction = In } ]
                 Locals = []
@@ -86,7 +86,7 @@ module ``CilToSsm Method Transformations`` =
     let ``extern method without return value and parameters should have kind required port`` () =
         transformMethod "extern void M();" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
@@ -98,7 +98,7 @@ module ``CilToSsm Method Transformations`` =
     let ``extern method with return value and parameters should have kind required port`` () =
         transformMethod "extern int M(int x);" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
@@ -110,7 +110,7 @@ module ``CilToSsm Method Transformations`` =
     let ``read from ref parameter`` () =
         transformMethod "int M(ref int x) { return x; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
@@ -122,7 +122,7 @@ module ``CilToSsm Method Transformations`` =
     let ``write to ref parameter`` () =
         transformMethod "void M(ref int x) { x = 17; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
@@ -134,7 +134,7 @@ module ``CilToSsm Method Transformations`` =
     let ``write to out parameter`` () =
         transformMethod "void M(out int x) { x = 17; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "x" IntType; Direction = Out } ]
                 Locals = []
@@ -143,10 +143,22 @@ module ``CilToSsm Method Transformations`` =
             }
 
     [<Test>]
+    let ``passing field as boolean out parameter should not fail type deduction`` () =
+        transformMethod "bool f; void Q(out bool x) { x = true; } void M() { Q(out f); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = VoidType
+                Params = []
+                Locals = []
+                Body = SeqStm [CallStm (name "Q", [BoolType], [Out], VoidType, [VarRefExpr (field "f" BoolType)], this); RetStm None]
+                Kind = ProvPort
+            }
+
+    [<Test>]
     let ``access field`` () =
         transformMethod "int _f; int M(ref int x) { _f = x; return _f; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = []
@@ -158,7 +170,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call static method without parameters`` () =
         transformMethod "static void F() {} void M() { F(); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
@@ -170,7 +182,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call static method with parameter and return value`` () =
         transformMethod "static int F(int x) { return x; } int M() { return F(4); }" =? 
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = []
                 Locals = [tmp 1 0 IntType]
@@ -186,11 +198,11 @@ module ``CilToSsm Method Transformations`` =
     let ``call method on non-this target without parameters`` () =
         transformMethod "class Q { public void F() {} } Q q; void M() { q.F(); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [CallStm ({ Name = "F"; Type = className + ".Q" }, [], [], VoidType, [], Some (VarExpr (field "q" (ClassType (className + ".Q"))))); RetStm None]
+                Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "F" 1 0; Type = className + ".Q" }, [], [], VoidType, [], Some (VarExpr (field "q" (ClassType (className + ".Q"))))); RetStm None]
                 Kind = ProvPort
             }
 
@@ -198,13 +210,13 @@ module ``CilToSsm Method Transformations`` =
     let ``call method on non-this target with parameter and return value`` () =
         transformMethod "class Q { public int F(int x) { return x; } } Q q; int M() { return q.F(4); }" =? 
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = []
                 Locals = [tmp 3 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 3 0 IntType, CallExpr ({ Name = "F"; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], Some (VarExpr (field "q" (ClassType (className + ".Q"))))))
+                        AsgnStm (tmp 3 0 IntType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "F" 1 0; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], Some (VarExpr (field "q" (ClassType (className + ".Q"))))))
                         RetStm (Some (VarExpr (tmp 3 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -214,11 +226,11 @@ module ``CilToSsm Method Transformations`` =
     let ``call static method on other class without parameters`` () =
         transformMethod "class Q { public static void F() {} } void M() { Q.F(); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [CallStm ({ Name = "F"; Type = className + ".Q" }, [], [], VoidType, [], None); RetStm None]
+                Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "F" 1 0; Type = className + ".Q" }, [], [], VoidType, [], None); RetStm None]
                 Kind = ProvPort
             }
 
@@ -226,13 +238,13 @@ module ``CilToSsm Method Transformations`` =
     let ``call static method on other class with parameter and return value`` () =
         transformMethod "class Q { public static int F(int x) { return x; } } int M() { return Q.F(4); }" =? 
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = []
                 Locals = [tmp 1 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 1 0 IntType, CallExpr ({ Name = "F"; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], None))
+                        AsgnStm (tmp 1 0 IntType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "F" 1 0; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], None))
                         RetStm (Some (VarExpr (tmp 1 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -242,7 +254,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method without parameters`` () =
         transformMethod "void F() {} void M() { F(); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
@@ -254,7 +266,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with parameter`` () =
         transformMethod "void F(int x) {} void M() { F(4); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
@@ -266,7 +278,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with ref parameter`` () =
         transformMethod "void F(ref int x) {} void M(int x) { F(ref x); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
@@ -278,7 +290,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with out parameter`` () =
         transformMethod "void F(out int x) { x = 0; } void M(int x) { F(out x); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
@@ -290,7 +302,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method ignore return`` () =
         transformMethod "int F(int x) { return x; } void M() { F(4); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = [tmp 2 0 IntType]
@@ -302,7 +314,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method ignore return within if statement`` () =
         transformMethod "int F(int x) { return x; } void M(bool b) { if (b) F(4); else F(1); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "b" BoolType; Direction = In } ]
                 Locals = [tmp 9 0 IntType; tmp 4 0 IntType]
@@ -319,7 +331,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with multiple parameters`` () =
         transformMethod "void F(int x, bool y, int z, bool w, bool q) {} void M(int a, bool b) { F(a, b, 2, false, true); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "a" IntType; Direction = In }; { Var = arg "b" BoolType; Direction = In } ]
                 Locals = []
@@ -341,7 +353,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with multiple parameters and return value`` () =
         transformMethod "int F(int x, bool y, bool z) { return 0; } int M(int a, bool b) { return F(1, false, true); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "a" IntType; Direction = In }; { Var = arg "b" BoolType; Direction = In } ]
                 Locals = [tmp 4 0 IntType]
@@ -358,7 +370,7 @@ module ``CilToSsm Method Transformations`` =
     let ``method with in, inout, and out parameters`` () =
         transformMethod "double M(double x, ref bool y, out int z) { z = y ? 1 : 0; return 3.0; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = DoubleType
                 Params = 
                     [ 
@@ -384,7 +396,7 @@ module ``CilToSsm Method Transformations`` =
     let ``method with complex side effects`` () =
         transformMethod "void M(int z) { z *= z-- * --z; }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "z" IntType; Direction = In } ]
                 Locals = [tmp 5 0 IntType; tmp 10 0 IntType]
@@ -407,7 +419,7 @@ module ``CilToSsm Method Transformations`` =
         transformMethod "void M(ref int z) { z *= z-- * --z; }" =?
             let local = local "__loc_0" IntType
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "z" IntType; Direction = InOut } ]
                 Locals = [local; tmp 10 0 IntType; tmp 17 0 IntType; tmp 19 0 IntType]
@@ -436,7 +448,7 @@ module ``CilToSsm Method Transformations`` =
             let argY = arg "y" BoolType
             let argZ = arg "z" IntType
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = arg "y" BoolType; Direction = InOut }; { Var = arg "z" IntType; Direction = InOut } ]
                 Locals = [local1; tmp 41 0 IntType; tmp 43 0 IntType; local0; tmp 31 0 IntType; tmp 21 0 IntType]
@@ -486,7 +498,7 @@ module ``CilToSsm Method Transformations`` =
             let ifStm = IfStm (condition, thenStm, Some elseStm)
             let retStm = RetStm <| Some (BExpr (VarExpr tmp, Sub, IntExpr 1))
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = SeqStm [ifStm; retStm]
                 Return = IntType
@@ -498,7 +510,7 @@ module ``CilToSsm Method Transformations`` =
     let ``ternary operator with method calls`` () =
         transformMethod "int M(int x) { return F1(false) ? F2(false) : F3(2); } bool F1(bool v) { return v; } int F2(bool x) { return 1; } int F3(int x) { return x; }" =? 
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = 
                     SeqStm [
@@ -524,7 +536,7 @@ module ``CilToSsm Method Transformations`` =
     let ``short-circuit 'or' with method calls`` () =
         transformMethod "int M(int x) { if (F1(false) || F2(1)) return 1; return -1; } bool F1(bool x) { return false; } bool F2(int x) { return false; }" =? 
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = 
                     SeqStm [
@@ -554,7 +566,7 @@ module ``CilToSsm Method Transformations`` =
             let thenStm = RetStm (Some (IntExpr 0))
             let elseStm = RetStm (Some (IntExpr -1))
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" BoolType; Direction = In }; { Var = arg "y" BoolType; Direction = In } ]
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = IntType
@@ -569,7 +581,7 @@ module ``CilToSsm Method Transformations`` =
             let thenStm = RetStm (Some (IntExpr 0))
             let elseStm = RetStm (Some (IntExpr -1))
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" BoolType; Direction = In }; { Var = arg "y" BoolType; Direction = In } ]
                 Body = IfStm (condition, thenStm, Some elseStm)
                 Return = IntType
@@ -590,7 +602,7 @@ module ``CilToSsm Method Transformations`` =
             let ifStm = IfStm (condition, thenStm, Some elseStm)
             let assignStm = AsgnStm (arg "z" IntType, VarExpr (tmp 10 0 IntType))
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = 
                     [ 
                         { Var = arg "x" IntType; Direction = In }
@@ -616,7 +628,7 @@ module ``CilToSsm Method Transformations`` =
             let ifStm = IfStm (condition, thenStm, Some elseStm)
             let assignStm = AsgnStm (arg "z" IntType, VarExpr (tmp 10 0 IntType))
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = 
                     [ 
                         { Var = arg "x" IntType; Direction = In }
@@ -633,7 +645,7 @@ module ``CilToSsm Method Transformations`` =
     let ``nested ternary operator`` () =
         transformMethod "int M(bool b, bool c) { var x = 1 + (b ? (c ? 4 : 2) : 3); return x; }" =? 
             { 
-                Name = "M" 
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "b" BoolType; Direction = In }; { Var = arg "c" BoolType; Direction = In } ]
                 Body = 
                     SeqStm [
@@ -671,7 +683,7 @@ module ``CilToSsm Method Transformations`` =
         transformMethod "int F(ref int x) { return x; } int M() { int x = 0; return x + F(ref x); }" =?
             let local = local "__loc_0" IntType
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = []
                 Locals = [local; tmp 5 0 IntType; tmp 5 1 IntType]
@@ -689,7 +701,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with field byref parameter should store local in temporary`` () =
         transformMethod "int F(ref int x) { return x; } int f; int M() { return f + F(ref f); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = []
                 Locals = [tmp 5 0 IntType; tmp 5 1 IntType]
@@ -706,7 +718,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with value arg byref parameter should store local in temporary`` () =
         transformMethod "int F(ref int x) { return x; } int M(int x) { return x + F(ref x); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = [tmp 3 0 IntType; tmp 3 1 IntType]
@@ -723,7 +735,7 @@ module ``CilToSsm Method Transformations`` =
     let ``call method with byref arg byref parameter should store local in temporary`` () =
         transformMethod "int F(ref int x) { return x; } int M(ref int x) { return x + F(ref x); }" =?
             {
-                Name = "M"
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
                 Return = IntType
                 Params = [ { Var = arg "x" IntType; Direction = InOut } ]
                 Locals = [tmp 4 0 IntType; tmp 4 1 IntType]
@@ -741,7 +753,7 @@ module ``CilToSsm Method Transformations`` =
         transform "class X : Component { void M() { } bool M(int i) { return true; } int M(bool b) { return 1; }}" "new X()" =?
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -749,7 +761,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 1
                     Return = BoolType
                     Params = [ { Var = arg "i" IntType; Direction = In } ]
                     Locals = []
@@ -757,7 +769,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 2
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 2
                     Return = IntType
                     Params = [ { Var = arg "b" BoolType; Direction = In } ]
                     Locals = []
@@ -772,7 +784,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new D()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -780,7 +792,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "N" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "N" 3 0
                     Return = BoolType
                     Params = [ { Var = arg "n" BoolType; Direction = In } ]
                     Locals = []
@@ -795,7 +807,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new D()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -803,7 +815,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 1
                     Return = VoidType
                     Params = [ { Var = arg "i" IntType; Direction = In } ]
                     Locals = []
@@ -811,7 +823,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -819,7 +831,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 1
                     Return = VoidType
                     Params = [ { Var = arg "b" BoolType; Direction = In } ]
                     Locals = []
@@ -834,7 +846,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new E()" =? 
              [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -842,7 +854,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "N" 2 0
+                    Name = CilToSsm.makeUniqueMethodName "N" 4 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -850,7 +862,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 5 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -858,7 +870,7 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 }
                 {
-                    Name = CilToSsm.makeUniqueMethodName "Q" 4 0
+                    Name = CilToSsm.makeUniqueMethodName "Q" 6 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -873,7 +885,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = IntType
                     Params = []
                     Locals = []
@@ -888,7 +900,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = IntType
                     Params = [ { Var = arg "x" IntType; Direction = In } ]
                     Locals = []
@@ -896,14 +908,14 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 } 
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 1
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 1
                     Return = IntType
                     Params = []
                     Locals = [tmp 2 0 IntType]
                     Body = 
                         SeqStm [
                             AsgnStm (tmp 2 0 IntType, 
-                                CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [IntType], [In], IntType, [IntExpr 1], tthis "B"))
+                                CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 3 0; Type = "B" }, [IntType], [In], IntType, [IntExpr 1], tthis "B"))
                             RetStm (Some (VarExpr (tmp 2 0 IntType)))
                     ]
                     Kind = ProvPort
@@ -916,7 +928,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B(), new C()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -924,13 +936,13 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 } 
                 {
-                    Name = "M"
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
                     Body = 
                         SeqStm [
-                            CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], Some (VarExpr (field "b" (ClassType "B"))))
+                            CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 3 0; Type = "B" }, [], [], VoidType, [], Some (VarExpr (field "b" (ClassType "B"))))
                             RetStm None
                         ]
                     Kind = ProvPort
@@ -943,7 +955,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new B()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -951,11 +963,11 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 } 
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]
                     Kind = ProvPort
                 } 
             ]
@@ -966,7 +978,7 @@ module ``CilToSsm Method Transformations`` =
         transform c "new C()" =? 
             [
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 0 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
                     Return = VoidType
                     Params = []
                     Locals = []
@@ -974,19 +986,19 @@ module ``CilToSsm Method Transformations`` =
                     Kind = ProvPort
                 } 
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 1 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]                   
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A" }, [], [], VoidType, [], tthis "B"); RetStm None]                   
                     Kind = ProvPort
                 } 
                 {
-                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                    Name = CilToSsm.makeUniqueMethodName "M" 4 0
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 1 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
+                    Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 3 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
                     Kind = ProvPort
                 } 
             ]
