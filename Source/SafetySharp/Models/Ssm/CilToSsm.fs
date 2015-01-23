@@ -94,7 +94,7 @@ module internal CilToSsm =
     /// Computes the inheritance level of a component, i.e., the distance to the System.Object base class
     /// in the inheritance chain.
     let rec internal getInheritanceLevel (t : TypeDefinition) =
-        if t.FullName = typeof<obj>.FullName then
+        if t.FullName = typeof<obj>.FullName || t.BaseType = null then
             0
         else
             (getInheritanceLevel (t.BaseType.Resolve ())) + 1
@@ -489,20 +489,8 @@ module internal CilToSsm =
 
     /// Transforms the given method to an SSM method with structured control flow.
     let transformMethod (m : MethodDefinition) =
-        let originalMethod = 
-            // Check whether the method's implementation was changed by the S# compiler and if so, 
-            // use the original implementation of the method during the transformation of the method body
-            match m.CustomAttributes |> Seq.tryFind (fun a -> a.AttributeType.FullName = typeof<OriginalMethodAttribute>.FullName) with
-            | Some attribute ->
-                let originalMethodName = attribute.ConstructorArguments.[0].Value :?> string
-                match m.DeclaringType.Methods |> Seq.filter (fun m' -> m'.Name = originalMethodName) |> Seq.toList with
-                | []      -> invalidOp "Failed to find original method implementation of '%s'." m.FullName
-                | m :: [] -> m
-                | _       -> invalidOp "Found more than one method with name '%s' while searching for original implementation of '%s'." originalMethodName m.FullName
-            | None -> m
-
         let body =
-            originalMethod
+            m
             |> Cil.getMethodBody
             |> transformMethodBody
             |> compress

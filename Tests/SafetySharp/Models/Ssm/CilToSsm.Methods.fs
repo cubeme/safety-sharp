@@ -66,23 +66,6 @@ module ``CilToSsm Method Transformations`` =
     let private name name = { Name = CilToSsm.makeUniqueMethodName name 2 0; Type = className }
 
     [<Test>]
-    let ``method marked with OriginalMethodAttribute should be transformed using the indicated method`` () =
-        transformMethod "[OriginalMethod(\"X\")] int M(int y) { return 0; } int X(int y) { return y + 1; }" =?
-            {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
-                Return = IntType
-                Params = [ { Var = arg "y" IntType; Direction = In } ]
-                Locals = []
-                Body =  RetStm (Some (BExpr (VarExpr (arg "y" IntType), Add, IntExpr 1)))
-                Kind = ProvPort
-            }
-
-    [<Test>]
-    let ``throws when original implementation cannot be found`` () =
-        raises<InvalidOperationException> (fun () -> transformMethod "[OriginalMethod(\"X\")] int M(int y) { return 0; }" |> ignore)
-        raises<InvalidOperationException> (fun () -> transformMethod "[OriginalMethod(\"X\")] int M(int y) { return 0; } void X() {} void X(int x) {}" |> ignore)
-
-    [<Test>]
     let ``extern method without return value and parameters should have kind required port`` () =
         transformMethod "extern void M();" =?
             {
@@ -246,6 +229,34 @@ module ``CilToSsm Method Transformations`` =
                     SeqStm [
                         AsgnStm (tmp 1 0 IntType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "F" 1 0; Type = className + ".Q" }, [IntType], [In], IntType, [IntExpr 4], None))
                         RetStm (Some (VarExpr (tmp 1 0 IntType)))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call interface method on other class without parameters`` () =
+        transformMethod "interface I { void N(); } I i; void M() { i.N(); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = VoidType
+                Params = []
+                Locals = []
+                Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "N" 0 0; Type = className + ".I" }, [], [], VoidType, [], Some (VarExpr (field "i" (ClassType (className + ".I"))))); RetStm None]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call interface method on other class with parameter and return value`` () =
+        transformMethod "interface I { int N(int n); } I i; int M() { return i.N(4); }" =? 
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = IntType
+                Params = []
+                Locals = [tmp 3 0 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 3 0 IntType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "N" 0 0; Type = className + ".I" }, [IntType], [In], IntType, [IntExpr 4], Some (VarExpr (field "i" (ClassType (className + ".I"))))))
+                        RetStm (Some (VarExpr (tmp 3 0 IntType)))
                     ]
                 Kind = ProvPort
             }
