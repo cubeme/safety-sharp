@@ -124,10 +124,12 @@ module internal SamAstToString =
     
         
     let rec exportPgm (pgm:Pgm) : AstToStringStateFunction =
+        (append "globals {") >>= (newLineAndIncreaseIndent) >>=
         (foreachWithSep pgm.Globals exportGlobalVarDecl (newLine) ) >>=
-        newParagraph >>=
+        (newLineAndDecreaseIndent) >>= (append "}") >>= newParagraph >>=
+        (append "locals {") >>= (newLineAndIncreaseIndent) >>=
         (foreachWithSep pgm.Locals  exportLocalVarDecl  (newParagraph) ) >>=
-        newParagraph >>=
+        (newLineAndDecreaseIndent) >>= (append "}") >>= newParagraph >>=
         (exportStm pgm.Body )
 
 
