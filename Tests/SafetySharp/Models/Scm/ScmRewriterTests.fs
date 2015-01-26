@@ -61,7 +61,7 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 1
         parentNode.Fields.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpField
@@ -92,7 +92,7 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 1
         parentNode.Fields.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpField
@@ -123,7 +123,7 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Faults.Length =? 2
         parentNode.Faults.Length =? 0
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpFault
@@ -154,7 +154,7 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.ReqPorts.Length =? 1
         parentNode.ReqPorts.Length =? 0
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -186,7 +186,7 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.ProvPorts.Length =? 1
         parentNode.ProvPorts.Length =? 0
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort
@@ -224,7 +224,7 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 0
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -267,7 +267,7 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 1
         parentNode.Bindings.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -311,7 +311,7 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 1
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort
@@ -355,7 +355,7 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -400,7 +400,7 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort
@@ -444,7 +444,7 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -495,7 +495,7 @@ type FixpointIteratorTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 3
         parentNode.Fields.Length =? 1
-        let initialState = (ScmRewriteState.initial model) 
+        let initialState = (initiaScmRewriterStateWithoutSubState model) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.setChildToLevelUp pathOfChild
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpField) 
@@ -533,7 +533,7 @@ type CompleteLevelUpTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
-        let initialState = ScmRewriteState.initial model
+        let initialState = initiaScmRewriterStateWithoutSubState model
         let workFlow = scmRewrite {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
@@ -555,7 +555,7 @@ type CompleteLevelUpTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
-        let initialState = ScmRewriteState.initial model
+        let initialState = initiaScmRewriterStateWithoutSubState model
         let workFlow = scmRewrite {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
@@ -576,7 +576,7 @@ type CompleteLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let initialState = ScmRewriteState.initial model
+        let initialState = initiaScmRewriterStateWithoutSubState model
         let workFlow = scmRewrite {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
@@ -595,7 +595,7 @@ type CompleteLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let initialState = ScmRewriteState.initial model
+        let initialState = initiaScmRewriterStateWithoutSubState model
         let workFlow = scmRewrite {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
@@ -614,7 +614,7 @@ type CompleteLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent5.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let initialState = ScmRewriteState.initial model
+        let initialState = initiaScmRewriterStateWithoutSubState model
         let workFlow = scmRewrite {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }
@@ -634,7 +634,7 @@ type CompleteLevelUpTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
-        let initialState = ScmRewriteState.initial model
+        let initialState = initiaScmRewriterStateWithoutSubState model
         let workFlow = scmRewrite {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpSubcomponent)
         }

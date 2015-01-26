@@ -37,7 +37,7 @@ module internal ScmRewriterFlattenModel =
     //  * convert delayed ports
     //  * inline behaviors
 
-    let levelUpAndInline : ScmRewriteFunction<unit> = scmRewrite {
+    let levelUpAndInline : ScmRewriteFunction<unit,unit> = scmRewrite {
             // level up everything
             do! levelUpSubcomponents
             do! assertNoSubcomponent

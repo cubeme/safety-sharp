@@ -64,7 +64,11 @@ module internal ScmRewriterConvertDelayedBindings =
     //     * Create example with indeterministic initialisazion
     
     
-    let selectRootComponentForConvertingDelayedBindings : ScmRewriteFunction<unit> = scmRewrite {
+    
+    type ScmRewriterConvertDelayedBindingsFunction<'returnType> = ScmRewriteFunction<unit,'returnType>
+    type ScmRewriterConvertDelayedBindingsState = ScmRewriteState<unit>
+
+    let selectRootComponentForConvertingDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         // Use As1
         let! state = getState
         if (state.ConvertDelayedBindings.IsSome) then
@@ -85,7 +89,7 @@ module internal ScmRewriterConvertDelayedBindings =
 
 
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
-                : ScmRewriteFunction<Map<Var,Field>> = scmRewrite {
+                : ScmRewriterConvertDelayedBindingsFunction<Map<Var,Field>> = scmRewrite {
         let varList = provPortDecl.Params |> List.map (fun param -> param.Var )
         let fieldNamesBasedOn = varList |> List.map (fun var -> sprintf "%s_%s" fieldNamePrefix var.getName)
         let! newFieldList = getUnusedFieldNames fieldNamesBasedOn
@@ -105,7 +109,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return  varToFieldMap
     }
 
-    let createPreStepOfProvPort (fieldNamePrefix:string)  (provPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) : ScmRewriteFunction<unit> = scmRewrite {
+    let createPreStepOfProvPort (fieldNamePrefix:string)  (provPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         let varListOfBeh = provPortDecl.Behavior.Locals |> List.map (fun param -> param.Var )
         let newVarNamesOfBehBasedOn = varListOfBeh |> List.map (fun var -> sprintf "preStepVar_%s_%s" fieldNamePrefix var.getName)
         let! newVarsForBeh = getUnusedVarNames newVarNamesOfBehBasedOn
@@ -140,7 +144,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
     
-    let createReflectionOfProvPort (oldProvPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) (newProvPort:ProvPort) : ScmRewriteFunction<unit> = scmRewrite {        
+    let createReflectionOfProvPort (oldProvPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {        
         let assignments =
             varToNewFieldMap |> Map.toList
                              |> List.map (fun (var,field)-> Stm.AssignVar(var,Expr.ReadField(field)))
@@ -163,7 +167,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
 
-    let replaceDelayedBinding (bndDecl:BndDecl) (newProvPort:ProvPort) : ScmRewriteFunction<unit> = scmRewrite {
+    let replaceDelayedBinding (bndDecl:BndDecl) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         let! compDecl = getSubComponentToChange
         let newBndSource =
             {
@@ -181,7 +185,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
 
-    let findProvPortOfDelayedBinding (bndDecl:BndDecl) : ScmRewriteFunction<ProvPortDecl> = scmRewrite {
+    let findProvPortOfDelayedBinding (bndDecl:BndDecl) : ScmRewriterConvertDelayedBindingsFunction<ProvPortDecl> = scmRewrite {
         let! state = getState
         // Use As1
         let location = state.PathOfChangingSubcomponent
@@ -196,7 +200,7 @@ module internal ScmRewriterConvertDelayedBindings =
     }
 
 
-    let convertDelayedBinding : ScmRewriteFunction<unit> = scmRewrite {
+    let convertDelayedBinding : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         let! state = getState
         let bindingToConvert =
             // Use As2
@@ -218,7 +222,7 @@ module internal ScmRewriterConvertDelayedBindings =
     }
     
     
-    let convertDelayedBindingsWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
+    let convertDelayedBindingsWriteBackChangesIntoModel  : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         // Use As1
         let! state = getState
         if (state.ConvertDelayedBindings.IsNone) then
@@ -238,7 +242,7 @@ module internal ScmRewriterConvertDelayedBindings =
             return! putState modifiedState
     }
 
-    let convertDelayedBindings : ScmRewriteFunction<unit> = scmRewrite {        
+    let convertDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {        
         do! selectRootComponentForConvertingDelayedBindings
         do! (iterateToFixpoint convertDelayedBinding)
         do! convertDelayedBindingsWriteBackChangesIntoModel

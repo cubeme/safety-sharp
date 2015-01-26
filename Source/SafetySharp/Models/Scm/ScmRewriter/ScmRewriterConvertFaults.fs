@@ -26,13 +26,15 @@ module internal ScmRewriterConvertFaults =
     open ScmHelpers
     open ScmRewriterBase
     
+    type ScmRewriterConvertFaultsFunction<'returnType> = ScmRewriteFunction<unit,'returnType>
+    type ScmRewriterConvertFaultsState = ScmRewriteState<unit>
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Converting Faults
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
 
-    let selectRootComponentForConvertingFaults : ScmRewriteFunction<unit> = scmRewrite {
+    let selectRootComponentForConvertingFaults : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
         let! state = getState
         if (state.ConvertFaults.IsSome) then
             return ()
@@ -57,7 +59,7 @@ module internal ScmRewriterConvertFaults =
             return! putState modifiedState
     }
     
-    let replaceFaultByPortsAndFields : ScmRewriteFunction<unit> = scmRewrite {
+    let replaceFaultByPortsAndFields : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
         let! state = getState
         if (state.ConvertFaults.IsNone) then
             return ()
@@ -124,7 +126,7 @@ module internal ScmRewriterConvertFaults =
                 return! putState modifiedState
     }
 
-    let replaceStepFaultByCallPort : ScmRewriteFunction<unit> = scmRewrite {
+    let replaceStepFaultByCallPort : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
         let! state = getState
         if (state.ConvertFaults.IsNone) then
             return ()
@@ -202,7 +204,7 @@ module internal ScmRewriterConvertFaults =
 
     
 
-    let uniteProvPortDecls  : ScmRewriteFunction<unit> = scmRewrite {
+    let uniteProvPortDecls  : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
         //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
         let! state = getState
         if (state.ConvertFaults.IsNone) then
@@ -268,7 +270,7 @@ module internal ScmRewriterConvertFaults =
                 do! updateSubComponentToChange newCompDecl
     }    
     
-    let uniteStep : ScmRewriteFunction<unit> = scmRewrite {
+    let uniteStep : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
           //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
         let! state = getState
         if (state.ConvertFaults.IsNone) then
@@ -334,7 +336,7 @@ module internal ScmRewriterConvertFaults =
                 do! updateSubComponentToChange newCompDecl
     }
     
-    let convertFaultsWriteBackChangesIntoModel  : ScmRewriteFunction<unit> = scmRewrite {
+    let convertFaultsWriteBackChangesIntoModel  : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
         let! state = getState
         if (state.ConvertFaults.IsNone) then
             return ()
@@ -354,7 +356,7 @@ module internal ScmRewriterConvertFaults =
     }
        
     
-    let convertFaults : ScmRewriteFunction<unit> = scmRewrite {        
+    let convertFaults : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {        
         do! selectRootComponentForConvertingFaults
         do! (iterateToFixpoint replaceFaultByPortsAndFields)
         do! (iterateToFixpoint replaceStepFaultByCallPort)
