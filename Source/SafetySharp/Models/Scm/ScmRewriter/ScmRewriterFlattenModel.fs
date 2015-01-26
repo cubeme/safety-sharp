@@ -44,7 +44,7 @@ module internal ScmRewriterFlattenModel =
             do! checkConsistency
             
             // convert faults
-            do! convertFaults
+            do! convertFaultsWrapper
             //do! assertNoFault
             do! checkConsistency
             

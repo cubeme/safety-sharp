@@ -27,15 +27,7 @@ module internal ScmRewriterBase =
 
     
     type ScmModel = CompDecl //may change, but I hope it does not
-    
-                                        
-    type ScmRewriterConvertFaults = { //TODO: Rename to data, move into file
-        // Forwarder
-        ArtificialFaultOldToFieldNew : Map<Fault,Field>;
-        ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
-        BehaviorsToRewrite : BehaviorWithLocation list;
-    }
-                    
+                        
     type ScmRewriterInlineBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
         InlinedBehavior : BehaviorDecl;
@@ -62,7 +54,6 @@ module internal ScmRewriterBase =
         //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
         InlineBehavior : ScmRewriterInlineBehavior option;
-        ConvertFaults : ScmRewriterConvertFaults option;
         Tainted : bool;
     }
         with
@@ -74,7 +65,6 @@ module internal ScmRewriterBase =
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.SubState = subState;
                     ScmRewriteState.InlineBehavior = None;
-                    ScmRewriteState.ConvertFaults = None;
                     ScmRewriteState.Tainted = false;
                 }
             member this.deriveWithSubState<'newSubState> (newSubState:'newSubState) =
@@ -85,7 +75,6 @@ module internal ScmRewriterBase =
                     ScmRewriteState.TakenNames = this.TakenNames;
                     ScmRewriteState.SubState = newSubState; //<---- everything but this must be changed
                     ScmRewriteState.InlineBehavior = this.InlineBehavior;
-                    ScmRewriteState.ConvertFaults = this.ConvertFaults;
                     ScmRewriteState.Tainted = this.Tainted;
                 }
 

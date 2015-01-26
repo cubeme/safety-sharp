@@ -87,7 +87,6 @@ module internal ScmRewriterLevelUp =
             state.SubState,state
         ScmRewriteFunction (getLevelUpState)
 
-    // this should be removed: Every access to levelup-State should be done by a ScmRewriterLevelUpFunction
     let updateLevelUpState (newLevelUp:ScmRewriterLevelUp) : ScmRewriterLevelUpFunction<unit> = 
         let updateLevelUpState (state:ScmRewriterLevelUpState) : (unit * ScmRewriterLevelUpState) =
             let newState =
@@ -680,19 +679,19 @@ module internal ScmRewriterLevelUp =
 
 
     let levelUpWriteBackChangesIntoModel  : ScmRewriterLevelUpFunction<unit> = scmRewrite {
-            let! state = getState
-            let! parentCompDecl = getParentCompDecl
+        let! state = getState
+        let! parentCompDecl = getParentCompDecl
 
-            let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent parentCompDecl
-            let modifiedState =
-                { state with
-                    ScmRewriterLevelUpState.ChangingSubComponent = newModel;
-                    ScmRewriterLevelUpState.PathOfChangingSubcomponent = [newModel.Comp];
-                    ScmRewriterLevelUpState.Model = newModel;
-                    ScmRewriterLevelUpState.Tainted = true; // if tainted, set tainted to true
-                }
-            return! putState modifiedState
-        }
+        let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent parentCompDecl
+        let modifiedState =
+            { state with
+                ScmRewriterLevelUpState.ChangingSubComponent = newModel;
+                ScmRewriterLevelUpState.PathOfChangingSubcomponent = [newModel.Comp];
+                ScmRewriterLevelUpState.Model = newModel;
+                ScmRewriterLevelUpState.Tainted = true; // if tainted, set tainted to true
+            }
+        return! putState modifiedState
+     }
         
     let levelUpSubcomponent : ScmRewriterLevelUpFunction<unit> = scmRewrite {
         // idea: first level up every item of a component,
@@ -764,10 +763,15 @@ module internal ScmRewriterLevelUp =
                 ScmRewriteState.TakenNames = oldState.TakenNames;
                 ScmRewriteState.SubState = newLevelUp;
                 ScmRewriteState.InlineBehavior = oldState.InlineBehavior;
-                ScmRewriteState.ConvertFaults = oldState.ConvertFaults;
                 ScmRewriteState.Tainted = true;
                 }
         newState
+
+    let levelUpSubcomponentWrapper (subComponentToLevelUp:CompPath) : ScmRewriteFunction<unit,unit> = scmRewrite {        
+        let! state = getState
+        let (_,newState) = runStateAndReturnSimpleState (levelUpSubcomponent) (createLevelUpStateForSubComponent state subComponentToLevelUp)
+        do! putState newState
+    }
 
     // entry point with other signature (empty subState). This function must implement the conversion
     // from subState "unit" to subState "LevelUpData"
@@ -777,9 +781,7 @@ module internal ScmRewriterLevelUp =
             match subComponentToLevelUp with
                 | None -> return ()
                 | Some(subComponentToLevelUp) ->
-                    let! state = getState
-                    let (_,newState) = runStateAndReturnSimpleState (levelUpSubcomponent) (createLevelUpStateForSubComponent state subComponentToLevelUp)
-                    do! putState newState
+                    do! levelUpSubcomponentWrapper subComponentToLevelUp
         }))
         do! assertNoSubcomponent
     }
