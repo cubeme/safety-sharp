@@ -59,7 +59,7 @@ module internal Cil =
         | Stfld of FieldReference
         | Stloc of VariableDefinition
         | Starg of ParameterDefinition
-        | Call of MethodDefinition
+        | Call of MethodReference
         | Br of BrType * int
         | Ret
         | Or
@@ -96,57 +96,54 @@ module internal Cil =
             // Creates an instruction that has an operand
             let toInstr instrType =
                 getOperand () |> instrType
-
-            // Creates a call instruction, resolving the referenced method
-            let toCall () =
-                (instr.Operand :?> MethodReference).Resolve () |> Call
             
             match instr.OpCode.Code with
-            | Code.Nop      -> Nop
-            | Code.Ldind_I4 -> Ldind
-            | Code.Ldind_U1 -> Ldind
-            | Code.Ldfld    -> toInstr  Ldfld
-            | Code.Ldloc    -> toInstr  Ldloc
-            | Code.Ldarg    -> toInstr  Ldarg
-            | Code.Ldflda   -> toInstr  Ldflda
-            | Code.Ldloca   -> toInstr  Ldloca
-            | Code.Ldarga   -> toInstr  Ldarga
-            | Code.Ldc_I4   -> toInstr  Ldci
-            | Code.Ldc_R8   -> toInstr  Ldcd
-            | Code.Stind_I1 -> Stind
-            | Code.Stind_I4 -> Stind
-            | Code.Stfld    -> toInstr  Stfld
-            | Code.Stloc    -> toInstr  Stloc
-            | Code.Starg    -> toInstr  Starg
-            | Code.Call     -> toCall   ()
-            | Code.Callvirt -> toCall   ()
-            | Code.Br       -> toBranch Always
-            | Code.Bgt      -> toBranch Gt
-            | Code.Bge      -> toBranch Ge
-            | Code.Ble      -> toBranch Le
-            | Code.Blt      -> toBranch Lt
-            | Code.Brtrue   -> toBranch True
-            | Code.Brfalse  -> toBranch False
-            | Code.Beq      -> toBranch Eq
-            | Code.Bne_Un   -> toBranch Ne
-            | Code.Ret      -> Ret
-            | Code.Or       -> Or
-            | Code.And      -> And
-            | Code.Not      -> Not
-            | Code.Ceq      -> Ceq
-            | Code.Cgt      -> Cgt
-            | Code.Cgt_Un   -> Cgt
-            | Code.Clt      -> Clt
-            | Code.Clt_Un   -> Clt
-            | Code.Neg      -> Neg
-            | Code.Add      -> Add
-            | Code.Sub      -> Sub
-            | Code.Mul      -> Mul
-            | Code.Div      -> Div
-            | Code.Rem      -> Rem
-            | Code.Dup      -> Dup
-            | Code.Pop      -> Pop
-            | _             -> invalidOp "MSIL instruction '%+A' is unsupported." instr
+            | Code.Nop          -> Nop
+            | Code.Ldind_I4     -> Ldind
+            | Code.Ldind_U1     -> Ldind
+            | Code.Ldfld        -> toInstr  Ldfld
+            | Code.Ldloc        -> toInstr  Ldloc
+            | Code.Ldarg        -> toInstr  Ldarg
+            | Code.Ldflda       -> toInstr  Ldflda
+            | Code.Ldloca       -> toInstr  Ldloca
+            | Code.Ldarga       -> toInstr  Ldarga
+            | Code.Ldc_I4       -> toInstr  Ldci
+            | Code.Ldc_R8       -> toInstr  Ldcd
+            | Code.Stind_I1     -> Stind
+            | Code.Stind_I4     -> Stind
+            | Code.Stfld        -> toInstr  Stfld
+            | Code.Stloc        -> toInstr  Stloc
+            | Code.Starg        -> toInstr  Starg
+            | Code.Call         -> toInstr  Call
+            | Code.Callvirt     -> toInstr  Call
+            | Code.Br           -> toBranch Always
+            | Code.Bgt          -> toBranch Gt
+            | Code.Bge          -> toBranch Ge
+            | Code.Ble          -> toBranch Le
+            | Code.Blt          -> toBranch Lt
+            | Code.Brtrue       -> toBranch True
+            | Code.Brfalse      -> toBranch False
+            | Code.Beq          -> toBranch Eq
+            | Code.Bne_Un       -> toBranch Ne
+            | Code.Ret          -> Ret
+            | Code.Or           -> Or
+            | Code.And          -> And
+            | Code.Not          -> Not
+            | Code.Ceq          -> Ceq
+            | Code.Cgt          -> Cgt
+            | Code.Cgt_Un       -> Cgt
+            | Code.Clt          -> Clt
+            | Code.Clt_Un       -> Clt
+            | Code.Neg          -> Neg
+            | Code.Add          -> Add
+            | Code.Sub          -> Sub
+            | Code.Mul          -> Mul
+            | Code.Div          -> Div
+            | Code.Rem          -> Rem
+            | Code.Dup          -> Dup
+            | Code.Pop          -> Pop
+            | Code.Constrained  -> Nop
+            | _                 -> invalidOp "MSIL instruction '%+A' is unsupported." instr
         ) 
         |> Array.ofSeq
 

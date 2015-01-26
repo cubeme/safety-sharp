@@ -1232,7 +1232,7 @@ module ``CilToSsm Method Transformations`` =
             ]
 
     [<Test>]
-    let ``method calling generic method of generic base`` () =
+    let ``method calling method of generic base`` () =
         let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B : A<bool, int> { bool N(int x) { return M(x); } }"
         transform c "new B()" =? 
             [
@@ -1254,6 +1254,94 @@ module ``CilToSsm Method Transformations`` =
                             [
                                 AsgnStm (tmp 2 0 BoolType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A`2" }, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], tthis "B"))
                                 RetStm (Some (VarExpr (tmp 2 0 BoolType)))
+                            ]
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``method of generic type calling method of generic base`` () =
+        let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B<T1> : A<T1, int> { T1 N(int x) { return M(x); } }"
+        transform c "new B<bool>()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                    Return = BoolType
+                    Params = [{ Var = arg "p" IntType; Direction = In }]
+                    Locals = []
+                    Body = RetStm (Some (VarExpr (field "f" BoolType)))
+                    Kind = ProvPort
+                }
+                {
+                    Name = CilToSsm.makeUniqueMethodName "N" 3 0
+                    Return = BoolType
+                    Params = [{ Var = arg "x" IntType; Direction = In }]
+                    Locals = [tmp 2 0 BoolType]
+                    Body = 
+                        SeqStm
+                            [
+                                AsgnStm (tmp 2 0 BoolType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A`2" }, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], tthis "B`1"))
+                                RetStm (Some (VarExpr (tmp 2 0 BoolType)))
+                            ]
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``method calling method of generic subcomponent`` () =
+        let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B : Component { A<bool, int> a = new A<bool, int>(); bool N(int x) { return a.M(x); } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "N" 2 0
+                    Return = BoolType
+                    Params = [{ Var = arg "x" IntType; Direction = In }]
+                    Locals = [tmp 3 0 BoolType]
+                    Body = 
+                        SeqStm
+                            [
+                                AsgnStm (tmp 3 0 BoolType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A`2" }, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], Some (VarExpr (Field (CilToSsm.makeUniqueFieldName "a" 2, ClassType "A`2<System.Boolean,System.Int32>")))))
+                                RetStm (Some (VarExpr (tmp 3 0 BoolType)))
+                            ]
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``method of generic type calling method of generic subcomponent`` () =
+        let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B<T1> : Component { A<T1, int> a = new A<T1, int>(); T1 N(int x) { return a.M(x); } }"
+        transform c "new B<bool>()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "N" 2 0
+                    Return = BoolType
+                    Params = [{ Var = arg "x" IntType; Direction = In }]
+                    Locals = [tmp 3 0 BoolType]
+                    Body = 
+                        SeqStm
+                            [
+                                AsgnStm (tmp 3 0 BoolType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A`2" }, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], Some (VarExpr (Field (CilToSsm.makeUniqueFieldName "a" 2, ClassType "A`2<T1,System.Int32>")))))
+                                RetStm (Some (VarExpr (tmp 3 0 BoolType)))
+                            ]
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``method of generic type calling method of generic subcomponent via generic constraint`` () =
+        let c = "interface I<T1, T2> { T1 M(T2 p); } class A<T1, T2> : Component, I<T1, T2> { T1 f; public T1 M(T2 p) { return f; } } class B<T, T1, T2> : Component where T : I<T1, T2>, new() { T a = new T(); T1 N(T2 x) { return a.M(x); } }"
+        transform c "new B<A<bool, int>, bool, int>()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "N" 2 0
+                    Return = BoolType
+                    Params = [{ Var = arg "x" IntType; Direction = In }]
+                    Locals = [tmp 4 0 BoolType]
+                    Body = 
+                        SeqStm
+                            [
+                                AsgnStm (tmp 4 0 BoolType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 0 0; Type = "I`2" }, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], Some (VarRefExpr (Field (CilToSsm.makeUniqueFieldName "a" 2, ClassType "A`2<System.Boolean,System.Int32>")))))
+                                RetStm (Some (VarExpr (tmp 4 0 BoolType)))
                             ]
                     Kind = ProvPort
                 }
