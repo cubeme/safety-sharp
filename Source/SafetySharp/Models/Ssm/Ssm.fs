@@ -88,7 +88,7 @@ module internal Ssm =
         | VarRefExpr of Var
         | UExpr of UOp * Expr
         | BExpr of Expr * BOp * Expr
-        | CallExpr of MethodId * Type list * ParamDir list * Type * Expr list * Expr option
+        | CallExpr of MethodId * Params : Type list * ParamDir list * Return : Type * Args : Expr list * Target : Expr option
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
@@ -98,7 +98,7 @@ module internal Ssm =
         | SeqStm of Stm list
         | RetStm of Expr option
         | IfStm of Expr * Stm * Stm option
-        | CallStm of MethodId * Type list * ParamDir list * Type * Expr list * Expr option
+        | CallStm of MethodId * Params : Type list * ParamDir list * Return : Type * Args : Expr list * Target : Expr option
 
     /// Represents a method parameter.
     type internal Param = {
@@ -107,7 +107,11 @@ module internal Ssm =
     }
 
     /// Indicates whether a method represents a port or a function.
-    type internal MethodKind = ReqPort | ProvPort | Function
+    type internal MethodKind = 
+        | ReqPort 
+        | ProvPort 
+        | Function
+        | Step
 
     /// Represents a method of a S# component.
     type internal Method = {

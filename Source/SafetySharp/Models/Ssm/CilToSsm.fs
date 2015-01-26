@@ -39,6 +39,10 @@ module internal CilToSsm =
     open Mono.Cecil
     open Mono.Cecil.Cil
 
+    type GenericMap = Dictionary<GenericParameter, TypeReference>
+    type TypeResolver = TypeReference -> TypeReference
+    type TypeMap = ImmutableDictionary<System.Type, TypeReference>
+
     /// Provides assembly metadata, automatically looking for and using embedded S# assemblies.
     type private AssemblyMetadataProvider () as this =
         inherit DefaultAssemblyResolver ()
@@ -71,14 +75,14 @@ module internal CilToSsm =
 
         /// Gets the type definitions for all given components.
         member this.GetTypeDefinitions (components : Component list) =
-            let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeDefinition> ()
+            let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeReference> ()
 
             components 
             |> Seq.map (fun c -> c.GetType ())
             |> Seq.distinct
             |> Seq.iter (fun t -> 
                 let assemblyDefinition = loadAssembly t.Assembly.FullName
-                dictionary.Add (t, assemblyDefinition.MainModule.Import(t).Resolve ())
+                dictionary.Add (t, assemblyDefinition.MainModule.Import(t))
             )
 
             dictionary.ToImmutableDictionary ()
@@ -139,12 +143,13 @@ module internal CilToSsm =
     let private tryMapType (typeRef : TypeReference) =
         let metadataType = if typeRef.IsByReference then typeRef.GetElementType().MetadataType else typeRef.MetadataType
         match metadataType with
-        | MetadataType.Void    -> Some VoidType
-        | MetadataType.Boolean -> Some BoolType
-        | MetadataType.Int32   -> Some IntType
-        | MetadataType.Double  -> Some DoubleType
-        | MetadataType.Class   -> Some (ClassType (getCSharpType typeRef.FullName))
-        | _                    -> None
+        | MetadataType.Void            -> Some VoidType
+        | MetadataType.Boolean         -> Some BoolType
+        | MetadataType.Int32           -> Some IntType
+        | MetadataType.Double          -> Some DoubleType
+        | MetadataType.GenericInstance
+        | MetadataType.Class           -> Some (ClassType (getCSharpType typeRef.FullName))
+        | _                            -> None
 
     /// Maps the metadata type of a variable to a S# type.
     let private mapVarType typeRef =
@@ -153,7 +158,7 @@ module internal CilToSsm =
         | Some VoidType -> invalidOp "Unsupported variable type '%A'." typeRef
         | Some t        -> t
 
-    /// Maps the metadata type of a variable to a S# type.
+    /// Maps the metadata type of a method's return value to a S# type.
     let private mapReturnType typeRef =
         match tryMapType typeRef with
         | None 
@@ -161,8 +166,8 @@ module internal CilToSsm =
         | Some t             -> t
     
     /// Creates a variable using the given constructor with the given name and type.
-    let private createVar constr name typeRef =
-        constr (name, mapVarType typeRef)
+    let private createVar resolveType constr name typeRef =
+        constr (name, typeRef |> resolveType |> mapVarType)
 
     /// Normalizes binary expressions where one side is of type Boolean and the other side is an integer
     /// literal such that the integer literal is replaced by the corresponding Boolean literal.
@@ -178,7 +183,7 @@ module internal CilToSsm =
     /// of the corresponding SSM instruction, a list of assignments to temporary variables,
     /// and a new symbolic stack.
     /// This function corresponds to the BC2BIR_instr function in the Demange paper.
-    let private transformInstr pc instr stack =
+    let private transformInstr (c : Component) (resolveType : TypeResolver) pc instr stack =
         // Checks whether the stack contains an expression referencing a variable that satisfies the given predicate.
         let checkStack pred stack =
             let rec check = function
@@ -207,6 +212,7 @@ module internal CilToSsm =
             let tmp = freshLocal pc 0 (Ssm.getVarType v)
             (AsgnStm (v, e), [AsgnStm (tmp, VarExpr v)], replace (Ssm.getVarName v) tmp s)
 
+        let createVar = createVar resolveType
         let localVarPred l = function Local (l', _) -> l = l' | _ -> false
         let argVarPred a = function Arg (a', _) -> a = a' | _ -> false
         let fieldVarPred f = function Field (f', _) -> f = f' | _ -> false
@@ -229,7 +235,18 @@ module internal CilToSsm =
         match instr, stack with
         | (Instr.Nop, s) -> (NopStm, [], s)
         | (Instr.Ldind, (VarRefExpr v) :: s) -> (NopStm, [], (VarExpr v) :: s)
-        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.isClassType v -> (NopStm, [], (VarExpr (field f)) :: s)
+        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.isClassType v ->
+            let field = field f
+            let resolvedField = f.Resolve ()
+            let readField = (NopStm, [], (VarExpr field) :: s)
+            if Ssm.getVarName v = "this" && resolvedField.IsInitOnly && not (Ssm.isClassType field) then
+                match (c.GetInitialValuesOfField resolvedField, Ssm.getVarType field) with
+                | (b :: [], BoolType)   -> (NopStm, [], (BoolExpr (b :?> bool)) :: s)
+                | (i :: [], IntType)    -> (NopStm, [], (IntExpr (i :?> int)) :: s)
+                | (d :: [], DoubleType) -> (NopStm, [], (DoubleExpr (d :?> double)) :: s)
+                | _                     -> readField
+            else
+                readField
         | (Instr.Ldflda f, (VarExpr v) :: s) when Ssm.isClassType v -> (NopStm, [], (VarRefExpr (field f)) :: s)
         | (Instr.Ldarg a, s) when a.ParameterType.IsByReference -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
@@ -248,8 +265,8 @@ module internal CilToSsm =
         | (Instr.Stloc l, e :: s) when containsLocal l s -> replaceWithTempVar pc (local l) e replaceLocal s         
         | (Instr.Call m, s) when List.length s >= m.Parameters.Count + (if m.IsStatic then 0 else 1) ->
             let argCount = m.Parameters.Count
-            let returnType = mapReturnType m.ReturnType
-            let paramTypes = m.Parameters |> Seq.map (fun p -> mapVarType p.ParameterType) |> Seq.toList
+            let returnType = m.ReturnType |> resolveType |> mapReturnType
+            let paramTypes = m.Parameters |> Seq.map (fun p -> p.ParameterType |> resolveType |> mapVarType) |> Seq.toList
             let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
             let methodId = { Type = getCSharpType m.DeclaringType.FullName; Name = getUniqueMethodName m }
@@ -264,9 +281,9 @@ module internal CilToSsm =
             // Pop the arguments from the symbolic stack, as well as the invocation target for non-static methods
             let s = s |> Seq.skip (argCount + (if m.IsStatic then 0 else 1)) |> Seq.toList
 
-            // Save the current value of all fields that are currently on the stack; the function that is being 
-            // called might change the values of those fields
-            let fields = s |> List.map Ssm.getFieldsOfExpr |> List.collect id |> Seq.distinct
+            // Save the current value of all non-readonly and non-classtype fields that are currently on the stack;
+            //  the function that is being called might change the values of those fields
+            let fields = s |> Seq.map Ssm.getFieldsOfExpr |> Seq.collect id |> Seq.filter (fun f -> Ssm.isClassType f |> not) |> Seq.distinct
             let (idx, vars, stack) = 
                 fields |> Seq.fold (fun (idx, vars, s) field ->
                     let tmp = freshLocal pc idx (Ssm.getVarType field)
@@ -321,7 +338,7 @@ module internal CilToSsm =
 
     /// Transforms all instructions of the method body to list of SSM statements with unstructured control flow.
     /// This function corresponds to the BC2BIR function in the Demange paper.
-    let private transformMethodBody methodBody =
+    let private transformMethodBody (c : Component) (resolveType : TypeResolver) methodBody =
         let jumpTargets = getJumpTargets methodBody
         let isJumpTarget pc = Set.contains pc jumpTargets
         let succ = Cil.getSuccessors methodBody
@@ -377,7 +394,7 @@ module internal CilToSsm =
         let (_, _, stms) =
             Array.fold (fun (pc, stack, stms) instr ->
                 let stack = if isJumpTarget pc then getJumpStack pc else stack
-                let (stm, vars, stack') = transformInstr pc instr stack
+                let (stm, vars, stack') = transformInstr c resolveType pc instr stack
                 outStacks.[pc] <- stack'
                 
                 if stack' <> [] && succ pc |> Set.exists (fun pc' -> pc' < pc) then 
@@ -472,11 +489,18 @@ module internal CilToSsm =
         | :? double as d -> DoubleVal d
         | _              -> invalidOp "Unsupported initial field value of type '%s'." (v.GetType().FullName)
 
+    /// Resolves the given type; if the type is generic, the substituted actual type is returned.
+    let rec private resolveType (g : GenericMap) (t : TypeReference) = 
+        match t with
+        | :? GenericParameter as t -> resolveType g g.[t]
+        | _                        -> t
+
     /// Transforms the fields of a component.
-    let private transformFields (c : Component) (t : TypeDefinition) =
+    let private transformFields (c : Component) (t : TypeDefinition) (resolveType : TypeResolver) =
         t.Fields 
+        |> Seq.filter (fun f -> not f.IsLiteral)
         |> Seq.map (fun f -> 
-            match f.FieldType.MetadataType with
+            match (resolveType f.FieldType).MetadataType with
             | MetadataType.Boolean -> (f, Some BoolType)
             | MetadataType.Int32   -> (f, Some IntType)
             | MetadataType.Double  -> (f, Some DoubleType)
@@ -487,49 +511,55 @@ module internal CilToSsm =
         |> Seq.toList
 
     /// Transforms the given method to an SSM method with structured control flow.
-    let transformMethod (m : MethodDefinition) =
+    let private transformMethod (c : Component) (resolveType : TypeResolver) (m : MethodDefinition) =
         let body =
-            m
-            |> Cil.getMethodBody
-            |> transformMethodBody
-            |> compress
-            |> fixIntIsBool (m.ReturnType.MetadataType = MetadataType.Boolean)
-            |> Ssm.replaceGotos
+            if m.IsAbstract then NopStm
+            else
+                m
+                |> Cil.getMethodBody
+                |> transformMethodBody c resolveType
+                |> compress
+                |> fixIntIsBool (m.ReturnType.MetadataType = MetadataType.Boolean)
+                |> Ssm.replaceGotos
 
         {
             Name = getUniqueMethodName m
             Body = body
             Params =
                 m.Parameters 
-                |> Seq.map (fun p -> { Var = Arg (p.Name, mapVarType p.ParameterType); Direction = getParamDir p })
+                |> Seq.map (fun p -> { Var = Arg (p.Name, p.ParameterType |> resolveType |> mapVarType); Direction = getParamDir p })
                 |> Seq.toList
-            Return = mapReturnType m.ReturnType
+            Return = m.ReturnType |> resolveType |> mapReturnType
             Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
-            Kind = if m.RVA <> 0 then ProvPort else ReqPort
+            Kind = if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort
         }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
-    let private transformMethods (t : TypeDefinition) =
+    let private transformMethods (c : Component) (t : TypeDefinition) (resolveType : TypeResolver) =
         t.GetMethods()
-        |> Seq.map transformMethod
+        |> Seq.map (transformMethod c resolveType)
         |> List.ofSeq
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
-    let rec private transformType (typeDefinitions : ImmutableDictionary<System.Type, TypeDefinition>) (c : Component) =
-        let rec transform (t : TypeDefinition) =
+    let rec private transformType (typeDefinitions : TypeMap) (c : Component) =
+        let rec transform (t : TypeReference) (g : GenericMap) =
+            match t with
+            | :? GenericInstanceType as t -> Seq.zip (t.Resolve().GenericParameters) t.GenericArguments |> Seq.iter (fun (p, a) -> g.Add (p, a))
+            | _                           -> ()
+            let t = t.Resolve ()
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
-                    transform (t.BaseType.Resolve ())
+                    transform t.BaseType g
                 else { Name = String.Empty; Fields = []; Methods = []; Subs = [] }
 
             { transformed with 
                 Name = c.Name
-                Fields = transformed.Fields @ (transformFields c t) 
-                Methods = transformed.Methods @ (transformMethods t)
+                Fields = transformed.Fields @ (transformFields c t (resolveType g)) 
+                Methods = transformed.Methods @ (transformMethods c t (resolveType g))
                 Subs = transformed.Subs @ (c.Subcomponents |> List.map (transformType typeDefinitions))
             }
 
-        transform (typeDefinitions.[c.GetType ()])
+        transform (typeDefinitions.[c.GetType ()]) (GenericMap ())
         
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =

@@ -54,6 +54,10 @@ module ``CilToSsm Field Transformations`` =
         transform "class C : Component { string s; Component c; }" "new C()" =? []
 
     [<Test>]
+    let ``constant fields should be ignored`` () =
+        transform "class C : Component { const int x = 4; }" "new C()" =? []
+
+    [<Test>]
     let ``component with single field`` () =
         transform "class C : Component { int _field; }" "new C()" =? [ field "_field" 2 IntType [IntVal 0] ]
 
@@ -62,13 +66,13 @@ module ``CilToSsm Field Transformations`` =
         transform "class C : Component { int _field1; bool _field2; }" "new C()" =? 
             [ field "_field1" 2 IntType [IntVal 0]; field "_field2" 2 BoolType [BoolVal false] ]
 
-    [<Test; Ignore("not yet implemented")>]
+    [<Test>]
     let ``generic component with generic field of supported type`` () =
         let c = "class C<T> : Component { T _field; }"
         transform c "new C<int>()" =? [ field "_field" 2 IntType [IntVal 0] ]
         transform c "new C<bool>()" =? [ field "_field" 2 BoolType [BoolVal false] ]
 
-    [<Test; Ignore("not yet implemented")>]
+    [<Test>]
     let ``generic component with generic field of unsupported type`` () =
         let c = "class C<T> : Component { T _field; }"
         transform c "new C<string>()" =? []
@@ -147,3 +151,22 @@ module ``CilToSsm Field Transformations`` =
                 field "_field1" 3 BoolType [BoolVal true]
                 field "_field2" 3 BoolType [BoolVal false]
             ]
+
+    [<Test>]
+    let ``generic fields of inherited component`` () =
+        let c = "class C : Component { int b = 3; } class D<T> : C { T b; public D(params T[] v) { SetInitialValues(() => b, v); }}"
+        transform c "new D<int>(16, 3, -1)" =? [field "b" 2 IntType [IntVal 3]; field "b" 3 IntType [IntVal 16; IntVal 3; IntVal -1] ]
+        transform c "new D<bool>(true, false)" =? [field "b" 2 IntType [IntVal 3]; field "b" 3 BoolType [BoolVal true; BoolVal false] ]
+
+    [<Test>]
+    let ``generic fields of inherited generic component`` () =
+        let c = "class C<T1, T2> : Component { T1 b; T2 c; protected C(T1 b1, T2 c2) { b = b1; c = c2; }} class D : C<int, bool> { double d = .5; public D() : base(3, true) {}}"
+        transform c "new D()" =? [field "b" 2 IntType [IntVal 3]; field "c" 2 BoolType [BoolVal true]; field "d" 3 DoubleType [DoubleVal 0.5] ]
+
+    [<Test>]
+    let ``generic fields of generic inherited generic component`` () =
+        let c = "class C<T> : Component { T b; public C(params T[] v) { SetInitialValues(() => b, v); } } class D<T, R> : C<T> { R b; public D(R v1, params T[] v2) : base(v2) { SetInitialValues(() => b, v1); }}"
+        transform c "new D<int, bool>(false, -4, 2, 1)" =? [field "b" 2 IntType [IntVal -4; IntVal 2; IntVal 1]; field "b" 3 BoolType [BoolVal false] ]
+        transform c "new D<int, bool>(true, 0)" =? [field "b" 2 IntType [IntVal 0]; field "b" 3 BoolType [BoolVal true] ]
+        transform c "new D<bool, int>(17, true, false)" =? [field "b" 2 BoolType [BoolVal true; BoolVal false]; field "b" 3 IntType [IntVal 17] ]
+        transform c "new D<double, double>(.5, 1.5)" =? [field "b" 2 DoubleType [DoubleVal 1.5]; field "b" 3 DoubleType [DoubleVal 0.5] ]

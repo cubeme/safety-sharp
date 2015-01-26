@@ -64,6 +64,11 @@ module ``SetInitialValues method`` =
         raises<InvalidOperationException> (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", 1) |> ignore)
 
     [<Test>]
+    let ``throws when field is constant`` () =
+        // Compile a C# class, as F# does not support IL constant fields
+        raisesArgumentException "field" (fun () -> unwrap<TargetInvocationException> (fun () ->  createModel "class TestModel : Model { public TestModel() { SetRootComponents(new C()); }} class C : Component { const int x = 4; public C() { SetInitialValues(() => x, 1, 2, 3); }}" |> ignore))
+
+    [<Test>]
     let ``throws when field does not reference a field of the component`` () =
         let component' = InheritedComponent ()
         let otherComponent = FieldComponent<int, int> ()

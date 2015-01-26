@@ -53,7 +53,8 @@ module ``CilToSsm Method Transformations`` =
 
         printfn ""
         printfn "Transformed method:"
-        let m = CilToSsm.transformMethod methodDef
+        let ssm = transform (sprintf "class %s : Component { %s }" className methodDefinition) (sprintf "new %s()" className)
+        let m = ssm |> Seq.find (fun m -> m.Name = CilToSsm.makeUniqueMethodName "M" 2 0)
         SsmToCSharp.transform m |> printfn "%s"
         m
 
@@ -786,7 +787,88 @@ module ``CilToSsm Method Transformations`` =
             }
 
     [<Test>]
-    let ``call method with field byref parameter should store local in temporary`` () =
+    let ``call method with field parameter should store field in temporary`` () =
+        transformMethod "int F(int x) { return x; } int f; int M() { return f + F(f); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = IntType
+                Params = []
+                Locals = [tmp 5 0 IntType; tmp 5 1 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 5 0 IntType, VarExpr (field "f" IntType))
+                        AsgnStm (tmp 5 1 IntType, CallExpr (name "F", [IntType], [In], IntType, [VarExpr (field "f" IntType)], this))
+                        RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call method with integer readonly field parameter should inline field`` () =
+        transformMethod "int F(int x) { return x; } readonly int f = 4; int M() { return f + F(f); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = IntType
+                Params = []
+                Locals = [tmp 5 0 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 5 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this))
+                        RetStm (Some (BExpr (IntExpr 4, Add, VarExpr (tmp 5 0 IntType))))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call method with double readonly field parameter should inline field`` () =
+        transformMethod "double F(double x) { return x; } readonly double f = .5; double M() { return f + F(f); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = DoubleType
+                Params = []
+                Locals = [tmp 5 0 DoubleType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 5 0 DoubleType, CallExpr (name "F", [DoubleType], [In], DoubleType, [DoubleExpr 0.5], this))
+                        RetStm (Some (BExpr (DoubleExpr 0.5, Add, VarExpr (tmp 5 0 DoubleType))))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call method with boolean readonly field parameter should inline field`` () =
+        transformMethod "bool F(bool x) { return x; } readonly bool f = true; bool M() { return f & F(f); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = BoolType
+                Params = []
+                Locals = [tmp 5 0 BoolType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 5 0 BoolType, CallExpr (name "F", [BoolType], [In], BoolType, [BoolExpr true], this))
+                        RetStm (Some (BExpr (BoolExpr true, And, VarExpr (tmp 5 0 BoolType))))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call method with const field parameter should inline field value`` () =
+        transformMethod "int F(int x) { return x; } const int f = 4; int M() { return f + F(f); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = IntType
+                Params = []
+                Locals = [tmp 3 0 IntType]
+                Body = 
+                    SeqStm [
+                        AsgnStm (tmp 3 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this))
+                        RetStm (Some (BExpr (IntExpr 4, Add, VarExpr (tmp 3 0 IntType))))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``call method with field byref parameter should store field in temporary`` () =
         transformMethod "int F(ref int x) { return x; } int f; int M() { return f + F(ref f); }" =?
             {
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0
@@ -803,7 +885,7 @@ module ``CilToSsm Method Transformations`` =
             }
 
     [<Test>]
-    let ``call method with value arg byref parameter should store local in temporary`` () =
+    let ``call method with value arg byref parameter should store arg in temporary`` () =
         transformMethod "int F(ref int x) { return x; } int M(int x) { return x + F(ref x); }" =?
             {
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0
@@ -820,7 +902,7 @@ module ``CilToSsm Method Transformations`` =
             }
 
     [<Test>]
-    let ``call method with byref arg byref parameter should store local in temporary`` () =
+    let ``call method with byref arg byref parameter should store arg in temporary`` () =
         transformMethod "int F(ref int x) { return x; } int M(ref int x) { return x + F(ref x); }" =?
             {
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0
@@ -1089,4 +1171,90 @@ module ``CilToSsm Method Transformations`` =
                     Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 3 0; Type = "B" }, [], [], VoidType, [], tthis "C"); RetStm None]
                     Kind = ProvPort
                 } 
+            ]
+
+    [<Test>]
+    let ``abstract method has an empty body`` () =
+        let c = "abstract class A : Component { public abstract void M(); } class B : A { public override void M() { } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = NopStm
+                    Kind = ProvPort
+                } 
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                    Kind = ProvPort
+                } 
+            ]
+
+    [<Test>]
+    let ``call method with integer readonly field parameter defined by base class should inline field`` () =
+        let c = "class A : Component { protected readonly int f = 4; } class B : A { int M() { return f; } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 3 0
+                    Return = IntType
+                    Params = []
+                    Locals = []
+                    Body = RetStm (Some (IntExpr 4))
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``method using generic parameters of enclosing class`` () =
+        let c = "class A<T1, T2> : Component { T1 f; T1 M(T2 p) { M(p); return f; } }"
+        transform c "new A<int, bool>()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                    Return = IntType
+                    Params = [{ Var = arg "p" BoolType; Direction = In }]
+                    Locals = [tmp 2 0 IntType]
+                    Body = 
+                        SeqStm
+                            [
+                                AsgnStm (tmp 2 0 IntType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A`2" }, [BoolType], [In], IntType, [VarExpr (arg "p" BoolType)], tthis "A`2"))
+                                RetStm (Some (VarExpr (field "f" IntType)))
+                            ]
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``method calling generic method of generic base`` () =
+        let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B : A<bool, int> { bool N(int x) { return M(x); } }"
+        transform c "new B()" =? 
+            [
+                {
+                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                    Return = BoolType
+                    Params = [{ Var = arg "p" IntType; Direction = In }]
+                    Locals = []
+                    Body = RetStm (Some (VarExpr (field "f" BoolType)))
+                    Kind = ProvPort
+                }
+                {
+                    Name = CilToSsm.makeUniqueMethodName "N" 3 0
+                    Return = BoolType
+                    Params = [{ Var = arg "x" IntType; Direction = In }]
+                    Locals = [tmp 2 0 BoolType]
+                    Body = 
+                        SeqStm
+                            [
+                                AsgnStm (tmp 2 0 BoolType, CallExpr ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "A`2" }, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], tthis "B"))
+                                RetStm (Some (VarExpr (tmp 2 0 BoolType)))
+                            ]
+                    Kind = ProvPort
+                }
             ]

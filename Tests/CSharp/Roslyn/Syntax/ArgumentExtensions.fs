@@ -237,10 +237,10 @@ module ``IsBooleanExpressionArgument method`` =
         invokeMethodP.ArgumentList.Arguments.[3].IsBooleanExpression semanticModel =? false
 
 [<TestFixture>]
-module ``GetMethodCallExpression method`` =
+module ``GetInvocationExpression method`` =
     [<Test>]
     let ``throws when argument is null`` () =
-        raisesArgumentNullException "argument" (fun () -> (null : ArgumentSyntax).GetMethodCallExpression () |> ignore)
+        raisesArgumentNullException "argument" (fun () -> (null : ArgumentSyntax).GetInvocationExpression () |> ignore)
 
     [<Test>]
     let ``returns correct invocation expression`` () =
@@ -259,9 +259,26 @@ module ``GetMethodCallExpression method`` =
         let argumentNInY = invokeNInY.Descendants<ArgumentSyntax>().First ()
         let argumentOInY = invokeOInY.Descendants<ArgumentSyntax>().Single ()
 
-        argumentNInX.GetMethodCallExpression () :?> InvocationExpressionSyntax =? invokeNInX
-        argumentNInY.GetMethodCallExpression () :?> InvocationExpressionSyntax =? invokeNInY
-        argumentOInY.GetMethodCallExpression () :?> InvocationExpressionSyntax =? invokeOInY
+        argumentNInX.GetInvocationExpression () :?> InvocationExpressionSyntax =? invokeNInX
+        argumentNInY.GetInvocationExpression () :?> InvocationExpressionSyntax =? invokeNInY
+        argumentOInY.GetInvocationExpression () :?> InvocationExpressionSyntax =? invokeOInY
+
+    [<Test>]
+    let ``returns base constructor call`` () =
+        let compilation = TestCompilation "class X : Y { public X(int i) : base(i) {}} class Y { public Y(int i) {}}"
+        let ctor = compilation.FindConstructorDeclaration "X"
+        let argument = ctor.Descendants<ArgumentSyntax>().Single ()
+        argument.GetInvocationExpression () :?> ConstructorInitializerSyntax =? ctor.Initializer
+
+    [<Test>]
+    let ``returns forwarding constructor call`` () =
+        let compilation = TestCompilation "class X { public X(int i) : this(i, 1) {} X(int i, int j) {}}"
+        let classType = compilation.FindTypeDeclaration "X"
+        let ctor = classType.Descendants<ConstructorDeclarationSyntax>().First ()
+        let argument1 = ctor.Descendants<ArgumentSyntax>().First ()
+        let argument2 = ctor.Descendants<ArgumentSyntax>().Skip(1).Single ()
+        argument1.GetInvocationExpression () :?> ConstructorInitializerSyntax =? ctor.Initializer
+        argument2.GetInvocationExpression () :?> ConstructorInitializerSyntax =? ctor.Initializer
 
     [<Test>]
     let ``returns correct object creation expression`` () =
@@ -290,11 +307,11 @@ module ``GetMethodCallExpression method`` =
         let argumentBInZ = createBInZ.Descendants<ArgumentSyntax>().Single ()
         let argumentNInZ = invokeNInZ.Descendants<ArgumentSyntax>().First ()
 
-        argumentInX .GetMethodCallExpression () :?> ObjectCreationExpressionSyntax =? createBInX
-        argumentBInY.GetMethodCallExpression () :?> ObjectCreationExpressionSyntax =? createBInY
-        argumentCInY.GetMethodCallExpression () :?> ObjectCreationExpressionSyntax =? createCInY
-        argumentBInZ.GetMethodCallExpression () :?> ObjectCreationExpressionSyntax =? createBInZ
-        argumentNInZ.GetMethodCallExpression () :?> InvocationExpressionSyntax =? invokeNInZ
+        argumentInX .GetInvocationExpression () :?> ObjectCreationExpressionSyntax =? createBInX
+        argumentBInY.GetInvocationExpression () :?> ObjectCreationExpressionSyntax =? createBInY
+        argumentCInY.GetInvocationExpression () :?> ObjectCreationExpressionSyntax =? createCInY
+        argumentBInZ.GetInvocationExpression () :?> ObjectCreationExpressionSyntax =? createBInZ
+        argumentNInZ.GetInvocationExpression () :?> InvocationExpressionSyntax =? invokeNInZ
 
 [<TestFixture>]
 module ``GetParameterSymbol method`` =
@@ -340,3 +357,13 @@ module ``GetParameterSymbol method`` =
         argument1.GetParameterSymbol compilation.SemanticModel =? methodSymbol.Parameters.[0]
         argument2.GetParameterSymbol compilation.SemanticModel =? methodSymbol.Parameters.[1]
         argument3.GetParameterSymbol compilation.SemanticModel =? methodSymbol.Parameters.[1]
+
+    [<Test>]
+    let ``returns correct constructor symbol`` () =
+        let compilation = TestCompilation "class X : Y { public X(int i) : base(i) {}} class Y { public Y(int i) {}}"
+        let ctor = compilation.FindConstructorDeclaration "X"
+        let argument = ctor.Descendants<ArgumentSyntax>().Single ()
+        let baseType = compilation.FindClassSymbol "Y"
+        let ctorSymbol = baseType.Constructors.[0]
+
+        argument.GetParameterSymbol compilation.SemanticModel =? ctorSymbol.Parameters.[0]

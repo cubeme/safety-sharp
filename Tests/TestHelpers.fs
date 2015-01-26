@@ -184,6 +184,11 @@ let raisesArgumentException argumentName func =
     let e = raisesWith<ArgumentException> func
     Assert.AreEqual (argumentName, e.ParamName, "Expected exception to be thrown for argument '{0}', but was thrown for '{1}'.", argumentName, e.ParamName)
 
+/// Catches the given exception type and rethrows the inner exception.
+let unwrap<'T when 'T :> Exception> func =
+    let e = raisesWith<'T> func
+    raise e.InnerException |> ignore
+
 /// Checks whether the given function raises no exception.
 let nothrow func =
     try

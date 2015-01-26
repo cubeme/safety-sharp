@@ -48,7 +48,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			var methodCallExpression = argument.GetMethodCallExpression();
+			var methodCallExpression = argument.GetInvocationExpression();
 			return methodCallExpression.GetReferencedSymbol<IMethodSymbol>(semanticModel);
 		}
 
@@ -131,19 +131,19 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		}
 
 		/// <summary>
-		///     Gets the <see cref="InvocationExpressionSyntax" /> or the <see cref="ObjectCreationExpressionSyntax" />
-		///     that contains the <paramref name="argument" />.
+		///     Gets the <see cref="InvocationExpressionSyntax" />, <see cref="ObjectCreationExpressionSyntax" />, or
+		///     <see cref="ConstructorInitializerSyntax" /> that contains the <paramref name="argument" />.
 		/// </summary>
 		/// <param name="argument">The argument the method call expression should be returned for.</param>
 		[Pure, NotNull]
-		public static ExpressionSyntax GetMethodCallExpression([NotNull] this ArgumentSyntax argument)
+		public static SyntaxNode GetInvocationExpression([NotNull] this ArgumentSyntax argument)
 		{
 			Requires.NotNull(argument, () => argument);
 
 			for (var node = argument.Parent; node != null; node = node.Parent)
 			{
-				if (node is InvocationExpressionSyntax || node is ObjectCreationExpressionSyntax)
-					return node as ExpressionSyntax;
+				if (node is InvocationExpressionSyntax || node is ObjectCreationExpressionSyntax || node is ConstructorInitializerSyntax)
+					return node;
 			}
 
 			Assert.NotReached("Unable to find the method call expression containing argument '{0}'.", argument);
@@ -166,8 +166,8 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 			Requires.NotNull(argument, () => argument);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			var methodCallExpression = argument.GetMethodCallExpression();
-			var methodSymbol = methodCallExpression.GetReferencedSymbol<IMethodSymbol>(semanticModel);
+			var invocation = argument.GetInvocationExpression();
+			var methodSymbol = invocation.GetReferencedSymbol<IMethodSymbol>(semanticModel);
 
 			// If this is a named argument, simply look up the parameter symbol by name.
 			if (argument.NameColon != null)
@@ -175,13 +175,16 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 
 			// Otherwise, get the corresponding invocation or object creation expression and match the argument.
 			var arguments = default(SeparatedSyntaxList<ArgumentSyntax>);
-			var invocationExpression = methodCallExpression as InvocationExpressionSyntax;
-			var objectCreationExpression = methodCallExpression as ObjectCreationExpressionSyntax;
+			var invocationExpression = invocation as InvocationExpressionSyntax;
+			var objectCreationExpression = invocation as ObjectCreationExpressionSyntax;
+			var constructorInitializer = invocation as ConstructorInitializerSyntax;
 
 			if (invocationExpression != null)
 				arguments = invocationExpression.ArgumentList.Arguments;
 			else if (objectCreationExpression != null)
 				arguments = objectCreationExpression.ArgumentList.Arguments;
+			else if (constructorInitializer != null)
+				arguments = constructorInitializer.ArgumentList.Arguments;
 			else
 				Assert.NotReached("Expected an invocation expression or an object creation expression.");
 

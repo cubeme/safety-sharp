@@ -173,6 +173,18 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         | :? InterfaceDeclarationSyntax as interfaceDeclaration -> interfaceDeclaration
         | _ -> failed "Found no interface with name '%s'." interfaceName
 
+    /// Finds the <see cref="ConstructorDeclarationSyntax" /> in the type with the given name
+    /// within the compilation. Throws an exception if more than one type or constructor with the given name was found.
+    member this.FindConstructorDeclaration typeName =
+        let methods = 
+            this.FindTypeDeclaration(typeName).DescendantsAndSelf<ConstructorDeclarationSyntax> ()
+            |> List.ofSeq
+
+        match methods with
+        | methodDeclaration :: [] -> methodDeclaration
+        | [] -> failed "Found no constructors in '%s'." typeName
+        | _ -> failed "Found more than one constructor in '%s'." typeName
+
     /// Finds the <see cref="MethodDeclarationSyntax" /> for the method with the given name in the type with the given name
     /// within the compilation. Throws an exception if more than one type or method with the given name was found.
     member this.FindMethodDeclaration typeName methodName =
