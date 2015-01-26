@@ -53,7 +53,7 @@ module internal ScmRewriterFlattenModel =
             do! checkConsistency
 
             // inline everything beginning with the main step
-            do! inlineBehaviors
+            do! inlineBehaviorsWrapper
             //do! assertNoPortCall
             do! checkConsistency
         }

@@ -45,11 +45,11 @@ module internal ScmRewriterConvertFaults =
             state.SubState,state
         ScmRewriteFunction (getConvertFaultsState)
 
-    let updateConvertFaultsState (newLevelUp:ScmRewriterConvertFaults) : ScmRewriterConvertFaultsFunction<unit> = 
+    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaults) : ScmRewriterConvertFaultsFunction<unit> = 
         let updateConvertFaultsState (state:ScmRewriterConvertFaultsState) : (unit * ScmRewriterConvertFaultsState) =
             let newState =
                 { state with
-                    ScmRewriterConvertFaultsState.SubState = newLevelUp;
+                    ScmRewriterConvertFaultsState.SubState = newConvertFaults;
                     ScmRewriterConvertFaultsState.Tainted = true;
                 }
             (),newState
@@ -318,6 +318,14 @@ module internal ScmRewriterConvertFaults =
             }
         return! putState modifiedState
      }
+    
+    let convertFaults : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+        do! (iterateToFixpoint replaceFaultByPortsAndFields)
+        do! (iterateToFixpoint replaceStepFaultByCallPort)
+        do! (iterateToFixpoint uniteProvPortDecls)
+        do! uniteStep
+        do! convertFaultsWriteBackChangesIntoModel
+    }
        
     let createConvertFaultsStateForRootComponent (oldState) = 
             let rootComp = oldState.Model
@@ -337,19 +345,10 @@ module internal ScmRewriterConvertFaults =
                     ScmRewriteState.PathOfChangingSubcomponent = rootPath;
                     ScmRewriteState.TakenNames = oldState.TakenNames;
                     ScmRewriteState.SubState = convertFaultsState;
-                    ScmRewriteState.InlineBehavior = oldState.InlineBehavior;
                     ScmRewriteState.Tainted = true;
                     }
             newState
             
-    
-    let convertFaults : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
-        do! (iterateToFixpoint replaceFaultByPortsAndFields)
-        do! (iterateToFixpoint replaceStepFaultByCallPort)
-        do! (iterateToFixpoint uniteProvPortDecls)
-        do! uniteStep
-        do! convertFaultsWriteBackChangesIntoModel
-    }
     
     let convertFaultsWrapper : ScmRewriteFunction<unit,unit> = scmRewrite {
         let! state = getState

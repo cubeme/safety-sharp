@@ -28,20 +28,6 @@ module internal ScmRewriterBase =
     
     type ScmModel = CompDecl //may change, but I hope it does not
                         
-    type ScmRewriterInlineBehavior = {
-        BehaviorToReplace : BehaviorWithLocation;
-        InlinedBehavior : BehaviorDecl;
-        CallToReplace : StmPath option;
-        (*ArtificialLocalVarOldToNew : Map<VarDecl,VarDecl>;*)
-    }
-        with
-            static member createEmptyFromBehavior (behaviorWithLocaltion:BehaviorWithLocation) =
-                {
-                    ScmRewriterInlineBehavior.BehaviorToReplace = behaviorWithLocaltion;
-                    ScmRewriterInlineBehavior.InlinedBehavior = behaviorWithLocaltion.Behavior;
-                    ScmRewriterInlineBehavior.CallToReplace = None;
-                }
-            
     type ScmRewriteState<'subState> = {
         Model : ScmModel;
 
@@ -50,10 +36,7 @@ module internal ScmRewriterBase =
 
         TakenNames : Set<string>;
         SubState : 'subState;
-        // TODO: Optimization: Add parent of ComponentToRemove here. Thus, when a change to the componentToRemove is done, only its parent needs to be updated and not the whole model.
-        //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
-        InlineBehavior : ScmRewriterInlineBehavior option;
         Tainted : bool;
     }
         with
@@ -64,7 +47,6 @@ module internal ScmRewriterBase =
                     PathOfChangingSubcomponent = [scm.Comp];
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.SubState = subState;
-                    ScmRewriteState.InlineBehavior = None;
                     ScmRewriteState.Tainted = false;
                 }
             member this.deriveWithSubState<'newSubState> (newSubState:'newSubState) =
@@ -74,7 +56,6 @@ module internal ScmRewriterBase =
                     ScmRewriteState.PathOfChangingSubcomponent = this.PathOfChangingSubcomponent;
                     ScmRewriteState.TakenNames = this.TakenNames;
                     ScmRewriteState.SubState = newSubState; //<---- everything but this must be changed
-                    ScmRewriteState.InlineBehavior = this.InlineBehavior;
                     ScmRewriteState.Tainted = this.Tainted;
                 }
 

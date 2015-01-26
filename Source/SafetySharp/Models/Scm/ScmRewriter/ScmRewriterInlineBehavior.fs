@@ -27,10 +27,51 @@ module internal ScmRewriterInlineBehavior =
     open ScmRewriterBase
     
     // Currently only works in the root component
-                
-    type ScmRewriterInlineBehaviorFunction<'returnType> = ScmRewriteFunction<unit,'returnType>
-    type ScmRewriterInlineBehaviorState = ScmRewriteState<unit>
 
+    
+    type ScmRewriterInlineBehavior = {
+        BehaviorToReplace : BehaviorWithLocation;
+        InlinedBehavior : BehaviorDecl;
+        CallToReplace : StmPath option;
+        (*ArtificialLocalVarOldToNew : Map<VarDecl,VarDecl>;*)
+    }
+        with
+            static member createEmptyFromBehavior (behaviorWithLocaltion:BehaviorWithLocation) =
+                {
+                    ScmRewriterInlineBehavior.BehaviorToReplace = behaviorWithLocaltion;
+                    ScmRewriterInlineBehavior.InlinedBehavior = behaviorWithLocaltion.Behavior;
+                    ScmRewriterInlineBehavior.CallToReplace = None;
+                }
+            
+                
+    type ScmRewriterInlineBehaviorFunction<'returnType> = ScmRewriteFunction<ScmRewriterInlineBehavior option,'returnType>
+    type ScmRewriterInlineBehaviorState = ScmRewriteState<ScmRewriterInlineBehavior option>
+
+    
+    let getInlineBehaviorState : ScmRewriterInlineBehaviorFunction<ScmRewriterInlineBehavior option> = 
+        let getInlineBehaviorState (state:ScmRewriterInlineBehaviorState) : (ScmRewriterInlineBehavior option * ScmRewriterInlineBehaviorState) =
+            state.SubState,state
+        ScmRewriteFunction (getInlineBehaviorState)
+
+    let updateInlineBehaviorState (newInlinedBehavior:ScmRewriterInlineBehavior) : ScmRewriterInlineBehaviorFunction<unit> = 
+        let updateInlineBehaviorState (state:ScmRewriterInlineBehaviorState) : (unit * ScmRewriterInlineBehaviorState) =
+            let newState =
+                { state with
+                    ScmRewriterInlineBehaviorState.SubState = Some(newInlinedBehavior);
+                    ScmRewriterInlineBehaviorState.Tainted = true;
+                }
+            (),newState
+        ScmRewriteFunction (updateInlineBehaviorState)
+    
+    let removeInlineBehaviorState : ScmRewriterInlineBehaviorFunction<unit> = 
+        let removeInlineBehaviorState (state:ScmRewriterInlineBehaviorState) : (unit * ScmRewriterInlineBehaviorState) =
+            let newState =
+                { state with
+                    ScmRewriterInlineBehaviorState.SubState = None;
+                    ScmRewriterInlineBehaviorState.Tainted = true;
+                }
+            (),newState
+        ScmRewriteFunction (removeInlineBehaviorState)
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +118,8 @@ module internal ScmRewriterInlineBehavior =
                             |> List.map (fun fault -> fault.Step.Body)
                     maxLevel faultStmts (currentLevel+1)
 
-        if (state.InlineBehavior.IsSome) then
+        let! inlineBehavior=getInlineBehaviorState
+        if (inlineBehavior.IsSome) then
             return ()
         else
             // try to find a behavior, which only contains port calls, which themselves do not call ports            
@@ -118,20 +160,15 @@ module internal ScmRewriterInlineBehavior =
                 | None -> return ()
                 | Some (inlineBehavior) ->
                     let rewriterInlineBehavior = ScmRewriterInlineBehavior.createEmptyFromBehavior inlineBehavior
-                    let modifiedState =
-                        { state with
-                            ScmRewriteState.InlineBehavior = Some(rewriterInlineBehavior);
-                            ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                        }
-                    return! putState modifiedState
+                    do! updateInlineBehaviorState rewriterInlineBehavior
         }
     
     let findCallToInline : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
-            let! state = getState
-            if (state.InlineBehavior.IsNone) then
+        let! inlineBehavior=getInlineBehaviorState
+        if (inlineBehavior.IsNone) then
                 return ()
             else
-                let inlineBehavior = state.InlineBehavior.Value
+                let inlineBehavior = inlineBehavior.Value
                 if inlineBehavior.CallToReplace.IsSome then
                     return ()
                 else
@@ -161,207 +198,209 @@ module internal ScmRewriterInlineBehavior =
                                 { inlineBehavior with
                                     ScmRewriterInlineBehavior.CallToReplace=Some(path);
                                 }
-                            let modifiedState =
-                                { state with
-                                    ScmRewriteState.InlineBehavior = Some(newInlineBehavior);
-                                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                                }
-                            return! putState modifiedState
+                            do! updateInlineBehaviorState newInlineBehavior
         }
 
     let inlineCall : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
-            let! state = getState
-            if (state.InlineBehavior.IsNone) then
+        let! inlineBehavior=getInlineBehaviorState
+        if (inlineBehavior.IsNone) then
+            return ()
+        else
+            let inlineBehavior = inlineBehavior.Value
+            if inlineBehavior.CallToReplace.IsNone then
                 return ()
             else
-                let inlineBehavior = state.InlineBehavior.Value
-                if inlineBehavior.CallToReplace.IsNone then
-                    return ()
-                else
-                    let pathToCallToReplace = inlineBehavior.CallToReplace.Value
-                    let body = inlineBehavior.InlinedBehavior.Body
-                    let callToReplace = body.getSubStatement pathToCallToReplace 
-                    match callToReplace with
-                        | Stm.AssignVar (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
-                        | Stm.AssignField (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
-                        | Stm.AssignFault (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
-                        | Stm.Block (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
-                        | Stm.Choice (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
-                        | Stm.StepComp (comp) ->
-                            failwith "BUG: In this phase Stm.StepComp should not be in any statement"; return ()
-                        | Stm.StepFault (fault) ->
-                            failwith "BUG: In this phase Stm.StepFault should not be in any statement"; return ()
-                        | Stm.CallPort (reqPort,_params) ->
-                            let binding = state.Model.getBindingOfLocalReqPort reqPort
-                            if binding.Kind= BndKind.Delayed then
-                                failwith "TODO: Delayed Bindings cannot be inlined yet"
-                                return ()
-                            else
-                                //TODO: rewrite getProvPortDecls: It only gets the ProvPortDecls in the original model and
-                                //      does not include the parts, which are in the already rewritten part of the model.
-                                //      Move this part into "State".
-                                //      Actually, it makes no difference now, but might become a problem later.
-                                let provPortDecls = binding.Source.ProvPort |> state.Model.getProvPortDecls
-                                assert (provPortDecls.Length = 1) //exactly one provPortDecl should exist. Assume uniteProvPortDecls was called
-                                let provPortDecl = provPortDecls.Head
-                                    // Note: assure, no name clashes and inside always fresh names are used
-                                //let transformLocal  =
-                                //    let! newName = getUnusedVarName (sprintf "%s_%s" provPortDecl.getName var.getName)
-                                //provPortDecl.Behavior.Locals |> List.iter (fun varDecl -> (varDecl,transformedVarName varDecl) )
+                let pathToCallToReplace = inlineBehavior.CallToReplace.Value
+                let body = inlineBehavior.InlinedBehavior.Body
+                let callToReplace = body.getSubStatement pathToCallToReplace 
+                match callToReplace with
+                    | Stm.AssignVar (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.AssignField (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.AssignFault (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.Block (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.Choice (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.StepComp (comp) ->
+                        failwith "BUG: In this phase Stm.StepComp should not be in any statement"; return ()
+                    | Stm.StepFault (fault) ->
+                        failwith "BUG: In this phase Stm.StepFault should not be in any statement"; return ()
+                    | Stm.CallPort (reqPort,_params) ->
+                        let! state = getState
+                        let binding = state.Model.getBindingOfLocalReqPort reqPort
+                        if binding.Kind= BndKind.Delayed then
+                            failwith "TODO: Delayed Bindings cannot be inlined yet"
+                            return ()
+                        else
+                            //TODO: rewrite getProvPortDecls: It only gets the ProvPortDecls in the original model and
+                            //      does not include the parts, which are in the already rewritten part of the model.
+                            //      Move this part into "State".
+                            //      Actually, it makes no difference now, but might become a problem later.
+                            let provPortDecls = binding.Source.ProvPort |> state.Model.getProvPortDecls
+                            assert (provPortDecls.Length = 1) //exactly one provPortDecl should exist. Assume uniteProvPortDecls was called
+                            let provPortDecl = provPortDecls.Head
+                                // Note: assure, no name clashes and inside always fresh names are used
+                            //let transformLocal  =
+                            //    let! newName = getUnusedVarName (sprintf "%s_%s" provPortDecl.getName var.getName)
+                            //provPortDecl.Behavior.Locals |> List.iter (fun varDecl -> (varDecl,transformedVarName varDecl) )
 
                                 
-                                // Step 1: replace Local:VarDecl by new Local:VarDecl in Statement
+                            // Step 1: replace Local:VarDecl by new Local:VarDecl in Statement
 
-                                let! newLocalVarDecls =                                    
-                                    let newNameSuggestionsForNewVars =
-                                        provPortDecl.Behavior.Locals |> List.map (fun varDecl -> (sprintf "%s_%s" provPortDecl.getName varDecl.getName))
-                                    getUnusedVarNames newNameSuggestionsForNewVars
-                                let listOldVarDeclsToNewVars =
-                                    List.zip provPortDecl.Behavior.Locals newLocalVarDecls
-                                let mapOldVarsToNewVars =
-                                    listOldVarDeclsToNewVars |> List.map (fun (oldVarDecl,newVar) -> (oldVarDecl.Var,newVar))
-                                                             |> Map.ofList                                                                    
-                                let newLocalVarDecls =
-                                    let createNewVarDecl (oldVarDecl:VarDecl,newVar:Var) : VarDecl =
-                                        { oldVarDecl with
-                                            VarDecl.Var = newVar
-                                        }
-                                    listOldVarDeclsToNewVars |> List.map createNewVarDecl
+                            let! newLocalVarDecls =                                    
+                                let newNameSuggestionsForNewVars =
+                                    provPortDecl.Behavior.Locals |> List.map (fun varDecl -> (sprintf "%s_%s" provPortDecl.getName varDecl.getName))
+                                getUnusedVarNames newNameSuggestionsForNewVars
+                            let listOldVarDeclsToNewVars =
+                                List.zip provPortDecl.Behavior.Locals newLocalVarDecls
+                            let mapOldVarsToNewVars =
+                                listOldVarDeclsToNewVars |> List.map (fun (oldVarDecl,newVar) -> (oldVarDecl.Var,newVar))
+                                                            |> Map.ofList                                                                    
+                            let newLocalVarDecls =
+                                let createNewVarDecl (oldVarDecl:VarDecl,newVar:Var) : VarDecl =
+                                    { oldVarDecl with
+                                        VarDecl.Var = newVar
+                                    }
+                                listOldVarDeclsToNewVars |> List.map createNewVarDecl
 
-                                let newStatementStep1 = rewriteStm_onlyVars mapOldVarsToNewVars (provPortDecl.Behavior.Body)
+                            let newStatementStep1 = rewriteStm_onlyVars mapOldVarsToNewVars (provPortDecl.Behavior.Body)
                                 
-                                // Step 2-4: Replace the local vars in the signature.
-                                //   replace Params by their actual Fields or LocalVars or declared in the parameters of the caller
-                                //   here we need to take a close look: if an expression was used as parameter, add an assignment to a local variable
-                                //   add this local variable to the other local variables.
-                                //   Otherwise replace the names in-text. Also replace a varCall to a FieldCall in expressions and assignments
-                                let localVarToReqPortParam =
-                                    List.zip provPortDecl.Params _params
+                            // Step 2-4: Replace the local vars in the signature.
+                            //   replace Params by their actual Fields or LocalVars or declared in the parameters of the caller
+                            //   here we need to take a close look: if an expression was used as parameter, add an assignment to a local variable
+                            //   add this local variable to the other local variables.
+                            //   Otherwise replace the names in-text. Also replace a varCall to a FieldCall in expressions and assignments
+                            let localVarToReqPortParam =
+                                List.zip provPortDecl.Params _params
 
-                                // Step 2: ParamExpr.ExprParam
-                                //   Every time a localVar is accessed, which is actually an in-parameter (ExprParam) of the ProvPort,
-                                //   the localVar is inlined: The localVar is replaced by the expression declared in the call of the provPort.
-                                //   Note: InParam may never be written to!
-                                //         The Var of an InParam may never be used as InOutParam of a call. (Try to indirectly relief the rule above)
-                                let localVarToReqPortExprParamMap =
-                                    localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
-                                                              (
-                                                                match paramReq with
-                                                                    | Param.ExprParam (expr) -> [(localVarParamDecl.Var.Var,expr)]
-                                                                    | _ -> []
-                                                              ) )
-                                                            |> Map.ofList
-                                let newStatementStep2 =
-                                    rewriteStm_varsToExpr localVarToReqPortExprParamMap newStatementStep1 
+                            // Step 2: ParamExpr.ExprParam
+                            //   Every time a localVar is accessed, which is actually an in-parameter (ExprParam) of the ProvPort,
+                            //   the localVar is inlined: The localVar is replaced by the expression declared in the call of the provPort.
+                            //   Note: InParam may never be written to!
+                            //         The Var of an InParam may never be used as InOutParam of a call. (Try to indirectly relief the rule above)
+                            let localVarToReqPortExprParamMap =
+                                localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
+                                                            (
+                                                            match paramReq with
+                                                                | Param.ExprParam (expr) -> [(localVarParamDecl.Var.Var,expr)]
+                                                                | _ -> []
+                                                            ) )
+                                                        |> Map.ofList
+                            let newStatementStep2 =
+                                rewriteStm_varsToExpr localVarToReqPortExprParamMap newStatementStep1 
 
-                                // Step 3: ParamExpr.InOutVarParam:
-                                //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadVar
-                                //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignVar
-                                //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutVarParam
-                                let localVarToReqPortInOutVarParamMap =
-                                    localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
-                                                              (
-                                                                match paramReq with
-                                                                    | Param.InOutVarParam (var) -> [(localVarParamDecl.Var.Var,var)]
-                                                                    | _ -> []
-                                                              ) )
-                                                            |> Map.ofList
-                                let newStatementStep3 =
-                                    rewriteStm_onlyVars localVarToReqPortInOutVarParamMap (newStatementStep2) 
+                            // Step 3: ParamExpr.InOutVarParam:
+                            //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadVar
+                            //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignVar
+                            //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutVarParam
+                            let localVarToReqPortInOutVarParamMap =
+                                localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
+                                                            (
+                                                            match paramReq with
+                                                                | Param.InOutVarParam (var) -> [(localVarParamDecl.Var.Var,var)]
+                                                                | _ -> []
+                                                            ) )
+                                                        |> Map.ofList
+                            let newStatementStep3 =
+                                rewriteStm_onlyVars localVarToReqPortInOutVarParamMap (newStatementStep2) 
 
 
-                                // Step 4: ParamExpr.InOutFieldParam:
-                                //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadField
-                                //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignField
-                                //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutFieldParam
-                                let localVarToReqPortInOutFieldMap =
-                                    localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
-                                                              (
-                                                                match paramReq with
-                                                                    | Param.InOutFieldParam (field) -> [(localVarParamDecl.Var.Var,field)]
-                                                                    | _ -> []
-                                                              ) )
-                                                            |> Map.ofList
-                                let newStatementStep4 =
-                                    rewriteStm_varsToFields localVarToReqPortInOutFieldMap newStatementStep3
+                            // Step 4: ParamExpr.InOutFieldParam:
+                            //      a) replace in each expression, which may occur where ever ReadVar by remapped ReadField
+                            //      b) replace in each statement, which may occur where ever AssignVar by remapped AssignField
+                            //      c) replace in each param, which may occur where ever InOutVarParam by remapped InOutFieldParam
+                            let localVarToReqPortInOutFieldMap =
+                                localVarToReqPortParam |> List.collect (fun (localVarParamDecl,paramReq) ->
+                                                            (
+                                                            match paramReq with
+                                                                | Param.InOutFieldParam (field) -> [(localVarParamDecl.Var.Var,field)]
+                                                                | _ -> []
+                                                            ) )
+                                                        |> Map.ofList
+                            let newStatementStep4 =
+                                rewriteStm_varsToFields localVarToReqPortInOutFieldMap newStatementStep3
 
                                 
 
-                                // Step 5: Write back changes into state
-                                let newBody = body.replaceSubStatement pathToCallToReplace newStatementStep4
-                                let newBehavior =
-                                    {
-                                        BehaviorDecl.Body = newBody;
-                                        BehaviorDecl.Locals = inlineBehavior.InlinedBehavior.Locals @ newLocalVarDecls;
-                                    }
-                                let newRewriterInlineBehavior =
-                                    { inlineBehavior with
-                                        ScmRewriterInlineBehavior.CallToReplace = None;
-                                        ScmRewriterInlineBehavior.InlinedBehavior = newBehavior;
-                                    }
-                                let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
-                                let modifiedState =
-                                    { state with
-                                        ScmRewriteState.InlineBehavior = Some(newRewriterInlineBehavior);
-                                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                                    }
-                                return! putState modifiedState
-        }   
+                            // Step 5: Write back changes into state
+                            let newBody = body.replaceSubStatement pathToCallToReplace newStatementStep4
+                            let newBehavior =
+                                {
+                                    BehaviorDecl.Body = newBody;
+                                    BehaviorDecl.Locals = inlineBehavior.InlinedBehavior.Locals @ newLocalVarDecls;
+                                }
+                            let newRewriterInlineBehavior =
+                                { inlineBehavior with
+                                    ScmRewriterInlineBehavior.CallToReplace = None;
+                                    ScmRewriterInlineBehavior.InlinedBehavior = newBehavior;
+                                }
+                            do! updateInlineBehaviorState newRewriterInlineBehavior
+    }   
 
     let inlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
-            // Assert: only inline statements in the root-component
+        // Assert: only inline statements in the root-component
 
-            do! (iterateToFixpoint (scmRewrite {
-                do! findCallToInline
-                do! inlineCall
-            }))
-        }
+        do! (iterateToFixpoint (scmRewrite {
+            do! findCallToInline
+            do! inlineCall
+        }))
+    }
 
     let writeBackChangedBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
-            // Assert: only inline statements in the root-component 
-            let! state = getState
-            if (state.InlineBehavior.IsNone) then
-                return ()
-            else
-                let inlineBehavior = state.InlineBehavior.Value
-                let newModel =
-                    match inlineBehavior.BehaviorToReplace with
-                        | BehaviorWithLocation.InProvPort (_,provPortDecl,beh) ->
-                            let newProvPort =
-                                { provPortDecl with
-                                    ProvPortDecl.Behavior = inlineBehavior.InlinedBehavior;
-                                }
-                            state.Model.replaceProvPort(provPortDecl,newProvPort) 
-                        | BehaviorWithLocation.InFault (_,faultDecl,beh) ->
-                            let newFault =
-                                { faultDecl with
-                                    FaultDecl.Step = inlineBehavior.InlinedBehavior;
-                                }
-                            state.Model.replaceFault(faultDecl,newFault) 
-                        | BehaviorWithLocation.InStep (_,stepDecl,beh) ->
-                            let newStep =
-                                { stepDecl with
-                                    StepDecl.Behavior = inlineBehavior.InlinedBehavior;
-                                }
-                            state.Model.replaceStep (stepDecl,newStep) 
-                let modifiedState =
-                    { state with
-                        ScmRewriteState.Model = newModel;
-                        ScmRewriteState.InlineBehavior = None;
-                        ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    }
-                return! putState modifiedState
+        // Assert: only inline statements in the root-component 
+        let! state = getState
+        let! inlineBehavior=getInlineBehaviorState
+        if (inlineBehavior.IsNone) then
+            return ()
+        else
+            let inlineBehavior = inlineBehavior.Value
+            let newModel =
+                match inlineBehavior.BehaviorToReplace with
+                    | BehaviorWithLocation.InProvPort (_,provPortDecl,beh) ->
+                        let newProvPort =
+                            { provPortDecl with
+                                ProvPortDecl.Behavior = inlineBehavior.InlinedBehavior;
+                            }
+                        state.Model.replaceProvPort(provPortDecl,newProvPort) 
+                    | BehaviorWithLocation.InFault (_,faultDecl,beh) ->
+                        let newFault =
+                            { faultDecl with
+                                FaultDecl.Step = inlineBehavior.InlinedBehavior;
+                            }
+                        state.Model.replaceFault(faultDecl,newFault) 
+                    | BehaviorWithLocation.InStep (_,stepDecl,beh) ->
+                        let newStep =
+                            { stepDecl with
+                                StepDecl.Behavior = inlineBehavior.InlinedBehavior;
+                            }
+                        state.Model.replaceStep (stepDecl,newStep) 
+            let modifiedState =
+                { state with
+                    ScmRewriteState.ChangingSubComponent = newModel;
+                    ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
+                    ScmRewriteState.Model = newModel;
+                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+                    ScmRewriteState.SubState = None; //better: do! removeInlineBehaviorState (but it would modify the state :-()
+                }
+            return! putState modifiedState
         }
 
 
         
     let findAndInlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
-            // Assert: only inline statements in the root-component
-            do! findInlineBehavior            
-            do! inlineBehavior
-            do! writeBackChangedBehavior
-        }
+        // Assert: only inline statements in the root-component
+        do! findInlineBehavior            
+        do! inlineBehavior
+        do! writeBackChangedBehavior
+    }
 
     let inlineBehaviors : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
-            do! (iterateToFixpoint findAndInlineBehavior)
-        }
+        do! (iterateToFixpoint findAndInlineBehavior)
+    }
+
+    let createInlineBehaviorState (oldState:ScmRewriteState<unit>) =
+        oldState.deriveWithSubState None
+
+    let inlineBehaviorsWrapper : ScmRewriteFunction<unit,unit> = scmRewrite {
+        let! state = getState
+        let (_,newState) = runStateAndReturnSimpleState (inlineBehaviors) (createInlineBehaviorState state)
+        do! putState newState
+    }

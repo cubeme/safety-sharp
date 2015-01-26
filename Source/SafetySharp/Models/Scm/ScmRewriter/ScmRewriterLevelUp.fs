@@ -762,7 +762,6 @@ module internal ScmRewriterLevelUp =
                 ScmRewriteState.PathOfChangingSubcomponent = parentPath;
                 ScmRewriteState.TakenNames = oldState.TakenNames;
                 ScmRewriteState.SubState = newLevelUp;
-                ScmRewriteState.InlineBehavior = oldState.InlineBehavior;
                 ScmRewriteState.Tainted = true;
                 }
         newState
