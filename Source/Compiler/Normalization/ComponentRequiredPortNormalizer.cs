@@ -37,11 +37,11 @@ namespace SafetySharp.Compiler.Normalization
 	///     <code>
 	///  		public extern void MyMethod(int a, decimal b)
 	///  		// becomes:
-	///  		public Action{int, decimal} MyMethod { private get; set; }
+	///  		public Action{int, decimal} MyMethod { get; set; }
 	///  		
 	///  		private extern bool MyMethod(int a)
 	///  		// becomes:
-	///  		private Func{int, bool} MyMethod { private get; set; }
+	///  		private Func{int, bool} MyMethod { get; set; }
 	/// 	</code>
 	/// </summary>
 	public class ComponentRequiredPortNormalizer : CSharpNormalizer
@@ -64,9 +64,8 @@ namespace SafetySharp.Compiler.Normalization
 				return methodDeclaration;
 
 			var propertyType = methodDeclaration.GetDelegateType(SemanticModel);
-			var getterVisibility = methodDeclaration.GetVisibility() == Visibility.Private ? (Visibility?)null : Visibility.Private;
 			var property = SyntaxBuilder.AutoProperty(methodDeclaration.Identifier.ValueText, propertyType,
-				methodDeclaration.GetVisibility(), getterVisibility, null);
+				methodDeclaration.GetVisibility(), null, null);
 
 			if (methodDeclaration.ExplicitInterfaceSpecifier != null)
 				property = property.WithExplicitInterfaceSpecifier(methodDeclaration.ExplicitInterfaceSpecifier)

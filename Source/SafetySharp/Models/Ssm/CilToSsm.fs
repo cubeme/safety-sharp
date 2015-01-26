@@ -305,7 +305,6 @@ module internal CilToSsm =
                 | _ -> invalidOp "Unsupported branch type '%+A'." op
             (GotoStm (normalizeIntToBool (BExpr (e2, op, e1)), t), [], s)
         | (Instr.Dup, e :: s) -> (NopStm, [], e :: e :: s)
-        | (Instr.Pop, CallExpr (m, p, d, r, e, t) :: s) -> (CallStm (m, p, d, r, e, t), [], s)
         | (Instr.Pop, e :: s) -> (NopStm, [], s)
         | (Instr.And, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, And, e1))) :: s)
         | (Instr.Or, e1 :: e2 :: s) -> (NopStm, [], (normalizeIntToBool (BExpr (e2, Or, e1))) :: s)
@@ -510,13 +509,13 @@ module internal CilToSsm =
         }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
-    let transformMethods (t : TypeDefinition) =
+    let private transformMethods (t : TypeDefinition) =
         t.GetMethods()
         |> Seq.map transformMethod
         |> List.ofSeq
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
-    let rec transformType (typeDefinitions : ImmutableDictionary<System.Type, TypeDefinition>) (c : Component) =
+    let rec private transformType (typeDefinitions : ImmutableDictionary<System.Type, TypeDefinition>) (c : Component) =
         let rec transform (t : TypeDefinition) =
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then

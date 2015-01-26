@@ -49,38 +49,38 @@ module ComponentRequiredPortNormalizer =
     [<Test>]
     let ``normalizes extern 'void -> void' method within a component`` () =
         normalize "class X : Component { public extern void M(); }" =? 
-            "class X : Component { public System.Action M { private get; set; } }"
+            "class X : Component { public System.Action M { get; set; } }"
         normalize "class X : Component { internal extern void M(); }" =? 
-            "class X : Component { internal System.Action M { private get; set; } }"
+            "class X : Component { internal System.Action M { get; set; } }"
         normalize "class X : Component { protected internal extern void M(); }" =? 
-            "class X : Component { protected internal System.Action M { private get; set; } }"
+            "class X : Component { protected internal System.Action M { get; set; } }"
         normalize "class X : Component { protected extern void M(); }" =? 
-            "class X : Component { protected System.Action M { private get; set; } }"
+            "class X : Component { protected System.Action M { get; set; } }"
         normalize "class X : Component { private extern void M(); }" =? 
             "class X : Component { private System.Action M { get; set; } }"
 
     [<Test>]
     let ``normalizes extern void returning method within a component`` () =
         normalize "class X : Component { public extern void M(int a); }" =? 
-            "class X : Component { public System.Action<int> M { private get; set; } }"
+            "class X : Component { public System.Action<int> M { get; set; } }"
         normalize "class X : Component { internal extern void M(int a, decimal b); }" =? 
-            "class X : Component { internal System.Action<int, decimal> M { private get; set; } }"
+            "class X : Component { internal System.Action<int, decimal> M { get; set; } }"
         normalize "class X : Component { internal extern void M(int a, decimal b, bool c); }" =? 
-            "class X : Component { internal System.Action<int, decimal, bool> M { private get; set; } }"
+            "class X : Component { internal System.Action<int, decimal, bool> M { get; set; } }"
 
     [<Test>]
     let ``normalizes extern non-void returning method within a component`` () =
         normalize "class X : Component { public extern bool M(int a); }" =? 
-            "class X : Component { public System.Func<int, bool> M { private get; set; } }"
+            "class X : Component { public System.Func<int, bool> M { get; set; } }"
         normalize "class X : Component { internal extern int M(int a, decimal b); }" =? 
-            "class X : Component { internal System.Func<int, decimal, int> M { private get; set; } }"
+            "class X : Component { internal System.Func<int, decimal, int> M { get; set; } }"
         normalize "class X : Component { internal extern bool M(int a, decimal b, bool c); }" =? 
-            "class X : Component { internal System.Func<int, decimal, bool, bool> M { private get; set; } }"
+            "class X : Component { internal System.Func<int, decimal, bool, bool> M { get; set; } }"
 
     [<Test>]
     let ``normalizes explictly implemented extern method within a component`` () =
         normalize "interface I { void M(); } class X : Component, I { extern void I.M(); }" =?
-            "class X : Component, I { System.Action I.M { private get; set; } }"
+            "class X : Component, I { System.Action I.M { get; set; } }"
 
     [<Test>]
     let ``preserves attributes applied to extern method within a component`` () =
@@ -96,6 +96,6 @@ module ComponentRequiredPortNormalizer =
     [<Test>]
     let ``preserves line numbers of following lines`` () =
         let actual = normalize "class X : Component { public extern void M(int a,\nint b,\nint c); \n\nint f; }" |> normalizeNewLines
-        let expected = "class X : Component { public System.Action<int, int, int> M { private get; set; } \n\n\n\nint f; }"
+        let expected = "class X : Component { public System.Action<int, int, int> M { get; set; } \n\n\n\nint f; }"
 
         actual =? expected

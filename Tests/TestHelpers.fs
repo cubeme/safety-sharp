@@ -219,5 +219,5 @@ type TestSetup () =
     member this.RemoveTemporaryAssemblies () =
         let directory = DirectoryInfo (Environment.CurrentDirectory)
         directory.GetFiles()
-        |> Seq.filter (fun f -> (f.Extension = ".dll" || f.Extension = ".pdb") && f.Name.StartsWith("tmp_"))
+        |> Seq.filter (fun f -> (f.Extension = ".dll" || f.Extension = ".pdb" || f.Extension = ".tmp") && f.Name.StartsWith("tmp_"))
         |> Seq.iter (fun f ->  File.Delete (f.FullName))

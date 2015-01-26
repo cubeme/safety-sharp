@@ -322,6 +322,83 @@ module ``CilToSsm Method Transformations`` =
             }
 
     [<Test>]
+    let ``call method in binary expression`` () =
+        transformMethod "int M() { return 1 + M(); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = IntType
+                Params = []
+                Locals = [tmp 2 0 IntType]
+                Body = 
+                    SeqStm 
+                        [
+                            AsgnStm (tmp 2 0 IntType, CallExpr (name "M", [], [], IntType, [], this))
+                            RetStm (Some (BExpr (IntExpr 1, Add, VarExpr (tmp 2 0 IntType))))
+                        ] 
+                Kind = ProvPort                   
+            }
+
+    [<Test>]
+    let ``call method in method parameter`` () =
+        transformMethod "int M(int x) { return M(M(x)); }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = IntType
+                Params = [ { Var = arg "x" IntType; Direction = In } ]
+                Locals = [tmp 3 0 IntType; tmp 4 0 IntType]
+                Body = 
+                    SeqStm 
+                        [
+                            AsgnStm (tmp 3 0 IntType, CallExpr (name "M", [IntType], [In], IntType, [VarExpr (arg "x" IntType)], this))
+                            AsgnStm (tmp 4 0 IntType, CallExpr (name "M", [IntType], [In], IntType, [VarExpr (tmp 3 0 IntType)], this))
+                            RetStm (Some (VarExpr (tmp 4 0 IntType)))
+                        ] 
+                Kind = ProvPort                   
+            }
+
+    [<Test>]
+    let ``call method in if condition`` () =
+        transformMethod "bool M() { if (M()) return true; else return false; }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = BoolType
+                Params = []
+                Locals = [tmp 1 0 BoolType]
+                Body = 
+                    SeqStm 
+                        [
+                            AsgnStm (tmp 1 0 BoolType, CallExpr (name "M", [], [], BoolType, [], this))
+                            IfStm (
+                                UExpr (Not, VarExpr (tmp 1 0 BoolType)),
+                                RetStm (Some (BoolExpr false)),
+                                Some (RetStm (Some (BoolExpr true)))
+                            )
+                        ] 
+                Kind = ProvPort                   
+            }
+
+    [<Test>]
+    let ``call method in ternary operator`` () =
+        transformMethod "bool M() { return M() ? true : false; }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = BoolType
+                Params = []
+                Locals = [tmp 1 0 BoolType]
+                Body = 
+                    SeqStm 
+                        [
+                            AsgnStm (tmp 1 0 BoolType, CallExpr (name "M", [], [], BoolType, [], this))
+                            IfStm (
+                                VarExpr (tmp 1 0 BoolType),
+                                RetStm (Some (BoolExpr true)),
+                                Some (RetStm (Some (BoolExpr false)))
+                            )
+                        ] 
+                Kind = ProvPort                   
+            }
+
+    [<Test>]
     let ``call method ignore return within if statement`` () =
         transformMethod "int F(int x) { return x; } void M(bool b) { if (b) F(4); else F(1); }" =?
             {

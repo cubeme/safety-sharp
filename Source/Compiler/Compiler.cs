@@ -54,7 +54,7 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Compiles the SafetySharp modeling project identified by the <paramref name="projectFile" /> for the given
+		///     Compiles the S# modeling project identified by the <paramref name="projectFile" /> for the given
 		///     <paramref name="configuration" /> and <paramref name="platform" />.
 		/// </summary>
 		/// <param name="projectFile">The C# project file that should be compiled.</param>
@@ -80,9 +80,22 @@ namespace SafetySharp.Compiler
 			var workspace = MSBuildWorkspace.Create(msBuildProperties);
 			var project = workspace.OpenProjectAsync(projectFile).Result;
 			var compilation = project.GetCompilationAsync().Result;
-			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
 
-			if (!Diagnose(compilation) || !Emit(optimizedCompilation, project.OutputFilePath, embedOriginalAssembly: false))
+			return Compile(compilation, project.OutputFilePath);
+		}
+
+		/// <summary>
+		///     Compiles the S# <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation that should be compiled.</param>
+		/// <param name="outputPath">The output path of the compiled assembly.</param>
+		public static bool Compile([NotNull] Compilation compilation, string outputPath)
+		{
+			Requires.NotNull(compilation, () => compilation);
+			Requires.NotNullOrWhitespace(outputPath, () => outputPath);
+
+			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
+			if (!Diagnose(compilation) || !Emit(optimizedCompilation, outputPath, embedOriginalAssembly: false))
 				return false;
 
 			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
@@ -90,7 +103,7 @@ namespace SafetySharp.Compiler
 			compilation = compilation.WithOptions(options);
 
 			compilation = NormalizeSimulationCode(compilation);
-			return Emit(compilation, project.OutputFilePath, embedOriginalAssembly: true);
+			return Emit(compilation, outputPath, embedOriginalAssembly: true);
 		}
 
 		/// <summary>

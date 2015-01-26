@@ -105,7 +105,7 @@ module internal SsmToCSharp =
                 expr e
                 writer.AppendLine ";"
             | GotoStm _              -> invalidOp "'goto' statements are not supported when generating C# code."
-            | SeqStm s               -> s |> List.iter toCSharp
+            | SeqStm s               -> writer.AppendBlockStatement (fun () -> s |> List.iter toCSharp)
             | RetStm None            -> writer.AppendLine "return;"
             | RetStm (Some e)        -> writer.Append "return "; expr e; writer.AppendLine(";")
             | IfStm (e, s, None)     -> 

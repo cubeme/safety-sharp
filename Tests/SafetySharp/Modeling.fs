@@ -47,7 +47,7 @@ module ModelingShared =
     /// Compiles the given C# code and creates an instance of the "TestModel" class.
     let internal createModel csharpCode =
         let compilation = TestCompilation csharpCode
-        let assembly = compilation.Compile ()
+        let assembly = compilation.CompileSSharp ()
         let modelType = assembly.GetType "TestModel"
         Activator.CreateInstance modelType :?> Model
 

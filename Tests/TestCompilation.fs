@@ -37,6 +37,7 @@ open Microsoft.CodeAnalysis.Diagnostics
 open Mono.Cecil
 open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn
+open SafetySharp.Compiler
 open SafetySharp.Modeling
 
 /// Raised when a C# compilation problem occurred.
@@ -113,6 +114,18 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
             else
                 emitResult.Diagnostics |> Seq.iter (fun diagnostic -> printf "%A" diagnostic)
                 failed "Assembly compilation failed."
+
+        assembly
+
+    /// Emits an assembly for the compilation compiled with the S# compiler and loads the S# assembly into the app domain.
+    member this.CompileSSharp () =
+        if assembly = null then
+            // Create a temporary file and load the assembly from the file, as some
+            // tests require the assembly to be present on the file system
+            if not <| Compiler.Compile (csharpCompilation, assemblyPath) then
+                failed "Assembly compilation failed."
+
+            assembly <- Assembly.LoadFile assemblyPath
 
         assembly
 
