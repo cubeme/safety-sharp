@@ -764,7 +764,6 @@ module internal ScmRewriterLevelUp =
                 ScmRewriteState.TakenNames = oldState.TakenNames;
                 ScmRewriteState.SubState = newLevelUp;
                 ScmRewriteState.InlineBehavior = oldState.InlineBehavior;
-                ScmRewriteState.ConvertDelayedBindings = oldState.ConvertDelayedBindings;
                 ScmRewriteState.ConvertFaults = oldState.ConvertFaults;
                 ScmRewriteState.Tainted = true;
                 }

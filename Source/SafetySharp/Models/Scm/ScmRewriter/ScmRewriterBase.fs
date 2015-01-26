@@ -35,9 +35,7 @@ module internal ScmRewriterBase =
         ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
         BehaviorsToRewrite : BehaviorWithLocation list;
     }
-                
-    type ScmConvertDelayedBindings = unit
-    
+                    
     type ScmRewriterInlineBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
         InlinedBehavior : BehaviorDecl;
@@ -64,7 +62,6 @@ module internal ScmRewriterBase =
         //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
         InlineBehavior : ScmRewriterInlineBehavior option;
-        ConvertDelayedBindings : ScmConvertDelayedBindings option;
         ConvertFaults : ScmRewriterConvertFaults option;
         Tainted : bool;
     }
@@ -77,7 +74,6 @@ module internal ScmRewriterBase =
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.SubState = subState;
                     ScmRewriteState.InlineBehavior = None;
-                    ScmRewriteState.ConvertDelayedBindings = None;
                     ScmRewriteState.ConvertFaults = None;
                     ScmRewriteState.Tainted = false;
                 }
@@ -89,7 +85,6 @@ module internal ScmRewriterBase =
                     ScmRewriteState.TakenNames = this.TakenNames;
                     ScmRewriteState.SubState = newSubState; //<---- everything but this must be changed
                     ScmRewriteState.InlineBehavior = this.InlineBehavior;
-                    ScmRewriteState.ConvertDelayedBindings = this.ConvertDelayedBindings;
                     ScmRewriteState.ConvertFaults = this.ConvertFaults;
                     ScmRewriteState.Tainted = this.Tainted;
                 }

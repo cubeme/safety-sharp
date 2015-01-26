@@ -71,20 +71,15 @@ module internal ScmRewriterConvertDelayedBindings =
     let selectRootComponentForConvertingDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         // Use As1
         let! state = getState
-        if (state.ConvertDelayedBindings.IsSome) then
-            return ()
-        else
-            let rootComp = state.Model
-            let rootPath = [state.Model.Comp]
-            let convertDelayedBindingsState = ()
-            let modifiedState =
-                { state with
-                    ScmRewriteState.ChangingSubComponent = rootComp;
-                    ScmRewriteState.PathOfChangingSubcomponent = rootPath;
-                    ScmRewriteState.ConvertDelayedBindings = Some(convertDelayedBindingsState);
-                    ScmRewriteState.Tainted = true;
-                }
-            return! putState modifiedState
+        let rootComp = state.Model
+        let rootPath = [state.Model.Comp]
+        let modifiedState =
+            { state with
+                ScmRewriteState.ChangingSubComponent = rootComp;
+                ScmRewriteState.PathOfChangingSubcomponent = rootPath;
+                ScmRewriteState.Tainted = true;
+            }
+        return! putState modifiedState
     }
 
 
@@ -225,21 +220,16 @@ module internal ScmRewriterConvertDelayedBindings =
     let convertDelayedBindingsWriteBackChangesIntoModel  : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {
         // Use As1
         let! state = getState
-        if (state.ConvertDelayedBindings.IsNone) then
-            return ()
-        else
-            let! compDecl = getSubComponentToChange
-            let convertDelayedBindingsState = state.ConvertDelayedBindings.Value
-            let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent compDecl
-            let modifiedState =
-                { state with
-                    ScmRewriteState.ChangingSubComponent = newModel;
-                    ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
-                    ScmRewriteState.Model = newModel;
-                    ScmRewriteState.ConvertDelayedBindings = None;
-                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                }
-            return! putState modifiedState
+        let! compDecl = getSubComponentToChange
+        let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent compDecl
+        let modifiedState =
+            { state with
+                ScmRewriteState.ChangingSubComponent = newModel;
+                ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
+                ScmRewriteState.Model = newModel;
+                ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+            }
+        return! putState modifiedState
     }
 
     let convertDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = scmRewrite {        
