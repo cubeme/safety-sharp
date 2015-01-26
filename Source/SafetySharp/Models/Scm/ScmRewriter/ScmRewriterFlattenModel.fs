@@ -40,7 +40,7 @@ module internal ScmRewriterFlattenModel =
     let levelUpAndInline : ScmRewriteFunction<unit,unit> = scmRewrite {
             // level up everything
             do! levelUpSubcomponents
-            do! assertNoSubcomponent
+            //do! assertNoSubcomponent (assertion is done as last step)
             do! checkConsistency
             
             // convert faults

@@ -28,37 +28,6 @@ module internal ScmRewriterBase =
     
     type ScmModel = CompDecl //may change, but I hope it does not
     
-    type ScmRewriterLevelUp = {  //TODO: Rename to data, move into file
-        // child lives in parent. Things from the child are moved
-        // into the parent. The path to the parent is declared in the ScmRewriterState
-        NameOfChildToRewrite : Comp;
-        
-        // Forwarder
-        // For each of these. Map goes from:old -> to:new. Old entity lives always in ChildPath, new in ParentPath
-        // So no path is necessary
-        ArtificialFieldsOldToNew : Map<Field,Field>
-        ArtificialFaultsOldToNew : Map<Fault,Fault>
-        ArtificialReqPortOldToNew : Map<ReqPort,ReqPort>
-        ArtificialProvPortOldToNew : Map<ProvPort,ProvPort>
-
-        //Maps from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
-        ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> 
-        ArtificialFaultsNewToOld : Map<FaultPath,FaultPath>        
-        ArtificialReqPortNewToOld : Map<ReqPortPath,ReqPortPath>
-        ArtificialProvPortNewToOld : Map<ProvPortPath,ProvPortPath>
-        
-        FaultsToRewrite : FaultDecl list    //declared in parent
-        ProvPortsToRewrite : ProvPortDecl list    //declared in parent
-        StepsToRewrite : StepDecl list    //declared in parent
-        ArtificialStep : (ReqPort*ProvPort) option
-    }
-        with
-            member levelUp.oldToNewMaps1 =                
-                    (levelUp.ArtificialReqPortOldToNew,levelUp.ArtificialFaultsOldToNew,Map.empty<Var,Var>,levelUp.ArtificialFieldsOldToNew)
-            member levelUp.oldToNewMaps2 =                
-                    (levelUp.ArtificialFaultsOldToNew)
-            //member levelUp.ParentCompDecl =
-            //        levelUp.ParentCompDecl
                                         
     type ScmRewriterConvertFaults = { //TODO: Rename to data, move into file
         // Forwarder
@@ -94,7 +63,6 @@ module internal ScmRewriterBase =
         // TODO: Optimization: Add parent of ComponentToRemove here. Thus, when a change to the componentToRemove is done, only its parent needs to be updated and not the whole model.
         //       The writeBack to the model can happen, when a component gets deleted
         // Flag, which determines, if something was changed (needed for fixpoint iteration)
-        LevelUp : ScmRewriterLevelUp option;
         InlineBehavior : ScmRewriterInlineBehavior option;
         ConvertDelayedBindings : ScmConvertDelayedBindings option;
         ConvertFaults : ScmRewriterConvertFaults option;
@@ -107,15 +75,29 @@ module internal ScmRewriterBase =
                     ChangingSubComponent = scm;
                     PathOfChangingSubcomponent = [scm.Comp];
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
-                    ScmRewriteState.LevelUp = None;
                     ScmRewriteState.SubState = subState;
                     ScmRewriteState.InlineBehavior = None;
                     ScmRewriteState.ConvertDelayedBindings = None;
                     ScmRewriteState.ConvertFaults = None;
                     ScmRewriteState.Tainted = false;
                 }
+            member this.deriveWithSubState<'newSubState> (newSubState:'newSubState) =
+                {
+                    ScmRewriteState.Model = this.Model;
+                    ScmRewriteState.ChangingSubComponent = this.ChangingSubComponent;
+                    ScmRewriteState.PathOfChangingSubcomponent = this.PathOfChangingSubcomponent;
+                    ScmRewriteState.TakenNames = this.TakenNames;
+                    ScmRewriteState.SubState = newSubState; //<---- everything but this must be changed
+                    ScmRewriteState.InlineBehavior = this.InlineBehavior;
+                    ScmRewriteState.ConvertDelayedBindings = this.ConvertDelayedBindings;
+                    ScmRewriteState.ConvertFaults = this.ConvertFaults;
+                    ScmRewriteState.Tainted = this.Tainted;
+                }
+
+
+    type ScmRewriteSimpleState = ScmRewriteState<unit> //simple state is a state without subState
                     
-    let initiaScmRewriterStateWithoutSubState (scm:ScmModel) = ScmRewriteState<unit>.initial scm ()
+    let initialSimpleState (scm:ScmModel) = ScmRewriteState<unit>.initial scm ()
 
                 
     
@@ -163,6 +145,11 @@ module internal ScmRewriterBase =
     let getState = ScmRewriteFunction (fun s -> (s,s)) //Called in workflow: (implicitly) gets state (s) from workflow; assign this State s to the let!; and set (in this case keep)State of workflow to s
     let putState s = ScmRewriteFunction (fun _ -> ((),s)) //Called in workflow: ignore state (_) from workflow; assign nothing () to the let!; and set State of workflow to the new state s
     let putStateAndReturn s returnValue = ScmRewriteFunction (fun _ -> (returnValue,s))//Called in workflow: ignore state (_) from workflow; assign returnValue to the let!; and set State of workflow to the new state s
+
+    let runStateAndReturnSimpleState<'subState> ((ScmRewriteFunction s):ScmRewriteFunction<'subState,unit>) (a:ScmRewriteState<'subState>) : (unit*ScmRewriteSimpleState) =
+        let (_,result) = s a
+        let convertedResult = result.deriveWithSubState ()
+        ((),convertedResult)
 
     // the computational expression "scmRewrite" is defined here
     // inspired by http://fsharpforfunandprofit.com/posts/computation-expressions-intro/ (StateBuilder, now offline)

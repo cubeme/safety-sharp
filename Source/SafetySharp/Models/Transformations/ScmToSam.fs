@@ -143,7 +143,7 @@ module internal ScmToSam =
     let transformScmToSam (model : Scm.CompDecl) : Sam.Pgm =
         // first level up and inline everything in Sam, then produce the appropriate Sam.Pgm.
         // The latter is just a recursive walk through the Scm-Datatypes and return the equivalent Sam-Datatypes
-        let initialState = initiaScmRewriterStateWithoutSubState model
+        let initialState = initialSimpleState model
         let workFlow = Scm.ScmRewriterFlattenModel.levelUpAndInline
         let (_,resultingState) = Scm.ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
