@@ -24,6 +24,7 @@ namespace SafetySharp.Models
 
 /// Lowers SSM models into a normalized form that can be transformed to a SCM model in a trivial way.
 module internal SsmLowering =
+    open SafetySharp
     open Ssm
 
     /// Makes the given name variable unique within the given method of the given component.
@@ -53,8 +54,7 @@ module internal SsmLowering =
                 | AsgnStm (v, CallExpr (m, p, d, r, e, t)) ->
                     CallStm (m, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v], t)
                 | SeqStm s -> SeqStm (s |> List.map lower)
-                | IfStm (c, s1, None) -> IfStm (c, lower s1, None)
-                | IfStm (c, s1, Some s2) -> IfStm (c, lower s1, Some (lower s2))
+                | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
                 | s -> s
             { m with Body = lower m.Body }
 
@@ -67,8 +67,7 @@ module internal SsmLowering =
                 | RetStm (Some e) ->
                     SeqStm [ AsgnStm (retArg, e); RetStm None ]
                 | SeqStm s -> SeqStm (s |> List.map lower)
-                | IfStm (c, s1, None) -> IfStm (c, lower s1, None)
-                | IfStm (c, s1, Some s2) -> IfStm (c, lower s1, Some (lower s2))
+                | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
                 | s -> s
             { m with Body = lower m.Body; Return = VoidType }
 
@@ -84,3 +83,29 @@ module internal SsmLowering =
         { c with
             Methods = c.Methods |> List.map lowerSignature
             Subs = c.Subs |> List.map lowerSignatures }
+
+    /// Rewrites all methods such that they have a single exit point only; i.e., the method exits when the last
+    /// statement has been executed. Once this lowering step is completed, a method does not contain any 
+    /// return statements anymore.
+    let rec lowerExitPoints (c : Comp) =
+        let lowerMethod (m : Method) = 
+            let retVar = Local (makeUniqueName c m "returned", BoolType)
+            let rec lower s = 
+                match s with
+                | NopStm -> (NopStm, false)
+                | AsgnStm _ -> (s, false)
+                | CallStm _ -> (s, false)
+                | SeqStm s -> (SeqStm s, false)
+                | IfStm (e, s1, s2) -> 
+                    let (s1, ret1) = lower s1
+                    let (s2, ret2) = lower s2
+                    (IfStm (e, s1, s2), ret1 || ret2)
+                | _ -> notSupported "Unsupported statement '%+A'" s
+
+            let (body, hadMultipleExitPoints) = lower m.Body
+            let locals = if hadMultipleExitPoints then retVar :: m.Locals else m.Locals
+            { m with Body = body; Locals = locals }
+
+        { c with
+            Methods = c.Methods |> List.map lowerMethod
+            Subs = c.Subs |> List.map lowerExitPoints }

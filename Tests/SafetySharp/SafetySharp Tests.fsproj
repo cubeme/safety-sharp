@@ -69,6 +69,7 @@
     <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
     <Compile Include="Models\Ssm\SsmLowering.Signatures.fs" />
+    <Compile Include="Models\Ssm\SsmLowering.ExitPoints.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Models\Scm\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
