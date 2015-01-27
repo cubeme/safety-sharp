@@ -42,6 +42,70 @@ module ``CilToSsm Component Transformation`` =
         CilToSsm.transformModel model
 
     [<Test>]
+    let ``transform subcomponents of derived component with non-conflicting names`` () =
+        transform "class S : Component {} class X : Component { S s = new S(); } class Y : X { S s1 = new S(); S s2 = new S(); }" "new Y()" =?
+            [
+                {
+                    Name = "Root0"
+                    Fields = []
+                    Methods = []
+                    Subs =
+                        [
+                            {
+                                Name = "Root0.s@0"
+                                Fields = []
+                                Methods = []
+                                Subs = []
+                            }
+                            {
+                                Name = "Root0.s1@1"
+                                Fields = []
+                                Methods = []
+                                Subs = []
+                            }
+                            {
+                                Name = "Root0.s2@2"
+                                Fields = []
+                                Methods = []
+                                Subs = []
+                            }
+                        ]
+                }
+            ]
+
+    [<Test>]
+    let ``transform subcomponents of derived component with conflicting names`` () =
+        transform "class S : Component {} class X : Component { S s = new S(); } class Y : X { S s = new S(); S s2 = new S(); }" "new Y()" =?
+            [
+                {
+                    Name = "Root0"
+                    Fields = []
+                    Methods = []
+                    Subs =
+                        [
+                            {
+                                Name = "Root0.s@0"
+                                Fields = []
+                                Methods = []
+                                Subs = []
+                            }
+                            {
+                                Name = "Root0.s@1"
+                                Fields = []
+                                Methods = []
+                                Subs = []
+                            }
+                            {
+                                Name = "Root0.s2@2"
+                                Fields = []
+                                Methods = []
+                                Subs = []
+                            }
+                        ]
+                }
+            ]
+
+    [<Test>]
     let ``transform component without simple method`` () =
         transform "namespace Y { class X : Component { int M() { return 1; }}}" "new Y.X()" =?
         [
@@ -73,7 +137,7 @@ module ``CilToSsm Component Transformation`` =
                 Subs = 
                     [
                         {
-                            Name = "Root0.x"
+                            Name = "Root0.x@0"
                             Fields = []
                             Subs = []
                             Methods = 

@@ -52,6 +52,33 @@ namespace Elbtunnel
 		}
 	}
 
+	class Generic2<T>: GenericComponent<T>
+	{
+		private GenericComponent<T> c1;
+		private GenericComponent<bool> c2;
+
+		public Generic2(params T[] v) : base(v)
+		{
+			c1 = new GenericComponent<T>(v);
+			c2 = new GenericComponent<bool>(false, false, false);
+		}
+	}
+
+	class GenericComponent<T> : Component
+	{
+		T f;
+
+		public GenericComponent(params T[] values)
+		{
+			SetInitialValues(()=>f, values);
+		}
+
+		public T MyPort(T val)
+		{
+			return val;
+		}
+	}
+
 	public class LightBarrier : Component
 	{
 		private int _i = 1;
@@ -65,6 +92,9 @@ namespace Elbtunnel
 		[Required]
 		public extern void SendData(int position);
 
+		[Required]
+		public extern int GetPort(bool position);
+
 		public void IsTriggered(out bool t)
 		{
 			_timer.Update();
@@ -77,8 +107,15 @@ namespace Elbtunnel
 			SendData(22);
 			var q = 38;
 			//q = Choose.Value(23, 4, 23, 55);
-			_i = _i + 1;
+			if (_i == 3)
+			{
+				_i = _i + 1 + (Triggered ? 1 : 0) + GetPort(Triggered);
+				q += 3;
+			}
+			else
+				--_i;
 			//return _i + q;
+			_i *= q;
 		}
 	}
 

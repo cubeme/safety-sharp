@@ -69,7 +69,7 @@
     <Compile Include="Models\Scm\ScmParser.fs" />
     <Compile Include="Models\Scm\ScmTypedefs.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />
-    <Compile Include="Models\Scm\ScmAstToString.fs" />
+    <Compile Include="Models\Scm\ScmToString.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheck.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterBase.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterLevelUp.fs" />

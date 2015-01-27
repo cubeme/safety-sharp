@@ -53,7 +53,7 @@ module ``CilToSsm Multiple Assemblies`` =
                     Subs = 
                         [
                             {
-                                Name = "Root0.x"
+                                Name = "Root0.x@0"
                                 Fields = []
                                 Subs = []
                                 Methods = 

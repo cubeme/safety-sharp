@@ -59,7 +59,7 @@ module ``CilToSsm Method Transformations`` =
         m
 
     let private arg name t = Arg (name, t)
-    let private local name t = Local (name, t)
+    let private local name t = Local (sprintf "%s%%" name, t)
     let private field name t = Field (CilToSsm.makeUniqueFieldName name 2, t)
     let private tmp = CilToSsm.freshLocal
     let private this = Some (VarExpr (This (ClassType className)))
@@ -477,6 +477,35 @@ module ``CilToSsm Method Transformations`` =
                         )
                         AsgnStm (arg "z" IntType, VarExpr (tmp 7 0 IntType))
                         RetStm (Some (DoubleExpr 3.0))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
+    let ``do not store objects on the stack to temporaries`` () =
+        transformMethod "int _f; void M() { _f += (_f > 0 ? 1 : 2) + X(_f); } int X(int v) { return v; }" =?
+            {
+                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Return = VoidType
+                Params = []
+                Locals = [tmp 9 0 IntType; tmp 10 0 IntType; tmp 10 1 IntType; tmp 13 0 IntType]
+                Body =
+                    SeqStm [
+                        AsgnStm (tmp 9 0 IntType, VarExpr (field "_f" IntType))
+                        IfStm (
+                            BExpr (VarExpr (field "_f" IntType), Gt, IntExpr 0),
+                            SeqStm [
+                                AsgnStm (tmp 10 0 IntType, IntExpr 1)
+                                AsgnStm (tmp 10 1 IntType, VarExpr (tmp 9 0 IntType))
+                            ],
+                            SeqStm [
+                                AsgnStm (tmp 10 0 IntType, IntExpr 2)
+                                AsgnStm (tmp 10 1 IntType, VarExpr (field "_f" IntType))
+                            ]
+                        )
+                        AsgnStm (tmp 13 0 IntType, CallExpr (name "X", [IntType], [In], IntType, [VarExpr (field "_f" IntType)], this))
+                        AsgnStm (field "_f" IntType, BExpr (VarExpr (tmp 10 1 IntType), Add, BExpr (VarExpr (tmp 10 0 IntType), Add, VarExpr (tmp 13 0 IntType))))
+                        RetStm None
                     ]
                 Kind = ProvPort
             }

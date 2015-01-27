@@ -206,7 +206,7 @@ module ``Components property`` =
         model.Components |> List.iter (fun component' -> component'.IsMetadataFinalized =? true)
 
     [<Test>]
-    let ``all contained components have their tree path encoded in their name`` () =
+    let ``all contained components have their tree path and subcomponent index encoded in their name`` () =
         let component1 = EmptyComponent ()
         let component2 = EmptyComponent ()
         let component3 = EmptyComponent ()
@@ -218,10 +218,10 @@ module ``Components property`` =
 
         let name root = function
             | [] -> sprintf "Root%i" root
-            | fields -> sprintf "Root%i.%s" root <| String.Join (".", fields |> List.map fsharpFieldName)
+            | fields -> sprintf "Root%i.%s" root <| String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
         
         model.Components |> List.map (fun component' -> component'.Name) =?
-        [name 0 []; name 0 ["_component"]; name 1 []; name 1 ["_component1"]; name 1 ["_component2"]; name 1 ["_component2"; "_component"]] 
+        [name 0 []; name 0 [("_component", 0)]; name 1 []; name 1 [("_component1", 0)]; name 1 [("_component2", 1)]; name 1 [("_component2", 1); ("_component", 0)]] 
 
 [<TestFixture>]
 module ``Roots property`` =

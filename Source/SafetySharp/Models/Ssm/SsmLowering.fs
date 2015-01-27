@@ -51,11 +51,10 @@ module internal SsmLowering =
         //   a statement call
         let lowerCallSites (m : Method) =
             let rec lower = function
-                | AsgnStm (v, CallExpr (m, p, d, r, e, t)) ->
-                    CallStm (m, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v], t)
-                | SeqStm s -> SeqStm (s |> List.map lower)
-                | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
-                | s -> s
+                | AsgnStm (v, CallExpr (m, p, d, r, e, t)) -> CallStm (m, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v], t)
+                | SeqStm s                                 -> SeqStm (s |> List.map lower)
+                | IfStm (c, s1, s2)                        -> IfStm (c, lower s1, lower s2)
+                | s                                        -> s
             { m with Body = lower m.Body }
 
         // Lowers all returns statements of the method:
@@ -64,11 +63,10 @@ module internal SsmLowering =
         //   parameter and a non-value returning return
         let lowerRetStms retArg (m : Method) =
             let rec lower = function
-                | RetStm (Some e) ->
-                    SeqStm [ AsgnStm (retArg, e); RetStm None ]
-                | SeqStm s -> SeqStm (s |> List.map lower)
+                | RetStm (Some e)   -> SeqStm [ AsgnStm (retArg, e); RetStm None ]
+                | SeqStm s          -> SeqStm (s |> List.map lower)
                 | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
-                | s -> s
+                | s                 -> s
             { m with Body = lower m.Body; Return = VoidType }
 
         // Lowers the signature of the given method.
@@ -84,28 +82,69 @@ module internal SsmLowering =
             Methods = c.Methods |> List.map lowerSignature
             Subs = c.Subs |> List.map lowerSignatures }
 
-    /// Rewrites all methods such that they have a single exit point only; i.e., the method exits when the last
-    /// statement has been executed. Once this lowering step is completed, a method does not contain any 
-    /// return statements anymore.
-    let rec lowerExitPoints (c : Comp) =
-        let lowerMethod (m : Method) = 
-            let retVar = Local (makeUniqueName c m "returned", BoolType)
-            let rec lower s = 
-                match s with
-                | NopStm -> (NopStm, false)
-                | AsgnStm _ -> (s, false)
-                | CallStm _ -> (s, false)
-                | SeqStm s -> (SeqStm s, false)
-                | IfStm (e, s1, s2) -> 
-                    let (s1, ret1) = lower s1
-                    let (s2, ret2) = lower s2
-                    (IfStm (e, s1, s2), ret1 || ret2)
-                | _ -> notSupported "Unsupported statement '%+A'" s
+    /// Indicates the kind of operations performed on a variable.
+    type private UseType = 
+        | Unknown
+        | Read
+        | Write
+        | ReadWrite
 
-            let (body, hadMultipleExitPoints) = lower m.Body
-            let locals = if hadMultipleExitPoints then retVar :: m.Locals else m.Locals
-            { m with Body = body; Locals = locals }
+//    /// Removes all unused local variables from all methods of the given component and its subcomponents.
+//    let rec removeUnusedLocals (c : Comp) =
+//        let merge s1 s2 =
+//            match (s1, s2) with
+//            | (Unknown, s)           -> s
+//            | (s, Unknown)           -> s
+//            | (s1, s2) when s1 = s2  -> s1
+//            | (s1, s2)               -> ReadWrite
+//
+//        let rec classifyLocalInExpr local e =
+//            match e with
+//            | VarExpr local               -> Read
+//            | VarRefExpr local            -> ReadWrite
+//            | UExpr (_, e)                -> classifyLocalInExpr local e
+//            | BExpr (e1, _, e2)           -> merge (classifyLocalInExpr local e1) (classifyLocalInExpr local e2)
+//            | CallExpr (_, _, _, _, e, _) -> e |> List.map (classifyLocalInExpr local) |> List.reduce merge
+//            | _                           -> Unknown
+//
+//        let rec classifyLocalInStm local stm =
+//            match stm with
+//            | AsgnStm (local, e)         -> merge Write (classifyLocalInExpr local e)
+//            | SeqStm s                   -> s |> List.map (classifyLocalInStm local) |> List.reduce merge
+//            | RetStm (Some e)            -> classifyLocalInExpr local e
+//            | IfStm (e, s1, s2)          -> merge (classifyLocalInExpr local e) (classifyLocalInStm local s1) |> merge (classifyLocalInStm local s2)
+//            | CallStm (_, _, _, _, e, _) -> e |> List.map (classifyLocalInExpr local) |> List.reduce merge
+//            | _                          -> Unknown
+//
+//        let rec removeLocal local stm =
+//            match stm with
+//            | AsgnStm (local, e) -> NopStm
+//            | SeqStm s           -> s |> List.map (removeLocal local) |> SeqStm
+//            | IfStm (e, s1, s2)  -> IfStm (e, removeLocal local s1, removeLocal local s2)
+//            | s                  -> s
+//
+//        let remove (m : Method) =
+//            let locals = m.Locals |> List.map (fun l -> (l, classifyLocalInStm l m.Body))
+//            let body = 
+//                locals |> List.fold (fun body (local, useType) ->
+//                    match useType with
+//                    | Unknown
+//                    | Write     -> removeLocal local body
+//                    | Read      -> invalidOp "Local variable '%+A' is read from, but never written to." local
+//                    | ReadWrite -> body
+//                ) m.Body
+//
+//            { m with Body = body; Locals = locals |> List.filter (fun (local, useType) -> useType <> Write) |> List.map fst }
+//
+//        { c with
+//            Methods = c.Methods |> List.map remove
+//            Subs = c.Subs |> List.map removeUnusedLocals }
 
-        { c with
-            Methods = c.Methods |> List.map lowerMethod
-            Subs = c.Subs |> List.map lowerExitPoints }
+    /// Applies all lowerings to the given components.
+    let lower (c : Comp list) : Comp =
+        let root = 
+            match c with
+            | c :: [] -> c
+            | c       -> { Name = "SynthesizedRoot"; Subs = c; Fields = []; Methods = []; }
+        
+        root |> lowerSignatures //|> removeUnusedLocals

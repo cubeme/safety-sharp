@@ -198,20 +198,26 @@ type Component () =
             )
         this.GetType () |> collectFields 
 
-        let subcomponentMetadata = 
-            this.GetType().GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+        // Collects all subcomponents of the component recursively, going up the inheritance chain; unfortunately, the GetFields()
+        // method does not return private fields of base classes, even with BindingFlags.FlattenHierarchy.
+        let rec collectSubcomponents (t : Type) = seq {
+            if t.BaseType <> typeof<Component> then
+                yield! collectSubcomponents t.BaseType
+
+            yield! t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
             |> Seq.map (fun field -> (field, field.GetValue(this)))
             |> Seq.where (fun (field, component') -> component' <> null)
             |> Seq.map (fun (field, component') -> (field, component' :?> Component))
-            |> List.ofSeq
+        }
 
+        let subcomponentMetadata = collectSubcomponents (this.GetType ()) |> Seq.toList
         subcomponents <- subcomponentMetadata |> List.map snd
         subcomponentMetadata
-        |> List.iter (fun (field, component') -> 
+        |> List.iteri (fun idx (field, component') -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata (sprintf "%s.%s" name field.Name)
+                component'.FinalizeMetadata (sprintf "%s.%s@%d" name field.Name idx)
         )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------

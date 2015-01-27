@@ -317,7 +317,7 @@ module ``GetSubcomponent method`` =
         let component' = OneSubcomponent (subcomponent)
         component'.FinalizeMetadata ()
 
-        component'.GetSubcomponent (fsharpFieldName "_component") =? (subcomponent :> Component)
+        component'.GetSubcomponent (fsharpSubcomponentName "_component" 0) =? (subcomponent :> Component)
 
     [<Test>]
     let ``returns multiple subcomponents`` () =
@@ -326,8 +326,8 @@ module ``GetSubcomponent method`` =
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
         component'.FinalizeMetadata ()
 
-        component'.GetSubcomponent(fsharpFieldName "_component1") =? (subcomponent1 :> Component)
-        component'.GetSubcomponent(fsharpFieldName "_component2") =? (subcomponent2 :> Component)
+        component'.GetSubcomponent(fsharpSubcomponentName "_component1" 0) =? (subcomponent1 :> Component)
+        component'.GetSubcomponent(fsharpSubcomponentName "_component2" 1) =? (subcomponent2 :> Component)
 
 [<TestFixture>]
 module ``Subcomponents property`` =
@@ -381,11 +381,36 @@ module ``Subcomponents property`` =
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
         component'.FinalizeMetadata "Root"
 
-        component'.Subcomponents.[0].Name =? fsharpFieldName "Root._component1"
-        component'.Subcomponents.[1].Name =? fsharpFieldName "Root._component2"
+        component'.Subcomponents.[0].Name =? fsharpSubcomponentName "Root._component1" 0
+        component'.Subcomponents.[1].Name =? fsharpSubcomponentName "Root._component2" 1
 
-// These tests assume that the F# compiler generates a property named 'x' and a backing field with
-// some internal name for a 'val x : type' expression within a class.
+    [<Test>]
+    let ``returns all subcomponents of the entire type hierarchy`` () =
+        let csharpCode = "class S : Component {} class X : Component { S s = new S(); } class Y : X { S s1 = new S(); S s2 = new S(); }" 
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let derivedType = assembly.GetType "Y"
+        let component' = Activator.CreateInstance derivedType :?> Component
+        component'.FinalizeMetadata "Root"
+
+        component'.Subcomponents.Length =? 3
+        component'.Subcomponents.[0].Name =? "Root.s@0"
+        component'.Subcomponents.[1].Name =? "Root.s1@1"
+        component'.Subcomponents.[2].Name =? "Root.s2@2"
+
+    [<Test>]
+    let ``all returned subcomponents have unique names`` () =
+        let csharpCode = "class S : Component {} class X : Component { S s = new S(); } class Y : X { S s = new S(); }" 
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let derivedType = assembly.GetType "Y"
+        let component' = Activator.CreateInstance derivedType :?> Component
+        component'.FinalizeMetadata "Root"
+
+        component'.Subcomponents.Length =? 2
+        component'.Subcomponents.[0].Name =? "Root.s@0"
+        component'.Subcomponents.[1].Name =? "Root.s@1"
+
 [<TestFixture>]
 module ``Access method`` =
     [<Test>]

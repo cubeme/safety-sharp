@@ -84,20 +84,42 @@ module internal SsmToScm =
         | Ssm.BExpr (e1, op, e2)         -> Scm.BExpr (transformExpr e1, mapBOp op, transformExpr e2)
         | _                              -> notSupported "Unsupported SSM expression '%+A'." e
 
+    /// Transforms the given parameter expression of the given direction.
+    let private transformParamExpr (e : Ssm.Expr list) (d : Ssm.ParamDir list) : Scm.Param list =
+        let transform = function
+            | (e, Ssm.In)                                    -> transformExpr e |> Scm.ExprParam 
+            | (Ssm.VarRefExpr (Ssm.Local (l, _)), Ssm.InOut) -> Scm.InOutVarParam (Scm.Var l)
+            | (Ssm.VarRefExpr (Ssm.Local (l, _)), Ssm.Out)   -> Scm.InOutVarParam (Scm.Var l)
+            | (Ssm.VarRefExpr (Ssm.Arg (a, _)), Ssm.InOut)   -> Scm.InOutVarParam (Scm.Var a)
+            | (Ssm.VarRefExpr (Ssm.Arg (a, _)), Ssm.Out)     -> Scm.InOutVarParam (Scm.Var a)
+            | (Ssm.VarRefExpr (Ssm.Field (f, _)), Ssm.InOut) -> Scm.InOutFieldParam (Scm.Field f)
+            | (Ssm.VarRefExpr (Ssm.Field (f, _)), Ssm.Out)   -> Scm.InOutFieldParam (Scm.Field f)
+            | (e, _)                                         -> notSupported "Unsupported inout or out parameter '%+A'." e
+
+        List.zip e d |> List.map transform
+
     /// Transforms the given statement.
     let rec private transformStm (s : Ssm.Stm) : Scm.Stm =
-        match s with
-        | Ssm.NopStm                        -> Scm.Block [] 
-        | Ssm.AsgnStm (Ssm.Field (f, _), e) -> Scm.AssignField (Scm.Field f, transformExpr e)
-        | Ssm.AsgnStm (v, e)                -> Scm.AssignVar (Scm.Var (Ssm.getVarName v), transformExpr e)
-        | Ssm.SeqStm s                      -> s |> List.map transformStm |> Scm.Block
-        | Ssm.IfStm (e, s1, s2)             -> 
-            let e = transformExpr e
-            Scm.Choice [(e, transformStm s1); (Scm.UExpr (e, Scm.Not), transformStm s2)]
-        | Ssm.CallStm (m, p, d, r, e, t)    -> 
-            Scm.CallPort (Scm.ReqPort m.Name, []) // TODO
-        | Ssm.RetStm _                      -> Scm.Block [] // TODO: Remove
-        | _                                 -> notSupported "Unsupported SSM statement '%+A'." s
+        let transform = function
+            | Ssm.NopStm                        -> Scm.Block [] 
+            | Ssm.AsgnStm (Ssm.Field (f, _), e) -> Scm.AssignField (Scm.Field f, transformExpr e)
+            | Ssm.AsgnStm (v, e)                -> Scm.AssignVar (Scm.Var (Ssm.getVarName v), transformExpr e)
+            | Ssm.SeqStm s                      -> s |> List.map transformStm |> Scm.Block
+            | Ssm.IfStm (e, s1, s2)             -> 
+                let e = transformExpr e
+                Scm.Choice [(e, transformStm s1); (Scm.UExpr (e, Scm.Not), transformStm s2)]
+            | Ssm.CallStm (m, p, d, r, e, t)    -> Scm.CallPort (Scm.ReqPort m.Name, transformParamExpr e d)
+            | Ssm.RetStm _                      -> Scm.Block [] 
+            | _                                 -> notSupported "Unsupported SSM statement '%+A'." s
+
+        // Removes unnecessary statements
+        let rec cleanup = function
+            | Scm.Block s ->
+                let flattened = s |> Seq.collect (fun s -> match cleanup s with Scm.Block s -> s | s -> [s])
+                Scm.Block (flattened |> Seq.toList)
+            | s -> s
+
+        s |> transform |> cleanup
 
     /// Transforms the given local variable.
     let private transformLocal (l : Ssm.Var) : Scm.VarDecl =

@@ -209,7 +209,7 @@ module ``Ssm Lowering of Port Signatures`` =
                 Subs = 
                     [
                         {
-                            Name = "Root0.q"
+                            Name = "Root0.q@0"
                             Fields = []
                             Subs = []
                             Methods = 

@@ -31,7 +31,7 @@ module internal SsmToCSharp =
         let writer = StructuredWriter ()
 
         let mangledName (m : string) =
-            writer.Append "%s" (m.Replace("@", "").Replace("$", ""))
+            writer.Append "%s" (m.Replace("@", "").Replace("$", "").Replace("%", ""))
 
         let typeRef = function
             | VoidType    -> writer.Append "void"
@@ -60,15 +60,15 @@ module internal SsmToCSharp =
             | Or  -> writer.Append "|"
 
         let var = function
-            | Arg (a, _)   -> writer.Append "%s" a
-            | Local (l, _) -> writer.Append "%s" l
+            | Arg (a, _)   -> mangledName a
+            | Local (l, _) -> mangledName l
             | Field (f, _) -> mangledName f
             | This _       -> writer.Append "this"
 
         let varDecl = function
-            | Arg (a, t)   -> typeRef t; writer.Append " %s" a
-            | Local (l, t) -> typeRef t; writer.Append " %s" l
-            | Field (f, t) -> typeRef t; writer.Append " %s" f
+            | Arg (a, t)   -> typeRef t; writer.Append " "; mangledName a
+            | Local (l, t) -> typeRef t; writer.Append " "; mangledName l
+            | Field (f, t) -> typeRef t; writer.Append " "; mangledName f
             | This _       -> invalidOp "Cannot declare 'this' pointer."
 
         let rec call t m d e =

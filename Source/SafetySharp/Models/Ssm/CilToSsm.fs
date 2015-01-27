@@ -129,18 +129,16 @@ module internal CilToSsm =
     /// Computes the inheritance level of a component, i.e., the distance to the System.Object base class
     /// in the inheritance chain.
     let rec internal getInheritanceLevel (t : TypeDefinition) =
-        if t.FullName = typeof<obj>.FullName || t.BaseType = null then
-            0
-        else
-            (getInheritanceLevel (t.BaseType.Resolve ())) + 1
+        if t.FullName = typeof<obj>.FullName || t.BaseType = null then 0
+        else (getInheritanceLevel (t.BaseType.Resolve ())) + 1
 
     /// Returns a unique name for the given field name and inheritance level.
     let internal makeUniqueFieldName fieldName inheritanceLevel =
-        sprintf "%s%s" (String ('$', inheritanceLevel)) fieldName
+        sprintf "%s%s" fieldName (String ('$', inheritanceLevel))
 
     /// Returns a unique name for the given method name, inheritance level and overload index.
     let internal makeUniqueMethodName methodName inheritanceLevel overloadIndex =
-        sprintf "%s%s%s" (String ('$', inheritanceLevel)) methodName (String ('@', overloadIndex))
+        sprintf "%s%s%s" methodName (String ('$', inheritanceLevel)) (String ('@', overloadIndex))
 
      /// Gets a unique name for the given field within the declaring type's inheritance hierarchy.
     let private getUniqueFieldName (f : FieldReference) =
@@ -162,7 +160,7 @@ module internal CilToSsm =
 
     /// Generates a fresh local variable (see also the Demange paper)
     let freshLocal pc idx t =
-        Local (sprintf "__tmp_%i_%i" pc idx, t)
+        Local (sprintf "__tmp_%i_%i%%" pc idx, t)
 
     /// Gets the direction of a method parameter.
     let getParamDir (p : ParameterDefinition) =
@@ -249,7 +247,7 @@ module internal CilToSsm =
         let fieldVarPred f = function Field (f', _) -> f = f' | _ -> false
 
         let argName (a : ParameterDefinition) = if a.Index = -1 then "this" else a.Name
-        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i" l.Index else l.Name
+        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i%%" l.Index else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
         let arg (a : ParameterDefinition) = createVar Arg (argName a) a.ParameterType
         let field (f : FieldReference) = createVar Field (getUniqueFieldName f) f.FieldType
@@ -315,7 +313,7 @@ module internal CilToSsm =
             let s = s |> Seq.skip (argCount + (if m.IsStatic then 0 else 1)) |> Seq.toList
 
             // Save the current value of all non-readonly and non-classtype fields that are currently on the stack;
-            //  the function that is being called might change the values of those fields
+            // the function that is being called might change the values of those fields
             let fields = s |> Seq.map Ssm.getFieldsOfExpr |> Seq.collect id |> Seq.filter (fun f -> Ssm.isClassType f |> not) |> Seq.distinct
             let (idx, vars, stack) = 
                 fields |> Seq.fold (fun (idx, vars, s) field ->
@@ -405,19 +403,20 @@ module internal CilToSsm =
                 outStacks.[p] 
                 |> List.fold (fun (stack, idx) expr -> 
                     match expr with
-                    | VarRefExpr v -> ((VarRefExpr v) :: stack, idx)
-                    | expr         -> ((VarExpr (freshLocal pc idx (Ssm.deduceType expr))) :: stack, idx + 1)
+                    | VarRefExpr v                     -> (expr :: stack, idx)
+                    | VarExpr v when Ssm.isClassType v -> (expr :: stack, idx)
+                    | expr                             -> ((VarExpr (freshLocal pc idx (Ssm.deduceType expr))) :: stack, idx + 1)
                 ) ([], 0)
                 |> fst
                 |> List.rev
 
         // Corresponds to the TAssign function in the Demange paper; creates a fresh local
-        // variable with a unique name for each element on the symbolic stack (except for var refs).
+        // variable with a unique name for each element on the symbolic stack (except for var refs and vars of class type).
         let tmpAssigns pcs stack =
             pcs 
             |> Set.map (fun pc ->
                 stack 
-                |> List.filter (function | VarRefExpr _ -> false | _ -> true)
+                |> List.filter (function | VarRefExpr _ -> false | VarExpr v when Ssm.isClassType v -> false | _ -> true)
                 |> List.mapi (fun idx expr -> AsgnStm (freshLocal pc idx (Ssm.deduceType expr), expr))
             ) 
             |> List.ofSeq 
@@ -581,10 +580,9 @@ module internal CilToSsm =
                 Name = c.Name
                 Fields = transformed.Fields @ (transformFields c t resolver) 
                 Methods = transformed.Methods @ (transformMethods c t resolver)
-                Subs = transformed.Subs @ (c.Subcomponents |> List.map (transformType typeDefinitions))
             }
 
-        transform typeDefinitions.[c.GetType ()]
+        { transform typeDefinitions.[c.GetType ()] with Subs = c.Subcomponents |> List.map (transformType typeDefinitions) }
         
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =
