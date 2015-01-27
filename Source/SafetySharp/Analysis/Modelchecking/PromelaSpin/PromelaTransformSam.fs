@@ -27,6 +27,7 @@ open SafetySharp.Internal.Modelchecking
 open SafetySharp.Internal.Modelchecking.PromelaSpin.Typedefs
 open SafetySharp.Models.Sam.Typedefs
 open SafetySharp.Models.Sam.SamHelpers 
+open SafetySharp.Models.Sam.Rewriter.SimplifyBlocks 
 
 // IDEA: 
 //   - Use pool of temporary fields of each type for the implementation of temporary variables
