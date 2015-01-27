@@ -23,7 +23,7 @@
 
 namespace SafetySharp.Models.Sam.Rewriter
 
-module internal SamRewriterChangeIdentifier =
+module internal ChangeIdentifier =
 
     open SafetySharp.Models.Sam
     open SafetySharp.Models.Sam.SamHelpers
@@ -58,6 +58,7 @@ module internal SamRewriterChangeIdentifier =
     
     let namegenerator_donothing = (fun takenNames based_on -> based_on);
 
+    (*
     let namegenerator_c_like_random (takenNames:Set<string>) (based_on:string) : string =
         // * https://msdn.microsoft.com/en-us/library/e7f8y25b.aspx
         // * Rule-Type: [a-zA-Z_][a-zA-Z0-9_]* without forbidden names (keywords)
@@ -72,7 +73,9 @@ module internal SamRewriterChangeIdentifier =
         // * Rule-Type: [a-zA-Z_][a-zA-Z0-9_]* without forbidden names (keywords)
         // * note: omit 2 underscores
         // * max length of identifier 31 (ansi) or 247 (microsoft). let's stay with 31
+        
         based_on
+    *)
     
     let rec transformExpr (state:ChangeIdentifierState) (expr:Expr) : Expr =
         match expr with
@@ -119,14 +122,14 @@ module internal SamRewriterChangeIdentifier =
         let newGlobals =
             let transformGlobal (globalVar:GlobalVarDecl) =
                 { globalVar with
-                    GlobalVarDecl.Var = state.OldToNew.Item globalVar.Var
+                    GlobalVarDecl.Var = newState.OldToNew.Item globalVar.Var
                 }
             samPgm.Globals |> List.map transformGlobal
 
         let newLocals =
             let transformLocal (localVar:LocalVarDecl) =
                 { localVar with
-                    LocalVarDecl.Var = state.OldToNew.Item localVar.Var
+                    LocalVarDecl.Var = newState.OldToNew.Item localVar.Var
                 }
             samPgm.Locals |> List.map transformLocal
 
