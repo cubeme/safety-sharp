@@ -97,7 +97,7 @@ module internal Ssm =
         | GotoStm of Expr * int
         | SeqStm of Stm list
         | RetStm of Expr option
-        | IfStm of Expr * Stm * Stm option
+        | IfStm of Expr * Stm * Stm
         | CallStm of MethodId * Params : Type list * ParamDir list * Return : Type * Args : Expr list * Target : Expr option
 
     /// Represents a method parameter.
@@ -298,8 +298,7 @@ module internal Ssm =
         | SeqStm stms                -> stms |> List.map getLocalsOfStm |> List.collect id
         | RetStm None                -> []
         | RetStm (Some e)            -> getLocalsOfExpr e
-        | IfStm (e, s, None)         -> (getLocalsOfExpr e) @ (getLocalsOfStm s)
-        | IfStm (e, s1, Some s2)     -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
+        | IfStm (e, s1, s2)          -> (getLocalsOfExpr e) @ (getLocalsOfStm s1) @ (getLocalsOfStm s2)
         | CallStm (_, _, _, _, e, _) -> e |> List.map getLocalsOfExpr |> List.collect id
 
     /// Replaces all goto statements in the given method body with structured control flow statements.
@@ -329,7 +328,7 @@ module internal Ssm =
                 | GotoStm (BoolExpr true, t) ->
                     let joinPoint = getJoinPoint ()
                     let thenStm = transform t joinPoint
-                    let elseStm = None
+                    let elseStm = NopStm
                     let ifStm = IfStm (BoolExpr true, thenStm, elseStm)
                     let joinedStm = transform joinPoint last
                     append ifStm joinedStm
@@ -338,7 +337,7 @@ module internal Ssm =
                     // There might be no then-stm if the goto represents an 'if' without an 'else'
                     // (note that the C# compiler inverts the condition and switches the original then and else statements)
                     let thenStm = if cfg.[pc] |> Set.contains joinPoint then NopStm else transform t joinPoint
-                    let elseStm = transform (pc + 1) joinPoint |> Some
+                    let elseStm = transform (pc + 1) joinPoint
                     let ifStm = IfStm (e, thenStm, elseStm)
                     let joinedStm = transform joinPoint last
                     append ifStm joinedStm

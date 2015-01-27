@@ -170,14 +170,13 @@ module ``Ssm Lowering of Port Signatures`` =
                     IfStm (
                         VarExpr (Arg ("b", BoolType)),
                         SeqStm [AsgnStm (Arg ("retVal", BoolType), BoolExpr true); RetStm None],
-                        Some (
+                        SeqStm [
+                            CallStm (methodId "M", [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)], this)
                             SeqStm [
-                                CallStm (methodId "M", [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)], this)
-                                SeqStm [
-                                    AsgnStm (Arg ("retVal", BoolType), VarExpr (tmp 6 0 BoolType))
-                                    RetStm None
-                                ] 
-                            ])
+                                AsgnStm (Arg ("retVal", BoolType), VarExpr (tmp 6 0 BoolType))
+                                RetStm None
+                            ] 
+                        ]
                     )
                 Kind = ProvPort                   
             }

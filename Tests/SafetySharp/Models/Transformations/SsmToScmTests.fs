@@ -84,11 +84,10 @@ module ``SsmToScm Transformation`` =
                 Ssm.IfStm (
                     Ssm.VarExpr (Ssm.Arg ("b", Ssm.BoolType)),
                     Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr 1),
-                    Some (Ssm.SeqStm 
-                        [
-                            Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
-                            Ssm.AsgnStm (Ssm.Field ("f", Ssm.BoolType), Ssm.BoolExpr false)
-                        ])
+                    Ssm.SeqStm [
+                        Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
+                        Ssm.AsgnStm (Ssm.Field ("f", Ssm.BoolType), Ssm.BoolExpr false)
+                    ]
                 )
                 Ssm.AsgnStm (Ssm.Arg ("a", Ssm.IntType), Ssm.VarExpr (Ssm.Local ("x", Ssm.IntType)))
             ]

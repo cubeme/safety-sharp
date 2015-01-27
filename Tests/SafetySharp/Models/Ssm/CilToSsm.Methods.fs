@@ -372,7 +372,7 @@ module ``CilToSsm Method Transformations`` =
                             IfStm (
                                 UExpr (Not, VarExpr (tmp 1 0 BoolType)),
                                 RetStm (Some (BoolExpr false)),
-                                Some (RetStm (Some (BoolExpr true)))
+                                RetStm (Some (BoolExpr true))
                             )
                         ] 
                 Kind = ProvPort                   
@@ -393,7 +393,7 @@ module ``CilToSsm Method Transformations`` =
                             IfStm (
                                 VarExpr (tmp 1 0 BoolType),
                                 RetStm (Some (BoolExpr true)),
-                                Some (RetStm (Some (BoolExpr false)))
+                                RetStm (Some (BoolExpr false))
                             )
                         ] 
                 Kind = ProvPort                   
@@ -411,7 +411,7 @@ module ``CilToSsm Method Transformations`` =
                     IfStm (
                         UExpr (Not, VarExpr (arg "b" BoolType)),
                         SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 1], this)); RetStm None],
-                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this)); RetStm None] |> Some
+                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr (name "F", [IntType], [In], IntType, [IntExpr 4], this)); RetStm None]
                     )
                 Kind = ProvPort
             }
@@ -473,7 +473,7 @@ module ``CilToSsm Method Transformations`` =
                         IfStm (
                             VarExpr (arg "y" BoolType),
                             AsgnStm (tmp 7 0 IntType, IntExpr 1),
-                            AsgnStm (tmp 7 0 IntType, IntExpr 0) |> Some
+                            AsgnStm (tmp 7 0 IntType, IntExpr 0)
                         )
                         AsgnStm (arg "z" IntType, VarExpr (tmp 7 0 IntType))
                         RetStm (Some (DoubleExpr 3.0))
@@ -567,9 +567,9 @@ module ``CilToSsm Method Transformations`` =
                                            AsgnStm (tmp 21 0 IntType, VarExpr argZ)
                                            AsgnStm (argZ, VarExpr local1)
                                            AsgnStm (tmp 43 0 IntType, VarExpr local1)
-                                       ] |> Some
+                                       ]
                                    )
-                            ] |> Some
+                            ]
                         )
                         AsgnStm (argZ, VarExpr (tmp 43 0 IntType))
                         RetStm None
@@ -584,7 +584,7 @@ module ``CilToSsm Method Transformations`` =
             let condition = BExpr (VarExpr (arg "x" IntType), Gt, IntExpr 0)
             let thenStm = AsgnStm (tmp, IntExpr -1)
             let elseStm = AsgnStm (tmp, IntExpr 1)
-            let ifStm = IfStm (condition, thenStm, Some elseStm)
+            let ifStm = IfStm (condition, thenStm, elseStm)
             let retStm = RetStm <| Some (BExpr (VarExpr tmp, Sub, IntExpr 1))
             { 
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0 
@@ -613,7 +613,7 @@ module ``CilToSsm Method Transformations`` =
                             SeqStm [
                                 AsgnStm (tmp 6 0 IntType, CallExpr (name "F3", [IntType], [In], IntType, [IntExpr 2], this))
                                 RetStm (Some (VarExpr (tmp 6 0 IntType)))
-                            ] |> Some
+                            ]
                         )
                     ]
                 Return = IntType
@@ -638,9 +638,9 @@ module ``CilToSsm Method Transformations`` =
                                 IfStm (
                                     UExpr (Not, VarExpr (tmp 6 0 BoolType)),
                                     RetStm (Some (IntExpr -1)),
-                                    RetStm (Some (IntExpr 1)) |> Some
+                                    RetStm (Some (IntExpr 1))
                                 )
-                            ] |> Some
+                            ]
                         )
                     ]
                 Return = IntType
@@ -657,7 +657,7 @@ module ``CilToSsm Method Transformations`` =
             { 
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" BoolType; Direction = In }; { Var = arg "y" BoolType; Direction = In } ]
-                Body = IfStm (condition, thenStm, Some elseStm)
+                Body = IfStm (condition, thenStm, elseStm)
                 Return = IntType
                 Locals = []
                 Kind = ProvPort
@@ -672,7 +672,7 @@ module ``CilToSsm Method Transformations`` =
             { 
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0 
                 Params = [ { Var = arg "x" BoolType; Direction = In }; { Var = arg "y" BoolType; Direction = In } ]
-                Body = IfStm (condition, thenStm, Some elseStm)
+                Body = IfStm (condition, thenStm, elseStm)
                 Return = IntType
                 Locals = []
                 Kind = ProvPort
@@ -688,7 +688,7 @@ module ``CilToSsm Method Transformations`` =
                 let assignStm3 = AsgnStm (arg "y" IntType, BExpr (VarExpr (arg "y" IntType), Add, IntExpr 1))
                 SeqStm [assignStm1; assignStm2; assignStm3]
             let elseStm = AsgnStm (tmp 10 0 IntType, IntExpr 0)
-            let ifStm = IfStm (condition, thenStm, Some elseStm)
+            let ifStm = IfStm (condition, thenStm, elseStm)
             let assignStm = AsgnStm (arg "z" IntType, VarExpr (tmp 10 0 IntType))
             { 
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0 
@@ -714,7 +714,7 @@ module ``CilToSsm Method Transformations`` =
                 let assignStm3 = AsgnStm (arg "y" IntType, BExpr (VarExpr (arg "y" IntType), Sub, IntExpr 1))
                 SeqStm [assignStm1; assignStm2; assignStm3]
             let elseStm = AsgnStm (tmp 10 0 IntType, IntExpr 0)
-            let ifStm = IfStm (condition, thenStm, Some elseStm)
+            let ifStm = IfStm (condition, thenStm, elseStm)
             let assignStm = AsgnStm (arg "z" IntType, VarExpr (tmp 10 0 IntType))
             { 
                 Name = CilToSsm.makeUniqueMethodName "M" 2 0 
@@ -752,13 +752,13 @@ module ``CilToSsm Method Transformations`` =
                                     SeqStm [
                                         AsgnStm (tmp 10 0 IntType, IntExpr 2)
                                         AsgnStm (tmp 10 1 IntType, VarExpr (tmp 5 0 IntType))
-                                    ] |> Some
+                                    ]
                                 )
                             ],
                             SeqStm [
                                 AsgnStm (tmp 10 0 IntType, IntExpr 3)
                                 AsgnStm (tmp 10 1 IntType, IntExpr 1)
-                            ] |> Some
+                            ]
                         )
                         RetStm (Some (BExpr (VarExpr (tmp 10 1 IntType), Add, VarExpr (tmp 10 0 IntType))))
                     ]

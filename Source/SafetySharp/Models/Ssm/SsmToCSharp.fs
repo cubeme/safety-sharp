@@ -108,11 +108,11 @@ module internal SsmToCSharp =
             | SeqStm s               -> writer.AppendBlockStatement (fun () -> s |> List.iter toCSharp)
             | RetStm None            -> writer.AppendLine "return;"
             | RetStm (Some e)        -> writer.Append "return "; expr e; writer.AppendLine(";")
-            | IfStm (e, s, None)     -> 
+            | IfStm (e, s, NopStm)   -> 
                 writer.Append "if "
                 writer.AppendParenthesized (fun () -> expr e)
                 writer.AppendBlockStatement (fun () -> toCSharp s)
-            | IfStm (e, s1, Some s2) -> 
+            | IfStm (e, s1, s2) -> 
                 writer.Append "if "
                 writer.AppendParenthesized (fun () -> expr e)
                 writer.AppendBlockStatement (fun () -> toCSharp s1)
