@@ -59,7 +59,7 @@ module ``SsmToScm Transformation`` =
     ]
 
     let private ssmReqPort : Ssm.Method = {
-        Name = "M"
+        Name = "R"
         Params = [{ Var = Ssm.Arg ("a", Ssm.IntType); Direction = Ssm.InOut}; { Var = Ssm.Arg ("b", Ssm.BoolType); Direction = Ssm.In}]
         Body = Ssm.NopStm
         Return = Ssm.VoidType
@@ -68,7 +68,7 @@ module ``SsmToScm Transformation`` =
     }
 
     let private scmReqPort : Scm.ReqPortDecl = {
-        ReqPort = Scm.ReqPort "M"
+        ReqPort = Scm.ReqPort "R"
         Params = 
             [
                 { Var = { Var = Scm.Var "a"; Type = Scm.IntType }; Dir = Scm.InOut }
@@ -85,6 +85,7 @@ module ``SsmToScm Transformation`` =
                     Ssm.VarExpr (Ssm.Arg ("b", Ssm.BoolType)),
                     Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr 1),
                     Ssm.SeqStm [
+                        Ssm.CallStm ({ Name = "R"; Type = "X" }, [Ssm.IntType; Ssm.BoolType], [Ssm.InOut; Ssm.In], Ssm.VoidType, [Ssm.VarRefExpr (ssmFields.[0].Var); Ssm.BoolExpr false], Some (Ssm.VarExpr (Ssm.This (Ssm.ClassType "X"))))
                         Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
                         Ssm.AsgnStm (Ssm.Field ("f", Ssm.BoolType), Ssm.BoolExpr false)
                     ]
@@ -114,6 +115,7 @@ module ``SsmToScm Transformation`` =
                         (Scm.UExpr (Scm.ReadVar (Scm.Var "b"), Scm.Not), 
                             Scm.Block 
                                 [
+                                    Scm.CallPort (Scm.ReqPort "R", [Scm.InOutFieldParam scmFields.[0].Field; Scm.ExprParam (Scm.Literal (Scm.BoolVal false))])
                                     Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal -1))
                                     Scm.AssignField (Scm.Field "f", Scm.Literal (Scm.BoolVal false))
                                 ])
