@@ -29,7 +29,6 @@ open Mono.Cecil
 open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
-open SafetySharp.Tests
 
 [<TestFixture>]
 module ``CilToSsm Component Transformation`` =

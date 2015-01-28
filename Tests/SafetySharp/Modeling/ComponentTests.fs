@@ -28,8 +28,8 @@ open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
 open SafetySharp.Modeling
-open SafetySharp.Tests
 open Mono.Cecil
+open Modeling
 
 type private TestEnum =
     | Default = 0
@@ -66,7 +66,7 @@ module ``SetInitialValues method`` =
     [<Test>]
     let ``throws when field is constant`` () =
         // Compile a C# class, as F# does not support IL constant fields
-        raisesArgumentException "field" (fun () -> unwrap<TargetInvocationException> (fun () ->  createModel "class TestModel : Model { public TestModel() { SetRootComponents(new C()); }} class C : Component { const int x = 4; public C() { SetInitialValues(() => x, 1, 2, 3); }}" |> ignore))
+        raisesArgumentException "field" (fun () -> unwrap<TargetInvocationException> (fun () ->  TestCompilation.CreateModel "class TestModel : Model { public TestModel() { SetRootComponents(new C()); }} class C : Component { const int x = 4; public C() { SetInitialValues(() => x, 1, 2, 3); }}" |> ignore))
 
     [<Test>]
     let ``throws when field does not reference a field of the component`` () =

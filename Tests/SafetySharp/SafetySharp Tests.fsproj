@@ -60,7 +60,8 @@
     <Compile Include="..\AstTestHelpers.fs">
       <Link>AstTestHelpers.fs</Link>
     </Compile>
-    <Compile Include="Modeling.fs" />
+    <Compile Include="Modeling\ModelingTestHelpers.fs" />
+    <Compile Include="Modeling\BindingTests.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />

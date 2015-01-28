@@ -164,7 +164,6 @@ module internal ScmToString =
             | Delayed       -> writer.Append "delayed"
 
         let bndDecl (b : BndDecl) =
-            writer.NewLineIfNotEmpty ()
             bndTarget b.Target
             writer.Append " = "
             bndKind b.Kind

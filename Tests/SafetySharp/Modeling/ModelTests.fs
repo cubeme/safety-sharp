@@ -28,7 +28,7 @@ open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
 open SafetySharp.Modeling
-open SafetySharp.Tests
+open Modeling
 
 [<TestFixture>]
 module ``FinalizeMetadata method`` =

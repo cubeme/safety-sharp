@@ -29,13 +29,12 @@ open Mono.Cecil
 open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
-open SafetySharp.Tests
 
 [<TestFixture>]
 module ``CilToSsm Field Transformations`` =
 
     let private transform componentCode initCode = 
-        let model = createModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
+        let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
         let ssm = CilToSsm.transformModel model
         ssm.[0].Fields

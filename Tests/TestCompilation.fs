@@ -358,3 +358,10 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     static member GetNormalizedInterface (normalizer : CSharpNormalizer) csharpCode =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
         syntaxTree.Descendants<InterfaceDeclarationSyntax>().Single().ToFullString ()
+
+    /// Compiles the given C# code and creates an instance of the "TestModel" class.
+    static member CreateModel csharpCode =
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.CompileSSharp ()
+        let modelType = assembly.GetType "TestModel"
+        Activator.CreateInstance modelType :?> Model

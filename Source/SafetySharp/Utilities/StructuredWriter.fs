@@ -30,7 +30,6 @@ type StructuredWriter () =
     let output = StringBuilder ()
     let mutable atBeginningOfLine = true
     let mutable indent = 0
-    let mutable emptyLineCount = 0
 
     /// Appends the given format string to the current line.
     member public this.AppendFormatted (s, [<ParamArray>] args) =
@@ -54,15 +53,7 @@ type StructuredWriter () =
     /// Appends a new line to the buffer.
     member public this.NewLine () =
         output.Append "\n" |> ignore
-        if atBeginningOfLine then emptyLineCount <- emptyLineCount + 1
-        else 
-            atBeginningOfLine <- true
-            emptyLineCount <- 1
-
-    /// Appends a new line to the buffer if the current line is not empty.
-    member public this.NewLineIfNotEmpty () =
-        if not atBeginningOfLine then
-            this.NewLine ()
+        atBeginningOfLine <- true
 
     /// Appends the given content to the buffer, enclosed in parentheses.
     member public this.AppendParenthesized content =

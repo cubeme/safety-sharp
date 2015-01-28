@@ -29,7 +29,6 @@ open Mono.Cecil
 open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
-open SafetySharp.Tests
 
 [<TestFixture>]
 module ``Ssm Lowering of Port Signatures`` =
@@ -37,7 +36,7 @@ module ``Ssm Lowering of Port Signatures`` =
 
     let private transform methodDefinition= 
         let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
-        let model = createModel csharpCode
+        let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
         let ssm = CilToSsm.transformModel model
         ssm.[0] |> SsmLowering.lowerSignatures

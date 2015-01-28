@@ -55,11 +55,13 @@
     <Compile Include="Utilities\FileSystem.fs" />
     <Compile Include="Utilities\StructuredWriter.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
+    <Compile Include="Modeling\ModelingHelpers.fs" />
+    <Compile Include="Modeling\Attributes.fs" />
+    <Compile Include="Modeling\Binding.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
     <Compile Include="Modeling\OverflowBehavior.fs" />
-    <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Models\Ssm\Cil.fs" />
     <Compile Include="Models\Ssm\Ssm.fs" />
     <Compile Include="Models\Ssm\CilToSsm.fs" />

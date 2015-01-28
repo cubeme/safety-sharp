@@ -174,6 +174,10 @@ let raisesWith<'T when 'T :> Exception> func =
 let raises<'T when 'T :> Exception> func =
     raisesWith<'T> func |> ignore
 
+/// Checks whether the given function raises an <see cref="InvalidOperationException"/>.
+let raisesInvalidOpException func =
+    raises<InvalidOperationException> func |> ignore
+
 /// Checks whether the given function raises an <see cref="ArgumentNullException"/> for the argument with the given name.
 let raisesArgumentNullException argumentName func =
     let e = raisesWith<ArgumentNullException> func

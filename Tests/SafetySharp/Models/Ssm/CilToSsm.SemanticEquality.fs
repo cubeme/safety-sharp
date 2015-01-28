@@ -28,12 +28,11 @@ open Mono.Cecil
 open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
-open SafetySharp.Tests
 
 [<AutoOpen>]
 module TestHelpers =
     let compile baseClass csharpCode additionalMembers fields replaceReturns = 
-        let model = createModel (sprintf "class TestModel : Model { public TestModel() { SetRootComponents(new O()); }} class O : Component { public %s %s %s }" csharpCode additionalMembers fields)
+        let model = TestCompilation.CreateModel (sprintf "class TestModel : Model { public TestModel() { SetRootComponents(new O()); }} class O : Component { public %s %s %s }" csharpCode additionalMembers fields)
         model.FinalizeMetadata ()
         let ssm = CilToSsm.transformModel model
         let transformedMethod = ssm.[0].Methods |> Seq.find (fun m -> m.Name = CilToSsm.makeUniqueMethodName "M" 2 0) |> SsmToCSharp.transform

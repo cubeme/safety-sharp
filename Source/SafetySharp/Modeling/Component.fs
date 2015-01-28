@@ -24,20 +24,32 @@ namespace SafetySharp.Modeling
 
 open System
 open System.Collections.Generic
+open System.Dynamic
 open System.Globalization
 open System.Linq
 open System.Linq.Expressions
 open System.Reflection
+open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open SafetySharp
 open SafetySharp.Modeling.CompilerServices
 open Mono.Cecil
 
-/// Represents a marker interface for components.
+/// Represents an interface that must be implemented by all components.
 [<AllowNullLiteral>]
 type IComponent = 
     /// Updates the internal state of the component.
     abstract member Update : unit -> unit
+
+    /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
+    /// ports declared by the component.
+    [<Dynamic>]
+    abstract member RequiredPorts : obj
+
+    /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
+    /// ports declared by the component.
+    [<Dynamic>]
+    abstract member ProvidedPorts : obj
 
 /// Provides access to a non-public member of a component.
 type internal IMemberAccess =
@@ -91,7 +103,7 @@ type MemberAccess<'T> internal (component', memberName) =
 
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>] 
-type Component () =
+type Component () as this =
     
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata
@@ -101,6 +113,8 @@ type Component () =
     let mutable name = String.Empty
     let mutable (subcomponents : Component list) = []
     let fields = Dictionary<FieldInfo, obj list> ()
+    let requiredPorts = RequiredPortCollection this
+    let providedPorts = ProvidedPortCollection this
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
@@ -109,9 +123,29 @@ type Component () =
         /// Updates the internal state of the component.
         member this.Update () = this.Update ()
 
+        /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
+        /// ports declared by the component.
+        [<Dynamic>]
+        member this.RequiredPorts with get () = this.RequiredPorts
+
+        /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
+        /// ports declared by the component.
+        [<Dynamic>]
+        member this.ProvidedPorts with get () = this.ProvidedPorts
+
     /// Updates the internal state of the component.
     abstract member Update : unit -> unit
     default this.Update () = ()
+
+    /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
+    /// ports declared by the component.
+    [<Dynamic>]
+    member this.RequiredPorts with get () = requiredPorts :> obj
+
+    /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
+    /// ports declared by the component.
+    [<Dynamic>]
+    member this.ProvidedPorts with get() = providedPorts :> obj
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
@@ -180,38 +214,25 @@ type Component () =
         isSealed <- true
         name <- defaultArg componentName String.Empty
 
-        // Collects all fields of the component recursively, going up the inheritance chain; unfortunately, the GetFields()
-        // method does not return private fields of base classes, even with BindingFlags.FlattenHierarchy.
-        let rec collectFields (t : Type) =
-            if t.BaseType <> typeof<Component> then
-                collectFields t.BaseType
+        Helpers.collectFields (this.GetType ())
+        |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
+        |> Seq.iter (fun field ->
+            let value =
+                if field.FieldType.IsEnum then
+                    (field.GetValue(this) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj
+                else
+                    field.GetValue this
+            fields.Add (field, [value])
+        )
 
-            t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-            |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
-            |> Seq.iter (fun field ->
-                let value =
-                    if field.FieldType.IsEnum then
-                        (field.GetValue(this) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj
-                    else
-                        field.GetValue this
-                fields.Add (field, [value])
-            )
-        this.GetType () |> collectFields 
-
-        // Collects all subcomponents of the component recursively, going up the inheritance chain; unfortunately, the GetFields()
-        // method does not return private fields of base classes, even with BindingFlags.FlattenHierarchy.
-        let rec collectSubcomponents (t : Type) = seq {
-            if t.BaseType <> typeof<Component> then
-                yield! collectSubcomponents t.BaseType
-
-            yield! t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+        let subcomponentMetadata = 
+            Helpers.collectFields (this.GetType ())
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
             |> Seq.map (fun field -> (field, field.GetValue(this)))
             |> Seq.where (fun (field, component') -> component' <> null)
             |> Seq.map (fun (field, component') -> (field, component' :?> Component))
-        }
+            |> Seq.toList
 
-        let subcomponentMetadata = collectSubcomponents (this.GetType ()) |> Seq.toList
         subcomponents <- subcomponentMetadata |> List.map snd
         subcomponentMetadata
         |> List.iteri (fun idx (field, component') -> 
