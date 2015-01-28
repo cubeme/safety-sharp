@@ -26,6 +26,7 @@ namespace SafetySharp.Models.Sam.Rewriter
 module internal SimplifyBlocks = 
     open SafetySharp.Models.Sam
 
+
     // Extension methods
     type Stm with
         member stm.removeEmptyBlocks : Stm =
@@ -83,7 +84,8 @@ module internal SimplifyBlocks =
                                 |> Stm.Choice
                 | Stm.Write (variable:Var, expression:Expr) ->
                     stm // nothing to do
-
+                    
+        // a so called "peephole optimization"
         member stm.simplifyBlocks: Stm =
             stm.removeEmptyBlocks.simplifyBlocksWithOnlyOneStatement //first removeEmptyBlocks must be done
 
