@@ -53,10 +53,10 @@ module ``Implementation and interface port kinds are inconsistent`` =
 
     [<Test>]
     let ``Implementations with wrong attribute outside of component class are valid`` () =
-        getDiagnostic "class C : I { public void Update() {} [Provided] public void In() {} [Required] extern public void Out(); }" =? None
-        getDiagnostic "class C : I { public void Update() {} [Provided] void I.In() {} [Required] extern void I.Out(); }" =? None
-        getDiagnostic "class C : J { public void Update() {} [Provided] public int In { get; set; } [Required] extern public int Out { get; set; }}" =? None
-        getDiagnostic "class C : J { public void Update() {} [Provided] int J.In { get; set; } [Required] extern int J.Out { get; set; }}" =? None
+        getDiagnostic "class C : I { public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} public void Update() {} [Provided] public void In() {} [Required] extern public void Out(); }" =? None
+        getDiagnostic "class C : I { public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} public void Update() {} [Provided] void I.In() {} [Required] extern void I.Out(); }" =? None
+        getDiagnostic "class C : J { public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} public void Update() {} [Provided] public int In { get; set; } [Required] extern public int Out { get; set; }}" =? None
+        getDiagnostic "class C : J { public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} public void Update() {} [Provided] int J.In { get; set; } [Required] extern int J.Out { get; set; }}" =? None
 
     [<Test>]
     let ``Implementations with wrong attribute are valid if interface does not derive from IComponent`` () =

@@ -66,5 +66,5 @@ module ``Interface members must be marked with port attributes`` =
         getDiagnostic "class C : Component { int M { get; set; }}" =? None
         getDiagnostic "class C { void M() {} }" =? None
         getDiagnostic "class C { int M { get; set; }}" =? None
-        getDiagnostic "class C : IComponent { public void Update() {} void M() {} }" =? None
-        getDiagnostic "class C : IComponent { public void Update() {} int M { get; set; }}" =? None
+        getDiagnostic "class C : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} void M() {} }" =? None
+        getDiagnostic "class C : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} int M { get; set; }}" =? None

@@ -125,7 +125,7 @@ module ``IsDerivedFromComponent methods`` =
 
     [<Test>]
     let ``returns false for class only implementing IComponent`` () =
-        isDerivedFromComponent "class X : IComponent { public void Update() {} }" =? false
+        isDerivedFromComponent "class X : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} }" =? false
 
     [<Test>]
     let ``returns true for class directly derived from Component`` () =
@@ -169,7 +169,7 @@ module ``ImplementsIComponent methods`` =
 
     [<Test>]
     let ``returns true for class only implementing IComponent`` () =
-        implementsIComponent "class X : IComponent { public void Update() {} }" =? true
+        implementsIComponent "class X : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} }" =? true
 
     [<Test>]
     let ``returns true for class directly derived from Component`` () =
@@ -181,4 +181,4 @@ module ``ImplementsIComponent methods`` =
 
     [<Test>]
     let ``returns true for class indirectly implementing IComponent`` () =
-        implementsIComponent "class Y : IComponent { public void Update() {} } class X : Y {}" =? true
+        implementsIComponent "class Y : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} } class X : Y {}" =? true
