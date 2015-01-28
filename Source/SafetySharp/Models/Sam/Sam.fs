@@ -38,6 +38,7 @@ type internal BOp =
     // Logical operators
     | And
     | Or
+    | Implies
     
     // Equality operators
     | Equals

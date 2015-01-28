@@ -184,6 +184,7 @@ module internal SamAstToString =
                 | BOp.Modulo -> "%"
                 | BOp.And -> "&&"
                 | BOp.Or -> "||"
+                | BOp.Implies -> "->"
                 | BOp.Equals -> "=="
                 | BOp.NotEquals -> "!="
                 | BOp.Less -> "<"

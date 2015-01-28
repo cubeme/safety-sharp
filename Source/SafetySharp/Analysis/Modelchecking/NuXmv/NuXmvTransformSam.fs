@@ -24,6 +24,7 @@ namespace SafetySharp.Internal.Modelchecking.NuXmv
 
 open SafetySharp.Internal.Modelchecking
 
+type internal NuXmvIdentifier = SafetySharp.Internal.Modelchecking.NuXmv.Identifier
 type internal NuXmvBasicExpression = SafetySharp.Internal.Modelchecking.NuXmv.BasicExpression
 type internal NuXmvConstExpression = SafetySharp.Internal.Modelchecking.NuXmv.ConstExpression
 type internal NuXmvSignSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.SignSpecifier
@@ -35,6 +36,134 @@ type internal NuXmvSpecification = SafetySharp.Internal.Modelchecking.NuXmv.Spec
 type internal NuXmvModuleTypeSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.ModuleTypeSpecifier
 type internal NuXmvModuleDeclaration = SafetySharp.Internal.Modelchecking.NuXmv.ModuleDeclaration
 
+
+
+open SafetySharp.Internal.Modelchecking
+open SafetySharp.Models.Sam.Typedefs
+open SafetySharp.Models.Sam.SamHelpers 
+open SafetySharp.Models.Sam.Rewriter.SimplifyBlocks 
+open SafetySharp.Models.Sam.Rewriter.ChangeIdentifier
+open SafetySharp.Analysis.VerificationCondition
+
+
+
+module internal SamToNuXmv =
+    (*
+
+    type ManageVariablesState = {
+        TakenNames : Set<string>;
+        VarWithPostValueToVarWithCurrentValue : Map<SamModified.Var,SamModified.Var>;
+        NameGenerator : NameGenerator;
+    }
+        with
+            static member initial (forbiddenNames:Set<string>) (nameGenerator:NameGenerator) =
+                {
+                    ManageVariablesState.TakenNames = forbiddenNames;
+                    ManageVariablesState.VarWithPostValueToVarWithCurrentValue = Map.empty<SamModified.Var,SamModified.Var>;
+                    ManageVariablesState.NameGenerator = nameGenerator;
+                }
+            member this.generateNewName (based_on:string) : string =
+                this.NameGenerator this.TakenNames based_on
+
+            member this.generatePostValueVar (currentValVar:SamModified.Var) : (SamModified.Var*ManageVariablesState) =
+                let postValVarName = this.generateNewName currentValVar.getName
+                let postValVar = SamModified.Var.Var(postValVarName)
+                let newState=
+                    { this with
+                        ManageVariablesState.TakenNames = this.TakenNames.Add postValVarName;
+                        ManageVariablesState.VarWithPostValueToVarWithCurrentValue =
+                                this.VarWithPostValueToVarWithCurrentValue.Add (postValVar,currentValVar)
+                    }
+                (postValVar,newState)
+
+
+    let generateGlobalVarDeclarations (varDecls:SamModified.GlobalVarDecl list) : ModuleElement =
+        let generateDecl (varDecl:SamModified.GlobalVarDecl) : TypedIdentifier =
+            let _type = match varDecl.Type with
+                            | SamType.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
+                            | SamType.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
+                            //| SamType.Decimal -> failwith "NotImplementedYet"
+            let _varName = varDecl.Var.getName 
+            let _variable = {NuXmvIdentifier.Name = _varName}
+            {
+                TypedIdentifier.Identifier = _variable ;
+                TypedIdentifier.TypeSpecifier = _type ;
+            }
+        varDecls |> List.map generateDecl
+                 |> ModuleElement.VarDeclaration
+        
+    let generateGlobalVarInitialisations (varDecls:SamModified.GlobalVarDecl list) : ModuleElement =
+        let generateInit (varDecl:SamGlobalVarDecl) : SamModified.Expr =
+            let generateSequence (initialValue : SamVal) : PrSequence =
+                let assignVarref = transformSamVarToVarref varDecl.Var
+                let assignExpr = transformSamVal initialValue
+                //also possible to add a "true" as a guard to the returned sequence
+                statementsToSequence [PrStatement.AssignStmnt(PrAssign.AssignExpr(assignVarref,assignExpr))]                
+            varDecl.Init |> List.map generateSequence
+                         |> PrOptions.Options
+                         |> PrStatement.IfStmnt
+        varDecls |> List.map generateInit
+                 |> SamModified.createAndedExpr
+                 |> translateExpression
+                 |> ModuleElement.InitConstraint
+
+    let generateTransRelation (expr:SamModified.Expr) : ModuleElement =
+        ModuleElement
+
+    let transformConfiguration (pgm:SamPgm) : NuXmvProgram =
+        // remove unwanted chars and assure, that no unwanted characters are in the string
+        let changeIdsState = ChangeIdentifierState.initial Set.empty<string> namegenerator_c_like
+        let pgm = changeNamesPgm changeIdsState pgm
+
+        // transform to SamModified-Metamodel
+        let pgm = SamModified.translatePgm pgm
+
+
+        // create the manageVariablesState: Keeps the association between the post value variable and the current value variable
+        // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
+        let manageVariablesState = ManageVariablesState.initial Set.empty<string> namegenerator_c_like
+
+
+        let manageVariablesState =
+            let currentGlobalVars = pgm.Globals |> List.map (fun varDecl -> varDecl.Var)
+            let generateAndAddToList (state:ManageVariablesState) (newVirtualVariable:SamModified.Var): (ManageVariablesState) =
+                let (_,newState) = state.generatePostValueVar newVirtualVariable
+                newState
+            Seq.fold generateAndAddToList (manageVariablesState) currentGlobalVars
+
+        let formulaForWPPostcondition = // "a'=a,b'<->b,...."
+            let createFormulaForGlobalVarDecl (globalVarDecl:SamModified.GlobalVarDecl) : SamModified.Expr =
+                let varCurrent = globalVarDecl.Var
+                let varPost = manageVariablesState.VarWithPostValueToVarWithCurrentValue.Item varCurrent
+                let operator = SamModified.BOp.Equals
+                SamModified.Expr.BExpr(SamModified.Expr.Read(varPost),operator,SamModified.Expr.Read(varCurrent))
+            pgm.Globals |> List.map createFormulaForGlobalVarDecl
+                        |> SamModified.createAndedExpr
+
+                        
+        // declare globals variables
+        let globalVarModuleElement = generateGlobalVarDeclarations pgm.Globals
+        
+        // initialize globals (INIT)
+        let globalVarInitialisations = generateGlobalVarInitialisations pgm.Globals
+        
+        // program loop (TRANS)
+        let wp_of_Statement = WeakestPrecondition.wp pgm.Body formulaForWPPostcondition
+        let transRelation  = generateTransRelation wp_of_Statement
+        
+        let systemModule =
+            {
+                NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "system" };
+                NuXmvModuleDeclaration.ModuleParameters = [];
+                NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;transRelation];
+            }
+        
+        {
+            NuXmvProgram.Modules = [systemModule];
+            NuXmvProgram.Specifications = [];
+        }
+
+        *)
 (*
 
 type internal MetamodelToNuXmv (configuration:MMConfiguration)  =

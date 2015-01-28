@@ -29,4 +29,22 @@ module internal SamHelpers =
         member var.getName =
             match var with
                 | Var (name) -> name
-                
+                 
+    // Extension methods
+    type Expr with
+        static member createOredExpr (exprs:Expr list) : Expr =
+            if exprs.IsEmpty then
+                Expr.Literal(Val.BoolVal(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                Expr.BExpr(exprs.Head,BOp.Or,Expr.createOredExpr exprs.Tail)
+        static member createAndedExpr (exprs:Expr list) : Expr =
+            if exprs.IsEmpty then
+                Expr.Literal(Val.BoolVal(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                Expr.BExpr(exprs.Head,BOp.And,Expr.createAndedExpr exprs.Tail)
