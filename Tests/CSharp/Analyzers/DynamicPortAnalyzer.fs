@@ -37,7 +37,7 @@ module ``Dynamically referenced port must exist`` =
 
     let ss1010 portKind location componentType portName =
         Diagnostic ("SS1010", (1, location), (1, location + String.length portName), 
-            sprintf "'%s' does not declare a %s port named '%s'." componentType portKind portName)
+            sprintf "'%s' does not declare a %s port named '%s' or the port is inaccessible from this location." componentType portKind portName)
         |> Some
 
     let ss1010Req = ss1010 "required"

@@ -47,8 +47,8 @@ namespace SafetySharp.CSharp.Analyzers
 		public DynamicPortAnalyzer()
 		{
 			Error(1010,
-				"The component does not declare a port of the given name.",
-				"'{0}' does not declare a {1} port named '{2}'.");
+				"The component does not declare an accessible port of the given name.",
+				"'{0}' does not declare a {1} port named '{2}' or the port is inaccessible from this location.");
 		}
 
 		/// <summary>

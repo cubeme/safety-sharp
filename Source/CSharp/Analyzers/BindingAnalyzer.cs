@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,64 +23,28 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
-	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a method or property is not marked with both the <see cref="ProvidedAttribute" /> and the
-	///     <see cref="RequiredAttribute" />.
+	///     A base class for implementing port binding analyzers.
 	/// </summary>
-	[DiagnosticAnalyzer]
-	public class BothRequiredAndProvidedPortAnalyzer : CSharpAnalyzer
+	public abstract class BindingAnalyzer : CSharpAnalyzer
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		public BothRequiredAndProvidedPortAnalyzer()
-		{
-			Error(1000,
-				String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName));
-		}
-
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
 		/// <param name="context" />
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.SimpleMemberAccessExpression);
 		}
 
 		/// <summary>
-		///     Performs the analysis.
+		///     Performs the analysis on the given binding.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
-		{
-			var compilation = context.Compilation;
-			var symbol = context.Symbol;
-
-			if (!symbol.ContainingType.ImplementsIComponent(compilation))
-				return;
-
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
-			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
-
-			if (hasProvidedAttribute && hasRequiredAttribute)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
-		}
+		protected abstract void Analyze(SyntaxNodeAnalysisContext context);
 	}
 }

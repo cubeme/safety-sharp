@@ -32,7 +32,7 @@ open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
 module ``Marked with both provided and required port attribute`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (BothRequiredAndProvidedPortAnalyzer ())
+    let getDiagnostic = TestCompilation.GetDiagnostic (AmbiguousPortKindAnalyzer ())
 
     let ss1000 location memberName =
         Diagnostic ("SS1000", (1, location), (1, location + 1), 

@@ -60,9 +60,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzers\BindingAmbiguityAnalyzer.cs" />
+    <Compile Include="Analyzers\BindingAnalyzer.cs" />
+    <Compile Include="Analyzers\BindingFailureAnalyzer.cs" />
     <Compile Include="Analyzers\DynamicPortAnalyzer.cs" />
     <Compile Include="Analyzers\CustomIComponentAnalyzer.cs" />
-    <Compile Include="Analyzers\BothRequiredAndProvidedPortAnalyzer.cs" />
+    <Compile Include="Analyzers\AmbiguousPortKindAnalyzer.cs" />
     <Compile Include="Analyzers\PortPropertyAccessorAnalyzer.cs" />
     <Compile Include="Analyzers\ExternProvidedPortAnalyzer.cs" />
     <Compile Include="Analyzers\NonExternRequiredPortAnalyzer.cs" />
