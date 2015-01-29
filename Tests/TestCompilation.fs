@@ -37,6 +37,7 @@ open Microsoft.CodeAnalysis.Diagnostics
 open Mono.Cecil
 open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn
+open SafetySharp.CSharp.Analyzers
 open SafetySharp.Compiler
 open SafetySharp.Modeling
 
@@ -47,6 +48,12 @@ type CompilationException (message : string) =
 /// Provides information about a diagnostic.
 type Diagnostic =
     | Diagnostic of Identifier : string * Start : (int * int) * End : (int * int) * Message : string
+
+/// Creates a diagnostic.
+let createDiagnostic (id : DiagnosticIdentifier) startLocation endLocation =
+    Printf.ksprintf (fun message ->  
+        Diagnostic ("SS" + (int id).ToString(), startLocation, endLocation, message) |> Some
+    )
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
 [<AllowNullLiteral>]

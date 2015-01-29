@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Roslyn
 {
 	using System;
 	using System.Collections.Immutable;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Utilities;
@@ -34,143 +35,26 @@ namespace SafetySharp.CSharp.Roslyn
 	public abstract class CSharpAnalyzer : DiagnosticAnalyzer
 	{
 		/// <summary>
-		///     The prefix that is used for all diagnostic identifiers.
-		/// </summary>
-		public const string Prefix = "SS";
-
-		/// <summary>
-		///     The category that is used for all diagnostics.
-		/// </summary>
-		public const string Category = "SafetySharp";
-
-		/// <summary>
 		///     The set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
-		private ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
+		private readonly ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
 
 		/// <summary>
-		///     Gets the descriptor for the diagnostic emitted by the analyzer.
+		///     Initializes a new instance.
 		/// </summary>
-		protected DiagnosticDescriptor Descriptor { get; private set; }
+		/// <param name="diagnostics">The diagnostics supported by the analyzer.</param>
+		protected CSharpAnalyzer([NotNull] params DiagnosticInfo[] diagnostics)
+		{
+			Requires.NotNull(diagnostics, () => diagnostics);
+			_supportedDiagnostics = diagnostics.Select(message => message.Descriptor).ToImmutableArray();
+		}
 
 		/// <summary>
 		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+		public sealed override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 		{
 			get { return _supportedDiagnostics; }
-		}
-
-		/// <summary>
-		///     Describes the error diagnostic of the analyzer.
-		/// </summary>
-		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
-		/// <param name="description">The description of the diagnostic.</param>
-		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		protected void Error(int identifier, [NotNull] string description, [NotNull] string messageFormat)
-		{
-			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Error);
-		}
-
-		/// <summary>
-		///     Describes the error diagnostic of the analyzer.
-		/// </summary>
-		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
-		/// <param name="description">The description of the diagnostic.</param>
-		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		protected void Warning(int identifier, [NotNull] string description, [NotNull] string messageFormat)
-		{
-			SetDescriptor(identifier, description, messageFormat, DiagnosticSeverity.Warning);
-		}
-
-		/// <summary>
-		///     Describes the error diagnostic of the analyzer.
-		/// </summary>
-		/// <param name="identifier">The identifier of the analyzer's diagnostic.</param>
-		/// <param name="description">The description of the diagnostic.</param>
-		/// <param name="messageFormat">The message format of the diagnostic.</param>
-		/// <param name="severity">The severity of the diagnostic.</param>
-		private void SetDescriptor(int identifier, [NotNull] string description, [NotNull] string messageFormat, DiagnosticSeverity severity)
-		{
-			Requires.That(Descriptor == null, "A descriptor has already been set.");
-			Requires.NotNullOrWhitespace(description, () => description);
-			Requires.NotNullOrWhitespace(messageFormat, () => messageFormat);
-			Requires.InRange(severity, () => severity);
-
-			Descriptor = new DiagnosticDescriptor(Prefix + identifier, description, messageFormat, Category, severity, true);
-			_supportedDiagnostics = ImmutableArray.Create(Descriptor);
-		}
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
-		///     diagnostic message.
-		/// </summary>
-		/// <param name="context">The context in which the diagnostic should be emitted.</param>
-		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SyntaxNodeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
-		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
-		}
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
-		///     diagnostic message.
-		/// </summary>
-		/// <param name="context">The context in which the diagnostic should be emitted.</param>
-		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SyntaxTreeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
-		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
-		}
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="syntaxToken" /> using the <paramref name="messageArgs" /> to format the
-		///     diagnostic message.
-		/// </summary>
-		/// <param name="context">The context in which the diagnostic should be emitted.</param>
-		/// <param name="syntaxToken">The syntax token the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SyntaxTreeAnalysisContext context, SyntaxToken syntaxToken, params object[] messageArgs)
-		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
-		}
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
-		///     diagnostic message.
-		/// </summary>
-		/// <param name="context">The context in which the diagnostic should be emitted.</param>
-		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SemanticModelAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
-		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
-		}
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="syntaxToken" /> using the <paramref name="messageArgs" /> to format the
-		///     diagnostic message.
-		/// </summary>
-		/// <param name="context">The context in which the diagnostic should be emitted.</param>
-		/// <param name="syntaxToken">The syntax token the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SemanticModelAnalysisContext context, SyntaxToken syntaxToken, params object[] messageArgs)
-		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxToken.GetLocation(), messageArgs));
-		}
-
-		/// <summary>
-		///     Emits a diagnostic for <paramref name="symbol" /> using the <paramref name="messageArgs" /> to format the diagnostic
-		///     message.
-		/// </summary>
-		/// <param name="context">The context in which the diagnostic should be emitted.</param>
-		/// <param name="symbol">The symbol the diagnostic is emitted for.</param>
-		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
-		protected void EmitDiagnostic(SymbolAnalysisContext context, [NotNull] ISymbol symbol, params object[] messageArgs)
-		{
-			context.ReportDiagnostic(Diagnostic.Create(Descriptor, symbol.Locations[0], messageArgs));
 		}
 	}
 }

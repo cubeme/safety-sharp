@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -30,58 +30,54 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.
+	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class ExternProvidedPortAnalyzer : CSharpAnalyzer
+	public class CustomComponentAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo CustomComponent = DiagnosticInfo.Error(
+			DiagnosticIdentifier.CustomComponent,
+			String.Format("A class cannot implement '{0}' when it is not derived from '{1}'.",
+				typeof(IComponent).FullName,
+				typeof(Component).FullName),
+			String.Format("Class '{{0}}' cannot implement '{0}' explicitly; derive from '{1}' instead.",
+				typeof(IComponent).FullName,
+				typeof(Component).FullName));
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public ExternProvidedPortAnalyzer()
+		public CustomComponentAnalyzer()
+			: base(CustomComponent)
 		{
-			Error(1002,
-				String.Format("A method or property marked with '{0}' cannot be extern.", typeof(ProvidedAttribute).FullName),
-				"Provided port '{0}' cannot be extern.");
 		}
 
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		/// <param name="context" />
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSymbolAction(Analyze, SymbolKind.NamedType);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
-			var symbol = context.Symbol;
+			var symbol = context.Symbol as ITypeSymbol;
 
-			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
+			if (symbol == null || symbol.TypeKind != TypeKind.Class)
 				return;
 
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
-			// If the provided port attribute is not applied, we've nothing to do here
-			if (!symbol.HasAttribute<ProvidedAttribute>(compilation))
-				return;
-
-			// If the method is also marked as a required port, something is wrong; we'll let another 
-			// analyzer handle this situation
-			if (symbol.HasAttribute<RequiredAttribute>(compilation))
-				return;
-
-			if (symbol.IsExtern)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			if (symbol.ImplementsIComponent(compilation) && !symbol.IsDerivedFromComponent(compilation))
+				CustomComponent.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

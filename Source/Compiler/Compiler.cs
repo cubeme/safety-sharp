@@ -162,10 +162,10 @@ namespace SafetySharp.Compiler
 		[StringFormatMethod("message")]
 		private static bool ReportError([NotNull] string identifier, [NotNull] string message, params object[] formatArgs)
 		{
-			identifier = CSharpAnalyzer.Prefix + identifier;
+			identifier = DiagnosticInfo.Prefix + identifier;
 			message = String.Format(message, formatArgs);
 
-			var diagnostic = Diagnostic.Create(identifier, CSharpAnalyzer.Category, message, DiagnosticSeverity.Error,
+			var diagnostic = Diagnostic.Create(identifier, DiagnosticInfo.Category, message, DiagnosticSeverity.Error,
 				DiagnosticSeverity.Error, true, 0);
 			Report(diagnostic, true);
 			return false;

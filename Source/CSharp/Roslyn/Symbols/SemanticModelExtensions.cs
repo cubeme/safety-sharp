@@ -88,6 +88,30 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="Fault" /> class within the
+		///     context of the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model the class symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetFaultClassSymbol([NotNull] this SemanticModel semanticModel)
+		{
+			Requires.NotNull(semanticModel, () => semanticModel);
+			return semanticModel.Compilation.GetTypeSymbol<Fault>();
+		}
+
+		/// <summary>
+		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="OccurrencePatternAttribute" /> class within the
+		///     context of the <paramref name="semanticModel" />.
+		/// </summary>
+		/// <param name="semanticModel">The semantic model the class symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static INamedTypeSymbol GetOccurrencePatternAttributeSymbol([NotNull] this SemanticModel semanticModel)
+		{
+			Requires.NotNull(semanticModel, () => semanticModel);
+			return semanticModel.Compilation.GetTypeSymbol<OccurrencePatternAttribute>();
+		}
+
+		/// <summary>
 		///     Gets the <see cref="INamedTypeSymbol " /> representing the <see cref="IComponent" /> interface within the
 		///     context of the <paramref name="semanticModel" />.
 		/// </summary>

@@ -32,12 +32,11 @@ open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
 module ``Explicit enum member value`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (ExplicitEnumValueAnalyzer ())
+    let getDiagnostic = TestCompilation.GetDiagnostic (EnumValueAnalyzer ())
 
-    let ss1006 location memberName =
-        Diagnostic ("SS1006", (1, location), (1, location + 1),
-            sprintf "Value of enum member 'E.%s' cannot be declared explicitly." memberName)
-        |> Some
+    let diagnostic location memberName =
+        createDiagnostic DiagnosticIdentifier.ExplicitEnumMemberValue (1, location) (1, location + 1)
+            "Value of enum member 'E.%s' cannot be declared explicitly." memberName
 
     [<Test>]
     let ``enum declaration without explicit member values is valid`` () =
@@ -45,12 +44,12 @@ module ``Explicit enum member value`` =
 
     [<Test>]
     let ``enum declaration with explicit value on first member is invalid`` () =
-        getDiagnostic "enum E { A = 1, B, C }" =? ss1006 13 "A"
+        getDiagnostic "enum E { A = 1, B, C }" =? diagnostic 13 "A"
 
     [<Test>]
     let ``enum declaration with explicit value on second member is invalid`` () =
-        getDiagnostic "enum E { A, B = 1, C }" =? ss1006 16 "B"
+        getDiagnostic "enum E { A, B = 1, C }" =? diagnostic 16 "B"
 
     [<Test>]
     let ``enum declaration with explicit value on third member is invalid`` () =
-        getDiagnostic "enum E { A, B, C = 3 }" =? ss1006 19 "C"
+        getDiagnostic "enum E { A, B, C = 3 }" =? diagnostic 19 "C"

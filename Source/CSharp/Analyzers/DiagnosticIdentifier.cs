@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,26 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.CSharp.Analyzers
+{
+	using System;
+	using Roslyn;
 
-open System
+	/// <summary>
+	///     Represents a unique identifier for a S# diagnostic emitted by a <see cref="CSharpAnalyzer" />.
+	/// </summary>
+	public enum DiagnosticIdentifier
+	{
+		// Type diagnostics
+		CustomComponent = 1000,
+		ExplicitEnumType = 1001,
+		ExplicitEnumMemberValue = 1002,
 
-/// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
-/// marks the method or property as a provided port.
-[<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
-[<Sealed>]
-type ProvidedAttribute () =
-    inherit Attribute ()
+		// Fault diagnostics
+		MissingOccurrencePattern = 2000,
+		AmbiguousOccurrencePattern = 2001,
 
-/// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
-/// marks the method or property as a required port.
-[<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
-[<Sealed>]
-type RequiredAttribute () =
-    inherit Attribute ()
+		// Port diagnostics
+		AmbiguousPortKind = 3000,
+		UnknownProvidedPort = 3001,
+		UnknownRequiredPort = 3002,
+		UnmarkedInterfacePort = 3003,
+		PortPropertyAccessor = 3004,
+		ProvidedPortImplementedAsRequiredPort = 3005,
+		RequiredPortImplementedAsProvidedPort = 3006,
+		NonExternRequiredPort = 3007,
+		ExternProvidedPort = 3008,
 
-/// Represents a base class for all fault occurrence patterns.
-[<AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)>]
-[<AbstractClass>]
-type OccurrencePatternAttribute () =
-    inherit Attribute ()
+		// Misc diagnostics
+		ReservedName = 9000
+	}
+}

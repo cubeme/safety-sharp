@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,64 +23,60 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using System.Linq;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
-	using Roslyn.Symbols;
+	using Roslyn.Syntax;
 
 	/// <summary>
-	///     Ensures that a method or property is not marked with both the <see cref="ProvidedAttribute" /> and the
-	///     <see cref="RequiredAttribute" />.
+	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class BothRequiredAndProvidedPortAnalyzer : CSharpAnalyzer
+	public class EnumValueAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo ExplicitEnumMemberValue = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExplicitEnumMemberValue,
+			"Values of enumeration members must not be explicitly declared.",
+			"Value of enum member '{0}' cannot be declared explicitly.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public BothRequiredAndProvidedPortAnalyzer()
+		public EnumValueAnalyzer()
+			: base(ExplicitEnumMemberValue)
 		{
-			Error(1000,
-				String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="context" />
+		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSemanticModelAction(Analyze);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SemanticModelAnalysisContext context)
 		{
-			var compilation = context.Compilation;
-			var symbol = context.Symbol;
+			var enumDeclarations = context
+				.SemanticModel
+				.SyntaxTree.Descendants<EnumMemberDeclarationSyntax>()
+				.Where(enumMember => enumMember.EqualsValue != null);
 
-			if (!symbol.ContainingType.ImplementsIComponent(compilation))
-				return;
-
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
-			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
-
-			if (hasProvidedAttribute && hasRequiredAttribute)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			foreach (var enumMember in enumDeclarations)
+			{
+				ExplicitEnumMemberValue.Emit(context, enumMember.EqualsValue.Value,
+					context.SemanticModel.GetDeclaredSymbol(enumMember).ToDisplayString());
+			}
 		}
 	}
 }

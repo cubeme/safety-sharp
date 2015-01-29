@@ -32,13 +32,12 @@ open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
 module ``Custom implementation of IComponent interface`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (CustomIComponentAnalyzer ())
+    let getDiagnostic = TestCompilation.GetDiagnostic (CustomComponentAnalyzer ())
     let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
 
-    let ss1009 typeName location =
-        Diagnostic ("SS1009", (1, location), (1, location + 1), 
-            sprintf "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName)
-        |> Some
+    let diagnostic typeName location =
+        createDiagnostic DiagnosticIdentifier.CustomComponent (1, location) (1, location + 1) 
+            "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName
 
     [<Test>]
     let ``type derived from Component is valid`` () =
@@ -63,13 +62,13 @@ module ``Custom implementation of IComponent interface`` =
 
     [<Test>]
     let ``base type not derived from Component is invalid`` () =
-        getDiagnostic (sprintf "class X : IComponent { %s }" implementation) =? ss1009 "X" 6
+        getDiagnostic (sprintf "class X : IComponent { %s }" implementation) =? diagnostic "X" 6
 
     [<Test>]
     let ``nested base type not derived from Component is invalid`` () =
-        getDiagnostic (sprintf "class Y { class X : IComponent { %s }}" implementation) =? ss1009 "Y.X" 16
-        getDiagnostic (sprintf "class Y : Component { class X : IComponent { %s }}" implementation) =? ss1009 "Y.X" 28
+        getDiagnostic (sprintf "class Y { class X : IComponent { %s }}" implementation) =? diagnostic "Y.X" 16
+        getDiagnostic (sprintf "class Y : Component { class X : IComponent { %s }}" implementation) =? diagnostic "Y.X" 28
 
     [<Test>]
     let ``inherited type not derived from Component is invalid`` () =
-        getDiagnostic (sprintf "class Y {} class X : IComponent { %s }" implementation) =? ss1009 "X" 17
+        getDiagnostic (sprintf "class Y {} class X : IComponent { %s }" implementation) =? diagnostic "X" 17

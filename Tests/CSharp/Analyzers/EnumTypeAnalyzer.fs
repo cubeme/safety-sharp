@@ -34,9 +34,9 @@ open SafetySharp.CSharp.Roslyn.Symbols
 module ``Explicit enum type`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (EnumTypeAnalyzer ())
 
-    let ss1007 location length =
-        Diagnostic ("SS1007", (1, location), (1, location + length), "Enum 'E' must not explicitly declare an underlying type.")
-        |> Some
+    let diagnostic location length =
+        createDiagnostic DiagnosticIdentifier.ExplicitEnumType (1, location) (1, location + length)
+            "Enum 'E' must not explicitly declare an underlying type."
 
     [<Test>]
     let ``implicit underlying type is valid`` () =
@@ -44,32 +44,32 @@ module ``Explicit enum type`` =
 
     [<Test>]
     let ``byte as underlying type is invalid`` () =
-        getDiagnostic "enum E : byte { A }" =? ss1007 9 4
+        getDiagnostic "enum E : byte { A }" =? diagnostic 9 4
 
     [<Test>]
     let ``int as underlying type is invalid`` () =
-        getDiagnostic "enum E : int { A }" =? ss1007 9 3
+        getDiagnostic "enum E : int { A }" =? diagnostic 9 3
 
     [<Test>]
     let ``long as underlying type is invalid`` () =
-        getDiagnostic "enum E : long { A }" =? ss1007 9 4
+        getDiagnostic "enum E : long { A }" =? diagnostic 9 4
 
     [<Test>]
     let ``sbyte as underlying type is invalid`` () =
-        getDiagnostic "enum E : sbyte { A }" =? ss1007 9 5
+        getDiagnostic "enum E : sbyte { A }" =? diagnostic 9 5
 
     [<Test>]
     let ``short as underlying type is invalid`` () =
-        getDiagnostic "enum E : short { A }" =? ss1007 9 5
+        getDiagnostic "enum E : short { A }" =? diagnostic 9 5
 
     [<Test>]
     let ``uint as underlying type is invalid`` () =
-        getDiagnostic "enum E : uint { A }" =? ss1007 9 4
+        getDiagnostic "enum E : uint { A }" =? diagnostic 9 4
 
     [<Test>]
     let ``ulong as underlying type is invalid`` () =
-        getDiagnostic "enum E : ulong { A }" =? ss1007 9 5
+        getDiagnostic "enum E : ulong { A }" =? diagnostic 9 5
 
     [<Test>]
     let ``ushort as underlying type is invalid`` () =
-        getDiagnostic "enum E : ushort { A }" =? ss1007 9 6
+        getDiagnostic "enum E : ushort { A }" =? diagnostic 9 6

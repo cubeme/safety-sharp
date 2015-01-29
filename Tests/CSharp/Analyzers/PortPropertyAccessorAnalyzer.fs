@@ -34,10 +34,9 @@ open SafetySharp.CSharp.Roslyn.Symbols
 module ``Property accessor marked with port attribute`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortPropertyAccessorAnalyzer ())
 
-    let ss1001 location memberName =
-        Diagnostic ("SS1001", (1, location), (1, location + 3), 
-            sprintf "'%s' cannot be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
-        |> Some
+    let diagnostic location memberName =
+        createDiagnostic DiagnosticIdentifier.PortPropertyAccessor (1, location) (1, location + 3)
+            "'%s' cannot be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
     [<Test>]
     let ``Accessors without attributes are valid`` () =
@@ -46,25 +45,25 @@ module ``Property accessor marked with port attribute`` =
 
     [<Test>]
     let ``Accessors with single attribute are invalid`` () =
-        getDiagnostic "class C : Component { int M { [Required] get; set; }}" =? ss1001 41 "C.M.get"
-        getDiagnostic "class C : Component { int M { [Provided] get; set; }}" =? ss1001 41 "C.M.get"
-        getDiagnostic "class C : Component { int M { get; [Required] set; }}" =? ss1001 46 "C.M.set"
-        getDiagnostic "class C : Component { int M { get; [Provided] set; }}" =? ss1001 46 "C.M.set"
-        getDiagnostic "interface C : IComponent { int M { [Required] get; set; }}" =? ss1001 46 "C.M.get"
-        getDiagnostic "interface C : IComponent { int M { [Provided] get; set; }}" =? ss1001 46 "C.M.get"
-        getDiagnostic "interface C : IComponent { int M { get; [Required] set; }}" =? ss1001 51 "C.M.set"
-        getDiagnostic "interface C : IComponent { int M { get; [Provided] set; }}" =? ss1001 51 "C.M.set"
+        getDiagnostic "class C : Component { int M { [Required] get; set; }}" =? diagnostic 41 "C.M.get"
+        getDiagnostic "class C : Component { int M { [Provided] get; set; }}" =? diagnostic 41 "C.M.get"
+        getDiagnostic "class C : Component { int M { get; [Required] set; }}" =? diagnostic 46 "C.M.set"
+        getDiagnostic "class C : Component { int M { get; [Provided] set; }}" =? diagnostic 46 "C.M.set"
+        getDiagnostic "interface C : IComponent { int M { [Required] get; set; }}" =? diagnostic 46 "C.M.get"
+        getDiagnostic "interface C : IComponent { int M { [Provided] get; set; }}" =? diagnostic 46 "C.M.get"
+        getDiagnostic "interface C : IComponent { int M { get; [Required] set; }}" =? diagnostic 51 "C.M.set"
+        getDiagnostic "interface C : IComponent { int M { get; [Provided] set; }}" =? diagnostic 51 "C.M.set"
 
     [<Test>]
     let ``Accessors with both attributes are invalid`` () =
-        getDiagnostic "class C : Component { int M { [Required, Provided] get; set; }}" =? ss1001 51 "C.M.get"
-        getDiagnostic "class C : Component { int M { [Required] [Provided] get; set; }}" =? ss1001 52 "C.M.get"
-        getDiagnostic "class C : Component { int M { get; [Required, Provided] set; }}" =? ss1001 56 "C.M.set"
-        getDiagnostic "class C : Component { int M { get; [Required] [Provided] set; }}" =? ss1001 57 "C.M.set"
-        getDiagnostic "interface C : IComponent { int M { [Required, Provided] get; set; }}" =? ss1001 56 "C.M.get"
-        getDiagnostic "interface C : IComponent { int M { [Required] [Provided] get; set; }}" =? ss1001 57 "C.M.get"
-        getDiagnostic "interface C : IComponent { int M { get; [Required, Provided] set; }}" =? ss1001 61 "C.M.set"
-        getDiagnostic "interface C : IComponent { int M { get; [Required] [Provided] set; }}" =? ss1001 62 "C.M.set"
+        getDiagnostic "class C : Component { int M { [Required, Provided] get; set; }}" =? diagnostic 51 "C.M.get"
+        getDiagnostic "class C : Component { int M { [Required] [Provided] get; set; }}" =? diagnostic 52 "C.M.get"
+        getDiagnostic "class C : Component { int M { get; [Required, Provided] set; }}" =? diagnostic 56 "C.M.set"
+        getDiagnostic "class C : Component { int M { get; [Required] [Provided] set; }}" =? diagnostic 57 "C.M.set"
+        getDiagnostic "interface C : IComponent { int M { [Required, Provided] get; set; }}" =? diagnostic 56 "C.M.get"
+        getDiagnostic "interface C : IComponent { int M { [Required] [Provided] get; set; }}" =? diagnostic 57 "C.M.get"
+        getDiagnostic "interface C : IComponent { int M { get; [Required, Provided] set; }}" =? diagnostic 61 "C.M.set"
+        getDiagnostic "interface C : IComponent { int M { get; [Required] [Provided] set; }}" =? diagnostic 62 "C.M.set"
 
     [<Test>]
     let ``Accessors with attributes outside of component class or interface are valid`` () =

@@ -35,16 +35,30 @@ namespace SafetySharp.CSharp.Analyzers
 	///     corresponding interface method or property.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class InconsistentPortKindAnalyzer : CSharpAnalyzer
+	public class PortImplementationAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo RequiredPortImplementedAsProvidedPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.RequiredPortImplementedAsProvidedPort,
+			"Cannot implement an required port as a provided port.",
+			"'{0}' does not implement interface member '{1}'. '{1}' is declared as a required port, but is implemented as a provided port.");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo ProvidedPortImplementedAsRequiredPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ProvidedPortImplementedAsRequiredPort,
+			"Cannot implement an provided port as a required port.",
+			"'{0}' does not implement interface member '{1}'. '{1}' is declared as a provided port, but is implemented as a required port.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public InconsistentPortKindAnalyzer()
+		public PortImplementationAnalyzer()
+			: base(RequiredPortImplementedAsProvidedPort, ProvidedPortImplementedAsRequiredPort)
 		{
-			Error(1005,
-				"Method or property does not implement the corresponding interface method or property, as the port kinds are different.",
-				"'{0}' does not implement interface member '{1}'. '{1}' is declared as a {2} port, but is implemented as a {3} port.");
 		}
 
 		/// <summary>
@@ -60,7 +74,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
 			var symbol = (INamedTypeSymbol)context.Symbol;
@@ -85,7 +99,7 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="symbol">The symbol that should be analyzed.</param>
 		/// <param name="compilation">The compilation the symbol is declared in.</param>
 		/// <param name="interfaceMember">The interface member that should be checked.</param>
-		private void CheckMember(SymbolAnalysisContext context, ITypeSymbol symbol, Compilation compilation, ISymbol interfaceMember)
+		private static void CheckMember(SymbolAnalysisContext context, ITypeSymbol symbol, Compilation compilation, ISymbol interfaceMember)
 		{
 			var implementingMember = symbol.FindImplementationForInterfaceMember(interfaceMember);
 
@@ -101,12 +115,16 @@ namespace SafetySharp.CSharp.Analyzers
 				return;
 
 			if (interfaceIsRequired && !implementationIsRequired)
-				EmitDiagnostic(context, implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
-					"required", "provided");
+			{
+				RequiredPortImplementedAsProvidedPort.Emit(context, implementingMember,
+					implementingMember.ToDisplayString(), interfaceMember.ToDisplayString());
+			}
 
 			if (interfaceIsProvided && !implementationIsProvided)
-				EmitDiagnostic(context, implementingMember, implementingMember.ToDisplayString(), interfaceMember.ToDisplayString(),
-					"provided", "required");
+			{
+				ProvidedPortImplementedAsRequiredPort.Emit(context, implementingMember,
+					implementingMember.ToDisplayString(), interfaceMember.ToDisplayString());
+			}
 		}
 	}
 }

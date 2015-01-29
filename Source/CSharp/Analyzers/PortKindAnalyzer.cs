@@ -30,29 +30,44 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
-	///     the <see cref="RequiredAttribute" /> or <see cref="ProvidedAttribute" />.
+	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class UnmarkedInterfacePortAnalyzer : CSharpAnalyzer
+	public class PortKindAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer.
+		///     The error diagnostic emitted by the analyzer if a provided port is extern.
 		/// </summary>
-		private static readonly DiagnosticInfo UnmarkedInterfacePort = DiagnosticInfo.Error(
-			DiagnosticIdentifier.UnmarkedInterfacePort,
-			String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
+		private static readonly DiagnosticInfo ExternProvidedPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExternProvidedPort,
+			String.Format("A method or property marked with '{0}' cannot be extern.", typeof(ProvidedAttribute).FullName),
+			"Provided port '{0}' cannot be extern.");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer if a required port is not extern.
+		/// </summary>
+		private static readonly DiagnosticInfo NonExternRequiredPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.NonExternRequiredPort,
+			String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
+			"Required port '{0}' must be extern.");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer if a method or property is marked as both required and provided.
+		/// </summary>
+		private static readonly DiagnosticInfo AmbiguousPortKind = DiagnosticInfo.Error(
+			DiagnosticIdentifier.AmbiguousPortKind,
+			String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
 				typeof(RequiredAttribute).FullName,
 				typeof(ProvidedAttribute).FullName),
-			String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
+			String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
 				typeof(RequiredAttribute).FullName,
 				typeof(ProvidedAttribute).FullName));
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public UnmarkedInterfacePortAnalyzer()
-			: base(UnmarkedInterfacePort)
+		public PortKindAnalyzer()
+			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind)
 		{
 		}
 
@@ -69,12 +84,12 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
 			var symbol = context.Symbol;
 
-			if (symbol.ContainingType.TypeKind != TypeKind.Interface || !symbol.ContainingType.ImplementsIComponent(compilation))
+			if (!symbol.ContainingType.ImplementsIComponent(compilation))
 				return;
 
 			// Ignore getter and setter methods of properties
@@ -82,11 +97,22 @@ namespace SafetySharp.CSharp.Analyzers
 			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
 				return;
 
-			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
+			var isRequiredPort = symbol.HasAttribute<RequiredAttribute>(compilation);
+			var isProvidedPort = symbol.HasAttribute<ProvidedAttribute>(compilation);
 
-			if (!hasProvidedAttribute && !hasRequiredAttribute)
-				UnmarkedInterfacePort.Emit(context, symbol, symbol.ToDisplayString());
+			if (isRequiredPort && isProvidedPort)
+			{
+				AmbiguousPortKind.Emit(context, symbol, symbol.ToDisplayString());
+				return;
+			}
+
+			if (symbol.ContainingType.TypeKind == TypeKind.Interface)
+				return;
+
+			if (isProvidedPort && symbol.IsExtern)
+				ExternProvidedPort.Emit(context, symbol, symbol.ToDisplayString());
+			else if (isRequiredPort && !symbol.IsExtern)
+				NonExternRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
@@ -30,58 +31,66 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn.Symbols;
 
 	/// <summary>
-	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
+	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.
 	/// </summary>
 	[DiagnosticAnalyzer]
-	public class NonExternRequiredPortAnalyzer : CSharpAnalyzer
+	public class OccurrencePatternAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     Indicates that the occurrence pattern is missing.
+		/// </summary>
+		private static readonly DiagnosticInfo MissingPattern = DiagnosticInfo.Error(
+			DiagnosticIdentifier.MissingOccurrencePattern,
+			"A fault must be marked with a default occurrence pattern.",
+			String.Format(
+				"Fault '{{0}}' does not declare a default occurrence pattern. Mark it with an attribute derived from '{0}'. " +
+				"You can change the default occurrence pattern dynamically during model initialization time.",
+				typeof(OccurrencePatternAttribute).FullName));
+
+		/// <summary>
+		///     Indicates that multiple occurrence patterns are provided.
+		/// </summary>
+		private static readonly DiagnosticInfo AmbiguousPattern = DiagnosticInfo.Error(
+			DiagnosticIdentifier.AmbiguousOccurrencePattern,
+			"A fault cannot be marked with more than one default occurrence pattern.",
+			"Fault '{{0}}' is marked with more than one occurrence pattern.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public NonExternRequiredPortAnalyzer()
+		public OccurrencePatternAnalyzer()
+			: base(MissingPattern, AmbiguousPattern)
 		{
-			Error(1003,
-				String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
-				"Required port '{0}' must be extern.");
 		}
 
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
-		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
+		/// <param name="context" />
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSymbolAction(Analyze, SymbolKind.NamedType);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
-			var symbol = context.Symbol;
+			var symbol = context.Symbol as ITypeSymbol;
 
-			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
+			if (symbol == null || !symbol.IsDerivedFromFault(compilation))
 				return;
 
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
+			var attributeSymbol = compilation.GetOccurrencePatternAttributeSymbol();
+			var count = symbol.GetAttributes().Count(attribute => attribute.AttributeClass == attributeSymbol);
 
-			// If the required port attribute is not applied, we've nothing to do here
-			if (!symbol.HasAttribute<RequiredAttribute>(compilation))
-				return;
-
-			// If the method is also marked as a provided port, something is wrong; we'll let another 
-			// analyzer handle this situation
-			if (symbol.HasAttribute<ProvidedAttribute>(compilation))
-				return;
-
-			if (!symbol.IsExtern)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			if (count == 0)
+				MissingPattern.Emit(context, symbol, symbol.ToDisplayString());
+			else if (count > 1)
+				AmbiguousPattern.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

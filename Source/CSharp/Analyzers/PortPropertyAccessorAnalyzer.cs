@@ -37,17 +37,23 @@ namespace SafetySharp.CSharp.Analyzers
 	public class PortPropertyAccessorAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo PortPropertyAccessor = DiagnosticInfo.Error(
+			DiagnosticIdentifier.PortPropertyAccessor,
+			String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName),
+			String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName));
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public PortPropertyAccessorAnalyzer()
+			: base(PortPropertyAccessor)
 		{
-			Error(1001,
-				String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
@@ -63,7 +69,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
 			var symbol = context.Symbol;
@@ -79,7 +85,7 @@ namespace SafetySharp.CSharp.Analyzers
 			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
 
 			if (hasProvidedAttribute || hasRequiredAttribute)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+				PortPropertyAccessor.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

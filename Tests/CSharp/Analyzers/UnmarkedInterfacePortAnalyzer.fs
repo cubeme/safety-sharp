@@ -34,15 +34,14 @@ open SafetySharp.CSharp.Roslyn.Symbols
 module ``Interface members must be marked with port attributes`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (UnmarkedInterfacePortAnalyzer ())
 
-    let ss1004 location memberName =
-        Diagnostic ("SS1004", (1, location), (1, location + 1), 
-            sprintf "'%s' must be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName)
-        |> Some
+    let diagnostic location memberName =
+        createDiagnostic DiagnosticIdentifier.UnmarkedInterfacePort (1, location) (1, location + 1)
+            "'%s' must be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
     [<Test>]
     let ``Method or property without attributes is invalid`` () =
-        getDiagnostic "interface C : IComponent { void M(); }" =? ss1004 32 "C.M()"
-        getDiagnostic "interface C : IComponent { int M { get; set; }}" =? ss1004 31 "C.M"
+        getDiagnostic "interface C : IComponent { void M(); }" =? diagnostic 32 "C.M()"
+        getDiagnostic "interface C : IComponent { int M { get; set; }}" =? diagnostic 31 "C.M"
 
     [<Test>]
     let ``Method or property with only one of the attributes is valid`` () =
