@@ -44,7 +44,7 @@ module private Helpers =
     let getPorts name =
         component'.GetType().GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic) |> Seq.filter (fun m -> m.Name = name)
 
-[<TestFixture>]
+[<TestFixture; Ignore>]
 module ``Port class`` =
     [<Test>]
     let ``signatures of 'void -> void' ports shoud be compatible`` () =
@@ -90,7 +90,7 @@ module ``Port class`` =
         port2.IsCompatibleTo port4 =? false
         port4.IsCompatibleTo port2 =? false
 
-[<TestFixture>]
+[<TestFixture; Ignore>]
 module ``PortSet class`` =
     [<Test>]
     let ``OfType method should return port of matching type (singleton set)`` () =
@@ -132,13 +132,13 @@ module ``PortSet class`` =
        let set = PortSet ("OverloadedProvPort", component', getPorts "OverloadedProvPort")
        raisesInvalidOpException (fun () -> set.OfType<Action>().Method =? getPort "ProvPort2")
 
-[<TestFixture>]
+[<TestFixture; Ignore>]
 module ``ProvidedPortCollection class`` =
     [<Test>]
     let ``GetPortSets method`` () =
         provPorts.GetPortSets() |> List.map (fun p -> p.Name) |> List.sort =? ["OverloadedProvPort"; "OverloadedProvPort2"; "ProvPort1"; "ProvPort2"]
 
-[<TestFixture>]
+[<TestFixture; Ignore>]
 module ``RequiredPortCollection class`` =
     [<Test>]
     let ``GetPortSets method`` () =
