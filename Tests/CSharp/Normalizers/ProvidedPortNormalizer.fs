@@ -75,3 +75,15 @@ module ProvidedPortNormalizer =
             "class X : Component { [DebuggerHidden, DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
         normalize "class X : Component { [DebuggerHidden] [DebuggerNonUserCode] void M() {} }" =? 
             "class X : Component { [DebuggerHidden] [DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+
+    [<Test>]
+    let ``normalizes provided port of component class nested in other component class`` () =
+        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ProvidedPortNormalizer()) "class Y : Component { class X : Component { void M() {} }}"
+        syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+
+    [<Test>]
+    let ``normalizes provided port of component class nested in other non-component class`` () =
+        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ProvidedPortNormalizer()) "class Y { class X : Component { void M() {} }}"
+        syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"

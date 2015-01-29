@@ -155,3 +155,21 @@ module RequiredPortNormalizer =
             [SafetySharp.Modeling.RequiredAttribute()] public void M(int a, int b, int c) => this.__M__int__int__int__Field__(a, b, c);\n\n\n\nint f; }"
 
         actual =? expected
+
+    [<Test>]
+    let ``normalizes required port of component class nested in other component class`` () =
+        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (RequiredPortNormalizer()) "class Y : Component { class X : Component { public extern void M(); }}"
+        syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
+            "class X : Component { \
+            public delegate void __M____Delegate__();\
+            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] private __M____Delegate__ __M____Field__;\
+            [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__M____Field__();}"
+
+    [<Test>]
+    let ``normalizes required port of component class nested in other non-component class`` () =
+        let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (RequiredPortNormalizer()) "class Y { class X : Component { public extern void M(); }}"
+        syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
+            "class X : Component { \
+            public delegate void __M____Delegate__();\
+            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] private __M____Delegate__ __M____Field__;\
+            [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__M____Field__();}"

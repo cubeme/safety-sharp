@@ -68,7 +68,7 @@ namespace SafetySharp.Compiler.Normalization
 		private static readonly AttributeListSyntax RequiredAttribute = SyntaxBuilder.Attribute(typeof(RequiredAttribute).FullName);
 
 		/// <summary>
-		///     Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)]  attribute syntax.
+		///     Represents the [DebuggerBrowsable(DebuggerBrowsableState.Never)] attribute syntax.
 		/// </summary>
 		private static readonly AttributeListSyntax BrowsableAttribute = SyntaxBuilder.Attribute(
 			typeof(DebuggerBrowsableAttribute).FullName,
@@ -83,13 +83,10 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes all required ports of the given class.
+		///     Normalizes the <paramref name="classDeclaration" />.
 		/// </summary>
-		public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		protected override ClassDeclarationSyntax NormalizeClassDeclaration(ClassDeclarationSyntax classDeclaration)
 		{
-			if (!ShouldNormalizeClassDeclaration(classDeclaration))
-				return classDeclaration;
-
 			var originalMembers = classDeclaration.Members;
 			var members = originalMembers;
 
