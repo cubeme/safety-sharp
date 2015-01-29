@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp
 
 open System
 open System.Collections.Generic
@@ -31,31 +31,30 @@ open System.Linq.Expressions
 open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp
-open SafetySharp.Modeling.CompilerServices
 open Mono.Cecil
 
-/// Provides helper functions for the implementation of the modeling types.
-module private Helpers =
-    /// Collects all members of the given object recursively, going up the inheritance chain; unfortunately, the reflection API
-    /// does not return private members of base classes, even with BindingFlags.FlattenHierarchy.
-    let rec private collect selector (t : Type) = seq {
+/// Provides helper functions for working with the reflection APIs.
+module Reflection =
+    /// Gets all members of the given object recursively, going up the inheritance chain; unfortunately, the reflection APIs
+    /// do not return private members of base classes, even with BindingFlags.FlattenHierarchy.
+    let rec private getMembers selector (t : Type) = seq {
         if t.BaseType <> null then
-            yield! collect selector t.BaseType
+            yield! getMembers selector t.BaseType
         
         yield! selector t (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
     }
 
-    /// Collects all fields declared by the given type.
-    let collectFields t = 
-        collect (fun t b -> t.GetFields b) t
+    /// Gets all fields declared by the given type.
+    let getFields t = 
+        getMembers (fun t b -> t.GetFields b) t
 
-    /// Collects all properties declared by the given type.
-    let collectProperties t = 
-        collect (fun t b -> t.GetProperties b) t
+    /// Gets all properties declared by the given type.
+    let getProperties t = 
+        getMembers (fun t b -> t.GetProperties b) t
 
-    /// Collects all methods declared by the given type.
-    let collectMethods t = 
-        collect (fun t b -> t.GetMethods b) t
+    /// Gets all methods declared by the given type.
+    let getMethods t = 
+        getMembers (fun t b -> t.GetMethods b) t
 
     /// Gets a value indicating whether the given member info is marked with an instance of the given attribute.
     let hasAttribute<'T> (info : MemberInfo) =

@@ -54,8 +54,8 @@
     <Compile Include="Utilities\Exceptions.fs" />
     <Compile Include="Utilities\FileSystem.fs" />
     <Compile Include="Utilities\StructuredWriter.fs" />
+    <Compile Include="Utilities\Reflection.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
-    <Compile Include="Modeling\ModelingHelpers.fs" />
     <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Modeling\Binding.fs" />
     <Compile Include="Modeling\Component.fs" />

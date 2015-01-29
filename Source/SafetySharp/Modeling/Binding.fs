@@ -53,10 +53,10 @@ type Port (comp: obj, port : MethodInfo) =
     member this.Method with get () = port
 
     /// Gets a value indicating whether the port is a required port
-    member this.IsRequiredPort with get () = Helpers.hasAttribute<RequiredAttribute> port
+    member this.IsRequiredPort with get () = Reflection.hasAttribute<RequiredAttribute> port
 
     /// Gets a value indicating whether the port is a provided port
-    member this.IsProvidedPort with get () = Helpers.hasAttribute<ProvidedAttribute> port
+    member this.IsProvidedPort with get () = Reflection.hasAttribute<ProvidedAttribute> port
 
     /// Checks whether the two ports are signature-compatible.
     member this.IsCompatibleTo (other : Port) =
@@ -131,8 +131,8 @@ type internal RequiredPortCollection (comp : obj) =
 
     /// The required ports declared by the component grouped by name.
     let ports =
-        Helpers.collectMethods (comp.GetType ())
-        |> Seq.filter Helpers.hasAttribute<RequiredAttribute>
+        Reflection.getMethods (comp.GetType ())
+        |> Seq.filter Reflection.hasAttribute<RequiredAttribute>
         |> Seq.groupBy (fun p -> p.Name)
         |> Seq.map (fun (name, ports) -> (name, PortSet (name, comp, ports)))
         |> Map.ofSeq
@@ -181,8 +181,8 @@ type internal ProvidedPortCollection (comp : obj) =
 
     /// The provided ports declared by the component grouped by name.
     let ports =
-        Helpers.collectMethods (comp.GetType ())
-        |> Seq.filter Helpers.hasAttribute<ProvidedAttribute>
+        Reflection.getMethods (comp.GetType ())
+        |> Seq.filter Reflection.hasAttribute<ProvidedAttribute>
         |> Seq.groupBy (fun p -> p.Name)
         |> Seq.map (fun (name, ports) -> (name, PortSet (name, comp, ports)))
         |> Map.ofSeq

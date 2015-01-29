@@ -214,7 +214,7 @@ type Component () as this =
         isSealed <- true
         name <- defaultArg componentName String.Empty
 
-        Helpers.collectFields (this.GetType ())
+        Reflection.getFields (this.GetType ())
         |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
         |> Seq.iter (fun field ->
             let value =
@@ -226,7 +226,7 @@ type Component () as this =
         )
 
         let subcomponentMetadata = 
-            Helpers.collectFields (this.GetType ())
+            Reflection.getFields (this.GetType ())
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
             |> Seq.map (fun field -> (field, field.GetValue(this)))
             |> Seq.where (fun (field, component') -> component' <> null)
