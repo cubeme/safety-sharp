@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzers\CustomIComponentAnalyzer.cs" />
     <Compile Include="Analyzers\BothRequiredAndProvidedPortAnalyzer.cs" />
     <Compile Include="Analyzers\PortPropertyAccessorAnalyzer.cs" />
     <Compile Include="Analyzers\ExternProvidedPortAnalyzer.cs" />

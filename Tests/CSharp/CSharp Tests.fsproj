@@ -83,6 +83,7 @@
     <Compile Include="Analyzers\InconsistentPortKindAnalyzer.fs" />
     <Compile Include="Analyzers\ExplicitEnumValueAnalyzer.fs" />
     <Compile Include="Analyzers\EnumTypeAnalyzer.fs" />
+    <Compile Include="Analyzers\CustomIComponentAnalyzer.fs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Compile Include="Normalizers\ProvidedPortNormalizer.fs" />
