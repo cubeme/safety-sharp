@@ -73,6 +73,43 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		}
 
 		/// <summary>
+		///     Creates a <see cref="FieldDeclarationSyntax" />.
+		/// </summary>
+		/// <param name="name">The name of the field.</param>
+		/// <param name="fieldType">The type of the field.</param>
+		/// <param name="visibility">The visibility of the field.</param>
+		/// <param name="attributes">Optional attributes the field should be marked with.</param>
+		public static FieldDeclarationSyntax Field([NotNull] string name, [NotNull] string fieldType, Visibility visibility,
+												   [NotNull] params AttributeListSyntax[] attributes)
+		{
+			Requires.NotNullOrWhitespace(fieldType, () => fieldType);
+			return Field(name, SyntaxFactory.ParseTypeName(fieldType), visibility, attributes);
+		}
+
+		/// <summary>
+		///     Creates a <see cref="FieldDeclarationSyntax" />.
+		/// </summary>
+		/// <param name="name">The name of the field.</param>
+		/// <param name="fieldType">The type of the field.</param>
+		/// <param name="visibility">The visibility of the field.</param>
+		/// <param name="attributes">Optional attributes the field should be marked with.</param>
+		public static FieldDeclarationSyntax Field([NotNull] string name, [NotNull] TypeSyntax fieldType, Visibility visibility,
+												   [NotNull] params AttributeListSyntax[] attributes)
+		{
+			Requires.NotNullOrWhitespace(name, () => name);
+			Requires.NotNull(fieldType, () => fieldType);
+			Requires.InRange(visibility, () => visibility);
+			Requires.NotNull(attributes, () => attributes);
+
+			var attributeLists = SyntaxFactory.List(attributes);
+			var modifiers = VisibilityModifier(visibility);
+			var declarator = SyntaxFactory.VariableDeclarator(name);
+			var declaratorList = SyntaxFactory.SingletonSeparatedList(declarator);
+			var variableDeclaration = SyntaxFactory.VariableDeclaration(fieldType, declaratorList);
+			return SyntaxFactory.FieldDeclaration(attributeLists, modifiers, variableDeclaration).NormalizeWhitespace();
+		}
+
+		/// <summary>
 		///     Creates an <see cref="AccessorDeclarationSyntax" /> with the given <paramref name="accessorType" /> and
 		///     <paramref name="visibility" />.
 		/// </summary>
@@ -178,6 +215,26 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 
 			var parameterList = SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters));
 			return SyntaxFactory.ParenthesizedLambdaExpression(parameterList, tempBody).NormalizeWhitespace().WithBody(body);
+		}
+
+		/// <summary>
+		///     Creates an <see cref="AttributeListSyntax" /> for an attribute of <paramref name="type" /> with the given constructor
+		///     <paramref name="arguments" />.
+		/// </summary>
+		/// <param name="type">The type of the attribute.</param>
+		/// <param name="arguments">The optional arguments to the constructor.</param>
+		[Pure, NotNull]
+		public static AttributeListSyntax Attribute([NotNull] string type, [NotNull] params ExpressionSyntax[] arguments)
+		{
+			Requires.NotNullOrWhitespace(type, () => type);
+			Requires.NotNull(arguments, () => arguments);
+
+			var typeName = SyntaxFactory.ParseName(type);
+			var attributeArguments = arguments.Select(SyntaxFactory.AttributeArgument);
+			var argumentList = SyntaxFactory.AttributeArgumentList(SyntaxFactory.SeparatedList(attributeArguments));
+			var attribute = SyntaxFactory.Attribute(typeName, argumentList);
+			var attributes = SyntaxFactory.SingletonSeparatedList(attribute);
+			return SyntaxFactory.AttributeList(attributes);
 		}
 	}
 }

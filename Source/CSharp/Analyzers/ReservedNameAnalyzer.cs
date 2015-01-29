@@ -75,7 +75,7 @@ namespace SafetySharp.CSharp.Analyzers
 			var invalidNamespaces = syntaxTree
 				.Descendants<NamespaceDeclarationSyntax>()
 				.SelectMany(n => n.Descendants<IdentifierNameSyntax>())
-				.Where(identifierName => IdentifierNameSynthesizer.IsSynthesized(identifierName.Identifier));
+				.Where(identifierName => identifierName.Identifier.IsSynthesized());
 
 			foreach (var invalidNamespace in invalidNamespaces)
 				EmitDiagnostic(context, invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
@@ -99,7 +99,7 @@ namespace SafetySharp.CSharp.Analyzers
 			var invalidIdentifiers = syntaxTree
 				.Descendants<T>()
 				.Select(getIdentifier)
-				.Where(IdentifierNameSynthesizer.IsSynthesized);
+				.Where(name => name.IsSynthesized());
 
 			foreach (var identifier in invalidIdentifiers)
 				EmitDiagnostic(context, identifier, identifier.ValueText);

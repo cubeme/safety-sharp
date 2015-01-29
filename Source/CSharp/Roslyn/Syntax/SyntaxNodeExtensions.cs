@@ -175,8 +175,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 
 			Func<SyntaxNode, int> countLines = node =>
 			{
-				var lineSpan = node.GetLocation().GetLineSpan();
-				return lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line + 1;
+				return node.ToFullString().Replace("\r\n", "\n").Replace("\r", "\n").Count(c => c == '\n');
 			};
 
 			var actualLineCount = countLines(syntaxNode);

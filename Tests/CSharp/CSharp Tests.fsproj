@@ -84,9 +84,8 @@
     <Compile Include="Analyzers\ExplicitEnumValueAnalyzer.fs" />
     <Compile Include="Analyzers\EnumTypeAnalyzer.fs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
-    <Compile Include="Normalizers\ComponentRequiredPortNormalizer.fs" />
+    <Compile Include="Normalizers\RequiredPortNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
-    <Compile Include="Normalizers\InterfaceRequiredPortNormalizer.fs" />
     <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>

@@ -96,9 +96,8 @@
     <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Normalization\ComponentRequiredPortNormalizer.cs" />
+    <Compile Include="Normalization\RequiredPortNormalizer.cs" />
     <Compile Include="Normalization\ExpressionLifter.cs" />
-    <Compile Include="Normalization\InterfaceRequiredPortNormalizer.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

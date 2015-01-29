@@ -227,8 +227,7 @@ namespace SafetySharp.Compiler
 		private static Compilation NormalizeSimulationCode([NotNull] Compilation compilation)
 		{
 			compilation = ApplyNormalizer<ExpressionLifter>(compilation);
-			compilation = ApplyNormalizer<ComponentRequiredPortNormalizer>(compilation);
-			compilation = ApplyNormalizer<InterfaceRequiredPortNormalizer>(compilation);
+			compilation = ApplyNormalizer<RequiredPortNormalizer>(compilation);
 
 			OutputCode(compilation, "obj/Simulation");
 			return compilation;

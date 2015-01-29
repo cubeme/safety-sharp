@@ -44,7 +44,7 @@ namespace SafetySharp.CSharp.Roslyn
 		///     Gets a value indicating whether <paramref name="identifier" /> is a synthesized name.
 		/// </summary>
 		/// <param name="identifier">The identifier that should be checked.</param>
-		public static bool IsSynthesized(SyntaxToken identifier)
+		public static bool IsSynthesized(this SyntaxToken identifier)
 		{
 			return IsSynthesized(identifier.ValueText);
 		}

@@ -127,7 +127,9 @@ module ``EnsureSameLineCount method`` =
     [<Test>]
     let ``adds trailing new lines when syntax node has less lines than template node`` () =
         ensureSameLineCount "var x = 1;" " var x \n=   1;" =? "var x = 1;\n"
+        ensureSameLineCount "var x = 1;" " var x =   1;\n" =? "var x = 1;\n"
+
         let actual = ensureSameLineCount "if (true) ; else return;" "if \n(true) \n;\n else\n return;\n"
-        let expected = "if (true) ; else return;\n\n\n\n"
+        let expected = "if (true) ; else return;\n\n\n\n\n"
 
         actual =? expected
