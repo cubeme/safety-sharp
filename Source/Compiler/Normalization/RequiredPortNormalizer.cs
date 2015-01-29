@@ -39,25 +39,25 @@ namespace SafetySharp.Compiler.Normalization
 	/// 
 	///     For instance:
 	///     <code>
-	///    		public extern void MyMethod(int a, double b)
+	///    		public extern void MyMethod(int a, double b);
 	///    		// becomes (on a single line with uniquely generated names):
 	///  		public delegate void d(int a, double b);
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] d f;
-	///    		[Required] public void MyMethod(int a, double b) { f(a, b); }
+	///    		[SafetySharp.Modeling.RequiredAttribute] public void MyMethod(int a, double b) { f(a, b); }
 	///    		
-	///    		private extern bool MyMethod(out int a)
+	///    		private extern bool MyMethod(out int a);
 	///    		// becomes (on a single line with uniquely generated names):
 	///    		public delegate bool d(out int a);
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] private d f;
-	///    		[Required] private bool MyMethod(out int a) { return f(out a); }
+	///    		[SafetySharp.Modeling.RequiredAttribute] private bool MyMethod(out int a) { return f(out a); }
 	///  
-	/// 		private extern bool MyProperty { get; set; }
+	/// 		private extern bool MyProperty { get; set; } // TODO!
 	///    		// becomes (on a single line with uniquely generated names):
 	///    		public delegate bool d1();
 	///   		public delegate void d2(bool value);
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] private d1 f1;
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] private d2 f2;
-	///    		private bool MyProperty { [Required] get { return f1(); } [Required] set { f2(value); } }
+	///    		private bool MyProperty { [SafetySharp.Modeling.RequiredAttribute] get { return f1(); } [SafetySharp.Modeling.RequiredAttribute] set { f2(value); } }
 	///   	</code>
 	/// </summary>
 	public class RequiredPortNormalizer : CSharpNormalizer
@@ -159,29 +159,6 @@ namespace SafetySharp.Compiler.Normalization
 			members = members.Insert(index, methodDelegate);
 			members = members.Insert(++index, field);
 			members = members.Insert(++index, methodDeclaration);
-		}
-
-		/// <summary>
-		///     Normalizes required port component class methods.
-		/// </summary>
-		/// <param name="methodDeclaration">The method declaration that should be normalized.</param>
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
-		{
-			if (!methodDeclaration.Modifiers.Any(SyntaxKind.ExternKeyword))
-				return methodDeclaration;
-
-			var propertyType = methodDeclaration.GetDelegateType(SemanticModel);
-			var property = SyntaxBuilder.AutoProperty(methodDeclaration.Identifier.ValueText, propertyType,
-				methodDeclaration.GetVisibility(), null, null);
-
-			if (methodDeclaration.ExplicitInterfaceSpecifier != null)
-				property = property.WithExplicitInterfaceSpecifier(methodDeclaration.ExplicitInterfaceSpecifier)
-								   .WithModifiers(new SyntaxTokenList());
-
-			if (methodDeclaration.AttributeLists.Count != 0)
-				property = property.WithAttributeLists(methodDeclaration.AttributeLists);
-
-			return property.AsSingleLine().WithTrivia(methodDeclaration).EnsureSameLineCount(methodDeclaration);
 		}
 	}
 }
