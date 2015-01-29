@@ -36,7 +36,8 @@ module ``Custom implementation of IComponent interface`` =
     let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
 
     let ss1009 typeName location =
-        Diagnostic ("SS1009", (1, location), (1, location + 1), (sprintf "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName))
+        Diagnostic ("SS1009", (1, location), (1, location + 1), 
+            sprintf "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName)
         |> Some
 
     [<Test>]

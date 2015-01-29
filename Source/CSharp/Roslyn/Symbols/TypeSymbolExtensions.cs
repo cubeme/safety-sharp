@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Roslyn.Symbols
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Modeling;
@@ -144,6 +145,89 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			return typeSymbol.Equals(semanticModel.GetTypeSymbol<int>()) ||
 				   typeSymbol.Equals(semanticModel.GetTypeSymbol<bool>()) ||
 				   typeSymbol.Equals(semanticModel.GetTypeSymbol<decimal>());
+		}
+
+		/// <summary>
+		///     Gets the symbols of all accessible ports declared by <paramref name="typeSymbol" /> or any of its base types.
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		/// <param name="position">The position that should be used to determine accessibility.</param>
+		/// <param name="filter">A filter that should be applied to filter the ports.</param>
+		[Pure]
+		private static IEnumerable<ISymbol> GetPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel,
+													 int position, Func<ITypeSymbol, ISymbol, bool> filter)
+		{
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
+			var inheritedPorts = Enumerable.Empty<ISymbol>();
+			if (typeSymbol.TypeKind == TypeKind.Interface)
+				inheritedPorts = typeSymbol.AllInterfaces.SelectMany(i => i.GetPorts(semanticModel, position, filter));
+			else if (typeSymbol.BaseType != null)
+				inheritedPorts = typeSymbol.BaseType.GetPorts(semanticModel, position, filter);
+
+			var members = typeSymbol.GetMembers();
+			return members
+				.OfType<IMethodSymbol>()
+				.Cast<ISymbol>()
+				.Union(members.OfType<IPropertySymbol>())
+				.Where(port => filter(typeSymbol, port) && semanticModel.IsAccessible(position, port))
+				.Union(inheritedPorts);
+		}
+
+		/// <summary>
+		///     Gets the symbols of all accessible required ports declared by <paramref name="typeSymbol" /> or any of its base types.
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		/// <param name="position">The position that should be used to determine accessibility.</param>
+		[Pure]
+		public static IEnumerable<ISymbol> GetRequiredPorts([NotNull] this ITypeSymbol typeSymbol,
+															[NotNull] SemanticModel semanticModel, int position)
+		{
+			return typeSymbol.GetPorts(semanticModel, position, (type, portSymbol) =>
+			{
+				if (type.TypeKind == TypeKind.Interface)
+					return portSymbol.HasAttribute<RequiredAttribute>(semanticModel);
+
+				var methodSymbol = portSymbol as IMethodSymbol;
+				if (methodSymbol != null)
+					return methodSymbol.IsExtern;
+
+				var propertySymbol = portSymbol as IPropertySymbol;
+				if (propertySymbol != null)
+					return propertySymbol.IsExtern;
+
+				return false;
+			});
+		}
+
+		/// <summary>
+		///     Gets the symbols of all accessible provided ports declared by <paramref name="typeSymbol" /> or any of its base types.
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
+		/// <param name="position">The position that should be used to determine accessibility.</param>
+		[Pure]
+		public static IEnumerable<ISymbol> GetProvidedPorts([NotNull] this ITypeSymbol typeSymbol,
+															[NotNull] SemanticModel semanticModel, int position)
+		{
+			return typeSymbol.GetPorts(semanticModel, position, (type, portSymbol) =>
+			{
+				if (type.TypeKind == TypeKind.Interface)
+					return portSymbol.HasAttribute<ProvidedAttribute>(semanticModel);
+
+				var methodSymbol = portSymbol as IMethodSymbol;
+				if (methodSymbol != null)
+					return !methodSymbol.IsExtern;
+
+				var propertySymbol = portSymbol as IPropertySymbol;
+				if (propertySymbol != null)
+					return !propertySymbol.IsExtern;
+
+				return false;
+			});
 		}
 	}
 }

@@ -85,6 +85,8 @@
     <Compile Include="Analyzers\EnumTypeAnalyzer.fs" />
     <Compile Include="Analyzers\CustomIComponentAnalyzer.fs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
+    <Compile Include="Analyzers\DynamicPortAnalyzer.fs" />
+    <Compile Include="Analyzers\BindingAnalyzer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Compile Include="Normalizers\ProvidedPortNormalizer.fs" />
     <Compile Include="Normalizers\RequiredPortNormalizer.fs" />

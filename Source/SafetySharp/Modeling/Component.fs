@@ -140,12 +140,12 @@ type Component () as this =
     /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
     /// ports declared by the component.
     [<Dynamic>]
-    member this.RequiredPorts with get () = requiredPorts :> obj
+    member this.RequiredPorts with get () = invalidOp "This method cannot be called outside of a port binding expression."
 
     /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
     /// ports declared by the component.
     [<Dynamic>]
-    member this.ProvidedPorts with get() = providedPorts :> obj
+    member this.ProvidedPorts with get() = invalidOp "This method cannot be called outside of a port binding expression."
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed

@@ -108,6 +108,18 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <param name="context">The context in which the diagnostic should be emitted.</param>
 		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
 		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		protected void EmitDiagnostic(SyntaxNodeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
+		{
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
+		}
+
+		/// <summary>
+		///     Emits a diagnostic for <paramref name="syntaxNode" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
+		/// <param name="syntaxNode">The syntax node the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
 		protected void EmitDiagnostic(SyntaxTreeAnalysisContext context, [NotNull] SyntaxNode syntaxNode, params object[] messageArgs)
 		{
 			context.ReportDiagnostic(Diagnostic.Create(Descriptor, syntaxNode.GetLocation(), messageArgs));
