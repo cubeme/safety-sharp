@@ -20,41 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
+namespace SafetySharp.Internal.Modelchecking.NuXmv
 
+open SafetySharp.Models
+open SafetySharp.Models.Transformations
 
-open System
-open NUnit.Framework
-open FParsec
-
-open TestHelpers
-open AstTestHelpers
-
-open SafetySharp.Internal.Modelchecking.NuXmv
-
-
-
-[<TestFixture>]
-module SamToPromelaTests =
-
-    let parseWithParser parser str =
-        match run parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, _, _) -> failwith errorMsg
-
-    let internal parseSam str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
-
-    let internal nuXmvWriter = ExportNuXmvAstToFile()
-
-           
-    [<Test>]
-    let ``simpleBoolean1.sam gets converted to nuXmv`` () =
+module internal ScmToNuXmv =
+                
+    let transformConfiguration (model:Scm.CompDecl) : SafetySharp.Internal.Modelchecking.NuXmv.NuXmvProgram =        
+        let samModel = ScmToSam.transformScmToSam model
+        SamToNuXmv.transformConfiguration samModel
         
-        let inputFile = """../../Examples/SAM/simpleBoolean1.sam"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSam input
-        let nuXmv = SamToNuXmv.transformConfiguration model
 
-        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
-        printf "%s" nuXmvCodeString
-        ()

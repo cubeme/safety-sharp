@@ -20,7 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformScmTests
+namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
+
 
 open System
 open NUnit.Framework
@@ -29,10 +30,10 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 
-open SafetySharp.Internal.Modelchecking.PromelaSpin
+open SafetySharp.Internal.Modelchecking.NuXmv
 
 [<TestFixture>]
-module ScmToPromelaTests =
+module ScmToNuXmvTests =
     
     let internal runWithUserState parser str = runParserOnString parser SafetySharp.Models.Scm.Parser.UserState.initialUserState "" str
 
@@ -43,7 +44,7 @@ module ScmToPromelaTests =
         
     let internal parseSCM str = parseWithParser (SafetySharp.Models.Scm.Parser.scmFile .>> eof) str
 
-    let internal promelaWriter = ExportPromelaAstToFile()
+    let internal nuXmvWriter = ExportNuXmvAstToFile()
 
            
     [<Test>]
@@ -52,10 +53,10 @@ module ScmToPromelaTests =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let promela = ScmToPromela.transformConfiguration model
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
+        let nuXmv = ScmToNuXmv.transformConfiguration model
+        
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
+        printf "%s" nuXmvCodeString
         ()
         
     [<Test>]
@@ -64,10 +65,10 @@ module ScmToPromelaTests =
         let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let promela = ScmToPromela.transformConfiguration model
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
+        let nuXmv = ScmToNuXmv.transformConfiguration model
+        
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
+        printf "%s" nuXmvCodeString
         ()
         
     [<Test>]
@@ -76,10 +77,10 @@ module ScmToPromelaTests =
         let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let promela = ScmToPromela.transformConfiguration model
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
+        let nuXmv = ScmToNuXmv.transformConfiguration model
+        
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
+        printf "%s" nuXmvCodeString
            
         
     [<Test>]
@@ -88,8 +89,9 @@ module ScmToPromelaTests =
         let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let promela = ScmToPromela.transformConfiguration model
-
-        let promelaCodeString = promelaWriter.Export promela
-        printf "%s" promelaCodeString
+        let nuXmv = ScmToNuXmv.transformConfiguration model
+        
+        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
+        printf "%s" nuXmvCodeString
            
+
