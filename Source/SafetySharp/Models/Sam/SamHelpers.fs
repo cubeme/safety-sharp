@@ -47,4 +47,47 @@ module internal SamHelpers =
                 // only one element, so return it
                 exprs.Head
             else
-                Expr.BExpr(exprs.Head,BOp.And,Expr.createAndedExpr exprs.Tail)
+                Expr.BExpr(exprs.Head,BOp.And,Expr.createAndedExpr exprs.Tail)        
+        
+        
+        (*
+        member expr.getSamType (varToType:Map<Var,Type>) : Type =
+            // TODO: things like a==b==c not supported yet
+            // TODO: rewrite to be more efficient
+            match expr with
+                | Expr.Literal (_val) ->
+                    match _val with
+                        | SafetySharp.Models.Sam.BoolVal (_) -> Type.BoolType
+                        | SafetySharp.Models.Sam.NumbVal (_) -> Type.IntType
+                | Expr.Read (_var) ->
+                    varToType.Item _var
+                | Expr.ReadOld (_var) ->
+                    varToType.Item _var
+                | Expr.UExpr (expr,uop) ->
+                    // TODO: Check, if uop matches to type
+                    expr.getSamType varToType
+                | Expr.BExpr (left, bop, right) ->
+                    let leftType = left.getSamType varToType //very inefficient, if this has to be done
+                    let rightType = right.getSamType varToType //very inefficient, if this has to be done
+                    let leftIntRightIntOutBool () =                        
+                        if leftType = Type.IntType && rightType = Type.IntType then Type.BoolType else failwith "types don't match"
+                    let leftBoolRightBoolOutBool () =
+                        if leftType = Type.IntType && rightType = Type.IntType then Type.BoolType else failwith "types don't match"
+                    let leftTypeEqualsRightTypeOutBool () =                        
+                        if leftType = rightType then Type.BoolType else failwith "types don't match"
+                    match bop with
+                        | BOp.Add -> leftIntRightIntOutBool ()
+                        | BOp.Subtract -> leftIntRightIntOutBool ()
+                        | BOp.Multiply -> leftIntRightIntOutBool ()
+                        | BOp.Divide -> leftIntRightIntOutBool ()
+                        | BOp.Modulo -> leftIntRightIntOutBool ()
+                        | BOp.And -> leftBoolRightBoolOutBool ()
+                        | BOp.Or -> leftBoolRightBoolOutBool ()
+                        | BOp.Implies -> leftBoolRightBoolOutBool ()
+                        | BOp.Equals -> leftTypeEqualsRightTypeOutBool ()
+                        | BOp.NotEquals -> leftTypeEqualsRightTypeOutBool ()
+                        | BOp.Less -> leftIntRightIntOutBool ()
+                        | BOp.LessEqual -> leftIntRightIntOutBool ()
+                        | BOp.Greater -> leftIntRightIntOutBool ()
+                        | BOp.GreaterEqual -> leftIntRightIntOutBool ()
+        *)

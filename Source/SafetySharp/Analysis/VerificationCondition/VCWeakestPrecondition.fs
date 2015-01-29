@@ -79,6 +79,15 @@ module internal SamModified =
             exprs.Head
         else
             Expr.BExpr(exprs.Head,BOp.And,createAndedExpr exprs.Tail)
+                
+    let rec createOredExpr (exprs:Expr list) : Expr =
+        if exprs.IsEmpty then
+            Expr.Literal(Val.BoolVal(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
+        else if exprs.Tail = [] then
+            // only one element, so return it
+            exprs.Head
+        else
+            Expr.BExpr(exprs.Head,BOp.Or,createOredExpr exprs.Tail)
 
 
 module internal  WeakestPrecondition =
