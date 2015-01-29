@@ -35,7 +35,7 @@ open SafetySharp.Internal.Modelchecking.NuXmv
 
 
 [<TestFixture>]
-module SamToPromelaTests =
+module SamToNuXmvTests =
 
     let parseWithParser parser str =
         match run parser str with

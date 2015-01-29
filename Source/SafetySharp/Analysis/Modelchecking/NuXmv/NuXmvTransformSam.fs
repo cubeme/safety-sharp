@@ -53,6 +53,7 @@ module internal SamToNuXmv =
     type ManageVariablesState = {
         TakenNames : Set<string>;
         VarWithPostValueToVarWithCurrentValue : Map<SamModified.Var,SamModified.Var>;
+        VarWithCurrentValueToVarWithPostValue : Map<SamModified.Var,SamModified.Var>;
         VarToNuXmvIdentifier: Map<SamModified.Var,NuXmvIdentifier>;
         VarToNuXmvComplexIdentifier: Map<SamModified.Var,NuXmv.ComplexIdentifier>;
         // TODO: Add type information of a variable
@@ -73,19 +74,22 @@ module internal SamToNuXmv =
                 newState
 
             member private this.generatePostValueVar (currentValVar:SamModified.Var) : (SamModified.Var*ManageVariablesState) =
-                let postValVarName = this.generateNewName currentValVar.getName
+                let postValVarName = this.generateNewName (currentValVar.getName + "_virtual")
                 let postValVar = SamModified.Var.Var(postValVarName)
                 let newState=
                     { this with
                         ManageVariablesState.TakenNames = this.TakenNames.Add postValVarName;
                         ManageVariablesState.VarWithPostValueToVarWithCurrentValue =
                                 this.VarWithPostValueToVarWithCurrentValue.Add (postValVar,currentValVar)
+                        ManageVariablesState.VarWithCurrentValueToVarWithPostValue =
+                                this.VarWithCurrentValueToVarWithPostValue.Add (currentValVar,postValVar)
                     }
                 (postValVar,newState)
 
             member private this.createMapEntries (var:SamModified.Var) : ManageVariablesState =
                 let (newVar,newState1) = this.generatePostValueVar var
-                newState1
+                let newState2 = newState1.generateNuXmvIdentifier var
+                newState2
 
             static member initial (variableDeclsToAdd:SamModified.GlobalVarDecl list) (nameGenerator:NameGenerator) =
                 // * create a nuXmv identifier
@@ -98,6 +102,7 @@ module internal SamToNuXmv =
                     {
                         ManageVariablesState.TakenNames = Set.union nuXmvKeywords takenVariableNames;
                         ManageVariablesState.VarWithPostValueToVarWithCurrentValue = Map.empty<SamModified.Var,SamModified.Var>;
+                        ManageVariablesState.VarWithCurrentValueToVarWithPostValue = Map.empty<SamModified.Var,SamModified.Var>;
                         ManageVariablesState.VarToNuXmvIdentifier = Map.empty<SamModified.Var,NuXmvIdentifier>;
                         ManageVariablesState.VarToNuXmvComplexIdentifier = Map.empty<SamModified.Var,NuXmv.ComplexIdentifier>;
                         ManageVariablesState.NameGenerator = nameGenerator;
@@ -204,7 +209,7 @@ module internal SamToNuXmv =
         let formulaForWPPostcondition = // "a'=a,b'<->b,...."
             let createFormulaForGlobalVarDecl (globalVarDecl:SamModified.GlobalVarDecl) : SamModified.Expr =
                 let varCurrent = globalVarDecl.Var
-                let varPost = manageVariablesState.VarWithPostValueToVarWithCurrentValue.Item varCurrent
+                let varPost = manageVariablesState.VarWithCurrentValueToVarWithPostValue.Item varCurrent
                 let operator = SamModified.BOp.Equals
                 SamModified.Expr.BExpr(SamModified.Expr.Read(varPost),operator,SamModified.Expr.Read(varCurrent))
             pgm.Globals |> List.map createFormulaForGlobalVarDecl
