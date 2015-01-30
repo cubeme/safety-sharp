@@ -108,7 +108,7 @@ type Fault () =
 
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>] 
-type Component () as this =
+type Component () =
     
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata
@@ -118,8 +118,6 @@ type Component () as this =
     let mutable name = String.Empty
     let mutable (subcomponents : Component list) = []
     let fields = Dictionary<FieldInfo, obj list> ()
-    let requiredPorts = RequiredPortCollection this
-    let providedPorts = ProvidedPortCollection this
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
@@ -172,6 +170,14 @@ type Component () as this =
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
+
+    /// Establishes the given port binding in a non-delayed fashion; that is, invocations are executed instantly.
+    member this.BindInstantaneous (binding : PortBinding) =
+        () // TODO
+
+    /// Establishes the given port binding in a delayed fashion; that is, invocations are delayed by one system step.
+    member this.BindDelayed (binding : PortBinding) =
+        () // TODO
 
     /// <summary>
     ///     Sets the initial values of a field of the component instance.

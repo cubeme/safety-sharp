@@ -72,7 +72,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     let mutable (assembly : Assembly) = null
     let failed message = Printf.ksprintf (fun message -> CompilationException message |> raise) message
 
-    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices;\n" + csharpCode)
+    let compilationUnit = SyntaxFactory.ParseCompilationUnit ("using System; using SafetySharp.Modeling; using SafetySharp.Modeling.CompilerServices;\n" + csharpCode)
     let syntaxTree = compilationUnit.SyntaxTree
 
     let assemblyPath = Path.Combine (Environment.CurrentDirectory, sprintf "tmp_%s.dll" (Guid.NewGuid().ToString ()))
@@ -350,7 +350,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
                 match diagnostic.Severity with
                 | DiagnosticSeverity.Error   -> Error
                 | DiagnosticSeverity.Warning -> Warning
-                | s                          -> sprintf "Unsupported diagnostic severity '%A'" s |> invalidOp
+                | s                          -> sprintf "Unsupported diagnostic: '%A'" diagnostic |> invalidOp
 
             Diagnostic (kind,
                         diagnostic.Id, 

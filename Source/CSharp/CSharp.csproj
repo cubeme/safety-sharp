@@ -71,6 +71,8 @@
     <Compile Include="Analyzers\EnumValueAnalyzer.cs" />
     <Compile Include="Analyzers\EnumTypeAnalyzer.cs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
+    <Compile Include="Port.cs" />
+    <Compile Include="PortCollection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Analyzers\DiagnosticIdentifier.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
@@ -88,6 +90,7 @@
     <Compile Include="Roslyn\Symbols\TypeSymbolExtensions.cs" />
     <Compile Include="Roslyn\Syntax\ArgumentExtensions.cs" />
     <Compile Include="Roslyn\Syntax\BaseTypeDeclarationExtensions.cs" />
+    <Compile Include="Roslyn\Syntax\MemberAccessExpressionExtensions.cs" />
     <Compile Include="Roslyn\Syntax\MethodDeclarationExtensions.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxBuilder.cs" />
     <Compile Include="Roslyn\Syntax\SyntaxNodeExtensions.cs" />

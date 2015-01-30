@@ -208,5 +208,25 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			var type = SyntaxFactory.ParseTypeName(String.Format("{0}.{1}", methodSymbol.ContainingType.ToDisplayString(), delegateName));
 			return SyntaxFactory.CastExpression(type, SyntaxFactory.ParenthesizedExpression(expression)).NormalizeWhitespace();
 		}
+
+		/// <summary>
+		///     Checks whether the two <see cref="IMethodSymbol" />s are signature-compatible.
+		/// </summary>
+		/// <param name="methodSymbol1">The first method symbol that should be checked.</param>
+		/// <param name="methodSymbol2">The second method symbol that should be checked.</param>
+		public static bool IsSignatureCompatibleTo([NotNull] this IMethodSymbol methodSymbol1, [NotNull] IMethodSymbol methodSymbol2)
+		{
+			Requires.NotNull(methodSymbol1, () => methodSymbol1);
+			Requires.NotNull(methodSymbol2, () => methodSymbol2);
+
+			if (methodSymbol1.TypeParameters.Length != 0 || methodSymbol2.TypeParameters.Length != 0)
+				return false;
+
+			return methodSymbol1.ReturnType.Equals(methodSymbol2.ReturnType)
+				   && methodSymbol1.Parameters.Length == methodSymbol2.Parameters.Length
+				   && methodSymbol1.Parameters
+								   .Zip(methodSymbol2.Parameters, (p1, p2) => p1.Type.Equals(p2.Type) && p1.RefKind == p2.RefKind)
+								   .All(b => b);
+		}
 	}
 }

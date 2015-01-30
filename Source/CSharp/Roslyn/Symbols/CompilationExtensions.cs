@@ -140,5 +140,39 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 				.OfType<IMethodSymbol>()
 				.Single(method => method.Parameters.Length == 0 && method.ReturnsVoid);
 		}
+
+		/// <summary>
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.BindDelayed(PortBinding)" /> method within
+		///     the context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static IMethodSymbol GetBindDelayedMethodSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+
+			return compilation
+				.GetTypeSymbol<Component>()
+				.GetMembers("BindDelayed")
+				.OfType<IMethodSymbol>()
+				.Single(method => method.Parameters.Length == 1 && method.ReturnsVoid);
+		}
+
+		/// <summary>
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.BindInstantaneous(PortBinding)" /> method
+		///     within the context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
+		[Pure, NotNull]
+		public static IMethodSymbol GetBindInstantaneousMethodSymbol([NotNull] this Compilation compilation)
+		{
+			Requires.NotNull(compilation, () => compilation);
+
+			return compilation
+				.GetTypeSymbol<Component>()
+				.GetMembers("BindInstantaneous")
+				.OfType<IMethodSymbol>()
+				.Single(method => method.Parameters.Length == 1 && method.ReturnsVoid);
+		}
 	}
 }

@@ -23,9 +23,16 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
+	using Modeling;
 	using Roslyn;
+	using Roslyn.Symbols;
+	using Roslyn.Syntax;
 	using Utilities;
 
 	/// <summary>
@@ -35,28 +42,56 @@ namespace SafetySharp.CSharp.Analyzers
 	public class BindingAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer if a binding failed.
+		///     The error diagnostic emitted by the analyzer when a bind method is called without a port assignment argument.
+		/// </summary>
+		private static readonly DiagnosticInfo ExpectedPortAssignment = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExpectedPortAssignment,
+			String.Format("Instances of '{0}' can only be created using port assignment syntax.", typeof(PortBinding).FullName),
+			String.Format("A port assignment of the form 'component1.RequiredPorts.Port = component2.ProvidedPorts.Port' " +
+						  "is required to initialize an instance of '{0}'.", typeof(PortBinding).FullName));
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a bind method is called without a port assignment argument.
+		/// </summary>
+		private static readonly DiagnosticInfo ExpectedPortReference = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExpectedPortReference,
+			"Expected a reference to a port of the form 'RequiredPorts.Port' or 'ProvidedPorts.Port'.",
+			"Expected a reference to a port of the form 'RequiredPorts.Port' or 'ProvidedPorts.Port'.");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a port is cast to a non-delegate type.
+		/// </summary>
+		private static readonly DiagnosticInfo ExpectedPortDelegateCast = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExpectedPortDelegateCast,
+			"Expected port to be cast to a delegate type.",
+			"Expected port to be cast to a delegate type.");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a binding failed.
 		/// </summary>
 		private static readonly DiagnosticInfo BindingFailure = DiagnosticInfo.Error(
 			DiagnosticIdentifier.BindingFailure,
 			"There are no accessible signature-compatible ports that could be bound.",
-			"Port binding failure: There are no accessible signature-compatible ports with the given names that could be bound. " +
-			"\nOn the left-hand side, could be:\n{0}\nOn the right-hand side, could be:\n{1}");
+			"There are no accessible signature-compatible ports that could be bound. " +
+			"\nCandidate ports on the left-hand side:\n{0}\nCandidate ports on the right-hand side:\n{1}");
 
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer if a binding is ambiguous.
+		///     The error diagnostic emitted by the analyzer when a binding is ambiguous.
 		/// </summary>
 		private static readonly DiagnosticInfo AmbiguousBinding = DiagnosticInfo.Error(
 			DiagnosticIdentifier.AmbiguousBinding,
 			"There are multiple signature-compatible ports that could be bound.",
-			"Port binding is ambiguous: There are multiple accessible and signature-compatible ports with the given " +
-			"names that could be bound.\nOn the left-hand side, could be:\n{0}\nOn the right-hand side, could be:\n{1}");
+			"Port binding is ambiguous: There are multiple accessible and signature-compatible ports " +
+			"that could be bound. You can disambiguate the binding by explicitly casting one of the ports to a " +
+			"delegate type with the signature of the port you intend to use. For instance, use 'RequiredPorts.X = " +
+			"(Action<int>)ProvidedPorts.Y' if the port you want to bind is signature-compatible to the 'System.Action<int>' " +
+			"delegate.\nCandidate ports on the left-hand side:\n{0}\nCandidate ports on the right-hand side:\n{1}");
 
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public BindingAnalyzer()
-			: base(BindingFailure, AmbiguousBinding)
+			: base(BindingFailure, AmbiguousBinding, ExpectedPortAssignment, ExpectedPortReference, ExpectedPortDelegateCast)
 		{
 		}
 
@@ -66,7 +101,7 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context" />
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.SimpleMemberAccessExpression);
+			context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.InvocationExpression);
 		}
 
 		/// <summary>
@@ -75,6 +110,93 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context">The context in which the analysis should be performed.</param>
 		private static void Analyze(SyntaxNodeAnalysisContext context)
 		{
+			var semanticModel = context.SemanticModel;
+			var node = (InvocationExpressionSyntax)context.Node;
+
+			var methodSymbol = node.GetReferencedSymbol(semanticModel) as IMethodSymbol;
+			if (methodSymbol == null)
+				return;
+
+			var delayedSymbol = semanticModel.GetBindDelayedMethodSymbol();
+			var instantaneousSymbol = semanticModel.GetBindInstantaneousMethodSymbol();
+
+			if (!methodSymbol.Equals(delayedSymbol) && !methodSymbol.Equals(instantaneousSymbol))
+				return;
+
+			// We now expect that the argument of the invocation is a port binding in the form of an assignment
+			var arguments = node.ArgumentList.Arguments;
+			if (arguments.Count != 1 || !(arguments[0].Expression is AssignmentExpressionSyntax))
+			{
+				ExpectedPortAssignment.Emit(context, arguments[0].Expression);
+				return;
+			}
+
+			// We now expect a port collection on both sides of the assignment
+			var assignment = (AssignmentExpressionSyntax)arguments[0].Expression;
+			var leftExpression = assignment.Left as MemberAccessExpressionSyntax;
+			var rightExpression = assignment.Right as MemberAccessExpressionSyntax;
+
+			// On the right-hand side, we could also have a cast to a delegate type
+			CastExpressionSyntax castExpression = null;
+			if (rightExpression == null)
+			{
+				castExpression = assignment.Right as CastExpressionSyntax;
+				if (castExpression != null)
+					rightExpression = castExpression.Expression as MemberAccessExpressionSyntax;
+			}
+
+			PortCollection leftPorts;
+			PortCollection rightPorts;
+
+			if (leftExpression == null || ((leftPorts = leftExpression.GetReferencedPorts(semanticModel)) == null))
+			{
+				ExpectedPortReference.Emit(context, assignment.Left);
+				return;
+			}
+
+			if (rightExpression == null || ((rightPorts = rightExpression.GetReferencedPorts(semanticModel)) == null))
+			{
+				ExpectedPortReference.Emit(context, assignment.Right);
+				return;
+			}
+
+			leftPorts.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
+			rightPorts.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
+
+			// If there is a cast, filter the right-hand port list
+			if (castExpression != null)
+			{
+				var targetSymbol = castExpression.Type.GetReferencedSymbol(semanticModel) as INamedTypeSymbol;
+				if (targetSymbol == null || targetSymbol.TypeKind != TypeKind.Delegate)
+				{
+					ExpectedPortDelegateCast.Emit(context, castExpression.Type);
+					return;
+				}
+
+				rightPorts.Filter(targetSymbol);
+			}
+
+			// If either side returns an empty set of ports, we don't have to continue; this situation is handled
+			// by another (more generally applicable) analyzer.
+			if (leftPorts.Count == 0 || rightPorts.Count == 0)
+				return;
+
+			var candidates = leftPorts.GetBindingCandidates(rightPorts);
+			if (candidates.Length == 0)
+				BindingFailure.Emit(context, assignment, PortSetToString(leftPorts), PortSetToString(rightPorts));
+			else if (candidates.Length > 1)
+				AmbiguousBinding.Emit(context, assignment, PortSetToString(candidates.Select(candidate => candidate.Left)),
+					PortSetToString(candidates.Select(candidate => candidate.Right)));
+		}
+
+		/// <summary>
+		///     Gets a string representation of <paramref name="ports" /> for inclusing in a diagnostic message.
+		/// </summary>
+		/// <param name="ports">The ports that should be included in the string.</param>
+		private static string PortSetToString(IEnumerable<Port> ports)
+		{
+			return String.Join("\n",
+				ports.Select(port => String.Format("'{0}'", port.Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))));
 		}
 	}
 }

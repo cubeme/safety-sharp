@@ -56,6 +56,9 @@ namespace SafetySharp.CSharp.Analyzers
 		// Binding diagnostics
 		AmbiguousBinding = 4000,
 		BindingFailure,
+		ExpectedPortAssignment,
+		ExpectedPortReference,
+		ExpectedPortDelegateCast,
 
 		// Misc diagnostics
 		ReservedName = 9000

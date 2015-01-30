@@ -30,7 +30,6 @@ namespace SafetySharp.CSharp.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
 	using Roslyn;
-	using Roslyn.Symbols;
 	using Roslyn.Syntax;
 	using Utilities;
 
@@ -103,69 +102,31 @@ namespace SafetySharp.CSharp.Analyzers
 			if (symbol == null)
 				return;
 
-			var requiredPortsSymbol = (IPropertySymbol)semanticModel.GetComponentClassSymbol().GetMembers("RequiredPorts").Single();
-			var providedPortsSymbol = (IPropertySymbol)semanticModel.GetComponentClassSymbol().GetMembers("ProvidedPorts").Single();
+			var portCollection = node.GetReferencedPorts(semanticModel);
+			if (portCollection == null)
+				return;
 
-			if (!symbol.Overrides(requiredPortsSymbol) && !symbol.Overrides(providedPortsSymbol))
+			if (portCollection.ContainsRequiredPorts)
 			{
-				// Try the interface properties; thanks to F#, Component implements those properties explicitly...
-				requiredPortsSymbol = (IPropertySymbol)semanticModel.GetComponentInterfaceSymbol().GetMembers("RequiredPorts").Single();
-				providedPortsSymbol = (IPropertySymbol)semanticModel.GetComponentInterfaceSymbol().GetMembers("ProvidedPorts").Single();
-
-				if (!symbol.Overrides(requiredPortsSymbol) && !symbol.Overrides(providedPortsSymbol))
-					return;
-			}
-
-			var portName = node.Name.Identifier.ValueText;
-			var isRequiredPort = symbol.Equals(requiredPortsSymbol);
-			var nestedMemberAccess = node.Expression as MemberAccessExpressionSyntax;
-
-			ITypeSymbol targetSymbol = null;
-			if (nestedMemberAccess == null)
-				targetSymbol = semanticModel.GetEnclosingSymbol(node.SpanStart).ContainingType;
-			else
-			{
-				var untypedTargetSymbol = nestedMemberAccess.Expression.GetReferencedSymbol(semanticModel);
-
-				var parameterSymbol = untypedTargetSymbol as IParameterSymbol;
-				var localSymbol = untypedTargetSymbol as ILocalSymbol;
-				var fieldSymbol = untypedTargetSymbol as IFieldSymbol;
-				var propertySymbol = untypedTargetSymbol as IPropertySymbol;
-				var methodSymbol = untypedTargetSymbol as IMethodSymbol;
-
-				if (parameterSymbol != null)
-					targetSymbol = parameterSymbol.Type;
-
-				if (localSymbol != null)
-					targetSymbol = localSymbol.Type;
-
-				if (fieldSymbol != null)
-					targetSymbol = fieldSymbol.Type;
-
-				if (propertySymbol != null)
-					targetSymbol = propertySymbol.Type;
-
-				if (methodSymbol != null)
-					targetSymbol = methodSymbol.ReturnType;
-			}
-
-			Assert.NotNull(targetSymbol, "Failed to determine the target symbol.");
-
-			if (isRequiredPort)
-			{
-				var ports = targetSymbol.GetRequiredPorts(semanticModel).Where(p => p.Name == portName).ToArray();
-				if (!ports.Any())
-					UnknownRequiredPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
-				else if (ports.All(p => !semanticModel.IsAccessible(node.SpanStart, p)))
-					InaccessibleRequiredPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
+				if (!portCollection.Any())
+					UnknownRequiredPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+				else
+				{
+					portCollection.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
+					if (!portCollection.Any())
+						InaccessibleRequiredPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+				}
 			}
 			else
 			{
-				var ports = targetSymbol.GetProvidedPorts(semanticModel).Where(p => p.Name == portName).ToArray();
-				if (!ports.Any())
-					UnknownProvidedPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
-				else if (ports.All(p => !semanticModel.IsAccessible(node.SpanStart, p)))
-					InaccessibleProvidedPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
+				if (!portCollection.Any())
+					UnknownProvidedPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+				else
+				{
+					portCollection.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
+					if (!portCollection.Any())
+						InaccessibleProvidedPort.Emit(context, node.Name, portCollection.DeclaringType.ToDisplayString(), portCollection.Name);
+				}
 			}
 		}
 	}
