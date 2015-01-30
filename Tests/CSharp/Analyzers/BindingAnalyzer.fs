@@ -36,7 +36,7 @@ module ``Binding ambiguity`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (BindingAnalyzer ())
 
     let diagnostic portKind location length leftPorts rightPorts =
-        createDiagnostic DiagnosticIdentifier.AmbiguousBinding (1, location) (1, location + length)
+        errorDiagnostic DiagnosticIdentifier.AmbiguousBinding (1, location) (1, location + length)
             "Port binding is ambiguous: There are multiple accessible and signature-compatible ports with the given \
 			names that could be bound.\nOn the left-hand side, could be:\n%s\nOn the right-hand side, could be:\n%s" leftPorts rightPorts
 
@@ -49,7 +49,7 @@ module ``Binding failure`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (BindingAnalyzer ())
 
     let diagnostic portKind location length leftPorts rightPorts =
-        createDiagnostic DiagnosticIdentifier.BindingFailure (1, location) (1, location + length)
+        errorDiagnostic DiagnosticIdentifier.BindingFailure (1, location) (1, location + length)
             "Port binding failure: There are no accessible signature-compatible ports with the given names that could be bound. \
 		    \nOn the left-hand side, could be:\n%s\nOn the right-hand side, could be:\n%s" leftPorts rightPorts
 

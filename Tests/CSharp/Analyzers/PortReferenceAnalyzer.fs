@@ -36,11 +36,11 @@ module ``Referenced ports must exist`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortReferenceAnalyzer ())
 
     let prov location componentType portName =
-        createDiagnostic DiagnosticIdentifier.UnknownProvidedPort (1, location) (1, location + String.length portName)
+        errorDiagnostic DiagnosticIdentifier.UnknownProvidedPort (1, location) (1, location + String.length portName)
             "'%s' does not declare a provided port named '%s'." componentType portName
 
     let req location componentType portName =
-        createDiagnostic DiagnosticIdentifier.UnknownRequiredPort (1, location) (1, location + String.length portName)
+        errorDiagnostic DiagnosticIdentifier.UnknownRequiredPort (1, location) (1, location + String.length portName)
             "'%s' does not declare a required port named '%s'." componentType portName
 
     [<Test>]

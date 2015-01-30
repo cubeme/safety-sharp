@@ -35,7 +35,7 @@ module ``Marked with both provided and required port attribute`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
 
     let ambiguous location memberName =
-        createDiagnostic DiagnosticIdentifier.AmbiguousPortKind (1, location) (1, location + 1)
+        errorDiagnostic DiagnosticIdentifier.AmbiguousPortKind (1, location) (1, location + 1)
             "'%s' cannot be marked with both '%s' and '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
     [<Test>]
@@ -83,7 +83,7 @@ module ``Provided ports cannot be extern`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
 
     let prov location memberName =
-        createDiagnostic DiagnosticIdentifier.ExternProvidedPort (1, location) (1, location + 1)
+        errorDiagnostic DiagnosticIdentifier.ExternProvidedPort (1, location) (1, location + 1)
             "Provided port '%s' cannot be extern." memberName
 
     [<Test>]
@@ -113,7 +113,7 @@ module ``Required ports cannot be non extern`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
 
     let req location memberName =
-        createDiagnostic DiagnosticIdentifier.NonExternRequiredPort (1, location) (1, location + 1) 
+        errorDiagnostic DiagnosticIdentifier.NonExternRequiredPort (1, location) (1, location + 1) 
             "Required port '%s' must be extern." memberName
 
     [<Test>]

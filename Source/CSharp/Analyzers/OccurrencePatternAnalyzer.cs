@@ -54,7 +54,15 @@ namespace SafetySharp.CSharp.Analyzers
 		private static readonly DiagnosticInfo AmbiguousPattern = DiagnosticInfo.Error(
 			DiagnosticIdentifier.AmbiguousOccurrencePattern,
 			"A fault cannot be marked with more than one default occurrence pattern.",
-			"Fault '{{0}}' is marked with more than one occurrence pattern.");
+			"Fault '{0}' cannot be marked with more than one occurrence pattern.");
+
+		/// <summary>
+		///     Indicates that a non-fault class is marked with an occurrence pattern.
+		/// </summary>
+		private static readonly DiagnosticInfo OccurrencePatternHasNoEffect = DiagnosticInfo.Warning(
+			DiagnosticIdentifier.OccurrencePatternHasNoEffect,
+			"Marking a non-fault class with an occurrence pattern has no effect.",
+			String.Format("Occurrence patterns have no effect on classes not derived from '{0}'.", typeof(Fault).FullName));
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -82,11 +90,18 @@ namespace SafetySharp.CSharp.Analyzers
 			var compilation = context.Compilation;
 			var symbol = context.Symbol as ITypeSymbol;
 
-			if (symbol == null || !symbol.IsDerivedFromFault(compilation))
+			if (symbol == null)
 				return;
 
+			var isFault = symbol.IsDerivedFromFault(compilation);
 			var attributeSymbol = compilation.GetOccurrencePatternAttributeSymbol();
-			var count = symbol.GetAttributes().Count(attribute => attribute.AttributeClass == attributeSymbol);
+			var count = symbol.GetAttributes().Count(attribute => attribute.AttributeClass.IsDerivedFrom(attributeSymbol));
+
+			if (count != 0 && !isFault)
+				OccurrencePatternHasNoEffect.Emit(context, symbol);
+
+			if (!isFault)
+				return;
 
 			if (count == 0)
 				MissingPattern.Emit(context, symbol, symbol.ToDisplayString());

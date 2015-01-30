@@ -45,14 +45,25 @@ open SafetySharp.Modeling
 type CompilationException (message : string) =
     inherit Exception (message)
 
+/// Describes the kind of a diagnostic.
+type DiagnosticKind = 
+    | Error
+    | Warning
+
 /// Provides information about a diagnostic.
 type Diagnostic =
-    | Diagnostic of Identifier : string * Start : (int * int) * End : (int * int) * Message : string
+    | Diagnostic of Kind : DiagnosticKind * Identifier : string * Start : (int * int) * End : (int * int) * Message : string
 
-/// Creates a diagnostic.
-let createDiagnostic (id : DiagnosticIdentifier) startLocation endLocation =
+/// Creates an error diagnostic.
+let errorDiagnostic (id : DiagnosticIdentifier) startLocation endLocation = 
     Printf.ksprintf (fun message ->  
-        Diagnostic ("SS" + (int id).ToString(), startLocation, endLocation, message) |> Some
+        Diagnostic (Error, "SS" + (int id).ToString(), startLocation, endLocation, message) |> Some
+    )
+
+/// Creates a warning diagnostic.
+let warningDiagnostic (id : DiagnosticIdentifier) startLocation endLocation =
+    Printf.ksprintf (fun message ->  
+        Diagnostic (Warning, "SS" + (int id).ToString(), startLocation, endLocation, message) |> Some
     )
 
 /// Represents a compiled C# compilation unit with a single syntax tree.
@@ -335,7 +346,14 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         else
             let diagnostic = diagnostics.[0]
             let span = diagnostic.Location.GetLineSpan ()
-            Diagnostic (diagnostic.Id, 
+            let kind = 
+                match diagnostic.Severity with
+                | DiagnosticSeverity.Error   -> Error
+                | DiagnosticSeverity.Warning -> Warning
+                | s                          -> sprintf "Unsupported diagnostic severity '%A'" s |> invalidOp
+
+            Diagnostic (kind,
+                        diagnostic.Id, 
                         (span.StartLinePosition.Line, span.StartLinePosition.Character),
                         (span.EndLinePosition.Line, span.EndLinePosition.Character),
                         diagnostic.GetMessage ())

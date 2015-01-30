@@ -58,6 +58,7 @@
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Modeling\Binding.fs" />
+    <Compile Include="Modeling\OccurrencePattern.fs" />
     <Compile Include="Modeling\Component.fs" />
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />

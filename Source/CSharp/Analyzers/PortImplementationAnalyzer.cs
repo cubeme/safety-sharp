@@ -39,7 +39,7 @@ namespace SafetySharp.CSharp.Analyzers
 	public class PortImplementationAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer.
+		///     The error diagnostic emitted by the analyzer when a required port is implemented as a provided port.
 		/// </summary>
 		private static readonly DiagnosticInfo RequiredPortImplementedAsProvidedPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.RequiredPortImplementedAsProvidedPort,
@@ -47,7 +47,7 @@ namespace SafetySharp.CSharp.Analyzers
 			"'{0}' does not implement interface member '{1}'. '{1}' is declared as a required port, but is implemented as a provided port.");
 
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer.
+		///     The error diagnostic emitted by the analyzer when a provided port is implemented as a required port.
 		/// </summary>
 		private static readonly DiagnosticInfo ProvidedPortImplementedAsRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ProvidedPortImplementedAsRequiredPort,

@@ -38,6 +38,7 @@ namespace SafetySharp.CSharp.Analyzers
 		// Fault diagnostics
 		MissingOccurrencePattern = 2000,
 		AmbiguousOccurrencePattern = 2001,
+		OccurrencePatternHasNoEffect = 2002,
 
 		// Port diagnostics
 		AmbiguousPortKind = 3000,

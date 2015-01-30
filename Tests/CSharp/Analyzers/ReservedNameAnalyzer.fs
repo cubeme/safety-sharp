@@ -36,7 +36,7 @@ module ``Use of reserved name`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (ReservedNameAnalyzer ())
 
     let diagnostic location identifierName =
-        createDiagnostic DiagnosticIdentifier.ReservedName (1, location) (1, location + String.length identifierName)
+        errorDiagnostic DiagnosticIdentifier.ReservedName (1, location) (1, location + String.length identifierName)
             "Identifier name '%s' is reserved for internal use." identifierName
 
     [<Test>]

@@ -37,9 +37,3 @@ type ProvidedAttribute () =
 [<Sealed>]
 type RequiredAttribute () =
     inherit Attribute ()
-
-/// Represents a base class for all fault occurrence patterns.
-[<AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)>]
-[<AbstractClass>]
-type OccurrencePatternAttribute () =
-    inherit Attribute ()

@@ -35,7 +35,7 @@ module ``Interface members must be marked with port attributes`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (UnmarkedInterfacePortAnalyzer ())
 
     let diagnostic location memberName =
-        createDiagnostic DiagnosticIdentifier.UnmarkedInterfacePort (1, location) (1, location + 1)
+        errorDiagnostic DiagnosticIdentifier.UnmarkedInterfacePort (1, location) (1, location + 1)
             "'%s' must be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
     [<Test>]

@@ -33,12 +33,48 @@ open SafetySharp.CSharp.Roslyn.Symbols
 [<TestFixture>]
 module ``Fault must be marked with a single occurrence pattern`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (OccurrencePatternAnalyzer ())
-    let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
 
-    let diagnostic typeName location =
-        createDiagnostic DiagnosticIdentifier.CustomComponent (1, location) (1, location + 1) 
-            "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName
+    let missing fault location =
+        errorDiagnostic DiagnosticIdentifier.MissingOccurrencePattern (1, location) (1, location + 1) 
+            "Fault '%s' does not declare a default occurrence pattern. Mark it with an attribute derived from '%s'. \
+			You can change the default occurrence pattern dynamically during model initialization time."
+            fault typeof<OccurrencePatternAttribute>.FullName
+
+    let ambiguous fault location =
+        errorDiagnostic DiagnosticIdentifier.AmbiguousOccurrencePattern (1, location) (1, location + 1) 
+            "Fault '%s' cannot be marked with more than one occurrence pattern." fault
+
+    let noEffect fault location =
+        warningDiagnostic DiagnosticIdentifier.OccurrencePatternHasNoEffect (1, location) (1, location + 1) 
+            "Occurrence patterns have no effect on classes not derived from 'SafetySharp.Modeling.Fault'."
 
     [<Test>]
-    let ``type derived from Component is valid`` () =
+    let ``non-fault class without an occurrence pattern is valid`` () =
+        getDiagnostic "class X {}" =? None
         getDiagnostic "class X : Component {}" =? None
+        getDiagnostic "namespace Y { class C : Component { class X {} }}" =? None
+        getDiagnostic "namespace Y { class C : Component { class X : Component {} }}" =? None
+
+    [<Test>]
+    let ``non-fault class with one or more occurrence patterns is invalid`` () =
+        getDiagnostic "[Persistent] class X {}" =? noEffect "X" 19
+        getDiagnostic "[Persistent, Transient] class X : Component {}" =? noEffect "X" 30
+        getDiagnostic "namespace Y { class C : Component { [Transient] class X {} }}" =? noEffect "Y.C.X" 54
+        getDiagnostic "namespace Y { class C : Component { [Transient] [Persistent] class X : Component {} }}" =? noEffect "Y.C.X" 67
+
+    [<Test>]
+    let ``fault without an occurrence pattern is invalid`` () =
+        getDiagnostic "class X : Fault {}" =? missing "X" 6
+        getDiagnostic "namespace Y { class C : Component { class X : Fault {} }}" =? missing "Y.C.X" 42
+
+    [<Test>]
+    let ``fault with a single occurrence pattern is valid`` () =
+        getDiagnostic "[Transient] class X : Fault {}" =? None
+        getDiagnostic "namespace Y { class C : Component { [Persistent] class X : Fault {} }}" =? None
+
+    [<Test>]
+    let ``fault with multiple occurrence patterns is invalid`` () =
+        getDiagnostic "[Transient, Persistent] class X : Fault {}" =? ambiguous "X" 30
+        getDiagnostic "[Transient] [Persistent] class X : Fault {}" =? ambiguous "X" 31
+        getDiagnostic "namespace Y { class C : Component { [Transient, Persistent] class X : Fault {} }}" =? ambiguous "Y.C.X" 66
+        getDiagnostic "namespace Y { class C : Component { [Transient] [Persistent] class X : Fault {} }}" =? ambiguous "Y.C.X" 67

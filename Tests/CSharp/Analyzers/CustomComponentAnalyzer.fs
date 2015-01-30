@@ -36,7 +36,7 @@ module ``Custom implementation of IComponent interface`` =
     let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
 
     let diagnostic typeName location =
-        createDiagnostic DiagnosticIdentifier.CustomComponent (1, location) (1, location + 1) 
+        errorDiagnostic DiagnosticIdentifier.CustomComponent (1, location) (1, location + 1) 
             "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName
 
     [<Test>]

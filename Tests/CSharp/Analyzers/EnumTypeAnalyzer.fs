@@ -35,7 +35,7 @@ module ``Explicit enum type`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (EnumTypeAnalyzer ())
 
     let diagnostic location length =
-        createDiagnostic DiagnosticIdentifier.ExplicitEnumType (1, location) (1, location + length)
+        errorDiagnostic DiagnosticIdentifier.ExplicitEnumType (1, location) (1, location + length)
             "Enum 'E' must not explicitly declare an underlying type."
 
     [<Test>]

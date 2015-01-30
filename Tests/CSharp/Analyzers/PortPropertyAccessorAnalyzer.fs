@@ -35,7 +35,7 @@ module ``Property accessor marked with port attribute`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortPropertyAccessorAnalyzer ())
 
     let diagnostic location memberName =
-        createDiagnostic DiagnosticIdentifier.PortPropertyAccessor (1, location) (1, location + 3)
+        errorDiagnostic DiagnosticIdentifier.PortPropertyAccessor (1, location) (1, location + 3)
             "'%s' cannot be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
     [<Test>]

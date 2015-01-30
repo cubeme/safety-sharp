@@ -39,12 +39,12 @@ module ``Implementation and interface port kinds are inconsistent`` =
         TestCompilation.GetDiagnostic (PortImplementationAnalyzer ()) csharpCode
 
     let diagnosticProv location length memberName interfaceMemberName =
-        createDiagnostic DiagnosticIdentifier.ProvidedPortImplementedAsRequiredPort (3, location) (3, location + length)
+        errorDiagnostic DiagnosticIdentifier.ProvidedPortImplementedAsRequiredPort (3, location) (3, location + length)
             "'%s' does not implement interface member '%s'. '%s' is declared as a provided port, but is implemented as a required port." 
             memberName interfaceMemberName interfaceMemberName
 
     let diagnosticReq location length memberName interfaceMemberName =
-        createDiagnostic DiagnosticIdentifier.RequiredPortImplementedAsProvidedPort (3, location) (3, location + length)
+        errorDiagnostic DiagnosticIdentifier.RequiredPortImplementedAsProvidedPort (3, location) (3, location + length)
             "'%s' does not implement interface member '%s'. '%s' is declared as a required port, but is implemented as a provided port." 
             memberName interfaceMemberName interfaceMemberName
 
