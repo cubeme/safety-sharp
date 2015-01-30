@@ -28,26 +28,32 @@ namespace SafetySharp.CSharp.Analyzers
 	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
+	using Utilities;
 
 	/// <summary>
-	///     Ensures that a method or property is not marked with both the <see cref="ProvidedAttribute" /> and the
-	///     <see cref="RequiredAttribute" />.
+	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.
 	/// </summary>
-	[DiagnosticAnalyzer]
-	public class AmbiguousPortKindAnalyzer : CSharpAnalyzer
+	[DiagnosticAnalyzer, UsedImplicitly]
+	public class CustomComponentAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo CustomComponent = DiagnosticInfo.Error(
+			DiagnosticIdentifier.CustomComponent,
+			String.Format("A class cannot implement '{0}' when it is not derived from '{1}'.",
+				typeof(IComponent).FullName,
+				typeof(Component).FullName),
+			String.Format("Class '{{0}}' cannot implement '{0}' explicitly; derive from '{1}' instead.",
+				typeof(IComponent).FullName,
+				typeof(Component).FullName));
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public AmbiguousPortKindAnalyzer()
+		public CustomComponentAnalyzer()
+			: base(CustomComponent)
 		{
-			Error(1000,
-				String.Format("A method or property cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' cannot be marked with both '{0}' and '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
@@ -56,31 +62,23 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context" />
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSymbolAction(Analyze, SymbolKind.NamedType);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
-			var symbol = context.Symbol;
+			var symbol = context.Symbol as ITypeSymbol;
 
-			if (!symbol.ContainingType.ImplementsIComponent(compilation))
+			if (symbol == null || symbol.TypeKind != TypeKind.Class)
 				return;
 
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
-			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
-
-			if (hasProvidedAttribute && hasRequiredAttribute)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			if (symbol.ImplementsIComponent(compilation) && !symbol.IsDerivedFromComponent(compilation))
+				CustomComponent.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

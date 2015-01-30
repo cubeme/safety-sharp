@@ -23,26 +23,34 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
-	using Microsoft.CodeAnalysis;
+	using System.Linq;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
-	using Modeling;
 	using Roslyn;
-	using Roslyn.Symbols;
+	using Roslyn.Syntax;
+	using Utilities;
 
 	/// <summary>
-	///     Ensures that a method or property marked with the <see cref="RequiredAttribute" /> is <c>extern</c>.
+	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
-	[DiagnosticAnalyzer]
-	public class NonExternRequiredPortAnalyzer : CSharpAnalyzer
+	[DiagnosticAnalyzer, UsedImplicitly]
+	public class EnumValueAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo ExplicitEnumMemberValue = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExplicitEnumMemberValue,
+			"Values of enumeration members must not be explicitly declared.",
+			"Value of enum member '{0}' cannot be declared explicitly.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public NonExternRequiredPortAnalyzer()
+		public EnumValueAnalyzer()
+			: base(ExplicitEnumMemberValue)
 		{
-			Error(1003,
-				String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
-				"Required port '{0}' must be extern.");
 		}
 
 		/// <summary>
@@ -51,37 +59,25 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="context">The analysis context that should be used to register analysis actions.</param>
 		public override void Initialize(AnalysisContext context)
 		{
-			context.RegisterSymbolAction(Analyze, SymbolKind.Method, SymbolKind.Property);
+			context.RegisterSemanticModelAction(Analyze);
 		}
 
 		/// <summary>
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SemanticModelAnalysisContext context)
 		{
-			var compilation = context.Compilation;
-			var symbol = context.Symbol;
+			var enumDeclarations = context
+				.SemanticModel
+				.SyntaxTree.Descendants<EnumMemberDeclarationSyntax>()
+				.Where(enumMember => enumMember.EqualsValue != null);
 
-			if (!symbol.ContainingType.IsDerivedFromComponent(compilation))
-				return;
-
-			// Ignore getter and setter methods of properties
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
-			// If the required port attribute is not applied, we've nothing to do here
-			if (!symbol.HasAttribute<RequiredAttribute>(compilation))
-				return;
-
-			// If the method is also marked as a provided port, something is wrong; we'll let another 
-			// analyzer handle this situation
-			if (symbol.HasAttribute<ProvidedAttribute>(compilation))
-				return;
-
-			if (!symbol.IsExtern)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			foreach (var enumMember in enumDeclarations)
+			{
+				ExplicitEnumMemberValue.Emit(context, enumMember.EqualsValue.Value,
+					context.SemanticModel.GetDeclaredSymbol(enumMember).ToDisplayString());
+			}
 		}
 	}
 }

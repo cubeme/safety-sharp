@@ -101,6 +101,11 @@ type MemberAccess<'T> internal (component', memberName) =
         else
             propertyInfo.GetValue component' :?> 'T
 
+/// Represents a base class for all faults.
+[<AbstractClass; AllowNullLiteral>]
+type Fault () =
+    class end
+
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>] 
 type Component () as this =

@@ -60,21 +60,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Analyzers\BindingAmbiguityAnalyzer.cs" />
     <Compile Include="Analyzers\BindingAnalyzer.cs" />
-    <Compile Include="Analyzers\BindingFailureAnalyzer.cs" />
-    <Compile Include="Analyzers\DynamicPortAnalyzer.cs" />
-    <Compile Include="Analyzers\CustomIComponentAnalyzer.cs" />
-    <Compile Include="Analyzers\AmbiguousPortKindAnalyzer.cs" />
+    <Compile Include="Analyzers\OccurrencePatternAnalyzer.cs" />
+    <Compile Include="Analyzers\PortReferenceAnalyzer.cs" />
+    <Compile Include="Analyzers\CustomComponentAnalyzer.cs" />
     <Compile Include="Analyzers\PortPropertyAccessorAnalyzer.cs" />
-    <Compile Include="Analyzers\ExternProvidedPortAnalyzer.cs" />
-    <Compile Include="Analyzers\NonExternRequiredPortAnalyzer.cs" />
+    <Compile Include="Analyzers\PortKindAnalyzer.cs" />
     <Compile Include="Analyzers\UnmarkedInterfacePortAnalyzer.cs" />
-    <Compile Include="Analyzers\InconsistentPortKindAnalyzer.cs" />
-    <Compile Include="Analyzers\ExplicitEnumValueAnalyzer.cs" />
+    <Compile Include="Analyzers\PortImplementationAnalyzer.cs" />
+    <Compile Include="Analyzers\EnumValueAnalyzer.cs" />
     <Compile Include="Analyzers\EnumTypeAnalyzer.cs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Analyzers\DiagnosticIdentifier.cs" />
+    <Compile Include="Roslyn\DiagnosticInfo.cs" />
     <Compile Include="Roslyn\CSharpAnalyzer.cs" />
     <Compile Include="Roslyn\CSharpNormalizer.cs" />
     <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />

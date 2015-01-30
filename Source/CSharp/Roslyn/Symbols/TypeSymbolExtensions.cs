@@ -80,6 +80,23 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Checks whether <paramref name="typeSymbol" /> is directly or indirectly derived from the <see cref="Fault" />
+		///     class within the context of the <paramref name="compilation" />.
+		/// </summary>
+		/// <param name="typeSymbol">The type symbol that should be checked.</param>
+		/// <param name="compilation">
+		///     The compilation that should be used to resolve the type symbol for the <see cref="Component" /> class.
+		/// </param>
+		[Pure]
+		public static bool IsDerivedFromFault([NotNull] this ITypeSymbol typeSymbol, [NotNull] Compilation compilation)
+		{
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(compilation, () => compilation);
+
+			return typeSymbol.IsDerivedFrom(compilation.GetFaultClassSymbol());
+		}
+
+		/// <summary>
 		///     Checks whether <paramref name="typeSymbol" /> directly or indirectly implements the <see cref="IComponent" />
 		///     interface within the context of the <paramref name="compilation" />.
 		/// </summary>

@@ -32,14 +32,26 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Bindings ambiguity`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (BindingAmbiguityAnalyzer ())
+module ``Binding ambiguity`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (BindingAnalyzer ())
 
-    let ss1012 portKind location length leftPorts rightPorts =
-        Diagnostic ("SS1012", (1, location), (1, location + length), 
-            sprintf "Port binding is ambiguous: There are multiple accessible and signature-compatible ports with the given \
-				names that could be bound.\nOn the left-hand side, could be:\n%s\nOn the right-hand side, could be:\n%s" leftPorts rightPorts)
-        |> Some
+    let diagnostic portKind location length leftPorts rightPorts =
+        createDiagnostic DiagnosticIdentifier.AmbiguousBinding (1, location) (1, location + length)
+            "Port binding is ambiguous: There are multiple accessible and signature-compatible ports with the given \
+			names that could be bound.\nOn the left-hand side, could be:\n%s\nOn the right-hand side, could be:\n%s" leftPorts rightPorts
+
+    [<Test>]
+    let x () =
+        ()
+
+[<TestFixture>]
+module ``Binding failure`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (BindingAnalyzer ())
+
+    let diagnostic portKind location length leftPorts rightPorts =
+        createDiagnostic DiagnosticIdentifier.BindingFailure (1, location) (1, location + length)
+            "Port binding failure: There are no accessible signature-compatible ports with the given names that could be bound. \
+		    \nOn the left-hand side, could be:\n%s\nOn the right-hand side, could be:\n%s" leftPorts rightPorts
 
     [<Test>]
     let x () =

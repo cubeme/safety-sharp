@@ -36,13 +36,17 @@ module ``Implementation and interface port kinds are inconsistent`` =
             "interface I : IComponent { [Required] void In(); [Provided] void Out(); }
             interface J : IComponent { [Required] int In { get; set; } [Provided] int Out { get; set; }}\n" 
             + csharpCode
-        TestCompilation.GetDiagnostic (InconsistentPortKindAnalyzer ()) csharpCode
+        TestCompilation.GetDiagnostic (PortImplementationAnalyzer ()) csharpCode
 
-    let ss1005 location length memberName interfaceMemberName declaredPortType actualPortType =
-        Diagnostic ("SS1005", (3, location), (3, location + length), 
-            sprintf "'%s' does not implement interface member '%s'. '%s' is declared as a %s port, but is implemented as a %s port." 
-                    memberName interfaceMemberName interfaceMemberName declaredPortType actualPortType)
-        |> Some
+    let diagnosticProv location length memberName interfaceMemberName =
+        createDiagnostic DiagnosticIdentifier.ProvidedPortImplementedAsRequiredPort (3, location) (3, location + length)
+            "'%s' does not implement interface member '%s'. '%s' is declared as a provided port, but is implemented as a required port." 
+            memberName interfaceMemberName interfaceMemberName
+
+    let diagnosticReq location length memberName interfaceMemberName =
+        createDiagnostic DiagnosticIdentifier.RequiredPortImplementedAsProvidedPort (3, location) (3, location + length)
+            "'%s' does not implement interface member '%s'. '%s' is declared as a required port, but is implemented as a provided port." 
+            memberName interfaceMemberName interfaceMemberName
 
     [<Test>]
     let ``Implementations without attributes are valid`` () =
@@ -72,32 +76,32 @@ module ``Implementation and interface port kinds are inconsistent`` =
     [<Test>]
     let ``Implementations with wrong port type are invalid`` () =
         getDiagnostic "class C : Component, I { extern public void In(); extern public void Out(); }" 
-            =? ss1005 69 3 "C.Out()" "I.Out()" "provided" "required"
+            =? diagnosticProv 69 3 "C.Out()" "I.Out()"
         getDiagnostic "class C : Component, I { [Provided] public void In() {} [Provided] public void Out() {}}" 
-            =? ss1005 48 2 "C.In()" "I.In()" "required" "provided"
+            =? diagnosticReq 48 2 "C.In()" "I.In()"
         getDiagnostic "class C : Component, I { extern void I.In(); extern void I.Out(); }" 
-            =? ss1005 59 3 "C.I.Out()" "I.Out()" "provided" "required"
+            =? diagnosticProv 59 3 "C.I.Out()" "I.Out()"
         getDiagnostic "class C : Component, I { [Provided] void I.In() {} [Provided] void I.Out() {}}" 
-            =? ss1005 43 2 "C.I.In()" "I.In()" "required" "provided"
+            =? diagnosticReq 43 2 "C.I.In()" "I.In()"
         getDiagnostic "class C : Component, J { extern public int In { get; set; } [Required] extern public int Out { get; set; }}" 
-            =? ss1005 89 3 "C.Out" "J.Out" "provided" "required"
+            =? diagnosticProv 89 3 "C.Out" "J.Out"
         getDiagnostic "class C : Component, J { [Provided] public int In { get; set; } [Provided] public int Out { get; set; }}" 
-            =? ss1005 47 2 "C.In" "J.In" "required" "provided"
+            =? diagnosticReq 47 2 "C.In" "J.In"
         getDiagnostic "class C : Component, J { extern int J.In { get; set; } [Required] extern int J.Out { get; set; }}"  
-            =? ss1005 79 3 "C.J.Out" "J.Out" "provided" "required"
+            =? diagnosticProv 79 3 "C.J.Out" "J.Out"
         getDiagnostic "class C : Component, J { [Provided] int J.In { get; set; } [Provided] int J.Out { get; set; }}" 
-            =? ss1005 42 2 "C.J.In" "J.In" "required" "provided"
+            =? diagnosticReq 42 2 "C.J.In" "J.In"
 
     [<Test>]
     let ``Implementations of interface members in base class with wrong port type are invalid`` () =
         getDiagnostic "class C : Component { extern public void In(); extern public void Out(); } class X : C, I {}" 
-            =? ss1005 66 3 "C.Out()" "I.Out()" "provided" "required"
+            =? diagnosticProv 66 3 "C.Out()" "I.Out()"
         getDiagnostic "class C : Component { [Provided] public void In() {} [Provided] public void Out() {}} class X : C, I {}" 
-            =? ss1005 45 2 "C.In()" "I.In()" "required" "provided"
+            =? diagnosticReq 45 2 "C.In()" "I.In()"
         getDiagnostic "class C : Component { extern public int In { get; set; } [Required] extern public int Out { get; set; }} class X : C, J {}" 
-            =? ss1005 86 3 "C.Out" "J.Out" "provided" "required"
+            =? diagnosticProv 86 3 "C.Out" "J.Out"
         getDiagnostic "class C : Component { [Provided] public int In { get; set; } [Provided] public int Out { get; set; }} class X : C, J {}" 
-            =? ss1005 44 2 "C.In" "J.In" "required" "provided"
+            =? diagnosticReq 44 2 "C.In" "J.In"
 
     [<Test>]
     let ``Implementations with unknown port type are ignored`` () =

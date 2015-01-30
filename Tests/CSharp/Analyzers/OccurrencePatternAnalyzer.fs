@@ -20,35 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Analyzers
-{
-	using System;
-	using Microsoft.CodeAnalysis.Diagnostics;
+namespace Analyzers
 
-	/// <summary>
-	///     Ensures that port bindings are unambiguous, i.e., that there is at most one unique pair of signature-compatible ports
-	///     that can be bound.
-	/// </summary>
-	[DiagnosticAnalyzer]
-	public class BindingAmbiguityAnalyzer : BindingAnalyzer
-	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		public BindingAmbiguityAnalyzer()
-		{
-			Error(1012,
-				"There are multiple signature-compatible ports that could be bound.",
-				"Port binding is ambiguous: There are multiple accessible and signature-compatible ports with the given " +
-				"names that could be bound.\nOn the left-hand side, could be:\n{0}\nOn the right-hand side, could be:\n{1}");
-		}
+open System
+open System.Linq
+open NUnit.Framework
+open SafetySharp.Modeling
+open SafetySharp.CSharp.Analyzers
+open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn.Symbols
 
-		/// <summary>
-		///     Performs the analysis.
-		/// </summary>
-		/// <param name="context">The context in which the analysis should be performed.</param>
-		protected override void Analyze(SyntaxNodeAnalysisContext context)
-		{
-		}
-	}
-}
+[<TestFixture>]
+module ``Fault must be marked with a single occurrence pattern`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (OccurrencePatternAnalyzer ())
+    let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
+
+    let diagnostic typeName location =
+        createDiagnostic DiagnosticIdentifier.CustomComponent (1, location) (1, location + 1) 
+            "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName
+
+    [<Test>]
+    let ``type derived from Component is valid`` () =
+        getDiagnostic "class X : Component {}" =? None

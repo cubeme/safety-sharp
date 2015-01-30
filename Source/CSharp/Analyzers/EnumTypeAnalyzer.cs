@@ -29,21 +29,28 @@ namespace SafetySharp.CSharp.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Syntax;
+	using Utilities;
 
 	/// <summary>
 	///     Ensures that no enumeration members explicitly declare a constant value.
 	/// </summary>
-	[DiagnosticAnalyzer]
+	[DiagnosticAnalyzer, UsedImplicitly]
 	public class EnumTypeAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo ExplicitEnumType = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExplicitEnumType,
+			"Enumeration declarations must not explicitly declare an underlying type.",
+			"Enum '{0}' must not explicitly declare an underlying type.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public EnumTypeAnalyzer()
+			: base(ExplicitEnumType)
 		{
-			Error(1007,
-				"Enumeration declarations must not explicitly declare an underlying type.",
-				"Enum '{0}' must not explicitly declare an underlying type.");
 		}
 
 		/// <summary>
@@ -59,7 +66,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SemanticModelAnalysisContext context)
+		private static void Analyze(SemanticModelAnalysisContext context)
 		{
 			var enumDeclarations = context
 				.SemanticModel
@@ -67,8 +74,10 @@ namespace SafetySharp.CSharp.Analyzers
 				.Where(enumDeclatation => enumDeclatation.BaseList != null);
 
 			foreach (var enumDeclaration in enumDeclarations)
-				EmitDiagnostic(context, enumDeclaration.BaseList.Types.First(),
+			{
+				ExplicitEnumType.Emit(context, enumDeclaration.BaseList.Types.First(),
 					context.SemanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
+			}
 		}
 	}
 }

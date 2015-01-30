@@ -26,12 +26,40 @@ namespace SafetySharp.CSharp.Analyzers
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
+	using Utilities;
 
 	/// <summary>
-	///     A base class for implementing port binding analyzers.
+	///     Ensures that bindings resolve to a unique pair of bound ports.
 	/// </summary>
-	public abstract class BindingAnalyzer : CSharpAnalyzer
+	[DiagnosticAnalyzer, UsedImplicitly]
+	public class BindingAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer if a binding failed.
+		/// </summary>
+		private static readonly DiagnosticInfo BindingFailure = DiagnosticInfo.Error(
+			DiagnosticIdentifier.BindingFailure,
+			"There are no accessible signature-compatible ports that could be bound.",
+			"Port binding failure: There are no accessible signature-compatible ports with the given names that could be bound. " +
+			"\nOn the left-hand side, could be:\n{0}\nOn the right-hand side, could be:\n{1}");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer if a binding is ambiguous.
+		/// </summary>
+		private static readonly DiagnosticInfo AmbiguousBinding = DiagnosticInfo.Error(
+			DiagnosticIdentifier.AmbiguousBinding,
+			"There are multiple signature-compatible ports that could be bound.",
+			"Port binding is ambiguous: There are multiple accessible and signature-compatible ports with the given " +
+			"names that could be bound.\nOn the left-hand side, could be:\n{0}\nOn the right-hand side, could be:\n{1}");
+
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		public BindingAnalyzer()
+			: base(BindingFailure, AmbiguousBinding)
+		{
+		}
+
 		/// <summary>
 		///     Called once at session start to register actions in the analysis context.
 		/// </summary>
@@ -45,6 +73,8 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis on the given binding.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		protected abstract void Analyze(SyntaxNodeAnalysisContext context);
+		private static void Analyze(SyntaxNodeAnalysisContext context)
+		{
+		}
 	}
 }

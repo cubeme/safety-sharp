@@ -28,26 +28,33 @@ namespace SafetySharp.CSharp.Analyzers
 	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
+	using Utilities;
 
 	/// <summary>
 	///     Ensures that a method or property within an interface derived from <see cref="IComponent" /> is marked with either
 	///     the <see cref="RequiredAttribute" /> or <see cref="ProvidedAttribute" />.
 	/// </summary>
-	[DiagnosticAnalyzer]
+	[DiagnosticAnalyzer, UsedImplicitly]
 	public class UnmarkedInterfacePortAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo UnmarkedInterfacePort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.UnmarkedInterfacePort,
+			String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName),
+			String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName));
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public UnmarkedInterfacePortAnalyzer()
+			: base(UnmarkedInterfacePort)
 		{
-			Error(1004,
-				String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName),
-				String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
-					typeof(RequiredAttribute).FullName,
-					typeof(ProvidedAttribute).FullName));
 		}
 
 		/// <summary>
@@ -80,7 +87,7 @@ namespace SafetySharp.CSharp.Analyzers
 			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
 
 			if (!hasProvidedAttribute && !hasRequiredAttribute)
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+				UnmarkedInterfacePort.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

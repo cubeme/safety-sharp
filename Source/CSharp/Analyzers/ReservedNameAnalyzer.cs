@@ -30,21 +30,28 @@ namespace SafetySharp.CSharp.Analyzers
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Syntax;
+	using Utilities;
 
 	/// <summary>
 	///     Ensures that no type, type member, variable, etc. uses a name reserved for synthesized variables.
 	/// </summary>
-	[DiagnosticAnalyzer]
+	[DiagnosticAnalyzer, UsedImplicitly]
 	public class ReservedNameAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo ReservedName = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ReservedName,
+			"The identifier name is reserved for internal use.",
+			"Identifier name '{0}' is reserved for internal use.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public ReservedNameAnalyzer()
+			: base(ReservedName)
 		{
-			Error(1008,
-				"The identifier name is reserved for internal use.",
-				"Identifier name '{0}' is reserved for internal use.");
 		}
 
 		/// <summary>
@@ -60,7 +67,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SyntaxTreeAnalysisContext context)
+		private static void Analyze(SyntaxTreeAnalysisContext context)
 		{
 			var syntaxTree = context.Tree;
 
@@ -78,7 +85,7 @@ namespace SafetySharp.CSharp.Analyzers
 				.Where(identifierName => identifierName.Identifier.IsSynthesized());
 
 			foreach (var invalidNamespace in invalidNamespaces)
-				EmitDiagnostic(context, invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
+				ReservedName.Emit(context, invalidNamespace.Identifier, invalidNamespace.Identifier.ValueText);
 		}
 
 		/// <summary>
@@ -93,7 +100,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     A function that gets the <see cref="SyntaxToken" /> representing the identifier of a
 		///     <see cref="SyntaxNode" /> of type <typeparamref name="T" />.
 		/// </param>
-		private void CheckIdentifiers<T>(SyntaxTreeAnalysisContext context, SyntaxTree syntaxTree, Func<T, SyntaxToken> getIdentifier)
+		private static void CheckIdentifiers<T>(SyntaxTreeAnalysisContext context, SyntaxTree syntaxTree, Func<T, SyntaxToken> getIdentifier)
 			where T : CSharpSyntaxNode
 		{
 			var invalidIdentifiers = syntaxTree
@@ -102,7 +109,7 @@ namespace SafetySharp.CSharp.Analyzers
 				.Where(name => name.IsSynthesized());
 
 			foreach (var identifier in invalidIdentifiers)
-				EmitDiagnostic(context, identifier, identifier.ValueText);
+				ReservedName.Emit(context, identifier, identifier.ValueText);
 		}
 	}
 }

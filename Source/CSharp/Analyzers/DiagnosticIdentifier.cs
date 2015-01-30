@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,31 +23,38 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
-	using Microsoft.CodeAnalysis.Diagnostics;
+	using Roslyn;
 
 	/// <summary>
-	///     Ensures that port bindings succeed, i.e., that there are one or more signature-compatible ports that can be bound.
+	///     Represents a unique identifier for a S# diagnostic emitted by a <see cref="CSharpAnalyzer" />.
 	/// </summary>
-	[DiagnosticAnalyzer]
-	public class BindingFailureAnalyzer : BindingAnalyzer
+	public enum DiagnosticIdentifier
 	{
-		/// <summary>
-		///     Initializes a new instance.
-		/// </summary>
-		public BindingFailureAnalyzer()
-		{
-			Error(1011,
-				"There are no accessible signature-compatible ports that could be bound.",
-				"Port binding failure: There are no accessible signature-compatible ports with the given names that could be bound. " +
-				"\nOn the left-hand side, could be:\n{0}\nOn the right-hand side, could be:\n{1}");
-		}
+		// Type diagnostics
+		CustomComponent = 1000,
+		ExplicitEnumType = 1001,
+		ExplicitEnumMemberValue = 1002,
 
-		/// <summary>
-		///     Performs the analysis.
-		/// </summary>
-		/// <param name="context">The context in which the analysis should be performed.</param>
-		protected override void Analyze(SyntaxNodeAnalysisContext context)
-		{
-		}
+		// Fault diagnostics
+		MissingOccurrencePattern = 2000,
+		AmbiguousOccurrencePattern = 2001,
+
+		// Port diagnostics
+		AmbiguousPortKind = 3000,
+		UnknownProvidedPort = 3001,
+		UnknownRequiredPort = 3002,
+		UnmarkedInterfacePort = 3003,
+		PortPropertyAccessor = 3004,
+		ProvidedPortImplementedAsRequiredPort = 3005,
+		RequiredPortImplementedAsProvidedPort = 3006,
+		NonExternRequiredPort = 3007,
+		ExternProvidedPort = 3008,
+
+		// Binding diagnostics
+		AmbiguousBinding = 4000,
+		BindingFailure = 4001,
+
+		// Misc diagnostics
+		ReservedName = 9000
 	}
 }

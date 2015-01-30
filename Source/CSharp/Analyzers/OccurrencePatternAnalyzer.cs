@@ -23,30 +23,45 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
+	using Utilities;
 
 	/// <summary>
-	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.
+	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.
 	/// </summary>
-	[DiagnosticAnalyzer]
-	public class CustomIComponentAnalyzer : CSharpAnalyzer
+	[DiagnosticAnalyzer, UsedImplicitly]
+	public class OccurrencePatternAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     Indicates that the occurrence pattern is missing.
+		/// </summary>
+		private static readonly DiagnosticInfo MissingPattern = DiagnosticInfo.Error(
+			DiagnosticIdentifier.MissingOccurrencePattern,
+			"A fault must be marked with a default occurrence pattern.",
+			String.Format(
+				"Fault '{{0}}' does not declare a default occurrence pattern. Mark it with an attribute derived from '{0}'. " +
+				"You can change the default occurrence pattern dynamically during model initialization time.",
+				typeof(OccurrencePatternAttribute).FullName));
+
+		/// <summary>
+		///     Indicates that multiple occurrence patterns are provided.
+		/// </summary>
+		private static readonly DiagnosticInfo AmbiguousPattern = DiagnosticInfo.Error(
+			DiagnosticIdentifier.AmbiguousOccurrencePattern,
+			"A fault cannot be marked with more than one default occurrence pattern.",
+			"Fault '{{0}}' is marked with more than one occurrence pattern.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public CustomIComponentAnalyzer()
+		public OccurrencePatternAnalyzer()
+			: base(MissingPattern, AmbiguousPattern)
 		{
-			Error(1009,
-				String.Format("A class cannot implement '{0}' when it is not derived from '{1}'.",
-					typeof(IComponent).FullName,
-					typeof(Component).FullName),
-				String.Format("Class '{{0}}' cannot implement '{0}' explicitly; derive from '{1}' instead.",
-					typeof(IComponent).FullName,
-					typeof(Component).FullName));
 		}
 
 		/// <summary>
@@ -62,16 +77,21 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SymbolAnalysisContext context)
+		private static void Analyze(SymbolAnalysisContext context)
 		{
 			var compilation = context.Compilation;
 			var symbol = context.Symbol as ITypeSymbol;
 
-			if (symbol == null || symbol.TypeKind != TypeKind.Class)
+			if (symbol == null || !symbol.IsDerivedFromFault(compilation))
 				return;
 
-			if (symbol.ImplementsIComponent(compilation) && !symbol.IsDerivedFromComponent(compilation))
-				EmitDiagnostic(context, symbol, symbol.ToDisplayString());
+			var attributeSymbol = compilation.GetOccurrencePatternAttributeSymbol();
+			var count = symbol.GetAttributes().Count(attribute => attribute.AttributeClass == attributeSymbol);
+
+			if (count == 0)
+				MissingPattern.Emit(context, symbol, symbol.ToDisplayString());
+			else if (count > 1)
+				AmbiguousPattern.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}
 }

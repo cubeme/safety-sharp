@@ -35,20 +35,34 @@ namespace SafetySharp.CSharp.Analyzers
 	using Utilities;
 
 	/// <summary>
-	///     Ensures that port referenced using the <see cref="IComponent.RequiredPorts" /> or
-	///     <see cref="IComponent.ProvidedPorts" /> properties is actually declared by the target class.
+	///     Ensures that ports referenced using the <see cref="IComponent.RequiredPorts" /> or
+	///     <see cref="IComponent.ProvidedPorts" /> properties are actually declared by the target class.
 	/// </summary>
-	[DiagnosticAnalyzer]
-	public class DynamicPortAnalyzer : CSharpAnalyzer
+	[DiagnosticAnalyzer, UsedImplicitly]
+	public class PortReferenceAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     Indicates that a provided port could not be found.
+		/// </summary>
+		private static readonly DiagnosticInfo UnknownProvidedPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.UnknownProvidedPort,
+			"The component does not declare a provided port of the given name.",
+			"'{0}' does not declare a provided port named '{1}'.");
+
+		/// <summary>
+		///     Indicates that a required port could not be found.
+		/// </summary>
+		private static readonly DiagnosticInfo UnknownRequiredPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.UnknownRequiredPort,
+			"The component does not declare a required port of the given name.",
+			"'{0}' does not declare a required port named '{1}'.");
+
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public DynamicPortAnalyzer()
+		public PortReferenceAnalyzer()
+			: base(UnknownProvidedPort, UnknownRequiredPort)
 		{
-			Error(1010,
-				"The component does not declare an accessible port of the given name.",
-				"'{0}' does not declare a {1} port named '{2}' or the port is inaccessible from this location.");
 		}
 
 		/// <summary>
@@ -64,7 +78,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Performs the analysis.
 		/// </summary>
 		/// <param name="context">The context in which the analysis should be performed.</param>
-		private void Analyze(SyntaxNodeAnalysisContext context)
+		private static void Analyze(SyntaxNodeAnalysisContext context)
 		{
 			var semanticModel = context.SemanticModel;
 			var node = (MemberAccessExpressionSyntax)context.Node;
@@ -88,7 +102,6 @@ namespace SafetySharp.CSharp.Analyzers
 
 			var portName = node.Name.Identifier.ValueText;
 			var isRequiredPort = symbol.Equals(requiredPortsSymbol);
-			var portKind = isRequiredPort ? "required" : "provided";
 			var nestedMemberAccess = node.Expression as MemberAccessExpressionSyntax;
 
 			ITypeSymbol targetSymbol = null;
@@ -122,14 +135,11 @@ namespace SafetySharp.CSharp.Analyzers
 
 			Assert.NotNull(targetSymbol, "Failed to determine the target symbol.");
 
-			var failedRequired = isRequiredPort &&
-								 targetSymbol.GetRequiredPorts(semanticModel, node.SpanStart).All(p => p.Name != portName);
+			if (isRequiredPort && targetSymbol.GetRequiredPorts(semanticModel, node.SpanStart).All(p => p.Name != portName))
+				UnknownRequiredPort.Emit(context, node.Name, targetSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), portName);
 
-			var failedProvided = !isRequiredPort &&
-								 targetSymbol.GetProvidedPorts(semanticModel, node.SpanStart).All(p => p.Name != portName);
-
-			if (failedRequired || failedProvided)
-				EmitDiagnostic(context, node.Name, targetSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), portKind, portName);
+			if (!isRequiredPort && targetSymbol.GetProvidedPorts(semanticModel, node.SpanStart).All(p => p.Name != portName))
+				UnknownProvidedPort.Emit(context, node.Name, targetSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), portName);
 		}
 	}
 }
