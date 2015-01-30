@@ -194,7 +194,7 @@ module internal SamToNuXmv =
 
     let transformConfiguration (pgm:SamPgm) : NuXmvProgram =
         // remove unwanted chars and assure, that no unwanted characters are in the string
-        let changeIdsState = ChangeIdentifierState.initial Set.empty<string> namegenerator_c_like
+        let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
         let pgm = changeNamesPgm changeIdsState pgm
 
         // transform to SamModified-Metamodel
@@ -203,7 +203,7 @@ module internal SamToNuXmv =
 
         // create the manageVariablesState: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
-        let manageVariablesState = ManageVariablesState.initial pgm.Globals namegenerator_c_like
+        let manageVariablesState = ManageVariablesState.initial pgm.Globals SafetySharp.FreshNameGenerator.namegenerator_c_like
 
 
         let formulaForWPPostcondition = // "a'=a,b'<->b,...."

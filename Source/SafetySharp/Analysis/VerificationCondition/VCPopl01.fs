@@ -34,7 +34,19 @@ namespace SafetySharp.Analysis.VerificationCondition
 
 
 module internal VCPopl01 =
+    open SafetySharp.Models.Sam.SamHelpers
     open SamModified
+
+    let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =
+        let rec unionManyVarMaps (united:Map<Var,'b>) (mapsToUnite:Map<Var,'b> list) =
+            if mapsToUnite.IsEmpty then
+                united
+            else
+                let newUnited =
+                    mapsToUnite.Head |> Map.toList
+                                     |> List.fold (fun (united:Map<Var,'b>) (key:Var,value:'b) -> united.Add(key,value)) united
+                unionManyVarMaps newUnited mapsToUnite.Tail
+        unionManyVarMaps Map.empty<Var,'b> mapsToUnite
         
     type Substitutions =
         {
@@ -42,32 +54,174 @@ module internal VCPopl01 =
             CurrentSubstitution : Map<Var,Var>;
             LocalTakenNames : Set<string>;
             VarToType : Map<Var,Type>;
-            GlobalTakenNames : Map<Var,Type> ref; //the set, where ref points to, stays the same, when copied. No need to merge here!
+             // Note: the elements, where ref points to, stays the same, when copied. No need to merge here!
+            GlobalTakenNamesWithTypes : Map<Var,Type> ref;
+            GlobalTakenNames : Set<string> ref;
+            VarToCounter : Map<Var,int> ref;
             TryToRecycle : bool; // if true, we try to recycle currently unused variables
         }
             with
-                static member initial (localAndGlobalVars:Var list) =
+                static member initial (localAndGlobalVars:(Var*Type) list) =
+                    let takenNamesAsString =
+                        localAndGlobalVars |> List.map (fun (var,_type) -> var.getName)
+                                           |> Set.ofList
+
                     {
                         Substitutions.IsBottom = false;
                         Substitutions.CurrentSubstitution =
-                            localAndGlobalVars |> List.map (fun var -> (var,var))
+                            localAndGlobalVars |> List.map (fun (var,_type) -> (var,var))
                                                |> Map.ofList;
+                        Substitutions.LocalTakenNames = takenNamesAsString
+                        Substitutions.VarToType  =
+                            localAndGlobalVars |> Map.ofList
+                        Substitutions.GlobalTakenNamesWithTypes =
+                            ref (localAndGlobalVars |> Map.ofList)
+                        Substitutions.GlobalTakenNames = ref (takenNamesAsString)
+                        Substitutions.VarToCounter =
+                            let newMap =
+                                localAndGlobalVars |> List.map (fun (var,_) -> (var,1))
+                                                   |> Map.ofList;            
+                            ref (newMap);
+                        Substitutions.TryToRecycle = true;
                     }
                 static member bottom =
                     {
                         Substitutions.IsBottom = true;
                         Substitutions.CurrentSubstitution = Map.empty<Var,Var>;
+                        Substitutions.LocalTakenNames = Set.empty<string>;
+                        Substitutions.VarToType = Map.empty<Var,Type>;
+                        Substitutions.GlobalTakenNamesWithTypes = ref (Map.empty<Var,Type>)
+                        Substitutions.GlobalTakenNames = ref (Set.empty<string>)
+                        Substitutions.VarToCounter = ref (Map.empty<Var,int>);
+                        Substitutions.TryToRecycle = true;
                     }
-                member this.tryToRecycleVar (_type:Type)=
-                    ""
+                    
+                member this.tryToRecycleVar (_type:Type) : Var option =
                     // Recycled variables are variables, which have been used before in another indeterministic choice branch.
                     // We could try to get one of these to keep the state space small. This may or may not help to reduce the
                     // verification.
-                member this.getFreshVar (var:Var) : (Substitutions*Var) =
-                    ""
-                static member merge (subs:Substitutions list) : (Substitutions * (Stm list)) =
+                    if this.TryToRecycle = false then
+                        None
+                    else
+                        let unused =
+                            Set.difference (this.GlobalTakenNames.Value) this.LocalTakenNames
+                        let isOfCorrectType (name:string) : bool =
+                            this.GlobalTakenNamesWithTypes.Value.Item (Var.Var(name)) =_type
+                        unused |> Set.toList
+                               |> List.tryPick (fun name -> if isOfCorrectType name then Some(Var.Var(name)) else None)
+                        
+                member this.getFreshVar (based_on:Var) : (Substitutions*Var) =
+                    let _type:Type = this.VarToType.Item based_on
+                    match this.tryToRecycleVar (_type) with
+                        | Some (_var) ->
+                            let newSubstitutions =
+                                { this with
+                                    Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,_var)
+                                }
+                            (newSubstitutions,_var)
+                        | None ->
+                            let currentCounter = this.VarToCounter.Value.Item based_on
+                            do this.VarToCounter := this.VarToCounter.Value.Add (based_on,currentCounter + 1)
+                            let nameCandidate = sprintf "%s_passive%i" based_on.getName currentCounter
+                            let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like this.GlobalTakenNames.Value (nameCandidate)
+                            let newVarWithFreshName = Var.Var(freshName)
+                            let _type = this.VarToType.Item based_on
+                            do this.GlobalTakenNames:=this.GlobalTakenNames.Value.Add (freshName)
+                            do this.GlobalTakenNamesWithTypes:=this.GlobalTakenNamesWithTypes.Value.Add (newVarWithFreshName,_type)
+                            let newSubstitutions =
+                                { this with
+                                    Substitutions.LocalTakenNames = this.LocalTakenNames.Add (freshName);
+                                    Substitutions.VarToType = this.VarToType.Add (newVarWithFreshName,_type);
+                                    Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,newVarWithFreshName);
+                                }
+                            (newSubstitutions,newVarWithFreshName)
+                            
+
+                static member merge (subs:Substitutions list) : (Substitutions * (Stm list list)) =
+                    //subs contains at least one member
+                    
                     // merge is only possible, when the ref cells of GlobalTakenNames match
-                    ()
+                    let numberedBranches = List.zip ([1..List.length subs]) subs
+                    let deadBranches,livingBranches =
+                        List.partition (fun (number,subs:Substitutions)->subs.IsBottom) numberedBranches
+                    // we do not need to append or merge dead branches at all!
+                    if livingBranches.Length = 0 then
+                        //nothing is alive, so bottom!
+                        let appendStatements =
+                            deadBranches |> List.map (fun _ -> [])
+                        let number,livingBranch = livingBranches.Head
+                        (Substitutions.bottom,appendStatements)
+                    else if livingBranches.Length = 1 then
+                        // take the sub of the living branch.
+                        // append no statement anywhere
+                        let appendStatements =
+                            numberedBranches |> List.map (fun _ -> [])
+                        let number,livingBranch = livingBranches.Head
+                        (livingBranch,appendStatements)
+                    else
+                        let (_,firstSub) = livingBranches.Head
+                        let variablesToMerge = // this is the set "D" of figure 4 in the paper
+                            let firstSub = firstSub.CurrentSubstitution
+                            // Compare, if a sub maps to the same variable as firstSub does.
+                            // If every sub has the same mapping as _firstSub_, they have _all_ same mapping.
+                            // If they do not have all the same mapping, there is at least one sub, which
+                            // has a different mapping than firstSub. That means comparing to firstSub is enough.
+                            // There is no need to compare each pair of subs.
+                            let compareEveryVarWithFirstSub (sub:Map<Var,Var>) : Set<Var> =
+                                //returns Vars not equal
+                                sub |> Map.toList
+                                    |> List.filter (fun (from,_to) -> (firstSub.Item from) <> _to )
+                                    |> List.map (fun (from,_to) -> from)
+                                    |> Set.ofList
+
+                            livingBranches |> List.map ( fun (_,sub) -> sub.CurrentSubstitution)
+                                           |> List.fold (fun toMerge sub -> Set.union toMerge (compareEveryVarWithFirstSub sub) ) Set.empty<Var>
+                                           |> Set.toList //easier to process
+                            
+                        let mergedSubs =
+                            // merge subs, such that it contains every locally created name (every name used in any branch should not be
+                            // able to be recycled in the future)
+                            let unifiedSubstitutions = livingBranches |> List.map (fun (_,subs) -> subs.CurrentSubstitution) |> unionManyVarMaps
+                            let unifiedLocalTakenNames = livingBranches |> List.map (fun (_,subs) -> subs.LocalTakenNames) |> Set.unionMany
+                            let unifiedVarToType = livingBranches |> List.map (fun (_,subs) -> subs.VarToType) |> unionManyVarMaps
+                            { firstSub with
+                                Substitutions.CurrentSubstitution = unifiedSubstitutions;
+                                Substitutions.LocalTakenNames = unifiedLocalTakenNames;
+                                Substitutions.VarToType = unifiedVarToType;
+                            }
+                        let (newSub) = // this calculates implicitly map "\Theta" of figure 4 in the paper
+                            let createNewVariable (subst:Substitutions) (variable:Var) =
+                                 let (newSub,var) = subst.getFreshVar variable
+                                 newSub
+                            variablesToMerge |> List.fold createNewVariable mergedSubs
+
+                        let appendStatementsForLiving =
+                            let appendsForSub (sub:Substitutions) : Stm list =                                          
+                                let assumptionForVar (_var:Var) =
+                                    let currentVar = Expr.Read(sub.CurrentSubstitution.Item _var)
+                                    let nextVar = Expr.Read(newSub.CurrentSubstitution.Item _var)
+                                    Stm.Assume(Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
+                                variablesToMerge |> List.map assumptionForVar
+                            livingBranches |> List.map (fun (number:int,sub) -> (number,appendsForSub sub))
+                        let appendStatementsForDead : ((int*Stm list) list) =
+                            deadBranches |> List.map (fun (number:int,_) -> number,[])
+                        let appendStatements = // this is "R_a" or "R_b" generalized for lists of figure 4 in the paper
+                            (appendStatementsForLiving @ appendStatementsForDead)
+                                |> List.sortBy (fun (index,stmts) -> index)
+                                |> List.map (fun (index,stmts) -> stmts)
+                        (newSub,appendStatements)
+
+                    // Note: output of the StatementsToAppend must be in the same order as the input!!!!
+                    // if there is only one branch to merge, use it
+                    // get, which variables are written to
+                    
+                    // TODO: One spontaneous idea to optimize (is almost a new algorithm):
+                    //     * If the count, how many assignments are made to each variable in each branch,
+                    //       we could save the number of last assignment to each variable in each branch.
+                    //       When a fresh Variable is introduced for this last assignment, we use this fresh
+                    //       variable in each branch for the last assignment. For every branch with no assignment
+                    //       to this specific variable, we add "assume (lastVarAssignmentName=currentValue).
+                    //       If there is only one branch, even this needs not to be done!
     
     let rec replaceVarsWithCurrentVars (sigma:Substitutions) (expr:Expr) : Expr =
         if sigma.IsBottom then
@@ -107,14 +261,17 @@ module internal VCPopl01 =
                     List.fold foldFct (sigma,[]) statements
                 (newSigma,Stm.Block(List.rev statementsRev))
             | Stm.Choice (choices) ->
-                let (sigmas,passifiedChoices) =
-                    choices |> List.map (fun choice -> passify (sigma,choice))
-                            |> List.unzip
-                let (newSigma,stmtsToAppend) = Substitutions.merge sigmas
-                let newChoices =
-                    List.map2 (fun passifiedChoice stmToAppend -> Stm.Block([passifiedChoice;stmToAppend])) passifiedChoices stmtsToAppend
-                (newSigma,Stm.Choice (newChoices))
-                
+                if choices = [] then
+                    (sigma,Stm.Assume(Expr.Literal(Val.BoolVal(false))))
+                else
+                    let (sigmas,passifiedChoices) =
+                        choices |> List.map (fun choice -> passify (sigma,choice))
+                                |> List.unzip
+                    let (newSigma,stmtssToAppend) = Substitutions.merge sigmas
+                    let newChoices =
+                        List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
+                    (newSigma,Stm.Choice (newChoices))
+                    
 
 
     (*
@@ -130,7 +287,7 @@ module internal VCPopl01 =
                         SmallRefExampel.Global = ref(1);
                     }
                 member this.increase =
-                    this.Global := (!this.Global + 1);
+                    do this.Global := (!this.Global + 1);
                     { this with
                         SmallRefExampel.Local = this.Local + 1;
                     }
