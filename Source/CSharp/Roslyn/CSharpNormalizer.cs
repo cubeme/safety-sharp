@@ -96,7 +96,7 @@ namespace SafetySharp.CSharp.Roslyn
 		public override sealed SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationSyntax classDeclaration)
 		{
 			if (ShouldNormalizeClassDeclaration(classDeclaration))
-				return base.VisitClassDeclaration(NormalizeClassDeclaration(classDeclaration));
+				return NormalizeClassDeclaration((ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration));
 		
 			// We still might have to normalize nested types, though
 			var originalDeclaration = classDeclaration;
@@ -114,7 +114,7 @@ namespace SafetySharp.CSharp.Roslyn
 		public override sealed SyntaxNode VisitInterfaceDeclaration([NotNull] InterfaceDeclarationSyntax interfaceDeclaration)
 		{
 			if (ShouldNormalizeInterfaceDeclaration(interfaceDeclaration))
-				return base.VisitInterfaceDeclaration(NormalizeInterfaceDeclaration(interfaceDeclaration));
+				return NormalizeInterfaceDeclaration((InterfaceDeclarationSyntax)base.VisitInterfaceDeclaration(interfaceDeclaration));
 
 			return interfaceDeclaration;
 		}
@@ -127,7 +127,7 @@ namespace SafetySharp.CSharp.Roslyn
 		public override sealed SyntaxNode VisitConstructorDeclaration([NotNull] ConstructorDeclarationSyntax constructorDeclaration)
 		{
 			if (_scope.HasFlag(NormalizationScope.Global) || !_scope.HasFlag(NormalizationScope.ComponentStatements))
-				return base.VisitConstructorDeclaration(NormalizeConstructorDeclaration(constructorDeclaration));
+				return NormalizeConstructorDeclaration((ConstructorDeclarationSyntax)base.VisitConstructorDeclaration(constructorDeclaration));
 
 			return constructorDeclaration;
 		}

@@ -229,6 +229,7 @@ namespace SafetySharp.Compiler
 			compilation = ApplyNormalizer<ExpressionLifter>(compilation);
 			compilation = ApplyNormalizer<ProvidedPortNormalizer>(compilation);
 			compilation = ApplyNormalizer<RequiredPortNormalizer>(compilation);
+			compilation = ApplyNormalizer<BindingNormalizer>(compilation);
 
 			OutputCode(compilation, "obj/Simulation");
 			return compilation;

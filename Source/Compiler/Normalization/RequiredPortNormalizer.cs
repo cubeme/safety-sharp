@@ -117,7 +117,7 @@ namespace SafetySharp.Compiler.Normalization
 			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration();
 
 			// Create the field
-			var fieldName = IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Field");
+			var fieldName = methodSymbol.GetSynthesizedFieldName();
 			var field = SyntaxBuilder.Field(fieldName, methodDelegate.Identifier.ValueText,Visibility.Private, BrowsableAttribute).AsSingleLine();
 
 			// Add the [Required] attribute if it is not already present

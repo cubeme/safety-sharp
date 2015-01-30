@@ -110,7 +110,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// </summary>
 		/// <param name="methodSymbol">The method symbol the unique name should be generated for.</param>
 		[Pure]
-		public static string GetUniqueName([NotNull] this IMethodSymbol methodSymbol)
+		private static string GetUniqueName([NotNull] this IMethodSymbol methodSymbol)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 
@@ -142,6 +142,28 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
+		///     Gets a unique name for a field synthesized for the method.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol the field name should be generated for.</param>
+		[Pure]
+		public static string GetSynthesizedFieldName([NotNull] this IMethodSymbol methodSymbol)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			return IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Field");
+		}
+
+		/// <summary>
+		///     Gets a unique name for a delegate synthesized for the method.
+		/// </summary>
+		/// <param name="methodSymbol">The method symbol the delegate name should be generated for.</param>
+		[Pure]
+		private static string GetSynthesizedDelegateName([NotNull] this IMethodSymbol methodSymbol)
+		{
+			Requires.NotNull(methodSymbol, () => methodSymbol);
+			return IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Delegate");
+		}
+
+		/// <summary>
 		///     Returns a <see cref="DelegateDeclarationSyntax" /> for a delegate that can be used to invoke
 		///     <paramref name="methodSymbol" />.
 		/// </summary>
@@ -152,8 +174,6 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 
 			var returnType = SyntaxFactory.ParseTypeName(methodSymbol.ReturnType.ToDisplayString());
-			var name = IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Delegate");
-
 			var parameters = methodSymbol.Parameters.Select(parameter =>
 			{
 				var identifier = SyntaxFactory.Identifier(parameter.Name);
@@ -185,7 +205,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			});
 
 			return SyntaxFactory
-				.DelegateDeclaration(returnType, name)
+				.DelegateDeclaration(returnType, methodSymbol.GetSynthesizedDelegateName())
 				.WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
 				.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
 				.NormalizeWhitespace();
@@ -204,7 +224,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			Requires.NotNull(methodSymbol, () => methodSymbol);
 			Requires.NotNull(expression, () => expression);
 
-			var delegateName = IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Delegate");
+			var delegateName = methodSymbol.GetSynthesizedDelegateName();
 			var type = SyntaxFactory.ParseTypeName(String.Format("{0}.{1}", methodSymbol.ContainingType.ToDisplayString(), delegateName));
 			return SyntaxFactory.CastExpression(type, SyntaxFactory.ParenthesizedExpression(expression)).NormalizeWhitespace();
 		}

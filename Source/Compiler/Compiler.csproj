@@ -97,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Normalization\ProvidedPortNormalizer.cs" />
+    <Compile Include="Normalization\BindingNormalizer.cs" />
     <Compile Include="Normalization\RequiredPortNormalizer.cs" />
     <Compile Include="Normalization\ExpressionLifter.cs" />
     <Compile Include="Compiler.cs" />

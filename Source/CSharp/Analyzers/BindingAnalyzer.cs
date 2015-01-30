@@ -73,7 +73,7 @@ namespace SafetySharp.CSharp.Analyzers
 			DiagnosticIdentifier.BindingFailure,
 			"There are no accessible signature-compatible ports that could be bound.",
 			"There are no accessible signature-compatible ports that could be bound. " +
-			"\nCandidate ports on the left-hand side:\n{0}\nCandidate ports on the right-hand side:\n{1}");
+			"\nCandidate ports for the left-hand side:\n{0}\nCandidate ports for the right-hand side:\n{1}");
 
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a binding is ambiguous.
@@ -85,7 +85,7 @@ namespace SafetySharp.CSharp.Analyzers
 			"that could be bound. You can disambiguate the binding by explicitly casting one of the ports to a " +
 			"delegate type with the signature of the port you intend to use. For instance, use 'RequiredPorts.X = " +
 			"(Action<int>)ProvidedPorts.Y' if the port you want to bind is signature-compatible to the 'System.Action<int>' " +
-			"delegate.\nCandidate ports on the left-hand side:\n{0}\nCandidate ports on the right-hand side:\n{1}");
+			"delegate.\nCandidate ports for the left-hand side:\n{0}\nCandidate ports for the right-hand side:\n{1}");
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -163,6 +163,11 @@ namespace SafetySharp.CSharp.Analyzers
 			leftPorts.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
 			rightPorts.RemoveInaccessiblePorts(semanticModel, node.SpanStart);
 
+			// If either side returns an empty set of ports, we don't have to continue; this situation is handled
+			// by another (more generally applicable) analyzer.
+			if (leftPorts.Count == 0 || rightPorts.Count == 0)
+				return;
+
 			// If there is a cast, filter the right-hand port list
 			if (castExpression != null)
 			{
@@ -175,11 +180,6 @@ namespace SafetySharp.CSharp.Analyzers
 
 				rightPorts.Filter(targetSymbol);
 			}
-
-			// If either side returns an empty set of ports, we don't have to continue; this situation is handled
-			// by another (more generally applicable) analyzer.
-			if (leftPorts.Count == 0 || rightPorts.Count == 0)
-				return;
 
 			var candidates = leftPorts.GetBindingCandidates(rightPorts);
 			if (candidates.Length == 0)
@@ -195,6 +195,9 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <param name="ports">The ports that should be included in the string.</param>
 		private static string PortSetToString(IEnumerable<Port> ports)
 		{
+			if (!ports.Any())
+				return "<none>";
+
 			return String.Join("\n",
 				ports.Select(port => String.Format("'{0}'", port.Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))));
 		}

@@ -20,12 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Modeling.``Binding Tests``
+namespace Analyzers
 
 open System
 open System.Linq
-open System.Linq.Expressions
-open System.Reflection
 open NUnit.Framework
+open SafetySharp.CSharp.Analyzers
+open SafetySharp.CSharp.Roslyn.Syntax
+open SafetySharp.CSharp.Roslyn.Symbols
 open SafetySharp.Modeling
-open Modeling
+
+[<TestFixture>]
+module ``Instances of port bindings cannot be created explicitly`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (PortBindingInstantiationAnalyzer ())
+
+    let diagnostic locationStart locationEnd =
+        errorDiagnostic DiagnosticIdentifier.ExplicitPortBindingInstantiation (1, locationStart) (1, locationEnd)
+            "Cannot instantiate an object of type '%s' using regular constructor syntax. Use a binding expression of \
+            the form 'RequiredPorts.X = ProvidedPorts.Y' instead." typeof<PortBinding>.FullName
+
+    [<Test>]
+    let ``object instantiations are valid for other types`` () =
+        getDiagnostic "class X : Component { X() { new object(); }}" =? None
+        getDiagnostic "class X : Component { X() { new System.Text.StringBuilder(); }}" =? None
+
+    [<Test>]
+    let ``instantiations of port bindings are invalid`` () =
+        getDiagnostic "class X : Component { X() { new PortBinding(null, null); }}" =? diagnostic 28 55

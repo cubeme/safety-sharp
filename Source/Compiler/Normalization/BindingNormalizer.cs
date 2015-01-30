@@ -1,0 +1,143 @@
+﻿// The MIT License (MIT)
+// 
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+namespace SafetySharp.Compiler.Normalization
+{
+	using System;
+	using CSharp;
+	using CSharp.Roslyn;
+	using CSharp.Roslyn.Symbols;
+	using CSharp.Roslyn.Syntax;
+	using Microsoft.CodeAnalysis;
+	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
+	using Modeling;
+
+	/// <summary>
+	///     Replaces all port binding assignments with constructor invocations of <see cref="PortBinding" />.
+	/// 
+	///     For instance:
+	///     <code>
+	///    		BindDelayed(c.RequiredPorts.X, ProvidedPorts.Y);
+	///    		// becomes (if the ports have signature 'void -> void'):
+	///  		BindDelayed(new PortBinding(PortInfo.RequiredPort((Action)c.X, "..."), PortInfo.ProvidedPort((Action)Y)));
+	///   	</code>
+	/// </summary>
+	public class BindingNormalizer : CSharpNormalizer
+	{
+		/// <summary>
+		///     Initializes a new instance.
+		/// </summary>
+		public BindingNormalizer()
+			: base(NormalizationScope.Global)
+		{
+		}
+
+		/// <summary>
+		///     Normalizes <paramref name="expression" /> if it is an invocation of <see cref="Component.BindDelayed" /> or
+		///     <see cref="Component.BindInstantaneous" />.
+		/// </summary>
+		public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax expression)
+		{
+			expression = (InvocationExpressionSyntax)base.VisitInvocationExpression(expression);
+
+			var methodSymbol = expression.GetReferencedSymbol(SemanticModel) as IMethodSymbol;
+			if (methodSymbol == null)
+				return expression;
+
+			var delayedSymbol = SemanticModel.GetBindDelayedMethodSymbol();
+			var instantaneousSymbol = SemanticModel.GetBindInstantaneousMethodSymbol();
+
+			if (!methodSymbol.Equals(delayedSymbol) && !methodSymbol.Equals(instantaneousSymbol))
+				return expression;
+
+			// We now know that the argument of the invocation is a port binding in the form of an assignment
+			var assignment = (AssignmentExpressionSyntax)expression.ArgumentList.Arguments[0].Expression;
+			var leftExpression = (MemberAccessExpressionSyntax)assignment.Left;
+			var rightExpression = assignment.Right as MemberAccessExpressionSyntax;
+
+			// On the right-hand side, we could also have a cast to a delegate type
+			CastExpressionSyntax castExpression = null;
+			if (rightExpression == null)
+			{
+				castExpression = (CastExpressionSyntax)assignment.Right;
+				rightExpression = (MemberAccessExpressionSyntax)castExpression.Expression;
+			}
+
+			var leftPorts = leftExpression.GetReferencedPorts(SemanticModel);
+			var rightPorts = rightExpression.GetReferencedPorts(SemanticModel);
+
+			leftPorts.RemoveInaccessiblePorts(SemanticModel, expression.SpanStart);
+			rightPorts.RemoveInaccessiblePorts(SemanticModel, expression.SpanStart);
+
+			// If there is a cast, filter the right-hand port list
+			if (castExpression != null)
+				rightPorts.Filter(castExpression.Type.GetReferencedSymbol<INamedTypeSymbol>(SemanticModel));
+
+			var boundPorts = leftPorts.GetBindingCandidates(rightPorts)[0];
+			var leftPort = CreatePortInfoExpression(boundPorts.Left, leftExpression);
+			var rightPort = CreatePortInfoExpression(boundPorts.Right, rightExpression);
+
+			var leftArgument = SyntaxFactory.Argument(leftPort);
+			var rightArgument = SyntaxFactory.Argument(rightPort);
+			var constructorArgumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { leftArgument, rightArgument }));
+			var portBindingType = SyntaxFactory.ParseTypeName(typeof(PortBinding).FullName);
+			var instantiation = SyntaxFactory.ObjectCreationExpression(portBindingType, constructorArgumentList, null);
+			var instantiationArgument = SyntaxFactory.Argument(instantiation);
+
+			var argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(instantiationArgument));
+			return expression.WithArgumentList(argumentList).NormalizeWhitespace().WithTrivia(expression).EnsureSameLineCount(expression);
+		}
+
+		/// <summary>
+		///     Creates an expression that instantiates a <see cref="PortInfo" /> instance for the given port.
+		/// </summary>
+		/// <param name="port">The port the expression should be created for.</param>
+		/// <param name="portExpression">The port expression that was used to reference the port.</param>
+		private static ExpressionSyntax CreatePortInfoExpression(Port port, MemberAccessExpressionSyntax portExpression)
+		{
+			// TODO: property ports
+
+			var nestedMemberAccess = portExpression.Expression as MemberAccessExpressionSyntax;
+			var castTarget =
+				nestedMemberAccess != null
+					? SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, nestedMemberAccess.Expression, portExpression.Name)
+					: (ExpressionSyntax)portExpression.Name;
+			var castExpression = port.Symbol.CastToSynthesizedDelegate(castTarget);
+			var castArgument = SyntaxFactory.Argument(castExpression);
+
+			var fieldName = port.Symbol.GetSynthesizedFieldName();
+			var fieldNameExpression = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", fieldName));
+			var fieldArgument = SyntaxFactory.Argument(fieldNameExpression);
+
+			var arguments =
+				port.IsRequiredPort
+					? SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { castArgument, fieldArgument }))
+					: SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(castArgument));
+
+			var portInfoType = SyntaxFactory.ParseTypeName(typeof(PortInfo).FullName);
+			var methodName = SyntaxFactory.IdentifierName(port.IsRequiredPort ? "RequiredPort" : "ProvidedPort");
+			var memberAccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, portInfoType, methodName);
+			return SyntaxFactory.InvocationExpression(memberAccess, arguments);
+		}
+	}
+}

@@ -49,7 +49,8 @@ module ``Binding validity`` =
             "Expected a reference to a port of the form 'RequiredPorts.Port' or 'ProvidedPorts.Port'."
 
     let portList ports =
-        String.Join ("\n", ports |> Seq.map (sprintf "'%s'"))
+        if ports = [] then "<none>"
+        else String.Join ("\n", ports |> Seq.map (sprintf "'%s'"))
 
     let ambiguous locationStart locationEnd leftPorts rightPorts =
         errorDiagnostic DiagnosticIdentifier.AmbiguousBinding (1, locationStart) (1, locationEnd)
@@ -57,12 +58,12 @@ module ``Binding validity`` =
 			that could be bound. You can disambiguate the binding by explicitly casting one of the ports to a \
 			delegate type with the signature of the port you intend to use. For instance, use 'RequiredPorts.X = \
 			(Action<int>)ProvidedPorts.Y' if the port you want to bind is signature-compatible to the 'System.Action<int>' \
-			delegate.\nCandidate ports on the left-hand side:\n%s\nCandidate ports on the right-hand side:\n%s" (portList leftPorts) (portList rightPorts)
+			delegate.\nCandidate ports for the left-hand side:\n%s\nCandidate ports for the right-hand side:\n%s" (portList leftPorts) (portList rightPorts)
 
     let failure locationStart locationEnd leftPorts rightPorts =
         errorDiagnostic DiagnosticIdentifier.BindingFailure (1, locationStart) (1, locationEnd)
             "There are no accessible signature-compatible ports that could be bound. \
-		    \nCandidate ports on the left-hand side:\n%s\nCandidate ports on the right-hand side:\n%s" (portList leftPorts) (portList rightPorts)
+		    \nCandidate ports for the left-hand side:\n%s\nCandidate ports for the right-hand side:\n%s" (portList leftPorts) (portList rightPorts)
 
     [<Test>]
     let ``non-failing unambiguous binding with single candidate is valid`` () =
@@ -151,6 +152,11 @@ module ``Binding validity`` =
         getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (int)ProvidedPorts.M); } }" =? cast 88 3
         getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (object)ProvidedPorts.M); } }" =? cast 88 6
         getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (Component)ProvidedPorts.M); } }" =? cast 88 9
+
+    [<Test>]
+    let ``cast to delegate type with no compatible ports is invalid`` () =
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (Action<int>)ProvidedPorts.M); } }" =? 
+            failure 69 115 ["X.N()"] []
 
     [<Test>]
     let ``unambiguous binding between ports of same name is valid`` () =

@@ -59,6 +59,7 @@ namespace SafetySharp.CSharp.Analyzers
 		ExpectedPortAssignment,
 		ExpectedPortReference,
 		ExpectedPortDelegateCast,
+		ExplicitPortBindingInstantiation,
 
 		// Misc diagnostics
 		ReservedName = 9000

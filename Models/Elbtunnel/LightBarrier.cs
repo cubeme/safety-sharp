@@ -87,13 +87,26 @@ namespace Elbtunnel
 		public LightBarrier(Timer timer)
 		{
 			_timer = timer;
+			BindDelayed(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
 		}
 
 		[Required]
 		public extern void SendData(int position);
 
 		[Required]
+		public extern void SendData(ref int position);
+
+		[Required]
 		public extern int GetPort(bool position);
+
+		void SendProvided(ref int position)
+		{
+			
+		}
+		void SendProvided(int position)
+		{
+
+		}
 
 		public void IsTriggered(out bool t)
 		{

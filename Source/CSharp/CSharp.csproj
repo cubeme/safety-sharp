@@ -62,12 +62,13 @@
   <ItemGroup>
     <Compile Include="Analyzers\BindingAnalyzer.cs" />
     <Compile Include="Analyzers\OccurrencePatternAnalyzer.cs" />
+    <Compile Include="Analyzers\PortImplementationAnalyzer.cs" />
     <Compile Include="Analyzers\PortReferenceAnalyzer.cs" />
     <Compile Include="Analyzers\CustomComponentAnalyzer.cs" />
     <Compile Include="Analyzers\PortPropertyAccessorAnalyzer.cs" />
     <Compile Include="Analyzers\PortKindAnalyzer.cs" />
     <Compile Include="Analyzers\UnmarkedInterfacePortAnalyzer.cs" />
-    <Compile Include="Analyzers\PortImplementationAnalyzer.cs" />
+    <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.cs" />
     <Compile Include="Analyzers\EnumValueAnalyzer.cs" />
     <Compile Include="Analyzers\EnumTypeAnalyzer.cs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.cs" />

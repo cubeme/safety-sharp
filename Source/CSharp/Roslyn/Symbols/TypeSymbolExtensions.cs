@@ -202,8 +202,11 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		{
 			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
+				if (portSymbol.HasAttribute<RequiredAttribute>(semanticModel))
+					return true;
+
 				if (type.TypeKind == TypeKind.Interface)
-					return portSymbol.HasAttribute<RequiredAttribute>(semanticModel);
+					return false;
 
 				var methodSymbol = portSymbol as IMethodSymbol;
 				if (methodSymbol != null)
@@ -227,8 +230,11 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		{
 			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
+				if (portSymbol.HasAttribute<ProvidedAttribute>(semanticModel))
+					return true;
+
 				if (type.TypeKind == TypeKind.Interface)
-					return portSymbol.HasAttribute<ProvidedAttribute>(semanticModel);
+					return false;
 
 				var methodSymbol = portSymbol as IMethodSymbol;
 				if (methodSymbol != null)

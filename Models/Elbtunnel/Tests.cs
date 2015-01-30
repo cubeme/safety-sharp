@@ -20,7 +20,7 @@
 				var t = new Test2();
 				//SetRootComponents(new LightBarrier(timer), new Timer(70));
 				SetRootComponents(new GenericComponent<int>(1,2,3,4,5), new GenericComponent<bool>(false, true), new Generic2<int>(-4, 4));
-
+				
 				//var unknown = new LightBarrier();
 				//var value = c1.Access<bool>("Value");
 				//var value1 = lb.Access<int>("_i");
