@@ -169,27 +169,26 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		/// <param name="position">The position that should be used to determine accessibility.</param>
 		/// <param name="filter">A filter that should be applied to filter the ports.</param>
 		[Pure]
 		private static IEnumerable<ISymbol> GetPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel,
-													 int position, Func<ITypeSymbol, ISymbol, bool> filter)
+													 Func<ITypeSymbol, ISymbol, bool> filter)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
 			var inheritedPorts = Enumerable.Empty<ISymbol>();
 			if (typeSymbol.TypeKind == TypeKind.Interface)
-				inheritedPorts = typeSymbol.AllInterfaces.SelectMany(i => i.GetPorts(semanticModel, position, filter));
+				inheritedPorts = typeSymbol.AllInterfaces.SelectMany(i => i.GetPorts(semanticModel, filter));
 			else if (typeSymbol.BaseType != null)
-				inheritedPorts = typeSymbol.BaseType.GetPorts(semanticModel, position, filter);
+				inheritedPorts = typeSymbol.BaseType.GetPorts(semanticModel, filter);
 
 			var members = typeSymbol.GetMembers();
 			return members
 				.OfType<IMethodSymbol>()
 				.Cast<ISymbol>()
 				.Union(members.OfType<IPropertySymbol>())
-				.Where(port => filter(typeSymbol, port) && semanticModel.IsAccessible(position, port))
+				.Where(port => filter(typeSymbol, port))
 				.Union(inheritedPorts);
 		}
 
@@ -198,12 +197,10 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		/// <param name="position">The position that should be used to determine accessibility.</param>
 		[Pure]
-		public static IEnumerable<ISymbol> GetRequiredPorts([NotNull] this ITypeSymbol typeSymbol,
-															[NotNull] SemanticModel semanticModel, int position)
+		public static IEnumerable<ISymbol> GetRequiredPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
-			return typeSymbol.GetPorts(semanticModel, position, (type, portSymbol) =>
+			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
 				if (type.TypeKind == TypeKind.Interface)
 					return portSymbol.HasAttribute<RequiredAttribute>(semanticModel);
@@ -225,12 +222,10 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// </summary>
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
-		/// <param name="position">The position that should be used to determine accessibility.</param>
 		[Pure]
-		public static IEnumerable<ISymbol> GetProvidedPorts([NotNull] this ITypeSymbol typeSymbol,
-															[NotNull] SemanticModel semanticModel, int position)
+		public static IEnumerable<ISymbol> GetProvidedPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
-			return typeSymbol.GetPorts(semanticModel, position, (type, portSymbol) =>
+			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
 				if (type.TypeKind == TypeKind.Interface)
 					return portSymbol.HasAttribute<ProvidedAttribute>(semanticModel);

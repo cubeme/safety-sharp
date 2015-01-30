@@ -32,28 +32,30 @@ namespace SafetySharp.CSharp.Analyzers
 	{
 		// Type diagnostics
 		CustomComponent = 1000,
-		ExplicitEnumType = 1001,
-		ExplicitEnumMemberValue = 1002,
+		ExplicitEnumType,
+		ExplicitEnumMemberValue,
 
 		// Fault diagnostics
 		MissingOccurrencePattern = 2000,
-		AmbiguousOccurrencePattern = 2001,
-		OccurrencePatternHasNoEffect = 2002,
+		AmbiguousOccurrencePattern,
+		OccurrencePatternHasNoEffect,
 
 		// Port diagnostics
 		AmbiguousPortKind = 3000,
-		UnknownProvidedPort = 3001,
-		UnknownRequiredPort = 3002,
-		UnmarkedInterfacePort = 3003,
-		PortPropertyAccessor = 3004,
-		ProvidedPortImplementedAsRequiredPort = 3005,
-		RequiredPortImplementedAsProvidedPort = 3006,
-		NonExternRequiredPort = 3007,
-		ExternProvidedPort = 3008,
+		UnknownProvidedPort,
+		UnknownRequiredPort,
+		UnmarkedInterfacePort,
+		PortPropertyAccessor,
+		ProvidedPortImplementedAsRequiredPort,
+		RequiredPortImplementedAsProvidedPort,
+		NonExternRequiredPort,
+		ExternProvidedPort,
+		InaccessibleProvidedPort,
+		InaccessibleRequiredPort,
 
 		// Binding diagnostics
 		AmbiguousBinding = 4000,
-		BindingFailure = 4001,
+		BindingFailure,
 
 		// Misc diagnostics
 		ReservedName = 9000

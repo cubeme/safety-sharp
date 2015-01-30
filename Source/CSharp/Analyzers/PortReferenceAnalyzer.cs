@@ -58,6 +58,22 @@ namespace SafetySharp.CSharp.Analyzers
 			"'{0}' does not declare a required port named '{1}'.");
 
 		/// <summary>
+		///     Indicates that a provided port could be found but is inaccessible.
+		/// </summary>
+		private static readonly DiagnosticInfo InaccessibleProvidedPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.InaccessibleProvidedPort,
+			"The provided port is not accessible from the current location.",
+			"Provided port '{0}.{1}' is inaccessible due to its protection level.");
+
+		/// <summary>
+		///     Indicates that a required port could be found but is inaccessible.
+		/// </summary>
+		private static readonly DiagnosticInfo InaccessibleRequiredPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.InaccessibleRequiredPort,
+			"The required port is not accessible from the current location.",
+			"Required port '{0}.{1}' is inaccessible due to its protection level.");
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public PortReferenceAnalyzer()
@@ -135,11 +151,22 @@ namespace SafetySharp.CSharp.Analyzers
 
 			Assert.NotNull(targetSymbol, "Failed to determine the target symbol.");
 
-			if (isRequiredPort && targetSymbol.GetRequiredPorts(semanticModel, node.SpanStart).All(p => p.Name != portName))
-				UnknownRequiredPort.Emit(context, node.Name, targetSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), portName);
-
-			if (!isRequiredPort && targetSymbol.GetProvidedPorts(semanticModel, node.SpanStart).All(p => p.Name != portName))
-				UnknownProvidedPort.Emit(context, node.Name, targetSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), portName);
+			if (isRequiredPort)
+			{
+				var ports = targetSymbol.GetRequiredPorts(semanticModel).Where(p => p.Name == portName).ToArray();
+				if (!ports.Any())
+					UnknownRequiredPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
+				else if (ports.All(p => !semanticModel.IsAccessible(node.SpanStart, p)))
+					InaccessibleRequiredPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
+			}
+			else
+			{
+				var ports = targetSymbol.GetProvidedPorts(semanticModel).Where(p => p.Name == portName).ToArray();
+				if (!ports.Any())
+					UnknownProvidedPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
+				else if (ports.All(p => !semanticModel.IsAccessible(node.SpanStart, p)))
+					InaccessibleProvidedPort.Emit(context, node.Name, targetSymbol.ToDisplayString(), portName);
+			}
 		}
 	}
 }

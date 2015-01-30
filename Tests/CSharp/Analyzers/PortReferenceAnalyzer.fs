@@ -35,37 +35,45 @@ open SafetySharp.CSharp.Roslyn.Symbols
 module ``Referenced ports must exist`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortReferenceAnalyzer ())
 
-    let prov location componentType portName =
+    let provUnknown location componentType portName =
         errorDiagnostic DiagnosticIdentifier.UnknownProvidedPort (1, location) (1, location + String.length portName)
             "'%s' does not declare a provided port named '%s'." componentType portName
 
-    let req location componentType portName =
+    let reqUnknown location componentType portName =
         errorDiagnostic DiagnosticIdentifier.UnknownRequiredPort (1, location) (1, location + String.length portName)
             "'%s' does not declare a required port named '%s'." componentType portName
 
+    let provInaccessible location componentType portName =
+        errorDiagnostic DiagnosticIdentifier.InaccessibleProvidedPort (1, location) (1, location + String.length portName)
+            "Provided port '%s.%s' is inaccessible due to its protection level." componentType portName
+
+    let reqInaccessible location componentType portName =
+        errorDiagnostic DiagnosticIdentifier.InaccessibleRequiredPort (1, location) (1, location + String.length portName)
+            "Required port '%s.%s' is inaccessible due to its protection level." componentType portName
+
     [<Test>]
     let ``non-existent required port is invalid`` () =
-        getDiagnostic "namespace Y { class X : Component { X() { var x = RequiredPorts.Xyz; } } }" =? req 64 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { var x = base.RequiredPorts.Xyz; } } }" =? req 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { var x = this.RequiredPorts.Xyz; } } }" =? req 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X(X x) { var y = x.RequiredPorts.Xyz; } } }" =? req 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { X x = null; var y = x.RequiredPorts.Xyz; } } }" =? req 78 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X x; X() { var y = x.RequiredPorts.Xyz; } } }" =? req 71 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X x { get; set; } X() { var y = x.RequiredPorts.Xyz; } } }" =? req 84 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X x() { return null; } X() { var y = x().RequiredPorts.Xyz; } } }" =? req 91 "Y.X" "Xyz"
-        getDiagnostic "class Y : Component { } class X : Component { extern void Xyz(); X(Y y) { var z = y.RequiredPorts.Xyz; } }" =? req 98 "Y" "Xyz"
-        getDiagnostic "class X : Component { X(Component y) { var z = y.RequiredPorts.Xyz; } }" =? req 63 "SafetySharp.Modeling.Component" "Xyz"
-        getDiagnostic "class X : Component { X(IComponent y) { var z = y.RequiredPorts.Xyz; } }" =? req 64 "SafetySharp.Modeling.IComponent" "Xyz"
-        getDiagnostic "interface I : IComponent {} class X : Component { extern void Xyz(); X(I y) { var z = y.RequiredPorts.Xyz; } }" =? req 102 "I" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { var x = RequiredPorts.Xyz; } } }" =? reqUnknown 64 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { var x = base.RequiredPorts.Xyz; } } }" =? reqUnknown 69 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { var x = this.RequiredPorts.Xyz; } } }" =? reqUnknown 69 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X(X x) { var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 69 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { X x = null; var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 78 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X x; X() { var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 71 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X x { get; set; } X() { var y = x.RequiredPorts.Xyz; } } }" =? reqUnknown 84 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X x() { return null; } X() { var y = x().RequiredPorts.Xyz; } } }" =? reqUnknown 91 "Y.X" "Xyz"
+        getDiagnostic "class Y : Component { } class X : Component { extern void Xyz(); X(Y y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 98 "Y" "Xyz"
+        getDiagnostic "class X : Component { X(Component y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 63 "SafetySharp.Modeling.Component" "Xyz"
+        getDiagnostic "class X : Component { X(IComponent y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 64 "SafetySharp.Modeling.IComponent" "Xyz"
+        getDiagnostic "interface I : IComponent {} class X : Component { extern void Xyz(); X(I y) { var z = y.RequiredPorts.Xyz; } }" =? reqUnknown 102 "I" "Xyz"
 
     [<Test>]
     let ``non-existent required port is invalid when provided port of same name exists`` () =
-        getDiagnostic "class X : Component { void Xyz() {} X() { var x = RequiredPorts.Xyz; } }" =? req 64 "X" "Xyz"
-        getDiagnostic "interface I : IComponent { [Provided] void Xyz(); } class X : Component { X(I i) { var x = i.RequiredPorts.Xyz; } }" =? req 107 "I" "Xyz"
+        getDiagnostic "class X : Component { void Xyz() {} X() { var x = RequiredPorts.Xyz; } }" =? reqUnknown 64 "X" "Xyz"
+        getDiagnostic "interface I : IComponent { [Provided] void Xyz(); } class X : Component { X(I i) { var x = i.RequiredPorts.Xyz; } }" =? reqUnknown 107 "I" "Xyz"
 
     [<Test>]
     let ``inaccessible required port is invalid`` () =
-        getDiagnostic "class Y : Component { extern void M(); } class X : Component { X(Y y) { var z = y.RequiredPorts.M; } }" =? req 96 "Y" "M"
+        getDiagnostic "class Y : Component { extern void M(); } class X : Component { X(Y y) { var z = y.RequiredPorts.M; } }" =? reqInaccessible 96 "Y" "M"
 
     [<Test>]
     let ``uses accessible required port when inaccessible one of same name is also in scope`` () =
@@ -73,27 +81,27 @@ module ``Referenced ports must exist`` =
 
     [<Test>]
     let ``non-existent provided port is invalid`` () =
-        getDiagnostic "namespace Y { class X : Component { X() { var x = ProvidedPorts.Xyz; } } }" =? prov 64 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { var x = this.ProvidedPorts.Xyz; } } }" =? prov 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { var x = base.ProvidedPorts.Xyz; } } }" =? prov 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X(X x) { var y = x.ProvidedPorts.Xyz; } } }" =? prov 69 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X() { X x = null; var y = x.ProvidedPorts.Xyz; } } }" =? prov 78 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X x; X() { var y = x.ProvidedPorts.Xyz; } } }" =? prov 71 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X x { get; set; } X() { var y = x.ProvidedPorts.Xyz; } } }" =? prov 84 "Y.X" "Xyz"
-        getDiagnostic "namespace Y { class X : Component { X x() { return null; } X() { var y = x().ProvidedPorts.Xyz; } } }" =? prov 91 "Y.X" "Xyz"
-        getDiagnostic "class Y : Component { } class X : Component { void Xyz() {} X(Y y) { var z = y.ProvidedPorts.Xyz; } }" =? prov 93 "Y" "Xyz"
-        getDiagnostic "class X : Component { X(Component y) { var z = y.ProvidedPorts.Xyz; } }" =? prov 63 "SafetySharp.Modeling.Component" "Xyz"
-        getDiagnostic "class X : Component { X(IComponent y) { var z = y.ProvidedPorts.Xyz; } }" =? prov 64 "SafetySharp.Modeling.IComponent" "Xyz"
-        getDiagnostic "interface I : IComponent {} class X : Component { void Xyz() {} X(I y) { var z = y.ProvidedPorts.Xyz; } }" =? prov 97 "I" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { var x = ProvidedPorts.Xyz; } } }" =? provUnknown 64 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { var x = this.ProvidedPorts.Xyz; } } }" =? provUnknown 69 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { var x = base.ProvidedPorts.Xyz; } } }" =? provUnknown 69 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X(X x) { var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 69 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X() { X x = null; var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 78 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X x; X() { var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 71 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X x { get; set; } X() { var y = x.ProvidedPorts.Xyz; } } }" =? provUnknown 84 "Y.X" "Xyz"
+        getDiagnostic "namespace Y { class X : Component { X x() { return null; } X() { var y = x().ProvidedPorts.Xyz; } } }" =? provUnknown 91 "Y.X" "Xyz"
+        getDiagnostic "class Y : Component { } class X : Component { void Xyz() {} X(Y y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 93 "Y" "Xyz"
+        getDiagnostic "class X : Component { X(Component y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 63 "SafetySharp.Modeling.Component" "Xyz"
+        getDiagnostic "class X : Component { X(IComponent y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 64 "SafetySharp.Modeling.IComponent" "Xyz"
+        getDiagnostic "interface I : IComponent {} class X : Component { void Xyz() {} X(I y) { var z = y.ProvidedPorts.Xyz; } }" =? provUnknown 97 "I" "Xyz"
 
     [<Test>]
     let ``non-existent provided port is invalid when required port of same name exists`` () =
-        getDiagnostic "class X : Component { extern void Xyz(); X() { var x = ProvidedPorts.Xyz; } }" =? prov 69 "X" "Xyz"
-        getDiagnostic "interface I : IComponent { [Required] void Xyz(); } class X : Component { X(I i) { var x = i.ProvidedPorts.Xyz; } }" =? prov 107 "I" "Xyz"
+        getDiagnostic "class X : Component { extern void Xyz(); X() { var x = ProvidedPorts.Xyz; } }" =? provUnknown 69 "X" "Xyz"
+        getDiagnostic "interface I : IComponent { [Required] void Xyz(); } class X : Component { X(I i) { var x = i.ProvidedPorts.Xyz; } }" =? provUnknown 107 "I" "Xyz"
 
     [<Test>]
     let ``inaccessible provided port is invalid`` () =
-        getDiagnostic "class Y : Component { void M() {} } class X : Component { X(Y y) { var z = y.ProvidedPorts.M; } }" =? prov 91 "Y" "M"
+        getDiagnostic "class Y : Component { void M() {} } class X : Component { X(Y y) { var z = y.ProvidedPorts.M; } }" =? provInaccessible 91 "Y" "M"
 
     [<Test>]
     let ``uses accessible provided port when inaccessible one of same name is also in scope`` () =
@@ -134,7 +142,7 @@ module ``Referenced ports must exist`` =
 
     [<Test>]
     let ``does not consider ports of derived types`` () =
-        getDiagnostic "class Y : X { extern void M(); } class X : Component { public X() { var y = RequiredPorts.M; } }" =? req 90 "X" "M"
-        getDiagnostic "class Y : X { void M() {} } class X : Component { public X() { var y = ProvidedPorts.M; } }" =? prov 85 "X" "M"
-        getDiagnostic "interface J : IComponent {} interface I : J { [Required] void M(); } class X : Component { public X(J j) { var y = j.RequiredPorts.M; } }" =? req 131 "J" "M"
-        getDiagnostic "interface J : IComponent {} interface I : J { [Provided] void M(); } class X : Component { public X(J j) { var y = j.ProvidedPorts.M; } }" =? prov 131 "J" "M"
+        getDiagnostic "class Y : X { extern void M(); } class X : Component { public X() { var y = RequiredPorts.M; } }" =? reqUnknown 90 "X" "M"
+        getDiagnostic "class Y : X { void M() {} } class X : Component { public X() { var y = ProvidedPorts.M; } }" =? provUnknown 85 "X" "M"
+        getDiagnostic "interface J : IComponent {} interface I : J { [Required] void M(); } class X : Component { public X(J j) { var y = j.RequiredPorts.M; } }" =? reqUnknown 131 "J" "M"
+        getDiagnostic "interface J : IComponent {} interface I : J { [Provided] void M(); } class X : Component { public X(J j) { var y = j.ProvidedPorts.M; } }" =? provUnknown 131 "J" "M"
