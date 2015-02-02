@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Roslyn.Symbols.IMethodSymbolExtensions
+namespace Roslyn.Symbols.MethodSymbolExtensions
 
 open System
 open System.Linq
@@ -120,117 +120,70 @@ module ``GetSynthesizedDelegateDeclaration method`` =
     let synthesize csharpCode methodName =
         let compilation = TestCompilation csharpCode
         let methodSymbol = compilation.FindMethodSymbol "X" methodName
-        methodSymbol.GetSynthesizedDelegateDeclaration().ToString ()
-
-    let delegateName name = IdentifierNameSynthesizer.ToSynthesizedName (name + "__Delegate")
+        methodSymbol.GetSynthesizedDelegateDeclaration("D").ToString ()
 
     [<Test>]
     let ``throws when method symbol is null`` () =
         let compilation = TestCompilation "class X { void M() {} }"
-        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).GetSynthesizedDelegateDeclaration () |> ignore)
+        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).GetSynthesizedDelegateDeclaration "D" |> ignore)
+
+    [<Test>]
+    let ``throws when name is null`` () =
+        let compilation = TestCompilation "class X { void M() {} }"
+        let methodSymbol = compilation.FindMethodSymbol "X" "M"
+        raisesArgumentNullException "name" (fun () -> methodSymbol.GetSynthesizedDelegateDeclaration null |> ignore)
 
     [<Test>]
     let ``returns delegate for 'void -> void' method`` () =
         synthesize "class X { void M() {} }" "M" =? 
-            (sprintf "public delegate void %s();" (delegateName "M__"))
+            "private delegate void __D__();" 
 
     [<Test>]
     let ``returns delegate for 'bool, int' -> bool' method`` () =
         synthesize "class X { bool M(bool b, int i) { return b; } }" "M" =? 
-            (sprintf "public delegate bool %s(bool b, int i);" (delegateName "M__bool__int"))
+            "private delegate bool __D__(bool b, int i);" 
 
     [<Test>]
     let ``returns delegate for 'double, params int[]' -> double' method`` () =
         synthesize "class X { double M(double d, params int[] i) { return d; } }" "M" =? 
-            (sprintf "public delegate double %s(double d, params int[] i);" (delegateName "M__double__params_int_a"))
+            "private delegate double __D__(double d, params int[] i);" 
 
     [<Test>]
     let ``returns delegate for 'double, int[][]' -> double' method`` () =
         synthesize "class X { double M(double d, int[][] i) { return d; } }" "M" =? 
-            (sprintf "public delegate double %s(double d, int[][] i);" (delegateName "M__double__int_a_a"))
+            "private delegate double __D__(double d, int[][] i);" 
 
     [<Test>]
     let ``returns delegate for 'Q.R<int> -> void' method`` () =
         synthesize "namespace Q { class R<T> {}} class X { void M(Q.R<int> r) {} }" "M" =? 
-            (sprintf "public delegate void %s(Q.R<int> r);" (delegateName "M__Q_R___int___"))
+            "private delegate void __D__(Q.R<int> r);" 
 
     [<Test>]
     let ``returns delegate for 'Q.R<int>[] -> void' method`` () =
         synthesize "namespace Q { class R<T> {}} class X { void M(Q.R<int>[] r) {} }" "M" =? 
-            (sprintf "public delegate void %s(Q.R<int>[] r);" (delegateName "M__Q_R___int____a"))
+            "private delegate void __D__(Q.R<int>[] r);" 
 
     [<Test>]
     let ``returns delegate for 'ref int -> void' method`` () =
         synthesize "class X { void M(ref int i) {} }" "M" =? 
-            (sprintf "public delegate void %s(ref int i);" (delegateName "M__ref_int"))
+            "private delegate void __D__(ref int i);" 
 
     [<Test>]
     let ``returns delegate for 'out int -> void' method`` () =
         synthesize "class X { void M(out int i) { i = 0; } }" "M" =? 
-            (sprintf "public delegate void %s(out int i);" (delegateName "M__out_int"))
+            "private delegate void __D__(out int i);" 
 
     [<Test>]
     let ``returns delegate for explicitly implemented 'void -> void' interface method`` () =
         synthesize "namespace Q { interface I { void M(); }} class X : Q.I { void Q.I.M() { } }" "Q.I.M" =? 
-            (sprintf "public delegate void %s();" (delegateName "Q_I_M__"))
+            "private delegate void __D__();" 
 
     [<Test>]
     let ``returns delegate for property getter`` () =
         synthesize "class X { int M { get; set; } }" "get_M" =? 
-            (sprintf "public delegate int %s();" (delegateName "get_M__"))
+            "private delegate int __D__();" 
 
     [<Test>]
     let ``returns delegate for property setter`` () =
         synthesize "class X { int M { get; set; } }" "set_M" =? 
-            (sprintf "public delegate void %s(int value);" (delegateName "set_M__int"))
-
-[<TestFixture>]
-module ``CastToSynthesizedDelegate method`` =
-    let cast csharpCode className methodName =
-        let compilation = TestCompilation csharpCode
-        let methodSymbol = compilation.FindMethodSymbol className methodName
-        methodSymbol.CastToSynthesizedDelegate(SyntaxFactory.ParseExpression "null").ToString ()
-
-    let delegateName name = IdentifierNameSynthesizer.ToSynthesizedName (name + "__Delegate")
-
-    [<Test>]
-    let ``throws when method symbol is null`` () =
-        let compilation = TestCompilation "class X { void M() {} }"
-        let expression = SyntaxFactory.ParseExpression "true"
-        raisesArgumentNullException "methodSymbol" (fun () -> (null : IMethodSymbol).CastToSynthesizedDelegate expression |> ignore)
-
-    [<Test>]
-    let ``throws when expression is null`` () =
-        let compilation = TestCompilation "class X { void M() {} }"
-        let methodSymbol = compilation.FindMethodSymbol "X" "M"
-        raisesArgumentNullException "expression" (fun () -> methodSymbol.CastToSynthesizedDelegate null |> ignore)
-
-    [<Test>]
-    let ``returns cast for 'void -> void' method`` () =
-        cast "class X { void M() {} }" "X" "M" =? 
-            (sprintf "(X.%s)(null)" (delegateName "M__"))
-
-    [<Test>]
-    let ``returns cast for 'ref int -> bool' method`` () =
-        cast "class X { bool M(ref int i) { return i == 0; } }" "X" "M" =? 
-            (sprintf "(X.%s)(null)" (delegateName "M__ref_int"))
-
-    [<Test>]
-    let ``returns cast for 'void -> void' method of class in namespace`` () =
-        cast "namespace A.B.C { class X { void M() {} }}" "A.B.C.X" "M" =? 
-            (sprintf "(A.B.C.X.%s)(null)" (delegateName "M__"))
-
-    [<Test>]
-    let ``returns cast for 'void -> void' method of nested class`` () =
-        cast "namespace A.B.C { class Y { class X { void M() {} }}}" "A.B.C.Y+X" "M" =? 
-            (sprintf "(A.B.C.Y.X.%s)(null)" (delegateName "M__"))
-
-    [<Test>]
-    let ``returns cast for property getter`` () =
-        cast "namespace A.B.C { class X { bool M { get; set; } }}" "A.B.C.X" "get_M" =? 
-            (sprintf "(A.B.C.X.%s)(null)" (delegateName "get_M__"))
-
-    [<Test>]
-    let ``returns cast for property setter`` () =
-        cast "namespace A.B.C { class Y { class X { bool M { get; set; } }}}" "A.B.C.Y+X" "set_M" =? 
-            (sprintf "(A.B.C.Y.X.%s)(null)" (delegateName "set_M__bool"))
+            "private delegate void __D__(int value);" 

@@ -48,43 +48,42 @@ module ProvidedPortNormalizer =
 
     [<Test>]
     let ``does not change attribute of component method that is already marked with the attribute`` () =
-        normalize "class X : Component { [Provided] void M() {} }" =? "class X : Component { public delegate void __M____Delegate__();[Provided] void M() {} }"
+        normalize "class X : Component { [Provided] void M() {} }" =? "class X : Component { [Provided] void M() {} }"
 
     [<Test>]
     let ``normalizes provided port of component`` () =
         normalize "class X : Component { void M() {} }" =?
-            "class X : Component { public delegate void __M____Delegate__();[SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
         normalize "class X : Component { protected void M() {} }" =? 
-            "class X : Component { public delegate void __M____Delegate__();[SafetySharp.Modeling.ProvidedAttribute()] protected void M() {} }"
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] protected void M() {} }"
 
     [<Test>]
     let ``normalizes implicitly implemented provided port of component`` () =
         normalize "namespace Q { interface I { void M(); }} class X : Component, Q.I { void Q.I.M() {} }" =? 
-            "class X : Component, Q.I { public delegate void __Q_I_M____Delegate__();[SafetySharp.Modeling.ProvidedAttribute()] void Q.I.M() {} }"
+            "class X : Component, Q.I { [SafetySharp.Modeling.ProvidedAttribute()] void Q.I.M() {} }"
 
     [<Test>]
     let ``normalizes multiple provided ports of component`` () =
         normalize "class X : Component { void M() {} void N() {} }" =?
-            "class X : Component { public delegate void __M____Delegate__();[SafetySharp.Modeling.ProvidedAttribute()] \
-            void M() {} public delegate void __N____Delegate__();[SafetySharp.Modeling.ProvidedAttribute()] void N() {} }"
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M() {} [SafetySharp.Modeling.ProvidedAttribute()] void N() {} }"
 
     [<Test>]
     let ``normalizes provided port of component and keeps all attributes`` () =
         normalize "class X : Component { [DebuggerHidden] void M() {} }" =? 
-            "class X : Component { public delegate void __M____Delegate__();[DebuggerHidden] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+            "class X : Component { [DebuggerHidden] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
         normalize "class X : Component { [DebuggerHidden, DebuggerNonUserCode] void M() {} }" =? 
-            "class X : Component { public delegate void __M____Delegate__();[DebuggerHidden, DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+            "class X : Component { [DebuggerHidden, DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
         normalize "class X : Component { [DebuggerHidden] [DebuggerNonUserCode] void M() {} }" =? 
-            "class X : Component { public delegate void __M____Delegate__();[DebuggerHidden] [DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+            "class X : Component { [DebuggerHidden] [DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
 
     [<Test>]
     let ``normalizes provided port of component class nested in other component class`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ProvidedPortNormalizer()) "class Y : Component { class X : Component { void M() {} }}"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
-            "class X : Component { public delegate void __M____Delegate__();[SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M() {} }"
 
     [<Test>]
     let ``normalizes provided port of component class nested in other non-component class`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ProvidedPortNormalizer()) "class Y { class X : Component { void M(int i) {} }}"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
-            "class X : Component { public delegate void __M__int__Delegate__(int i);[SafetySharp.Modeling.ProvidedAttribute()] void M(int i) {} }"
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M(int i) {} }"

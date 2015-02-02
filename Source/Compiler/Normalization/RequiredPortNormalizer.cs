@@ -25,6 +25,7 @@ namespace SafetySharp.Compiler.Normalization
 	using System;
 	using System.Diagnostics;
 	using System.Linq;
+	using System.Runtime.CompilerServices;
 	using CSharp.Roslyn;
 	using CSharp.Roslyn.Symbols;
 	using CSharp.Roslyn.Syntax;
@@ -41,27 +42,33 @@ namespace SafetySharp.Compiler.Normalization
 	///     <code>
 	///    		public extern void MyMethod(int a, double b);
 	///    		// becomes (on a single line with uniquely generated names):
-	///  		public delegate void d(int a, double b);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] d f;
+	///  		[CompilerGenerated] public delegate void d(int a, double b);
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] d f;
 	///    		[SafetySharp.Modeling.RequiredAttribute] public void MyMethod(int a, double b) { f(a, b); }
 	///    		
 	///    		private extern bool MyMethod(out int a);
 	///    		// becomes (on a single line with uniquely generated names):
-	///    		public delegate bool d(out int a);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] private d f;
+	///    		[CompilerGenerated] public delegate bool d(out int a);
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d f;
 	///    		[SafetySharp.Modeling.RequiredAttribute] private bool MyMethod(out int a) { return f(out a); }
 	///  
 	/// 		private extern bool MyProperty { get; set; } // TODO!
 	///    		// becomes (on a single line with uniquely generated names):
-	///    		public delegate bool d1();
-	///   		public delegate void d2(bool value);
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] private d1 f1;
-	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never)] private d2 f2;
+	///    		[CompilerGenerated] public delegate bool d1();
+	///   		[CompilerGenerated] public delegate void d2(bool value);
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d1 f1;
+	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d2 f2;
 	///    		private bool MyProperty { [SafetySharp.Modeling.RequiredAttribute] get { return f1(); } [SafetySharp.Modeling.RequiredAttribute] set { f2(value); } }
 	///   	</code>
 	/// </summary>
 	public class RequiredPortNormalizer : CSharpNormalizer
 	{
+		/// <summary>
+		///     Represents the [CompilerGenerated] attribute syntax.
+		/// </summary>
+		private static readonly AttributeListSyntax CompilerGeneratedAttribute =
+			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
+
 		/// <summary>
 		///     Represents the [Required] attribute syntax.
 		/// </summary>
@@ -73,6 +80,11 @@ namespace SafetySharp.Compiler.Normalization
 		private static readonly AttributeListSyntax BrowsableAttribute = SyntaxBuilder.Attribute(
 			typeof(DebuggerBrowsableAttribute).FullName,
 			SyntaxFactory.ParseExpression("System.Diagnostics.DebuggerBrowsableState.Never"));
+
+		/// <summary>
+		///     The number of required ports declared by the compilation.
+		/// </summary>
+		private int _portCount;
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -114,11 +126,13 @@ namespace SafetySharp.Compiler.Normalization
 		{
 			// Create the delegate
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
-			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration();
+			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration("ReqPortDelegate" + _portCount);
+			methodDelegate = methodDelegate.AddAttributeLists(CompilerGeneratedAttribute);
 
 			// Create the field
-			var fieldName = methodSymbol.GetSynthesizedFieldName();
-			var field = SyntaxBuilder.Field(fieldName, methodDelegate.Identifier.ValueText,Visibility.Private, BrowsableAttribute).AsSingleLine();
+			var fieldName = IdentifierNameSynthesizer.ToSynthesizedName("reqPortField" + _portCount++);
+			var field = SyntaxBuilder.Field(fieldName, methodDelegate.Identifier.ValueText, Visibility.Private, BrowsableAttribute);
+			field = field.AddAttributeLists(CompilerGeneratedAttribute).AsSingleLine();
 
 			// Add the [Required] attribute if it is not already present
 			var originalDeclaration = methodDeclaration;

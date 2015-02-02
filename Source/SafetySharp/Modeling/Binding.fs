@@ -40,10 +40,9 @@ type PortInfo private (port : Delegate, backingField : string) =
     member this.IsRequiredPort = backingField <> null
 
     /// Creates an instance for a required port.
-    static member RequiredPort (port : Delegate, backingField : string) =
+    static member RequiredPort (port : Delegate) =
         nullArg port "port"
-        nullOrWhitespaceArg backingField "backingField"
-        PortInfo (port, backingField)
+        PortInfo (port, null)
 
     /// Creates an instance for a provided port.
     static member ProvidedPort (port : Delegate) =

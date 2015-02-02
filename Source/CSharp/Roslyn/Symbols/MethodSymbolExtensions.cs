@@ -106,72 +106,16 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets a unique name for the given method symbol that disambiguates method overloads.
-		/// </summary>
-		/// <param name="methodSymbol">The method symbol the unique name should be generated for.</param>
-		[Pure]
-		private static string GetUniqueName([NotNull] this IMethodSymbol methodSymbol)
-		{
-			Requires.NotNull(methodSymbol, () => methodSymbol);
-
-			var parameters = String.Join("__", methodSymbol.Parameters.Select(parameter =>
-			{
-				var prefix = String.Empty;
-				if (parameter.IsParams)
-					prefix = "params_";
-
-				switch (parameter.RefKind)
-				{
-					case RefKind.None:
-						break;
-					case RefKind.Ref:
-						prefix = "ref_";
-						break;
-					case RefKind.Out:
-						prefix = "out_";
-						break;
-					default:
-						throw new InvalidOperationException("Unsupported ref kind.");
-				}
-
-				var name = prefix + parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-				return name.Replace(".", "_").Replace("[]", "_a").Replace("<", "___").Replace(">", "___").Replace("global::", "");
-			}));
-
-			return String.Format("{0}__{1}__", methodSymbol.Name.Replace(".", "_"), parameters);
-		}
-
-		/// <summary>
-		///     Gets a unique name for a field synthesized for the method.
-		/// </summary>
-		/// <param name="methodSymbol">The method symbol the field name should be generated for.</param>
-		[Pure]
-		public static string GetSynthesizedFieldName([NotNull] this IMethodSymbol methodSymbol)
-		{
-			Requires.NotNull(methodSymbol, () => methodSymbol);
-			return IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Field");
-		}
-
-		/// <summary>
-		///     Gets a unique name for a delegate synthesized for the method.
-		/// </summary>
-		/// <param name="methodSymbol">The method symbol the delegate name should be generated for.</param>
-		[Pure]
-		private static string GetSynthesizedDelegateName([NotNull] this IMethodSymbol methodSymbol)
-		{
-			Requires.NotNull(methodSymbol, () => methodSymbol);
-			return IdentifierNameSynthesizer.ToSynthesizedName(methodSymbol.GetUniqueName() + "Delegate");
-		}
-
-		/// <summary>
 		///     Returns a <see cref="DelegateDeclarationSyntax" /> for a delegate that can be used to invoke
 		///     <paramref name="methodSymbol" />.
 		/// </summary>
 		/// <param name="methodSymbol">The method the delegate should be synthesized for.</param>
+		/// <param name="name">An name of the synthesized delegate.</param>
 		[Pure]
-		public static DelegateDeclarationSyntax GetSynthesizedDelegateDeclaration([NotNull] this IMethodSymbol methodSymbol)
+		public static DelegateDeclarationSyntax GetSynthesizedDelegateDeclaration([NotNull] this IMethodSymbol methodSymbol, [NotNull] string name)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
+			Requires.NotNullOrWhitespace(name, () => name);
 
 			var returnType = SyntaxFactory.ParseTypeName(methodSymbol.ReturnType.ToDisplayString());
 			var parameters = methodSymbol.Parameters.Select(parameter =>
@@ -205,28 +149,10 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			});
 
 			return SyntaxFactory
-				.DelegateDeclaration(returnType, methodSymbol.GetSynthesizedDelegateName())
-				.WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
+				.DelegateDeclaration(returnType, IdentifierNameSynthesizer.ToSynthesizedName(name))
+				.WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PrivateKeyword)))
 				.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
 				.NormalizeWhitespace();
-		}
-
-		/// <summary>
-		///     Returns a <see cref="CastExpressionSyntax" /> for a delegate that can be used to invoke
-		///     <paramref name="methodSymbol" />.
-		/// </summary>
-		/// <param name="methodSymbol">The method the delegate is synthesized from.</param>
-		/// <param name="expression">The expression that should be cast to the synthesized delegate type.</param>
-		[Pure]
-		public static CastExpressionSyntax CastToSynthesizedDelegate([NotNull] this IMethodSymbol methodSymbol,
-																	 [NotNull] ExpressionSyntax expression)
-		{
-			Requires.NotNull(methodSymbol, () => methodSymbol);
-			Requires.NotNull(expression, () => expression);
-
-			var delegateName = methodSymbol.GetSynthesizedDelegateName();
-			var type = SyntaxFactory.ParseTypeName(String.Format("{0}.{1}", methodSymbol.ContainingType.ToDisplayString(), delegateName));
-			return SyntaxFactory.CastExpression(type, SyntaxFactory.ParenthesizedExpression(expression)).NormalizeWhitespace();
 		}
 
 		/// <summary>

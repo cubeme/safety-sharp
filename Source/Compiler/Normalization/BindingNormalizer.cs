@@ -23,6 +23,9 @@
 namespace SafetySharp.Compiler.Normalization
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+	using System.Runtime.CompilerServices;
 	using CSharp;
 	using CSharp.Roslyn;
 	using CSharp.Roslyn.Symbols;
@@ -45,11 +48,38 @@ namespace SafetySharp.Compiler.Normalization
 	public class BindingNormalizer : CSharpNormalizer
 	{
 		/// <summary>
+		///     Represents the [CompilerGenerated] attribute syntax.
+		/// </summary>
+		private static readonly AttributeListSyntax CompilerGeneratedAttribute =
+			SyntaxBuilder.Attribute(typeof(CompilerGeneratedAttribute).FullName).WithTrailingSpace();
+
+		/// <summary>
+		///     The delegate types used by the bindings of a component.
+		/// </summary>
+		private readonly List<DelegateDeclarationSyntax> _delegates = new List<DelegateDeclarationSyntax>();
+
+		/// <summary>
+		///     The number of bindings established in the compilation.
+		/// </summary>
+		private int _bindingCount;
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public BindingNormalizer()
 			: base(NormalizationScope.Global)
 		{
+		}
+
+		/// <summary>
+		///     Normalizes the <paramref name="classDeclaration" />.
+		/// </summary>
+		protected override ClassDeclarationSyntax NormalizeClassDeclaration(ClassDeclarationSyntax classDeclaration)
+		{
+			var delegates = _delegates.Select(d => d.AddAttributeLists(CompilerGeneratedAttribute)).ToArray();
+			_delegates.Clear();
+
+			return classDeclaration.AddMembers(delegates);
 		}
 
 		/// <summary>
@@ -94,8 +124,11 @@ namespace SafetySharp.Compiler.Normalization
 				rightPorts.Filter(castExpression.Type.GetReferencedSymbol<INamedTypeSymbol>(SemanticModel));
 
 			var boundPorts = leftPorts.GetBindingCandidates(rightPorts)[0];
-			var leftPort = CreatePortInfoExpression(boundPorts.Left, leftExpression);
-			var rightPort = CreatePortInfoExpression(boundPorts.Right, rightExpression);
+			var delegateType = boundPorts.Left.Symbol.GetSynthesizedDelegateDeclaration("BindingDelegate" + _bindingCount++);
+			_delegates.Add(delegateType);
+
+			var leftPort = CreatePortInfoExpression(boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
+			var rightPort = CreatePortInfoExpression(boundPorts.Right, rightExpression, delegateType.Identifier.ValueText);
 
 			var leftArgument = SyntaxFactory.Argument(leftPort);
 			var rightArgument = SyntaxFactory.Argument(rightPort);
@@ -113,27 +146,20 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		/// <param name="port">The port the expression should be created for.</param>
 		/// <param name="portExpression">The port expression that was used to reference the port.</param>
-		private static ExpressionSyntax CreatePortInfoExpression(Port port, MemberAccessExpressionSyntax portExpression)
+		/// <param name="delegateType">The type of the delegate the port should be cast to.</param>
+		private static ExpressionSyntax CreatePortInfoExpression(Port port, MemberAccessExpressionSyntax portExpression, string delegateType)
 		{
 			// TODO: property ports
 
-			var nestedMemberAccess = portExpression.Expression as MemberAccessExpressionSyntax;
+			var nestedMemberAccess = portExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
 			var castTarget =
 				nestedMemberAccess != null
 					? SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, nestedMemberAccess.Expression, portExpression.Name)
 					: (ExpressionSyntax)portExpression.Name;
-			var castExpression = port.Symbol.CastToSynthesizedDelegate(castTarget);
+			var type = SyntaxFactory.ParseTypeName(delegateType);
+			var castExpression = SyntaxFactory.CastExpression(type, SyntaxFactory.ParenthesizedExpression(castTarget)).NormalizeWhitespace();
 			var castArgument = SyntaxFactory.Argument(castExpression);
-
-			var fieldName = port.Symbol.GetSynthesizedFieldName();
-			var fieldNameExpression = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", fieldName));
-			var fieldArgument = SyntaxFactory.Argument(fieldNameExpression);
-
-			var arguments =
-				port.IsRequiredPort
-					? SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { castArgument, fieldArgument }))
-					: SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(castArgument));
-
+			var arguments = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(castArgument));
 			var portInfoType = SyntaxFactory.ParseTypeName(typeof(PortInfo).FullName);
 			var methodName = SyntaxFactory.IdentifierName(port.IsRequiredPort ? "RequiredPort" : "ProvidedPort");
 			var memberAccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, portInfoType, methodName);
