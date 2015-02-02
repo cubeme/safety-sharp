@@ -30,7 +30,7 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 
-open SafetySharp.Internal.Modelchecking.NuXmv
+open SafetySharp.Analysis.Modelchecking.NuXmv
 
 
 
@@ -42,7 +42,7 @@ module SamToNuXmvTests =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let internal parseSam str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
+    let internal parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
 
     let internal nuXmvWriter = ExportNuXmvAstToFile()
 

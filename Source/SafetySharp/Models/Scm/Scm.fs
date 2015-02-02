@@ -20,144 +20,146 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Scm
+namespace SafetySharp.Models
 
-type internal Var = Var of string
-type internal Field = Field of string
-type internal ReqPort = ReqPort of string
-type internal ProvPort = ProvPort of string
-type internal Fault = Fault of string
-type internal Comp = Comp of string
+module internal Scm =
 
-type internal UOp =
-    | Minus
-    | Not
+    type internal Var = Var of string
+    type internal Field = Field of string
+    type internal ReqPort = ReqPort of string
+    type internal ProvPort = ProvPort of string
+    type internal Fault = Fault of string
+    type internal Comp = Comp of string
 
-type internal BOp =
-    | Add
-    | Subtract
-    | Multiply
-    | Divide
-    | Modulo
-    | And
-    | Or
-    | Equals
-    | NotEquals
-    | Less
-    | LessEqual
-    | Greater
-    | GreaterEqual
+    type internal UOp =
+        | Minus
+        | Not
 
-type internal Val = 
-    | BoolVal of bool
-    | IntVal of int
+    type internal BOp =
+        | Add
+        | Subtract
+        | Multiply
+        | Divide
+        | Modulo
+        | And
+        | Or
+        | Equals
+        | NotEquals
+        | Less
+        | LessEqual
+        | Greater
+        | GreaterEqual
 
-type internal Expr =
-    | Literal of Val
-    | ReadVar of Var
-    | ReadField of Field
-    | UExpr of Expr * UOp
-    | BExpr of Expr * BOp * Expr
+    type internal Val = 
+        | BoolVal of bool
+        | IntVal of int
 
-type internal FaultExpr =
-    | Fault of Fault
-    | NotFault of FaultExpr
-    | AndFault of FaultExpr * FaultExpr
-    | OrFault of FaultExpr * FaultExpr
+    type internal Expr =
+        | Literal of Val
+        | ReadVar of Var
+        | ReadField of Field
+        | UExpr of Expr * UOp
+        | BExpr of Expr * BOp * Expr
 
-type internal Param =
-    | ExprParam of Expr
-    | InOutVarParam of Var
-    | InOutFieldParam of Field
+    type internal FaultExpr =
+        | Fault of Fault
+        | NotFault of FaultExpr
+        | AndFault of FaultExpr * FaultExpr
+        | OrFault of FaultExpr * FaultExpr
 
-type internal Stm =
-    | AssignVar of Var * Expr
-    | AssignField of Field * Expr
-    | AssignFault of Fault * Expr
-    | Block of Stm list
-    | Choice of (Expr * Stm) list
-    | CallPort of ReqPort * Param list
-    | StepComp of Comp
-    | StepFault of Fault
+    type internal Param =
+        | ExprParam of Expr
+        | InOutVarParam of Var
+        | InOutFieldParam of Field
 
-type internal Type =
-    | BoolType
-    | IntType
+    type internal Stm =
+        | AssignVar of Var * Expr
+        | AssignField of Field * Expr
+        | AssignFault of Fault * Expr
+        | Block of Stm list
+        | Choice of (Expr * Stm) list
+        | CallPort of ReqPort * Param list
+        | StepComp of Comp
+        | StepFault of Fault
 
-type internal VarDecl = {
-    Var : Var
-    Type : Type
-}
+    type internal Type =
+        | BoolType
+        | IntType
 
-type internal FieldDecl = {
-    Field : Field
-    Type : Type
-    Init : Val list 
-}
+    type internal VarDecl = {
+        Var : Var
+        Type : Type
+    }
 
-type internal BehaviorDecl = {
-    Locals : VarDecl list
-    Body : Stm
-}
+    type internal FieldDecl = {
+        Field : Field
+        Type : Type
+        Init : Val list 
+    }
 
-type internal ParamDir = 
-    | In
-    | InOut
+    type internal BehaviorDecl = {
+        Locals : VarDecl list
+        Body : Stm
+    }
 
-type internal ParamDecl = {
-    Var : VarDecl
-    Dir : ParamDir
-}
+    type internal ParamDir = 
+        | In
+        | InOut
 
-type internal ReqPortDecl = {
-    ReqPort : ReqPort
-    Params : ParamDecl list
-}
+    type internal ParamDecl = {
+        Var : VarDecl
+        Dir : ParamDir
+    }
 
-type internal ProvPortDecl = {
-    FaultExpr : FaultExpr option
-    ProvPort : ProvPort
-    Params : ParamDecl list
-    Behavior : BehaviorDecl
-}
+    type internal ReqPortDecl = {
+        ReqPort : ReqPort
+        Params : ParamDecl list
+    }
 
-type internal BndSrc = {
-    ProvPort : ProvPort
-    Comp : Comp option
-}
+    type internal ProvPortDecl = {
+        FaultExpr : FaultExpr option
+        ProvPort : ProvPort
+        Params : ParamDecl list
+        Behavior : BehaviorDecl
+    }
 
-type internal BndTarget = {
-    ReqPort : ReqPort
-    Comp : Comp option
-}
+    type internal BndSrc = {
+        ProvPort : ProvPort
+        Comp : Comp option
+    }
 
-type internal BndKind = 
-    | Instantaneous
-    | Delayed
+    type internal BndTarget = {
+        ReqPort : ReqPort
+        Comp : Comp option
+    }
 
-type internal BndDecl = {
-    Target : BndTarget
-    Source : BndSrc
-    Kind : BndKind
-}
+    type internal BndKind = 
+        | Instantaneous
+        | Delayed
 
-type internal FaultDecl = {
-    Fault : Fault
-    Step : BehaviorDecl //TODO: maybe rename to Behavior to be consistent
-}
+    type internal BndDecl = {
+        Target : BndTarget
+        Source : BndSrc
+        Kind : BndKind
+    }
 
-type internal StepDecl = {
-    FaultExpr : FaultExpr option
-    Behavior : BehaviorDecl
-}
+    type internal FaultDecl = {
+        Fault : Fault
+        Step : BehaviorDecl //TODO: maybe rename to Behavior to be consistent
+    }
 
-type internal CompDecl = {
-    Comp : Comp
-    Subs : CompDecl list
-    Fields : FieldDecl list
-    Faults : FaultDecl list
-    ReqPorts : ReqPortDecl list
-    ProvPorts : ProvPortDecl list
-    Bindings : BndDecl list
-    Steps : StepDecl list
-}
+    type internal StepDecl = {
+        FaultExpr : FaultExpr option
+        Behavior : BehaviorDecl
+    }
+
+    type internal CompDecl = {
+        Comp : Comp
+        Subs : CompDecl list
+        Fields : FieldDecl list
+        Faults : FaultDecl list
+        ReqPorts : ReqPortDecl list
+        ProvPorts : ProvPortDecl list
+        Bindings : BndDecl list
+        Steps : StepDecl list
+    }

@@ -21,12 +21,13 @@
 // THE SOFTWARE.
 
 
-namespace SafetySharp.Models.Sam.Rewriter
+namespace SafetySharp.Models
+open SafetySharp.Models.Sam
 
-module internal ChangeIdentifier =
+module internal SamChangeIdentifier =
 
     open SafetySharp.Models.Sam
-    open SafetySharp.Models.Sam.SamHelpers
+    open SafetySharp.Models.SamHelpers
     
     type NameGenerator = Set<string> -> string -> string
 

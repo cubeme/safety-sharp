@@ -20,11 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.Modelchecking.PromelaSpin
+namespace SafetySharp.Analysis.Modelchecking.PromelaSpin
 
-open SafetySharp.Internal.Modelchecking.PromelaSpin.Typedefs
+open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
 open SafetySharp.Models
-open SafetySharp.Models.Transformations
 
 module internal ScmToPromela =
                 

@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Sam
+namespace SafetySharp.Models
+open SafetySharp.Models.Sam
 
-
-module internal Parser =
+module internal SamParser =
 
     // The statement and expression parser is similar to the FIL-parser, but the Data Structures are different.
 

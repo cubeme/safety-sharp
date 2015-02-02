@@ -25,7 +25,7 @@ module AstTestHelpers
 open System
 open NUnit.Framework
 
-open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
 
 let internal selectAst = function
     | Ast(ast) -> ast :> obj 

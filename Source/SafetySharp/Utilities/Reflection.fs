@@ -34,7 +34,7 @@ open SafetySharp
 open Mono.Cecil
 
 /// Provides helper functions for working with the reflection APIs.
-module Reflection =
+module internal Reflection =
     /// Gets all members of the given object recursively, going up the inheritance chain; unfortunately, the reflection APIs
     /// do not return private members of base classes, even with BindingFlags.FlattenHierarchy.
     let rec private getMembers selector (t : Type) = seq {

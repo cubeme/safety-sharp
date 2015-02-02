@@ -214,7 +214,7 @@ namespace SafetySharp.Compiler
 		/// <param name="compilation">The compilation that should be normalized.</param>
 		[NotNull]
 		private static Compilation ApplyNormalizer<T>([NotNull] Compilation compilation)
-			where T : CSharpNormalizer, new()
+			where T : Normalizer, new()
 		{
 			return new T().Normalize(compilation);
 		}

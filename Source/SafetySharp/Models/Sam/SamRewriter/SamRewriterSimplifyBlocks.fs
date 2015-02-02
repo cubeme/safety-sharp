@@ -21,9 +21,10 @@
 // THE SOFTWARE.
 
 
-namespace SafetySharp.Models.Sam.Rewriter
+namespace SafetySharp.Models
+open SafetySharp.Models.Sam
 
-module internal SimplifyBlocks = 
+module internal SamSimplifyBlocks = 
     open SafetySharp.Models.Sam
 
 

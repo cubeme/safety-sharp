@@ -26,8 +26,8 @@ open NUnit.Framework
 open SafetySharp.Tests
 open SafetySharp.Tests.Modelchecking
 open SafetySharp
-open SafetySharp.Internal.Modelchecking
-open SafetySharp.Internal.Modelchecking.NuXmv
+open SafetySharp.Analysis.Modelchecking
+open SafetySharp.Analysis.Modelchecking.NuXmv
 
 open SafetySharp.Tests.Modelchecking.NuXmv.Models
 

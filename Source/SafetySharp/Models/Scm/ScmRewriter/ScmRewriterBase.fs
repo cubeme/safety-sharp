@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Scm
+namespace SafetySharp.Models
+open SafetySharp.Models.Scm
+open SafetySharp.Models.ScmHelpers
 
 module internal ScmRewriterBase =
-    open ScmHelpers
-
     
     type ScmModel = CompDecl //may change, but I hope it does not
                         

@@ -20,29 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.Modelchecking.NuXmv
+namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
-open SafetySharp.Internal.Modelchecking
+open SafetySharp.Analysis.Modelchecking
 
-type internal NuXmvIdentifier = SafetySharp.Internal.Modelchecking.NuXmv.Identifier
-type internal NuXmvBasicExpression = SafetySharp.Internal.Modelchecking.NuXmv.BasicExpression
-type internal NuXmvConstExpression = SafetySharp.Internal.Modelchecking.NuXmv.ConstExpression
-type internal NuXmvSignSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.SignSpecifier
-type internal NuXmvRadix = SafetySharp.Internal.Modelchecking.NuXmv.Radix
+type internal NuXmvIdentifier = SafetySharp.Analysis.Modelchecking.NuXmv.Identifier
+type internal NuXmvBasicExpression = SafetySharp.Analysis.Modelchecking.NuXmv.BasicExpression
+type internal NuXmvConstExpression = SafetySharp.Analysis.Modelchecking.NuXmv.ConstExpression
+type internal NuXmvSignSpecifier = SafetySharp.Analysis.Modelchecking.NuXmv.SignSpecifier
+type internal NuXmvRadix = SafetySharp.Analysis.Modelchecking.NuXmv.Radix
 
-type internal NuXmvCtlExpression = SafetySharp.Internal.Modelchecking.NuXmv.CtlExpression
-type internal NuXmvLtlExpression = SafetySharp.Internal.Modelchecking.NuXmv.LtlExpression
-type internal NuXmvSpecification = SafetySharp.Internal.Modelchecking.NuXmv.Specification
-type internal NuXmvModuleTypeSpecifier = SafetySharp.Internal.Modelchecking.NuXmv.ModuleTypeSpecifier
-type internal NuXmvModuleDeclaration = SafetySharp.Internal.Modelchecking.NuXmv.ModuleDeclaration
+type internal NuXmvCtlExpression = SafetySharp.Analysis.Modelchecking.NuXmv.CtlExpression
+type internal NuXmvLtlExpression = SafetySharp.Analysis.Modelchecking.NuXmv.LtlExpression
+type internal NuXmvSpecification = SafetySharp.Analysis.Modelchecking.NuXmv.Specification
+type internal NuXmvModuleTypeSpecifier = SafetySharp.Analysis.Modelchecking.NuXmv.ModuleTypeSpecifier
+type internal NuXmvModuleDeclaration = SafetySharp.Analysis.Modelchecking.NuXmv.ModuleDeclaration
 
 
 
-open SafetySharp.Internal.Modelchecking
-open SafetySharp.Models.Sam.Typedefs
-open SafetySharp.Models.Sam.SamHelpers 
-open SafetySharp.Models.Sam.Rewriter.SimplifyBlocks 
-open SafetySharp.Models.Sam.Rewriter.ChangeIdentifier
+open SafetySharp.Analysis.Modelchecking
+open SafetySharp.Models
+open SafetySharp.Models.SamHelpers
+open SafetySharp.Models.SamChangeIdentifier
+open SafetySharp.Models.SamSimplifyBlocks
 open SafetySharp.Analysis.VerificationCondition
 
 
@@ -119,8 +119,8 @@ module internal SamToNuXmv =
     let generateGlobalVarDeclarations (manageVariablesState:ManageVariablesState) (varDecls:SamModified.GlobalVarDecl list) : ModuleElement =
         let generateDecl (varDecl:SamModified.GlobalVarDecl) : TypedIdentifier =
             let _type = match varDecl.Type with
-                            | SamType.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
-                            | SamType.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
+                            | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
+                            | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
                             //| SamType.Decimal -> failwith "NotImplementedYet"
             let _variable = manageVariablesState.VarToNuXmvIdentifier.Item varDecl.Var
             {
@@ -176,7 +176,7 @@ module internal SamToNuXmv =
 
 
     let generateGlobalVarInitialisations (manageVariablesState:ManageVariablesState) (varDecls:SamModified.GlobalVarDecl list) : ModuleElement =
-        let generateInit (varDecl:SamGlobalVarDecl) : SamModified.Expr =
+        let generateInit (varDecl:Sam.GlobalVarDecl) : SamModified.Expr =
             let generatePossibleValues (initialValue : SamModified.Val) : SamModified.Expr =
                 let assignVar = varDecl.Var
                 let assignExpr = SamModified.Expr.Literal(initialValue)
@@ -192,7 +192,7 @@ module internal SamToNuXmv =
     let generateTransRelation (manageVariablesState:ManageVariablesState) (expr:SamModified.Expr) : ModuleElement =
         ModuleElement.TransConstraint(translateExpression manageVariablesState expr)
 
-    let transformConfiguration (pgm:SamPgm) : NuXmvProgram =
+    let transformConfiguration (pgm:Sam.Pgm) : NuXmvProgram =
         // remove unwanted chars and assure, that no unwanted characters are in the string
         let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
         let pgm = changeNamesPgm changeIdsState pgm

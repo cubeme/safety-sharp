@@ -20,98 +20,100 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Sam
+namespace SafetySharp.Models
 
-/// Represents the operator in an unary expression.
-type internal UOp =
-    | Not
+module internal Sam =
 
-/// Represents the operator in a binary expression. (same as SafetySharp.Internal.Metamodel.UnaryOperatorBinaryOperator)
-type internal BOp =
-    // Arithmetic operators
-    | Add
-    | Subtract
-    | Multiply
-    | Divide
-    | Modulo
-    
-    // Logical operators
-    | And
-    | Or
-    | Implies
-    
-    // Equality operators
-    | Equals
-    | NotEquals
-    
-    // Comparison operators
-    | Less
-    | LessEqual
-    | Greater
-    | GreaterEqual
+    /// Represents the operator in an unary expression.
+    type internal UOp =
+        | Not
 
-type internal Var =
-    | Var of string
+    /// Represents the operator in a binary expression. (same as SafetySharp.Internal.Metamodel.UnaryOperatorBinaryOperator)
+    type internal BOp =
+        // Arithmetic operators
+        | Add
+        | Subtract
+        | Multiply
+        | Divide
+        | Modulo
+    
+        // Logical operators
+        | And
+        | Or
+        | Implies
+    
+        // Equality operators
+        | Equals
+        | NotEquals
+    
+        // Comparison operators
+        | Less
+        | LessEqual
+        | Greater
+        | GreaterEqual
+
+    type internal Var =
+        | Var of string
         
-type internal Val = 
-    /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
-    | BoolVal of bool
-    /// Represents a number value.
-    | NumbVal of Value : bigint
+    type internal Val = 
+        /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
+        | BoolVal of bool
+        /// Represents a number value.
+        | NumbVal of Value : bigint
 
-/// Represents side-effect free expressions within a FIL model. (not the same as SafetySharp.Internal.Metamodel.Expression)
-type internal Expr =
-    /// Represents a literal
-    | Literal of Val
+    /// Represents side-effect free expressions within a FIL model. (not the same as SafetySharp.Internal.Metamodel.Expression)
+    type internal Expr =
+        /// Represents a literal
+        | Literal of Val
 
-    /// Represents the application of an unary operator to an expression.
-    | UExpr of Operand : Expr * Operator : UOp
+        /// Represents the application of an unary operator to an expression.
+        | UExpr of Operand : Expr * Operator : UOp
 
-    /// Represents the application of a binary operator to two subexpressions.
-    | BExpr of LeftExpression : Expr * Operator : BOp * RightExpression : Expr
+        /// Represents the application of a binary operator to two subexpressions.
+        | BExpr of LeftExpression : Expr * Operator : BOp * RightExpression : Expr
     
-    /// Represents a read operation of a variable.
-    | Read of Variable : Var
+        /// Represents a read operation of a variable.
+        | Read of Variable : Var
 
-    /// Represents a read operation of the previous value of a variable.
-    | ReadOld of Variable : Var
+        /// Represents a read operation of the previous value of a variable.
+        | ReadOld of Variable : Var
 
-type internal Clause = {
-    Guard:Expr;
-    Statement:Stm;
-}
+    type internal Clause = {
+        Guard:Expr;
+        Statement:Stm;
+    }
 
-/// Represents statements contained within method bodies.
-and internal Stm =
-    /// Represents a list of statements that are executed sequentially.
-    | Block of Statements: Stm list
+    /// Represents statements contained within method bodies.
+    and internal Stm =
+        /// Represents a list of statements that are executed sequentially.
+        | Block of Statements: Stm list
     
-    /// Represents a guarded command statement. The body of at most one clause of the guarded command is
-    /// executed. For a body to be executed, its guard must evaluate to true. If multiple guards hold, one
-    /// clause is chosen nondeterministically.
-    | Choice of Clauses : Clause list
+        /// Represents a guarded command statement. The body of at most one clause of the guarded command is
+        /// executed. For a body to be executed, its guard must evaluate to true. If multiple guards hold, one
+        /// clause is chosen nondeterministically.
+        | Choice of Clauses : Clause list
 
-    /// Represents the assignment of a variable.
-    | Write of Variable:Var * Expression:Expr
+        /// Represents the assignment of a variable.
+        | Write of Variable:Var * Expression:Expr
 
-type internal Type =
-    | BoolType
-    | IntType
+    type internal Type =
+        | BoolType
+        | IntType
 
-type internal GlobalVarDecl = {
-    Var : Var
-    Type : Type
-    Init : Val list 
-}
+    type internal GlobalVarDecl = {
+        Var : Var
+        Type : Type
+        Init : Val list 
+    }
 
 
-type internal LocalVarDecl = {
-    Var : Var
-    Type : Type
-}
+    type internal LocalVarDecl = {
+        Var : Var
+        Type : Type
+    }
 
-type internal Pgm = {
-    Globals : GlobalVarDecl list
-    Locals : LocalVarDecl list
-    Body : Stm
-}
+    type internal Pgm = {
+        Globals : GlobalVarDecl list
+        Locals : LocalVarDecl list
+        Body : Stm
+    }

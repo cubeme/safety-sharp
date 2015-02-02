@@ -44,7 +44,7 @@ namespace SafetySharp.Compiler.Normalization
 	///    		public int MyProperty { [SafetySharp.Modeling.ProvidedAttribute] get; [SafetySharp.Modeling.ProvidedAttribute] set; }
 	///   	</code>
 	/// </summary>
-	public class ProvidedPortNormalizer : CSharpNormalizer
+	public class ProvidedPortNormalizer : Normalizer
 	{
 		/// <summary>
 		///     Represents the [Provided] attribute syntax.

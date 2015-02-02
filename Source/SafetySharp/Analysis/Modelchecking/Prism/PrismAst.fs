@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.Modelchecking.Prism
+namespace SafetySharp.Analysis.Modelchecking.Prism
 
 // semantics of prism
 // http://www.prismmodelchecker.org/doc/semantics.pdf

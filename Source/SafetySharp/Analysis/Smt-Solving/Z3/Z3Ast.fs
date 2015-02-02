@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.Z3.Ast
+namespace SafetySharp.Analysis.SmtSolving.Z3.Ast
 
 // Here we add some of Z3's Datastructures, which extend SMT-LIBv2
 
@@ -38,7 +38,7 @@ namespace SafetySharp.Internal.SmtSolving.Z3.Ast
 // Source-File: z3/src/ast/ast.h                       <-- declaration of expr
 // Source-File: z3/src/ast/ast_smt2_pp.cpp             <-- output of Expression
 
-open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
 
 // TODO: Custom einführen (hier und in SMTLIBv2). Damit kann ein reguläres Ding hier in ein Custom da überführt werden und umgekehrt. Vielleicht ein Custom SMT-Interface genierieren, was eine toString-Methode enthalten soll
 // TODO: Analyse dotnet api

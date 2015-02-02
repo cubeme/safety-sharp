@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.SmtLib2.Parser
+namespace SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
 
 module internal SmtLib2ParsingResult =
 

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Models.Sam.ParserTests
+namespace Models.Sam
 
 
 open System
@@ -38,7 +38,7 @@ type ExampleFiles() =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let parseSam str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
+    let parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
 
     [<Test>]
     member this.``Example simpleArithmetical1 parses successfully`` () =

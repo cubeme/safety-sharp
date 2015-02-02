@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.Modelchecking.PromelaSpin
+namespace SafetySharp.Analysis.Modelchecking.PromelaSpin
 
 open PromelaAstHelpers
-open SafetySharp.Internal.Modelchecking
-open SafetySharp.Internal.Modelchecking.PromelaSpin.Typedefs
-open SafetySharp.Models.Sam.Typedefs
-open SafetySharp.Models.Sam.SamHelpers 
-open SafetySharp.Models.Sam.Rewriter.SimplifyBlocks 
-open SafetySharp.Models.Sam.Rewriter.ChangeIdentifier
+open SafetySharp.Analysis.Modelchecking
+open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
+open SafetySharp.Models
+open SafetySharp.Models.SamHelpers
+open SafetySharp.Models.SamChangeIdentifier
+open SafetySharp.Models.SamSimplifyBlocks
 
 // IDEA: 
 //   - Use pool of temporary fields of each type for the implementation of temporary variables
@@ -41,45 +41,45 @@ open SafetySharp.Models.Sam.Rewriter.ChangeIdentifier
 
 
 module internal SamToPromela =
-    let generateGlobalVarDeclarations (varDecls:SamGlobalVarDecl list) : PrOneDecl list =
-        let generateDecl (varDecl:SamGlobalVarDecl) : PrOneDecl =
+    let generateGlobalVarDeclarations (varDecls:Sam.GlobalVarDecl list) : PrOneDecl list =
+        let generateDecl (varDecl:Sam.GlobalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
-                            | SamType.BoolType -> PrTypename.Bool
-                            | SamType.IntType -> PrTypename.Int
-                            //| SamType.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.BoolType -> PrTypename.Bool
+                            | Sam.Type.IntType -> PrTypename.Int
+                            //| Sam.Type.Decimal -> failwith "NotImplementedYet"
             let _varName = varDecl.Var.getName 
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
         varDecls |> List.map generateDecl
                  
                  
-    let generateLocalVarDeclarations (varDecls:SamLocalVarDecl list) : PrOneDecl list =
-        let generateDecl (varDecl:SamLocalVarDecl) : PrOneDecl =
+    let generateLocalVarDeclarations (varDecls:Sam.LocalVarDecl list) : PrOneDecl list =
+        let generateDecl (varDecl:Sam.LocalVarDecl) : PrOneDecl =
             let _type = match varDecl.Type with
-                            | SamType.BoolType -> PrTypename.Bool
-                            | SamType.IntType -> PrTypename.Int
-                            //| SamType.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.BoolType -> PrTypename.Bool
+                            | Sam.Type.IntType -> PrTypename.Int
+                            //| Sam.Type.Decimal -> failwith "NotImplementedYet"
             let _varName = varDecl.Var.getName 
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
         varDecls |> List.map generateDecl
                  
-    let transformSamVarToVarref ( var:SamVar ) =
+    let transformSamVarToVarref ( var:Sam.Var ) =
         let varName = var.getName
         PrVarref.Varref(varName,None,None)
 
-    let transformSamVal (literal:SamVal) : PrExpression =
+    let transformSamVal (literal:Sam.Val) : PrExpression =
         match literal with
-            | SamVal.NumbVal (value) ->
+            | Sam.Val.NumbVal (value) ->
                     PrExpression.Const(PrConst.Number(  int32(value) ))
-            | SamVal.BoolVal (value) ->
+            | Sam.Val.BoolVal (value) ->
                 match value with
                     | true  -> PrExpression.Const(PrConst.True)
                     | false -> PrExpression.Const(PrConst.False)
 
-    let generateGlobalVarInitialisations (varDecls:SamGlobalVarDecl list) : PrStatement list =
-        let generateInit (varDecl:SamGlobalVarDecl) : PrStatement =
-            let generateSequence (initialValue : SamVal) : PrSequence =
+    let generateGlobalVarInitialisations (varDecls:Sam.GlobalVarDecl list) : PrStatement list =
+        let generateInit (varDecl:Sam.GlobalVarDecl) : PrStatement =
+            let generateSequence (initialValue : Sam.Val) : PrSequence =
                 let assignVarref = transformSamVarToVarref varDecl.Var
                 let assignExpr = transformSamVal initialValue
                 //also possible to add a "true" as a guard to the returned sequence
@@ -91,43 +91,43 @@ module internal SamToPromela =
 
 
                                 
-    let rec transformSamExpr (expression:SamExpr) : PrExpression =
+    let rec transformSamExpr (expression:Sam.Expr) : PrExpression =
         match expression with
-            | SamExpr.Literal (value:SamVal) ->
+            | Sam.Expr.Literal (value:Sam.Val) ->
                 transformSamVal value
-            | SamExpr.UExpr (operand, operator) ->
+            | Sam.Expr.UExpr (operand, operator) ->
                 let transformedOperand = transformSamExpr operand
                 match operator with
-                    | SamUOp.Not -> PrExpression.UnaryExpr(PrUnarop.Not,transformedOperand)
-                    //| SamUOp.      -> PrExpression.UnaryExpr(PrUnarop.Neg,transformedOperand)
-            | SamExpr.BExpr (leftExpression,operator,rightExpression) ->
+                    | Sam.UOp.Not -> PrExpression.UnaryExpr(PrUnarop.Not,transformedOperand)
+                    //| Sam.UOp.      -> PrExpression.UnaryExpr(PrUnarop.Neg,transformedOperand)
+            | Sam.Expr.BExpr (leftExpression,operator,rightExpression) ->
                 let transformedLeft = transformSamExpr leftExpression
                 let transformedRight = transformSamExpr rightExpression
                 match operator with
-                    | SamBOp.Add         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Add,transformedRight)
-                    | SamBOp.Subtract    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Min,transformedRight)
-                    | SamBOp.Multiply    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mul,transformedRight)
-                    | SamBOp.Divide      -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Div,transformedRight)
-                    | SamBOp.Modulo      -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mod,transformedRight)
-                    | SamBOp.And         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.And),transformedRight)
-                    | SamBOp.Or          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.Or),transformedRight)
-                    | SamBOp.Implies     -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight) // true -> false := 1 <= 0
-                    | SamBOp.Equals      -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Eq,transformedRight)
-                    | SamBOp.NotEquals   -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Neq,transformedRight)
-                    | SamBOp.Less        -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Lt,transformedRight)
-                    | SamBOp.LessEqual   -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
-                    | SamBOp.Greater     -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
-                    | SamBOp.GreaterEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
-            | SamExpr.Read (variable) ->
+                    | Sam.BOp.Add         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Add,transformedRight)
+                    | Sam.BOp.Subtract    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Min,transformedRight)
+                    | Sam.BOp.Multiply    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mul,transformedRight)
+                    | Sam.BOp.Divide      -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Div,transformedRight)
+                    | Sam.BOp.Modulo      -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mod,transformedRight)
+                    | Sam.BOp.And         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.And),transformedRight)
+                    | Sam.BOp.Or          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.Or),transformedRight)
+                    | Sam.BOp.Implies     -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight) // true -> false := 1 <= 0
+                    | Sam.BOp.Equals      -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Eq,transformedRight)
+                    | Sam.BOp.NotEquals   -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Neq,transformedRight)
+                    | Sam.BOp.Less        -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Lt,transformedRight)
+                    | Sam.BOp.LessEqual   -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
+                    | Sam.BOp.Greater     -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
+                    | Sam.BOp.GreaterEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
+            | Sam.Expr.Read (variable) ->
                 let varref = transformSamVarToVarref variable
                 PrExpression.Varref varref
-            | SamExpr.ReadOld (variable) ->
+            | Sam.Expr.ReadOld (variable) ->
                 failwith "NotImplementedYet"
 
         
-    let rec transformSamStm (statement:SamStm) : PrStatement =
+    let rec transformSamStm (statement:Sam.Stm) : PrStatement =
         match statement with
-            | SamStm.Block (statements:SamStm list) ->
+            | Sam.Stm.Block (statements:Sam.Stm list) ->
                 if statements.IsEmpty then
                     PrStatement.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.Skip)))
                 else
@@ -135,8 +135,8 @@ module internal SamToPromela =
                                |> List.map (fun stm -> Step.StmntStep(stm,None))
                                |> PrSequence.Sequence
                                |> PrStatement.SequenceStmnt
-            | SamStm.Choice (clauses:SamClause list) ->
-                let transformOption (clause : SamClause) =
+            | Sam.Stm.Choice (clauses:Sam.Clause list) ->
+                let transformOption (clause : Sam.Clause) =
                     let transformedGuard = transformSamExpr clause.Guard
                     let transformedGuardStmnt = anyExprToStmnt transformedGuard
                     let transformedStm = transformSamStm clause.Statement
@@ -146,12 +146,12 @@ module internal SamToPromela =
                         |> PrOptions.Options
                         |> PrStatement.IfStmnt
 
-            | SamStm.Write (variable:SamVar, expression:SamExpr) ->
+            | Sam.Stm.Write (variable:Sam.Var, expression:Sam.Expr) ->
                 let transformedTarget = transformSamVarToVarref variable
                 let transformedExpression = transformSamExpr expression
                 createAssignmentStatement transformedTarget transformedExpression            
                     
-    let transformConfiguration (pgm:SamPgm) : PrSpec =
+    let transformConfiguration (pgm:Sam.Pgm) : PrSpec =
         // remove unwanted chars and assure, that no unwanted characters are in the string
         let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
         let pgm = changeNamesPgm changeIdsState pgm

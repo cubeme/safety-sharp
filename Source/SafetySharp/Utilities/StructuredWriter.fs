@@ -26,7 +26,7 @@ open System
 open System.Text
 
 /// Generates structured strings in an in-memory buffer.
-type StructuredWriter () =
+type internal StructuredWriter () =
     let output = StringBuilder ()
     let mutable atBeginningOfLine = true
     let mutable indent = 0

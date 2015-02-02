@@ -61,7 +61,7 @@ namespace SafetySharp.Compiler.Normalization
 	///    		private bool MyProperty { [SafetySharp.Modeling.RequiredAttribute] get { return f1(); } [SafetySharp.Modeling.RequiredAttribute] set { f2(value); } }
 	///   	</code>
 	/// </summary>
-	public class RequiredPortNormalizer : CSharpNormalizer
+	public class RequiredPortNormalizer : Normalizer
 	{
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Models.Scm.RewriterTests
+namespace Models.Scm
 
 open System
 open NUnit.Framework
@@ -28,22 +28,22 @@ open FParsec
 
 open TestHelpers
 open AstTestHelpers
-open SafetySharp.Internal
+open SafetySharp.Models
 open SafetySharp.Models.Scm
-open ScmHelpers
-open ScmRewriterBase
+open SafetySharp.Models.ScmHelpers
+open SafetySharp.Models.ScmRewriterBase
 
 [<TestFixture>]
 type CompleteRewriteTests () =
 
-    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
+    let runWithUserState parser str = runParserOnString parser ScmParser.UserState.initialUserState "" str
 
     let parseWithParser parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
-    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
+    let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
     
     [<Test>]
     member this.``Example nestedComponent3 gets rewritten (leveled up and inlined) completely`` () =

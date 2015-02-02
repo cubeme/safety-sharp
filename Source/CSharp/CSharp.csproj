@@ -78,7 +78,6 @@
     <Compile Include="Analyzers\DiagnosticIdentifier.cs" />
     <Compile Include="Roslyn\DiagnosticInfo.cs" />
     <Compile Include="Roslyn\CSharpAnalyzer.cs" />
-    <Compile Include="Roslyn\CSharpNormalizer.cs" />
     <Compile Include="Roslyn\IdentifierNameSynthesizer.cs" />
     <Compile Include="Roslyn\NormalizationScope.cs" />
     <Compile Include="Roslyn\SideEffectAnalyzer.cs" />

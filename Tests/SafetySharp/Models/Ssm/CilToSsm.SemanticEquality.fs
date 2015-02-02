@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Ssm
+namespace Models.Ssm
 
 open System.Linq
 open NUnit.Framework
@@ -42,7 +42,7 @@ module TestHelpers =
         // By removing all returns, we test whether this assumption actually holds.
         // Note that this only works when the tests are void-returning...
         let transformedMethod = if replaceReturns then transformedMethod.Replace ("return;", ";") else transformedMethod
-        let csharpCode = sprintf "class T : Ssm.TestHelpers.%s { public override %s %s } class O : Ssm.TestHelpers.%s { public override %s %s }" baseClass csharpCode additionalMembers baseClass transformedMethod additionalMembers
+        let csharpCode = sprintf "class T : Models.Ssm.TestHelpers.%s { public override %s %s } class O : Models.Ssm.TestHelpers.%s { public override %s %s }" baseClass csharpCode additionalMembers baseClass transformedMethod additionalMembers
         let compilation = TestCompilation csharpCode
         compilation.Compile () |> ignore
         (compilation.CreateObject<'a> "T", compilation.CreateObject<'a> "O")

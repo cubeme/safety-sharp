@@ -23,7 +23,7 @@
 namespace SafetySharp.Tests.Modelchecking.Promela.PromelaAstToFileTests
 
 open NUnit.Framework
-open SafetySharp.Internal.Modelchecking.PromelaSpin
+open SafetySharp.Analysis.Modelchecking.PromelaSpin
 open PromelaAstHelpers
 open SafetySharp.Tests
 

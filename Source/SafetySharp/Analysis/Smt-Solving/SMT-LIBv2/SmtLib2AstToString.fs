@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.SmtLib2.AstToString
+namespace SafetySharp.Analysis.SmtSolving.SmtLib2.AstToString
 
-open SafetySharp.Internal.SmtSolving.SmtLib2.SmtShortTypes
+open SafetySharp.Analysis.SmtSolving.SmtLib2.SmtShortTypes
 open System
 
 exception NotImplementedYetException

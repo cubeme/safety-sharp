@@ -20,40 +20,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Sam
+namespace SafetySharp.Models
+open SafetySharp.Models.Sam
 
-type NewLineStyle =
-    | NoNewLine
-    | NewLine
-    | NewParagraph
+//////////////////////////////////////////////////////////////////////////////
+// helpers
+//////////////////////////////////////////////////////////////////////////////
+module internal SamToStringHelpers =
+    type NewLineStyle =
+        | NoNewLine
+        | NewLine
+        | NewParagraph
 
-type AstToStringState = {
-    Indent : int;
-    NewLineStyle : NewLineStyle;
-    CurrentLine : string;
-    TextBuffer : string list;
-}
-    with
-        static member initial =
-            {
-                AstToStringState.Indent = 0;
-                AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
-                AstToStringState.CurrentLine = "";
-                AstToStringState.TextBuffer = [];
-            }                
-        override state.ToString() : string =
-            (state.CurrentLine :: state.TextBuffer)
-                |> List.rev
-                |> String.concat System.Environment.NewLine
+    type AstToStringState = {
+        Indent : int;
+        NewLineStyle : NewLineStyle;
+        CurrentLine : string;
+        TextBuffer : string list;
+    }
+        with
+            static member initial =
+                {
+                    AstToStringState.Indent = 0;
+                    AstToStringState.NewLineStyle = NewLineStyle.NoNewLine;
+                    AstToStringState.CurrentLine = "";
+                    AstToStringState.TextBuffer = [];
+                }                
+            override state.ToString() : string =
+                (state.CurrentLine :: state.TextBuffer)
+                    |> List.rev
+                    |> String.concat System.Environment.NewLine
 
-type AstToStringStateFunction = AstToStringState -> AstToStringState
-    
-    
+    type AstToStringStateFunction = AstToStringState -> AstToStringState
 
-    //////////////////////////////////////////////////////////////////////////////
-    // helpers
-    //////////////////////////////////////////////////////////////////////////////
-module Helpers =
     //elementary
 
     let increaseIndent (state:AstToStringState) : AstToStringState =
@@ -154,7 +153,7 @@ module Helpers =
         newLine >>= decreaseIndent
 
 module internal SamAstToString =
-    open Helpers
+    open SamToStringHelpers
 
     //////////////////////////////////////////////////////////////////////////////
     // actual export

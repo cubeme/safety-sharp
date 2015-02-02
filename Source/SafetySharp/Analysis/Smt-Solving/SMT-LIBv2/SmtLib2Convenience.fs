@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.SmtLib2
+namespace SafetySharp.Analysis.SmtSolving.SmtLib2
 
 module internal SmtShortTypes =
-    open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
 
     type Smt2Numeral = Numeral
     type Smt2Decimal = Decimal
@@ -76,7 +76,7 @@ module internal SmtShortTypes =
 
 module internal SMTLIB2Convenience =
 
-    open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
 
     let IdentifierFromString str = 
         Identifier.IdSymbol(Symbol.Symbol(str))

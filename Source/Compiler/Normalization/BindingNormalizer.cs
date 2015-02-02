@@ -45,7 +45,7 @@ namespace SafetySharp.Compiler.Normalization
 	///  		BindDelayed(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
 	///   	</code>
 	/// </summary>
-	public class BindingNormalizer : CSharpNormalizer
+	public class BindingNormalizer : Normalizer
 	{
 		/// <summary>
 		///     Represents the [CompilerGenerated] attribute syntax.

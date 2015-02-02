@@ -92,7 +92,7 @@ module internal SamModified =
 
 module internal  WeakestPrecondition =
     open SamModified
-    open SafetySharp.Models.Sam.SamHelpers
+    open SafetySharp.Models.SamHelpers
        
     let rec wp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
         match expr with

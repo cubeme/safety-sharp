@@ -41,7 +41,7 @@ namespace SafetySharp.Compiler.Normalization
 	///  		M(() => 1 + 2, 4);
 	/// 	</code>
 	/// </summary>
-	public class ExpressionLifter : CSharpNormalizer
+	public class ExpressionLifter : Normalizer
 	{
 		/// <summary>
 		///     Initializes a new instance.

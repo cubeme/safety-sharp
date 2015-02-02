@@ -20,16 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.Z3.Parser
+namespace SafetySharp.Analysis.SmtSolving.Z3.Parser
 
 open System
 open System.IO
 open FParsec
-open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
-open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
-open SafetySharp.Internal.SmtSolving.Z3.Ast
-open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
-open SafetySharp.Internal.SmtSolving.SmtLib2.Parser.ParseSMTLIB2Whitespace
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.Z3.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.ParseSMTLIB2Whitespace
 
 type internal Z3Parser() =
     let smt2libcommonparser = new SMTCommonParser()

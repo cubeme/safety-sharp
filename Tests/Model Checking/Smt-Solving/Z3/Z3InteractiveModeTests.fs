@@ -25,9 +25,9 @@ namespace Z3ExecuteExternal.Tests
 open System
 open NUnit.Framework
 open AstTestHelpers
-open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
-open SafetySharp.Internal.SmtSolving.SmtLib2.SmtShortTypes
-open SafetySharp.Internal.SmtSolving.Z3.Execute
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.SmtShortTypes
+open SafetySharp.Analysis.SmtSolving.Z3.Execute
 
 type Z3InteractiveModeTests() = 
     

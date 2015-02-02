@@ -25,7 +25,6 @@ namespace Transformations
 open System
 open NUnit.Framework
 open SafetySharp.Models
-open SafetySharp.Models.Transformations
 
 [<TestFixture>]
 module ``SsmToScm Transformation`` =

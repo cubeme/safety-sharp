@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.Z3.Execute
+namespace SafetySharp.Analysis.SmtSolving.Z3.Execute
 
 open System.Diagnostics
-open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
-open SafetySharp.Internal.SmtSolving.SmtLib2.Parser
-open SafetySharp.Internal.SmtSolving.Z3.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
+open SafetySharp.Analysis.SmtSolving.Z3.Ast
 
 open FParsec
 

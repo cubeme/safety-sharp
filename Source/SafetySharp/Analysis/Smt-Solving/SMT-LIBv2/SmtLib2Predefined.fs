@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.SmtSolving.SmtLib2.Predefined
+namespace SafetySharp.Analysis.SmtSolving.SmtLib2.Predefined
 
-open SafetySharp.Internal.SmtSolving.SmtLib2.Ast
+open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
 
 //For Convenience: Predefined Symbols in Z3 (TODO: make it depend on the theory)
 type internal Smt2Predefined (theory:string) =

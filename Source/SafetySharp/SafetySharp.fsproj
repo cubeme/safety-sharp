@@ -71,7 +71,6 @@
     <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
-    <Compile Include="Models\Scm\ScmTypedefs.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmToString.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheck.fs" />
@@ -83,7 +82,6 @@
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
-    <Compile Include="Models\Sam\SamTypedefs.fs" />
     <Compile Include="Models\Sam\SamHelpers.fs" />
     <Compile Include="Models\Sam\SamAstToString.fs" />
     <Compile Include="Models\Sam\SamConsistencyCheck.fs" />

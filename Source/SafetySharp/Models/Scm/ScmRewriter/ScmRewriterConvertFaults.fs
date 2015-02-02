@@ -20,7 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Scm
+namespace SafetySharp.Models
+open SafetySharp.Models.Scm
 
 module internal ScmRewriterConvertFaults =
     open ScmHelpers

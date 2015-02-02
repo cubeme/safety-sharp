@@ -29,12 +29,12 @@
 //     In this group walkers over statements and collections are useful
 //     This group can also reuse elements from entity-local
 
-namespace SafetySharp.Models.Scm
+namespace SafetySharp.Models
+open SafetySharp.Models.Scm
+open SafetySharp.Models.ScmHelpers
 
 module internal ScmConsistencyCheck =
-    open ScmHelpers
-    
-    
+
     /////////////
     // generic function for Statements
     ////////////

@@ -29,7 +29,7 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 
-open SafetySharp.Internal.Modelchecking.PromelaSpin
+open SafetySharp.Analysis.Modelchecking.PromelaSpin
 
 
 
@@ -41,7 +41,7 @@ module SamToPromelaTests =
         | Success(result, _, _)   -> result
         | Failure(errorMsg, _, _) -> failwith errorMsg
 
-    let internal parseSam str = parseWithParser (SafetySharp.Models.Sam.Parser.samFile .>> eof) str
+    let internal parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
 
     let internal promelaWriter = ExportPromelaAstToFile()
 

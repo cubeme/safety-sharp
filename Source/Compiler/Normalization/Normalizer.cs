@@ -20,20 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.CSharp.Roslyn
+namespace SafetySharp.Compiler.Normalization
 {
 	using System;
+	using CSharp.Roslyn;
+	using CSharp.Roslyn.Syntax;
+	using CSharp.Utilities;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
-	using Syntax;
-	using Utilities;
 
 	/// <summary>
 	///     A base class for C# normalizers that normalize certain SafetySharp C# language features in order to
 	///     ensure that the SafetySharp models remain executable.
 	/// </summary>
-	public abstract class CSharpNormalizer : CSharpSyntaxRewriter
+	public abstract class Normalizer : CSharpSyntaxRewriter
 	{
 		/// <summary>
 		///     The scope of the normalizer.
@@ -44,7 +45,7 @@ namespace SafetySharp.CSharp.Roslyn
 		///     Initializes a new instance.
 		/// </summary>
 		/// <param name="scope">The scope of the normalizer.</param>
-		protected CSharpNormalizer(NormalizationScope scope)
+		protected Normalizer(NormalizationScope scope)
 		{
 			_scope = scope;
 		}
@@ -97,7 +98,7 @@ namespace SafetySharp.CSharp.Roslyn
 		{
 			if (ShouldNormalizeClassDeclaration(classDeclaration))
 				return NormalizeClassDeclaration((ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration));
-		
+
 			// We still might have to normalize nested types, though
 			var originalDeclaration = classDeclaration;
 			foreach (var nestedType in originalDeclaration.Descendants<BaseTypeDeclarationSyntax>())

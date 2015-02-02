@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Models.Transformations
+namespace SafetySharp.Models
 
 open SafetySharp.Models
-open SafetySharp.Models.Scm.ScmRewriterBase
-open SafetySharp.Models.Scm.ScmRewriterFlattenModel
+open SafetySharp.Models.ScmRewriterBase
+open SafetySharp.Models.ScmRewriterFlattenModel
 
 type ScmFault = SafetySharp.Models.Scm.Fault
 type ScmFaultExpr = SafetySharp.Models.Scm.FaultExpr
@@ -144,8 +144,8 @@ module internal ScmToSam =
         // first level up and inline everything in Sam, then produce the appropriate Sam.Pgm.
         // The latter is just a recursive walk through the Scm-Datatypes and return the equivalent Sam-Datatypes
         let initialState = initialSimpleState model
-        let workFlow = Scm.ScmRewriterFlattenModel.levelUpAndInline
-        let (_,resultingState) = Scm.ScmRewriterBase.runState workFlow initialState
+        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
         let newModel = resultingState.Model
         //printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
 

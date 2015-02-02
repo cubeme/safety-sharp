@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Models.Scm.ScmConsistencyCheckTests
+namespace Models.Scm
 
 
 open System
@@ -29,28 +29,27 @@ open FParsec
 
 open TestHelpers
 open AstTestHelpers
-open SafetySharp.Internal
+open SafetySharp.Models
 open SafetySharp.Models.Scm
-open ScmHelpers
-
-open ScmRewriterBase
-open ScmRewriterLevelUp
-open ScmRewriterConvertFaults
-open ScmRewriterInlineBehavior
-open ScmRewriterFlattenModel
+open SafetySharp.Models.ScmHelpers
+open SafetySharp.Models.ScmRewriterBase
+open SafetySharp.Models.ScmRewriterLevelUp
+open SafetySharp.Models.ScmRewriterConvertFaults
+open SafetySharp.Models.ScmRewriterInlineBehavior
+open SafetySharp.Models.ScmRewriterFlattenModel
 
 [<TestFixture>]
 type ScmConsistencyCheckOfDelayedBindingsTests () =    
 
 
-    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
+    let runWithUserState parser str = runParserOnString parser ScmParser.UserState.initialUserState "" str
 
     let parseWithParser parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
-    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
+    let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
         
     
 

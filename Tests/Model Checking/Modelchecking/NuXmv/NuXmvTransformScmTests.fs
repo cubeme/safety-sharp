@@ -30,19 +30,19 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 
-open SafetySharp.Internal.Modelchecking.NuXmv
+open SafetySharp.Analysis.Modelchecking.NuXmv
 
 [<TestFixture>]
 module ScmToNuXmvTests =
     
-    let internal runWithUserState parser str = runParserOnString parser SafetySharp.Models.Scm.Parser.UserState.initialUserState "" str
+    let internal runWithUserState parser str = runParserOnString parser SafetySharp.Models.ScmParser.UserState.initialUserState "" str
 
     let internal parseWithParser parser str =
         match runWithUserState parser str with
         | Success(result, _, _)   -> result
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
-    let internal parseSCM str = parseWithParser (SafetySharp.Models.Scm.Parser.scmFile .>> eof) str
+    let internal parseSCM str = parseWithParser (SafetySharp.Models.ScmParser.scmFile .>> eof) str
 
     let internal nuXmvWriter = ExportNuXmvAstToFile()
 

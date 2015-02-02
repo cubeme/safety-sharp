@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 //TODO: Solve the indentions more gracefully
-namespace SafetySharp.Internal.Modelchecking.NuXmv
+namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 open System
 

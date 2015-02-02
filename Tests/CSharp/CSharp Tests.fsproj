@@ -171,4 +171,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <Import Project="../TestCleanup.targets" />
 </Project>

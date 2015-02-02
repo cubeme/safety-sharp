@@ -34,7 +34,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 
 
 module internal VCPopl01 =
-    open SafetySharp.Models.Sam.SamHelpers
+    open SafetySharp.Models.SamHelpers
     open SamModified
 
     let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =

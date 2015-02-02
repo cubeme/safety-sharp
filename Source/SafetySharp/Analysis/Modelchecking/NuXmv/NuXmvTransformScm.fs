@@ -20,14 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.Modelchecking.NuXmv
+namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 open SafetySharp.Models
-open SafetySharp.Models.Transformations
 
 module internal ScmToNuXmv =
                 
-    let transformConfiguration (model:Scm.CompDecl) : SafetySharp.Internal.Modelchecking.NuXmv.NuXmvProgram =        
+    let transformConfiguration (model:Scm.CompDecl) : SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvProgram =        
         let samModel = ScmToSam.transformScmToSam model
         SamToNuXmv.transformConfiguration samModel
         

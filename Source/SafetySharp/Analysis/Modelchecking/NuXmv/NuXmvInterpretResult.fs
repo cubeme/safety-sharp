@@ -31,7 +31,7 @@
 //   - Tests for those attacks
 
 
-namespace SafetySharp.Internal.Modelchecking.NuXmv
+namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 // It is nice to be able to show the reason for a failure of the processing of a command in the GUI
 [<RequireQualifiedAccess>]

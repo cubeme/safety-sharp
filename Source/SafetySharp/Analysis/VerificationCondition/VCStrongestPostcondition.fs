@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-module StrongestPostcondition =
+module internal StrongestPostcondition =
     open SamModified
 

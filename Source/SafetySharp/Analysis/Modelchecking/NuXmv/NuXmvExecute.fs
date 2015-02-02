@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Internal.Modelchecking.NuXmv
+namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 // TODO:
 //  - Introduce Cancellation Token. Read() and Mutexes() should be timed and check every second the status of the cancelationToken

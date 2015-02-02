@@ -22,7 +22,7 @@
 
 namespace SafetySharp
 
-module FreshNameGenerator =
+module internal FreshNameGenerator =
 
     let namegenerator_donothing = (fun takenNames based_on -> based_on);
 

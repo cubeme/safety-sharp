@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Modeling
+namespace SafetySharp.Analysis
 
 open System
 open SafetySharp
+open SafetySharp.Modeling
 open SafetySharp.Models
-open SafetySharp.Models.Transformations
 
 [<Sealed>]
 type SpinModelChecker (model : Model) =
@@ -40,14 +40,14 @@ type SpinModelChecker (model : Model) =
 //        let formulas = [formula.Formula]
 //        let configuration = ModelTransformation.Transform modelingAssembly.Compilation model formulas
 //        
-//        let converter = SafetySharp.Internal.Modelchecking.PromelaSpin.MetamodelToPromela configuration
-//        let astWriter = SafetySharp.Internal.Modelchecking.PromelaSpin.ExportPromelaAstToFile ()
+//        let converter = SafetySharp.Analysis.Modelchecking.PromelaSpin.MetamodelToPromela configuration
+//        let astWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.ExportPromelaAstToFile ()
 //
 //        let converted = converter.transformConfiguration
 //        FileSystem.WriteToAsciiFile "Modelchecking/Spin.promela" (astWriter.Export converted)
 //
-//        let converter = SafetySharp.Internal.Modelchecking.NuXmv.MetamodelToNuXmv configuration
-//        let astWriter = SafetySharp.Internal.Modelchecking.NuXmv.ExportNuXmvAstToFile ()
+//        let converter = SafetySharp.Analysis.Modelchecking.NuXmv.MetamodelToNuXmv configuration
+//        let astWriter = SafetySharp.Analysis.Modelchecking.NuXmv.ExportNuXmvAstToFile ()
 //
 //        let converted = converter.transformConfiguration
 //        FileSystem.WriteToAsciiFile "Modelchecking/NuXmv.smv" (astWriter.ExportNuXmvProgram converted)

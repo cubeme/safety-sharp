@@ -21,9 +21,9 @@
 // THE SOFTWARE.
 
 
-namespace SafetySharp.Internal.Analysis.Stochastic
+namespace SafetySharp.Analysis.Stochastic
 
-open SafetySharp.Internal.Analysis
+open SafetySharp.Analysis
 
 (* continuous distributions *)
 

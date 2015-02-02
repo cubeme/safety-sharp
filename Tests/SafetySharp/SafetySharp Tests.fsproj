@@ -70,15 +70,14 @@
     <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
     <Compile Include="Models\Ssm\SsmLowering.Signatures.fs" />
+    <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
     <Compile Include="Models\Scm\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
-    <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheckTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
-    <Compile Include="Analysis\Stochastic\FailureRateTests.fs" />
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
@@ -165,4 +164,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <Import Project="../TestCleanup.targets" />
 </Project>
