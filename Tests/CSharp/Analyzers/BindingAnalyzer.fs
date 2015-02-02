@@ -151,7 +151,7 @@ module ``Binding validity`` =
     let ``cast to non-delegate type is invalid`` () =
         getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (int)ProvidedPorts.M); } }" =? cast 88 3
         getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (object)ProvidedPorts.M); } }" =? cast 88 6
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (Component)ProvidedPorts.M); } }" =? cast 88 9
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (Component)((ProvidedPorts.M))); } }" =? cast 88 9
 
     [<Test>]
     let ``cast to delegate type with no compatible ports is invalid`` () =
@@ -161,6 +161,10 @@ module ``Binding validity`` =
     [<Test>]
     let ``unambiguous binding between ports of same name is valid`` () =
         getDiagnostic "class Y : Component { public extern void M(); } class X : Component { void M() {} X(Y y) { BindDelayed(y.RequiredPorts.M = ProvidedPorts.M); }}" =? None
+
+    [<Test>]
+    let ``binding with many parentheses is valid`` () =
+        getDiagnostic "class Y : Component { public extern void M(); } class X : Component { void M() {} X(Y y) { BindDelayed(((((y).RequiredPorts).M) = (ProvidedPorts.M))); }}" =? None
 
     [<Test>]
     let ``unambiguous binding of ports with same name and different kind is valid`` () =

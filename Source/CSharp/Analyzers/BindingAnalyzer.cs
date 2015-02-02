@@ -125,24 +125,25 @@ namespace SafetySharp.CSharp.Analyzers
 
 			// We now expect that the argument of the invocation is a port binding in the form of an assignment
 			var arguments = node.ArgumentList.Arguments;
-			if (arguments.Count != 1 || !(arguments[0].Expression is AssignmentExpressionSyntax))
+			var argumentExpression = arguments[0].Expression.RemoveParentheses();
+			if (arguments.Count != 1 || !(argumentExpression is AssignmentExpressionSyntax))
 			{
 				ExpectedPortAssignment.Emit(context, arguments[0].Expression);
 				return;
 			}
 
 			// We now expect a port collection on both sides of the assignment
-			var assignment = (AssignmentExpressionSyntax)arguments[0].Expression;
-			var leftExpression = assignment.Left as MemberAccessExpressionSyntax;
-			var rightExpression = assignment.Right as MemberAccessExpressionSyntax;
+			var assignment = (AssignmentExpressionSyntax)argumentExpression;
+			var leftExpression = assignment.Left.RemoveParentheses() as MemberAccessExpressionSyntax;
+			var rightExpression = assignment.Right.RemoveParentheses() as MemberAccessExpressionSyntax;
 
 			// On the right-hand side, we could also have a cast to a delegate type
 			CastExpressionSyntax castExpression = null;
 			if (rightExpression == null)
 			{
-				castExpression = assignment.Right as CastExpressionSyntax;
+				castExpression = assignment.Right.RemoveParentheses() as CastExpressionSyntax;
 				if (castExpression != null)
-					rightExpression = castExpression.Expression as MemberAccessExpressionSyntax;
+					rightExpression = castExpression.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
 			}
 
 			PortCollection leftPorts;

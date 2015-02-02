@@ -123,7 +123,7 @@ module ``Referenced ports must exist`` =
     [<Test>]
     let ``existing provided port is valid`` () =
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = ProvidedPorts.Xyz; } } }" =? None
-        getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = this.ProvidedPorts.Xyz; } } }" =? None
+        getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = (this).ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { var x = base.ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X(X x) { var y = x.ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X() { X x = null; var y = x.ProvidedPorts.Xyz; } } }" =? None
@@ -132,6 +132,7 @@ module ``Referenced ports must exist`` =
         getDiagnostic "namespace Y { class X : Component { void Xyz() {} X x() { return null; } X() { var y = x().ProvidedPorts.Xyz; } } }" =? None
         getDiagnostic "class Y : Component { public void Xyz() {} } class X : Component { X(Y y) { var z = y.ProvidedPorts.Xyz; } }" =? None
         getDiagnostic "interface I : IComponent { [Provided] void Xyz(); } class X : Component { X(I y) { var z = y.ProvidedPorts.Xyz; } }" =? None
+        getDiagnostic "interface I : IComponent { [Provided] void Xyz(); } class X : Component { X(I y) { var z = (y.ProvidedPorts).Xyz; } }" =? None
 
     [<Test>]
     let ``considers inherited ports`` () =

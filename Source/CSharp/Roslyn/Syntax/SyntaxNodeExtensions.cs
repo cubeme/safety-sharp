@@ -27,6 +27,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
+	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Symbols;
 	using Utilities;
 
@@ -35,6 +36,26 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 	/// </summary>
 	public static class SyntaxNodeExtensions
 	{
+		/// <summary>
+		///     Unwraps an expression contained in zero, one, or more <see cref="ParenthesizedExpressionSyntax" />. For instance,
+		///     <c>x</c> remains <c>x</c>, <c>(x)</c>, <c>((x))</c>, etc. become <c>x</c>.
+		/// </summary>
+		/// <param name="syntaxNode">The syntax node that should be unwrapped.</param>
+		[Pure, NotNull]
+		public static SyntaxNode RemoveParentheses([NotNull] this SyntaxNode syntaxNode)
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+
+			var parenthesized = syntaxNode as ParenthesizedExpressionSyntax;
+			while (parenthesized != null)
+			{
+				syntaxNode = parenthesized.Expression;
+				parenthesized = syntaxNode as ParenthesizedExpressionSyntax;
+			}
+
+			return syntaxNode;
+		}
+
 		/// <summary>
 		///     Gets a list of descendant syntax nodes of type <typeparamref name="T" /> in prefix document order.
 		/// </summary>
@@ -173,10 +194,8 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 			Requires.NotNull(syntaxNode, () => syntaxNode);
 			Requires.NotNull(templateNode, () => templateNode);
 
-			Func<SyntaxNode, int> countLines = node =>
-			{
-				return node.ToFullString().Replace("\r\n", "\n").Replace("\r", "\n").Count(c => c == '\n');
-			};
+			Func<SyntaxNode, int> countLines =
+				node => { return node.ToFullString().Replace("\r\n", "\n").Replace("\r", "\n").Count(c => c == '\n'); };
 
 			var actualLineCount = countLines(syntaxNode);
 			var desiredLineCount = countLines(templateNode);

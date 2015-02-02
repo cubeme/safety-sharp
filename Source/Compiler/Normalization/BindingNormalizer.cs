@@ -38,8 +38,8 @@ namespace SafetySharp.Compiler.Normalization
 	///     For instance:
 	///     <code>
 	///    		BindDelayed(c.RequiredPorts.X, ProvidedPorts.Y);
-	///    		// becomes (if the ports have signature 'void -> void'):
-	///  		BindDelayed(new PortBinding(PortInfo.RequiredPort((Action)c.X, "..."), PortInfo.ProvidedPort((Action)Y)));
+	///    		// becomes (for some matching delegate type D):
+	///  		BindDelayed(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
 	///   	</code>
 	/// </summary>
 	public class BindingNormalizer : CSharpNormalizer
@@ -71,16 +71,16 @@ namespace SafetySharp.Compiler.Normalization
 				return expression;
 
 			// We now know that the argument of the invocation is a port binding in the form of an assignment
-			var assignment = (AssignmentExpressionSyntax)expression.ArgumentList.Arguments[0].Expression;
-			var leftExpression = (MemberAccessExpressionSyntax)assignment.Left;
-			var rightExpression = assignment.Right as MemberAccessExpressionSyntax;
+			var assignment = (AssignmentExpressionSyntax)expression.ArgumentList.Arguments[0].Expression.RemoveParentheses();
+			var leftExpression = (MemberAccessExpressionSyntax)assignment.Left.RemoveParentheses();
+			var rightExpression = assignment.Right.RemoveParentheses() as MemberAccessExpressionSyntax;
 
 			// On the right-hand side, we could also have a cast to a delegate type
 			CastExpressionSyntax castExpression = null;
 			if (rightExpression == null)
 			{
-				castExpression = (CastExpressionSyntax)assignment.Right;
-				rightExpression = (MemberAccessExpressionSyntax)castExpression.Expression;
+				castExpression = (CastExpressionSyntax)assignment.Right.RemoveParentheses();
+				rightExpression = (MemberAccessExpressionSyntax)castExpression.Expression.RemoveParentheses();
 			}
 
 			var leftPorts = leftExpression.GetReferencedPorts(SemanticModel);

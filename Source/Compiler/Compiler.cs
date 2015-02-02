@@ -251,7 +251,7 @@ namespace SafetySharp.Compiler
 			if (embedOriginalAssembly)
 			{
 				// Copy the original assembly so that we can later embed it into the newly compiled one
-				var tmpPath = Path.ChangeExtension(assemblyPath, ".tmp");
+				var tmpPath = Path.ChangeExtension(assemblyPath, ".tmp.dll");
 				File.Copy(assemblyPath, tmpPath, overwrite: true);
 
 				resources = new[] { new ResourceDescription(Ssm.EmbeddedAssembly, () => new FileStream(tmpPath, FileMode.Open, FileAccess.Read), true) };

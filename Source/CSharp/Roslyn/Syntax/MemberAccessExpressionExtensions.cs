@@ -69,8 +69,8 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 
 			var portName = node.Name.Identifier.ValueText;
 			var isRequiredPort = symbol.Equals(requiredPortsSymbol);
-			var nestedMemberAccess = node.Expression as MemberAccessExpressionSyntax;
-
+			var nestedMemberAccess = node.Expression.RemoveParentheses() as MemberAccessExpressionSyntax;
+			
 			ITypeSymbol targetSymbol = null;
 			if (nestedMemberAccess == null)
 				targetSymbol = semanticModel.GetEnclosingSymbol(node.SpanStart).ContainingType;
