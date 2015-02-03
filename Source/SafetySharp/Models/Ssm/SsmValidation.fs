@@ -28,8 +28,10 @@ open SafetySharp.Modeling
 /// Raised when one or more unbound required ports were found.
 type UnboundRequiredPortsException internal (unboundPorts : PortInfo array) =
     inherit Exception (
-        let ports = String.Join ("\n", unboundPorts |> Array.map (fun p -> sprintf "Component '%s', Port '%A'" (p.Component :?> Component).UnmangledName p.Method))
-        sprintf "One or more unbound required ports detected:\n%s\nCheck the 'UnboundPorts' property of this exception instance for further details about the unbound ports." ports)
+        let ports = String.Join ("\n", unboundPorts |> Array.map (fun p -> 
+            sprintf "Component '%s', Port '%A'" (p.Component :?> Component).UnmangledName p.Method))
+        sprintf "One or more unbound required ports detected:\n%s\nCheck the 'UnboundPorts' property of this exception instance for further \
+                 details about the unbound ports." ports)
 
     /// Gets the unbound required ports the exception was raised for.
     member this.UnboundPorts = unboundPorts
@@ -40,7 +42,8 @@ type AmbiguousRequiredPortBindingsException internal (ambiguousBindings : PortBi
         let bindings = String.Join ("\n", ambiguousBindings |> Array.map (fun bindings ->
             let ambiguousBindings = String.Join ("\n     ", bindings |> Array.map (fun binding -> 
                 sprintf "bound to: Component '%s', Port '%A' [%A]; binding established by Component '%s'" 
-                    (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method binding.Kind (binding.Component :?> Component).UnmangledName)
+                    (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method binding.Kind 
+                    (binding.Component :?> Component).UnmangledName)
             )
             sprintf "Component '%s', Port '%A':\n     %s" 
                 (bindings.[0].TargetPort.Component :?> Component).UnmangledName bindings.[0].TargetPort.Method ambiguousBindings

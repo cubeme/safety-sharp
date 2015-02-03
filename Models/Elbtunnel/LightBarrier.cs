@@ -88,11 +88,11 @@ namespace Elbtunnel
 		public LightBarrier(Timer timer)
 		{
 			_timer = timer;
-			BindDelayed(_timer.RequiredPorts.Test = ProvidedPorts.Do);
-			BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
+			//BindDelayed(_timer.RequiredPorts.Test = ProvidedPorts.Do);
+			//BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
 			BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
 			BindDelayed(RequiredPorts.SendData = ProvidedPorts.SendProvided33);
-			BindInstantaneous(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
+			//BindInstantaneous(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
 			BindInstantaneous(RequiredPorts.GetPort = ProvidedPorts.IsTriggered);
 		}
 
