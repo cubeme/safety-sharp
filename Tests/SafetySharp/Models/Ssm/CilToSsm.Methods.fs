@@ -58,7 +58,7 @@ module ``CilToSsm Methods`` =
         m
 
     let private arg name t = Arg (name, t)
-    let private local name t = Local (sprintf "%s!" name, t)
+    let private local name t = Local (sprintf "%s%c" name CilToSsm.varToken, t)
     let private field name t = Field (CilToSsm.makeUniqueFieldName name 2, t)
     let private tmp = CilToSsm.freshLocal
     let private this = Some (VarExpr (This (ClassType className)))

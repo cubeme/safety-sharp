@@ -31,7 +31,9 @@ module internal SsmToCSharp =
         let writer = StructuredWriter ()
 
         let mangledName (m : string) =
-            writer.Append "%s" (m.Replace("@", "").Replace("$", "").Replace("%", ""))
+            writer.Append "%s" (m.Replace(CilToSsm.inheritanceToken.ToString (), "")
+                                 .Replace(CilToSsm.overloadToken.ToString (), "")
+                                 .Replace(CilToSsm.varToken.ToString (), ""))
 
         let typeRef = function
             | VoidType    -> writer.Append "void"

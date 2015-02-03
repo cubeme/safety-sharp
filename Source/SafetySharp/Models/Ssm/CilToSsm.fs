@@ -42,9 +42,9 @@ module internal CilToSsm =
     type GenericResolver = ImmutableDictionary<GenericParameter, TypeReference>
     type TypeMap = ImmutableDictionary<System.Type, TypeReference>
 
-    let private inheritanceToken = '$'
-    let private overloadToken = '@'
-    let private varToken = '!'
+    let inheritanceToken = '$'
+    let overloadToken = '@'
+    let varToken = '!'
 
     /// Creates a generic resolver for the given type that can be used to lookup actual type references 
     /// that have been substituted for generic type parameters. For non-generic type references, the passed in
