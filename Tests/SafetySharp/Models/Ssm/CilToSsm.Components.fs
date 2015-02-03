@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Component Transformation`` =
+module ``CilToSsm Components`` =
     let private transform csharpCode instantiations =
         let compilation = TestCompilation (sprintf "class T : Model { public T() { SetRootComponents(%s); } } %s" instantiations csharpCode)
         let assembly = compilation.Compile ()

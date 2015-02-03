@@ -35,7 +35,7 @@ open SafetySharp.Modeling.CompilerServices
 open Mono.Cecil
 
 /// Indicates the kind of a binding.
-type internal BindingKind =
+type BindingKind =
     | Instantaneous 
     | Delayed
 
@@ -68,13 +68,13 @@ type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
     do nullArg targetPort "targetPort"
 
     /// Gets the source port of the binding.
-    member internal this.SourcePort = sourcePort
+    member this.SourcePort = sourcePort
 
     /// Gets the target port of the binding.
-    member internal this.TargetPort = targetPort
+    member this.TargetPort = targetPort
 
     /// Gets or sets the kind of the binding.
-    member val internal Kind = BindingKind.Instantaneous with get, set
+    member val Kind = BindingKind.Instantaneous with get, set
 
     /// Gets or sets the component that instantiated the binding.
-    member val internal Component = (null : obj) with get, set
+    member val Component = (null : obj) with get, set

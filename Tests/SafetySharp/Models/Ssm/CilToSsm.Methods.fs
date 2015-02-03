@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Method Transformations`` =
+module ``CilToSsm Methods`` =
     let private className = "TestClass"
 
     let private transform componentCode initCode = 

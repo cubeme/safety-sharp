@@ -119,3 +119,8 @@ type Model () =
         with get () = 
             requiresIsSealed ()
             components
+
+    /// Returns the component with the given mangled name.
+    member internal this.FindComponent mangledName =
+        requiresIsSealed ()
+        components |> List.find (fun c -> c.Name = mangledName)

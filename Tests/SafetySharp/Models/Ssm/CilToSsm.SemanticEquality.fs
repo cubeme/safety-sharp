@@ -138,7 +138,7 @@ module TestHelpers =
         abstract member M : 'p1 -> 'p2 -> 'p3 -> 'p4 -> 'r
 
 [<TestFixture>]
-module ``CilToSsm Method Semantic Equality`` =
+module ``CilToSsm Semantic Equality`` =
 
     let readField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return _f + x; }" "" "int _f;" false)
     let writeField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; return _f; }" "" "int _f;" false)

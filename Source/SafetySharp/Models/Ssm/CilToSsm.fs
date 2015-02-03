@@ -42,6 +42,10 @@ module internal CilToSsm =
     type GenericResolver = ImmutableDictionary<GenericParameter, TypeReference>
     type TypeMap = ImmutableDictionary<System.Type, TypeReference>
 
+    let private inheritanceToken = '$'
+    let private overloadToken = '@'
+    let private varToken = '%'
+
     /// Creates a generic resolver for the given type that can be used to lookup actual type references 
     /// that have been substituted for generic type parameters. For non-generic type references, the passed in
     /// type reference is returned unchanged.
@@ -141,11 +145,11 @@ module internal CilToSsm =
 
     /// Returns a unique name for the given field name and inheritance level.
     let internal makeUniqueFieldName fieldName inheritanceLevel =
-        sprintf "%s%s" fieldName (String ('$', inheritanceLevel))
+        sprintf "%s%s" fieldName (String (inheritanceToken, inheritanceLevel))
 
     /// Returns a unique name for the given method name, inheritance level and overload index.
     let internal makeUniqueMethodName methodName inheritanceLevel overloadIndex =
-        sprintf "%s%s%s" methodName (String ('$', inheritanceLevel)) (String ('@', overloadIndex))
+        sprintf "%s%s%s" methodName (String (inheritanceToken, inheritanceLevel)) (String (overloadToken, overloadIndex))
 
      /// Gets a unique name for the given field within the declaring type's inheritance hierarchy.
     let private getUniqueFieldName (f : FieldReference) =
@@ -167,7 +171,7 @@ module internal CilToSsm =
 
     /// Generates a fresh local variable (see also the Demange paper)
     let freshLocal pc idx t =
-        Local (sprintf "__tmp_%i_%i%%" pc idx, t)
+        Local (sprintf "__tmp_%i_%i%c" pc idx varToken, t)
 
     /// Gets the direction of a method parameter.
     let getParamDir (p : ParameterDefinition) =
@@ -254,7 +258,7 @@ module internal CilToSsm =
         let fieldVarPred f = function Field (f', _) -> f = f' | _ -> false
 
         let argName (a : ParameterDefinition) = if a.Index = -1 then "this" else a.Name
-        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i%%" l.Index else l.Name
+        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i%c" l.Index varToken else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
         let arg (a : ParameterDefinition) = createVar Arg (argName a) a.ParameterType
         let field (f : FieldReference) = createVar Field (getUniqueFieldName f) f.FieldType
@@ -610,3 +614,16 @@ module internal CilToSsm =
         let metadataProvider = AssemblyMetadataProvider ()
         let typeDefinitions = metadataProvider.GetTypeDefinitions model.Components
         model.Roots |> List.map (transformType typeDefinitions)
+
+    /// Maps the given method name of the given component back to a method reference.
+    let unmapMethod (c : Component) (methodName : string) =
+        let metadataProvider = AssemblyMetadataProvider ()
+        let typeDefinitions = metadataProvider.GetTypeDefinitions [c]
+        let netModule = typeDefinitions.[c.GetType ()].Module
+        let unmangledPart = methodName.Substring (0, methodName.IndexOf inheritanceToken)
+
+        Reflection.getMethods (c.GetType ()) typeof<Component>
+        |> Seq.filter (fun m -> m.Name.StartsWith unmangledPart)
+        |> Seq.map (fun m -> (m, netModule.Import(m).Resolve ()))
+        |> Seq.find (fun (info, definition) -> getUniqueMethodName definition = methodName)
+        |> fst

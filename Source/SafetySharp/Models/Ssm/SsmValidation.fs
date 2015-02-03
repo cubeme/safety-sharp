@@ -22,6 +22,35 @@
 
 namespace SafetySharp.Models
 
+open System
+open SafetySharp.Modeling
+
+/// Raised when one or more unbound required ports were found.
+type UnboundRequiredPortsException internal (unboundPorts : PortInfo array) =
+    inherit Exception (
+        let ports = String.Join ("\n", unboundPorts |> Array.map (fun p -> sprintf "Component '%s', Port '%A'" (p.Component :?> Component).UnmangledName p.Method))
+        sprintf "One or more unbound required ports detected:\n%s\nCheck the 'UnboundPorts' property of this exception instance for further details about the unbound ports." ports)
+
+    /// Gets the unbound required ports the exception was raised for.
+    member this.UnboundPorts = unboundPorts
+
+/// Raised when one or more required ports have more than one binding.
+type AmbiguousRequiredPortBindingsException internal (ambiguousBindings : PortBinding array array) =
+    inherit Exception (
+        let bindings = String.Join ("\n", ambiguousBindings |> Array.map (fun bindings ->
+            let ambiguousBindings = String.Join ("\n     ", bindings |> Array.map (fun binding -> 
+                sprintf "bound to: Component '%s', Port '%A' [%A]; binding established by Component '%s'" 
+                    (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method binding.Kind (binding.Component :?> Component).UnmangledName)
+            )
+            sprintf "Component '%s', Port '%A':\n     %s" 
+                (bindings.[0].TargetPort.Component :?> Component).UnmangledName bindings.[0].TargetPort.Method ambiguousBindings
+        ))
+        sprintf "Detected an ambiguous binding for one or more required ports:\n%s\nCheck the 'AmbiguousBindings' property of this exception instance \
+                 for further details about the ambiguous port bindings." bindings)
+
+    /// Gets the unbound required ports the exception was raised for.
+    member this.AmbiguousBindings = ambiguousBindings
+
 /// Performs a couple of validation checks on a lowered SSM model.
 module internal SsmValidation =
     open System
@@ -32,83 +61,50 @@ module internal SsmValidation =
     open QuickGraph
     open QuickGraph.Algorithms
 
-    /// Raised when one or more invalid port bindings were encountered.
-    type InvalidBindingsException internal (invalidBindings : PortBinding array) =
-        inherit Exception ("One or more bindings are invalid. A binding can only be established if it does not span more than one level \
-            of the hierarchy. Use the 'InvalidBindings' property to inspect the bindings this exception was raised for.")
+    /// Maps the given information to a <see cref="PortInfo" /> instance.
+    let private toPortInfo (model : Model) (componentName : string) (portName : string) = 
+        let c = model.FindComponent componentName
+        PortInfo (c, CilToSsm.unmapMethod c portName)
 
-        /// Gets the invalid port bindings the exception was raised for.
-        member this.InvalidBindings = invalidBindings
-
-    /// Raised when one or more unbound required ports were found.
-    type UnboundRequiredPortsException internal (unboundPorts : PortInfo array) =
-        inherit Exception ("One or more unbound required ports detected. Use the 'UnboundPorts' property to inspect the required ports \
-            this exception was raised for.")
-
-        /// Gets the unbound required ports the exception was raised for.
-        member this.UnboundPorts = unboundPorts
-
-    /// Raised when one or more required ports have more than one binding.
-    type AmbiguousRequiredPortBindingsException internal (ambiguousBindings : PortBinding array array) =
-        inherit Exception ("Detected an ambiguous binding for one or more required ports. Use the 'AmbiguousBindings' property to inspect \
-            the required ports and bindings this exception was raised for.")
-
-        /// Gets the unbound required ports the exception was raised for.
-        member this.AmbiguousBindings = ambiguousBindings
-
-    /// Maps the given information to a PortInfo instance.
-    let toPortInfo (m : Model) (componentName : string) (portName : string) =
-        () //TODO
+    /// Maps the given information to a <see cref="PortBinding" /> instance.
+    let private toPortBinding (model : Model) (componentName : string) (binding : Binding) =
+        let portBinding = PortBinding (toPortInfo model binding.TargetComp binding.TargetPort, toPortInfo model binding.SourceComp binding.SourcePort)
+        portBinding.Kind <- binding.Kind
+        portBinding.Component <- model.FindComponent componentName
+        portBinding
 
     /// Selects all elements from the given component hierarchy using the given selector function.
-    let rec collectAll selector (c : Comp) = seq {
+    let rec private collect selector (c : Comp) = seq {
         yield! selector c |> Seq.map (fun e -> (c, e))
-        yield! c.Subs |> Seq.collect (collectAll selector)
+        yield! c.Subs |> Seq.collect (collect selector)
     }
 
-    /// Checks for invalid bindings, i.e., bindings spanning more than one level of the component hierarchy.
-    let private invalidBindings (m : Model) (c : Comp) =
-        let rec check (c : Comp) = seq {
-            let invalidComp portComponent = c.Name <> portComponent && c.Subs |> List.exists (fun s -> s.Name = portComponent) |> not
-            yield! c.Bindings 
-                   |> Seq.filter (fun binding -> invalidComp binding.SourceComp || invalidComp binding.TargetComp) 
-                   |> Seq.map (fun binding -> (c, binding))
-            yield! c.Subs |> Seq.map check |> Seq.collect id
-        }
-
-        let bindings = check c |> Seq.toArray
-        if bindings.Length > 0 then
-            //bindings |> Array.map (fun binding -> PortBinding ()) // TODO
-            raise (InvalidBindingsException ([||])) // TODO
-
     /// Checks for unbound or ambiguously bound required ports.
-    let private invalidRequiredPortBindings (m : Model) (c : Comp) =
-        let reqPorts = collectAll (fun c -> c.Methods |> Seq.filter (fun m -> match m.Kind with ReqPort -> true | _ -> false)) c
-        let bindings = collectAll (fun c -> c.Bindings) c
+    let private invalidRequiredPortBindings (model : Model) (c : Comp) =
+        let reqPorts = collect (fun c -> c.Methods |> Seq.filter (fun m -> match m.Kind with ReqPort -> true | _ -> false)) c
+        let bindings = collect (fun c -> c.Bindings) c
 
         let invalid = 
             reqPorts 
-            |> Seq.map (fun (c, p) -> (c, p, bindings |> Seq.filter (fun (_, b) -> b.SourceComp = c.Name && b.SourcePort = p.Name) |> Seq.length))
-            |> Seq.filter (fun (c, p, count) -> count <> 1)
+            |> Seq.map (fun (c, p) -> (c, p, bindings |> Seq.filter (fun (_, b) -> b.TargetComp = c.Name && b.TargetPort = p.Name) |> Seq.toArray))
+            |> Seq.filter (fun (c, p, bindings) -> bindings.Length <> 1)
             |> Seq.toArray
 
-        let unbound = invalid |> Array.filter (fun (c, p, count) -> count = 0)
-        if invalid.Length > 0 then
-            //bindings |> Array.map (fun binding -> PortBinding ()) // TODO
-            raise (UnboundRequiredPortsException ([||])) // TODO
+        let unbound = invalid |> Array.filter (fun (c, p, bindings) -> bindings.Length = 0)
+        if unbound.Length > 0 then
+            raise (UnboundRequiredPortsException (unbound |> Array.map (fun (c, m, _) -> toPortInfo model c.Name m.Name)))
 
-        let ambiguous = invalid |> Array.filter (fun (c, p, count) -> count > 1)
+        let ambiguous = invalid |> Array.filter (fun (c, p, bindings) -> bindings.Length > 1)
         if ambiguous.Length > 0 then
-            //bindings |> Array.map (fun binding -> PortBinding ()) // TODO
-            raise (AmbiguousRequiredPortBindingsException ([||])) // TODO
+            raise (AmbiguousRequiredPortBindingsException (ambiguous |> Array.map (fun (_, _, b) -> b |> Array.map (fun (c, b) -> toPortBinding model c.Name b))))
 
     /// Checks for cyclic control flow, i.e., ports recursively invoking themselves without a delayed binding in between.
-    let private controlFlowCycles (m : Model) (c : Comp) =
+    let private controlFlowCycles (model : Model) (c : Comp) =
         let createVertex = sprintf "%s.%s"
 
         // Compute the edges from the required ports to the bound provided ports
         let required =
-            collectAll (fun c -> c.Bindings) c |> Seq.map (fun (c, binding) -> 
+            collect (fun c -> c.Bindings) c |> Seq.map (fun (c, binding) -> 
                 SEdge<_> (createVertex binding.SourceComp binding.SourcePort, createVertex binding.TargetComp binding.TargetPort)
             )
 
@@ -116,7 +112,6 @@ module internal SsmValidation =
         ()
 
     /// Performs the validation of the given SSM root component and S# model.
-    let validate (m : Model) (c : Comp) =
-        invalidBindings m c
-        invalidRequiredPortBindings m c
-        controlFlowCycles m c
+    let validate (model : Model) (c : Comp) =
+        invalidRequiredPortBindings model c
+        controlFlowCycles model c

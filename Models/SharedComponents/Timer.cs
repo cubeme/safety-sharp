@@ -8,12 +8,15 @@
 	    public Timer(int timeout)
 	    {
 	        _timeout = timeout;
+			BindInstantaneous(RequiredPorts.Test = ProvidedPorts.Reset);
 	    }
 
 		//public bool Triggered = false;
 	    private readonly int _timeout;
 
 		private int _i = 1;
+
+		public extern void Test();
 
 	    [Provided]
 	    public bool Triggered()

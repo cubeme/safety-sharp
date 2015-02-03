@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Field Transformations`` =
+module ``CilToSsm Fields`` =
 
     let private transform componentCode initCode = 
         let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
