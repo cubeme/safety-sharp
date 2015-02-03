@@ -161,7 +161,7 @@ namespace SafetySharp.Compiler.Normalization
 			var castArgument = SyntaxFactory.Argument(castExpression);
 			var arguments = SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(castArgument));
 			var portInfoType = SyntaxFactory.ParseTypeName(typeof(PortInfo).FullName);
-			var methodName = SyntaxFactory.IdentifierName(port.IsRequiredPort ? "RequiredPort" : "ProvidedPort");
+			var methodName = SyntaxFactory.IdentifierName("MethodPort");
 			var memberAccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, portInfoType, methodName);
 			return SyntaxFactory.InvocationExpression(memberAccess, arguments);
 		}

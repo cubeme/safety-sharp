@@ -155,6 +155,13 @@ type internal OneSubcomponent =
     new () = { _component = Unchecked.defaultof<Component> }
     new component' = { _component = component' }
 
+type internal SelfSubcomponent =
+    inherit Component
+
+    val mutable _component : Component
+
+    new () as this = { _component = null } then this._component <- this
+
 type internal TwoSubcomponents =
     inherit Component
 
@@ -172,6 +179,20 @@ type internal ComplexComponent =
 
     new (nested1, nested2, other) =
         { _nested1 = nested1; _nested2 = nested2; _other = other }
+
+type internal ProvidedComponent () =
+    inherit Component ()
+
+    [<Provided>] member this.X (i : int) = i
+    [<Provided>] member this.X (i : int byref) = i
+    [<Provided>] member this.Y () = ()
+
+type internal RequiredComponent () =
+    inherit Component ()
+
+    [<Required>] member this.X (i : int) = i
+    [<Required>] member this.X (i : int byref) = i
+    [<Required>] member this.Y () = ()
 
 type internal EmptyModel () =
     inherit Model ()

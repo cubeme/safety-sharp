@@ -27,9 +27,10 @@ open System.Linq
 open System.Linq.Expressions
 open System.Reflection
 open NUnit.Framework
+open Modeling
+open SafetySharp
 open SafetySharp.Modeling
 open Mono.Cecil
-open Modeling
 
 type private TestEnum =
     | Default = 0
@@ -61,7 +62,7 @@ module ``SetInitialValues method`` =
         let component' = FieldComponent<int> ()
         component'.FinalizeMetadata ()
 
-        raises<InvalidOperationException> (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", 1) |> ignore)
+        raisesInvalidOpException (fun () -> component'.SetInitialValues (createFieldExpression<int> component' "_field", 1) |> ignore)
 
     [<Test>]
     let ``throws when field is constant`` () =
@@ -110,7 +111,7 @@ module ``FinalizeMetadata method`` =
         let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
 
-        raises<InvalidOperationException> (fun () -> component'.FinalizeMetadata () |> ignore)
+        raisesInvalidOpException (fun () -> component'.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``updates the IsMetadataFinalized property`` () =
@@ -124,10 +125,10 @@ module ``FinalizeMetadata method`` =
 module ``GetInitialValuesOfField method`` =
     let private getFieldDef field (declaringType : Type) = 
         let fieldInfo = declaringType.GetField(field, BindingFlags.NonPublic ||| BindingFlags.Instance)
-        if fieldInfo = null then invalidOp (sprintf "Unable to find field '%s' in '%s'." field (declaringType.FullName))
+        if fieldInfo = null then invalidOp "Unable to find field '%s' in '%s'." field (declaringType.FullName)
         let assemblyDef = AssemblyDefinition.ReadAssembly (declaringType.Assembly.Location)
         let fieldDef = (assemblyDef.MainModule.Import fieldInfo).Resolve ()
-        if fieldDef = null then invalidOp (sprintf "Unable to find field '%s' in '%s' in assembly metadata." field (declaringType.FullName))
+        if fieldDef = null then invalidOp "Unable to find field '%s' in '%s' in assembly metadata." field (declaringType.FullName)
         fieldDef
 
     let private getTypedInitialValues (component' : Component) field (declaringType : Type) =
@@ -155,7 +156,7 @@ module ``GetInitialValuesOfField method`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = FieldComponent<int> 3
-        raises<InvalidOperationException> (fun () -> getInitialValues component' "_field" |> ignore)
+        raisesInvalidOpException (fun () -> getInitialValues component' "_field" |> ignore)
 
     [<Test>]
     let ``throws for subcomponent field`` () =
@@ -277,64 +278,232 @@ module ``GetInitialValuesOfField method`` =
         getTypedInitialValues component' "f" derivedType =? [false]
 
 [<TestFixture>]
-module ``GetSubcomponent method`` = 
+module ``RequiredPortInfo property`` =
     [<Test>]
-    let ``throws when null is passed`` () =
-        let component' = FieldComponent<int> ()
-        component'.FinalizeMetadata ()
-
-        raisesArgumentNullException "subcomponentName" (fun () -> component'.GetSubcomponent null |> ignore)
+    let ``throws when metadata has not yet been finalized`` () =
+        let component' = OneSubcomponent (FieldComponent<int> 3)
+        raisesInvalidOpException (fun () -> component'.RequiredPortInfo |> ignore)
 
     [<Test>]
-    let ``throws when empty string is passed`` () =
-        let component' = FieldComponent<int> ()
+    let ``returns empty list for component without required ports`` () =
+        let component' = EmptyComponent ()
         component'.FinalizeMetadata ()
 
-        raisesArgumentException "subcomponentName" (fun () -> component'.GetSubcomponent "" |> ignore)
+        component'.RequiredPortInfo =? []
+
+    [<Test>]
+    let ``ignores provided ports`` () =
+        let component' = ProvidedComponent ()
+        component'.FinalizeMetadata ()
+
+        component'.RequiredPortInfo =? []
+
+    [<Test>]
+    let ``returns required ports`` () =
+        let component' = RequiredComponent ()
+        component'.FinalizeMetadata ()
+
+        component'.RequiredPortInfo.Length =? 3
+        component'.RequiredPortInfo.[0].Name =? "X"
+        component'.RequiredPortInfo.[0].ReturnType.FullName =? "System.Int32"
+        component'.RequiredPortInfo.[0].GetParameters().Length =? 1
+        component'.RequiredPortInfo.[0].GetParameters().[0].ParameterType.FullName =? "System.Int32"
+        component'.RequiredPortInfo.[0].GetParameters().[0].ParameterType.IsByRef =? false
+        component'.RequiredPortInfo.[1].Name =? "X"
+        component'.RequiredPortInfo.[1].ReturnType.FullName =? "System.Int32"
+        component'.RequiredPortInfo.[1].GetParameters().Length =? 1
+        component'.RequiredPortInfo.[1].GetParameters().[0].ParameterType.FullName =? "System.Int32&"
+        component'.RequiredPortInfo.[1].GetParameters().[0].ParameterType.IsByRef =? true
+        component'.RequiredPortInfo.[2].Name =? "Y"
+        component'.RequiredPortInfo.[2].ReturnType.FullName =? "System.Void"
+        component'.RequiredPortInfo.[2].GetParameters().Length =? 0
+
+    [<Test>]
+    let ``returns inherited private required ports`` () =
+        let csharpCode = "class X : Component { [Required] void M() {} } class Y : X { [Required] int M() { return 0; } }"
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let baseType = assembly.GetType "X"
+        let derivedType = assembly.GetType "Y"
+        let component' = Activator.CreateInstance derivedType :?> Component
+        component'.FinalizeMetadata ()
+
+        component'.RequiredPortInfo.Length =? 2
+        component'.RequiredPortInfo.[0].DeclaringType =? baseType
+        component'.RequiredPortInfo.[0].Name =? "M"
+        component'.RequiredPortInfo.[0].ReturnType.FullName =? "System.Void"
+        component'.RequiredPortInfo.[1].DeclaringType =? derivedType
+        component'.RequiredPortInfo.[1].Name =? "M"
+        component'.RequiredPortInfo.[1].ReturnType.FullName =? "System.Int32"
+
+[<TestFixture>]
+module ``ProvidedPortInfo property`` =
+    [<Test>]
+    let ``throws when metadata has not yet been finalized`` () =
+        let component' = OneSubcomponent (FieldComponent<int> 3)
+        raisesInvalidOpException (fun () -> component'.ProvidedPortInfo |> ignore)
+
+    [<Test>]
+    let ``returns empty list for component without provided ports`` () =
+        let component' = EmptyComponent ()
+        component'.FinalizeMetadata ()
+
+        component'.ProvidedPortInfo =? []
+
+    [<Test>]
+    let ``ignores required ports`` () =
+        let component' = RequiredComponent ()
+        component'.FinalizeMetadata ()
+
+        component'.ProvidedPortInfo =? []
+
+    [<Test>]
+    let ``returns provided ports`` () =
+        let component' = ProvidedComponent ()
+        component'.FinalizeMetadata ()
+
+        component'.ProvidedPortInfo.Length =? 3
+        component'.ProvidedPortInfo.[0].Name =? "X"
+        component'.ProvidedPortInfo.[0].ReturnType.FullName =? "System.Int32"
+        component'.ProvidedPortInfo.[0].GetParameters().Length =? 1
+        component'.ProvidedPortInfo.[0].GetParameters().[0].ParameterType.FullName =? "System.Int32"
+        component'.ProvidedPortInfo.[0].GetParameters().[0].ParameterType.IsByRef =? false
+        component'.ProvidedPortInfo.[1].Name =? "X"
+        component'.ProvidedPortInfo.[1].ReturnType.FullName =? "System.Int32"
+        component'.ProvidedPortInfo.[1].GetParameters().Length =? 1
+        component'.ProvidedPortInfo.[1].GetParameters().[0].ParameterType.FullName =? "System.Int32&"
+        component'.ProvidedPortInfo.[1].GetParameters().[0].ParameterType.IsByRef =? true
+        component'.ProvidedPortInfo.[2].Name =? "Y"
+        component'.ProvidedPortInfo.[2].ReturnType.FullName =? "System.Void"
+        component'.ProvidedPortInfo.[2].GetParameters().Length =? 0
+
+    [<Test>]
+    let ``returns inherited private provided ports`` () =
+        let csharpCode = "class X : Component { [Provided] void M() {} } class Y : X { [Provided] int M() { return 0; } }"
+        let compilation = TestCompilation csharpCode
+        let assembly = compilation.Compile ()
+        let baseType = assembly.GetType "X"
+        let derivedType = assembly.GetType "Y"
+        let component' = Activator.CreateInstance derivedType :?> Component
+        component'.FinalizeMetadata ()
+
+        component'.ProvidedPortInfo.Length =? 2
+        component'.ProvidedPortInfo.[0].DeclaringType =? baseType
+        component'.ProvidedPortInfo.[0].Name =? "M"
+        component'.ProvidedPortInfo.[0].ReturnType.FullName =? "System.Void"
+        component'.ProvidedPortInfo.[1].DeclaringType =? derivedType
+        component'.ProvidedPortInfo.[1].Name =? "M"
+        component'.ProvidedPortInfo.[1].ReturnType.FullName =? "System.Int32"
+
+[<TestFixture>]
+module ``Bindings property`` =
+    let mutable component' = (null :> Component)
+
+    let private bindings csharpCode =
+        let csharpCode = sprintf "class TestModel : Model { public TestModel() { SetRootComponents(new X()); } } %s" csharpCode
+        let model = TestCompilation.CreateModel csharpCode
+        model.FinalizeMetadata ()
+        component' <- model.Components.[0]
 
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
-        let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> (fun () -> component'.GetSubcomponent (fsharpFieldName "_field") |> ignore)
+        let component' = OneSubcomponent (FieldComponent<int> 3)
+        raisesInvalidOpException (fun () -> component'.Bindings |> ignore)
 
     [<Test>]
-    let ``throws for non-component field`` () =
-        let component' = FieldComponent<int> ()
-        component'.FinalizeMetadata ()
-
-        raisesArgumentException "subcomponentName" (fun () -> component'.GetSubcomponent (fsharpFieldName "_field") |> ignore)
+    let ``returns empty list for component without bindings`` () =
+        bindings "class X : Component { void M() {} extern void N(); }"
+        component'.Bindings =? []
 
     [<Test>]
-    let ``throws for unknown field`` () =
-        let component' = FieldComponent<int> ()
-        component'.FinalizeMetadata ()
-
-        raisesArgumentException "subcomponentName" (fun () -> component'.GetSubcomponent (fsharpFieldName "abcd") |> ignore)
-
-    [<Test>]
-    let ``returns single subcomponent`` () =
-        let subcomponent = FieldComponent<int> ()
-        let component' = OneSubcomponent (subcomponent)
-        component'.FinalizeMetadata ()
-
-        component'.GetSubcomponent (fsharpSubcomponentName "_component" 0) =? (subcomponent :> Component)
+    let ``returns delayed port binding of a component`` () =
+        bindings "class X : Component { void M() {} extern void N(); public X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }"
+        component'.Bindings.Length =? 1
+        component'.Bindings.[0].Kind =? BindingKind.Delayed
+        component'.Bindings.[0].Port1.IsRequiredPort =? true
+        component'.Bindings.[0].Port1.Component =? (component' :> obj)
+        component'.Bindings.[0].Port1.Method.Name =? "N"
+        component'.Bindings.[0].Port2.IsRequiredPort =? false
+        component'.Bindings.[0].Port2.Component =? (component' :> obj)
+        component'.Bindings.[0].Port2.Method.Name =? "M"
 
     [<Test>]
-    let ``returns multiple subcomponents`` () =
-        let subcomponent1 = FieldComponent<int> ()
-        let subcomponent2 = FieldComponent<bool> ()
-        let component' = TwoSubcomponents (subcomponent1, subcomponent2)
-        component'.FinalizeMetadata ()
+    let ``returns instantaneous port binding of a component`` () =
+        bindings "class X : Component { void M() {} extern void N(); public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }"
+        component'.Bindings.Length =? 1
+        component'.Bindings.[0].Kind =? BindingKind.Instantaneous
+        component'.Bindings.[0].Port1.IsRequiredPort =? true
+        component'.Bindings.[0].Port1.Component =? (component' :> obj)
+        component'.Bindings.[0].Port1.Method.Name =? "N"
+        component'.Bindings.[0].Port2.IsRequiredPort =? false
+        component'.Bindings.[0].Port2.Component =? (component' :> obj)
+        component'.Bindings.[0].Port2.Method.Name =? "M"
 
-        component'.GetSubcomponent(fsharpSubcomponentName "_component1" 0) =? (subcomponent1 :> Component)
-        component'.GetSubcomponent(fsharpSubcomponentName "_component2" 1) =? (subcomponent2 :> Component)
+    [<Test>]
+    let ``returns multiple port binding between subcomponents`` () =
+        bindings "class Y : Component { public void M() {} public extern void N(); } class X : Component { Y y1 = new Y(); Y y2 = new Y(); public X() { BindInstantaneous(y1.RequiredPorts.N = y2.ProvidedPorts.M); BindDelayed(y2.RequiredPorts.N = y1.ProvidedPorts.M); } }"
+        component'.Bindings.Length =? 2
+        component'.Bindings.[0].Kind =? BindingKind.Instantaneous
+        component'.Bindings.[0].Port1.IsRequiredPort =? true
+        component'.Bindings.[0].Port1.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].Port1.Method.Name =? "N"
+        component'.Bindings.[0].Port2.IsRequiredPort =? false
+        component'.Bindings.[0].Port2.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[0].Port2.Method.Name =? "M"
+        component'.Bindings.[1].Kind =? BindingKind.Delayed
+        component'.Bindings.[1].Port1.IsRequiredPort =? true
+        component'.Bindings.[1].Port1.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[1].Port1.Method.Name =? "N"
+        component'.Bindings.[1].Port2.IsRequiredPort =? false
+        component'.Bindings.[1].Port2.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[1].Port2.Method.Name =? "M"
+
+    [<Test>]
+    let ``returns inherited port binding between subcomponents`` () =
+        bindings "class Y : Component { public void M() {} public extern void N(); } class Z : Component { public Y y = new Y(); public Z() { BindDelayed(y.RequiredPorts.N = y.ProvidedPorts.M); } } class X : Z { public Y y2 = new Y(); public X() { BindDelayed(y.RequiredPorts.N = y2.ProvidedPorts.M); } }"
+        component'.Bindings.Length =? 2
+        component'.Bindings.[0].Kind =? BindingKind.Delayed
+        component'.Bindings.[0].Port1.IsRequiredPort =? true
+        component'.Bindings.[0].Port1.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].Port1.Method.Name =? "N"
+        component'.Bindings.[0].Port2.IsRequiredPort =? false
+        component'.Bindings.[0].Port2.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].Port2.Method.Name =? "M"
+        component'.Bindings.[1].Kind =? BindingKind.Delayed
+        component'.Bindings.[1].Port1.IsRequiredPort =? true
+        component'.Bindings.[1].Port1.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[1].Port1.Method.Name =? "N"
+        component'.Bindings.[1].Port2.IsRequiredPort =? false
+        component'.Bindings.[1].Port2.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[1].Port2.Method.Name =? "M"
+
+[<TestFixture>]
+module ``Parent property`` =
+    [<Test>]
+    let ``throws when metadata has not yet been finalized`` () =
+        let component' = OneSubcomponent (FieldComponent<int> 3)
+        raisesInvalidOpException (fun () -> component'.Parent |> ignore)
+
+    [<Test>]
+    let ``returns null for root of hierarchy`` () =
+        let component' = FieldComponent<int> 3
+        component'.FinalizeMetadata ()
+        component'.Parent =? null
+
+    [<Test>]
+    let ``returns root for subcomponent`` () =
+        let component1 = FieldComponent<int> 3
+        let component2 = OneSubcomponent component1
+        component2.FinalizeMetadata ()
+        component2.Parent =? null
+        component1.Parent =? (component2 :> Component)
 
 [<TestFixture>]
 module ``Subcomponents property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let component' = OneSubcomponent (FieldComponent<int> 3)
-        raises<InvalidOperationException> (fun () -> component'.Subcomponents |> ignore)
+        raisesInvalidOpException (fun () -> component'.Subcomponents |> ignore)
 
     [<Test>]
     let ``ignores non-component fields`` () =
@@ -379,10 +548,10 @@ module ``Subcomponents property`` =
         let subcomponent1 = FieldComponent<int> 3
         let subcomponent2 = FieldComponent<bool> true
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
-        component'.FinalizeMetadata "Root"
+        component'.FinalizeMetadata (null, "Root")
 
-        component'.Subcomponents.[0].Name =? fsharpSubcomponentName "Root._component1" 0
-        component'.Subcomponents.[1].Name =? fsharpSubcomponentName "Root._component2" 1
+        component'.Subcomponents.[0].Name =? fsharpSubcomponentName "Root@0._component1" 0
+        component'.Subcomponents.[1].Name =? fsharpSubcomponentName "Root@0._component2" 1
 
     [<Test>]
     let ``returns all subcomponents of the entire type hierarchy`` () =
@@ -391,12 +560,12 @@ module ``Subcomponents property`` =
         let assembly = compilation.Compile ()
         let derivedType = assembly.GetType "Y"
         let component' = Activator.CreateInstance derivedType :?> Component
-        component'.FinalizeMetadata "Root"
+        component'.FinalizeMetadata (null, "Root")
 
         component'.Subcomponents.Length =? 3
-        component'.Subcomponents.[0].Name =? "Root.s@0"
-        component'.Subcomponents.[1].Name =? "Root.s1@1"
-        component'.Subcomponents.[2].Name =? "Root.s2@2"
+        component'.Subcomponents.[0].Name =? "Root@0.s@0"
+        component'.Subcomponents.[1].Name =? "Root@0.s1@1"
+        component'.Subcomponents.[2].Name =? "Root@0.s2@2"
 
     [<Test>]
     let ``all returned subcomponents have unique names`` () =
@@ -405,11 +574,11 @@ module ``Subcomponents property`` =
         let assembly = compilation.Compile ()
         let derivedType = assembly.GetType "Y"
         let component' = Activator.CreateInstance derivedType :?> Component
-        component'.FinalizeMetadata "Root"
+        component'.FinalizeMetadata (null, "Root")
 
         component'.Subcomponents.Length =? 2
-        component'.Subcomponents.[0].Name =? "Root.s@0"
-        component'.Subcomponents.[1].Name =? "Root.s@1"
+        component'.Subcomponents.[0].Name =? "Root@0.s@0"
+        component'.Subcomponents.[1].Name =? "Root@0.s@1"
 
 [<TestFixture>]
 module ``Access method`` =
@@ -426,25 +595,25 @@ module ``Access method`` =
     [<Test>]
     let ``throws when no member with the given name exists`` () =
         let component' = EmptyComponent ()
-        raises<InvalidOperationException> (fun () -> component'.Access<bool> "xyz" |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<bool> "xyz" |> ignore)
 
     [<Test>]
     let ``throws when field with given name exists but types differ`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> (fun () -> component'.Access<bool> (fsharpFieldName "_field") |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<bool> (fsharpFieldName "_field") |> ignore)
 
         let component' = FieldComponent<int, bool> ()
-        raises<InvalidOperationException> (fun () -> component'.Access<bool> (fsharpFieldName "_field1") |> ignore)
-        raises<InvalidOperationException> (fun () -> component'.Access<int> (fsharpFieldName "_field2") |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<bool> (fsharpFieldName "_field1") |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<int> (fsharpFieldName "_field2") |> ignore)
 
     [<Test>]
     let ``throws when property with given name exists but types differ`` () =
         let component' = FieldComponent<int> ()
-        raises<InvalidOperationException> (fun () -> component'.Access<bool> "_field" |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<bool> "_field" |> ignore)
 
         let component' = FieldComponent<int, bool> ()
-        raises<InvalidOperationException> (fun () -> component'.Access<bool> "_field1" |> ignore)
-        raises<InvalidOperationException> (fun () -> component'.Access<int> "_field2" |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<bool> "_field1" |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<int> "_field2" |> ignore)
 
     type SetterOnlyComponent () =
         inherit Component ()
@@ -453,7 +622,7 @@ module ``Access method`` =
     [<Test>]
     let ``throws when property has no getter`` () =
         let component' = SetterOnlyComponent ()
-        raises<InvalidOperationException> (fun () -> component'.Access<int> "X" |> ignore)
+        raisesInvalidOpException (fun () -> component'.Access<int> "X" |> ignore)
 
     [<Test>]
     let ``gets field value when integer field with given name exists`` () =

@@ -219,14 +219,3 @@ let (<>?) actual expected =
 /// Normalizes all new lines to '\n' only.
 let normalizeNewLines (str : string) =
     str.Replace ("\r", String.Empty)
-
-/// Removes all previously created temporary assemblies and .pdb files from the working directory. Unfortunately, we cannot remove
-/// those during TearDown, as the assemblies are still loaded into the process and therefore cannot be deleted.
-//[<SetUpFixture>]
-//type TestSetup () =
-//    [<SetUp>]
-//    member this.RemoveTemporaryAssemblies () =
-//        let directory = DirectoryInfo (Environment.CurrentDirectory)
-//        directory.GetFiles()
-//        |> Seq.filter (fun f -> (f.Extension = ".dll" || f.Extension = ".pdb" || f.Extension = ".tmp") && f.Name.StartsWith("tmp_"))
-//        |> Seq.iter (fun f ->  File.Delete (f.FullName))

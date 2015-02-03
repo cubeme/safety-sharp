@@ -47,12 +47,12 @@ module ``CilToSsm Multiple Assemblies`` =
         transform "public class X : Component { public void M() {} }" "class Y : Component { X x = new X(); void N() { x.M(); }}" "new Y()" =?
             [
                 {
-                    Name = "Root0"
+                    Name = "Root@0"
                     Fields = []
                     Subs = 
                         [
                             {
-                                Name = "Root0.x@0"
+                                Name = "Root@0.x@0"
                                 Fields = []
                                 Subs = []
                                 Methods = 
@@ -87,7 +87,7 @@ module ``CilToSsm Multiple Assemblies`` =
         transform "public class X : Component { protected bool b; public void M() {} }" "class Y : X { void N() { M(); b = true; }}" "new Y()" =?
             [
                 {
-                    Name = "Root0"
+                    Name = "Root@0"
                     Fields = [{ Var = Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType); Init = [BoolVal false] }]
                     Subs = []
                     Methods =

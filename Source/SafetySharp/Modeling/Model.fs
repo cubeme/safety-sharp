@@ -35,7 +35,24 @@ type SharedComponentsException internal (components : Component list) =
     inherit Exception ("One or more components have been found in multiple locations of the component tree.")
 
     /// Gets the component instances that were found in multiple locations of a component tree.
-    member this.Components = components
+    member this.Components = components |> List.toArray
+
+/// Provides information about an unbound port.
+type UnboundPort = {
+    Component : Component
+    Port      : MethodInfo
+}
+  with override this.ToString () = sprintf "Component '%s': '%s'" this.Component.UnmangledName (this.Port.ToString ())
+
+/// Raised when one or more unbound required ports are found.
+type UnboundRequiredPortsException internal (unboundPorts : UnboundPort array) =
+    inherit Exception (
+        let info = String.Join ("\n", unboundPorts)
+        sprintf "One or more unbound required ports have been found:\n%s\nMore information is available in the UnboundPorts property." info
+    )
+
+    /// Gets the unbound ports and the component instance that declares the port.
+    member this.UnboundPorts = unboundPorts
 
 /// Represents a base class for all models.
 [<AbstractClass; AllowNullLiteral>]
@@ -52,10 +69,11 @@ type Model () =
     let requiresNotSealed () = invalidCall isSealed "Modifications of the model metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not isSealed) "Cannot access the model metadata as it might not yet be complete."
 
-    let rec getAllComponents (component' : Component) =
+    let rec getAllComponents (checkedComponents : HashSet<Component>) (component' : Component) =
         seq {
             yield component'
-            yield! component'.Subcomponents |> Seq.collect getAllComponents
+            if checkedComponents.Add component' then
+                yield! component'.Subcomponents |> Seq.collect (getAllComponents checkedComponents)
         }
 
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
@@ -68,7 +86,7 @@ type Model () =
     /// Sets the <paramref name="rootComponents" /> of the model.
     member this.SetRootComponents ([<ParamArray>] rootComponents : Component array) =
         nullArg rootComponents "rootComponents"
-        invalidArg (rootComponents.Length <= 0) "rootComponents" "There must be at least one partition root."
+        invalidArg (rootComponents.Length <= 0) "rootComponents" "There must be at least one root component."
         invalidCall (components <> []) "This method can only be called once on any given model instance."
         requiresNotSealed ()
 
@@ -76,12 +94,13 @@ type Model () =
         rootComponents |> Seq.iteri (fun index component' -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata ("Root" + index.ToString())
+                component'.FinalizeMetadata (null, "Root", index)
         )
 
-        // Store the partition roots and collect all components of the model
+        // Store the root components and collect all components of the model
         roots <- rootComponents |> List.ofSeq
-        components <- roots |> Seq.collect getAllComponents |> List.ofSeq
+        let set = HashSet<Component> ()
+        components <- roots |> Seq.collect (getAllComponents set) |> List.ofSeq
 
         // Ensure that there are no shared components
         let sharedComponents =
@@ -96,7 +115,7 @@ type Model () =
 
     /// Finalizes the models's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata () =
-        invalidCall (components = []) "No partition roots have been set for the model."
+        invalidCall (components = []) "No root components have been set for the model."
         requiresNotSealed ()
 
         isSealed <- true
@@ -116,3 +135,17 @@ type Model () =
         with get () = 
             requiresIsSealed ()
             components
+
+    /// Checks whether all required ports of all components have been bound.
+    member internal this.CheckAllRequiredPortsBound () =
+        requiresIsSealed ()
+
+        let requiredPorts = components |> Seq.collect (fun c -> c.RequiredPortInfo |> Seq.map (fun p -> { Component = c; Port = p }))
+        let bindings = components |> List.collect (fun c -> c.Bindings)
+        let unboundPorts = 
+            requiredPorts 
+            |> Seq.where (fun unbound -> bindings |> Seq.exists (fun binding -> binding.Port1.Method = unbound.Port) |> not)
+            |> Seq.toArray
+
+        if unboundPorts.Length > 0 then
+            raise (UnboundRequiredPortsException unboundPorts)

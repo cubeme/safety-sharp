@@ -41,13 +41,11 @@ type IComponent =
     /// Updates the internal state of the component.
     abstract member Update : unit -> unit
 
-    /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
-    /// ports declared by the component.
+    /// Gets all required ports declared by the component.
     [<Dynamic>]
     abstract member RequiredPorts : obj
 
-    /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
-    /// ports declared by the component.
+    /// Gets all provided ports declared by the component.
     [<Dynamic>]
     abstract member ProvidedPorts : obj
 
@@ -116,8 +114,13 @@ type Component () =
 
     let mutable isSealed = false
     let mutable name = String.Empty
+    let mutable slot = 0
+    let mutable (parent : Component) = null
     let mutable (subcomponents : Component list) = []
+    let mutable (requiredPorts : MethodInfo list) = []
+    let mutable (providedPorts : MethodInfo list) = []
     let fields = Dictionary<FieldInfo, obj list> ()
+    let bindings = List<PortBinding> ()
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
@@ -126,13 +129,11 @@ type Component () =
         /// Updates the internal state of the component.
         member this.Update () = this.Update ()
 
-        /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
-        /// ports declared by the component.
+        /// Gets all required ports declared by the component.
         [<Dynamic>]
         member this.RequiredPorts with get () = this.RequiredPorts
 
-        /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
-        /// ports declared by the component.
+        /// Gets all provided ports declared by the component.
         [<Dynamic>]
         member this.ProvidedPorts with get () = this.ProvidedPorts
 
@@ -140,13 +141,11 @@ type Component () =
     abstract member Update : unit -> unit
     default this.Update () = ()
 
-    /// Gets a collection of <see cref="RequiredPortReference"/>s that contains references to all required 
-    /// ports declared by the component.
+    /// Gets all required ports declared by the component.
     [<Dynamic>]
     member this.RequiredPorts with get () = invalidOp "This method cannot be called outside of a port binding expression."
 
-    /// Gets a collection of <see cref="ProvidedPortReference"/>s that contains references to all provided 
-    /// ports declared by the component.
+    /// Gets all provided ports declared by the component.
     [<Dynamic>]
     member this.ProvidedPorts with get() = invalidOp "This method cannot be called outside of a port binding expression."
 
@@ -173,11 +172,15 @@ type Component () =
 
     /// Establishes the given port binding in a non-delayed fashion; that is, invocations are executed instantly.
     member this.BindInstantaneous (binding : PortBinding) =
-        () // TODO
+        nullArg binding "binding"
+        binding.Kind <- BindingKind.Instantaneous
+        bindings.Add binding
 
     /// Establishes the given port binding in a delayed fashion; that is, invocations are delayed by one system step.
     member this.BindDelayed (binding : PortBinding) =
-        () // TODO
+        nullArg binding "binding"
+        binding.Kind <- BindingKind.Delayed
+        bindings.Add binding
 
     /// <summary>
     ///     Sets the initial values of a field of the component instance.
@@ -219,13 +222,15 @@ type Component () =
         | _ -> invalidArg true "field" "Expected a reference to a field of the component."
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
-    member internal this.FinalizeMetadata (?componentName : string) =
+    member internal this.FinalizeMetadata (?parentComponent : Component, ?componentName : string, ?componentSlot : int) =
         requiresNotSealed ()
 
         isSealed <- true
+        parent <- defaultArg parentComponent null
         name <- defaultArg componentName String.Empty
+        slot <- defaultArg componentSlot 0
 
-        Reflection.getFields (this.GetType ())
+        Reflection.getFields (this.GetType ()) typeof<Component>
         |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
         |> Seq.iter (fun field ->
             let value =
@@ -236,8 +241,11 @@ type Component () =
             fields.Add (field, [value])
         )
 
+        requiredPorts <- Reflection.getMethods (this.GetType ()) typeof<Component> |> Seq.where Reflection.hasAttribute<RequiredAttribute> |> Seq.toList
+        providedPorts <- Reflection.getMethods (this.GetType ()) typeof<Component> |> Seq.where Reflection.hasAttribute<ProvidedAttribute> |> Seq.toList
+
         let subcomponentMetadata = 
-            Reflection.getFields (this.GetType ())
+            Reflection.getFields (this.GetType ()) typeof<Component>
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
             |> Seq.map (fun field -> (field, field.GetValue(this)))
             |> Seq.where (fun (field, component') -> component' <> null)
@@ -249,7 +257,7 @@ type Component () =
         |> List.iteri (fun idx (field, component') -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata (sprintf "%s.%s@%d" name field.Name idx)
+                component'.FinalizeMetadata (this, field.Name, idx)
         )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -268,26 +276,50 @@ type Component () =
             invalidArg true "field" "Unable to retrieve initial values for field '%s'." field.FullName
             [] // Required, but cannot be reached
 
-    /// Gets the subcomponent with the given name.
-    member internal this.GetSubcomponent subcomponentName =
-        nullOrWhitespaceArg subcomponentName "subcomponentName"
-        requiresIsSealed ()
-
-        let subcomponent = subcomponents |> List.tryFind (fun component' -> component'.Name.EndsWith subcomponentName)
-        match subcomponent with
-        | Some subcomponent -> subcomponent
-        | None ->
-            invalidArg true "subcomponentName" "A subcomponent with name '%s' does not exist." subcomponentName
-            subcomponent.Value // Required, but cannot be reached
-
-    /// Gets the name of the component instance. Returns the empty string if no component name could be determined.
+    /// Gets the unique name of the component instance. Returns the empty string if no component name could be determined.
     member internal this.Name
         with get () : string = 
             requiresIsSealed ()
-            name
+            if this.Parent <> null then
+                sprintf "%s.%s@%d" (this.Parent.Name) name slot
+            else
+                sprintf "%s@%d" name slot
+
+    /// Gets the unmangled, non-unique name of the component instance. Returns the empty string if no component name could be determined.
+    member internal this.UnmangledName
+        with get () : string = 
+            requiresIsSealed ()
+            if this.Parent <> null then
+                sprintf "%s.%s" (this.Parent.UnmangledName) name
+            else
+                name
 
     /// Gets the <see cref="Component" /> instances that are direct subcomponents of the current instance.
     member internal this.Subcomponents 
         with get () = 
             requiresIsSealed ()
             subcomponents
+
+    /// Gets the <see cref="MethodInfo" /> instances representing the component's required ports.
+    member internal this.RequiredPortInfo
+        with get () = 
+            requiresIsSealed()
+            requiredPorts
+
+    /// Gets the <see cref="MethodInfo" /> instances representing the component's provided ports.
+    member internal this.ProvidedPortInfo
+        with get () = 
+            requiresIsSealed()
+            providedPorts
+
+    /// Gets the port bindings of the component.
+    member internal this.Bindings
+        with get () =
+            requiresIsSealed ()
+            bindings |> Seq.toList
+
+    /// Gets the parent component of the component within the hierarchy or null if the component represents the root of the hierarchy.
+    member internal this.Parent 
+        with get() : Component =
+            requiresIsSealed ()
+            parent

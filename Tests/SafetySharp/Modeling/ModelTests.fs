@@ -37,12 +37,12 @@ module ``FinalizeMetadata method`` =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
 
-        raises<InvalidOperationException> (fun () -> model.FinalizeMetadata () |> ignore)
+        raisesInvalidOpException (fun () -> model.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``throws when no root has been set`` () =
         let model = EmptyModel ()
-        raises<InvalidOperationException> (fun () -> model.FinalizeMetadata () |> ignore)
+        raisesInvalidOpException (fun () -> model.FinalizeMetadata () |> ignore)
 
     [<Test>]
     let ``updates the IsMetadataFinalized property`` () =
@@ -71,19 +71,19 @@ module ``SetRootComponents method`` =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
 
-        raises<InvalidOperationException> (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
+        raisesInvalidOpException (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
     let ``throws when method is called twice on same object`` () =
         let model = EmptyModel ()
         model.SetRootComponents [| EmptyComponent () :> Component |]
 
-        raises<InvalidOperationException> (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
+        raisesInvalidOpException (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
     let ``throws when component is shared within the same root at the same level`` () =
         let component1 = EmptyComponent ()
-        raisesSharedComponentsException (fun () -> TestModel (component1, component1) |> ignore) [component1]
+        raisesSharedComponentsException (fun () -> TestModel (component1, component1) |> ignore) [|component1|]
 
     [<Test>]
     let ``throws when component is shared within the same root at different levels`` () =
@@ -93,35 +93,40 @@ module ``SetRootComponents method`` =
         let component4 = ComplexComponent (component1, component3, obj ())
         let component5 = ComplexComponent (component4, component2, obj ())
 
-        raisesSharedComponentsException (fun () -> TestModel component5 |> ignore) [component2]
+        raisesSharedComponentsException (fun () -> TestModel component5 |> ignore) [|component2|]
 
     [<Test>]
     let ``throws when component is shared between different roots at different levels`` () =
-        let component1 =  EmptyComponent ()
-        let component2 =  EmptyComponent ()
-        let component3 =  OneSubcomponent component2
-        let component4 =  ComplexComponent (component1, component3, obj ())
-        let component5 =  EmptyComponent ()
-        let component6 =  ComplexComponent (component5, component2, obj ())
+        let component1 = EmptyComponent ()
+        let component2 = EmptyComponent ()
+        let component3 = OneSubcomponent component2
+        let component4 = ComplexComponent (component1, component3, obj ())
+        let component5 = EmptyComponent ()
+        let component6 = ComplexComponent (component5, component2, obj ())
 
-        raisesSharedComponentsException (fun () -> TestModel (component4, component6) |> ignore) [component2]
+        raisesSharedComponentsException (fun () -> TestModel (component4, component6) |> ignore) [|component2|]
 
     [<Test>]
     let ``throws when multiple components are shared between different roots at different levels`` () =
-        let component1 =  EmptyComponent ()
-        let component2 =  EmptyComponent ()
-        let component3 =  OneSubcomponent component2
-        let component4 =  ComplexComponent (component1, component3, obj ())
-        let component5 =  ComplexComponent (component1, component2, obj ())
+        let component1 = EmptyComponent ()
+        let component2 = EmptyComponent ()
+        let component3 = OneSubcomponent component2
+        let component4 = ComplexComponent (component1, component3, obj ())
+        let component5 = ComplexComponent (component1, component2, obj ())
 
-        raisesSharedComponentsException (fun () -> TestModel (component4, component5) |> ignore) [component1; component2]
+        raisesSharedComponentsException (fun () -> TestModel (component4, component5) |> ignore) [|component1; component2|]
+
+    [<Test>]
+    let ``throws for cyclic component graph instead of stack overflowing`` () =
+        let component' = SelfSubcomponent ()
+        raisesSharedComponentsException (fun () -> TestModel (component') |> ignore) [|component'|]
 
 [<TestFixture>]
 module ``Components property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let model = TestModel (EmptyComponent ())
-        raises<InvalidOperationException> (fun () -> model.Components |> ignore)
+        raisesInvalidOpException (fun () -> model.Components |> ignore)
 
     [<Test>]
     let ``does not contain non-component null-objects`` () =
@@ -217,8 +222,8 @@ module ``Components property`` =
         model.FinalizeMetadata ()
 
         let name root = function
-            | [] -> sprintf "Root%i" root
-            | fields -> sprintf "Root%i.%s" root <| String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
+            | [] -> sprintf "Root@%i" root
+            | fields -> sprintf "Root@%i.%s" root <| String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
         
         model.Components |> List.map (fun component' -> component'.Name) =?
         [name 0 []; name 0 [("_component", 0)]; name 1 []; name 1 [("_component1", 0)]; name 1 [("_component2", 1)]; name 1 [("_component2", 1); ("_component", 0)]] 
@@ -228,7 +233,7 @@ module ``Roots property`` =
     [<Test>]
     let ``throws when metadata has not yet been finalized`` () =
         let model = TestModel (EmptyComponent ())
-        raises<InvalidOperationException> (fun () -> model.Roots |> ignore)
+        raisesInvalidOpException (fun () -> model.Roots |> ignore)
 
     [<Test>]
     let ``contains single top-level component`` () =
@@ -261,10 +266,49 @@ module ``Roots property`` =
     let ``contained roots have unique names`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
-        model.Roots.[0].Name =? "Root0"
+        model.Roots.[0].Name =? "Root@0"
 
         let model = TestModel (EmptyComponent (), EmptyComponent (), EmptyComponent ())
         model.FinalizeMetadata ()
-        model.Roots.[0].Name =? "Root0"
-        model.Roots.[1].Name =? "Root1"
-        model.Roots.[2].Name =? "Root2"
+        model.Roots.[0].Name =? "Root@0"
+        model.Roots.[1].Name =? "Root@1"
+        model.Roots.[2].Name =? "Root@2"
+
+[<TestFixture>]
+module ``CheckAllRequiredPortsBound method`` =
+    let private check componentNames portNames csharpCode =
+        let model = TestCompilation.CreateModel csharpCode
+        model.FinalizeMetadata ()
+        
+        let e = raisesWith<UnboundRequiredPortsException> (fun () -> model.CheckAllRequiredPortsBound ())
+        e.UnboundPorts.Length =? List.length componentNames
+        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Component.UnmangledName) =? componentNames
+        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Port.Name) =? portNames
+
+    [<Test>]
+    let ``throws when metadata has not yet been finalized`` () =
+        let model = EmptyModel ()
+        raisesInvalidOpException (fun () -> model.CheckAllRequiredPortsBound ())
+
+    [<Test>]
+    let ``does not throw when all ports are bound`` () =
+        let model = 
+            TestCompilation.CreateModel 
+              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
+               class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+        model.FinalizeMetadata ()
+        nothrow (fun () -> model.CheckAllRequiredPortsBound ())
+
+    [<Test>]
+    let ``throws when single port is unbound`` () =
+        check ["Root"] ["M"] 
+          "class X : Component { extern void M(); }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
+    let ``throws when subcomponent port is unbound`` () =
+        check ["Root.x"] ["N"] 
+          "class X : Component { public extern void M(); public extern void N(); }
+           class Y : Component { void N() {} X x = new X(); public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
+           class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"

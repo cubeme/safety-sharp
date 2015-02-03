@@ -37,24 +37,24 @@ open Mono.Cecil
 module internal Reflection =
     /// Gets all members of the given object recursively, going up the inheritance chain; unfortunately, the reflection APIs
     /// do not return private members of base classes, even with BindingFlags.FlattenHierarchy.
-    let rec private getMembers selector (t : Type) = seq {
-        if t.BaseType <> null then
-            yield! getMembers selector t.BaseType
+    let rec private getMembers selector (typeInfo : Type) (inheritanceRoot : Type) = seq {
+        if typeInfo.BaseType <> null && typeInfo.BaseType <> inheritanceRoot then
+            yield! getMembers selector typeInfo.BaseType inheritanceRoot
         
-        yield! selector t (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+        yield! selector typeInfo (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly)
     }
 
-    /// Gets all fields declared by the given type.
-    let getFields t = 
-        getMembers (fun t b -> t.GetFields b) t
+    /// Gets all fields declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
+    let getFields typeInfo inheritanceRoot = 
+        getMembers (fun t b -> t.GetFields b) typeInfo inheritanceRoot
 
-    /// Gets all properties declared by the given type.
-    let getProperties t = 
-        getMembers (fun t b -> t.GetProperties b) t
+    /// Gets all properties declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
+    let getProperties typeInfo inheritanceRoot = 
+        getMembers (fun t b -> t.GetProperties b) typeInfo inheritanceRoot
 
-    /// Gets all methods declared by the given type.
-    let getMethods t = 
-        getMembers (fun t b -> t.GetMethods b) t
+    /// Gets all methods declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
+    let getMethods typeInfo inheritanceRoot = 
+        getMembers (fun t b -> t.GetMethods b) typeInfo inheritanceRoot
 
     /// Gets a value indicating whether the given member info is marked with an instance of the given attribute.
     let hasAttribute<'T> (info : MemberInfo) =
