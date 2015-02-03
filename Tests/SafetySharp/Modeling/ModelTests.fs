@@ -274,41 +274,68 @@ module ``Roots property`` =
         model.Roots.[1].Name =? "Root@1"
         model.Roots.[2].Name =? "Root@2"
 
-[<TestFixture>]
-module ``CheckAllRequiredPortsBound method`` =
-    let private check componentNames portNames csharpCode =
-        let model = TestCompilation.CreateModel csharpCode
-        model.FinalizeMetadata ()
-        
-        let e = raisesWith<UnboundRequiredPortsException> (fun () -> model.CheckAllRequiredPortsBound ())
-        e.UnboundPorts.Length =? List.length componentNames
-        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Component.UnmangledName) =? componentNames
-        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Port.Name) =? portNames
-
-    [<Test>]
-    let ``throws when metadata has not yet been finalized`` () =
-        let model = EmptyModel ()
-        raisesInvalidOpException (fun () -> model.CheckAllRequiredPortsBound ())
-
-    [<Test>]
-    let ``does not throw when all ports are bound`` () =
-        let model = 
-            TestCompilation.CreateModel 
-              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
-               class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
-
-        model.FinalizeMetadata ()
-        nothrow (fun () -> model.CheckAllRequiredPortsBound ())
-
-    [<Test>]
-    let ``throws when single port is unbound`` () =
-        check ["Root"] ["M"] 
-          "class X : Component { extern void M(); }
-           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
-
-    [<Test>]
-    let ``throws when subcomponent port is unbound`` () =
-        check ["Root.x"] ["N"] 
-          "class X : Component { public extern void M(); public extern void N(); }
-           class Y : Component { void N() {} X x = new X(); public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
-           class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+//[<TestFixture>]
+//module ``CheckForUnboundRequiredPorts method`` =
+//    let private check componentNames portNames csharpCode =
+//        let model = TestCompilation.CreateModel csharpCode
+//        model.FinalizeMetadata ()
+//        
+//        let e = raisesWith<UnboundRequiredPortsException> (fun () -> model.CheckForUnboundRequiredPorts ())
+//        e.UnboundPorts.Length =? List.length componentNames
+//        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Component.UnmangledName) =? componentNames
+//        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Port.Name) =? portNames
+//
+//    [<Test>]
+//    let ``throws when metadata has not yet been finalized`` () =
+//        let model = EmptyModel ()
+//        raisesInvalidOpException (fun () -> model.CheckForUnboundRequiredPorts ())
+//
+//    [<Test>]
+//    let ``does not throw when all ports are bound`` () =
+//        let model = 
+//            TestCompilation.CreateModel 
+//              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
+//               class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+//
+//        model.FinalizeMetadata ()
+//        nothrow (fun () -> model.CheckAllRequiredPortsBound ())
+//
+//    [<Test>]
+//    let ``throws when single port is unbound`` () =
+//        check ["Root"] ["M"] 
+//          "class X : Component { extern void M(); }
+//           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+//
+//    [<Test>]
+//    let ``throws when subcomponent port is unbound`` () =
+//        check ["Root.x"] ["N"] 
+//          "class X : Component { public extern void M(); public extern void N(); }
+//           class Y : Component { void N() {} X x = new X(); public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
+//           class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+//
+//[<TestFixture>]
+//module ``CheckForInstantaneousCycles method`` =
+//    let private check componentNames portNames csharpCode =
+//        let model = TestCompilation.CreateModel csharpCode
+//        model.FinalizeMetadata ()
+//        
+//        let e = raisesWith<UnboundRequiredPortsException> (fun () -> model.CheckForInstantaneousCycles ())
+//        e.UnboundPorts.Length =? List.length componentNames
+//        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Component.UnmangledName) =? componentNames
+//        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Port.Name) =? portNames
+//
+//    [<Test>]
+//    let ``throws when metadata has not yet been finalized`` () =
+//        let model = EmptyModel ()
+//        raisesInvalidOpException (fun () -> model.CheckForInstantaneousCycles ())
+//
+//    [<Test>]
+//    let ``does not throw for model without any cycles`` () =
+//        check ["Root"] ["M"] 
+//          "class X : Component { 
+//                extern void M(); 
+//                void N() { }
+//                public override void Update() { M(); } 
+//                public X() { BindInstantaneous(RequiredPorts.M = ProvidedPorts.N); }
+//           }
+//           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"

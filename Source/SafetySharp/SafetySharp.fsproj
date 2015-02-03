@@ -68,6 +68,7 @@
     <Compile Include="Models\Ssm\Ssm.fs" />
     <Compile Include="Models\Ssm\CilToSsm.fs" />
     <Compile Include="Models\Ssm\SsmLowering.fs" />
+    <Compile Include="Models\Ssm\SsmValidation.fs" />
     <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
@@ -170,6 +171,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="QuickGraph">
+      <HintPath>..\..\Dependencies\Packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\Dependencies\Packages\System.Collections.Immutable.1.1.32-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>

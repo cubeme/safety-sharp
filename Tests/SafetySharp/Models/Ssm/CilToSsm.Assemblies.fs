@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Multiple Assemblies`` =
+module ``CilToSsm Assemblies`` =
     let private transform supportingCode mainCode instantiations =
         let supportCompilation = TestCompilation supportingCode
         let supportAssembly = supportCompilation.Compile ()
@@ -56,16 +56,18 @@ module ``CilToSsm Multiple Assemblies`` =
                                 Fields = []
                                 Subs = []
                                 Methods = 
-                                [
-                                    {
-                                        Name = CilToSsm.makeUniqueMethodName "M" 2 0
-                                        Return = VoidType
-                                        Params = []
-                                        Locals = []
-                                        Body = RetStm None
-                                        Kind = ProvPort
-                                    } 
-                                ]
+                                    [
+                                        {
+                                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                                            Return = VoidType
+                                            Params = []
+                                            Locals = []
+                                            Body = RetStm None
+                                            Kind = ProvPort
+                                        } 
+                                    ]
+                                Faults = []
+                                Bindings = []
                             } 
                         ]
                     Methods = 
@@ -79,6 +81,8 @@ module ``CilToSsm Multiple Assemblies`` =
                                 Kind = ProvPort
                             } 
                         ]
+                    Faults = []
+                    Bindings = []
                 }
             ]
 
@@ -91,29 +95,31 @@ module ``CilToSsm Multiple Assemblies`` =
                     Fields = [{ Var = Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType); Init = [BoolVal false] }]
                     Subs = []
                     Methods =
-                    [
-                        {
-                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
-                            Return = VoidType
-                            Params = []
-                            Locals = []
-                            Body = RetStm None
-                            Kind = ProvPort
-                        } 
-                        {
-                            Name = CilToSsm.makeUniqueMethodName "N" 3 0
-                            Return = VoidType
-                            Params = []
-                            Locals = []
-                            Body = SeqStm 
-                                [
-                                    CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y"))))
-                                    AsgnStm (Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType), BoolExpr true)
-                                    RetStm None
-                                ]
-                            Kind = ProvPort
-                        } 
-                    ]
+                        [
+                            {
+                                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                                Return = VoidType
+                                Params = []
+                                Locals = []
+                                Body = RetStm None
+                                Kind = ProvPort
+                            } 
+                            {
+                                Name = CilToSsm.makeUniqueMethodName "N" 3 0
+                                Return = VoidType
+                                Params = []
+                                Locals = []
+                                Body = SeqStm 
+                                    [
+                                        CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (This (ClassType "Y"))))
+                                        AsgnStm (Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType), BoolExpr true)
+                                        RetStm None
+                                    ]
+                                Kind = ProvPort
+                            } 
+                        ]
+                    Faults = []
+                    Bindings = []
                 }
             ]
 

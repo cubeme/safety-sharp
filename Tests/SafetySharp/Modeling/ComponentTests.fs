@@ -278,124 +278,6 @@ module ``GetInitialValuesOfField method`` =
         getTypedInitialValues component' "f" derivedType =? [false]
 
 [<TestFixture>]
-module ``RequiredPortInfo property`` =
-    [<Test>]
-    let ``throws when metadata has not yet been finalized`` () =
-        let component' = OneSubcomponent (FieldComponent<int> 3)
-        raisesInvalidOpException (fun () -> component'.RequiredPortInfo |> ignore)
-
-    [<Test>]
-    let ``returns empty list for component without required ports`` () =
-        let component' = EmptyComponent ()
-        component'.FinalizeMetadata ()
-
-        component'.RequiredPortInfo =? []
-
-    [<Test>]
-    let ``ignores provided ports`` () =
-        let component' = ProvidedComponent ()
-        component'.FinalizeMetadata ()
-
-        component'.RequiredPortInfo =? []
-
-    [<Test>]
-    let ``returns required ports`` () =
-        let component' = RequiredComponent ()
-        component'.FinalizeMetadata ()
-
-        component'.RequiredPortInfo.Length =? 3
-        component'.RequiredPortInfo.[0].Name =? "X"
-        component'.RequiredPortInfo.[0].ReturnType.FullName =? "System.Int32"
-        component'.RequiredPortInfo.[0].GetParameters().Length =? 1
-        component'.RequiredPortInfo.[0].GetParameters().[0].ParameterType.FullName =? "System.Int32"
-        component'.RequiredPortInfo.[0].GetParameters().[0].ParameterType.IsByRef =? false
-        component'.RequiredPortInfo.[1].Name =? "X"
-        component'.RequiredPortInfo.[1].ReturnType.FullName =? "System.Int32"
-        component'.RequiredPortInfo.[1].GetParameters().Length =? 1
-        component'.RequiredPortInfo.[1].GetParameters().[0].ParameterType.FullName =? "System.Int32&"
-        component'.RequiredPortInfo.[1].GetParameters().[0].ParameterType.IsByRef =? true
-        component'.RequiredPortInfo.[2].Name =? "Y"
-        component'.RequiredPortInfo.[2].ReturnType.FullName =? "System.Void"
-        component'.RequiredPortInfo.[2].GetParameters().Length =? 0
-
-    [<Test>]
-    let ``returns inherited private required ports`` () =
-        let csharpCode = "class X : Component { [Required] void M() {} } class Y : X { [Required] int M() { return 0; } }"
-        let compilation = TestCompilation csharpCode
-        let assembly = compilation.Compile ()
-        let baseType = assembly.GetType "X"
-        let derivedType = assembly.GetType "Y"
-        let component' = Activator.CreateInstance derivedType :?> Component
-        component'.FinalizeMetadata ()
-
-        component'.RequiredPortInfo.Length =? 2
-        component'.RequiredPortInfo.[0].DeclaringType =? baseType
-        component'.RequiredPortInfo.[0].Name =? "M"
-        component'.RequiredPortInfo.[0].ReturnType.FullName =? "System.Void"
-        component'.RequiredPortInfo.[1].DeclaringType =? derivedType
-        component'.RequiredPortInfo.[1].Name =? "M"
-        component'.RequiredPortInfo.[1].ReturnType.FullName =? "System.Int32"
-
-[<TestFixture>]
-module ``ProvidedPortInfo property`` =
-    [<Test>]
-    let ``throws when metadata has not yet been finalized`` () =
-        let component' = OneSubcomponent (FieldComponent<int> 3)
-        raisesInvalidOpException (fun () -> component'.ProvidedPortInfo |> ignore)
-
-    [<Test>]
-    let ``returns empty list for component without provided ports`` () =
-        let component' = EmptyComponent ()
-        component'.FinalizeMetadata ()
-
-        component'.ProvidedPortInfo =? []
-
-    [<Test>]
-    let ``ignores required ports`` () =
-        let component' = RequiredComponent ()
-        component'.FinalizeMetadata ()
-
-        component'.ProvidedPortInfo =? []
-
-    [<Test>]
-    let ``returns provided ports`` () =
-        let component' = ProvidedComponent ()
-        component'.FinalizeMetadata ()
-
-        component'.ProvidedPortInfo.Length =? 3
-        component'.ProvidedPortInfo.[0].Name =? "X"
-        component'.ProvidedPortInfo.[0].ReturnType.FullName =? "System.Int32"
-        component'.ProvidedPortInfo.[0].GetParameters().Length =? 1
-        component'.ProvidedPortInfo.[0].GetParameters().[0].ParameterType.FullName =? "System.Int32"
-        component'.ProvidedPortInfo.[0].GetParameters().[0].ParameterType.IsByRef =? false
-        component'.ProvidedPortInfo.[1].Name =? "X"
-        component'.ProvidedPortInfo.[1].ReturnType.FullName =? "System.Int32"
-        component'.ProvidedPortInfo.[1].GetParameters().Length =? 1
-        component'.ProvidedPortInfo.[1].GetParameters().[0].ParameterType.FullName =? "System.Int32&"
-        component'.ProvidedPortInfo.[1].GetParameters().[0].ParameterType.IsByRef =? true
-        component'.ProvidedPortInfo.[2].Name =? "Y"
-        component'.ProvidedPortInfo.[2].ReturnType.FullName =? "System.Void"
-        component'.ProvidedPortInfo.[2].GetParameters().Length =? 0
-
-    [<Test>]
-    let ``returns inherited private provided ports`` () =
-        let csharpCode = "class X : Component { [Provided] void M() {} } class Y : X { [Provided] int M() { return 0; } }"
-        let compilation = TestCompilation csharpCode
-        let assembly = compilation.Compile ()
-        let baseType = assembly.GetType "X"
-        let derivedType = assembly.GetType "Y"
-        let component' = Activator.CreateInstance derivedType :?> Component
-        component'.FinalizeMetadata ()
-
-        component'.ProvidedPortInfo.Length =? 2
-        component'.ProvidedPortInfo.[0].DeclaringType =? baseType
-        component'.ProvidedPortInfo.[0].Name =? "M"
-        component'.ProvidedPortInfo.[0].ReturnType.FullName =? "System.Void"
-        component'.ProvidedPortInfo.[1].DeclaringType =? derivedType
-        component'.ProvidedPortInfo.[1].Name =? "M"
-        component'.ProvidedPortInfo.[1].ReturnType.FullName =? "System.Int32"
-
-[<TestFixture>]
 module ``Bindings property`` =
     let mutable component' = (null :> Component)
 
@@ -420,62 +302,62 @@ module ``Bindings property`` =
         bindings "class X : Component { void M() {} extern void N(); public X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }"
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Delayed
-        component'.Bindings.[0].Port1.IsRequiredPort =? true
-        component'.Bindings.[0].Port1.Component =? (component' :> obj)
-        component'.Bindings.[0].Port1.Method.Name =? "N"
-        component'.Bindings.[0].Port2.IsRequiredPort =? false
-        component'.Bindings.[0].Port2.Component =? (component' :> obj)
-        component'.Bindings.[0].Port2.Method.Name =? "M"
+        component'.Bindings.[0].TargetPort.IsRequiredPort =? true
+        component'.Bindings.[0].TargetPort.Component =? (component' :> obj)
+        component'.Bindings.[0].TargetPort.Method.Name =? "N"
+        component'.Bindings.[0].SourcePort.IsRequiredPort =? false
+        component'.Bindings.[0].SourcePort.Component =? (component' :> obj)
+        component'.Bindings.[0].SourcePort.Method.Name =? "M"
 
     [<Test>]
     let ``returns instantaneous port binding of a component`` () =
         bindings "class X : Component { void M() {} extern void N(); public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }"
         component'.Bindings.Length =? 1
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
-        component'.Bindings.[0].Port1.IsRequiredPort =? true
-        component'.Bindings.[0].Port1.Component =? (component' :> obj)
-        component'.Bindings.[0].Port1.Method.Name =? "N"
-        component'.Bindings.[0].Port2.IsRequiredPort =? false
-        component'.Bindings.[0].Port2.Component =? (component' :> obj)
-        component'.Bindings.[0].Port2.Method.Name =? "M"
+        component'.Bindings.[0].TargetPort.IsRequiredPort =? true
+        component'.Bindings.[0].TargetPort.Component =? (component' :> obj)
+        component'.Bindings.[0].TargetPort.Method.Name =? "N"
+        component'.Bindings.[0].SourcePort.IsRequiredPort =? false
+        component'.Bindings.[0].SourcePort.Component =? (component' :> obj)
+        component'.Bindings.[0].SourcePort.Method.Name =? "M"
 
     [<Test>]
     let ``returns multiple port binding between subcomponents`` () =
         bindings "class Y : Component { public void M() {} public extern void N(); } class X : Component { Y y1 = new Y(); Y y2 = new Y(); public X() { BindInstantaneous(y1.RequiredPorts.N = y2.ProvidedPorts.M); BindDelayed(y2.RequiredPorts.N = y1.ProvidedPorts.M); } }"
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Instantaneous
-        component'.Bindings.[0].Port1.IsRequiredPort =? true
-        component'.Bindings.[0].Port1.Component =? (component'.Subcomponents.[0] :> obj)
-        component'.Bindings.[0].Port1.Method.Name =? "N"
-        component'.Bindings.[0].Port2.IsRequiredPort =? false
-        component'.Bindings.[0].Port2.Component =? (component'.Subcomponents.[1] :> obj)
-        component'.Bindings.[0].Port2.Method.Name =? "M"
+        component'.Bindings.[0].TargetPort.IsRequiredPort =? true
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Method.Name =? "N"
+        component'.Bindings.[0].SourcePort.IsRequiredPort =? false
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[0].SourcePort.Method.Name =? "M"
         component'.Bindings.[1].Kind =? BindingKind.Delayed
-        component'.Bindings.[1].Port1.IsRequiredPort =? true
-        component'.Bindings.[1].Port1.Component =? (component'.Subcomponents.[1] :> obj)
-        component'.Bindings.[1].Port1.Method.Name =? "N"
-        component'.Bindings.[1].Port2.IsRequiredPort =? false
-        component'.Bindings.[1].Port2.Component =? (component'.Subcomponents.[0] :> obj)
-        component'.Bindings.[1].Port2.Method.Name =? "M"
+        component'.Bindings.[1].TargetPort.IsRequiredPort =? true
+        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[1].TargetPort.Method.Name =? "N"
+        component'.Bindings.[1].SourcePort.IsRequiredPort =? false
+        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[1].SourcePort.Method.Name =? "M"
 
     [<Test>]
     let ``returns inherited port binding between subcomponents`` () =
         bindings "class Y : Component { public void M() {} public extern void N(); } class Z : Component { public Y y = new Y(); public Z() { BindDelayed(y.RequiredPorts.N = y.ProvidedPorts.M); } } class X : Z { public Y y2 = new Y(); public X() { BindDelayed(y.RequiredPorts.N = y2.ProvidedPorts.M); } }"
         component'.Bindings.Length =? 2
         component'.Bindings.[0].Kind =? BindingKind.Delayed
-        component'.Bindings.[0].Port1.IsRequiredPort =? true
-        component'.Bindings.[0].Port1.Component =? (component'.Subcomponents.[0] :> obj)
-        component'.Bindings.[0].Port1.Method.Name =? "N"
-        component'.Bindings.[0].Port2.IsRequiredPort =? false
-        component'.Bindings.[0].Port2.Component =? (component'.Subcomponents.[0] :> obj)
-        component'.Bindings.[0].Port2.Method.Name =? "M"
+        component'.Bindings.[0].TargetPort.IsRequiredPort =? true
+        component'.Bindings.[0].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].TargetPort.Method.Name =? "N"
+        component'.Bindings.[0].SourcePort.IsRequiredPort =? false
+        component'.Bindings.[0].SourcePort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[0].SourcePort.Method.Name =? "M"
         component'.Bindings.[1].Kind =? BindingKind.Delayed
-        component'.Bindings.[1].Port1.IsRequiredPort =? true
-        component'.Bindings.[1].Port1.Component =? (component'.Subcomponents.[0] :> obj)
-        component'.Bindings.[1].Port1.Method.Name =? "N"
-        component'.Bindings.[1].Port2.IsRequiredPort =? false
-        component'.Bindings.[1].Port2.Component =? (component'.Subcomponents.[1] :> obj)
-        component'.Bindings.[1].Port2.Method.Name =? "M"
+        component'.Bindings.[1].TargetPort.IsRequiredPort =? true
+        component'.Bindings.[1].TargetPort.Component =? (component'.Subcomponents.[0] :> obj)
+        component'.Bindings.[1].TargetPort.Method.Name =? "N"
+        component'.Bindings.[1].SourcePort.IsRequiredPort =? false
+        component'.Bindings.[1].SourcePort.Component =? (component'.Subcomponents.[1] :> obj)
+        component'.Bindings.[1].SourcePort.Method.Name =? "M"
 
 [<TestFixture>]
 module ``Parent property`` =

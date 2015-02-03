@@ -117,8 +117,6 @@ type Component () =
     let mutable slot = 0
     let mutable (parent : Component) = null
     let mutable (subcomponents : Component list) = []
-    let mutable (requiredPorts : MethodInfo list) = []
-    let mutable (providedPorts : MethodInfo list) = []
     let fields = Dictionary<FieldInfo, obj list> ()
     let bindings = List<PortBinding> ()
 
@@ -174,12 +172,14 @@ type Component () =
     member this.BindInstantaneous (binding : PortBinding) =
         nullArg binding "binding"
         binding.Kind <- BindingKind.Instantaneous
+        binding.Component <- this
         bindings.Add binding
 
     /// Establishes the given port binding in a delayed fashion; that is, invocations are delayed by one system step.
     member this.BindDelayed (binding : PortBinding) =
         nullArg binding "binding"
         binding.Kind <- BindingKind.Delayed
+        binding.Component <- this
         bindings.Add binding
 
     /// <summary>
@@ -241,9 +241,6 @@ type Component () =
             fields.Add (field, [value])
         )
 
-        requiredPorts <- Reflection.getMethods (this.GetType ()) typeof<Component> |> Seq.where Reflection.hasAttribute<RequiredAttribute> |> Seq.toList
-        providedPorts <- Reflection.getMethods (this.GetType ()) typeof<Component> |> Seq.where Reflection.hasAttribute<ProvidedAttribute> |> Seq.toList
-
         let subcomponentMetadata = 
             Reflection.getFields (this.GetType ()) typeof<Component>
             |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
@@ -299,18 +296,6 @@ type Component () =
         with get () = 
             requiresIsSealed ()
             subcomponents
-
-    /// Gets the <see cref="MethodInfo" /> instances representing the component's required ports.
-    member internal this.RequiredPortInfo
-        with get () = 
-            requiresIsSealed()
-            requiredPorts
-
-    /// Gets the <see cref="MethodInfo" /> instances representing the component's provided ports.
-    member internal this.ProvidedPortInfo
-        with get () = 
-            requiresIsSealed()
-            providedPorts
 
     /// Gets the port bindings of the component.
     member internal this.Bindings

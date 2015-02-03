@@ -25,6 +25,7 @@ namespace Transformations
 open System
 open NUnit.Framework
 open SafetySharp.Models
+open SafetySharp.Modeling
 
 [<TestFixture>]
 module ``SsmToScm Transformation`` =
@@ -34,6 +35,8 @@ module ``SsmToScm Transformation`` =
         Subs = []
         Fields = []
         Methods = []
+        Faults = []
+        Bindings = []
     }
 
     let private scmComp : Scm.CompDecl = {
@@ -124,6 +127,38 @@ module ``SsmToScm Transformation`` =
         }
     }
 
+    let private ssmBindings : Ssm.Binding list = 
+        [
+            {
+                SourceComp = "Root0.x.y"
+                SourcePort = "A"
+                TargetComp = "Root1.z.w"
+                TargetPort = "B"
+                Kind = BindingKind.Instantaneous
+            }
+            {
+                SourceComp = "Root0.x.y"
+                SourcePort = "A"
+                TargetComp = "Root1.z.w"
+                TargetPort = "B"
+                Kind = BindingKind.Delayed
+            }
+        ]
+
+    let private scmBindings : Scm.BndDecl list = 
+        [
+            {
+                Source = { Comp = Scm.Comp "y" |> Some; ProvPort = Scm.ProvPort "A" }
+                Target = { Comp = Scm.Comp "w" |> Some; ReqPort = Scm.ReqPort "B" }
+                Kind = Scm.Instantaneous
+            }
+            {
+                Source = { Comp = Scm.Comp "y" |> Some; ProvPort = Scm.ProvPort "A" }
+                Target = { Comp = Scm.Comp "w" |> Some; ReqPort = Scm.ReqPort "B" }
+                Kind = Scm.Delayed
+            }
+        ]
+
     let private transform = SsmToScm.transform
 
     [<Test>]
@@ -139,22 +174,28 @@ module ``SsmToScm Transformation`` =
         transform { ssmComp with Methods = [ssmProvPort] } =? { scmComp with ProvPorts = [scmProvPort] }
 
     [<Test>]
+    let ``binding transformation`` () =
+        transform { ssmComp with Bindings = ssmBindings } =? { scmComp with Bindings = scmBindings }
+
+    [<Test>]
     let ``nested components`` () =
         let ssm = {
             ssmComp with
              Fields = ssmFields
              Methods = [ssmProvPort; ssmReqPort]
+             Bindings = ssmBindings
         }
         let sub = { ssm with Subs = [ssm; ssm] }
-        let ssm = { ssm with Subs = [sub; ssm] }
+        let ssm = { ssm with Subs = [sub; { ssm with Bindings = ssmBindings }] }
 
         let scm = {
             scmComp with
              Fields = scmFields
              ReqPorts = [scmReqPort]
              ProvPorts = [scmProvPort]
+             Bindings = scmBindings
         }
         let sub = { scm with Subs = [scm; scm] }
-        let scm = { scm with Subs = [sub; scm] }
+        let scm = { scm with Subs = [sub; { scm with Bindings = scmBindings }] }
 
         transform ssm =? scm

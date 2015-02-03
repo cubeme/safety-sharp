@@ -64,11 +64,12 @@
     <Compile Include="Modeling\BindingTests.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Fields.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.SemanticEquality.fs" />
-    <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.Bindings.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.Components.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.Fields.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.Methods.fs" />
+    <Compile Include="Models\Ssm\CilToSsm.SemanticEquality.fs" />
     <Compile Include="Models\Ssm\SsmLowering.Signatures.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />

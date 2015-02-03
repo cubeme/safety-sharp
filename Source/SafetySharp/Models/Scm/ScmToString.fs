@@ -167,7 +167,9 @@ module internal ScmToString =
             bndTarget b.Target
             writer.Append " = "
             bndKind b.Kind
+            writer.Append " "
             bndSrc b.Source
+            writer.AppendLine ";"
 
         let faultDecl (f : FaultDecl) = 
             writer.Append "fault "

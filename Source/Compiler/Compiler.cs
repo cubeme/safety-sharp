@@ -33,7 +33,6 @@ namespace SafetySharp.Compiler
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.MSBuild;
-	using Models;
 	using Normalization;
 
 	/// <summary>
@@ -254,7 +253,11 @@ namespace SafetySharp.Compiler
 				var tmpPath = Path.ChangeExtension(assemblyPath, ".tmp.dll");
 				File.Copy(assemblyPath, tmpPath, overwrite: true);
 
-				resources = new[] { new ResourceDescription(Ssm.EmbeddedAssembly, () => new FileStream(tmpPath, FileMode.Open, FileAccess.Read), true) };
+				resources = new[]
+				{
+					new ResourceDescription(Reflection.EmbeddedAssembly,
+						() => new FileStream(tmpPath, FileMode.Open, FileAccess.Read), true)
+				};
 			}
 
 			var emitResult = compilation.Emit(assemblyPath, Path.ChangeExtension(assemblyPath, ".pdb"), manifestResources: resources);

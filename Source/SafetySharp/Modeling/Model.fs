@@ -29,6 +29,7 @@ open System.Linq.Expressions
 open System.Reflection
 open System.Runtime.InteropServices
 open SafetySharp
+open SafetySharp.Reflection
 
 /// Raised when a component is found in multiple locations of a component tree.
 type SharedComponentsException internal (components : Component list) =
@@ -36,23 +37,6 @@ type SharedComponentsException internal (components : Component list) =
 
     /// Gets the component instances that were found in multiple locations of a component tree.
     member this.Components = components |> List.toArray
-
-/// Provides information about an unbound port.
-type UnboundPort = {
-    Component : Component
-    Port      : MethodInfo
-}
-  with override this.ToString () = sprintf "Component '%s': '%s'" this.Component.UnmangledName (this.Port.ToString ())
-
-/// Raised when one or more unbound required ports are found.
-type UnboundRequiredPortsException internal (unboundPorts : UnboundPort array) =
-    inherit Exception (
-        let info = String.Join ("\n", unboundPorts)
-        sprintf "One or more unbound required ports have been found:\n%s\nMore information is available in the UnboundPorts property." info
-    )
-
-    /// Gets the unbound ports and the component instance that declares the port.
-    member this.UnboundPorts = unboundPorts
 
 /// Represents a base class for all models.
 [<AbstractClass; AllowNullLiteral>]
@@ -135,17 +119,3 @@ type Model () =
         with get () = 
             requiresIsSealed ()
             components
-
-    /// Checks whether all required ports of all components have been bound.
-    member internal this.CheckAllRequiredPortsBound () =
-        requiresIsSealed ()
-
-        let requiredPorts = components |> Seq.collect (fun c -> c.RequiredPortInfo |> Seq.map (fun p -> { Component = c; Port = p }))
-        let bindings = components |> List.collect (fun c -> c.Bindings)
-        let unboundPorts = 
-            requiredPorts 
-            |> Seq.where (fun unbound -> bindings |> Seq.exists (fun binding -> binding.Port1.Method = unbound.Port) |> not)
-            |> Seq.toArray
-
-        if unboundPorts.Length > 0 then
-            raise (UnboundRequiredPortsException unboundPorts)

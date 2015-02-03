@@ -21,15 +21,12 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Models
+open SafetySharp.Modeling
 
 /// Provides types and functions for working with S# models (SSM). Basically, the S# metamodel is a subset of
 /// the metadata and instructions supported by the .NET common language runtime (CLR); a S# model is a view
 /// of a .NET assembly.
 module internal Ssm =
-
-    /// The name of the resource that stores the embedded original S# assembly.
-    [<Literal>]
-    let EmbeddedAssembly = "OriginalAssembly"
 
     /// Represents the unary operators supported by S# models.
     type internal UOp =
@@ -64,14 +61,14 @@ module internal Ssm =
         | BoolType
         | IntType
         | DoubleType
-        | ClassType of string
+        | ClassType  of string
 
     /// Represents a variable accessed by an expression.
     type internal Var =
-        | Arg of string * Type
+        | Arg   of string * Type
         | Local of string * Type
         | Field of string * Type
-        | This of Type
+        | This  of Type
 
     /// Uniquely identifies a method.
     type internal MethodId = {
@@ -81,28 +78,28 @@ module internal Ssm =
 
     /// Represents an expression within the body of a S# method.
     type internal Expr = 
-        | BoolExpr of bool
-        | IntExpr of int
+        | BoolExpr   of bool
+        | IntExpr    of int
         | DoubleExpr of double
-        | VarExpr of Var
+        | VarExpr    of Var
         | VarRefExpr of Var
-        | UExpr of UOp * Expr
-        | BExpr of Expr * BOp * Expr
-        | CallExpr of MethodId * Params : Type list * ParamDir list * Return : Type * Args : Expr list * Target : Expr option
+        | UExpr      of UOp * Expr
+        | BExpr      of Expr * BOp * Expr
+        | CallExpr   of MethodId * Params : Type list * ParamDir list * Return : Type * Args : Expr list * Target : Expr option
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
         | NopStm
         | AsgnStm of Var * Expr
         | GotoStm of Expr * int
-        | SeqStm of Stm list
-        | RetStm of Expr option
-        | IfStm of Expr * Stm * Stm
+        | SeqStm  of Stm list
+        | RetStm  of Expr option
+        | IfStm   of Expr * Stm * Stm
         | CallStm of MethodId * Params : Type list * ParamDir list * Return : Type * Args : Expr list * Target : Expr option
 
     /// Represents a method parameter.
     type internal Param = {
-        Var : Var
+        Var       : Var
         Direction : ParamDir
     }
 
@@ -110,37 +107,53 @@ module internal Ssm =
     type internal MethodKind = 
         | ReqPort 
         | ProvPort 
-        | Function
         | Step
 
     /// Represents a method of a S# component.
     type internal Method = {
-        Name : string
+        Name   : string
         Params : Param list
-        Body : Stm
+        Body   : Stm
         Return : Type
         Locals : Var list
-        Kind : MethodKind
+        Kind   : MethodKind
     }
 
     /// Represents an initial value of a S# field.
     type internal InitVal =
-        | BoolVal of bool
-        | IntVal of int
+        | BoolVal   of bool
+        | IntVal    of int
         | DoubleVal of double
 
     /// Represents a field of a S# component with zero, one, or more initial values.
     type internal Field = {
-        Var : Var
+        Var  : Var
         Init : InitVal list
+    }
+
+    /// Represents a fault of a S# component
+    type internal Fault = {
+        Name : string
+        // TODO   
+    }
+
+    /// Represents a port binding.
+    type internal Binding = {
+        SourceComp : string
+        TargetComp : string
+        SourcePort : string
+        TargetPort : string
+        Kind       : BindingKind
     }
 
     /// Represents a S# component.
     type internal Comp = {
-        Name : string
-        Fields : Field list
-        Methods : Method list
-        Subs : Comp list
+        Name     : string
+        Fields   : Field list
+        Methods  : Method list
+        Subs     : Comp list
+        Faults   : Fault list
+        Bindings : Binding list
     }
 
     /// Gets the set of statement program counters that can be executed following the execution of the

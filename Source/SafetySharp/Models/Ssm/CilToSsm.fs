@@ -91,7 +91,7 @@ module internal CilToSsm =
                 parameters.AssemblyResolver <- this
 
                 let assembly = 
-                    use stream = assembly.GetManifestResourceStream Ssm.EmbeddedAssembly
+                    use stream = assembly.GetManifestResourceStream Reflection.EmbeddedAssembly
                     if stream = null then
                         AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
                     else
@@ -113,7 +113,14 @@ module internal CilToSsm =
             |> Seq.distinct
             |> Seq.iter (fun t -> 
                 let assemblyDefinition = loadAssembly t.Assembly.FullName
-                dictionary.Add (t, assemblyDefinition.MainModule.Import(t))
+
+                // Add the type and all of its base types to the dictionary, if we haven't added them already
+                let rec add (t : System.Type) =
+                    if dictionary.ContainsKey t |> not then
+                        dictionary.Add (t, assemblyDefinition.MainModule.Import t)
+                        if t.BaseType <> null then add t.BaseType
+
+                add t
             )
 
             dictionary.ToImmutableDictionary ()
@@ -548,23 +555,35 @@ module internal CilToSsm =
                 |> fixIntIsBool (m.ReturnType.MetadataType = MetadataType.Boolean)
                 |> Ssm.replaceGotos
 
-        {
-            Name = getUniqueMethodName m
-            Body = body
-            Params =
-                m.Parameters 
-                |> Seq.map (fun p -> { Var = Arg (p.Name, p.ParameterType |> resolveGenericType resolver |> mapVarType); Direction = getParamDir p })
-                |> Seq.toList
-            Return = m.ReturnType |> resolveGenericType resolver |> mapReturnType
-            Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
-            Kind = if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort
-        }
+        {  Name = getUniqueMethodName m
+           Body = body
+           Params =
+               m.Parameters 
+               |> Seq.map (fun p -> { Var = Arg (p.Name, p.ParameterType |> resolveGenericType resolver |> mapVarType); Direction = getParamDir p })
+               |> Seq.toList
+           Return = m.ReturnType |> resolveGenericType resolver |> mapReturnType
+           Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
+           Kind = if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
     let private transformMethods (c : Component) (t : TypeDefinition) (resolver : GenericResolver) =
         t.GetMethods()
         |> Seq.map (transformMethod c resolver)
         |> List.ofSeq
+
+    /// Transforms the given bindings.
+    let private transformBindings (typeDefinitions : TypeMap) =
+        let resolvePort (port : PortInfo) = typeDefinitions.[port.Method.DeclaringType].Module.Import(port.Method).Resolve () |> getUniqueMethodName
+        let resolveComponent (port : PortInfo) = (port.Component :?> Component).Name
+        
+        let transform (binding : PortBinding) =
+          { SourceComp = binding.SourcePort |> resolveComponent
+            SourcePort = binding.SourcePort |> resolvePort
+            TargetComp = binding.TargetPort |> resolveComponent 
+            TargetPort = binding.TargetPort |> resolvePort
+            Kind       = binding.Kind }
+
+        List.map transform
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
     let rec private transformType (typeDefinitions : TypeMap) (c : Component) =
@@ -574,7 +593,7 @@ module internal CilToSsm =
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
                     transform t.BaseType
-                else { Name = String.Empty; Fields = []; Methods = []; Subs = [] }
+                else { Name = String.Empty; Fields = []; Methods = []; Subs = []; Faults = []; Bindings = [] }
 
             { transformed with 
                 Name = c.Name
@@ -582,7 +601,9 @@ module internal CilToSsm =
                 Methods = transformed.Methods @ (transformMethods c t resolver)
             }
 
-        { transform typeDefinitions.[c.GetType ()] with Subs = c.Subcomponents |> List.map (transformType typeDefinitions) }
+        { transform typeDefinitions.[c.GetType ()] with 
+            Subs = c.Subcomponents |> List.map (transformType typeDefinitions)
+            Bindings = transformBindings typeDefinitions c.Bindings }
         
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =

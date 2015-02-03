@@ -23,18 +23,16 @@
 namespace SafetySharp
 
 open System
-open System.Collections.Generic
-open System.Dynamic
-open System.Globalization
-open System.Linq
-open System.Linq.Expressions
 open System.Reflection
-open System.Runtime.InteropServices
 open SafetySharp
-open Mono.Cecil
 
 /// Provides helper functions for working with the reflection APIs.
 module internal Reflection =
+
+    /// The name of the resource that stores the embedded original S# assembly.
+    [<Literal>]
+    let EmbeddedAssembly = "OriginalAssembly"
+
     /// Gets all members of the given object recursively, going up the inheritance chain; unfortunately, the reflection APIs
     /// do not return private members of base classes, even with BindingFlags.FlattenHierarchy.
     let rec private getMembers selector (typeInfo : Type) (inheritanceRoot : Type) = seq {

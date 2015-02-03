@@ -79,6 +79,7 @@ namespace Elbtunnel
 		}
 	}
 
+	internal delegate void D(ref int i);
 	public class LightBarrier : Component
 	{
 		private int _i = 1;
@@ -87,7 +88,8 @@ namespace Elbtunnel
 		public LightBarrier(Timer timer)
 		{
 			_timer = timer;
-			BindDelayed(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
+			BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
+			BindInstantaneous(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
 		}
 
 		[Required]

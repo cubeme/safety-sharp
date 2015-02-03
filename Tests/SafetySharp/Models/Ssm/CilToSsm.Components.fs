@@ -55,20 +55,28 @@ module ``CilToSsm Component Transformation`` =
                                 Fields = []
                                 Methods = []
                                 Subs = []
+                                Faults = []
+                                Bindings = []
                             }
                             {
                                 Name = "Root@0.s1@1"
                                 Fields = []
                                 Methods = []
                                 Subs = []
+                                Faults = []
+                                Bindings = []
                             }
                             {
                                 Name = "Root@0.s2@2"
                                 Fields = []
                                 Methods = []
                                 Subs = []
+                                Faults = []
+                                Bindings = []
                             }
                         ]
+                    Faults = []
+                    Bindings = []
                 }
             ]
 
@@ -87,20 +95,28 @@ module ``CilToSsm Component Transformation`` =
                                 Fields = []
                                 Methods = []
                                 Subs = []
+                                Faults = []
+                                Bindings = []
                             }
                             {
                                 Name = "Root@0.s@1"
                                 Fields = []
                                 Methods = []
                                 Subs = []
+                                Faults = []
+                                Bindings = []
                             }
                             {
                                 Name = "Root@0.s2@2"
                                 Fields = []
                                 Methods = []
                                 Subs = []
+                                Faults = []
+                                Bindings = []
                             }
                         ]
+                    Faults = []
+                    Bindings = []
                 }
             ]
 
@@ -113,16 +129,18 @@ module ``CilToSsm Component Transformation`` =
                 Fields = []
                 Subs = []
                 Methods = 
-                [
-                    {
-                        Name = CilToSsm.makeUniqueMethodName "M" 2 0
-                        Return = IntType
-                        Params = []
-                        Locals = []
-                        Body = RetStm (Some (IntExpr 1))
-                        Kind = ProvPort
-                    }
-                ]
+                    [
+                        {
+                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                            Return = IntType
+                            Params = []
+                            Locals = []
+                            Body = RetStm (Some (IntExpr 1))
+                            Kind = ProvPort
+                        }
+                    ]
+                Faults = []
+                Bindings = []
             }
         ]
 
@@ -140,16 +158,18 @@ module ``CilToSsm Component Transformation`` =
                             Fields = []
                             Subs = []
                             Methods = 
-                            [
-                                {
-                                    Name = CilToSsm.makeUniqueMethodName "M" 2 0
-                                    Return = VoidType
-                                    Params = []
-                                    Locals = []
-                                    Body = RetStm None
-                                    Kind = ProvPort
-                                } 
-                            ]
+                                [
+                                    {
+                                        Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                                        Return = VoidType
+                                        Params = []
+                                        Locals = []
+                                        Body = RetStm None
+                                        Kind = ProvPort
+                                    } 
+                                ]
+                            Faults = []
+                            Bindings = []
                         } 
                     ]
                 Methods = 
@@ -163,5 +183,7 @@ module ``CilToSsm Component Transformation`` =
                             Kind = ProvPort
                         } 
                     ]
+                Faults = []
+                Bindings = []
             }
         ]

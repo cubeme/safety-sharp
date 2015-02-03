@@ -36,17 +36,17 @@ open Mono.Cecil
 
 /// Indicates the kind of a binding.
 type internal BindingKind =
-    | Instantaneous = 0
-    | Delayed       = 1
+    | Instantaneous 
+    | Delayed
 
 /// Provides metadata about a port.
 [<AllowNullLiteral>]
-type PortInfo private (port : Delegate) =
+type PortInfo internal (c : obj, m : MethodInfo) =
     /// Gets the method representing the port.    
-    member this.Method = port.Method
+    member this.Method = m
 
     /// Gets the component instance declaring the bound port.
-    member this.Component = port.Target
+    member this.Component = c
 
     /// Gets a value indicating whether the port is a required port.
     member this.IsRequiredPort = Reflection.hasAttribute<RequiredAttribute> this.Method
@@ -54,7 +54,7 @@ type PortInfo private (port : Delegate) =
     /// Creates a new instance for a method port.
     static member MethodPort (port : Delegate) =
         nullArg port "port"
-        PortInfo (port)
+        PortInfo (port.Target, port.Method)
 
     /// Creates a new instance for a property port.
     static member PropertyPort (port : Delegate) =
@@ -63,15 +63,18 @@ type PortInfo private (port : Delegate) =
 /// Represents a binding of two ports. Use the syntax <c>component1.RequiredPorts.Port = component2.ProvidedPorts.Port</c>
 /// to instantiate a binding.
 [<Sealed; AllowNullLiteral>]
-type PortBinding (port1 : PortInfo, port2 : PortInfo) =
-    do nullArg port1 "port1"
-    do nullArg port2 "port2"
+type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
+    do nullArg sourcePort "sourcePort"
+    do nullArg targetPort "targetPort"
 
-    /// Gets the first port that has been bound.
-    member internal this.Port1 = port1
+    /// Gets the source port of the binding.
+    member internal this.SourcePort = sourcePort
 
-    /// Gets the second port that has been bound.
-    member internal this.Port2 = port2
+    /// Gets the target port of the binding.
+    member internal this.TargetPort = targetPort
 
-    /// Gets or sets the kind of the binding
+    /// Gets or sets the kind of the binding.
     member val internal Kind = BindingKind.Instantaneous with get, set
+
+    /// Gets or sets the component that instantiated the binding.
+    member val internal Component = (null : obj) with get, set

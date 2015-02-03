@@ -222,6 +222,10 @@ module ``Ssm Lowering of Port Signatures`` =
                                         Kind = ReqPort                   
                                     }
                                 ]
+                            Faults = []
+                            Bindings = []
                         }
-                    ]          
+                    ]   
+                Faults = []
+                Bindings = []       
             }

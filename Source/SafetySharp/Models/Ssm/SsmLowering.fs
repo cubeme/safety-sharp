@@ -82,69 +82,11 @@ module internal SsmLowering =
             Methods = c.Methods |> List.map lowerSignature
             Subs = c.Subs |> List.map lowerSignatures }
 
-    /// Indicates the kind of operations performed on a variable.
-    type private UseType = 
-        | Unknown
-        | Read
-        | Write
-        | ReadWrite
-
-//    /// Removes all unused local variables from all methods of the given component and its subcomponents.
-//    let rec removeUnusedLocals (c : Comp) =
-//        let merge s1 s2 =
-//            match (s1, s2) with
-//            | (Unknown, s)           -> s
-//            | (s, Unknown)           -> s
-//            | (s1, s2) when s1 = s2  -> s1
-//            | (s1, s2)               -> ReadWrite
-//
-//        let rec classifyLocalInExpr local e =
-//            match e with
-//            | VarExpr local               -> Read
-//            | VarRefExpr local            -> ReadWrite
-//            | UExpr (_, e)                -> classifyLocalInExpr local e
-//            | BExpr (e1, _, e2)           -> merge (classifyLocalInExpr local e1) (classifyLocalInExpr local e2)
-//            | CallExpr (_, _, _, _, e, _) -> e |> List.map (classifyLocalInExpr local) |> List.reduce merge
-//            | _                           -> Unknown
-//
-//        let rec classifyLocalInStm local stm =
-//            match stm with
-//            | AsgnStm (local, e)         -> merge Write (classifyLocalInExpr local e)
-//            | SeqStm s                   -> s |> List.map (classifyLocalInStm local) |> List.reduce merge
-//            | RetStm (Some e)            -> classifyLocalInExpr local e
-//            | IfStm (e, s1, s2)          -> merge (classifyLocalInExpr local e) (classifyLocalInStm local s1) |> merge (classifyLocalInStm local s2)
-//            | CallStm (_, _, _, _, e, _) -> e |> List.map (classifyLocalInExpr local) |> List.reduce merge
-//            | _                          -> Unknown
-//
-//        let rec removeLocal local stm =
-//            match stm with
-//            | AsgnStm (local, e) -> NopStm
-//            | SeqStm s           -> s |> List.map (removeLocal local) |> SeqStm
-//            | IfStm (e, s1, s2)  -> IfStm (e, removeLocal local s1, removeLocal local s2)
-//            | s                  -> s
-//
-//        let remove (m : Method) =
-//            let locals = m.Locals |> List.map (fun l -> (l, classifyLocalInStm l m.Body))
-//            let body = 
-//                locals |> List.fold (fun body (local, useType) ->
-//                    match useType with
-//                    | Unknown
-//                    | Write     -> removeLocal local body
-//                    | Read      -> invalidOp "Local variable '%+A' is read from, but never written to." local
-//                    | ReadWrite -> body
-//                ) m.Body
-//
-//            { m with Body = body; Locals = locals |> List.filter (fun (local, useType) -> useType <> Write) |> List.map fst }
-//
-//        { c with
-//            Methods = c.Methods |> List.map remove
-//            Subs = c.Subs |> List.map removeUnusedLocals }
-
     /// Applies all lowerings to the given components.
     let lower (c : Comp list) : Comp =
         let root = 
             match c with
             | c :: [] -> c
-            | c       -> { Name = "SynthesizedRoot"; Subs = c; Fields = []; Methods = []; }
+            | c       -> { Name = "SynthesizedRoot"; Subs = c; Fields = []; Methods = []; Faults = []; Bindings = [] }
         
         root |> lowerSignatures //|> removeUnusedLocals
