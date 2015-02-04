@@ -8,7 +8,6 @@
 	    public Timer(int timeout)
 	    {
 	        _timeout = timeout;
-			BindInstantaneous(RequiredPorts.Test = ProvidedPorts.Reset);
 	    }
 
 		//public bool Triggered = false;
@@ -27,6 +26,7 @@
 	    [Provided]
 	    public void Reset()
 	    {
+		    Test();
 	        _i = 0;
 	    }
 

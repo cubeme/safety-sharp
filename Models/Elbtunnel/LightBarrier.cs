@@ -85,12 +85,15 @@ namespace Elbtunnel
 		private int _i = 1;
 		public bool Triggered = false;
 		private Timer _timer;
+		private Timer _timer2 = new Timer(4);
 		public LightBarrier(Timer timer)
 		{
 			_timer = timer;
 			//BindDelayed(_timer.RequiredPorts.Test = ProvidedPorts.Do);
 			//BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
-			BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
+			BindInstantaneous(_timer2.RequiredPorts.Test = _timer.ProvidedPorts.Reset);
+			BindInstantaneous(_timer.RequiredPorts.Test = ProvidedPorts.Do);
+			BindInstantaneous(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
 			BindDelayed(RequiredPorts.SendData = ProvidedPorts.SendProvided33);
 			//BindInstantaneous(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
 			BindInstantaneous(RequiredPorts.GetPort = ProvidedPorts.IsTriggered);
@@ -106,15 +109,15 @@ namespace Elbtunnel
 
 		void SendProvided(ref int position)
 		{
-			
+			SendData(position);
 		}
 		void SendProvided(int position)
 		{
-
+			
 		}
 		void SendProvided33(int position)
 		{
-
+			SendData(ref position);
 		}
 
 		public int IsTriggered(out bool t)
@@ -137,6 +140,7 @@ namespace Elbtunnel
 			}
 			else
 				--_i;
+			IsTriggered(out Triggered);
 			//return _i + q;
 			_i *= q;
 		}

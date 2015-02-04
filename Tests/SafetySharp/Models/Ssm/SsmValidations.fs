@@ -210,29 +210,111 @@ module ``Ssm Validation: Ambiguous required port bindings`` =
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-//[<TestFixture>]
-//module ``Ssm Validation: Cyclic component graph`` =
-//    let private check componentNames portNames csharpCode =
-//        let model = TestCompilation.CreateModel csharpCode
-//        model.FinalizeMetadata ()
-//        
-//        let e = raisesWith<UnboundRequiredPortsException> (fun () -> model.CheckForInstantaneousCycles ())
-//        e.UnboundPorts.Length =? List.length componentNames
-//        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Component.UnmangledName) =? componentNames
-//        e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Port.Name) =? portNames
-//
-//    [<Test>]
-//    let ``throws when metadata has not yet been finalized`` () =
-//        let model = EmptyModel ()
-//        raisesInvalidOpException (fun () -> model.CheckForInstantaneousCycles ())
-//
-//    [<Test>]
-//    let ``does not throw for model without any cycles`` () =
-//        check ["Root"] ["M"] 
-//          "class X : Component { 
-//                extern void M(); 
-//                void N() { }
-//                public override void Update() { M(); } 
-//                public X() { BindInstantaneous(RequiredPorts.M = ProvidedPorts.N); }
-//           }
-//           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+[<TestFixture>]
+module ``Ssm Validation: Cyclic control flow`` =
+    let private transform csharpCode =
+        let model = TestCompilation.CreateModel csharpCode
+        model.FinalizeMetadata ()
+        (model, CilToSsm.transformModel model |> SsmLowering.lower)
+
+    let private check componentNames portNames csharpCode =
+        let (model, loweredSsm) = transform csharpCode
+        let e = raisesWith<CyclicControlFlowException> (fun () -> SsmValidation.validate model loweredSsm)
+        e.ControlFlow |> List.ofArray |> List.map (fun (c, _) -> c.UnmangledName) =? componentNames
+        e.ControlFlow |> List.ofArray |> List.map (fun (_, m) -> m.Name) =? portNames
+
+    [<Test>]
+    let ``model without any cycles is valid`` () =
+        let (model, loweredSsm) = 
+            transform
+              "class X : Component { 
+                extern void M(); 
+                void N() { }
+                public X() { BindInstantaneous(RequiredPorts.M = ProvidedPorts.N); }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
+    [<Test>]
+    let ``model with simple delayed binding cycle is valid`` () =
+        let (model, loweredSsm) = 
+            transform
+              "class X : Component { 
+                    extern void M(); 
+                    void N() { M(); }
+                    public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); }
+               }
+               class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
+    [<Test>]
+    let ``model with simple instantaneous binding cycle is invalid`` () =
+        check ["Root0"; "Root0"] ["M"; "N"] 
+          "class X : Component { 
+                extern void M(); 
+                void N() { M(); }
+                public X() { BindInstantaneous(RequiredPorts.M = ProvidedPorts.N); }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
+    let ``model with recursive function is invalid`` () =
+        check ["Root0"] ["N"] 
+          "class X : Component { 
+                void N() { N(); }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
+    let ``model with mutually recursive functions is invalid`` () =
+        check ["Root0"; "Root0"] ["M"; "N"] 
+          "class X : Component { 
+                void M() { N(); }
+                void N() { M(); }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
+    let ``model with long cycle involving subcomponents is invalid`` () =
+        check ["Root0.t1"; "Root0.t2"; "Root0.t2"; "Root0"; "Root0"; "Root0.t1"] ["Req"; "Prov"; "Req"; "N"; "M"; "Prov"] 
+          "class T : Component {
+                public extern void Req();
+                public void Prov() { Req(); }
+           }
+           class X : Component { 
+                T t1 = new T();
+                T t2 = new T();
+                extern void M();
+                void N() { M(); }
+                public X() {
+                    BindInstantaneous(t1.RequiredPorts.Req = t2.ProvidedPorts.Prov);
+                    BindInstantaneous(t2.RequiredPorts.Req = ProvidedPorts.N);
+                    BindInstantaneous(RequiredPorts.M = t1.ProvidedPorts.Prov);
+                }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
+    let ``model with long cycle involving subcomponents boken up by delayed binding is valid`` () =
+        let (model, loweredSsm) = 
+            transform
+                "class T : Component {
+                    public extern void Req();
+                    public void Prov() { Req(); }
+                 }
+                 class X : Component { 
+                      T t1 = new T();
+                      T t2 = new T();
+                      extern void M();
+                      void N() { M(); }
+                      public X() {
+                          BindInstantaneous(t1.RequiredPorts.Req = t2.ProvidedPorts.Prov);
+                          BindDelayed(t2.RequiredPorts.Req = ProvidedPorts.N);
+                          BindInstantaneous(RequiredPorts.M = t1.ProvidedPorts.Prov);
+                      }
+                 }
+                 class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)

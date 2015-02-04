@@ -23,7 +23,7 @@
 namespace SafetySharp.Models
 
 open System
-open System.Linq
+open System.Collections.Generic
 open System.Reflection
 open SafetySharp
 open SafetySharp.Modeling
@@ -74,6 +74,18 @@ type AmbiguousRequiredPortBindingsException internal (ambiguousBindings : PortBi
 
     /// Gets the unbound required ports the exception was raised for.
     member this.AmbiguousBindings = ambiguousBindings
+
+/// Raised when a cycle in the control flow of a model exists.
+type CyclicControlFlowException internal (cycle : (Component * MethodInfo) array) =
+    inherit Exception (
+        let print (c : Component, m : MethodInfo) = sprintf "Component '%s', Method '%A'" c.UnmangledName m
+        let info = String.Join ("\n   ", cycle |> Array.map print)
+        sprintf "A cycle has been detected in the control flow of the model. Recursion is not allowed or must be broken up by a delayed binding. \
+                 Involved methods:\n\n   %s\n   %s\n   ...\n\nCheck the 'ControlFlow' property of this exception instance \
+                 for further details about the methods and objects that constitute the cycle." info (print cycle.[0]))
+
+    /// Gets the methods and objects constituting the cycle.
+    member this.ControlFlow = cycle
 
 /// Performs a couple of validation checks on a lowered SSM model.
 module internal SsmValidation =
@@ -131,31 +143,59 @@ module internal SsmValidation =
 
     /// Checks for cyclic control flow, i.e., ports recursively invoking themselves without a delayed binding in between.
     let private controlFlowCycles (model : Model) (c : Comp) =
-        let createVertex = sprintf "%s.%s"
+        let componentMethodVertex componentName portName = 
+            let c = model.FindComponent componentName
+            (c, CilToSsm.unmapMethod c portName)
 
-        // Compute the edges from the required ports to the bound provided ports
-        let required = collect (fun c -> c.Bindings) c |> Seq.map (fun (c, binding) -> 
-            SEdge<_> (createVertex binding.SourceComp binding.SourcePort, createVertex binding.TargetComp binding.TargetPort)
+        let edge startVertex endVertex = SEdge<_> (startVertex, endVertex)
+
+        // Compute the edges from the required ports to the instantly bound provided ports
+        let required = collect (fun c -> c.Bindings) c |> Seq.filter (fun (c, binding) -> binding.Kind = Instantaneous) |> Seq.map (fun (c, binding) -> 
+            edge (componentMethodVertex binding.TargetComp binding.TargetPort) (componentMethodVertex binding.SourceComp binding.SourcePort)
         )
 
         // Compute the edges from the provided ports to all invoked methods
-//        let provided = collect (fun c -> c.Methods |> Seq.filter (fun m -> m.Kind = ProvPort)) c |> Seq.collect (fun (c, port) ->
-//            let extractMethod id var =
-//                id.
-//
-//            let rec invocations stm = 
-//                match stm with
-//                | SeqStm s          -> s |> Seq.collect invocations
-//                | IfStm (_, s1, s2) -> (invocations s1).Union(invocations s2)
-//                | CallStm (id, _, _, _, _, Some (VarExpr (Field ("this", ClassType _))))    -> extractMethod id f
-//                | CallStm (id, _, _, _, _, Some (VarRefExpr (Field ("this", ClassType _)))) -> extractMethod id f
-//                | CallStm _ -> notSupported "Unsupported call statement '%+A'." stm
-//                | _         -> Seq.empty
-//
-//            invocations port.Body |> Seq.map (fun (id, target) -> SEdge<_> (createVertex c.Name port.Name, ""))
-//        )
+        let provided = collect (fun c -> c.Methods |> Seq.filter (fun m -> m.Kind = ProvPort)) c |> Seq.collect (fun (c, port) ->
+            let edge = edge (componentMethodVertex c.Name port.Name)
+            let rec invocations stm = 
+                match stm with
+                | SeqStm s -> s |> Seq.collect invocations
+                | IfStm (_, s1, s2) -> seq { yield! invocations s1; yield! invocations s2 }
+                | ExprStm (CallExpr (m, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
+                | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
+                | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _))) -> 
+                    edge (componentMethodVertex (sprintf "%s.%s" c.Name f) m) |> Seq.singleton
+                | _ -> Seq.empty
 
-        ()
+            invocations port.Body
+        )
+
+        let edges = seq { yield! required; yield! provided }
+        let graph = edges.ToAdjacencyGraph ()
+
+        // Check for recursive function calls; this is a special case that is not detected by the
+        // SSC-based cycle detection below.
+        match graph.Edges |> Seq.tryFind (fun edge -> edge.Source = edge.Target) with
+        | None -> ()
+        | Some edge -> raise (CyclicControlFlowException [|edge.Source|])
+
+        // Construct the sets of strongly connected components of the graph; if there are no cycles, the
+        // number of SCCs matches the number of vertices.
+        let mutable components = Dictionary<_,_> () :> IDictionary<_,_>
+        let componentCount = graph.StronglyConnectedComponents (&components)
+
+        if componentCount <> graph.VertexCount then
+            // Report the smallest cycle that was found
+            let cycle = 
+                components 
+                |> Seq.map (fun p -> (p.Key, p.Value)) 
+                |> Seq.groupBy (fun (_, scc) -> scc) 
+                |> Seq.filter (fun (_, scc) -> Seq.length scc > 1)
+                |> Seq.minBy (snd >> Seq.length) 
+                |> snd
+                |> Seq.map fst
+                |> Seq.toArray
+            raise (CyclicControlFlowException cycle)
 
     /// Performs the validation of the given SSM root component and S# model.
     let validate (model : Model) (c : Comp) =
