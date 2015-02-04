@@ -73,7 +73,7 @@ module internal SsmToCSharp =
             | Field (f, t) -> typeRef t; writer.Append " "; mangledName f
             | This _       -> invalidOp "Cannot declare 'this' pointer."
 
-        let rec call t m d e =
+        let rec call m d e =
             let writeArg (d, e) =
                 match d with
                 | In    -> ()
@@ -81,22 +81,21 @@ module internal SsmToCSharp =
                 | Out -> writer.Append "out "
                 expr e
             let args = List.zip d e
-            match t with
-            | None -> writer.Append "%s." m.Type
-            | Some t -> expr t; writer.Append "."
-            mangledName m.Name
+            mangledName m
             writer.Append "("
             writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
 
         and expr = function
-            | BoolExpr b                  -> writer.Append <| if b then "true" else "false"
-            | IntExpr i                   -> writer.Append "%i" i
-            | DoubleExpr d                -> writer.Append "%f" d
-            | VarExpr v                   -> var v
-            | VarRefExpr v                -> var v
-            | UExpr (op, e)               -> uop op; writer.AppendParenthesized (fun () -> expr e)
-            | BExpr (e1, op, e2)          -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
-            | CallExpr (m, _, d, _, e, t) -> call t m d e
+            | BoolExpr b               -> writer.Append <| if b then "true" else "false"
+            | IntExpr i                -> writer.Append "%i" i
+            | DoubleExpr d             -> writer.Append "%f" d
+            | VarExpr v                -> var v
+            | VarRefExpr v             -> var v
+            | UExpr (op, e)            -> uop op; writer.AppendParenthesized (fun () -> expr e)
+            | BExpr (e1, op, e2)       -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+            | MemberExpr (v, e)        -> var v; writer.Append "."; expr e
+            | TypeExpr (t, e)          -> writer.Append "%s." t; expr e
+            | CallExpr (m, _, d, _, e) -> call m d e
 
         let rec toCSharp stm = 
             match stm with
@@ -120,7 +119,7 @@ module internal SsmToCSharp =
                 writer.AppendBlockStatement (fun () -> toCSharp s1)
                 writer.Append "else"
                 writer.AppendBlockStatement (fun () -> toCSharp s2)
-            | CallStm (m, _, d, _, e, t) -> call t m d e; writer.AppendLine ";"
+            | ExprStm e -> expr e; writer.AppendLine ";"
 
         typeRef m.Return
         writer.Append " "

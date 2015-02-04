@@ -43,18 +43,21 @@ module internal SsmLowering =
 
     /// Lowers the signatures of ports: Ports returning a value are transformed to void-returning ports 
     /// with an additional out parameter.
-    let rec lowerSignatures (c : Comp) =
+    let rec private lowerSignatures (c : Comp) =
         // Lowers all method call sites:
         // - Statements calls have no return value so there's nothing to do here
         // - Expression calls are always embedded in an assignment statement; we therefore simply add the 
         //   assignment target as the last (out) parameter of the method and convert the assignment into
         //   a statement call
         let lowerCallSites (m : Method) =
+            let rewrite v m p d r e = CallExpr (m, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v])
             let rec lower = function
-                | AsgnStm (v, CallExpr (m, p, d, r, e, t)) -> CallStm (m, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v], t)
-                | SeqStm s                                 -> SeqStm (s |> List.map lower)
-                | IfStm (c, s1, s2)                        -> IfStm (c, lower s1, lower s2)
-                | s                                        -> s
+                | AsgnStm (v, CallExpr (m, p, d, r, e))                 -> rewrite v m p d r e |> ExprStm
+                | AsgnStm (v, MemberExpr (t, CallExpr (m, p, d, r, e))) -> MemberExpr (t, rewrite v m p d r e) |> ExprStm
+                | AsgnStm (v, TypeExpr (t, CallExpr (m, p, d, r, e)))   -> TypeExpr (t, rewrite v m p d r e) |> ExprStm
+                | SeqStm s          -> SeqStm (s |> List.map lower)
+                | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
+                | s                 -> s
             { m with Body = lower m.Body }
 
         // Lowers all returns statements of the method:
@@ -89,4 +92,4 @@ module internal SsmLowering =
             | c :: [] -> c
             | c       -> { Name = "SynthesizedRoot"; Subs = c; Fields = []; Methods = []; Faults = []; Bindings = [] }
         
-        root |> lowerSignatures //|> removeUnusedLocals
+        root |> lowerSignatures

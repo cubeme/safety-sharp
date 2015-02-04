@@ -119,7 +119,7 @@ namespace Elbtunnel
 
 		public int IsTriggered(out bool t)
 		{
-			_timer.Update();
+			//_timer.Update();
 			t= false;
 			return 0;
 		}

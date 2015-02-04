@@ -179,7 +179,12 @@ module ``CilToSsm Components`` =
                             Return = VoidType
                             Params = []
                             Locals = []
-                            Body = SeqStm [CallStm ({ Name = CilToSsm.makeUniqueMethodName "M" 2 0; Type = "X" }, [], [], VoidType, [], Some (VarExpr (Field (CilToSsm.makeUniqueFieldName "x" 2, ClassType "X")))); RetStm None]
+                            Body = SeqStm 
+                                [
+                                    ExprStm (MemberExpr (Field (CilToSsm.makeUniqueFieldName "x" 2, ClassType "X"),
+                                                         CallExpr (CilToSsm.makeUniqueMethodName "M" 2 0, [], [], VoidType, [])))
+                                    RetStm None
+                                ]
                             Kind = ProvPort
                         } 
                     ]

@@ -204,11 +204,11 @@ module internal CilToSsm =
         | None 
         | Some (ClassType _) -> invalidOp "Unsupported method return type '%A'." typeRef
         | Some t             -> t
-    
+
     /// Creates a variable using the given constructor with the given name and type.
     let private createVar resolveType constr name typeRef =
         constr (name, typeRef |> resolveType |> mapVarType)
-
+    
     /// Normalizes binary expressions where one side is of type Boolean and the other side is an integer
     /// literal such that the integer literal is replaced by the corresponding Boolean literal.
     let private normalizeIntToBool bexpr =
@@ -260,8 +260,12 @@ module internal CilToSsm =
         let argName (a : ParameterDefinition) = if a.Index = -1 then "this" else a.Name
         let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i%c" l.Index varToken else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
-        let arg (a : ParameterDefinition) = createVar Arg (argName a) a.ParameterType
         let field (f : FieldReference) = createVar Field (getUniqueFieldName f) f.FieldType
+        let arg (a : ParameterDefinition) = 
+            if a.Index = -1 then
+                This (a.ParameterType |> resolveGenericType resolver |> mapVarType)
+            else
+                createVar Arg (argName a) a.ParameterType
 
         let containsLocal l = checkStack (localVarPred (localName l))
         let containsArg a = checkStack (argVarPred a)
@@ -275,11 +279,15 @@ module internal CilToSsm =
         match instr, stack with
         | (Instr.Nop, s) -> (NopStm, [], s)
         | (Instr.Ldind, (VarRefExpr v) :: s) -> (NopStm, [], (VarExpr v) :: s)
-        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.isClassType v ->
+        | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.isClassType v && f.Resolve().IsStatic |> not ->
             let field = field f
             let resolvedField = f.Resolve ()
-            let readField = (NopStm, [], (VarExpr field) :: s)
-            if Ssm.getVarName v = "this" && resolvedField.IsInitOnly && not (Ssm.isClassType field) then
+            let readField = 
+                if Ssm.isThis v then (NopStm, [], (VarExpr field) :: s)
+                else (NopStm, [], (MemberExpr (v, VarExpr field)) :: s)
+
+            // Inline readonly fields of non-class type
+            if Ssm.isThis v && resolvedField.IsInitOnly && not (Ssm.isClassType field) then
                 match (c.GetInitialValuesOfField resolvedField, Ssm.getVarType field) with
                 | (b :: [], BoolType)   -> (NopStm, [], (BoolExpr (b :?> bool)) :: s)
                 | (i :: [], IntType)    -> (NopStm, [], (IntExpr (i :?> int)) :: s)
@@ -311,14 +319,8 @@ module internal CilToSsm =
             let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
             let m = m.Resolve ()
-            let methodId = { Type = getCSharpType m.DeclaringType.FullName; Name = getUniqueMethodName m }
-
-            // Determine the target of invocation, if any
-            let target = 
-                if m.IsStatic then None 
-                else match s.[m.Parameters.Count] with
-                     | VarExpr v when Ssm.isClassType v && Ssm.getVarName v = "this" -> Some (VarExpr (This (ClassType (Ssm.getClassType v))))
-                     | v -> Some v
+            let name = getUniqueMethodName m
+            let target = if m.IsStatic then None else Some s.[m.Parameters.Count]
 
             // Pop the arguments from the symbolic stack, as well as the invocation target for non-static methods
             let s = s |> Seq.skip (argCount + (if m.IsStatic then 0 else 1)) |> Seq.toList
@@ -344,11 +346,20 @@ module internal CilToSsm =
                     (idx + 1, (AsgnStm (tmp, VarExpr v)) :: vars, replaceVar ((=) v) tmp s)
                  ) (idx, vars, stack)
 
+            let callExpr = CallExpr (name, paramTypes, paramDirs, returnType, args)
+            let expr = 
+                match target with 
+                | None -> TypeExpr (getCSharpType m.DeclaringType.FullName, callExpr)
+                | Some (VarExpr v) when Ssm.isThis v -> callExpr
+                | Some (VarExpr (Field (f, ClassType t)))
+                | Some (VarRefExpr (Field (f, ClassType t))) -> MemberExpr (Field (f, ClassType t), callExpr)
+                | _ -> invalidOp "Unsupported member method invocation: '%+A' for stack '%+A." instr stack
+
             if returnType = VoidType then
-                (CallStm (methodId, paramTypes, paramDirs, returnType, args, target), vars, stack)
+                (ExprStm expr, vars, stack)
             else
                 let tmp = freshLocal pc idx returnType
-                (NopStm, vars @ [AsgnStm (tmp, CallExpr (methodId, paramTypes, paramDirs, returnType, args, target))], (VarExpr tmp) :: stack)
+                (NopStm, vars @ [AsgnStm (tmp, expr)], (VarExpr tmp) :: stack)
         | (Instr.Br (Always, t), s) -> (GotoStm (BoolExpr true, t), [], s)
         | (Instr.Br (True, t), e :: s) -> (GotoStm (e, t), [], s)
         | (Instr.Br (False, t), e :: s) -> (GotoStm (UExpr (Not, e), t), [], s)
@@ -458,10 +469,12 @@ module internal CilToSsm =
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
             match e with
-            | IntExpr 0 when isBool       -> BoolExpr false
-            | IntExpr _ when isBool       -> BoolExpr true
-            | CallExpr (m, p, d, r, e, t) -> CallExpr (m, p, d, r, fixCallExprs p e, t)
-            | e when isBool               -> 
+            | IntExpr 0 when isBool    -> BoolExpr false
+            | IntExpr _ when isBool    -> BoolExpr true
+            | CallExpr (m, p, d, r, e) -> CallExpr (m, p, d, r, fixCallExprs p e)
+            | MemberExpr (v, e)        -> MemberExpr (v, fixExpr e isBool)
+            | TypeExpr (t, e)          -> TypeExpr (t, fixExpr e isBool)
+            | e when isBool            -> 
                 match Ssm.deduceType e with
                 | IntType    -> BExpr (e, Ne, IntExpr 0)
                 | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
@@ -488,7 +501,7 @@ module internal CilToSsm =
             | GotoStm (e, t) -> GotoStm (fixExpr e true, t)
             | RetStm None -> RetStm None
             | RetStm (Some e) -> RetStm (Some (fixExpr e returnsBool))
-            | CallStm (m, p, d, r, e, t) -> CallStm (m, p, d, r, fixCallExprs p e, t)
+            | ExprStm e -> fixExpr e false |> ExprStm
             | _ -> invalidOp "Unsupported statement '%+A'." stm
         ) methodBody
 
@@ -544,7 +557,10 @@ module internal CilToSsm =
             | _                    -> (f, None)
         )
         |> Seq.filter (fun (f, t) -> t <> None)
-        |> Seq.map (fun (f, t) -> { Var = Field (getUniqueFieldName f, t.Value); Init = c.GetInitialValuesOfField f |> List.map transformFieldValue })
+        |> Seq.map (fun (f, fieldType) -> 
+          { Var = Field (getUniqueFieldName f, fieldType.Value)
+            Init = c.GetInitialValuesOfField f |> List.map transformFieldValue }
+        )
         |> Seq.toList
 
     /// Transforms the given method to an SSM method with structured control flow.

@@ -38,8 +38,7 @@ module ``Ssm Lowering of Port Signatures`` =
         let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let ssm = CilToSsm.transformModel model
-        ssm.[0] |> SsmLowering.lowerSignatures
+        CilToSsm.transformModel model |> SsmLowering.lower
 
     let private transformMethod methodDefinition= 
         let ssm = transform methodDefinition
@@ -47,8 +46,8 @@ module ``Ssm Lowering of Port Signatures`` =
         ssm.Methods.[0]
 
     let private tmp = CilToSsm.freshLocal
-    let private methodId name = { Name = CilToSsm.makeUniqueMethodName name 2 0; Type = className }
-    let private this = Some (VarExpr (This (ClassType className)))
+    let private methodName = CilToSsm.makeUniqueMethodName
+    let private this = VarExpr (This (ClassType className))
 
     [<Test>]
     let ``does not change void-returning method`` () =
@@ -73,7 +72,7 @@ module ``Ssm Lowering of Port Signatures`` =
                 Body = 
                     SeqStm 
                         [
-                            CallStm (methodId "M", [IntType], [Out], VoidType, [VarRefExpr (tmp 1 0 IntType)], this)
+                            ExprStm (CallExpr (methodName "M" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 1 0 IntType)]))
                             SeqStm [
                                 AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 1 0 IntType))
                                 RetStm None
@@ -170,7 +169,7 @@ module ``Ssm Lowering of Port Signatures`` =
                         VarExpr (Arg ("b", BoolType)),
                         SeqStm [AsgnStm (Arg ("retVal", BoolType), BoolExpr true); RetStm None],
                         SeqStm [
-                            CallStm (methodId "M", [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)], this)
+                            ExprStm (CallExpr (methodName "M" 2 0, [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)]))
                             SeqStm [
                                 AsgnStm (Arg ("retVal", BoolType), VarExpr (tmp 6 0 BoolType))
                                 RetStm None
@@ -178,6 +177,44 @@ module ``Ssm Lowering of Port Signatures`` =
                         ]
                     )
                 Kind = ProvPort                   
+            }
+
+    [<Test>]
+    let ``lowers static value-returning method without parameters`` () =
+        transform "static int Q() { return 1; } int M() { return Q(); }" =?
+            {
+                Name = "Root0@0"
+                Fields = []
+                Methods = 
+                    [
+                       {
+                            Name = CilToSsm.makeUniqueMethodName "Q" 2 0
+                            Return = VoidType
+                            Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
+                            Locals = []
+                            Body =  SeqStm [ AsgnStm (Arg ("retVal", IntType), IntExpr 1); RetStm None ]
+                            Kind = ProvPort               
+                       }
+                       {
+                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                            Return = VoidType
+                            Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
+                            Locals = [tmp 0 0 IntType]
+                            Body = 
+                                SeqStm 
+                                    [
+                                        ExprStm (TypeExpr (className, CallExpr (methodName "Q" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 0 0 IntType)])))
+                                        SeqStm [
+                                            AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 0 0 IntType))
+                                            RetStm None
+                                        ]
+                                    ]
+                            Kind = ProvPort               
+                        }
+                    ]
+                Subs = [] 
+                Faults = []
+                Bindings = []       
             }
 
     [<Test>]
@@ -196,7 +233,7 @@ module ``Ssm Lowering of Port Signatures`` =
                             Body = 
                                 SeqStm 
                                     [
-                                        CallStm ({ Type = "X.Sub"; Name = CilToSsm.makeUniqueMethodName "Q" 2 0 }, [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)], Some (VarExpr (Field (CilToSsm.makeUniqueFieldName "q" 2, ClassType "X.Sub"))))
+                                        ExprStm (MemberExpr (Field (CilToSsm.makeUniqueFieldName "q" 2, ClassType "X.Sub"), CallExpr (methodName "Q" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)])))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 2 0 IntType))
                                             RetStm None

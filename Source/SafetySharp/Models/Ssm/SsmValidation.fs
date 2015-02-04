@@ -23,7 +23,13 @@
 namespace SafetySharp.Models
 
 open System
+open System.Linq
+open System.Reflection
+open SafetySharp
 open SafetySharp.Modeling
+open Ssm
+open QuickGraph
+open QuickGraph.Algorithms
 
 /// Raised when one or more invalid port bindings were encountered that span more than one level of the component hierarchy.
 type InvalidBindingsException internal (invalidBindings : PortBinding array) =
@@ -71,14 +77,7 @@ type AmbiguousRequiredPortBindingsException internal (ambiguousBindings : PortBi
 
 /// Performs a couple of validation checks on a lowered SSM model.
 module internal SsmValidation =
-    open System
-    open System.Reflection
-    open SafetySharp
-    open SafetySharp.Modeling
-    open Ssm
-    open QuickGraph
-    open QuickGraph.Algorithms
-
+    
     /// Maps the given information to a <see cref="PortInfo" /> instance.
     let private toPortInfo (model : Model) (componentName : string) (portName : string) = 
         let c = model.FindComponent componentName
@@ -135,12 +134,27 @@ module internal SsmValidation =
         let createVertex = sprintf "%s.%s"
 
         // Compute the edges from the required ports to the bound provided ports
-        let required =
-            collect (fun c -> c.Bindings) c |> Seq.map (fun (c, binding) -> 
-                SEdge<_> (createVertex binding.SourceComp binding.SourcePort, createVertex binding.TargetComp binding.TargetPort)
-            )
+        let required = collect (fun c -> c.Bindings) c |> Seq.map (fun (c, binding) -> 
+            SEdge<_> (createVertex binding.SourceComp binding.SourcePort, createVertex binding.TargetComp binding.TargetPort)
+        )
 
         // Compute the edges from the provided ports to all invoked methods
+//        let provided = collect (fun c -> c.Methods |> Seq.filter (fun m -> m.Kind = ProvPort)) c |> Seq.collect (fun (c, port) ->
+//            let extractMethod id var =
+//                id.
+//
+//            let rec invocations stm = 
+//                match stm with
+//                | SeqStm s          -> s |> Seq.collect invocations
+//                | IfStm (_, s1, s2) -> (invocations s1).Union(invocations s2)
+//                | CallStm (id, _, _, _, _, Some (VarExpr (Field ("this", ClassType _))))    -> extractMethod id f
+//                | CallStm (id, _, _, _, _, Some (VarRefExpr (Field ("this", ClassType _)))) -> extractMethod id f
+//                | CallStm _ -> notSupported "Unsupported call statement '%+A'." stm
+//                | _         -> Seq.empty
+//
+//            invocations port.Body |> Seq.map (fun (id, target) -> SEdge<_> (createVertex c.Name port.Name, ""))
+//        )
+
         ()
 
     /// Performs the validation of the given SSM root component and S# model.
