@@ -338,9 +338,9 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     static member GetDiagnostic (analyzer : DiagnosticAnalyzer) csharpCode =
         let compilation = TestCompilation csharpCode
         let options = AnalyzerOptions (ImmutableArray.Create<AdditionalStream> (), ImmutableDictionary.Create<string, string> ())
-        let analyzer = ImmutableArray.Create analyzer
+        let analyzerArray = ImmutableArray.Create analyzer
 
-        let diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation.CSharpCompilation, analyzer).Result
+        let diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation.CSharpCompilation, analyzerArray).Result
         if diagnostics.Length > 1 then
             raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))
         elif diagnostics.Length = 0 then
@@ -353,6 +353,11 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
                 | DiagnosticSeverity.Error   -> Error
                 | DiagnosticSeverity.Warning -> Warning
                 | s                          -> sprintf "Unsupported diagnostic: '%A'" diagnostic |> invalidOp
+
+            // Check whether the analyzer is allowed to emit the diagnostic
+            if analyzer.SupportedDiagnostics |> Seq.exists (fun supportedDiagnostic -> supportedDiagnostic.Id = diagnostic.Id) |> not then
+                invalidOp (sprintf "Analyzer of type '%s' emitted a diagnostic with id '%s' which is not contained in its set of supported diagnostics."
+                    (analyzer.GetType().FullName) diagnostic.Id)
 
             Diagnostic (kind,
                         diagnostic.Id, 

@@ -171,25 +171,41 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		/// <param name="filter">A filter that should be applied to filter the ports.</param>
 		[Pure]
-		private static IEnumerable<ISymbol> GetPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel,
-													 Func<ITypeSymbol, ISymbol, bool> filter)
+		private static IEnumerable<IMethodSymbol> GetPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel,
+														   Func<ITypeSymbol, ISymbol, bool> filter)
 		{
 			Requires.NotNull(typeSymbol, () => typeSymbol);
 			Requires.NotNull(semanticModel, () => semanticModel);
 
-			var inheritedPorts = Enumerable.Empty<ISymbol>();
+			var inheritedPorts = Enumerable.Empty<IMethodSymbol>();
 			if (typeSymbol.TypeKind == TypeKind.Interface)
 				inheritedPorts = typeSymbol.AllInterfaces.SelectMany(i => i.GetPorts(semanticModel, filter));
 			else if (typeSymbol.BaseType != null)
 				inheritedPorts = typeSymbol.BaseType.GetPorts(semanticModel, filter);
 
 			var members = typeSymbol.GetMembers();
-			return members
+			var ports = members
 				.OfType<IMethodSymbol>()
 				.Cast<ISymbol>()
 				.Union(members.OfType<IPropertySymbol>())
 				.Where(port => filter(typeSymbol, port))
-				.Union(inheritedPorts);
+				.SelectMany(port =>
+				{
+					var method = port as IMethodSymbol;
+					if (method != null)
+						return new[] { method };
+
+					var property = port as IPropertySymbol;
+					if (property != null)
+						return new[] { property.GetMethod, property.SetMethod }.Where(symbol => symbol != null);
+
+					return Enumerable.Empty<IMethodSymbol>();
+				})
+				.Union(inheritedPorts)
+				.ToArray();
+
+			// Filter out all ports that are overridden by another one
+			return ports.Where(port => ports.All(derivedPort => !derivedPort.Overrides(port) || Equals(derivedPort, port)));
 		}
 
 		/// <summary>
@@ -198,7 +214,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
-		public static IEnumerable<ISymbol> GetRequiredPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
+		public static IEnumerable<IMethodSymbol> GetRequiredPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
@@ -226,7 +242,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		/// <param name="typeSymbol">The type symbol that should be checked.</param>
 		/// <param name="semanticModel">The semantic model that should be used to resolve symbol information.</param>
 		[Pure]
-		public static IEnumerable<ISymbol> GetProvidedPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
+		public static IEnumerable<IMethodSymbol> GetProvidedPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
 			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
@@ -238,7 +254,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 
 				var methodSymbol = portSymbol as IMethodSymbol;
 				if (methodSymbol != null)
-					return !methodSymbol.IsExtern;
+					return !methodSymbol.IsExtern && !methodSymbol.IsUpdateMethod(semanticModel);
 
 				var propertySymbol = portSymbol as IPropertySymbol;
 				if (propertySymbol != null)

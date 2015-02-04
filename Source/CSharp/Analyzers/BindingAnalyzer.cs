@@ -199,6 +199,7 @@ namespace SafetySharp.CSharp.Analyzers
 			if (!ports.Any())
 				return "<none>";
 
+			ports = ports.GroupBy(port => port.Symbol).Select(group => group.First());
 			return String.Join("\n",
 				ports.Select(port => String.Format("'{0}'", port.Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))));
 		}

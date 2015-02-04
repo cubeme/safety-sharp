@@ -155,3 +155,35 @@ module BindingNormalizer =
             (SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x1.N)), \
             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(x2.M)))).Delayed(); } \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __BindingDelegate0__();}"
+
+    [<Test>]
+    let ``normalizes overridden provided port`` () =
+        normalize "class Y : X { extern void N(); public override void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }} class X : Component { public virtual void M() {}}" =?
+            "class Y : X { extern void N(); public override void M() {} Y() { Bind(new SafetySharp.Modeling.PortBinding(\
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)), \
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M)))); }\
+             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __BindingDelegate0__();} "
+
+    [<Test>]
+    let ``normalizes overridden required port`` () =
+        normalize "class Y : X { void N() {} public extern override void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }} class X : Component { public virtual extern void M(); }" =?
+            "class Y : X { void N() {} public extern override void M(); Y() { Bind(new SafetySharp.Modeling.PortBinding(\
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M)), \
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)))); }\
+             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __BindingDelegate0__();} "
+
+    [<Test>]
+    let ``normalizes provided port replaced by new required port`` () =
+        normalize "class Y : X { void N() {} public extern new void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }} class X : Component { public void M() {}}" =?
+            "class Y : X { void N() {} public extern new void M(); Y() { Bind(new SafetySharp.Modeling.PortBinding(\
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M)), \
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)))); }\
+             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __BindingDelegate0__();} "
+
+    [<Test>]
+    let ``normalizes required port replaced by new provided port`` () =
+        normalize "class Y : X { extern void N(); public new void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }} class X : Component { public extern void M(); }" =?
+            "class Y : X { extern void N(); public new void M() {} Y() { Bind(new SafetySharp.Modeling.PortBinding(\
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(N)), \
+             SafetySharp.Modeling.PortInfo.MethodPort((__BindingDelegate0__)(M)))); }\
+             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __BindingDelegate0__();} "

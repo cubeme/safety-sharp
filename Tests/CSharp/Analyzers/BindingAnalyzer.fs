@@ -215,5 +215,34 @@ module ``Binding validity`` =
         getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (int)x.ProvidedPorts.M).Delayed(); } }" =? cast 122 3
         getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (object)x.ProvidedPorts.M).Delayed(); } }" =? cast 122 6
         getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (Component)((x.ProvidedPorts.M))).Delayed(); } }" =? cast 122 9
-
     
+    [<Test>]
+    let ``binding of Update method is valid`` () = 
+        getDiagnostic "class X : Component { void M() {} X() { Bind(RequiredPorts.Update = ProvidedPorts.M); } public override void Update() {}}" =? None
+        getDiagnostic "class X : Component { extern void M(); X() { Bind(RequiredPorts.M = ProvidedPorts.Update); } public override void Update() {}}" =? None
+
+    [<Test>]
+    let ``overridden provided ports are only considered once`` () =
+        getDiagnostic "class X : Component { public virtual void M() {}} class Y : X { extern void N(); public override void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =? None
+
+    [<Test>]
+    let ``overridden required ports are only considered once`` () =
+        getDiagnostic "class X : Component { public virtual extern void M(); } class Y : X { void N() {} public extern override void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }}" =? None
+
+    [<Test>]
+    let ``new and original provided ports are both considered causing an ambiguity`` () =
+        getDiagnostic "class X : Component { public void M() {}} class Y : X { extern void N(); public new void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =? 
+            ambiguous 107 140 ["Y.N()"] ["Y.M()"; "X.M()"]
+
+    [<Test>]
+    let ``new and original required ports are both considered causing an ambiguity`` () =
+        getDiagnostic "class X : Component { public extern void M(); } class Y : X { void N() {} public extern new void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }}" =? 
+            ambiguous 113 146 ["Y.M()"; "X.M()"] ["Y.N()"]
+
+    [<Test>]
+    let ``provided port replaced by new required port`` () =
+        getDiagnostic "class X : Component { public void M() {}} class Y : X { void N() {} public extern new void M(); Y() { Bind(RequiredPorts.M = ProvidedPorts.N); }}" =? None
+
+    [<Test>]
+    let ``required port replaced by new provided port`` () =
+        getDiagnostic "class X : Component { public extern void M(); } class Y : X { extern void N(); public new void M() {} Y() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =? None

@@ -23,7 +23,7 @@
 namespace SafetySharp.CSharp
 {
 	using System;
-	using System.Collections.Immutable;
+	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
 	using Microsoft.CodeAnalysis;
@@ -41,7 +41,7 @@ namespace SafetySharp.CSharp
 		/// <param name="portSymbols">The ports contained in the collection.</param>
 		/// <param name="name">The common name of the ports contained in the collection.</param>
 		/// <param name="containsRequiredPorts">Indicates whether the collection contains required ports.</param>
-		public PortCollection([NotNull] ITypeSymbol declaringType, [NotNull] ISymbol[] portSymbols, string name, bool containsRequiredPorts)
+		public PortCollection([NotNull] ITypeSymbol declaringType, [NotNull] IMethodSymbol[] portSymbols, string name, bool containsRequiredPorts)
 		{
 			Requires.NotNull(declaringType, () => declaringType);
 			Requires.NotNull(portSymbols, () => portSymbols);
@@ -54,21 +54,7 @@ namespace SafetySharp.CSharp
 
 			// We add ports for all property accessors declared by property ports
 			foreach (var port in portSymbols)
-			{
-				var methodSymbol = port as IMethodSymbol;
-				if (methodSymbol != null)
-					Add(new Port(methodSymbol, methodSymbol.Name, containsRequiredPorts));
-
-				var propertySymbol = port as IPropertySymbol;
-				if (propertySymbol == null)
-					continue;
-
-				if (propertySymbol.GetMethod != null)
-					Add(new Port(propertySymbol.GetMethod, propertySymbol.Name, containsRequiredPorts));
-
-				if (propertySymbol.SetMethod != null)
-					Add(new Port(propertySymbol.SetMethod, propertySymbol.Name, containsRequiredPorts));
-			}
+				Add(new Port(port, port.Name, containsRequiredPorts));
 
 			Assert.That(this.All(p => p.IsRequiredPort == containsRequiredPorts),
 				"Cannot have required and provided ports in the same collection.");
@@ -114,15 +100,10 @@ namespace SafetySharp.CSharp
 		///     Tries to find a port that is signature-compatible to <paramref name="methodSymbol" />.
 		/// </summary>
 		/// <param name="methodSymbol">The method symbol defining the signature the port must be compatible to.</param>
-		private Port FindOfType([NotNull] IMethodSymbol methodSymbol)
+		private IEnumerable<Port> FindOfType([NotNull] IMethodSymbol methodSymbol)
 		{
 			Requires.NotNull(methodSymbol, () => methodSymbol);
-
-			var ports = this.Where(p => p.IsCompatibleTo(methodSymbol)).ToImmutableArray();
-			if (ports.Length == 1)
-				return ports[0];
-
-			return null;
+			return this.Where(p => p.IsCompatibleTo(methodSymbol));
 		}
 
 		/// <summary>
@@ -150,7 +131,7 @@ namespace SafetySharp.CSharp
 		public BindingCandidate[] GetBindingCandidates([NotNull] PortCollection other)
 		{
 			return this
-				.Select(port => new BindingCandidate { Left = port, Right = other.FindOfType(port.Symbol) })
+				.SelectMany(port => other.FindOfType(port.Symbol).Select(p => new BindingCandidate { Left = port, Right = p }))
 				.Where(candidate => candidate.Right != null)
 				.ToArray();
 		}

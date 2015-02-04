@@ -147,3 +147,8 @@ module ``Referenced ports must exist`` =
         getDiagnostic "class Y : X { void M() {} } class X : Component { public X() { var y = ProvidedPorts.M; } }" =? provUnknown 85 "X" "M"
         getDiagnostic "interface J : IComponent {} interface I : J { [Required] void M(); } class X : Component { public X(J j) { var y = j.RequiredPorts.M; } }" =? reqUnknown 131 "J" "M"
         getDiagnostic "interface J : IComponent {} interface I : J { [Provided] void M(); } class X : Component { public X(J j) { var y = j.ProvidedPorts.M; } }" =? provUnknown 131 "J" "M"
+
+    [<Test>]
+    let ``update method is not a valid port`` () =
+        getDiagnostic "class X : Component { public X() { var y = RequiredPorts.Update; } public override void Update() {}}" =? reqUnknown 57 "X" "Update"
+        getDiagnostic "class X : Component { public X() { var y = ProvidedPorts.Update; } public override void Update() {}}" =? provUnknown 57 "X" "Update"

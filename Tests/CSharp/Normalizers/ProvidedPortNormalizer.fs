@@ -87,3 +87,7 @@ module ProvidedPortNormalizer =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (ProvidedPortNormalizer()) "class Y { class X : Component { void M(int i) {} }}"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] void M(int i) {} }"
+
+    [<Test>]
+    let ``does not normalize Update method`` () =
+        normalize "class X : Component { public override void Update() {} }" =? "class X : Component { public override void Update() {} }"

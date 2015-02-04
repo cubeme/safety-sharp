@@ -68,7 +68,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public OccurrencePatternAnalyzer()
-			: base(MissingPattern, AmbiguousPattern)
+			: base(MissingPattern, AmbiguousPattern, OccurrencePatternHasNoEffect)
 		{
 		}
 

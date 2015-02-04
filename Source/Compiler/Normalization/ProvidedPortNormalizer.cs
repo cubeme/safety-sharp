@@ -24,6 +24,7 @@ namespace SafetySharp.Compiler.Normalization
 {
 	using System;
 	using CSharp.Roslyn;
+	using CSharp.Roslyn.Symbols;
 	using CSharp.Roslyn.Syntax;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
@@ -65,10 +66,16 @@ namespace SafetySharp.Compiler.Normalization
 		/// </summary>
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax methodDeclaration)
 		{
-			if (!methodDeclaration.Modifiers.Any(SyntaxKind.ExternKeyword) && !methodDeclaration.HasAttribute<ProvidedAttribute>(SemanticModel))
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(ProvidedAttribute));
+			if (methodDeclaration.Modifiers.Any(SyntaxKind.ExternKeyword))
+				return methodDeclaration;
 
-			return methodDeclaration;
+			if (methodDeclaration.HasAttribute<ProvidedAttribute>(SemanticModel))
+				return methodDeclaration;
+
+			if (methodDeclaration.GetMethodSymbol(SemanticModel).IsUpdateMethod(SemanticModel))
+				return methodDeclaration;
+
+			return methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(ProvidedAttribute));
 		}
 	}
 }

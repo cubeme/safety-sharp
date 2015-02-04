@@ -76,7 +76,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public PortReferenceAnalyzer()
-			: base(UnknownProvidedPort, UnknownRequiredPort)
+			: base(UnknownProvidedPort, UnknownRequiredPort, InaccessibleProvidedPort, InaccessibleRequiredPort)
 		{
 		}
 
