@@ -38,10 +38,10 @@ type InvalidBindingsException internal (invalidBindings : PortBinding array) =
             sprintf "Component '%s', Port '%A' = Component '%s', Port '%A' [%A]; binding established by Component '%s'"
                 (binding.TargetPort.Component :?> Component).UnmangledName binding.TargetPort.Method
                 (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method
-                binding.Kind (binding.Component :?> Component).UnmangledName
+                binding.Kind binding.BinderName
         ))
         sprintf "One or more bindings are invalid because they span more than one level of the hierarchy:\n%s\n\
-                 Use the 'InvalidBindings' property of this exception instance for further details about the invalid bindings." bindings)
+                 Check the 'InvalidBindings' property of this exception instance for further details about the invalid bindings." bindings)
 
     /// Gets the invalid port bindings the exception was raised for.
     member this.InvalidBindings = invalidBindings
@@ -63,9 +63,8 @@ type AmbiguousRequiredPortBindingsException internal (ambiguousBindings : PortBi
         let bindings = String.Join ("\n", ambiguousBindings |> Array.map (fun bindings ->
             let ambiguousBindings = String.Join ("\n     ", bindings |> Array.map (fun binding -> 
                 sprintf "bound to: Component '%s', Port '%A' [%A]; binding established by Component '%s'" 
-                    (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method binding.Kind 
-                    (binding.Component :?> Component).UnmangledName)
-            )
+                    (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method binding.Kind binding.BinderName
+            ))
             sprintf "Component '%s', Port '%A':\n     %s" 
                 (bindings.[0].TargetPort.Component :?> Component).UnmangledName bindings.[0].TargetPort.Method ambiguousBindings
         ))
@@ -99,7 +98,7 @@ module internal SsmValidation =
     let private toPortBinding (model : Model) (componentName : string) (binding : Binding) =
         let portBinding = PortBinding (toPortInfo model binding.TargetComp binding.TargetPort, toPortInfo model binding.SourceComp binding.SourcePort)
         portBinding.Kind <- binding.Kind
-        portBinding.Component <- model.FindComponent componentName
+        portBinding.Binder <- model.FindComponent componentName
         portBinding
 
     /// Selects all elements from the given component hierarchy using the given selector function.

@@ -33,23 +33,30 @@ open SafetySharp.Reflection
 
 /// Raised when a component is found in multiple locations of a component tree.
 type SharedComponentsException internal (components : Component list) =
-    inherit Exception ("One or more components have been found in multiple locations of the component tree.")
+    inherit Exception ("One or more components have been found in multiple locations of the component tree. \
+                        Check the 'Components' property of this exception instance for the shared component instances.")
 
     /// Gets the component instances that were found in multiple locations of a component tree.
     member this.Components = components |> List.toArray
 
+/// Represents the synthesized root of the component hierarchy created by a model.
+type internal SynthesizedRootComponent (components, bindings) as this =
+    inherit Component (components, bindings)
+    do this.FinalizeMetadata (null, "SynRoot")
+
 /// Represents a base class for all models.
-[<AbstractClass; AllowNullLiteral>]
+[<AllowNullLiteral>]
 type Model () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Model state and metadata
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    let mutable (roots : Component list) = []
-    let mutable (components : Component list) = []
+    let mutable roots : Component list = []
+    let mutable components : Component list = []
     let mutable isSealed = false
-
+    let mutable synthesizedRoot : Component = null
+    let bindings = List<PortBinding> ()
     let requiresNotSealed () = invalidCall isSealed "Modifications of the model metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not isSealed) "Cannot access the model metadata as it might not yet be complete."
 
@@ -72,7 +79,7 @@ type Model () =
         nullArg rootComponents "rootComponents"
         invalidArg (rootComponents.Length <= 0) "rootComponents" "There must be at least one root component."
         invalidCall (components <> []) "This method can only be called once on any given model instance."
-        requiresNotSealed ()
+        invalidCall isSealed "The model's metadata has already been finalized."
 
         // Disallow future modifications of the components' metadata
         rootComponents |> Seq.iteri (fun index component' -> 
@@ -103,16 +110,31 @@ type Model () =
         requiresNotSealed ()
 
         isSealed <- true
+        synthesizedRoot <- SynthesizedRootComponent (roots, bindings)
+
+    /// Establishes the given port binding. By default, the binding is instantenous; invoke the <see cref="PortBinding.Delayed" /> method
+    /// on the <see cref="PortBinding" /> instance returned by this method to create a delayed binding instead.
+    member this.Bind (binding : PortBinding) =
+        nullArg binding "binding"
+        binding.Binder <- this
+        bindings.Add binding
+        binding
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called after metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Gets the root <see cref="Component" />s of the configuration.
+    /// Gets the root <see cref="Component" />s of the model.
     member internal this.Roots 
         with get () = 
             requiresIsSealed ()
             roots
+
+    /// Gets the synthesized root component of the model.
+    member internal this.SynthesizedRoot
+        with get() =
+            requiresIsSealed ()
+            synthesizedRoot
 
     /// Gets all <see cref="Component" />s contained in the model configuration.
     member internal this.Components 
@@ -124,3 +146,13 @@ type Model () =
     member internal this.FindComponent mangledName =
         requiresIsSealed ()
         components |> List.find (fun c -> c.Name = mangledName)
+
+[<AutoOpen>]
+module internal Extensions =
+    type PortBinding with
+        /// Gets the user-friendly name of the binder.
+        member internal this.BinderName = 
+            match this.Binder with
+            | :? Component as c -> c.UnmangledName
+            | :? Model -> "Model"
+            | _ -> "<unknown>"

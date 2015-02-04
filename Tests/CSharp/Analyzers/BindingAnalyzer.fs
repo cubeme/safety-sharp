@@ -67,106 +67,153 @@ module ``Binding validity`` =
 
     [<Test>]
     let ``non-failing unambiguous binding with single candidate is valid`` () =
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+
+    [<Test>]
+    let ``non-failing unambiguous model binding with single candidate is valid`` () =
+        getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = x.ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = x.ProvidedPorts.M).Delayed(); } }" =? None
 
     [<Test>]
     let ``non-failing unambiguous binding with multiple candidates is valid`` () =
-        getDiagnostic "class X : Component { void M() {} extern void N(); extern void N(int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M(int i) {} extern void N(); extern void N(int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} void M(bool b) {} extern void N(); extern void N(int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); extern void N(bool b); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} void M(ref bool b) {} extern void N(ref bool b); extern void N(int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M(ref int i) {} void M(int i) {} extern void N(); extern void N(ref int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} extern void N(); extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+        getDiagnostic "class X : Component { void M(int i) {} extern void N(); extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+        getDiagnostic "class X : Component { void M() {} void M(bool b) {} extern void N(); extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); extern void N(bool b); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+        getDiagnostic "class X : Component { void M() {} void M(ref bool b) {} extern void N(ref bool b); extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M(ref int i) {} void M(int i) {} extern void N(); extern void N(ref int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
 
     [<Test>]
     let ``binding where either side yields no ports is valid`` () =
-        getDiagnostic "class X : Component { extern void N(); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { extern void N(); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { void M() {} X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? None
-        getDiagnostic "class X : Component { X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { extern void N(); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { extern void N(); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+        getDiagnostic "class X : Component { void M() {} X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+        getDiagnostic "class X : Component { X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
 
     [<Test>]
     let ``bind invocation without port assignment is invalid`` () =
-        getDiagnostic "class X : Component { X() { BindInstantaneous(null); } }" =? assignment 46 4
-        getDiagnostic "class X : Component { X(PortBinding p) { BindInstantaneous(p); } }" =? assignment 59 1
-        getDiagnostic "class X : Component { X() { BindDelayed(null); } }" =? assignment 40 4
-        getDiagnostic "class X : Component { X(PortBinding p) { BindDelayed(p); } }" =? assignment 53 1
+        getDiagnostic "class X : Component { X() { Bind(null); } }" =? assignment 33 4
+        getDiagnostic "class X : Component { X(PortBinding p) { Bind(p); } }" =? assignment 46 1
+        getDiagnostic "class X : Component { X() { Bind(null).Delayed(); } }" =? assignment 33 4
+        getDiagnostic "class X : Component { X(PortBinding p) { Bind(p).Delayed(); } }" =? assignment 46 1
+
+    [<Test>]
+    let ``model bind invocation without port assignment is invalid`` () =
+        getDiagnostic "class M : Model { M() { Bind(null); } }" =? assignment 29 4
+        getDiagnostic "class M : Model { M(PortBinding p) { Bind(p); } }" =? assignment 42 1
 
     [<Test>]
     let ``bind invocation with invalid port reference on either side is invalid`` () =
-        getDiagnostic "class X : Component { dynamic x; X() { BindInstantaneous(x = ProvidedPorts.X); } }" =? reference 57 1
-        getDiagnostic "class X : Component { dynamic x; X() { BindInstantaneous(RequiredPorts.X = x); } }" =? reference 75 1
-        getDiagnostic "class X : Component { dynamic x; X() { BindDelayed(x = ProvidedPorts.X); } }" =? reference 51 1
-        getDiagnostic "class X : Component { dynamic x; X() { BindDelayed(RequiredPorts.X = x); } }" =? reference 69 1
-        getDiagnostic "class X : Component { X x; dynamic y; X() { BindInstantaneous(x.y = ProvidedPorts.X); } }" =? reference 62 3
-        getDiagnostic "class X : Component { X x; dynamic y; X() { BindInstantaneous(RequiredPorts.X = x.y); } }" =? reference 80 3
-        getDiagnostic "class X : Component { X x; dynamic y; X() { BindDelayed(x.y = ProvidedPorts.X); } }" =? reference 56 3
-        getDiagnostic "class X : Component { X x; dynamic y; X() { BindDelayed(RequiredPorts.X = x.y); } }" =? reference 74 3
+        getDiagnostic "class X : Component { dynamic x; X() { Bind(x = ProvidedPorts.X); } }" =? reference 44 1
+        getDiagnostic "class X : Component { dynamic x; X() { Bind(RequiredPorts.X = x); } }" =? reference 62 1
+        getDiagnostic "class X : Component { dynamic x; X() { Bind(x = ProvidedPorts.X).Delayed(); } }" =? reference 44 1
+        getDiagnostic "class X : Component { dynamic x; X() { Bind(RequiredPorts.X = x).Delayed(); } }" =? reference 62 1
+        getDiagnostic "class X : Component { X x; dynamic y; X() { Bind(x.y = ProvidedPorts.X); } }" =? reference 49 3
+        getDiagnostic "class X : Component { X x; dynamic y; X() { Bind(RequiredPorts.X = x.y); } }" =? reference 67 3
+        getDiagnostic "class X : Component { X x; dynamic y; X() { Bind(x.y = ProvidedPorts.X).Delayed(); } }" =? reference 49 3
+        getDiagnostic "class X : Component { X x; dynamic y; X() { Bind(RequiredPorts.X = x.y).Delayed(); } }" =? reference 67 3
+
+    [<Test>]
+    let ``model bind invocation with invalid port reference on either side is invalid`` () =
+        getDiagnostic "class X : Model { dynamic x; X() { Bind(x = x.ProvidedPorts.X); } }" =? reference 40 1
+        getDiagnostic "class X : Model { IComponent x; dynamic y; X() { Bind(x.RequiredPorts.y = y.ProvidedPorts.X); } }" =? reference 74 17
 
     [<Test>]
     let ``failed binding is invalid`` () =
-        getDiagnostic "class X : Component { void M() {} extern void N(int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" =? 
-            failure 80 113 ["X.N(int)"] ["X.M()"]
-        getDiagnostic "class X : Component { void M() {} extern void N(int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? 
-            failure 74 107 ["X.N(int)"] ["X.M()"]
+        getDiagnostic "class X : Component { void M() {} extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" =? 
+            failure 67 100 ["X.N(int)"] ["X.M()"]
+        getDiagnostic "class X : Component { void M() {} extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? 
+            failure 67 100 ["X.N(int)"] ["X.M()"]
+
+    [<Test>]
+    let ``failed model binding is invalid`` () =
+        getDiagnostic "class X : Component { public void M() {} public extern void N(int i); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = x.ProvidedPorts.M); } }" =? 
+            failure 106 143 ["X.N(int)"] ["X.M()"]
+        getDiagnostic "class X : Component { public void M() {} public extern void N(int i); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = x.ProvidedPorts.M).Delayed(); } }" =? 
+            failure 106 143 ["X.N(int)"] ["X.M()"]
 
     [<Test>]
     let ``ambiguous binding is invalid`` () =
-        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); extern void N(int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); }}" =?
-            ambiguous 108 141 ["X.N()"; "X.N(int)"] ["X.M()"; "X.M(int)"]
-        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); extern void N(int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); }}" =?
-            ambiguous 114 147 ["X.N()"; "X.N(int)"] ["X.M()"; "X.M(int)"]
-        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} extern void N(int i); extern void N(ref int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); }}" =?
-            ambiguous 126 159 ["X.N(int)"; "X.N(ref int)"] ["X.M(int)"; "X.M(ref int)"]
-        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} extern void N(int i); extern void N(ref int i); X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); }}" =?
-            ambiguous 132 165 ["X.N(int)"; "X.N(ref int)"] ["X.M(int)"; "X.M(ref int)"]
-        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} void M(out bool b) { b = false; } extern void N(int i); extern void N(ref int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); }}" =?
-            ambiguous 160 193 ["X.N(int)"; "X.N(ref int)"] ["X.M(int)"; "X.M(ref int)"]
-        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} void M(out bool b) { b = false; } extern void N(out bool b); extern void N(int i); extern void N(ref int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); }}" =?
-            ambiguous 187 220 ["X.N(out bool)"; "X.N(int)"; "X.N(ref int)"] ["X.M(out bool)"; "X.M(int)"; "X.M(ref int)"]
+        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); }}" =?
+            ambiguous 101 134 ["X.N()"; "X.N(int)"] ["X.M()"; "X.M(int)"]
+        getDiagnostic "class X : Component { void M() {} void M(int i) {} extern void N(); extern void N(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =?
+            ambiguous 101 134 ["X.N()"; "X.N(int)"] ["X.M()"; "X.M(int)"]
+        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} extern void N(int i); extern void N(ref int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); }}" =?
+            ambiguous 119 152 ["X.N(int)"; "X.N(ref int)"] ["X.M(int)"; "X.M(ref int)"]
+        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} extern void N(int i); extern void N(ref int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M); }}" =?
+            ambiguous 119 152 ["X.N(int)"; "X.N(ref int)"] ["X.M(int)"; "X.M(ref int)"]
+        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} void M(out bool b) { b = false; } extern void N(int i); extern void N(ref int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); }}" =?
+            ambiguous 153 186 ["X.N(int)"; "X.N(ref int)"] ["X.M(int)"; "X.M(ref int)"]
+        getDiagnostic "class X : Component { void M(int i) {} void M(ref int i) {} void M(out bool b) { b = false; } extern void N(out bool b); extern void N(int i); extern void N(ref int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); }}" =?
+            ambiguous 180 213 ["X.N(out bool)"; "X.N(int)"; "X.N(ref int)"] ["X.M(out bool)"; "X.M(int)"; "X.M(ref int)"]
+
+    [<Test>]
+    let ``ambiguous model binding is invalid`` () =
+        getDiagnostic "class X : Component { public void M() {} public void M(int i) {} public extern void N(); public extern void N(int i); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = x.ProvidedPorts.M).Delayed(); }}" =?
+            ambiguous 154 191 ["X.N()"; "X.N(int)"] ["X.M()"; "X.M(int)"]
+        getDiagnostic "class X : Component { public void M() {} public void M(int i) {} public extern void N(); public extern void N(int i); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = x.ProvidedPorts.M); }}" =?
+            ambiguous 154 191 ["X.N()"; "X.N(int)"] ["X.M()"; "X.M(int)"]
 
     [<Test>]
     let ``binding is invalid when valid candidates are inaccessible`` () =
-        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} X(Y y) { BindInstantaneous(y.RequiredPorts.N = ProvidedPorts.M); } }" =? 
-            failure 131 166 ["Y.N(int)"] ["X.M()"]
-        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} X(Y y) { BindDelayed(y.RequiredPorts.N = ProvidedPorts.M); } }" =? 
-            failure 125 160 ["Y.N(int)"] ["X.M()"]
+        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} X(Y y) { Bind(y.RequiredPorts.N = ProvidedPorts.M); } }" =? 
+            failure 118 153 ["Y.N(int)"] ["X.M()"]
+        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} X(Y y) { Bind(y.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? 
+            failure 118 153 ["Y.N(int)"] ["X.M()"]
 
     [<Test>]
     let ``binding is unambiguous if ambiguous candidates are inaccessible`` () =
-        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} void M(int i) {} X(Y y) { BindInstantaneous(y.RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} void M(int i) {} X(Y y) { Bind(y.RequiredPorts.N = ProvidedPorts.M); } }" =? None
 
     [<Test>]
     let ``can resolve ambiguity by explicit cast to delegate type`` () =
-        getDiagnostic "class Y : Component { protected extern void N(); public extern void N(int i); } class X : Y { void M() {} void M(int i) {} X() { BindInstantaneous(RequiredPorts.N = (Action)ProvidedPorts.M); } }" =? None
-        getDiagnostic "class Y : Component { protected extern void N(); public extern void N(int i); } class X : Y { void M() {} void M(int i) {} X() { BindInstantaneous(RequiredPorts.N = (Action<int>)ProvidedPorts.M); } }" =? None
-        getDiagnostic "delegate void D(ref int i); class Y : Component { protected extern void N(); public extern void N(ref int i); } class X : Y { void M() {} void M(ref int i) {} X() { BindInstantaneous(RequiredPorts.N = (D)ProvidedPorts.M); } }" =? None
+        getDiagnostic "class Y : Component { protected extern void N(); public extern void N(int i); } class X : Y { void M() {} void M(int i) {} X() { Bind(RequiredPorts.N = (Action)ProvidedPorts.M); } }" =? None
+        getDiagnostic "class Y : Component { protected extern void N(); public extern void N(int i); } class X : Y { void M() {} void M(int i) {} X() { Bind(RequiredPorts.N = (Action<int>)ProvidedPorts.M); } }" =? None
+        getDiagnostic "delegate void D(ref int i); class Y : Component { protected extern void N(); public extern void N(ref int i); } class X : Y { void M() {} void M(ref int i) {} X() { Bind(RequiredPorts.N = (D)ProvidedPorts.M); } }" =? None
 
     [<Test>]
     let ``cast to non-delegate type is invalid`` () =
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (int)ProvidedPorts.M); } }" =? cast 88 3
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (object)ProvidedPorts.M); } }" =? cast 88 6
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (Component)((ProvidedPorts.M))); } }" =? cast 88 9
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { Bind(RequiredPorts.N = (int)ProvidedPorts.M).Delayed(); } }" =? cast 81 3
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { Bind(RequiredPorts.N = (object)ProvidedPorts.M).Delayed(); } }" =? cast 81 6
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { Bind(RequiredPorts.N = (Component)((ProvidedPorts.M))).Delayed(); } }" =? cast 81 9
 
     [<Test>]
     let ``cast to delegate type with no compatible ports is invalid`` () =
-        getDiagnostic "class X : Component { void M() {} extern void N(); X() { BindDelayed(RequiredPorts.N = (Action<int>)ProvidedPorts.M); } }" =? 
-            failure 69 115 ["X.N()"] []
+        getDiagnostic "class X : Component { void M() {} extern void N(); X() { Bind(RequiredPorts.N = (Action<int>)ProvidedPorts.M).Delayed(); } }" =? 
+            failure 62 108 ["X.N()"] []
 
     [<Test>]
     let ``unambiguous binding between ports of same name is valid`` () =
-        getDiagnostic "class Y : Component { public extern void M(); } class X : Component { void M() {} X(Y y) { BindDelayed(y.RequiredPorts.M = ProvidedPorts.M); }}" =? None
+        getDiagnostic "class Y : Component { public extern void M(); } class X : Component { void M() {} X(Y y) { Bind(y.RequiredPorts.M = ProvidedPorts.M).Delayed(); }}" =? None
 
     [<Test>]
     let ``binding with many parentheses is valid`` () =
-        getDiagnostic "class Y : Component { public extern void M(); } class X : Component { void M() {} X(Y y) { BindDelayed(((((y).RequiredPorts).M) = (ProvidedPorts.M))); }}" =? None
+        getDiagnostic "class Y : Component { public extern void M(); } class X : Component { void M() {} X(Y y) { Bind(((((y).RequiredPorts).M) = (ProvidedPorts.M))).Delayed(); }}" =? None
 
     [<Test>]
     let ``unambiguous binding of ports with same name and different kind is valid`` () =
-        getDiagnostic "class X : Component { void M() {} extern void N(); void N(int i) {} extern void M(int i); X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }" =? None
-        getDiagnostic "class X : Component { void M() {} extern void N(); void N(int i) {} extern void M(int i); X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" =? None
+        getDiagnostic "class X : Component { void M() {} extern void N(); void N(int i) {} extern void M(int i); X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }" =? None
+        getDiagnostic "class X : Component { void M() {} extern void N(); void N(int i) {} extern void M(int i); X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" =? None
+
+    [<Test>]
+    let ``model binding is unambiguous if ambiguous candidates are inaccessible`` () =
+        getDiagnostic "class Y : Component { extern void N(); public extern void N(int i); } class X : Component { void M() {} public void M(int i) {} } class M : Model { X x; Y y; M() { Bind(y.RequiredPorts.N = x.ProvidedPorts.M); } }" =? None
+
+    [<Test>]
+    let ``model bindingcan resolve ambiguity by explicit cast to delegate type`` () =
+        getDiagnostic "class Y : Component { public extern void N(); public extern void N(int i); } class X : Y { public void M() {} public void M(int i) {} } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (Action)x.ProvidedPorts.M); } }" =? None
+        getDiagnostic "class Y : Component { public extern void N(); public extern void N(int i); } class X : Y { public void M() {} public void M(int i) {} } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (Action<int>)x.ProvidedPorts.M); } }" =? None
+        getDiagnostic "delegate void D(ref int i); class Y : Component { public extern void N(); public extern void N(ref int i); } class X : Y { public void M() {} public void M(ref int i) {} } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (D)x.ProvidedPorts.M); } }" =? None
+
+    [<Test>]
+    let ``model binding cast to non-delegate type is invalid`` () =
+        getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (int)x.ProvidedPorts.M).Delayed(); } }" =? cast 122 3
+        getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (object)x.ProvidedPorts.M).Delayed(); } }" =? cast 122 6
+        getDiagnostic "class X : Component { public void M() {} public extern void N(); } class M : Model { X x; M() { Bind(x.RequiredPorts.N = (Component)((x.ProvidedPorts.M))).Delayed(); } }" =? cast 122 9
+
+    

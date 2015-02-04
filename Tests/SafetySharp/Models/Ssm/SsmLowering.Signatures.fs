@@ -38,7 +38,8 @@ module ``Ssm Lowering of Port Signatures`` =
         let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        CilToSsm.transformModel model |> SsmLowering.lower
+        let root = CilToSsm.transformModel model |> SsmLowering.lower
+        root.Subs.[0]
 
     let private transformMethod methodDefinition= 
         let ssm = transform methodDefinition

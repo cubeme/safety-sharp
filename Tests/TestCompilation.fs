@@ -374,17 +374,17 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
     static member GetNormalizedClass (normalizer : Normalizer) csharpCode =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+        syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
     static member GetNormalizedClassWithExternAliases (normalizer : Normalizer) csharpCode externAliases =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTreeWithExternAliases normalizer csharpCode externAliases
-        syntaxTree.Descendants<ClassDeclarationSyntax>().Single().ToFullString ()
+        syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first interface contained in the given code.
     static member GetNormalizedInterface (normalizer : Normalizer) csharpCode =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
-        syntaxTree.Descendants<InterfaceDeclarationSyntax>().Single().ToFullString ()
+        syntaxTree.Descendants<InterfaceDeclarationSyntax>().First().ToFullString ()
 
     /// Compiles the given C# code and creates an instance of the "TestModel" class.
     static member CreateModel csharpCode =

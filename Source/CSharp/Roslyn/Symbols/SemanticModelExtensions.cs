@@ -136,27 +136,27 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.BindDelayed(PortBinding)" /> method within
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Bind(PortBinding)" /> method within
 		///     the context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the attribute symbol should be returned for.</param>
 		[Pure, NotNull]
-		public static IMethodSymbol GetBindDelayedMethodSymbol([NotNull] this SemanticModel semanticModel)
+		public static IMethodSymbol GetComponentBindMethodSymbol([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
-			return semanticModel.Compilation.GetBindDelayedMethodSymbol();
+			return semanticModel.Compilation.GetComponentBindMethodSymbol();
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.BindInstantaneous(PortBinding)" /> method
-		///     within the context of the <paramref name="semanticModel" />.
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Model.Bind(PortBinding)" /> method within
+		///     the context of the <paramref name="semanticModel" />.
 		/// </summary>
 		/// <param name="semanticModel">The semantic model the attribute symbol should be returned for.</param>
 		[Pure, NotNull]
-		public static IMethodSymbol GetBindInstantaneousMethodSymbol([NotNull] this SemanticModel semanticModel)
+		public static IMethodSymbol GetModelBindMethodSymbol([NotNull] this SemanticModel semanticModel)
 		{
 			Requires.NotNull(semanticModel, () => semanticModel);
-			return semanticModel.Compilation.GetBindInstantaneousMethodSymbol();
+			return semanticModel.Compilation.GetModelBindMethodSymbol();
 		}
 	}
 }

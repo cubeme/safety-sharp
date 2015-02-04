@@ -40,9 +40,9 @@ namespace SafetySharp.Compiler.Normalization
 	/// 
 	///     For instance:
 	///     <code>
-	///    		BindDelayed(c.RequiredPorts.X, ProvidedPorts.Y);
+	///    		Bind(c.RequiredPorts.X, ProvidedPorts.Y);
 	///    		// becomes (for some matching delegate type D):
-	///  		BindDelayed(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
+	///  		Bind(new PortBinding(PortInfo.RequiredPort((D)c.X, "..."), PortInfo.ProvidedPort((D)Y)));
 	///   	</code>
 	/// </summary>
 	public class BindingNormalizer : Normalizer
@@ -83,21 +83,26 @@ namespace SafetySharp.Compiler.Normalization
 		}
 
 		/// <summary>
-		///     Normalizes <paramref name="expression" /> if it is an invocation of <see cref="Component.BindDelayed" /> or
-		///     <see cref="Component.BindInstantaneous" />.
+		///     Normalizes <paramref name="expression" /> if it is an invocation of <see cref="Component.Bind" /> or
+		///     <see cref="Model.Bind" />.
 		/// </summary>
 		public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax expression)
 		{
-			expression = (InvocationExpressionSyntax)base.VisitInvocationExpression(expression);
+			var newExpression = (InvocationExpressionSyntax)base.VisitInvocationExpression(expression);
 
-			var methodSymbol = expression.GetReferencedSymbol(SemanticModel) as IMethodSymbol;
+			// If the expression has changed, that means we're looking at an invocation of the Delayed() function;
+			// there's no need to rewrite it.
+			if (newExpression != expression)
+				return newExpression;
+
+			var methodSymbol = SemanticModel.GetSymbolInfo(expression.Expression).Symbol as IMethodSymbol;
 			if (methodSymbol == null)
 				return expression;
 
-			var delayedSymbol = SemanticModel.GetBindDelayedMethodSymbol();
-			var instantaneousSymbol = SemanticModel.GetBindInstantaneousMethodSymbol();
+			var componentBindSymbol = SemanticModel.GetComponentBindMethodSymbol();
+			var modelBindSymbol = SemanticModel.GetModelBindMethodSymbol();
 
-			if (!methodSymbol.Equals(delayedSymbol) && !methodSymbol.Equals(instantaneousSymbol))
+			if (!methodSymbol.Equals(componentBindSymbol) && !methodSymbol.Equals(modelBindSymbol))
 				return expression;
 
 			// We now know that the argument of the invocation is a port binding in the form of an assignment

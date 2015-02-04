@@ -142,37 +142,37 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.BindDelayed(PortBinding)" /> method within
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.Bind(PortBinding)" /> method within
 		///     the context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
 		[Pure, NotNull]
-		public static IMethodSymbol GetBindDelayedMethodSymbol([NotNull] this Compilation compilation)
+		public static IMethodSymbol GetComponentBindMethodSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 
 			return compilation
 				.GetTypeSymbol<Component>()
-				.GetMembers("BindDelayed")
+				.GetMembers("Bind")
 				.OfType<IMethodSymbol>()
-				.Single(method => method.Parameters.Length == 1 && method.ReturnsVoid);
+				.Single(method => method.Parameters.Length == 1);
 		}
 
 		/// <summary>
-		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Component.BindInstantaneous(PortBinding)" /> method
+		///     Gets the <see cref="IMethodSymbol " /> representing the <see cref="Model.Bind(PortBinding)" /> method
 		///     within the context of the <paramref name="compilation" />.
 		/// </summary>
 		/// <param name="compilation">The compilation the attribute symbol should be returned for.</param>
 		[Pure, NotNull]
-		public static IMethodSymbol GetBindInstantaneousMethodSymbol([NotNull] this Compilation compilation)
+		public static IMethodSymbol GetModelBindMethodSymbol([NotNull] this Compilation compilation)
 		{
 			Requires.NotNull(compilation, () => compilation);
 
 			return compilation
-				.GetTypeSymbol<Component>()
-				.GetMembers("BindInstantaneous")
+				.GetTypeSymbol<Model>()
+				.GetMembers("Bind")
 				.OfType<IMethodSymbol>()
-				.Single(method => method.Parameters.Length == 1 && method.ReturnsVoid);
+				.Single(method => method.Parameters.Length == 1);
 		}
 	}
 }

@@ -36,8 +36,8 @@ module ``CilToSsm Bindings`` =
     let private transform componentCode initCode = 
         let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
-        let ssm = CilToSsm.transformModel model
-        ssm.[0].Bindings
+        let root = CilToSsm.transformModel model
+        root.Subs.[0].Bindings
 
     [<Test>]
     let ``component without bindings`` () =
@@ -45,7 +45,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``component with single delayed binding`` () =
-        transform "class X : Component { extern void N(); void M() {} public X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
+        transform "class X : Component { extern void N(); void M() {} public X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0"
@@ -58,7 +58,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``component with single instantaneous binding`` () =
-        transform "class X : Component { extern void N(); void M() {} public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
+        transform "class X : Component { extern void N(); void M() {} public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0"
@@ -71,7 +71,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``component with multiple bindings`` () =
-        transform "class X : Component { extern void N(); void M() {} extern int Q(int i); int P(int i) { return i; } public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); BindDelayed(RequiredPorts.Q = ProvidedPorts.P); } }" "new X()" =? 
+        transform "class X : Component { extern void N(); void M() {} extern int Q(int i); int P(int i) { return i; } public X() { Bind(RequiredPorts.N = ProvidedPorts.M); Bind(RequiredPorts.Q = ProvidedPorts.P).Delayed(); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0"
@@ -91,7 +91,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``subcomponent as source`` () =
-        transform "class Y : Component { public extern void N(); } class X : Component { Y y = new Y(); void M() {} public X() { BindDelayed(y.RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
+        transform "class Y : Component { public extern void N(); } class X : Component { Y y = new Y(); void M() {} public X() { Bind(y.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0.y@0"
@@ -104,7 +104,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``subcomponent as target`` () =
-        transform "class Y : Component { public void N() {} } class X : Component { Y y = new Y(); extern void M(); public X() { BindDelayed(RequiredPorts.M = y.ProvidedPorts.N); } }" "new X()" =? 
+        transform "class Y : Component { public void N() {} } class X : Component { Y y = new Y(); extern void M(); public X() { Bind(RequiredPorts.M = y.ProvidedPorts.N).Delayed(); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0"
@@ -117,7 +117,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``subcomponent as source and target`` () =
-        transform "class Y : Component { public void N() {} public extern void M(); } class X : Component { Y y = new Y(); public X() { BindDelayed(y.RequiredPorts.M = y.ProvidedPorts.N); } }" "new X()" =? 
+        transform "class Y : Component { public void N() {} public extern void M(); } class X : Component { Y y = new Y(); public X() { Bind(y.RequiredPorts.M = y.ProvidedPorts.N).Delayed(); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0.y@0"
@@ -137,8 +137,8 @@ module ``CilToSsm Bindings`` =
                         extern void Q();
                         
                         public W() {
-                            BindDelayed(RequiredPorts.Q = z.ProvidedPorts.N);
-                            BindDelayed(z.RequiredPorts.M = z.ProvidedPorts.Q);
+                            Bind(RequiredPorts.Q = z.ProvidedPorts.N).Delayed();
+                            Bind(z.RequiredPorts.M = z.ProvidedPorts.Q).Delayed();
                         }
                    }
                    delegate void D(out int i);
@@ -148,7 +148,7 @@ module ``CilToSsm Bindings`` =
                         Y y = new Y();
                         
                         public X() { 
-                            BindDelayed(RequiredPorts.Q = (D)y.ProvidedPorts.N); 
+                            Bind(RequiredPorts.Q = (D)y.ProvidedPorts.N).Delayed(); 
                         }
                    }" "new X()" =? 
             [
@@ -177,7 +177,7 @@ module ``CilToSsm Bindings`` =
 
     [<Test>]
     let ``transforms cyclic bindings`` () =
-        transform "class X : Component { extern void N(); void M() { N(); } public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
+        transform "class X : Component { extern void N(); void M() { N(); } public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
                     TargetComp =  "Root0@0"

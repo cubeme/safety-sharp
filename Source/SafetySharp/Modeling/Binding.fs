@@ -67,6 +67,8 @@ type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
     do nullArg sourcePort "sourcePort"
     do nullArg targetPort "targetPort"
 
+    let mutable isSealed = false
+
     /// Gets the source port of the binding.
     member this.SourcePort = sourcePort
 
@@ -74,7 +76,17 @@ type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
     member this.TargetPort = targetPort
 
     /// Gets or sets the kind of the binding.
-    member val Kind = BindingKind.Instantaneous with get, set
+    member val Kind = Instantaneous with get, set
 
-    /// Gets or sets the component that instantiated the binding.
-    member val Component = (null : obj) with get, set
+    /// Gets or sets the object that instantiated the binding.
+    member val Binder = (null : obj) with get, set
+
+    /// Finalizes the bindings's metadata, disallowing any future metadata modifications.
+    member internal this.FinalizeMetadata () =
+        invalidCall isSealed "The port bindings's metadata has already been finalized."
+        isSealed <- true
+
+    /// Changes the kind of the binding to delayed, meaning that the invocation of the bound port is delayed by one system step.
+    member this.Delayed () =
+        invalidCall isSealed "Modifications of the port binding's metadata are only allowed during object construction."
+        this.Kind <- Delayed

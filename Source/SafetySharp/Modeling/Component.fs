@@ -106,7 +106,7 @@ type Fault () =
 
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>] 
-type Component () =
+type Component internal (components : Component list, bindings : List<PortBinding>) =
     
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata
@@ -115,13 +115,14 @@ type Component () =
     let mutable isSealed = false
     let mutable name = String.Empty
     let mutable slot = 0
-    let mutable (parent : Component) = null
-    let mutable (subcomponents : Component list) = []
+    let mutable parent : Component = null
     let fields = Dictionary<FieldInfo, obj list> ()
-    let bindings = List<PortBinding> ()
+    let mutable subcomponents = components
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
+
+    new () = Component ([], List<PortBinding> ())
 
     interface IComponent with
         /// Updates the internal state of the component.
@@ -168,19 +169,13 @@ type Component () =
     // Methods that can only be called during metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
 
-    /// Establishes the given port binding in a non-delayed fashion; that is, invocations are executed instantly.
-    member this.BindInstantaneous (binding : PortBinding) =
+    /// Establishes the given port binding. By default, the binding is instantenous; invoke the <see cref="PortBinding.Delayed" /> method
+    /// on the <see cref="PortBinding" /> instance returned by this method to create a delayed binding instead.
+    member this.Bind (binding : PortBinding) =
         nullArg binding "binding"
-        binding.Kind <- BindingKind.Instantaneous
-        binding.Component <- this
+        binding.Binder <- this
         bindings.Add binding
-
-    /// Establishes the given port binding in a delayed fashion; that is, invocations are delayed by one system step.
-    member this.BindDelayed (binding : PortBinding) =
-        nullArg binding "binding"
-        binding.Kind <- BindingKind.Delayed
-        binding.Component <- this
-        bindings.Add binding
+        binding
 
     /// <summary>
     ///     Sets the initial values of a field of the component instance.
@@ -223,13 +218,14 @@ type Component () =
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata (?parentComponent : Component, ?componentName : string, ?componentSlot : int) =
-        requiresNotSealed ()
+        invalidCall isSealed "The component's metadata has already been finalized."
 
         isSealed <- true
         parent <- defaultArg parentComponent null
         name <- defaultArg componentName String.Empty
         slot <- defaultArg componentSlot 0
 
+        // Retrieve the non-subcomponent fields of the component
         Reflection.getFields (this.GetType ()) typeof<Component>
         |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
         |> Seq.iter (fun field ->
@@ -241,21 +237,27 @@ type Component () =
             fields.Add (field, [value])
         )
 
-        let subcomponentMetadata = 
-            Reflection.getFields (this.GetType ()) typeof<Component>
-            |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
-            |> Seq.map (fun field -> (field, field.GetValue(this)))
-            |> Seq.where (fun (field, component') -> component' <> null)
-            |> Seq.map (fun (field, component') -> (field, component' :?> Component))
-            |> Seq.toList
+        // Finalize the component's bindings
+        bindings |> Seq.iter (fun binding -> binding.FinalizeMetadata ())
 
-        subcomponents <- subcomponentMetadata |> List.map snd
-        subcomponentMetadata
-        |> List.iteri (fun idx (field, component') -> 
-            // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
-            if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata (this, field.Name, idx)
-        )
+        // Retrieve the subcomponents of the component; we skip that step when the subcomponents have already been provided 
+        // via the constructor (namely: for the synthesized root component)
+        if subcomponents |> List.length = 0 then
+            let subcomponentMetadata = 
+                Reflection.getFields (this.GetType ()) typeof<Component>
+                |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
+                |> Seq.map (fun field -> (field, field.GetValue(this)))
+                |> Seq.where (fun (field, component') -> component' <> null)
+                |> Seq.map (fun (field, component') -> (field, component' :?> Component))
+                |> Seq.toList
+
+            subcomponents <- subcomponentMetadata |> List.map snd
+            subcomponentMetadata
+            |> List.iteri (fun idx (field, component') -> 
+                // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
+                if not component'.IsMetadataFinalized then
+                    component'.FinalizeMetadata (this, field.Name, idx)
+            )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called after metadata initialization

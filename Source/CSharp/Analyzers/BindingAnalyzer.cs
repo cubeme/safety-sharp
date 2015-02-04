@@ -113,14 +113,14 @@ namespace SafetySharp.CSharp.Analyzers
 			var semanticModel = context.SemanticModel;
 			var node = (InvocationExpressionSyntax)context.Node;
 
-			var methodSymbol = node.GetReferencedSymbol(semanticModel) as IMethodSymbol;
+			var methodSymbol = semanticModel.GetSymbolInfo(node.Expression).Symbol as IMethodSymbol;
 			if (methodSymbol == null)
 				return;
 
-			var delayedSymbol = semanticModel.GetBindDelayedMethodSymbol();
-			var instantaneousSymbol = semanticModel.GetBindInstantaneousMethodSymbol();
+			var componentBindSymbol = semanticModel.GetComponentBindMethodSymbol();
+			var modelBindSymbol = semanticModel.GetModelBindMethodSymbol();
 
-			if (!methodSymbol.Equals(delayedSymbol) && !methodSymbol.Equals(instantaneousSymbol))
+			if (!methodSymbol.Equals(componentBindSymbol) && !methodSymbol.Equals(modelBindSymbol))
 				return;
 
 			// We now expect that the argument of the invocation is a port binding in the form of an assignment

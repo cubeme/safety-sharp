@@ -86,10 +86,5 @@ module internal SsmLowering =
             Subs = c.Subs |> List.map lowerSignatures }
 
     /// Applies all lowerings to the given components.
-    let lower (c : Comp list) : Comp =
-        let root = 
-            match c with
-            | c :: [] -> c
-            | c       -> { Name = "SynthesizedRoot"; Subs = c; Fields = []; Methods = []; Faults = []; Bindings = [] }
-        
+    let lower (root : Comp) : Comp =
         root |> lowerSignatures

@@ -40,7 +40,8 @@ module ``CilToSsm Assemblies`` =
         let modelType = assembly.GetType "T"
         let model = Activator.CreateInstance modelType :?> Model
         model.FinalizeMetadata ()
-        CilToSsm.transformModel model
+        let root = CilToSsm.transformModel model
+        root.Subs
 
     [<Test>]
     let ``subcomponent of type in other assembly`` () =

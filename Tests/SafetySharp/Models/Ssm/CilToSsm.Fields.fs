@@ -36,8 +36,8 @@ module ``CilToSsm Fields`` =
     let private transform componentCode initCode = 
         let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
-        let ssm = CilToSsm.transformModel model
-        ssm.[0].Fields
+        let root = CilToSsm.transformModel model
+        root.Subs.[0].Fields
 
     let private arg name t = Arg (name, t)
     let private local name t = Local (name, t)

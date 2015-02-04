@@ -38,7 +38,8 @@ module ``CilToSsm Components`` =
         let modelType = assembly.GetType "T"
         let model = Activator.CreateInstance modelType :?> Model
         model.FinalizeMetadata ()
-        CilToSsm.transformModel model
+        let root = CilToSsm.transformModel model
+        root.Subs
 
     [<Test>]
     let ``transform subcomponents of derived component with non-conflicting names`` () =

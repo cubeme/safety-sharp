@@ -628,8 +628,8 @@ module internal CilToSsm =
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =
         let metadataProvider = AssemblyMetadataProvider ()
-        let typeDefinitions = metadataProvider.GetTypeDefinitions model.Components
-        model.Roots |> List.map (transformType typeDefinitions)
+        let typeDefinitions = metadataProvider.GetTypeDefinitions (model.SynthesizedRoot :: model.Components)
+        transformType typeDefinitions model.SynthesizedRoot
 
     /// Maps the given method name of the given component back to a method reference.
     let unmapMethod (c : Component) (methodName : string) =

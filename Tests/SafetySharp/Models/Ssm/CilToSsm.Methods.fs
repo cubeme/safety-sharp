@@ -37,8 +37,8 @@ module ``CilToSsm Methods`` =
     let private transform componentCode initCode = 
         let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)
         model.FinalizeMetadata ()
-        let ssm = CilToSsm.transformModel model
-        ssm |> List.collect (fun c -> c.Methods)
+        let root = CilToSsm.transformModel model
+        root.Subs |> List.collect (fun c -> c.Methods)
 
     let private transformMethod methodDefinition= 
         let csharpCode = sprintf "class %s : Component { %s }" className methodDefinition

@@ -42,7 +42,7 @@ module ``Ssm Validation: Invalid bindings`` =
         let (model, loweredSsm) = transform csharpCode
         let e = raisesWith<InvalidBindingsException> (fun () -> SsmValidation.validate model loweredSsm)
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.Kind) =? kinds
-        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.Component :?> Component).UnmangledName) =? binders
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.BinderName) =? binders
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.SourcePort.Component :?> Component).UnmangledName) =? sourceComponents
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.TargetPort.Component :?> Component).UnmangledName) =? targetComponents
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.SourcePort.Method.Name) =? sourceMethods
@@ -52,7 +52,7 @@ module ``Ssm Validation: Invalid bindings`` =
     let ``binding at same level of hierarchy is valid`` () =
         let (model, loweredSsm) = 
             transform
-              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
+              "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
         nothrow (fun () -> SsmValidation.validate model loweredSsm)
@@ -60,7 +60,7 @@ module ``Ssm Validation: Invalid bindings`` =
         let (model, loweredSsm) = 
             transform
               "class X : Component { public extern void M(); public void N() {} }
-               class Y : Component { X x = new X(); public Y() { BindDelayed(x.RequiredPorts.M = x.ProvidedPorts.N); } }
+               class Y : Component { X x = new X(); public Y() { Bind(x.RequiredPorts.M = x.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
         nothrow (fun () -> SsmValidation.validate model loweredSsm)
@@ -70,7 +70,7 @@ module ``Ssm Validation: Invalid bindings`` =
         let (model, loweredSsm) = 
             transform
               "class X : Component { public extern void M(); }
-               class Y : Component { void N() {} X x = new X(); public Y() { BindDelayed(x.RequiredPorts.M = ProvidedPorts.N); } }
+               class Y : Component { void N() {} X x = new X(); public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
         nothrow (fun () -> SsmValidation.validate model loweredSsm)
@@ -78,7 +78,7 @@ module ``Ssm Validation: Invalid bindings`` =
         let (model, loweredSsm) = 
             transform
               "class X : Component { public void N() {}  }
-               class Y : Component { extern void M(); X x = new X(); public Y() { BindDelayed(RequiredPorts.M = x.ProvidedPorts.N); } }
+               class Y : Component { extern void M(); X x = new X(); public Y() { Bind(RequiredPorts.M = x.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
         nothrow (fun () -> SsmValidation.validate model loweredSsm)
@@ -88,13 +88,13 @@ module ``Ssm Validation: Invalid bindings`` =
         check [Delayed] ["Root0"] ["Root0.x.z"] ["Root0"] ["N"] ["M"]
           "class Z : Component { public void N() {} }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
-           class Y : Component { extern void M(); X x; public Y(X x, Z z) { this.x = x; BindDelayed(RequiredPorts.M = z.ProvidedPorts.N); } }
+           class Y : Component { extern void M(); X x; public Y(X x, Z z) { this.x = x; Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
 
         check [Delayed] ["Root0"] ["Root0"] ["Root0.x.z"] ["M"] ["N"]
           "class Z : Component { public extern void N(); }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
-           class Y : Component { void M() {} X x; public Y(X x, Z z) { this.x = x; BindDelayed(z.RequiredPorts.N = ProvidedPorts.M); } }
+           class Y : Component { void M() {} X x; public Y(X x, Z z) { this.x = x; Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
 
     [<Test>]
@@ -102,13 +102,13 @@ module ``Ssm Validation: Invalid bindings`` =
         check [Delayed] ["Root1"] ["Root0.z"] ["Root1"] ["N"] ["M"]
           "class Z : Component { public void N() {} }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
-           class Y : Component { extern void M(); public Y(Z z) { BindDelayed(RequiredPorts.M = z.ProvidedPorts.N); } }
+           class Y : Component { extern void M(); public Y(Z z) { Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
 
         check [Delayed] ["Root1"] ["Root1"] ["Root0.z"] ["M"] ["N"]
           "class Z : Component { public extern void N(); }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
-           class Y : Component { void M() {} public Y(Z z) { BindDelayed(z.RequiredPorts.N = ProvidedPorts.M); } }
+           class Y : Component { void M() {} public Y(Z z) { Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
 
 [<TestFixture>]
@@ -129,7 +129,7 @@ module ``Ssm Validation: Unbound required ports`` =
     let ``valid when all ports are bound`` () =
         let (model, loweredSsm) = 
             transform
-              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
+              "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
         nothrow (fun () -> SsmValidation.validate model loweredSsm)
@@ -144,7 +144,7 @@ module ``Ssm Validation: Unbound required ports`` =
     let ``invalid when subcomponent port is unbound`` () =
         check ["Root0.x"] ["N"] 
           "class X : Component { public extern void M(); public extern void N(); }
-           class Y : Component { void N() {} X x = new X(); public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
+           class Y : Component { void N() {} X x = new X(); public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
 [<TestFixture>]
@@ -168,28 +168,28 @@ module ``Ssm Validation: Ambiguous required port bindings`` =
         ) =? bindings
         let bindings = e.AmbiguousBindings |> Array.collect id
         bindings |> List.ofArray |> List.map (fun binding -> binding.Kind) =? kinds
-        bindings |> List.ofArray |> List.map (fun binding -> (binding.Component :?> Component).UnmangledName) =? binders
+        bindings |> List.ofArray |> List.map (fun binding -> binding.BinderName) =? binders
 
     [<Test>]
     let ``valid when all ports are bound`` () =
         let (model, loweredSsm) = 
             transform
-              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
+              "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
         nothrow (fun () -> SsmValidation.validate model loweredSsm)
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by the same component`` () =
-        check [[("Root0", "M", "Root0", "N"); ("Root0", "M", "Root0", "R")]] [Delayed; Delayed] ["Root0"; "Root0"]
-          "class X : Component { extern void M(); void N() {} void R() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); BindDelayed(RequiredPorts.M = ProvidedPorts.R); } }
+        check [[("Root0", "M", "Root0", "N"); ("Root0", "M", "Root0", "R")]] [Instantaneous; Delayed] ["Root0"; "Root0"]
+          "class X : Component { extern void M(); void N() {} void R() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N); Bind(RequiredPorts.M = ProvidedPorts.R).Delayed(); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by different components`` () =
         check [["Root0.x", "M", "Root0", "N"; "Root0.x", "M", "Root0.x", "N"]] [Instantaneous; Delayed] ["Root0"; "Root0.x"]
-          "class X : Component { public extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
-           class Y : Component { X x = new X(); void N() {} public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
+          "class X : Component { public extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
+           class Y : Component { X x = new X(); void N() {} public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
     [<Test>]
@@ -202,10 +202,10 @@ module ``Ssm Validation: Ambiguous required port bindings`` =
                 void A() {}
                 void B() {}
                 public X() {
-                    BindDelayed(RequiredPorts.N = ProvidedPorts.A);
-                    BindInstantaneous(RequiredPorts.N = ProvidedPorts.B);
-                    BindDelayed(RequiredPorts.M = ProvidedPorts.A);
-                    BindInstantaneous(RequiredPorts.M = ProvidedPorts.B);
+                    Bind(RequiredPorts.N = ProvidedPorts.A).Delayed();
+                    Bind(RequiredPorts.N = ProvidedPorts.B);
+                    Bind(RequiredPorts.M = ProvidedPorts.A).Delayed();
+                    Bind(RequiredPorts.M = ProvidedPorts.B);
                 }
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
@@ -230,7 +230,7 @@ module ``Ssm Validation: Cyclic control flow`` =
               "class X : Component { 
                 extern void M(); 
                 void N() { }
-                public X() { BindInstantaneous(RequiredPorts.M = ProvidedPorts.N); }
+                public X() { Bind(RequiredPorts.M = ProvidedPorts.N); }
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
@@ -243,7 +243,7 @@ module ``Ssm Validation: Cyclic control flow`` =
               "class X : Component { 
                     extern void M(); 
                     void N() { M(); }
-                    public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); }
+                    public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); }
                }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
@@ -255,7 +255,7 @@ module ``Ssm Validation: Cyclic control flow`` =
           "class X : Component { 
                 extern void M(); 
                 void N() { M(); }
-                public X() { BindInstantaneous(RequiredPorts.M = ProvidedPorts.N); }
+                public X() { Bind(RequiredPorts.M = ProvidedPorts.N); }
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
@@ -289,9 +289,9 @@ module ``Ssm Validation: Cyclic control flow`` =
                 extern void M();
                 void N() { M(); }
                 public X() {
-                    BindInstantaneous(t1.RequiredPorts.Req = t2.ProvidedPorts.Prov);
-                    BindInstantaneous(t2.RequiredPorts.Req = ProvidedPorts.N);
-                    BindInstantaneous(RequiredPorts.M = t1.ProvidedPorts.Prov);
+                    Bind(t1.RequiredPorts.Req = t2.ProvidedPorts.Prov);
+                    Bind(t2.RequiredPorts.Req = ProvidedPorts.N);
+                    Bind(RequiredPorts.M = t1.ProvidedPorts.Prov);
                 }
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
@@ -310,9 +310,9 @@ module ``Ssm Validation: Cyclic control flow`` =
                       extern void M();
                       void N() { M(); }
                       public X() {
-                          BindInstantaneous(t1.RequiredPorts.Req = t2.ProvidedPorts.Prov);
-                          BindDelayed(t2.RequiredPorts.Req = ProvidedPorts.N);
-                          BindInstantaneous(RequiredPorts.M = t1.ProvidedPorts.Prov);
+                          Bind(t1.RequiredPorts.Req = t2.ProvidedPorts.Prov);
+                          Bind(t2.RequiredPorts.Req = ProvidedPorts.N).Delayed();
+                          Bind(RequiredPorts.M = t1.ProvidedPorts.Prov);
                       }
                  }
                  class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
