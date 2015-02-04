@@ -78,7 +78,7 @@ type Model () =
         rootComponents |> Seq.iteri (fun index component' -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata (null, "Root", index)
+                component'.FinalizeMetadata (null, "Root" + index.ToString (), index) // Add the index to the name to disambiguate roots in execption messages
         )
 
         // Store the root components and collect all components of the model

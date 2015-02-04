@@ -48,8 +48,8 @@ module ``CilToSsm Bindings`` =
         transform "class X : Component { extern void N(); void M() {} public X() { BindDelayed(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "N" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "M" 2 0
                     Kind = BindingKind.Delayed
@@ -61,8 +61,8 @@ module ``CilToSsm Bindings`` =
         transform "class X : Component { extern void N(); void M() {} public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "N" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "M" 2 0
                     Kind = BindingKind.Instantaneous
@@ -74,15 +74,15 @@ module ``CilToSsm Bindings`` =
         transform "class X : Component { extern void N(); void M() {} extern int Q(int i); int P(int i) { return i; } public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); BindDelayed(RequiredPorts.Q = ProvidedPorts.P); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "N" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "M" 2 0
                     Kind = BindingKind.Instantaneous
                 }
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "Q" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "P" 2 0
                     Kind = BindingKind.Delayed
@@ -94,8 +94,8 @@ module ``CilToSsm Bindings`` =
         transform "class Y : Component { public extern void N(); } class X : Component { Y y = new Y(); void M() {} public X() { BindDelayed(y.RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0.y@0"
-                    SourceComp = "Root@0"
+                    TargetComp =  "Root0@0.y@0"
+                    SourceComp = "Root0@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "N" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "M" 2 0
                     Kind = BindingKind.Delayed
@@ -107,8 +107,8 @@ module ``CilToSsm Bindings`` =
         transform "class Y : Component { public void N() {} } class X : Component { Y y = new Y(); extern void M(); public X() { BindDelayed(RequiredPorts.M = y.ProvidedPorts.N); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0.y@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0.y@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "M" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "N" 2 0
                     Kind = BindingKind.Delayed
@@ -120,8 +120,8 @@ module ``CilToSsm Bindings`` =
         transform "class Y : Component { public void N() {} public extern void M(); } class X : Component { Y y = new Y(); public X() { BindDelayed(y.RequiredPorts.M = y.ProvidedPorts.N); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0.y@0"
-                    SourceComp = "Root@0.y@0"
+                    TargetComp =  "Root0@0.y@0"
+                    SourceComp = "Root0@0.y@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "M" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "N" 2 0
                     Kind = BindingKind.Delayed
@@ -153,22 +153,22 @@ module ``CilToSsm Bindings`` =
                    }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0.z@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0.z@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "Q" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "N" 2 0
                     Kind = BindingKind.Delayed
                 }
                 { 
-                    TargetComp =  "Root@0.z@0"
-                    SourceComp = "Root@0.z@0"
+                    TargetComp =  "Root0@0.z@0"
+                    SourceComp = "Root0@0.z@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "M" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "Q" 3 0
                     Kind = BindingKind.Delayed
                 }
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0.y@1"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0.y@1"
                     TargetPort = CilToSsm.makeUniqueMethodName "Q" 3 1
                     SourcePort = CilToSsm.makeUniqueMethodName "N" 2 1
                     Kind = BindingKind.Delayed
@@ -180,8 +180,8 @@ module ``CilToSsm Bindings`` =
         transform "class X : Component { extern void N(); void M() { N(); } public X() { BindInstantaneous(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "Root@0"
-                    SourceComp = "Root@0"
+                    TargetComp =  "Root0@0"
+                    SourceComp = "Root0@0"
                     TargetPort = CilToSsm.makeUniqueMethodName "N" 2 0
                     SourcePort = CilToSsm.makeUniqueMethodName "M" 2 0
                     Kind = BindingKind.Instantaneous

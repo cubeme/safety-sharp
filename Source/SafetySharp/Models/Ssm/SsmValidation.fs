@@ -25,6 +25,21 @@ namespace SafetySharp.Models
 open System
 open SafetySharp.Modeling
 
+/// Raised when one or more invalid port bindings were encountered that span more than one level of the component hierarchy.
+type InvalidBindingsException internal (invalidBindings : PortBinding array) =
+    inherit Exception (
+        let bindings = String.Join ("\n", invalidBindings |> Array.map (fun binding ->
+            sprintf "Component '%s', Port '%A' = Component '%s', Port '%A' [%A]; binding established by Component '%s'"
+                (binding.TargetPort.Component :?> Component).UnmangledName binding.TargetPort.Method
+                (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method
+                binding.Kind (binding.Component :?> Component).UnmangledName
+        ))
+        sprintf "One or more bindings are invalid because they span more than one level of the hierarchy:\n%s\n\
+                 Use the 'InvalidBindings' property of this exception instance for further details about the invalid bindings." bindings)
+
+    /// Gets the invalid port bindings the exception was raised for.
+    member this.InvalidBindings = invalidBindings
+
 /// Raised when one or more unbound required ports were found.
 type UnboundRequiredPortsException internal (unboundPorts : PortInfo array) =
     inherit Exception (
@@ -82,6 +97,20 @@ module internal SsmValidation =
         yield! c.Subs |> Seq.collect (collect selector)
     }
 
+    /// Checks for invalid bindings, i.e., bindings spanning more than one level of the component hierarchy.
+    let private invalidBindings (model : Model) (c : Comp) =
+        let rec check (c : Comp) = seq {
+            let invalidComp portComponent = c.Name <> portComponent && c.Subs |> List.exists (fun s -> s.Name = portComponent) |> not
+            yield! c.Bindings 
+                   |> Seq.filter (fun binding -> invalidComp binding.SourceComp || invalidComp binding.TargetComp) 
+                   |> Seq.map (fun binding -> (c, binding))
+            yield! c.Subs |> Seq.map check |> Seq.collect id
+        }
+
+        let bindings = check c |> Seq.toArray
+        if bindings.Length > 0 then
+            raise (InvalidBindingsException (bindings |> Array.map (fun (c, binding) -> toPortBinding model c.Name binding)))
+
     /// Checks for unbound or ambiguously bound required ports.
     let private invalidRequiredPortBindings (model : Model) (c : Comp) =
         let reqPorts = collect (fun c -> c.Methods |> Seq.filter (fun m -> match m.Kind with ReqPort -> true | _ -> false)) c
@@ -116,5 +145,6 @@ module internal SsmValidation =
 
     /// Performs the validation of the given SSM root component and S# model.
     let validate (model : Model) (c : Comp) =
+        invalidBindings model c
         invalidRequiredPortBindings model c
         controlFlowCycles model c

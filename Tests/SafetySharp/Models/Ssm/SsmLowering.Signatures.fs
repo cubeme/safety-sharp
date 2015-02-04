@@ -184,7 +184,7 @@ module ``Ssm Lowering of Port Signatures`` =
     let ``lowers subcomponents`` () =
         transform "int M() { return q.Q(); } Sub q = new Sub(); class Sub : Component { public extern int Q(); } " =?
             {
-                Name = "Root@0"
+                Name = "Root0@0"
                 Fields = []
                 Methods = 
                     [
@@ -208,7 +208,7 @@ module ``Ssm Lowering of Port Signatures`` =
                 Subs = 
                     [
                         {
-                            Name = "Root@0.q@0"
+                            Name = "Root0@0.q@0"
                             Fields = []
                             Subs = []
                             Methods = 

@@ -31,7 +31,88 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``Ssm Validation: Unbound required port`` =
+module ``Ssm Validation: Invalid bindings`` =
+
+    let private transform csharpCode =
+        let model = TestCompilation.CreateModel csharpCode
+        model.FinalizeMetadata ()
+        (model, CilToSsm.transformModel model |> SsmLowering.lower)
+
+    let private check kinds binders sourceComponents targetComponents sourceMethods targetMethods csharpCode =
+        let (model, loweredSsm) = transform csharpCode
+        let e = raisesWith<InvalidBindingsException> (fun () -> SsmValidation.validate model loweredSsm)
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.Kind) =? kinds
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.Component :?> Component).UnmangledName) =? binders
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.SourcePort.Component :?> Component).UnmangledName) =? sourceComponents
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.TargetPort.Component :?> Component).UnmangledName) =? targetComponents
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.SourcePort.Method.Name) =? sourceMethods
+        e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.TargetPort.Method.Name) =? targetMethods
+
+    [<Test>]
+    let ``binding at same level of hierarchy is valid`` () =
+        let (model, loweredSsm) = 
+            transform
+              "class X : Component { extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
+               class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
+        let (model, loweredSsm) = 
+            transform
+              "class X : Component { public extern void M(); public void N() {} }
+               class Y : Component { X x = new X(); public Y() { BindDelayed(x.RequiredPorts.M = x.ProvidedPorts.N); } }
+               class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
+    [<Test>]
+    let ``binding at spanning one level of the hierarchy is valid`` () =
+        let (model, loweredSsm) = 
+            transform
+              "class X : Component { public extern void M(); }
+               class Y : Component { void N() {} X x = new X(); public Y() { BindDelayed(x.RequiredPorts.M = ProvidedPorts.N); } }
+               class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
+        let (model, loweredSsm) = 
+            transform
+              "class X : Component { public void N() {}  }
+               class Y : Component { extern void M(); X x = new X(); public Y() { BindDelayed(RequiredPorts.M = x.ProvidedPorts.N); } }
+               class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
+    [<Test>]
+    let ``binding with subsubcomponent is invalid`` () =
+        check [Delayed] ["Root0"] ["Root0.x.z"] ["Root0"] ["N"] ["M"]
+          "class Z : Component { public void N() {} }
+           class X : Component { Z z; public X(Z z) { this.z = z; } }
+           class Y : Component { extern void M(); X x; public Y(X x, Z z) { this.x = x; BindDelayed(RequiredPorts.M = z.ProvidedPorts.N); } }
+           class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
+
+        check [Delayed] ["Root0"] ["Root0"] ["Root0.x.z"] ["M"] ["N"]
+          "class Z : Component { public extern void N(); }
+           class X : Component { Z z; public X(Z z) { this.z = z; } }
+           class Y : Component { void M() {} X x; public Y(X x, Z z) { this.x = x; BindDelayed(z.RequiredPorts.N = ProvidedPorts.M); } }
+           class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
+
+    [<Test>]
+    let ``binding with non-subcomponent is invalid`` () =
+        check [Delayed] ["Root1"] ["Root0.z"] ["Root1"] ["N"] ["M"]
+          "class Z : Component { public void N() {} }
+           class X : Component { Z z; public X(Z z) { this.z = z; } }
+           class Y : Component { extern void M(); public Y(Z z) { BindDelayed(RequiredPorts.M = z.ProvidedPorts.N); } }
+           class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
+
+        check [Delayed] ["Root1"] ["Root1"] ["Root0.z"] ["M"] ["N"]
+          "class Z : Component { public extern void N(); }
+           class X : Component { Z z; public X(Z z) { this.z = z; } }
+           class Y : Component { void M() {} public Y(Z z) { BindDelayed(z.RequiredPorts.N = ProvidedPorts.M); } }
+           class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
+
+[<TestFixture>]
+module ``Ssm Validation: Unbound required ports`` =
 
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
@@ -55,13 +136,13 @@ module ``Ssm Validation: Unbound required port`` =
 
     [<Test>]
     let ``invalid when single port is unbound`` () =
-        check ["Root"] ["M"] 
+        check ["Root0"] ["M"] 
           "class X : Component { extern void M(); }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
     let ``invalid when subcomponent port is unbound`` () =
-        check ["Root.x"] ["N"] 
+        check ["Root0.x"] ["N"] 
           "class X : Component { public extern void M(); public extern void N(); }
            class Y : Component { void N() {} X x = new X(); public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
@@ -100,21 +181,21 @@ module ``Ssm Validation: Ambiguous required port bindings`` =
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by the same component`` () =
-        check [[("Root", "M", "Root", "N"); ("Root", "M", "Root", "R")]] [Delayed; Delayed] ["Root"; "Root"]
+        check [[("Root0", "M", "Root0", "N"); ("Root0", "M", "Root0", "R")]] [Delayed; Delayed] ["Root0"; "Root0"]
           "class X : Component { extern void M(); void N() {} void R() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); BindDelayed(RequiredPorts.M = ProvidedPorts.R); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by different components`` () =
-        check [["Root.x", "M", "Root", "N"; "Root.x", "M", "Root.x", "N"]] [Instantaneous; Delayed] ["Root"; "Root.x"]
+        check [["Root0.x", "M", "Root0", "N"; "Root0.x", "M", "Root0.x", "N"]] [Instantaneous; Delayed] ["Root0"; "Root0.x"]
           "class X : Component { public extern void M(); void N() {} public X() { BindDelayed(RequiredPorts.M = ProvidedPorts.N); } }
            class Y : Component { X x = new X(); void N() {} public Y() { BindInstantaneous(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
     [<Test>]
     let ``invalid when multiple ports are bound ambiguously`` () =
-        check [[("Root", "N", "Root", "A"); ("Root", "N", "Root", "B")]; [("Root", "M", "Root", "A"); ("Root", "M", "Root", "B")]] 
-          [Delayed; Instantaneous; Delayed; Instantaneous] ["Root"; "Root"; "Root"; "Root"]
+        check [[("Root0", "N", "Root0", "A"); ("Root0", "N", "Root0", "B")]; [("Root0", "M", "Root0", "A"); ("Root0", "M", "Root0", "B")]] 
+          [Delayed; Instantaneous; Delayed; Instantaneous] ["Root0"; "Root0"; "Root0"; "Root0"]
           "class X : Component { 
                 extern void N();
                 extern void M();
