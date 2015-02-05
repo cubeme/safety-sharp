@@ -46,6 +46,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Dependencies\Packages\Microsoft.CodeAnalysis.Common.1.0.0.0-beta2\lib\net45\Microsoft.CodeAnalysis.Desktop.dll</HintPath>
     </Reference>
+    <Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Dependencies\QuickGraph.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.1.32.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>True</Private>
@@ -67,6 +71,7 @@
     <Compile Include="Analyzers\CustomComponentAnalyzer.cs" />
     <Compile Include="Analyzers\PortPropertyAccessorAnalyzer.cs" />
     <Compile Include="Analyzers\PortKindAnalyzer.cs" />
+    <Compile Include="Analyzers\RecursionAnalyzer.cs" />
     <Compile Include="Analyzers\UnmarkedInterfacePortAnalyzer.cs" />
     <Compile Include="Analyzers\PortBindingInstantiationAnalyzer.cs" />
     <Compile Include="Analyzers\EnumValueAnalyzer.cs" />

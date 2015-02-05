@@ -185,7 +185,7 @@ module internal SsmValidation =
 
         // Construct the sets of strongly connected components of the graph; if there are no cycles, the
         // number of SCCs matches the number of vertices.
-        let mutable components = Dictionary<_,_> () :> IDictionary<_,_>
+        let mutable components :IDictionary<_,_> = null
         let componentCount = graph.StronglyConnectedComponents (&components)
 
         if componentCount <> graph.VertexCount then

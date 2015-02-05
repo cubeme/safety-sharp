@@ -66,6 +66,8 @@ namespace SafetySharp.CSharp.Analyzers
 		ExplicitPortBindingInstantiation,
 
 		// Misc diagnostics
-		ReservedName = 9000
+		ReservedName = 9000,
+		Recursion,
+		MutualRecursion
 	}
 }

@@ -359,6 +359,11 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
                 invalidOp (sprintf "Analyzer of type '%s' emitted a diagnostic with id '%s' which is not contained in its set of supported diagnostics."
                     (analyzer.GetType().FullName) diagnostic.Id)
 
+            // Check whether the message contains any new lines (would result in a bad user experience in Visual Studio)
+            if diagnostic.GetMessage().IndexOf "\n" <> -1 || diagnostic.GetMessage().IndexOf "\r" <> -1 then
+                invalidOp (sprintf "Analyzer of type '%s' emitted a diagnostic message containing new line characters, which results \
+                                    in a bad user experience in Visual Studio." (analyzer.GetType().FullName))
+
             Diagnostic (kind,
                         diagnostic.Id, 
                         (span.StartLinePosition.Line, span.StartLinePosition.Character),

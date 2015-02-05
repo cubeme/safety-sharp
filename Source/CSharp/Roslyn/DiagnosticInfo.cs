@@ -159,6 +159,18 @@ namespace SafetySharp.CSharp.Roslyn
 		}
 
 		/// <summary>
+		///     Emits a diagnostic for <paramref name="location" /> using the <paramref name="messageArgs" /> to format the
+		///     diagnostic message.
+		/// </summary>
+		/// <param name="context">The context in which the diagnostic should be emitted.</param>
+		/// <param name="location">The location the diagnostic is emitted for.</param>
+		/// <param name="messageArgs">The arguments for formatting the diagnostic message.</param>
+		public void Emit(SemanticModelAnalysisContext context, [NotNull] Location location, params object[] messageArgs)
+		{
+			context.ReportDiagnostic(Diagnostic.Create(Descriptor, location, messageArgs));
+		}
+
+		/// <summary>
 		///     Emits a diagnostic for <paramref name="symbol" /> using the <paramref name="messageArgs" /> to format the diagnostic
 		///     message.
 		/// </summary>

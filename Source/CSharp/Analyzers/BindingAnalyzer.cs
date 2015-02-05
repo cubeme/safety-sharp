@@ -73,7 +73,7 @@ namespace SafetySharp.CSharp.Analyzers
 			DiagnosticIdentifier.BindingFailure,
 			"There are no accessible signature-compatible ports that could be bound.",
 			"There are no accessible signature-compatible ports that could be bound. " +
-			"\nCandidate ports for the left-hand side:\n{0}\nCandidate ports for the right-hand side:\n{1}");
+			"Candidate ports for the left-hand side: {0}. Candidate ports for the right-hand side: {1}.");
 
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer when a binding is ambiguous.
@@ -85,7 +85,7 @@ namespace SafetySharp.CSharp.Analyzers
 			"that could be bound. You can disambiguate the binding by explicitly casting one of the ports to a " +
 			"delegate type with the signature of the port you intend to use. For instance, use 'RequiredPorts.X = " +
 			"(Action<int>)ProvidedPorts.Y' if the port you want to bind is signature-compatible to the 'System.Action<int>' " +
-			"delegate.\nCandidate ports for the left-hand side:\n{0}\nCandidate ports for the right-hand side:\n{1}");
+			"delegate. Candidate ports for the left-hand side: {0}. Candidate ports for the right-hand side: {1}.");
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -200,7 +200,7 @@ namespace SafetySharp.CSharp.Analyzers
 				return "<none>";
 
 			ports = ports.GroupBy(port => port.Symbol).Select(group => group.First());
-			return String.Join("\n",
+			return String.Join(", ",
 				ports.Select(port => String.Format("'{0}'", port.Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat))));
 		}
 	}
