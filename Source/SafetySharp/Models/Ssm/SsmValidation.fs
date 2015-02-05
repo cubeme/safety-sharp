@@ -117,7 +117,8 @@ module internal SsmValidation =
             yield! c.Subs |> Seq.map check |> Seq.collect id
         }
 
-        let bindings = check c |> Seq.toArray
+        // Don't check the bindings established by the model - they are allowed to span different roots and levels of the hierarchy
+        let bindings = c.Subs |> Seq.collect check |> Seq.toArray
         if bindings.Length > 0 then
             raise (InvalidBindingsException (bindings |> Array.map (fun (c, binding) -> toPortBinding model c.Name binding)))
 

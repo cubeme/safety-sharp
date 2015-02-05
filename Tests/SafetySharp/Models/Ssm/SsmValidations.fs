@@ -66,7 +66,7 @@ module ``Invalid bindings`` =
         nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
-    let ``binding at spanning one level of the hierarchy is valid`` () =
+    let ``binding spanning one level of the hierarchy is valid`` () =
         let (model, ssm) = 
             transform
               "class X : Component { public extern void M(); }
@@ -110,6 +110,42 @@ module ``Invalid bindings`` =
            class X : Component { Z z; public X(Z z) { this.z = z; } }
            class Y : Component { void M() {} public Y(Z z) { Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
+
+    [<Test>]
+    let ``model binding between two roots is valid`` () =
+        let (model, ssm) = 
+            transform
+              "class X : Component { public void N() {}  }
+               class Y : Component { public extern void M(); }
+               class TestModel : Model { 
+                    public TestModel() { 
+                        var x = new X();
+                        var y = new Y();
+                        SetRootComponents(x, y); 
+                        Bind(y.RequiredPorts.M = x.ProvidedPorts.N).Delayed();
+                    } 
+               }"
+
+        nothrow (fun () -> SsmValidation.validate model ssm)
+
+    [<Test>]
+    let ``model binding across roots and levels is valid`` () =
+        let (model, ssm) = 
+            transform
+              "class X : Component { public void N() {}  }
+               class Y : Component { public extern void M(); }
+               class A : Component { X x; public A(X x) { this.x = x; }}
+               class B : Component { Y y; public B(Y y) { this.y = y; }}
+               class TestModel : Model { 
+                    public TestModel() { 
+                        var x = new X();
+                        var y = new Y();
+                        SetRootComponents(new A(x), new B(y)); 
+                        Bind(y.RequiredPorts.M = x.ProvidedPorts.N).Delayed();
+                    } 
+               }"
+
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
 [<TestFixture>]
 module ``Unbound required ports`` =

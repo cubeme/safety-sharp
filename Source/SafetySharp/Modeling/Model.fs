@@ -145,7 +145,8 @@ type Model () =
     /// Returns the component with the given mangled name.
     member internal this.FindComponent mangledName =
         requiresIsSealed ()
-        components |> List.find (fun c -> c.Name = mangledName)
+        if mangledName = synthesizedRoot.Name then synthesizedRoot
+        else components |> List.find (fun c -> c.Name = mangledName)
 
 [<AutoOpen>]
 module internal Extensions =
