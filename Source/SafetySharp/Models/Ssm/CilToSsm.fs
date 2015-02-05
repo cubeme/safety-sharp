@@ -298,6 +298,16 @@ module internal CilToSsm =
         | (Instr.Ldfld f, (VarExpr v) :: s) when Ssm.isClassType v && f.Resolve().IsStatic |> not ->
             let field = field f
             let resolvedField = f.Resolve ()
+
+            // If this is a subcomponent field, use the subcomponent name as the field name
+            let field =
+                if Ssm.isClassType field then
+                    match c.Subcomponents |> Seq.tryFind (fun sub -> f.Module.Import(sub.ParentField).Resolve () = f.Resolve ()) with
+                    | None -> field
+                    | Some sub -> Field (sub.Name, Ssm.getVarType field)
+                else
+                    field
+            
             let readField = 
                 if Ssm.isThis v then (NopStm, [], (VarExpr field) :: s)
                 else (NopStm, [], (MemberExpr (v, VarExpr field)) :: s)
@@ -638,8 +648,7 @@ module internal CilToSsm =
             { transformed with 
                 Name = c.Name
                 Fields = transformed.Fields @ (transformFields c t resolver) 
-                Methods = transformed.Methods @ (transformMethods c t resolver)
-            }
+                Methods = transformed.Methods @ (transformMethods c t resolver) }
 
         { transform typeDefinitions.[c.GetType ()] with 
             Subs = c.Subcomponents |> List.map (transformType typeDefinitions)

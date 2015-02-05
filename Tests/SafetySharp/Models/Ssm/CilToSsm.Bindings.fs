@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Models.Ssm
+namespace Models.Ssm.CilToSsm
 
 open System
 open System.Linq
@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Bindings`` =
+module Bindings =
    
     let private transform componentCode initCode = 
         let model = TestCompilation.CreateModel (sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(%s); } }" componentCode initCode)

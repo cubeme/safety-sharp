@@ -32,9 +32,9 @@ type SpinModelChecker (model : Model) =
     do nullArg model "model"
     do model.FinalizeMetadata ()
 
-    let ssm = model |> CilToSsm.transformModel |> SsmLowering.lower
+    let ssm = model |> CilToSsm.transformModel
     do SsmValidation.validate model ssm
-    let scm = ssm |> SsmToScm.transform
+    let scm = ssm |> SsmLowering.lower |> SsmToScm.transform
     do printf "%s" (ScmToString.toString scm)
 
 //    member this.Check (formula : LtlFormula) =

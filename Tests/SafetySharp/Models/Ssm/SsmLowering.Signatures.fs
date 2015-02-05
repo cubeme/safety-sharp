@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Models.Ssm
+namespace Models.Ssm.Lowering
 
 open System
 open System.Linq
@@ -31,14 +31,14 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``Ssm Lowering of Port Signatures`` =
+module ``Port signatures`` =
     let private className = "X"
 
     let private transform methodDefinition= 
         let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lower
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerSignatures
         root.Subs.[0]
 
     let private transformMethod methodDefinition= 
@@ -234,7 +234,7 @@ module ``Ssm Lowering of Port Signatures`` =
                             Body = 
                                 SeqStm 
                                     [
-                                        ExprStm (MemberExpr (Field (CilToSsm.makeUniqueFieldName "q" 2, ClassType "X.Sub"), CallExpr (methodName "Q" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)])))
+                                        ExprStm (MemberExpr (Field ("Root0@0.q@0", ClassType "X.Sub"), CallExpr (methodName "Q" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)])))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 2 0 IntType))
                                             RetStm None

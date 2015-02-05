@@ -118,6 +118,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
     let mutable parent : Component = null
     let fields = Dictionary<FieldInfo, obj list> ()
     let mutable subcomponents = components
+    let mutable parentField : FieldInfo = null
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
@@ -217,17 +218,18 @@ type Component internal (components : Component list, bindings : List<PortBindin
         | _ -> invalidArg true "field" "Expected a reference to a field of the component."
 
     /// Finalizes the component's metadata, disallowing any future metadata modifications.
-    member internal this.FinalizeMetadata (?parentComponent : Component, ?componentName : string, ?componentSlot : int) =
+    member internal this.FinalizeMetadata (?parentComponent : Component, ?componentName : string, ?componentSlot : int, ?field : FieldInfo) =
         invalidCall isSealed "The component's metadata has already been finalized."
 
         isSealed <- true
         parent <- defaultArg parentComponent null
         name <- defaultArg componentName String.Empty
         slot <- defaultArg componentSlot 0
+        parentField <- defaultArg field null
 
         // Retrieve the non-subcomponent fields of the component
         Reflection.getFields (this.GetType ()) typeof<Component>
-        |> Seq.where (fun field -> not field.IsStatic && not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
+        |> Seq.where (fun field -> not field.IsStatic && not <| typeof<IComponent>.IsAssignableFrom field.FieldType && not <| fields.ContainsKey field)
         |> Seq.iter (fun field ->
             let value =
                 if field.FieldType.IsEnum then
@@ -245,7 +247,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
         if subcomponents |> List.length = 0 then
             let subcomponentMetadata = 
                 Reflection.getFields (this.GetType ()) typeof<Component>
-                |> Seq.where (fun field -> not field.IsStatic && typeof<IComponent>.IsAssignableFrom(field.FieldType))
+                |> Seq.where (fun field -> not field.IsStatic && typeof<IComponent>.IsAssignableFrom field.FieldType)
                 |> Seq.map (fun field -> (field, field.GetValue(this)))
                 |> Seq.where (fun (field, component') -> component' <> null)
                 |> Seq.map (fun (field, component') -> (field, component' :?> Component))
@@ -256,7 +258,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
             |> List.iteri (fun idx (field, component') -> 
                 // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
                 if not component'.IsMetadataFinalized then
-                    component'.FinalizeMetadata (this, field.Name, idx)
+                    component'.FinalizeMetadata (this, field.Name, idx, field)
             )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -310,3 +312,9 @@ type Component internal (components : Component list, bindings : List<PortBindin
         with get() : Component =
             requiresIsSealed ()
             parent
+
+    /// Gets the field of the parent component the component is stored in. Returns null for root components.
+    member internal this.ParentField
+        with get () : FieldInfo =
+            requiresIsSealed ()
+            parentField

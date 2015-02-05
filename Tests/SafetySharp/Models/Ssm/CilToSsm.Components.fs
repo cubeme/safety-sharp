@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Models.Ssm
+namespace Models.Ssm.CilToSsm
 
 open System
 open System.Linq
@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Components`` =
+module Components =
     let private transform csharpCode instantiations =
         let compilation = TestCompilation (sprintf "class T : Model { public T() { SetRootComponents(%s); } } %s" instantiations csharpCode)
         let assembly = compilation.Compile ()
@@ -182,7 +182,7 @@ module ``CilToSsm Components`` =
                             Locals = []
                             Body = SeqStm 
                                 [
-                                    ExprStm (MemberExpr (Field (CilToSsm.makeUniqueFieldName "x" 2, ClassType "X"),
+                                    ExprStm (MemberExpr (Field ("Root0@0.x@0", ClassType "X"),
                                                          CallExpr (CilToSsm.makeUniqueMethodName "M" 2 0, [], [], VoidType, [])))
                                     RetStm None
                                 ]

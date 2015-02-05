@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Models.Ssm
+namespace Models.Ssm.Validation
 
 open System
 open System.Linq
@@ -31,16 +31,16 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``Ssm Validation: Invalid bindings`` =
+module ``Invalid bindings`` =
 
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        (model, CilToSsm.transformModel model |> SsmLowering.lower)
+        (model, CilToSsm.transformModel model)
 
     let private check kinds binders sourceComponents targetComponents sourceMethods targetMethods csharpCode =
-        let (model, loweredSsm) = transform csharpCode
-        let e = raisesWith<InvalidBindingsException> (fun () -> SsmValidation.validate model loweredSsm)
+        let (model, ssm) = transform csharpCode
+        let e = raisesWith<InvalidBindingsException> (fun () -> SsmValidation.validate model ssm)
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.Kind) =? kinds
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.BinderName) =? binders
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.SourcePort.Component :?> Component).UnmangledName) =? sourceComponents
@@ -50,38 +50,38 @@ module ``Ssm Validation: Invalid bindings`` =
 
     [<Test>]
     let ``binding at same level of hierarchy is valid`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { public extern void M(); public void N() {} }
                class Y : Component { X x = new X(); public Y() { Bind(x.RequiredPorts.M = x.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``binding at spanning one level of the hierarchy is valid`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { public extern void M(); }
                class Y : Component { void N() {} X x = new X(); public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { public void N() {}  }
                class Y : Component { extern void M(); X x = new X(); public Y() { Bind(RequiredPorts.M = x.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``binding with subsubcomponent is invalid`` () =
@@ -112,27 +112,27 @@ module ``Ssm Validation: Invalid bindings`` =
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
 
 [<TestFixture>]
-module ``Ssm Validation: Unbound required ports`` =
+module ``Unbound required ports`` =
 
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        (model, CilToSsm.transformModel model |> SsmLowering.lower)
+        (model, CilToSsm.transformModel model)
 
     let private check componentNames portNames csharpCode =
-        let (model, loweredSsm) = transform csharpCode
-        let e = raisesWith<UnboundRequiredPortsException> (fun () -> SsmValidation.validate model loweredSsm)
+        let (model, ssm) = transform csharpCode
+        let e = raisesWith<UnboundRequiredPortsException> (fun () -> SsmValidation.validate model ssm)
         e.UnboundPorts |> List.ofArray |> List.map (fun p -> (p.Component :?> Component).UnmangledName) =? componentNames
         e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Method.Name) =? portNames
 
     [<Test>]
     let ``valid when all ports are bound`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``invalid when single port is unbound`` () =
@@ -148,16 +148,16 @@ module ``Ssm Validation: Unbound required ports`` =
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
 [<TestFixture>]
-module ``Ssm Validation: Ambiguous required port bindings`` =
+module ``Ambiguous required port bindings`` =
 
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        (model, CilToSsm.transformModel model |> SsmLowering.lower)
+        (model, CilToSsm.transformModel model)
 
     let private check bindings kinds binders csharpCode =
-        let (model, loweredSsm) = transform csharpCode
-        let e = raisesWith<AmbiguousRequiredPortBindingsException> (fun () -> SsmValidation.validate model loweredSsm)
+        let (model, ssm) = transform csharpCode
+        let e = raisesWith<AmbiguousRequiredPortBindingsException> (fun () -> SsmValidation.validate model ssm)
         e.AmbiguousBindings |> List.ofArray |> List.map (fun p -> 
             p |> List.ofArray |> List.map (fun b -> 
                 ((b.TargetPort.Component :?> Component).UnmangledName,
@@ -172,12 +172,12 @@ module ``Ssm Validation: Ambiguous required port bindings`` =
 
     [<Test>]
     let ``valid when all ports are bound`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by the same component`` () =
@@ -211,21 +211,21 @@ module ``Ssm Validation: Ambiguous required port bindings`` =
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
 [<TestFixture>]
-module ``Ssm Validation: Cyclic control flow`` =
+module ``Cyclic control flow`` =
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        (model, CilToSsm.transformModel model |> SsmLowering.lower)
+        (model, CilToSsm.transformModel model)
 
     let private check componentNames portNames csharpCode =
-        let (model, loweredSsm) = transform csharpCode
-        let e = raisesWith<CyclicControlFlowException> (fun () -> SsmValidation.validate model loweredSsm)
+        let (model, ssm) = transform csharpCode
+        let e = raisesWith<CyclicControlFlowException> (fun () -> SsmValidation.validate model ssm)
         e.ControlFlow |> List.ofArray |> List.map (fun (c, _) -> c.UnmangledName) =? componentNames
         e.ControlFlow |> List.ofArray |> List.map (fun (_, m) -> m.Name) =? portNames
 
     [<Test>]
     let ``model without any cycles is valid`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { 
                 extern void M(); 
@@ -234,11 +234,11 @@ module ``Ssm Validation: Cyclic control flow`` =
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``model with simple delayed binding cycle is valid`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
               "class X : Component { 
                     extern void M(); 
@@ -247,7 +247,7 @@ module ``Ssm Validation: Cyclic control flow`` =
                }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``model with simple instantaneous binding cycle is invalid`` () =
@@ -277,14 +277,14 @@ module ``Ssm Validation: Cyclic control flow`` =
 
     [<Test>]
     let ``model with base update call is valid`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
                 "class X : Component { 
                       public override void Update() { base.Update(); }
                  }
                  class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``model with mutually recursive functions is invalid`` () =
@@ -316,8 +316,24 @@ module ``Ssm Validation: Cyclic control flow`` =
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
+    let ``model involving recursive direct subcomponent provided port call is invalid`` () =
+        check ["Root0.t"; "Root0"; "Root0.t"] ["Req"; "N"; "Prov"] 
+          "class T : Component {
+                public extern void Req();
+                public void Prov() { Req(); }
+           }
+           class X : Component { 
+                T t = new T();
+                void N() { t.Prov(); }
+                public X() {
+                    Bind(t.RequiredPorts.Req = ProvidedPorts.N);
+                }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
     let ``model with long cycle involving subcomponents boken up by delayed binding is valid`` () =
-        let (model, loweredSsm) = 
+        let (model, ssm) = 
             transform
                 "class T : Component {
                     public extern void Req();
@@ -336,4 +352,4 @@ module ``Ssm Validation: Cyclic control flow`` =
                  }
                  class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+        nothrow (fun () -> SsmValidation.validate model ssm)

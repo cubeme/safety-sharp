@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Models.Ssm
+namespace Models.Ssm.CilToSsm
 
 open System.Linq
 open NUnit.Framework
@@ -42,7 +42,7 @@ module TestHelpers =
         // By removing all returns, we test whether this assumption actually holds.
         // Note that this only works when the tests are void-returning...
         let transformedMethod = if replaceReturns then transformedMethod.Replace ("return;", ";") else transformedMethod
-        let csharpCode = sprintf "class T : Models.Ssm.TestHelpers.%s { public override %s %s } class O : Models.Ssm.TestHelpers.%s { public override %s %s }" baseClass csharpCode additionalMembers baseClass transformedMethod additionalMembers
+        let csharpCode = sprintf "class T : Models.Ssm.CilToSsm.TestHelpers.%s { public override %s %s } class O : Models.Ssm.CilToSsm.TestHelpers.%s { public override %s %s }" baseClass csharpCode additionalMembers baseClass transformedMethod additionalMembers
         let compilation = TestCompilation csharpCode
         compilation.Compile () |> ignore
         (compilation.CreateObject<'a> "T", compilation.CreateObject<'a> "O")
@@ -138,7 +138,7 @@ module TestHelpers =
         abstract member M : 'p1 -> 'p2 -> 'p3 -> 'p4 -> 'r
 
 [<TestFixture>]
-module ``CilToSsm Semantic Equality`` =
+module ``Semantic equality`` =
 
     let readField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { return _f + x; }" "" "int _f;" false)
     let writeField = OneValParam<int, int>.Test (compile "OneValParam<int, int>" "int M(int x) { _f = x; return _f; }" "" "int _f;" false)

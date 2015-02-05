@@ -164,7 +164,7 @@ module internal SsmValidation =
                     | ExprStm (CallExpr (m, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
                     | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
                     | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _))) -> 
-                        edge (componentMethodVertex (sprintf "%s.%s" c.Name f) m) |> Seq.singleton
+                        edge (componentMethodVertex f m) |> Seq.singleton
                     | _ -> Seq.empty
 
                 invocations port.Body
@@ -201,7 +201,7 @@ module internal SsmValidation =
                 |> Seq.toArray
             raise (CyclicControlFlowException cycle)
 
-    /// Performs the validation of the given SSM root component and S# model.
+    /// Performs the validation of the given (unlowered) SSM root component and S# model.
     let validate (model : Model) (c : Comp) =
         invalidBindings model c
         invalidRequiredPortBindings model c

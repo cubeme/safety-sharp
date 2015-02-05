@@ -113,11 +113,14 @@ namespace Elbtunnel
 		}
 		void SendProvided(int position)
 		{
-			
+			_timer.Reset();
+			//SendProvided(position);
+			//SendProvided(position);
 		}
 		void SendProvided33(int position)
 		{
 			SendData(ref position);
+			
 		}
 
 		public int IsTriggered(out bool t)
@@ -130,8 +133,8 @@ namespace Elbtunnel
 		[Provided]
 		public void Do()
 		{
-			Update();
-			_timer.Update();
+			//Update();
+			//_timer.Update();
 			SendData(22);
 			var q = 38;
 			//q = Choose.Value(23, 4, 23, 55);
@@ -149,8 +152,8 @@ namespace Elbtunnel
 
 		public override void Update()
 		{
-			Update();
-			_timer.Update();
+			//Update();
+			//_timer.Update();
 			Do();
 		}
 	}

@@ -366,3 +366,15 @@ module internal Ssm =
 
         let last = Array.length methodBody
         transform 0 last
+
+    /// Replaces all expressions within the given statement using the given replacement function.
+    let rec replaceExprs replace stm =
+        match stm with
+        | NopStm            -> stm
+        | AsgnStm (v, e)    -> AsgnStm (v, replace e)
+        | GotoStm (e, pc)   -> GotoStm (replace e, pc)
+        | SeqStm s          -> s |> List.map (replaceExprs replace) |> SeqStm
+        | RetStm None       -> stm
+        | RetStm (Some e)   -> RetStm (Some (replace e))
+        | IfStm (e, s1, s2) -> IfStm (replace e, replaceExprs replace s1, replaceExprs replace s2)
+        | ExprStm e         -> ExprStm (replace e)

@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Models.Ssm
+namespace Models.Ssm.CilToSsm
 
 open System
 open System.Linq
@@ -31,7 +31,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
 [<TestFixture>]
-module ``CilToSsm Methods`` =
+module Methods =
     let private className = "TestClass"
 
     let private transform componentCode initCode = 
@@ -1326,7 +1326,7 @@ module ``CilToSsm Methods`` =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field (fieldName "a" 2, ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
+                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
                                 RetStm (Some (VarExpr (tmp 3 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1346,7 +1346,7 @@ module ``CilToSsm Methods`` =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field (fieldName "a" 2, ClassType "A`2<T1,System.Int32>"), CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
+                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<T1,System.Int32>"), CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
                                 RetStm (Some (VarExpr (tmp 3 0 BoolType)))
                             ]
                     Kind = ProvPort
