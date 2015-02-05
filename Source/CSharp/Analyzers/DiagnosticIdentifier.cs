@@ -35,6 +35,7 @@ namespace SafetySharp.CSharp.Analyzers
 		ComponentInterfaceReimplementation,
 		ExplicitEnumType,
 		ExplicitEnumMemberValue,
+		InvalidUpdateCall,
 
 		// Fault diagnostics
 		MissingOccurrencePattern = 2000,
@@ -50,7 +51,9 @@ namespace SafetySharp.CSharp.Analyzers
 		ProvidedPortImplementedAsRequiredPort,
 		RequiredPortImplementedAsProvidedPort,
 		NonExternRequiredPort,
+		UpdateMethodMarkedAsPort,
 		ExternProvidedPort,
+		ExternUpdateMethod,
 		InaccessibleProvidedPort,
 		InaccessibleRequiredPort,
 

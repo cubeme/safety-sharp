@@ -37,7 +37,15 @@ namespace SafetySharp.CSharp.Analyzers
 	public class PortKindAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer if a provided port is extern.
+		///     The error diagnostic emitted by the analyzer when the update method is extern.
+		/// </summary>
+		private static readonly DiagnosticInfo ExternUpdateMethod = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExternUpdateMethod,
+			"A component's Update method cannot be extern.",
+			String.Format("'{{0}}' cannot be extern as it overrides '{0}.Update()'.", typeof(Component).FullName));
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a provided port is extern.
 		/// </summary>
 		private static readonly DiagnosticInfo ExternProvidedPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.ExternProvidedPort,
@@ -45,12 +53,25 @@ namespace SafetySharp.CSharp.Analyzers
 			"Provided port '{0}' cannot be extern.");
 
 		/// <summary>
-		///     The error diagnostic emitted by the analyzer if a required port is not extern.
+		///     The error diagnostic emitted by the analyzer when a required port is not extern.
 		/// </summary>
 		private static readonly DiagnosticInfo NonExternRequiredPort = DiagnosticInfo.Error(
 			DiagnosticIdentifier.NonExternRequiredPort,
-			String.Format("A method or property marked with '{0}' must be extern.", typeof(ProvidedAttribute).FullName),
+			String.Format("A method or property marked with '{0}' must be extern.", typeof(RequiredAttribute).FullName),
 			"Required port '{0}' must be extern.");
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer when the update method is marked as a port.
+		/// </summary>
+		private static readonly DiagnosticInfo UpdateMethodMarkedAsPort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.UpdateMethodMarkedAsPort,
+			String.Format("A component's Update method cannot be marked with '{0}' or '{1}'.",
+				typeof(ProvidedAttribute).FullName,
+				typeof(RequiredAttribute).FullName),
+			String.Format("'{{0}}' overrides '{0}.Update()' and is therefore not a port. The method cannot be marked with '{1}' or '{2}'.",
+				typeof(Component).FullName,
+				typeof(ProvidedAttribute).FullName,
+				typeof(RequiredAttribute).FullName));
 
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer if a method or property is marked as both required and provided.
@@ -68,7 +89,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public PortKindAnalyzer()
-			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind)
+			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind, UpdateMethodMarkedAsPort, ExternProvidedPort, ExternUpdateMethod)
 		{
 		}
 
@@ -98,10 +119,20 @@ namespace SafetySharp.CSharp.Analyzers
 			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
 				return;
 
-			var isRequiredPort = symbol.HasAttribute<RequiredAttribute>(compilation);
-			var isProvidedPort = symbol.HasAttribute<ProvidedAttribute>(compilation);
+			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
+			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
 
-			if (isRequiredPort && isProvidedPort)
+			if (methodSymbol != null && methodSymbol.Overrides(compilation.GetUpdateMethodSymbol()))
+			{
+				if (hasRequiredAttribute || hasProvidedAttribute)
+					UpdateMethodMarkedAsPort.Emit(context, symbol, symbol.ToDisplayString());
+				else if (methodSymbol.IsExtern)
+					ExternUpdateMethod.Emit(context, symbol, symbol.ToDisplayString());
+
+				return;
+			}
+
+			if (hasRequiredAttribute && hasProvidedAttribute)
 			{
 				AmbiguousPortKind.Emit(context, symbol, symbol.ToDisplayString());
 				return;
@@ -110,9 +141,9 @@ namespace SafetySharp.CSharp.Analyzers
 			if (symbol.ContainingType.TypeKind == TypeKind.Interface)
 				return;
 
-			if (isProvidedPort && symbol.IsExtern)
+			if (hasProvidedAttribute && symbol.IsExtern)
 				ExternProvidedPort.Emit(context, symbol, symbol.ToDisplayString());
-			else if (isRequiredPort && !symbol.IsExtern)
+			else if (hasRequiredAttribute && !symbol.IsExtern)
 				NonExternRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}

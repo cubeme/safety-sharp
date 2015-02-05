@@ -137,3 +137,49 @@ module ``Required ports cannot be non extern`` =
     let ``Non-extern method or property with Required attribute outside of component classes is valid`` () =
         getDiagnostic "class C { [Provided] void M() {}}" =? None
         getDiagnostic "class C { [Provided] int M { get; set; }}" =? None
+
+[<TestFixture>]
+module ``Update method is not a port`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
+
+    let attribute location memberName =
+        errorDiagnostic DiagnosticIdentifier.UpdateMethodMarkedAsPort (1, location) (1, location + 6) 
+            "'%s' overrides 'SafetySharp.Modeling.Component.Update()' and is therefore not a port. The method cannot \
+             be marked with 'SafetySharp.Modeling.ProvidedAttribute' or 'SafetySharp.Modeling.RequiredAttribute'." memberName
+
+    let isExtern location memberName =
+        errorDiagnostic DiagnosticIdentifier.ExternUpdateMethod (1, location) (1, location + 6) 
+            "'%s' cannot be extern as it overrides 'SafetySharp.Modeling.Component.Update()'." memberName
+
+    [<Test>]
+    let ``unmarked update method is valid`` () =
+        getDiagnostic "class C : Component { public override void Update() {} }" =? None
+
+    [<Test>]
+    let ``replaced update method is valid`` () =
+        getDiagnostic "class C : Component { [Provided] public new void Update() {} }" =? None
+        getDiagnostic "class C : Component { [Required] public new extern void Update(); }" =? None
+
+    [<Test>]
+    let ``unmarked inherited update method is valid`` () =
+        getDiagnostic "class C : Component { public override void Update() {}} class D : C { public override void Update() {} }" =? None
+
+    [<Test>]
+    let ``update method marked as required port is invalid`` () =
+        getDiagnostic "class C : Component { [Required] public override void Update() {} }" =? attribute 54 "C.Update()"
+
+    [<Test>]
+    let ``update method marked as provided port is invalid`` () =
+        getDiagnostic "class C : Component { [Provided] public override void Update() {} }" =? attribute 54 "C.Update()"
+
+    [<Test>]
+    let ``update method marked with both port attributes is invalid`` () =
+        getDiagnostic "class C : Component { [Provided, Required] public override void Update() {} }" =? attribute 64 "C.Update()"
+
+    [<Test>]
+    let ``extern update method is invalid`` () =
+        getDiagnostic "class C : Component { public extern override void Update(); }" =? isExtern 50 "C.Update()"
+
+    [<Test>]
+    let ``extern replaced update method is invalid`` () =
+        getDiagnostic "class C : Component { public extern new void Update(); }" =? None

@@ -130,6 +130,8 @@ namespace Elbtunnel
 		[Provided]
 		public void Do()
 		{
+			Update();
+			_timer.Update();
 			SendData(22);
 			var q = 38;
 			//q = Choose.Value(23, 4, 23, 55);
@@ -147,6 +149,8 @@ namespace Elbtunnel
 
 		public override void Update()
 		{
+			Update();
+			_timer.Update();
 			Do();
 		}
 	}

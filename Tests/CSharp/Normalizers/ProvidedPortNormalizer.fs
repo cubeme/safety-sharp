@@ -91,3 +91,8 @@ module ProvidedPortNormalizer =
     [<Test>]
     let ``does not normalize Update method`` () =
         normalize "class X : Component { public override void Update() {} }" =? "class X : Component { public override void Update() {} }"
+
+    [<Test>]
+    let ``normalizes replaced Update method`` () =
+        normalize "class X : Component { public new void Update() {} }" =? 
+            "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] public new void Update() {} }"

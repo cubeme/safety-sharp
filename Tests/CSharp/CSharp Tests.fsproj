@@ -87,6 +87,7 @@
     <Compile Include="Analyzers\PortReferenceAnalyzer.fs" />
     <Compile Include="Analyzers\ReservedNameAnalyzer.fs" />
     <Compile Include="Analyzers\UnmarkedInterfacePortAnalyzer.fs" />
+    <Compile Include="Analyzers\UpdateInvocationAnalyzer.fs" />
     <Compile Include="Normalizers\BindingNormalizer.fs" />
     <Compile Include="Normalizers\ExpressionLifter.fs" />
     <Compile Include="Normalizers\ProvidedPortNormalizer.fs" />

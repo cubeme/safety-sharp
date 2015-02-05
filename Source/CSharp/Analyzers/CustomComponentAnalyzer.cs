@@ -64,7 +64,7 @@ namespace SafetySharp.CSharp.Analyzers
 		///     Initializes a new instance.
 		/// </summary>
 		public CustomComponentAnalyzer()
-			: base(CustomComponent)
+			: base(CustomComponent, Reimplementation)
 		{
 		}
 

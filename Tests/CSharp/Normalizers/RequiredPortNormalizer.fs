@@ -173,3 +173,15 @@ module RequiredPortNormalizer =
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
             [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__reqPortField0__();}"
+
+    [<Test>]
+    let ``does not normalize Update method`` () =
+        normalize "class X : Component { public override void Update() {} }" =? "class X : Component { public override void Update() {} }"
+
+    [<Test>]
+    let ``normalizes replaced Update method`` () =
+        normalize "class X : Component { public new extern void Update(); }" =? 
+            "class X : Component { \
+            [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
+            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
+            [SafetySharp.Modeling.RequiredAttribute()] public new void Update() => this.__reqPortField0__();}"
