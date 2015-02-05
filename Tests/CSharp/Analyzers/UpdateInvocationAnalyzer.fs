@@ -31,7 +31,7 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Update method can only be called within other Update method`` =
+module ``Update method invocation`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (UpdateInvocationAnalyzer ())
 
     let diagnostic location length typeName =

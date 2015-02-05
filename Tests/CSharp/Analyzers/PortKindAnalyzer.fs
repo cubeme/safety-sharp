@@ -31,22 +31,47 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Marked with both provided and required port attribute`` =
+module ``Port kinds`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
 
     let ambiguous location memberName =
         errorDiagnostic DiagnosticIdentifier.AmbiguousPortKind (1, location) (1, location + 1)
             "'%s' cannot be marked with both '%s' and '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
-    [<Test>]
-    let ``Method or property without attributes is valid`` () =
-        getDiagnostic "class C : Component { void M() {}}" =? None
-        getDiagnostic "class C : Component { int M { get; set; }}" =? None
-        getDiagnostic "interface C : IComponent { void M(); }" =? None
-        getDiagnostic "interface C : IComponent { int M { get; set; }}" =? None
+    let prov location memberName =
+        errorDiagnostic DiagnosticIdentifier.ExternProvidedPort (1, location) (1, location + 1)
+            "Provided port '%s' cannot be extern." memberName
+
+    let req location memberName =
+        errorDiagnostic DiagnosticIdentifier.NonExternRequiredPort (1, location) (1, location + 1) 
+            "Required port '%s' must be extern." memberName
+
+    let updateport location memberName =
+        errorDiagnostic DiagnosticIdentifier.UpdateMethodMarkedAsPort (1, location) (1, location + 6) 
+            "'%s' overrides 'SafetySharp.Modeling.Component.Update()' and is therefore not a port. The method cannot \
+             be marked with 'SafetySharp.Modeling.ProvidedAttribute' or 'SafetySharp.Modeling.RequiredAttribute'." memberName
+
+    let isExtern location memberName =
+        errorDiagnostic DiagnosticIdentifier.ExternUpdateMethod (1, location) (1, location + 6) 
+            "'%s' cannot be extern as it overrides 'SafetySharp.Modeling.Component.Update()'." memberName
+
+    let accessor location memberName =
+        errorDiagnostic DiagnosticIdentifier.PortPropertyAccessor (1, location) (1, location + 3)
+            "'%s' cannot be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
+
+    let interfacePort location memberName =
+        errorDiagnostic DiagnosticIdentifier.UnmarkedInterfacePort (1, location) (1, location + 1)
+            "'%s' must be marked with either '%s' or '%s'." memberName typeof<RequiredAttribute>.FullName typeof<ProvidedAttribute>.FullName
 
     [<Test>]
-    let ``Method or property with only one of the attributes is valid`` () =
+    let ``method or property without attributes is valid`` () =
+        getDiagnostic "class C : Component { void M() {}}" =? None
+        getDiagnostic "class C : Component { int M { get; set; }}" =? None
+        getDiagnostic "class C : Component { extern void M(); }" =? None
+        getDiagnostic "class C : Component { extern int M { get; set; }}" =? None
+
+    [<Test>]
+    let ``method or property with only one of the attributes is valid`` () =
         getDiagnostic "class C : Component { [Required] extern void M(); }" =? None
         getDiagnostic "class C : Component { [Required] extern int M { get; set; }}" =? None
         getDiagnostic "class C : Component { [Provided] void M() {}}" =? None
@@ -57,7 +82,7 @@ module ``Marked with both provided and required port attribute`` =
         getDiagnostic "interface C : IComponent { [Provided] int M { get; set; }}" =? None
 
     [<Test>]
-    let ``Method or property with both attributes is invalid`` () =
+    let ``method or property with both attributes is invalid`` () =
         getDiagnostic "class C : Component { [Required, Provided] void M() {}}" =? ambiguous 48 "C.M()"
         getDiagnostic "class C : Component { [Required, Provided] int M { get; set; }}" =? ambiguous 47 "C.M"
         getDiagnostic "class C : Component { [Required] [Provided] void M() {}}" =? ambiguous 49 "C.M()"
@@ -68,7 +93,7 @@ module ``Marked with both provided and required port attribute`` =
         getDiagnostic "interface C : IComponent { [Required] [Provided] int M { get; set; }}" =? ambiguous 53 "C.M"
 
     [<Test>]
-    let ``Method or property with both attributes outside of component class or interface is valid`` () =
+    let ``method or property with both attributes outside of component class or interface is valid`` () =
         getDiagnostic "class C { [Required, Provided] void M() {}}" =? None
         getDiagnostic "class C { [Required, Provided] int M { get; set; }}" =? None
         getDiagnostic "class C { [Required] [Provided] void M() {}}" =? None
@@ -78,78 +103,35 @@ module ``Marked with both provided and required port attribute`` =
         getDiagnostic "interface C { [Required] [Provided] void M(); }" =? None
         getDiagnostic "interface C { [Required] [Provided] int M { get; set; }}" =? None
 
-[<TestFixture>]
-module ``Provided ports cannot be extern`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
-
-    let prov location memberName =
-        errorDiagnostic DiagnosticIdentifier.ExternProvidedPort (1, location) (1, location + 1)
-            "Provided port '%s' cannot be extern." memberName
-
     [<Test>]
-    let ``Method or property without attributes is valid`` () =
-        getDiagnostic "class C : Component { void M() {}}" =? None
-        getDiagnostic "class C : Component { int M { get; set; }}" =? None
-        getDiagnostic "class C : Component { extern void M(); }" =? None
-        getDiagnostic "class C : Component { extern int M { get; set; }}" =? None
-
-    [<Test>]
-    let ``Non-extern method or property with Provided attribute is valid`` () =
+    let ``non-extern method or property with Provided attribute is valid`` () =
         getDiagnostic "class C : Component { [Provided] void M() {}}" =? None
         getDiagnostic "class C : Component { [Provided] int M { get; set; }}" =? None
 
     [<Test>]
-    let ``Extern method or property with Provided attribute is invalid`` () =
+    let ``extern method or property with Provided attribute is invalid`` () =
         getDiagnostic "class C : Component { [Provided] extern void M();}" =? prov 45 "C.M()"
         getDiagnostic "class C : Component { [Provided] extern int M { get; set; }}" =? prov 44 "C.M"
 
     [<Test>]
-    let ``Extern method or property with Provided attribute outside of component classes is valid`` () =
+    let ``extern method or property with Provided attribute outside of component classes is valid`` () =
         getDiagnostic "class C { [Provided] extern void M();}" =? None
         getDiagnostic "class C { [Provided] extern int M { get; set; }}" =? None
 
-[<TestFixture>]
-module ``Required ports cannot be non extern`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
-
-    let req location memberName =
-        errorDiagnostic DiagnosticIdentifier.NonExternRequiredPort (1, location) (1, location + 1) 
-            "Required port '%s' must be extern." memberName
-
     [<Test>]
-    let ``Method or property without attributes is valid`` () =
-        getDiagnostic "class C : Component { void M() {}}" =? None
-        getDiagnostic "class C : Component { int M { get; set; }}" =? None
-        getDiagnostic "class C : Component { extern void M(); }" =? None
-        getDiagnostic "class C : Component { extern int M { get; set; }}" =? None
-
-    [<Test>]
-    let ``Non-extern method or property with Required attribute is invalid`` () =
+    let ``non-extern method or property with Required attribute is invalid`` () =
         getDiagnostic "class C : Component { [Required] void M() {}}" =? req 38 "C.M()"
         getDiagnostic "class C : Component { [Required] int M { get; set; }}" =? req 37 "C.M"
 
     [<Test>]
-    let ``Extern method or property with Required attribute is valid`` () =
+    let ``extern method or property with Required attribute is valid`` () =
         getDiagnostic "class C : Component { [Required] extern void M();}" =? None
         getDiagnostic "class C : Component { [Required] extern int M { get; set; }}" =? None
 
     [<Test>]
-    let ``Non-extern method or property with Required attribute outside of component classes is valid`` () =
+    let ``non-extern method or property with Required attribute outside of component classes is valid`` () =
         getDiagnostic "class C { [Provided] void M() {}}" =? None
         getDiagnostic "class C { [Provided] int M { get; set; }}" =? None
-
-[<TestFixture>]
-module ``Update method is not a port`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (PortKindAnalyzer ())
-
-    let attribute location memberName =
-        errorDiagnostic DiagnosticIdentifier.UpdateMethodMarkedAsPort (1, location) (1, location + 6) 
-            "'%s' overrides 'SafetySharp.Modeling.Component.Update()' and is therefore not a port. The method cannot \
-             be marked with 'SafetySharp.Modeling.ProvidedAttribute' or 'SafetySharp.Modeling.RequiredAttribute'." memberName
-
-    let isExtern location memberName =
-        errorDiagnostic DiagnosticIdentifier.ExternUpdateMethod (1, location) (1, location + 6) 
-            "'%s' cannot be extern as it overrides 'SafetySharp.Modeling.Component.Update()'." memberName
 
     [<Test>]
     let ``unmarked update method is valid`` () =
@@ -166,15 +148,15 @@ module ``Update method is not a port`` =
 
     [<Test>]
     let ``update method marked as required port is invalid`` () =
-        getDiagnostic "class C : Component { [Required] public override void Update() {} }" =? attribute 54 "C.Update()"
+        getDiagnostic "class C : Component { [Required] public override void Update() {} }" =? updateport 54 "C.Update()"
 
     [<Test>]
     let ``update method marked as provided port is invalid`` () =
-        getDiagnostic "class C : Component { [Provided] public override void Update() {} }" =? attribute 54 "C.Update()"
+        getDiagnostic "class C : Component { [Provided] public override void Update() {} }" =? updateport 54 "C.Update()"
 
     [<Test>]
     let ``update method marked with both port attributes is invalid`` () =
-        getDiagnostic "class C : Component { [Provided, Required] public override void Update() {} }" =? attribute 64 "C.Update()"
+        getDiagnostic "class C : Component { [Provided, Required] public override void Update() {} }" =? updateport 64 "C.Update()"
 
     [<Test>]
     let ``extern update method is invalid`` () =
@@ -183,3 +165,55 @@ module ``Update method is not a port`` =
     [<Test>]
     let ``extern replaced update method is invalid`` () =
         getDiagnostic "class C : Component { public extern new void Update(); }" =? None
+
+    [<Test>]
+    let ``accessors without attributes are valid`` () =
+        getDiagnostic "class C : Component { int M { get; set; }}" =? None
+        getDiagnostic "interface C : IComponent { [Provided] int M { get; set; }}" =? None
+        getDiagnostic "class C : Component { extern int M { get; set; }}" =? None
+        getDiagnostic "interface C : IComponent { [Required] int M { get; set; }}" =? None
+
+    [<Test>]
+    let ``accessors with single attribute are invalid`` () =
+        getDiagnostic "class C : Component { int M { [Required] get; set; }}" =? accessor 41 "C.M.get"
+        getDiagnostic "class C : Component { int M { [Provided] get; set; }}" =? accessor 41 "C.M.get"
+        getDiagnostic "class C : Component { int M { get; [Required] set; }}" =? accessor 46 "C.M.set"
+        getDiagnostic "class C : Component { int M { get; [Provided] set; }}" =? accessor 46 "C.M.set"
+        getDiagnostic "interface C : IComponent { [Required] int M { [Required] get; set; }}" =? accessor 57 "C.M.get"
+        getDiagnostic "interface C : IComponent { [Provided] int M { [Provided] get; set; }}" =? accessor 57 "C.M.get"
+        getDiagnostic "interface C : IComponent { [Required] int M { get; [Required] set; }}" =? accessor 62 "C.M.set"
+        getDiagnostic "interface C : IComponent { [Provided] int M { get; [Provided] set; }}" =? accessor 62 "C.M.set"
+
+    [<Test>]
+    let ``accessors with both attributes are invalid`` () =
+        getDiagnostic "class C : Component { int M { [Required, Provided] get; set; }}" =? accessor 51 "C.M.get"
+        getDiagnostic "class C : Component { int M { [Required] [Provided] get; set; }}" =? accessor 52 "C.M.get"
+        getDiagnostic "class C : Component { int M { get; [Required, Provided] set; }}" =? accessor 56 "C.M.set"
+        getDiagnostic "class C : Component { int M { get; [Required] [Provided] set; }}" =? accessor 57 "C.M.set"
+        getDiagnostic "interface C : IComponent { [Required] int M { [Required, Provided] get; set; }}" =? accessor 67 "C.M.get"
+        getDiagnostic "interface C : IComponent { [Required] int M { [Required] [Provided] get; set; }}" =? accessor 68 "C.M.get"
+        getDiagnostic "interface C : IComponent { [Required] int M { get; [Required, Provided] set; }}" =? accessor 72 "C.M.set"
+        getDiagnostic "interface C : IComponent { [Required] int M { get; [Required] [Provided] set; }}" =? accessor 73 "C.M.set"
+
+    [<Test>]
+    let ``accessors with attributes outside of component class or interface are valid`` () =
+        getDiagnostic "class C { int M { [Required, Provided] get; set; }}" =? None
+        getDiagnostic "class C { int M { get; [Provided] set; }}" =? None
+        getDiagnostic "interface C { int M { get; [Required] set; }}" =? None
+        getDiagnostic "interface C { int M { [Provided] get; set; }}" =? None
+
+    [<Test>]
+    let ``method or property without attributes is invalid`` () =
+        getDiagnostic "interface C : IComponent { void M(); }" =? interfacePort 32 "C.M()"
+        getDiagnostic "interface C : IComponent { int M { get; set; }}" =? interfacePort 31 "C.M"
+
+    [<Test>]
+    let ``method or property without attributes outside of component interface is valid`` () =
+        getDiagnostic "interface C { void M(); }" =? None
+        getDiagnostic "interface C { int M { get; set; }}" =? None
+        getDiagnostic "class C : Component { void M() {} }" =? None
+        getDiagnostic "class C : Component { int M { get; set; }}" =? None
+        getDiagnostic "class C { void M() {} }" =? None
+        getDiagnostic "class C { int M { get; set; }}" =? None
+        getDiagnostic "class C : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} void M() {} }" =? None
+        getDiagnostic "class C : IComponent { public void Update() {} public dynamic RequiredPorts { get { return null; }} public dynamic ProvidedPorts { get { return null; }} int M { get; set; }}" =? None

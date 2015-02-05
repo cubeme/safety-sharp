@@ -32,7 +32,7 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Referenced ports must exist`` =
+module ``Port references`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortReferenceAnalyzer ())
 
     let provUnknown location componentType portName =

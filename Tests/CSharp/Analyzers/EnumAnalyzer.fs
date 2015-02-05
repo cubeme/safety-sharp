@@ -31,12 +31,52 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Explicit enum member value`` =
-    let getDiagnostic = TestCompilation.GetDiagnostic (EnumValueAnalyzer ())
+module ``Enumerations`` =
+    let getDiagnostic = TestCompilation.GetDiagnostic (EnumAnalyzer ())
 
-    let diagnostic location memberName =
+    let underlyingType location length =
+        errorDiagnostic DiagnosticIdentifier.ExplicitEnumType (1, location) (1, location + length)
+            "Enum 'E' must not explicitly declare an underlying type."
+
+    let memberValue location memberName =
         errorDiagnostic DiagnosticIdentifier.ExplicitEnumMemberValue (1, location) (1, location + 1)
             "Value of enum member 'E.%s' cannot be declared explicitly." memberName
+
+    [<Test>]
+    let ``implicit underlying type is valid`` () =
+        getDiagnostic "enum E { A }" =? None
+
+    [<Test>]
+    let ``byte as underlying type is invalid`` () =
+        getDiagnostic "enum E : byte { A }" =? underlyingType 9 4
+
+    [<Test>]
+    let ``int as underlying type is invalid`` () =
+        getDiagnostic "enum E : int { A }" =? underlyingType 9 3
+
+    [<Test>]
+    let ``long as underlying type is invalid`` () =
+        getDiagnostic "enum E : long { A }" =? underlyingType 9 4
+
+    [<Test>]
+    let ``sbyte as underlying type is invalid`` () =
+        getDiagnostic "enum E : sbyte { A }" =? underlyingType 9 5
+
+    [<Test>]
+    let ``short as underlying type is invalid`` () =
+        getDiagnostic "enum E : short { A }" =? underlyingType 9 5
+
+    [<Test>]
+    let ``uint as underlying type is invalid`` () =
+        getDiagnostic "enum E : uint { A }" =? underlyingType 9 4
+
+    [<Test>]
+    let ``ulong as underlying type is invalid`` () =
+        getDiagnostic "enum E : ulong { A }" =? underlyingType 9 5
+
+    [<Test>]
+    let ``ushort as underlying type is invalid`` () =
+        getDiagnostic "enum E : ushort { A }" =? underlyingType 9 6
 
     [<Test>]
     let ``enum declaration without explicit member values is valid`` () =
@@ -44,12 +84,12 @@ module ``Explicit enum member value`` =
 
     [<Test>]
     let ``enum declaration with explicit value on first member is invalid`` () =
-        getDiagnostic "enum E { A = 1, B, C }" =? diagnostic 13 "A"
+        getDiagnostic "enum E { A = 1, B, C }" =? memberValue 13 "A"
 
     [<Test>]
     let ``enum declaration with explicit value on second member is invalid`` () =
-        getDiagnostic "enum E { A, B = 1, C }" =? diagnostic 16 "B"
+        getDiagnostic "enum E { A, B = 1, C }" =? memberValue 16 "B"
 
     [<Test>]
     let ``enum declaration with explicit value on third member is invalid`` () =
-        getDiagnostic "enum E { A, B, C = 3 }" =? diagnostic 19 "C"
+        getDiagnostic "enum E { A, B, C = 3 }" =? memberValue 19 "C"

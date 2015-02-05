@@ -32,7 +32,7 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Use of reserved name`` =
+module ``Rreserved names`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (ReservedNameAnalyzer ())
 
     let diagnostic location identifierName =

@@ -32,17 +32,24 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Recursive method or property accessor invocations`` =
+module ``Recursion`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (RecursionAnalyzer ())
+    let getDiagnostics = TestCompilation.GetDiagnostics (RecursionAnalyzer ())
 
     let recursion location length =
         errorDiagnostic DiagnosticIdentifier.Recursion (1, location) (1, location + length)
             "Recursive method or property accessor invocation is not allowed here."
 
+    let recursions locations lengths =
+        List.zip locations lengths |> List.map (fun (location, length) -> recursion location length) |> List.map Option.get
+
     let mutualRecursion location length (cycle : string list) =
         let cycle = String.Join (", ", cycle |> Seq.map (sprintf "'%s'"))
         errorDiagnostic DiagnosticIdentifier.MutualRecursion (1, location) (1, location + length)
             "Mutually recursive method or property accessor invocations are not allowed here. The recursion involves: %s." cycle
+
+    let mutualRecursions locations lengths cycles =
+        List.zip3 locations lengths cycles |> List.map (fun (location, length, cycle) -> mutualRecursion location length cycle) |> List.map Option.get
 
     [<Test>]
     let ``recursive call outside of component is valid`` () =
@@ -72,14 +79,26 @@ module ``Recursive method or property accessor invocations`` =
         getDiagnostic "class X : Component { int N(int i) { return i; } int M() { return N(M()); } }" =? recursion 68 3
 
     [<Test>]
+    let ``multiple recursive method calls are invalid`` () =
+        getDiagnostics "class X : Component { int N(int i) { return i; } int M() { return M() + N(M()); } }" =? recursions [66; 74] [3; 3]
+
+    [<Test>]
     let ``recursive getter call is invalid`` () =
         getDiagnostic "class X : Component { int M { get { var m = M; return m; } } }" =? recursion 44 1
         getDiagnostic "class X : Component { int N(int i) { return i; } int M { get { return N(M); } } }" =? recursion 72 1
 
     [<Test>]
+    let ``multiple recursive getter calls are invalid`` () =
+        getDiagnostics "class X : Component { bool M { get { var m = M == M; return m; } } }" =? recursions [45; 50] [1; 1]
+
+    [<Test>]
     let ``recursive setter call is invalid`` () =
         getDiagnostic "class X : Component { int M { set { M = value; } } }" =? recursion 36 1
         getDiagnostic "class X : Component { int M { set { var i = M = value; } } }" =? recursion 44 1
+
+    [<Test>]
+    let ``multiple recursive setter calls are invalid`` () =
+        getDiagnostics "class X : Component { int M { set { M = M = value; } } }" =? recursions [36; 40] [1; 1]
 
     [<Test>]
     let ``mutual method recursion is invalid`` () =
@@ -104,3 +123,18 @@ module ``Recursive method or property accessor invocations`` =
                             int C { set { D(value); } } \
                             void D(int i) { i += A; }
                        }" =? mutualRecursion 56 1 ["X.B()"; "X.C.set"; "X.D(int)"; "X.A.get"]
+
+    [<Test>]
+    let ``multiple mutual method recursions are invalid`` () =
+        getDiagnostics "class X : Component { void A() { B(); } void B() { A(); } void C() { D(); } void D() { C(); } }" =?
+            mutualRecursions [27; 63] [1; 1] [["X.A()"; "X.B()"]; ["X.C()"; "X.D()"]]
+
+    [<Test>]
+    let ``multiple mutual getter recursions are invalid`` () =
+        getDiagnostics "class X : Component { int A { get { return B; } } int B { get { return A; } } int C { get { return D; } } int D { get { return C; } } }" =? 
+            mutualRecursions [30; 86] [3; 3] [["X.A.get"; "X.B.get"]; ["X.C.get"; "X.D.get"]]
+
+    [<Test>]
+    let ``multiple mutual setter recursions are invalid`` () =
+        getDiagnostics "class X : Component { int A { set { B = value; } } int B { set { A = value; } } int C { set { D = value; } } int D { set { C = value; } } }" =? 
+            mutualRecursions [30; 88] [3; 3] [["X.A.set"; "X.B.set"]; ["X.C.set"; "X.D.set"]]

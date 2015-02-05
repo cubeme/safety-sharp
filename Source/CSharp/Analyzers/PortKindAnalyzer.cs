@@ -86,10 +86,35 @@ namespace SafetySharp.CSharp.Analyzers
 				typeof(ProvidedAttribute).FullName));
 
 		/// <summary>
+		///     The error diagnostic emitted by the analyzer when a property accessor is marked as either required or provided.
+		/// </summary>
+		private static readonly DiagnosticInfo PortPropertyAccessor = DiagnosticInfo.Error(
+			DiagnosticIdentifier.PortPropertyAccessor,
+			String.Format("Property getters and setters cannot be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName),
+			String.Format("'{{0}}' cannot be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName));
+
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer when an interface method or property is unmarked.
+		/// </summary>
+		private static readonly DiagnosticInfo UnmarkedInterfacePort = DiagnosticInfo.Error(
+			DiagnosticIdentifier.UnmarkedInterfacePort,
+			String.Format("A method or property within a component interface must be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName),
+			String.Format("'{{0}}' must be marked with either '{0}' or '{1}'.",
+				typeof(RequiredAttribute).FullName,
+				typeof(ProvidedAttribute).FullName));
+
+		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
 		public PortKindAnalyzer()
-			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind, UpdateMethodMarkedAsPort, ExternProvidedPort, ExternUpdateMethod)
+			: base(ExternProvidedPort, NonExternRequiredPort, AmbiguousPortKind, UpdateMethodMarkedAsPort,
+				ExternProvidedPort, ExternUpdateMethod, PortPropertyAccessor, UnmarkedInterfacePort)
 		{
 		}
 
@@ -114,13 +139,17 @@ namespace SafetySharp.CSharp.Analyzers
 			if (!symbol.ContainingType.ImplementsIComponent(compilation))
 				return;
 
-			// Ignore getter and setter methods of properties
 			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol)
-				return;
-
 			var hasRequiredAttribute = symbol.HasAttribute<RequiredAttribute>(compilation);
 			var hasProvidedAttribute = symbol.HasAttribute<ProvidedAttribute>(compilation);
+
+			var isAccessor = methodSymbol != null && methodSymbol.AssociatedSymbol is IPropertySymbol;
+			if (isAccessor)
+			{
+				if (hasProvidedAttribute || hasRequiredAttribute)
+					PortPropertyAccessor.Emit(context, symbol, symbol.ToDisplayString());
+				return;
+			}
 
 			if (methodSymbol != null && methodSymbol.Overrides(compilation.GetUpdateMethodSymbol()))
 			{
@@ -139,12 +168,17 @@ namespace SafetySharp.CSharp.Analyzers
 			}
 
 			if (symbol.ContainingType.TypeKind == TypeKind.Interface)
-				return;
-
-			if (hasProvidedAttribute && symbol.IsExtern)
-				ExternProvidedPort.Emit(context, symbol, symbol.ToDisplayString());
-			else if (hasRequiredAttribute && !symbol.IsExtern)
-				NonExternRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
+			{
+				if (!hasRequiredAttribute && !hasProvidedAttribute)
+					UnmarkedInterfacePort.Emit(context, symbol, symbol.ToDisplayString());
+			}
+			else
+			{
+				if (hasProvidedAttribute && symbol.IsExtern)
+					ExternProvidedPort.Emit(context, symbol, symbol.ToDisplayString());
+				else if (hasRequiredAttribute && !symbol.IsExtern)
+					NonExternRequiredPort.Emit(context, symbol, symbol.ToDisplayString());
+			}
 		}
 	}
 }

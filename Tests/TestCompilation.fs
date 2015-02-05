@@ -334,19 +334,14 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         | null -> failed "Unable to find a type with name '%s' in the compiled assembly." typeName
         | typeSymbol -> Activator.CreateInstance(typeSymbol) :?> 'T
 
-    /// Checks whether the given C# code has any diagnostics.
-    static member GetDiagnostic (analyzer : DiagnosticAnalyzer) csharpCode =
+    /// Gets the diagnostics for the given code emitted by the given analyzer.
+    static member GetDiagnostics (analyzer : DiagnosticAnalyzer) csharpCode =
         let compilation = TestCompilation csharpCode
         let options = AnalyzerOptions (ImmutableArray.Create<AdditionalStream> (), ImmutableDictionary.Create<string, string> ())
         let analyzerArray = ImmutableArray.Create analyzer
 
-        let diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation.CSharpCompilation, analyzerArray).Result
-        if diagnostics.Length > 1 then
-            raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))
-        elif diagnostics.Length = 0 then
-            None
-        else
-            let diagnostic = diagnostics.[0]
+        AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation.CSharpCompilation, analyzerArray).Result
+        |> Seq.map (fun diagnostic ->
             let span = diagnostic.Location.GetLineSpan ()
             let kind = 
                 match diagnostic.Severity with
@@ -369,7 +364,17 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
                         (span.StartLinePosition.Line, span.StartLinePosition.Character),
                         (span.EndLinePosition.Line, span.EndLinePosition.Character),
                         diagnostic.GetMessage ())
-            |> Some
+        ) |> Seq.toList
+
+    /// Gets the single diagnostics for the given code emitted by the given analyzer.
+    static member GetDiagnostic (analyzer : DiagnosticAnalyzer) csharpCode =
+        let diagnostics = TestCompilation.GetDiagnostics analyzer csharpCode |> Seq.toArray
+        if diagnostics.Length > 1 then
+            raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))
+        elif diagnostics.Length = 0 then
+            None
+        else
+            diagnostics.[0] |> Some
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
     static member GetNormalizedSyntaxTree (normalizer : Normalizer) csharpCode =

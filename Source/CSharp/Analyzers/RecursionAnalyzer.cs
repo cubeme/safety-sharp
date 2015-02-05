@@ -117,16 +117,16 @@ namespace SafetySharp.CSharp.Analyzers
 					.Select(invocation => new SEquatableEdge<InvocationInfo>(source, invocation));
 			});
 
-			var graph = methodEdges.Union(accessorEdges).ToAdjacencyGraph<InvocationInfo, SEquatableEdge<InvocationInfo>>();
-
 			// Check for recursive function calls; this is a special case that is not detected by the
 			// SSC-based cycle detection below.
-			foreach (var edge in graph.Edges.Where(e => e.Source.Equals(e.Target)))
+			var edges = methodEdges.Concat(accessorEdges).ToArray();
+			foreach (var edge in edges.Where(e => e.Source.Equals(e.Target)))
 				Recursion.Emit(context, edge.Target.Node);
 
 			// Construct the sets of strongly connected components of the graph; if there are no cycles, the
 			// number of SCCs matches the number of vertices.
 			IDictionary<InvocationInfo, int> components;
+			var graph = edges.ToAdjacencyGraph<InvocationInfo, SEquatableEdge<InvocationInfo>>();
 			var componentCount = graph.StronglyConnectedComponents(out components);
 
 			if (componentCount == graph.VertexCount)
@@ -166,7 +166,7 @@ namespace SafetySharp.CSharp.Analyzers
 									where symbol != null && !IsAssignmentTarget(identifier)
 									select new InvocationInfo(identifier, symbol.GetMethod);
 
-			return methodInvocations.Union(setterInvocations).Union(getterInvocations);
+			return methodInvocations.Concat(setterInvocations).Concat(getterInvocations);
 		}
 
 		/// <summary>
@@ -223,6 +223,7 @@ namespace SafetySharp.CSharp.Analyzers
 			{
 				if (ReferenceEquals(null, obj))
 					return false;
+
 				return obj is InvocationInfo && Equals((InvocationInfo)obj);
 			}
 

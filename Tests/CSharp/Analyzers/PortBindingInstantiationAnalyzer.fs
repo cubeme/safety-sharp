@@ -31,7 +31,7 @@ open SafetySharp.CSharp.Roslyn.Symbols
 open SafetySharp.Modeling
 
 [<TestFixture>]
-module ``Instances of port bindings cannot be created explicitly`` =
+module ``PortBinding instantiations`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (PortBindingInstantiationAnalyzer ())
 
     let diagnostic locationStart locationEnd =

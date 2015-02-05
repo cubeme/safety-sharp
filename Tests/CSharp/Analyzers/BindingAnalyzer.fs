@@ -32,7 +32,7 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Binding validity`` =
+module ``Bindings`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (BindingAnalyzer ())
 
     let assignment location length =

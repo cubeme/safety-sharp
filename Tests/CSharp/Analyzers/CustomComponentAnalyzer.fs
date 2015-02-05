@@ -31,7 +31,7 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Custom implementation of IComponent interface`` =
+module ``Custom component`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (CustomComponentAnalyzer ())
     let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
 

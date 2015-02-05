@@ -31,7 +31,7 @@ open SafetySharp.CSharp.Roslyn.Syntax
 open SafetySharp.CSharp.Roslyn.Symbols
 
 [<TestFixture>]
-module ``Fault must be marked with a single occurrence pattern`` =
+module ``Occurrence pattern`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (OccurrencePatternAnalyzer ())
 
     let missing fault location =

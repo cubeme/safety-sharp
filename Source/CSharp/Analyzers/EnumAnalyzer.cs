@@ -32,11 +32,20 @@ namespace SafetySharp.CSharp.Analyzers
 	using Utilities;
 
 	/// <summary>
-	///     Ensures that no enumeration members explicitly declare a constant value.
+	///     Ensures that no enumeration members explicitly declare a constant value and that the underlying type of all enumerations
+	///     is <see cref="int" />.
 	/// </summary>
 	[DiagnosticAnalyzer, UsedImplicitly]
-	public class EnumValueAnalyzer : CSharpAnalyzer
+	public class EnumAnalyzer : CSharpAnalyzer
 	{
+		/// <summary>
+		///     The error diagnostic emitted by the analyzer.
+		/// </summary>
+		private static readonly DiagnosticInfo ExplicitEnumType = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ExplicitEnumType,
+			"Enumeration declarations must not explicitly declare an underlying type.",
+			"Enum '{0}' must not explicitly declare an underlying type.");
+
 		/// <summary>
 		///     The error diagnostic emitted by the analyzer.
 		/// </summary>
@@ -48,8 +57,8 @@ namespace SafetySharp.CSharp.Analyzers
 		/// <summary>
 		///     Initializes a new instance.
 		/// </summary>
-		public EnumValueAnalyzer()
-			: base(ExplicitEnumMemberValue)
+		public EnumAnalyzer()
+			: base(ExplicitEnumType, ExplicitEnumMemberValue)
 		{
 		}
 
@@ -70,13 +79,25 @@ namespace SafetySharp.CSharp.Analyzers
 		{
 			var enumDeclarations = context
 				.SemanticModel
-				.SyntaxTree.Descendants<EnumMemberDeclarationSyntax>()
-				.Where(enumMember => enumMember.EqualsValue != null);
+				.SyntaxTree.Descendants<EnumDeclarationSyntax>();
 
-			foreach (var enumMember in enumDeclarations)
+			foreach (var enumDeclaration in enumDeclarations)
 			{
-				ExplicitEnumMemberValue.Emit(context, enumMember.EqualsValue.Value,
-					context.SemanticModel.GetDeclaredSymbol(enumMember).ToDisplayString());
+				if (enumDeclaration.BaseList != null)
+				{
+					ExplicitEnumType.Emit(context, enumDeclaration.BaseList.Types.First(),
+						context.SemanticModel.GetDeclaredSymbol(enumDeclaration).ToDisplayString());
+				}
+
+				var enumMembers = enumDeclaration
+					.Descendants<EnumMemberDeclarationSyntax>()
+					.Where(enumMember => enumMember.EqualsValue != null);
+
+				foreach (var enumMember in enumMembers)
+				{
+					ExplicitEnumMemberValue.Emit(context, enumMember.EqualsValue.Value,
+						context.SemanticModel.GetDeclaredSymbol(enumMember).ToDisplayString());
+				}
 			}
 		}
 	}
