@@ -138,11 +138,11 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         assembly
 
     /// Emits an assembly for the compilation compiled with the S# compiler and loads the S# assembly into the app domain.
-    member this.CompileSSharp () =
+    member this.CompileSSharp runSSharpDiagnostics =
         if assembly = null then
             // Create a temporary file and load the assembly from the file, as some
             // tests require the assembly to be present on the file system
-            if not <| Compiler.Compile (csharpCompilation, assemblyPath) then
+            if not <| Compiler.Compile (csharpCompilation, assemblyPath, runSSharpDiagnostics) then
                 failed "Assembly compilation failed."
 
             assembly <- Assembly.LoadFile assemblyPath
@@ -397,8 +397,8 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         syntaxTree.Descendants<InterfaceDeclarationSyntax>().First().ToFullString ()
 
     /// Compiles the given C# code and creates an instance of the "TestModel" class.
-    static member CreateModel csharpCode =
+    static member CreateModel (csharpCode, ?runSSharpDiagnostics : bool) =
         let compilation = TestCompilation csharpCode
-        let assembly = compilation.CompileSSharp ()
+        let assembly = compilation.CompileSSharp (defaultArg runSSharpDiagnostics false)
         let modelType = assembly.GetType "TestModel"
         Activator.CreateInstance modelType :?> Model

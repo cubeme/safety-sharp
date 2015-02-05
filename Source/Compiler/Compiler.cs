@@ -80,7 +80,7 @@ namespace SafetySharp.Compiler
 			var project = workspace.OpenProjectAsync(projectFile).Result;
 			var compilation = project.GetCompilationAsync().Result;
 
-			return Compile(compilation, project.OutputFilePath);
+			return Compile(compilation, project.OutputFilePath, runSSharpDiagnostics: true);
 		}
 
 		/// <summary>
@@ -88,13 +88,14 @@ namespace SafetySharp.Compiler
 		/// </summary>
 		/// <param name="compilation">The compilation that should be compiled.</param>
 		/// <param name="outputPath">The output path of the compiled assembly.</param>
-		public static bool Compile([NotNull] Compilation compilation, string outputPath)
+		/// <param name="runSSharpDiagnostics">Indicates whether S#-specific diagnostics should be run.</param>
+		public static bool Compile([NotNull] Compilation compilation, string outputPath, bool runSSharpDiagnostics)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNullOrWhitespace(outputPath, () => outputPath);
 
 			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
-			if (!Diagnose(compilation) || !Emit(optimizedCompilation, outputPath, embedOriginalAssembly: false))
+			if (!Diagnose(compilation, runSSharpDiagnostics) || !Emit(optimizedCompilation, outputPath, embedOriginalAssembly: false))
 				return false;
 
 			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);
@@ -197,10 +198,14 @@ namespace SafetySharp.Compiler
 		///     <c>false</c> when at least one error diagnostic has been reported.
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be diagnosed.</param>
-		private static bool Diagnose([NotNull] Compilation compilation)
+		/// <param name="runSSharpDiagnostics">Indicates whether S#-specific diagnostics should be run.</param>
+		private static bool Diagnose([NotNull] Compilation compilation, bool runSSharpDiagnostics)
 		{
 			if (!Report(compilation.GetDiagnostics(), true))
 				return false;
+
+			if (!runSSharpDiagnostics)
+				return true;
 
 			var diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation, GetAnalyzers());
 			return Report(diagnostics.Result, false);
