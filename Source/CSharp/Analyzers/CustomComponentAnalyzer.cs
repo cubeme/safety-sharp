@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using System.Linq;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
@@ -37,7 +38,7 @@ namespace SafetySharp.CSharp.Analyzers
 	public class CustomComponentAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>
-		///     The error emitted by the analyzer.
+		///     The error emitted by the analyzer when the interface is implemented explicitly.
 		/// </summary>
 		private static readonly DiagnosticInfo CustomComponent = DiagnosticInfo.Error(
 			DiagnosticIdentifier.CustomComponent,
@@ -47,6 +48,17 @@ namespace SafetySharp.CSharp.Analyzers
 			String.Format("Class '{{0}}' cannot implement '{0}' explicitly; derive from '{1}' instead.",
 				typeof(IComponent).FullName,
 				typeof(Component).FullName));
+
+		/// <summary>
+		///     The error emitted by the analyzer when the interface is reimplemented by a component class.
+		/// </summary>
+		private static readonly DiagnosticInfo Reimplementation = DiagnosticInfo.Error(
+			DiagnosticIdentifier.ComponentInterfaceReimplementation,
+			String.Format("Interface '{0}' cannot be reimplemented by a class derived from '{1}'.",
+				typeof(IComponent).FullName,
+				typeof(Component).FullName),
+			String.Format("Class '{{0}}' cannot reimplement '{0}'.",
+				typeof(IComponent).FullName));
 
 		/// <summary>
 		///     Initializes a new instance.
@@ -77,7 +89,15 @@ namespace SafetySharp.CSharp.Analyzers
 			if (symbol == null || symbol.TypeKind != TypeKind.Class)
 				return;
 
-			if (symbol.ImplementsIComponent(compilation) && !symbol.IsDerivedFromComponent(compilation))
+			if (!symbol.ImplementsIComponent(compilation))
+				return;
+
+			var interfaceSymbol = compilation.GetComponentInterfaceSymbol();
+			var isComponent = symbol.IsDerivedFromComponent(compilation);
+
+			if (isComponent && symbol.Interfaces.Any(i => i.Equals(interfaceSymbol)))
+				Reimplementation.Emit(context, symbol, symbol.ToDisplayString());
+			else if (!isComponent)
 				CustomComponent.Emit(context, symbol, symbol.ToDisplayString());
 		}
 	}

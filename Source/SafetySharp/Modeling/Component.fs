@@ -227,7 +227,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
 
         // Retrieve the non-subcomponent fields of the component
         Reflection.getFields (this.GetType ()) typeof<Component>
-        |> Seq.where (fun field -> not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
+        |> Seq.where (fun field -> not field.IsStatic && not <| typeof<IComponent>.IsAssignableFrom(field.FieldType) && not <| fields.ContainsKey(field))
         |> Seq.iter (fun field ->
             let value =
                 if field.FieldType.IsEnum then
@@ -245,7 +245,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
         if subcomponents |> List.length = 0 then
             let subcomponentMetadata = 
                 Reflection.getFields (this.GetType ()) typeof<Component>
-                |> Seq.where (fun field -> typeof<IComponent>.IsAssignableFrom(field.FieldType))
+                |> Seq.where (fun field -> not field.IsStatic && typeof<IComponent>.IsAssignableFrom(field.FieldType))
                 |> Seq.map (fun field -> (field, field.GetValue(this)))
                 |> Seq.where (fun (field, component') -> component' <> null)
                 |> Seq.map (fun (field, component') -> (field, component' :?> Component))

@@ -146,16 +146,24 @@ module internal SsmToScm =
         Params = m.Params |> List.map transformParam
     }
 
+    /// Transforms the given method to a SCM behavior declaration.
+    let private transformBehavior (m : Ssm.Method) : Scm.BehaviorDecl = {
+        Locals = m.Locals |> List.map transformLocal
+        Body = transformStm m.Body
+    }
+
     /// Transforms the given method to a SCM provided port declaration.
     let private transformProvPort (m : Ssm.Method) : Scm.ProvPortDecl = {
         ProvPort = Scm.ProvPort m.Name
         Params = m.Params |> List.map transformParam 
         FaultExpr = None
-        Behavior = 
-        { 
-            Locals = m.Locals |> List.map transformLocal
-            Body = transformStm m.Body
-        }
+        Behavior = transformBehavior m
+    }
+
+    /// Transforms the given method to a SCM step declaration.
+    let private transformSteps (m : Ssm.Method) : Scm.StepDecl = {
+        FaultExpr = None
+        Behavior = transformBehavior m
     }
 
     /// Transforms the given binding to a SCM binding.
@@ -176,6 +184,6 @@ module internal SsmToScm =
         ReqPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ReqPort) |> Seq.map transformReqPort |> Seq.toList
         ProvPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort) |> Seq.map transformProvPort |> Seq.toList
         Bindings = c.Bindings |> List.map transformBinding
-        Steps = []
+        Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step) |> Seq.map transformSteps |> Seq.toList
     }
         

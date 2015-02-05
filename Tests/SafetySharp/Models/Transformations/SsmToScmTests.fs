@@ -159,6 +159,24 @@ module ``SsmToScm Transformation`` =
             }
         ]
 
+    let private ssmStep : Ssm.Method = {
+        Name = "Update"
+        Params = []
+        Body = Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
+        Return = Ssm.VoidType
+        Locals = [Ssm.Local ("x", Ssm.IntType)]
+        Kind = Ssm.Step
+    }
+
+    let private scmStep : Scm.StepDecl = {
+        FaultExpr = None
+        Behavior = 
+        {
+            Locals = [{ Var = Scm.Var "x"; Type = Scm.IntType }]
+            Body = Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal -1))
+        }
+    }
+
     let private transform = SsmToScm.transform
 
     [<Test>]
@@ -178,24 +196,29 @@ module ``SsmToScm Transformation`` =
         transform { ssmComp with Bindings = ssmBindings } =? { scmComp with Bindings = scmBindings }
 
     [<Test>]
+    let ``step method transformation`` () =
+        transform { ssmComp with Methods = [ssmStep] } =? { scmComp with Steps = [scmStep] }
+
+    [<Test>]
     let ``nested components`` () =
         let ssm = {
             ssmComp with
              Fields = ssmFields
-             Methods = [ssmProvPort; ssmReqPort]
+             Methods = [ssmProvPort; ssmReqPort; ssmStep]
              Bindings = ssmBindings
         }
         let sub = { ssm with Subs = [ssm; ssm] }
-        let ssm = { ssm with Subs = [sub; { ssm with Bindings = ssmBindings }] }
+        let ssm = { ssm with Subs = [sub; { ssm with Bindings = ssmBindings; Methods = [ssmStep; ssmProvPort] }] }
 
         let scm = {
             scmComp with
              Fields = scmFields
              ReqPorts = [scmReqPort]
              ProvPorts = [scmProvPort]
+             Steps = [scmStep]
              Bindings = scmBindings
         }
         let sub = { scm with Subs = [scm; scm] }
-        let scm = { scm with Subs = [sub; { scm with Bindings = scmBindings }] }
+        let scm = { scm with Subs = [sub; { scm with Bindings = scmBindings; Steps = [scmStep]; ProvPorts = [scmProvPort]; ReqPorts = [] }] }
 
         transform ssm =? scm

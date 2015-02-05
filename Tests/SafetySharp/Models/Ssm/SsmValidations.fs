@@ -267,6 +267,25 @@ module ``Ssm Validation: Cyclic control flow`` =
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
+    [<Test; Ignore "Not yet implemented">]
+    let ``model with recursive update function is invalid`` () =
+        check ["Root0"] ["Update"] 
+          "class X : Component { 
+                public override void Update() { Update(); }
+           }
+           class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+    [<Test>]
+    let ``model with base update call is valid`` () =
+        let (model, loweredSsm) = 
+            transform
+                "class X : Component { 
+                      public override void Update() { base.Update(); }
+                 }
+                 class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model loweredSsm)
+
     [<Test>]
     let ``model with mutually recursive functions is invalid`` () =
         check ["Root0"; "Root0"] ["M"; "N"] 

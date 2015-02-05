@@ -32,6 +32,7 @@ namespace SafetySharp.CSharp.Analyzers
 	{
 		// Type diagnostics
 		CustomComponent = 1000,
+		ComponentInterfaceReimplementation,
 		ExplicitEnumType,
 		ExplicitEnumMemberValue,
 

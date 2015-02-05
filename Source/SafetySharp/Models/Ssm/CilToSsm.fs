@@ -205,6 +205,22 @@ module internal CilToSsm =
         | Some (ClassType _) -> invalidOp "Unsupported method return type '%A'." typeRef
         | Some t             -> t
 
+    /// Maps the given method name of the given component back to a method info.
+    let unmapMethod (c : Component) (methodName : string) =
+        let metadataProvider = AssemblyMetadataProvider ()
+        let typeDefinitions = metadataProvider.GetTypeDefinitions [c]
+        let netModule = typeDefinitions.[c.GetType ()].Module
+        let unmangledPart = methodName.Substring (0, methodName.IndexOf inheritanceToken)
+
+        Reflection.getMethods (c.GetType ()) typeof<obj>
+        |> Seq.filter (fun m -> m.Name.StartsWith unmangledPart)
+        |> Seq.map (fun m -> (m, netModule.Import(m).Resolve ()))
+        |> Seq.find (fun (info, definition) -> getUniqueMethodName definition = methodName)
+        |> fst
+
+    /// Represents the <see cref="Component.Update" /> method.
+    let private componentUpdateMethod = typeof<Component>.GetMethod ("Update", BindingFlags.Instance ||| BindingFlags.Public)
+
     /// Creates a variable using the given constructor with the given name and type.
     let private createVar resolveType constr name typeRef =
         constr (name, typeRef |> resolveType |> mapVarType)
@@ -565,6 +581,7 @@ module internal CilToSsm =
 
     /// Transforms the given method to an SSM method with structured control flow.
     let private transformMethod (c : Component) (resolver : GenericResolver) (m : MethodDefinition) =
+        let name = getUniqueMethodName m
         let body =
             if m.IsAbstract then NopStm
             else
@@ -575,7 +592,7 @@ module internal CilToSsm =
                 |> fixIntIsBool (m.ReturnType.MetadataType = MetadataType.Boolean)
                 |> Ssm.replaceGotos
 
-        {  Name = getUniqueMethodName m
+        {  Name = name
            Body = body
            Params =
                m.Parameters 
@@ -583,7 +600,10 @@ module internal CilToSsm =
                |> Seq.toList
            Return = m.ReturnType |> resolveGenericType resolver |> mapReturnType
            Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
-           Kind = if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
+           Kind = 
+                let methodInfo = unmapMethod c name
+                if methodInfo.GetBaseDefinition () = componentUpdateMethod then Step
+                else if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
     let private transformMethods (c : Component) (t : TypeDefinition) (resolver : GenericResolver) =
@@ -630,16 +650,3 @@ module internal CilToSsm =
         let metadataProvider = AssemblyMetadataProvider ()
         let typeDefinitions = metadataProvider.GetTypeDefinitions (model.SynthesizedRoot :: model.Components)
         transformType typeDefinitions model.SynthesizedRoot
-
-    /// Maps the given method name of the given component back to a method reference.
-    let unmapMethod (c : Component) (methodName : string) =
-        let metadataProvider = AssemblyMetadataProvider ()
-        let typeDefinitions = metadataProvider.GetTypeDefinitions [c]
-        let netModule = typeDefinitions.[c.GetType ()].Module
-        let unmangledPart = methodName.Substring (0, methodName.IndexOf inheritanceToken)
-
-        Reflection.getMethods (c.GetType ()) typeof<Component>
-        |> Seq.filter (fun m -> m.Name.StartsWith unmangledPart)
-        |> Seq.map (fun m -> (m, netModule.Import(m).Resolve ()))
-        |> Seq.find (fun (info, definition) -> getUniqueMethodName definition = methodName)
-        |> fst

@@ -91,12 +91,12 @@ namespace Elbtunnel
 			_timer = timer;
 			//BindDelayed(_timer.RequiredPorts.Test = ProvidedPorts.Do);
 			//BindDelayed(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
-			BindInstantaneous(_timer2.RequiredPorts.Test = _timer.ProvidedPorts.Reset);
-			BindInstantaneous(_timer.RequiredPorts.Test = ProvidedPorts.Do);
-			BindInstantaneous(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided);
-			BindDelayed(RequiredPorts.SendData = ProvidedPorts.SendProvided33);
+			Bind(_timer2.RequiredPorts.Test = _timer.ProvidedPorts.Reset);
+			Bind(_timer.RequiredPorts.Test = ProvidedPorts.Do);
+			Bind(RequiredPorts.SendData = (D)ProvidedPorts.SendProvided).Delayed();
+			Bind(RequiredPorts.SendData = ProvidedPorts.SendProvided33);
 			//BindInstantaneous(RequiredPorts.SendData = (Action<int>)ProvidedPorts.SendProvided);
-			BindInstantaneous(RequiredPorts.GetPort = ProvidedPorts.IsTriggered);
+			Bind(RequiredPorts.GetPort = ProvidedPorts.IsTriggered);
 		}
 
 		[Required]
@@ -143,6 +143,11 @@ namespace Elbtunnel
 			IsTriggered(out Triggered);
 			//return _i + q;
 			_i *= q;
+		}
+
+		public override void Update()
+		{
+			Do();
 		}
 	}
 

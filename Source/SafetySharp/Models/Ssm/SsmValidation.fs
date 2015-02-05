@@ -153,23 +153,28 @@ module internal SsmValidation =
             edge (componentMethodVertex binding.TargetComp binding.TargetPort) (componentMethodVertex binding.SourceComp binding.SourcePort)
         )
 
-        // Compute the edges from the provided ports to all invoked methods
-        let provided = collect (fun c -> c.Methods |> Seq.filter (fun m -> m.Kind = ProvPort)) c |> Seq.collect (fun (c, port) ->
-            let edge = edge (componentMethodVertex c.Name port.Name)
-            let rec invocations stm = 
-                match stm with
-                | SeqStm s -> s |> Seq.collect invocations
-                | IfStm (_, s1, s2) -> seq { yield! invocations s1; yield! invocations s2 }
-                | ExprStm (CallExpr (m, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
-                | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
-                | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _))) -> 
-                    edge (componentMethodVertex (sprintf "%s.%s" c.Name f) m) |> Seq.singleton
-                | _ -> Seq.empty
+        let collectInvocations kind = 
+            collect (fun c -> c.Methods |> Seq.filter (fun m -> m.Kind = kind)) c 
+            |> Seq.collect (fun (c, port) ->
+                let edge = edge (componentMethodVertex c.Name port.Name)
+                let rec invocations stm = 
+                    match stm with
+                    | SeqStm s -> s |> Seq.collect invocations
+                    | IfStm (_, s1, s2) -> seq { yield! invocations s1; yield! invocations s2 }
+                    | ExprStm (CallExpr (m, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
+                    | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
+                    | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _))) -> 
+                        edge (componentMethodVertex (sprintf "%s.%s" c.Name f) m) |> Seq.singleton
+                    | _ -> Seq.empty
 
-            invocations port.Body
-        )
+                invocations port.Body
+            )
 
-        let edges = seq { yield! required; yield! provided }
+        // Compute the edges from the provided ports and step functions to all invoked methods
+        let provided = collectInvocations ProvPort
+        let step = collectInvocations Step
+
+        let edges = seq { yield! required; yield! provided; yield! step }
         let graph = edges.ToAdjacencyGraph ()
 
         // Check for recursive function calls; this is a special case that is not detected by the

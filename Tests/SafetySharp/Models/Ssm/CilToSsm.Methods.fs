@@ -63,7 +63,7 @@ module ``CilToSsm Methods`` =
     let private local name t = Local (sprintf "%s%c" name CilToSsm.varToken, t)
     let private field name t = Field (fieldName name 2, t)
     let private tmp = CilToSsm.freshLocal
-    
+
     [<Test>]
     let ``extern method without return value and parameters should have kind required port`` () =
         transformMethod "extern void M();" =?
@@ -1369,6 +1369,127 @@ module ``CilToSsm Methods`` =
                                 AsgnStm (tmp 4 0 BoolType, MemberExpr (Field (fieldName "a" 2, ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 0 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
                                 RetStm (Some (VarExpr (tmp 4 0 BoolType)))
                             ]
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``step method: simple override`` () =
+        let c = "class C : Component { public override void Update() {} }"
+        transform c "new C()" =? 
+            [
+                {
+                    Name = methodName "Update" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                    Kind = Step
+                }
+            ]
+
+    [<Test>]
+    let ``step method: inherited override`` () =
+        let c = "class C : Component {} class D : C { public override void Update() {} }"
+        transform c "new D()" =? 
+            [
+                {
+                    Name = methodName "Update" 3 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                    Kind = Step
+                }
+            ]
+
+    [<Test>]
+    let ``step method: inherited double override and base call`` () =
+        let c = "class C : Component { public override void Update() { base.Update(); } } class D : C { public override void Update () { base.Update(); } }"
+        transform c "new D()" =? 
+            [
+                {
+                    Name = methodName "Update" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 1 0, [], [], VoidType, [])); RetStm None]
+                    Kind = Step
+                }
+                {
+                    Name = methodName "Update" 3 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 2 0, [], [], VoidType, [])); RetStm None]
+                    Kind = Step
+                }
+            ]
+
+    [<Test>]
+    let ``step method: non-override as required port`` () =
+        let c = "class C : Component { public extern new void Update(); }"
+        transform c "new C()" =? 
+            [
+                {
+                    Name = methodName "Update" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = NopStm
+                    Kind = ReqPort
+                }
+            ]
+
+    [<Test>]
+    let ``step method: non-override as provided port`` () =
+        let c = "class C : Component { public new void Update() {} }"
+        transform c "new C()" =? 
+            [
+                {
+                    Name = methodName "Update" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``step method: inherited non-override`` () =
+        let c = "class C : Component { public new void Update() {} } class D : C { }"
+        transform c "new D()" =? 
+            [
+                {
+                    Name = methodName "Update" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                    Kind = ProvPort
+                }
+            ]
+
+    [<Test>]
+    let ``step method: inherited overridden non-override`` () =
+        let c = "class C : Component { public new virtual void Update() {} } class D : C { public override void Update() {} }"
+        transform c "new D()" =? 
+            [
+                {
+                    Name = methodName "Update" 2 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
+                    Kind = ProvPort
+                }
+                {
+                    Name = methodName "Update" 3 0
+                    Return = VoidType
+                    Params = []
+                    Locals = []
+                    Body = RetStm None
                     Kind = ProvPort
                 }
             ]

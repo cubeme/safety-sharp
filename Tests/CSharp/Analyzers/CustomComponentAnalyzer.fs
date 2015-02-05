@@ -35,9 +35,13 @@ module ``Custom implementation of IComponent interface`` =
     let getDiagnostic = TestCompilation.GetDiagnostic (CustomComponentAnalyzer ())
     let implementation = "public void Update() {} public dynamic RequiredPorts { get { return null; } } public dynamic ProvidedPorts { get { return null; } }"
 
-    let diagnostic typeName location =
+    let custom typeName location =
         errorDiagnostic DiagnosticIdentifier.CustomComponent (1, location) (1, location + 1) 
             "Class '%s' cannot implement 'SafetySharp.Modeling.IComponent' explicitly; derive from 'SafetySharp.Modeling.Component' instead." typeName
+
+    let reimplementation typeName location =
+        errorDiagnostic DiagnosticIdentifier.ComponentInterfaceReimplementation (1, location) (1, location + 1) 
+            "Class '%s' cannot reimplement 'SafetySharp.Modeling.IComponent'." typeName
 
     [<Test>]
     let ``type derived from Component is valid`` () =
@@ -53,22 +57,22 @@ module ``Custom implementation of IComponent interface`` =
         getDiagnostic "class Y : Component {} class X : Y {}" =? None
 
     [<Test>]
-    let ``type derived from Component is valid when IComponent is listed explicitly`` () =
-        getDiagnostic "class X : Component, IComponent {}" =? None
+    let ``type derived from Component is invalid when IComponent is reimplemented`` () =
+        getDiagnostic "class X : Component, IComponent {}" =? reimplementation "X" 6
 
     [<Test>]
-    let ``type indirectly derived from Component is valid when IComponent is listed explicitly`` () =
-        getDiagnostic "class Y : Component {} class X : Y, IComponent {}" =? None
+    let ``type indirectly derived from Component is invalid when IComponent is reimplemented`` () =
+        getDiagnostic "class Y : Component {} class X : Y, IComponent {}" =? reimplementation "X" 29
 
     [<Test>]
     let ``base type not derived from Component is invalid`` () =
-        getDiagnostic (sprintf "class X : IComponent { %s }" implementation) =? diagnostic "X" 6
+        getDiagnostic (sprintf "class X : IComponent { %s }" implementation) =? custom "X" 6
 
     [<Test>]
     let ``nested base type not derived from Component is invalid`` () =
-        getDiagnostic (sprintf "class Y { class X : IComponent { %s }}" implementation) =? diagnostic "Y.X" 16
-        getDiagnostic (sprintf "class Y : Component { class X : IComponent { %s }}" implementation) =? diagnostic "Y.X" 28
+        getDiagnostic (sprintf "class Y { class X : IComponent { %s }}" implementation) =? custom "Y.X" 16
+        getDiagnostic (sprintf "class Y : Component { class X : IComponent { %s }}" implementation) =? custom "Y.X" 28
 
     [<Test>]
     let ``inherited type not derived from Component is invalid`` () =
-        getDiagnostic (sprintf "class Y {} class X : IComponent { %s }" implementation) =? diagnostic "X" 17
+        getDiagnostic (sprintf "class Y {} class X : IComponent { %s }" implementation) =? custom "X" 17

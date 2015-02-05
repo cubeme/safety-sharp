@@ -39,7 +39,8 @@ module internal Reflection =
         if typeInfo.BaseType <> null && typeInfo.BaseType <> inheritanceRoot then
             yield! getMembers selector typeInfo.BaseType inheritanceRoot
         
-        yield! selector typeInfo (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly)
+        let flags = BindingFlags.Static ||| BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
+        yield! selector typeInfo flags
     }
 
     /// Gets all fields declared by the given type or one of its base types up to the given root of the inheritance hierarchy.
