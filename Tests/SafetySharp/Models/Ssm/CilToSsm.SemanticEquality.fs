@@ -35,7 +35,7 @@ module TestHelpers =
         let model = TestCompilation.CreateModel (sprintf "class TestModel : Model { public TestModel() { SetRootComponents(new O()); }} class O : Component { public %s %s %s }" csharpCode additionalMembers fields)
         model.FinalizeMetadata ()
         let root = CilToSsm.transformModel model
-        let transformedMethod = root.Subs.[0].Methods |> Seq.find (fun m -> m.Name = CilToSsm.makeUniqueMethodName "M" 2 0) |> SsmToCSharp.transform
+        let transformedMethod = root.Subs.[0].Methods |> Seq.find (fun m -> m.Name = methodName "M" 2 0) |> SsmToCSharp.transform
 
         // We remove all return statements from the method, as we assume that they are irrelevant (the code is transformed in such a way
         // that a conditional return results in subsequent code not being executed, regardless of whether the returning branch is taken).

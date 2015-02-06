@@ -27,6 +27,7 @@ module internal SsmLowering =
     open System.Collections.Generic
     open SafetySharp
     open SafetySharp.Modeling
+    open SafetySharp.Reflection
     open Ssm
 
     /// Makes the given name variable unique within the given method of the given component.
@@ -55,25 +56,48 @@ module internal SsmLowering =
     let getMethod (c : Comp) methodName = 
         c.Methods |> Seq.filter (fun m -> m.Name = methodName) |> Seq.exactlyOne
 
+    /// Lowers virtual method calls and bindings. Replaces all calls to virtual methods or interface methods with the most derived 
+    /// implementation of the target type.
+    let rec lowerVirtualCalls (model : Model) (c : Comp) =
+        let replaceVirtualCall componentName methodName t p d r e =
+            let c = model.FindComponent componentName
+            let m = model.MetadataProvider.UnmapMethod c methodName
+            if not m.IsVirtual then CallExpr (methodName, t, p, d, r, e)
+            else 
+                let targetMethod = 
+                    if m.DeclaringType.IsInterface then Reflection.getImplementingMethod (c.GetType ()) m
+                    else Reflection.getOverridingMethod (c.GetType ()) m
+
+                let methodName = model.MetadataProvider.Resolve targetMethod |> Renaming.getUniqueMethodName
+                let declaringType = targetMethod.DeclaringType.FullName
+                CallExpr (methodName, declaringType, p, d, r, e)
+
+        let rec lower = function
+            | CallExpr (m, t, p, d, r, e) -> replaceVirtualCall c.Name m t p d r e
+            | MemberExpr (Field (f, t), CallExpr (m, dt, p, d, r, e)) -> MemberExpr (Field (f, t), replaceVirtualCall f m dt p d r e)
+            | UExpr (op, e) -> UExpr (op, lower e)
+            | BExpr (e1, op, e2) -> BExpr (lower e1, op, lower e2)
+            | e -> e
+
+        { c with
+            Methods = c.Methods |> List.map (fun m -> { m with Body = Ssm.replaceExprs lower m.Body })
+            Subs = c.Subs |> List.map (lowerVirtualCalls model)
+            (* lower virtual bindings *) }
+
     /// Lowers the signatures of ports: Ports returning a value are transformed to void-returning ports 
     /// with an additional out parameter.
     let rec lowerSignatures (c : Comp) =
-        // Lowers all method call sites
         let lowerCallSites (m : Method) =
-            let rewrite v m p d r e = CallExpr (m, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v])
+            let rewrite v m t p d r e = CallExpr (m, t, p @ [r], d @ [Out], VoidType, e @ [VarRefExpr v])
             let rec lower = function
-                | AsgnStm (v, CallExpr (m, p, d, r, e))                 -> rewrite v m p d r e |> ExprStm
-                | AsgnStm (v, MemberExpr (t, CallExpr (m, p, d, r, e))) -> MemberExpr (t, rewrite v m p d r e) |> ExprStm
-                | AsgnStm (v, TypeExpr (t, CallExpr (m, p, d, r, e)))   -> TypeExpr (t, rewrite v m p d r e) |> ExprStm
+                | AsgnStm (v, CallExpr (m, t, p, d, r, e))                  -> rewrite v m t p d r e |> ExprStm
+                | AsgnStm (v, MemberExpr (t, CallExpr (m, dt, p, d, r, e))) -> MemberExpr (t, rewrite v m dt p d r e) |> ExprStm
+                | AsgnStm (v, TypeExpr (t, CallExpr (m, dt, p, d, r, e)))   -> TypeExpr (t, rewrite v m dt p d r e) |> ExprStm
                 | SeqStm s          -> SeqStm (s |> List.map lower)
                 | IfStm (c, s1, s2) -> IfStm (c, lower s1, lower s2)
                 | s                 -> s
             { m with Body = lower m.Body }
 
-        // Lowers all returns statements of the method:
-        // - There's nothing to do for void-returning methods
-        // - If a value is returned, the return statement is split into an assignment to the newly introduced out
-        //   parameter and a non-value returning return
         let lowerRetStms retArg (m : Method) =
             let rec lower = function
                 | RetStm (Some e)   -> SeqStm [ AsgnStm (retArg, e); RetStm None ]
@@ -82,7 +106,6 @@ module internal SsmLowering =
                 | s                 -> s
             { m with Body = lower m.Body; Return = VoidType }
 
-        // Lowers the signature of the given method.
         let lowerSignature m =
             if m.Return = VoidType then
                 lowerCallSites m
@@ -102,7 +125,7 @@ module internal SsmLowering =
         let synPorts = List<Method> ()
         let synBindings = List<Binding> ()
 
-        let callSynthesized c' n p d r e =
+        let callSynthesized c' n t p d r e =
             let m = getMethod c' n
             match m.Kind with
             | ProvPort ->
@@ -114,26 +137,21 @@ module internal SsmLowering =
                       Locals = [] }
                 synPorts.Add syn
                 synBindings.Add { SourceComp = c'.Name; SourcePort = m.Name; TargetComp = c.Name; TargetPort = syn.Name; Kind = Instantaneous }
-                CallExpr (syn.Name, p, d, r, e)
-            | _ -> CallExpr (n, p, d, r, e)
+                CallExpr (syn.Name, t, p, d, r, e)
+            | _ -> CallExpr (n, t, p, d, r, e)
 
-        // Lowers all method call sites of provided ports, replacing them with calls to synthesized required ports
         let rec lower = function
-            | CallExpr (m, p, d, r, e) -> callSynthesized c m p d r e
-            | MemberExpr (Field (f, _), CallExpr (m, p, d, r, e)) -> callSynthesized (getSub c f) m p d r e
+            | CallExpr (m, t, p, d, r, e) -> callSynthesized c m t p d r e
+            | MemberExpr (Field (f, _), CallExpr (m, t, p, d, r, e)) -> callSynthesized (getSub c f) m t p d r e
             | UExpr (op, e) -> UExpr (op, lower e)
             | BExpr (e1, op, e2) -> BExpr (lower e1, op, lower e2)
             | e -> e
 
-        // Lowers the given method
-        let lowerMethod m =
-            { m with Body = Ssm.replaceExprs lower m.Body }
-
         { c with
-            Methods = (c.Methods |> List.map lowerMethod) @ (synPorts |> List.ofSeq)
+            Methods = (c.Methods |> List.map (fun m -> { m with Body = Ssm.replaceExprs lower m.Body })) @ (synPorts |> List.ofSeq)
             Subs = c.Subs |> List.map lowerLocalBindings
             Bindings = c.Bindings @ (synBindings |> Seq.toList) }
 
     /// Applies all lowerings to the given components.
-    let lower (root : Comp) : Comp =
-        root |> lowerSignatures |> lowerLocalBindings
+    let lower (model : Model) (root : Comp) : Comp =
+        root |> lowerVirtualCalls model |> lowerSignatures |> lowerLocalBindings

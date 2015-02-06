@@ -47,14 +47,13 @@ module ``Port signatures`` =
         ssm.Methods.[0]
 
     let private tmp = CilToSsm.freshLocal
-    let private methodName = CilToSsm.makeUniqueMethodName
     let private this = VarExpr (This (ClassType className))
 
     [<Test>]
     let ``does not change void-returning method`` () =
         transformMethod "void M() { return; }" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
@@ -66,14 +65,14 @@ module ``Port signatures`` =
     let ``lowers value-returning method without parameters`` () =
         transformMethod "int M() { return M(); }" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                 Locals = [tmp 1 0 IntType]
                 Body = 
                     SeqStm 
                         [
-                            ExprStm (CallExpr (methodName "M" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 1 0 IntType)]))
+                            ExprStm (CallExpr (methodName "M" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (tmp 1 0 IntType)]))
                             SeqStm [
                                 AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 1 0 IntType))
                                 RetStm None
@@ -86,7 +85,7 @@ module ``Port signatures`` =
     let ``does not change void-returning required port method`` () =
         transformMethod "extern void M();" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params = []
                 Locals = []
@@ -98,7 +97,7 @@ module ``Port signatures`` =
     let ``lowers value-returning required port method without parameters`` () =
         transformMethod "extern int M();" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                 Locals = []
@@ -110,7 +109,7 @@ module ``Port signatures`` =
     let ``lowers value-returning required port method with parameters`` () =
         transformMethod "extern bool M(int x, ref bool b);" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params =
                     [ 
@@ -127,7 +126,7 @@ module ``Port signatures`` =
     let ``lowers value-returning required port method with conflicting parameter`` () =
         transformMethod "extern int M(int retVal);" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = Arg ("retVal", IntType); Direction = In }; { Var = Arg ("retVal_", IntType); Direction = Out } ]
                 Locals = []
@@ -139,7 +138,7 @@ module ``Port signatures`` =
     let ``lowers value-returning method with conflicting parameter`` () =
         transformMethod "int M(int retVal) { return retVal; }" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params = [ { Var = Arg ("retVal", IntType); Direction = In }; { Var = Arg ("retVal_", IntType); Direction = Out } ]
                 Locals = []
@@ -156,7 +155,7 @@ module ``Port signatures`` =
     let ``lowers value-returning method with parameters`` () =
         transformMethod "bool M(int x, ref bool b) { return b || M(x, ref b); }" =?
             {
-                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                Name = methodName "M" 2 0
                 Return = VoidType
                 Params =
                     [ 
@@ -170,7 +169,7 @@ module ``Port signatures`` =
                         VarExpr (Arg ("b", BoolType)),
                         SeqStm [AsgnStm (Arg ("retVal", BoolType), BoolExpr true); RetStm None],
                         SeqStm [
-                            ExprStm (CallExpr (methodName "M" 2 0, [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)]))
+                            ExprStm (CallExpr (methodName "M" 2 0, className, [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)]))
                             SeqStm [
                                 AsgnStm (Arg ("retVal", BoolType), VarExpr (tmp 6 0 BoolType))
                                 RetStm None
@@ -189,7 +188,7 @@ module ``Port signatures`` =
                 Methods = 
                     [
                        {
-                            Name = CilToSsm.makeUniqueMethodName "Q" 2 0
+                            Name = methodName "Q" 2 0
                             Return = VoidType
                             Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                             Locals = []
@@ -197,14 +196,14 @@ module ``Port signatures`` =
                             Kind = ProvPort               
                        }
                        {
-                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                            Name = methodName "M" 2 0
                             Return = VoidType
                             Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                             Locals = [tmp 0 0 IntType]
                             Body = 
                                 SeqStm 
                                     [
-                                        ExprStm (TypeExpr (className, CallExpr (methodName "Q" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 0 0 IntType)])))
+                                        ExprStm (TypeExpr (className, CallExpr (methodName "Q" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (tmp 0 0 IntType)])))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 0 0 IntType))
                                             RetStm None
@@ -227,14 +226,14 @@ module ``Port signatures`` =
                 Methods = 
                     [
                        {
-                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                            Name = methodName "M" 2 0
                             Return = VoidType
                             Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                             Locals = [tmp 2 0 IntType]
                             Body = 
                                 SeqStm 
                                     [
-                                        ExprStm (MemberExpr (Field ("Root0@0.q@0", ClassType "X.Sub"), CallExpr (methodName "Q" 2 0, [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)])))
+                                        ExprStm (MemberExpr (Field ("Root0@0.q@0", ClassType "X.Sub"), CallExpr (methodName "Q" 2 0, "X.Sub", [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)])))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 2 0 IntType))
                                             RetStm None
@@ -252,7 +251,7 @@ module ``Port signatures`` =
                             Methods = 
                                 [
                                     {
-                                        Name = CilToSsm.makeUniqueMethodName "Q" 2 0
+                                        Name = methodName "Q" 2 0
                                         Return = VoidType
                                         Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                                         Locals = []

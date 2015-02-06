@@ -42,7 +42,7 @@ module Fields =
     let private arg name t = Arg (name, t)
     let private local name t = Local (name, t)
     let private tmp = CilToSsm.freshLocal
-    let private field f l t i = { Var = Field (CilToSsm.makeUniqueFieldName f l, t); Init = i }
+    let private field f l t i = { Var = Field (fieldName f l, t); Init = i }
 
     [<Test>]
     let ``component without fields`` () =

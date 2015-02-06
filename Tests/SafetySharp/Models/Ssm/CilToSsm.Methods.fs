@@ -27,6 +27,7 @@ open System.Linq
 open NUnit.Framework
 open Mono.Cecil
 open SafetySharp.Modeling
+open SafetySharp.Reflection
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
 
@@ -53,14 +54,12 @@ module Methods =
         printfn ""
         printfn "Transformed method:"
         let ssm = transform (sprintf "class %s : Component { %s }" className methodDefinition) (sprintf "new %s()" className)
-        let m = ssm |> Seq.find (fun m -> m.Name = CilToSsm.makeUniqueMethodName "M" 2 0)
+        let m = ssm |> Seq.find (fun m -> m.Name = methodName "M" 2 0)
         SsmToCSharp.transform m |> printfn "%s"
         m
 
-    let private methodName = CilToSsm.makeUniqueMethodName
-    let private fieldName = CilToSsm.makeUniqueFieldName
     let private arg name t = Arg (name, t)
-    let private local name t = Local (sprintf "%s%c" name CilToSsm.varToken, t)
+    let private local name t = Local (sprintf "%s%c" name Renaming.VarToken, t)
     let private field name t = Field (fieldName name 2, t)
     let private tmp = CilToSsm.freshLocal
 
@@ -132,7 +131,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (CallExpr (methodName "Q" 2 0, [BoolType], [Out], VoidType, [VarRefExpr (field "f" BoolType)])); RetStm None]
+                Body = SeqStm [ExprStm (CallExpr (methodName "Q" 2 0, className, [BoolType], [Out], VoidType, [VarRefExpr (field "f" BoolType)])); RetStm None]
                 Kind = ProvPort
             }
 
@@ -156,7 +155,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (TypeExpr (className, CallExpr (methodName "F" 2 0, [], [], VoidType, []))); RetStm None]
+                Body = SeqStm [ExprStm (TypeExpr (className, CallExpr (methodName "F" 2 0, className, [], [], VoidType, []))); RetStm None]
                 Kind = ProvPort
             }
 
@@ -170,7 +169,7 @@ module Methods =
                 Locals = [tmp 1 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 1 0 IntType, TypeExpr (className, CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [IntExpr 4])))
+                        AsgnStm (tmp 1 0 IntType, TypeExpr (className, CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [IntExpr 4])))
                         RetStm (Some (VarExpr (tmp 1 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -184,7 +183,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (MemberExpr (field "q" (ClassType (className + ".Q")), CallExpr (methodName "F" 1 0, [], [], VoidType, []))); RetStm None]
+                Body = SeqStm [ExprStm (MemberExpr (field "q" (ClassType (className + ".Q")), CallExpr (methodName "F" 1 0, "TestClass.Q", [], [], VoidType, []))); RetStm None]
                 Kind = ProvPort
             }
 
@@ -198,7 +197,7 @@ module Methods =
                 Locals = [tmp 3 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 3 0 IntType, MemberExpr (field "q" (ClassType (className + ".Q")), CallExpr (methodName "F" 1 0, [IntType], [In], IntType, [IntExpr 4])))
+                        AsgnStm (tmp 3 0 IntType, MemberExpr (field "q" (ClassType (className + ".Q")), CallExpr (methodName "F" 1 0, "TestClass.Q", [IntType], [In], IntType, [IntExpr 4])))
                         RetStm (Some (VarExpr (tmp 3 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -212,7 +211,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (TypeExpr (className + ".Q", CallExpr (methodName "F" 1 0, [], [], VoidType, []))); RetStm None]
+                Body = SeqStm [ExprStm (TypeExpr (className + ".Q", CallExpr (methodName "F" 1 0, "TestClass.Q", [], [], VoidType, []))); RetStm None]
                 Kind = ProvPort
             }
 
@@ -226,7 +225,7 @@ module Methods =
                 Locals = [tmp 1 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 1 0 IntType, TypeExpr (className + ".Q", CallExpr (methodName "F" 1 0, [IntType], [In], IntType, [IntExpr 4])))
+                        AsgnStm (tmp 1 0 IntType, TypeExpr (className + ".Q", CallExpr (methodName "F" 1 0, "TestClass.Q", [IntType], [In], IntType, [IntExpr 4])))
                         RetStm (Some (VarExpr (tmp 1 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -240,7 +239,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (MemberExpr (field "i" (ClassType (className + ".I")), CallExpr (methodName "N" 0 0, [], [], VoidType, []))); RetStm None]
+                Body = SeqStm [ExprStm (MemberExpr (field "i" (ClassType (className + ".I")), CallExpr (methodName "N" 0 0, "TestClass.I", [], [], VoidType, []))); RetStm None]
                 Kind = ProvPort
             }
 
@@ -254,7 +253,7 @@ module Methods =
                 Locals = [tmp 3 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 3 0 IntType, MemberExpr (field "i" (ClassType (className + ".I")), CallExpr (methodName "N" 0 0, [IntType], [In], IntType, [IntExpr 4])))
+                        AsgnStm (tmp 3 0 IntType, MemberExpr (field "i" (ClassType (className + ".I")), CallExpr (methodName "N" 0 0, "TestClass.I", [IntType], [In], IntType, [IntExpr 4])))
                         RetStm (Some (VarExpr (tmp 3 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -268,7 +267,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, [], [], VoidType, [])); RetStm None]
+                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, className, [], [], VoidType, [])); RetStm None]
                 Kind = ProvPort
             }
 
@@ -280,7 +279,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = []
-                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, [IntType], [In], VoidType, [IntExpr 4])); RetStm None]
+                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, className, [IntType], [In], VoidType, [IntExpr 4])); RetStm None]
                 Kind = ProvPort
             }
 
@@ -292,7 +291,7 @@ module Methods =
                 Return = VoidType
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
-                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, [IntType], [InOut], VoidType, [VarRefExpr (arg "x" IntType)])); RetStm None]
+                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, className, [IntType], [InOut], VoidType, [VarRefExpr (arg "x" IntType)])); RetStm None]
                 Kind = ProvPort
             }
 
@@ -304,7 +303,7 @@ module Methods =
                 Return = VoidType
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Locals = []
-                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, [IntType], [Out], VoidType, [VarRefExpr (arg "x" IntType)])); RetStm None]
+                Body = SeqStm [ExprStm (CallExpr (methodName "F" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (arg "x" IntType)])); RetStm None]
                 Kind = ProvPort
             }
 
@@ -316,7 +315,7 @@ module Methods =
                 Return = VoidType
                 Params = []
                 Locals = [tmp 2 0 IntType]
-                Body = SeqStm [AsgnStm (tmp 2 0 IntType, (CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [IntExpr 4]))); RetStm None] 
+                Body = SeqStm [AsgnStm (tmp 2 0 IntType, (CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [IntExpr 4]))); RetStm None] 
                 Kind = ProvPort                   
             }
 
@@ -331,7 +330,7 @@ module Methods =
                 Body = 
                     SeqStm 
                         [
-                            AsgnStm (tmp 2 0 IntType, CallExpr (methodName "M" 2 0, [], [], IntType, []))
+                            AsgnStm (tmp 2 0 IntType, CallExpr (methodName "M" 2 0, className, [], [], IntType, []))
                             RetStm (Some (BExpr (IntExpr 1, Add, VarExpr (tmp 2 0 IntType))))
                         ] 
                 Kind = ProvPort                   
@@ -348,8 +347,8 @@ module Methods =
                 Body = 
                     SeqStm 
                         [
-                            AsgnStm (tmp 3 0 IntType, CallExpr (methodName "M" 2 0, [IntType], [In], IntType, [VarExpr (arg "x" IntType)]))
-                            AsgnStm (tmp 4 0 IntType, CallExpr (methodName "M" 2 0, [IntType], [In], IntType, [VarExpr (tmp 3 0 IntType)]))
+                            AsgnStm (tmp 3 0 IntType, CallExpr (methodName "M" 2 0, className, [IntType], [In], IntType, [VarExpr (arg "x" IntType)]))
+                            AsgnStm (tmp 4 0 IntType, CallExpr (methodName "M" 2 0, className, [IntType], [In], IntType, [VarExpr (tmp 3 0 IntType)]))
                             RetStm (Some (VarExpr (tmp 4 0 IntType)))
                         ] 
                 Kind = ProvPort                   
@@ -366,7 +365,7 @@ module Methods =
                 Body = 
                     SeqStm 
                         [
-                            AsgnStm (tmp 1 0 BoolType, CallExpr (methodName "M" 2 0, [], [], BoolType, []))
+                            AsgnStm (tmp 1 0 BoolType, CallExpr (methodName "M" 2 0, className, [], [], BoolType, []))
                             IfStm (
                                 UExpr (Not, VarExpr (tmp 1 0 BoolType)),
                                 RetStm (Some (BoolExpr false)),
@@ -387,7 +386,7 @@ module Methods =
                 Body = 
                     SeqStm 
                         [
-                            AsgnStm (tmp 1 0 BoolType, CallExpr (methodName "M" 2 0, [], [], BoolType, []))
+                            AsgnStm (tmp 1 0 BoolType, CallExpr (methodName "M" 2 0, className, [], [], BoolType, []))
                             IfStm (
                                 VarExpr (tmp 1 0 BoolType),
                                 RetStm (Some (BoolExpr true)),
@@ -408,8 +407,8 @@ module Methods =
                 Body = 
                     IfStm (
                         UExpr (Not, VarExpr (arg "b" BoolType)),
-                        SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [IntExpr 1])); RetStm None],
-                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [IntExpr 4])); RetStm None]
+                        SeqStm [AsgnStm (tmp 9 0 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [IntExpr 1])); RetStm None],
+                        SeqStm [AsgnStm (tmp 4 0 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [IntExpr 4])); RetStm None]
                     )
                 Kind = ProvPort
             }
@@ -426,6 +425,7 @@ module Methods =
                     SeqStm [
                         ExprStm (
                                          CallExpr (methodName "F" 2 0, 
+                                                   className,
                                                    [IntType; BoolType; IntType; BoolType; BoolType], 
                                                    [In; In; In; In; In],
                                                    VoidType, 
@@ -446,7 +446,7 @@ module Methods =
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 4 0 IntType, 
-                            CallExpr (methodName "F" 2 0, [IntType; BoolType; BoolType], [In; In; In], IntType, [IntExpr 1; BoolExpr false; BoolExpr true]))
+                            CallExpr (methodName "F" 2 0, className, [IntType; BoolType; BoolType], [In; In; In], IntType, [IntExpr 1; BoolExpr false; BoolExpr true]))
                         RetStm (Some (VarExpr (tmp 4 0 IntType)))
                     ]
                 Kind = ProvPort
@@ -500,7 +500,7 @@ module Methods =
                                 AsgnStm (tmp 10 1 IntType, VarExpr (field "_f" IntType))
                             ]
                         )
-                        AsgnStm (tmp 13 0 IntType, CallExpr (methodName "X" 2 0, [IntType], [In], IntType, [VarExpr (field "_f" IntType)]))
+                        AsgnStm (tmp 13 0 IntType, CallExpr (methodName "X" 2 0, className, [IntType], [In], IntType, [VarExpr (field "_f" IntType)]))
                         AsgnStm (field "_f" IntType, BExpr (VarExpr (tmp 10 1 IntType), Add, BExpr (VarExpr (tmp 10 0 IntType), Add, VarExpr (tmp 13 0 IntType))))
                         RetStm None
                     ]
@@ -629,15 +629,15 @@ module Methods =
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "F1" 2 0, [BoolType], [In], BoolType, [BoolExpr false]))
+                        AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "F1" 2 0, className, [BoolType], [In], BoolType, [BoolExpr false]))
                         IfStm (
                             VarExpr (tmp 2 0 BoolType),
                             SeqStm [
-                                AsgnStm (tmp 10 0 IntType, CallExpr (methodName "F2" 2 0, [BoolType], [In], IntType, [BoolExpr false]))
+                                AsgnStm (tmp 10 0 IntType, CallExpr (methodName "F2" 2 0, className, [BoolType], [In], IntType, [BoolExpr false]))
                                 RetStm (Some (VarExpr (tmp 10 0 IntType)))
                             ],
                             SeqStm [
-                                AsgnStm (tmp 6 0 IntType, CallExpr (methodName "F3" 2 0, [IntType], [In], IntType, [IntExpr 2]))
+                                AsgnStm (tmp 6 0 IntType, CallExpr (methodName "F3" 2 0, className, [IntType], [In], IntType, [IntExpr 2]))
                                 RetStm (Some (VarExpr (tmp 6 0 IntType)))
                             ]
                         )
@@ -655,12 +655,12 @@ module Methods =
                 Params = [ { Var = arg "x" IntType; Direction = In } ]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "F1" 2 0, [BoolType], [In], BoolType, [BoolExpr false]))
+                        AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "F1" 2 0, className, [BoolType], [In], BoolType, [BoolExpr false]))
                         IfStm (
                             VarExpr (tmp 2 0 BoolType),
                             RetStm (Some (IntExpr 1)),
                             SeqStm [
-                                AsgnStm (tmp 6 0 BoolType, CallExpr (methodName "F2" 2 0, [IntType], [In], BoolType, [IntExpr 1]))
+                                AsgnStm (tmp 6 0 BoolType, CallExpr (methodName "F2" 2 0, className, [IntType], [In], BoolType, [IntExpr 1]))
                                 IfStm (
                                     UExpr (Not, VarExpr (tmp 6 0 BoolType)),
                                     RetStm (Some (IntExpr -1)),
@@ -806,7 +806,7 @@ module Methods =
                     SeqStm [
                         AsgnStm (local, IntExpr 0)
                         AsgnStm (tmp 5 0 IntType, VarExpr local)
-                        AsgnStm (tmp 5 1 IntType, CallExpr (methodName "F" 2 0, [IntType], [InOut], IntType, [VarRefExpr local]))
+                        AsgnStm (tmp 5 1 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [InOut], IntType, [VarRefExpr local]))
                         RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
                     ]
                 Kind = ProvPort
@@ -823,7 +823,7 @@ module Methods =
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 5 0 IntType, VarExpr (field "f" IntType))
-                        AsgnStm (tmp 5 1 IntType, CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [VarExpr (field "f" IntType)]))
+                        AsgnStm (tmp 5 1 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [VarExpr (field "f" IntType)]))
                         RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
                     ]
                 Kind = ProvPort
@@ -839,7 +839,7 @@ module Methods =
                 Locals = [tmp 5 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 5 0 IntType, CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [IntExpr 4]))
+                        AsgnStm (tmp 5 0 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [IntExpr 4]))
                         RetStm (Some (BExpr (IntExpr 4, Add, VarExpr (tmp 5 0 IntType))))
                     ]
                 Kind = ProvPort
@@ -855,7 +855,7 @@ module Methods =
                 Locals = [tmp 5 0 DoubleType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 5 0 DoubleType, CallExpr (methodName "F" 2 0, [DoubleType], [In], DoubleType, [DoubleExpr 0.5]))
+                        AsgnStm (tmp 5 0 DoubleType, CallExpr (methodName "F" 2 0, className, [DoubleType], [In], DoubleType, [DoubleExpr 0.5]))
                         RetStm (Some (BExpr (DoubleExpr 0.5, Add, VarExpr (tmp 5 0 DoubleType))))
                     ]
                 Kind = ProvPort
@@ -871,7 +871,7 @@ module Methods =
                 Locals = [tmp 5 0 BoolType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 5 0 BoolType, CallExpr (methodName "F" 2 0, [BoolType], [In], BoolType, [BoolExpr true]))
+                        AsgnStm (tmp 5 0 BoolType, CallExpr (methodName "F" 2 0, className, [BoolType], [In], BoolType, [BoolExpr true]))
                         RetStm (Some (BExpr (BoolExpr true, And, VarExpr (tmp 5 0 BoolType))))
                     ]
                 Kind = ProvPort
@@ -887,7 +887,7 @@ module Methods =
                 Locals = [tmp 3 0 IntType]
                 Body = 
                     SeqStm [
-                        AsgnStm (tmp 3 0 IntType, CallExpr (methodName "F" 2 0, [IntType], [In], IntType, [IntExpr 4]))
+                        AsgnStm (tmp 3 0 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [In], IntType, [IntExpr 4]))
                         RetStm (Some (BExpr (IntExpr 4, Add, VarExpr (tmp 3 0 IntType))))
                     ]
                 Kind = ProvPort
@@ -904,7 +904,7 @@ module Methods =
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 5 0 IntType, VarExpr (field "f" IntType))
-                        AsgnStm (tmp 5 1 IntType, CallExpr (methodName "F" 2 0, [IntType], [InOut], IntType, [VarRefExpr (field "f" IntType)]))
+                        AsgnStm (tmp 5 1 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [InOut], IntType, [VarRefExpr (field "f" IntType)]))
                         RetStm (Some (BExpr (VarExpr (tmp 5 0 IntType), Add, VarExpr (tmp 5 1 IntType))))
                     ]
                 Kind = ProvPort
@@ -921,7 +921,7 @@ module Methods =
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 3 0 IntType, VarExpr (arg "x" IntType))
-                        AsgnStm (tmp 3 1 IntType, CallExpr (methodName "F" 2 0, [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)]))
+                        AsgnStm (tmp 3 1 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)]))
                         RetStm (Some (BExpr (VarExpr (tmp 3 0 IntType), Add, VarExpr (tmp 3 1 IntType))))
                     ]
                 Kind = ProvPort
@@ -938,7 +938,7 @@ module Methods =
                 Body = 
                     SeqStm [
                         AsgnStm (tmp 4 0 IntType, VarExpr (arg "x" IntType))
-                        AsgnStm (tmp 4 1 IntType, CallExpr (methodName "F" 2 0, [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)]))
+                        AsgnStm (tmp 4 1 IntType, CallExpr (methodName "F" 2 0, className, [IntType], [InOut], IntType, [VarRefExpr (arg "x" IntType)]))
                         RetStm (Some (BExpr (VarExpr (tmp 4 0 IntType), Add, VarExpr (tmp 4 1 IntType))))
                     ]
                 Kind = ProvPort
@@ -1111,7 +1111,7 @@ module Methods =
                     Body = 
                         SeqStm [
                             AsgnStm (tmp 2 0 IntType, 
-                                CallExpr (methodName "M" 3 0, [IntType], [In], IntType, [IntExpr 1]))
+                                CallExpr (methodName "M" 3 0, "B", [IntType], [In], IntType, [IntExpr 1]))
                             RetStm (Some (VarExpr (tmp 2 0 IntType)))
                     ]
                     Kind = ProvPort
@@ -1138,7 +1138,7 @@ module Methods =
                     Locals = []
                     Body = 
                         SeqStm [
-                            ExprStm (MemberExpr (field "b" (ClassType "B"), CallExpr (methodName "M" 3 0, [], [], VoidType, [])))
+                            ExprStm (MemberExpr (field "b" (ClassType "B"), CallExpr (methodName "M" 3 0, "B", [], [], VoidType, [])))
                             RetStm None
                         ]
                     Kind = ProvPort
@@ -1163,7 +1163,7 @@ module Methods =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, [], [], VoidType, [])); RetStm None]
+                    Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, "A", [], [], VoidType, [])); RetStm None]
                     Kind = ProvPort
                 } 
             ]
@@ -1186,7 +1186,7 @@ module Methods =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, [], [], VoidType, [])); RetStm None]                   
+                    Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, "A", [], [], VoidType, [])); RetStm None]                   
                     Kind = ProvPort
                 } 
                 {
@@ -1194,7 +1194,7 @@ module Methods =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [ExprStm (CallExpr (methodName "M" 3 0, [], [], VoidType, [])); RetStm None]
+                    Body = SeqStm [ExprStm (CallExpr (methodName "M" 3 0, "B", [], [], VoidType, [])); RetStm None]
                     Kind = ProvPort
                 } 
             ]
@@ -1250,7 +1250,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 2 0 IntType, CallExpr (methodName "M" 2 0, [BoolType], [In], IntType, [VarExpr (arg "p" BoolType)]))
+                                AsgnStm (tmp 2 0 IntType, CallExpr (methodName "M" 2 0, "A`2", [BoolType], [In], IntType, [VarExpr (arg "p" BoolType)]))
                                 RetStm (Some (VarExpr (field "f" IntType)))
                             ]
                     Kind = ProvPort
@@ -1278,7 +1278,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)]))
+                                AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "M" 2 0, "A`2", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)]))
                                 RetStm (Some (VarExpr (tmp 2 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1306,7 +1306,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)]))
+                                AsgnStm (tmp 2 0 BoolType, CallExpr (methodName "M" 2 0, "A`2", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)]))
                                 RetStm (Some (VarExpr (tmp 2 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1326,7 +1326,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
+                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 2 0, "A`2", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
                                 RetStm (Some (VarExpr (tmp 3 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1346,7 +1346,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<T1,System.Int32>"), CallExpr (methodName "M" 2 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
+                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<T1,System.Int32>"), CallExpr (methodName "M" 2 0, "A`2", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
                                 RetStm (Some (VarExpr (tmp 3 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1366,7 +1366,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 4 0 BoolType, MemberExpr (Field (fieldName "a" 2, ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 0 0, [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
+                                AsgnStm (tmp 4 0 BoolType, MemberExpr (Field (fieldName "a" 2, ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 0 0, "I`2", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)])))
                                 RetStm (Some (VarExpr (tmp 4 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1413,7 +1413,7 @@ module Methods =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 1 0, [], [], VoidType, [])); RetStm None]
+                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [])); RetStm None]
                     Kind = Step
                 }
                 {
@@ -1421,7 +1421,7 @@ module Methods =
                     Return = VoidType
                     Params = []
                     Locals = []
-                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 2 0, [], [], VoidType, [])); RetStm None]
+                    Body = SeqStm [ExprStm (CallExpr (methodName "Update" 2 0, "C", [], [], VoidType, [])); RetStm None]
                     Kind = Step
                 }
             ]

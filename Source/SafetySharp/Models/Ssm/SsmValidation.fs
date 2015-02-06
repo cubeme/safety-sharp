@@ -92,7 +92,7 @@ module internal SsmValidation =
     /// Maps the given information to a <see cref="PortInfo" /> instance.
     let private toPortInfo (model : Model) (componentName : string) (portName : string) = 
         let c = model.FindComponent componentName
-        PortInfo (c, CilToSsm.unmapMethod c portName)
+        PortInfo (c, model.MetadataProvider.UnmapMethod c portName)
 
     /// Maps the given information to a <see cref="PortBinding" /> instance.
     let private toPortBinding (model : Model) (componentName : string) (binding : Binding) =
@@ -145,7 +145,7 @@ module internal SsmValidation =
     let private controlFlowCycles (model : Model) (c : Comp) =
         let componentMethodVertex componentName portName = 
             let c = model.FindComponent componentName
-            (c, CilToSsm.unmapMethod c portName)
+            (c, model.MetadataProvider.UnmapMethod c portName)
 
         let edge startVertex endVertex = SEdge<_> (startVertex, endVertex)
 
@@ -162,9 +162,9 @@ module internal SsmValidation =
                     match stm with
                     | SeqStm s -> s |> Seq.collect invocations
                     | IfStm (_, s1, s2) -> seq { yield! invocations s1; yield! invocations s2 }
-                    | ExprStm (CallExpr (m, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
-                    | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
-                    | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _))) -> 
+                    | ExprStm (CallExpr (m, _, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
+                    | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
+                    | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _, _))) -> 
                         edge (componentMethodVertex f m) |> Seq.singleton
                     | _ -> Seq.empty
 

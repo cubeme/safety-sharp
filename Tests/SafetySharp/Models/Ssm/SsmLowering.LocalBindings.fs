@@ -45,7 +45,6 @@ module ``Local bindings`` =
         ssm.Methods.[0]
 
     let private tmp = CilToSsm.freshLocal
-    let private methodName = CilToSsm.makeUniqueMethodName
     let private synName name inheritanceLevel overloadIndex synIndex = SsmLowering.makeSynPortName (methodName name inheritanceLevel overloadIndex) synIndex
 
     [<Test>]
@@ -73,7 +72,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, [], [], VoidType, [])); RetStm None]
+                            Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [])); RetStm None]
                         }
                     ]
             }
@@ -112,7 +111,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, [], [], VoidType, [])); RetStm None]
+                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "X", [], [], VoidType, [])); RetStm None]
                         }
                         {
                             Name = synName "M" 2 0 0
@@ -171,7 +170,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, [], [], VoidType, [])); RetStm None]
+                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, [])); RetStm None]
                         }
                         {
                             Name = synName "M" 2 0 0
@@ -215,7 +214,7 @@ module ``Local bindings`` =
                                         Params = []
                                         Locals = []
                                         Return = VoidType
-                                        Body = SeqStm [ExprStm (CallExpr (synName "N" 2 0 0, [], [], VoidType, [])); RetStm None]
+                                        Body = SeqStm [ExprStm (CallExpr (synName "N" 2 0 0, "Y", [], [], VoidType, [])); RetStm None]
                                     }
                                     {
                                         Name = methodName "N" 2 0
@@ -279,9 +278,9 @@ module ``Local bindings`` =
                             Return = VoidType
                             Body = 
                                 SeqStm [
-                                    ExprStm (CallExpr (synName "M" 2 0 0, [], [], VoidType, []))
-                                    ExprStm (CallExpr (synName "Q" 2 0 1, [], [], VoidType, []))
-                                    ExprStm (CallExpr (synName "Q" 2 0 2, [], [], VoidType, []))
+                                    ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, []))
+                                    ExprStm (CallExpr (synName "Q" 2 0 1, "X", [], [], VoidType, []))
+                                    ExprStm (CallExpr (synName "Q" 2 0 2, "X", [], [], VoidType, []))
                                     RetStm None
                                 ]
                         }

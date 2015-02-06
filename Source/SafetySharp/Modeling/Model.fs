@@ -56,6 +56,7 @@ type Model () =
     let mutable components : Component list = []
     let mutable isSealed = false
     let mutable synthesizedRoot : Component = null
+    let mutable metadataProvider : MetadataProvider = null
     let bindings = List<PortBinding> ()
     let requiresNotSealed () = invalidCall isSealed "Modifications of the model metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not isSealed) "Cannot access the model metadata as it might not yet be complete."
@@ -85,7 +86,8 @@ type Model () =
         rootComponents |> Seq.iteri (fun index component' -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                component'.FinalizeMetadata (null, "Root" + index.ToString (), index) // Add the index to the name to disambiguate roots in execption messages
+                // Add the index to the name to disambiguate roots in execption messages
+                component'.FinalizeMetadata (null, "Root" + index.ToString (), index) 
         )
 
         // Store the root components and collect all components of the model
@@ -111,6 +113,7 @@ type Model () =
 
         isSealed <- true
         synthesizedRoot <- SynthesizedRootComponent (roots, bindings)
+        metadataProvider <- MetadataProvider (typeof<SynthesizedRootComponent> :: (components |> List.map (fun c -> c.GetType ())))
 
     /// Establishes the given port binding. By default, the binding is instantenous; invoke the <see cref="PortBinding.Delayed" /> method
     /// on the <see cref="PortBinding" /> instance returned by this method to create a delayed binding instead.
@@ -147,6 +150,12 @@ type Model () =
         requiresIsSealed ()
         if mangledName = synthesizedRoot.Name then synthesizedRoot
         else components |> List.find (fun c -> c.Name = mangledName)
+
+    /// Gets the metadata provider of the model.
+    member internal this.MetadataProvider
+        with get () =
+            requiresIsSealed ()
+            metadataProvider
 
 [<AutoOpen>]
 module internal Extensions =

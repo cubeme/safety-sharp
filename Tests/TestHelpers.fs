@@ -37,6 +37,7 @@ open System.Reflection
 open System.Runtime.CompilerServices
 open SafetySharp
 open SafetySharp.Modeling
+open SafetySharp.Reflection
 open Microsoft.FSharp.Reflection
 open NUnit.Framework
 
@@ -219,3 +220,6 @@ let (<>?) actual expected =
 /// Normalizes all new lines to '\n' only.
 let normalizeNewLines (str : string) =
     str.Replace ("\r", String.Empty)
+
+let methodName = Renaming.makeUniqueMethodName
+let fieldName = Renaming.makeUniqueFieldName

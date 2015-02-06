@@ -81,7 +81,7 @@ module internal Ssm =
         | BExpr      of Expr * BOp * Expr
         | MemberExpr of Target : Var * Member : Expr
         | TypeExpr   of Target : string * Member : Expr
-        | CallExpr   of Name : string * Params : Type list * ParamDir list * Return : Type * Args : Expr list
+        | CallExpr   of Name : string * DeclaringType : string * Params : Type list * ParamDir list * Return : Type * Args : Expr list
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
@@ -280,7 +280,7 @@ module internal Ssm =
         | BExpr (e1, Le, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Gt, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Ge, e2) when bothAreNonBool e1 e2 -> BoolType
-        | CallExpr (_, _, _, t, _) -> t
+        | CallExpr (_, _, _, _, t, _) -> t
         | MemberExpr (_, m) -> deduceType m
         | TypeExpr (_, m) -> deduceType m
         | _ -> invalidOp "Type deduction failure."
@@ -288,18 +288,18 @@ module internal Ssm =
     /// Gets all variables referenced by the given expression fulfilling the given predicate.
     let rec getVarsOfExpr pred expr =
         match expr with
-        | BoolExpr _                -> []
-        | IntExpr _                 -> []
-        | DoubleExpr _              -> []
-        | VarExpr v when pred v     -> [v]
-        | VarExpr _                 -> []
-        | VarRefExpr v when pred v  -> [v]
-        | VarRefExpr _              -> []
-        | UExpr (_, e)              -> getVarsOfExpr pred e
-        | BExpr (e1, _, e2)         -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
-        | CallExpr ( _, _, _, _, e) -> e |> List.map (getVarsOfExpr pred) |> List.collect id
-        | MemberExpr (_, m)         -> getVarsOfExpr pred m
-        | TypeExpr (_, m)           -> getVarsOfExpr pred m
+        | BoolExpr _                  -> []
+        | IntExpr _                   -> []
+        | DoubleExpr _                -> []
+        | VarExpr v when pred v       -> [v]
+        | VarExpr _                   -> []
+        | VarRefExpr v when pred v    -> [v]
+        | VarRefExpr _                -> []
+        | UExpr (_, e)                -> getVarsOfExpr pred e
+        | BExpr (e1, _, e2)           -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
+        | CallExpr (_, _, _, _, _, e) -> e |> List.map (getVarsOfExpr pred) |> List.collect id
+        | MemberExpr (_, m)           -> getVarsOfExpr pred m
+        | TypeExpr (_, m)             -> getVarsOfExpr pred m
 
     /// Gets all local variables referenced by the given expression.
     let rec getLocalsOfExpr = 

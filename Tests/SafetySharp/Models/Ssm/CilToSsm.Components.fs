@@ -132,7 +132,7 @@ module Components =
                 Methods = 
                     [
                         {
-                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                            Name = methodName "M" 2 0
                             Return = IntType
                             Params = []
                             Locals = []
@@ -161,7 +161,7 @@ module Components =
                             Methods = 
                                 [
                                     {
-                                        Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                                        Name = methodName "M" 2 0
                                         Return = VoidType
                                         Params = []
                                         Locals = []
@@ -176,14 +176,14 @@ module Components =
                 Methods = 
                     [
                         {
-                            Name = CilToSsm.makeUniqueMethodName "N" 2 0
+                            Name = methodName "N" 2 0
                             Return = VoidType
                             Params = []
                             Locals = []
                             Body = SeqStm 
                                 [
                                     ExprStm (MemberExpr (Field ("Root0@0.x@0", ClassType "X"),
-                                                         CallExpr (CilToSsm.makeUniqueMethodName "M" 2 0, [], [], VoidType, [])))
+                                                         CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [])))
                                     RetStm None
                                 ]
                             Kind = ProvPort

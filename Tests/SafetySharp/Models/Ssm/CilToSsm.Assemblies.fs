@@ -26,6 +26,7 @@ open System
 open System.Linq
 open NUnit.Framework
 open Mono.Cecil
+open SafetySharp.Reflection
 open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Models.Ssm
@@ -59,7 +60,7 @@ module Assemblies =
                                 Methods = 
                                     [
                                         {
-                                            Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                                            Name = methodName "M" 2 0
                                             Return = VoidType
                                             Params = []
                                             Locals = []
@@ -74,14 +75,14 @@ module Assemblies =
                     Methods = 
                         [
                             {
-                                Name = CilToSsm.makeUniqueMethodName "N" 2 0
+                                Name = methodName "N" 2 0
                                 Return = VoidType
                                 Params = []
                                 Locals = []
                                 Body = SeqStm
                                     [
                                         ExprStm (MemberExpr (Field ("Root0@0.x@0", ClassType "X"), 
-                                                             CallExpr (CilToSsm.makeUniqueMethodName "M" 2 0, [], [], VoidType, [])))
+                                                             CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [])))
                                         RetStm None
                                     ]
                                 Kind = ProvPort
@@ -98,12 +99,12 @@ module Assemblies =
             [
                 {
                     Name = "Root0@0"
-                    Fields = [{ Var = Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType); Init = [BoolVal false] }]
+                    Fields = [{ Var = Field (fieldName "b" 2, BoolType); Init = [BoolVal false] }]
                     Subs = []
                     Methods =
                         [
                             {
-                                Name = CilToSsm.makeUniqueMethodName "M" 2 0
+                                Name = methodName "M" 2 0
                                 Return = VoidType
                                 Params = []
                                 Locals = []
@@ -111,14 +112,14 @@ module Assemblies =
                                 Kind = ProvPort
                             } 
                             {
-                                Name = CilToSsm.makeUniqueMethodName "N" 3 0
+                                Name = methodName "N" 3 0
                                 Return = VoidType
                                 Params = []
                                 Locals = []
                                 Body = SeqStm 
                                     [
-                                        ExprStm (CallExpr (CilToSsm.makeUniqueMethodName "M" 2 0, [], [], VoidType, []))
-                                        AsgnStm (Field (CilToSsm.makeUniqueFieldName "b" 2, BoolType), BoolExpr true)
+                                        ExprStm (CallExpr (methodName "M" 2 0, "X", [], [], VoidType, []))
+                                        AsgnStm (Field (fieldName "b" 2, BoolType), BoolExpr true)
                                         RetStm None
                                     ]
                                 Kind = ProvPort

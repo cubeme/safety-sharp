@@ -109,7 +109,7 @@ module internal SsmToScm =
             | Ssm.IfStm (e, s1, s2)             -> 
                 let e = transformExpr e
                 Scm.Choice [(e, transformStm s1); (Scm.UExpr (e, Scm.Not), transformStm s2)]
-            | Ssm.ExprStm (Ssm.CallExpr (m, _, d, _, e)) -> Scm.CallPort (Scm.ReqPort m, transformParamExpr e d)
+            | Ssm.ExprStm (Ssm.CallExpr (m, _, _, d, _, e)) -> Scm.CallPort (Scm.ReqPort m, transformParamExpr e d)
             | Ssm.RetStm _ -> Scm.Block [] 
             | _            -> notSupported "Unsupported SSM statement '%+A'." s
 

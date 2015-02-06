@@ -34,17 +34,13 @@ module internal CilToSsm =
     open SafetySharp
     open SafetySharp.Modeling
     open SafetySharp.Modeling.CompilerServices
+    open SafetySharp.Reflection
     open Cil
     open Ssm
     open Mono.Cecil
     open Mono.Cecil.Cil
 
     type GenericResolver = ImmutableDictionary<GenericParameter, TypeReference>
-    type TypeMap = ImmutableDictionary<System.Type, TypeReference>
-
-    let inheritanceToken = '$'
-    let overloadToken = '@'
-    let varToken = '!'
 
     /// Creates a generic resolver for the given type that can be used to lookup actual type references 
     /// that have been substituted for generic type parameters. For non-generic type references, the passed in
@@ -77,104 +73,17 @@ module internal CilToSsm =
         let builder = resolver1.ToBuilder ()
         resolver2 |> Seq.filter (fun t -> not <| builder.ContainsKey t.Key) |> builder.AddRange 
         builder.ToImmutableDictionary ()
-
-    /// Provides assembly metadata, automatically looking for and using embedded S# assemblies.
-    type private AssemblyMetadataProvider () as this =
-        inherit DefaultAssemblyResolver ()
-
-        /// The assemblies that have been loaded by the metadata provider.
-        let loadedAssemblies = Dictionary<string, AssemblyDefinition> ()
-
-        /// Loads the assembly with the given name.
-        let loadAssembly name =
-            match loadedAssemblies.TryGetValue name with
-            | (true, assembly) -> assembly
-            | (false, _) ->
-                let assembly = Assembly.Load (AssemblyName name)
-                let parameters = ReaderParameters ()
-                parameters.AssemblyResolver <- this
-
-                let assembly = 
-                    use stream = assembly.GetManifestResourceStream Reflection.EmbeddedAssembly
-                    if stream = null then
-                        AssemblyDefinition.ReadAssembly (assembly.Location, parameters)
-                    else
-                        AssemblyDefinition.ReadAssembly (stream, parameters)
-
-                loadedAssemblies.Add (name, assembly)
-                assembly
-
-        /// Resolves the assembly definition for the given assembly name.
-        override this.Resolve (name : AssemblyNameReference) : AssemblyDefinition = 
-            loadAssembly name.FullName            
-
-        /// Gets the type definitions for all given components.
-        member this.GetTypeDefinitions (components : Component list) =
-            let dictionary = ImmutableDictionary.CreateBuilder<System.Type, TypeReference> ()
-
-            components 
-            |> Seq.map (fun c -> c.GetType ())
-            |> Seq.distinct
-            |> Seq.iter (fun t -> 
-                let assemblyDefinition = loadAssembly t.Assembly.FullName
-
-                // Add the type and all of its base types to the dictionary, if we haven't added them already
-                let rec add (t : System.Type) =
-                    if dictionary.ContainsKey t |> not then
-                        dictionary.Add (t, assemblyDefinition.MainModule.Import t)
-                        if t.BaseType <> null then add t.BaseType
-
-                add t
-            )
-
-            dictionary.ToImmutableDictionary ()
-
-    /// Provides an extension method that returns all methods excluding all constructors.
-    type private TypeDefinition with
-        member this.GetMethods () = this.Methods |> Seq.filter (fun m -> not m.IsConstructor)
     
     /// Gets the C# compatiable full name.
     let private getCSharpType (fullName : string) =
         fullName.Replace("/", ".")
 
-    /// Computes the inheritance level of a component, i.e., the distance to the System.Object base class
-    /// in the inheritance chain.
-    let rec internal getInheritanceLevel (t : TypeDefinition) =
-        if t.FullName = typeof<obj>.FullName || t.BaseType = null then 0
-        else (getInheritanceLevel (t.BaseType.Resolve ())) + 1
-
-    /// Returns a unique name for the given field name and inheritance level.
-    let internal makeUniqueFieldName fieldName inheritanceLevel =
-        sprintf "%s%s" fieldName (String (inheritanceToken, inheritanceLevel))
-
-    /// Returns a unique name for the given method name, inheritance level and overload index.
-    let internal makeUniqueMethodName methodName inheritanceLevel overloadIndex =
-        sprintf "%s%s%s" methodName (String (inheritanceToken, inheritanceLevel)) (String (overloadToken, overloadIndex))
-
-     /// Gets a unique name for the given field within the declaring type's inheritance hierarchy.
-    let private getUniqueFieldName (f : FieldReference) =
-        let f = f.Resolve ()
-        let level = getInheritanceLevel f.DeclaringType
-        makeUniqueFieldName f.Name level
-
-    /// Gets a unique name for the given method within the declaring type's inheritance hierarchy. Overloaded methods
-    /// are also assigned unique names.
-    let private getUniqueMethodName (m : MethodDefinition) =
-        let level = getInheritanceLevel m.DeclaringType
-        let index = 
-            m.DeclaringType.GetMethods() 
-            |> Seq.filter (fun m' -> m'.Name = m.Name)
-            |> Seq.toList
-            |> List.findIndex ((=) m)
-
-        makeUniqueMethodName m.Name level index
-
     /// Generates a fresh local variable (see also the Demange paper)
     let freshLocal pc idx t =
-        Local (sprintf "__tmp_%i_%i%c" pc idx varToken, t)
+        Local (sprintf "__tmp_%i_%i%c" pc idx Renaming.VarToken, t)
 
     /// Gets the direction of a method parameter.
-    let getParamDir (p : ParameterDefinition) =
+    let private getParamDir (p : ParameterDefinition) =
         if not p.ParameterType.IsByReference then In
         elif p.ParameterType.IsByReference && p.IsOut then Out
         else InOut
@@ -204,19 +113,6 @@ module internal CilToSsm =
         | None 
         | Some (ClassType _) -> invalidOp "Unsupported method return type '%A'." typeRef
         | Some t             -> t
-
-    /// Maps the given method name of the given component back to a method info.
-    let unmapMethod (c : Component) (methodName : string) =
-        let metadataProvider = AssemblyMetadataProvider ()
-        let typeDefinitions = metadataProvider.GetTypeDefinitions [c]
-        let netModule = typeDefinitions.[c.GetType ()].Module
-        let unmangledPart = methodName.Substring (0, methodName.IndexOf inheritanceToken)
-
-        Reflection.getMethods (c.GetType ()) typeof<obj>
-        |> Seq.filter (fun m -> m.Name.StartsWith unmangledPart)
-        |> Seq.map (fun m -> (m, netModule.Import(m).Resolve ()))
-        |> Seq.find (fun (info, definition) -> getUniqueMethodName definition = methodName)
-        |> fst
 
     /// Represents the <see cref="Component.Update" /> method.
     let private componentUpdateMethod = typeof<Component>.GetMethod ("Update", BindingFlags.Instance ||| BindingFlags.Public)
@@ -274,9 +170,9 @@ module internal CilToSsm =
         let fieldVarPred f = function Field (f', _) -> f = f' | _ -> false
 
         let argName (a : ParameterDefinition) = if a.Index = -1 then "this" else a.Name
-        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i%c" l.Index varToken else l.Name
+        let localName (l : VariableDefinition) = if String.IsNullOrWhiteSpace l.Name then sprintf "__loc_%i%c" l.Index Renaming.VarToken else l.Name
         let local (l : VariableDefinition) = createVar Local (localName l) l.VariableType
-        let field (f : FieldReference) = createVar Field (getUniqueFieldName f) f.FieldType
+        let field (f : FieldReference) = createVar Field (Renaming.getUniqueFieldName f) f.FieldType
         let arg (a : ParameterDefinition) = 
             if a.Index = -1 then
                 This (a.ParameterType |> resolveGenericType resolver |> mapVarType)
@@ -331,7 +227,7 @@ module internal CilToSsm =
         | (Instr.Ldcd c, s) -> (NopStm, [], (DoubleExpr c) :: s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) when not (containsArg a s) -> (AsgnStm (Arg (a, t), e), [], s)
         | (Instr.Stind, e :: (VarRefExpr (Arg (a, t))) :: s) -> replaceWithTempVar pc (Arg (a, t)) e replaceArg s  
-        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v && not (containsField (getUniqueFieldName f) s) -> (AsgnStm (field f, e), [], s)
+        | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v && not (containsField (Renaming.getUniqueFieldName f) s) -> (AsgnStm (field f, e), [], s)
         | (Instr.Stfld f, e :: (VarExpr v) :: s) when Ssm.isClassType v -> replaceWithTempVar pc (field f) e replaceField s  
         | (Instr.Starg a, e :: s) when not (containsArg (argName a) s) -> (AsgnStm (arg a, e), [], s)
         | (Instr.Starg a, e :: s) when containsArg (argName a) s -> replaceWithTempVar pc (arg a) e replaceArg s  
@@ -345,8 +241,9 @@ module internal CilToSsm =
             let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
             let m = m.Resolve ()
-            let name = getUniqueMethodName m
+            let name = Renaming.getUniqueMethodName m
             let target = if m.IsStatic then None else Some s.[m.Parameters.Count]
+            let declaringType = getCSharpType m.DeclaringType.FullName
 
             // Pop the arguments from the symbolic stack, as well as the invocation target for non-static methods
             let s = s |> Seq.skip (argCount + (if m.IsStatic then 0 else 1)) |> Seq.toList
@@ -372,7 +269,7 @@ module internal CilToSsm =
                     (idx + 1, (AsgnStm (tmp, VarExpr v)) :: vars, replaceVar ((=) v) tmp s)
                  ) (idx, vars, stack)
 
-            let callExpr = CallExpr (name, paramTypes, paramDirs, returnType, args)
+            let callExpr = CallExpr (name, declaringType, paramTypes, paramDirs, returnType, args)
             let expr = 
                 match target with 
                 | None -> TypeExpr (getCSharpType m.DeclaringType.FullName, callExpr)
@@ -495,12 +392,12 @@ module internal CilToSsm =
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
             match e with
-            | IntExpr 0 when isBool    -> BoolExpr false
-            | IntExpr _ when isBool    -> BoolExpr true
-            | CallExpr (m, p, d, r, e) -> CallExpr (m, p, d, r, fixCallExprs p e)
-            | MemberExpr (v, e)        -> MemberExpr (v, fixExpr e isBool)
-            | TypeExpr (t, e)          -> TypeExpr (t, fixExpr e isBool)
-            | e when isBool            -> 
+            | IntExpr 0 when isBool       -> BoolExpr false
+            | IntExpr _ when isBool       -> BoolExpr true
+            | CallExpr (m, t, p, d, r, e) -> CallExpr (m, t, p, d, r, fixCallExprs p e)
+            | MemberExpr (v, e)           -> MemberExpr (v, fixExpr e isBool)
+            | TypeExpr (t, e)             -> TypeExpr (t, fixExpr e isBool)
+            | e when isBool               -> 
                 match Ssm.deduceType e with
                 | IntType    -> BExpr (e, Ne, IntExpr 0)
                 | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
@@ -584,14 +481,14 @@ module internal CilToSsm =
         )
         |> Seq.filter (fun (f, t) -> t <> None)
         |> Seq.map (fun (f, fieldType) -> 
-          { Var = Field (getUniqueFieldName f, fieldType.Value)
+          { Var = Field (Renaming.getUniqueFieldName f, fieldType.Value)
             Init = c.GetInitialValuesOfField f |> List.map transformFieldValue }
         )
         |> Seq.toList
 
     /// Transforms the given method to an SSM method with structured control flow.
-    let private transformMethod (c : Component) (resolver : GenericResolver) (m : MethodDefinition) =
-        let name = getUniqueMethodName m
+    let private transformMethod (metadata : MetadataProvider) (c : Component) (resolver : GenericResolver) (m : MethodDefinition) =
+        let name = Renaming.getUniqueMethodName m
         let body =
             if m.IsAbstract then NopStm
             else
@@ -611,19 +508,19 @@ module internal CilToSsm =
            Return = m.ReturnType |> resolveGenericType resolver |> mapReturnType
            Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
            Kind = 
-                let methodInfo = unmapMethod c name
+                let methodInfo = metadata.UnmapMethod c name
                 if methodInfo.GetBaseDefinition () = componentUpdateMethod then Step
                 else if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
-    let private transformMethods (c : Component) (t : TypeDefinition) (resolver : GenericResolver) =
+    let private transformMethods (metadata : MetadataProvider) (c : Component) (t : TypeDefinition) (resolver : GenericResolver) =
         t.GetMethods()
-        |> Seq.map (transformMethod c resolver)
+        |> Seq.map (transformMethod metadata c resolver)
         |> List.ofSeq
 
     /// Transforms the given bindings.
-    let private transformBindings (typeDefinitions : TypeMap) =
-        let resolvePort (port : PortInfo) = typeDefinitions.[port.Method.DeclaringType].Module.Import(port.Method).Resolve () |> getUniqueMethodName
+    let private transformBindings (metadata : MetadataProvider) =
+        let resolvePort (port : PortInfo) = metadata.Resolve(port.Method) |> Renaming.getUniqueMethodName
         let resolveComponent (port : PortInfo) = (port.Component :?> Component).Name
         
         let transform (binding : PortBinding) =
@@ -636,8 +533,8 @@ module internal CilToSsm =
         List.map transform
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
-    let rec private transformType (typeDefinitions : TypeMap) (c : Component) =
-        let resolver = createGenericResolver typeDefinitions.[c.GetType ()]
+    let rec private transformType (metadata : MetadataProvider) (c : Component) =
+        let resolver = createGenericResolver (metadata.GetTypeReference c)
         let rec transform (t : TypeReference) =
             let t = t.Resolve ()
             let transformed =
@@ -648,14 +545,12 @@ module internal CilToSsm =
             { transformed with 
                 Name = c.Name
                 Fields = transformed.Fields @ (transformFields c t resolver) 
-                Methods = transformed.Methods @ (transformMethods c t resolver) }
+                Methods = transformed.Methods @ (transformMethods metadata c t resolver) }
 
-        { transform typeDefinitions.[c.GetType ()] with 
-            Subs = c.Subcomponents |> List.map (transformType typeDefinitions)
-            Bindings = transformBindings typeDefinitions c.Bindings }
+        { transform (metadata.GetTypeReference c) with 
+            Subs = c.Subcomponents |> List.map (transformType metadata)
+            Bindings = transformBindings metadata c.Bindings }
         
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =
-        let metadataProvider = AssemblyMetadataProvider ()
-        let typeDefinitions = metadataProvider.GetTypeDefinitions (model.SynthesizedRoot :: model.Components)
-        transformType typeDefinitions model.SynthesizedRoot
+        transformType model.MetadataProvider model.SynthesizedRoot
