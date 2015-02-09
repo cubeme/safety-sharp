@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Models
+open SafetySharp
 open SafetySharp.Modeling
 
 /// Provides types and functions for working with S# models (SSM). Basically, the S# metamodel is a subset of
@@ -389,3 +390,13 @@ module internal Ssm =
         | IfStm (e, s1, s2) -> func e; iterExprs func s1; iterExprs func s2
         | ExprStm e         -> func e
         | _                 -> ()
+
+    /// Represents the SSM version of the <see cref="Component.Update" /> method.
+    let BaseUpdateMethod = { 
+        Name = Reflection.Renaming.makeUniqueMethodName "Update" 1 0
+        Params = []
+        Locals = []
+        Return = VoidType
+        Body = RetStm None
+        Kind = Step
+    }

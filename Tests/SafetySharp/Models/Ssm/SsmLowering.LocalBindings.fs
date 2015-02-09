@@ -53,6 +53,7 @@ module ``Local bindings`` =
                 Bindings = []
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "M" 2 0
                             Kind = ReqPort
@@ -68,6 +69,83 @@ module ``Local bindings`` =
                             Locals = []
                             Return = VoidType
                             Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [], false)); RetStm None]
+                        }
+                    ]
+            }
+
+    [<Test>]
+    let ``does not change Update method invocation of component not overriding Update`` () =
+        transform "class Y : Component {} class X : Component { Y y = new Y(); public override void Update() { y.Update(); } }" =?
+            {
+                Name = "Root0@0"
+                Fields = []
+                Subs = 
+                    [
+                        {
+                            Name = "Root0@0.y@0"
+                            Fields = []
+                            Subs = []
+                            Faults = []
+                            Bindings = []
+                            Methods = [Ssm.BaseUpdateMethod]
+                        }
+                    ]
+                Faults = []
+                Bindings = []
+                Methods = 
+                    [
+                        Ssm.BaseUpdateMethod
+                        {
+                            Name = methodName "Update" 2 0
+                            Kind = Step
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = SeqStm [ExprStm (MemberExpr (Field ("Root0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
+                        }
+                    ]
+            }
+
+    [<Test>]
+    let ``does not change Update method invocation of component overriding Update`` () =
+        transform "class Y : Component { public override void Update() {} } class X : Component { Y y = new Y(); public override void Update() { y.Update(); } }" =?
+            {
+                Name = "Root0@0"
+                Fields = []
+                Subs = 
+                    [
+                        {
+                            Name = "Root0@0.y@0"
+                            Fields = []
+                            Subs = []
+                            Faults = []
+                            Bindings = []
+                            Methods = 
+                                [
+                                    Ssm.BaseUpdateMethod
+                                    {
+                                        Name = methodName "Update" 2 0
+                                        Kind = Step
+                                        Params = []
+                                        Locals = []
+                                        Return = VoidType
+                                        Body = RetStm None
+                                    }
+                                ]
+                        }
+                    ]
+                Faults = []
+                Bindings = []
+                Methods = 
+                    [
+                        Ssm.BaseUpdateMethod
+                        {
+                            Name = methodName "Update" 2 0
+                            Kind = Step
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = SeqStm [ExprStm (MemberExpr (Field ("Root0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 2 0, "Y", [], [], VoidType, [], false))); RetStm None]
                         }
                     ]
             }
@@ -92,6 +170,7 @@ module ``Local bindings`` =
                     ]
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "M" 2 0
                             Kind = ProvPort
@@ -139,6 +218,7 @@ module ``Local bindings`` =
                     ]
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "M" 2 0
                             Kind = ProvPort
@@ -194,6 +274,7 @@ module ``Local bindings`` =
                     ]
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "M" 2 0
                             Kind = ProvPort
@@ -237,6 +318,7 @@ module ``Local bindings`` =
                             Bindings = []
                             Methods = 
                                 [
+                                    Ssm.BaseUpdateMethod
                                     {
                                         Name = methodName "M" 2 0
                                         Kind = ProvPort
@@ -261,6 +343,7 @@ module ``Local bindings`` =
                     ]
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "N" 2 0
                             Kind = ProvPort
@@ -305,6 +388,7 @@ module ``Local bindings`` =
                                 ]
                             Methods = 
                                 [
+                                    Ssm.BaseUpdateMethod
                                     {
                                         Name = methodName "M" 2 0
                                         Kind = ProvPort
@@ -359,6 +443,7 @@ module ``Local bindings`` =
                     ]
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "Q" 2 0
                             Kind = ProvPort

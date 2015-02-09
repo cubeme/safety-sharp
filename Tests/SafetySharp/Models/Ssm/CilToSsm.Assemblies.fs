@@ -59,6 +59,7 @@ module Assemblies =
                                 Subs = []
                                 Methods = 
                                     [
+                                        Ssm.BaseUpdateMethod
                                         {
                                             Name = methodName "M" 2 0
                                             Return = VoidType
@@ -74,6 +75,7 @@ module Assemblies =
                         ]
                     Methods = 
                         [
+                            Ssm.BaseUpdateMethod
                             {
                                 Name = methodName "N" 2 0
                                 Return = VoidType
@@ -103,6 +105,7 @@ module Assemblies =
                     Subs = []
                     Methods =
                         [
+                            Ssm.BaseUpdateMethod
                             {
                                 Name = methodName "M" 2 0
                                 Return = VoidType

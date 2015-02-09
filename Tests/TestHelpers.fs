@@ -36,6 +36,7 @@ open System.Text
 open System.Reflection
 open System.Runtime.CompilerServices
 open SafetySharp
+open SafetySharp.Models
 open SafetySharp.Modeling
 open SafetySharp.Reflection
 open Microsoft.FSharp.Reflection

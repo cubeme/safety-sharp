@@ -162,7 +162,12 @@ module ``SsmToScm Transformation`` =
     let private ssmStep : Ssm.Method = {
         Name = "Update"
         Params = []
-        Body = Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
+        Body = 
+            Ssm.SeqStm 
+                [
+                    Ssm.AsgnStm (Ssm.Local ("x", Ssm.IntType), Ssm.IntExpr -1)
+                    Ssm.ExprStm (Ssm.MemberExpr (Ssm.Field ("sub", Ssm.ClassType "Y"), Ssm.CallExpr ("Update", "X", [], [], Ssm.VoidType, [], false)))
+                ]
         Return = Ssm.VoidType
         Locals = [Ssm.Local ("x", Ssm.IntType)]
         Kind = Ssm.Step
@@ -173,7 +178,7 @@ module ``SsmToScm Transformation`` =
         Behavior = 
         {
             Locals = [{ Var = Scm.Var "x"; Type = Scm.IntType }]
-            Body = Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal -1))
+            Body = Scm.Block [Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal -1)); Scm.StepComp (Scm.Comp "sub")]
         }
     }
 

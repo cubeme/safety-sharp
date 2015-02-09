@@ -949,6 +949,7 @@ module Methods =
     let ``renaming: overloaded methods without inheritance`` () =
         transform "class X : Component { void M() { } bool M(int i) { return true; } int M(bool b) { return 1; }}" "new X()" =?
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -980,6 +981,7 @@ module Methods =
         let c = "class C : Component { void M() {} } class D : C { bool N(bool n) { return n; } }"
         transform c "new D()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1003,6 +1005,7 @@ module Methods =
         let c = "class C : Component { void M() {} void M(int i) {} } class D : C { void M() {} void M(bool b) {} }"
         transform c "new D()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1042,6 +1045,7 @@ module Methods =
         let c = "class A : Component { void M() {} } class B : A { } class C : B { void N() {} } class D : C { void M() {} } class E : D { void Q() {} }"
         transform c "new E()" =? 
              [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1081,6 +1085,7 @@ module Methods =
         let c = "class A : Component {} class B : A { int x; int M() { return x; } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 3 0
                     Return = IntType
@@ -1096,6 +1101,7 @@ module Methods =
         let c = "class A : Component {} class B : A { int M(int x) { return x; } int M() { return M(1); } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 3 0
                     Return = IntType
@@ -1124,6 +1130,7 @@ module Methods =
         let c = "class A : Component {} class B : A { public void M() {} } class C : Component { B b; void M() { b.M(); } }"
         transform c "new B(), new C()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 3 0
                     Return = VoidType
@@ -1132,6 +1139,7 @@ module Methods =
                     Body = RetStm None
                     Kind = ProvPort
                 } 
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1151,6 +1159,7 @@ module Methods =
         let c = "class A : Component { public void M() {} } class B : A { public new void M() { base.M(); } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1174,6 +1183,7 @@ module Methods =
         let c = "class A : Component { public virtual void M() {} } class B : A { public override void M() { base.M(); } } class C : B { public override void M() { base.M(); } }"
         transform c "new C()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1205,6 +1215,7 @@ module Methods =
         let c = "abstract class A : Component { public abstract void M(); } class B : A { public override void M() { } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = VoidType
@@ -1228,6 +1239,7 @@ module Methods =
         let c = "class A : Component { protected readonly int f = 4; } class B : A { int M() { return f; } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 3 0
                     Return = IntType
@@ -1243,6 +1255,7 @@ module Methods =
         let c = "class A<T1, T2> : Component { T1 f; T1 M(T2 p) { M(p); return f; } }"
         transform c "new A<int, bool>()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = IntType
@@ -1263,6 +1276,7 @@ module Methods =
         let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B : A<bool, int> { bool N(int x) { return M(x); } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = BoolType
@@ -1291,6 +1305,7 @@ module Methods =
         let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B<T1> : A<T1, int> { T1 N(int x) { return M(x); } }"
         transform c "new B<bool>()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "M" 2 0
                     Return = BoolType
@@ -1319,6 +1334,7 @@ module Methods =
         let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B : Component { A<bool, int> a = new A<bool, int>(); bool N(int x) { return a.M(x); } }"
         transform c "new B()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "N" 2 0
                     Return = BoolType
@@ -1339,6 +1355,7 @@ module Methods =
         let c = "class A<T1, T2> : Component { T1 f; public T1 M(T2 p) { return f; } } class B<T1> : Component { A<T1, int> a = new A<T1, int>(); T1 N(int x) { return a.M(x); } }"
         transform c "new B<bool>()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "N" 2 0
                     Return = BoolType
@@ -1359,6 +1376,7 @@ module Methods =
         let c = "interface I<T1, T2> { T1 M(T2 p); } class A<T1, T2> : Component, I<T1, T2> { T1 f; public T1 M(T2 p) { return f; } } class B<T, T1, T2> : Component where T : I<T1, T2>, new() { T a = new T(); T1 N(T2 x) { return a.M(x); } }"
         transform c "new B<A<bool, int>, bool, int>()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "N" 2 0
                     Return = BoolType
@@ -1379,6 +1397,7 @@ module Methods =
         let c = "class C : Component { public override void Update() {} }"
         transform c "new C()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 2 0
                     Return = VoidType
@@ -1394,6 +1413,7 @@ module Methods =
         let c = "class C : Component {} class D : C { public override void Update() {} }"
         transform c "new D()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 3 0
                     Return = VoidType
@@ -1409,6 +1429,7 @@ module Methods =
         let c = "class C : Component { public override void Update() { base.Update(); } } class D : C { public override void Update () { base.Update(); } }"
         transform c "new D()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 2 0
                     Return = VoidType
@@ -1432,6 +1453,7 @@ module Methods =
         let c = "class C : Component { public extern new void Update(); }"
         transform c "new C()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 2 0
                     Return = VoidType
@@ -1447,6 +1469,7 @@ module Methods =
         let c = "class C : Component { public new void Update() {} }"
         transform c "new C()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 2 0
                     Return = VoidType
@@ -1462,6 +1485,7 @@ module Methods =
         let c = "class C : Component { public new void Update() {} } class D : C { }"
         transform c "new D()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 2 0
                     Return = VoidType
@@ -1477,6 +1501,7 @@ module Methods =
         let c = "class C : Component { public new virtual void Update() {} } class D : C { public override void Update() {} }"
         transform c "new D()" =? 
             [
+                Ssm.BaseUpdateMethod
                 {
                     Name = methodName "Update" 2 0
                     Return = VoidType

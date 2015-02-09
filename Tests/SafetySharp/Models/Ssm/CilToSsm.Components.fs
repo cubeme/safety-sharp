@@ -48,13 +48,13 @@ module Components =
                 {
                     Name = "Root0@0"
                     Fields = []
-                    Methods = []
+                    Methods = [Ssm.BaseUpdateMethod]
                     Subs =
                         [
                             {
                                 Name = "Root0@0.s@0"
                                 Fields = []
-                                Methods = []
+                                Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
                                 Faults = []
                                 Bindings = []
@@ -62,7 +62,7 @@ module Components =
                             {
                                 Name = "Root0@0.s1@1"
                                 Fields = []
-                                Methods = []
+                                Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
                                 Faults = []
                                 Bindings = []
@@ -70,7 +70,7 @@ module Components =
                             {
                                 Name = "Root0@0.s2@2"
                                 Fields = []
-                                Methods = []
+                                Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
                                 Faults = []
                                 Bindings = []
@@ -88,13 +88,13 @@ module Components =
                 {
                     Name = "Root0@0"
                     Fields = []
-                    Methods = []
+                    Methods = [Ssm.BaseUpdateMethod]
                     Subs =
                         [
                             {
                                 Name = "Root0@0.s@0"
                                 Fields = []
-                                Methods = []
+                                Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
                                 Faults = []
                                 Bindings = []
@@ -102,7 +102,7 @@ module Components =
                             {
                                 Name = "Root0@0.s@1"
                                 Fields = []
-                                Methods = []
+                                Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
                                 Faults = []
                                 Bindings = []
@@ -110,7 +110,7 @@ module Components =
                             {
                                 Name = "Root0@0.s2@2"
                                 Fields = []
-                                Methods = []
+                                Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
                                 Faults = []
                                 Bindings = []
@@ -131,6 +131,7 @@ module Components =
                 Subs = []
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "M" 2 0
                             Return = IntType
@@ -160,6 +161,7 @@ module Components =
                             Subs = []
                             Methods = 
                                 [
+                                    Ssm.BaseUpdateMethod
                                     {
                                         Name = methodName "M" 2 0
                                         Return = VoidType
@@ -175,6 +177,7 @@ module Components =
                     ]
                 Methods = 
                     [
+                        Ssm.BaseUpdateMethod
                         {
                             Name = methodName "N" 2 0
                             Return = VoidType

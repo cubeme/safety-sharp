@@ -99,18 +99,23 @@ module internal SsmToScm =
 
         List.zip e d |> List.map transform
 
+    /// Represents SCM 'nop' statement.
+    let emptyBlock = Scm.Block []
+
     /// Transforms the given statement.
-    let rec private transformStm (s : Ssm.Stm) : Scm.Stm =
-        let transform = function
-            | Ssm.NopStm                        -> Scm.Block [] 
+    let private transformStm (s : Ssm.Stm) : Scm.Stm =
+        let rec transform s = 
+            match s with
+            | Ssm.NopStm                        -> emptyBlock
             | Ssm.AsgnStm (Ssm.Field (f, _), e) -> Scm.AssignField (Scm.Field f, transformExpr e)
             | Ssm.AsgnStm (v, e)                -> Scm.AssignVar (Scm.Var (Ssm.getVarName v), transformExpr e)
-            | Ssm.SeqStm s                      -> s |> List.map transformStm |> Scm.Block
+            | Ssm.SeqStm s                      -> s |> List.map transform |> Scm.Block
             | Ssm.IfStm (e, s1, s2)             -> 
                 let e = transformExpr e
-                Scm.Choice [(e, transformStm s1); (Scm.UExpr (e, Scm.Not), transformStm s2)]
+                Scm.Choice [(e, transform s1); (Scm.UExpr (e, Scm.Not), transform s2)]
+            | Ssm.ExprStm (Ssm.MemberExpr (Ssm.Field (f, _), Ssm.CallExpr (m, _, _, d, _, e, false))) -> Scm.StepComp (Scm.Comp f)
             | Ssm.ExprStm (Ssm.CallExpr (m, _, _, d, _, e, false)) -> Scm.CallPort (Scm.ReqPort m, transformParamExpr e d)
-            | Ssm.RetStm _ -> Scm.Block [] 
+            | Ssm.RetStm _ -> emptyBlock
             | _            -> notSupported "Unsupported SSM statement '%+A'." s
 
         // Removes unnecessary statements
@@ -184,6 +189,6 @@ module internal SsmToScm =
         ReqPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ReqPort) |> Seq.map transformReqPort |> Seq.toList
         ProvPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort) |> Seq.map transformProvPort |> Seq.toList
         Bindings = c.Bindings |> List.map transformBinding
-        Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step) |> Seq.map transformSteps |> Seq.toList
+        Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step && m.Name <> Ssm.BaseUpdateMethod.Name) |> Seq.map transformSteps |> Seq.toList
     }
         

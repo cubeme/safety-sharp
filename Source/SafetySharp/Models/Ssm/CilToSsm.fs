@@ -536,7 +536,7 @@ module internal CilToSsm =
             let transformed =
                 if t.BaseType.FullName <> typeof<obj>.FullName && t.BaseType.FullName <> typeof<Component>.FullName then
                     transform t.BaseType
-                else { Name = String.Empty; Fields = []; Methods = []; Subs = []; Faults = []; Bindings = [] }
+                else { Name = String.Empty; Fields = []; Methods = [Ssm.BaseUpdateMethod]; Subs = []; Faults = []; Bindings = [] }
 
             { transformed with 
                 Name = c.Name

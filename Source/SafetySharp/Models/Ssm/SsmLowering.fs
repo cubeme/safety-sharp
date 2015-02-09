@@ -123,8 +123,7 @@ module internal SsmLowering =
         let synPorts = List<Method> ()
         let synBindings = List<Binding> ()
 
-        let callSynthesized c' n t p d r e =
-            let m = getMethod c' n
+        let callSynthesized c' (m : Method) t p d r e =
             match m.Kind with
             | ProvPort ->
                 let syn = 
@@ -136,14 +135,21 @@ module internal SsmLowering =
                 synPorts.Add syn
                 synBindings.Add { SourceComp = c'.Name; SourcePort = m.Name; TargetComp = c.Name; TargetPort = syn.Name; Kind = Instantaneous }
                 CallExpr (syn.Name, t, p, d, r, e, false)
-            | _ -> CallExpr (n, t, p, d, r, e, false)
+            | _ -> CallExpr (m.Name, t, p, d, r, e, false)
 
-        let rec lower = function
-            | CallExpr (m, t, p, d, r, e, false) -> callSynthesized c m t p d r e
-            | MemberExpr (Field (f, _), CallExpr (m, t, p, d, r, e, false)) -> callSynthesized (getSub c f) m t p d r e
+        let rec lower expr = 
+            match expr with
+            | CallExpr (m, t, p, d, r, e, false) -> callSynthesized c (getMethod c m) t p d r e
+            | MemberExpr (Field (f, _), CallExpr (m, t, p, d, r, e, false)) -> 
+                let c = getSub c f
+                let m = getMethod c m
+                match m.Kind with
+                | ProvPort -> callSynthesized c m t p d r e
+                | ReqPort  -> notSupported "Cannot invoke required port of subcomponent."
+                | Step     -> expr
             | UExpr (op, e) -> UExpr (op, lower e)
             | BExpr (e1, op, e2) -> BExpr (lower e1, op, lower e2)
-            | e -> e
+            | _ -> expr
 
         { c with
             Methods = (c.Methods |> List.map (fun m -> { m with Body = Ssm.mapExprs lower m.Body })) @ (synPorts |> List.ofSeq)

@@ -43,8 +43,8 @@ module ``Port signatures`` =
 
     let private transformMethod methodDefinition= 
         let ssm = transform methodDefinition
-        ssm.Methods.[0] |> SsmToCSharp.transform |> printfn "%s"
-        ssm.Methods.[0]
+        ssm.Methods.[1] |> SsmToCSharp.transform |> printfn "%s"
+        ssm.Methods.[1]
 
     let private tmp = CilToSsm.freshLocal
     let private this = VarExpr (This (ClassType className))
@@ -187,15 +187,16 @@ module ``Port signatures`` =
                 Fields = []
                 Methods = 
                     [
-                       {
+                        Ssm.BaseUpdateMethod
+                        {
                             Name = methodName "Q" 2 0
                             Return = VoidType
                             Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
                             Locals = []
                             Body =  SeqStm [ AsgnStm (Arg ("retVal", IntType), IntExpr 1); RetStm None ]
                             Kind = ProvPort               
-                       }
-                       {
+                        }
+                        {
                             Name = methodName "M" 2 0
                             Return = VoidType
                             Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
@@ -225,7 +226,8 @@ module ``Port signatures`` =
                 Fields = []
                 Methods = 
                     [
-                       {
+                        Ssm.BaseUpdateMethod
+                        {
                             Name = methodName "M" 2 0
                             Return = VoidType
                             Params = [ { Var = Arg ("retVal", IntType); Direction = Out } ]
@@ -250,6 +252,7 @@ module ``Port signatures`` =
                             Subs = []
                             Methods = 
                                 [
+                                    Ssm.BaseUpdateMethod
                                     {
                                         Name = methodName "Q" 2 0
                                         Return = VoidType
