@@ -59,7 +59,7 @@ module internal Cil =
         | Stfld of FieldReference
         | Stloc of VariableDefinition
         | Starg of ParameterDefinition
-        | Call of MethodReference
+        | Call of MethodReference * IsVirtual : bool
         | Br of BrType * int
         | Ret
         | Or
@@ -114,8 +114,8 @@ module internal Cil =
             | Code.Stfld        -> toInstr  Stfld
             | Code.Stloc        -> toInstr  Stloc
             | Code.Starg        -> toInstr  Starg
-            | Code.Call         -> toInstr  Call
-            | Code.Callvirt     -> toInstr  Call
+            | Code.Call         -> toInstr  (fun m -> Call (m, false))
+            | Code.Callvirt     -> toInstr  (fun m -> Call (m, true))
             | Code.Br           -> toBranch Always
             | Code.Bgt          -> toBranch Gt
             | Code.Bge          -> toBranch Ge

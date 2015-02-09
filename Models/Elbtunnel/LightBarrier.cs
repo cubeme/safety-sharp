@@ -38,17 +38,20 @@ namespace Elbtunnel
 
 	internal class InterfacedSubcomponent : Component
 	{
-		private readonly LightBarrier _sensor;
+		private readonly ISensor _sensor;
 		private bool _triggered;
 
 		public InterfacedSubcomponent(LightBarrier sensor)
 		{
 			_sensor = sensor;
+			Bind(RequiredPorts.IsTriggered = sensor.ProvidedPorts.IsTriggered);
 		}
+
+		private extern bool IsTriggered();
 
 		public override void Update()
 		{
-			_sensor.IsTriggered(out _triggered);
+			_sensor.IsTriggered();
 		}
 	}
 
@@ -80,7 +83,7 @@ namespace Elbtunnel
 	}
 
 	internal delegate void D(ref int i);
-	public class LightBarrier : Component
+	public class LightBarrier : Component,ISensor
 	{
 		private int _i = 1;
 		public bool Triggered = false;
@@ -101,6 +104,11 @@ namespace Elbtunnel
 
 		[Required]
 		public extern void SendData(int position);
+
+		public virtual bool IsTriggered()
+		{
+			throw new NotImplementedException();
+		}
 
 		[Required]
 		public extern void SendData(ref int position);

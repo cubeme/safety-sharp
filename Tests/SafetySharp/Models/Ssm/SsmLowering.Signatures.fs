@@ -38,7 +38,7 @@ module ``Port signatures`` =
         let csharpCode = sprintf "class %s : Component { %s } class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" className methodDefinition
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lowerSignatures
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model |> SsmLowering.lowerSignatures
         root.Subs.[0]
 
     let private transformMethod methodDefinition= 
@@ -72,7 +72,7 @@ module ``Port signatures`` =
                 Body = 
                     SeqStm 
                         [
-                            ExprStm (CallExpr (methodName "M" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (tmp 1 0 IntType)]))
+                            ExprStm (CallExpr (methodName "M" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (tmp 1 0 IntType)], false))
                             SeqStm [
                                 AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 1 0 IntType))
                                 RetStm None
@@ -169,7 +169,7 @@ module ``Port signatures`` =
                         VarExpr (Arg ("b", BoolType)),
                         SeqStm [AsgnStm (Arg ("retVal", BoolType), BoolExpr true); RetStm None],
                         SeqStm [
-                            ExprStm (CallExpr (methodName "M" 2 0, className, [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)]))
+                            ExprStm (CallExpr (methodName "M" 2 0, className, [IntType; BoolType; BoolType], [In; InOut; Out], VoidType, [VarExpr (Arg ("x", IntType)); VarRefExpr (Arg ("b", BoolType)); VarRefExpr (tmp 6 0 BoolType)], false))
                             SeqStm [
                                 AsgnStm (Arg ("retVal", BoolType), VarExpr (tmp 6 0 BoolType))
                                 RetStm None
@@ -203,7 +203,7 @@ module ``Port signatures`` =
                             Body = 
                                 SeqStm 
                                     [
-                                        ExprStm (TypeExpr (className, CallExpr (methodName "Q" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (tmp 0 0 IntType)])))
+                                        ExprStm (TypeExpr (className, CallExpr (methodName "Q" 2 0, className, [IntType], [Out], VoidType, [VarRefExpr (tmp 0 0 IntType)], false)))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 0 0 IntType))
                                             RetStm None
@@ -233,7 +233,7 @@ module ``Port signatures`` =
                             Body = 
                                 SeqStm 
                                     [
-                                        ExprStm (MemberExpr (Field ("Root0@0.q@0", ClassType "X.Sub"), CallExpr (methodName "Q" 2 0, "X.Sub", [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)])))
+                                        ExprStm (MemberExpr (Field ("Root0@0.q@0", ClassType "X/Sub"), CallExpr (methodName "Q" 2 0, "X/Sub", [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)], false)))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 2 0 IntType))
                                             RetStm None

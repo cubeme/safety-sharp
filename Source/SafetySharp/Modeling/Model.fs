@@ -151,6 +151,14 @@ type Model () =
         if mangledName = synthesizedRoot.Name then synthesizedRoot
         else components |> List.find (fun c -> c.Name = mangledName)
 
+    /// Returns the type of the component with the given mangled name.
+    member internal this.GetTypeOfComponent mangledName =
+        requiresIsSealed ()
+        let c = 
+            if mangledName = synthesizedRoot.Name then synthesizedRoot
+            else components |> List.find (fun c -> c.Name = mangledName)
+        c.GetType ()
+
     /// Gets the metadata provider of the model.
     member internal this.MetadataProvider
         with get () =

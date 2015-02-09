@@ -35,12 +35,15 @@ module internal SsmToCSharp =
                                  .Replace(Reflection.Renaming.OverloadToken.ToString (), "")
                                  .Replace(Reflection.Renaming.VarToken.ToString (), ""))
 
+        let classType (c : string) =
+            writer.Append "%s" (c.Replace ("/", "."))
+
         let typeRef = function
             | VoidType    -> writer.Append "void"
             | BoolType    -> writer.Append "bool"
             | IntType     -> writer.Append "int"
             | DoubleType  -> writer.Append "double"
-            | ClassType t -> writer.Append "%s" t
+            | ClassType t -> classType t
 
         let uop = function
             | Not   -> writer.Append "!"
@@ -86,16 +89,16 @@ module internal SsmToCSharp =
             writer.AppendRepeated args writeArg (fun () -> writer.Append ", "); writer.Append ")"
 
         and expr = function
-            | BoolExpr b                  -> writer.Append <| if b then "true" else "false"
-            | IntExpr i                   -> writer.Append "%i" i
-            | DoubleExpr d                -> writer.Append "%f" d
-            | VarExpr v                   -> var v
-            | VarRefExpr v                -> var v
-            | UExpr (op, e)               -> uop op; writer.AppendParenthesized (fun () -> expr e)
-            | BExpr (e1, op, e2)          -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
-            | MemberExpr (v, e)           -> var v; writer.Append "."; expr e
-            | TypeExpr (t, e)             -> writer.Append "%s." t; expr e
-            | CallExpr (m, _, _, d, _, e) -> call m d e
+            | BoolExpr b                     -> writer.Append <| if b then "true" else "false"
+            | IntExpr i                      -> writer.Append "%i" i
+            | DoubleExpr d                   -> writer.Append "%f" d
+            | VarExpr v                      -> var v
+            | VarRefExpr v                   -> var v
+            | UExpr (op, e)                  -> uop op; writer.AppendParenthesized (fun () -> expr e)
+            | BExpr (e1, op, e2)             -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+            | MemberExpr (v, e)              -> var v; writer.Append "."; expr e
+            | TypeExpr (t, e)                -> classType t; writer.Append "."; expr e
+            | CallExpr (m, _, _, d, _, e, _) -> call m d e
 
         let rec toCSharp stm = 
             match stm with

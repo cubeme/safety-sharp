@@ -63,14 +63,14 @@ module internal Reflection =
         info.GetCustomAttribute (typeof<'T>, false) <> null
 
     /// Gets the given type's method that implements the given interface method.
-    let getImplementingMethod (typeInfo : Type) (interfaceMethod : MethodInfo) =
+    let private getImplementingMethod (typeInfo : Type) (interfaceMethod : MethodInfo) =
         let map = typeInfo.GetInterfaceMap interfaceMethod.DeclaringType
         let index = map.InterfaceMethods |> Array.findIndex ((=) interfaceMethod)
         map.TargetMethods.[index]
 
     /// Gets the given type's method that overrides the given non-interface method. If the type does not override the method,
     /// the given method is returned.
-    let rec getOverridingMethod (typeInfo : Type) (baseMethod : MethodInfo) =
+    let rec private getOverridingMethod (typeInfo : Type) (baseMethod : MethodInfo) =
         let methods = typeInfo.GetMethods (BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly)
         match methods |> Array.tryFind (fun m -> m = baseMethod || m.GetBaseDefinition () = baseMethod) with
         | Some m -> m
@@ -78,8 +78,18 @@ module internal Reflection =
             if typeInfo.BaseType <> null then getOverridingMethod typeInfo.BaseType baseMethod
             else baseMethod
 
-    /// Provides an extension method that returns all methods excluding all constructors.
+    /// Gets the most derived implementation of the given virtual or interface method of the given type.
+    let getMostDerivedMethod (typeInfo : Type) (baseMethod : MethodInfo) =
+        // Resolve the method that implements the interface method
+        let targetMethod = if baseMethod.DeclaringType.IsInterface then getImplementingMethod typeInfo baseMethod else baseMethod
+
+        // Resolve the method that overrides the target method; this is also required for implicit, 
+        // virtual interface method implementations
+        getOverridingMethod typeInfo targetMethod
+
+    /// Provides extension methods for type definitions.
     type private TypeDefinition with
+        /// Gets all methods declared by the type, except for constructors.
         member this.GetMethods () = this.Methods |> Seq.filter (fun m -> not m.IsConstructor)
 
     /// Renames members of types, giving them unique names.
@@ -163,6 +173,7 @@ module internal Reflection =
                     if typeReferences.ContainsKey t |> not then
                         typeReferences.Add (t, assemblyDefinition.MainModule.Import t)
                         if t.BaseType <> null then add t.BaseType
+                        t.GetInterfaces () |> Array.iter add
 
                 add t
             )
@@ -187,13 +198,45 @@ module internal Reflection =
         member this.Resolve (m : MethodInfo) =
             this.GetTypeReference(m.DeclaringType).Module.Import(m).Resolve ()
 
-        /// Maps the given method name of the given component back to a method info.
-        member this.UnmapMethod (o : obj) (methodName : string) =
-            let typeDefinition = this.GetTypeReference o
-            let unmangledPart = methodName.Substring (0, methodName.IndexOf Renaming.InheritanceToken)
+        /// Maps the given method name of the given type back to a method info.
+        member this.UnmapMethod (t : Type) (methodName : string) =
+            let typeDefinition = this.GetTypeReference t
+            let manglingStart = methodName.IndexOf Renaming.InheritanceToken
+            let unmangledPart = if manglingStart = -1 then methodName else methodName.Substring (0, manglingStart)
 
-            getMethods (o.GetType ()) typeof<obj>
+            getMethods t typeof<obj>
             |> Seq.filter (fun m -> m.Name.StartsWith unmangledPart)
             |> Seq.map (fun m -> (m, typeDefinition.Module.Import(m).Resolve ()))
             |> Seq.find (fun (info, definition) -> Renaming.getUniqueMethodName definition = methodName)
             |> fst
+
+        /// Gets the type object for the type with the given name implemented by the given type.
+        member this.GetImplementedType implementingType implementedType =
+            let interfaceMatches t = 
+                let reference = this.GetTypeReference t
+                reference.FullName = implementedType || reference.Resolve().FullName = implementedType
+
+            let classMatches t = 
+                let reference = this.GetTypeReference t
+                if reference.FullName = implementedType || reference.Resolve().FullName = implementedType then true
+                else
+                    // Special case when X<T> calls one of its own methods, for instance. In that case, implementedType == "X<T>", i.e.,
+                    // the type parameter is not resolved but we still want to match the "X" class 
+                    let typeListStart = implementedType.IndexOf '<'
+                    if typeListStart = -1 then false
+                    else
+                        reference.IsGenericInstance && reference.Resolve().FullName.StartsWith (implementedType.Substring (0, typeListStart))
+
+            let rec get t =
+                if classMatches t then t
+                else
+                    let baseType = if t.BaseType <> null then get t.BaseType else null
+                    if baseType <> null then baseType
+                    else
+                        match t.GetInterfaces () |> Seq.tryFind interfaceMatches with
+                        | None -> null
+                        | Some t -> t
+
+            let t = get implementingType
+            if t = null then invalidOp "Type '%s' does not implement or inherit '%s'." implementingType.FullName implementedType
+            t

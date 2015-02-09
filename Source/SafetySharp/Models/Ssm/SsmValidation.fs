@@ -92,7 +92,7 @@ module internal SsmValidation =
     /// Maps the given information to a <see cref="PortInfo" /> instance.
     let private toPortInfo (model : Model) (componentName : string) (portName : string) = 
         let c = model.FindComponent componentName
-        PortInfo (c, model.MetadataProvider.UnmapMethod c portName)
+        PortInfo (c, model.MetadataProvider.UnmapMethod (c.GetType ()) portName)
 
     /// Maps the given information to a <see cref="PortBinding" /> instance.
     let private toPortBinding (model : Model) (componentName : string) (binding : Binding) =
@@ -145,37 +145,37 @@ module internal SsmValidation =
     let private controlFlowCycles (model : Model) (c : Comp) =
         let componentMethodVertex componentName portName = 
             let c = model.FindComponent componentName
-            (c, model.MetadataProvider.UnmapMethod c portName)
+            (c, model.MetadataProvider.UnmapMethod (c.GetType ()) portName)
 
-        let edge startVertex endVertex = SEdge<_> (startVertex, endVertex)
+        let edges = List<SEdge<_>> ()
+        let edge startVertex endVertex = edges.Add (SEdge<_> (startVertex, endVertex))
 
         // Compute the edges from the required ports to the instantly bound provided ports
-        let required = collect (fun c -> c.Bindings) c |> Seq.filter (fun (c, binding) -> binding.Kind = Instantaneous) |> Seq.map (fun (c, binding) -> 
+        let required = collect (fun c -> c.Bindings) c |> Seq.filter (fun (c, binding) -> binding.Kind = Instantaneous) |> Seq.iter (fun (c, binding) -> 
             edge (componentMethodVertex binding.TargetComp binding.TargetPort) (componentMethodVertex binding.SourceComp binding.SourcePort)
         )
 
         let collectInvocations kind = 
             collect (fun c -> c.Methods |> Seq.filter (fun m -> m.Kind = kind)) c 
-            |> Seq.collect (fun (c, port) ->
+            |> Seq.iter (fun (c, port) ->
                 let edge = edge (componentMethodVertex c.Name port.Name)
-                let rec invocations stm = 
-                    match stm with
-                    | SeqStm s -> s |> Seq.collect invocations
-                    | IfStm (_, s1, s2) -> seq { yield! invocations s1; yield! invocations s2 }
-                    | ExprStm (CallExpr (m, _, _, _, _, _)) -> edge (componentMethodVertex c.Name m) |> Seq.singleton
-                    | ExprStm (TypeExpr (t, CallExpr (m, _, _, _, _, _))) -> notSupported "Unsupported static method call '%+A'." stm
-                    | ExprStm (MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _, _))) -> 
-                        edge (componentMethodVertex f m) |> Seq.singleton
-                    | _ -> Seq.empty
+                let invocations e =
+                    match e with
+                    | CallExpr (m, _, _, _, _, _, false) -> edge (componentMethodVertex c.Name m)
+                    | TypeExpr (t, CallExpr (m, _, _, _, _, _, false)) -> notSupported "Unsupported static method call '%+A'." e
+                    | MemberExpr (Field (f, ClassType _), CallExpr (m, _, _, _, _, _, false)) -> edge (componentMethodVertex f m)
+                    | CallExpr (_, _, _, _, _, _, true)
+                    | TypeExpr (_, CallExpr (_, _, _, _, _, _, true))
+                    | MemberExpr (_, CallExpr (_, _, _, _, _, _, true)) -> notSupported "Unsupported virtual method call '%+A'." e
+                    | _ -> ()
 
-                invocations port.Body
+                port.Body |> Ssm.iterExprs invocations
             )
 
         // Compute the edges from the provided ports and step functions to all invoked methods
         let provided = collectInvocations ProvPort
         let step = collectInvocations Step
 
-        let edges = seq { yield! required; yield! provided; yield! step }
         let graph = edges.ToAdjacencyGraph ()
 
         // Check for recursive function calls; this is a special case that is not detected by the
@@ -186,7 +186,7 @@ module internal SsmValidation =
 
         // Construct the sets of strongly connected components of the graph; if there are no cycles, the
         // number of SCCs matches the number of vertices.
-        let mutable components :IDictionary<_,_> = null
+        let mutable components : IDictionary<_,_> = null
         let componentCount = graph.StronglyConnectedComponents (&components)
 
         if componentCount <> graph.VertexCount then
@@ -202,7 +202,7 @@ module internal SsmValidation =
                 |> Seq.toArray
             raise (CyclicControlFlowException cycle)
 
-    /// Performs the validation of the given (unlowered) SSM root component and S# model.
+    /// Performs the validation of the given SSM root component and S# model.
     let validate (model : Model) (c : Comp) =
         invalidBindings model c
         invalidRequiredPortBindings model c

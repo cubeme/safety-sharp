@@ -81,7 +81,7 @@ module internal Ssm =
         | BExpr      of Expr * BOp * Expr
         | MemberExpr of Target : Var * Member : Expr
         | TypeExpr   of Target : string * Member : Expr
-        | CallExpr   of Name : string * DeclaringType : string * Params : Type list * ParamDir list * Return : Type * Args : Expr list
+        | CallExpr   of Name : string * DeclaringType : string * Params : Type list * ParamDir list * Return : Type * Args : Expr list * IsVirtual : bool
 
     /// Represents a statement within the body of a S# method.
     type internal Stm =
@@ -280,7 +280,7 @@ module internal Ssm =
         | BExpr (e1, Le, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Gt, e2) when bothAreNonBool e1 e2 -> BoolType
         | BExpr (e1, Ge, e2) when bothAreNonBool e1 e2 -> BoolType
-        | CallExpr (_, _, _, _, t, _) -> t
+        | CallExpr (_, _, _, _, t, _, _) -> t
         | MemberExpr (_, m) -> deduceType m
         | TypeExpr (_, m) -> deduceType m
         | _ -> invalidOp "Type deduction failure."
@@ -288,18 +288,18 @@ module internal Ssm =
     /// Gets all variables referenced by the given expression fulfilling the given predicate.
     let rec getVarsOfExpr pred expr =
         match expr with
-        | BoolExpr _                  -> []
-        | IntExpr _                   -> []
-        | DoubleExpr _                -> []
-        | VarExpr v when pred v       -> [v]
-        | VarExpr _                   -> []
-        | VarRefExpr v when pred v    -> [v]
-        | VarRefExpr _                -> []
-        | UExpr (_, e)                -> getVarsOfExpr pred e
-        | BExpr (e1, _, e2)           -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
-        | CallExpr (_, _, _, _, _, e) -> e |> List.map (getVarsOfExpr pred) |> List.collect id
-        | MemberExpr (_, m)           -> getVarsOfExpr pred m
-        | TypeExpr (_, m)             -> getVarsOfExpr pred m
+        | BoolExpr _                     -> []
+        | IntExpr _                      -> []
+        | DoubleExpr _                   -> []
+        | VarExpr v when pred v          -> [v]
+        | VarExpr _                      -> []
+        | VarRefExpr v when pred v       -> [v]
+        | VarRefExpr _                   -> []
+        | UExpr (_, e)                   -> getVarsOfExpr pred e
+        | BExpr (e1, _, e2)              -> (getVarsOfExpr pred e1) @ (getVarsOfExpr pred e2)
+        | CallExpr (_, _, _, _, _, e, _) -> e |> List.map (getVarsOfExpr pred) |> List.collect id
+        | MemberExpr (_, m)              -> getVarsOfExpr pred m
+        | TypeExpr (_, m)                -> getVarsOfExpr pred m
 
     /// Gets all local variables referenced by the given expression.
     let rec getLocalsOfExpr = 
@@ -367,14 +367,25 @@ module internal Ssm =
         let last = Array.length methodBody
         transform 0 last
 
-    /// Replaces all expressions within the given statement using the given replacement function.
-    let rec replaceExprs replace stm =
+    /// Maps all expressions within the given statement using the given map function.
+    let rec mapExprs map stm =
         match stm with
         | NopStm            -> stm
-        | AsgnStm (v, e)    -> AsgnStm (v, replace e)
-        | GotoStm (e, pc)   -> GotoStm (replace e, pc)
-        | SeqStm s          -> s |> List.map (replaceExprs replace) |> SeqStm
+        | AsgnStm (v, e)    -> AsgnStm (v, map e)
+        | GotoStm (e, pc)   -> GotoStm (map e, pc)
+        | SeqStm s          -> s |> List.map (mapExprs map) |> SeqStm
         | RetStm None       -> stm
-        | RetStm (Some e)   -> RetStm (Some (replace e))
-        | IfStm (e, s1, s2) -> IfStm (replace e, replaceExprs replace s1, replaceExprs replace s2)
-        | ExprStm e         -> ExprStm (replace e)
+        | RetStm (Some e)   -> RetStm (Some (map e))
+        | IfStm (e, s1, s2) -> IfStm (map e, mapExprs map s1, mapExprs map s2)
+        | ExprStm e         -> ExprStm (map e)
+
+    /// Iterates all expressions within the given statement, calling the given function.
+    let rec iterExprs func stm =
+        match stm with
+        | AsgnStm (v, e)    -> func e
+        | GotoStm (e, pc)   -> func e
+        | SeqStm s          -> s |> List.iter (iterExprs func)
+        | RetStm (Some e)   -> func e
+        | IfStm (e, s1, s2) -> func e; iterExprs func s1; iterExprs func s2
+        | ExprStm e         -> func e
+        | _                 -> ()

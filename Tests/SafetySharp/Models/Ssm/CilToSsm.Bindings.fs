@@ -52,7 +52,7 @@ module Bindings =
                     SourceComp = "Root0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
             ]
 
@@ -65,7 +65,7 @@ module Bindings =
                     SourceComp = "Root0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Instantaneous
+                    Kind = Instantaneous
                 }
             ]
 
@@ -78,14 +78,14 @@ module Bindings =
                     SourceComp = "Root0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Instantaneous
+                    Kind = Instantaneous
                 }
                 { 
                     TargetComp =  "Root0@0"
                     SourceComp = "Root0@0"
                     TargetPort = methodName "Q" 2 0
                     SourcePort = methodName "P" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
             ]
 
@@ -98,7 +98,7 @@ module Bindings =
                     SourceComp = "Root0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
             ]
 
@@ -111,7 +111,7 @@ module Bindings =
                     SourceComp = "Root0@0.y@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "N" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
             ]
 
@@ -124,7 +124,7 @@ module Bindings =
                     SourceComp = "Root0@0.y@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "N" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
             ]
 
@@ -157,21 +157,21 @@ module Bindings =
                     SourceComp = "Root0@0.z@0"
                     TargetPort = methodName "Q" 2 0
                     SourcePort = methodName "N" 2 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
                 { 
                     TargetComp =  "Root0@0.z@0"
                     SourceComp = "Root0@0.z@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "Q" 3 0
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
                 { 
                     TargetComp =  "Root0@0"
                     SourceComp = "Root0@0.y@1"
                     TargetPort = methodName "Q" 3 1
                     SourcePort = methodName "N" 2 1
-                    Kind = BindingKind.Delayed
+                    Kind = Delayed
                 }
             ]
 
@@ -184,6 +184,65 @@ module Bindings =
                     SourceComp = "Root0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
-                    Kind = BindingKind.Instantaneous
+                    Kind = Instantaneous
+                }
+            ]
+
+    [<Test>]
+    let ``binding with virtual provided port`` () =
+        transform "class Y : Component { public virtual void M() {} } class X : Y { public override void M() {} extern void N(); public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =?
+            [
+                {
+                    Kind = Instantaneous
+                    SourceComp = "Root0@0"
+                    TargetComp = "Root0@0"
+                    TargetPort = methodName "N" 3 0
+                    SourcePort = methodName "M" 3 0
+                }
+            ]
+
+        transform "class Y : Component { public virtual void M() {} public extern void N(); } class Z : Y { public override void M() {} } class X : Component { Y y = new Z(); public X() { Bind(y.RequiredPorts.N = y.ProvidedPorts.M); } }" "new X()" =?
+            [
+                {
+                    Kind = Instantaneous
+                    SourceComp = "Root0@0.y@0"
+                    TargetComp = "Root0@0.y@0"
+                    TargetPort = methodName "N" 2 0
+                    SourcePort = methodName "M" 3 0
+                }
+            ]
+
+    [<Test>]
+    let ``binding with interface provided port`` () =
+        transform "interface I : IComponent { [Provided] void M(); } class Y : Component, I { public void M() {} } class X : Component { I y = new Y(); public extern void N(); public X() { Bind(RequiredPorts.N = y.ProvidedPorts.M); } }" "new X()" =?
+            [
+                {
+                    Kind = Instantaneous
+                    SourceComp = "Root0@0.y@0"
+                    TargetComp = "Root0@0"
+                    TargetPort = methodName "N" 2 0
+                    SourcePort = methodName "M" 2 0
+                }
+            ]
+
+        transform "interface I : IComponent { [Provided] void M(); } class Y : Component, I { public virtual void M() {} } class Z : Y { public override void M() {} } class X : Component { I i = new Z(); public extern void N(); public X() { Bind(RequiredPorts.N = i.ProvidedPorts.M); } }" "new X()" =?
+            [
+                {
+                    Kind = Instantaneous
+                    SourceComp = "Root0@0.i@0"
+                    TargetComp = "Root0@0"
+                    TargetPort = methodName "N" 2 0
+                    SourcePort = methodName "M" 3 0
+                }
+            ]
+
+        transform "interface I : IComponent { [Provided] void M(); } class Y : Component, I { void I.M() {} } class X : Component { I y = new Y(); public extern void N(); public X() { Bind(RequiredPorts.N = y.ProvidedPorts.M); } }" "new X()" =?
+            [
+                {
+                    Kind = Instantaneous
+                    SourceComp = "Root0@0.y@0"
+                    TargetComp = "Root0@0"
+                    TargetPort = methodName "N" 2 0
+                    SourcePort = methodName "I.M" 2 0
                 }
             ]

@@ -251,13 +251,13 @@ module ``Cyclic control flow`` =
     let private transform csharpCode =
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        (model, CilToSsm.transformModel model)
+        (model, CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model)
 
     let private check componentNames portNames csharpCode =
         let (model, ssm) = transform csharpCode
         let e = raisesWith<CyclicControlFlowException> (fun () -> SsmValidation.validate model ssm)
         e.ControlFlow |> List.ofArray |> List.map (fun (c, _) -> c.UnmangledName) =? componentNames
-        e.ControlFlow |> List.ofArray |> List.map (fun (_, m) -> m.Name) =? portNames
+        e.ControlFlow |> List.ofArray |> List.map (fun (_, m) -> sprintf "%s.%s" m.DeclaringType.FullName m.Name) =? portNames
 
     [<Test>]
     let ``model without any cycles is valid`` () =
@@ -287,7 +287,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with simple instantaneous binding cycle is invalid`` () =
-        check ["Root0"; "Root0"] ["M"; "N"] 
+        check ["Root0"; "Root0"] ["X.M"; "X.N"] 
           "class X : Component { 
                 extern void M(); 
                 void N() { M(); }
@@ -297,15 +297,15 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with recursive function is invalid`` () =
-        check ["Root0"] ["N"] 
+        check ["Root0"] ["X.N"] 
           "class X : Component { 
                 void N() { N(); }
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-    [<Test; Ignore "Not yet implemented">]
+    [<Test>]
     let ``model with recursive update function is invalid`` () =
-        check ["Root0"] ["Update"] 
+        check ["Root0"] ["X.Update"] 
           "class X : Component { 
                 public override void Update() { Update(); }
            }
@@ -324,7 +324,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with mutually recursive functions is invalid`` () =
-        check ["Root0"; "Root0"] ["M"; "N"] 
+        check ["Root0"; "Root0"] ["X.M"; "X.N"] 
           "class X : Component { 
                 void M() { N(); }
                 void N() { M(); }
@@ -333,7 +333,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with long cycle involving subcomponents is invalid`` () =
-        check ["Root0.t1"; "Root0.t2"; "Root0.t2"; "Root0"; "Root0"; "Root0.t1"] ["Req"; "Prov"; "Req"; "N"; "M"; "Prov"] 
+        check ["Root0.t1"; "Root0.t2"; "Root0.t2"; "Root0"; "Root0"; "Root0.t1"] ["T.Req"; "T.Prov"; "T.Req"; "X.N"; "X.M"; "T.Prov"] 
           "class T : Component {
                 public extern void Req();
                 public void Prov() { Req(); }
@@ -353,7 +353,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model involving recursive direct subcomponent provided port call is invalid`` () =
-        check ["Root0.t"; "Root0"; "Root0.t"] ["Req"; "N"; "Prov"] 
+        check ["Root0.t"; "Root0"; "Root0.t"] ["T.Req"; "X.N"; "T.Prov"] 
           "class T : Component {
                 public extern void Req();
                 public void Prov() { Req(); }
@@ -389,3 +389,67 @@ module ``Cyclic control flow`` =
                  class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
         nothrow (fun () -> SsmValidation.validate model ssm)
+
+    [<Test>]
+    let ``recursive virtual call is invalid`` () =
+        check ["Root0"] ["Y.M"] 
+            "class X : Component {
+                public virtual void M() {}
+             }
+             class Y : X { 
+                public override void M() { M(); }
+             }
+             class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+    [<Test>]
+    let ``recursive virtual and base call is invalid`` () =
+        check ["Root0"; "Root0"] ["X.M"; "Y.M"] 
+            "class X : Component {
+                public virtual void M() { M(); }
+             }
+             class Y : X { 
+                public override void M() { base.M(); }
+             }
+             class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+    [<Test>]
+    let ``recursive virtual call of base implementation is valid`` () =
+        let (model, ssm) = 
+            transform
+                "class X : Component {
+                    public virtual void M() { M(); }
+                 }
+                 class Y : X { 
+                    public override void M() { }
+                 }
+                 class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+        nothrow (fun () -> SsmValidation.validate model ssm)
+
+    [<Test>]
+    let ``recursive virtual functions and properties are invalid`` () =
+        check ["Root0"; "Root0"; "Root0"] ["X.get_P"; "Y.M"; "Y.get_P"] 
+            "abstract class X : Component {
+                public virtual int M() { return 0; }
+                public virtual int P { get { return M(); } }
+             }
+             class Y : X { 
+                public override int M() { return P; }
+                public override int P { get { return base.P; } }
+             }
+             class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
+
+    [<Test>]
+    let ``model with recursion involving virtual binding is valid`` () =
+        check ["Root0"; "Root0"] ["Y.Req"; "X.Prov"] 
+            "class Y : Component {
+                public extern void Req();
+                public virtual void Prov() { }
+                }
+                class X : Y { 
+                    public override void Prov() { Req(); }
+                    public X() {
+                        Bind(RequiredPorts.Req = ProvidedPorts.Prov);
+                    }
+                }
+                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"

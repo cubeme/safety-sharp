@@ -36,13 +36,8 @@ module ``Local bindings`` =
         let csharpCode = sprintf "%s class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }" csharpCode
         let model = TestCompilation.CreateModel csharpCode
         model.FinalizeMetadata ()
-        let root = CilToSsm.transformModel model |> SsmLowering.lowerLocalBindings
+        let root = CilToSsm.transformModel model |> SsmLowering.lowerVirtualCalls model |> SsmLowering.lowerLocalBindings
         root.Subs.[0]
-
-    let private transformMethod methodDefinition= 
-        let ssm = transform methodDefinition
-        ssm.Methods.[0] |> SsmToCSharp.transform |> printfn "%s"
-        ssm.Methods.[0]
 
     let private tmp = CilToSsm.freshLocal
     let private synName name inheritanceLevel overloadIndex synIndex = SsmLowering.makeSynPortName (methodName name inheritanceLevel overloadIndex) synIndex
@@ -72,7 +67,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [])); RetStm None]
+                            Body = SeqStm [ExprStm (CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [], false)); RetStm None]
                         }
                     ]
             }
@@ -111,7 +106,109 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "X", [], [], VoidType, [])); RetStm None]
+                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "X", [], [], VoidType, [], false)); RetStm None]
+                        }
+                        {
+                            Name = synName "M" 2 0 0
+                            Kind = ReqPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = NopStm
+                        }
+                    ]
+            }
+
+    [<Test>]
+    let ``introduces binding for virtual overridden provided port invocation`` () =
+        transform "class Y : Component { public virtual void M() { } void N() { M(); } } class X : Y { public override void M() {} }" =?
+            {
+                Name = "Root0@0"
+                Fields = []
+                Subs = []
+                Faults = []
+                Bindings = 
+                    [
+                        { 
+                            SourceComp = "Root0@0"
+                            SourcePort = methodName "M" 3 0
+                            TargetComp = "Root0@0"; 
+                            TargetPort = synName "M" 3 0 0
+                            Kind = Instantaneous 
+                        }
+                    ]
+                Methods = 
+                    [
+                        {
+                            Name = methodName "M" 2 0
+                            Kind = ProvPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = RetStm None
+                        }
+                        {
+                            Name = methodName "N" 2 0
+                            Kind = ProvPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = SeqStm [ExprStm (CallExpr (synName "M" 3 0 0, "X", [], [], VoidType, [], false)); RetStm None]
+                        }
+                        {
+                            Name = methodName "M" 3 0
+                            Kind = ProvPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = RetStm None
+                        }
+                        {
+                            Name = synName "M" 3 0 0
+                            Kind = ReqPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = NopStm
+                        }
+                    ]
+            }
+
+    [<Test>]
+    let ``introduces binding for base method invocation`` () =
+        transform "class Y : Component { public virtual void M() { } } class X : Y { public override void M() { base.M(); } }" =?
+            {
+                Name = "Root0@0"
+                Fields = []
+                Subs = []
+                Faults = []
+                Bindings = 
+                    [
+                        { 
+                            SourceComp = "Root0@0"
+                            SourcePort = methodName "M" 2 0
+                            TargetComp = "Root0@0"; 
+                            TargetPort = synName "M" 2 0 0
+                            Kind = Instantaneous 
+                        }
+                    ]
+                Methods = 
+                    [
+                        {
+                            Name = methodName "M" 2 0
+                            Kind = ProvPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = RetStm None
+                        }
+                        {
+                            Name = methodName "M" 3 0
+                            Kind = ProvPort
+                            Params = []
+                            Locals = []
+                            Return = VoidType
+                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, [], false)); RetStm None]
                         }
                         {
                             Name = synName "M" 2 0 0
@@ -170,7 +267,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, [])); RetStm None]
+                            Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, [], false)); RetStm None]
                         }
                         {
                             Name = synName "M" 2 0 0
@@ -214,7 +311,7 @@ module ``Local bindings`` =
                                         Params = []
                                         Locals = []
                                         Return = VoidType
-                                        Body = SeqStm [ExprStm (CallExpr (synName "N" 2 0 0, "Y", [], [], VoidType, [])); RetStm None]
+                                        Body = SeqStm [ExprStm (CallExpr (synName "N" 2 0 0, "Y", [], [], VoidType, [], false)); RetStm None]
                                     }
                                     {
                                         Name = methodName "N" 2 0
@@ -278,9 +375,9 @@ module ``Local bindings`` =
                             Return = VoidType
                             Body = 
                                 SeqStm [
-                                    ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, []))
-                                    ExprStm (CallExpr (synName "Q" 2 0 1, "X", [], [], VoidType, []))
-                                    ExprStm (CallExpr (synName "Q" 2 0 2, "X", [], [], VoidType, []))
+                                    ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, [], false))
+                                    ExprStm (CallExpr (synName "Q" 2 0 1, "X", [], [], VoidType, [], false))
+                                    ExprStm (CallExpr (synName "Q" 2 0 2, "X", [], [], VoidType, [], false))
                                     RetStm None
                                 ]
                         }

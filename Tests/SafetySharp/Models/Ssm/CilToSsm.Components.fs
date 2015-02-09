@@ -183,7 +183,7 @@ module Components =
                             Body = SeqStm 
                                 [
                                     ExprStm (MemberExpr (Field ("Root0@0.x@0", ClassType "X"),
-                                                         CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [])))
+                                                         CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [], true)))
                                     RetStm None
                                 ]
                             Kind = ProvPort

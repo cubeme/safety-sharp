@@ -73,10 +73,6 @@ module internal CilToSsm =
         let builder = resolver1.ToBuilder ()
         resolver2 |> Seq.filter (fun t -> not <| builder.ContainsKey t.Key) |> builder.AddRange 
         builder.ToImmutableDictionary ()
-    
-    /// Gets the C# compatiable full name.
-    let private getCSharpType (fullName : string) =
-        fullName.Replace("/", ".")
 
     /// Generates a fresh local variable (see also the Demange paper)
     let freshLocal pc idx t =
@@ -97,7 +93,7 @@ module internal CilToSsm =
         | MetadataType.Int32           -> Some IntType
         | MetadataType.Double          -> Some DoubleType
         | MetadataType.GenericInstance
-        | MetadataType.Class           -> Some (ClassType (getCSharpType typeRef.FullName))
+        | MetadataType.Class           -> Some (ClassType typeRef.FullName)
         | _                            -> None
 
     /// Maps the metadata type of a variable to a S# type.
@@ -233,17 +229,17 @@ module internal CilToSsm =
         | (Instr.Starg a, e :: s) when containsArg (argName a) s -> replaceWithTempVar pc (arg a) e replaceArg s  
         | (Instr.Stloc l, e :: s) when not (containsLocal l s) -> (AsgnStm (local l, e), [], s)
         | (Instr.Stloc l, e :: s) when containsLocal l s -> replaceWithTempVar pc (local l) e replaceLocal s         
-        | (Instr.Call m, s) when List.length s >= m.Parameters.Count + (if m.Resolve().IsStatic then 0 else 1) ->
+        | (Instr.Call (m, isVirtual), s) when List.length s >= m.Parameters.Count + (if m.Resolve().IsStatic then 0 else 1) ->
             let resolver = mergeGenericResolvers resolver (createGenericResolver m.DeclaringType)
             let argCount = m.Parameters.Count
             let returnType = m.ReturnType |> resolveGenericType resolver |> mapReturnType
             let paramTypes = m.Parameters |> Seq.map (fun p -> p.ParameterType |> resolveGenericType resolver |> mapVarType) |> Seq.toList
             let paramDirs = m.Parameters |> Seq.map getParamDir |> Seq.toList
             let args = s |> Seq.take argCount |> Seq.toList |> List.rev
+            let declaringType = m.DeclaringType.FullName
             let m = m.Resolve ()
             let name = Renaming.getUniqueMethodName m
             let target = if m.IsStatic then None else Some s.[m.Parameters.Count]
-            let declaringType = getCSharpType m.DeclaringType.FullName
 
             // Pop the arguments from the symbolic stack, as well as the invocation target for non-static methods
             let s = s |> Seq.skip (argCount + (if m.IsStatic then 0 else 1)) |> Seq.toList
@@ -269,10 +265,10 @@ module internal CilToSsm =
                     (idx + 1, (AsgnStm (tmp, VarExpr v)) :: vars, replaceVar ((=) v) tmp s)
                  ) (idx, vars, stack)
 
-            let callExpr = CallExpr (name, declaringType, paramTypes, paramDirs, returnType, args)
+            let callExpr = CallExpr (name, declaringType, paramTypes, paramDirs, returnType, args, isVirtual)
             let expr = 
                 match target with 
-                | None -> TypeExpr (getCSharpType m.DeclaringType.FullName, callExpr)
+                | None -> TypeExpr (m.DeclaringType.FullName, callExpr)
                 | Some (VarExpr v) when Ssm.isThis v -> callExpr
                 | Some (VarExpr (Field (f, ClassType t)))
                 | Some (VarRefExpr (Field (f, ClassType t))) -> MemberExpr (Field (f, ClassType t), callExpr)
@@ -392,12 +388,12 @@ module internal CilToSsm =
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
             match e with
-            | IntExpr 0 when isBool       -> BoolExpr false
-            | IntExpr _ when isBool       -> BoolExpr true
-            | CallExpr (m, t, p, d, r, e) -> CallExpr (m, t, p, d, r, fixCallExprs p e)
-            | MemberExpr (v, e)           -> MemberExpr (v, fixExpr e isBool)
-            | TypeExpr (t, e)             -> TypeExpr (t, fixExpr e isBool)
-            | e when isBool               -> 
+            | IntExpr 0 when isBool          -> BoolExpr false
+            | IntExpr _ when isBool          -> BoolExpr true
+            | CallExpr (m, t, p, d, r, e, v) -> CallExpr (m, t, p, d, r, fixCallExprs p e, v)
+            | MemberExpr (v, e)              -> MemberExpr (v, fixExpr e isBool)
+            | TypeExpr (t, e)                -> TypeExpr (t, fixExpr e isBool)
+            | e when isBool                  -> 
                 match Ssm.deduceType e with
                 | IntType    -> BExpr (e, Ne, IntExpr 0)
                 | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
@@ -508,7 +504,7 @@ module internal CilToSsm =
            Return = m.ReturnType |> resolveGenericType resolver |> mapReturnType
            Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
            Kind = 
-                let methodInfo = metadata.UnmapMethod c name
+                let methodInfo = metadata.UnmapMethod (c.GetType ()) name
                 if methodInfo.GetBaseDefinition () = componentUpdateMethod then Step
                 else if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
 
@@ -520,8 +516,8 @@ module internal CilToSsm =
 
     /// Transforms the given bindings.
     let private transformBindings (metadata : MetadataProvider) =
-        let resolvePort (port : PortInfo) = metadata.Resolve(port.Method) |> Renaming.getUniqueMethodName
         let resolveComponent (port : PortInfo) = (port.Component :?> Component).Name
+        let resolvePort (port : PortInfo) = metadata.Resolve(port.Method) |> Renaming.getUniqueMethodName
         
         let transform (binding : PortBinding) =
           { SourceComp = binding.SourcePort |> resolveComponent
