@@ -100,7 +100,7 @@ compositions and guarded commands.
 		\skipStm \mid 
 		\assignVarStm{\var}{\expr} \mid 
 		\seqStm{\stmFil_1}{\stmFil_2} \mid
-		\guardedStm{\guardedClause{\expr}{\stmFil}}
+		\guardedStm{\toList{(\guardedClause{\expr}{\stmFil})}}
 \end{align*}
 
 The nondeterministic rule system $\stmArrowFil$ defines the natural (big-step) semantics of statements.
@@ -313,7 +313,7 @@ component C
 		Y();
 		
 		// provided port
-		X(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool)
+		X(in p1 : int, inout r1 : bool, in p2 : int, inout r2 : bool)
 		{
 			Y();
 			r1 = false;
@@ -340,23 +340,20 @@ component C
 	}
 			
 	// required ports
-	M(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool);
+	M(in p1 : int, inout r1 : bool, in p2 : int, inout r2 : bool);
 		
 	// provided ports; overloaded on fault expressions
-	X(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool)
+	X(in p1 : int, inout r1 : bool, in p2 : int, inout r2 : bool)
 	{
-		locals
-		{
-			int x;
-			int y;
-		}
+		int x;
+		int y;
 		
 		r1 = p1 > 1;
 		r2 = p2 > x && b;
 	}
 	
 	[Stuck] // or more complex fault expression like [F1 && F2 && !F3 && !F4]
-	X(p1 : int, inout r1 : bool, p2 : int, inout r2 : bool)
+	X(in p1 : int, inout r1 : bool, in p2 : int, inout r2 : bool)
 	{
 		r1 = stuckValue;
 		r2 = stuckValue;
@@ -367,19 +364,16 @@ component C
 	}
 		
 	// bindings
-	M = delayed D.X;  // ok as D.X has no side-effects
-	D.Y = instantly Y;
+	C.M = delayed D.X;  // ok as D.X has no side-effects
+	D.Y = instantly C.Y;
 	
 	// step behavior; overloaded on fault expressions
 	step
 	{
-		locals
-		{
-			bool l1;
-			bool l2;
-		}
-		
-		M(x, inout l1, x - 1, inout l2);
+		bool l1;
+		bool l2;
+				
+		M(in x, inout l1, in x - 1, inout l2);
 		Y();
 		
 		choice
@@ -388,16 +382,17 @@ component C
 			l2 => { b = true; }
 		}
 		
-		step D;
-		step Stuck;
-		step F;
+		D();
+		Stuck();
+		F();
 	}
 	
 	[Stuck]
 	step
 	{
-		locals { bool l1; }
-		M(x, x - 1; l1, l2);
+		bool l1;
+		bool l2;
+		M(in x, inout l1; in x - 1, inout l2);
 	}
 }
 \end{lstlisting}
@@ -627,21 +622,15 @@ delayed bindings are allowed to be invoked. Also, the field environment is not a
 fields are illegal. Otherwise, it would be possible to ``rewrite history''.
 
 Formally, a binding binds a \textit{binding source} to a \textit{binding target}; either instantaneously or delayed. A
-binding source uniquely identifies a provided port of some component; if no component is given, the ``current'' component is
-implied. Otherwise the component must be a direct subcomponent of the ``current'' component. Similarly, a binding target uniquely
-identifies a required port of some component.
+binding source uniquely identifies a provided port of some component; the component must either be the component itself or one of
+its direct subcomponents. Similarly, a binding target uniquely identifies a required port of the component itself or one of its
+direct subcomponents.
 \begin{align*} 
-	\bindingSrc \in \BindingSrc &:=
-		\provPort \mid \qualifiedName{\comp}{\provPort}
-	\\
-	\bindingTarget \in \BindingTarget &:=
-		\reqPort \mid \qualifiedName{\comp}{\reqPort} 
-	\\
 	\bindingType \in \BindingType &:=
 		\instantBindingType \mid \delayedBindingType
 	\\
 	\bindingDecl \in \BindingDecl &:=
-		\bindingDeclSyn{\bindingTarget}{\bindingSrc}{\bindingType} 
+		\bindingDeclSyn{\qualifiedName{\comp}{\reqPort} }{\qualifiedName{\comp}{\provPort}}{\bindingType} 
 \end{align*}
 
 We define a substitution operation for components used within bindings as follows: Given a component $\comp$ that is to be
@@ -911,7 +900,7 @@ declaring component, the port's default implementation or one of its overloads a
 	\tag{call${_i}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnv, \faultEnv, \varEnvFmEmpty[\varof(\toList{\parameterDecl}) \mapsto
+		\configurationFm{\stmof({\behavior}), \fieldEnv, \faultEnv, \varEnvFmEmpty[\varof(\toList{\parameterDecl}) \mapsto
 		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm
@@ -941,7 +930,7 @@ implementation or one of its overloads are invoked.
 	\tag{call${_d}$}
 	\dfrac
 	{
-		\configurationFm{\stmFm, \fieldEnvPrev, \faultEnvPrev, \varEnvFmEmpty[\varof(\toList{\parameterDecl}) \mapsto
+		\configurationFm{\stmof({\behavior}), \fieldEnvPrev, \faultEnvPrev, \varEnvFmEmpty[\varof(\toList{\parameterDecl}) \mapsto
 		\ExprSem{\toList{\expr}}\fieldEnv(\toListNE{\comp})\varEnvFm],
 		\toListNE{\comp}_\provPort}
 			\stmArrowFm

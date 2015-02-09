@@ -109,14 +109,14 @@ module internal ScmToString =
             | StepFault f -> fault f; writer.Append "();"
 
         let varDecl (v : VarDecl) =
-            typeRef v.Type
-            writer.Append " "
             var v.Var
+            writer.Append " : "
+            typeRef v.Type
 
         let fieldDecl (f : FieldDecl) =
-            typeRef f.Type
-            writer.Append " "
             field f.Field
+            writer.Append " : "
+            typeRef f.Type
             writer.Append " = "
             writer.AppendRepeated f.Init value (fun () -> writer.Append ", ")
             writer.AppendLine ";"
