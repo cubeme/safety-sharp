@@ -76,6 +76,22 @@ module Methods =
             }
 
     [<Test>]
+    let ``method with enum return value and parameters`` () =
+        transformMethod "enum X { A, B } X M(X x1, out X x2) { x2 = X.B; return x1; }" =?
+            {
+                Name = methodName "M" 2 0
+                Return = IntType
+                Params = [{ Var = arg "x1" IntType; Direction = In }; { Var = arg "x2" IntType; Direction = Out }]
+                Locals = []
+                Body = 
+                    SeqStm [
+                        AsgnStm (arg "x2" IntType, IntExpr 1)    
+                        RetStm (Some (VarExpr (arg "x1" IntType)))
+                    ]
+                Kind = ProvPort
+            }
+
+    [<Test>]
     let ``extern method with return value and parameters should have kind required port`` () =
         transformMethod "extern int M(int x);" =?
             {

@@ -169,3 +169,9 @@ module Fields =
         transform c "new D<int, bool>(true, 0)" =? [field "b" 2 IntType [IntVal 0]; field "b" 3 BoolType [BoolVal true] ]
         transform c "new D<bool, int>(17, true, false)" =? [field "b" 2 BoolType [BoolVal true; BoolVal false]; field "b" 3 IntType [IntVal 17] ]
         transform c "new D<double, double>(.5, 1.5)" =? [field "b" 2 DoubleType [DoubleVal 1.5]; field "b" 3 DoubleType [DoubleVal 0.5] ]
+
+    [<Test>]
+    let ``field of enum type`` () =
+        let c = "enum X { A, B, C} class C : Component { X x; public C(params X[] values) { SetInitialValues(() => x, values); } }" 
+        transform c "new C(X.A)" =? [field "x" 2 IntType [IntVal 0]]
+        transform c "new C(X.A, X.C, X.B)" =? [field "x" 2 IntType [IntVal 0; IntVal 2; IntVal 1]]

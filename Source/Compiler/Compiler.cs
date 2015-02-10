@@ -94,8 +94,11 @@ namespace SafetySharp.Compiler
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNullOrWhitespace(outputPath, () => outputPath);
 
+			if (!Diagnose(compilation, runSSharpDiagnostics))
+				return false;
+
 			var optimizedCompilation = compilation.WithOptions(compilation.Options.WithOptimizationLevel(OptimizationLevel.Release));
-			if (!Diagnose(compilation, runSSharpDiagnostics) || !Emit(optimizedCompilation, outputPath, embedOriginalAssembly: false))
+			if (!Emit(optimizedCompilation, outputPath, embedOriginalAssembly: false))
 				return false;
 
 			var diagnosticOptions = compilation.Options.SpecificDiagnosticOptions.Add("CS0626", ReportDiagnostic.Suppress);

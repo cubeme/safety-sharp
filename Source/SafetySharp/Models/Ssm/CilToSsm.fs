@@ -88,13 +88,14 @@ module internal CilToSsm =
     let private tryMapType (typeRef : TypeReference) =
         let metadataType = if typeRef.IsByReference then typeRef.GetElementType().MetadataType else typeRef.MetadataType
         match metadataType with
-        | MetadataType.Void            -> Some VoidType
-        | MetadataType.Boolean         -> Some BoolType
-        | MetadataType.Int32           -> Some IntType
-        | MetadataType.Double          -> Some DoubleType
-        | MetadataType.GenericInstance
-        | MetadataType.Class           -> Some (ClassType typeRef.FullName)
-        | _                            -> None
+        | MetadataType.Void               -> Some VoidType
+        | MetadataType.Boolean            -> Some BoolType
+        | MetadataType.Int32              -> Some IntType
+        | MetadataType.Double             -> Some DoubleType
+        | MetadataType.GenericInstance    
+        | MetadataType.Class              -> Some (ClassType typeRef.FullName)
+        | _ when typeRef.Resolve().IsEnum -> Some IntType
+        | _                               -> None
 
     /// Maps the metadata type of a variable to a S# type.
     let private mapVarType typeRef =
@@ -469,11 +470,13 @@ module internal CilToSsm =
         t.Fields 
         |> Seq.filter (fun f -> not f.IsLiteral)
         |> Seq.map (fun f -> 
-            match (resolveGenericType resolver f.FieldType).MetadataType with
-            | MetadataType.Boolean -> (f, Some BoolType)
-            | MetadataType.Int32   -> (f, Some IntType)
-            | MetadataType.Double  -> (f, Some DoubleType)
-            | _                    -> (f, None)
+            let fieldType = resolveGenericType resolver f.FieldType
+            match fieldType.MetadataType with
+            | MetadataType.Boolean              -> (f, Some BoolType)
+            | MetadataType.Int32                -> (f, Some IntType)
+            | MetadataType.Double               -> (f, Some DoubleType)
+            | _ when fieldType.Resolve().IsEnum -> (f, Some IntType)
+            | _                                 -> (f, None)
         )
         |> Seq.filter (fun (f, t) -> t <> None)
         |> Seq.map (fun (f, fieldType) -> 
