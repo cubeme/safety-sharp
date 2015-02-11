@@ -82,7 +82,7 @@ namespace PressureTank
 					{
 						_currentState = PressureTankState.Draining;
 					}
-					else if (_timer.Triggered())
+					else if (_timer.HasElapsed())
 					{
 						_currentState = PressureTankState.EmergencyStop;
 					}
@@ -95,7 +95,7 @@ namespace PressureTank
 					if (!_sensor.Triggered())
 					{
 						_currentState = PressureTankState.Filling;
-						_timer.Reset();
+						_timer.Start();
 					}
 					break;
 				case PressureTankState.EmergencyStop:

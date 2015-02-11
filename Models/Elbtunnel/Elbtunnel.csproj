@@ -47,11 +47,25 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LightBarrier.cs">
-    </Compile>
-    <Compile Include="MainControl.cs" />
+    <Compile Include="Controllers\HeightControl.cs" />
+    <Compile Include="Controllers\IEndControl.cs" />
+    <Compile Include="Controllers\IMainControl.cs" />
+    <Compile Include="Controllers\IPreControl.cs" />
+    <Compile Include="Controllers\OriginalEndControl.cs" />
+    <Compile Include="Controllers\OriginalMainControl.cs" />
+    <Compile Include="Controllers\RevisedPreControl.cs" />
+    <Compile Include="Controllers\OriginalPreControl.cs" />
+    <Compile Include="Actuators\TrafficLights.cs" />
+    <Compile Include="Environment\IVehicle.cs" />
+    <Compile Include="Environment\Vehicle.cs" />
+    <Compile Include="Environment\VehicleCollection.cs" />
+    <Compile Include="Lane.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sensors\IVehicleDetector.cs" />
+    <Compile Include="Sensors\OverheadDetector.cs" />
+    <Compile Include="Sensors\LightBarrier.cs" />
     <Compile Include="Tests.cs" />
+    <Compile Include="VehicleKind.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\SafetySharp\SafetySharp.fsproj">

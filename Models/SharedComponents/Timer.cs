@@ -5,34 +5,35 @@
 
 	public class Timer : Component
 	{
-	    public Timer(int timeout)
-	    {
-	        _timeout = timeout;
-	    }
+		private readonly int _timeout;
 
-		//public bool Triggered = false;
-	    private readonly int _timeout;
+		// TODO: OverflowBehavior.Clamp
+		private int _remainingTime;
 
-		private int _i = 1;
+		public Timer(int timeout)
+		{
+			_timeout = timeout;
+		}
 
-		public extern void Test();
+		public bool HasElapsed()
+		{
+			return _remainingTime == 0;
+		}
 
-	    [Provided]
-	    public bool Triggered()
-	    {
-	        return (_i >= _timeout);
-	    }
+		public void Start()
+		{
+			_remainingTime = _timeout;
+		}
 
-	    [Provided]
-	    public void Reset()
-	    {
-		    Test();
-	        _i = 0;
-	    }
+		public void Stop()
+		{
+			_remainingTime = 0;
+		}
 
 		public override void Update()
 		{
-			_i = _i + 1;
+			// TODO: Support different system step times
+			--_remainingTime;
 		}
 	}
 }
