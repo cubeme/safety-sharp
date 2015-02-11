@@ -99,7 +99,7 @@ module Methods =
                 Return = BoolType
                 Params = [{ Var = arg "x" IntType; Direction = In }; { Var = arg "b" BoolType; Direction = In }]
                 Locals = [tmp 3 0 BoolType]
-                Body = IfStm (BExpr (VarExpr (arg "x" IntType), Eq, IntExpr 0),
+                Body = IfStm (UExpr (Not, BExpr (VarExpr (arg "x" IntType), Ne, IntExpr 0)),
                               RetStm (Some (BoolExpr false)),
                               SeqStm [
                                 AsgnStm (tmp 3 0 BoolType, CallExpr (methodName "F" 2 0, className, [], [], BoolType, [], false))
