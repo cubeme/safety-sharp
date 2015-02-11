@@ -156,6 +156,27 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		}
 
 		/// <summary>
+		///     Returns a copy of <paramref name="syntaxNode" /> with all comment trivia removed.
+		/// </summary>
+		/// <typeparam name="T">The type of the syntax node that should have all of its comment trivia removed.</typeparam>
+		/// <param name="syntaxNode">The syntax node that should have all of its comment trivia removed.</param>
+		[Pure, NotNull]
+		public static T RemoveComments<T>([NotNull] this T syntaxNode)
+			where T : SyntaxNode
+		{
+			Requires.NotNull(syntaxNode, () => syntaxNode);
+
+			var trivia = syntaxNode.DescendantTrivia().Where(t =>
+			{
+				var kind = t.CSharpKind();
+				return kind == SyntaxKind.DocumentationCommentExteriorTrivia || kind == SyntaxKind.MultiLineCommentTrivia ||
+					   kind == SyntaxKind.MultiLineDocumentationCommentTrivia || kind == SyntaxKind.SingleLineCommentTrivia ||
+					   kind == SyntaxKind.SingleLineDocumentationCommentTrivia;
+			});
+			return syntaxNode.ReplaceTrivia(trivia, (t1, t2) => SyntaxFactory.Space);
+		}
+
+		/// <summary>
 		///     Returns a copy of <paramref name="syntaxNode" /> with <paramref name="newLineCount" /> many end-of-line trivia tokens
 		///     appended to <paramref name="syntaxNode" />'s trailing trivia.
 		/// </summary>

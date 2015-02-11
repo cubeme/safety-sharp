@@ -92,6 +92,23 @@ module Methods =
             }
 
     [<Test>]
+    let ``method with enum comparison should not fail type deduction`` () =
+        transformMethod "enum X { A, B } bool F() { return false; } bool M(X x, bool b) { return x != X.A && F(); }" =?
+            {
+                Name = methodName "M" 2 0
+                Return = BoolType
+                Params = [{ Var = arg "x" IntType; Direction = In }; { Var = arg "b" BoolType; Direction = In }]
+                Locals = [tmp 3 0 BoolType]
+                Body = IfStm (BExpr (VarExpr (arg "x" IntType), Eq, IntExpr 0),
+                              RetStm (Some (BoolExpr false)),
+                              SeqStm [
+                                AsgnStm (tmp 3 0 BoolType, CallExpr (methodName "F" 2 0, className, [], [], BoolType, [], false))
+                                RetStm (Some (VarExpr (tmp 3 0 BoolType)))
+                              ])
+                Kind = ProvPort
+            }
+
+    [<Test>]
     let ``extern method with return value and parameters should have kind required port`` () =
         transformMethod "extern int M(int x);" =?
             {

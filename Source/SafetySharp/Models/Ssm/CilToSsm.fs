@@ -386,23 +386,30 @@ module internal CilToSsm =
     /// It also allows implicit "conversion" of ints to bools. C# and the SSM, however, don't allow that, so we have to fix
     /// that in a couple of places.
     let private fixIntIsBool returnsBool methodBody =
+        let makeBool e shouldBeBool =
+            match Ssm.deduceType e with
+            | IntType    when shouldBeBool -> BExpr (e, Ne, IntExpr 0)
+            | DoubleType when shouldBeBool -> BExpr (e, Ne, DoubleExpr 0.0)
+            | _          -> e
+
         // Makes all implict conversions of ints or doubles to bool within an expression explicit
         let rec fixExpr e isBool =
             match e with
-            | IntExpr 0 when isBool          -> BoolExpr false
-            | IntExpr _ when isBool          -> BoolExpr true
-            | CallExpr (m, t, p, d, r, e, v) -> CallExpr (m, t, p, d, r, fixCallExprs p e, v)
-            | MemberExpr (v, e)              -> MemberExpr (v, fixExpr e isBool)
-            | TypeExpr (t, e)                -> TypeExpr (t, fixExpr e isBool)
-            | e when isBool                  -> 
+            | IntExpr 0 when isBool              -> BoolExpr false
+            | IntExpr _ when isBool              -> BoolExpr true
+            | VarExpr (Local (l, t)) when isBool -> VarExpr (Local (l, BoolType))
+            | CallExpr (m, t, p, d, r, e, v)     -> CallExpr (m, t, p, d, r, List.zip p e |> List.map (fun (t, e) -> fixExpr e (t = BoolType)), v)
+            | MemberExpr (v, e)                  -> MemberExpr (v, fixExpr e isBool)
+            | TypeExpr (t, e)                    -> TypeExpr (t, fixExpr e isBool)
+            | BExpr (e1, op, e2)                 -> makeBool (BExpr (fixExpr e1 false, op, fixExpr e2 false)) isBool
+            | UExpr (Not, e)                     ->
+                let e = fixExpr e true
                 match Ssm.deduceType e with
-                | IntType    -> BExpr (e, Ne, IntExpr 0)
-                | DoubleType -> BExpr (e, Ne, DoubleExpr 0.0)
+                | IntType    -> BExpr (e, Eq, IntExpr 0)
+                | DoubleType -> BExpr (e, Eq, DoubleExpr 0.0)
+                | BoolType   -> UExpr (Not, e)
                 | _          -> e
-            | e -> e
-
-        and fixCallExprs p e =
-            List.zip p e |> List.map (fun (t, e) -> fixExpr e (t = BoolType))
+            | e -> makeBool e isBool
 
         // We also have to check if there is a local variable of type bool that is also defined as a local
         // of type int or double. If so, there is probably a boolean assignment of the form 'var = 0' somewhere 

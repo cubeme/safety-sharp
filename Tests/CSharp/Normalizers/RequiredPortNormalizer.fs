@@ -147,12 +147,12 @@ module RequiredPortNormalizer =
 
     [<Test>]
     let ``preserves line numbers of following lines`` () =
-        let actual = normalize "class X : Component { public extern void M(int a,\nint b,\nint c); \n\nint f; }" |> normalizeNewLines
+        let actual = normalize "class X : Component { public \nextern\n void M(int a,\nint b,\nint c); \n\nint f; }" |> normalizeNewLines
         let expected = 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(int a, int b, int c);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M(int a, int b, int c) => this.__reqPortField0__(a, b, c);\n\n\n\nint f; }"
+            [SafetySharp.Modeling.RequiredAttribute()] public void M(int a, int b, int c) => this.__reqPortField0__(a, b, c);\n\n\n\n\n\nint f; }"
 
         actual =? expected
 
@@ -185,3 +185,23 @@ module RequiredPortNormalizer =
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
             [SafetySharp.Modeling.RequiredAttribute()] public new void Update() => this.__reqPortField0__();}"
+
+    [<Test>]
+    let ``does not get confused by comments`` () =
+        normalize "class X : Component { //TODO\nextern void M(); }" =? 
+            "class X : Component { //TODO\n\
+            [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
+            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
+            [SafetySharp.Modeling.RequiredAttribute()] void M() => this.__reqPortField0__();}"
+
+        normalize "class X : Component { ///<summary>X</summary>\nextern void M(); }" =? 
+            "class X : Component { \
+            [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
+            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
+            [SafetySharp.Modeling.RequiredAttribute()] void M() => this.__reqPortField0__();\n}"
+
+        normalize "class X : Component { void N() {}\n///<summary>\n///X\n///</summary>\n//TODO\npublic extern void M(); }" =? 
+            "class X : Component { void N() {}\n\
+            [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
+            [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
+            [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__reqPortField0__();\n\n\n\n}"

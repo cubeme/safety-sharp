@@ -75,7 +75,10 @@ namespace SafetySharp.Compiler.Normalization
 			if (methodDeclaration.GetMethodSymbol(SemanticModel).IsUpdateMethod(SemanticModel))
 				return methodDeclaration;
 
-			return methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(ProvidedAttribute));
+			var originalDeclaration = methodDeclaration;
+			methodDeclaration = methodDeclaration.RemoveTrivia();
+			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(ProvidedAttribute));
+			return methodDeclaration.WithTrivia(originalDeclaration);
 		}
 	}
 }

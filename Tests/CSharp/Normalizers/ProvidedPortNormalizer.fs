@@ -96,3 +96,8 @@ module ProvidedPortNormalizer =
     let ``normalizes replaced Update method`` () =
         normalize "class X : Component { public new void Update() {} }" =? 
             "class X : Component { [SafetySharp.Modeling.ProvidedAttribute()] public new void Update() {} }"
+
+    [<Test>]
+    let ``documentation comments are placed correctly`` () =
+        normalize "class X : Component { ///<summary>X</summary>\npublic void M() {} }" =? 
+            "class X : Component { ///<summary>X</summary>\n[SafetySharp.Modeling.ProvidedAttribute()] public void M() {} }"

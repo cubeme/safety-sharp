@@ -113,7 +113,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			return classDeclaration.WithMembers(members);
 		}
-
+		
 		/// <summary>
 		///     Normalizes the given method declaration and adds the generated members to the member list at the given index.
 		/// </summary>
@@ -137,7 +137,7 @@ namespace SafetySharp.Compiler.Normalization
 			// Add the [Required] attribute if it is not already present
 			var originalDeclaration = methodDeclaration;
 			if (!methodDeclaration.HasAttribute<RequiredAttribute>(SemanticModel))
-				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(RequiredAttribute));
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(RequiredAttribute.WithTrailingSpace()));
 
 			// Remove the 'extern' keyword from the method
 			var externIndex = methodDeclaration.Modifiers.IndexOf(SyntaxKind.ExternKeyword);
@@ -161,7 +161,7 @@ namespace SafetySharp.Compiler.Normalization
 			var argumentList = SyntaxFactory.SeparatedList(arguments);
 			var body = SyntaxFactory.InvocationExpression(fieldReference, SyntaxFactory.ArgumentList(argumentList));
 			var arrowExpression = SyntaxFactory.ArrowExpressionClause(body);
-			methodDeclaration = methodDeclaration.WithExpressionBody(arrowExpression);
+			methodDeclaration = methodDeclaration.WithExpressionBody(arrowExpression).RemoveComments();
 			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine().EnsureSameLineCount(originalDeclaration);
 
 			// Now add the delegate, field, and modified method to the members collection, 
