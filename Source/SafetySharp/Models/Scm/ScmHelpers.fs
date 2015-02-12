@@ -296,7 +296,7 @@ module internal ScmHelpers =
             // Only works, if binding was declared in current node.
             // If binding might also be declared in the parent node, maybe
             // the function tryFindProvPortOfReqPort is what you want.
-            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=[])
+            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp.Length = 1) // the CompPath of a local binding has length 1
             
         member node.removeStep (step:StepDecl) =
             { node with
@@ -345,45 +345,35 @@ module internal ScmHelpers =
                 // recursively replace parent
                 model.replaceDescendant pathToReplace.Tail newParent  
         
-        // search in the model        
+        // search in the model
         member model.tryFindBindingOfReqPort (pathOfReqPort:ReqPortPath) : BndDeclPath option =
-            // option, because it might not be in the model (binding is not declared, or declared in the parent node
-            // of "model"
-            let compPath,reqPort = pathOfReqPort
-            let node = model.getDescendantUsingPath compPath
-            // Try to find the binding in node
-            let binding =
-                node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=[])
-            match binding with
-                | Some (binding) ->
-                    // case 1: Binding found in the node
-                    Some (compPath,binding)
-                | None ->                    
-                    // Try to find binding in the parent of node
-                    if compPath = [] then
-                        // case 2: the binding was not declared in the model or model is not the real root component. We
-                        //         cannot search in the parent of node
-                        None
-                    else
-                        let parentPath = compPath.Tail
-                        let parentNode = model.getDescendantUsingPath parentPath                        
-                        let binding =
-                            node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=[compPath.Head])
-                        match binding with
-                            | Some (binding) ->
-                                // case 3: Binding found in the parent
-                                Some (parentPath,binding)
-                            | None ->
-                                // case 4: Binding not found in the parent, and not found in the node itself
-                                None
+            // option, because it might not be in the model (binding is not declared, or declared in any parent node)
+            let compPath,reqPort = pathOfReqPort            
+            let rec tryFindBindingOfReqPort (pathToCheck:CompPath) (relativePathToReqPort:CompPath) : BndDeclPath option =
+                // search from bottom to the top (just arbitrarily). If a binding is declared at several places, the first match is used. BUT: consistency should assert, that it never happens.
+                if pathToCheck = [] then
+                    None                    
+                    // case 1: the binding was not declared in the model or model is not the real root component. We
+                    //         cannot search in the parent of node
+                else
+                    let node = model.getDescendantUsingPath pathToCheck
+                    let binding =
+                        node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=relativePathToReqPort)
+                    match binding with
+                        | Some (binding) ->
+                            // case 2: Binding found in the node
+                            Some (pathToCheck,binding)
+                        | None ->                            
+                            // case 3: Try to find binding in the parent of node
+                            let parentPath = pathToCheck.Tail
+                            let nextRelativePathToReqPort = relativePathToReqPort @ [pathToCheck.Head]
+                            tryFindBindingOfReqPort parentPath nextRelativePathToReqPort
+            tryFindBindingOfReqPort compPath [compPath.Head]
                 
-        member model.tryGetProvPort (bndDeclPath:BndDeclPath) : ProvPortPath option = //TODO: option useful? where is it used?
-            let compPath,bndDecl = bndDeclPath
-            let node = model.getDescendantUsingPath compPath
-            if bndDecl.Source.Comp=[] then
-                Some (compPath,bndDecl.Source.ProvPort)
-            else
-                Some (bndDecl.Source.Comp@compPath,bndDecl.Source.ProvPort)
+        member model.getProvPort (bndDeclPath:BndDeclPath) : ProvPortPath =
+            let bndgCompPath,bndDecl = bndDeclPath
+            let compPath = bndDecl.Source.Comp @ bndgCompPath.Tail
+            compPath,bndDecl.Source.ProvPort
 
         member model.collectDelayedProvPorts : ProvPortPath list =
             let rec collectDelayedProvPortsInSub (path:CompPath) (compDecl:CompDecl) =
@@ -391,9 +381,7 @@ module internal ScmHelpers =
                 let local =
                     compDecl.Bindings |> List.filter (fun bndDecl -> bndDecl.Kind = BndKind.Delayed) // now only delayed bindings
                                       |> List.map (fun bndDecl -> (path,bndDecl)) // now we have got the bindings with path
-                                      |> List.map (model.tryGetProvPort) // now we have got the prov ports
-                                      |> List.filter (fun provPortOpt -> provPortOpt.IsSome) // filter out entries, where the target port was not found
-                                      |> List.map (fun provPortOpt -> provPortOpt.Value) // exactly what we want
+                                      |> List.map (model.getProvPort) // now we have got the prov ports
                 local@subs
             let compPath= [model.Comp]
             collectDelayedProvPortsInSub compPath model
@@ -685,15 +673,11 @@ module internal ScmHelpers =
                             // Binding could not be found: Model is incomplete. But: it is not because of (checker)
                             neutralState
                         | Some(bndDeclCompPath,binding) ->
-                            let provPortPath = model.tryGetProvPort (bndDeclCompPath,binding)
-                            match provPortPath with
-                                | None ->
-                                    neutralState  // Binding could not be found: Model is incomplete. But: it is not because of (checker)
-                                | Some(provPortPath,provPort) ->
-                                    let provPortCompDecl = model.getDescendantUsingPath provPortPath
-                                    let provPortDecls = provPortCompDecl.getProvPortDecls(provPort)
-                                    provPortDecls |> List.map (fun provPortDecl -> provPortDecl.Behavior.Body)
-                                                  |> assessAndMergeStates (fun stm -> walkMe provPortPath newState stm)
+                            let provPortPath,provPort = model.getProvPort (bndDeclCompPath,binding)
+                            let provPortCompDecl = model.getDescendantUsingPath provPortPath
+                            let provPortDecls = provPortCompDecl.getProvPortDecls(provPort)
+                            provPortDecls |> List.map (fun provPortDecl -> provPortDecl.Behavior.Body)
+                                            |> assessAndMergeStates (fun stm -> walkMe provPortPath newState stm)
                 | _ ->
                      // Return calculated value, when no further walking is possible.
                      // This is used, when the assessor returns keepOnWalking=true, but the statement to examine

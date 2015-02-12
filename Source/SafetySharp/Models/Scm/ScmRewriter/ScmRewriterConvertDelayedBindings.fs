@@ -185,9 +185,7 @@ module internal ScmRewriterConvertDelayedBindings =
         let! state = getState
         // Use As1
         let location = state.PathOfChangingSubcomponent
-        let locProvPort = state.ChangingSubComponent.tryGetProvPort (location,bndDecl)        
-        //Assume, that binding is correct
-        let provPortComp,provPort = locProvPort.Value
+        let provPortComp,provPort = state.ChangingSubComponent.getProvPort (location,bndDecl)
        // Use As2: Assume provPortComp=location
         let provPortDecls = state.ChangingSubComponent.getProvPortDecls provPort
         // Use As3

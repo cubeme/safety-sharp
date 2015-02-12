@@ -38,8 +38,8 @@ type SpinModelChecker (model : Model) =
     let scm = ssm |> SsmLowering.lowerPostValidation model |> SsmToScm.transform
     do printf "%s" (ScmToString.toString scm)
    // do printf "======================================="
-   // let spin = ScmToPromela.transformConfiguration scm
-   // do printf "%+A" spin
+    let spin = ScmToPromela.transformConfiguration scm
+    do printf "%+A" spin
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)

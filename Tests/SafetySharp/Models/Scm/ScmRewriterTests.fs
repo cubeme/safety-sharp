@@ -216,6 +216,8 @@ type SingleLevelUpTests () =
         childNode.ReqPorts.Length =? 1
         childNode.ProvPorts.Length =? 1
         childNode.Bindings.Length =? 1
+        childNode.Bindings.Head.Source.Comp =? [Comp("nested")]
+        childNode.Bindings.Head.Target.Comp =? [Comp("nested")]
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 0
@@ -241,7 +243,9 @@ type SingleLevelUpTests () =
         newChildNode.Bindings.Length =? 0
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
-        newParentNode.Bindings.Length =? 1     
+        newParentNode.Bindings.Length =? 1   
+        newParentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        newParentNode.Bindings.Head.Target.Comp =? [Comp("simple")]  
         ()
         
     [<Test>]
@@ -261,6 +265,8 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 1
         parentNode.Bindings.Length =? 1
+        parentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        parentNode.Bindings.Head.Target.Comp =? [Comp("nested"); Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -283,8 +289,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? []
-        newParentNode.Bindings.Head.Target.Comp =? []
+        newParentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        newParentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
         ()
 
     [<Test>]
@@ -304,6 +310,8 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 1
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
+        parentNode.Bindings.Head.Source.Comp =? [Comp("nested"); Comp("simple")]
+        parentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.levelUpProvPort
@@ -326,8 +334,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? []
-        newParentNode.Bindings.Head.Target.Comp =? []
+        newParentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        newParentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
         ()
         
     [<Test>]
@@ -347,6 +355,8 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
+        parentNode.Bindings.Head.Source.Comp =? [Comp("nested"); Comp("simple")]
+        parentNode.Bindings.Head.Target.Comp =? [Comp("nested"); Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -370,8 +380,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? []
-        newParentNode.Bindings.Head.Target.Comp =? []
+        newParentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        newParentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
         ()
         
     [<Test>]
@@ -391,6 +401,8 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
+        parentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
+        parentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.levelUpProvPort
@@ -413,8 +425,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? []
-        newParentNode.Bindings.Head.Target.Comp <>? []
+        newParentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        newParentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
         ()
 
     [<Test>]
@@ -434,6 +446,8 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 1
+        parentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
+        parentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
         let workFlow = scmRewrite {
             do! ScmRewriterLevelUp.levelUpReqPort
@@ -456,8 +470,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 0
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp <>? []
-        newParentNode.Bindings.Head.Target.Comp =? []
+        newParentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
+        newParentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
         ()
         
 

@@ -149,6 +149,8 @@ module internal ScmParser =
                 preturn x stream
                 )
 
+    let (oldPipeTo) = (|>>) // does not something into userstate
+    
     let (|>>) p f : Parser<_,UserState> =
         p >>= (fun x stream ->
                 let resultNode = (f x)
@@ -503,20 +505,20 @@ module internal ScmParser =
                        (behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
                        createProvPortDecl)
                                                   
+    let comppath_dot : Parser<_,UserState> =
+        // TODO: could check, if path is correct
+        let parseIdentifier = identifier (IdentifierOptions())
+        oldPipeTo (many (attempt (parseIdentifier |>> Comp.Comp .>> pstring "." )))
+                  List.rev
+    
     let binding_ws : Parser<_,UserState> =
         let bindingsrc_ws =
-            let createProvPortSame srcPort = {BndSrc.Comp = []; BndSrc.ProvPort=srcPort}
-            let createProvPortChild (comp,srcPort) = {BndSrc.Comp = [comp]; BndSrc.ProvPort=srcPort}
-            let samecmp_ws = provPortId_ws |>> createProvPortSame
-            let childcmp_ws = attempt (compIdInst_ws .>>. (pstring_ws "." >>. provPortId_ws)) |>> createProvPortChild
-            (attempt childcmp_ws) <|> samecmp_ws
+            let createProvPort (comps,srcPort) = {BndSrc.Comp = comps; BndSrc.ProvPort=srcPort}
+            attempt (comppath_dot .>>. provPortId_ws) |>> createProvPort
 
         let bindingtarget_ws =
-            let createReqPortSame targetPort = {BndTarget.Comp = []; BndTarget.ReqPort=targetPort}
-            let createReqPortChild (comp,targetPort) = {BndTarget.Comp = [comp]; BndTarget.ReqPort=targetPort}
-            let samecmp_ws = reqPortId_ws |>> createReqPortSame
-            let childcmp_ws = attempt (compIdInst_ws .>>. (pstring_ws "." >>. reqPortId_ws)) |>> createReqPortChild
-            (attempt childcmp_ws) <|> samecmp_ws
+            let createReqPort (comps,targetPort) = {BndTarget.Comp = comps; BndTarget.ReqPort=targetPort}
+            attempt (comppath_dot .>>. reqPortId_ws) |>> createReqPort
         
         let instantbinding_ws =
             let createBinding (req) (prov) =

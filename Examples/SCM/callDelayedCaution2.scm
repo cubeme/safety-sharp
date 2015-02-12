@@ -23,7 +23,7 @@ component simple {
 			rport_GetOldFieldValue (inout_p ) ;
 		}	
 		
-		nested.rport_Increase = nested.instantly pport_Increase
+		nested.rport_Increase = instantly nested.pport_Increase
 		nested.rport_GetOldFieldValue = delayed nested.pport_GetFieldValue
 		
 		step {

@@ -405,19 +405,19 @@ module internal ScmRewriterLevelUp =
             return ()
         else
             let bindingDecl = childCompDecl.Bindings.Head
-            assert (bindingDecl.Source.Comp = []) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding from a subcomponent
-            assert (bindingDecl.Target.Comp = []) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding to a subcomponent
+            assert (bindingDecl.Source.Comp = [childCompDecl.Comp]) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding from a subcomponent
+            assert (bindingDecl.Target.Comp = [childCompDecl.Comp]) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding to a subcomponent
             let newChildCompDecl = childCompDecl.removeBinding bindingDecl
             let newTarget =
                 let newReqPort = levelUp.ArtificialReqPortOldToNew.Item (bindingDecl.Target.ReqPort)
                 {
-                    BndTarget.Comp = [];
+                    BndTarget.Comp = [parentCompDecl.Comp];
                     BndTarget.ReqPort = newReqPort;
                 }
             let newSource =
                 let newProvPort = levelUp.ArtificialProvPortOldToNew.Item (bindingDecl.Source.ProvPort)
                 {
-                    BndSrc.Comp = [];
+                    BndSrc.Comp = [parentCompDecl.Comp];
                     BndSrc.ProvPort = newProvPort;
                 }                    
             let transformedBinding = 
@@ -456,12 +456,16 @@ module internal ScmRewriterLevelUp =
         let bindingToRewrite : BndDecl option =
             let targetIsChild (bndDecl:BndDecl) =
                 match bndDecl.Target.Comp with
-                    | [] -> false
-                    | comp :: [] -> comp = childCompDecl.Comp
+                    | [] -> failwith "path in binding should at least contain the name of the component itself"
+                    | comp_parent :: [] -> false
+                    | comp_child :: comp_parent :: [] -> comp_child = childCompDecl.Comp
+                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
             let sourceIsChild (bndDecl:BndDecl) =
                 match bndDecl.Source.Comp with
-                    | [] -> false
-                    | comp :: [] -> comp = childCompDecl.Comp
+                    | [] -> failwith "path in binding should at least contain the name of the component itself"
+                    | comp_parent :: [] -> false
+                    | comp_child :: comp_parent :: [] -> comp_child = childCompDecl.Comp
+                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
             parentCompDecl.Bindings |> List.tryFind (fun bndDecl -> (targetIsChild bndDecl) || (sourceIsChild bndDecl) )
         if bindingToRewrite.IsNone then
             // do not modify old tainted state here
@@ -471,28 +475,32 @@ module internal ScmRewriterLevelUp =
                     
             let newSource =
                 match bindingToRewrite.Source.Comp with
-                    | [] -> bindingToRewrite.Source
-                    | comp :: [] ->
-                        if comp = childCompDecl.Comp then
+                    | [] -> failwith "path in binding should at least contain the name of the component itself"
+                    | comp_parent :: [] -> bindingToRewrite.Source
+                    | comp_child :: comp_parent :: [] ->
+                        if comp_child = childCompDecl.Comp then
                             let port = levelUp.ArtificialProvPortOldToNew.Item (bindingToRewrite.Source.ProvPort)
                             {
-                                BndSrc.Comp = [];
+                                BndSrc.Comp = [comp_parent];
                                 BndSrc.ProvPort = port
                             }
                         else
                             bindingToRewrite.Source
+                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
             let newTarget =
                 match bindingToRewrite.Target.Comp with
-                    | [] -> bindingToRewrite.Target
-                    | comp :: [] ->
-                        if comp = childCompDecl.Comp then
+                    | [] -> failwith "path in binding should at least contain the name of the component itself"
+                    | comp_parent :: [] -> bindingToRewrite.Target
+                    | comp_child :: comp_parent :: [] ->
+                        if comp_child = childCompDecl.Comp then
                             let port = levelUp.ArtificialReqPortOldToNew.Item (bindingToRewrite.Target.ReqPort)
                             {
-                                BndTarget.Comp = [];
+                                BndTarget.Comp = [comp_parent];
                                 BndTarget.ReqPort = port
                             }
                         else
                             bindingToRewrite.Target
+                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
             let transformedBinding = 
                 {
                     BndDecl.Target = newTarget;
@@ -526,8 +534,8 @@ module internal ScmRewriterLevelUp =
                     }
                 let newBindingDecl = 
                     {
-                        BndDecl.Target = {BndTarget.Comp = []; BndTarget.ReqPort = reqPort};
-                        BndDecl.Source = {BndSrc.Comp = []; BndSrc.ProvPort = provPort};
+                        BndDecl.Target = {BndTarget.Comp = [childCompDecl.Comp]; BndTarget.ReqPort = reqPort};
+                        BndDecl.Source = {BndSrc.Comp = [childCompDecl.Comp]; BndSrc.ProvPort = provPort};
                         BndDecl.Kind = BndKind.Instantaneous;
                     }
                                 
