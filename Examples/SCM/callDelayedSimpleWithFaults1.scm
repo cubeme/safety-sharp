@@ -26,7 +26,7 @@ component simple {
 		inout_p := intField1 + 1;
 	}
 	
-	rport1 = delayed pport1
+	simple.rport1 = delayed simple.pport1
 	
 	
 	step {

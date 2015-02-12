@@ -183,16 +183,16 @@ component backupRecoverySystem {
 	}
 	
 		
-	s1.senseSourceValueR = instantly in.getSourceValueP
-	s2.senseSourceValueR = instantly in.getSourceValueP
-	a1.getSensorValue1R = instantly s1.getSensorValueP
-	a1.getSensorValue2R = instantly s2.getSensorValueP
-	monitor.doSensorValuesMatchR = instantly a1.doSensorValuesMatchP	
-	monitor.switchArithmeticalUnitR_PartActivate = instantly a2.activateP
-	monitor.switchArithmeticalUnitR_PartDeactivate = instantly a1.deactivateP
-	monitor.switchArithmeticalUnitR_PartSwitchOutput = instantly out.switchArithmeticalUnitP
-	out.getArithmeticalValue1R = instantly a1.getArithmeticalValueP
-	out.getArithmeticalValue2R = instantly a2.getArithmeticalValueP
+	backupRecoverySystem.s1.senseSourceValueR = instantly backupRecoverySystem.in.getSourceValueP
+	backupRecoverySystem.s2.senseSourceValueR = instantly backupRecoverySystem.in.getSourceValueP
+	backupRecoverySystem.a1.getSensorValue1R = instantly backupRecoverySystem.s1.getSensorValueP
+	backupRecoverySystem.a1.getSensorValue2R = instantly backupRecoverySystem.s2.getSensorValueP
+	backupRecoverySystem.monitor.doSensorValuesMatchR = instantly backupRecoverySystem.a1.doSensorValuesMatchP	
+	backupRecoverySystem.monitor.switchArithmeticalUnitR_PartActivate = instantly backupRecoverySystem.a2.activateP
+	backupRecoverySystem.monitor.switchArithmeticalUnitR_PartDeactivate = instantly backupRecoverySystem.a1.deactivateP
+	backupRecoverySystem.monitor.switchArithmeticalUnitR_PartSwitchOutput = instantly backupRecoverySystem.out.switchArithmeticalUnitP
+	backupRecoverySystem.out.getArithmeticalValue1R = instantly backupRecoverySystem.a1.getArithmeticalValueP
+	backupRecoverySystem.out.getArithmeticalValue2R = instantly backupRecoverySystem.a2.getArithmeticalValueP
 	
 	step {
 		locals{}

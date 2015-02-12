@@ -8,7 +8,7 @@ component simple {
 		p_inout := p_inout + 1;
 	}
 	
-	rport1 = instantly pport1 
+	simple.rport1 = instantly simple.pport1 
 	
 	step {		
 		locals{

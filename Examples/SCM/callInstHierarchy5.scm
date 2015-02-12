@@ -23,7 +23,7 @@ component simple {
 		}
 	}
 		
-	nestedRequired.rport1 = instantly nestedProvided.pport1
+	simple.nestedRequired.rport1 = instantly simple.nestedProvided.pport1
 	
 	step {
 		locals{

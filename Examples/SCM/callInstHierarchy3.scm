@@ -16,7 +16,7 @@ component simple {
 		intField := 1;
 	}
 	
-	nested.rport1 = instantly pport1
+	simple.nested.rport1 = instantly simple.pport1
 	
 	step {
 		locals{

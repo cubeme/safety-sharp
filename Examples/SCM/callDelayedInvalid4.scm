@@ -10,7 +10,7 @@ component simple {
 	}	
 	
 	
-	rport1 = delayed pport1
+	simple.rport1 = delayed simple.pport1
 	
 	
 	step {

@@ -31,8 +31,8 @@ component C {
 		locals{}
 	}
 		
-	M = delayed D.X
-	D.Y = instantly Y
+	C.M = delayed C.D.X
+	C.D.Y = instantly C.Y
 	
 	step {
 		locals{

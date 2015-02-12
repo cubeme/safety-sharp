@@ -23,8 +23,8 @@ component simple {
 			rport_GetOldFieldValue (inout_p ) ;
 		}	
 		
-		rport_Increase = instantly pport_Increase
-		rport_GetOldFieldValue = delayed pport_GetFieldValue
+		nested.rport_Increase = instantly nested.pport_Increase
+		nested.rport_GetOldFieldValue = delayed nested.pport_GetFieldValue
 		
 		step {
 			locals{
@@ -38,8 +38,8 @@ component simple {
 	rport_increaseBeforeNestedStep ( );
 	rport_getValue ( inout intField_outer : int);
 	
-	rport_increaseBeforeNestedStep = instantly nested.pport_Increase
-	rport_getValue = instantly nested.pport_FromExtern
+	simple.rport_increaseBeforeNestedStep = instantly simple.nested.pport_Increase
+	simple.rport_getValue = instantly simple.nested.pport_FromExtern
 	
 	step {
 		locals{

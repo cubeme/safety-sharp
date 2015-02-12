@@ -9,7 +9,7 @@ component simple {
 		intField := intField + p_input1 + p_input2;		
 	}
 	
-	rport1 = instantly pport1 
+	simple.rport1 = instantly simple.pport1 
 	
 	step {		
 		locals{

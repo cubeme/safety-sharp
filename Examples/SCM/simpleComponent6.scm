@@ -6,8 +6,8 @@ component simple {
 		locals{}
 	}
 	
-	rport1 = instantly pport1
-	rport2 = delayed pport1
+	simple.rport1 = instantly simple.pport1
+	simple.rport2 = delayed simple.pport1
 	
 	step {
 		locals{}

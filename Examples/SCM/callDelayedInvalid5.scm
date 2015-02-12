@@ -18,8 +18,8 @@ component simple {
 	}	
 	
 	
-	rport1 = delayed pport1
-	rport2 = instantly pport2
+	simple.rport1 = delayed simple.pport1
+	simple.rport2 = instantly simple.pport2
 	
 	
 	step {

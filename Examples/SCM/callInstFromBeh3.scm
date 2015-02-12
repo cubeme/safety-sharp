@@ -9,7 +9,7 @@ component simple {
 		intField := intField + 3;
 	}
 	
-	rport1 = instantly pport1
+	simple.rport1 = instantly simple.pport1
 	
 	step {
 		locals {
