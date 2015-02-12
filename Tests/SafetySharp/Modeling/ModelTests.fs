@@ -222,8 +222,8 @@ module ``Components property`` =
         model.FinalizeMetadata ()
 
         let name root = function
-            | [] -> sprintf "Root%i@%i" root root
-            | fields -> sprintf "Root%i@%i.%s" root root <| String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
+            | [] -> sprintf "SynRoot.Root%i@%i" root root
+            | fields -> sprintf "SynRoot.Root%i@%i.%s" root root <| String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
         
         model.Components |> List.map (fun component' -> component'.Name) =?
         [name 0 []; name 0 [("_component", 0)]; name 1 []; name 1 [("_component1", 0)]; name 1 [("_component2", 1)]; name 1 [("_component2", 1); ("_component", 0)]] 
@@ -266,10 +266,10 @@ module ``Roots property`` =
     let ``contained roots have unique names`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
-        model.Roots.[0].Name =? "Root0@0"
+        model.Roots.[0].Name =? "SynRoot.Root0@0"
 
         let model = TestModel (EmptyComponent (), EmptyComponent (), EmptyComponent ())
         model.FinalizeMetadata ()
-        model.Roots.[0].Name =? "Root0@0"
-        model.Roots.[1].Name =? "Root1@1"
-        model.Roots.[2].Name =? "Root2@2"
+        model.Roots.[0].Name =? "SynRoot.Root0@0"
+        model.Roots.[1].Name =? "SynRoot.Root1@1"
+        model.Roots.[2].Name =? "SynRoot.Root2@2"

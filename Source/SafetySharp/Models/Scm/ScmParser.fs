@@ -505,15 +505,15 @@ module internal ScmParser =
                                                   
     let binding_ws : Parser<_,UserState> =
         let bindingsrc_ws =
-            let createProvPortSame srcPort = {BndSrc.Comp = None; BndSrc.ProvPort=srcPort}
-            let createProvPortChild (comp,srcPort) = {BndSrc.Comp = Some(comp); BndSrc.ProvPort=srcPort}
+            let createProvPortSame srcPort = {BndSrc.Comp = []; BndSrc.ProvPort=srcPort}
+            let createProvPortChild (comp,srcPort) = {BndSrc.Comp = [comp]; BndSrc.ProvPort=srcPort}
             let samecmp_ws = provPortId_ws |>> createProvPortSame
             let childcmp_ws = attempt (compIdInst_ws .>>. (pstring_ws "." >>. provPortId_ws)) |>> createProvPortChild
             (attempt childcmp_ws) <|> samecmp_ws
 
         let bindingtarget_ws =
-            let createReqPortSame targetPort = {BndTarget.Comp = None; BndTarget.ReqPort=targetPort}
-            let createReqPortChild (comp,targetPort) = {BndTarget.Comp = Some(comp); BndTarget.ReqPort=targetPort}
+            let createReqPortSame targetPort = {BndTarget.Comp = []; BndTarget.ReqPort=targetPort}
+            let createReqPortChild (comp,targetPort) = {BndTarget.Comp = [comp]; BndTarget.ReqPort=targetPort}
             let samecmp_ws = reqPortId_ws |>> createReqPortSame
             let childcmp_ws = attempt (compIdInst_ws .>>. (pstring_ws "." >>. reqPortId_ws)) |>> createReqPortChild
             (attempt childcmp_ws) <|> samecmp_ws

@@ -149,15 +149,14 @@ module internal ScmToString =
             writer.AppendParenthesized (fun () -> writer.AppendRepeated p.Params paramDecl (fun () -> writer.Append ", "))
             behavior p.Behavior
 
+        let compPath (p : CompPath) =
+            writer.AppendRepeated (p |> List.rev) comp (fun () -> writer.Append ".")
+
         let bndSrc (b : BndSrc) =
-            match b.Comp with
-            | None -> provPort b.ProvPort
-            | Some c -> comp c; writer.Append "."; provPort b.ProvPort
+            compPath b.Comp; writer.Append "."; provPort b.ProvPort
 
         let bndTarget (b : BndTarget) =
-            match b.Comp with
-            | None -> reqPort b.ReqPort
-            | Some c -> comp c; writer.Append "."; reqPort b.ReqPort
+            compPath b.Comp; writer.Append "."; reqPort b.ReqPort
             
         let bndKind = function
             | Instantaneous -> writer.Append "instantly"   

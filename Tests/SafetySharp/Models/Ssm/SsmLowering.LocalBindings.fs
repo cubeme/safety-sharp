@@ -46,7 +46,7 @@ module ``Local bindings`` =
     let ``does not change required port invocation`` () =
         transform "class X : Component { extern void M(); void N() { M(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = []
                 Faults = []
@@ -77,12 +77,12 @@ module ``Local bindings`` =
     let ``does not change Update method invocation of component not overriding Update`` () =
         transform "class Y : Component {} class X : Component { Y y = new Y(); public override void Update() { y.Update(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = 
                     [
                         {
-                            Name = "Root0@0.y@0"
+                            Name = "SynRoot.Root0@0.y@0"
                             Fields = []
                             Subs = []
                             Faults = []
@@ -101,7 +101,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (MemberExpr (Field ("Root0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
+                            Body = SeqStm [ExprStm (MemberExpr (Field ("SynRoot.Root0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 1 0, "SafetySharp.Modeling.Component", [], [], VoidType, [], false))); RetStm None]
                         }
                     ]
             }
@@ -110,12 +110,12 @@ module ``Local bindings`` =
     let ``does not change Update method invocation of component overriding Update`` () =
         transform "class Y : Component { public override void Update() {} } class X : Component { Y y = new Y(); public override void Update() { y.Update(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = 
                     [
                         {
-                            Name = "Root0@0.y@0"
+                            Name = "SynRoot.Root0@0.y@0"
                             Fields = []
                             Subs = []
                             Faults = []
@@ -145,7 +145,7 @@ module ``Local bindings`` =
                             Params = []
                             Locals = []
                             Return = VoidType
-                            Body = SeqStm [ExprStm (MemberExpr (Field ("Root0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 2 0, "Y", [], [], VoidType, [], false))); RetStm None]
+                            Body = SeqStm [ExprStm (MemberExpr (Field ("SynRoot.Root0@0.y@0", ClassType "Y"), CallExpr (methodName "Update" 2 0, "Y", [], [], VoidType, [], false))); RetStm None]
                         }
                     ]
             }
@@ -154,16 +154,16 @@ module ``Local bindings`` =
     let ``introduces binding for provided port invocation`` () =
         transform "class X : Component { void M() { } void N() { M(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = []
                 Faults = []
                 Bindings = 
                     [
                         { 
-                            SourceComp = "Root0@0"
+                            SourceComp = "SynRoot.Root0@0"
                             SourcePort = methodName "M" 2 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "M" 2 0 0
                             Kind = Instantaneous 
                         }
@@ -202,16 +202,16 @@ module ``Local bindings`` =
     let ``introduces binding for virtual overridden provided port invocation`` () =
         transform "class Y : Component { public virtual void M() { } void N() { M(); } } class X : Y { public override void M() {} }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = []
                 Faults = []
                 Bindings = 
                     [
                         { 
-                            SourceComp = "Root0@0"
+                            SourceComp = "SynRoot.Root0@0"
                             SourcePort = methodName "M" 3 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "M" 3 0 0
                             Kind = Instantaneous 
                         }
@@ -258,16 +258,16 @@ module ``Local bindings`` =
     let ``introduces binding for base method invocation`` () =
         transform "class Y : Component { public virtual void M() { } } class X : Y { public override void M() { base.M(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = []
                 Faults = []
                 Bindings = 
                     [
                         { 
-                            SourceComp = "Root0@0"
+                            SourceComp = "SynRoot.Root0@0"
                             SourcePort = methodName "M" 2 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "M" 2 0 0
                             Kind = Instantaneous 
                         }
@@ -306,12 +306,12 @@ module ``Local bindings`` =
     let ``introduces binding for provided port invocation of subcomponent`` () =
         transform "class Y : Component { public void M() { } } class X : Component { Y y = new Y(); void N() { y.M(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = 
                     [
                         {
-                            Name = "Root0@0.y@0"
+                            Name = "SynRoot.Root0@0.y@0"
                             Fields = []
                             Subs = []
                             Faults = []
@@ -334,9 +334,9 @@ module ``Local bindings`` =
                 Bindings = 
                     [
                         { 
-                            SourceComp = "Root0@0.y@0"
+                            SourceComp = "SynRoot.Root0@0.y@0"
                             SourcePort = methodName "M" 2 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "M" 2 0 0
                             Kind = Instantaneous 
                         }
@@ -367,21 +367,21 @@ module ``Local bindings`` =
     let ``introduces multiple bindings for provided port invocations`` () =
         transform "class Y : Component { public void M() { N(); } void N() {} } class X : Component { Y y = new Y(); void Q() {} void N() { y.M(); Q(); Q(); } }" =?
             {
-                Name = "Root0@0"
+                Name = "SynRoot.Root0@0"
                 Fields = []
                 Subs = 
                     [
                         {
-                            Name = "Root0@0.y@0"
+                            Name = "SynRoot.Root0@0.y@0"
                             Fields = []
                             Subs = []
                             Faults = []
                             Bindings =
                                 [
                                     { 
-                                        SourceComp = "Root0@0.y@0"
+                                        SourceComp = "SynRoot.Root0@0.y@0"
                                         SourcePort = methodName "N" 2 0
-                                        TargetComp = "Root0@0.y@0" 
+                                        TargetComp = "SynRoot.Root0@0.y@0" 
                                         TargetPort = synName "N" 2 0 0
                                         Kind = Instantaneous 
                                     }
@@ -420,23 +420,23 @@ module ``Local bindings`` =
                 Bindings = 
                     [
                         { 
-                            SourceComp = "Root0@0.y@0"
+                            SourceComp = "SynRoot.Root0@0.y@0"
                             SourcePort = methodName "M" 2 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "M" 2 0 0
                             Kind = Instantaneous 
                         }
                         { 
-                            SourceComp = "Root0@0"
+                            SourceComp = "SynRoot.Root0@0"
                             SourcePort = methodName "Q" 2 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "Q" 2 0 1
                             Kind = Instantaneous 
                         }
                         { 
-                            SourceComp = "Root0@0"
+                            SourceComp = "SynRoot.Root0@0"
                             SourcePort = methodName "Q" 2 0
-                            TargetComp = "Root0@0"; 
+                            TargetComp = "SynRoot.Root0@0"; 
                             TargetPort = synName "Q" 2 0 2
                             Kind = Instantaneous 
                         }

@@ -39,11 +39,6 @@ type SharedComponentsException internal (components : Component list) =
     /// Gets the component instances that were found in multiple locations of a component tree.
     member this.Components = components |> List.toArray
 
-/// Represents the synthesized root of the component hierarchy created by a model.
-type internal SynthesizedRootComponent (components, bindings) as this =
-    inherit Component (components, bindings)
-    do this.FinalizeMetadata (null, "SynRoot")
-
 /// Represents a base class for all models.
 [<AllowNullLiteral>]
 type Model () =
@@ -87,7 +82,7 @@ type Model () =
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
                 // Add the index to the name to disambiguate roots in execption messages
-                component'.FinalizeMetadata (null, "Root" + index.ToString (), index) 
+                component'.FinalizeMetadata (null, sprintf "%s.Root%d" Component.SynthesizedRootName index, index) 
         )
 
         // Store the root components and collect all components of the model
@@ -154,10 +149,7 @@ type Model () =
     /// Returns the type of the component with the given mangled name.
     member internal this.GetTypeOfComponent mangledName =
         requiresIsSealed ()
-        let c = 
-            if mangledName = synthesizedRoot.Name then synthesizedRoot
-            else components |> List.find (fun c -> c.Name = mangledName)
-        c.GetType ()
+        this.FindComponent(mangledName).GetType ()
 
     /// Gets the metadata provider of the model.
     member internal this.MetadataProvider

@@ -152,6 +152,9 @@ type Component internal (components : Component list, bindings : List<PortBindin
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
 
+    /// Gets the name of the synthesized root component.
+    static member internal SynthesizedRootName = "SynRoot"
+
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Internal access
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -224,7 +227,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
         isSealed <- true
         parent <- defaultArg parentComponent null
         name <- defaultArg componentName String.Empty
-        slot <- defaultArg componentSlot 0
+        slot <- defaultArg componentSlot -1
         parentField <- defaultArg field null
 
         // Retrieve the non-subcomponent fields of the component
@@ -281,10 +284,9 @@ type Component internal (components : Component list, bindings : List<PortBindin
     member internal this.Name
         with get () : string = 
             requiresIsSealed ()
-            if this.Parent <> null then
-                sprintf "%s.%s@%d" (this.Parent.Name) name slot
-            else
-                sprintf "%s@%d" name slot
+            let name = if this.Parent <> null then sprintf "%s.%s" (this.Parent.Name) name else sprintf "%s" name
+            if slot = -1 then name
+            else sprintf "%s@%d" name slot
 
     /// Gets the unmangled, non-unique name of the component instance. Returns the empty string if no component name could be determined.
     member internal this.UnmangledName
@@ -293,7 +295,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
             if this.Parent <> null then
                 sprintf "%s.%s" (this.Parent.UnmangledName) name
             else
-                name
+                name.Substring (Component.SynthesizedRootName.Length + 1)
 
     /// Gets the <see cref="Component" /> instances that are direct subcomponents of the current instance.
     member internal this.Subcomponents 
@@ -318,3 +320,8 @@ type Component internal (components : Component list, bindings : List<PortBindin
         with get () : FieldInfo =
             requiresIsSealed ()
             parentField
+
+/// Represents the synthesized root of the component hierarchy created by a model.
+type internal SynthesizedRootComponent (components, bindings) as this =
+    inherit Component (components, bindings)
+    do this.FinalizeMetadata (null, Component.SynthesizedRootName)

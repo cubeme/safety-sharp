@@ -127,35 +127,55 @@ module ``SsmToScm Transformation`` =
         }
     }
 
-    let private ssmBindings : Ssm.Binding list = 
+    let private ssmBindings1 : Ssm.Binding list = 
         [
             {
-                SourceComp = "Root0.x.y"
+                SourceComp = "X.x.y"
                 SourcePort = "A"
-                TargetComp = "Root1.z.w"
+                TargetComp = "X.z.w"
                 TargetPort = "B"
                 Kind = BindingKind.Instantaneous
             }
             {
-                SourceComp = "Root0.x.y"
+                SourceComp = "X.x"
                 SourcePort = "A"
-                TargetComp = "Root1.z.w"
+                TargetComp = "X"
                 TargetPort = "B"
                 Kind = BindingKind.Delayed
             }
         ]
 
-    let private scmBindings : Scm.BndDecl list = 
+    let private scmBindings1 : Scm.BndDecl list = 
         [
             {
-                Source = { Comp = Scm.Comp "y" |> Some; ProvPort = Scm.ProvPort "A" }
-                Target = { Comp = Scm.Comp "w" |> Some; ReqPort = Scm.ReqPort "B" }
+                Source = { Comp = [Scm.Comp "y"; Scm.Comp "x"; Scm.Comp "X"]; ProvPort = Scm.ProvPort "A" }
+                Target = { Comp = [Scm.Comp "w"; Scm.Comp "z"; Scm.Comp "X"]; ReqPort = Scm.ReqPort "B" }
                 Kind = Scm.Instantaneous
             }
             {
-                Source = { Comp = Scm.Comp "y" |> Some; ProvPort = Scm.ProvPort "A" }
-                Target = { Comp = Scm.Comp "w" |> Some; ReqPort = Scm.ReqPort "B" }
+                Source = { Comp = [Scm.Comp "x"; Scm.Comp "X"]; ProvPort = Scm.ProvPort "A" }
+                Target = { Comp = [Scm.Comp "X"]; ReqPort = Scm.ReqPort "B" }
                 Kind = Scm.Delayed
+            }
+        ]
+
+    let private ssmBindings2 : Ssm.Binding list = 
+        [
+            {
+                SourceComp = "Root0.X.x.y"
+                SourcePort = "A"
+                TargetComp = "Root0.X"
+                TargetPort = "B"
+                Kind = BindingKind.Instantaneous
+            }
+        ]
+
+    let private scmBindings2 : Scm.BndDecl list = 
+        [
+            {
+                Source = { Comp = [Scm.Comp "y"; Scm.Comp "x"; Scm.Comp "X"]; ProvPort = Scm.ProvPort "A" }
+                Target = { Comp = [Scm.Comp "X"]; ReqPort = Scm.ReqPort "B" }
+                Kind = Scm.Instantaneous
             }
         ]
 
@@ -198,7 +218,8 @@ module ``SsmToScm Transformation`` =
 
     [<Test>]
     let ``binding transformation`` () =
-        transform { ssmComp with Bindings = ssmBindings } =? { scmComp with Bindings = scmBindings }
+        transform { ssmComp with Bindings = ssmBindings1 } =? { scmComp with Bindings = scmBindings1 }
+        transform { ssmComp with Name = "Root0.X"; Bindings = ssmBindings2 } =? { scmComp with Comp = Scm.Comp "X"; Bindings = scmBindings2 }
 
     [<Test>]
     let ``step method transformation`` () =
@@ -210,10 +231,10 @@ module ``SsmToScm Transformation`` =
             ssmComp with
              Fields = ssmFields
              Methods = [ssmProvPort; ssmReqPort; ssmStep]
-             Bindings = ssmBindings
+             Bindings = ssmBindings1
         }
         let sub = { ssm with Subs = [ssm; ssm] }
-        let ssm = { ssm with Subs = [sub; { ssm with Bindings = ssmBindings; Methods = [ssmStep; ssmProvPort] }] }
+        let ssm = { ssm with Subs = [sub; { ssm with Bindings = ssmBindings1; Methods = [ssmStep; ssmProvPort] }] }
 
         let scm = {
             scmComp with
@@ -221,9 +242,9 @@ module ``SsmToScm Transformation`` =
              ReqPorts = [scmReqPort]
              ProvPorts = [scmProvPort]
              Steps = [scmStep]
-             Bindings = scmBindings
+             Bindings = scmBindings1
         }
         let sub = { scm with Subs = [scm; scm] }
-        let scm = { scm with Subs = [sub; { scm with Bindings = scmBindings; Steps = [scmStep]; ProvPorts = [scmProvPort]; ReqPorts = [] }] }
+        let scm = { scm with Subs = [sub; { scm with Bindings = scmBindings1; Steps = [scmStep]; ProvPorts = [scmProvPort]; ReqPorts = [] }] }
 
         transform ssm =? scm

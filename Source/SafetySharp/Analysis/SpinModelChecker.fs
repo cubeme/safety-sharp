@@ -26,6 +26,7 @@ open System
 open SafetySharp
 open SafetySharp.Modeling
 open SafetySharp.Models
+open SafetySharp.Analysis.Modelchecking.PromelaSpin
 
 [<Sealed>]
 type SpinModelChecker (model : Model) =
@@ -36,6 +37,9 @@ type SpinModelChecker (model : Model) =
     do SsmValidation.validate model ssm
     let scm = ssm |> SsmLowering.lowerPostValidation model |> SsmToScm.transform
     do printf "%s" (ScmToString.toString scm)
+   // do printf "======================================="
+   // let spin = ScmToPromela.transformConfiguration scm
+   // do printf "%+A" spin
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)

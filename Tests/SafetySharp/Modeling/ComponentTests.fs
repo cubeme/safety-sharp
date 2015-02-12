@@ -430,7 +430,7 @@ module ``Subcomponents property`` =
         let subcomponent1 = FieldComponent<int> 3
         let subcomponent2 = FieldComponent<bool> true
         let component' = TwoSubcomponents (subcomponent1, subcomponent2)
-        component'.FinalizeMetadata (null, "Root")
+        component'.FinalizeMetadata (null, "Root", 0)
 
         component'.Subcomponents.[0].Name =? fsharpSubcomponentName "Root@0._component1" 0
         component'.Subcomponents.[1].Name =? fsharpSubcomponentName "Root@0._component2" 1
@@ -442,7 +442,7 @@ module ``Subcomponents property`` =
         let assembly = compilation.Compile ()
         let derivedType = assembly.GetType "Y"
         let component' = Activator.CreateInstance derivedType :?> Component
-        component'.FinalizeMetadata (null, "Root")
+        component'.FinalizeMetadata (null, "Root", 0)
 
         component'.Subcomponents.Length =? 3
         component'.Subcomponents.[0].Name =? "Root@0.s@0"
@@ -456,7 +456,7 @@ module ``Subcomponents property`` =
         let assembly = compilation.Compile ()
         let derivedType = assembly.GetType "Y"
         let component' = Activator.CreateInstance derivedType :?> Component
-        component'.FinalizeMetadata (null, "Root")
+        component'.FinalizeMetadata (null, "Root", 0)
 
         component'.Subcomponents.Length =? 2
         component'.Subcomponents.[0].Name =? "Root@0.s@0"

@@ -84,18 +84,24 @@ module ``Invalid bindings`` =
         nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
-    let ``binding with subsubcomponent is invalid`` () =
-        check [Delayed] ["Root0"] ["Root0.x.z"] ["Root0"] ["N"] ["M"]
-          "class Z : Component { public void N() {} }
-           class X : Component { Z z; public X(Z z) { this.z = z; } }
-           class Y : Component { extern void M(); X x; public Y(X x, Z z) { this.x = x; Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
-           class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
+    let ``binding with subsubcomponent is valid`` () =
+        let (model, ssm) = 
+            transform
+              "class Z : Component { public void N() {} }
+               class X : Component { Z z; public X(Z z) { this.z = z; } }
+               class Y : Component { extern void M(); X x; public Y(X x, Z z) { this.x = x; Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
+               class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
 
-        check [Delayed] ["Root0"] ["Root0"] ["Root0.x.z"] ["M"] ["N"]
-          "class Z : Component { public extern void N(); }
-           class X : Component { Z z; public X(Z z) { this.z = z; } }
-           class Y : Component { void M() {} X x; public Y(X x, Z z) { this.x = x; Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
-           class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
+        nothrow (fun () -> SsmValidation.validate model ssm)
+
+        let (model, ssm) = 
+            transform
+              "class Z : Component { public extern void N(); }
+               class X : Component { Z z; public X(Z z) { this.z = z; } }
+               class Y : Component { void M() {} X x; public Y(X x, Z z) { this.x = x; Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
+               class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
+
+        nothrow (fun () -> SsmValidation.validate model ssm)
 
     [<Test>]
     let ``binding with non-subcomponent is invalid`` () =

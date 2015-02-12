@@ -405,19 +405,19 @@ module internal ScmRewriterLevelUp =
             return ()
         else
             let bindingDecl = childCompDecl.Bindings.Head
-            assert (bindingDecl.Source.Comp = None) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding from a subcomponent
-            assert (bindingDecl.Target.Comp = None) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding to a subcomponent
+            assert (bindingDecl.Source.Comp = []) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding from a subcomponent
+            assert (bindingDecl.Target.Comp = []) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding to a subcomponent
             let newChildCompDecl = childCompDecl.removeBinding bindingDecl
             let newTarget =
                 let newReqPort = levelUp.ArtificialReqPortOldToNew.Item (bindingDecl.Target.ReqPort)
                 {
-                    BndTarget.Comp = None;
+                    BndTarget.Comp = [];
                     BndTarget.ReqPort = newReqPort;
                 }
             let newSource =
                 let newProvPort = levelUp.ArtificialProvPortOldToNew.Item (bindingDecl.Source.ProvPort)
                 {
-                    BndSrc.Comp = None;
+                    BndSrc.Comp = [];
                     BndSrc.ProvPort = newProvPort;
                 }                    
             let transformedBinding = 
@@ -456,12 +456,12 @@ module internal ScmRewriterLevelUp =
         let bindingToRewrite : BndDecl option =
             let targetIsChild (bndDecl:BndDecl) =
                 match bndDecl.Target.Comp with
-                    | None -> false
-                    | Some (comp) -> comp = childCompDecl.Comp
+                    | [] -> false
+                    | comp :: [] -> comp = childCompDecl.Comp
             let sourceIsChild (bndDecl:BndDecl) =
                 match bndDecl.Source.Comp with
-                    | None -> false
-                    | Some (comp) -> comp = childCompDecl.Comp
+                    | [] -> false
+                    | comp :: [] -> comp = childCompDecl.Comp
             parentCompDecl.Bindings |> List.tryFind (fun bndDecl -> (targetIsChild bndDecl) || (sourceIsChild bndDecl) )
         if bindingToRewrite.IsNone then
             // do not modify old tainted state here
@@ -471,24 +471,24 @@ module internal ScmRewriterLevelUp =
                     
             let newSource =
                 match bindingToRewrite.Source.Comp with
-                    | None -> bindingToRewrite.Source
-                    | Some (comp) ->
+                    | [] -> bindingToRewrite.Source
+                    | comp :: [] ->
                         if comp = childCompDecl.Comp then
                             let port = levelUp.ArtificialProvPortOldToNew.Item (bindingToRewrite.Source.ProvPort)
                             {
-                                BndSrc.Comp = None;
+                                BndSrc.Comp = [];
                                 BndSrc.ProvPort = port
                             }
                         else
                             bindingToRewrite.Source
             let newTarget =
                 match bindingToRewrite.Target.Comp with
-                    | None -> bindingToRewrite.Target
-                    | Some (comp) ->
+                    | [] -> bindingToRewrite.Target
+                    | comp :: [] ->
                         if comp = childCompDecl.Comp then
                             let port = levelUp.ArtificialReqPortOldToNew.Item (bindingToRewrite.Target.ReqPort)
                             {
-                                BndTarget.Comp = None;
+                                BndTarget.Comp = [];
                                 BndTarget.ReqPort = port
                             }
                         else
@@ -526,8 +526,8 @@ module internal ScmRewriterLevelUp =
                     }
                 let newBindingDecl = 
                     {
-                        BndDecl.Target = {BndTarget.Comp = None; BndTarget.ReqPort = reqPort};
-                        BndDecl.Source = {BndSrc.Comp = None; BndSrc.ProvPort = provPort};
+                        BndDecl.Target = {BndTarget.Comp = []; BndTarget.ReqPort = reqPort};
+                        BndDecl.Source = {BndSrc.Comp = []; BndSrc.ProvPort = provPort};
                         BndDecl.Kind = BndKind.Instantaneous;
                     }
                                 

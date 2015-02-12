@@ -167,7 +167,7 @@ module internal ScmRewriterConvertDelayedBindings =
         let! compDecl = getSubComponentToChange
         let newBndSource =
             {
-                BndSrc.Comp = None;
+                BndSrc.Comp = [];
                 BndSrc.ProvPort = newProvPort;
             }
         let newInstantBinding =

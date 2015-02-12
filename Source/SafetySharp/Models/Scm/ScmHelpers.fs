@@ -25,19 +25,6 @@ open SafetySharp.Models.Scm
 
 module internal ScmHelpers =
     
-    
-    type CompPath = Comp list
-        // index1::index2::root::[]
-        // root {
-        //   index2 {
-        //     index1 {
-        //       ...
-        //     }
-        //     ...
-        //   }
-        //   ...
-        // }
-
     type FieldPath = CompPath * Field
     type FaultPath = CompPath * Fault
     type ReqPortPath = CompPath * ReqPort
@@ -309,7 +296,7 @@ module internal ScmHelpers =
             // Only works, if binding was declared in current node.
             // If binding might also be declared in the parent node, maybe
             // the function tryFindProvPortOfReqPort is what you want.
-            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
+            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=[])
             
         member node.removeStep (step:StepDecl) =
             { node with
@@ -366,7 +353,7 @@ module internal ScmHelpers =
             let node = model.getDescendantUsingPath compPath
             // Try to find the binding in node
             let binding =
-                node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=None)
+                node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=[])
             match binding with
                 | Some (binding) ->
                     // case 1: Binding found in the node
@@ -381,7 +368,7 @@ module internal ScmHelpers =
                         let parentPath = compPath.Tail
                         let parentNode = model.getDescendantUsingPath parentPath                        
                         let binding =
-                            node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=Some(compPath.Head))
+                            node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=[compPath.Head])
                         match binding with
                             | Some (binding) ->
                                 // case 3: Binding found in the parent
@@ -393,10 +380,10 @@ module internal ScmHelpers =
         member model.tryGetProvPort (bndDeclPath:BndDeclPath) : ProvPortPath option = //TODO: option useful? where is it used?
             let compPath,bndDecl = bndDeclPath
             let node = model.getDescendantUsingPath compPath
-            if bndDecl.Source.Comp=None then
+            if bndDecl.Source.Comp=[] then
                 Some (compPath,bndDecl.Source.ProvPort)
             else
-                Some (bndDecl.Source.Comp.Value::compPath,bndDecl.Source.ProvPort)
+                Some (bndDecl.Source.Comp@compPath,bndDecl.Source.ProvPort)
 
         member model.collectDelayedProvPorts : ProvPortPath list =
             let rec collectDelayedProvPortsInSub (path:CompPath) (compDecl:CompDecl) =

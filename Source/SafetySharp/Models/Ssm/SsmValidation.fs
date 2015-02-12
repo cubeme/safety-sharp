@@ -31,7 +31,8 @@ open Ssm
 open QuickGraph
 open QuickGraph.Algorithms
 
-/// Raised when one or more invalid port bindings were encountered that span more than one level of the component hierarchy.
+/// Raised when one or more invalid port bindings were encountered that involve a port of a component that is not
+/// part of the declaring component's sub tree.
 type InvalidBindingsException internal (invalidBindings : PortBinding array) =
     inherit Exception (
         let bindings = String.Join ("\n", invalidBindings |> Array.map (fun binding ->
@@ -40,7 +41,7 @@ type InvalidBindingsException internal (invalidBindings : PortBinding array) =
                 (binding.SourcePort.Component :?> Component).UnmangledName binding.SourcePort.Method
                 binding.Kind binding.BinderName
         ))
-        sprintf "One or more bindings are invalid because they span more than one level of the hierarchy:\n%s\n\
+        sprintf "One or more bindings are invalid because they involve a port of a component that is not part of the declaring component's sub tree:\n%s\n\
                  Check the 'InvalidBindings' property of this exception instance for further details about the invalid bindings." bindings)
 
     /// Gets the invalid port bindings the exception was raised for.
@@ -107,18 +108,17 @@ module internal SsmValidation =
         yield! c.Subs |> Seq.collect (collect selector)
     }
 
-    /// Checks for invalid bindings, i.e., bindings spanning more than one level of the component hierarchy.
+    /// Checks for invalid bindings, i.e., bindings involving a port of a component that is not part of the declaring component's sub tree.
     let private invalidBindings (model : Model) (c : Comp) =
         let rec check (c : Comp) = seq {
-            let invalidComp portComponent = c.Name <> portComponent && c.Subs |> List.exists (fun s -> s.Name = portComponent) |> not
+            let invalidComp (portComponent : string) = portComponent.StartsWith c.Name |> not
             yield! c.Bindings 
                    |> Seq.filter (fun binding -> invalidComp binding.SourceComp || invalidComp binding.TargetComp) 
                    |> Seq.map (fun binding -> (c, binding))
             yield! c.Subs |> Seq.map check |> Seq.collect id
         }
 
-        // Don't check the bindings established by the model - they are allowed to span different roots and levels of the hierarchy
-        let bindings = c.Subs |> Seq.collect check |> Seq.toArray
+        let bindings = check c |> Seq.toArray
         if bindings.Length > 0 then
             raise (InvalidBindingsException (bindings |> Array.map (fun (c, binding) -> toPortBinding model c.Name binding)))
 

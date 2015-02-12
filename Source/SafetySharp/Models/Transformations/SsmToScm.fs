@@ -172,23 +172,28 @@ module internal SsmToScm =
     }
 
     /// Transforms the given binding to a SCM binding.
-    let private transformBinding (b : Ssm.Binding) : Scm.BndDecl = 
-        let truncate (name : string) = name.Substring (name.LastIndexOf "." + 1)
-        { Target = { ReqPort = Scm.ReqPort b.TargetPort; Comp = Scm.Comp (truncate b.TargetComp) |> Some }
-          Source = { ProvPort = Scm.ProvPort b.SourcePort; Comp = Scm.Comp (truncate b.SourceComp) |> Some }
+    let private transformBinding (c : Ssm.Comp) (b : Ssm.Binding) : Scm.BndDecl = 
+        let getComp (name : string) =
+            invalidArg (name.StartsWith c.Name |> not) "name" "Unexpected subcomponent name. Cannot bind port of parent component."
+            let lastDot = c.Name.LastIndexOf '.'
+            let relativePath = name.Substring (lastDot + 1)
+            relativePath.Split '.' |> Array.filter ((<>) "") |> Array.rev |> Array.map Scm.Comp |> Array.toList
+
+        { Target = { ReqPort = Scm.ReqPort b.TargetPort; Comp = getComp b.TargetComp }
+          Source = { ProvPort = Scm.ProvPort b.SourcePort; Comp = getComp b.SourceComp }
           Kind = match b.Kind with 
                  | BindingKind.Instantaneous -> Scm.Instantaneous 
                  | BindingKind.Delayed       -> Scm.Delayed }
 
     /// Transforms the given (lowered) SSM model to a SCM model.
     let rec transform (c : Ssm.Comp) : Scm.CompDecl = {
-        Comp = Scm.Comp c.Name
+        Comp = Scm.Comp (c.Name.Substring (c.Name.LastIndexOf '.' + 1))
         Subs = c.Subs |> List.map transform
         Fields = c.Fields |> List.map transformField
         Faults = []
         ReqPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ReqPort) |> Seq.map transformReqPort |> Seq.toList
         ProvPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort) |> Seq.map transformProvPort |> Seq.toList
-        Bindings = c.Bindings |> List.map transformBinding
+        Bindings = c.Bindings |> List.map (transformBinding c)
         Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step && m.Name <> Ssm.BaseUpdateMethod.Name) |> Seq.map transformSteps |> Seq.toList
     }
         

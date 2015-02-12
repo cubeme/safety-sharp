@@ -102,8 +102,8 @@ module internal ScmRewriterConvertFaults =
                 }
             let newBindingDecl = 
                 {
-                    BndDecl.Target = {BndTarget.Comp = None; BndTarget.ReqPort = reqPort};
-                    BndDecl.Source = {BndSrc.Comp = None; BndSrc.ProvPort = provPort};
+                    BndDecl.Target = {BndTarget.Comp = []; BndTarget.ReqPort = reqPort};
+                    BndDecl.Source = {BndSrc.Comp = []; BndSrc.ProvPort = provPort};
                     BndDecl.Kind = BndKind.Instantaneous;
                 }                                
             let newCompDecl = compDecl.addField(newFieldDecl)

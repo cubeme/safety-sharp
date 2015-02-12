@@ -283,8 +283,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? None
-        newParentNode.Bindings.Head.Target.Comp =? None
+        newParentNode.Bindings.Head.Source.Comp =? []
+        newParentNode.Bindings.Head.Target.Comp =? []
         ()
 
     [<Test>]
@@ -326,8 +326,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? None
-        newParentNode.Bindings.Head.Target.Comp =? None
+        newParentNode.Bindings.Head.Source.Comp =? []
+        newParentNode.Bindings.Head.Target.Comp =? []
         ()
         
     [<Test>]
@@ -370,8 +370,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? None
-        newParentNode.Bindings.Head.Target.Comp =? None
+        newParentNode.Bindings.Head.Source.Comp =? []
+        newParentNode.Bindings.Head.Target.Comp =? []
         ()
         
     [<Test>]
@@ -413,8 +413,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 1
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp =? None
-        newParentNode.Bindings.Head.Target.Comp <>? None
+        newParentNode.Bindings.Head.Source.Comp =? []
+        newParentNode.Bindings.Head.Target.Comp <>? []
         ()
 
     [<Test>]
@@ -456,8 +456,8 @@ type SingleLevelUpTests () =
         newParentNode.ReqPorts.Length =? 1
         newParentNode.ProvPorts.Length =? 0
         newParentNode.Bindings.Length =? 1
-        newParentNode.Bindings.Head.Source.Comp <>? None
-        newParentNode.Bindings.Head.Target.Comp =? None
+        newParentNode.Bindings.Head.Source.Comp <>? []
+        newParentNode.Bindings.Head.Target.Comp =? []
         ()
         
 

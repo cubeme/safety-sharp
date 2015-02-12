@@ -123,14 +123,16 @@ module internal Scm =
         Behavior : BehaviorDecl
     }
 
+    type CompPath = Comp list // index1::index2::root::[]
+
     type internal BndSrc = {
         ProvPort : ProvPort
-        Comp : Comp option
+        Comp : CompPath
     }
 
     type internal BndTarget = {
         ReqPort : ReqPort
-        Comp : Comp option
+        Comp : CompPath
     }
 
     type internal BndKind = 

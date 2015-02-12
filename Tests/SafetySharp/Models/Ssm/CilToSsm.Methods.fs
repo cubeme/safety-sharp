@@ -1376,7 +1376,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 2 0, "A`2<System.Boolean,System.Int32>", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], true)))
+                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("SynRoot.Root0@0.a@0", ClassType "A`2<System.Boolean,System.Int32>"), CallExpr (methodName "M" 2 0, "A`2<System.Boolean,System.Int32>", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], true)))
                                 RetStm (Some (VarExpr (tmp 3 0 BoolType)))
                             ]
                     Kind = ProvPort
@@ -1397,7 +1397,7 @@ module Methods =
                     Body = 
                         SeqStm
                             [
-                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("Root0@0.a@0", ClassType "A`2<T1,System.Int32>"), CallExpr (methodName "M" 2 0, "A`2<T1,System.Int32>", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], true)))
+                                AsgnStm (tmp 3 0 BoolType, MemberExpr (Field ("SynRoot.Root0@0.a@0", ClassType "A`2<T1,System.Int32>"), CallExpr (methodName "M" 2 0, "A`2<T1,System.Int32>", [IntType], [In], BoolType, [VarExpr (arg "x" IntType)], true)))
                                 RetStm (Some (VarExpr (tmp 3 0 BoolType)))
                             ]
                     Kind = ProvPort
