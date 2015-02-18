@@ -78,7 +78,7 @@ module internal ScmRewriterInlineBehavior =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inline Behavior
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let findInlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {    
+    let findInlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {    
         let! state = getState
         let compPath = [state.Model.Comp]
 
@@ -164,7 +164,7 @@ module internal ScmRewriterInlineBehavior =
                     do! updateInlineBehaviorState rewriterInlineBehavior
         }
     
-    let findCallToInline : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
+    let findCallToInline : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         let! inlineBehavior=getInlineBehaviorState
         if (inlineBehavior.IsNone) then
                 return ()
@@ -202,7 +202,7 @@ module internal ScmRewriterInlineBehavior =
                             do! updateInlineBehaviorState newInlineBehavior
         }
 
-    let inlineCall : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
+    let inlineCall : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         let! inlineBehavior=getInlineBehaviorState
         if (inlineBehavior.IsNone) then
             return ()
@@ -336,16 +336,16 @@ module internal ScmRewriterInlineBehavior =
                             do! updateInlineBehaviorState newRewriterInlineBehavior
     }   
 
-    let inlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
+    let inlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         // Assert: only inline statements in the root-component
 
-        do! (iterateToFixpoint (scmRewrite {
+        do! (iterateToFixpoint (workflow {
             do! findCallToInline
             do! inlineCall
         }))
     }
 
-    let writeBackChangedBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
+    let writeBackChangedBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         // Assert: only inline statements in the root-component 
         let! state = getState
         let! inlineBehavior=getInlineBehaviorState
@@ -386,21 +386,21 @@ module internal ScmRewriterInlineBehavior =
 
 
         
-    let findAndInlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
+    let findAndInlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         // Assert: only inline statements in the root-component
         do! findInlineBehavior            
         do! inlineBehavior
         do! writeBackChangedBehavior
     }
 
-    let inlineBehaviors : ScmRewriterInlineBehaviorFunction<unit> = scmRewrite {
+    let inlineBehaviors : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         do! (iterateToFixpoint findAndInlineBehavior)
     }
 
     let createInlineBehaviorState (oldState:ScmRewriteState<unit>) =
         oldState.deriveWithSubState None
 
-    let inlineBehaviorsWrapper : ScmRewriteFunction<unit,unit> = scmRewrite {
+    let inlineBehaviorsWrapper : ScmRewriteFunction<unit,unit> = workflow {
         let! state = getState
         let (_,newState) = runStateAndReturnSimpleState (inlineBehaviors) (createInlineBehaviorState state)
         do! putState newState

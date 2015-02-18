@@ -23,11 +23,13 @@
 namespace SafetySharp.Models
 open SafetySharp.Models.Scm
 open SafetySharp.Models.ScmHelpers
+open SafetySharp.Workflow
 
 module internal ScmRewriterBase =
     
     type ScmModel = CompDecl //may change, but I hope it does not
-                        
+                       
+    (*
     type ScmRewriteState<'subState> = {
         Model : ScmModel;
 
@@ -36,8 +38,6 @@ module internal ScmRewriterBase =
 
         TakenNames : Set<string>;
         SubState : 'subState;
-        // Flag, which determines, if something was changed (needed for fixpoint iteration)
-        Tainted : bool;
     }
         with
             static member initial (scm:ScmModel) (subState:'subState) = 
@@ -47,7 +47,6 @@ module internal ScmRewriterBase =
                     PathOfChangingSubcomponent = [scm.Comp];
                     ScmRewriteState.TakenNames = scm.getTakenNames () |> Set.ofList;
                     ScmRewriteState.SubState = subState;
-                    ScmRewriteState.Tainted = false;
                 }
             member this.deriveWithSubState<'newSubState> (newSubState:'newSubState) =
                 {
@@ -56,94 +55,67 @@ module internal ScmRewriterBase =
                     ScmRewriteState.PathOfChangingSubcomponent = this.PathOfChangingSubcomponent;
                     ScmRewriteState.TakenNames = this.TakenNames;
                     ScmRewriteState.SubState = newSubState; //<---- everything but this must be changed
-                    ScmRewriteState.Tainted = this.Tainted;
                 }
 
 
     type ScmRewriteSimpleState = ScmRewriteState<unit> //simple state is a state without subState
                     
     let initialSimpleState (scm:ScmModel) = ScmRewriteState<unit>.initial scm ()
+    *)
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Change Subcomponent
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+
+    type IScmChangeSubcomponent<'state> =
+        interface
+            abstract getModel : ScmModel
+            abstract setModel : ScmModel -> 'state
+            
+            abstract getPathOfChangingSubcomponent : CompPath
+            abstract setPathOfChangingSubcomponent : CompPath -> 'state
+        end
+        
+
+    let getSubComponentToChange<'state when 'state :> IScmChangeSubcomponent<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
+        let! state = getState
+        let model = state.getModel
+        let path = state.getPathOfChangingSubcomponent
+        return (model.getDescendantUsingPath path)
+    }
                 
+    // example with exact type annotation without workflow-surrounding (also easily implementable with workflow {})
+    let getPathOfSubComponentToChange<'state when 'state :> IScmChangeSubcomponent<'state>> : WorkflowFunction<'state,'state,CompPath> =
+        let getPathOfSubComponentToChange (state:WorkflowState<'state> when 'state :> IScmChangeSubcomponent<'state>) : (CompPath * WorkflowState<'state>) =            
+            state.State.getPathOfChangingSubcomponent,state
+        WorkflowFunction (getPathOfSubComponentToChange)
+
+    let updateSubComponentToChange<'state when 'state :> IScmChangeSubcomponent<'state>> (updatedSubComponent:CompDecl) : WorkflowFunction<'state,'state,unit> = workflow {
+        let! state = getState
+        let model = state.getModel
+        let path = state.getPathOfChangingSubcomponent
+        let newModel = model.replaceDescendant path updatedSubComponent
+        let newState = state.setModel newModel
+        do! updateState newState
+    }
+        
     
-    // ScmRewriteFunction<'subState,'returnType>, where 'subState is a special state (with interface rewriteInit), where everything like ScmRewriterInlineBehavior is encapsulated. Write converter-functions (every subRewriter should contain a "toUnit", where 'b=unit.
-    // RewriteState should also be parametrized. We could also rename scmRewriter to ScmLocalRewriter (it works only on one component(and maybe its subcomponent) 
-    type ScmRewriteFunction<'subState,'returnType> = ScmRewriteFunction of (ScmRewriteState<'subState> -> 'returnType * ScmRewriteState<'subState>)
-    
-    let iterateToFixpoint<'subState> (s:ScmRewriteFunction<'subState,unit>) =
-        match s with
-            | ScmRewriteFunction (functionToIterate) ->            
-                let adjust_tainted_and_call (state:ScmRewriteState<'subState>) : (bool*ScmRewriteState<'subState>) =
-                    // 1) Tainted is set to false
-                    // 2) function is called
-                    // 3) Tainted is set to true, if (at least one option applies)
-                    //      a) it was true before the function call
-                    //      b) the functionToIterate sets tainted to true 
-                    let wasTaintedBefore = state.Tainted
-                    let stateButUntainted =
-                        { state with
-                            ScmRewriteState.Tainted = false;
-                        }
-                    let (_,stateAfterCall) = functionToIterate stateButUntainted
-                    let taintedByCall = stateAfterCall.Tainted
-                    let newState =
-                        { stateAfterCall with
-                            ScmRewriteState.Tainted = wasTaintedBefore || taintedByCall;
-                        }
-                    (taintedByCall,newState)
-                let rec iterate (state:ScmRewriteState<'subState>) : (unit*ScmRewriteState<'subState>) =
-                    let (taintedByCall,stateAfterOneCall) = adjust_tainted_and_call state
-                    if taintedByCall then
-                        iterate stateAfterOneCall
-                    else
-                        ((),stateAfterOneCall)
-                ScmRewriteFunction (iterate)
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Fresh Names
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // TODO:
-    //   - RewriteElement should return, if it made a change
-    //   - smallest element only gets called once
-    //   - liftToFixpoint repeats a small element, until it doesn't change something anymore
-    //   - so levelUpField levels up one field, levelUpFields levels up fields, until nothing possible anymore
+    type IFreshNameDepot<'state> =
+        interface
+            abstract getTakenNames : Set<string>
+            abstract setTakenNames : Set<string> -> 'state //must be implemented by every state
+        end
 
-
-    let runState (ScmRewriteFunction s) a = s a
-    let getState = ScmRewriteFunction (fun s -> (s,s)) //Called in workflow: (implicitly) gets state (s) from workflow; assign this State s to the let!; and set (in this case keep)State of workflow to s
-    let putState s = ScmRewriteFunction (fun _ -> ((),s)) //Called in workflow: ignore state (_) from workflow; assign nothing () to the let!; and set State of workflow to the new state s
-    let putStateAndReturn s returnValue = ScmRewriteFunction (fun _ -> (returnValue,s))//Called in workflow: ignore state (_) from workflow; assign returnValue to the let!; and set State of workflow to the new state s
-
-    let runStateAndReturnSimpleState<'subState> ((ScmRewriteFunction s):ScmRewriteFunction<'subState,unit>) (a:ScmRewriteState<'subState>) : (unit*ScmRewriteSimpleState) =
-        let (_,result) = s a
-        let convertedResult = result.deriveWithSubState ()
-        ((),convertedResult)
-
-    // the computational expression "scmRewrite" is defined here
-    // inspired by http://fsharpforfunandprofit.com/posts/computation-expressions-intro/ (StateBuilder, now offline)
-    type ScmRewriter() =
-        member this.Return(a) = 
-            ScmRewriteFunction (fun s -> (a,s))
-        member this.Bind(m,k) =
-            ScmRewriteFunction (fun state -> 
-                let (a,state') = runState m state 
-                runState (k a) state')
-        member this.ReturnFrom (m) =
-            m
-
-    let scmRewrite = new ScmRewriter()
-
-    
-    // helpers
-    
-    // TODO:
-    // let! x = (stateFromLevelUp scmRewriteLevelUp{...})
-    // let fromBaseState = ... (execute and write back)
-    // let getUnusedFieldName = (fromBaseState ScmRewriterBase.getUnusedFieldName)
-    
-
-    let getCompletlyFreshName<'subState> (basedOn:string) : ScmRewriteFunction<'subState,string> = scmRewrite {
+    let getCompletlyFreshName<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string) : WorkflowFunction<'state,'state,string> = workflow {
             let! state = getState
             let newName = 
                 let existsName (nameCandidate:string) : bool =
-                    state.TakenNames.Contains nameCandidate
+                    state.getTakenNames.Contains nameCandidate
                 let rec inventName numberSuffix : string =
                     // If desired name does not exist, get name with the lowest numberSuffix.
                     // This is not really beautiful, but finally leads to a free name, (because domain is finite).
@@ -156,94 +128,65 @@ module internal ScmRewriterBase =
                     basedOn
                 else
                     inventName 0
-            let modifiedState =
-                { state with
-                    ScmRewriteState.TakenNames = state.TakenNames.Add newName;
-                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                }
-            return! putStateAndReturn modifiedState newName
+            let modifiedState = state.setTakenNames (state.getTakenNames.Add newName)
+            return! updateStateAndReturn modifiedState newName
         }
 
-    let getUnusedFieldName<'subState> (basedOn:string) : ScmRewriteFunction<'subState,Field> = scmRewrite {
+    let getUnusedFieldName<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string) : WorkflowFunction<'state,'state,Field> = workflow {
             let! name = getCompletlyFreshName basedOn
             return Field(name)
         }
 
-    let getUnusedFaultName<'subState> (basedOn:string) : ScmRewriteFunction<'subState,Fault> = scmRewrite {
+    let getUnusedFaultName<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string) : WorkflowFunction<'state,'state,Fault> = workflow {
             let! name = getCompletlyFreshName basedOn
             return Fault.Fault(name)
         }
             
-    let getUnusedReqPortName<'subState> (basedOn:string) : ScmRewriteFunction<'subState,ReqPort> = scmRewrite {
+    let getUnusedReqPortName<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string) : WorkflowFunction<'state,'state,ReqPort> = workflow {
             let! name = getCompletlyFreshName basedOn
             return ReqPort(name)
         }
 
-    let getUnusedProvPortName<'subState> (basedOn:string) : ScmRewriteFunction<'subState,ProvPort> = scmRewrite {
+    let getUnusedProvPortName<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string) : WorkflowFunction<'state,'state,ProvPort> = workflow {
             let! name = getCompletlyFreshName basedOn
             return ProvPort(name)
         }
         
-    let getUnusedVarName<'subState> (basedOn:string) : ScmRewriteFunction<'subState,Var> = scmRewrite {
+    let getUnusedVarName<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string) : WorkflowFunction<'state,'state,Var> = workflow {
             let! name = getCompletlyFreshName basedOn
             return Var(name)
         }
 
-    let getUnusedVarNames<'subState> (basedOn:string list) : ScmRewriteFunction<'subState,Var list> = 
-        let newUnusedVarNames (state) : (Var list * ScmRewriteState<'subState>) =
+    let getUnusedVarNames<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string list) : WorkflowFunction<'state,'state,Var list> =
+        let newUnusedVarNames (state) : (Var list * WorkflowState<'state>) =
             let mutable varState = state
             let mutable newVars = []
             for i in basedOn do
-                let (newVar,newState) = runState (getUnusedVarName i) varState
+                let (newVar,newState) = runWorkflowState (getUnusedVarName i) varState
                 varState <- newState
                 newVars <- newVar::newVars
             (List.rev newVars, varState)
-        ScmRewriteFunction (newUnusedVarNames)
+        WorkflowFunction (newUnusedVarNames)
 
-    let getUnusedFieldNames<'subState> (basedOn:string list) : ScmRewriteFunction<'subState,Field list> = 
-        let newUnusedFieldNames (state) : (Field list * ScmRewriteState<'subState>) =
+    let getUnusedFieldNames<'state when 'state :> IFreshNameDepot<'state>> (basedOn:string list) : WorkflowFunction<'state,'state,Field list> =
+        let newUnusedFieldNames (state) : (Field list * WorkflowState<'state>) =
             let mutable varState = state
             let mutable newFields = []
             for i in basedOn do
-                let (newField,newState) = runState (getUnusedFieldName i) varState
+                let (newField,newState) = runWorkflowState (getUnusedFieldName i) varState
                 varState <- newState
                 newFields <- newField::newFields
             (List.rev newFields, varState)
-        ScmRewriteFunction (newUnusedFieldNames)
+        WorkflowFunction (newUnusedFieldNames)
 
         
-    let getSubComponentToChange<'subState> : ScmRewriteFunction<'subState,CompDecl> = 
-        let getParentCompDecl (state:ScmRewriteState<'subState>) : (CompDecl * ScmRewriteState<'subState>) =
-            state.ChangingSubComponent,state
-        ScmRewriteFunction (getParentCompDecl)
-        
-        
-    let getPathOfSubComponentToChange<'subState> : ScmRewriteFunction<'subState,CompPath> = 
-        let getPathOfSubComponentToChange (state:ScmRewriteState<'subState>) : (CompPath * ScmRewriteState<'subState>) =
-            state.PathOfChangingSubcomponent,state
-        ScmRewriteFunction (getPathOfSubComponentToChange)
-
-        
-    let updateSubComponentToChange<'subState> (updatedSubComponent:CompDecl) : ScmRewriteFunction<'subState,unit> = 
-        let updateSubComponentToChange (state:ScmRewriteState<'subState>) : (unit * ScmRewriteState<'subState>) =
-            let newState =
-                { state with
-                    ScmRewriteState.ChangingSubComponent = updatedSubComponent;
-                    ScmRewriteState.Tainted = true;
-                }
-            (),newState
-        ScmRewriteFunction (updateSubComponentToChange)
-
-    // TODO: Move every access to the model into a function here.
-    //       Here we can easily assure, that reading operations occur on the correct part of the model (which may
-    //       live in the rewritten part). Also buffering/caching operations can be implemented here more easily.
 
 
         
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Check Consistency
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let checkConsistency<'subState> : ScmRewriteFunction<'subState,unit> = scmRewrite {
-            return ()
+    let checkConsistency<'state> : WorkflowFunction<'state,'state,bool> = workflow {
+            return true
         }
     

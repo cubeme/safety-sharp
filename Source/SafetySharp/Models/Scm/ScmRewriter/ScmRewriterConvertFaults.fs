@@ -65,7 +65,7 @@ module internal ScmRewriterConvertFaults =
     
 
     
-    let replaceFaultByPortsAndFields : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+    let replaceFaultByPortsAndFields : ScmRewriterConvertFaultsFunction<unit> = workflow {
         let! convertFaultsState = getConvertFaultsState
         let! compDecl = getSubComponentToChange
         if compDecl.Faults = [] then
@@ -120,7 +120,7 @@ module internal ScmRewriterConvertFaults =
             do! updateConvertFaultsState newConvertFaultsState
     }
 
-    let replaceStepFaultByCallPort : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+    let replaceStepFaultByCallPort : ScmRewriterConvertFaultsFunction<unit> = workflow {
         let! convertFaultsState = getConvertFaultsState
 
         if convertFaultsState.BehaviorsToRewrite.IsEmpty then
@@ -180,7 +180,7 @@ module internal ScmRewriterConvertFaults =
 
     
 
-    let uniteProvPortDecls  : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+    let uniteProvPortDecls  : ScmRewriterConvertFaultsFunction<unit> = workflow {
         //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
         
         let! convertFaultsState = getConvertFaultsState
@@ -243,7 +243,7 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }    
     
-    let uniteStep : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+    let uniteStep : ScmRewriterConvertFaultsFunction<unit> = workflow {
           //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
         let! convertFaultsState = getConvertFaultsState
         let! compDecl = getSubComponentToChange
@@ -305,7 +305,7 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }
     
-    let convertFaultsWriteBackChangesIntoModel  : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+    let convertFaultsWriteBackChangesIntoModel  : ScmRewriterConvertFaultsFunction<unit> = workflow {
         let! state = getState
         let! compDecl = getSubComponentToChange
 
@@ -320,7 +320,7 @@ module internal ScmRewriterConvertFaults =
         return! putState modifiedState
      }
     
-    let convertFaults : ScmRewriterConvertFaultsFunction<unit> = scmRewrite {
+    let convertFaults : ScmRewriterConvertFaultsFunction<unit> = workflow {
         do! (iterateToFixpoint replaceFaultByPortsAndFields)
         do! (iterateToFixpoint replaceStepFaultByCallPort)
         do! (iterateToFixpoint uniteProvPortDecls)
@@ -351,7 +351,7 @@ module internal ScmRewriterConvertFaults =
             newState
             
     
-    let convertFaultsWrapper : ScmRewriteFunction<unit,unit> = scmRewrite {
+    let convertFaultsWrapper : ScmRewriteFunction<unit,unit> = workflow {
         let! state = getState
         let (_,newState) = runStateAndReturnSimpleState (convertFaults) (createConvertFaultsStateForRootComponent state)
         do! putState newState
