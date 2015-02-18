@@ -42,6 +42,15 @@ module internal Workflow =
                     WorkflowState.CancellationToken = ctk;
                     WorkflowState.Tainted = false;
                 }
+            static member stateInit (state:'state) (ctk:System.Threading.CancellationToken option) =
+                {
+                    WorkflowState.State = state;
+                    WorkflowState.StepNumber = [];
+                    WorkflowState.StepName = [];
+                    WorkflowState.Log = [];
+                    WorkflowState.CancellationToken = ctk;
+                    WorkflowState.Tainted = false;
+                }
             member this.CurrentStepNumber = this.StepNumber.Head
             member this.CurrentStepName = this.StepName.Head
 
@@ -172,7 +181,7 @@ module internal Workflow =
         // no cancellation token
         let result,newWfState = s (WorkflowState<unit>.emptyInit None)
         result
-
+        
     let ignoreResult ( (WorkflowFunction (functionToCall)):WorkflowFunction<'oldState,'newState,'returnType>) : WorkflowFunction<'oldState,'newState,unit> =
         let ignoreResult oldState =
             let result,newState = functionToCall oldState
