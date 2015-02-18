@@ -26,35 +26,51 @@ open SafetySharp.Models.Scm
 module internal ScmRewriterConvertFaults =
     open ScmHelpers
     open ScmRewriterBase
+    open SafetySharp.Workflow
     
     
                                         
-    type ScmRewriterConvertFaults = { //TODO: Rename to data
+    type ScmRewriterConvertFaultsState = {
+        Model : ScmModel;
+        PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
+        TakenNames : Set<string>;
+
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
         ArtificialFaultOldToPortNew : Map<Fault,ProvPort*ReqPort>;
         BehaviorsToRewrite : BehaviorWithLocation list;
     }
+        with
+            interface IScmModel<ScmRewriterConvertFaultsState> with
+                member this.getModel : ScmModel = this.Model
+                member this.setModel (model:ScmModel) =
+                    { this with
+                        ScmRewriterConvertFaultsState.Model = model
+                    }
+            interface IScmChangeSubcomponent<ScmRewriterConvertFaultsState> with
+                member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
+                member this.setPathOfChangingSubcomponent (compPath:CompPath) =
+                    { this with
+                        ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = compPath
+                    }
+            interface IFreshNameDepot<ScmRewriterConvertFaultsState> with
+                member this.getTakenNames : Set<string> = this.TakenNames
+                member this.setTakenNames (takenNames:Set<string>) =
+                    { this with
+                        ScmRewriterConvertFaultsState.TakenNames = takenNames
+                    }
 
-    type ScmRewriterConvertFaultsFunction<'returnType> = ScmRewriteFunction<ScmRewriterConvertFaults,'returnType>
-    type ScmRewriterConvertFaultsState = ScmRewriteState<ScmRewriterConvertFaults>
+
+    type ScmRewriterConvertFaultsFunction<'returnType> = WorkflowFunction<ScmRewriterConvertFaultsState,ScmRewriterConvertFaultsState,'returnType>
+    type ScmRewriterConvertFaultsWorkflowState = WorkflowState<ScmRewriterConvertFaultsState>
     
 
     
-    let getConvertFaultsState : ScmRewriterConvertFaultsFunction<ScmRewriterConvertFaults> = 
-        let getConvertFaultsState (state:ScmRewriterConvertFaultsState) : (ScmRewriterConvertFaults * ScmRewriterConvertFaultsState) =
-            state.SubState,state
-        ScmRewriteFunction (getConvertFaultsState)
+    let getConvertFaultsState : ScmRewriterConvertFaultsFunction<ScmRewriterConvertFaultsState> = 
+        getState
 
-    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaults) : ScmRewriterConvertFaultsFunction<unit> = 
-        let updateConvertFaultsState (state:ScmRewriterConvertFaultsState) : (unit * ScmRewriterConvertFaultsState) =
-            let newState =
-                { state with
-                    ScmRewriterConvertFaultsState.SubState = newConvertFaults;
-                    ScmRewriterConvertFaultsState.Tainted = true;
-                }
-            (),newState
-        ScmRewriteFunction (updateConvertFaultsState)
+    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaultsState) : ScmRewriterConvertFaultsFunction<unit> = 
+        updateState newConvertFaults
 
 
 
@@ -114,8 +130,8 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
             let newConvertFaultsState =
                 { convertFaultsState with
-                    ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = convertFaultsState.ArtificialFaultOldToFieldNew.Add ( (faultToConvert.Fault,field) ) ;
-                    ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = convertFaultsState.ArtificialFaultOldToPortNew.Add ( (faultToConvert.Fault,(newProvPortDecl.ProvPort,newReqPortDecl.ReqPort)) );
+                    ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = convertFaultsState.ArtificialFaultOldToFieldNew.Add ( (faultToConvert.Fault,field) ) ;
+                    ScmRewriterConvertFaultsState.ArtificialFaultOldToPortNew = convertFaultsState.ArtificialFaultOldToPortNew.Add ( (faultToConvert.Fault,(newProvPortDecl.ProvPort,newReqPortDecl.ReqPort)) );
                 }
             do! updateConvertFaultsState newConvertFaultsState
     }
@@ -147,7 +163,7 @@ module internal ScmRewriterConvertFaults =
                     let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
-                            ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
+                            ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
                         }
                     do! updateConvertFaultsState newConvertFaultsState
                 | BehaviorWithLocation.InFault (_,fault,_) ->
@@ -160,7 +176,7 @@ module internal ScmRewriterConvertFaults =
                     let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
-                            ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
+                            ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
                         }
                     do! updateConvertFaultsState newConvertFaultsState
                 | BehaviorWithLocation.InStep (_,step,_) ->
@@ -173,7 +189,7 @@ module internal ScmRewriterConvertFaults =
                     let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
-                            ScmRewriterConvertFaults.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
+                            ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
                         }
                     do! updateConvertFaultsState newConvertFaultsState
     }
@@ -305,54 +321,33 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }
     
-    let convertFaultsWriteBackChangesIntoModel  : ScmRewriterConvertFaultsFunction<unit> = workflow {
-        let! state = getState
-        let! compDecl = getSubComponentToChange
-
-        let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent compDecl
-        let modifiedState =
-            { state with
-                ScmRewriterConvertFaultsState.ChangingSubComponent = newModel;
-                ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = [newModel.Comp];
-                ScmRewriterConvertFaultsState.Model = newModel;
-                ScmRewriterConvertFaultsState.Tainted = true; // if tainted, set tainted to true
-            }
-        return! putState modifiedState
-     }
-    
     let convertFaults : ScmRewriterConvertFaultsFunction<unit> = workflow {
         do! (iterateToFixpoint replaceFaultByPortsAndFields)
         do! (iterateToFixpoint replaceStepFaultByCallPort)
         do! (iterateToFixpoint uniteProvPortDecls)
         do! uniteStep
-        do! convertFaultsWriteBackChangesIntoModel
     }
        
-    let createConvertFaultsStateForRootComponent (oldState) = 
-            let rootComp = oldState.Model
-            let rootPath = [oldState.Model.Comp]
+    let createConvertFaultsStateForRootComponent (model:ScmModel) = 
+            let rootComp = model
+            let rootPath = [model.Comp]
             let convertFaultsState =
                 let behaviorsToRewrite =
                     BehaviorWithLocation.collectAllBehaviorsInPath rootComp rootPath
                 {
-                    ScmRewriterConvertFaults.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
-                    ScmRewriterConvertFaults.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
-                    ScmRewriterConvertFaults.BehaviorsToRewrite = behaviorsToRewrite;
+                    ScmRewriterConvertFaultsState.Model = model;
+                    ScmRewriterConvertFaultsState.TakenNames = model.getTakenNames () |> Set.ofList ;
+                    ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = rootPath;
+                    ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
+                    ScmRewriterConvertFaultsState.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;
+                    ScmRewriterConvertFaultsState.BehaviorsToRewrite = behaviorsToRewrite;
                 }
-            let newState =
-                {
-                    ScmRewriteState.Model = oldState.Model;
-                    ScmRewriteState.ChangingSubComponent = rootComp;
-                    ScmRewriteState.PathOfChangingSubcomponent = rootPath;
-                    ScmRewriteState.TakenNames = oldState.TakenNames;
-                    ScmRewriteState.SubState = convertFaultsState;
-                    ScmRewriteState.Tainted = true;
-                    }
-            newState
+            convertFaultsState
             
     
-    let convertFaultsWrapper : ScmRewriteFunction<unit,unit> = workflow {
-        let! state = getState
-        let (_,newState) = runStateAndReturnSimpleState (convertFaults) (createConvertFaultsStateForRootComponent state)
-        do! putState newState
+    let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,ScmRewriterConvertFaultsState,unit> = workflow {
+        let! model = getModel
+        do! updateState (createConvertFaultsStateForRootComponent model)
+        do! convertFaults
     }

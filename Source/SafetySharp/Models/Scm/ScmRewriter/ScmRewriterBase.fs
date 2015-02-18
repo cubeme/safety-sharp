@@ -75,11 +75,33 @@ module internal ScmRewriterBase =
             abstract setModel : ScmModel -> 'state
         end
         
-
+        
     let getModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
         let! state = getState
         let model = state.getModel
         return model
+    }
+    
+    let setModel<'state when 'state :> IScmModel<'state>> (model:ScmModel) : WorkflowFunction<'state,'state,unit> = workflow {
+        let! state = getState
+        let newState = state.setModel model
+        do! updateState newState
+    }
+
+    type PlainScmModel(model:ScmModel) =
+        class end
+            with
+                interface IScmModel<PlainScmModel> with
+                    member this.getModel : ScmModel = model
+                    member this.setModel (model:ScmModel) = PlainScmModel(model)
+    
+    let setPlainModelState (model:ScmModel) = workflow {
+        do! updateState (PlainScmModel(model))
+    }
+    
+    let toPlainModelState<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,PlainScmModel,unit> = workflow {
+        let! state = getState
+        do! setPlainModelState state.getModel
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

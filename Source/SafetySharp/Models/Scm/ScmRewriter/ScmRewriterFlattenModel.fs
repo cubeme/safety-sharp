@@ -30,6 +30,7 @@ module internal ScmRewriterFlattenModel =
     open ScmRewriterConvertFaults
     open ScmRewriterConvertDelayedBindings
     open ScmRewriterInlineBehavior
+    open SafetySharp.Workflow
 
     
     // flatten model means
@@ -38,25 +39,28 @@ module internal ScmRewriterFlattenModel =
     //  * convert delayed ports
     //  * inline behaviors
 
-    let levelUpAndInline : ScmRewriteFunction<unit,unit> = workflow {
+    let levelUpAndInline<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,PlainScmModel,unit> = workflow {
             // level up everything
-            do! levelUpSubcomponents
+            do! levelUpSubcomponentsWrapper
             //do! assertNoSubcomponent (assertion is done as last step)
-            do! checkConsistency
+            //do! checkConsistency
             
             // convert faults
             do! convertFaultsWrapper
             //do! assertNoFault
-            do! checkConsistency
+            //do! checkConsistency
             
             // convert delayed bindings            
-            do! convertDelayedBindings
-            do! checkConsistency
+            do! convertDelayedBindingsWrapper
+            //do! checkConsistency
 
             // inline everything beginning with the main step
             do! inlineBehaviorsWrapper
             //do! assertNoPortCall
-            do! checkConsistency
+            //do! checkConsistency
+
+            do! toPlainModelState
         }
 
 

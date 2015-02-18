@@ -26,6 +26,7 @@ open SafetySharp.Models.Scm
 module internal ScmRewriterConvertDelayedBindings =
     open ScmHelpers
     open ScmRewriterBase
+    open SafetySharp.Workflow
     
     // Assumptions:
     //  As1: Only root component gets converted
@@ -64,26 +65,34 @@ module internal ScmRewriterConvertDelayedBindings =
     //       First Step)
     //     * Create example with indeterministic initialisazion
     
-    
-    
-    type ScmRewriterConvertDelayedBindingsFunction<'returnType> = ScmRewriteFunction<unit,'returnType>
-    type ScmRewriterConvertDelayedBindingsState = ScmRewriteState<unit>
-
-    let selectRootComponentForConvertingDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
-        // Use As1
-        let! state = getState
-        let rootComp = state.Model
-        let rootPath = [state.Model.Comp]
-        let modifiedState =
-            { state with
-                ScmRewriteState.ChangingSubComponent = rootComp;
-                ScmRewriteState.PathOfChangingSubcomponent = rootPath;
-                ScmRewriteState.Tainted = true;
-            }
-        return! putState modifiedState
+    type ScmRewriterConvertDelayedBindingsState = {
+        Model : ScmModel;
+        PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
+        TakenNames : Set<string>;
     }
-
-
+        with
+            interface IScmModel<ScmRewriterConvertDelayedBindingsState> with
+                member this.getModel : ScmModel = this.Model
+                member this.setModel (model:ScmModel) =
+                    { this with
+                        ScmRewriterConvertDelayedBindingsState.Model = model
+                    }
+            interface IScmChangeSubcomponent<ScmRewriterConvertDelayedBindingsState> with
+                member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
+                member this.setPathOfChangingSubcomponent (compPath:CompPath) =
+                    { this with
+                        ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = compPath
+                    }
+            interface IFreshNameDepot<ScmRewriterConvertDelayedBindingsState> with
+                member this.getTakenNames : Set<string> = this.TakenNames
+                member this.setTakenNames (takenNames:Set<string>) =
+                    { this with
+                        ScmRewriterConvertDelayedBindingsState.TakenNames = takenNames
+                    }
+    
+    type ScmRewriterConvertDelayedBindingsFunction<'returnType> = WorkflowFunction<ScmRewriterConvertDelayedBindingsState,ScmRewriterConvertDelayedBindingsState,'returnType>
+    type ScmRewriterConvertDelayedBindingsWorkflowState = WorkflowState<ScmRewriterConvertDelayedBindingsState>
+    
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
                 : ScmRewriterConvertDelayedBindingsFunction<Map<Var,Field>> = workflow {
         let varList = provPortDecl.Params |> List.map (fun param -> param.Var )
@@ -185,20 +194,21 @@ module internal ScmRewriterConvertDelayedBindings =
         let! state = getState
         // Use As1
         let location = state.PathOfChangingSubcomponent
-        let provPortComp,provPort = state.ChangingSubComponent.getProvPort (location,bndDecl)
+        let! changingSubComponent = getSubComponentToChange
+        let provPortComp,provPort = changingSubComponent.getProvPort (location,bndDecl)
        // Use As2: Assume provPortComp=location
-        let provPortDecls = state.ChangingSubComponent.getProvPortDecls provPort
+        let provPortDecls = changingSubComponent.getProvPortDecls provPort
         // Use As3
         let provPortDecl = provPortDecls.Head                
         return provPortDecl
     }
-
-
+        
     let convertDelayedBinding : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
         let! state = getState
+        let! changingSubComponent = getSubComponentToChange
         let bindingToConvert =
             // Use As2
-            state.ChangingSubComponent.Bindings |> List.tryFind (fun bndDecl -> bndDecl.Kind = BndKind.Delayed)
+            changingSubComponent.Bindings |> List.tryFind (fun bndDecl -> bndDecl.Kind = BndKind.Delayed)
         match bindingToConvert with
             | None ->
                 // nothing to do, work is finished
@@ -215,24 +225,26 @@ module internal ScmRewriterConvertDelayedBindings =
                 return ()
     }
     
-    
-    let convertDelayedBindingsWriteBackChangesIntoModel  : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
+    let selectRootComponentForConvertingDelayedBindings<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,unit> = workflow {
         // Use As1
-        let! state = getState
-        let! compDecl = getSubComponentToChange
-        let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent compDecl
-        let modifiedState =
-            { state with
-                ScmRewriteState.ChangingSubComponent = newModel;
-                ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
-                ScmRewriteState.Model = newModel;
-                ScmRewriteState.Tainted = true; // if tainted, set tainted to true
+        let! model = getModel
+        let newState =
+            {
+                ScmRewriterConvertDelayedBindingsState.Model = model;
+                ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = [model.Comp];
+                ScmRewriterConvertDelayedBindingsState.TakenNames = model.getTakenNames () |> Set.ofList;
             }
-        return! putState modifiedState
+        do! updateState newState
+    }
+        
+    let convertDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
+        do! (iterateToFixpoint convertDelayedBinding)
     }
 
-    let convertDelayedBindings : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {        
+    let convertDelayedBindingsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,unit> = workflow {
         do! selectRootComponentForConvertingDelayedBindings
-        do! (iterateToFixpoint convertDelayedBinding)
-        do! convertDelayedBindingsWriteBackChangesIntoModel
+        do! convertDelayedBindings
     }
+

@@ -26,53 +26,72 @@ open SafetySharp.Models.Scm
 module internal ScmRewriterInlineBehavior =
     open ScmHelpers
     open ScmRewriterBase
+    open SafetySharp.Workflow
     
     // Currently only works in the root component
-
     
-    type ScmRewriterInlineBehavior = {
+    type ScmRewriterInlineBehaviorStateConcreteBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
         InlinedBehavior : BehaviorDecl;
         CallToReplace : StmPath option;
-        (*ArtificialLocalVarOldToNew : Map<VarDecl,VarDecl>;*)
     }
         with
             static member createEmptyFromBehavior (behaviorWithLocaltion:BehaviorWithLocation) =
                 {
-                    ScmRewriterInlineBehavior.BehaviorToReplace = behaviorWithLocaltion;
-                    ScmRewriterInlineBehavior.InlinedBehavior = behaviorWithLocaltion.Behavior;
-                    ScmRewriterInlineBehavior.CallToReplace = None;
+                    ScmRewriterInlineBehaviorStateConcreteBehavior.BehaviorToReplace = behaviorWithLocaltion;
+                    ScmRewriterInlineBehaviorStateConcreteBehavior.InlinedBehavior = behaviorWithLocaltion.Behavior;
+                    ScmRewriterInlineBehaviorStateConcreteBehavior.CallToReplace = None;
                 }
+    
+    type ScmRewriterInlineBehaviorState = {
+        Model : ScmModel;
+        TakenNames : Set<string>;
+
+        ConcreteBehavior : ScmRewriterInlineBehaviorStateConcreteBehavior option;
+        (*ArtificialLocalVarOldToNew : Map<VarDecl,VarDecl>;*)
+    }
+        with
+            interface IScmModel<ScmRewriterInlineBehaviorState> with
+                member this.getModel : ScmModel = this.Model
+                member this.setModel (model:ScmModel) =
+                    { this with
+                        ScmRewriterInlineBehaviorState.Model = model
+                    }
+            interface IFreshNameDepot<ScmRewriterInlineBehaviorState> with
+                member this.getTakenNames : Set<string> = this.TakenNames
+                member this.setTakenNames (takenNames:Set<string>) =
+                    { this with
+                        ScmRewriterInlineBehaviorState.TakenNames = takenNames
+                    }
+
             
                 
-    type ScmRewriterInlineBehaviorFunction<'returnType> = ScmRewriteFunction<ScmRewriterInlineBehavior option,'returnType>
-    type ScmRewriterInlineBehaviorState = ScmRewriteState<ScmRewriterInlineBehavior option>
+    type ScmRewriterInlineBehaviorFunction<'returnType> = WorkflowFunction<ScmRewriterInlineBehaviorState,ScmRewriterInlineBehaviorState,'returnType>
+    type ScmRewriterInlineBehaviorWorkflowState = WorkflowState<ScmRewriterInlineBehaviorState>
 
     
-    let getInlineBehaviorState : ScmRewriterInlineBehaviorFunction<ScmRewriterInlineBehavior option> = 
-        let getInlineBehaviorState (state:ScmRewriterInlineBehaviorState) : (ScmRewriterInlineBehavior option * ScmRewriterInlineBehaviorState) =
-            state.SubState,state
-        ScmRewriteFunction (getInlineBehaviorState)
+    let getInlineBehaviorState : ScmRewriterInlineBehaviorFunction<ScmRewriterInlineBehaviorStateConcreteBehavior option> = workflow {
+        let! state = getState
+        return state.ConcreteBehavior
+    }
 
-    let updateInlineBehaviorState (newInlinedBehavior:ScmRewriterInlineBehavior) : ScmRewriterInlineBehaviorFunction<unit> = 
-        let updateInlineBehaviorState (state:ScmRewriterInlineBehaviorState) : (unit * ScmRewriterInlineBehaviorState) =
-            let newState =
-                { state with
-                    ScmRewriterInlineBehaviorState.SubState = Some(newInlinedBehavior);
-                    ScmRewriterInlineBehaviorState.Tainted = true;
-                }
-            (),newState
-        ScmRewriteFunction (updateInlineBehaviorState)
+    let updateConcreteBehavior (concreteBehavior:ScmRewriterInlineBehaviorStateConcreteBehavior) : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+        let! state = getState
+        let newState =
+            { state with
+                ScmRewriterInlineBehaviorState.ConcreteBehavior = Some(concreteBehavior);
+            }
+        do! updateState newState
+    }
     
-    let removeInlineBehaviorState : ScmRewriterInlineBehaviorFunction<unit> = 
-        let removeInlineBehaviorState (state:ScmRewriterInlineBehaviorState) : (unit * ScmRewriterInlineBehaviorState) =
-            let newState =
-                { state with
-                    ScmRewriterInlineBehaviorState.SubState = None;
-                    ScmRewriterInlineBehaviorState.Tainted = true;
-                }
-            (),newState
-        ScmRewriteFunction (removeInlineBehaviorState)
+    let removeInlineBehaviorState : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+        let! state = getState
+        let newState =
+            { state with
+                ScmRewriterInlineBehaviorState.ConcreteBehavior = None;
+            }
+        do! updateState newState
+    }
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,8 +179,8 @@ module internal ScmRewriterInlineBehavior =
             match candidateToInline with
                 | None -> return ()
                 | Some (inlineBehavior) ->
-                    let rewriterInlineBehavior = ScmRewriterInlineBehavior.createEmptyFromBehavior inlineBehavior
-                    do! updateInlineBehaviorState rewriterInlineBehavior
+                    let rewriterInlineBehavior = ScmRewriterInlineBehaviorStateConcreteBehavior.createEmptyFromBehavior inlineBehavior
+                    do! updateConcreteBehavior rewriterInlineBehavior
         }
     
     let findCallToInline : ScmRewriterInlineBehaviorFunction<unit> = workflow {
@@ -197,9 +216,9 @@ module internal ScmRewriterInlineBehavior =
                         | Some (path:StmPath) ->
                             let newInlineBehavior =
                                 { inlineBehavior with
-                                    ScmRewriterInlineBehavior.CallToReplace=Some(path);
+                                    ScmRewriterInlineBehaviorStateConcreteBehavior.CallToReplace=Some(path);
                                 }
-                            do! updateInlineBehaviorState newInlineBehavior
+                            do! updateConcreteBehavior newInlineBehavior
         }
 
     let inlineCall : ScmRewriterInlineBehaviorFunction<unit> = workflow {
@@ -330,10 +349,10 @@ module internal ScmRewriterInlineBehavior =
                                 }
                             let newRewriterInlineBehavior =
                                 { inlineBehavior with
-                                    ScmRewriterInlineBehavior.CallToReplace = None;
-                                    ScmRewriterInlineBehavior.InlinedBehavior = newBehavior;
+                                    ScmRewriterInlineBehaviorStateConcreteBehavior.CallToReplace = None;
+                                    ScmRewriterInlineBehaviorStateConcreteBehavior.InlinedBehavior = newBehavior;
                                 }
-                            do! updateInlineBehaviorState newRewriterInlineBehavior
+                            do! updateConcreteBehavior newRewriterInlineBehavior
     }   
 
     let inlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {
@@ -373,15 +392,8 @@ module internal ScmRewriterInlineBehavior =
                                 StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
                         state.Model.replaceStep (stepDecl,newStep) 
-            let modifiedState =
-                { state with
-                    ScmRewriteState.ChangingSubComponent = newModel;
-                    ScmRewriteState.PathOfChangingSubcomponent = [newModel.Comp];
-                    ScmRewriteState.Model = newModel;
-                    ScmRewriteState.Tainted = true; // if tainted, set tainted to true
-                    ScmRewriteState.SubState = None; //better: do! removeInlineBehaviorState (but it would modify the state :-()
-                }
-            return! putState modifiedState
+            do! ScmRewriterBase.setModel newModel
+            do! removeInlineBehaviorState
         }
 
 
@@ -397,11 +409,18 @@ module internal ScmRewriterInlineBehavior =
         do! (iterateToFixpoint findAndInlineBehavior)
     }
 
-    let createInlineBehaviorState (oldState:ScmRewriteState<unit>) =
-        oldState.deriveWithSubState None
+    let createInlineBehaviorState (model:ScmModel) =
+        {
+            ScmRewriterInlineBehaviorState.Model = model;
+            ScmRewriterInlineBehaviorState.TakenNames = model.getTakenNames () |> Set.ofList;
+            ScmRewriterInlineBehaviorState.ConcreteBehavior = None;
+        }
 
-    let inlineBehaviorsWrapper : ScmRewriteFunction<unit,unit> = workflow {
+
+
+    let inlineBehaviorsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,ScmRewriterInlineBehaviorState,unit> = workflow {
         let! state = getState
-        let (_,newState) = runStateAndReturnSimpleState (inlineBehaviors) (createInlineBehaviorState state)
-        do! putState newState
+        do! updateState (createInlineBehaviorState state.getModel)
+        do! inlineBehaviors
     }
