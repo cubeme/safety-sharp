@@ -63,16 +63,32 @@ module internal ScmRewriterBase =
     let initialSimpleState (scm:ScmModel) = ScmRewriteState<unit>.initial scm ()
     *)
 
+
+    
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Scm-Model
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    type IScmModel<'state> =
+        interface
+            abstract getModel : ScmModel
+            abstract setModel : ScmModel -> 'state
+        end
+        
+
+    let getModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
+        let! state = getState
+        let model = state.getModel
+        return model
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Change Subcomponent
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
 
-    type IScmChangeSubcomponent<'state> =
+    type IScmChangeSubcomponent<'state when 'state :> IScmModel<'state>> =
         interface
-            abstract getModel : ScmModel
-            abstract setModel : ScmModel -> 'state
-            
             abstract getPathOfChangingSubcomponent : CompPath
             abstract setPathOfChangingSubcomponent : CompPath -> 'state
         end

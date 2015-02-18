@@ -26,11 +26,16 @@ open SafetySharp.Models.Scm
 module internal ScmRewriterLevelUp =
     open ScmHelpers
     open ScmRewriterBase
+    open SafetySharp.Workflow
     
-    type ScmRewriterLevelUp = {  //TODO: Rename to data, move into file
+    type ScmRewriterLevelUpState = {
+        Model : ScmModel;
+        PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
+        TakenNames : Set<string>;
+
         // child lives in parent. Things from the child are moved
         // into the parent. The path to the parent is declared in the ScmRewriterState
-        NameOfChildToRewrite : Comp;
+        NameOfChildToRewrite : Comp option;
         
         // Forwarder
         // For each of these. Map goes from:old -> to:new. Old entity lives always in ChildPath, new in ParentPath
@@ -56,12 +61,31 @@ module internal ScmRewriterLevelUp =
                     (levelUp.ArtificialReqPortOldToNew,levelUp.ArtificialFaultsOldToNew,Map.empty<Var,Var>,levelUp.ArtificialFieldsOldToNew)
             member levelUp.oldToNewMaps2 =                
                     (levelUp.ArtificialFaultsOldToNew)
-            //member levelUp.ParentCompDecl =
-            //        levelUp.ParentCompDecl
+            interface IScmModel<ScmRewriterLevelUpState> with
+                member this.getModel : ScmModel = this.Model
+                member this.setModel (model:ScmModel) =
+                    { this with
+                        ScmRewriterLevelUpState.Model = model
+                    }
+            interface IScmChangeSubcomponent<ScmRewriterLevelUpState> with
+                member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
+                member this.setPathOfChangingSubcomponent (compPath:CompPath) =
+                    { this with
+                        ScmRewriterLevelUpState.PathOfChangingSubcomponent = compPath
+                    }
+            interface IFreshNameDepot<ScmRewriterLevelUpState> with
+                member this.getTakenNames : Set<string> = this.TakenNames
+                member this.setTakenNames (takenNames:Set<string>) =
+                    { this with
+                        ScmRewriterLevelUpState.TakenNames = takenNames
+                    }
+                
+                
 
 
-    type ScmRewriterLevelUpFunction<'returnType> = ScmRewriteFunction<ScmRewriterLevelUp,'returnType>
-    type ScmRewriterLevelUpState = ScmRewriteState<ScmRewriterLevelUp>
+
+    type ScmRewriterLevelUpFunction<'returnType> = WorkflowFunction<ScmRewriterLevelUpState,ScmRewriterLevelUpState,'returnType>
+    type ScmRewriterLevelUpWorkflowState = WorkflowState<ScmRewriterLevelUpState>
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Accessor Functions to ScmRewriterLevelUp (and ScmRewriterState
@@ -73,29 +97,20 @@ module internal ScmRewriterLevelUp =
     let updateParentCompDecl (newParent:CompDecl) : ScmRewriterLevelUpFunction<unit> = 
         ScmRewriterBase.updateSubComponentToChange newParent
 
-    let getChildCompDecl : ScmRewriterLevelUpFunction<CompDecl> = 
-        let getChildCompDecl (state:ScmRewriterLevelUpState) : (CompDecl * ScmRewriterLevelUpState) =
-            let childName = state.SubState.NameOfChildToRewrite
-            let childCompDecl =
-                state.ChangingSubComponent.Subs |> List.find (fun subComp -> subComp.Comp = childName)
-            childCompDecl,state
-        ScmRewriteFunction (getChildCompDecl)
+    let getChildCompDecl : ScmRewriterLevelUpFunction<CompDecl>  = workflow {
+        let! state = getState
+        let! parent = getParentCompDecl
+        let childName = state.NameOfChildToRewrite.Value
+        let childCompDecl =
+            parent.Subs |> List.find (fun subComp -> subComp.Comp = childName)
+        return childCompDecl
+    }
+       
+    let getLevelUpState : ScmRewriterLevelUpFunction<ScmRewriterLevelUpState> =
+        getState
 
-                        
-    let getLevelUpState : ScmRewriterLevelUpFunction<ScmRewriterLevelUp> = 
-        let getLevelUpState (state:ScmRewriterLevelUpState) : (ScmRewriterLevelUp * ScmRewriterLevelUpState) =
-            state.SubState,state
-        ScmRewriteFunction (getLevelUpState)
-
-    let updateLevelUpState (newLevelUp:ScmRewriterLevelUp) : ScmRewriterLevelUpFunction<unit> = 
-        let updateLevelUpState (state:ScmRewriterLevelUpState) : (unit * ScmRewriterLevelUpState) =
-            let newState =
-                { state with
-                    ScmRewriterLevelUpState.SubState = newLevelUp;
-                    ScmRewriterLevelUpState.Tainted = true;
-                }
-            (),newState
-        ScmRewriteFunction (updateLevelUpState)
+    let updateLevelUpState (newLevelUp:ScmRewriterLevelUpState) : ScmRewriterLevelUpFunction<unit> = 
+        updateState newLevelUp
 
     (*
     let getParentPath : ScmRewriterLevelUpFunction<CompPath> = workflow {
@@ -115,11 +130,11 @@ module internal ScmRewriterLevelUp =
         let! state = getState
         let! levelUp = getLevelUpState
         let parentPath = state.PathOfChangingSubcomponent
-        let childPath = levelUp.NameOfChildToRewrite::parentPath
+        let childPath = levelUp.NameOfChildToRewrite.Value::parentPath
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ArtificialFieldsOldToNew = levelUp.ArtificialFieldsOldToNew.Add( oldField,newField );
-                ScmRewriterLevelUp.ArtificialFieldsNewToOld = levelUp.ArtificialFieldsNewToOld.Add( (parentPath,newField), (childPath,oldField) );
+                ScmRewriterLevelUpState.ArtificialFieldsOldToNew = levelUp.ArtificialFieldsOldToNew.Add( oldField,newField );
+                ScmRewriterLevelUpState.ArtificialFieldsNewToOld = levelUp.ArtificialFieldsNewToOld.Add( (parentPath,newField), (childPath,oldField) );
             }
         do! updateLevelUpState newLevelUp
     }
@@ -128,11 +143,11 @@ module internal ScmRewriterLevelUp =
         let! state = getState
         let! levelUp = getLevelUpState
         let parentPath = state.PathOfChangingSubcomponent
-        let childPath = levelUp.NameOfChildToRewrite::parentPath
+        let childPath = levelUp.NameOfChildToRewrite.Value::parentPath
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ArtificialFaultsOldToNew = levelUp.ArtificialFaultsOldToNew.Add( oldFault,newFault );
-                ScmRewriterLevelUp.ArtificialFaultsNewToOld = levelUp.ArtificialFaultsNewToOld.Add( (parentPath,newFault), (childPath,oldFault) );
+                ScmRewriterLevelUpState.ArtificialFaultsOldToNew = levelUp.ArtificialFaultsOldToNew.Add( oldFault,newFault );
+                ScmRewriterLevelUpState.ArtificialFaultsNewToOld = levelUp.ArtificialFaultsNewToOld.Add( (parentPath,newFault), (childPath,oldFault) );
             }
         do! updateLevelUpState newLevelUp
     }
@@ -141,11 +156,11 @@ module internal ScmRewriterLevelUp =
         let! state = getState
         let! levelUp = getLevelUpState
         let parentPath = state.PathOfChangingSubcomponent
-        let childPath = levelUp.NameOfChildToRewrite::parentPath
+        let childPath = levelUp.NameOfChildToRewrite.Value::parentPath
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ArtificialReqPortOldToNew = levelUp.ArtificialReqPortOldToNew.Add( oldReqPort,newReqPort );
-                ScmRewriterLevelUp.ArtificialReqPortNewToOld = levelUp.ArtificialReqPortNewToOld.Add( (parentPath,newReqPort), (childPath,oldReqPort) );
+                ScmRewriterLevelUpState.ArtificialReqPortOldToNew = levelUp.ArtificialReqPortOldToNew.Add( oldReqPort,newReqPort );
+                ScmRewriterLevelUpState.ArtificialReqPortNewToOld = levelUp.ArtificialReqPortNewToOld.Add( (parentPath,newReqPort), (childPath,oldReqPort) );
             }
         do! updateLevelUpState newLevelUp
     }
@@ -154,11 +169,11 @@ module internal ScmRewriterLevelUp =
         let! state = getState
         let! levelUp = getLevelUpState
         let parentPath = state.PathOfChangingSubcomponent
-        let childPath = levelUp.NameOfChildToRewrite::parentPath
+        let childPath = levelUp.NameOfChildToRewrite.Value::parentPath
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ArtificialProvPortOldToNew = levelUp.ArtificialProvPortOldToNew.Add( oldProvPort,newProvPort );
-                ScmRewriterLevelUp.ArtificialProvPortNewToOld = levelUp.ArtificialProvPortNewToOld.Add( (parentPath,newProvPort), (childPath,oldProvPort) );
+                ScmRewriterLevelUpState.ArtificialProvPortOldToNew = levelUp.ArtificialProvPortOldToNew.Add( oldProvPort,newProvPort );
+                ScmRewriterLevelUpState.ArtificialProvPortNewToOld = levelUp.ArtificialProvPortNewToOld.Add( (parentPath,newProvPort), (childPath,oldProvPort) );
             }
         do! updateLevelUpState newLevelUp
     }
@@ -171,7 +186,7 @@ module internal ScmRewriterLevelUp =
             let faultToRewrite = levelUp.FaultsToRewrite.Head
             let newLevelUp = 
                 { levelUp with
-                    ScmRewriterLevelUp.FaultsToRewrite = levelUp.FaultsToRewrite.Tail;
+                    ScmRewriterLevelUpState.FaultsToRewrite = levelUp.FaultsToRewrite.Tail;
                 }
             do! updateLevelUpState newLevelUp
             return Some(faultToRewrite)
@@ -185,7 +200,7 @@ module internal ScmRewriterLevelUp =
             let provPortToRewrite = levelUp.ProvPortsToRewrite.Head
             let newLevelUp = 
                 { levelUp with
-                    ScmRewriterLevelUp.ProvPortsToRewrite = levelUp.ProvPortsToRewrite.Tail;
+                    ScmRewriterLevelUpState.ProvPortsToRewrite = levelUp.ProvPortsToRewrite.Tail;
                 }
             do! updateLevelUpState newLevelUp
             return Some(provPortToRewrite)
@@ -199,7 +214,7 @@ module internal ScmRewriterLevelUp =
             let stepToRewrite = levelUp.StepsToRewrite.Head
             let newLevelUp = 
                 { levelUp with
-                    ScmRewriterLevelUp.StepsToRewrite = levelUp.StepsToRewrite.Tail;
+                    ScmRewriterLevelUpState.StepsToRewrite = levelUp.StepsToRewrite.Tail;
                 }
             do! updateLevelUpState newLevelUp
             return Some(stepToRewrite)
@@ -210,7 +225,7 @@ module internal ScmRewriterLevelUp =
         let! levelUp = getLevelUpState
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.FaultsToRewrite = faultToRewrite::levelUp.FaultsToRewrite;
+                ScmRewriterLevelUpState.FaultsToRewrite = faultToRewrite::levelUp.FaultsToRewrite;
             }
         do! updateLevelUpState newLevelUp
         return ()
@@ -220,7 +235,7 @@ module internal ScmRewriterLevelUp =
         let! levelUp = getLevelUpState
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ProvPortsToRewrite = provPortToRewrite::levelUp.ProvPortsToRewrite;
+                ScmRewriterLevelUpState.ProvPortsToRewrite = provPortToRewrite::levelUp.ProvPortsToRewrite;
             }
         do! updateLevelUpState newLevelUp
         return ()
@@ -231,7 +246,7 @@ module internal ScmRewriterLevelUp =
         let! parentCompDecl = getParentCompDecl
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.StepsToRewrite = parentCompDecl.Steps;
+                ScmRewriterLevelUpState.StepsToRewrite = parentCompDecl.Steps;
             }
         do! updateLevelUpState newLevelUp
         return ()
@@ -242,7 +257,7 @@ module internal ScmRewriterLevelUp =
         let! levelUp = getLevelUpState
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ArtificialStep = Some(reqport,provPort);
+                ScmRewriterLevelUpState.ArtificialStep = Some(reqport,provPort);
             }
         do! updateLevelUpState newLevelUp
         return ()
@@ -261,8 +276,8 @@ module internal ScmRewriterLevelUp =
         let! levelUp = getLevelUpState
         let newLevelUp = 
             { levelUp with
-                ScmRewriterLevelUp.ArtificialProvPortOldToNew = levelUp.ArtificialProvPortOldToNew.Add( oldProvPort,newProvPort );
-                ScmRewriterLevelUp.ArtificialProvPortNewToOld = levelUp.ArtificialProvPortNewToOld.Add( (parentPath,newProvPort), (childPath,oldProvPort) );
+                ScmRewriterLevelUpState.ArtificialProvPortOldToNew = levelUp.ArtificialProvPortOldToNew.Add( oldProvPort,newProvPort );
+                ScmRewriterLevelUpState.ArtificialProvPortNewToOld = levelUp.ArtificialProvPortNewToOld.Add( (parentPath,newProvPort), (childPath,oldProvPort) );
             }
         do! updateLevelUpState newLevelUp
     }
@@ -345,13 +360,14 @@ module internal ScmRewriterLevelUp =
     let levelUpProvPort : ScmRewriterLevelUpFunction<unit> = workflow {            
         let! levelUp = getLevelUpState
         
-        let getUnusedProvPortNameIfNotInMap (oldProv:ProvPort) (basedOn:string) : ScmRewriterLevelUpFunction<ProvPort> = 
-            let getUnusedProvPortNameIfNotInMap (state) : (ProvPort * ScmRewriterLevelUpState) =
-                if levelUp.ArtificialProvPortOldToNew.ContainsKey oldProv then
-                    (levelUp.ArtificialProvPortOldToNew.Item oldProv,state)
-                else
-                    runState (getUnusedProvPortName basedOn) state
-            ScmRewriteFunction (getUnusedProvPortNameIfNotInMap)
+        let getUnusedProvPortNameIfNotInMap (oldProv:ProvPort) (basedOn:string) : ScmRewriterLevelUpFunction<ProvPort> = workflow {
+            let! levelUp = getLevelUpState
+            if levelUp.ArtificialProvPortOldToNew.ContainsKey oldProv then
+                return (levelUp.ArtificialProvPortOldToNew.Item oldProv)
+            else
+                let! newProvPortName = getUnusedProvPortName basedOn
+                return newProvPortName
+        }
             
         // parent is target, child is source
         let! childCompDecl = getChildCompDecl
@@ -685,22 +701,7 @@ module internal ScmRewriterLevelUp =
             do! updateParentCompDecl newParentCompDecl
         }        
 
-
-    let levelUpWriteBackChangesIntoModel  : ScmRewriterLevelUpFunction<unit> = workflow {
-        let! state = getState
-        let! parentCompDecl = getParentCompDecl
-
-        let newModel = state.Model.replaceDescendant state.PathOfChangingSubcomponent parentCompDecl
-        let modifiedState =
-            { state with
-                ScmRewriterLevelUpState.ChangingSubComponent = newModel;
-                ScmRewriterLevelUpState.PathOfChangingSubcomponent = [newModel.Comp];
-                ScmRewriterLevelUpState.Model = newModel;
-                ScmRewriterLevelUpState.Tainted = true; // if tainted, set tainted to true
-            }
-        return! putState modifiedState
-     }
-        
+                
     let levelUpSubcomponent : ScmRewriterLevelUpFunction<unit> = workflow {
         // idea: first level up every item of a component,
         //       then rewrite every code accessing to some specific element of it        
@@ -716,13 +717,12 @@ module internal ScmRewriterLevelUp =
         do! (iterateToFixpoint rewriteFaults)
         do! assertSubcomponentEmpty
         do! removeSubComponent
-        do! levelUpWriteBackChangesIntoModel
     }
-        
-    let selectSubComponentForLevelingUp : ScmRewriteFunction<unit,CompPath option> = workflow {
-        let! state = getState
-        if state.Model.Subs = [] then
-        // nothing to do, we are done
+              
+    let findSubComponentForLevelingUp<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompPath option> = workflow {
+        let! model = ScmRewriterBase.getModel
+        if model.Subs = [] then
+            // nothing to do, we are done
             return None
         else
             // find component with no subcomponent, which is not the root. there must exist at least one
@@ -733,66 +733,85 @@ module internal ScmRewriterLevelUp =
                 else
                     let firstChild = node.Subs.Head
                     findLeaf nodePath firstChild
-            let leaf = findLeaf ([]) (state.Model)
+            let leaf = findLeaf ([]) (model)
             return Some(leaf)
     }
 
-    let assertNoSubcomponent : ScmRewriteFunction<unit,unit> = workflow {
-            let! state = getState
-            assert (state.Model.Subs=[])
-            return ()
-        }
-    
-    let createLevelUpStateForSubComponent (oldState) (subComponentToLevelUp:CompPath) =              
+    let createLevelUpStateForSubComponent (model:ScmModel) (subComponentToLevelUp:CompPath) =              
+        //let model = oldState.getModel
         let parentPath = subComponentToLevelUp.Tail
-        let parentCompDecl = oldState.Model.getDescendantUsingPath parentPath
+        let parentCompDecl = model.getDescendantUsingPath parentPath
         let childName = subComponentToLevelUp.Head
         let newLevelUp =
             {
-                ScmRewriterLevelUp.NameOfChildToRewrite = childName;
-                ScmRewriterLevelUp.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
-                ScmRewriterLevelUp.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
-                ScmRewriterLevelUp.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
-                ScmRewriterLevelUp.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
-                ScmRewriterLevelUp.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
-                ScmRewriterLevelUp.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
-                ScmRewriterLevelUp.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
-                ScmRewriterLevelUp.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
-                ScmRewriterLevelUp.FaultsToRewrite = [];
-                ScmRewriterLevelUp.ProvPortsToRewrite = [];
-                ScmRewriterLevelUp.StepsToRewrite = [];
-                ScmRewriterLevelUp.ArtificialStep = None;
-            }            
-        let newState =
-            {
-                ScmRewriteState.Model = oldState.Model;
-                ScmRewriteState.ChangingSubComponent = parentCompDecl;
-                ScmRewriteState.PathOfChangingSubcomponent = parentPath;
-                ScmRewriteState.TakenNames = oldState.TakenNames;
-                ScmRewriteState.SubState = newLevelUp;
-                ScmRewriteState.Tainted = true;
-                }
-        newState
-
-    let levelUpSubcomponentWrapper (subComponentToLevelUp:CompPath) : ScmRewriteFunction<unit,unit> = workflow {        
-        let! state = getState
-        let (_,newState) = runStateAndReturnSimpleState (levelUpSubcomponent) (createLevelUpStateForSubComponent state subComponentToLevelUp)
-        do! putState newState
+                ScmRewriterLevelUpState.Model = model;
+                ScmRewriterLevelUpState.PathOfChangingSubcomponent = parentPath;
+                ScmRewriterLevelUpState.TakenNames = model.getTakenNames () |> Set.ofList;
+                ScmRewriterLevelUpState.NameOfChildToRewrite = Some(childName);
+                ScmRewriterLevelUpState.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
+                ScmRewriterLevelUpState.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
+                ScmRewriterLevelUpState.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
+                ScmRewriterLevelUpState.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
+                ScmRewriterLevelUpState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                ScmRewriterLevelUpState.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
+                ScmRewriterLevelUpState.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
+                ScmRewriterLevelUpState.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
+                ScmRewriterLevelUpState.FaultsToRewrite = [];
+                ScmRewriterLevelUpState.ProvPortsToRewrite = [];
+                ScmRewriterLevelUpState.StepsToRewrite = [];
+                ScmRewriterLevelUpState.ArtificialStep = None;
+            }
+        newLevelUp
+        
+        
+    let selectAndLevelUpSubcomponent = workflow {
+        let! subComponentToLevelUp = findSubComponentForLevelingUp
+        match subComponentToLevelUp with
+            | None -> return ()
+            | Some(subComponentToLevelUp) ->
+                let! state = getState
+                do! updateState (createLevelUpStateForSubComponent state.getModel subComponentToLevelUp)
+                do! levelUpSubcomponent
     }
+    
+    
+    let assertNoSubcomponent<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,unit> = workflow {
+        let! model = ScmRewriterBase.getModel
+        assert (model.Subs=[])
+        return ()
+    }
+    
 
-    // entry point with other signature (empty subState). This function must implement the conversion
-    // from subState "unit" to subState "LevelUpData"
-    let levelUpSubcomponents : ScmRewriteFunction<unit,unit> = workflow {
-        do! (iterateToFixpoint (workflow {
-            let! subComponentToLevelUp = selectSubComponentForLevelingUp
-            match subComponentToLevelUp with
-                | None -> return ()
-                | Some(subComponentToLevelUp) ->
-                    do! levelUpSubcomponentWrapper subComponentToLevelUp
-        }))
+    // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
+    let levelUpSubcomponentsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,ScmRewriterLevelUpState,unit> = workflow {                        
+        let emptyLevelUpState (model:ScmModel) =
+            {
+                ScmRewriterLevelUpState.Model = model;
+                ScmRewriterLevelUpState.PathOfChangingSubcomponent = [model.Comp];
+                ScmRewriterLevelUpState.TakenNames = Set.empty<string>
+                ScmRewriterLevelUpState.NameOfChildToRewrite = None;
+                ScmRewriterLevelUpState.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
+                ScmRewriterLevelUpState.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
+                ScmRewriterLevelUpState.ArtificialReqPortOldToNew = Map.empty<ReqPort,ReqPort>;
+                ScmRewriterLevelUpState.ArtificialProvPortOldToNew = Map.empty<ProvPort,ProvPort>;
+                ScmRewriterLevelUpState.ArtificialFieldsNewToOld = Map.empty<FieldPath,FieldPath>;
+                ScmRewriterLevelUpState.ArtificialFaultsNewToOld = Map.empty<FaultPath,FaultPath>;
+                ScmRewriterLevelUpState.ArtificialReqPortNewToOld = Map.empty<ReqPortPath,ReqPortPath>;
+                ScmRewriterLevelUpState.ArtificialProvPortNewToOld = Map.empty<ProvPortPath,ProvPortPath>;
+                ScmRewriterLevelUpState.FaultsToRewrite = [];
+                ScmRewriterLevelUpState.ProvPortsToRewrite = [];
+                ScmRewriterLevelUpState.StepsToRewrite = [];
+                ScmRewriterLevelUpState.ArtificialStep = None;
+            }
+        let! model = getModel
+        do! updateState (emptyLevelUpState model)
+        
+        do! (iterateToFixpoint selectAndLevelUpSubcomponent)
+
         do! assertNoSubcomponent
     }
 
     
     let initialLevelUpState (scm:ScmModel) (subComponentToLevelUp:CompPath) =
-        createLevelUpStateForSubComponent (ScmRewriterBase.initialSimpleState scm) subComponentToLevelUp 
+        createLevelUpStateForSubComponent scm subComponentToLevelUp 
