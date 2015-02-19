@@ -356,6 +356,13 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy7 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
         
     // ## (call)-Tests (delayed)
     [<Test>]

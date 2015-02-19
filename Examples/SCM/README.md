@@ -51,11 +51,12 @@
 * callInstFromBeh8.scm: like callInst1, but with an inout-parameter, which was not preassigned and gets a value
 * callInstFromProv1.scm: tests, if inout- reading/writing works with Required Ports, if called within an provided port
 * callInstHierarchy1.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in this component
-* callInstHierarchy2.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in its parent component.
-* callInstHierarchy3.scm: tests hierarchical case: parent(RequiredPortComponent) = ProvidedPortComponent). Binding declared in ProvidedPortComponent
-* callInstHierarchy4.scm: tests hierarchical case: RequiredPortComponent = parent(ProvidedPortComponent). Binding declared in RequiredPortComponent
-* callInstHierarchy5.scm: tests hierarchical case: parent(RequiredPortComponent) = parent(ProvidedPortComponent; RequiredPortComponent!=ProvidedPortComponent). Binding declared in common parent
+* callInstHierarchy2.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in its parent component. (short: in parent (source=child;target=child))
+* callInstHierarchy3.scm: tests hierarchical case: parent(RequiredPortComponent) = ProvidedPortComponent). Binding declared in ProvidedPortComponent (short: in parent (source=parent;target=child))
+* callInstHierarchy4.scm: tests hierarchical case: RequiredPortComponent = parent(ProvidedPortComponent). Binding declared in RequiredPortComponent (short: in parent (source=child;target=parent))
+* callInstHierarchy5.scm: tests hierarchical case: parent(RequiredPortComponent) = parent(ProvidedPortComponent); RequiredPortComponent!=ProvidedPortComponent. Binding declared in common parent (short: in parent (source=child1;target=child2))
 * callInstHierarchy6.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in subcomponent
+* callInstHierarchy7.scm: tests hierarchical case: parent(parent(RequiredPortComponent)) = parent(parent(ProvidedPortComponent)); RequiredPortComponent!=ProvidedPortComponent. Binding declared in common grandparent (short: in grandparent (source=grandchild1;target=grandchild2))
 
 
 ## (call)-Tests (delayed)

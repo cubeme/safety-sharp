@@ -464,6 +464,95 @@ type SingleLevelUpTests () =
         newParentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
         ()
         
+    [<Test>]
+    member this.``A binding in a grandparent component gets rewritten (source=different grandchild;target=grandchild)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested2Required") :: Comp("nestedRequired") :: Comp("simple") :: []
+        let pathOfGrandparent = pathOfChild.Tail.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let grandparentNode = model.getDescendantUsingPath pathOfGrandparent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 0
+        childNode.Bindings.Length =? 0
+        grandparentNode.ReqPorts.Length =? 0
+        grandparentNode.ProvPorts.Length =? 0
+        grandparentNode.Bindings.Length =? 1
+        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided2"); Comp("nestedProvided"); Comp("simple")]
+        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired2"); Comp("nestedRequired"); Comp("simple")]
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newGrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newGrandparentNode.ReqPorts.Length =? 1
+        newGrandparentNode.ProvPorts.Length =? 0
+        newGrandparentNode.Bindings.Length =? 1
+        newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided2"); Comp("nestedProvided"); Comp("simple")]
+        newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
+        ()
+        
+    [<Test>]
+    member this.``A binding in a grandparent component gets rewritten (source=grandchild;target=different grandchild)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nestedProvided2") :: Comp("nestedProvided") :: Comp("simple") :: []
+        let pathOfGrandparent = pathOfChild.Tail.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let grandparentNode = model.getDescendantUsingPath pathOfGrandparent
+        childNode.ReqPorts.Length =? 0
+        childNode.ProvPorts.Length =? 1
+        childNode.Bindings.Length =? 0
+        grandparentNode.ReqPorts.Length =? 0
+        grandparentNode.ProvPorts.Length =? 0
+        grandparentNode.Bindings.Length =? 1
+        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided2"); Comp("nestedProvided"); Comp("simple")]
+        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired2"); Comp("nestedRequired"); Comp("simple")]
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newGrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newGrandparentNode.ReqPorts.Length =? 1
+        newGrandparentNode.ProvPorts.Length =? 0
+        newGrandparentNode.Bindings.Length =? 1
+        newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
+        newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired2"); Comp("nestedRequired"); Comp("simple")]
+        ()
+
+
 
 [<TestFixture>]
 type FixpointIteratorTests () =
@@ -622,6 +711,26 @@ type CompleteLevelUpTests () =
     [<Test>]
     member this.``Example callInstHierarchy2 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        model.ProvPorts.Length =? 0
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchy7 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
