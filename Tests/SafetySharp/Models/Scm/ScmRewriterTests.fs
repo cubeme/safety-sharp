@@ -265,7 +265,7 @@ type SingleLevelUpTests () =
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -309,7 +309,7 @@ type SingleLevelUpTests () =
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -354,7 +354,7 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -398,7 +398,7 @@ type SingleLevelUpTests () =
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -442,7 +442,7 @@ type SingleLevelUpTests () =
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -481,12 +481,12 @@ type SingleLevelUpTests () =
         grandparentNode.ReqPorts.Length =? 0
         grandparentNode.ProvPorts.Length =? 0
         grandparentNode.Bindings.Length =? 1
-        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided2"); Comp("nestedProvided"); Comp("simple")]
-        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired2"); Comp("nestedRequired"); Comp("simple")]
+        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nested2Provided"); Comp("nestedProvided"); Comp("simple")]
+        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nestedRequired"); Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -501,10 +501,10 @@ type SingleLevelUpTests () =
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
-        newGrandparentNode.ReqPorts.Length =? 1
+        newGrandparentNode.ReqPorts.Length =? 0
         newGrandparentNode.ProvPorts.Length =? 0
         newGrandparentNode.Bindings.Length =? 1
-        newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided2"); Comp("nestedProvided"); Comp("simple")]
+        newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nested2Provided"); Comp("nestedProvided"); Comp("simple")]
         newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
         ()
         
@@ -515,7 +515,7 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let pathOfChild = Comp("nestedProvided2") :: Comp("nestedProvided") :: Comp("simple") :: []
+        let pathOfChild = Comp("nested2Provided") :: Comp("nestedProvided") :: Comp("simple") :: []
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
         let grandparentNode = model.getDescendantUsingPath pathOfGrandparent
@@ -525,12 +525,12 @@ type SingleLevelUpTests () =
         grandparentNode.ReqPorts.Length =? 0
         grandparentNode.ProvPorts.Length =? 0
         grandparentNode.Bindings.Length =? 1
-        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided2"); Comp("nestedProvided"); Comp("simple")]
-        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired2"); Comp("nestedRequired"); Comp("simple")]
+        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nested2Provided"); Comp("nestedProvided"); Comp("simple")]
+        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nestedRequired"); Comp("simple")]
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
@@ -545,11 +545,11 @@ type SingleLevelUpTests () =
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
-        newGrandparentNode.ReqPorts.Length =? 1
+        newGrandparentNode.ReqPorts.Length =? 0
         newGrandparentNode.ProvPorts.Length =? 0
         newGrandparentNode.Bindings.Length =? 1
         newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
-        newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired2"); Comp("nestedRequired"); Comp("simple")]
+        newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nestedRequired"); Comp("simple")]
         ()
 
 

@@ -292,6 +292,10 @@ module internal ScmHelpers =
             { node with
                 CompDecl.Bindings = (node.Bindings |> List.map (fun bndg -> if bndg=bindingToReplace then newBinding else bndg));
             }
+        member node.replaceBindings (newBindings:BndDecl list) =
+            { node with
+                CompDecl.Bindings = newBindings
+            }
         member node.getBindingOfLocalReqPort (reqPort:ReqPort) : BndDecl=
             // Only works, if binding was declared in current node.
             // If binding might also be declared in the parent node, maybe
@@ -331,7 +335,6 @@ module internal ScmHelpers =
             }
             
         // Complete model
-        // TODO: Move to rewriter
         member model.replaceDescendant (pathToReplace: Comp list) (newComponent:CompDecl) : CompDecl =
             if pathToReplace.Head = model.Comp && pathToReplace.Tail = [] then
                 //root should be replaced
@@ -357,8 +360,11 @@ module internal ScmHelpers =
                     //         cannot search in the parent of node
                 else
                     let node = model.getDescendantUsingPath pathToCheck
+                    let currentComponentName = pathToCheck |> List.head
+                    // relativePathToReqPort does not contain the name of the current component
+                    let relativePathToReqPortWithCurrent = relativePathToReqPort @ [currentComponentName]
                     let binding =
-                        node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=relativePathToReqPort)
+                        node.Bindings |> List.tryFind (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp=relativePathToReqPortWithCurrent)
                     match binding with
                         | Some (binding) ->
                             // case 2: Binding found in the node
@@ -366,9 +372,9 @@ module internal ScmHelpers =
                         | None ->                            
                             // case 3: Try to find binding in the parent of node
                             let parentPath = pathToCheck.Tail
-                            let nextRelativePathToReqPort = relativePathToReqPort @ [pathToCheck.Head]
+                            let nextRelativePathToReqPort = relativePathToReqPortWithCurrent
                             tryFindBindingOfReqPort parentPath nextRelativePathToReqPort
-            tryFindBindingOfReqPort compPath [compPath.Head]
+            tryFindBindingOfReqPort compPath []
                 
         member model.getProvPort (bndDeclPath:BndDeclPath) : ProvPortPath =
             let bndgCompPath,bndDecl = bndDeclPath

@@ -97,6 +97,11 @@ module internal ScmRewriterLevelUp =
     let updateParentCompDecl (newParent:CompDecl) : ScmRewriterLevelUpFunction<unit> = 
         ScmRewriterBase.updateSubComponentToChange newParent
 
+    let getChildPath : ScmRewriterLevelUpFunction<CompPath>  = workflow {
+        let! state = getState
+        return (state.NameOfChildToRewrite.Value ::state.PathOfChangingSubcomponent)
+    }
+
     let getChildCompDecl : ScmRewriterLevelUpFunction<CompDecl>  = workflow {
         let! state = getState
         let! parent = getParentCompDecl
@@ -399,7 +404,7 @@ module internal ScmRewriterLevelUp =
        
     let levelUpAndRewriteBindingDeclaredInChild : ScmRewriterLevelUpFunction<unit> = workflow {
         // Cases: (view from parent, where sub1 is selected)                    
-        //   Declared in parent (done in rule rewriteBindingDeclaredInParent)
+        //   Declared in ancestor (done in rule rewriteBindingsDeclaredInAncestors)
         //    - x      -> x      (nothing to do)
         //    - x      -> sub1.x (target)
         //    - x      -> sub2.x (nothing to do)
@@ -449,9 +454,9 @@ module internal ScmRewriterLevelUp =
             return ()
         }
        
-    let rewriteBindingDeclaredInParent : ScmRewriterLevelUpFunction<unit> = workflow {
+    let rewriteBindingsDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
         // Cases: (view from parent, where sub1 is selected)                    
-        //   Declared in parent (done here)
+        //   Declared in ancestor (done here)
         //    - x      -> x      (nothing to do)
         //    - x      -> sub1.x (target)
         //    - x      -> sub2.x (nothing to do)
@@ -463,69 +468,74 @@ module internal ScmRewriterLevelUp =
         //    - sub2.x -> sub2.x (nothing to do)
         //   Declared in child (done in rule levelUpAndRewriteBindingDeclaredInChild)
         //    - sub1.x -> sub1.x (source and target)
+
+        // This function is the only function in LevelUp, which has to look and rewrite every ancestor of the component which gets upleveled.
+        // Luckily it is enough to look at every ancestor* and not every component in the whole model.
+        let! model = getModel
         let! levelUp = getLevelUpState
-        // parent is target, child is source
-        let! childCompDecl = getChildCompDecl
-        let! parentCompDecl = getParentCompDecl
-
-
-        let bindingToRewrite : BndDecl option =
-            let targetIsChild (bndDecl:BndDecl) =
-                match bndDecl.Target.Comp with
-                    | [] -> failwith "path in binding should at least contain the name of the component itself"
-                    | comp_parent :: [] -> false
-                    | comp_child :: comp_parent :: [] -> comp_child = childCompDecl.Comp
-                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
-            let sourceIsChild (bndDecl:BndDecl) =
-                match bndDecl.Source.Comp with
-                    | [] -> failwith "path in binding should at least contain the name of the component itself"
-                    | comp_parent :: [] -> false
-                    | comp_child :: comp_parent :: [] -> comp_child = childCompDecl.Comp
-                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
-            parentCompDecl.Bindings |> List.tryFind (fun bndDecl -> (targetIsChild bndDecl) || (sourceIsChild bndDecl) )
-        if bindingToRewrite.IsNone then
-            // do not modify old tainted state here
-            return ()
-        else
-            let bindingToRewrite = bindingToRewrite.Value
-                    
+              
+        let rewriteBinding (relativeLeveledUpPath:CompPath) (bindingToRewrite:BndDecl) : BndDecl =
             let newSource =
-                match bindingToRewrite.Source.Comp with
-                    | [] -> failwith "path in binding should at least contain the name of the component itself"
-                    | comp_parent :: [] -> bindingToRewrite.Source
-                    | comp_child :: comp_parent :: [] ->
-                        if comp_child = childCompDecl.Comp then
-                            let port = levelUp.ArtificialProvPortOldToNew.Item (bindingToRewrite.Source.ProvPort)
-                            {
-                                BndSrc.Comp = [comp_parent];
-                                BndSrc.ProvPort = port
-                            }
-                        else
-                            bindingToRewrite.Source
-                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
+                let relativeSourcePathToCheckFor = relativeLeveledUpPath
+                let oldCompPathInBinding = bindingToRewrite.Source.Comp
+                if oldCompPathInBinding = [] then
+                    failwith "path in binding should at least contain the name of the component itself"
+                else if relativeSourcePathToCheckFor = oldCompPathInBinding then
+                    let port = levelUp.ArtificialProvPortOldToNew.Item (bindingToRewrite.Source.ProvPort)
+                    {
+                        BndSrc.Comp = relativeSourcePathToCheckFor.Tail ; //new port is in parent
+                        BndSrc.ProvPort = port
+                    }
+                else
+                    bindingToRewrite.Source
             let newTarget =
-                match bindingToRewrite.Target.Comp with
-                    | [] -> failwith "path in binding should at least contain the name of the component itself"
-                    | comp_parent :: [] -> bindingToRewrite.Target
-                    | comp_child :: comp_parent :: [] ->
-                        if comp_child = childCompDecl.Comp then
-                            let port = levelUp.ArtificialReqPortOldToNew.Item (bindingToRewrite.Target.ReqPort)
-                            {
-                                BndTarget.Comp = [comp_parent];
-                                BndTarget.ReqPort = port
-                            }
-                        else
-                            bindingToRewrite.Target
-                    | _ -> failwith "NotImplementedYet" // we cannot have bindings with more levels yet
+                let relativeTargetPathToCheckFor = relativeLeveledUpPath
+                let oldCompPathInBinding = bindingToRewrite.Target.Comp
+                if oldCompPathInBinding = [] then
+                    failwith "path in binding should at least contain the name of the component itself"
+                else if relativeTargetPathToCheckFor = oldCompPathInBinding then
+                    let port = levelUp.ArtificialReqPortOldToNew.Item (bindingToRewrite.Target.ReqPort)
+                    {
+                        BndTarget.Comp = relativeTargetPathToCheckFor.Tail ; //new port is in parent
+                        BndTarget.ReqPort = port
+                    }
+                 else
+                    bindingToRewrite.Target
             let transformedBinding = 
                 {
                     BndDecl.Target = newTarget;
                     BndDecl.Source = newSource;
                     BndDecl.Kind = bindingToRewrite.Kind;
                 }
-            let newParentCompDecl = parentCompDecl.replaceBinding(bindingToRewrite,transformedBinding)
-            do! updateParentCompDecl newParentCompDecl
-        }
+            transformedBinding
+
+        let rec rewriteAncestors (pathToRewrite:CompPath) (relativeLeveledUpPath:CompPath) (alreadyRewrittenChild:CompDecl) : CompDecl=
+            if pathToRewrite = [] then
+                alreadyRewrittenChild // root (=model) reached
+            else
+                // relativeLevelUpPath does not contain the name of the current component
+                let currentComponentName = pathToRewrite |> List.head
+                let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
+                let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
+                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.head
+                let rewrittenBindings =
+                    componentToRewrite.Bindings |> List.map (rewriteBinding relativeLevelUpPathWithCurrent)
+                let rewrittenComponent =
+                    componentToRewrite.replaceChild(alreadyRewrittenChildName,alreadyRewrittenChild)
+                                      .replaceBindings(rewrittenBindings)
+
+                let parentPath = pathToRewrite.Tail
+                let nextRelativeLeveledUpPath = relativeLevelUpPathWithCurrent
+                rewriteAncestors parentPath nextRelativeLeveledUpPath rewrittenComponent
+                
+        let! childCompDecl = getChildCompDecl
+        let! fullPathToChild = getChildPath
+        let fullPathToParent = fullPathToChild.Tail
+        let relativePathToChild = [fullPathToChild.Head] //viewport of parent
+
+        let newModel = rewriteAncestors fullPathToParent relativePathToChild childCompDecl
+        do! setModel newModel
+    }
 
         
     let createArtificialStep : ScmRewriterLevelUpFunction<unit> = workflow {
@@ -711,7 +721,7 @@ module internal ScmRewriterLevelUp =
         do! (iterateToFixpoint levelUpReqPort)
         do! (iterateToFixpoint levelUpProvPort)
         do! (iterateToFixpoint levelUpAndRewriteBindingDeclaredInChild)
-        do! (iterateToFixpoint rewriteBindingDeclaredInParent)
+        do! (rewriteBindingsDeclaredInAncestors)
         do! (iterateToFixpoint rewriteParentStep)
         do! (iterateToFixpoint rewriteProvPort)
         do! (iterateToFixpoint rewriteFaults)
