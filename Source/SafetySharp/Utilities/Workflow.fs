@@ -33,22 +33,22 @@ module internal Workflow =
         Tainted : bool; // Use tainted to indicate, if a function changed something. Do not compare states, because now it is obvious, what happens, when a mutable changes
     }
         with
-            static member emptyInit (ctk:System.Threading.CancellationToken option) =
+            static member emptyInit =
                 {
                     WorkflowState.State = ();
                     WorkflowState.StepNumber = [];
                     WorkflowState.StepName = [];
                     WorkflowState.Log = [];
-                    WorkflowState.CancellationToken = ctk;
+                    WorkflowState.CancellationToken = None;
                     WorkflowState.Tainted = false;
                 }
-            static member stateInit (state:'state) (ctk:System.Threading.CancellationToken option) =
+            static member stateInit (state:'state) =
                 {
                     WorkflowState.State = state;
                     WorkflowState.StepNumber = [];
                     WorkflowState.StepName = [];
                     WorkflowState.Log = [];
-                    WorkflowState.CancellationToken = ctk;
+                    WorkflowState.CancellationToken = None;
                     WorkflowState.Tainted = false;
                 }
             member this.CurrentStepNumber = this.StepNumber.Head
@@ -177,10 +177,19 @@ module internal Workflow =
                 (returnValue,wfStateAfterOneCall)
         WorkflowFunction (iterate)
                 
-    let runWorkflow (WorkflowFunction s) =
+    let runWorkflow_getResult (WorkflowFunction s) =
         // no cancellation token
-        let result,newWfState = s (WorkflowState<unit>.emptyInit None)
+        let result,newWfState = s WorkflowState<unit>.emptyInit
         result
+          
+    let runWorkflow_getState (WorkflowFunction s) =
+        // no cancellation token
+        let result,newWfState = s WorkflowState<unit>.emptyInit
+        newWfState
+          
+    let runWorkflowState_getState<'oldState,'newState,'returnType> (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>)) (initialState:WorkflowState<'oldState>) =
+        let result,newWfState = s (initialState)
+        newWfState
         
     let ignoreResult ( (WorkflowFunction (functionToCall)):WorkflowFunction<'oldState,'newState,'returnType>) : WorkflowFunction<'oldState,'newState,unit> =
         let ignoreResult oldState =

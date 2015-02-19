@@ -28,6 +28,7 @@ open FParsec
 
 open TestHelpers
 open AstTestHelpers
+open SafetySharp.Workflow
 open SafetySharp.Models
 open SafetySharp.Models.ScmHelpers
 open SafetySharp.Models.Scm
@@ -61,14 +62,13 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 1
         parentNode.Fields.Length =? 1
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpField
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -91,14 +91,13 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 1
         parentNode.Fields.Length =? 1
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpField
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -121,14 +120,13 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Faults.Length =? 2
         parentNode.Faults.Length =? 0
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpFault
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -151,14 +149,13 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.ReqPorts.Length =? 1
         parentNode.ReqPorts.Length =? 0
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -182,14 +179,13 @@ type SingleLevelUpTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.ProvPorts.Length =? 1
         parentNode.ProvPorts.Length =? 0
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -221,16 +217,15 @@ type SingleLevelUpTests () =
         parentNode.ReqPorts.Length =? 0
         parentNode.ProvPorts.Length =? 0
         parentNode.Bindings.Length =? 0
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -267,15 +262,14 @@ type SingleLevelUpTests () =
         parentNode.Bindings.Length =? 1
         parentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
         parentNode.Bindings.Head.Target.Comp =? [Comp("nested"); Comp("simple")]
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -312,15 +306,14 @@ type SingleLevelUpTests () =
         parentNode.Bindings.Length =? 1
         parentNode.Bindings.Head.Source.Comp =? [Comp("nested"); Comp("simple")]
         parentNode.Bindings.Head.Target.Comp =? [Comp("simple")]
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -357,16 +350,15 @@ type SingleLevelUpTests () =
         parentNode.Bindings.Length =? 1
         parentNode.Bindings.Head.Source.Comp =? [Comp("nested"); Comp("simple")]
         parentNode.Bindings.Head.Target.Comp =? [Comp("nested"); Comp("simple")]
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -403,15 +395,14 @@ type SingleLevelUpTests () =
         parentNode.Bindings.Length =? 1
         parentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
         parentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -448,15 +439,14 @@ type SingleLevelUpTests () =
         parentNode.Bindings.Length =? 1
         parentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
         parentNode.Bindings.Head.Target.Comp =? [Comp("nestedRequired"); Comp("simple")]
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpReqPort
             do! ScmRewriterLevelUp.rewriteBindingDeclaredInParent
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -498,14 +488,13 @@ type FixpointIteratorTests () =
         let parentNode = model.getDescendantUsingPath pathOfParent
         childNode.Fields.Length =? 3
         parentNode.Fields.Length =? 1
-        let initialState = (ScmRewriterLevelUp.initialLevelUpState model pathOfChild) 
-        let workFlow = scmRewrite {
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
             do! (iterateToFixpoint ScmRewriterLevelUp.levelUpField) 
-            do! ScmRewriterLevelUp.levelUpWriteBackChangesIntoModel
             return ()
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
@@ -535,12 +524,12 @@ type CompleteLevelUpTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
-        let initialState = initialSimpleState model
-        let workFlow = scmRewrite {
-            do! levelUpSubcomponents
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
@@ -557,12 +546,12 @@ type CompleteLevelUpTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
-        let initialState = initialSimpleState model
-        let workFlow = scmRewrite {
-            do! levelUpSubcomponents
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
@@ -578,12 +567,12 @@ type CompleteLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let initialState = initialSimpleState model
-        let workFlow = scmRewrite {
-            do! levelUpSubcomponents
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
@@ -597,12 +586,12 @@ type CompleteLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let initialState = initialSimpleState model
-        let workFlow = scmRewrite {
-            do! levelUpSubcomponents
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
@@ -616,12 +605,12 @@ type CompleteLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent5.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
-        let initialState = initialSimpleState model
-        let workFlow = scmRewrite {
-            do! levelUpSubcomponents
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
@@ -636,12 +625,12 @@ type CompleteLevelUpTests () =
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         model.ProvPorts.Length =? 0
-        let initialState = initialSimpleState model
-        let workFlow = scmRewrite {
-            do! levelUpSubcomponents
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
         }
-        let (_,resultingState) = ScmRewriterBase.runState workFlow initialState
-        let newModel = resultingState.Model
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""

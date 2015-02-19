@@ -815,3 +815,6 @@ module internal ScmRewriterLevelUp =
     
     let initialLevelUpState (scm:ScmModel) (subComponentToLevelUp:CompPath) =
         createLevelUpStateForSubComponent scm subComponentToLevelUp 
+
+    let initialLevelUpWorkflowState (scm:ScmModel) (subComponentToLevelUp:CompPath) =
+        WorkflowState<ScmRewriterLevelUpState>.stateInit (initialLevelUpState scm subComponentToLevelUp) 

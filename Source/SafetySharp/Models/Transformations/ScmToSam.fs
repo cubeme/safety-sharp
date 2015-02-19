@@ -148,6 +148,5 @@ module internal ScmToSam =
         let (_,resultingState) = SafetySharp.Workflow.runWorkflowState workFlow initialState
         let newModel = resultingState.State.getModel
         //printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
-        a
         transformCompDeclToPgm newModel
         
