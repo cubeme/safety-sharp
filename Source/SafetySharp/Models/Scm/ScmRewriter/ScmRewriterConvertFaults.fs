@@ -126,8 +126,9 @@ module internal ScmRewriterConvertFaults =
                                         .addReqPort(newReqPortDecl)
                                         .addProvPort(newProvPortDecl)
                                         .addBinding(newBindingDecl)
-                                        .removeFault(faultToConvert)
-            do! updateSubComponentToChange newCompDecl
+                                        .removeFault(faultToConvert) 
+            do! updateSubComponentToChange newCompDecl           
+            let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
             let newConvertFaultsState =
                 { convertFaultsState with
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = convertFaultsState.ArtificialFaultOldToFieldNew.Add ( (faultToConvert.Fault,field) ) ;
@@ -160,7 +161,7 @@ module internal ScmRewriterConvertFaults =
                         }
                     let newCompDecl = compDecl.replaceProvPort(provPort,newProvPort);
                     do! updateSubComponentToChange newCompDecl
-                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                    let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
                             ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
@@ -173,7 +174,7 @@ module internal ScmRewriterConvertFaults =
                         }
                     let newCompDecl = compDecl.replaceFault(fault,newFault);                        
                     do! updateSubComponentToChange newCompDecl
-                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                    let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
                             ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
@@ -186,7 +187,7 @@ module internal ScmRewriterConvertFaults =
                         }
                     let newCompDecl = compDecl.replaceStep(step,newStep);                        
                     do! updateSubComponentToChange newCompDecl
-                    let! state = getState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                    let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
                             ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
