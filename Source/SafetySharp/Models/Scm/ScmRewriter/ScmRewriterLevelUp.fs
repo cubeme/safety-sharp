@@ -426,6 +426,10 @@ module internal ScmRewriterLevelUp =
             return ()
         else
             let bindingDecl = childCompDecl.Bindings.Head
+            
+            // printfn ""
+            // printfn "%s: %s-%s -> %s-%s" childCompDecl.getName (bindingDecl.Source.Comp |> List.map (fun c -> c.getName) |> String.concat ".") (bindingDecl.Source.ProvPort.getName) (bindingDecl.Target.Comp  |> List.map (fun c -> c.getName) |> String.concat ".") (bindingDecl.Target.ReqPort.getName)
+
             assert (bindingDecl.Source.Comp = [childCompDecl.Comp]) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding from a subcomponent
             assert (bindingDecl.Target.Comp = [childCompDecl.Comp]) //because the subcomponent has itself no subcomponent (we chose it so), it cannot have a binding to a subcomponent
             let newChildCompDecl = childCompDecl.removeBinding bindingDecl
@@ -517,7 +521,7 @@ module internal ScmRewriterLevelUp =
                 let currentComponentName = pathToRewrite |> List.head
                 let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
                 let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
-                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.head
+                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head  //TODO: Write test, which had detected the missing |> List.rev
                 let rewrittenBindings =
                     componentToRewrite.Bindings |> List.map (rewriteBinding relativeLevelUpPathWithCurrent)
                 let rewrittenComponent =
