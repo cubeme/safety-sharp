@@ -551,6 +551,95 @@ type SingleLevelUpTests () =
         newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nestedProvided"); Comp("simple")]
         newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nestedRequired"); Comp("simple")]
         ()
+        
+    [<Test>]
+    member this.``A binding in a great-grandparent component gets rewritten (source=root;target=great-grandchild)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy8.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested3Required") :: Comp("nested2Required") :: Comp("nestedRequired") :: Comp("simple") :: []
+        let pathOfGrandparent = pathOfChild.Tail.Tail.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let greatgrandparentNode = model.getDescendantUsingPath pathOfGrandparent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 0
+        childNode.Bindings.Length =? 0
+        greatgrandparentNode.ReqPorts.Length =? 0
+        greatgrandparentNode.ProvPorts.Length =? 1
+        greatgrandparentNode.Bindings.Length =? 1
+        greatgrandparentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        greatgrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested3Required"); Comp("nested2Required"); Comp("nestedRequired"); Comp("simple")]
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newGreatgrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newGreatgrandparentNode.ReqPorts.Length =? 0
+        newGreatgrandparentNode.ProvPorts.Length =? 1
+        newGreatgrandparentNode.Bindings.Length =? 1
+        newGreatgrandparentNode.Bindings.Head.Source.Comp =? [Comp("simple")]
+        newGreatgrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nestedRequired"); Comp("simple")]
+        ()
+
+        
+    [<Test>]
+    member this.``A binding in a grandparent component gets rewritten (source=non-root;target=grandchild)`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/callInstHierarchy9.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested3Required") :: Comp("nested2Required") :: Comp("nested") :: Comp("simple") :: []
+        let pathOfGrandparent = pathOfChild.Tail.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let grandparentNode = model.getDescendantUsingPath pathOfGrandparent
+        childNode.ReqPorts.Length =? 1
+        childNode.ProvPorts.Length =? 0
+        childNode.Bindings.Length =? 0
+        grandparentNode.ReqPorts.Length =? 0
+        grandparentNode.ProvPorts.Length =? 1
+        grandparentNode.Bindings.Length =? 1
+        grandparentNode.Bindings.Head.Source.Comp =? [Comp("nested")]
+        grandparentNode.Bindings.Head.Target.Comp =? [Comp("nested3Required"); Comp("nested2Required"); Comp("nested")]
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newGrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ReqPorts.Length =? 0
+        newChildNode.ProvPorts.Length =? 0
+        newChildNode.Bindings.Length =? 0
+        newGrandparentNode.ReqPorts.Length =? 0
+        newGrandparentNode.ProvPorts.Length =? 1
+        newGrandparentNode.Bindings.Length =? 1
+        newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nested")]
+        newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nested")]
+        ()
 
 
 

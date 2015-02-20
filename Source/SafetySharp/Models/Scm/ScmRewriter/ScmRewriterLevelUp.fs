@@ -521,7 +521,7 @@ module internal ScmRewriterLevelUp =
                 let currentComponentName = pathToRewrite |> List.head
                 let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
                 let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
-                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head  //TODO: Write test, which had detected the missing |> List.rev
+                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head
                 let rewrittenBindings =
                     componentToRewrite.Bindings |> List.map (rewriteBinding relativeLevelUpPathWithCurrent)
                 let rewrittenComponent =
