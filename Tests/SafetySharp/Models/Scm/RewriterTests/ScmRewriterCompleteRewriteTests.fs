@@ -46,6 +46,24 @@ type CompleteRewriteTests () =
     let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
     
     [<Test>]
+    member this.``Example beh5 gets flattened completely`` () =
+        let inputFile = """../../Examples/SCM/beh5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = ScmRewriterFlattenModel.flattenModel
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.getModel
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+        
+    [<Test>]
     member this.``Example nestedComponent3 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let input = System.IO.File.ReadAllText inputFile
@@ -432,6 +450,24 @@ type CompleteRewriteTests () =
     [<Test>]
     member this.``Example behWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/behWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        //model.ProvPorts.Length =? 0
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = ScmRewriterFlattenModel.flattenModel
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.getModel
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
+
+    [<Test>]
+    member this.``Example behWithFaults2 gets flattened completely`` () =
+        let inputFile = """../../Examples/SCM/behWithFaults2.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSCM input
         //model.ProvPorts.Length =? 0

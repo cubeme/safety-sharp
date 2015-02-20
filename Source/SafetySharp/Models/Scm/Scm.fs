@@ -31,6 +31,8 @@ module internal Scm =
     type internal Fault = Fault of string
     type internal Comp = Comp of string
 
+    type CompPath = Comp list // index1::index2::root::[]
+
     type internal UOp =
         | Minus
         | Not
@@ -66,7 +68,7 @@ module internal Scm =
         | NotFault of FaultExpr
         | AndFault of FaultExpr * FaultExpr
         | OrFault of FaultExpr * FaultExpr
-
+        
     type internal Param =
         | ExprParam of Expr
         | InOutVarParam of Var
@@ -123,8 +125,6 @@ module internal Scm =
         Behavior : BehaviorDecl
     }
 
-    type CompPath = Comp list // index1::index2::root::[]
-
     type internal BndSrc = {
         ProvPort : ProvPort
         Comp : CompPath
@@ -154,6 +154,23 @@ module internal Scm =
         FaultExpr : FaultExpr option
         Behavior : BehaviorDecl
     }
+    
+    [<RequireQualifiedAccessAttribute>]
+    type internal LocExpr = // expression with location
+        | Literal of Val
+        | ReadVar of CompPath * Var
+        | ReadField of CompPath * Field
+        | ReadFault of CompPath * Fault
+        | UExpr of LocExpr * UOp
+        | BExpr of LocExpr * BOp * LocExpr
+    
+    type internal Formula =
+        | Invariant of Invariant:LocExpr
+        | RG of Rely:LocExpr * Guarantee:LocExpr
+        | DCCA of FaultsToConsider:(CompPath*Fault) list
+        //| LTL of LtlExpression
+        // | CTL of CtlExpression
+        // | PCtl of PCtlExpression
 
     type internal CompDecl = {
         Comp : Comp
@@ -164,4 +181,5 @@ module internal Scm =
         ProvPorts : ProvPortDecl list
         Bindings : BndDecl list
         Steps : StepDecl list
+        Formulas : Formula list
     }

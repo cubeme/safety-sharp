@@ -254,6 +254,13 @@ type ExampleFiles() =
         let result = parseSCM input
         ()
         
+    [<Test>]
+    member this.``Example beh5 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/beh5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
     // ## (call)-Tests (instantaneous)
     [<Test>]
     member this.``Example callInstFromBeh1 parses successfully`` () =
@@ -513,6 +520,13 @@ type ExampleFiles() =
     [<Test>]
     member this.``Example behWithFaults1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/behWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+    [<Test>]
+    member this.``Example behWithFaults2 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/behWithFaults2.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
