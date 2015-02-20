@@ -158,7 +158,6 @@ module internal Scm =
     [<RequireQualifiedAccessAttribute>]
     type internal LocExpr = // expression with location
         | Literal of Val
-        | ReadVar of CompPath * Var
         | ReadField of CompPath * Field
         | ReadFault of CompPath * Fault
         | UExpr of LocExpr * UOp

@@ -41,8 +41,10 @@ module internal ScmParser =
 
 
     type UserState = {
-        IdentifiersComponentScope : Map<string,IdentifierType> ;
-        IdentifiersComponentScopeStack : (Map<string,IdentifierType>) list;
+        CurrentComponent : Comp ;
+        IdentifiersComponentScope : Map<string,IdentifierType> ; // identifiers in current scope
+        IdentifiersComponentScopeStack : (Map<string,IdentifierType>) list; // (identifiers in current scope) :: (identifiers in parent scope) :: ... :: []        
+        IdentifiersComponentLocationScope : Map<CompPath*string,IdentifierType> ; // CompPath is sub2::sub1::me. Only Fields and Faults
         IdentifiersCallScope : Map<string,IdentifierType> ;
         IdentifiersCallScopeStack : (Map<string,IdentifierType>) list;
         PositionMap : (System.Collections.Immutable.ImmutableDictionary<obj,FParsec.Position>)
@@ -54,21 +56,37 @@ module internal ScmParser =
                 elif us.IdentifiersCallScope.ContainsKey str && (us.IdentifiersCallScope.Item str) = id_type then
                     true
                 else
+                    false                    
+            member us.IsLocatedIdentifierOfType (location,str) (id_type:IdentifierType) =
+                if us.IdentifiersComponentLocationScope.ContainsKey (location,str) && (us.IdentifiersComponentLocationScope.Item (location,str)) = id_type then
+                    true
+                else
                     false
+            member us.setComponent (comp:Comp) : UserState =
+                { us with
+                    UserState.CurrentComponent = comp;
+                }
             member us.pushComponentScope : UserState =
                 { us with
                     UserState.IdentifiersComponentScope = UserState.freshScope ;
                     UserState.IdentifiersComponentScopeStack = us.IdentifiersComponentScope :: us.IdentifiersComponentScopeStack ;
+                    UserState.IdentifiersComponentLocationScope = Map.empty<CompPath*string,IdentifierType>;
                 }
                 
             member us.popComponentScope : UserState =
                 { us with
                     UserState.IdentifiersComponentScope = us.IdentifiersComponentScopeStack.Head ;
                     UserState.IdentifiersComponentScopeStack = us.IdentifiersComponentScopeStack.Tail ;
+                    UserState.IdentifiersComponentLocationScope =
+                        // add to every entry the name of the current component after popping
+                        us.IdentifiersComponentLocationScope |> Map.toList
+                                                             |> List.map (fun ((location,string),id_type) -> ((location @ [us.CurrentComponent] ,string),id_type) )
+                                                             |> Map.ofList
                 }                
             member us.addToComponentScope (identifier:string) (id_type:IdentifierType) : UserState =
                 { us with
                     UserState.IdentifiersComponentScope = us.IdentifiersComponentScope.Add(identifier, id_type) ;
+                    UserState.IdentifiersComponentLocationScope = us.IdentifiersComponentLocationScope.Add ( ([us.CurrentComponent],identifier),id_type)
                 }
                 
             member us.pushCallScope : UserState =
@@ -107,8 +125,10 @@ module internal ScmParser =
 
             static member initialUserState =
                 {
+                    UserState.CurrentComponent = Comp("undefined");
                     UserState.IdentifiersComponentScope = UserState.freshScope;
                     UserState.IdentifiersComponentScopeStack = [];
+                    UserState.IdentifiersComponentLocationScope = Map.empty<CompPath*string,IdentifierType>;
                     UserState.IdentifiersCallScope = UserState.freshScope;
                     UserState.IdentifiersCallScopeStack = [];
                     UserState.PositionMap = UserState.freshPositionMap;
@@ -161,11 +181,16 @@ module internal ScmParser =
                 
     //let stringReturn str result : Parser<_,UserState> =
     //    pstring str >>% result
-
+    
     let pipe8 p1 p2 p3 p4 p5 p6 p7 p8 f =
         pipe4 p1 p2 p3 (tuple5 p4 p5 p6 p7 p8)
             (fun x1 x2 x3 (x4, x5, x6, x7, x8) -> f x1 x2 x3 x4 x5 x6 x7 x8)
-                        
+            
+    let pipe9 p1 p2 p3 p4 p5 p6 p7 p8 p9 f =
+        pipe5 p1 p2 p3 p4 (tuple5 p5 p6 p7 p8 p9)
+            (fun x1 x2 x3 x4 (x5, x6, x7, x8, x9) -> f x1 x2 x3 x4 x5 x6 x7 x8 x9)
+
+    let parseIdentifier = identifier (IdentifierOptions())
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,UserState> =
@@ -185,8 +210,7 @@ module internal ScmParser =
     let value : Parser<_,UserState> =
         boolVal <|> numberVal        
         
-    let parseIdentifierDecl (scope:Scope) (id_type:IdentifierType) : Parser<_,UserState> =        
-        let parseIdentifier = identifier (IdentifierOptions())
+    let parseIdentifierDecl (scope:Scope) (id_type:IdentifierType) : Parser<_,UserState> =
         fun stream ->
             let identifier = (parseIdentifier stream)
             if identifier.Status = ReplyStatus.Ok then
@@ -195,8 +219,7 @@ module internal ScmParser =
             else
                 Reply(identifier.Status,identifier.Error)
 
-    let parseIdentifierInst (id_type:IdentifierType) : Parser<_,UserState> =        
-        let parseIdentifier = identifier (IdentifierOptions())
+    let parseIdentifierInst (id_type:IdentifierType) : Parser<_,UserState> =
         fun stream ->
             let identifier = (parseIdentifier stream)
             if identifier.Status = ReplyStatus.Ok then
@@ -207,7 +230,26 @@ module internal ScmParser =
                     Reply(ReplyStatus.Error,mergeErrors identifier.Error error)
             else
                 Reply(identifier.Status,identifier.Error)
-    
+                                
+    let comppath_dot : Parser<_,UserState> =
+        // TODO: could check, if path is correct
+        oldPipeTo (many (attempt (parseIdentifier |>> Comp.Comp .>> pstring "." )))
+                  List.rev
+                      
+    let parseLocatedIdentifierInst (id_type:IdentifierType) : Parser<_,UserState> =
+        fun stream ->
+            let locationIdentifierReply = (comppath_dot .>>. parseIdentifier) stream
+            //let identifier = (parseIdentifier stream)
+            if locationIdentifierReply.Status = ReplyStatus.Ok then
+                let (location,identifier) = locationIdentifierReply.Result
+                if stream.UserState.IsLocatedIdentifierOfType (location,identifier) id_type then
+                    Reply(locationIdentifierReply.Status,(location,identifier),locationIdentifierReply.Error)
+                else
+                    let error = messageError (sprintf "Identifier '%s' has not been declared in path %s or the kind of access is wrong" identifier (location |> List.rev |> List.map (fun (Comp(c)) -> c) |> String.concat ".") )
+                    Reply(ReplyStatus.Error,mergeErrors locationIdentifierReply.Error error)
+            else
+                Reply(locationIdentifierReply.Status,locationIdentifierReply.Error)
+
     let pushUserStateComponentStack : Parser<_,UserState> =
         updateUserState (fun userstate -> userstate.pushComponentScope)
      
@@ -241,11 +283,27 @@ module internal ScmParser =
         parseIdentifierDecl Scope.Component IdentifierType.Fault |>> Fault.Fault
     let faultIdInst : Parser<_,UserState> =
         parseIdentifierInst IdentifierType.Fault |>> Fault.Fault
-
+        
     let compIdDecl : Parser<_,UserState> =
         parseIdentifierDecl Scope.Component IdentifierType.Comp |>> Comp.Comp
     let compIdInst : Parser<_,UserState> =
         parseIdentifierInst IdentifierType.Comp |>> Comp.Comp
+    let currentCompIdDecl : Parser<_,UserState> = //name of current Component is parsed
+        fun stream ->
+            let identifierReply = (parseIdentifier stream)
+            if identifierReply.Status = ReplyStatus.Ok then
+                let comp = Comp(identifierReply.Result)
+                stream.UserState <- stream.UserState.setComponent comp
+                Reply(identifierReply.Status,comp,identifierReply.Error)
+            else
+                Reply(identifierReply.Status,identifierReply.Error)
+
+        
+    let locatedFieldInst : Parser<_,UserState> =
+        parseLocatedIdentifierInst IdentifierType.Field |>> (fun (loc,str) -> (loc,Field(str)))
+
+    let locatedFaultInst : Parser<_,UserState> =
+        parseLocatedIdentifierInst IdentifierType.Fault |>> (fun (loc,str) -> (loc,Fault.Fault(str)))
 
     // parsers with space afterwards
     let pstring_ws s : Parser<_,UserState> =
@@ -504,13 +562,7 @@ module internal ScmParser =
                        (paramDecls_ws .>> parentClose_ws .>> (pstring_ws "{"))
                        (behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
                        createProvPortDecl)
-                                                  
-    let comppath_dot : Parser<_,UserState> =
-        // TODO: could check, if path is correct
-        let parseIdentifier = identifier (IdentifierOptions())
-        oldPipeTo (many (attempt (parseIdentifier |>> Comp.Comp .>> pstring "." )))
-                  List.rev
-    
+                              
     let binding_ws : Parser<_,UserState> =
         let bindingsrc_ws =
             let createProvPort (comps,srcPort) = {BndSrc.Comp = comps; BndSrc.ProvPort=srcPort}
@@ -544,10 +596,49 @@ module internal ScmParser =
 
         instantbinding_ws <|> delayedbinding_ws
 
+    // parses a hierarchical expression
+    let hierarchical_expression_ws : Parser<_,UserState> =
+        let opp = new OperatorPrecedenceParser<_,_,_>()        
+        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Divide, e2)))
+        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Multiply, e2)))
+        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Modulo, e2)))
+        // >
+        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Add, e2)))
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">" , 4, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Subtract, e2)))
+        // >
+        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.LessEqual, e2)))
+        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Equals, e2)))
+        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.NotEquals, e2)))
+        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.GreaterEqual, e2)))
+        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Greater, e2)))
+        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Less, e2)))
+        opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> LocExpr.UExpr(e,UOp.Not)))
+        //>
+        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.And, e2)))
+        //>
+        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Or, e2)))
+
+        // parses an expression between ( and )
+        let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
         
+        // recursive term parser for expressions
+        opp.TermParser <-
+            (boolVal_ws |>> LocExpr.Literal) <|> 
+            (numberVal_ws |>> LocExpr.Literal) <|>
+            (attempt locatedFieldInst |>> LocExpr.ReadField) <|>
+            (attempt locatedFaultInst |>> LocExpr.ReadFault) <|> 
+            (parenExpr_ws)
+        opp.ExpressionParser
+
+
+
+    let formula_ws : Parser<_,UserState> =
+        let invarformula_ws : Parser<_,UserState> =
+            pstring_ws1 "formula-invar" >>. hierarchical_expression_ws .>> pstring_ws ";" |>> Formula.Invariant
+        invarformula_ws
 
     do compRef :=
-        let createComponent comp subcomp fields faults reqPorts provPorts bindings steps =
+        let createComponent comp subcomp fields faults reqPorts provPorts bindings steps formulas =
             {
                 CompDecl.Comp = comp;
                 CompDecl.Subs = subcomp;
@@ -557,8 +648,9 @@ module internal ScmParser =
                 CompDecl.ProvPorts = provPorts;
                 CompDecl.Bindings = bindings;
                 CompDecl.Steps = steps;
+                CompDecl.Formulas = formulas;
             }
-        pipe8 ((pstring_ws1 "component") >>. compIdDecl_ws .>> (pstring_ws "{") .>> pushUserStateComponentStack)
+        pipe9 ((pstring_ws1 "component") >>. currentCompIdDecl .>> (pstring_ws "{") .>> pushUserStateComponentStack)
               (many comp_ws)
               (many typedFieldDecl_ws)
               (many faultDecls_ws)
@@ -566,6 +658,7 @@ module internal ScmParser =
               (many provPortDecl_ws)
               (many binding_ws)
               (many stepDecl_ws .>> (pstring "}") .>> popUserStateComponentStack)
+              (many formula_ws)
               createComponent
         
     let scmFile = comp_ws
