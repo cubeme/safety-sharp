@@ -39,7 +39,10 @@ type SpinModelChecker (model : Model) =
     do printf "%s" (ScmToString.toString scm)
    // do printf "======================================="
     let spin = ScmToPromela.transformConfiguration scm
-    do printf "%+A" spin
+    //do printf "%+A" spin
+    let spinWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
+    let spincode = spinWriter.Export spin
+    do printf "%s" spincode
 
 //    member this.Check (formula : LtlFormula) =
 //        let modelingAssembly = ModelingAssembly (model.GetType().Assembly)

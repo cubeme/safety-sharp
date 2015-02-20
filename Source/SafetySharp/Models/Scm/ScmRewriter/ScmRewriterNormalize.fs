@@ -23,49 +23,44 @@
 namespace SafetySharp.Models
 open SafetySharp.Models.Scm
 
-module internal ScmRewriterFlattenModel =
+
+module internal ScmRewriterNormalize =
     open ScmHelpers
     open ScmRewriterBase
-    open ScmRewriterNormalize
-    open ScmRewriterLevelUp
-    open ScmRewriterConvertFaults
-    open ScmRewriterConvertDelayedBindings
-    open ScmRewriterInlineBehavior
     open SafetySharp.Workflow
-
     
-    // flatten model means
-    //  * normalize
-    //  * flatten hierarchy
-    //  * convert faults
-    //  * convert delayed ports
-    //  * inline behaviors
+    let createEmptySteps : PlainScmModelWorkflowFunction<unit> = workflow {
+        let! model = getModel
+        let emptyStep =
+            {
+                StepDecl.FaultExpr = None;
+                StepDecl.Behavior =
+                    {
+                        BehaviorDecl.Body = Stm.Block([]);
+                        BehaviorDecl.Locals = [];
+                    }
+            }        
+        let rec newCompDecl (compDecl:CompDecl) =
+            let newSteps =
+                if compDecl.Steps = [] then
+                    [emptyStep]
+                else
+                    compDecl.Steps
+            let newSubs =
+                compDecl.Subs |> List.map newCompDecl
+            { compDecl with
+                CompDecl.Steps = newSteps;
+                CompDecl.Subs = newSubs
+            }
+        do! setModel (newCompDecl model)
+    }
+    
+    let normalize : PlainScmModelWorkflowFunction<unit> = workflow {
+        do! createEmptySteps
+    }
 
-    let flattenModel<'oldState when 'oldState :> IScmModel<'oldState>> :
+    let normalizeWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,PlainScmModel,unit> = workflow {
-            /// normalize
-            do! normalizeWrapper
-            
-            // level up everything
-            do! levelUpSubcomponentsWrapper
-            //do! assertNoSubcomponent (assertion is done as last step)
-            //do! checkConsistency
-            
-            // convert faults
-            do! convertFaultsWrapper
-            //do! assertNoFault
-            //do! checkConsistency
-            
-            // convert delayed bindings            
-            do! convertDelayedBindingsWrapper
-            //do! checkConsistency
-
-            // inline everything beginning with the main step
-            do! inlineBehaviorsWrapper
-            //do! assertNoPortCall
-            //do! checkConsistency
-
-            do! toPlainModelState
-        }
-
-
+        do! toPlainModelState
+        do! normalize
+    }

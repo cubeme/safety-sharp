@@ -97,6 +97,7 @@ module internal ScmRewriterBase =
                     member this.setModel (model:ScmModel) = PlainScmModel(model)
     
     type PlainScmModelWorkflowState = WorkflowState<PlainScmModel>
+    type PlainScmModelWorkflowFunction<'returnType> = WorkflowFunction<PlainScmModel,PlainScmModel,'returnType>
 
     let createPlainScmWorkFlowState (model:ScmModel) : PlainScmModelWorkflowState =
         WorkflowState<PlainScmModel>.stateInit (PlainScmModel(model))

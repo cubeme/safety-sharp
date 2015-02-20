@@ -144,7 +144,7 @@ module internal ScmToSam =
         // first level up and inline everything in Sam, then produce the appropriate Sam.Pgm.
         // The latter is just a recursive walk through the Scm-Datatypes and return the equivalent Sam-Datatypes
         let initialState = ScmRewriterBase.createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.levelUpAndInline
+        let workFlow = ScmRewriterFlattenModel.flattenModel
         let (_,resultingState) = SafetySharp.Workflow.runWorkflowState workFlow initialState
         let newModel = resultingState.State.getModel
         //printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
