@@ -61,6 +61,8 @@ module internal ScmRewriterLevelUp =
                     (levelUp.ArtificialReqPortOldToNew,levelUp.ArtificialFaultsOldToNew,Map.empty<Var,Var>,levelUp.ArtificialFieldsOldToNew)
             member levelUp.oldToNewMaps2 =                
                     (levelUp.ArtificialFaultsOldToNew)
+            member levelUp.oldToNewMaps3=                
+                    (levelUp.ArtificialFaultsOldToNew,levelUp.ArtificialFieldsOldToNew)
             interface IScmModel<ScmRewriterLevelUpState> with
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
@@ -457,7 +459,7 @@ module internal ScmRewriterLevelUp =
             do! updateParentCompDecl newParentCompDecl
             return ()
         }
-       
+        
     let rewriteBindingsDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
         // Cases: (view from parent, where sub1 is selected)                    
         //   Declared in ancestor (done here)
@@ -479,28 +481,28 @@ module internal ScmRewriterLevelUp =
         let! levelUp = getLevelUpState
               
         let rewriteBinding (relativeLeveledUpPath:CompPath) (bindingToRewrite:BndDecl) : BndDecl =
+            let relChildPathToCheckFor = relativeLeveledUpPath
+            let relParentPath = relativeLeveledUpPath.Tail
             let newSource =
-                let relativeSourcePathToCheckFor = relativeLeveledUpPath
                 let oldCompPathInBinding = bindingToRewrite.Source.Comp
                 if oldCompPathInBinding = [] then
                     failwith "path in binding should at least contain the name of the component itself"
-                else if relativeSourcePathToCheckFor = oldCompPathInBinding then
+                else if relChildPathToCheckFor = oldCompPathInBinding then
                     let port = levelUp.ArtificialProvPortOldToNew.Item (bindingToRewrite.Source.ProvPort)
                     {
-                        BndSrc.Comp = relativeSourcePathToCheckFor.Tail ; //new port is in parent
+                        BndSrc.Comp = relParentPath ; //new port is in parent
                         BndSrc.ProvPort = port
                     }
                 else
                     bindingToRewrite.Source
             let newTarget =
-                let relativeTargetPathToCheckFor = relativeLeveledUpPath
                 let oldCompPathInBinding = bindingToRewrite.Target.Comp
                 if oldCompPathInBinding = [] then
                     failwith "path in binding should at least contain the name of the component itself"
-                else if relativeTargetPathToCheckFor = oldCompPathInBinding then
+                else if relChildPathToCheckFor = oldCompPathInBinding then
                     let port = levelUp.ArtificialReqPortOldToNew.Item (bindingToRewrite.Target.ReqPort)
                     {
-                        BndTarget.Comp = relativeTargetPathToCheckFor.Tail ; //new port is in parent
+                        BndTarget.Comp = relParentPath ; //new port is in parent
                         BndTarget.ReqPort = port
                     }
                  else
@@ -539,6 +541,79 @@ module internal ScmRewriterLevelUp =
 
         let newModel = rewriteAncestors fullPathToParent relativePathToChild childCompDecl
         do! setModel newModel
+    }
+
+    
+    let levelUpAndRewriteFormulaDeclaredInChild : ScmRewriterLevelUpFunction<unit> = workflow {
+        let! levelUp = getLevelUpState
+        // parent is target, child is source
+        let! childCompDecl = getChildCompDecl
+        let! parentCompDecl = getParentCompDecl
+
+        if childCompDecl.Formulas.IsEmpty then
+            // do not modify old tainted state here
+            return ()
+        else
+            let formula = childCompDecl.Formulas.Head            
+            let newChildCompDecl = childCompDecl.removeFormula formula
+            
+            let oldLoc = [childCompDecl.Comp]
+            let newLoc = [parentCompDecl.Comp]
+
+            let transformedFormula =
+                match formula with
+                    | Formula.Invariant(locExpr) ->
+                        let newLocExpr =
+                            locExpr.rewriteLocation oldLoc newLoc levelUp.oldToNewMaps3
+                        Formula.Invariant(newLocExpr)
+                    
+            let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
+                                                    .addFormula(formula)
+            do! updateParentCompDecl newParentCompDecl
+            return ()
+    }   
+
+    let rewriteFormulasDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
+        // fields and faults need to be upleveled first
+
+        let! model = getModel
+        let! levelUp = getLevelUpState
+
+        let rewriteFormula (relativeLeveledUpPath:CompPath) (formulaToRewrite:Formula) : Formula =
+            match formulaToRewrite with
+                | Formula.Invariant(locExpr) ->
+                    let relChildPathToCheckFor = relativeLeveledUpPath
+                    let relParentPath = relativeLeveledUpPath.Tail
+                    let newLocExpr = locExpr.rewriteLocation (relChildPathToCheckFor) (relParentPath) levelUp.oldToNewMaps3
+                    Formula.Invariant(newLocExpr)
+        
+        let rec rewriteAncestors (pathToRewrite:CompPath) (relativeLeveledUpPath:CompPath) (alreadyRewrittenChild:CompDecl) : CompDecl=
+            if pathToRewrite = [] then
+                alreadyRewrittenChild // root (=model) reached
+            else
+                // relativeLevelUpPath does not contain the name of the current component
+                let currentComponentName = pathToRewrite |> List.head
+                let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
+                let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
+                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head
+                let rewrittenFormulas =
+                    componentToRewrite.Formulas |> List.map (rewriteFormula relativeLevelUpPathWithCurrent)
+                let rewrittenComponent =
+                    componentToRewrite.replaceChild(alreadyRewrittenChildName,alreadyRewrittenChild)
+                                      .replaceFormulas(rewrittenFormulas)
+
+                let parentPath = pathToRewrite.Tail
+                let nextRelativeLeveledUpPath = relativeLevelUpPathWithCurrent
+                rewriteAncestors parentPath nextRelativeLeveledUpPath rewrittenComponent
+                
+        let! childCompDecl = getChildCompDecl
+        let! fullPathToChild = getChildPath
+        let fullPathToParent = fullPathToChild.Tail
+        let relativePathToChild = [fullPathToChild.Head] //viewport of parent
+
+        let newModel = rewriteAncestors fullPathToParent relativePathToChild childCompDecl
+        do! setModel newModel
+
     }
 
         
@@ -706,6 +781,7 @@ module internal ScmRewriterLevelUp =
             assert (childCompDecl.ReqPorts = [])
             assert (childCompDecl.ProvPorts = [])
             assert (childCompDecl.Bindings = [])
+            assert (childCompDecl.Formulas = [])
             return ()
         }
     let removeSubComponent : ScmRewriterLevelUpFunction<unit> = workflow {            
@@ -726,6 +802,8 @@ module internal ScmRewriterLevelUp =
         do! (iterateToFixpoint levelUpProvPort)
         do! (iterateToFixpoint levelUpAndRewriteBindingDeclaredInChild)
         do! (rewriteBindingsDeclaredInAncestors)
+        do! (iterateToFixpoint levelUpAndRewriteFormulaDeclaredInChild)
+        do! (rewriteFormulasDeclaredInAncestors)
         do! (iterateToFixpoint rewriteParentStep)
         do! (iterateToFixpoint rewriteProvPort)
         do! (iterateToFixpoint rewriteFaults)

@@ -300,8 +300,7 @@ module internal ScmHelpers =
             // Only works, if binding was declared in current node.
             // If binding might also be declared in the parent node, maybe
             // the function tryFindProvPortOfReqPort is what you want.
-            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp.Length = 1) // the CompPath of a local binding has length 1
-            
+            node.Bindings |> List.find (fun bndg -> bndg.Target.ReqPort=reqPort && bndg.Target.Comp.Length = 1) // the CompPath of a local binding has length 1            
         member node.removeStep (step:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.filter (fun _step -> _step<>step));
@@ -318,8 +317,23 @@ module internal ScmHelpers =
         member node.replaceStep (stepToReplace:StepDecl, newStep:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));
-            }     
-                                    
+            }            
+        member node.removeFormula (formula:Formula) =
+            { node with
+                CompDecl.Formulas = (node.Formulas |> List.filter (fun _formula -> _formula<>formula));
+            }
+        member node.addFormula (formula:Formula) =
+            { node with
+                CompDecl.Formulas = formula::node.Formulas
+            }
+        member node.replaceFormula (formulaToReplace:Formula, newFormula:Formula) =
+            { node with
+                CompDecl.Formulas = (node.Formulas |> List.map (fun formula -> if formula=formulaToReplace then newFormula else formula));
+            }                                    
+        member node.replaceFormulas (formulas:Formula list) =
+            { node with
+                CompDecl.Formulas = formulas
+            }
         member node.removeChild (child:CompDecl) =
             { node with
                 CompDecl.Subs = (node.Subs |> List.filter (fun _child -> _child<>child));
@@ -690,6 +704,27 @@ module internal ScmHelpers =
                      // is an assignment or something similar.
                     newState
 
+                    
+    // Extension methods    
+    type LocExpr with
+        member locExpr.rewriteLocation (oldLocation:CompPath) (newLocation:CompPath) (faultMap:Map<Fault,Fault>,fieldMap:Map<Field,Field>) : LocExpr =
+            match locExpr with
+                | LocExpr.Literal (_) ->
+                    locExpr
+                | LocExpr.ReadField (location, field) ->
+                    if location = oldLocation then
+                        LocExpr.ReadField (newLocation, fieldMap.Item field)
+                    else
+                        locExpr
+                | LocExpr.ReadFault (location, fault) ->
+                    if location = oldLocation then
+                        LocExpr.ReadFault (newLocation, faultMap.Item fault)
+                    else
+                        locExpr
+                | LocExpr.UExpr (locExpr,uop) ->
+                    LocExpr.UExpr(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap),uop)
+                | LocExpr.BExpr (locExprLeft,bop,locExprRight) ->
+                    LocExpr.BExpr(locExprLeft.rewriteLocation oldLocation newLocation (faultMap,fieldMap),bop,locExprRight.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
 
                     
     [<RequireQualifiedAccess>]
