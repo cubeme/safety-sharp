@@ -22,4 +22,5 @@ component simple {
 		intField3 := intField1 + 1;
 	}
 	formula-invar simple.intField3 >= simple.intField1;
+	formula-invar simple.nested.intField2 >= simple.intField1;
 }

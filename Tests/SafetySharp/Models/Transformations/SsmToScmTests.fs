@@ -48,6 +48,7 @@ module ``SsmToScm Transformation`` =
         Steps = []
         Faults = []
         Bindings = []
+        Formulas = []
     }
 
     let private ssmFields : Ssm.Field list = [

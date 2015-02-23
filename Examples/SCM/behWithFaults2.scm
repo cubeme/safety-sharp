@@ -78,5 +78,5 @@ component simple {
 	}
 	
 	formula-invar simple.intField3 >= simple.intField1;
-	formula-invar simple.faultPermanent = false;
+	formula-invar simple.faultPermanent == false;
 }

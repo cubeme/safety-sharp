@@ -195,5 +195,6 @@ module internal SsmToScm =
         ProvPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort) |> Seq.map transformProvPort |> Seq.toList
         Bindings = c.Bindings |> List.map (transformBinding c)
         Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step && m.Name <> Ssm.BaseUpdateMethod.Name) |> Seq.map transformSteps |> Seq.toList
+        Formulas = []
     }
         
