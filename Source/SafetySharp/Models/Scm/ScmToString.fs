@@ -63,6 +63,9 @@ module internal ScmToString =
         let reqPort (ReqPort r)   = writer.Append "%s" r
         let provPort (ProvPort p) = writer.Append "%s" p
         let comp (Comp c)         = writer.Append "%s" c
+                
+        let compPath (p : CompPath) =
+            writer.AppendRepeated (p |> List.rev) comp (fun () -> writer.Append ".")
 
         let rec expr = function
             | Literal l           -> value l
@@ -70,6 +73,13 @@ module internal ScmToString =
             | ReadField f         -> field f
             | UExpr (e, op)       -> uop op; writer.AppendParenthesized (fun () -> expr e)
             | BExpr (e1, op, e2)  -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
+            
+        let rec locExpr = function
+            | LocExpr.Literal l          -> value l
+            | LocExpr.ReadField (l, f)   -> compPath l; field f
+            | LocExpr.ReadFault (l, f)   -> compPath l; fault f
+            | LocExpr.UExpr (e, op)      -> uop op; writer.AppendParenthesized (fun () -> locExpr e)
+            | LocExpr.BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> locExpr e1; writer.Append " "; bop op; writer.Append " "; locExpr e2)
 
         let rec fexpr = function 
             | Fault f -> fault f
@@ -148,10 +158,7 @@ module internal ScmToString =
             provPort p.ProvPort
             writer.AppendParenthesized (fun () -> writer.AppendRepeated p.Params paramDecl (fun () -> writer.Append ", "))
             behavior p.Behavior
-
-        let compPath (p : CompPath) =
-            writer.AppendRepeated (p |> List.rev) comp (fun () -> writer.Append ".")
-
+            
         let bndSrc (b : BndSrc) =
             compPath b.Comp; writer.Append "."; provPort b.ProvPort
 
@@ -181,6 +188,13 @@ module internal ScmToString =
             | Some f -> writer.Append "["; fexpr f; writer.AppendLine "]"
             writer.Append "step"
             behavior s.Behavior
+                    
+        let formula (f : Formula) =
+            match f with
+                | Formula.Invariant(l) ->
+                    writer.Append "formula-invar"
+                    locExpr l
+                    writer.AppendLine ";"
 
         let rec compDecl (c : CompDecl) = 
             writer.Append "component "
@@ -202,6 +216,7 @@ module internal ScmToString =
                 append provPortDecl c.ProvPorts "provided ports" c.ReqPorts false
                 append bndDecl c.Bindings "bindings" c.ProvPorts true
                 append stepDecl c.Steps "steps" c.Bindings false
+                append formula c.Formulas "formulas" c.Steps true
             )
 
         compDecl c
