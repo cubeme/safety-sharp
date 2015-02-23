@@ -640,6 +640,95 @@ type SingleLevelUpTests () =
         newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nested")]
         newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nested")]
         ()
+        
+    [<Test>]
+    member this.``A formula in a sub component gets leveled up and rewritten`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+
+        let inputFile = """../../Examples/SCM/beh5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.Formulas.Length =? 1
+        parentNode.Formulas.Length =? 2
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpAndRewriteFormulaDeclaredInChild
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.Formulas.Length =? 0
+        newParentNode.Formulas.Length =? 3
+        let rec allLocationsInParent (locExpr:LocExpr) : unit =
+            match locExpr with
+                | LocExpr.Literal _ -> ()
+                | LocExpr.ReadField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadFault (l,_) -> l =? pathOfParent
+                | LocExpr.UExpr (e,o) -> allLocationsInParent e
+                | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
+
+        let checkFormula (formula:Formula) =
+            match formula with
+                | Formula.Invariant(locExpr) -> allLocationsInParent locExpr
+        checkFormula newParentNode.Formulas.Head //only check the head formula
+        ()
+        
+    [<Test>]
+    member this.``All formulas in a parent component get rewritten`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+        let inputFile = """../../Examples/SCM/beh5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.Formulas.Length =? 1
+        parentNode.Formulas.Length =? 2
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.rewriteFormulasDeclaredInAncestors
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.Formulas.Length =? 1
+        newParentNode.Formulas.Length =? 2
+        let rec allLocationsInParent (locExpr:LocExpr) : unit =
+            match locExpr with
+                | LocExpr.Literal _ -> ()
+                | LocExpr.ReadField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadFault (l,_) -> l =? pathOfParent
+                | LocExpr.UExpr (e,o) -> allLocationsInParent e
+                | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
+
+        let checkFormula (formula:Formula) =
+            match formula with
+                | Formula.Invariant(locExpr) -> allLocationsInParent locExpr
+        newParentNode.Formulas |> List.iter checkFormula
+        ()
 
 
 
@@ -683,7 +772,8 @@ type FixpointIteratorTests () =
         newChildNode.Fields.Length =? 0
         newParentNode.Fields.Length =? 4
         ()
-        
+
+
 [<TestFixture>]
 type CompleteLevelUpTests () =
 

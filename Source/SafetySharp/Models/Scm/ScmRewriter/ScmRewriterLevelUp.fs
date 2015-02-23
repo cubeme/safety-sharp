@@ -515,31 +515,17 @@ module internal ScmRewriterLevelUp =
                 }
             transformedBinding
 
-        let rec rewriteAncestors (pathToRewrite:CompPath) (relativeLeveledUpPath:CompPath) (alreadyRewrittenChild:CompDecl) : CompDecl=
-            if pathToRewrite = [] then
-                alreadyRewrittenChild // root (=model) reached
-            else
-                // relativeLevelUpPath does not contain the name of the current component
-                let currentComponentName = pathToRewrite |> List.head
-                let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
-                let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
-                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head
-                let rewrittenBindings =
-                    componentToRewrite.Bindings |> List.map (rewriteBinding relativeLevelUpPathWithCurrent)
-                let rewrittenComponent =
-                    componentToRewrite.replaceChild(alreadyRewrittenChildName,alreadyRewrittenChild)
-                                      .replaceBindings(rewrittenBindings)
-
-                let parentPath = pathToRewrite.Tail
-                let nextRelativeLeveledUpPath = relativeLevelUpPathWithCurrent
-                rewriteAncestors parentPath nextRelativeLeveledUpPath rewrittenComponent
-                
+        let compRewriter (relativeLeveledUpPath:CompPath) (currentComp:CompDecl) : CompDecl =
+            { currentComp with
+                CompDecl.Bindings = currentComp.Bindings |> List.map (rewriteBinding (relativeLeveledUpPath:CompPath))
+            }
+                            
         let! childCompDecl = getChildCompDecl
         let! fullPathToChild = getChildPath
         let fullPathToParent = fullPathToChild.Tail
         let relativePathToChild = [fullPathToChild.Head] //viewport of parent
 
-        let newModel = rewriteAncestors fullPathToParent relativePathToChild childCompDecl
+        let newModel = model.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
         do! setModel newModel
     }
 
@@ -568,7 +554,7 @@ module internal ScmRewriterLevelUp =
                         Formula.Invariant(newLocExpr)
                     
             let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
-                                                    .addFormula(formula)
+                                                  .addFormula(transformedFormula)
             do! updateParentCompDecl newParentCompDecl
             return ()
     }   
@@ -587,31 +573,19 @@ module internal ScmRewriterLevelUp =
                     let newLocExpr = locExpr.rewriteLocation (relChildPathToCheckFor) (relParentPath) levelUp.oldToNewMaps3
                     Formula.Invariant(newLocExpr)
         
-        let rec rewriteAncestors (pathToRewrite:CompPath) (relativeLeveledUpPath:CompPath) (alreadyRewrittenChild:CompDecl) : CompDecl=
-            if pathToRewrite = [] then
-                alreadyRewrittenChild // root (=model) reached
-            else
-                // relativeLevelUpPath does not contain the name of the current component
-                let currentComponentName = pathToRewrite |> List.head
-                let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
-                let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
-                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head
-                let rewrittenFormulas =
-                    componentToRewrite.Formulas |> List.map (rewriteFormula relativeLevelUpPathWithCurrent)
-                let rewrittenComponent =
-                    componentToRewrite.replaceChild(alreadyRewrittenChildName,alreadyRewrittenChild)
-                                      .replaceFormulas(rewrittenFormulas)
-
-                let parentPath = pathToRewrite.Tail
-                let nextRelativeLeveledUpPath = relativeLevelUpPathWithCurrent
-                rewriteAncestors parentPath nextRelativeLeveledUpPath rewrittenComponent
+        
+        let compRewriter (relativeLeveledUpPath:CompPath) (currentComp:CompDecl) : CompDecl =
+            { currentComp with
+                CompDecl.Formulas = currentComp.Formulas |> List.map (rewriteFormula (relativeLeveledUpPath:CompPath))
+            }
+                            
                 
         let! childCompDecl = getChildCompDecl
         let! fullPathToChild = getChildPath
         let fullPathToParent = fullPathToChild.Tail
         let relativePathToChild = [fullPathToChild.Head] //viewport of parent
 
-        let newModel = rewriteAncestors fullPathToParent relativePathToChild childCompDecl
+        let newModel = model.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
         do! setModel newModel
 
     }

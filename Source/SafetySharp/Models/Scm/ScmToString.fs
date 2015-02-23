@@ -76,8 +76,8 @@ module internal ScmToString =
             
         let rec locExpr = function
             | LocExpr.Literal l          -> value l
-            | LocExpr.ReadField (l, f)   -> compPath l; field f
-            | LocExpr.ReadFault (l, f)   -> compPath l; fault f
+            | LocExpr.ReadField (l, f)   -> compPath l; writer.Append "."; field f
+            | LocExpr.ReadFault (l, f)   -> compPath l; writer.Append "."; fault f
             | LocExpr.UExpr (e, op)      -> uop op; writer.AppendParenthesized (fun () -> locExpr e)
             | LocExpr.BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> locExpr e1; writer.Append " "; bop op; writer.Append " "; locExpr e2)
 
@@ -192,7 +192,7 @@ module internal ScmToString =
         let formula (f : Formula) =
             match f with
                 | Formula.Invariant(l) ->
-                    writer.Append "formula-invar"
+                    writer.Append "formula-invar "
                     locExpr l
                     writer.AppendLine ";"
 

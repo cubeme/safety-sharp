@@ -362,6 +362,25 @@ module internal ScmHelpers =
                 // recursively replace parent
                 model.replaceDescendant pathToReplace.Tail newParent  
         
+        member model.rewriteAncestors (compRewriter:CompPath->CompDecl->CompDecl) (pathToRewrite:CompPath) (relativeLeveledUpPath:CompPath) (alreadyRewrittenChild:CompDecl) : CompDecl=
+            // TODO: Write direct tests. Currently is only tested indirectly by the binding-tests with grandparents and great-grandparents
+            if pathToRewrite = [] then
+                alreadyRewrittenChild // root (=model) reached
+            else
+                // relativeLevelUpPath does not contain the name of the current component
+                let currentComponentName = pathToRewrite |> List.head
+                let relativeLevelUpPathWithCurrent = relativeLeveledUpPath @ [currentComponentName]
+                let componentToRewrite = model.getDescendantUsingPath pathToRewrite                
+                let alreadyRewrittenChildName = relativeLeveledUpPath |> List.rev |> List.head
+                let rewrittenComponent =
+                    componentToRewrite.replaceChild(alreadyRewrittenChildName,alreadyRewrittenChild)
+                        |> (compRewriter relativeLevelUpPathWithCurrent)
+
+                let parentPath = pathToRewrite.Tail
+                let nextRelativeLeveledUpPath = relativeLevelUpPathWithCurrent
+                model.rewriteAncestors compRewriter parentPath nextRelativeLeveledUpPath rewrittenComponent
+
+
         // search in the model
         member model.tryFindBindingOfReqPort (pathOfReqPort:ReqPortPath) : BndDeclPath option =
             // option, because it might not be in the model (binding is not declared, or declared in any parent node)
