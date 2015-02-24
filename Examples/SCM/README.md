@@ -38,18 +38,19 @@
 * beh3.scm: Like beh2. Additionally  the behaviours of both components make local variable assignments
 * beh4.scm: Like beh3. But stops during the execution (for better introspection)
 * beh5.scm: Like beh3. But with invariant-formulas
+* beh6.scm: Like beh3. But with contract at provided port
 
 
 ## (call)-Tests (instantaneous)
 
 * callInstFromBeh1.scm: just call from behaviour a requiredPort inside the same Component
 * callInstFromBeh2.scm: call from _behaviour_ a requiredPort which calls a required Port inside the same Component
-* callInstFromBeh3.scm: like callInst1, but with field assignments
-* callInstFromBeh4.scm: like callInst3, but with input-parameters
-* callInstFromBeh5.scm: like callInst1, but with an inout-parameter, which was preassigned (field) and gets a value
-* callInstFromBeh6.scm: like callInst1, but with an inout-parameter, which was preassigned (local) and gets a value
-* callInstFromBeh7.scm: like callInst1, but with an inout-parameter, which was not preassigned and gets no value
-* callInstFromBeh8.scm: like callInst1, but with an inout-parameter, which was not preassigned and gets a value
+* callInstFromBeh3.scm: like callInstFromBeh1, but with field assignments
+* callInstFromBeh4.scm: like callInstFromBeh3, but with input-parameters
+* callInstFromBeh5.scm: like callInstFromBeh1, but with an inout-parameter, which was preassigned (field) and gets a value
+* callInstFromBeh6.scm: like callInstFromBeh1, but with an inout-parameter, which was preassigned (local) and gets a value
+* callInstFromBeh7.scm: like callInstFromBeh1, but with an inout-parameter, which was not preassigned and gets no value
+* callInstFromBeh8.scm: like callInstFromBeh1, but with an inout-parameter, which was not preassigned and gets a value
 * callInstFromProv1.scm: tests, if inout- reading/writing works with Required Ports, if called within an provided port
 * callInstHierarchy1.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in this component
 * callInstHierarchy2.scm: tests hierarchical case: RequiredPortComponent = ProvidedPortComponent. Binding declared in its parent component. (short: in parent (source=child;target=child))
@@ -84,6 +85,9 @@
 * callInstFromProvWithFaults1.scm: like callInstFromProv1 but with several faults and affected ports and steps
 * callInstHierarchyWithFaults1.scm: like callInstHierarchy2 but with several faults and affected ports and steps
 * callDelayedSimpleWithFaults1.scm: like callDelayedSimple1 but with one fault and an affected port
+
+## Contract-Tests
+* callInstFromBehWithContract1.scm: like callInstFromBeh5, but with provPortContract
 
 ## Examples which combine several aspects
 
