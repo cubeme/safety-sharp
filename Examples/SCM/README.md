@@ -87,7 +87,9 @@
 * callDelayedSimpleWithFaults1.scm: like callDelayedSimple1 but with one fault and an affected port
 
 ## Contract-Tests
-* callInstFromBehWithContract1.scm: like callInstFromBeh5, but with provPortContract
+* callInstFromBehWithContracts1.scm: like callInstFromBeh5, but with provPortContract
+* callInstHierarchyWithContracts1.scm: like callInstHierarchy2 but with contracts
+* callInstHierarchyWithFaultsAndContracts1.scm: like callInstHierarchy2, but add faults and contracts (cf. callInstHierarchyWithFaults1, callInstHierarchyWithContract1)
 
 ## Examples which combine several aspects
 
