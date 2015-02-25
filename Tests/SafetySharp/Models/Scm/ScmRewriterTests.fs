@@ -754,6 +754,7 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpField
             do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteProvPort
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors
             return ()
         }
@@ -809,8 +810,11 @@ type SingleLevelUpTests () =
         let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
         let workFlow = workflow {
             do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpFault
             do! ScmRewriterLevelUp.levelUpProvPort
             do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteProvPort
+            do! ScmRewriterLevelUp.rewriteProvPort
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors
             return ()
         }
@@ -1024,7 +1028,7 @@ type CompleteLevelUpTests () =
         resultingState.Tainted =? true
         newModel.Subs =? []
         ()
-
+        
     [<Test>]
     member this.``Example callInstHierarchy7 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
@@ -1044,21 +1048,45 @@ type CompleteLevelUpTests () =
         resultingState.Tainted =? true
         newModel.Subs =? []
         ()
-(*       
         
-[<TestFixture>]
-type InliningTests () =
+    [<Test>]
+    member this.``Example callInstFromBehWithContracts1 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBehWithContracts1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
 
-    let runWithUserState parser str = runParserOnString parser Parser.UserState.initialUserState "" str
-
-    let parseWithParser parser str =
-        match runWithUserState parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, a, b) -> failwith errorMsg
-        
-    let parseSCM str = parseWithParser (Parser.scmFile .>> eof) str
-    
-*)
+    [<Test>]
+    member this.``Example callInstHierarchyWithFaultsAndContract1 gets leveled up completely`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        model.ProvPorts.Length =? 0
+        let initialState = createPlainScmWorkFlowState model
+        let workFlow = workflow {
+            do! levelUpSubcomponentsWrapper
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newModel.Subs =? []
+        ()
     
 // TODO: Write test, which ensures, that if a child component
 //       contains two ports with the same name, after leveling up, they keep the same name

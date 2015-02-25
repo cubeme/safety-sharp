@@ -743,6 +743,7 @@ module internal ScmRewriterLevelUp =
             
         let! levelUp = getLevelUpState
         let! parentCompDecl = getParentCompDecl
+        let! childCompDecl = getChildCompDecl
                                 
         let! provPortToRewrite = popProvPortToRewrite
         match provPortToRewrite with
@@ -751,14 +752,15 @@ module internal ScmRewriterLevelUp =
                 return ()
             | Some(provPortToRewrite) ->
                 // we are in a parent Component!!!
-
+                let oldLoc = [childCompDecl.Comp]
+                let newLoc = [parentCompDecl.Comp]
                 let rewrittenProvPort =
                     {
                         ProvPortDecl.FaultExpr = rewriteFaultExprOption levelUp.oldToNewMaps2 provPortToRewrite.FaultExpr;
                         ProvPortDecl.ProvPort = provPortToRewrite.ProvPort;
                         ProvPortDecl.Params = provPortToRewrite.Params; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any param. So we can keep it
                         ProvPortDecl.Behavior = rewriteBehavior levelUp.oldToNewMaps1 provPortToRewrite.Behavior;
-                        ProvPortDecl.Contract = provPortToRewrite.Contract //contract will be rewritten in rewriteContractsDeclaredInAncestors
+                        ProvPortDecl.Contract = provPortToRewrite.Contract.rewriteLocation oldLoc newLoc levelUp.oldToNewMaps3
                     }
                 let newParentCompDecl = parentCompDecl.replaceProvPort(provPortToRewrite,rewrittenProvPort)
                 do! updateParentCompDecl newParentCompDecl                        
@@ -805,11 +807,15 @@ module internal ScmRewriterLevelUp =
 
                 
     let levelUpSubcomponent : ScmRewriterLevelUpFunction<unit> = workflow {
-        // idea: first level up every item of a component,
-        //       then rewrite every code accessing to some specific element of it        
+        // idea:
+        //  1. convert: Convert step in subcomponent to a port
+        //  2. levelUp: LevelUp every element of the subcomponent. Create a map to be able track from the old name to the new name of an element
+        //  3. rewrite parent steps: "step subcomponent" is rewritten to PortCall (of step 1, which got upleveled in step 2)
+        //  4. rewrite upleveled: Rewrite every _upleveled_ Element. Change the names of the old identifiers to the names of the new identifiers using the map of step 2.
+        //  5. rewrite ancestors: Sometimes elements in an ancestor use a path, which refer to elements in the upleveled subcomponent. These path must be updated to the elements in the parent component.
+        do! (iterateToFixpoint convertStepToPort)
         do! (iterateToFixpoint levelUpField) //Invariant: Imagine LevelUp are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
         do! (iterateToFixpoint levelUpFault)
-        do! (iterateToFixpoint convertStepToPort)
         do! (iterateToFixpoint levelUpReqPort)
         do! (iterateToFixpoint levelUpProvPort)
         do! (iterateToFixpoint levelUpAndRewriteBindingDeclaredInChild)
@@ -819,7 +825,7 @@ module internal ScmRewriterLevelUp =
         do! (iterateToFixpoint rewriteFaults)
         do! (rewriteBindingsDeclaredInAncestors)
         do! (rewriteFormulasDeclaredInAncestors)
-        do! (rewriteContractsDeclaredInAncestors) //TODO: Can we get rid of _x in levelupAnd_x... by extending the ancestor function?!?
+        do! (rewriteContractsDeclaredInAncestors)
         do! assertSubcomponentEmpty
         do! removeSubComponent
     }
