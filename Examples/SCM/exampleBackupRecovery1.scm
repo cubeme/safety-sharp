@@ -22,7 +22,7 @@ component backupRecoverySystem {
 			sourceValueInout := sourceValueField;
 		}
 		
-		determineSourceValueR = instantly determineSourceValueP
+		in.determineSourceValueR = instantly in.determineSourceValueP
 		
 		step {
 			locals{

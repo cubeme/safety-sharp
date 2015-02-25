@@ -239,7 +239,7 @@ module internal ScmParser =
                                 
     let comppath_dot : Parser<_,UserState> =
         // TODO: could check, if path is correct
-        oldPipeTo (many (attempt (parseIdentifier |>> Comp.Comp .>> pstring "." )))
+        oldPipeTo (many1 (attempt (parseIdentifier |>> Comp.Comp .>> pstring "." )))
                   List.rev
                       
     let parseLocatedIdentifierInst (id_type:IdentifierType) : Parser<_,UserState> =

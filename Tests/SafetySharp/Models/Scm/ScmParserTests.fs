@@ -441,54 +441,7 @@ type ExampleFiles() =
         let result = parseSCM input
         ()
         
-
-
-    // ## Examples which combine several aspects
-    (*
-    [<Test>]
-    member this.``Example exampleDocumentationFull parses successfully`` () =
-        let inputFile = """../../Examples/SCM/exampleDocumentationFull.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let result = parseSCM input
-        ()
-    [<Test>]
-    member this.``Example exampleDocumentationSimplified1 parses successfully`` () =
-        let inputFile = """../../Examples/SCM/exampleDocumentationSimplified1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let result = parseSCM input
-        ()
-
-    [<Test>]
-    member this.``Example exampleDocumentationSimplified2 parses successfully`` () =
-        let inputFile = """../../Examples/SCM/exampleDocumentationSimplified2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let result = parseSCM input
-        ()
-    *)
-    [<Test>]
-    member this.``Example exampleBackupRecovery1 parses successfully`` () =
-        let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let result = parseSCM input
-        ()
-
-    [<Test>]
-    member this.``Example exampleBackupRecovery2 parses successfully`` () =
-        let inputFile = """../../Examples/SCM/exampleBackupRecovery2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let result = parseSCM input
-        ()
-        
-    [<Test>]
-    member this.``Example exampleBackupRecovery3 parses successfully`` () =
-        let inputFile = """../../Examples/SCM/exampleBackupRecovery3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let result = parseSCM input
-        ()
-        
-        
     // ## fault-Tests
-        
     [<Test>]
     member this.``Example nestedComponentWithFaults1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/nestedComponentWithFaults1.scm"""
@@ -555,6 +508,57 @@ type ExampleFiles() =
     [<Test>]
     member this.``Example callDelayedSimpleWithFaults1 parses successfully`` () =
         let inputFile = """../../Examples/SCM/callDelayedSimpleWithFaults1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+                
+    // ## Contract-Tests
+    [<Test>]
+    member this.``Example callInstFromBehWithContract1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstFromBehWithContract1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    // ## Examples which combine several aspects
+    (*
+    [<Test>]
+    member this.``Example exampleDocumentationFull parses successfully`` () =
+        let inputFile = """../../Examples/SCM/exampleDocumentationFull.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+    [<Test>]
+    member this.``Example exampleDocumentationSimplified1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/exampleDocumentationSimplified1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example exampleDocumentationSimplified2 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/exampleDocumentationSimplified2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+    *)
+    [<Test>]
+    member this.``Example exampleBackupRecovery1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example exampleBackupRecovery2 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery2.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        
+    [<Test>]
+    member this.``Example exampleBackupRecovery3 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery3.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
