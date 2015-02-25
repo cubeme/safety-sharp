@@ -590,6 +590,41 @@ module internal ScmRewriterLevelUp =
 
     }
 
+    
+    let rewriteContractsDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
+        // fields and faults need to be upleveled first
+        let! model = getModel
+        let! levelUp = getLevelUpState
+
+        let rewriteContract (relativeLeveledUpPath:CompPath) (contractToRewrite:Contract) : Contract =            
+            let relChildPathToCheckFor = relativeLeveledUpPath
+            let relParentPath = relativeLeveledUpPath.Tail
+            contractToRewrite.rewriteLocation relChildPathToCheckFor relParentPath levelUp.oldToNewMaps3
+        
+        let rewriteContractOfStep (relativeLeveledUpPath:CompPath) (stepToRewrite:StepDecl) : StepDecl =
+            { stepToRewrite with
+                StepDecl.Contract = rewriteContract relativeLeveledUpPath stepToRewrite.Contract 
+            }
+        let rewriteContractOfProvPort (relativeLeveledUpPath:CompPath) (provPortToRewrite:ProvPortDecl) : ProvPortDecl =
+            { provPortToRewrite with
+                ProvPortDecl.Contract = rewriteContract relativeLeveledUpPath provPortToRewrite.Contract 
+            }        
+        let compRewriter (relativeLeveledUpPath:CompPath) (currentComp:CompDecl) : CompDecl =
+            { currentComp with
+                CompDecl.ProvPorts = currentComp.ProvPorts |> List.map (rewriteContractOfProvPort (relativeLeveledUpPath))
+                CompDecl.Steps     = currentComp.Steps     |> List.map (rewriteContractOfStep     (relativeLeveledUpPath))
+            }                            
+                
+        let! childCompDecl = getChildCompDecl
+        let! fullPathToChild = getChildPath
+        let fullPathToParent = fullPathToChild.Tail
+        let relativePathToChild = [fullPathToChild.Head] //viewport of parent
+
+        let newModel = model.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
+        do! setModel newModel
+
+    }
+
         
     let createArtificialStep : ScmRewriterLevelUpFunction<unit> = workflow {
         let! levelUp = getLevelUpState
@@ -649,6 +684,7 @@ module internal ScmRewriterLevelUp =
                     ProvPortDecl.ProvPort = provPort;
                     ProvPortDecl.Params = [];
                     ProvPortDecl.Behavior = stepToConvert.Behavior;
+                    ProvPortDecl.Contract = stepToConvert.Contract
                 }
             let newChildCompDecl = childCompDecl.removeStep(stepToConvert)
                                                         .addProvPort(newProvPortDecl)
@@ -703,7 +739,7 @@ module internal ScmRewriterLevelUp =
         }
 
     let rewriteProvPort : ScmRewriterLevelUpFunction<unit> = workflow {
-        // replace reqPorts and fields by their proper names, replace Fault Expressions
+        // replace reqPorts and fields by their proper names, replace Fault Expressions, adapt Contracts
             
         let! levelUp = getLevelUpState
         let! parentCompDecl = getParentCompDecl
@@ -715,12 +751,14 @@ module internal ScmRewriterLevelUp =
                 return ()
             | Some(provPortToRewrite) ->
                 // we are in a parent Component!!!
+
                 let rewrittenProvPort =
                     {
                         ProvPortDecl.FaultExpr = rewriteFaultExprOption levelUp.oldToNewMaps2 provPortToRewrite.FaultExpr;
                         ProvPortDecl.ProvPort = provPortToRewrite.ProvPort;
                         ProvPortDecl.Params = provPortToRewrite.Params; // The getUnusedxxxName-Functions also ensured, that the names of new fields and faults,... do not overlap with any param. So we can keep it
                         ProvPortDecl.Behavior = rewriteBehavior levelUp.oldToNewMaps1 provPortToRewrite.Behavior;
+                        ProvPortDecl.Contract = provPortToRewrite.Contract //contract will be rewritten in rewriteContractsDeclaredInAncestors
                     }
                 let newParentCompDecl = parentCompDecl.replaceProvPort(provPortToRewrite,rewrittenProvPort)
                 do! updateParentCompDecl newParentCompDecl                        
@@ -775,12 +813,13 @@ module internal ScmRewriterLevelUp =
         do! (iterateToFixpoint levelUpReqPort)
         do! (iterateToFixpoint levelUpProvPort)
         do! (iterateToFixpoint levelUpAndRewriteBindingDeclaredInChild)
-        do! (rewriteBindingsDeclaredInAncestors)
         do! (iterateToFixpoint levelUpAndRewriteFormulaDeclaredInChild)
-        do! (rewriteFormulasDeclaredInAncestors)
         do! (iterateToFixpoint rewriteParentStep)
         do! (iterateToFixpoint rewriteProvPort)
         do! (iterateToFixpoint rewriteFaults)
+        do! (rewriteBindingsDeclaredInAncestors)
+        do! (rewriteFormulasDeclaredInAncestors)
+        do! (rewriteContractsDeclaredInAncestors) //TODO: Can we get rid of _x in levelupAnd_x... by extending the ancestor function?!?
         do! assertSubcomponentEmpty
         do! removeSubComponent
     }

@@ -134,7 +134,7 @@ module internal Scm =
     type internal ReqPortDecl = {
         ReqPort : ReqPort
         Params : ParamDecl list
-        //Contract : Contract option
+        //Contract : Contract
     }
 
     type internal ProvPortDecl = {
@@ -168,13 +168,13 @@ module internal Scm =
     type internal FaultDecl = {
         Fault : Fault
         Step : BehaviorDecl //TODO: maybe rename to Behavior to be consistent
-        //Contract : Contract option
+        //Contract : Contract
     }
 
     type internal StepDecl = {
         FaultExpr : FaultExpr option
         Behavior : BehaviorDecl
-        //Contract : Contract option
+        Contract : Contract
     }
         
     type internal Formula =

@@ -550,13 +550,49 @@ module internal ScmParser =
         (spaces >>% None)
      
 
+    let contract_ws : Parser<_,UserState> =
+        fun stream ->
+            let createContract (requires:LocExpr option) (ensures:LocExpr option) (changed:string list option) =
+                if requires.IsNone && ensures.IsNone && changed.IsNone then
+                    Contract.None
+                else
+                    if changed.IsNone then
+                        Contract.AutoDeriveChanges(requires,ensures)
+                    else
+                        let changedFields,changedFaults =
+                            let rec transformChanged (changedFields:(Field list),changedFaults:(Fault list)) (changed:string list) : (Field list)*(Fault list)=
+                                if changed.IsEmpty then
+                                    changedFields,changedFaults
+                                else
+                                    let changedElement = changed.Head
+                                    let changedFields =
+                                        if stream.UserState.IsIdentifierOfType changedElement IdentifierType.Field then
+                                            Field.Field(changedElement)::changedFields
+                                        else
+                                            changedFields
+                                    let changedFaults =
+                                        if stream.UserState.IsIdentifierOfType changedElement IdentifierType.Fault then
+                                            Fault.Fault(changedElement)::changedFaults
+                                        else
+                                            changedFaults
+                                    transformChanged (changedFields,changedFaults) changed.Tail
+                            transformChanged ([],[]) changed.Value
+                        Contract.Full(requires,ensures,changedFields,changedFaults)
+            pipe3 (opt (pstring_ws1 "requires" >>. hierarchical_expression_ws) )
+                  (opt (pstring_ws1 "ensures" >>. hierarchical_expression_ws) )
+                  (opt (pstring_ws1 "changes" >>. sepBy parseIdentifier (pstring_ws ",") ) )
+                  createContract
+                  stream
+
     let stepDecl =
-        let createStep faultExpr behavior =
+        let createStep faultExpr contract behavior =
             {
-                StepDecl.FaultExpr = faultExpr;
+                StepDecl.FaultExpr = faultExpr
                 StepDecl.Behavior = behavior;
+                StepDecl.Contract = contract
             }
-        pipe2 (faultExprOpt_ws .>> (pstring_ws "step") .>> (pstring_ws "{") .>> pushUserStateCallStack)
+        pipe3 (faultExprOpt_ws .>> (pstring_ws "step"))
+              (contract_ws  .>> (pstring_ws "{") .>> pushUserStateCallStack)
               (behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
               createStep
 
@@ -596,40 +632,6 @@ module internal ScmParser =
         attempt (pipe2 (reqPortId_ws .>> parentOpen_ws .>> pushUserStateCallStack)
                        (paramDecls_ws .>> parentClose_ws .>> popUserStateCallStack .>> (pstring_ws ";"))
                        createReqPortDecl)
-
-    let contract_ws : Parser<_,UserState> =
-        fun stream ->
-            let createContract (requires:LocExpr option) (ensures:LocExpr option) (changed:string list option) =
-                if requires.IsNone && ensures.IsNone && changed.IsNone then
-                    Contract.None
-                else
-                    if changed.IsNone then
-                        Contract.AutoDeriveChanges(requires,ensures)
-                    else
-                        let changedFields,changedFaults =
-                            let rec transformChanged (changedFields:(Field list),changedFaults:(Fault list)) (changed:string list) : (Field list)*(Fault list)=
-                                if changed.IsEmpty then
-                                    changedFields,changedFaults
-                                else
-                                    let changedElement = changed.Head
-                                    let changedFields =
-                                        if stream.UserState.IsIdentifierOfType changedElement IdentifierType.Field then
-                                            Field.Field(changedElement)::changedFields
-                                        else
-                                            changedFields
-                                    let changedFaults =
-                                        if stream.UserState.IsIdentifierOfType changedElement IdentifierType.Fault then
-                                            Fault.Fault(changedElement)::changedFaults
-                                        else
-                                            changedFaults
-                                    transformChanged (changedFields,changedFaults) changed.Tail
-                            transformChanged ([],[]) changed.Value
-                        Contract.Full(requires,ensures,changedFields,changedFaults)
-            pipe3 (opt (pstring_ws1 "requires" >>. hierarchical_expression_ws) )
-                  (opt (pstring_ws1 "ensures" >>. hierarchical_expression_ws) )
-                  (opt (pstring_ws1 "changes" >>. sepBy parseIdentifier (pstring_ws ",") ) )
-                  createContract
-                  stream
 
     let provPortDecl_ws : Parser<_,UserState> =
         let createProvPortDecl faultExpr name parms contract behavior =

@@ -682,7 +682,7 @@ type SingleLevelUpTests () =
 
         let checkFormula (formula:Formula) =
             match formula with
-                | Formula.Invariant(locExpr) -> allLocationsInParent locExpr
+                | Formula.InterStepInvariant(locExpr) -> allLocationsInParent locExpr
         checkFormula newParentNode.Formulas.Head //only check the head formula
         ()
         
@@ -726,7 +726,7 @@ type SingleLevelUpTests () =
 
         let checkFormula (formula:Formula) =
             match formula with
-                | Formula.Invariant(locExpr) -> allLocationsInParent locExpr
+                | Formula.InterStepInvariant(locExpr) -> allLocationsInParent locExpr
         newParentNode.Formulas |> List.iter checkFormula
         ()
 

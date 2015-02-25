@@ -39,6 +39,7 @@ module internal ScmRewriterNormalize =
                         BehaviorDecl.Body = Stm.Block([]);
                         BehaviorDecl.Locals = [];
                     }
+                StepDecl.Contract = Contract.None
             }        
         let rec newCompDecl (compDecl:CompDecl) =
             let newSteps =

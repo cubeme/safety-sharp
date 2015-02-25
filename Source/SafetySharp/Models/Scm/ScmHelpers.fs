@@ -746,6 +746,38 @@ module internal ScmHelpers =
                     LocExpr.BExpr(locExprLeft.rewriteLocation oldLocation newLocation (faultMap,fieldMap),bop,locExprRight.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
 
                     
+    // Extension methods    
+    type Contract with
+        member contract.rewriteLocation (oldLocation:CompPath) (newLocation:CompPath) (faultMap:Map<Fault,Fault>,fieldMap:Map<Field,Field>) =
+            match contract with
+                | Contract.None -> contract
+                | Contract.AutoDeriveChanges(require,ensure) ->
+                    let newRequire =
+                        match require with
+                            | None -> None
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                    let newEnsure =
+                        match ensure with
+                            | None -> None
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                    Contract.AutoDeriveChanges(newRequire,newEnsure)
+                | Contract.Full(require,ensure,changedFields,changedFaults) ->
+                    let newRequire =
+                        match require with
+                            | None -> None
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                    let newEnsure =
+                        match ensure with
+                            | None -> None
+                            | Some(locExpr) -> Some(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap))
+                    let newFields =
+                        changedFields |> List.map (itemOrOld fieldMap)
+                    let newFaults =
+                        changedFaults |> List.map (itemOrOld faultMap)
+                    Contract.Full(newRequire,newEnsure,newFields,newFaults)
+
+        
+
     [<RequireQualifiedAccess>]
     type BehaviorWithLocation = 
         | InProvPort of CompPath * ProvPortDecl * BehaviorDecl

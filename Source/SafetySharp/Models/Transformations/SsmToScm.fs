@@ -163,12 +163,14 @@ module internal SsmToScm =
         Params = m.Params |> List.map transformParam 
         FaultExpr = None
         Behavior = transformBehavior m
+        Contract = Scm.Contract.None
     }
 
     /// Transforms the given method to a SCM step declaration.
     let private transformSteps (m : Ssm.Method) : Scm.StepDecl = {
         FaultExpr = None
         Behavior = transformBehavior m
+        Contract = Scm.Contract.None
     }
 
     /// Transforms the given binding to a SCM binding.

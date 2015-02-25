@@ -221,12 +221,13 @@ module internal ScmToString =
             | None -> ()
             | Some f -> writer.Append "["; fexpr f; writer.AppendLine "]"
             writer.Append "step"
+            contract s.Contract
             behavior s.Behavior
                     
         let formula (f : Formula) =
             match f with
-                | Formula.Invariant(l) ->
-                    writer.Append "formula-invar "
+                | Formula.InterStepInvariant(l) ->
+                    writer.Append "formula-stepinvar "
                     locExpr l
                     writer.AppendLine ";"
 

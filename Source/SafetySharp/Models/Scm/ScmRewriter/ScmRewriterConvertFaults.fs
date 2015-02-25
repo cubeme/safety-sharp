@@ -115,6 +115,7 @@ module internal ScmRewriterConvertFaults =
                     ProvPortDecl.ProvPort = provPort;
                     ProvPortDecl.Params = [];
                     ProvPortDecl.Behavior = convertedBehavior;
+                    Contract = Scm.Contract.None 
                 }
             let newBindingDecl = 
                 {

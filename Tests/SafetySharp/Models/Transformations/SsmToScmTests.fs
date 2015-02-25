@@ -109,7 +109,7 @@ module ``SsmToScm Transformation`` =
                 { Var = { Var = Scm.Var "b"; Type = Scm.BoolType }; Dir = Scm.In }
             ]
         Behavior = 
-        {
+            {
             Locals = [{ Var = Scm.Var "x"; Type = Scm.IntType }]
             Body = Scm.Block 
                 [
@@ -125,7 +125,8 @@ module ``SsmToScm Transformation`` =
                     ]
                     Scm.AssignVar (Scm.Var "a", Scm.ReadVar (Scm.Var "x"))
                 ]
-        }
+            }
+        Contract = Scm.Contract.None
     }
 
     let private ssmBindings1 : Ssm.Binding list = 
@@ -197,10 +198,11 @@ module ``SsmToScm Transformation`` =
     let private scmStep : Scm.StepDecl = {
         FaultExpr = None
         Behavior = 
-        {
+            {
             Locals = [{ Var = Scm.Var "x"; Type = Scm.IntType }]
             Body = Scm.Block [Scm.AssignVar (Scm.Var "x", Scm.Literal (Scm.IntVal -1)); Scm.StepComp (Scm.Comp "sub")]
-        }
+            }
+        Contract = Scm.Contract.None
     }
 
     let private transform = SsmToScm.transform
