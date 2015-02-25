@@ -74,12 +74,17 @@ module internal ScmToString =
             | UExpr (e, op)       -> uop op; writer.AppendParenthesized (fun () -> expr e)
             | BExpr (e1, op, e2)  -> writer.AppendParenthesized (fun () -> expr e1; writer.Append " "; bop op; writer.Append " "; expr e2)
             
+        let oldValueIndicator = '\u207B' // Old Value : '⁻' (U+207B = SUPERSCRIPT MINUS)
+
         let rec locExpr = function
-            | LocExpr.Literal l          -> value l
-            | LocExpr.ReadField (l, f)   -> compPath l; writer.Append "."; field f
-            | LocExpr.ReadFault (l, f)   -> compPath l; writer.Append "."; fault f
-            | LocExpr.UExpr (e, op)      -> uop op; writer.AppendParenthesized (fun () -> locExpr e)
-            | LocExpr.BExpr (e1, op, e2) -> writer.AppendParenthesized (fun () -> locExpr e1; writer.Append " "; bop op; writer.Append " "; locExpr e2)
+            | LocExpr.Literal l           -> value l
+            | LocExpr.ReadField (l, f)    -> compPath l; writer.Append "."; field f
+            | LocExpr.ReadFault (l, f)    -> compPath l; writer.Append "."; fault f
+            | LocExpr.ReadOldField (l, f) -> compPath l; writer.Append "."; field f; writer.Append "%c" oldValueIndicator
+            | LocExpr.ReadOldFault (l, f) -> compPath l; writer.Append "."; fault f; writer.Append "%c" oldValueIndicator
+            | LocExpr.ReadVar v           -> var v
+            | LocExpr.UExpr (e, op)       -> uop op; writer.AppendParenthesized (fun () -> locExpr e)
+            | LocExpr.BExpr (e1, op, e2)  -> writer.AppendParenthesized (fun () -> locExpr e1; writer.Append " "; bop op; writer.Append " "; locExpr e2)
 
         let rec fexpr = function 
             | Fault f -> fault f
@@ -151,12 +156,41 @@ module internal ScmToString =
             writer.AppendParenthesized (fun () -> writer.AppendRepeated r.Params paramDecl (fun () -> writer.Append ", "))
             writer.AppendLine ";"
 
+        let contract (c : Contract) =
+            match c with
+            | Contract.None ->
+                ()
+            | Contract.AutoDeriveChanges (requires,ensures) ->
+                writer.AppendLine ""
+                writer.Append "     "
+                match requires with
+                | None -> ()
+                | Some (r) -> writer.Append "requires "; r |> locExpr
+                match ensures with
+                | None -> ()
+                | Some (e) -> writer.Append "ensures "; e |> locExpr
+            | Contract.Full (requires,ensures,changedFields,changedFaults) ->
+                writer.AppendLine ""
+                writer.Append "     "
+                match requires with
+                | None -> ()
+                | Some (r) -> writer.Append "requires "; r |> locExpr
+                match ensures with
+                | None -> ()
+                | Some (e) -> writer.Append "ensures "; e |> locExpr
+                writer.Append "changes "
+                writer.AppendRepeated changedFields field (fun () -> writer.Append ", ")
+                if not(changedFields.IsEmpty) && not(changedFaults.IsEmpty) then
+                    writer.Append ", "
+                writer.AppendRepeated changedFaults fault (fun () -> writer.Append ", ")
+
         let provPortDecl (p : ProvPortDecl) =
             match p.FaultExpr with
             | None -> ()
             | Some f -> writer.Append "["; fexpr f; writer.AppendLine "]"
             provPort p.ProvPort
             writer.AppendParenthesized (fun () -> writer.AppendRepeated p.Params paramDecl (fun () -> writer.Append ", "))
+            contract p.Contract
             behavior p.Behavior
             
         let bndSrc (b : BndSrc) =

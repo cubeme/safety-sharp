@@ -548,10 +548,10 @@ module internal ScmRewriterLevelUp =
 
             let transformedFormula =
                 match formula with
-                    | Formula.Invariant(locExpr) ->
+                    | Formula.InterStepInvariant(locExpr) ->
                         let newLocExpr =
                             locExpr.rewriteLocation oldLoc newLoc levelUp.oldToNewMaps3
-                        Formula.Invariant(newLocExpr)
+                        Formula.InterStepInvariant(newLocExpr)
                     
             let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
                                                   .addFormula(transformedFormula)
@@ -567,11 +567,11 @@ module internal ScmRewriterLevelUp =
 
         let rewriteFormula (relativeLeveledUpPath:CompPath) (formulaToRewrite:Formula) : Formula =
             match formulaToRewrite with
-                | Formula.Invariant(locExpr) ->
+                | Formula.InterStepInvariant(locExpr) ->
                     let relChildPathToCheckFor = relativeLeveledUpPath
                     let relParentPath = relativeLeveledUpPath.Tail
                     let newLocExpr = locExpr.rewriteLocation (relChildPathToCheckFor) (relParentPath) levelUp.oldToNewMaps3
-                    Formula.Invariant(newLocExpr)
+                    Formula.InterStepInvariant(newLocExpr)
         
         
         let compRewriter (relativeLeveledUpPath:CompPath) (currentComp:CompDecl) : CompDecl =

@@ -422,6 +422,50 @@ module internal ScmParser =
             parseStepFault
         allKindsOfStatements
         
+
+    // parses a hierarchical expression
+    let hierarchical_expression : Parser<_,UserState> =
+        let oldValueIndicator =      
+            //Old Value : '⁻' (U+207B = SUPERSCRIPT MINUS)
+            pchar '\u207B'
+
+        let opp = new OperatorPrecedenceParser<_,_,_>()        
+        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Divide, e2)))
+        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Multiply, e2)))
+        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Modulo, e2)))
+        // >
+        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Add, e2)))
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">" , 4, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Subtract, e2)))
+        // >
+        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.LessEqual, e2)))
+        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Equals, e2)))
+        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.NotEquals, e2)))
+        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.GreaterEqual, e2)))
+        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Greater, e2)))
+        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Less, e2)))
+        opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> LocExpr.UExpr(e,UOp.Not)))
+        //>
+        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.And, e2)))
+        //>
+        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Or, e2)))
+
+        // parses an expression between ( and )
+        let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
+  
+
+        // recursive term parser for expressions
+        opp.TermParser <-
+            (boolVal_ws |>> LocExpr.Literal) <|> 
+            (numberVal_ws |>> LocExpr.Literal) <|>
+            (attempt (locatedFieldInst_ws .>> notFollowedBy oldValueIndicator) |>> LocExpr.ReadField) <|>
+            (attempt (locatedFaultInst_ws .>> notFollowedBy oldValueIndicator) |>> LocExpr.ReadFault) <|>
+            (attempt (locatedFieldInst_ws .>> followedBy oldValueIndicator) |>> LocExpr.ReadOldField) <|>
+            (attempt (locatedFaultInst_ws .>> followedBy oldValueIndicator) |>> LocExpr.ReadOldFault) <|>
+            (attempt varIdInst_ws |>> LocExpr.ReadVar) <|> 
+            (parenExpr_ws)
+        opp.ExpressionParser
+
+    let hierarchical_expression_ws = hierarchical_expression .>> spaces
         
     let type_ws =
         let boolType = stringReturn "bool" Type.BoolType
@@ -553,17 +597,53 @@ module internal ScmParser =
                        (paramDecls_ws .>> parentClose_ws .>> popUserStateCallStack .>> (pstring_ws ";"))
                        createReqPortDecl)
 
+    let contract_ws : Parser<_,UserState> =
+        fun stream ->
+            let createContract (requires:LocExpr option) (ensures:LocExpr option) (changed:string list option) =
+                if requires.IsNone && ensures.IsNone && changed.IsNone then
+                    Contract.None
+                else
+                    if changed.IsNone then
+                        Contract.AutoDeriveChanges(requires,ensures)
+                    else
+                        let changedFields,changedFaults =
+                            let rec transformChanged (changedFields:(Field list),changedFaults:(Fault list)) (changed:string list) : (Field list)*(Fault list)=
+                                if changed.IsEmpty then
+                                    changedFields,changedFaults
+                                else
+                                    let changedElement = changed.Head
+                                    let changedFields =
+                                        if stream.UserState.IsIdentifierOfType changedElement IdentifierType.Field then
+                                            Field.Field(changedElement)::changedFields
+                                        else
+                                            changedFields
+                                    let changedFaults =
+                                        if stream.UserState.IsIdentifierOfType changedElement IdentifierType.Fault then
+                                            Fault.Fault(changedElement)::changedFaults
+                                        else
+                                            changedFaults
+                                    transformChanged (changedFields,changedFaults) changed.Tail
+                            transformChanged ([],[]) changed.Value
+                        Contract.Full(requires,ensures,changedFields,changedFaults)
+            pipe3 (opt (pstring_ws1 "requires" >>. hierarchical_expression_ws) )
+                  (opt (pstring_ws1 "ensures" >>. hierarchical_expression_ws) )
+                  (opt (pstring_ws1 "changes" >>. sepBy parseIdentifier (pstring_ws ",") ) )
+                  createContract
+                  stream
+
     let provPortDecl_ws : Parser<_,UserState> =
-        let createProvPortDecl faultExpr name parms behavior =
+        let createProvPortDecl faultExpr name parms contract behavior =
             {
                 ProvPortDecl.ProvPort = name;
                 ProvPortDecl.Params = parms ;
                 ProvPortDecl.Behavior = behavior;
                 ProvPortDecl.FaultExpr = faultExpr;
+                ProvPortDecl.Contract = contract
             }
-        attempt (pipe4 (faultExprOpt_ws)
+        attempt (pipe5 (faultExprOpt_ws)
                        (provPortId_ws .>> parentOpen_ws .>> pushUserStateCallStack)
-                       (paramDecls_ws .>> parentClose_ws .>> (pstring_ws "{"))
+                       (paramDecls_ws .>> parentClose_ws)
+                       (contract_ws .>> (pstring_ws "{"))
                        (behaviorDecl_ws .>> (pstring_ws "}") .>> popUserStateCallStack)
                        createProvPortDecl)
                               
@@ -600,46 +680,9 @@ module internal ScmParser =
 
         instantbinding_ws <|> delayedbinding_ws
 
-    // parses a hierarchical expression
-    let hierarchical_expression : Parser<_,UserState> =
-        let opp = new OperatorPrecedenceParser<_,_,_>()        
-        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Divide, e2)))
-        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Multiply, e2)))
-        opp.AddOperator(InfixOperator("%"   , spaces , 5, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Modulo, e2)))
-        // >
-        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Add, e2)))
-        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">" , 4, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Subtract, e2)))
-        // >
-        opp.AddOperator(InfixOperator("<="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.LessEqual, e2)))
-        opp.AddOperator(InfixOperator("=="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Equals, e2)))
-        opp.AddOperator(InfixOperator("=/=" , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.NotEquals, e2)))
-        opp.AddOperator(InfixOperator(">="  , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.GreaterEqual, e2)))
-        opp.AddOperator(InfixOperator(">"   , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Greater, e2)))
-        opp.AddOperator(InfixOperator("<"   , spaces , 3, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Less, e2)))
-        opp.AddOperator(PrefixOperator("!", spaces, 3, true, fun e -> LocExpr.UExpr(e,UOp.Not)))
-        //>
-        opp.AddOperator(InfixOperator("&&"   , spaces , 2, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.And, e2)))
-        //>
-        opp.AddOperator(InfixOperator("||"   , spaces , 1, Associativity.Left, fun e1 e2 -> LocExpr.BExpr(e1, BOp.Or, e2)))
-
-        // parses an expression between ( and )
-        let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
-        
-        // recursive term parser for expressions
-        opp.TermParser <-
-            (boolVal_ws |>> LocExpr.Literal) <|> 
-            (numberVal_ws |>> LocExpr.Literal) <|>
-            (attempt locatedFieldInst_ws |>> LocExpr.ReadField) <|>
-            (attempt locatedFaultInst_ws |>> LocExpr.ReadFault) <|> 
-            (parenExpr_ws)
-        opp.ExpressionParser
-
-    let hierarchical_expression_ws = hierarchical_expression .>> spaces
-
-
     let formula_ws : Parser<_,UserState> =
         let invarformula_ws : Parser<_,UserState> =
-            pstring_ws1 "formula-invar" >>. hierarchical_expression_ws .>> pstring_ws ";" |>> Formula.Invariant
+            pstring_ws1 "formula-stepinvar" >>. hierarchical_expression_ws .>> pstring_ws ";" |>> Formula.InterStepInvariant
         invarformula_ws
 
     do compRef :=

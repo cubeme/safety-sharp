@@ -38,7 +38,7 @@ component simple {
 			intLocal2 := intField2;
 			step faultNever;			
 		}
-		formula-invar nested.intField2 >= 0;
+		formula-stepinvar nested.intField2 >= 0;
 	}
 	intField1 : int = 0;
 	intField3 : int = 0;
@@ -77,6 +77,6 @@ component simple {
 		intField3 := intField1 + 1;
 	}
 	
-	formula-invar simple.intField3 >= simple.intField1;
-	formula-invar simple.faultPermanent == false;
+	formula-stepinvar simple.intField3 >= simple.intField1;
+	formula-stepinvar simple.faultPermanent == false;
 }

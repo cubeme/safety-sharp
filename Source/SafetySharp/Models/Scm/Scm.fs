@@ -63,6 +63,18 @@ module internal Scm =
         | UExpr of Expr * UOp
         | BExpr of Expr * BOp * Expr
 
+        
+    [<RequireQualifiedAccessAttribute>]
+    type internal LocExpr = // expression with location
+        | Literal of Val
+        | ReadField of CompPath * Field
+        | ReadFault of CompPath * Fault
+        | ReadOldField of CompPath * Field
+        | ReadOldFault of CompPath * Fault
+        | ReadVar of Var // no path here, because only local! Also we do not assume a previous valuation!
+        | UExpr of LocExpr * UOp
+        | BExpr of LocExpr * BOp * LocExpr
+
     type internal FaultExpr =
         | Fault of Fault
         | NotFault of FaultExpr
@@ -87,6 +99,12 @@ module internal Scm =
     type internal Type =
         | BoolType
         | IntType
+        
+    [<RequireQualifiedAccessAttribute>]
+    type internal Contract = 
+        | None
+        | AutoDeriveChanges of Requires : (LocExpr option) * Ensures : (LocExpr option) // if not declared explicitly, derive it implicitly. All variables written to by port and called ports. Writing it explicitly ensures, that ports being called, which are in _this_ component, make nothing wrong in this component. They may do everything when they live in their own component. Some kind of "Set.union port1.Changed port2.Changed "TODO: exact semantics.
+        | Full              of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list)
 
     type internal VarDecl = {
         Var : Var
@@ -116,6 +134,7 @@ module internal Scm =
     type internal ReqPortDecl = {
         ReqPort : ReqPort
         Params : ParamDecl list
+        //Contract : Contract option
     }
 
     type internal ProvPortDecl = {
@@ -123,6 +142,7 @@ module internal Scm =
         ProvPort : ProvPort
         Params : ParamDecl list
         Behavior : BehaviorDecl
+        Contract : Contract
     }
 
     type internal BndSrc = {
@@ -148,23 +168,18 @@ module internal Scm =
     type internal FaultDecl = {
         Fault : Fault
         Step : BehaviorDecl //TODO: maybe rename to Behavior to be consistent
+        //Contract : Contract option
     }
 
     type internal StepDecl = {
         FaultExpr : FaultExpr option
         Behavior : BehaviorDecl
+        //Contract : Contract option
     }
-    
-    [<RequireQualifiedAccessAttribute>]
-    type internal LocExpr = // expression with location
-        | Literal of Val
-        | ReadField of CompPath * Field
-        | ReadFault of CompPath * Fault
-        | UExpr of LocExpr * UOp
-        | BExpr of LocExpr * BOp * LocExpr
-    
+        
     type internal Formula =
-        | Invariant of Invariant:LocExpr
+        | InterStepInvariant of Invariant:LocExpr
+        | InterPortCallInvariant of PortCallsToCheck:ProvPort list * Invariant:LocExpr // The PortCallsToCheck are in this sense the "public" interface. TODO: Maybe remove the list and introduce a Visibility to every PortDecl
         | RG of Rely:LocExpr * Guarantee:LocExpr
         | DCCA of FaultsToConsider:(CompPath*Fault) list
         //| LTL of LtlExpression
