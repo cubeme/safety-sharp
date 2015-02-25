@@ -740,6 +740,18 @@ module internal ScmHelpers =
                         LocExpr.ReadFault (newLocation, faultMap.Item fault)
                     else
                         locExpr
+                | LocExpr.ReadOldField (location, field) ->
+                    if location = oldLocation then
+                        LocExpr.ReadOldField (newLocation, fieldMap.Item field)
+                    else
+                        locExpr
+                | LocExpr.ReadOldFault (location, fault) ->
+                    if location = oldLocation then
+                        LocExpr.ReadOldFault (newLocation, faultMap.Item fault)
+                    else
+                        locExpr
+                | LocExpr.ReadVar _ ->
+                    locExpr
                 | LocExpr.UExpr (locExpr,uop) ->
                     LocExpr.UExpr(locExpr.rewriteLocation oldLocation newLocation (faultMap,fieldMap),uop)
                 | LocExpr.BExpr (locExprLeft,bop,locExprRight) ->

@@ -1,4 +1,4 @@
-component simple {
+﻿component simple {
 	component nested {
 		intField : int = 0;
 		fault faultTransient2 {
@@ -14,12 +14,16 @@ component simple {
 		rport1 ( );
 		
 		[faultTransient2]
-		pport1 ( ) {
+		pport1 ( )
+			ensures (nested.intField==nested.intField⁻) changes intField
+		{
 			locals{
 			}
 		}
 		
-		pport1 ( ) {
+		pport1 ( )
+			ensures nested.intField==1 changes intField
+		{
 			locals{
 			}
 			intField := 1;
@@ -50,7 +54,9 @@ component simple {
 		}
 	}
 	
-	step {
+	step
+			ensures simple.nested.intField==1
+		{
 		locals{
 		}
 		step nested;

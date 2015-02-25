@@ -105,6 +105,7 @@ module internal Scm =
         | None
         | AutoDeriveChanges of Requires : (LocExpr option) * Ensures : (LocExpr option) // if not declared explicitly, derive it implicitly. All variables written to by port and called ports. Writing it explicitly ensures, that ports being called, which are in _this_ component, make nothing wrong in this component. They may do everything when they live in their own component. Some kind of "Set.union port1.Changed port2.Changed "TODO: exact semantics.
         | Full              of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list)
+        // | FullRobustAgains of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list) * RobustAgainsFaults : (Fault list)
 
     type internal VarDecl = {
         Var : Var
@@ -179,9 +180,9 @@ module internal Scm =
         
     type internal Formula =
         | InterStepInvariant of Invariant:LocExpr
-        | InterPortCallInvariant of PortCallsToCheck:ProvPort list * Invariant:LocExpr // The PortCallsToCheck are in this sense the "public" interface. TODO: Maybe remove the list and introduce a Visibility to every PortDecl
-        | RG of Rely:LocExpr * Guarantee:LocExpr
-        | DCCA of FaultsToConsider:(CompPath*Fault) list
+        //| InterPortCallInvariant of PortCallsToCheck:ProvPort list * Invariant:LocExpr // The PortCallsToCheck are in this sense the "public" interface. TODO: Maybe remove the list and introduce a Visibility to every PortDecl
+        //| RG of Rely:LocExpr * Guarantee:LocExpr
+        //| DCCA of FaultsToConsider:(CompPath*Fault) list
         //| LTL of LtlExpression
         // | CTL of CtlExpression
         // | PCtl of PCtlExpression

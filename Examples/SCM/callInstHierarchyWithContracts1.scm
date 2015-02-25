@@ -4,7 +4,9 @@ component simple {
 		
 		rport1 ( );
 		
-		pport1 ( ) {
+		pport1 ( )
+			ensures nested.intField==1 changes intField
+		{
 			locals{
 			}
 			intField := 1;
@@ -19,7 +21,9 @@ component simple {
 	
 	simple.nested.rport1 = instantly simple.nested.pport1
 	
-	step {
+	step
+			ensures simple.nested.intField==1
+		{
 		locals{
 		}
 		step nested;

@@ -315,6 +315,7 @@ module internal ScmParser =
     let boolVal_ws = boolVal .>> spaces
     let numberVal_ws = numberVal .>> spaces
     let value_ws = value .>> spaces
+    let parseIdentifier_ws = parseIdentifier .>> spaces
     let varIdDecl_ws = varIdDecl .>> spaces
     let varIdInst_ws = varIdInst .>> spaces
     let fieldIdDecl_ws = fieldIdDecl .>> spaces
@@ -457,10 +458,10 @@ module internal ScmParser =
         opp.TermParser <-
             (boolVal_ws |>> LocExpr.Literal) <|> 
             (numberVal_ws |>> LocExpr.Literal) <|>
-            (attempt (locatedFieldInst_ws .>> notFollowedBy oldValueIndicator) |>> LocExpr.ReadField) <|>
-            (attempt (locatedFaultInst_ws .>> notFollowedBy oldValueIndicator) |>> LocExpr.ReadFault) <|>
-            (attempt (locatedFieldInst_ws .>> followedBy oldValueIndicator) |>> LocExpr.ReadOldField) <|>
-            (attempt (locatedFaultInst_ws .>> followedBy oldValueIndicator) |>> LocExpr.ReadOldFault) <|>
+            (attempt ((locatedFieldInst .>> notFollowedBy oldValueIndicator) .>> spaces) |>> LocExpr.ReadField) <|>
+            (attempt ((locatedFaultInst .>> notFollowedBy oldValueIndicator) .>> spaces) |>> LocExpr.ReadFault) <|>
+            (attempt ((locatedFieldInst .>> oldValueIndicator) .>> spaces) |>> LocExpr.ReadOldField) <|>
+            (attempt ((locatedFaultInst .>> oldValueIndicator) .>> spaces) |>> LocExpr.ReadOldFault) <|>
             (attempt varIdInst_ws |>> LocExpr.ReadVar) <|> 
             (parenExpr_ws)
         opp.ExpressionParser
@@ -580,7 +581,7 @@ module internal ScmParser =
                         Contract.Full(requires,ensures,changedFields,changedFaults)
             pipe3 (opt (pstring_ws1 "requires" >>. hierarchical_expression_ws) )
                   (opt (pstring_ws1 "ensures" >>. hierarchical_expression_ws) )
-                  (opt (pstring_ws1 "changes" >>. sepBy parseIdentifier (pstring_ws ",") ) )
+                  (opt (pstring_ws1 "changes" >>. sepBy parseIdentifier_ws (pstring_ws ",") ) )
                   createContract
                   stream
 

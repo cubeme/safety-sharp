@@ -515,7 +515,21 @@ type ExampleFiles() =
     // ## Contract-Tests
     [<Test>]
     member this.``Example callInstFromBehWithContract1 parses successfully`` () =
-        let inputFile = """../../Examples/SCM/callInstFromBehWithContract1.scm"""
+        let inputFile = """../../Examples/SCM/callInstFromBehWithContracts1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchyWithContracts1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchyWithContracts1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example callInstHierarchyWithFaultsAndContract1 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()

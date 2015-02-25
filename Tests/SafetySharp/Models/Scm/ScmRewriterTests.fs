@@ -677,6 +677,9 @@ type SingleLevelUpTests () =
                 | LocExpr.Literal _ -> ()
                 | LocExpr.ReadField (l,_) -> l =? pathOfParent
                 | LocExpr.ReadFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadVar _ -> ()
                 | LocExpr.UExpr (e,o) -> allLocationsInParent e
                 | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
 
@@ -721,6 +724,9 @@ type SingleLevelUpTests () =
                 | LocExpr.Literal _ -> ()
                 | LocExpr.ReadField (l,_) -> l =? pathOfParent
                 | LocExpr.ReadFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadVar _ -> ()
                 | LocExpr.UExpr (e,o) -> allLocationsInParent e
                 | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
 
@@ -729,7 +735,119 @@ type SingleLevelUpTests () =
                 | Formula.InterStepInvariant(locExpr) -> allLocationsInParent locExpr
         newParentNode.Formulas |> List.iter checkFormula
         ()
+        
+    [<Test>]
+    member this.``A port gets leveled up and its contract (with fields) get rewritten`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
 
+        let inputFile = """../../Examples/SCM/callInstHierarchyWithContracts1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ProvPorts.Length =? 1
+        parentNode.ProvPorts.Length =? 0
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ProvPorts.Length =? 0
+        newParentNode.ProvPorts.Length =? 1
+        let rec allLocationsInParent (locExpr:LocExpr) : unit =
+            match locExpr with
+                | LocExpr.Literal _ -> ()
+                | LocExpr.ReadField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadVar _ -> ()
+                | LocExpr.UExpr (e,o) -> allLocationsInParent e
+                | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
+
+        let checkContract (contract:Contract) =
+            match contract with
+                | Contract.None -> ()
+                | Contract.AutoDeriveChanges(requires,ensures) ->
+                    if requires.IsSome then allLocationsInParent requires.Value
+                    if ensures.IsSome then allLocationsInParent ensures.Value
+                | Contract.Full (requires,ensures,changedFields,changedFaults) ->
+                    if requires.IsSome then allLocationsInParent requires.Value
+                    if ensures.IsSome then allLocationsInParent ensures.Value
+        newParentNode.Steps |> List.iter (fun s -> checkContract s.Contract)
+        newParentNode.ProvPorts |> List.iter (fun p -> checkContract p.Contract)
+        ()
+
+    [<Test>]
+    member this.``A port gets leveled up and its contract (with fields and faults) get rewritten`` () =
+        // this function needs the map entries of provided and required ports
+        // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
+
+        let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let model = parseSCM input
+        let pathOfChild = Comp("nested") :: Comp("simple") :: []
+        let pathOfParent = pathOfChild.Tail
+        let childNode = model.getDescendantUsingPath pathOfChild
+        let parentNode = model.getDescendantUsingPath pathOfParent
+        childNode.ProvPorts.Length =? 2
+        parentNode.ProvPorts.Length =? 0
+        let initialState = (ScmRewriterLevelUp.initialLevelUpWorkflowState model pathOfChild) 
+        let workFlow = workflow {
+            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors
+            return ()
+        }
+        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
+        let newModel = resultingState.State.Model
+        let newChildNode = newModel.getDescendantUsingPath pathOfChild
+        let newParentNode = newModel.getDescendantUsingPath pathOfParent
+        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        resultingState.Tainted =? true
+        newChildNode.ProvPorts.Length =? 0
+        newParentNode.ProvPorts.Length =? 2
+        let rec allLocationsInParent (locExpr:LocExpr) : unit =
+            match locExpr with
+                | LocExpr.Literal _ -> ()
+                | LocExpr.ReadField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldField (l,_) -> l =? pathOfParent
+                | LocExpr.ReadOldFault (l,_) -> l =? pathOfParent
+                | LocExpr.ReadVar _ -> ()
+                | LocExpr.UExpr (e,o) -> allLocationsInParent e
+                | LocExpr.BExpr (l,_,r) -> allLocationsInParent l; allLocationsInParent r
+
+        let checkContract (contract:Contract) =
+            match contract with
+                | Contract.None -> ()
+                | Contract.AutoDeriveChanges(requires,ensures) ->
+                    if requires.IsSome then allLocationsInParent requires.Value
+                    if ensures.IsSome then allLocationsInParent ensures.Value
+                | Contract.Full (requires,ensures,changedFields,changedFaults) ->
+                    if requires.IsSome then allLocationsInParent requires.Value
+                    if ensures.IsSome then allLocationsInParent ensures.Value
+        newParentNode.Steps |> List.iter (fun s -> checkContract s.Contract)
+        newParentNode.ProvPorts |> List.iter (fun p -> checkContract p.Contract)
+        ()
 
 
 [<TestFixture>]
