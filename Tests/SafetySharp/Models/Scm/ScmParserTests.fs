@@ -224,6 +224,42 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSCM input
         ()
+
+    [<Test>]
+    member this.``Example cmd3 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/cmd3.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example cmd4 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/cmd4.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example cmd5 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/cmd5.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+
+    [<Test>]
+    member this.``Example cmd6 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/cmd6.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
+        ()
+
+    [<Test>]
+    member this.``Example cmd7 parses successfully`` () =
+        let inputFile = """../../Examples/SCM/cmd7.scm"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSCM input
+        ()
         
     // ## (beh)-Tests
     [<Test>]

@@ -135,6 +135,7 @@
     <Compile Include="Analysis\Modelchecking\Prism\PrismCommandsToString.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismInterpretResult.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieTransformSam.fs" />
     <Compile Include="Analysis\Stochastic\UnitsOfMeasurement.fs" />
     <Compile Include="Analysis\Stochastic\DiscreteDistributions.fs" />
     <Compile Include="Analysis\Stochastic\ContinuousDistributions.fs" />

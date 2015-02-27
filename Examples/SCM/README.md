@@ -34,6 +34,7 @@
 * cmd4.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and not complete.
 * cmd5.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is indeterministic and complete.
 * cmd6.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is indeterministic and not complete.
+* cmd7.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and complete, but needs more sophisticated techniques to prove it
 ## (beh)-Tests
 
 * beh1.scm: 2 Components. 1 parent with 1 subcomponent. Parent calls behaviour of its subcomponent

@@ -809,9 +809,9 @@ module internal ScmRewriterLevelUp =
     let levelUpSubcomponent : ScmRewriterLevelUpFunction<unit> = workflow {
         // idea:
         //  1. convert: Convert step in subcomponent to a port
-        //  2. levelUp: LevelUp every element of the subcomponent. Create a map to be able track from the old name to the new name of an element
+        //  2. levelUp: LevelUp every element of the subcomponent. New names are created. Create a map to be able track from the old name to the new name of an element
         //  3. rewrite parent steps: "step subcomponent" is rewritten to PortCall (of step 1, which got upleveled in step 2)
-        //  4. rewrite upleveled: Rewrite every _upleveled_ Element. Change the names of the old identifiers to the names of the new identifiers using the map of step 2.
+        //  4. rewrite upleveled: Rewrite every _upleveled_ Element. Adapt: Change the names of the old identifiers to the names of the new identifiers using the map of step 2.
         //  5. rewrite ancestors: Sometimes elements in an ancestor use a path, which refer to elements in the upleveled subcomponent. These path must be updated to the elements in the parent component.
         do! (iterateToFixpoint convertStepToPort)
         do! (iterateToFixpoint levelUpField) //Invariant: Imagine LevelUp are written back into model. Fieldaccess (read/write) is either on the "real" field or on a "forwarded field" (map entry in ArtificialFieldsOldToNew exists, and new field exists)
@@ -827,6 +827,7 @@ module internal ScmRewriterLevelUp =
         do! (rewriteFormulasDeclaredInAncestors)
         do! (rewriteContractsDeclaredInAncestors)
         do! assertSubcomponentEmpty
+        // do! assertSubcomponentNotReferenced
         do! removeSubComponent
     }
               
@@ -895,7 +896,7 @@ module internal ScmRewriterLevelUp =
 
     // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
     let levelUpSubcomponentsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
-                        WorkflowFunction<'oldState,ScmRewriterLevelUpState,unit> = workflow {                        
+                        WorkflowFunction<'oldState,_,unit> = workflow {                        
         let emptyLevelUpState (model:ScmModel) =
             {
                 ScmRewriterLevelUpState.Model = model;
