@@ -30,11 +30,11 @@
 
 * cmd1.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. Always only one statement. Use "krun cmd1.scm --search-final" to get all results
 * cmd2.scm: 1 Component with one guardedCommand, which makes an indeterministic field assignment. More statements.
-* cmd3.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and complete.
+* cmd3.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and complete (well-defined).
 * cmd4.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and not complete.
 * cmd5.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is indeterministic and complete.
 * cmd6.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is indeterministic and not complete.
-* cmd7.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and complete, but needs more sophisticated techniques to prove it
+* cmd7.scm: 1 Component with a ProvidedPort with a guardedCommand. This guarded command is deterministic and complete (well-defined), but needs more sophisticated techniques to prove that the guards are really disjoint
 ## (beh)-Tests
 
 * beh1.scm: 2 Components. 1 parent with 1 subcomponent. Parent calls behaviour of its subcomponent
