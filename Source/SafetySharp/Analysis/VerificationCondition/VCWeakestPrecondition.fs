@@ -22,76 +22,9 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-module internal SamModified =
-    // Advantages:
-    //  * Peekhole optimizations are easier.
-    //  * Transformation to verification condition is slightly easier.
-    // See
-    //  * Cormac Flanagan, James Saxe. Avoiding Exponential Explosion: Generating Compact Verification Conditions. http://dx.doi.org/10.1145/360204.360220
-    //  * Greg Nelson. A generalization of Dijkstra's calculus. http://dx.doi.org/10.1145/69558.69559
-
-    type UOp = SafetySharp.Models.Sam.UOp
-    type BOp = SafetySharp.Models.Sam.BOp
-    type Var = SafetySharp.Models.Sam.Var
-    type Val = SafetySharp.Models.Sam.Val
-    type Expr = SafetySharp.Models.Sam.Expr
-    
-    type Stm =
-        | Assert of Expression : Expr       //semantics: wp( Stm.Assert(e), phi) := e && phi (formula to prove is false, when assertion is false)
-        | Assume of Expression : Expr       //semantics: wp( Stm.Assume(e), phi) := e -> phi
-        | Block of Statements: Stm list
-        | Choice of Choices : Stm list
-        | Write of Variable:Var * Expression:Expr
-    
-    type Type = SafetySharp.Models.Sam.Type
-    type GlobalVarDecl = SafetySharp.Models.Sam.GlobalVarDecl
-    type LocalVarDecl = SafetySharp.Models.Sam.LocalVarDecl
- 
-    type Pgm = {
-        Globals : GlobalVarDecl list
-        Locals : LocalVarDecl list
-        Body : Stm
-    }
-
-    let rec translateStm (stm : SafetySharp.Models.Sam.Stm) : Stm =
-        match stm with
-            | SafetySharp.Models.Sam.Stm.Block(statements) ->
-                Stm.Block(statements |> List.map translateStm)
-            | SafetySharp.Models.Sam.Stm.Choice (clauses) ->
-                let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Stm =
-                    Stm.Block([Stm.Assume(clause.Guard);translateStm clause.Statement]) // the guard is now an assumption
-                Stm.Choice(clauses |> List.map translateClause)
-            | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
-                Stm.Write (variable,expression)
-
-    let translatePgm (pgm : SafetySharp.Models.Sam.Pgm ) : Pgm =
-        {
-            Pgm.Globals = pgm.Globals;
-            Pgm.Locals = pgm.Locals;
-            Pgm.Body = translateStm pgm.Body;
-        }
-                
-    let rec createAndedExpr (exprs:Expr list) : Expr =
-        if exprs.IsEmpty then
-            Expr.Literal(Val.BoolVal(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
-        else if exprs.Tail = [] then
-            // only one element, so return it
-            exprs.Head
-        else
-            Expr.BExpr(exprs.Head,BOp.And,createAndedExpr exprs.Tail)
-                
-    let rec createOredExpr (exprs:Expr list) : Expr =
-        if exprs.IsEmpty then
-            Expr.Literal(Val.BoolVal(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
-        else if exprs.Tail = [] then
-            // only one element, so return it
-            exprs.Head
-        else
-            Expr.BExpr(exprs.Head,BOp.Or,createOredExpr exprs.Tail)
-
 
 module internal  WeakestPrecondition =
-    open SamModified
+    open VCSam
     open SafetySharp.Models.SamHelpers
        
     let rec wp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =

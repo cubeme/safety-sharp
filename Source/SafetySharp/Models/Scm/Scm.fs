@@ -65,7 +65,7 @@ module internal Scm =
 
         
     [<RequireQualifiedAccessAttribute>]
-    type internal LocExpr = // expression with location
+    type internal LocExpr = // expression with location //TODO: Maybe split into LocAtom and LocExpr. Makes LTL and CTL easier
         | Literal of Val
         | ReadField of CompPath * Field
         | ReadFault of CompPath * Fault
@@ -103,8 +103,8 @@ module internal Scm =
     [<RequireQualifiedAccessAttribute>]
     type internal Contract = 
         | None
-        | AutoDeriveChanges of Requires : (LocExpr option) * Ensures : (LocExpr option) // if not declared explicitly, derive it implicitly. All variables written to by port and called ports. Writing it explicitly ensures, that ports being called, which are in _this_ component, make nothing wrong in this component. They may do everything when they live in their own component. Some kind of "Set.union port1.Changed port2.Changed "TODO: exact semantics.
-        | Full              of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list)
+        | AutoDeriveChanges of Requires : (LocExpr option) * Ensures : (LocExpr option) // if not declared explicitly, derive it implicitly. All variables written to by port and called ports. Writing it explicitly ensures, that ports being called, which are in _this_ component, make nothing wrong in this component. They may do everything when they live in their own component. Some kind of "Set.union port1.Changed port2.Changed "TODO: exact semantics. InferFrameAssumption
+        | Full              of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list) //with frame assumption. ExplicitFrameAssumption
         // | FullRobustAgains of Requires : (LocExpr option) * Ensures : (LocExpr option) * ChangedFields : (Field list) * ChangedFaults : (Fault list) * RobustAgainsFaults : (Fault list)
 
     type internal VarDecl = {
@@ -178,7 +178,7 @@ module internal Scm =
         Contract : Contract
     }
         
-    type internal Formula =
+    type internal Formula = // It would be nice to have a "plugin system" for new kinds of formulas. Also Formula macros would be nice, which could be translated differently to each model checker.
         | InterStepInvariant of Invariant:LocExpr
         //| InterPortCallInvariant of PortCallsToCheck:ProvPort list * Invariant:LocExpr // The PortCallsToCheck are in this sense the "public" interface. TODO: Maybe remove the list and introduce a Visibility to every PortDecl
         //| RG of Rely:LocExpr * Guarantee:LocExpr

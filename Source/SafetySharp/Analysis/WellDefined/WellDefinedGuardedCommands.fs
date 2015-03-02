@@ -20,9 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Modelchecking.Boogie
+namespace SafetySharp.Analysis.WellDefined
 
-module BoogieTransformSam =
+module WellDefinedGuardedCommands =
 
+
+    // well-defined http://cs-exhibitions.uni-klu.ac.at/index.php?id=4&uid=18
 
     let a =""

@@ -20,9 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.Modelchecking.Boogie
-
-module BoogieTransformSam =
+namespace SafetySharp.Analysis.VerificationCondition
 
 
-    let a =""
+// Implementation of
+//  *  [GCFK09] Radu Grigore, Julien Charles, Fintan Fairmichael, Joseph Kiniry. Strongest Postcondition of Unstructured Programs.
+//                 http://dx.doi.org/10.1145/1557898.1557904
+
+// Advantage of this al
+// Disadvantages of this algorithm:
+
+module VCPassiveFormGCFK09 =
+    
+    // TODO: Graph transformation
+
+    let rec passify = ""
+
+    
+    // TODO: Local optimizations of [GCFK09], which decrease the number of copies. (Proposed in this paper)    
+    // TODO: My own optimization which tries to create only as many variables as necessary for each _type_.
+

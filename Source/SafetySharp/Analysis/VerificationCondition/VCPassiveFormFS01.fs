@@ -23,7 +23,7 @@
 namespace SafetySharp.Analysis.VerificationCondition
 
 // Implementation of
-//  * Cormac Flanagan, James Saxe. Avoiding Exponential Explosion: Generating Compact Verification Conditions. http://dx.doi.org/10.1145/360204.360220
+//  * [FS01] Cormac Flanagan, James Saxe. Avoiding Exponential Explosion: Generating Compact Verification Conditions. http://dx.doi.org/10.1145/360204.360220
 
 // Advantage of this algorithm:
 //   * smaller formulas
@@ -33,9 +33,9 @@ namespace SafetySharp.Analysis.VerificationCondition
 //   * more variables (artificial variables get introduced)
 
 
-module internal VCPopl01 =
+module internal VCPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
-    open SamModified
+    open VCSam
 
     let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =
         let rec unionManyVarMaps (united:Map<Var,'b>) (mapsToUnite:Map<Var,'b> list) =
