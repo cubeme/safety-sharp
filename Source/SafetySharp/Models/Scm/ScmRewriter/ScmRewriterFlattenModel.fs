@@ -32,6 +32,7 @@ module internal ScmRewriterFlattenModel =
     open ScmRewriterConvertDelayedBindings
     open ScmRewriterInlineBehavior
     open SafetySharp.Workflow
+    open ScmWorkflow
 
     
     // flatten model means

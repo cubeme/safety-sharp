@@ -38,6 +38,7 @@ open SafetySharp.Models.ScmRewriterLevelUp
 open SafetySharp.Models.ScmRewriterConvertFaults
 open SafetySharp.Models.ScmRewriterInlineBehavior
 open SafetySharp.Models.ScmRewriterFlattenModel
+open SafetySharp.Models.ScmWorkflow
 
 [<TestFixture>]
 type SingleLevelUpTests () =

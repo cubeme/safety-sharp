@@ -32,6 +32,7 @@ open SafetySharp.Models
 open SafetySharp.Models.Scm
 open SafetySharp.Models.ScmHelpers
 open SafetySharp.Models.ScmRewriterBase
+open SafetySharp.Models.ScmWorkflow
 
 [<TestFixture>]
 type CompleteRewriteTests () =
