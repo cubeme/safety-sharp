@@ -33,9 +33,9 @@ namespace SafetySharp.Analysis.VerificationCondition
 //   * more variables (artificial variables get introduced)
 
 
-module internal VCPassiveFormFS01 =
+module internal VcPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
-    open VCSam
+    open VcSam
 
     let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =
         let rec unionManyVarMaps (united:Map<Var,'b>) (mapsToUnite:Map<Var,'b> list) =

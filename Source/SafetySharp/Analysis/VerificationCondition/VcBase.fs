@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-module internal VCSam =
+module internal VcSam =
     // Both the transformation with weakest precondition or strongest postcondition work with a modified Sam-Model.
     
     // TODO: This model also contains a notion of versions for variables.
@@ -93,8 +93,54 @@ module internal VCSam =
         else
             Expr.BExpr(exprs.Head,BOp.Or,createOredExpr exprs.Tail)
     
-    (*
-module VCPassiveForm =
+
+module internal VcSamWorkflow =
+    open SafetySharp.Workflow
+    type VcSamPgm = VcSam.Pgm
+
+    type IVcSamModel<'state> =
+        interface
+            abstract getModel : VcSam.Pgm
+            abstract setModel : VcSam.Pgm -> 'state
+        end
+           
+    let getModel<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,'state,VcSam.Pgm> = workflow {
+        let! state = getState
+        let model = state.getModel
+        return model
+    }    
+    
+    let setModel<'state when 'state :> IVcSamModel<'state>> (model:VcSam.Pgm) : WorkflowFunction<'state,'state,unit> = workflow {
+        let! state = getState
+        let newState = state.setModel model
+        do! updateState newState
+    }
+
+    type PlainVcSamModel(model:VcSam.Pgm) =
+        class end
+            with
+                member this.getModel : VcSam.Pgm = model
+                interface IVcSamModel<PlainVcSamModel> with
+                    member this.getModel : VcSam.Pgm = model
+                    member this.setModel (model:VcSam.Pgm) = PlainVcSamModel(model)
+    
+    type PlainVCScmModelWorkflowState = WorkflowState<PlainVcSamModel>
+    type PlainVCScmModelWorkflowFunction<'returnType> = WorkflowFunction<PlainVcSamModel,PlainVcSamModel,'returnType>
+
+    let createPlainScmWorkFlowState (model:VcSam.Pgm) : PlainVCScmModelWorkflowState =
+        WorkflowState<PlainVcSamModel>.stateInit (PlainVcSamModel(model))
+    
+    let setPlainModelState (model:VcSam.Pgm) = workflow {
+        do! updateState (PlainVcSamModel(model))
+    }
+    
+    let toPlainModelState<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,PlainVcSamModel,unit> = workflow {
+        let! state = getState
+        do! setPlainModelState state.getModel
+    }
+
+
+module VcPassiveForm =
     // A passive form of a SAM-Model is a model which makes for every variable _at most one_ assignment. In those cases
     // the assignment "x:=E" can be replaced by a simple assertion "assert x=E".
     // The passive form allows the creation of verification condition algorithms which avoid an exponential size of these verification conditions.
@@ -108,12 +154,11 @@ module VCPassiveForm =
     //                 http://dx.doi.org/10.1145/1557898.1557904
     // describes two transformations to passive form. We implement the proposed one, which is version-optimal (has the least possible
     // number of fresh variables for each old variable).
-
-
     
-    let transformToSamPassiveWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+    type SamToVcWorkflowFunction<'stateWithSam> = WorkflowFunction<ISamModel<'stateWithSam>,PlainVcSamModel,unit>
+        
+    let transformToVcSam<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,PlainScmModel,unit> = workflow {
         do! toPlainModelState
         do! normalize
     }
-    *)

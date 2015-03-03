@@ -23,8 +23,8 @@
 namespace SafetySharp.Analysis.VerificationCondition
 
 
-module internal  WeakestPrecondition =
-    open VCSam
+module internal VcWeakestPrecondition =
+    open VcSam
     open SafetySharp.Models.SamHelpers
        
     let rec wp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =

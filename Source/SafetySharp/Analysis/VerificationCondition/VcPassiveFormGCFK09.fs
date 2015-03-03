@@ -30,7 +30,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 // Advantage of this al
 // Disadvantages of this algorithm:
 
-module VCPassiveFormGCFK09 =
+module VcPassiveFormGCFK09 =
     
     // TODO: Graph transformation
 
