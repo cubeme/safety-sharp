@@ -27,6 +27,7 @@ module internal ScmRewriterLevelUp =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
+    open ScmWorkflow
     
     type ScmRewriterLevelUpState = {
         Model : ScmModel;
@@ -832,7 +833,7 @@ module internal ScmRewriterLevelUp =
     }
               
     let findSubComponentForLevelingUp<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompPath option> = workflow {
-        let! model = ScmRewriterBase.getModel
+        let! model = ScmWorkflow.getModel
         if model.Subs = [] then
             // nothing to do, we are done
             return None
@@ -888,7 +889,7 @@ module internal ScmRewriterLevelUp =
     
     
     let assertNoSubcomponent<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,unit> = workflow {
-        let! model = ScmRewriterBase.getModel
+        let! model = ScmWorkflow.getModel
         assert (model.Subs=[])
         return ()
     }

@@ -27,6 +27,7 @@ module internal ScmRewriterConvertDelayedBindings =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
+    open ScmWorkflow
     
     // Assumptions:
     //  As1: Only root component gets converted

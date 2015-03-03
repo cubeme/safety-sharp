@@ -27,6 +27,7 @@ module internal ScmRewriterInlineBehavior =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
+    open ScmWorkflow
     
     // Currently only works in the root component
     
@@ -392,7 +393,7 @@ module internal ScmRewriterInlineBehavior =
                                 StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
                         state.Model.replaceStep (stepDecl,newStep) 
-            do! ScmRewriterBase.setModel newModel
+            do! ScmWorkflow.setModel newModel
             do! removeInlineBehaviorState
         }
 

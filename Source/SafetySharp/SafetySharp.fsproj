@@ -72,6 +72,7 @@
     <Compile Include="Models\Ssm\SsmValidation.fs" />
     <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
+    <Compile Include="Models\Scm\ScmWorkflow.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmToString.fs" />
@@ -84,6 +85,7 @@
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterInlineBehavior.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
+    <Compile Include="Models\Sam\SamWorkflow.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamHelpers.fs" />
     <Compile Include="Models\Sam\SamAstToString.fs" />

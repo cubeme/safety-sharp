@@ -27,6 +27,7 @@ module internal ScmRewriterConvertFaults =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
+    open ScmWorkflow
     
     
                                         

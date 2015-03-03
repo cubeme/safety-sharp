@@ -28,6 +28,7 @@ module internal ScmRewriterNormalize =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
+    open ScmWorkflow
     
     let createEmptySteps : PlainScmModelWorkflowFunction<unit> = workflow {
         let! model = getModel
