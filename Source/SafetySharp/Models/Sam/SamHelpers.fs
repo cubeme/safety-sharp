@@ -50,6 +50,12 @@ module internal SamHelpers =
             else
                 Expr.BExpr(exprs.Head,BOp.And,Expr.createAndedExpr exprs.Tail)        
         
+    type LocalVarDecl with
+        static member createLocalVarDecl (_var:Var) (_type:Type) : LocalVarDecl=
+            {
+                LocalVarDecl.Var = _var
+                LocalVarDecl.Type = _type;
+            }
         
         (*
         member expr.getSamType (varToType:Map<Var,Type>) : Type =

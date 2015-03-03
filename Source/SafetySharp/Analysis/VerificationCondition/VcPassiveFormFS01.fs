@@ -22,6 +22,23 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
+// Preamble
+// A passive form of a SAM-Model is a model which makes for every variable _at most one_ assignment. In those cases
+// the assignment "x:=E" can be replaced by a simple assertion "assert x=E".
+// The passive form allows the creation of verification condition algorithms which avoid an exponential size of these verification conditions.
+// The paper
+//  * [FS01] Cormac Flanagan, James Saxe. Avoiding Exponential Explosion: Generating Compact Verification Conditions.
+//                http://dx.doi.org/10.1145/360204.360220
+// introduced this passive form, which is very related to the "static single assignment form" (SSA form) or the "dynamic single assignment form" (DSA form) used in
+// compiler optimization. They are essentially the same but do not handle indeterministic guarded commands.
+// The paper
+//  *  [GCFK09] Radu Grigore, Julien Charles, Fintan Fairmichael, Joseph Kiniry. Strongest Postcondition of Unstructured Programs.
+//                 http://dx.doi.org/10.1145/1557898.1557904
+// describes two transformations to passive form. We implement the proposed one, which is version-optimal (has the least possible
+// number of fresh variables for each old variable).
+    
+
+
 // Implementation of
 //  * [FS01] Cormac Flanagan, James Saxe. Avoiding Exponential Explosion: Generating Compact Verification Conditions. http://dx.doi.org/10.1145/360204.360220
 
@@ -61,7 +78,8 @@ module internal VcPassiveFormFS01 =
             TryToRecycle : bool; // if true, we try to recycle currently unused variables
         }
             with
-                static member initial (localAndGlobalVars:(Var*Type) list) =
+                static member initial (globalVars:(Var*Type) list) (localVars:(Var*Type) list) =
+                    let localAndGlobalVars = localVars @ globalVars
                     let takenNamesAsString =
                         localAndGlobalVars |> List.map (fun (var,_type) -> var.getName)
                                            |> Set.ofList
@@ -69,8 +87,8 @@ module internal VcPassiveFormFS01 =
                     {
                         Substitutions.IsBottom = false;
                         Substitutions.CurrentSubstitution =
-                            localAndGlobalVars |> List.map (fun (var,_type) -> (var,var))
-                                               |> Map.ofList;
+                            globalVars |> List.map (fun (var,_type) -> (var,var))
+                                       |> Map.ofList;
                         Substitutions.LocalTakenNames = takenNamesAsString
                         Substitutions.VarToType  =
                             localAndGlobalVars |> Map.ofList
@@ -78,11 +96,15 @@ module internal VcPassiveFormFS01 =
                             ref (localAndGlobalVars |> Map.ofList)
                         Substitutions.GlobalTakenNames = ref (takenNamesAsString)
                         Substitutions.VarToCounter =
-                            let newMap =
-                                localAndGlobalVars |> List.map (fun (var,_) -> (var,1))
-                                                   |> Map.ofList;            
+                            let newMapLocals =
+                                localVars |> List.map (fun (var,_) -> (var,0))
+                                          |> Map.ofList;            
+                            let newMapGlobals =
+                                globalVars |> List.map (fun (var,_) -> (var,1))
+                                           |> Map.ofList;            
+                            let newMap = unionManyVarMaps [newMapLocals;newMapGlobals]
                             ref (newMap);
-                        Substitutions.TryToRecycle = true;
+                        Substitutions.TryToRecycle = false;
                     }
                 static member bottom =
                     {
@@ -111,30 +133,39 @@ module internal VcPassiveFormFS01 =
                                |> List.tryPick (fun name -> if isOfCorrectType name then Some(Var.Var(name)) else None)
                         
                 member this.getFreshVar (based_on:Var) : (Substitutions*Var) =
-                    let _type:Type = this.VarToType.Item based_on
-                    match this.tryToRecycleVar (_type) with
-                        | Some (_var) ->
-                            let newSubstitutions =
-                                { this with
-                                    Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,_var)
-                                }
-                            (newSubstitutions,_var)
-                        | None ->
-                            let currentCounter = this.VarToCounter.Value.Item based_on
-                            do this.VarToCounter := this.VarToCounter.Value.Add (based_on,currentCounter + 1)
-                            let nameCandidate = sprintf "%s_passive%i" based_on.getName currentCounter
-                            let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like this.GlobalTakenNames.Value (nameCandidate)
-                            let newVarWithFreshName = Var.Var(freshName)
-                            let _type = this.VarToType.Item based_on
-                            do this.GlobalTakenNames:=this.GlobalTakenNames.Value.Add (freshName)
-                            do this.GlobalTakenNamesWithTypes:=this.GlobalTakenNamesWithTypes.Value.Add (newVarWithFreshName,_type)
-                            let newSubstitutions =
-                                { this with
-                                    Substitutions.LocalTakenNames = this.LocalTakenNames.Add (freshName);
-                                    Substitutions.VarToType = this.VarToType.Add (newVarWithFreshName,_type);
-                                    Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,newVarWithFreshName);
-                                }
-                            (newSubstitutions,newVarWithFreshName)
+                    if this.VarToCounter.Value.Item based_on = 0 then
+                        //variable has never been used, so use the current name and increase counter to one
+                        let newSubstitutions =
+                            { this with
+                                Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,based_on)
+                            }
+                        do this.VarToCounter := this.VarToCounter.Value.Add (based_on, 1)
+                        (newSubstitutions,based_on)
+                    else
+                        let _type:Type = this.VarToType.Item based_on
+                        match this.tryToRecycleVar (_type) with
+                            | Some (_var) ->
+                                let newSubstitutions =
+                                    { this with
+                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,_var)
+                                    }
+                                (newSubstitutions,_var)
+                            | None ->
+                                let currentCounter = this.VarToCounter.Value.Item based_on
+                                do this.VarToCounter := this.VarToCounter.Value.Add (based_on,currentCounter + 1)
+                                let nameCandidate = sprintf "%s_passive%i" based_on.getName currentCounter
+                                let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like this.GlobalTakenNames.Value (nameCandidate)
+                                let newVarWithFreshName = Var.Var(freshName)
+                                let _type = this.VarToType.Item based_on
+                                do this.GlobalTakenNames:=this.GlobalTakenNames.Value.Add (freshName)
+                                do this.GlobalTakenNamesWithTypes:=this.GlobalTakenNamesWithTypes.Value.Add (newVarWithFreshName,_type)
+                                let newSubstitutions =
+                                    { this with
+                                        Substitutions.LocalTakenNames = this.LocalTakenNames.Add (freshName);
+                                        Substitutions.VarToType = this.VarToType.Add (newVarWithFreshName,_type);
+                                        Substitutions.CurrentSubstitution = this.CurrentSubstitution.Add(based_on,newVarWithFreshName);
+                                    }
+                                (newSubstitutions,newVarWithFreshName)
                             
 
                 static member merge (subs:Substitutions list) : (Substitutions * (Stm list list)) =
@@ -272,7 +303,30 @@ module internal VcPassiveFormFS01 =
                         List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
                     (newSigma,Stm.Choice (newChoices))
                     
+    open SafetySharp.Workflow
+    open VcSamWorkflow
+    open SafetySharp.Models.SamHelpers
 
+    let passifyPgm : PlainVCScmModelWorkflowFunction<unit> = workflow {
+        let! pgm = getModel
+        let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
+        let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
+        let sigma = Substitutions.initial globalVars localVars
+        let (newSigma,newBody) = passify (sigma,pgm.Body)
+        let newPgm =
+            let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
+            let oldGlobalsAsSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
+            let newLocals =
+                newSigma.VarToType |> Map.toList
+                                   |> List.filter (fun (_var,_) -> not(oldGlobalsAsSet.Contains _var) ) // use only those variables, which are not in global
+                                   |> List.map createLocalVarDecl
+            {
+                Pgm.Body = newBody;
+                Pgm.Globals = pgm.Globals; // globals stay globals
+                Pgm.Locals = newLocals;
+            }            
+        do! setModel newPgm
+    }
 
     (*
     type SmallRefExampel =
