@@ -40,19 +40,26 @@ module internal VcWeakestPrecondition =
     // formula is the formula which should be true after the execution
     let rec wp (stm:Stm) (formula:Expr) : Expr =
         match stm with
-        | Assert (expr) ->
+        | Assert (_,expr) ->
             Expr.BExpr(expr,BOp.And,formula)
-        | Assume (expr) ->
+        | Assume (_,expr) ->
             Expr.BExpr(expr,BOp.Implies,formula)
-        | Block (statements) ->
+        | Block (_,statements) ->
             List.foldBack wp statements formula
-        | Choice (choices) ->
+        | Choice (_,choices) ->
             let choicesAsExpr =
                 choices |> List.map (fun choice -> wp choice formula)
             Expr.createAndedExpr choicesAsExpr
-        | Write (variable,expression) ->
+        | Write (_,variable,expression) ->
             wp_rewriteExpr_varsToExpr (variable,expression) formula
 
-            
-    //let wpWrapper<'stateWithVcSam when 'stateWithVcSam :> IVcSamModel<'stateWithVcSam>> :
-    //                    VcSamToVcWorkflowFunction<'stateWithSam> = workflow {
+    (*
+    let wpWrapper<'stateWithVcSam when 'stateWithVcSam :> IVcSamModel<'stateWithVcSam>> :
+                        VcSamToVcWorkflowFunction<'stateWithSam> = workflow {
+        
+        
+        
+        let! model = getModel
+        return ()
+    }
+    *)

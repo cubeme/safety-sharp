@@ -53,18 +53,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 module internal VcPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
     open VcSam
-
-    let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =
-        let rec unionManyVarMaps (united:Map<Var,'b>) (mapsToUnite:Map<Var,'b> list) =
-            if mapsToUnite.IsEmpty then
-                united
-            else
-                let newUnited =
-                    mapsToUnite.Head |> Map.toList
-                                     |> List.fold (fun (united:Map<Var,'b>) (key:Var,value:'b) -> united.Add(key,value)) united
-                unionManyVarMaps newUnited mapsToUnite.Tail
-        unionManyVarMaps Map.empty<Var,'b> mapsToUnite
-        
+            
     type Substitutions =
         {
             IsBottom : bool;
@@ -231,7 +220,7 @@ module internal VcPassiveFormFS01 =
                                 let assumptionForVar (_var:Var) =
                                     let currentVar = Expr.Read(sub.CurrentSubstitution.Item _var)
                                     let nextVar = Expr.Read(newSub.CurrentSubstitution.Item _var)
-                                    Stm.Assume(Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
+                                    Stm.Assume(None,Expr.BExpr(currentVar,BOp.Equals,nextVar)) 
                                 variablesToMerge |> List.map assumptionForVar
                             livingBranches |> List.map (fun (number:int,sub) -> (number,appendsForSub sub))
                         let appendStatementsForDead : ((int*Stm list) list) =
@@ -268,40 +257,40 @@ module internal VcPassiveFormFS01 =
     
     let rec passify (sigma:Substitutions, stm:Stm) : (Substitutions*Stm) =
         match stm with
-            | Stm.Assert (expr) ->
+            | Stm.Assert (_,expr) ->
                 let expr = replaceVarsWithCurrentVars sigma expr //need to do it with old sigma!
                 if expr = Expr.Literal(Val.BoolVal(false)) then
                     (Substitutions.bottom,stm) //optimization: if false, then bottom
                 else
                     (sigma,stm)
-            | Stm.Assume (expr) ->
+            | Stm.Assume (_,expr) ->
                 let expr = replaceVarsWithCurrentVars sigma expr  //need to do it with old sigma!
                 if expr = Expr.Literal(Val.BoolVal(false)) then
                     (Substitutions.bottom,stm) //optimization: if false, then bottom
                 else
                     (sigma,stm)
-            | Stm.Write (variable,expression) ->
+            | Stm.Write (_,variable,expression) ->
                 let expr = replaceVarsWithCurrentVars sigma expression  //need to do it with old sigma!
                 let newSigma,newVar = sigma.getFreshVar variable
-                (newSigma,Stm.Assume(Expr.BExpr(Expr.Read(newVar),BOp.Equals,expr)))
-            | Stm.Block (statements) ->
+                (newSigma,Stm.Assume(None,Expr.BExpr(Expr.Read(newVar),BOp.Equals,expr)))
+            | Stm.Block (_,statements) ->
                 let newSigma,statementsRev =
                     let foldFct (sigma:Substitutions,statements:Stm list) (stm:Stm) =
                         let (newSigma,newStm) = passify (sigma,stm)
                         (newSigma,newStm::statements)
                     List.fold foldFct (sigma,[]) statements
-                (newSigma,Stm.Block(List.rev statementsRev))
-            | Stm.Choice (choices) ->
+                (newSigma,Stm.Block(None,List.rev statementsRev))
+            | Stm.Choice (_,choices) ->
                 if choices = [] then
-                    (sigma,Stm.Assume(Expr.Literal(Val.BoolVal(false))))
+                    (sigma,Stm.Assume(None,Expr.Literal(Val.BoolVal(false))))
                 else
                     let (sigmas,passifiedChoices) =
                         choices |> List.map (fun choice -> passify (sigma,choice))
                                 |> List.unzip
                     let (newSigma,stmtssToAppend) = Substitutions.merge sigmas
                     let newChoices =
-                        List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
-                    (newSigma,Stm.Choice (newChoices))
+                        List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(None,passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
+                    (newSigma,Stm.Choice (None,newChoices))
                     
     open SafetySharp.Workflow
     open VcSamWorkflow

@@ -25,6 +25,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 module internal VcSam =
     // Both the transformation with weakest precondition or strongest postcondition work with a modified Sam-Model.
     
+    // every statement also has a statement id = SID
     // TODO: This model also contains a notion of versions for variables.
 
     // Advantages of this modified Sam-Model:
@@ -40,12 +41,21 @@ module internal VcSam =
     type Val = SafetySharp.Models.Sam.Val
     type Expr = SafetySharp.Models.Sam.Expr
     
+    type StatementId = int option
+    
     type Stm =
-        | Assert of Expression : Expr       //semantics: wp( Stm.Assert(e), phi) := e && phi (formula to prove is false, when assertion is false)
-        | Assume of Expression : Expr       //semantics: wp( Stm.Assume(e), phi) := e -> phi
-        | Block of Statements: Stm list
-        | Choice of Choices : Stm list
-        | Write of Variable:Var * Expression:Expr
+        | Assert of SID:StatementId * Expression:Expr       //semantics: wp( Stm.Assert(e), phi) := e && phi (formula to prove is false, when assertion is false)
+        | Assume of SID:StatementId * Expression:Expr       //semantics: wp( Stm.Assume(e), phi) := e -> phi
+        | Block of SID:StatementId * Statements:Stm list
+        | Choice of SID:StatementId * Choices:Stm list
+        | Write of SID:StatementId * Variable:Var * Expression:Expr
+        with
+            member this.GetStatementId = function
+                | Assert (sid,_) -> sid
+                | Assume (sid,_) -> sid
+                | Block (sid,_) -> sid
+                | Choice (sid,_) -> sid
+                | Write (sid,_,_) -> sid
     
     type Type = SafetySharp.Models.Sam.Type
     type GlobalVarDecl = SafetySharp.Models.Sam.GlobalVarDecl
@@ -57,22 +67,30 @@ module internal VcSam =
         Body : Stm
     }
 
-    let rec translateStm (stm : SafetySharp.Models.Sam.Stm) : Stm =
+    let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : Stm =
+        do stmIdCounter := stmIdCounter.Value + 1
+        let freshId = Some(stmIdCounter.Value)
         match stm with
             | SafetySharp.Models.Sam.Stm.Block(statements) ->
-                Stm.Block(statements |> List.map translateStm)
-            | SafetySharp.Models.Sam.Stm.Choice (clauses) ->
-                let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Stm =
-                    Stm.Block([Stm.Assume(clause.Guard);translateStm clause.Statement]) // the guard is now an assumption
-                Stm.Choice(clauses |> List.map translateClause)
+                Stm.Block(freshId,statements |> List.map (translateStm stmIdCounter) )
+            | SafetySharp.Models.Sam.Stm.Choice (clauses) ->                
+                if clauses = [] then
+                    (Stm.Assume(freshId,Expr.Literal(Val.BoolVal(false))))
+                else
+                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Stm =
+                        do stmIdCounter := stmIdCounter.Value + 1
+                        let freshIdForGuard = Some(stmIdCounter.Value)
+                        Stm.Block(freshId,[Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
+                    Stm.Choice(freshId,clauses |> List.map translateClause)
             | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
-                Stm.Write (variable,expression)
+                Stm.Write (freshId,variable,expression)
 
     let translatePgm (pgm : SafetySharp.Models.Sam.Pgm ) : Pgm =
+        let stmIdCounter = ref (0)
         {
             Pgm.Globals = pgm.Globals;
             Pgm.Locals = pgm.Locals;
-            Pgm.Body = translateStm pgm.Body;
+            Pgm.Body = translateStm stmIdCounter pgm.Body;
         }
                 
     let rec createAndedExpr (exprs:Expr list) : Expr =
@@ -93,6 +111,16 @@ module internal VcSam =
         else
             Expr.BExpr(exprs.Head,BOp.Or,createOredExpr exprs.Tail)
     
+    let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =
+        let rec unionManyVarMaps (united:Map<Var,'b>) (mapsToUnite:Map<Var,'b> list) =
+            if mapsToUnite.IsEmpty then
+                united
+            else
+                let newUnited =
+                    mapsToUnite.Head |> Map.toList
+                                     |> List.fold (fun (united:Map<Var,'b>) (key:Var,value:'b) -> united.Add(key,value)) united
+                unionManyVarMaps newUnited mapsToUnite.Tail
+        unionManyVarMaps Map.empty<Var,'b> mapsToUnite
 
 module internal VcSamWorkflow =
     open SafetySharp.Workflow
