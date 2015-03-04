@@ -42,104 +42,156 @@ namespace SafetySharp.Analysis.VerificationCondition
 //  *  [GCFK09] Radu Grigore, Julien Charles, Fintan Fairmichael, Joseph Kiniry. Strongest Postcondition of Unstructured Programs.
 //                 http://dx.doi.org/10.1145/1557898.1557904
 
-// Advantage of this al
+// Advantage of this algorithm:
 // Disadvantages of this algorithm:
 
 module internal VcPassiveFormGCFK09 =
     open SafetySharp.Models.SamHelpers
     open VcSam
-    
-    type Cache =
+        
+    type StatementInfos =
         {
-            ReadVersion : Map<int,Map<Var,int>> // Node to [Var to ReadVersionNumber]
-            WriteVersion : Map<int,Map<Var,int>> // Node to [Var to WriteVersionNumber]
-            MaxWriteOfPredecessor : Map<Var,int> // Var to MaxWriteOfPredecessorOfVar
+            ReadVersion : Map<int,Map<Var,Set<int>>> // Node to [Var to [Set of ReadVersionNumber]]. 
+            WriteVersion : Map<int,Map<Var,Set<int>>> // Node to [Var to [Set of WriteVersionNumber]].
+            Children : Map<int,Set<int>> 
         }
             with
                 static member initial =
                     {
-                        Cache.ReadVersion = Map.empty<int,Map<Var,int>>;
-                        Cache.WriteVersion = Map.empty<int,Map<Var,int>>;
-                        Cache.MaxWriteOfPredecessor = Map.empty<Var,int>;
+                        StatementInfos.ReadVersion = Map.empty<int,Map<Var,Set<int>>>;
+                        StatementInfos.WriteVersion = Map.empty<int,Map<Var,Set<int>>>;
+                        StatementInfos.Children = Map.empty<int,Set<int>>;
                     }
     
-    let rec setReadAndWriteNumber (sigma:Cache) (stm:Stm) : Cache =
+    type CalculationCache =
+        {
+            StatementInfos : StatementInfos ref;
+            MaxWriteOfPredecessor : Map<Var,int> // Var to MaxWriteOfPredecessorOfVar
+            MaxWriteOfPredecessor_SetForm :  Map<Var,Set<int>> //to buffer the result.
+        }
+            with
+                static member initial =
+                    {
+                        CalculationCache.StatementInfos = ref StatementInfos.initial
+                        CalculationCache.MaxWriteOfPredecessor = Map.empty<Var,int>;
+                        CalculationCache.MaxWriteOfPredecessor_SetForm = Map.empty<Var,Set<int>>;
+                    }
+                static member maxWriteOfPredecessor_ToSetForm (maxWriteOfPredecessor:Map<Var,int>): Map<Var,Set<int>> =
+                    maxWriteOfPredecessor |> Map.map (fun key value -> Set.empty.Add value)
+                
+                member this.addEntryForStatement (sid:int) (readVersion:Map<Var,Set<int>>) (writeVersion:Map<Var,Set<int>>) (children:Set<int>) : unit =
+                    let statementInfos = this.StatementInfos.Value
+                    this.StatementInfos :=
+                        { statementInfos with                            
+                            StatementInfos.ReadVersion = statementInfos.ReadVersion.Add(sid,readVersion)
+                            StatementInfos.WriteVersion = statementInfos.WriteVersion.Add(sid,writeVersion)
+                            StatementInfos.Children = statementInfos.Children.Add(sid,children)
+                        }
+
+
+    let rec calculateStatementInfosAcc (stmPath:int list) (sigma:CalculationCache) (stm:Stm) : CalculationCache =
+        // This function is not side-effect-free. It is only intended as Worker for calculateStatementInfos, which provides
+        // an immutable interface
+        // afterwards sigma.StatementInfos contains all necessary information
         match stm with
             | Stm.Assert (sid,expr) ->
                 let sid = sid.Value
-                let maxRead = sigma.MaxWriteOfPredecessor
-                let maxWrite = sigma.MaxWriteOfPredecessor
-                let newSigma =
-                    { sigma with
-                        Cache.ReadVersion = sigma.ReadVersion.Add(sid,maxRead);
-                        Cache.WriteVersion = sigma.WriteVersion.Add(sid,maxWrite);
-                    }
-                newSigma
+                let read = sigma.MaxWriteOfPredecessor_SetForm
+                let write = sigma.MaxWriteOfPredecessor_SetForm
+                do sigma.addEntryForStatement sid read write (Set.empty<int>)
+                sigma
             | Stm.Assume (sid,expr) ->
                 let sid = sid.Value
-                let maxRead = sigma.MaxWriteOfPredecessor
-                let maxWrite = sigma.MaxWriteOfPredecessor
-                let newSigma =
-                    { sigma with
-                        Cache.ReadVersion = sigma.ReadVersion.Add(sid,maxRead);
-                        Cache.WriteVersion = sigma.WriteVersion.Add(sid,maxWrite);
-                    }
-                newSigma
+                let read = sigma.MaxWriteOfPredecessor_SetForm
+                let write = sigma.MaxWriteOfPredecessor_SetForm
+                do sigma.addEntryForStatement sid read write (Set.empty<int>)
+                sigma
             | Stm.Write (sid,variable,expression) ->
                 let sid = sid.Value
-                let maxRead = sigma.MaxWriteOfPredecessor
-                let maxWrite =
+                let read = sigma.MaxWriteOfPredecessor_SetForm
+                let write =
                     if sigma.MaxWriteOfPredecessor.ContainsKey variable then
                         let oldVersion = sigma.MaxWriteOfPredecessor.Item variable
                         sigma.MaxWriteOfPredecessor.Add(variable,oldVersion+1)
                     else
                         sigma.MaxWriteOfPredecessor.Add(variable,1) // first time written to variable
+                let write_SetForm = CalculationCache.maxWriteOfPredecessor_ToSetForm write
+                do sigma.addEntryForStatement sid read write_SetForm (Set.empty<int>)
+                
                 let newSigma =
                     { sigma with
-                        Cache.ReadVersion = sigma.ReadVersion.Add(sid,maxRead);
-                        Cache.WriteVersion = sigma.WriteVersion.Add(sid,maxWrite);
-                        Cache.MaxWriteOfPredecessor = maxWrite
+                        CalculationCache.MaxWriteOfPredecessor = write;
+                        CalculationCache.MaxWriteOfPredecessor_SetForm = write_SetForm;
                     }
                 newSigma
             | Stm.Block (sid,statements) ->
                 let sid = sid.Value
                 let newSigmaAfterStatements =
-                    List.fold setReadAndWriteNumber sigma statements                
-                let maxRead = newSigmaAfterStatements.MaxWriteOfPredecessor
-                let maxWrite = newSigmaAfterStatements.MaxWriteOfPredecessor
+                    List.fold (calculateStatementInfosAcc (sid::stmPath)) sigma statements
+                let children =
+                    statements |> List.map (fun stm -> stm.GetStatementId.Value) |> Set.ofList
+                
+                let statementInfos = newSigmaAfterStatements.StatementInfos.Value
+                let mergeEntries = mergeEntriesOfVarSetMap<int>
+                let read =
+                    children |> Set.toSeq
+                             |> Seq.map (fun child -> statementInfos.ReadVersion.Item child)
+                             |> Seq.fold mergeEntries Map.empty<Var,Set<int>>
+                let write =
+                    children |> Set.toSeq
+                             |> Seq.map (fun child -> statementInfos.WriteVersion.Item child)
+                             |> Seq.fold mergeEntries Map.empty<Var,Set<int>>                
+                do newSigmaAfterStatements.addEntryForStatement sid read write children
+
                 let newSigma =
                     { newSigmaAfterStatements with
-                        Cache.ReadVersion = sigma.ReadVersion.Add(sid,maxRead);
-                        Cache.WriteVersion = sigma.WriteVersion.Add(sid,maxWrite);
+                        CalculationCache.MaxWriteOfPredecessor = newSigmaAfterStatements.MaxWriteOfPredecessor;
+                        CalculationCache.MaxWriteOfPredecessor_SetForm = newSigmaAfterStatements.MaxWriteOfPredecessor_SetForm;
                     }
                 newSigma
             | Stm.Choice (sid,choices) ->
                 let sid = sid.Value       
                 let newSigmas =
-                    choices |> List.map (setReadAndWriteNumber sigma)                    
-                let newReadVersion =
-                    newSigmas |> List.collect (fun (sigma:Cache) -> sigma.ReadVersion |> Map.toList)
-                let newWriteVersion =
-                    newSigmas |> List.collect (fun (sigma:Cache) -> sigma.WriteVersion |> Map.toList)
+                    choices |> List.map (calculateStatementInfosAcc (sid::stmPath) sigma)                    
+                let children =
+                    choices |> List.map (fun stm -> stm.GetStatementId.Value) |> Set.ofList
+                                    
                 let newMaxWrite =
                     let addToMapIfValueHigher (entries:Map<Var,int>) (_var:Var,version:int) : Map<Var,int> =
                         if (entries.ContainsKey _var) && (entries.Item _var >= version) then
                             entries
                         else
                             entries.Add(_var,version)
-                    newSigmas |> List.collect (fun (sigma:Cache) -> sigma.MaxWriteOfPredecessor |> Map.toList)
+                    newSigmas |> List.collect (fun (sigma:CalculationCache) -> sigma.MaxWriteOfPredecessor |> Map.toList)
                               |> List.fold addToMapIfValueHigher Map.empty<Var,int>
+                let newMaxWrite_SetForm = CalculationCache.maxWriteOfPredecessor_ToSetForm newMaxWrite
+                                
+                let statementInfos = sigma.StatementInfos.Value
+                let mergeEntries = mergeEntriesOfVarSetMap<int>
+                let read =
+                    children |> Set.toSeq
+                             |> Seq.map (fun child -> statementInfos.ReadVersion.Item child)
+                             |> Seq.fold mergeEntries Map.empty<Var,Set<int>>
+                let write =
+                    children |> Set.toSeq
+                             |> Seq.map (fun child -> statementInfos.WriteVersion.Item child)
+                             |> Seq.fold mergeEntries Map.empty<Var,Set<int>>
+                do sigma.addEntryForStatement sid read write children
+
                 let newSigma =
                     { sigma with
-                        Cache.ReadVersion = newReadVersion |> Map.ofList |> Map.add sid (sigma.MaxWriteOfPredecessor) // read of the old sigma!
-                        Cache.WriteVersion = newWriteVersion |> Map.ofList |> Map.add sid newMaxWrite
-                        Cache.MaxWriteOfPredecessor = newMaxWrite
+                        CalculationCache.MaxWriteOfPredecessor = newMaxWrite;
+                        CalculationCache.MaxWriteOfPredecessor_SetForm = newMaxWrite_SetForm
                     }
                 newSigma
 
-    
+    let calculateStatementInfos (stm:Stm) : StatementInfos =
+        // the returned StatementInfos is immutable
+        let resultingCache = calculateStatementInfosAcc [] (CalculationCache.initial) stm
+        resultingCache.StatementInfos.Value
+
     // TODO: Graph transformation
 
     // TODO: Local optimizations of [GCFK09], which decrease the number of copies. (Proposed in this paper)    
     // TODO: My own optimization which tries to create only as many variables as necessary for each _type_.
-
+    // TODO: Optimization: If a Version is never read, we can omit the assignment :-D

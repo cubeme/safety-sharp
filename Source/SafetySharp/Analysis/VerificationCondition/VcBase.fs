@@ -50,12 +50,13 @@ module internal VcSam =
         | Choice of SID:StatementId * Choices:Stm list
         | Write of SID:StatementId * Variable:Var * Expression:Expr
         with
-            member this.GetStatementId = function
-                | Assert (sid,_) -> sid
-                | Assume (sid,_) -> sid
-                | Block (sid,_) -> sid
-                | Choice (sid,_) -> sid
-                | Write (sid,_,_) -> sid
+            member this.GetStatementId : StatementId =
+                match this with
+                    | Assert (sid,_) -> sid
+                    | Assume (sid,_) -> sid
+                    | Block (sid,_) -> sid
+                    | Choice (sid,_) -> sid
+                    | Write (sid,_,_) -> sid
     
     type Type = SafetySharp.Models.Sam.Type
     type GlobalVarDecl = SafetySharp.Models.Sam.GlobalVarDecl
@@ -121,6 +122,18 @@ module internal VcSam =
                                      |> List.fold (fun (united:Map<Var,'b>) (key:Var,value:'b) -> united.Add(key,value)) united
                 unionManyVarMaps newUnited mapsToUnite.Tail
         unionManyVarMaps Map.empty<Var,'b> mapsToUnite
+
+    let mergeEntriesOfVarSetMap<'b when 'b : comparison> (oldEntries:Map<Var,Set<'b>>) (newEntries:Map<Var,Set<'b>>) : Map<Var,Set<'b>> =
+        let newEntries = newEntries |> Map.toSeq
+        let mergeVariables (state:Map<Var,Set<'b>>) (_var:Var,newEntries:Set<'b>) : Map<Var,Set<'b>> =
+            if not(state.ContainsKey _var) then
+                state.Add(_var,newEntries)
+            else
+                let oldEntries = oldEntries.Item _var
+                let mergedEntries = Set.union oldEntries newEntries
+                state.Add(_var,mergedEntries)
+        Seq.fold mergeVariables oldEntries newEntries
+        
 
 module internal VcSamWorkflow =
     open SafetySharp.Workflow
