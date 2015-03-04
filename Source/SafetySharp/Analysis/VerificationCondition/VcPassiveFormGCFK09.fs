@@ -70,11 +70,14 @@ module internal VcPassiveFormGCFK09 =
             MaxWriteOfPredecessor_SetForm :  Map<Var,Set<int>> //to buffer the result.
         }
             with
-                static member initial =
+                static member initial (globalVars:Set<Var>) =
+                    let maxWriteOfPredecessor =
+                        // global fields have already been written to (in earlier steps or been initialized). Set the counter there to 1
+                        globalVars |> Set.fold (fun (acc:Map<Var,int>) (elem:Var) -> acc.Add(elem,1)) Map.empty<Var,int>;
                     {
                         CalculationCache.StatementInfos = ref StatementInfos.initial
-                        CalculationCache.MaxWriteOfPredecessor = Map.empty<Var,int>;
-                        CalculationCache.MaxWriteOfPredecessor_SetForm = Map.empty<Var,Set<int>>;
+                        CalculationCache.MaxWriteOfPredecessor = maxWriteOfPredecessor;
+                        CalculationCache.MaxWriteOfPredecessor_SetForm = CalculationCache.maxWriteOfPredecessor_ToSetForm maxWriteOfPredecessor;
                     }
                 static member maxWriteOfPredecessor_ToSetForm (maxWriteOfPredecessor:Map<Var,int>): Map<Var,Set<int>> =
                     maxWriteOfPredecessor |> Map.map (fun key value -> Set.empty.Add value)
@@ -185,13 +188,140 @@ module internal VcPassiveFormGCFK09 =
                     }
                 newSigma
 
-    let calculateStatementInfos (stm:Stm) : StatementInfos =
-        // the returned StatementInfos is immutable
-        let resultingCache = calculateStatementInfosAcc [] (CalculationCache.initial) stm
-        resultingCache.StatementInfos.Value
+    let calculateStatementInfos (pgm:Pgm) : StatementInfos =
+        // the returned StatementInfos is immutable        
+        let globalVars = pgm.Globals |> List.map (fun g -> g.Var) |> Set.ofList
+        let cacheWithGlobals = CalculationCache.initial globalVars
 
+        let resultingCache = calculateStatementInfosAcc [] cacheWithGlobals pgm.Body
+        resultingCache.StatementInfos.Value
+    
+    
+    let createVariablePerVariableVersion (statementInfos:StatementInfos) (pgm:Pgm) : Map<Var*int,Var> =
+        // get written versions of the root node
+        let writeVersionsOfRoot = statementInfos.WriteVersion.Item pgm.Body.GetStatementId.Value
+        let varVersionTuples =
+            writeVersionsOfRoot |> Map.toList
+                                |> List.collect (fun (var,setOfVersions) -> setOfVersions |> Set.toList |> List.map (fun version ->(var,version)))
+        
+        let mutable takenNames:Set<string> =            
+            let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
+            let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
+            (localNames @ globalNames) |> Set.ofList
+        
+        let createNewName (based_on:Var) (version:int) : string =
+            let nameCandidate = sprintf "%s_passive%i" based_on.getName version
+            let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like takenNames (nameCandidate)
+            takenNames<-takenNames.Add(freshName)
+            freshName
+        
+        let createFreshVarsForNewVariableVersions (var:Var,version:int) =
+            if version = 1 then
+                // keep, no need for first version to create a new variable
+                ((var,version),var)
+            else
+                let freshVar = Var.Var(createNewName var version)
+                ((var,version),freshVar)
+        
+        let newMap =
+            varVersionTuples |> List.map createFreshVarsForNewVariableVersions |> Map.ofList
+        newMap
+
+        
+    let rec replaceVarInExpr (readVersions:Map<Var,Set<int>>) (versionedVarToFreshVar:Map<Var*int,Var>) (expr:Expr) : Expr =
+        match expr with
+            | Expr.Literal (_) ->
+                expr
+            | Expr.Read (_var) ->                
+                let _newVar =
+                    let readVersionSetOfVar = readVersions.Item _var
+                    assert (readVersionSetOfVar.Count = 1)
+                    versionedVarToFreshVar.Item (_var,readVersionSetOfVar.MaximumElement)
+                Expr.Read (_newVar)
+            | Expr.ReadOld (_var) ->
+                let _newVar =
+                    let readVersionSetOfVar = readVersions.Item _var
+                    assert (readVersionSetOfVar.Count = 1)
+                    versionedVarToFreshVar.Item (_var,readVersionSetOfVar.MaximumElement)
+                Expr.ReadOld (_newVar)
+            | Expr.UExpr (expr,uop) ->
+                Expr.UExpr (replaceVarInExpr readVersions versionedVarToFreshVar expr,uop)
+            | Expr.BExpr (left, bop, right) ->
+                Expr.BExpr (replaceVarInExpr readVersions versionedVarToFreshVar left, bop, replaceVarInExpr readVersions versionedVarToFreshVar right)
+
+    let rec replaceVarInStm (statementInfos:StatementInfos) (versionedVarToFreshVar:Map<Var*int,Var>) (stm:Stm) : Stm =
+        match stm with
+            | Assert (sid,expr) ->
+                let readVersions = statementInfos.ReadVersion.Item sid.Value
+                Stm.Assert(sid,replaceVarInExpr readVersions versionedVarToFreshVar expr)
+            | Assume (sid,expr) ->
+                let readVersions = statementInfos.ReadVersion.Item sid.Value
+                Stm.Assume (sid,replaceVarInExpr readVersions versionedVarToFreshVar expr)
+            | Block (sid,statements) ->
+                let newStmnts = statements |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar)
+                Stm.Block (sid,newStmnts)
+            | Choice (sid,choices) ->
+                let newChoices = choices |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar)
+                Stm.Choice (sid,newChoices)
+            | Write (sid,_var,expr) ->
+                let writeVersions = statementInfos.WriteVersion.Item sid.Value
+                let readVersions = statementInfos.ReadVersion.Item sid.Value
+                let _newVar =
+                    let writeVersionSetOfVar = writeVersions.Item _var
+                    assert (writeVersionSetOfVar.Count = 1)
+                    versionedVarToFreshVar.Item (_var,writeVersionSetOfVar.MaximumElement)
+                Stm.Write (sid,_newVar,replaceVarInExpr readVersions versionedVarToFreshVar expr)
+        
+
+
+
+
+    open SafetySharp.Workflow
+    open VcSamWorkflow
+    open SafetySharp.Models.SamHelpers
+    
+    (*
+    let transformProgramInSsaForm1 : PlainVCScmModelWorkflowFunction<unit> = workflow {
+        let! pgm = getModel
+        let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
+        let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
+        
+        let statementInfos = calculateStatementInfos pgm
+        let versionedVarToFreshVar = createVariablePerVariableVersion statementInfos pgm
+
+        
+        let sigma = Substitutions.initial globalVars localVars
+        let (newSigma,newBody) = passify (sigma,pgm.Body)
+        let newPgm =
+            let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
+            let oldGlobalsAsSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
+            let newLocals =
+                newSigma.VarToType |> Map.toList
+                                   |> List.filter (fun (_var,_) -> not(oldGlobalsAsSet.Contains _var) ) // use only those variables, which are not in global
+                                   |> List.map createLocalVarDecl
+            {
+                Pgm.Body = newBody;
+                Pgm.Globals = pgm.Globals; // globals stay globals
+                Pgm.Locals = newLocals;
+            }            
+        do! setModel newPgm
+    }
+    *)
+
+    (*
+    Draft:
+    let passify () : unit =
+        createVarsForVersions ()
+        replaceVarAccesses ()
+        introduceAssignments ()
+        checkWrittenAtMostOnce ()
+        
+        // without this last step, optimization could be done on the graph
+        replaceAssignByAssert ()
+    *)
+    
     // TODO: Graph transformation
 
     // TODO: Local optimizations of [GCFK09], which decrease the number of copies. (Proposed in this paper)    
-    // TODO: My own optimization which tries to create only as many variables as necessary for each _type_.
+    // TODO: My own optimization which tries to create only as many variables as necessary for each _type_ (createVariablePerType).
     // TODO: Optimization: If a Version is never read, we can omit the assignment :-D
