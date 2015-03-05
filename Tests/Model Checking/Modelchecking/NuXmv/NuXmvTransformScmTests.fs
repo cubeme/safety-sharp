@@ -38,25 +38,19 @@ module ScmToNuXmvTests =
     
     let internal nuXmvWriter = ExportNuXmvAstToFile()
 
+    
+    let internal inputFileToNuXmvAstWorkflow (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.ScmToNuXmv.transformConfiguration
+        }
            
     [<Test>]
     let ``nestedComponent3.scm gets converted to NuXmv`` () =
 
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        let nuXmv = ScmToNuXmv.transformConfiguration model
-        
-        
-        let workflowToExecute = workflow {
-                do! readFile inputFile
-                do! SafetySharp.Models.ScmParser.parseStringWorkflow
-                do! SafetySharp.Models.ScmWorkflow.ScmtoPlainModelState
-                do! SafetySharp.Analysis.Modelchecking.NuXmv.ScmToNuXmv.transformConfiguration
-            }
-        let nuXmv = runWorkflow_getState workflowToExecute
-
-
+        let nuXmv = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
         printf "%s" nuXmvCodeString
         ()
@@ -65,9 +59,7 @@ module ScmToNuXmvTests =
     let ``callInstHierarchy1.scm gets converted to NuXmv`` () =
 
         let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        let nuXmv = ScmToNuXmv.transformConfiguration model
+        let nuXmv = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
         
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
         printf "%s" nuXmvCodeString
@@ -77,9 +69,7 @@ module ScmToNuXmvTests =
     let ``callInstFromBeh2.scm gets converted to NuXmv`` () =
 
         let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        let nuXmv = ScmToNuXmv.transformConfiguration model
+        let nuXmv = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
         
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
         printf "%s" nuXmvCodeString
@@ -89,9 +79,7 @@ module ScmToNuXmvTests =
     let ``simpleComponentWithFaults3.scm gets converted to NuXmv`` () =
 
         let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        let nuXmv = ScmToNuXmv.transformConfiguration model
+        let nuXmv = runWorkflow_getState (inputFileToNuXmvAstWorkflow inputFile)
         
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
         printf "%s" nuXmvCodeString

@@ -40,23 +40,24 @@ open SafetySharp.Models.ScmRewriterInlineBehavior
 open SafetySharp.Models.ScmRewriterFlattenModel
 open SafetySharp.Models.ScmWorkflow
 
+module internal TestWorkflow =
+    let internal readInputFileToScm (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow
+        }
+    let internal flattenModel (model:ScmModel) = workflow {
+            do! ScmWorkflow.setPlainModelState model
+            do! ScmRewriterFlattenModel.flattenModel
+        }
+
 [<TestFixture>]
 type SingleLevelUpTests () =
 
-    let runWithUserState parser str = runParserOnString parser ScmParser.UserState.initialUserState "" str
-
-    let parseWithParser parser str =
-        match runWithUserState parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, a, b) -> failwith errorMsg
-        
-    let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
             
     [<Test>]
     member this.``A simple field in a nested component gets leveled up`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested_n22") :: Comp("nested_n2") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -69,14 +70,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
         newParentNode.Fields.Length =? 2        
         ()
@@ -84,8 +84,7 @@ type SingleLevelUpTests () =
     [<Test>]
     member this.``A simple field in a sub component gets leveled up`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested_n2") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -98,14 +97,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
         newParentNode.Fields.Length =? 2        
         ()
@@ -113,8 +111,7 @@ type SingleLevelUpTests () =
     [<Test>]
     member this.``A simple fault in a sub component gets leveled up`` () =
         let inputFile = """../../Examples/SCM/nestedComponentWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -127,14 +124,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.Faults.Length =? 1
         newParentNode.Faults.Length =? 1
         ()
@@ -142,8 +138,7 @@ type SingleLevelUpTests () =
     [<Test>]
     member this.``A required Port in a sub component gets leveled up`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nestedRequired") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -156,14 +151,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newParentNode.ReqPorts.Length =? 1     
         ()
@@ -172,8 +166,7 @@ type SingleLevelUpTests () =
     [<Test>]
     member this.``A provided Port in a sub component gets leveled up`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nestedProvided") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -186,14 +179,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ProvPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 1     
         ()
@@ -204,8 +196,7 @@ type SingleLevelUpTests () =
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
 
         let inputFile = """../../Examples/SCM/callInstHierarchy6.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -226,14 +217,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -249,8 +239,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -270,14 +259,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -293,8 +281,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy4.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -314,14 +301,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -337,8 +323,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -359,14 +344,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -382,8 +366,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nestedProvided") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -403,14 +386,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -426,8 +408,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nestedRequired") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -447,14 +428,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -470,8 +450,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested2Required") :: Comp("nestedRequired") :: Comp("simple") :: []
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -491,14 +470,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newGrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -514,8 +492,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested2Provided") :: Comp("nestedProvided") :: Comp("simple") :: []
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -535,14 +512,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newGrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -558,8 +534,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy8.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested3Required") :: Comp("nested2Required") :: Comp("nestedRequired") :: Comp("simple") :: []
         let pathOfGrandparent = pathOfChild.Tail.Tail.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -579,14 +554,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newGreatgrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -603,8 +577,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/callInstHierarchy9.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested3Required") :: Comp("nested2Required") :: Comp("nested") :: Comp("simple") :: []
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -624,14 +597,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newGrandparentNode = newModel.getDescendantUsingPath pathOfGrandparent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ReqPorts.Length =? 0
         newChildNode.ProvPorts.Length =? 0
         newChildNode.Bindings.Length =? 0
@@ -648,8 +620,7 @@ type SingleLevelUpTests () =
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
 
         let inputFile = """../../Examples/SCM/beh5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -663,14 +634,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.Formulas.Length =? 0
         newParentNode.Formulas.Length =? 3
         let rec allLocationsInParent (locExpr:LocExpr) : unit =
@@ -695,8 +665,7 @@ type SingleLevelUpTests () =
         // this function needs the map entries of provided and required ports
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
         let inputFile = """../../Examples/SCM/beh5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -710,14 +679,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.Formulas.Length =? 1
         newParentNode.Formulas.Length =? 2
         let rec allLocationsInParent (locExpr:LocExpr) : unit =
@@ -743,8 +711,7 @@ type SingleLevelUpTests () =
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
 
         let inputFile = """../../Examples/SCM/callInstHierarchyWithContracts1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -760,14 +727,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ProvPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 1
         let rec allLocationsInParent (locExpr:LocExpr) : unit =
@@ -800,8 +766,7 @@ type SingleLevelUpTests () =
         // either fake it, or assume, that levelUpReqPort and levelUpProvPort works
 
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -820,14 +785,13 @@ type SingleLevelUpTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.ProvPorts.Length =? 0
         newParentNode.ProvPorts.Length =? 2
         let rec allLocationsInParent (locExpr:LocExpr) : unit =
@@ -870,8 +834,7 @@ type FixpointIteratorTests () =
     [<Test>]
     member this.``Several fields get leveled up by using levelUpFields with the iterateToFixpoint function`` () =
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let pathOfParent = pathOfChild.Tail
         let childNode = model.getDescendantUsingPath pathOfChild
@@ -884,14 +847,13 @@ type FixpointIteratorTests () =
             return ()
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         let newChildNode = newModel.getDescendantUsingPath pathOfChild
         let newParentNode = newModel.getDescendantUsingPath pathOfParent
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newChildNode.Fields.Length =? 0
         newParentNode.Fields.Length =? 4
         ()
@@ -912,20 +874,18 @@ type CompleteLevelUpTests () =
     [<Test>]
     member this.``Example nestedComponent1 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         model.ProvPorts.Length =? 0
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         // 1 Artificial Prov Port, which contains the code of the previous nested step
         newModel.ProvPorts.Length =? 1
@@ -934,20 +894,18 @@ type CompleteLevelUpTests () =
     [<Test>]
     member this.``Example nestedComponent2 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         model.ProvPorts.Length =? 0
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         // 4 Artificial Prov Ports, which contain the code of the previous nested steps
         newModel.ProvPorts.Length =? 4
@@ -956,136 +914,122 @@ type CompleteLevelUpTests () =
     [<Test>]
     member this.``Example nestedComponent3 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example nestedComponent4 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example nestedComponent5 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchy2 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         model.ProvPorts.Length =? 0
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
         
     [<Test>]
     member this.``Example callInstHierarchy7 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         model.ProvPorts.Length =? 0
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
         
     [<Test>]
     member this.``Example callInstFromBehWithContracts1 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBehWithContracts1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchyWithFaultsAndContract1 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
         model.ProvPorts.Length =? 0
         let initialState = createPlainScmWorkFlowState model
         let workFlow = workflow {
             do! levelUpSubcomponentsWrapper
         }
         let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.Model
+        let newModel = resultingState.Model
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
         printf "%+A" newModel
-        resultingState.Tainted =? true
         newModel.Subs =? []
         ()
     

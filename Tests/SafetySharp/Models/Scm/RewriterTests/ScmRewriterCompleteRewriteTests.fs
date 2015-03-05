@@ -28,201 +28,155 @@ open FParsec
 
 open TestHelpers
 open AstTestHelpers
+open SafetySharp.Workflow
 open SafetySharp.Models
 open SafetySharp.Models.Scm
 open SafetySharp.Models.ScmHelpers
 open SafetySharp.Models.ScmRewriterBase
 open SafetySharp.Models.ScmWorkflow
 
+module internal TestWorkflow =
+    let internal readInputFileToScm (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow
+        }
+    let internal flattenModel (model:ScmModel) = workflow {
+            do! ScmWorkflow.setPlainModelState model
+            do! ScmRewriterFlattenModel.flattenModel
+        }
+
+
 [<TestFixture>]
 type CompleteRewriteTests () =
 
-    let runWithUserState parser str = runParserOnString parser ScmParser.UserState.initialUserState "" str
-
-    let parseWithParser parser str =
-        match runWithUserState parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, a, b) -> failwith errorMsg
-        
-    let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
     
     [<Test>]
     member this.``Example beh5 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/beh5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
         
     [<Test>]
     member this.``Example nestedComponent3 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh2 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh3 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh4 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh4.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
         
     [<Test>]
     member this.``Example callInstFromBeh5 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh6 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh6.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh7 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh7.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromBeh8 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBeh8.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
@@ -231,18 +185,13 @@ type CompleteRewriteTests () =
     [<Test>]
     member this.``Example callInstFromProv1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromProv1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
@@ -251,126 +200,91 @@ type CompleteRewriteTests () =
     [<Test>]
     member this.``Example callInstHierarchy1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchy2 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchy3 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchy4 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy4.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchy5 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchy6 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy6.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callDelayedSimple1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callDelayedSimple1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
@@ -379,179 +293,128 @@ type CompleteRewriteTests () =
     [<Test>]
     member this.``Example nestedComponentWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponentWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
-
     [<Test>]
     member this.``Example simpleComponentWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/simpleComponentWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example simpleComponentWithFaults2 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/simpleComponentWithFaults2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example simpleComponentWithFaults3 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/simpleComponentWithFaults3.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example behWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/behWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example behWithFaults2 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/behWithFaults2.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
         
     [<Test>]
     member this.``Example callInstFromBehWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBehWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstFromProvWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromProvWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callInstHierarchyWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
 
     [<Test>]
     member this.``Example callDelayedSimpleWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callDelayedSimpleWithFaults1.scm"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSCM input
-        //model.ProvPorts.Length =? 0
-        let initialState = createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let resultingState = SafetySharp.Workflow.runWorkflowState_getState workFlow initialState
-        let newModel = resultingState.State.getModel
+        let model = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.readInputFileToScm inputFile)
+        let resultingState = SafetySharp.Workflow.runWorkflow_getState (TestWorkflow.flattenModel model)
+        let newModel = resultingState.getModel
         printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
         printfn ""
         printfn ""
-        printf "%+A" newModel
-        resultingState.Tainted =? true
+        printfn "%+A" newModel
         newModel.Subs =? []
         ()
