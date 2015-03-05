@@ -204,15 +204,15 @@ module internal VcPassiveFormGCFK09 =
             writeVersionsOfRoot |> Map.toList
                                 |> List.collect (fun (var,setOfVersions) -> setOfVersions |> Set.toList |> List.map (fun version ->(var,version)))
         
-        let mutable takenNames:Set<string> =            
+        let takenNames:Set<string> ref = 
             let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
             let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
-            (localNames @ globalNames) |> Set.ofList
+            (localNames @ globalNames) |> Set.ofList |> ref
         
         let createNewName (based_on:Var) (version:int) : string =
             let nameCandidate = sprintf "%s_passive%i" based_on.getName version
-            let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like takenNames (nameCandidate)
-            takenNames<-takenNames.Add(freshName)
+            let freshName = SafetySharp.FreshNameGenerator.namegenerator_c_like takenNames.Value (nameCandidate)
+            takenNames:=takenNames.Value.Add(freshName)
             freshName
         
         let createFreshVarsForNewVariableVersions (var:Var,version:int) =
@@ -251,19 +251,19 @@ module internal VcPassiveFormGCFK09 =
 
     let rec replaceVarInStm (statementInfos:StatementInfos) (versionedVarToFreshVar:Map<Var*int,Var>) (stm:Stm) : Stm =
         match stm with
-            | Assert (sid,expr) ->
+            | Stm.Assert (sid,expr) ->
                 let readVersions = statementInfos.ReadVersion.Item sid.Value
                 Stm.Assert(sid,replaceVarInExpr readVersions versionedVarToFreshVar expr)
-            | Assume (sid,expr) ->
+            | Stm.Assume (sid,expr) ->
                 let readVersions = statementInfos.ReadVersion.Item sid.Value
                 Stm.Assume (sid,replaceVarInExpr readVersions versionedVarToFreshVar expr)
-            | Block (sid,statements) ->
+            | Stm.Block (sid,statements) ->
                 let newStmnts = statements |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar)
                 Stm.Block (sid,newStmnts)
-            | Choice (sid,choices) ->
+            | Stm.Choice (sid,choices) ->
                 let newChoices = choices |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar)
                 Stm.Choice (sid,newChoices)
-            | Write (sid,_var,expr) ->
+            | Stm.Write (sid,_var,expr) ->
                 let writeVersions = statementInfos.WriteVersion.Item sid.Value
                 let readVersions = statementInfos.ReadVersion.Item sid.Value
                 let _newVar =
@@ -273,15 +273,32 @@ module internal VcPassiveFormGCFK09 =
                 Stm.Write (sid,_newVar,replaceVarInExpr readVersions versionedVarToFreshVar expr)
         
 
+        
+    let rec replaceAssignmentByAssumption (stm:Stm) : Stm =
+        // Note: take care, each variable is only written _once_. TODO: Implement check                
+        match stm with
+            | Stm.Assert (sid,expr) ->
+                stm
+            | Stm.Assume (sid,expr) ->
+                stm
+            | Stm.Block (sid,statements) ->
+                let newStmnts = statements |> List.map replaceAssignmentByAssumption
+                Stm.Block (sid,newStmnts)
+            | Stm.Choice (sid,choices) ->
+                let newChoices = choices |> List.map replaceAssignmentByAssumption
+                Stm.Choice (sid,newChoices)
+            | Stm.Write (sid,_var,expr) ->
+                Stm.Assume(sid,Expr.BExpr(Expr.Read(_var),BOp.Equals,expr))
+
 
 
 
     open SafetySharp.Workflow
     open VcSamWorkflow
+    open VcSamModelForModification
     open SafetySharp.Models.SamHelpers
     
-    (*
-    let transformProgramInSsaForm1 : PlainVCScmModelWorkflowFunction<unit> = workflow {
+    let transformProgramInSsaForm1 : ModelForModificationWorkflowFunction<unit> = workflow {
         let! pgm = getModel
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
@@ -289,16 +306,27 @@ module internal VcPassiveFormGCFK09 =
         let statementInfos = calculateStatementInfos pgm
         let versionedVarToFreshVar = createVariablePerVariableVersion statementInfos pgm
 
+        // replace versionedVar by fresh Var in each statement and expression
+        let newBodyWithReplacedExprs = replaceVarInStm statementInfos versionedVarToFreshVar pgm.Body
         
-        let sigma = Substitutions.initial globalVars localVars
-        let (newSigma,newBody) = passify (sigma,pgm.Body)
+        // add Assignments
+        //todo: to add assignments, we need to introduce new statements. For that, we need new statement ids
+        let newBody = newBodyWithReplacedExprs
+        
+        let varToType =
+            let localVarToType = pgm.Locals |> List.map (fun l -> l.Var,l.Type)
+            let globalVarToType = pgm.Globals |> List.map (fun g -> g.Var,g.Type)
+            (localVarToType @ globalVarToType) |> Map.ofList
+
         let newPgm =
             let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
             let oldGlobalsAsSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
             let newLocals =
-                newSigma.VarToType |> Map.toList
-                                   |> List.filter (fun (_var,_) -> not(oldGlobalsAsSet.Contains _var) ) // use only those variables, which are not in global
-                                   |> List.map createLocalVarDecl
+                let newVersions =
+                    versionedVarToFreshVar |> Map.toList
+                                           |> List.filter (fun ((_var1,version),_var2) -> _var1 <> _var2)
+                                           |> List.map (fun ((_var1,version),_var2) -> createLocalVarDecl (_var2,varToType.Item _var1) ) 
+                (newVersions @ pgm.Locals)
             {
                 Pgm.Body = newBody;
                 Pgm.Globals = pgm.Globals; // globals stay globals
@@ -306,20 +334,23 @@ module internal VcPassiveFormGCFK09 =
             }            
         do! setModel newPgm
     }
-    *)
 
-    (*
-    Draft:
-    let passify () : unit =
-        createVarsForVersions ()
-        replaceVarAccesses ()
-        introduceAssignments ()
-        checkWrittenAtMostOnce ()
+
+
+    //to Passive Form: 
+    let transformProgramInPassiveForm1 : ModelForModificationWorkflowFunction<unit> = workflow {
+        do! transformProgramInSsaForm1
+        let! pgm = getModel        
+        // Todo: checkEveryVariableWrittenAtMostOnce ()
+        // replace all assignments by assumptions
+        let newBody = replaceAssignmentByAssumption pgm.Body
+        let newPgm =
+            { pgm with
+                Pgm.Body = newBody;
+            }
+        do! setModel newPgm
+    }
         
-        // without this last step, optimization could be done on the graph
-        replaceAssignByAssert ()
-    *)
-    
     // TODO: Graph transformation
 
     // TODO: Local optimizations of [GCFK09], which decrease the number of copies. (Proposed in this paper)    

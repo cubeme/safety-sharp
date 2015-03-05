@@ -192,7 +192,8 @@ module internal SamToNuXmv =
     let generateTransRelation (manageVariablesState:ManageVariablesState) (expr:VcSam.Expr) : ModuleElement =
         ModuleElement.TransConstraint(translateExpression manageVariablesState expr)
 
-    let transformConfiguration (pgm:Sam.Pgm) : NuXmvProgram =
+    
+    let transformConfiguration (pgm:VcSam.Pgm) : NuXmvProgram =
         // remove unwanted chars and assure, that no unwanted characters are in the string
         let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
         let pgm = changeNamesPgm changeIdsState pgm
@@ -238,6 +239,11 @@ module internal SamToNuXmv =
             NuXmvProgram.Specifications = [];
         }
 
+    let transformConfiguration_fromVcSam = workflow {
+    }
+        
+    let transformConfiguration_fromSam = workflow {
+    }
 
 (*
 

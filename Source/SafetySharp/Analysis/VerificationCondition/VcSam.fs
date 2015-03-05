@@ -67,33 +67,7 @@ module internal VcSam =
         Locals : LocalVarDecl list
         Body : Stm
     }
-
-    let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : Stm =
-        do stmIdCounter := stmIdCounter.Value + 1
-        let freshId = Some(stmIdCounter.Value)
-        match stm with
-            | SafetySharp.Models.Sam.Stm.Block(statements) ->
-                Stm.Block(freshId,statements |> List.map (translateStm stmIdCounter) )
-            | SafetySharp.Models.Sam.Stm.Choice (clauses) ->                
-                if clauses = [] then
-                    (Stm.Assume(freshId,Expr.Literal(Val.BoolVal(false))))
-                else
-                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Stm =
-                        do stmIdCounter := stmIdCounter.Value + 1
-                        let freshIdForGuard = Some(stmIdCounter.Value)
-                        Stm.Block(freshId,[Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
-                    Stm.Choice(freshId,clauses |> List.map translateClause)
-            | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
-                Stm.Write (freshId,variable,expression)
-
-    let translatePgm (pgm : SafetySharp.Models.Sam.Pgm ) : Pgm =
-        let stmIdCounter = ref (0)
-        {
-            Pgm.Globals = pgm.Globals;
-            Pgm.Locals = pgm.Locals;
-            Pgm.Body = translateStm stmIdCounter pgm.Body;
-        }
-                
+                    
     let rec createAndedExpr (exprs:Expr list) : Expr =
         if exprs.IsEmpty then
             Expr.Literal(Val.BoolVal(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
@@ -157,44 +131,134 @@ module internal VcSamWorkflow =
         do! updateState newState
     }
 
-    type PlainVcSamModel(model:VcSam.Pgm) =
+    
+    type VcExpr = SafetySharp.Models.Sam.Expr
+    type SamToVcWorkflowFunction<'stateWithSam> = WorkflowFunction<'stateWithSam,VcExpr,unit>
+
+
+
+    // VcSam: PlainModel
+    type PlainModel(model:VcSam.Pgm) =
         class end
             with
                 member this.getModel : VcSam.Pgm = model
-                interface IVcSamModel<PlainVcSamModel> with
+                interface IVcSamModel<PlainModel> with
                     member this.getModel : VcSam.Pgm = model
-                    member this.setModel (model:VcSam.Pgm) = PlainVcSamModel(model)
+                    member this.setModel (model:VcSam.Pgm) = PlainModel(model)
     
-    type PlainVCScmModelWorkflowState = WorkflowState<PlainVcSamModel>
-    type PlainVCScmModelWorkflowFunction<'returnType> = WorkflowFunction<PlainVcSamModel,PlainVcSamModel,'returnType>
+    type PlainModelWorkflowState = WorkflowState<PlainModel>
+    type PlainModelWorkflowFunction<'returnType> = WorkflowFunction<PlainModel,PlainModel,'returnType>
 
-    let createPlainScmWorkFlowState (model:VcSam.Pgm) : PlainVCScmModelWorkflowState =
-        WorkflowState<PlainVcSamModel>.stateInit (PlainVcSamModel(model))
+    let createPlainModelWorkFlowState (model:VcSam.Pgm) : PlainModelWorkflowState =
+        WorkflowState<PlainModel>.stateInit (PlainModel(model))
     
     let setPlainModelState (model:VcSam.Pgm) = workflow {
-        do! updateState (PlainVcSamModel(model))
+        do! updateState (PlainModel(model))
     }
     
-    let toPlainModelState<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,PlainVcSamModel,unit> = workflow {
+    let toPlainModelState<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,PlainModel,unit> = workflow {
         let! state = getState
         do! setPlainModelState state.getModel
     }
+    
 
+module internal VcSamModelForModification =
+    open SafetySharp.Workflow
+    open VcSamWorkflow
+
+    let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : VcSam.Stm =
+        do stmIdCounter := stmIdCounter.Value + 1
+        let freshId = Some(stmIdCounter.Value)
+        match stm with
+            | SafetySharp.Models.Sam.Stm.Block(statements) ->
+                VcSam.Stm.Block(freshId,statements |> List.map (translateStm stmIdCounter) )
+            | SafetySharp.Models.Sam.Stm.Choice (clauses) ->                
+                if clauses = [] then
+                    (VcSam.Stm.Assume(freshId,VcSam.Expr.Literal(VcSam.Val.BoolVal(false))))
+                else
+                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : VcSam.Stm =
+                        do stmIdCounter := stmIdCounter.Value + 1
+                        let freshIdForGuard = Some(stmIdCounter.Value)
+                        VcSam.Stm.Block(freshId,[VcSam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
+                    VcSam.Stm.Choice(freshId,clauses |> List.map translateClause)
+            | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
+                VcSam.Stm.Write (freshId,variable,expression)
+                
+    let translatePgm (stmIdCounter:int ref) (pgm : SafetySharp.Models.Sam.Pgm ) : VcSam.Pgm =
+        {
+            VcSam.Pgm.Globals = pgm.Globals;
+            VcSam.Pgm.Locals = pgm.Locals;
+            VcSam.Pgm.Body = translateStm stmIdCounter pgm.Body;
+        }
+        
+    let rec getMaximalStmId (stm:VcSam.Stm) : int =
+        match stm with
+            | VcSam.Stm.Assert (sid,_) ->
+                sid.Value
+            | VcSam.Stm.Assume (sid,_) ->
+                sid.Value
+            | VcSam.Stm.Block (sid,statements) ->
+                statements |> List.map getMaximalStmId
+                           |> List.max
+            | VcSam.Stm.Choice (sid,choices) ->
+                choices |> List.map getMaximalStmId
+                        |> List.max
+            | VcSam.Stm.Write (sid,_,_) ->
+                sid.Value
+
+    // VcSam: Model with generator for fresh versions of variables
+    type ModelForModification =
+        {
+            StmIdCounter : int ref;
+            Model : VcSam.Pgm;
+        }
+            with
+                static member initial (model:SafetySharp.Models.Sam.Pgm) =
+                    let counter = ref 0
+                    {
+                        ModelForModification.StmIdCounter = counter;
+                        ModelForModification.Model = translatePgm counter model;
+                    }                    
+                static member initial (model:VcSam.Pgm) =
+                    let counter = ref (getMaximalStmId model.Body)
+                    {
+                        ModelForModification.StmIdCounter = counter;
+                        ModelForModification.Model = model;
+                    }
+                member this.getFreshId (): int =
+                    do this.StmIdCounter:=this.StmIdCounter.Value + 1
+                    this.StmIdCounter.Value
+
+                interface IVcSamModel<ModelForModification> with
+                    member this.getModel : VcSam.Pgm = this.Model
+                    member this.setModel (model:VcSam.Pgm) =
+                        { this with
+                            ModelForModification.Model = model;
+                        }
+    
+    type ModelForModificationWorkflowState = WorkflowState<ModelForModification>
+    type ModelForModificationWorkflowFunction<'returnType> = WorkflowFunction<ModelForModification,ModelForModification,'returnType>
+
+    let setModelForModificationState (model:VcSam.Pgm) = workflow {
+        let! oldState = getModel
+        do! setModel model
+    }
+    
+    
     open SafetySharp.Models
-    
-    type VcExpr = SafetySharp.Models.Sam.Expr
-
-    type SamToVcWorkflowFunction<'stateWithSam> = WorkflowFunction<'stateWithSam,VcExpr,unit>
-    
-    type SamToVcSamWorkflowFunction<'stateWithSam> = WorkflowFunction<'stateWithSam,PlainVcSamModel,unit>
-
+    type SamToVcSamWorkflowFunction<'stateWithSam> = WorkflowFunction<'stateWithSam,ModelForModification,unit>
     type VcSamToVcWorkflowFunction<'stateWithVcSam> = WorkflowFunction<'stateWithVcSam,VcExpr,unit>
         
     let transformSamToVcSam<'stateWithSam when 'stateWithSam :> SamWorkflow.ISamModel<'stateWithSam>> :
                         SamToVcSamWorkflowFunction<'stateWithSam> = workflow {
-        let! samModel = SamWorkflow.getModel
-        let vcSamModel = VcSam.translatePgm samModel
-        do! setPlainModelState vcSamModel
+        let! model = SafetySharp.Models.SamWorkflow.getModel
+        let newModel = (ModelForModification.initial model)
+        do! updateState newModel
     }
 
-    
+    let transformIVcSamToVcModelForModification<'state when 'state :> IVcSamModel<'state>>
+                     : WorkflowFunction<'state,ModelForModification,unit> = workflow {
+        let! model = getModel
+        let newModel = (ModelForModification.initial model)
+        do! updateState newModel
+    }

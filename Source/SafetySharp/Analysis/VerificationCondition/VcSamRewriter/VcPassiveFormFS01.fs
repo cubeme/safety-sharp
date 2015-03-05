@@ -294,9 +294,10 @@ module internal VcPassiveFormFS01 =
                     
     open SafetySharp.Workflow
     open VcSamWorkflow
+    open VcSamModelForModification
     open SafetySharp.Models.SamHelpers
 
-    let passifyPgm : PlainVCScmModelWorkflowFunction<unit> = workflow {
+    let passifyPgm : ModelForModificationWorkflowFunction<unit> = workflow {
         let! pgm = getModel
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
