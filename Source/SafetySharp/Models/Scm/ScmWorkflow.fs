@@ -35,16 +35,25 @@ module internal ScmWorkflow =
         end
         
         
-    let getModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
+    let getIscmModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
         let! state = getState
         let model = state.getModel
         return model
-    }
+    }    
     
-    let setModel<'state when 'state :> IScmModel<'state>> (model:ScmModel) : WorkflowFunction<'state,'state,unit> = workflow {
+    let setIscmModel<'state when 'state :> IScmModel<'state>> (model:ScmModel) : WorkflowFunction<'state,'state,unit> = workflow {
         let! state = getState
         let newState = state.setModel model
         do! updateState newState
+    }
+    
+    let getScmModel : WorkflowFunction<Scm.CompDecl,Scm.CompDecl,Scm.CompDecl> = workflow {
+        let! model = getState
+        return model
+    }
+
+    let setScmModel<'oldIrrelevantState> (model:ScmModel) : WorkflowFunction<'oldIrrelevantState,Scm.CompDecl,unit> = workflow {
+        do! updateState model
     }
 
     type PlainScmModel(model:ScmModel) =
@@ -65,8 +74,18 @@ module internal ScmWorkflow =
         do! updateState (PlainScmModel(model))
     }
     
-    let toPlainModelState<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,PlainScmModel,unit> = workflow {
+    let iscmToPlainModelState<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,PlainScmModel,unit> = workflow {
         let! state = getState
         do! setPlainModelState state.getModel
     }
-
+    
+    let scmToPlainModelState : WorkflowFunction<Scm.CompDecl,PlainScmModel,unit> = workflow {
+        let! state = getState
+        do! setPlainModelState state
+    }
+        
+    let iscmToScmState<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,Scm.CompDecl,unit> = workflow {
+        let! state = getState
+        do! SafetySharp.Workflow.updateState state.getModel
+    }
+    

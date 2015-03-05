@@ -30,6 +30,7 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 
+open SafetySharp.Workflow
 open SafetySharp.Analysis.Modelchecking.NuXmv
 
 
@@ -37,23 +38,19 @@ open SafetySharp.Analysis.Modelchecking.NuXmv
 [<TestFixture>]
 module SamToNuXmvTests =
 
-    let parseWithParser parser str =
-        match run parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, _, _) -> failwith errorMsg
-
-    let internal parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
-
     let internal nuXmvWriter = ExportNuXmvAstToFile()
-
            
     [<Test>]
     let ``simpleBoolean1.sam gets converted to nuXmv`` () =
         
         let inputFile = """../../Examples/SAM/simpleBoolean1.sam"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSam input
-        let nuXmv = SamToNuXmv.transformConfiguration model
+
+        let workflowToExecute = workflow {
+                do! readFile inputFile
+                do! SafetySharp.Models.SamParser.parseStringWorkflow
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmv.transformConfiguration_fromSam
+            }
+        let nuXmv = runWorkflow_getState workflowToExecute
 
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
         printf "%s" nuXmvCodeString

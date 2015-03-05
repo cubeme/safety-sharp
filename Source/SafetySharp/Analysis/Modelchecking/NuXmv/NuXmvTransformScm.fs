@@ -33,11 +33,10 @@ module internal ScmToNuXmv =
     let transformConfiguration<'state when 'state :> IScmModel<'state>>
                         : WorkflowFunction<'state,NuXmvProgram,unit> = workflow {
         
-        let! scmModel = ScmWorkflow.getModel
+        //let! scmModel = ScmWorkflow.getIscmModel
         //do! VcSamModelForModification.transformSamToVcSam
-        do! SafetySharp.Models.ScmToSam.transformScmToSamWorkflow
+        do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SamToNuXmv.transformConfiguration_fromSam
-        return ()        
     }
 
 

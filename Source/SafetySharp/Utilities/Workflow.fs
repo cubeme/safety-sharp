@@ -181,13 +181,22 @@ module internal Workflow =
         // no cancellation token
         let result,newWfState = s WorkflowState<unit>.emptyInit
         result
-          
+        
     let runWorkflow_getState (WorkflowFunction s) =
+        // no cancellation token
+        let result,newWfState = s WorkflowState<unit>.emptyInit
+        newWfState.State
+          
+    let runWorkflow_getWfState (WorkflowFunction s) =
         // no cancellation token
         let result,newWfState = s WorkflowState<unit>.emptyInit
         newWfState
           
     let runWorkflowState_getState<'oldState,'newState,'returnType> (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>)) (initialState:WorkflowState<'oldState>) =
+        let result,newWfState = s (initialState)
+        newWfState.State
+        
+    let runWorkflowState_getWfState<'oldState,'newState,'returnType> (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>)) (initialState:WorkflowState<'oldState>) =
         let result,newWfState = s (initialState)
         newWfState
         
@@ -219,6 +228,15 @@ module internal Workflow =
 
     let workflow = new Workflow()
     
+
+
+
+    ////////////// Basic Workflow element
+    let readFile<'oldIrrelevantState> (inputFile:string) : WorkflowFunction<'oldIrrelevantState,string,unit> = workflow {
+        let input = System.IO.File.ReadAllText inputFile
+        do! updateState input
+    }
+
 
     ////////////// EXAMPLE
 

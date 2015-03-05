@@ -393,7 +393,7 @@ module internal ScmRewriterInlineBehavior =
                                 StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
                         state.Model.replaceStep (stepDecl,newStep) 
-            do! ScmWorkflow.setModel newModel
+            do! ScmWorkflow.setIscmModel newModel
             do! removeInlineBehaviorState
         }
 

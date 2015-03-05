@@ -350,7 +350,7 @@ module internal ScmRewriterConvertFaults =
     
     let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,ScmRewriterConvertFaultsState,unit> = workflow {
-        let! model = getModel
+        let! model = getIscmModel
         do! updateState (createConvertFaultsStateForRootComponent model)
         do! convertFaults
     }

@@ -30,20 +30,12 @@ open FParsec
 open TestHelpers
 open AstTestHelpers
 
+open SafetySharp.Workflow
 open SafetySharp.Analysis.Modelchecking.NuXmv
 
 [<TestFixture>]
 module ScmToNuXmvTests =
     
-    let internal runWithUserState parser str = runParserOnString parser SafetySharp.Models.ScmParser.UserState.initialUserState "" str
-
-    let internal parseWithParser parser str =
-        match runWithUserState parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, a, b) -> failwith errorMsg
-        
-    let internal parseSCM str = parseWithParser (SafetySharp.Models.ScmParser.scmFile .>> eof) str
-
     let internal nuXmvWriter = ExportNuXmvAstToFile()
 
            
@@ -55,6 +47,16 @@ module ScmToNuXmvTests =
         let model = parseSCM input
         let nuXmv = ScmToNuXmv.transformConfiguration model
         
+        
+        let workflowToExecute = workflow {
+                do! readFile inputFile
+                do! SafetySharp.Models.ScmParser.parseStringWorkflow
+                do! SafetySharp.Models.ScmWorkflow.ScmtoPlainModelState
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.ScmToNuXmv.transformConfiguration
+            }
+        let nuXmv = runWorkflow_getState workflowToExecute
+
+
         let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
         printf "%s" nuXmvCodeString
         ()

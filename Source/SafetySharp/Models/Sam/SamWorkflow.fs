@@ -24,45 +24,10 @@ namespace SafetySharp.Models
 
 module internal SamWorkflow =
     open SafetySharp.Workflow
-
-    type ISamModel<'state> =
-        interface
-            abstract getModel : Sam.Pgm
-            abstract setModel : Sam.Pgm -> 'state
-        end
-        
-        
-    let getModel<'state when 'state :> ISamModel<'state>> : WorkflowFunction<'state,'state,Sam.Pgm> = workflow {
-        let! state = getState
-        let model = state.getModel
-        return model
-    }
+            
+    let getSamModel : WorkflowFunction<Sam.Pgm,Sam.Pgm,Sam.Pgm> =
+        getState
     
-    let setModel<'state when 'state :> ISamModel<'state>> (model:Sam.Pgm) : WorkflowFunction<'state,'state,unit> = workflow {
-        let! state = getState
-        let newState = state.setModel model
-        do! updateState newState
-    }
-
-    type PlainSamModel(model:Sam.Pgm) =
-        class end
-            with
-                member this.getModel : Sam.Pgm = model
-                interface ISamModel<PlainSamModel> with
-                    member this.getModel : Sam.Pgm = model
-                    member this.setModel (model:Sam.Pgm) = PlainSamModel(model)
-    
-    type PlainScmModelWorkflowState = WorkflowState<PlainSamModel>
-    type PlainScmModelWorkflowFunction<'returnType> = WorkflowFunction<PlainSamModel,PlainSamModel,'returnType>
-
-    let createPlainScmWorkFlowState (model:Sam.Pgm) : PlainScmModelWorkflowState =
-        WorkflowState<PlainSamModel>.stateInit (PlainSamModel(model))
-    
-    let setPlainModelState (model:Sam.Pgm) = workflow {
-        do! updateState (PlainSamModel(model))
-    }
-    
-    let toPlainModelState<'state when 'state :> ISamModel<'state>> : WorkflowFunction<'state,PlainSamModel,unit> = workflow {
-        let! state = getState
-        do! setPlainModelState state.getModel
+    let setSamModel<'oldIrrelevantState> (model:Sam.Pgm) : WorkflowFunction<'oldIrrelevantState,Sam.Pgm,unit> = workflow {
+        do! updateState model
     }

@@ -27,6 +27,7 @@ open SafetySharp
 open SafetySharp.Modeling
 open SafetySharp.Models
 open SafetySharp.Analysis.Modelchecking.PromelaSpin
+open SafetySharp.Workflow
 
 [<Sealed>]
 type SpinModelChecker (model : Model) =
@@ -38,7 +39,13 @@ type SpinModelChecker (model : Model) =
     let scm = ssm |> SsmLowering.lowerPostValidation model |> SsmToScm.transform
     do printf "%s" (ScmToString.toString scm)
    // do printf "======================================="
-    let spin = ScmToPromela.transformConfiguration scm
+   
+    let workflowToExecute = workflow {
+            do! ScmWorkflow.setPlainModelState scm
+            do! ScmToPromela.transformConfiguration
+        }
+    let spin = runWorkflow_getState workflowToExecute
+
     //do printf "%+A" spin
     let spinWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
     let spincode = spinWriter.Export spin

@@ -43,7 +43,7 @@ module internal ScmRewriterFlattenModel =
     //  * inline behaviors
 
     let flattenModel<'oldState when 'oldState :> IScmModel<'oldState>> :
-                        WorkflowFunction<'oldState,PlainScmModel,unit> = workflow {
+                        WorkflowFunction<'oldState,Scm.CompDecl,unit> = workflow {
             /// normalize
             do! normalizeWrapper
             
@@ -66,7 +66,7 @@ module internal ScmRewriterFlattenModel =
             //do! assertNoPortCall
             //do! checkConsistency
 
-            do! toPlainModelState
+            do! iscmToScmState
         }
 
 

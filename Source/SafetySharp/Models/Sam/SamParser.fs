@@ -170,3 +170,21 @@ module internal SamParser =
     
     let samFile =
         spaces >>. pgm_ws
+
+
+
+        
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmWorkflow
+
+    let parseStringWorkflow : WorkflowFunction<string,Pgm,unit> = workflow {
+        let parseWithParser parser str =
+            match run parser str with
+            | Success(result, _, _)   -> result
+            | Failure(errorMsg, _, _) -> failwith errorMsg
+
+            
+        let! model = SafetySharp.Workflow.getState
+        let parsedModel = parseWithParser (samFile .>> eof) model
+        do! SafetySharp.Workflow.updateState parsedModel
+    }

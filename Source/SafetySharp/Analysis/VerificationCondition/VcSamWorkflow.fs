@@ -23,6 +23,26 @@
 namespace SafetySharp.Analysis.VerificationCondition
 module internal VcSamWorkflow =
     open SafetySharp.Workflow
+
+    type VcExpr = SafetySharp.Models.Sam.Expr
+    type TransformToVcWorkflowFunction<'source> = WorkflowFunction<'source,VcExpr,unit>
+
+    
+    let getVcSamModel : WorkflowFunction<VcSam.Pgm,VcSam.Pgm,VcSam.Pgm> =
+        getState
+    
+    let setVcSamModel<'oldIrrelevantState> (model:VcSam.Pgm) : WorkflowFunction<'oldIrrelevantState,VcSam.Pgm,unit> = workflow {
+        do! updateState model
+    }
+
+
+    
+
+module internal VcSamModelForModification =
+    open SafetySharp.Workflow
+    open VcSamWorkflow
+
+    
     type VcSamPgm = VcSam.Pgm
 
     type IVcSamModel<'state> =
@@ -31,52 +51,19 @@ module internal VcSamWorkflow =
             abstract setModel : VcSam.Pgm -> 'state
         end
            
-    let getModel<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,'state,VcSam.Pgm> = workflow {
+    let getVcSamModel<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,'state,VcSam.Pgm> = workflow {
         let! state = getState
         let model = state.getModel
         return model
     }    
     
-    let setModel<'state when 'state :> IVcSamModel<'state>> (model:VcSam.Pgm) : WorkflowFunction<'state,'state,unit> = workflow {
+    let setVcSamModel<'state when 'state :> IVcSamModel<'state>> (model:VcSam.Pgm) : WorkflowFunction<'state,'state,unit> = workflow {
         let! state = getState
         let newState = state.setModel model
         do! updateState newState
     }
 
-    
-    type VcExpr = SafetySharp.Models.Sam.Expr
-    type SamToVcWorkflowFunction<'stateWithSam> = WorkflowFunction<'stateWithSam,VcExpr,unit>
 
-
-
-    // VcSam: PlainModel
-    type PlainModel(model:VcSam.Pgm) =
-        class end
-            with
-                member this.getModel : VcSam.Pgm = model
-                interface IVcSamModel<PlainModel> with
-                    member this.getModel : VcSam.Pgm = model
-                    member this.setModel (model:VcSam.Pgm) = PlainModel(model)
-    
-    type PlainModelWorkflowState = WorkflowState<PlainModel>
-    type PlainModelWorkflowFunction<'returnType> = WorkflowFunction<PlainModel,PlainModel,'returnType>
-
-    let createPlainModelWorkFlowState (model:VcSam.Pgm) : PlainModelWorkflowState =
-        WorkflowState<PlainModel>.stateInit (PlainModel(model))
-    
-    let setPlainModelState (model:VcSam.Pgm) = workflow {
-        do! updateState (PlainModel(model))
-    }
-    
-    let toPlainModelState<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,PlainModel,unit> = workflow {
-        let! state = getState
-        do! setPlainModelState state.getModel
-    }
-    
-
-module internal VcSamModelForModification =
-    open SafetySharp.Workflow
-    open VcSamWorkflow
 
     let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : VcSam.Stm =
         do stmIdCounter := stmIdCounter.Value + 1
@@ -150,27 +137,19 @@ module internal VcSamModelForModification =
     
     type ModelForModificationWorkflowState = WorkflowState<ModelForModification>
     type ModelForModificationWorkflowFunction<'returnType> = WorkflowFunction<ModelForModification,ModelForModification,'returnType>
-
-    let setModelForModificationState (model:VcSam.Pgm) = workflow {
-        let! oldState = getModel
-        do! setModel model
-    }
-    
     
     open SafetySharp.Models
-    type SamToVcSamWorkflowFunction<'stateWithSam> = WorkflowFunction<'stateWithSam,ModelForModification,unit>
-    type VcSamToVcWorkflowFunction<'stateWithVcSam> = WorkflowFunction<'stateWithVcSam,VcExpr,unit>
-        
-    let transformSamToVcSam<'stateWithSam when 'stateWithSam :> SamWorkflow.ISamModel<'stateWithSam>> :
-                        SamToVcSamWorkflowFunction<'stateWithSam> = workflow {
-        let! model = SafetySharp.Models.SamWorkflow.getModel
+    type TransformToModelForVerificationWorkflowFunction<'source> = WorkflowFunction<'source,ModelForModification,unit>
+            
+    let transformSamToVcSam : TransformToModelForVerificationWorkflowFunction<Sam.Pgm> = workflow {
+        let! model = SafetySharp.Models.SamWorkflow.getSamModel
         let newModel = (ModelForModification.initial model)
         do! updateState newModel
     }
 
     let transformIVcSamToVcModelForModification<'state when 'state :> IVcSamModel<'state>>
                      : WorkflowFunction<'state,ModelForModification,unit> = workflow {
-        let! model = getModel
+        let! model = getVcSamModel
         let newModel = (ModelForModification.initial model)
         do! updateState newModel
     }

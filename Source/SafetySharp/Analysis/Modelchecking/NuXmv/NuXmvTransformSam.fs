@@ -242,13 +242,12 @@ module internal SamToNuXmv =
     let transformConfiguration_fromVcSam : WorkflowFunction<VcModelForModification,NuXmvProgram,unit> = workflow {
         let reservedNames = Set.empty<string>
         do! SafetySharp.Analysis.VerificationCondition.VcsamrChangeIdentifier.changeIdentifiers reservedNames
-        let! pgm = VcSamWorkflow.getModel
+        let! pgm = VcSamModelForModification.getVcSamModel
         let nuXmvProgram = transformConfiguration pgm
         do! updateState nuXmvProgram
     }
         
-    let transformConfiguration_fromSam<'stateWithSam when 'stateWithSam :> SamWorkflow.ISamModel<'stateWithSam>>
-                : WorkflowFunction<'stateWithSam,NuXmvProgram,unit> = workflow {
+    let transformConfiguration_fromSam : WorkflowFunction<Sam.Pgm,NuXmvProgram,unit> = workflow {
         do! VcSamModelForModification.transformSamToVcSam
         do! transformConfiguration_fromVcSam
         return ()

@@ -229,7 +229,7 @@ module internal ScmRewriterConvertDelayedBindings =
     let selectRootComponentForConvertingDelayedBindings<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,unit> = workflow {
         // Use As1
-        let! model = getModel
+        let! model = getIscmModel
         let newState =
             {
                 ScmRewriterConvertDelayedBindingsState.Model = model;

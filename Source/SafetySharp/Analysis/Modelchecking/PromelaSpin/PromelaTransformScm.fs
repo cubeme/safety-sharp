@@ -26,7 +26,17 @@ open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
 open SafetySharp.Models
 
 module internal ScmToPromela =
+
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmWorkflow
+    open SafetySharp.Analysis.VerificationCondition
                 
-    let transformConfiguration (model:Scm.CompDecl) : PrSpec =        
-        let samModel = ScmToSam.transformScmToSam model
-        SamToPromela.transformConfiguration samModel
+    let transformConfiguration<'state when 'state :> IScmModel<'state>>
+                        : WorkflowFunction<'state,PrSpec,unit> = workflow {
+        do! SafetySharp.Models.ScmToSam.transformIscmToSam
+        let! samModel = SamWorkflow.getSamModel
+        let newPromelaSpec = SamToPromela.transformConfiguration samModel
+        do! updateState newPromelaSpec        
+    }
+
+              

@@ -126,12 +126,12 @@ module internal VcsamrChangeIdentifier =
 
     
     let changeIdentifiers (forbiddenNames:Set<string>) : ModelForModificationWorkflowFunction<unit> = workflow {
-        let! pgm = getModel
+        let! pgm = getVcSamModel
         
         let changeIdsState = ChangeIdentifierState.initial forbiddenNames SafetySharp.FreshNameGenerator.namegenerator_c_like
         let newPgm = changeNamesPgm changeIdsState pgm
         
-        do! setModel newPgm
+        do! setVcSamModel newPgm
     }
 
 

@@ -139,25 +139,16 @@ module internal ScmToSam =
         }
 
     ////////////////////////////////////////////////
-
-    let transformScmToSam (model : Scm.CompDecl) : Sam.Pgm =
-        // first level up and inline everything in Sam, then produce the appropriate Sam.Pgm.
-        // The latter is just a recursive walk through the Scm-Datatypes and return the equivalent Sam-Datatypes
-        let initialState = ScmWorkflow.createPlainScmWorkFlowState model
-        let workFlow = ScmRewriterFlattenModel.flattenModel
-        let (_,resultingState) = SafetySharp.Workflow.runWorkflowState workFlow initialState
-        let newModel = resultingState.State.getModel
-        //printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
-        transformCompDeclToPgm newModel
-        
+            
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmWorkflow
     open SafetySharp.Models.SamWorkflow
 
-    let transformScmToSamWorkflow<'state when 'state :> IScmModel<'state>>
-                        : WorkflowFunction<'state,PlainSamModel,unit> = workflow {
-        let! model = ScmWorkflow.getModel
-        let newModel = transformScmToSam (model : Scm.CompDecl) : Sam.Pgm
-        do! SamWorkflow.setPlainModelState newModel
+    let transformIscmToSam<'state when 'state :> IScmModel<'state>>
+                        : WorkflowFunction<'state,Sam.Pgm,unit> = workflow {
+        do! ScmRewriterFlattenModel.flattenModel
+        let! model = ScmWorkflow.getScmModel
+        let newModel = transformCompDeclToPgm model
+        do! SamWorkflow.setSamModel newModel
     }
 
