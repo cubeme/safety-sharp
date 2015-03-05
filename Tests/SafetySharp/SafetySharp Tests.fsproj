@@ -74,9 +74,10 @@
     <Compile Include="Models\Ssm\SsmLowering.LocalBindings.fs" />
     <Compile Include="Models\Ssm\SsmLowering.VirtualDispatch.fs" />
     <Compile Include="Models\Ssm\SsmValidations.fs" />
+    <Compile Include="Models\Scm\ScmTestHelpersWorkflowModule.fs" />
+    <Compile Include="Models\Scm\RewriterTests\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />
-    <Compile Include="Models\Scm\ScmRewriterTests.fs" />
     <Compile Include="Models\Scm\ScmHelpersTests.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheckTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />

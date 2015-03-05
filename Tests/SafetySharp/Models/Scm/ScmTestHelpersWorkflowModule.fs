@@ -1,6 +1,6 @@
 ﻿// The MIT License (MIT)
 // 
-// Copyright (c) 2014-2015, Institute for Software & Systems Engineeringgineering
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,34 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Transformations
+namespace Models.Scm
 
-open System
-open NUnit.Framework
-open FParsec
+module internal ScmTestHelpersWorkflowModule =
+    
+    open SafetySharp.Workflow
+    open SafetySharp.Models
+    open SafetySharp.Models
 
-open TestHelpers
-open AstTestHelpers
-open SafetySharp.Workflow
-open SafetySharp.Models
-open SafetySharp.Models.Scm
-open SafetySharp.Models.ScmToSam
 
-module internal TransformationsTestHelpersWorkflowModule =
-    let internal readInputFileAndTransformToSam (inputFile:string) = workflow {
+    let internal readInputFileToScm (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! SafetySharp.Models.ScmToSam.transformIscmToSam
         }
-
-[<TestFixture>]
-type ``ScmToSam transformations`` () =
-            
-    [<Test>]
-    member this.``nestedComponent3.scm gets converted to sam`` () =
-        let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
-        let samModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSam inputFile)
-        ()
-
-
+    let internal flattenModel (model:Scm.CompDecl) = workflow {
+            do! ScmWorkflow.setPlainModelState model
+            do! ScmRewriterFlattenModel.flattenModel
+        }
