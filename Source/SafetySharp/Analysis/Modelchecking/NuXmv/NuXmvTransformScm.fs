@@ -25,9 +25,23 @@ namespace SafetySharp.Analysis.Modelchecking.NuXmv
 open SafetySharp.Models
 
 module internal ScmToNuXmv =
+    
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmWorkflow
+    open SafetySharp.Analysis.VerificationCondition
                 
-    let transformConfiguration (model:Scm.CompDecl) : SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvProgram =        
-        let samModel = ScmToSam.transformScmToSam model
-        SamToNuXmv.transformConfiguration samModel
+    let transformConfiguration<'state when 'state :> IScmModel<'state>>
+                        : WorkflowFunction<'state,NuXmvProgram,unit> = workflow {
+        
+        let! scmModel = ScmWorkflow.getModel
+        //do! VcSamModelForModification.transformSamToVcSam
+        do! SafetySharp.Models.ScmToSam.transformScmToSamWorkflow
+        do! SamToNuXmv.transformConfiguration_fromSam
+        return ()        
+    }
+
+
+
+
         
 

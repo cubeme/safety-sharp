@@ -194,14 +194,6 @@ module internal SamToNuXmv =
 
     
     let transformConfiguration (pgm:VcSam.Pgm) : NuXmvProgram =
-        // remove unwanted chars and assure, that no unwanted characters are in the string
-        let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
-        let pgm = changeNamesPgm changeIdsState pgm
-
-        // transform to VcSam-Metamodel
-        let pgm = VcSam.translatePgm pgm
-
-
         // create the manageVariablesState: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
         let manageVariablesState = ManageVariablesState.initial pgm.Globals SafetySharp.FreshNameGenerator.namegenerator_c_like
@@ -239,10 +231,27 @@ module internal SamToNuXmv =
             NuXmvProgram.Specifications = [];
         }
 
-    let transformConfiguration_fromVcSam = workflow {
+
+
+
+    open SafetySharp.Workflow
+    open SafetySharp.Analysis.VerificationCondition
+
+    type VcModelForModification = VcSamModelForModification.ModelForModification
+
+    let transformConfiguration_fromVcSam : WorkflowFunction<VcModelForModification,NuXmvProgram,unit> = workflow {
+        let reservedNames = Set.empty<string>
+        do! SafetySharp.Analysis.VerificationCondition.VcsamrChangeIdentifier.changeIdentifiers reservedNames
+        let! pgm = VcSamWorkflow.getModel
+        let nuXmvProgram = transformConfiguration pgm
+        do! updateState nuXmvProgram
     }
         
-    let transformConfiguration_fromSam = workflow {
+    let transformConfiguration_fromSam<'stateWithSam when 'stateWithSam :> SamWorkflow.ISamModel<'stateWithSam>>
+                : WorkflowFunction<'stateWithSam,NuXmvProgram,unit> = workflow {
+        do! VcSamModelForModification.transformSamToVcSam
+        do! transformConfiguration_fromVcSam
+        return ()
     }
 
 (*

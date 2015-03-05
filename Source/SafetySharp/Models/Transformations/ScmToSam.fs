@@ -150,3 +150,14 @@ module internal ScmToSam =
         //printf "%s" (SafetySharp.Models.Scm.ScmAstToString.exportModel newModel)
         transformCompDeclToPgm newModel
         
+    open SafetySharp.Workflow
+    open SafetySharp.Models.ScmWorkflow
+    open SafetySharp.Models.SamWorkflow
+
+    let transformScmToSamWorkflow<'state when 'state :> IScmModel<'state>>
+                        : WorkflowFunction<'state,PlainSamModel,unit> = workflow {
+        let! model = ScmWorkflow.getModel
+        let newModel = transformScmToSam (model : Scm.CompDecl) : Sam.Pgm
+        do! SamWorkflow.setPlainModelState newModel
+    }
+
