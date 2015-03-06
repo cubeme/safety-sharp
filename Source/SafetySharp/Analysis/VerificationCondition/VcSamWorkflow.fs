@@ -124,10 +124,6 @@ module internal VcSamModelForModification =
                         ModelForModification.StmIdCounter = counter;
                         ModelForModification.Model = model;
                     }
-                member this.getFreshId (): int =
-                    do this.StmIdCounter:=this.StmIdCounter.Value + 1
-                    this.StmIdCounter.Value
-
                 interface IVcSamModel<ModelForModification> with
                     member this.getModel : VcSam.Pgm = this.Model
                     member this.setModel (model:VcSam.Pgm) =
@@ -146,10 +142,21 @@ module internal VcSamModelForModification =
         let newModel = (ModelForModification.initial model)
         do! updateState newModel
     }
-
+    
     let transformIVcSamToVcModelForModification<'state when 'state :> IVcSamModel<'state>>
                      : WorkflowFunction<'state,ModelForModification,unit> = workflow {
         let! model = getVcSamModel
         let newModel = (ModelForModification.initial model)
         do! updateState newModel
+    }
+    
+    let getFreshId : WorkflowFunction<ModelForModification,ModelForModification,int> = workflow {
+        let! state = getState
+        do state.StmIdCounter:=state.StmIdCounter.Value + 1
+        return state.StmIdCounter.Value       
+    }
+
+    let getReferenceToStmIdCounter : WorkflowFunction<ModelForModification,ModelForModification,int ref> = workflow {
+        let! state = getState
+        return state.StmIdCounter        
     }

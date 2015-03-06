@@ -97,6 +97,22 @@ module internal VcSam =
                 unionManyVarMaps newUnited mapsToUnite.Tail
         unionManyVarMaps Map.empty<Var,'b> mapsToUnite
 
+    
+    // Extension methods
+    type Stm with
+        member stm.appendStatements (referenceToStmIdCounter:int ref) (stmsToAppend:Stm list) =
+            if stmsToAppend.IsEmpty then
+                stm
+            else
+                match stm with
+                    | Stm.Block (sid,stmnts) ->
+                        Stm.Block (sid,stmnts@stmsToAppend)
+                    | _ ->
+                        do referenceToStmIdCounter := referenceToStmIdCounter.Value + 1
+                        let freshStmId = referenceToStmIdCounter.Value
+                        Stm.Block (Some(freshStmId),stm::stmsToAppend)
+                    
+    (*
     let mergeEntriesOfVarSetMap<'b when 'b : comparison> (oldEntries:Map<Var,Set<'b>>) (newEntries:Map<Var,Set<'b>>) : Map<Var,Set<'b>> =
         let newEntries = newEntries |> Map.toSeq
         let mergeVariables (state:Map<Var,Set<'b>>) (_var:Var,newEntries:Set<'b>) : Map<Var,Set<'b>> =
@@ -107,3 +123,4 @@ module internal VcSam =
                 let mergedEntries = Set.union oldEntries newEntries
                 state.Add(_var,mergedEntries)
         Seq.fold mergeVariables oldEntries newEntries
+    *)
