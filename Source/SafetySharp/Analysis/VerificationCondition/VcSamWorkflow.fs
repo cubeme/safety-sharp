@@ -110,6 +110,7 @@ module internal VcSamModelForModification =
         {
             StmIdCounter : int ref;
             Model : VcSam.Pgm;
+            //TODO: CodeForm = Unknown, MultipleAssignments, SingleAssignment, Passive
         }
             with
                 static member initial (model:SafetySharp.Models.Sam.Pgm) =
