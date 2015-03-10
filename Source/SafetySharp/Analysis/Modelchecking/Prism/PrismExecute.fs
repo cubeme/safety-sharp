@@ -74,14 +74,14 @@ type internal ExecutePrism =
             let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
             paths |> Array.map (fun path -> System.IO.Path.Combine(path,"bin","prism.bat"))
                   |> Array.toList
-        let prismCandidateOfNuXmvDir =
+        let prismCandidateOfPrismDir =
             let path=System.Environment.GetEnvironmentVariable("PRISM_DIR")
             if path = null then
                 []
             else
                 [System.IO.Path.Combine(path,"bin","prism.bat")]
         
-        let candidates = prismCandidatesManual @ prismCandidatesInPath @ prismCandidateOfNuXmvDir
+        let candidates = prismCandidatesManual @ prismCandidatesInPath @ prismCandidateOfPrismDir
         let fileNameToPrismBat =
             match candidates |> Seq.tryFind tryCandidate with
                 | Some(filename) -> filename
