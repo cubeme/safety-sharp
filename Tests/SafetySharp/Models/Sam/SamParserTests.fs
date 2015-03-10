@@ -186,3 +186,10 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSam input
         ()
+
+    [<Test>]
+    member this.``Example smokeTest14 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest14.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()

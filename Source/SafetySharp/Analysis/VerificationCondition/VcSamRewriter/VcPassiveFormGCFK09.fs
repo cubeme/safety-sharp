@@ -243,8 +243,9 @@ module internal VcPassiveFormGCFK09 =
     let createVariablePerVariableVersion (statementInfos:StatementInfos) (pgm:Pgm) : Map<Var*int,Var> =
         // get written versions of the root node
         let writeVersionsOfRoot = statementInfos.WriteVersions.Item pgm.Body.GetStatementId.Value
+        let readVersionsOfRoot = statementInfos.ReadVersions.Item pgm.Body.GetStatementId.Value
         let varVersionTuples =
-            writeVersionsOfRoot |> Set.toList
+            (Set.union writeVersionsOfRoot readVersionsOfRoot) |> Set.toList
         
         let takenNames:Set<string> ref = 
             let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)

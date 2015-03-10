@@ -78,7 +78,9 @@ module internal VcSamModelForModification =
                     let translateClause ( clause :SafetySharp.Models.Sam.Clause) : VcSam.Stm =
                         do stmIdCounter := stmIdCounter.Value + 1
                         let freshIdForGuard = Some(stmIdCounter.Value)
-                        VcSam.Stm.Block(freshId,[VcSam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
+                        do stmIdCounter := stmIdCounter.Value + 1
+                        let freshIdForBlock = Some(stmIdCounter.Value)
+                        VcSam.Stm.Block(freshIdForBlock,[VcSam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
                     VcSam.Stm.Choice(freshId,clauses |> List.map translateClause)
             | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
                 VcSam.Stm.Write (freshId,variable,expression)
