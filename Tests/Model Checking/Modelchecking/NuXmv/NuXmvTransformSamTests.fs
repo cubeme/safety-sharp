@@ -48,7 +48,7 @@ module SamToNuXmvTests =
         let workflowToExecute = workflow {
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmv.transformConfiguration_fromSam
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmvWp.transformConfiguration_fromSam
             }
         let nuXmv = runWorkflow_getState workflowToExecute
 

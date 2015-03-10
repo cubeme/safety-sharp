@@ -83,6 +83,7 @@
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcPassiveFormGCFK09Tests.fs" />
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>

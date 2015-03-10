@@ -26,7 +26,6 @@ module internal ScmTestHelpersWorkflowModule =
     
     open SafetySharp.Workflow
     open SafetySharp.Models
-    open SafetySharp.Models
 
 
     let internal readInputFileToScm (inputFile:string) = workflow {

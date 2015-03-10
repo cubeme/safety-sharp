@@ -47,7 +47,7 @@ open SafetySharp.Analysis.VerificationCondition
 
 
 
-module internal SamToNuXmv =
+module internal SamToNuXmvWp =
     
 
     type ManageVariablesState = {
@@ -252,6 +252,11 @@ module internal SamToNuXmv =
         do! transformConfiguration_fromVcSam
         return ()
     }
+
+    
+//module internal SamToNuXmvSsa =
+    
+
 
 (*
 

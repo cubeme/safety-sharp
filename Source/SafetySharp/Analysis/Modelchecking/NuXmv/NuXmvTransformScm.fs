@@ -36,7 +36,7 @@ module internal ScmToNuXmv =
         //let! scmModel = ScmWorkflow.getIscmModel
         //do! VcSamModelForModification.transformSamToVcSam
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
-        do! SamToNuXmv.transformConfiguration_fromSam
+        do! SamToNuXmvWp.transformConfiguration_fromSam
     }
 
 

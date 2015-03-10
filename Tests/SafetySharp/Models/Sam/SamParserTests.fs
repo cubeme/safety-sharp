@@ -116,3 +116,73 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSam input
         ()
+
+    [<Test>]
+    member this.``Example smokeTest4 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest4.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest5 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest5.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest6 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest6.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest7 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest7.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest8 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest8.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest9 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest9.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest10 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest10.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest11 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest11.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest12 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest12.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example smokeTest13 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/smokeTest13.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
