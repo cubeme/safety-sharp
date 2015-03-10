@@ -88,7 +88,7 @@
     <Compile Include="Models\Sam\SamWorkflow.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamHelpers.fs" />
-    <Compile Include="Models\Sam\SamAstToString.fs" />
+    <Compile Include="Models\Sam\SamToString.fs" />
     <Compile Include="Models\Sam\SamConsistencyCheck.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterSimplifyBlocks.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterChangeIdentifier.fs" />
@@ -96,6 +96,7 @@
     <Compile Include="Models\Transformations\ScmToSam.fs" />
     <Compile Include="Analysis\WellDefined\WellDefinedGuardedCommands.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSam.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcSamToString.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamWorkflow.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamRewriter\VcPassiveFormFS01.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamRewriter\VcPassiveFormGCFK09.fs" />

@@ -113,6 +113,7 @@ module internal VcSamModelForModification =
             StmIdCounter : int ref;
             Model : VcSam.Pgm;
             // TODO: HasMultipleAssignments
+            // TODO: Deterministic = Unknown, Deterministic, Indeterministic, DTMC, MDP
             //TODO: CodeForm = Unknown, MultipleAssignmentsNoAss, MultipleAssignmentsWithAss, SingleAssignmentNoAss, SingleAssignmentWithAss, Passive
         }
             with

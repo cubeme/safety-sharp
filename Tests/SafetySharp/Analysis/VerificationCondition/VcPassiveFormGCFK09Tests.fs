@@ -51,6 +51,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest1.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -58,12 +62,20 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest2.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     let ``smokeTest3 gets converted to SSA`` () =
         let inputFile = """../../Examples/SAM/smokeTest3.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
         
     [<Test>]
@@ -71,6 +83,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest4.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -78,6 +94,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest5.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -85,6 +105,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest6.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -92,6 +116,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest7.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -99,6 +127,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest8.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -106,6 +138,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest9.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -113,6 +149,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest10.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -120,6 +160,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest11.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -127,6 +171,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest12.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -134,6 +182,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest13.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -141,6 +193,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest14.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
 
@@ -151,6 +207,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest1.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -158,12 +218,20 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest2.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     let ``smokeTest3 gets converted to Passive Form`` () =
         let inputFile = """../../Examples/SAM/smokeTest3.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
         
     [<Test>]
@@ -171,6 +239,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest4.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -178,6 +250,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest5.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -185,6 +261,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest6.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -192,6 +272,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest7.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -199,6 +283,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest8.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -206,6 +294,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest9.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -213,6 +305,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest10.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -220,6 +316,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest11.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -227,6 +327,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest12.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -234,6 +338,10 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest13.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
 
     [<Test>]
@@ -241,4 +349,8 @@ module VcPassiveFormGCFK09Tests =
         let inputFile = """../../Examples/SAM/smokeTest14.sam"""
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToPassiveForm inputFile)
         printfn "%+A" ssaModel.Model
+        printfn ""
+        printfn ""
+        let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
+        printfn "%+A" ssaModelString
         ()
