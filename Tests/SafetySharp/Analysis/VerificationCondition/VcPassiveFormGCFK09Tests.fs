@@ -54,7 +54,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -65,7 +65,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     let ``smokeTest3 gets converted to SSA`` () =
@@ -75,7 +75,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
         
     [<Test>]
@@ -86,7 +86,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -97,7 +97,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -108,7 +108,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -119,7 +119,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -130,7 +130,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -141,7 +141,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -152,7 +152,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -163,7 +163,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -174,7 +174,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -185,7 +185,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -196,7 +196,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
 
@@ -210,7 +210,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -221,7 +221,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     let ``smokeTest3 gets converted to Passive Form`` () =
@@ -231,7 +231,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
         
     [<Test>]
@@ -242,7 +242,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -253,7 +253,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -264,7 +264,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -275,7 +275,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -286,7 +286,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -297,7 +297,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -308,7 +308,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -319,7 +319,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -330,7 +330,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -341,7 +341,7 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
 
     [<Test>]
@@ -352,5 +352,5 @@ module VcPassiveFormGCFK09Tests =
         printfn ""
         printfn ""
         let ssaModelString = SafetySharp.Analysis.VerificationCondition.VcSamToString.exportModel ssaModel.Model
-        printfn "%+A" ssaModelString
+        printfn "%s" ssaModelString
         ()
