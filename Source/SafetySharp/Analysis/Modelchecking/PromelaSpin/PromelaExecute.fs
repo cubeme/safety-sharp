@@ -41,6 +41,7 @@ type internal ExecutePromelaSpin =
     val mutable private compilerStdoutOutput : string
     val panResults : System.Collections.Concurrent.BlockingCollection<string*bool> //(string contains the result. bool tells, if it was the last element
 
+
     val mutable private completeVerificationTask : System.Threading.Tasks.Task<bool>
     // for partial results
 
@@ -55,7 +56,6 @@ type internal ExecutePromelaSpin =
         then
             do ExecutePromelaSpin.AddCompilerToPath
             do this.completeVerificationTask <- this.ExecuteCompleteVerificationAsync
-            do this.completeVerificationTask.Start ()
 
 
     ///////////////////////////////////////
@@ -68,7 +68,7 @@ type internal ExecutePromelaSpin =
             System.IO.File.Exists filename
 
         let spinCandidatesManual = [
-            "..\\..\\..\\..\\Dependencies\\spin627.exe";
+            "..\\..\\Dependencies\\spin627.exe";
         ]
         let spinCandidatesInPath =
             let paths=System.Environment.GetEnvironmentVariable("PATH").Split(';')
@@ -135,7 +135,7 @@ type internal ExecutePromelaSpin =
         let compiler = ExecutePromelaSpin.FindCompiler        
         let compilerDir = 
             let directoryOfMingwBin = System.IO.Directory.GetParent compiler
-            directoryOfMingwBin.Parent.FullName
+            directoryOfMingwBin.FullName
 
         let dirsInPath = System.Environment.GetEnvironmentVariable("PATH").Split(';')
         if Array.exists (fun elem -> elem = compilerDir) dirsInPath then
@@ -150,7 +150,7 @@ type internal ExecutePromelaSpin =
     static member IsCompilerRunnable : bool =
         let compilerExe = ExecutePromelaSpin.FindCompiler
         use proc = new System.Diagnostics.Process()        
-        do proc.StartInfo.Arguments <- "-V"
+        do proc.StartInfo.Arguments <- "--help"
         do proc.StartInfo.FileName <- compilerExe
         do proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         do proc.StartInfo.CreateNoWindow <-  true
@@ -179,7 +179,8 @@ type internal ExecutePromelaSpin =
         proc.StartInfo.UseShellExecute <-  false
         proc.StartInfo.RedirectStandardOutput <-  true
         proc.StartInfo.RedirectStandardError <-  false
-        proc.StartInfo.RedirectStandardInput <-  true        
+        proc.StartInfo.RedirectStandardInput <-  true  
+        proc.EnableRaisingEvents <-  true
         let afterFinished () =        
             let exitCode = proc.ExitCode
             this.spinStdoutOutput <- proc.StandardOutput.ReadToEnd()
@@ -207,6 +208,7 @@ type internal ExecutePromelaSpin =
         proc.StartInfo.RedirectStandardOutput <-  true
         proc.StartInfo.RedirectStandardError <-  false
         proc.StartInfo.RedirectStandardInput <-  true        
+        proc.EnableRaisingEvents <-  true
         let afterFinished () =        
             let exitCode = proc.ExitCode
             this.compilerStdoutOutput <- proc.StandardOutput.ReadToEnd()
@@ -233,16 +235,21 @@ type internal ExecutePromelaSpin =
         proc.StartInfo.UseShellExecute <-  false
         proc.StartInfo.RedirectStandardOutput <-  true
         proc.StartInfo.RedirectStandardError <-  false
-        proc.StartInfo.RedirectStandardInput <-  true        
+        proc.StartInfo.RedirectStandardInput <-  true      
+        proc.EnableRaisingEvents <-  true  
+        let startReadingOutput = new System.Threading.ManualResetEventSlim(false);
         let outputReaderTask : System.Threading.Tasks.Task =            
             System.Threading.Tasks.Task.Factory.StartNew(
-                fun () -> 
+                fun () ->
+                    // before proc.StandardOutput could be read, the process must have been started
                     // TODO: see PrismExecute.fs for how to output partial results (for GUIs, etc...)
+                    startReadingOutput.Wait()
                     while proc.StandardOutput.EndOfStream <> true do
                         let newLine = proc.StandardOutput.ReadLine()
                         let isLastEntry = proc.StandardOutput.EndOfStream
                         do this.panResults.Add((newLine,isLastEntry))
                         ()
+                    
             )
         let afterFinished () =        
             let exitCode = proc.ExitCode //program exited
@@ -254,6 +261,9 @@ type internal ExecutePromelaSpin =
             proc.Dispose() // now we can safely dispose the process. processes should be disposed
         do proc.Exited.Add ( fun _ -> afterFinished() )
         do proc.Start() |> ignore
+        do startReadingOutput.Set() // proc.StandardOutput can only be accessed after proc.Start() 
+        //if proc.Failed
+        //  do this.panResults.Add(("pan could not be started",true))
         proc.StandardInput.AutoFlush <- true
         tcs.Task
             
@@ -262,14 +272,20 @@ type internal ExecutePromelaSpin =
             async {
                 let! spinSuccessful = Async.AwaitTask this.ExecuteSpinAsync
                 if spinSuccessful = false then
+                    do this.panResults.Add(("spin could not be started",true))
                     return false
                 else
                     let! compilerSuccessful = Async.AwaitTask this.ExecuteCompilerAsync
                     if compilerSuccessful = false then
+                        do this.panResults.Add(("compiler could not be started",true))
                         return false
                     else
                         let! panSuccessful = Async.AwaitTask this.ExecutePanAsync
-                        return panSuccessful
+                        if panSuccessful = false then
+                            do this.panResults.Add(("pan could not be started",true))
+                            return false
+                        else
+                            return true
             }
         Async.StartAsTask<bool> asyncTask
 
@@ -302,3 +318,5 @@ type internal ExecutePromelaSpin =
                 | None -> acc
         collectAllResults [] |> List.rev
         
+    member this.WasSuccessful : bool =
+        this.completeVerificationTask.Result

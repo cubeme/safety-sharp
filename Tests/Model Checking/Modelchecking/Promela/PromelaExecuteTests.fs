@@ -22,6 +22,41 @@
 
 namespace SafetySharp.Tests.Modelchecking.Promela.PromelaExecuteTests
 
-module PromelaExecuteTests =
-    let x=1
 
+open NUnit.Framework
+open SafetySharp.Tests
+open SafetySharp.Tests.Modelchecking
+open SafetySharp
+open SafetySharp.Analysis.Modelchecking
+open SafetySharp.Analysis.Modelchecking.PromelaSpin
+
+
+
+[<TestFixture>]
+module PromelaExecuteTestsBasic =
+
+    [<Test>]
+    let ``Spin is in PATH or in dependency folder`` () =
+        let path = ExecutePromelaSpin.FindSpin
+        (path.Length > 0) =? true
+        
+    [<Test>]
+    let ``Spin is runable and shows help`` () =
+        ExecutePromelaSpin.IsSpinRunnable =? true
+
+    [<Test>]
+    let ``Compiler is in PATH or in dependency folder`` () =
+        let path = ExecutePromelaSpin.FindCompiler
+        (path.Length > 0) =? true
+        
+    [<Test>]
+    let ``Compiler is runable and shows help`` () =
+        ExecutePromelaSpin.IsCompilerRunnable =? true
+
+    [<Test>]
+    let ``Spin verifies the samSmokeTest1.pm file`` () =
+        let inputFile = """../../Examples/Promela/samSmokeTest1.pml"""
+        let executePromelaSpin = ExecutePromelaSpin(inputFile)
+        let results = executePromelaSpin.GetAllResults ()
+        executePromelaSpin.WasSuccessful =? true
+        ()
