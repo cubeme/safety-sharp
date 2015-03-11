@@ -254,7 +254,8 @@ module internal Workflow =
     let saveToFile (outputFile:FileSystem.FileName) : WorkflowFunction<string,FileSystem.FileName,unit> = workflow {
         let! input = getState
         let (FileSystem.FileName(outputFileName)) = outputFile
-        do FileSystem.WriteToAsciiFile outputFileName input
+        //do FileSystem.WriteToAsciiFile outputFileName input
+        do System.IO.File.WriteAllText (outputFileName, input, System.Text.Encoding.ASCII)
         do! updateState outputFile
     }
 
