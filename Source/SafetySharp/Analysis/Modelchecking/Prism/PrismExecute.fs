@@ -29,10 +29,10 @@ type internal ExecutePrism =
     // good to know: Prism only prints to stdout, even if errors occur. So only buffer for stdout necessary
     val stdoutOutputBuffer : System.Text.StringBuilder
     
-    val mutable processOutputReader : System.Threading.Tasks.Task
-    val mutable processWaiter : System.Threading.Tasks.Task
+    val mutable private processOutputReader : System.Threading.Tasks.Task
+    val mutable private processWaiter : System.Threading.Tasks.Task
 
-    val proc : System.Diagnostics.Process
+    val private proc : System.Diagnostics.Process
 
     val completeResults : System.Collections.Concurrent.BlockingCollection<string*bool> //(string contains the result. bool tells, if it was the last element
 
@@ -169,7 +169,7 @@ type internal ExecutePrism =
         // TODO:
         //   - No concurrent access from different threads
         // Note if you change this function:
-        //   - Changes might enable harmful sequences, which may lead to an inifinite blocking of GetNextResult() (race condition).
+        //   - Changes might enable harmful sequences, which may lead to an infinite blocking of GetNextResult() (race condition).
         //     Suppose GetNextResult gets called two times, but TaskReadStdout only adds one final element to an empty queue.
         //     Assure that the guard .IsCompleted() returns "true" the second time. This prevents the function to wait infinitely
         //     at the point ".Take()".

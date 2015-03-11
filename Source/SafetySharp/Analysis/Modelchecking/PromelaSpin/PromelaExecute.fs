@@ -22,38 +22,40 @@
 
 namespace SafetySharp.Analysis.Modelchecking.PromelaSpin
 
+(*
+[<RequireQualifiedAccessAttribute>]
+type PromelaSpinVerificationState =
+    | NotStarted
+    | Spin
+    | Compiler
+    | Pan
+    | Completed 
+*)
 
-type internal ExecuteSpin =
+type internal ExecutePromelaSpin =
+    
 
     val private filename : string
     // good to know: Prism only prints to stdout, even if errors occur. So only buffer for stdout necessary
-    val stdoutOutputBuffer : System.Text.StringBuilder
-    
-
-    
-    // pan may take a long time, so we use a waiter
-    val mutable panOutputReader : System.Threading.Tasks.Task
-    val mutable panWaiter : System.Threading.Tasks.Task    
-    val panProc : System.Diagnostics.Process
-
-
-
+    val mutable private spinStdoutOutput : string
+    val mutable private compilerStdoutOutput : string
     val panResults : System.Collections.Concurrent.BlockingCollection<string*bool> //(string contains the result. bool tells, if it was the last element
+
+    val mutable private completeVerificationTask : System.Threading.Tasks.Task<bool>
+    // for partial results
 
     new (filename : string) as this =
         {
             filename = filename;
-            stdoutOutputBuffer = new System.Text.StringBuilder ();
-            panOutputReader = null;
-            panWaiter = null;
-            panProc = new System.Diagnostics.Process();
+            spinStdoutOutput = "";
+            compilerStdoutOutput = "";
             panResults = new System.Collections.Concurrent.BlockingCollection<string*bool>(); //by default blockingcollection uses a fifo-queue.
+            completeVerificationTask = null;
         }
         then
-            //let spinResult = this.ExecuteSpin (filename)
-            ExecuteSpin.AddCompilerToPath () 
-            //let compilerResult = this.ExecuteCompiler ()
-            //do this.ExecutePan ()
+            do ExecutePromelaSpin.AddCompilerToPath
+            do this.completeVerificationTask <- this.ExecuteCompleteVerificationAsync
+            do this.completeVerificationTask.Start ()
 
 
     ///////////////////////////////////////
@@ -61,7 +63,7 @@ type internal ExecuteSpin =
     ///////////////////////////////////////
 
     
-    static member FindSpin () : string =
+    static member FindSpin : string =
         let tryCandidate (filename:string) : bool =
             System.IO.File.Exists filename
 
@@ -86,8 +88,8 @@ type internal ExecuteSpin =
                 | None -> failwith "Please add path to spin627.exe into PATH\n or set the environmental variable SPIN_DIR to the Spin top level directory \n or copy Spin into the dependency directory. You can download Spin from http://www.http://spinroot.com/"
         fileNameToSpinExe
     
-    static member IsSpinRunnable () : bool =
-        let spinExe = ExecuteSpin.FindSpin ()
+    static member IsSpinRunnable : bool =
+        let spinExe = ExecutePromelaSpin.FindSpin
         use proc = new System.Diagnostics.Process()        
         do proc.StartInfo.Arguments <- "-V"
         do proc.StartInfo.FileName <- spinExe
@@ -102,7 +104,7 @@ type internal ExecuteSpin =
             | _ -> false
 
 
-    static member FindCompiler () : string =
+    static member FindCompiler : string =
         let tryCandidate (filename:string) : bool =
             System.IO.File.Exists filename
 
@@ -129,8 +131,8 @@ type internal ExecuteSpin =
         fileNameToMingwGcc
     
     
-    static member AddCompilerToPath () =
-        let compiler = ExecuteSpin.FindCompiler ()        
+    static member AddCompilerToPath : unit =
+        let compiler = ExecutePromelaSpin.FindCompiler        
         let compilerDir = 
             let directoryOfMingwBin = System.IO.Directory.GetParent compiler
             directoryOfMingwBin.Parent.FullName
@@ -145,8 +147,8 @@ type internal ExecuteSpin =
         ()
 
         
-    static member IsCompilerRunnable () : bool =
-        let compilerExe = ExecuteSpin.FindCompiler ()
+    static member IsCompilerRunnable : bool =
+        let compilerExe = ExecutePromelaSpin.FindCompiler
         use proc = new System.Diagnostics.Process()        
         do proc.StartInfo.Arguments <- "-V"
         do proc.StartInfo.FileName <- compilerExe
@@ -164,124 +166,139 @@ type internal ExecuteSpin =
     // Execute x (x \in Spin, Compiler, Pan)
     ///////////////////////////////////////         
     
-    (*
-
-    member private this.ExecuteSpin (inputFile:string)  =
-        let argumentForSpin (arguments:string) : string =
-            sprintf """-a %s""" inputFile        
-        let spin = ExecuteSpin.FindSpin ()
-
-        this.proc.StartInfo.Arguments <- argumentForSpin inputFile
-        this.proc.StartInfo.FileName <- spin
-        this.proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
-        this.proc.StartInfo.CreateNoWindow <-  true
-        this.proc.StartInfo.UseShellExecute <-  false
-        this.proc.StartInfo.RedirectStandardOutput <-  true
-        this.proc.StartInfo.RedirectStandardError <-  false
-        this.proc.StartInfo.RedirectStandardInput <-  true
-        this.proc.Start() |> ignore
-        this.proc.StandardInput.AutoFlush <- true        
-        this.processOutputReader <- this.TaskReadStdout ()
-        this.processWaiter <- this.TaskWaitForEnd (0)
-        ()
-    
-    member private this.ExecuteCompiler ()  =
+    member private this.ExecuteSpinAsync : System.Threading.Tasks.Task<bool> =
+        let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+        let argumentForSpin : string =
+            sprintf """-a %s""" this.filename
+        let spinExe = ExecutePromelaSpin.FindSpin        
+        let proc = new System.Diagnostics.Process()        
+        proc.StartInfo.Arguments <- argumentForSpin
+        proc.StartInfo.FileName <- spinExe
+        proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
+        proc.StartInfo.CreateNoWindow <-  true
+        proc.StartInfo.UseShellExecute <-  false
+        proc.StartInfo.RedirectStandardOutput <-  true
+        proc.StartInfo.RedirectStandardError <-  false
+        proc.StartInfo.RedirectStandardInput <-  true        
+        let afterFinished () =        
+            let exitCode = proc.ExitCode
+            this.spinStdoutOutput <- proc.StandardOutput.ReadToEnd()
+            match exitCode with
+                | 0 -> tcs.SetResult(true)
+                | _ -> tcs.SetResult(false)            
+            proc.Dispose()
+        do proc.Exited.Add ( fun _ -> afterFinished() )
+        do proc.Start() |> ignore
+        proc.StandardInput.AutoFlush <- true
+        tcs.Task
+                    
+    //returns true, if successful
+    member private this.ExecuteCompilerAsync : System.Threading.Tasks.Task<bool> =    
+        let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();        
         let argumentForCompiler : string =
             "-o pan.exe pan.c"        
-        let compiler = ExecuteSpin.FindCompiler ()
-        this.proc.StartInfo.Arguments <- argumentForCompiler
-        this.proc.StartInfo.FileName <- compiler
-        this.proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
-        this.proc.StartInfo.CreateNoWindow <-  true
-        this.proc.StartInfo.UseShellExecute <-  false
-        this.proc.StartInfo.RedirectStandardOutput <-  true
-        this.proc.StartInfo.RedirectStandardError <-  false
-        this.proc.StartInfo.RedirectStandardInput <-  true
-        this.proc.Start() |> ignore
-        this.proc.StandardInput.AutoFlush <- true        
-        this.processOutputReader <- this.TaskReadStdout ()
-        this.processWaiter <- this.TaskWaitForEnd (0)
-        ()
-    
-    member private this.ExecutePan ()  =
+        let compiler = ExecutePromelaSpin.FindCompiler    
+        let proc = new System.Diagnostics.Process()        
+        proc.StartInfo.Arguments <- argumentForCompiler
+        proc.StartInfo.FileName <- compiler
+        proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
+        proc.StartInfo.CreateNoWindow <-  true
+        proc.StartInfo.UseShellExecute <-  false
+        proc.StartInfo.RedirectStandardOutput <-  true
+        proc.StartInfo.RedirectStandardError <-  false
+        proc.StartInfo.RedirectStandardInput <-  true        
+        let afterFinished () =        
+            let exitCode = proc.ExitCode
+            this.compilerStdoutOutput <- proc.StandardOutput.ReadToEnd()
+            match exitCode with
+                | 0 -> tcs.SetResult(true)
+                | _ -> tcs.SetResult(false)            
+            proc.Dispose()
+        do proc.Exited.Add ( fun _ -> afterFinished() )
+        do proc.Start() |> ignore
+        proc.StandardInput.AutoFlush <- true
+        tcs.Task
+            
+    //returns true, if successful
+    member private this.ExecutePanAsync : System.Threading.Tasks.Task<bool> =
+        let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
         let argumentForPan : string =
-            ""
-        
-        let compiler = ExecuteSpin.FindCompiler ()
-        this.proc.StartInfo.Arguments <- argumentForPan
-        this.proc.StartInfo.FileName <- compiler
-        this.proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
-        this.proc.StartInfo.CreateNoWindow <-  true
-        this.proc.StartInfo.UseShellExecute <-  false
-        this.proc.StartInfo.RedirectStandardOutput <-  true
-        this.proc.StartInfo.RedirectStandardError <-  false
-        this.proc.StartInfo.RedirectStandardInput <-  true
-        this.proc.Start() |> ignore
-        this.proc.StandardInput.AutoFlush <- true        
-        this.processOutputReader <- this.TaskReadStdout ()
-        this.processWaiter <- this.TaskWaitForEnd (0)
-        ()
-        
-    member this.IsPanRunning () =
-        let processes = [this.processOutputReader;this.processWaiter]
-        processes |> List.forall (fun elem -> elem.Status = System.Threading.Tasks.TaskStatus.Running)
-   
-    
-    member this.WaitUntilPrismTerminates () =
-        System.Threading.Tasks.Task.WaitAll(this.processOutputReader,this.processWaiter)
-        this.proc.ExitCode
+            ""        
+        let panExe = "pan.exe"     
+        let proc = new System.Diagnostics.Process()
+        proc.StartInfo.Arguments <- argumentForPan
+        proc.StartInfo.FileName <- panExe
+        proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
+        proc.StartInfo.CreateNoWindow <-  true
+        proc.StartInfo.UseShellExecute <-  false
+        proc.StartInfo.RedirectStandardOutput <-  true
+        proc.StartInfo.RedirectStandardError <-  false
+        proc.StartInfo.RedirectStandardInput <-  true        
+        let outputReaderTask : System.Threading.Tasks.Task =            
+            System.Threading.Tasks.Task.Factory.StartNew(
+                fun () -> 
+                    // TODO: see PrismExecute.fs for how to output partial results (for GUIs, etc...)
+                    while proc.StandardOutput.EndOfStream <> true do
+                        let newLine = proc.StandardOutput.ReadLine()
+                        let isLastEntry = proc.StandardOutput.EndOfStream
+                        do this.panResults.Add((newLine,isLastEntry))
+                        ()
+            )
+        let afterFinished () =        
+            let exitCode = proc.ExitCode //program exited
+            outputReaderTask.Wait() //finished reading the output
+            // outputReaderTask.Dispose() tasks should not be disposed.
+            match exitCode with
+                | 0 -> tcs.SetResult(true)
+                | _ -> tcs.SetResult(false)            
+            proc.Dispose() // now we can safely dispose the process. processes should be disposed
+        do proc.Exited.Add ( fun _ -> afterFinished() )
+        do proc.Start() |> ignore
+        proc.StandardInput.AutoFlush <- true
+        tcs.Task
+            
+    member private this.ExecuteCompleteVerificationAsync : System.Threading.Tasks.Task<bool> =
+        let asyncTask = 
+            async {
+                let! spinSuccessful = Async.AwaitTask this.ExecuteSpinAsync
+                if spinSuccessful = false then
+                    return false
+                else
+                    let! compilerSuccessful = Async.AwaitTask this.ExecuteCompilerAsync
+                    if compilerSuccessful = false then
+                        return false
+                    else
+                        let! panSuccessful = Async.AwaitTask this.ExecutePanAsync
+                        return panSuccessful
+            }
+        Async.StartAsTask<bool> asyncTask
 
-    member this.GetNextResult () : string option =
+    member this.IsVerificationRunning =
+        this.completeVerificationTask.Status = System.Threading.Tasks.TaskStatus.Running
+   
+    member this.WaitUntilVerificationTerminates =
+        this.completeVerificationTask.Wait()
+
+    member this.GetNextPanResult () : string option =
         // TODO:
         //   - No concurrent access from different threads
         // Note if you change this function:
-        //   - Changes might enable harmful sequences, which may lead to an inifinite blocking of GetNextResult() (race condition).
-        //     Suppose GetNextResult gets called two times, but TaskReadStdout only adds one final element to an empty queue.
+        //   - Changes might enable harmful sequences, which may lead to an infinite blocking of GetNextPanResult() (race condition).
+        //     Suppose GetNextPanResult gets called two times, but TaskReadStdout only adds one final element to an empty queue.
         //     Assure that the guard .IsCompleted() returns "true" the second time. This prevents the function to wait infinitely
         //     at the point ".Take()".
-        if this.completeResults.IsCompleted then
+        if this.panResults.IsCompleted then
             None
         else
-            let (nextResult,wasLastElement) = this.completeResults.Take() //Blocks until new element arrives
+            let (nextResult,wasLastElement) = this.panResults.Take() //Blocks until new element arrives
             if wasLastElement then
-                this.completeResults.CompleteAdding() //Do not allow adding. If 
+                this.panResults.CompleteAdding() //Do not allow adding. If 
             Some(nextResult)
 
     member this.GetAllResults () : string list =
         let rec collectAllResults acc =
-            match this.GetNextResult () with
+            match this.GetNextPanResult () with
                 | Some(entry) -> collectAllResults (entry::acc)
                 | None -> acc
         collectAllResults [] |> List.rev
         
-                        
-    member private this.TaskReadStdout () : System.Threading.Tasks.Task =
-        // TODO: see PrismExecute.fs for how to output partial results (for GUIs, etc...)
-        
-        let separator = "---------------------------------------------------------------------" // see file Spin/PrismLog.java/printSeparator()
-        System.Threading.Tasks.Task.Factory.StartNew(
-            fun () -> 
-                while this.proc.StandardOutput.EndOfStream <> true  do
-                    let newLine = this.proc.StandardOutput.ReadLine()
-                    if newLine = separator then
-                        let newEntry = this.stdoutOutputBuffer.ToString()
-                        this.stdoutOutputBuffer.Clear() |> ignore
-                        this.completeResults.Add((newEntry,false))
-                    else
-                        this.stdoutOutputBuffer.AppendLine newLine |> ignore
-                let lastEntry = this.stdoutOutputBuffer.ToString()
-                this.stdoutOutputBuffer.Clear() |> ignore
-                this.completeResults.Add((lastEntry,true))
-        )
-
-    member private this.TaskWaitForEnd (timeInMs:int) : System.Threading.Tasks.Task<bool> =
-        System.Threading.Tasks.Task<bool>.Factory.StartNew(
-            fun () ->
-                if timeInMs > 0 then
-                    let result = this.proc.WaitForExit(timeInMs)
-                    result
-                else
-                    this.proc.WaitForExit()
-                    true
-        )
-        *)
