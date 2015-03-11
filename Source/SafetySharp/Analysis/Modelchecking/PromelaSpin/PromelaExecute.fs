@@ -225,7 +225,7 @@ type internal ExecutePromelaSpin =
     member private this.ExecutePanAsync : System.Threading.Tasks.Task<bool> =
         let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
         let argumentForPan : string =
-            ""        
+            "-m2000"        
         let panExe = "pan.exe"     
         let proc = new System.Diagnostics.Process()
         proc.StartInfo.Arguments <- argumentForPan
