@@ -24,7 +24,7 @@ namespace SafetySharp.Analysis.Modelchecking.PromelaSpin
 
 open System
 
-type internal ExportPromelaAstToFile() =
+type internal PromelaToString () =
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()
@@ -309,3 +309,15 @@ type internal ExportPromelaAstToFile() =
                 sprintf "( %s %s )" ExportOperator ExportOperand
 
     member this.Export = this.ExportSpec 0
+
+
+open SafetySharp.Workflow
+
+type internal PromelaToString with
+    static member instance : PromelaToString =
+        PromelaToString()
+
+    static member workflow : WorkflowFunction<Spec,string,unit> = workflow {
+        let! model = getState
+        do! updateState (PromelaToString.instance.ExportSpec 0 model)
+    }

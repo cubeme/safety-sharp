@@ -47,7 +47,7 @@ type SpinModelChecker (model : Model) =
     let spin = runWorkflow_getState workflowToExecute
 
     //do printf "%+A" spin
-    let spinWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.ExportPromelaAstToFile()
+    let spinWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString()
     let spincode = spinWriter.Export spin
     do printf "%s" spincode
 

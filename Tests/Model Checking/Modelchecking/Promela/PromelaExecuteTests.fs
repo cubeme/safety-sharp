@@ -37,26 +37,26 @@ module PromelaExecuteTestsBasic =
 
     [<Test>]
     let ``Spin is in PATH or in dependency folder`` () =
-        let path = ExecutePromelaSpin.FindSpin
+        let path = ExecuteSpin.FindSpin
         (path.Length > 0) =? true
         
     [<Test>]
     let ``Spin is runable and shows help`` () =
-        ExecutePromelaSpin.IsSpinRunnable =? true
+        ExecuteSpin.IsSpinRunnable =? true
 
     [<Test>]
     let ``Compiler is in PATH or in dependency folder`` () =
-        let path = ExecutePromelaSpin.FindCompiler
+        let path = ExecuteSpin.FindCompiler
         (path.Length > 0) =? true
         
     [<Test>]
     let ``Compiler is runable and shows help`` () =
-        ExecutePromelaSpin.IsCompilerRunnable =? true
+        ExecuteSpin.IsCompilerRunnable =? true
 
     [<Test>]
     let ``Spin verifies the samSmokeTest1.pm file`` () =
         let inputFile = """../../Examples/Promela/samSmokeTest1.pml"""
-        let executePromelaSpin = ExecutePromelaSpin(inputFile)
+        let executePromelaSpin = ExecuteSpin(inputFile)
         let results = executePromelaSpin.GetAllResults ()
         executePromelaSpin.WasSuccessful =? true
         ()

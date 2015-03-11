@@ -22,5 +22,29 @@
 
 namespace SafetySharp.Tests.Modelchecking
 
+open NUnit.Framework
+
 module PromelaCheckSmokeTests =
     open SafetySharp.Models
+    open SafetySharp.Workflow
+    
+    let internal smokeTestWorkflow (inputFile:string) = workflow {    
+            do! readFile inputFile
+            do! SafetySharp.Models.SamParser.parseStringWorkflow
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow
+            let filename = sprintf "%s.pml" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName
+            do! saveToFile filename
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
+    }
+
+    let runSmokeTest (inputFile) =
+        SafetySharp.Workflow.runWorkflow_getState (smokeTestWorkflow inputFile)
+
+    [<Test>]
+    let ``smokeTest1.sam returns the expected results`` () =
+        
+        let inputFile = """../../Examples/SAM/smokeTest1.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()

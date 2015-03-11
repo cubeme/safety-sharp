@@ -43,7 +43,7 @@ module SamToPromelaTests =
 
     let internal parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
 
-    let internal promelaWriter = ExportPromelaAstToFile()
+    let internal promelaWriter = PromelaToString()
     
            
     [<Test>]
@@ -59,7 +59,7 @@ module SamToPromelaTests =
         ()
            
     [<Test>]
-    let ``smokeTest1.sam gets converted to promela and returns the expected result`` () =
+    let ``smokeTest1.sam gets converted to promela`` () =
         
         let inputFile = """../../Examples/SAM/smokeTest1.sam"""
         let input = System.IO.File.ReadAllText inputFile

@@ -72,4 +72,6 @@ module internal FileSystem =
             | 0x14c ->  MachineType.I386
             | 0x0 -> MachineType.Unknown
             | _ -> MachineType.Other(machineTypeAsUint16)
+
+    type FileName = | FileName of string
     

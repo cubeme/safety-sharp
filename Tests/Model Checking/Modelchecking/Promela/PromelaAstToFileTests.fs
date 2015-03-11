@@ -65,7 +65,7 @@ module SeparatorTests =
     // http://spinroot.com/spin/Man/separators.html
     // http://spinroot.com/spin/Man/grammar.html
     
-    let private astToFile = ExportPromelaAstToFile()
+    let private astToFile = PromelaToString()
     let private indent = 0
 
     let private simpleStatement1 = Stmnt.ExprStmnt(Expr.AnyExpr(AnyExpr.Const(Const.True)))

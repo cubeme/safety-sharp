@@ -184,8 +184,11 @@ module internal Scm =
         //| RG of Rely:LocExpr * Guarantee:LocExpr
         //| DCCA of FaultsToConsider:(CompPath*Fault) list
         //| LTL of LtlExpression
-        // | CTL of CtlExpression
-        // | PCtl of PCtlExpression
+        //| CTL of CtlExpression
+        //| PCtl of PCtlExpression
+        //| CheckContract
+        //| FunctionGetsCalled
+        //| Finally
 
     type internal CompDecl = {
         Comp : Comp

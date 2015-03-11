@@ -236,6 +236,27 @@ module internal Workflow =
         let input = System.IO.File.ReadAllText inputFile
         do! updateState input
     }
+    
+    (*
+    let saveToTemporaryFileBasedOnName (extension:string) : WorkflowFunction<string,FileSystem.FileName,unit> = workflow {
+        let! input = getState
+        let
+        FileSystem.WriteToAsciiFile ()
+    }
+
+    let saveToTemporaryFile (extension:string) : WorkflowFunction<string,FileSystem.FileName,unit> = workflow {
+        let! input = getState
+        let
+        FileSystem.WriteToAsciiFile ()
+    }
+    *)
+
+    let saveToFile (outputFile:FileSystem.FileName) : WorkflowFunction<string,FileSystem.FileName,unit> = workflow {
+        let! input = getState
+        let (FileSystem.FileName(outputFileName)) = outputFile
+        do FileSystem.WriteToAsciiFile outputFileName input
+        do! updateState outputFile
+    }
 
 
     ////////////// EXAMPLE

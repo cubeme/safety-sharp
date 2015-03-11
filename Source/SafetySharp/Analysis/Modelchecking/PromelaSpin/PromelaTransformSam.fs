@@ -186,6 +186,16 @@ module internal SamToPromela =
             PrSpec.Formulas = [];
         }
     
+    open SafetySharp.Workflow
+
+    let transformConfigurationWf : WorkflowFunction<Sam.Pgm,PrSpec,unit> = workflow {
+        let! samModel = SamWorkflow.getSamModel
+        let newPromelaSpec = transformConfiguration samModel
+        do! updateState newPromelaSpec        
+    }
+
+
+
     (*
 
     

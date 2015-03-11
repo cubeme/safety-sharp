@@ -35,7 +35,7 @@ open SafetySharp.Analysis.Modelchecking.PromelaSpin
 [<TestFixture>]
 module ScmToPromelaTests =
     
-    let internal promelaWriter = ExportPromelaAstToFile()
+    let internal promelaWriter = PromelaToString()
     
     let internal inputFileToPromelaAstWorkflow (inputFile:string) = workflow {
             do! readFile inputFile

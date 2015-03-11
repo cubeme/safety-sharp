@@ -32,7 +32,7 @@ type PromelaSpinVerificationState =
     | Completed 
 *)
 
-type internal ExecutePromelaSpin =
+type internal ExecuteSpin =
     
 
     val private filename : string
@@ -54,7 +54,7 @@ type internal ExecutePromelaSpin =
             completeVerificationTask = null;
         }
         then
-            do ExecutePromelaSpin.AddCompilerToPath
+            do ExecuteSpin.AddCompilerToPath
             do this.completeVerificationTask <- this.ExecuteCompleteVerificationAsync
 
 
@@ -89,7 +89,7 @@ type internal ExecutePromelaSpin =
         fileNameToSpinExe
     
     static member IsSpinRunnable : bool =
-        let spinExe = ExecutePromelaSpin.FindSpin
+        let spinExe = ExecuteSpin.FindSpin
         use proc = new System.Diagnostics.Process()        
         do proc.StartInfo.Arguments <- "-V"
         do proc.StartInfo.FileName <- spinExe
@@ -132,7 +132,7 @@ type internal ExecutePromelaSpin =
     
     
     static member AddCompilerToPath : unit =
-        let compiler = ExecutePromelaSpin.FindCompiler        
+        let compiler = ExecuteSpin.FindCompiler        
         let compilerDir = 
             let directoryOfMingwBin = System.IO.Directory.GetParent compiler
             directoryOfMingwBin.FullName
@@ -148,7 +148,7 @@ type internal ExecutePromelaSpin =
 
         
     static member IsCompilerRunnable : bool =
-        let compilerExe = ExecutePromelaSpin.FindCompiler
+        let compilerExe = ExecuteSpin.FindCompiler
         use proc = new System.Diagnostics.Process()        
         do proc.StartInfo.Arguments <- "--help"
         do proc.StartInfo.FileName <- compilerExe
@@ -170,7 +170,7 @@ type internal ExecutePromelaSpin =
         let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
         let argumentForSpin : string =
             sprintf """-a %s""" this.filename
-        let spinExe = ExecutePromelaSpin.FindSpin        
+        let spinExe = ExecuteSpin.FindSpin        
         let proc = new System.Diagnostics.Process()        
         proc.StartInfo.Arguments <- argumentForSpin
         proc.StartInfo.FileName <- spinExe
@@ -198,7 +198,7 @@ type internal ExecutePromelaSpin =
         let tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();        
         let argumentForCompiler : string =
             "-o pan.exe pan.c"        
-        let compiler = ExecutePromelaSpin.FindCompiler    
+        let compiler = ExecuteSpin.FindCompiler    
         let proc = new System.Diagnostics.Process()        
         proc.StartInfo.Arguments <- argumentForCompiler
         proc.StartInfo.FileName <- compiler
@@ -320,3 +320,30 @@ type internal ExecutePromelaSpin =
         
     member this.WasSuccessful : bool =
         this.completeVerificationTask.Result
+
+
+open SafetySharp.Workflow
+     
+(*  
+type internal PromelaCodeWithParameter =
+    {
+        Model : string;
+    }
+*)
+
+type internal ExecuteSpin with
+    
+    (*
+    static member promelaAstToPromelaCodeWithParameter : WorkflowFunction<PrSpec,PromelaCodeWithParameter,unit> = workflow {
+        let! model = getState
+
+        return ()
+    }*)
+
+    static member runPan : WorkflowFunction<SafetySharp.FileSystem.FileName,string,unit> = workflow {
+        let! file = getState
+        let (SafetySharp.FileSystem.FileName(filename)) = file
+        let executeSpin = new ExecuteSpin(filename)
+        let result = executeSpin.GetAllResults() |> String.concat "\n"
+        do! updateState result
+    }
