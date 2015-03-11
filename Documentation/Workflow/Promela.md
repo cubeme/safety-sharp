@@ -20,6 +20,8 @@ do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
 
 
 
+[comment]: # (Encoded in UMLGraph from http://plantuml.sourceforge.net/activity.html)
+```html
 ![Alt text](http://g.gravizo.com/g?
 @startuml;
 
@@ -35,3 +37,4 @@ do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
 
 @enduml
 )
+```html
