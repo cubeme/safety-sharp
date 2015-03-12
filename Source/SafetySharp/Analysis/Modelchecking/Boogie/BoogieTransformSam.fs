@@ -24,8 +24,8 @@ namespace SafetySharp.Analysis.Modelchecking.Boogie
 
 open SafetySharp.Models
 
+(*
 module internal SamToBoogie =
-
 
     let a =""
     
@@ -36,3 +36,4 @@ module internal SamToBoogie =
         let newPromelaSpec = transformConfiguration samModel
         do! updateState newPromelaSpec        
     }
+*)
