@@ -25,8 +25,10 @@ namespace SafetySharp.Analysis.Modelchecking.Boogie
 module internal BoogieSimplifiedAst =
     
     // From: To Goto Where No Statement Has Gone Before
-    // http://research.microsoft.com/apps/pubs/default.aspx?id=131665
-    // http://dx.doi.org/10.1007/978-3-642-15057-9_11
+    //      http://research.microsoft.com/apps/pubs/default.aspx?id=131665
+    //      http://dx.doi.org/10.1007/978-3-642-15057-9_11    
+    // The detailed Boogie Ast could be found in: This is Boogie 2
+    //      
     // Note: No support for Method Calls or CodeExprs, yet. No havoc
 
     type UOp = SafetySharp.Models.Sam.UOp
@@ -40,10 +42,13 @@ module internal BoogieSimplifiedAst =
         | BExpr of LeftExpression : Expr * Operator : BOp * RightExpression : Expr
         | Read of Variable : Var
     
+    type ProcedureName = ProcedureName of string
+
     type Stm =
         | Assert of Expression:Expr       //semantics: wp( Stm.Assert(e), phi) := e && phi (formula to prove is false, when assertion is false)
         | Assume of Expression:Expr       //semantics: wp( Stm.Assume(e), phi) := e -> phi
         | Write of Variable:Var * Expression:Expr
+        | Call of Callee:ProcedureName * Parameters:(Expr list)
         
     type BlockId = BlockId of string
 
@@ -60,12 +65,11 @@ module internal BoogieSimplifiedAst =
     type Type = SafetySharp.Models.Sam.Type
     type VarDecl = SafetySharp.Models.Sam.LocalVarDecl
     
-    type ProcedureName = ProcedureName of string
 
     type Procedure = {
         ProcedureName : ProcedureName;
         Modifies : Var list;
-        // TODO: Assumes :;
+        Assumes : Expr;
         // TODO: Ensures :;
         InParameters: VarDecl list;
         OutParameters: VarDecl list;

@@ -83,6 +83,9 @@ module internal BoogieToString =
                 (append "(") >>= (exportExpr exprLeft) >>= (append ")")  >>=
                 (exportBOp bop) >>=
                 (append "(") >>= (exportExpr exprRight) >>= (append ")") 
+
+    let exportProcedureName (ProcedureName(name:string)) : AstToStringStateFunction =
+        (append name)
        
 
     let rec exportStm (stm:Stm) : AstToStringStateFunction =
@@ -100,6 +103,12 @@ module internal BoogieToString =
                 (append " := ") >>=
                 (exportExpr expr) >>=
                 (append ";") >>= newLine
+            | Stm.Call (callee,exprs) ->
+                (append "call ") >>=
+                (exportProcedureName callee) >>=
+                (append " ( ") >>=
+                (foreachWithSep exprs exportExpr (append ",") ) >>=
+                (append ") ;") >>= newLine
                 
     let exportBlockId (BlockId(blockid:string)) =
         (append blockid)
@@ -139,9 +148,6 @@ module internal BoogieToString =
         (append ": ") >>=
         (exportType varDecl.Type) >>=
         (append ";") >>= newLine
-
-    let exportProcedureName (ProcedureName(name:string)) : AstToStringStateFunction =
-        (append name)
             
     let exportProcedure (procedure:Procedure) : AstToStringStateFunction =
         (append "procedure ") >>=
@@ -172,4 +178,8 @@ module internal BoogieToString =
             exportPgm pgm AstToStringState.initial
         stateAfterExport.ToString()
 
-
+    open SafetySharp.Workflow
+    let boogieToStringWf : WorkflowFunction<Pgm,string,unit> = workflow {
+        let! model = getState
+        do! updateState (exportModel model)
+    }

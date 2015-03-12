@@ -124,8 +124,7 @@
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaToString.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\SpinExecute.fs" />
-    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransformSam.fs" />
-    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransformScm.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransform.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvOperators.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvAst.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvAstHelpers.fs" />
@@ -134,8 +133,7 @@
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvCommandsToString.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvInterpretResult.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvExecute.fs" />
-    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvTransformSam.fs" />
-    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvTransformScm.fs" />
+    <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvTransform.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismAst.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismAstHelpers.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismCommands.fs" />
@@ -146,7 +144,7 @@
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieSimplifiedAst.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieToString.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieExecute.fs" />
-    <Compile Include="Analysis\Modelchecking\Boogie\BoogieTransformSam.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieTransform.fs" />
     <Compile Include="Analysis\Stochastic\UnitsOfMeasurement.fs" />
     <Compile Include="Analysis\Stochastic\DiscreteDistributions.fs" />
     <Compile Include="Analysis\Stochastic\ContinuousDistributions.fs" />
