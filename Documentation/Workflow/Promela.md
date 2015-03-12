@@ -21,20 +21,19 @@ do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
 
 
 [comment]: # (Encoded in UMLGraph from http://plantuml.sourceforge.net/activity.html)
+[comment]: # (Need to include ; in each new line:)
 [comment]: # (Need to Replace '(' by %28 and  ')' by %29 )
 
 ![Alt text](http://g.gravizo.com/g?
 @startuml;
-
-%28*%29 --> "SCM-Model"
--->[ScmWorkflow.setPlainModelState] "SCM model %28with IScm-Interface%29"
--->[SafetySharp.Models.ScmRewriterFlattenModel.flattenModel] "Flattened SCM model %28with IScm interface%29"
--->[SafetySharp.Models.ScmToSam.transformIscmToSam] "SAM model"
--->[SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf] "Promela code as AST"
--->[SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString] "Promela code as string"
--->[SafetySharp.Workflow.saveToFile] "Saved Promela Code"
--->[SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan] "result string of pan"
---> %28*%29
-
+%28*%29 --> "SCM-Model";
+-->[ScmWorkflow.setPlainModelState] "SCM model %28with IScm-Interface%29";
+-->[SafetySharp.Models.ScmRewriterFlattenModel.flattenModel] "Flattened SCM model %28with IScm interface%29";
+-->[SafetySharp.Models.ScmToSam.transformIscmToSam] "SAM model";
+-->[SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigurationWf] "Promela code as AST";
+-->[SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString] "Promela code as string";
+-->[SafetySharp.Workflow.saveToFile] "Saved Promela Code";
+-->[SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan] "result string of pan";
+--> %28*%29;
 @enduml
 )
