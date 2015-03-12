@@ -23,6 +23,7 @@ do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
 [comment]: # (Encoded in UMLGraph from http://plantuml.sourceforge.net/activity.html)
 [comment]: # (Need to include ; in each new line:)
 [comment]: # (Need to Replace '(' by %28 and  ')' by %29 )
+[comment]: # (Encoder available at http://www.gravizo.com/#converter )
 
 ![Alt text](http://g.gravizo.com/g?
 @startuml;

@@ -36,7 +36,7 @@ type internal ExecuteSpin =
     
 
     val private filename : string
-    // good to know: Prism only prints to stdout, even if errors occur. So only buffer for stdout necessary
+    // to check: is interesting output on stderr?
     val mutable private spinStdoutOutput : string
     val mutable private compilerStdoutOutput : string
     val panResults : System.Collections.Concurrent.BlockingCollection<string*bool> //(string contains the result. bool tells, if it was the last element
@@ -85,7 +85,7 @@ type internal ExecuteSpin =
         let fileNameToSpinExe =
             match candidates |> Seq.tryFind tryCandidate with
                 | Some(filename) -> filename
-                | None -> failwith "Please add path to spin627.exe into PATH\n or set the environmental variable SPIN_DIR to the Spin top level directory \n or copy Spin into the dependency directory. You can download Spin from http://www.http://spinroot.com/"
+                | None -> failwith "Please add path to spin627.exe into PATH\n or set the environmental variable SPIN_DIR to the Spin top level directory \n or copy Spin into the dependency directory. You can download Spin from http://spinroot.com/"
         fileNameToSpinExe
     
     static member IsSpinRunnable : bool =
