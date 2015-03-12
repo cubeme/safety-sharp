@@ -1,0 +1,16 @@
+globals {
+	i : int = 0;
+}
+locals {
+}
+choice {
+	true => {
+		i := i + 1;
+		choice {
+			false => { i := i + 2; }
+		}
+	}
+	true => {
+		i := 4;
+	}
+}

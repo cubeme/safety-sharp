@@ -143,6 +143,8 @@
     <Compile Include="Analysis\Modelchecking\Prism\PrismCommandsToString.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismInterpretResult.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieSimplifiedAst.fs" />
+    <Compile Include="Analysis\Modelchecking\Boogie\BoogieToString.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieExecute.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieTransformSam.fs" />
     <Compile Include="Analysis\Stochastic\UnitsOfMeasurement.fs" />

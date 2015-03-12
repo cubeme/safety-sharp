@@ -22,7 +22,17 @@
 
 namespace SafetySharp.Analysis.Modelchecking.Boogie
 
-module BoogieTransformSam =
+open SafetySharp.Models
+
+module internal SamToBoogie =
 
 
     let a =""
+    
+    open SafetySharp.Workflow
+    
+    let transformConfigurationWf : WorkflowFunction<Sam.Pgm,PrSpec,unit> = workflow {
+        let! samModel = SamWorkflow.getSamModel
+        let newPromelaSpec = transformConfiguration samModel
+        do! updateState newPromelaSpec        
+    }
