@@ -9,7 +9,7 @@
 
 
 
-
+```
 do! ScmWorkflow.setPlainModelState scm
 do! SafetySharp.Models.ScmRewriterFlattenModel.flattenModel
 do! SafetySharp.Models.ScmToSam.transformIscmToSam
@@ -17,7 +17,7 @@ do! SafetySharp.Analysis.Modelchecking.PromelaSpin.SamToPromela.transformConfigu
 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow
 do! SafetySharp.Workflow.saveToFile *freshFileName*
 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
-
+```
 
 
 [comment]: # (Encoded in UMLGraph from http://plantuml.sourceforge.net/activity.html)
