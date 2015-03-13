@@ -248,7 +248,7 @@ module internal SamToNuXmvWp =
     }
         
     let transformConfiguration_fromSam : WorkflowFunction<Sam.Pgm,NuXmvProgram,unit> = workflow {
-        do! VcSamModelForModification.transformSamToVcSam
+        do! VcSamModelForModification.transformSamToVcSamForModification
         do! transformConfiguration_fromVcSam
         return ()
     }

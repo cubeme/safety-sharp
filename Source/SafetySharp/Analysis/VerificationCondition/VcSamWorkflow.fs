@@ -142,13 +142,18 @@ module internal VcSamModelForModification =
     open SafetySharp.Models
     type TransformToModelForVerificationWorkflowFunction<'source> = WorkflowFunction<'source,ModelForModification,unit>
             
-    let transformSamToVcSam : TransformToModelForVerificationWorkflowFunction<Sam.Pgm> = workflow {
+    let transformSamToVcSamForModification : TransformToModelForVerificationWorkflowFunction<Sam.Pgm> = workflow {
         let! model = SafetySharp.Models.SamWorkflow.getSamModel
         let newModel = (ModelForModification.initial model)
         do! updateState newModel
     }
     
-    let transformIVcSamToVcModelForModification<'state when 'state :> IVcSamModel<'state>>
+    let transformVcSamForModificationToVcSam : WorkflowFunction<ModelForModification,VcSam.Pgm,unit> = workflow {
+        let! model = getVcSamModel
+        do! updateState model
+    }
+    
+    let transformIVcSamToModelForModification<'state when 'state :> IVcSamModel<'state>>
                      : WorkflowFunction<'state,ModelForModification,unit> = workflow {
         let! model = getVcSamModel
         let newModel = (ModelForModification.initial model)

@@ -69,16 +69,3 @@ module SamToPromelaTests =
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString
         ()
-
-
-    (*
-
-    [<Test>]
-    let ``write transformed model to file`` () =
-        let modelTransformer = MetamodelToPromela (testCase1Configuration)
-        let promelaCode = modelTransformer.transformConfiguration
-        let promelaWriter = ExportPromelaAstToFile()
-        let promelaCodeString = promelaWriter.Export promelaCode
-        FileSystem.WriteToAsciiFile "Modelchecking/Promela/testcase1.pml" promelaCodeString
-        ()
-    *)

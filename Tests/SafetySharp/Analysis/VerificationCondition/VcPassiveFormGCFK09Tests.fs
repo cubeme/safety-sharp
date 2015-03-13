@@ -31,7 +31,7 @@ module internal TransformationsTestHelpersWorkflowModule =
     let internal readInputFileAndTransformToSsa (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
-            do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformSamToVcSam
+            do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformSamToVcSamForModification
             do! SafetySharp.Analysis.VerificationCondition.VcPassiveFormGCFK09.transformProgramInSsaForm_Original
     }
 
@@ -39,7 +39,7 @@ module internal TransformationsTestHelpersWorkflowModule =
     let internal readInputFileAndTransformToPassiveForm (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
-            do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformSamToVcSam
+            do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformSamToVcSamForModification
             do! SafetySharp.Analysis.VerificationCondition.VcPassiveFormGCFK09.transformProgramInPassiveForm_Original
     }
 

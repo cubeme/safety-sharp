@@ -74,6 +74,7 @@
     <Compile Include="Modelchecking\Prism\PrismInterpretResultTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismCheckSmokeTests.fs" />
     <Compile Include="Modelchecking\Boogie\BoogieExecuteTests.fs" />
+    <Compile Include="Modelchecking\Boogie\BoogieTransformSamTests.fs" />
     <Compile Include="Modelchecking\Boogie\BoogieCheckSmokeTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserInputTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserSExprTests.fs" />
