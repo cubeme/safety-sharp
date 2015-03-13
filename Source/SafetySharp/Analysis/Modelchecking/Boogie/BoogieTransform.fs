@@ -37,20 +37,22 @@ module internal VcSamToBoogie =
     
     type TransformationContext =
         {
-            HybridCodeBlocks : HybridCodeBlock list;
+            HybridCodeBlocksReverse : HybridCodeBlock list;
         }
             with
-                member this.addHybridCodeBlock (entry:HybridCodeBlock) =
+                member this.appendHybridCodeBlock (entry:HybridCodeBlock) =
                     { this with
-                        TransformationContext.HybridCodeBlocks = entry :: this.HybridCodeBlocks;
+                        TransformationContext.HybridCodeBlocksReverse = entry :: this.HybridCodeBlocksReverse;
                     }
+                member this.getHybridCodeBlocks =
+                    this.HybridCodeBlocksReverse |> List.rev
                 member this.getBlockIdForVcStmBlock (blockStmId:VcSam.StatementId) (part:int) =
                     BoogieSimplifiedAst.BlockId(sprintf "Block%dPart%d" blockStmId.Value part)        
-                member this.getBlockIdForVcStmAtomic (blockStmId:VcSam.StatementId) =
-                    BoogieSimplifiedAst.BlockId(sprintf "Atomic%d" blockStmId.Value)
+                member this.getBlockIdForVcStmNonBlock (blockStmId:VcSam.StatementId) =
+                    BoogieSimplifiedAst.BlockId(sprintf "NonBlock%d" blockStmId.Value)
                 static member initial = 
                     {
-                        TransformationContext.HybridCodeBlocks = [];
+                        TransformationContext.HybridCodeBlocksReverse = [];
                     }
 
 
@@ -122,7 +124,7 @@ module internal VcSamToBoogie =
 
         let rec createTransformationContext (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (stm:VcSam.Stm) : TransformationContext =
             // A list of statements can be split up into groups of 'chained atomar statements' (HybridCodeBlock.Statements), 'block stm' (BS) and 'choice stm' (CS).
-            let processStmBlock (context:TransformationContext) (blockStmId:VcSam.StatementId,stmts:VcSam.Stm list) : TransformationContext =
+            let processStmBlock (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (blockStmId:VcSam.StatementId,stmts:VcSam.Stm list) : TransformationContext =
                 // we swapped the extraction of CASs in an Block-Statement, which is the most complex processing of all statements
                 let context = ref context
                 let currentPart = ref 1
@@ -137,7 +139,7 @@ module internal VcSamToBoogie =
                         | VcSam.Stm.Write (sid,variable,expression) ->
                             currentCASrev := stm::currentCASrev.Value
                         | VcSam.Stm.Block (sid,_) ->
-                            let statementBlockId =context.Value.getBlockIdForVcStmBlock blockStmId 1
+                            let statementBlockId = context.Value.getBlockIdForVcStmNonBlock stm.GetStatementId
                             let transferToBlock = BoogieSimplifiedAst.Transfer.Goto([statementBlockId])
                             // create HybridCodeBlock for all atomic statements until now
                             let hybridCodeBlock =
@@ -146,7 +148,7 @@ module internal VcSamToBoogie =
                                     HybridCodeBlock.Statements = currentCASrev.Value |> List.rev;
                                     HybridCodeBlock.Transfer = transferToBlock;
                                 }
-                            context := context.Value.addHybridCodeBlock hybridCodeBlock
+                            context := context.Value.appendHybridCodeBlock hybridCodeBlock
                             // now process the block
                             let nextPart = currentPart.Value + 1
                             let nextBlockId = context.Value.getBlockIdForVcStmBlock blockStmId nextPart
@@ -159,7 +161,7 @@ module internal VcSamToBoogie =
                             currentCASrev := []
                             ()
                         | VcSam.Stm.Choice (sid,choices) ->
-                            let choicesBlockIds = choices |> List.map (fun selected -> context.Value.getBlockIdForVcStmAtomic selected.GetStatementId)
+                            let choicesBlockIds = choices |> List.map (fun selected -> context.Value.getBlockIdForVcStmNonBlock selected.GetStatementId)
                             let transferToChoices = choicesBlockIds |> BoogieSimplifiedAst.Transfer.Goto
                             // create HybridCodeBlock for all atomic statements until now
                             let hybridCodeBlock =
@@ -168,7 +170,7 @@ module internal VcSamToBoogie =
                                     HybridCodeBlock.Statements = currentCASrev.Value |> List.rev;
                                     HybridCodeBlock.Transfer = transferToChoices;
                                 }
-                            context := context.Value.addHybridCodeBlock hybridCodeBlock
+                            context := context.Value.appendHybridCodeBlock hybridCodeBlock
                             // now process the block
                             let nextPart = currentPart.Value + 1
                             let nextBlockId = context.Value.getBlockIdForVcStmBlock blockStmId nextPart
@@ -186,29 +188,44 @@ module internal VcSamToBoogie =
                         HybridCodeBlock.Statements = currentCASrev.Value |> List.rev
                         HybridCodeBlock.Transfer = returnTo;
                     }
-                context := context.Value.addHybridCodeBlock lastHybridCodeBlock
+                context := context.Value.appendHybridCodeBlock lastHybridCodeBlock
                 context.Value
             // until now was the extraction of CASs in a block in a swapped function
-            let processStmNonBlock (context:TransformationContext) (stm:VcSam.Stm) : TransformationContext =
+            let processStmNonBlock (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (stm:VcSam.Stm) : TransformationContext =
                 // create an own HybridCodeBlock only for this single statement
-                let currentBlockId = context.getBlockIdForVcStmAtomic stm.GetStatementId
+                let currentBlockId = context.getBlockIdForVcStmNonBlock stm.GetStatementId
                 let hybridCodeBlock =
                     {
                         HybridCodeBlock.BlockId = currentBlockId;
                         HybridCodeBlock.Statements = [stm];
                         HybridCodeBlock.Transfer = returnTo;
                     }
-                context.addHybridCodeBlock hybridCodeBlock
+                context.appendHybridCodeBlock hybridCodeBlock
             // now we actually do something
             match stm with
                 | VcSam.Stm.Assert _ ->
-                    processStmNonBlock context stm
+                    processStmNonBlock returnTo context stm
                 | VcSam.Stm.Assume _ ->
-                    processStmNonBlock context stm
+                    processStmNonBlock returnTo context stm
                 | VcSam.Stm.Write _ ->
-                    processStmNonBlock context stm
+                    processStmNonBlock returnTo context stm
                 | VcSam.Stm.Block (sid,stmts) ->
-                    processStmBlock context (sid,stmts)
+                    // When a statement refers to a block statement, it refers to the compound block (i.e. the stm containing the other statements).
+                    // Thus, we must make a redirection from this compound block to the first part of the block.
+                    // We could also make a transfer everywhere directly into the code block. But there a several side conditions to take care of.
+                    // Note: The sub statements of this block should return to the position where this block should actually return to.
+                    let compoundBlock_BlockId = context.getBlockIdForVcStmNonBlock stm.GetStatementId
+                    let firstPartInBlock_BlockId = context.getBlockIdForVcStmBlock stm.GetStatementId 1
+                    // the transfer to this block was done by a transfer to 'compoundBlock_BlockId'
+                    let firstPartInBlockTransfer = BoogieSimplifiedAst.Transfer.Goto([firstPartInBlock_BlockId])                    
+                    let hybridCodeBlock =
+                        {
+                            HybridCodeBlock.BlockId = compoundBlock_BlockId;
+                            HybridCodeBlock.Statements = []; //do nothing.
+                            HybridCodeBlock.Transfer = firstPartInBlockTransfer;
+                        }
+                    let context = context.appendHybridCodeBlock hybridCodeBlock
+                    processStmBlock returnTo context (sid,stmts)
                 | VcSam.Stm.Choice (sid,choices) ->
                     let newContext = List.fold (createTransformationContext returnTo) context choices
                     newContext
@@ -245,7 +262,7 @@ module internal VcSamToBoogie =
                     
         let transformPgm (stm:VcSam.Stm) : BoogieSimplifiedAst.CodeBlock list =
             let hybridCodeBlocks = createTransformationContext (BoogieSimplifiedAst.Transfer.Return(None)) TransformationContext.initial stm
-            let transformedCodeBlocks = hybridCodeBlocks.HybridCodeBlocks |> List.map transformHybridCodeBlock
+            let transformedCodeBlocks = hybridCodeBlocks.getHybridCodeBlocks |> List.map transformHybridCodeBlock
             transformedCodeBlocks
 
         let loopProcedure =
