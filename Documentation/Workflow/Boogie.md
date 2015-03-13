@@ -13,10 +13,12 @@
 do! ScmWorkflow.setPlainModelState scm
 do! SafetySharp.Models.ScmRewriterFlattenModel.flattenModel
 ... //TODO
-do! SafetySharp.Analysis.Modelchecking.Boogie.transformVcSamToBoogieWf
+do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformSamToVcSamForModification
+do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformVcSamForModificationToVcSam
+do! SafetySharp.Analysis.Modelchecking.Boogie.VcSamToBoogie.transformVcSamToBoogieWf
 do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf
 do! SafetySharp.Workflow.saveToFile *freshFileName*
-do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
+do! SafetySharp.Analysis.Modelchecking.Boogie.ExecuteBoogie.runBoogie
 ```
 
 
