@@ -14,8 +14,9 @@ do! SafetySharp.Models.ScmRewriterFlattenModel.flattenModel
 do! SafetySharp.Models.ScmToSam.transformIscmToSam
 do! SafetySharp.Analysis.VerificationCondition.VcSamModelForModification.transformSamToVcSamForModification
 do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmvWp.transformConfiguration_fromVcSam
-//do! missing
+do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
 //do! SafetySharp.Workflow.saveToFile *freshFileName*
+//do! TODO: Model check
 ```
 
 
