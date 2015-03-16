@@ -221,7 +221,7 @@ module internal SamToNuXmvWp =
         
         let systemModule =
             {
-                NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "system" };
+                NuXmvModuleDeclaration.Identifier = {NuXmvIdentifier.Name = "main" };
                 NuXmvModuleDeclaration.ModuleParameters = [];
                 NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;globalVarInitialisations;transRelation];
             }
