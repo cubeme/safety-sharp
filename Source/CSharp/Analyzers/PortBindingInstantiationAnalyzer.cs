@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
@@ -35,7 +36,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that no instances of the <see cref="PortBinding" /> class are created explicitly.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class PortBindingInstantiationAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

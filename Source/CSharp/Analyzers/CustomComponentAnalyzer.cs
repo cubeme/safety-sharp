@@ -34,7 +34,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class CustomComponentAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

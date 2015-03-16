@@ -37,7 +37,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that ports referenced using the <see cref="IComponent.RequiredPorts" /> or
 	///     <see cref="IComponent.ProvidedPorts" /> properties are actually declared by the target class.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class PortReferenceAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

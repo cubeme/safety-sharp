@@ -114,7 +114,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     member this.SyntaxTree = syntaxTree
 
     /// Gets the <see cref="CSharpCompilation" /> corresponding to the current instance.
-    member this.CSharpCompilation : CSharpCompilation = csharpCompilation
+    member this.CSharpCompilation = csharpCompilation
 
     /// Gets the root syntax node of the syntax tree.
     member this.SyntaxRoot = syntaxTree.GetRoot ()
@@ -337,10 +337,9 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Gets the diagnostics for the given code emitted by the given analyzer.
     static member GetDiagnostics (analyzer : DiagnosticAnalyzer) csharpCode =
         let compilation = TestCompilation csharpCode
-        let options = AnalyzerOptions (ImmutableArray.Create<AdditionalStream> (), ImmutableDictionary.Create<string, string> ())
         let analyzerArray = ImmutableArray.Create analyzer
 
-        AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation.CSharpCompilation, analyzerArray).Result
+        compilation.CSharpCompilation.WithAnalyzers(analyzerArray).GetAnalyzerDiagnosticsAsync().Result
         |> Seq.map (fun diagnostic ->
             let span = diagnostic.Location.GetLineSpan ()
             let kind = 

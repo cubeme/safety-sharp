@@ -80,7 +80,7 @@ namespace SafetySharp.CSharp.Roslyn
 
 			public override bool DefaultVisit(SyntaxNode node)
 			{
-				Assert.NotReached("Encountered an unexpected kind of syntax node: {0}.", node.CSharpKind());
+				Assert.NotReached("Encountered an unexpected kind of syntax node: {0}.", node.Kind());
 				return false;
 			}
 
@@ -102,7 +102,7 @@ namespace SafetySharp.CSharp.Roslyn
 
 			public override bool VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
 			{
-				switch (node.CSharpKind())
+				switch (node.Kind())
 				{
 					case SyntaxKind.UnaryPlusExpression:
 					case SyntaxKind.UnaryMinusExpression:
@@ -119,27 +119,27 @@ namespace SafetySharp.CSharp.Roslyn
 					case SyntaxKind.PreDecrementExpression:
 						return false;
 					default:
-						Assert.NotReached("Encountered an unexpected unary operator: {0}.", node.CSharpKind());
+						Assert.NotReached("Encountered an unexpected unary operator: {0}.", node.Kind());
 						return false;
 				}
 			}
 
 			public override bool VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
 			{
-				switch (node.CSharpKind())
+				switch (node.Kind())
 				{
 					case SyntaxKind.PostIncrementExpression:
 					case SyntaxKind.PostDecrementExpression:
 						return false;
 					default:
-						Assert.NotReached("Encountered an unexpected unary operator: {0}.", node.CSharpKind());
+						Assert.NotReached("Encountered an unexpected unary operator: {0}.", node.Kind());
 						return false;
 				}
 			}
 
 			public override bool VisitBinaryExpression(BinaryExpressionSyntax node)
 			{
-				switch (node.CSharpKind())
+				switch (node.Kind())
 				{
 					case SyntaxKind.AddExpression:
 					case SyntaxKind.SubtractExpression:
@@ -176,7 +176,7 @@ namespace SafetySharp.CSharp.Roslyn
 
 						goto case SyntaxKind.AddExpression;
 					default:
-						Assert.NotReached("Encountered an unexpected binary operator: {0}.", node.CSharpKind());
+						Assert.NotReached("Encountered an unexpected binary operator: {0}.", node.Kind());
 						return false;
 				}
 			}

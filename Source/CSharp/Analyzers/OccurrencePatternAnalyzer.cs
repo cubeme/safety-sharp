@@ -34,7 +34,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that a fault declaration is marked with exactly one <see cref="OccurrencePatternAttribute" />.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class OccurrencePatternAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

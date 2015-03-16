@@ -33,7 +33,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class PortKindAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

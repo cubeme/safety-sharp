@@ -151,7 +151,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 		{
 			Requires.NotNull(syntaxNode, () => syntaxNode);
 
-			var trivia = syntaxNode.DescendantTrivia().Where(t => t.CSharpKind() == SyntaxKind.EndOfLineTrivia);
+			var trivia = syntaxNode.DescendantTrivia().Where(t => t.Kind() == SyntaxKind.EndOfLineTrivia);
 			return syntaxNode.ReplaceTrivia(trivia, (t1, t2) => SyntaxFactory.Space);
 		}
 
@@ -168,7 +168,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 
 			var trivia = syntaxNode.DescendantTrivia().Where(t =>
 			{
-				var kind = t.CSharpKind();
+				var kind = t.Kind();
 				return kind == SyntaxKind.DocumentationCommentExteriorTrivia || kind == SyntaxKind.MultiLineCommentTrivia ||
 					   kind == SyntaxKind.MultiLineDocumentationCommentTrivia || kind == SyntaxKind.SingleLineCommentTrivia ||
 					   kind == SyntaxKind.SingleLineDocumentationCommentTrivia;

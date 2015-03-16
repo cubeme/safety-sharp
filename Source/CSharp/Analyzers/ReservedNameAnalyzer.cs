@@ -35,7 +35,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that no type, type member, variable, etc. uses a name reserved for synthesized variables.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class ReservedNameAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

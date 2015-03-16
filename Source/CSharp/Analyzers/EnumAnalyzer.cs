@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
 	using System.Linq;
+	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
@@ -35,7 +36,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that no enumeration members explicitly declare a constant value and that the underlying type of all enumerations
 	///     is <see cref="int" />.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class EnumAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

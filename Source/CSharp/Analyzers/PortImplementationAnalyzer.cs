@@ -35,7 +35,7 @@ namespace SafetySharp.CSharp.Analyzers
 	///     Ensures that the port kind of an interface implementing method or property matches the port kind of the
 	///     corresponding interface method or property.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class PortImplementationAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

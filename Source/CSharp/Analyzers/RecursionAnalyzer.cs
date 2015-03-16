@@ -39,7 +39,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that there is no static recursion within a component.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class RecursionAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

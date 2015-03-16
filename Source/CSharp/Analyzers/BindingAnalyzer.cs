@@ -38,7 +38,7 @@ namespace SafetySharp.CSharp.Analyzers
 	/// <summary>
 	///     Ensures that bindings resolve to a unique pair of bound ports.
 	/// </summary>
-	[DiagnosticAnalyzer, UsedImplicitly]
+	[DiagnosticAnalyzer(LanguageNames.CSharp), UsedImplicitly]
 	public class BindingAnalyzer : CSharpAnalyzer
 	{
 		/// <summary>

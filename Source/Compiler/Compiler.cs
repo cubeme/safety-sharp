@@ -210,8 +210,7 @@ namespace SafetySharp.Compiler
 			if (!runSSharpDiagnostics)
 				return true;
 
-			var diagnostics = AnalyzerDriver.GetAnalyzerDiagnosticsAsync(compilation, GetAnalyzers());
-			return Report(diagnostics.Result, false);
+			return Report(compilation.WithAnalyzers(GetAnalyzers()).GetAnalyzerDiagnosticsAsync().Result, false);
 		}
 
 		/// <summary>
