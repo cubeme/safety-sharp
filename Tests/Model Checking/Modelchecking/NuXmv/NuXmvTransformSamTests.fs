@@ -37,8 +37,6 @@ open SafetySharp.Analysis.Modelchecking.NuXmv
 
 [<TestFixture>]
 module SamToNuXmvTests =
-
-    let internal nuXmvWriter = ExportNuXmvAstToFile()
            
     [<Test>]
     let ``simpleBoolean1.sam gets converted to nuXmv`` () =
@@ -49,9 +47,9 @@ module SamToNuXmvTests =
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
                 do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmvWp.transformConfiguration_fromSam
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
             }
-        let nuXmv = runWorkflow_getState workflowToExecute
+        let output = runWorkflow_getState workflowToExecute
 
-        let nuXmvCodeString = nuXmvWriter.ExportNuXmvProgram nuXmv
-        printf "%s" nuXmvCodeString
+        printf "%s" output
         ()

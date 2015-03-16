@@ -25,7 +25,7 @@ namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 open System
 
-type internal ExportNuXmvAstToFile() =
+type internal NuXmvToString() =
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()
@@ -468,3 +468,15 @@ type internal ExportNuXmvAstToFile() =
         | BitShiftLeft
 
    *)
+
+   
+open SafetySharp.Workflow
+
+type internal NuXmvToString with
+    static member instance : NuXmvToString =
+        NuXmvToString()
+
+    static member workflow : WorkflowFunction<NuXmvProgram,string,unit> = workflow {
+        let! model = getState
+        do! updateState (NuXmvToString.instance.ExportNuXmvProgram model)
+    }

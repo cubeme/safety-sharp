@@ -23,9 +23,9 @@
 namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 
-type internal ExportCommandsToString() =
+type internal NuXmvCommandsToString() =
     
-    let astToFile = ExportNuXmvAstToFile()
+    let astToFile = NuXmvToString()
 
     member this.ExportNameOfEnvironmentVariable (variable:IEnvironmentVariable) : string =
         match variable with

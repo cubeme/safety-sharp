@@ -84,7 +84,7 @@ type internal NuXmvCurrentTechniqueForVerification =
 
 
 type internal ExecuteNuXmv() =
-    let commandToString = ExportCommandsToString ()
+    let commandToString = NuXmvCommandsToString ()
 
     
     let commandActiveMutex = new System.Threading.Mutex()
