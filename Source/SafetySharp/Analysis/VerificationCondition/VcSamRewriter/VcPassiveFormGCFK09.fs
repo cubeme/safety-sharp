@@ -379,12 +379,19 @@ module internal VcPassiveFormGCFK09 =
         // Add Assignments. To add assignments, we need to introduce new statements. For that, we need new statement ids
         let! stmIdCounter = getReferenceToStmIdCounter
         let newBodyWithoutMissingAssignments = addMissingAssignmentsBeforeMerges statementInfos stmIdCounter versionedVarToFreshVar newBodyWithReplacedExprs
-        // statementInfos is useless now and outdated
+        // statementInfos is now outdated
+        
+        let mappingToNextGlobal =
+            //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
+            let maxLastWriteOfRoot = statementInfos.MaxLastWrite.Item pgm.Body.GetStatementId.Value
+            maxLastWriteOfRoot |> Map.map (fun var nextVarVersion -> versionedVarToFreshVar.Item(var,nextVarVersion))
+        // statementInfos is now useless
                 
         let varToType =
             let localVarToType = pgm.Locals |> List.map (fun l -> l.Var,l.Type)
             let globalVarToType = pgm.Globals |> List.map (fun g -> g.Var,g.Type)
             (localVarToType @ globalVarToType) |> Map.ofList
+
 
         let newPgm =
             let createLocalVarDecl (_var,_type) = LocalVarDecl.createLocalVarDecl _var _type
@@ -399,6 +406,7 @@ module internal VcPassiveFormGCFK09 =
                 Pgm.Body = newBodyWithoutMissingAssignments;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
+                Pgm.NextGlobal = mappingToNextGlobal;
             }            
         do! setVcSamModel newPgm
     }

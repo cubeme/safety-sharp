@@ -140,3 +140,17 @@ module BoogieSmokeTests =
         let output = runSmokeTest inputFile
         printf "%s" output
         ()
+
+    [<Test>]
+    let ``smokeTest15.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest15.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest16.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest16.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()

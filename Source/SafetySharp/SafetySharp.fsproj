@@ -103,6 +103,7 @@
     <Compile Include="Analysis\VerificationCondition\VcSamRewriter\VcsamrChangeIdentifier.fs" />
     <Compile Include="Analysis\VerificationCondition\VcWeakestPrecondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcStrongestPostcondition.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcGuardToNextForm.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />
@@ -141,6 +142,7 @@
     <Compile Include="Analysis\Modelchecking\Prism\PrismCommandsToString.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismInterpretResult.fs" />
     <Compile Include="Analysis\Modelchecking\Prism\PrismExecute.fs" />
+    <Compile Include="Analysis\Modelchecking\Prism\PrismTransform.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieSimplifiedAst.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieToString.fs" />
     <Compile Include="Analysis\Modelchecking\Boogie\BoogieExecute.fs" />

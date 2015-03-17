@@ -110,12 +110,16 @@ module internal VcsamrChangeIdentifier =
                 { localVar with
                     LocalVarDecl.Var = newState.OldToNew.Item localVar.Var
                 }
-            samPgm.Locals |> List.map transformLocal
-
+            samPgm.Locals |> List.map transformLocal        
+        let newNextGlobal =
+            samPgm.NextGlobal |> Map.toList
+                              |> List.map (fun (fromOldVar,toOldVar) -> (newState.OldToNew.Item fromOldVar,newState.OldToNew.Item toOldVar) )
+                              |> Map.ofList
         {
             Pgm.Globals = newGlobals;
             Pgm.Locals = newLocals;
             Pgm.Body = transformStm newState samPgm.Body;
+            Pgm.NextGlobal = newNextGlobal;
         }
 
     

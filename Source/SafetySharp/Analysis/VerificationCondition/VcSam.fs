@@ -65,6 +65,8 @@ module internal VcSam =
     type Pgm = {
         Globals : GlobalVarDecl list
         Locals : LocalVarDecl list
+        //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
+        NextGlobal : Map<Var,Var>
         Body : Stm
     }
                     

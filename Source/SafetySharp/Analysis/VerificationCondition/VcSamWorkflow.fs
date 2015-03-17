@@ -86,10 +86,14 @@ module internal VcSamModelForModification =
                 VcSam.Stm.Write (freshId,variable,expression)
                 
     let translatePgm (stmIdCounter:int ref) (pgm : SafetySharp.Models.Sam.Pgm ) : VcSam.Pgm =
+        let nextGlobals =
+            pgm.Globals |> List.map (fun varDecl -> (varDecl.Var,varDecl.Var) ) //map to the same variable
+                        |> Map.ofList
         {
             VcSam.Pgm.Globals = pgm.Globals;
             VcSam.Pgm.Locals = pgm.Locals;
             VcSam.Pgm.Body = translateStm stmIdCounter pgm.Body;
+            VcSam.Pgm.NextGlobal = nextGlobals;
         }
         
     let rec getMaximalStmId (stm:VcSam.Stm) : int =
