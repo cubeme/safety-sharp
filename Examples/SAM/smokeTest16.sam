@@ -1,0 +1,14 @@
+globals {
+	i : int = 0;
+	j : int = 0;
+}
+locals {
+}
+choice {
+	true => {
+		i := 1;
+	}
+	true => {
+		j := 2;
+	}
+}
