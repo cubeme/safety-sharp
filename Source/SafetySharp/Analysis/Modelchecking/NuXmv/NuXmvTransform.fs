@@ -48,81 +48,77 @@ open SafetySharp.Analysis.VerificationCondition
 
 
 module internal SamToNuXmvWp =
-    
+            
+    // next( var_x) = NextGlobal( var_x).
+    // If Pgm is in SSA-Form, then
 
-    type ManageVariablesState = {
-        TakenNames : Set<string>;
-        VarWithPostValueToVarWithCurrentValue : Map<VcSam.Var,VcSam.Var>;
-        VarWithCurrentValueToVarWithPostValue : Map<VcSam.Var,VcSam.Var>;
+
+    type NuXmvVariables = {
         VarToNuXmvIdentifier: Map<VcSam.Var,NuXmvIdentifier>;
         VarToNuXmvComplexIdentifier: Map<VcSam.Var,NuXmv.ComplexIdentifier>;
-        // TODO: Add type information of a variable
-        NameGenerator : NameGenerator;
+        VirtualVarToVar: Map<VcSam.Var,VcSam.Var>;
+        VarToVirtualVar : Map<VcSam.Var,VcSam.Var>;
     }
-        with
-            member private this.generateNewName (based_on:string) : string =
-                this.NameGenerator this.TakenNames based_on
-                
-            member private this.generateNuXmvIdentifier (var:VcSam.Var) : (ManageVariablesState) =
+        with    
+            member private this.generateNuXmvIdentifier (var:VcSam.Var) : (NuXmvVariables) =
                 let nuXmvIdentifier = {NuXmvIdentifier.Name=var.getName}
                 let nuXmvComplexIdentifier = NuXmv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
                 let newState=
                     { this with
-                        ManageVariablesState.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
-                        ManageVariablesState.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
+                        NuXmvVariables.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
+                        NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
                     }
                 newState
 
-            member private this.generatePostValueVar (currentValVar:VcSam.Var) : (VcSam.Var*ManageVariablesState) =
-                let postValVarName = this.generateNewName (currentValVar.getName + "_virtual")
-                let postValVar = VcSam.Var.Var(postValVarName)
-                let newState=
-                    { this with
-                        ManageVariablesState.TakenNames = this.TakenNames.Add postValVarName;
-                        ManageVariablesState.VarWithPostValueToVarWithCurrentValue =
-                                this.VarWithPostValueToVarWithCurrentValue.Add (postValVar,currentValVar)
-                        ManageVariablesState.VarWithCurrentValueToVarWithPostValue =
-                                this.VarWithCurrentValueToVarWithPostValue.Add (currentValVar,postValVar)
-                    }
-                (postValVar,newState)
-
-            member private this.createMapEntries (var:VcSam.Var) : ManageVariablesState =
-                let (newVar,newState1) = this.generatePostValueVar var
-                let newState2 = newState1.generateNuXmvIdentifier var
-                newState2
-
-            static member initial (variableDeclsToAdd:VcSam.GlobalVarDecl list) (nameGenerator:NameGenerator) =
-                // * create a nuXmv identifier
-                // * create a virtual variable with "virtualVar==next(var)"
-                // Note: to avoid name clashes, every variable, which will be added, needs already to be in TakenNames
-
+            static member private createVirtualVarEntries (pgm:VcSam.Pgm) : (VcSam.Var*VcSam.Var) list =
+                    //Var to Virtual Var which represents "next(Var)"
+                    let takenNames:Set<string> ref = 
+                        let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
+                        let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
+                        (localNames @ globalNames) |> Set.ofList |> ref            
+                    let createNewName (based_on:VcSam.Var) : string =
+                        let nameCandidate = sprintf "%s_virtual" based_on.getName
+                        let nameGenerator = SafetySharp.FreshNameGenerator.namegenerator_c_like
+                        let freshName = nameGenerator takenNames.Value (nameCandidate)
+                        takenNames:=takenNames.Value.Add(freshName)
+                        freshName        
+                    let createFreshVarsForNewVariableVersions (var:VcSam.GlobalVarDecl) =
+                            let freshVar = VcSam.Var.Var(createNewName var.Var)
+                            let nextGlobalVarOfVar = pgm.NextGlobal.Item (var.Var)
+                            (nextGlobalVarOfVar,freshVar)        
+                    let virtualVarEntries =
+                        pgm.Globals |> List.map createFreshVarsForNewVariableVersions
+                    virtualVarEntries
+                
+            static member initial (pgm:VcSam.Pgm) (nameGenerator:NameGenerator) =
+                // * create a nuXmv identifier for each global var
                 let nuXmvKeywords: Set<string> = Set.empty<string>
-                let takenVariableNames = variableDeclsToAdd |> List.map (fun varDecl -> varDecl.Var.getName) |> Set.ofList
+                let varDeclsToAdd : VcSam.GlobalVarDecl list= pgm.Globals
+                let virtualVarEntries = NuXmvVariables.createVirtualVarEntries pgm
+                let takenVariableNames = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var.getName) |> Set.ofList
                 let initialState =
                     {
-                        ManageVariablesState.TakenNames = Set.union nuXmvKeywords takenVariableNames;
-                        ManageVariablesState.VarWithPostValueToVarWithCurrentValue = Map.empty<VcSam.Var,VcSam.Var>;
-                        ManageVariablesState.VarWithCurrentValueToVarWithPostValue = Map.empty<VcSam.Var,VcSam.Var>;
-                        ManageVariablesState.VarToNuXmvIdentifier = Map.empty<VcSam.Var,NuXmvIdentifier>;
-                        ManageVariablesState.VarToNuXmvComplexIdentifier = Map.empty<VcSam.Var,NuXmv.ComplexIdentifier>;
-                        ManageVariablesState.NameGenerator = nameGenerator;
+                        NuXmvVariables.VarToNuXmvIdentifier = Map.empty<VcSam.Var,NuXmvIdentifier>;
+                        NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<VcSam.Var,NuXmv.ComplexIdentifier>;
+                        NuXmvVariables.VirtualVarToVar = virtualVarEntries |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
+                        NuXmvVariables.VarToVirtualVar = virtualVarEntries |> Map.ofList
                     }
-                let variablesToAdd = variableDeclsToAdd |> List.map (fun varDecl -> varDecl.Var)
+                let variablesToAdd = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var)
                     
-                let generateAndAddToList (state:ManageVariablesState) (variableToAdd:VcSam.Var): (ManageVariablesState) =
-                    let (newState) = state.createMapEntries variableToAdd
+                let generateAndAddToList (state:NuXmvVariables) (variableToAdd:VcSam.Var): (NuXmvVariables) =
+                    let (newState) = state.generateNuXmvIdentifier variableToAdd
                     newState
                 Seq.fold generateAndAddToList (initialState) variablesToAdd
             
+            
 
-
-    let generateGlobalVarDeclarations (manageVariablesState:ManageVariablesState) (varDecls:VcSam.GlobalVarDecl list) : ModuleElement =
+    let generateGlobalVarDeclarations (nuXmvVariables:NuXmvVariables) (varDecls:VcSam.GlobalVarDecl list) : ModuleElement =
         let generateDecl (varDecl:VcSam.GlobalVarDecl) : TypedIdentifier =
             let _type = match varDecl.Type with
                             | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
                             | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
                             //| SamType.Decimal -> failwith "NotImplementedYet"
-            let _variable = manageVariablesState.VarToNuXmvIdentifier.Item varDecl.Var
+            let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
             {
                 TypedIdentifier.Identifier = _variable ;
                 TypedIdentifier.TypeSpecifier = _type ;
@@ -130,30 +126,30 @@ module internal SamToNuXmvWp =
         varDecls |> List.map generateDecl
                  |> ModuleElement.VarDeclaration
     
-    let rec translateExpression (manageVariablesState:ManageVariablesState) (expr:VcSam.Expr) : NuXmvBasicExpression =
+    let rec translateExpression (nuXmvVariables:NuXmvVariables) (expr:VcSam.Expr) : NuXmvBasicExpression =
         match expr with
             | VcSam.Expr.Literal (_val) ->
                 match _val with
                     | VcSam.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
                     | VcSam.Val.NumbVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(_val))
             | VcSam.Expr.Read (_var) ->
-                match manageVariablesState.VarWithPostValueToVarWithCurrentValue.TryFind _var with
+                match nuXmvVariables.VirtualVarToVar.TryFind _var with
                     | None ->
-                        NuXmvBasicExpression.ComplexIdentifierExpression(manageVariablesState.VarToNuXmvComplexIdentifier.Item _var)
+                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
                     | Some(originalValue) ->
                         // here we have a virtual value. We want a next(originalValue) instead
-                        NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(manageVariablesState.VarToNuXmvComplexIdentifier.Item originalValue))
+                        NuXmvBasicExpression.BasicNextExpression(NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item originalValue))
             | VcSam.Expr.ReadOld (_var) ->            
-                match manageVariablesState.VarWithPostValueToVarWithCurrentValue.TryFind _var with
+                match nuXmvVariables.VirtualVarToVar.TryFind _var with
                     | None ->
-                        NuXmvBasicExpression.ComplexIdentifierExpression(manageVariablesState.VarToNuXmvComplexIdentifier.Item _var)
+                        NuXmvBasicExpression.ComplexIdentifierExpression(nuXmvVariables.VarToNuXmvComplexIdentifier.Item _var)
                     | Some(originalValue) ->
                         failwith "not sure, what this should mean in combination with readOld"
             | VcSam.Expr.UExpr (expr,uop) ->
                 let operator =
                     match uop with
                         | VcSam.UOp.Not -> NuXmv.UnaryOperator.LogicalNot
-                NuXmvBasicExpression.UnaryExpression(operator,translateExpression manageVariablesState expr)
+                NuXmvBasicExpression.UnaryExpression(operator,translateExpression nuXmvVariables expr)
             | VcSam.Expr.BExpr (left, bop, right) ->
                 let operator =
                     match bop with
@@ -171,11 +167,11 @@ module internal SamToNuXmvWp =
                         | VcSam.BOp.LessEqual -> NuXmv.BinaryOperator.LessEqual
                         | VcSam.BOp.Greater -> NuXmv.BinaryOperator.GreaterThan
                         | VcSam.BOp.GreaterEqual -> NuXmv.BinaryOperator.GreaterEqual
-                NuXmvBasicExpression.BinaryExpression(translateExpression manageVariablesState left,operator,translateExpression manageVariablesState right)
+                NuXmvBasicExpression.BinaryExpression(translateExpression nuXmvVariables left,operator,translateExpression nuXmvVariables right)
 
 
 
-    let generateGlobalVarInitialisations (manageVariablesState:ManageVariablesState) (varDecls:VcSam.GlobalVarDecl list) : ModuleElement =
+    let generateGlobalVarInitialisations (nuXmvVariables:NuXmvVariables) (varDecls:VcSam.GlobalVarDecl list) : ModuleElement =
         let generateInit (varDecl:Sam.GlobalVarDecl) : VcSam.Expr =
             let generatePossibleValues (initialValue : VcSam.Val) : VcSam.Expr =
                 let assignVar = varDecl.Var
@@ -186,23 +182,23 @@ module internal SamToNuXmvWp =
                          |> VcSam.createOredExpr
         varDecls |> List.map generateInit
                  |> VcSam.createAndedExpr
-                 |> translateExpression (manageVariablesState)
+                 |> translateExpression (nuXmvVariables)
                  |> ModuleElement.InitConstraint
 
-    let generateTransRelation (manageVariablesState:ManageVariablesState) (expr:VcSam.Expr) : ModuleElement =
-        ModuleElement.TransConstraint(translateExpression manageVariablesState expr)
+    let generateTransRelation (nuXmvVariables:NuXmvVariables) (expr:VcSam.Expr) : ModuleElement =
+        ModuleElement.TransConstraint(translateExpression nuXmvVariables expr)
 
     
     let transformConfiguration (pgm:VcSam.Pgm) : NuXmvProgram =
-        // create the manageVariablesState: Keeps the association between the post value variable and the current value variable
+        // create the nuXmvVariables: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
-        let manageVariablesState = ManageVariablesState.initial pgm.Globals SafetySharp.FreshNameGenerator.namegenerator_c_like
+        let nuXmvVariables = NuXmvVariables.initial pgm SafetySharp.FreshNameGenerator.namegenerator_c_like
 
 
-        let formulaForWPPostcondition = // "a'=a,b'<->b,...."
+        let formulaForWPPostcondition = // "a'=a_last, b'<->b_last, ...."
             let createFormulaForGlobalVarDecl (globalVarDecl:VcSam.GlobalVarDecl) : VcSam.Expr =
                 let varCurrent = globalVarDecl.Var
-                let varPost = manageVariablesState.VarWithCurrentValueToVarWithPostValue.Item varCurrent
+                let varPost = nuXmvVariables.VarToVirtualVar.Item varCurrent
                 let operator = VcSam.BOp.Equals
                 VcSam.Expr.BExpr(VcSam.Expr.Read(varPost),operator,VcSam.Expr.Read(varCurrent))
             pgm.Globals |> List.map createFormulaForGlobalVarDecl
@@ -210,14 +206,14 @@ module internal SamToNuXmvWp =
 
                         
         // declare globals variables
-        let globalVarModuleElement = generateGlobalVarDeclarations manageVariablesState pgm.Globals
+        let globalVarModuleElement = generateGlobalVarDeclarations nuXmvVariables pgm.Globals
         
         // initialize globals (INIT)
-        let globalVarInitialisations = generateGlobalVarInitialisations manageVariablesState pgm.Globals
+        let globalVarInitialisations = generateGlobalVarInitialisations nuXmvVariables pgm.Globals
         
         // program loop (TRANS)
         let wp_of_Statement = VcWeakestPrecondition.wp pgm.Body formulaForWPPostcondition
-        let transRelation  = generateTransRelation manageVariablesState wp_of_Statement
+        let transRelation  = generateTransRelation nuXmvVariables wp_of_Statement
         
         let systemModule =
             {
