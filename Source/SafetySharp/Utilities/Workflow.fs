@@ -260,3 +260,11 @@ module internal Workflow =
         do System.IO.File.WriteAllText (outputFileName, input, System.Text.Encoding.ASCII)
         do! updateState outputFile
     }
+
+    let printToFile (outputFile:FileSystem.FileName) : WorkflowFunction<string,string,unit> = workflow {
+        let! input = getState
+        let (FileSystem.FileName(outputFileName)) = outputFile
+        //do FileSystem.WriteToAsciiFile outputFileName input
+        do FileSystem.WriteToAsciiFile outputFileName input
+        return ()
+    }
