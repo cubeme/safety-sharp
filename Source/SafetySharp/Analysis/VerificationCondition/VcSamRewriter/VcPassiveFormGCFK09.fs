@@ -54,13 +54,6 @@ module internal VcPassiveFormGCFK09 =
     open SafetySharp.Models.SamHelpers
     open VcSam
     
-    (*
-    type StatementGraph = {
-        Root : int
-        Parent : Map<int,Set<int>>
-    }
-    *)
-
     type StatementInfos =
         {
             ReadVersions : Map<int,Set<Var*int>> 

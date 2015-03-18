@@ -103,7 +103,7 @@
     <Compile Include="Analysis\VerificationCondition\VcSamRewriter\VcsamrChangeIdentifier.fs" />
     <Compile Include="Analysis\VerificationCondition\VcWeakestPrecondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcStrongestPostcondition.fs" />
-    <Compile Include="Analysis\VerificationCondition\VcGuardToNextForm.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcGuardWithFinalAssignForm.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />

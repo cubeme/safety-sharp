@@ -27,6 +27,8 @@ module internal VcWeakestPrecondition =
     open VcSam
     open SafetySharp.Models.SamHelpers
        
+    // Predicate Transformers
+
     let rec wp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
         match expr with
             | Expr.Literal (_val) -> Expr.Literal(_val)
