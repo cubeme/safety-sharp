@@ -1,11 +1,14 @@
 globals {
 	i : int = 0;
+	j : int = 0;
 }
 locals {
 }
-i := i + 1;
 choice {
-	false => { i := i + 2; }
-	true => { i := i + 4; }	
+	true => {
+		i := 1;
+	}
+	true => {
+		j := 2;
+	}
 }
-i := i + 8;

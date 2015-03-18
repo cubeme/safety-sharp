@@ -5,9 +5,12 @@ locals {
 }
 choice {
 	true => {
-		i := 1;
+		i := i + 1;
+		choice {
+			false => { i := i + 2; }
+		}
 	}
 	true => {
-		i := 2;
+		i := 4;
 	}
 }

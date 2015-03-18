@@ -4,24 +4,10 @@ globals {
 locals {
 }
 choice {
-	false => {
-		choice {
-			true => {
-				i := 403;
-			}
-			false => {
-				i := 403;				
-			}
-		}
+	i < 10 => {
+		i := i + 1;
 	}
-	true => {
-		choice {
-			false => {
-				i := 403;				
-			}
-			true => {
-				i := 200;
-			}
-		}
+	i == 10 => {
+		i := 0;
 	}
 }

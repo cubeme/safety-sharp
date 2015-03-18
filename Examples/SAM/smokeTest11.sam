@@ -1,13 +1,12 @@
 globals {
 	i : int = 0;
-	j : int = 2048;
 }
 locals {
 }
 i := i + 1;
 choice {
 	false => {
-		j := j + 2;
+		i := i + 2;
 	}
 	true => {
 		i := i + 4;
@@ -15,13 +14,10 @@ choice {
 		choice {
 			true => {
 				i := i + 16;
-				i := i + 32;
 			}
 			false => {
-				j := j + 64;
+				i := i + 32;
 			}
-		}
-		i := i + 128;
+		}		
 	}
 }
-i := i + 256;

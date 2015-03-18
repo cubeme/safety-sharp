@@ -1,0 +1,17 @@
+globals {
+	i : int = 0;
+}
+locals {
+}
+choice {
+	i >= 3 => {
+		choice {
+			i < 10 => {
+				i := i + 1;
+			}
+			i == 10 => {
+				i := 0;
+			}
+		}
+	}
+}
