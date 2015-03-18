@@ -30,12 +30,19 @@ open SafetySharp.Analysis.Modelchecking.NuXmv
 [<TestFixture>]
 module NuXmvCheckSmokeTests =
     open SafetySharp.Models
+
+    let internal inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
+        let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
+        let newDirectory = "../../Examples/NuXmv/TransformedSam"
+        SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
         
     let internal smokeTestWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmvWp.transformConfiguration_fromSam
             do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
+            let outputFile = inputFileNameToOutputFileName inputFile
+            do! printToFile outputFile
         }
                    
     let runSmokeTest (inputFile) =
@@ -149,6 +156,27 @@ module NuXmvCheckSmokeTests =
     [<Test>]
     let ``smokeTest16.sam returns the expected results`` () =        
         let inputFile = """../../Examples/SAM/smokeTest16.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest17.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest17.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest18.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest18.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest19.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest19.sam"""
         let output = runSmokeTest inputFile
         printf "%s" output
         ()

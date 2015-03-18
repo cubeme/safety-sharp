@@ -152,3 +152,24 @@ module PromelaCheckSmokeTests =
         let output = runSmokeTest inputFile
         printf "%s" output
         ()
+
+    [<Test>]
+    let ``smokeTest17.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest17.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest18.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest18.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest19.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest19.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
