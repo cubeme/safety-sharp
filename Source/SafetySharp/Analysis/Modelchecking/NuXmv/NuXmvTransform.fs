@@ -49,9 +49,6 @@ open SafetySharp.Analysis.VerificationCondition
 
 module internal SamToNuXmvWp =
             
-    // next( var_x) = NextGlobal( var_x).
-    // If Pgm is in SSA-Form, then
-
 
     type NuXmvVariables = {
         VarToNuXmvIdentifier: Map<VcSam.Var,NuXmvIdentifier>;
@@ -71,6 +68,10 @@ module internal SamToNuXmvWp =
                 newState
 
             static member private createVirtualVarEntries (pgm:VcSam.Pgm) : (VcSam.Var*VcSam.Var) list =
+                    // next( var_x) = NextGlobal( var_x).
+                    
+                    //TODO: Think about it. In SSA and Passive: last version is next version. That value could also be used as virtual var. Maybe no need to create a new one.
+                                        
                     //Var to Virtual Var which represents "next(Var)"
                     let takenNames:Set<string> ref = 
                         let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
@@ -195,7 +196,13 @@ module internal SamToNuXmvWp =
         let nuXmvVariables = NuXmvVariables.initial pgm SafetySharp.FreshNameGenerator.namegenerator_c_like
 
 
-        let formulaForWPPostcondition = // "a'=a_last, b'<->b_last, ...."
+        let formulaForWPPostcondition =
+            // First Approach: "a'=a_last, b'<->b_last, ...."
+            // THIS FORMULA IS WRONG. It only works for the deterministic case. SEE RESULTS OF smokeTest5.sam
+            // The paper "To Goto Where No Statement Has Gone Before" offers in chapter 3 a way out.
+            // Their goal is to transform "Code Expressions" (Code with statements) into genuine Expressions.
+
+
             let createFormulaForGlobalVarDecl (globalVarDecl:VcSam.GlobalVarDecl) : VcSam.Expr =
                 let varCurrent = globalVarDecl.Var
                 let varPost = nuXmvVariables.VarToVirtualVar.Item varCurrent
@@ -228,7 +235,7 @@ module internal SamToNuXmvWp =
         }
 
 
-
+    //**** // for tomorrow: Include LocalVars and test, what happens, when Transform is run on a PassiveProgram. Maybe introduce the flags (Passive, SSA and Normal)
 
     open SafetySharp.Workflow
     open SafetySharp.Analysis.VerificationCondition

@@ -50,9 +50,19 @@ module internal VcWeakestPrecondition =
         | Choice (_,choices) ->
             let choicesAsExpr =
                 choices |> List.map (fun choice -> wp choice formula)
-            let atLeastOneCaseIsTrue =
-                Expr.createOredExpr choicesAsExpr
-            Expr.createAndedExpr (atLeastOneCaseIsTrue::choicesAsExpr)
+            // TODO: It is not guaranteed, that at least one branch is true
+            // See examples smokeTest17.sam and smokeTest18.sam.
+            // A variant of the formula adds the ored guards to the anded expression.
+            // This ensures, that at least one path is viable. Otherwise the wp returns false.
+            // The difference between this formula and the formula here is that if no path is viable
+            // the formula here returns true (and thus allows everything)
+            // and the variant formula returns false (and thus blocks execution).
+            // This variant formula cannot be used without explicit guards like in VcSam.
+            // PseudoCode:
+            //     let atLeastOneGuardIsTrue =
+            //         Expr.createOredExpr guardsAsExpr
+            //     Expr.createAndedExpr (atLeastOneGuardIsTrue::choicesAsExpr)
+            Expr.createAndedExpr choicesAsExpr
         | Write (_,variable,expression) ->
             wp_rewriteExpr_varsToExpr (variable,expression) formula
 
