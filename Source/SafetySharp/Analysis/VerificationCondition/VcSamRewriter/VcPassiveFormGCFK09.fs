@@ -244,8 +244,12 @@ module internal VcPassiveFormGCFK09 =
         // get written versions of the root node
         let writeVersionsOfRoot = statementInfos.WriteVersions.Item pgm.Body.GetStatementId.Value
         let readVersionsOfRoot = statementInfos.ReadVersions.Item pgm.Body.GetStatementId.Value
+        let initialVersions =
+            // Otherwise, if the initial version of a variable is never read, it does not appear in the set varVersionTuple.
+            // But it might be necessary for the missing statements. (See smokeTest6.sam)
+            pgm.Globals |> List.map (fun gl -> (gl.Var,1) ) |> Set.ofList
         let varVersionTuples =
-            (Set.union writeVersionsOfRoot readVersionsOfRoot) |> Set.toList
+            (Set.unionMany [writeVersionsOfRoot;readVersionsOfRoot;initialVersions]) |> Set.toList
         
         let takenNames:Set<string> ref = 
             let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
