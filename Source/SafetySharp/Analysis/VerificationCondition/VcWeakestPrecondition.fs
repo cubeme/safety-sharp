@@ -35,7 +35,8 @@ module internal VcWeakestPrecondition =
             | Expr.UExpr (expr,uop) -> Expr.UExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) expr ,uop)
             | Expr.BExpr (left, bop, right) -> Expr.BExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) left,bop,wp_rewriteExpr_varsToExpr (variable,toExpr) right)
 
-
+    
+    // http://en.wikipedia.org/wiki/Predicate_transformer_semantics
 
     // formula is the formula which should be true after the execution
     let rec wp (stm:Stm) (formula:Expr) : Expr =
@@ -49,7 +50,9 @@ module internal VcWeakestPrecondition =
         | Choice (_,choices) ->
             let choicesAsExpr =
                 choices |> List.map (fun choice -> wp choice formula)
-            Expr.createAndedExpr choicesAsExpr
+            let atLeastOneCaseIsTrue =
+                Expr.createOredExpr choicesAsExpr
+            Expr.createAndedExpr (atLeastOneCaseIsTrue::choicesAsExpr)
         | Write (_,variable,expression) ->
             wp_rewriteExpr_varsToExpr (variable,expression) formula
 
