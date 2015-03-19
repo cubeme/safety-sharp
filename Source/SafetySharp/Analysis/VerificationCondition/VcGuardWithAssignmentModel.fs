@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-module internal VcGuardToAssignForm =
+module internal VcGuardWithAssignmentModel =
     open VcSam
     open SafetySharp.Models.SamHelpers
     
@@ -110,8 +110,11 @@ module internal VcGuardToAssignForm =
             match stm with
                 | AtomicStm.Assert (expr) ->
                     failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
+                    // I think, we could add the assertion, but it would generate a new proof obligation.
                 | AtomicStm.Assume (expr) ->
-                    failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
+                    let newGuard =
+                        Expr.BExpr(currentGuard,BOp.And,expr)
+                    (newGuard,currentValuation)
                 | AtomicStm.Write (var, expr) ->
                     // replace vars in expr by their current valuation (such that no localVar occurs in any valuation)
                     let newExpr = gwa_rewriteExpr_varsToExpr currentValuation expr
@@ -124,13 +127,32 @@ module internal VcGuardToAssignForm =
             GuardWithAssignments.Assignments = finalValuation;
         }
 
-    let normalize (finalVars:Set<Var>)  =    
+    let removeNonFinalAssignments (finalVars:Set<Var>) (gwa:GuardWithAssignments) =
         //finalVars:
         //   In SSA-Form each GlobalVar has several representatives with different versions of this variable
         //   after each assignment. The representative with the last version of each GlobalVar is in the set FinalVars        
-        
-        // filter out every valuation, which is done on a finalVar
+        // remove every assignment entry, which is not done on a finalVar
+        { gwa with
+            GuardWithAssignments.Assignments = gwa.Assignments |> Map.filter (fun key value -> finalVars.Contains key);
+        }
 
-        // TODO: every non-mentioned Var should be set to the initial Var
-        // TODO: finally, we assign to every variable in finalVars, which has not been assigned to its initial value.
-        ()
+    type GuardWithAssignmentModel = {
+        Globals : GlobalVarDecl list;
+        GuardsWithFinalAssignments : GuardWithAssignments list;
+        NextGlobal : Map<Var,Var>;
+        //GlobalVars
+    }
+
+    // this is the main function of this algorithm
+    let transformPgmToGuardWithFinalAssignmentModel (pgm:Pgm) : GuardWithAssignmentModel =
+        let atomicStmBlocks = collectPaths pgm.Body
+        let globalVars = pgm.Globals |> List.map (fun gl-> gl.Var)
+        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList
+        let guardsWithFinalAssignments =
+            atomicStmBlocks |> List.map (transformAtomicStmBlockToGuardWithAssignments globalVars)
+                            |> List.map (removeNonFinalAssignments finalVars)
+        {
+            GuardWithAssignmentModel.Globals = pgm.Globals;
+            GuardWithAssignmentModel.GuardsWithFinalAssignments = guardsWithFinalAssignments;
+            GuardWithAssignmentModel.NextGlobal = pgm.NextGlobal;
+        }
