@@ -43,19 +43,6 @@ module internal VcGuardToAssignForm =
         AtomicStmBlock of AtomicStm list //more Type safety
                 static member concat (AtomicStmBlock(firstStmBlock)) (AtomicStmBlock(secondStmBlock)) : AtomicStmBlock =
                     AtomicStmBlock.AtomicStmBlock(firstStmBlock @ secondStmBlock)
-                
-            (*with
-                static member concatMany (stmBlocks : AtomicStmBlock list) : AtomicStmBlock =
-                    let rec concatHelper (concatenated:AtomicStm list) (toConcat:AtomicStmBlock list) : AtomicStmBlock =
-                        if toConcat.IsEmpty then
-                            AtomicStmBlock(concatenated)
-                        else
-                            match toConcat.Head with
-                                | AtomicStmBlock(nextElements) ->
-                                    concatHelper (concatenated @ nextElements ) toConcat.Tail
-                    concatHelper [] stmBlocks
-            *)
-
 
     // number of paths is exponential in the number of nested choices
     let rec collectPaths (stm:Stm) : AtomicStmBlock list =
@@ -72,11 +59,15 @@ module internal VcGuardToAssignForm =
                     // Otherwise it would be possible, that the resulting combination list is empty.
                     let newStmBlocks = collectPaths stm
                     if previousStmBlocks.IsEmpty then
+                        // Initially previousStmBlocks is empty. This could be omitted by using an empty
+                        // StmBlock (AtomicStmBlock([]) as initial State for List.fold.
+                        // Then previousStmBlocks should be empty by construction.
                         newStmBlocks
                     else if newStmBlocks.IsEmpty then
+                        // Should not be empty by construction, but just to be sure
                         previousStmBlocks
                     else
-                        // combine                        
+                        // Combine                        
                         let combineWithEveryNewStmBlock (previousStmBlock:AtomicStmBlock) : AtomicStmBlock list =
                             newStmBlocks |> List.map (fun newStmBlock -> AtomicStmBlock.concat previousStmBlock newStmBlock)
                         previousStmBlocks |> List.collect combineWithEveryNewStmBlock
@@ -86,44 +77,60 @@ module internal VcGuardToAssignForm =
             | Stm.Write (_,variable,expression) ->
                 [AtomicStmBlock ([AtomicStm.Write(variable,expression)])]
 
+    
+    let rec gwa_rewriteExpr_varsToExpr (currentValuation:Map<Var,Expr>) (expr:Expr) : Expr =
+        match expr with
+            | Expr.Literal (_) -> expr
+            | Expr.Read (_var) ->                
+                if currentValuation.ContainsKey _var then
+                    currentValuation.Item _var
+                else
+                    expr
+            | Expr.ReadOld (_var) -> expr //old variables keep their value
+            | Expr.UExpr (expr,uop) ->
+                Expr.UExpr (gwa_rewriteExpr_varsToExpr currentValuation expr,uop)
+            | Expr.BExpr (left, bop, right) ->
+                Expr.BExpr (gwa_rewriteExpr_varsToExpr currentValuation left, bop, gwa_rewriteExpr_varsToExpr currentValuation right)
+        
     type GuardWithAssignments = {
-        GuardOfCurrentBranch : Expr;
-        AssignmentsUntilStm : (Stm*Expr) list;
+        Guard : Expr;
+        Assignments : Map<Var,Expr>;
     }
 
-    let transformAtomicStmsToGuardWithAssignments (finalVars:Set<Var>) = []
+    let transformAtomicStmBlockToGuardWithAssignments (globalVars:Var list) (AtomicStmBlock(toTransform)) : GuardWithAssignments =
+        // Start with guard true. Every time we cross an assumption, we add this assumption to our guard.
+        // Every time we cross an assignment, we update the current assignments (forward similar to strongest postcondition)
+        // and if the assignment is to a finalVar, we add it to the Assignments.
+        let initialGuard =
+            Expr.Literal(Val.BoolVal(true))
+        let initialValuation =
+            // add for each globalVar a self assignment. Local Vars should only appear during the statements.
+            globalVars |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var,Expr.Read(var))) Map.empty<Var,Expr>
+        let foldStm (currentGuard:Expr,currentValuation:Map<Var,Expr>) (stm:AtomicStm) : Expr*Map<Var,Expr> =
+            match stm with
+                | AtomicStm.Assert (expr) ->
+                    failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
+                | AtomicStm.Assume (expr) ->
+                    failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
+                | AtomicStm.Write (var, expr) ->
+                    // replace vars in expr by their current valuation (such that no localVar occurs in any valuation)
+                    let newExpr = gwa_rewriteExpr_varsToExpr currentValuation expr
+                    let newValuation = currentValuation.Add(var,newExpr)
+                    (currentGuard,newValuation)
+        
+        let finalGuard,finalValuation = toTransform |> List.fold foldStm (initialGuard,initialValuation)
+        {
+            GuardWithAssignments.Guard = finalGuard;
+            GuardWithAssignments.Assignments = finalValuation;
+        }
 
-        //links werden guards gesammelt. Dies wird durch strongest Postcondition gemacht
-        //rechts kommen die zuweisungen. Wir wissen, dass es die richtige Zuweisung ist, wenn es der letzte wert ist, der geschrieben wird.
-
+    let normalize (finalVars:Set<Var>)  =    
         //finalVars:
-        //  In SSA-Form each GlobalVar has several representatives with different versions of this variable
-        //  after each assignment. The representative with the last version of each GlobalVar is in the set FinalVars
+        //   In SSA-Form each GlobalVar has several representatives with different versions of this variable
+        //   after each assignment. The representative with the last version of each GlobalVar is in the set FinalVars        
+        
+        // filter out every valuation, which is done on a finalVar
 
-    (*       
-    let rec wp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
-        match expr with
-            | Expr.Literal (_val) -> Expr.Literal(_val)
-            | Expr.Read (_var) -> if _var = variable then toExpr else expr
-            | Expr.ReadOld (_var) -> expr //old variables keep their value
-            | Expr.UExpr (expr,uop) -> Expr.UExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) expr ,uop)
-            | Expr.BExpr (left, bop, right) -> Expr.BExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) left,bop,wp_rewriteExpr_varsToExpr (variable,toExpr) right)
-
-
-            
-    // formula is the formula which should be true after the execution
-    let rec wp (stm:Stm) (formula:Expr) : Expr =
-        match stm with
-        | Assert (_,expr) ->
-            Expr.BExpr(expr,BOp.And,formula)
-        | Assume (_,expr) ->
-            Expr.BExpr(expr,BOp.Implies,formula)
-        | Block (_,statements) ->
-            List.foldBack wp statements formula
-        | Choice (_,choices) ->
-            let choicesAsExpr =
-                choices |> List.map (fun choice -> wp choice formula)
-            Expr.createAndedExpr choicesAsExpr
-        | Write (_,variable,expression) ->
-            wp_rewriteExpr_varsToExpr (variable,expression) 
-    *)
+        // TODO: every non-mentioned Var should be set to the initial Var
+        // TODO: finally, we assign to every variable in finalVars, which has not been assigned to its initial value.
+        ()

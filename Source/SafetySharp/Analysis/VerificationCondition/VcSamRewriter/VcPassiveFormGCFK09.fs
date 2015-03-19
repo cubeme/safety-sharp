@@ -278,10 +278,7 @@ module internal VcPassiveFormGCFK09 =
                     versionedVarToFreshVar.Item (_var,readVersionOfVar)
                 Expr.Read (_newVar)
             | Expr.ReadOld (_var) ->
-                let _newVar =
-                    let readVersionOfVar = readVersions.Item _var
-                    versionedVarToFreshVar.Item (_var,readVersionOfVar)
-                Expr.ReadOld (_newVar)
+                expr //old variables keep their value. TODO: Write Smoketest
             | Expr.UExpr (expr,uop) ->
                 Expr.UExpr (replaceVarInExpr readVersions versionedVarToFreshVar expr,uop)
             | Expr.BExpr (left, bop, right) ->
