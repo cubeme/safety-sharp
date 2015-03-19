@@ -41,10 +41,10 @@ module internal VcGuardToAssignForm =
     
     type AtomicStmBlock =
         AtomicStmBlock of AtomicStm list //more Type safety
-            (*with
                 static member concat (AtomicStmBlock(firstStmBlock)) (AtomicStmBlock(secondStmBlock)) : AtomicStmBlock =
                     AtomicStmBlock.AtomicStmBlock(firstStmBlock @ secondStmBlock)
                 
+            (*with
                 static member concatMany (stmBlocks : AtomicStmBlock list) : AtomicStmBlock =
                     let rec concatHelper (concatenated:AtomicStm list) (toConcat:AtomicStmBlock list) : AtomicStmBlock =
                         if toConcat.IsEmpty then
@@ -67,9 +67,19 @@ module internal VcGuardToAssignForm =
                 [AtomicStmBlock ([AtomicStm.Assume(expr)])]
             | Stm.Block (_,statements) ->
                 let rec appendStatementOfBlock (previousStmBlocks:AtomicStmBlock list) (stm:Stm) : AtomicStmBlock list =
-                    let newStmBlocks = collectPaths stm
                     // here we have to combine every possible path "previousStmBlocks X newStmBlocks"
-                    []
+                    // If one of the lists is empty, it should return the other list.
+                    // Otherwise it would be possible, that the resulting combination list is empty.
+                    let newStmBlocks = collectPaths stm
+                    if previousStmBlocks.IsEmpty then
+                        newStmBlocks
+                    else if newStmBlocks.IsEmpty then
+                        previousStmBlocks
+                    else
+                        // combine                        
+                        let combineWithEveryNewStmBlock (previousStmBlock:AtomicStmBlock) : AtomicStmBlock list =
+                            newStmBlocks |> List.map (fun newStmBlock -> AtomicStmBlock.concat previousStmBlock newStmBlock)
+                        previousStmBlocks |> List.collect combineWithEveryNewStmBlock
                 statements |> List.fold appendStatementOfBlock []
             | Stm.Choice (_,choices) ->
                 choices |> List.collect collectPaths
