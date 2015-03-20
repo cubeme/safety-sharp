@@ -3,6 +3,16 @@
 #define DefTimeScale 	2	// 1 unit represents TimeScale seconds
 //-- SCALES -------------------------------------------------------------------------------------
 
+
+//-- MISC PARAMETERS ----------------------------------------------------------------------------
+#define DefSafetyMargin 	(350 / DefPosScale) 							//-- 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
+#define DefCommDelay 		(2 / DefTimeScale)							//-- 2s
+#define DefClosingDelay 	(60 / DefTimeScale)							//-- 60s
+#define DefCloseTimeout 	(240 / DefTimeScale)							//-- 240s
+#define DefMaxSpeed 		(44 * DefTimeScale / DefPosScale)				//-- 160km/h = 44m/s
+#define DefDec 			(1 * DefTimeScale * DefTimeScale / DefPosScale)	//-- 1m/s^2 -> at 160km/h, the train stops after 0,97km
+//-- MISC PARAMETERS ----------------------------------------------------------------------------
+
 //-- POSITIONS ----------------------------------------------------------------------------------
 //-- The train's position ranges from 0 to EndPos. We are not interested in the train's actual
 //-- position if it falls outside that range.		
@@ -10,20 +20,12 @@
 #define DefSensorPos 	(9300 / DefPosScale)	//-- 9,3km
 #define DefCrossingPos (9000 / DefPosScale)	//-- 9km
 
-#define DefVirtualSpeed 	(DefSpeed + failureOdometer.Delta > 0 ? Speed + failureOdometer.Delta : 0)
-#define DefClosePos 		(DefQueryPos - (DefCommDelay + DefClosingDelay) * DefVirtualSpeed - DefSafetyMargin)
+#define DefVirtualSpeed 	(Speed + FailureOdometer > 0 -> Speed + FailureOdometer : 0)
+#define DefStopPos 		(DefCrossingPos - DefVirtualSpeed * DefVirtualSpeed / (2 * DefDec) - DefSafetyMargin)
 #define DefQueryPos 		(DefStopPos - 2 * DefCommDelay * DefVirtualSpeed - DefSafetyMargin)
-#define DefStopPos 		(DefCrossingPos - DefVirtualSpeed * DefVirtualSpeed / (2 * DefDec) - SafetyMargin)
+#define DefClosePos 		(DefQueryPos - (DefCommDelay + DefClosingDelay) * DefVirtualSpeed - DefSafetyMargin)
 //-- POSITIONS ----------------------------------------------------------------------------------
 
-//-- MISC PARAMETERS ----------------------------------------------------------------------------
-#define DefSafetyMargin 	(350 / PosScale) 							//-- 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
-#define DefCommDelay 		(2 / DefTimeScale)							//-- 2s
-#define DefClosingDelay 	(60 / DefTimeScale)							//-- 60s
-#define DefCloseTimeout 	(240 / DefTimeScale)							//-- 240s
-#define DefMaxSpeed 		(44 * DefTimeScale / DefPosScale)				//-- 160km/h = 44m/s
-#define DefDec 			(1 * DefTimeScale * DefTimeScale / DefPosScale)	//-- 1m/s^2 -> at 160km/h, the train stops after 0,97km
-//-- MISC PARAMETERS ----------------------------------------------------------------------------
 
 
 //-- MAGIC NUMBERS ------------------------------------------------------------------------------
@@ -63,7 +65,7 @@
 #define NoStateTrainStop 				4
 #define NoStateTrainGo 					5
 
-#define NoStatePosEnter 				1
+//#define NoStatePosEnter 				1
 #define NoStatePosApproaching 			2
 #define NoStatePosLeave 				3
 
@@ -100,28 +102,33 @@
 //-- STATES -------------------------------------------------------------------------------------
 int StateTimerClosing = 1;
 int StateTimerOpen = 1;
-int StateCommClose = 1;
-int StateCommQuery = 1;
-int StateCommSecured = 1;
+int StateCommClose = NoStateCommCloseInactive;
+int StateCommQuery = NoStateCommQueryInactive;
+int StateCommSecured = NoStateCommSecuredInactive;
 int StateCrossing = 1;
 int StateTrain = 1;
-int StatePos = 1;
-int StateSpeed = 1;
+int StatePos = NoStatePosApproaching;
+int StateSpeed = NoStateSpeedMoving;
 int StateBrakes = 1;
 
-int FailureBrakes = 0;
+int FailureBrakes = NoFailureBrakesNo;
 int FailureOdometer = 0;
-int FailureSecured = 0;
-int FailureClose = 0;
-int FailureOpen = 0;
-int FailureStuck = 0;
-int FailureComm = 0;
+int FailureSecured = NoFailureSecuredNo;
+int FailureClose = NoFailureCloseNo;
+int FailureOpen = NoFailureOpenNo;
+int FailureStuck = NoFailureStuckNo;
+int FailureComm = NoFailureCommNo;
 //-- STATES -------------------------------------------------------------------------------------
 
 
 //-- OTHER VARIABLES ----------------------------------------------------------------------------
 int Speed = DefMaxSpeed;
-
+int Pos = 0;
+int CommQueryTimeout = 0;
+int CommCloseTimeout = 0;
+int CommSecuredTimeout = 0;
+int TimerClosingTimeout = 0;
+int TimerOpenTimeout = 0;
 
 
 //-- OTHER VARIABLES ----------------------------------------------------------------------------
@@ -234,7 +241,7 @@ active proctype ffb( ) {
   ::	true -> // guard
   
 		//-- ENVIRONMENT ---------------------------
-		//   1. TrainSpeed		
+		//   1. TrainSpeed
 		if
 			:: IsStateBrakesEngaged && (Speed >= 0) && (Speed-DefDec >= 0) -> Speed = Speed - DefDec
 			:: IsStateBrakesEngaged && (Speed >= 0) && (Speed-DefDec < 0) -> Speed = 0
@@ -246,8 +253,90 @@ active proctype ffb( ) {
 		fi;
 		
 		//   2. TrainPosition
+		if
+			:: Pos + Speed >= DefEndPos -> Pos = DefEndPos
+			:: else -> Pos = Pos + Speed
+		fi;
+		if
+			:: StatePos = NoStatePosApproaching && Pos >= DefEndPos -> StatePos = NoStatePosLeave
+			:: else -> skip
+		fi;
+		
+		//-- COMMUNICATION -------------------------
+		//   3. CommQuery
+		// Condition is Train = Wait & Pos >= QueryPos & FailureComm = No
+		if
+			:: StateCommQuery == NoStateCommQueryInactive && (IsStateTrainWait && Pos >= DefQueryPos && IsFailureCommNo) ->
+			   CommQueryTimeout = 30;
+			   StateCommQuery = NoStateCommQueryActive
+			:: StateCommQuery == NoStateCommQueryActive && (CommQueryTimeout > 0) ->
+			   CommQueryTimeout = CommQueryTimeout - 1
+			:: StateCommQuery == NoStateCommQueryActive && (CommQueryTimeout == 0) ->
+			   StateCommQuery = NoStateCommQuerySignal
+			:: StateCommQuery == NoStateCommQuerySignal ->
+			   StateCommQuery = NoStateCommQueryInactive
+			:: else -> skip
+		fi;
+		
+		//   4. CommClose
+		// Condition is Train = Idle & Pos >= ClosePos & FailureComm = No
+		if
+			:: StateCommClose == NoStateCommCloseInactive && (IsStateTrainIdle && Pos >= DefClosePos && IsFailureCommNo) ->
+			   CommCloseTimeout = 30;
+			   StateCommClose = NoStateCommCloseActive
+			:: StateCommClose == NoStateCommCloseActive && (CommCloseTimeout > 0) ->
+			   CommCloseTimeout = CommCloseTimeout - 1
+			:: StateCommClose == NoStateCommCloseActive && (CommCloseTimeout == 0) ->
+			   StateCommClose = NoStateCommCloseSignal
+			:: StateCommClose == NoStateCommCloseSignal ->
+			   StateCommClose = NoStateCommCloseInactive
+			:: else -> skip
+		fi;
+		
+		//   5. CommSecured
+		// Condition is (Crossing = Closed & CommQuery = Signal & FailureComm = No) | (Crossing != Closed & CommQuery = Signal & FailureComm = No & FailureSecured != No)
+		if
+			:: StateCommSecured == NoStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommNo && ( !IsFailureSecuredNo))) ->
+			   CommSecuredTimeout = 30;
+			   StateCommSecured = NoStateCommSecuredActive
+			:: StateCommSecured == NoStateCommSecuredActive && (CommSecuredTimeout > 0) ->
+			   CommSecuredTimeout = CommSecuredTimeout - 1
+			:: StateCommSecured == NoStateCommSecuredActive && (CommSecuredTimeout == 0) ->
+			   StateCommSecured = NoStateCommSecuredSignal
+			:: StateCommSecured == NoStateCommSecuredSignal ->
+			   StateCommSecured = NoStateCommSecuredInactive
+			:: else -> skip
+		fi;
   
   
+		//   9. TimerClosing
+		// Condition is Crossing = Opened & CommClose = Signal
+		if
+			:: StateTimerClosing == NoStateTimerClosingInactive && (IsStateCrossingOpened && IsStateCommCloseSignal) ->
+			   TimerClosingTimeout = 30;
+			   StateTimerClosing = NoStateTimerClosingActive
+			:: StateTimerClosing == NoStateTimerClosingActive && (TimerClosingTimeout > 0) ->
+			   TimerClosingTimeout = TimerClosingTimeout - 1
+			:: StateTimerClosing == NoStateTimerClosingActive && (TimerClosingTimeout == 0) ->
+			   StateTimerClosing = NoStateTimerClosingSignal
+			:: StateTimerClosing == NoStateTimerClosingSignal ->
+			   StateTimerClosing = NoStateTimerClosingInactive
+			:: else -> skip
+		fi;
+		//  10. TimerOpen
+		// Condition is Crossing = Closed
+		if
+			:: StateTimerOpen == NoStateTimerOpenInactive && (IsStateCrossingClosed) ->
+			   TimerOpenTimeout = 30;
+			   StateTimerOpen = NoStateTimerOpenActive
+			:: StateTimerOpen == NoStateTimerOpenActive && (TimerOpenTimeout > 0) ->
+			   TimerOpenTimeout = TimerOpenTimeout - 1
+			:: StateTimerOpen == NoStateTimerOpenActive && (TimerOpenTimeout == 0) ->
+			   StateTimerOpen = NoStateTimerOpenSignal
+			:: StateTimerOpen == NoStateTimerOpenSignal ->
+			   StateTimerOpen = NoStateTimerOpenInactive
+			:: else -> skip
+		fi;
 				
 		//-- FAILURES ------------------------------
 		//  11. FailureBrakes (persistent)
