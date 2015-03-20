@@ -198,17 +198,74 @@ int FailureComm = 0;
 
 
 active proctype ffb( ) {
+  // Scheduling
   // Environment
-  // 1. TrainSpeed
-  // 2. TrainPosition
+  //   1. TrainSpeed
+  //   2. TrainPosition
   // Communication
-  // 3. 
-  // 4. 
+  //   3. CommQuery
+  //   4. CommClose
+  //   5. CommSecured
   // Train
-  // 5. TrainControl
-  // 6. Brakes
+  //   6. TrainControl
+  //   7. Brakes
   // Crossing
-  
-  // 7. CrossingControl
+  //   8. CrossingControl
+  //   9. TimerClosing
+  //  10. TimerOpen
   // Failures
+  //  11. FailureBrakes
+  //  12. FailureOdometer
+  //  13. FailureSecured
+  //  14. FailureClose
+  //  15. FailureOpen
+  //  16. FailureStuck
+  //  17. FailureComm
+  
+  
+  do
+  ::	true -> // guard
+				
+		//-- FAILURES ------------------------------
+		//  11. FailureBrakes (persistent)
+		if
+			:: true -> FailureBrakes = NoFailureBrakesYes
+			:: FailureBrakes == NoFailureBrakesNo -> FailureBrakes = NoFailureBrakesNo
+		fi;
+		
+		//  12. FailureOdometer (deviates)
+		if
+			:: true -> FailureOdometer = 0
+			:: true -> FailureOdometer = -1
+			:: true -> FailureOdometer = -2
+			:: true -> FailureOdometer = -3
+		fi;
+		//  13. FailureSecured (transient)
+		if
+			:: true -> FailureSecured = NoFailureSecuredYes
+			:: true -> FailureSecured = NoFailureSecuredNo
+		fi;
+		//  14. FailureClose (transient))
+		if
+			:: true -> FailureClose = NoFailureCloseYes
+			:: true -> FailureClose = NoFailureCloseNo
+		fi;
+		//  15. FailureOpen (transient)
+		if
+			:: true -> FailureOpen = NoFailureOpenYes
+			:: true -> FailureOpen = NoFailureOpenNo
+		fi;
+		//  16. FailureStuck (persistent)
+		if
+			:: true -> FailureStuck = NoFailureStuckYes
+			:: FailureStuck == NoFailureStuckNo -> FailureStuck = NoFailureStuckNo
+		fi;
+		//  17. FailureComm (transient)
+		if
+			:: true -> FailureComm = NoFailureCommYes
+			:: true -> FailureComm = NoFailureCommNo
+		fi;
+		
+  od
+  
 }
