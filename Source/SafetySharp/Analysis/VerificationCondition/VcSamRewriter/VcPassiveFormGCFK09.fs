@@ -360,7 +360,7 @@ module internal VcPassiveFormGCFK09 =
     open VcSamModelForModification
     open SafetySharp.Models.SamHelpers
     
-    let transformProgramInSsaForm_Original : ModelForModificationWorkflowFunction<unit> = workflow {
+    let transformProgramToSsaForm_Original : ModelForModificationWorkflowFunction<unit> = workflow {
         let! pgm = getVcSamModel
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
@@ -408,8 +408,8 @@ module internal VcPassiveFormGCFK09 =
 
 
     //to Passive Form: 
-    let transformProgramInPassiveForm_Original : ModelForModificationWorkflowFunction<unit> = workflow {
-        do! transformProgramInSsaForm_Original
+    let transformProgramToPassiveForm_Original : ModelForModificationWorkflowFunction<unit> = workflow {
+        do! transformProgramToSsaForm_Original
         let! pgm = getVcSamModel        
         // Todo: checkEveryVariableWrittenAtMostOnce ()
         // replace all assignments by assumptions

@@ -140,11 +140,11 @@ module internal VcGuardWithAssignmentModel =
         Globals : GlobalVarDecl list;
         GuardsWithFinalAssignments : GuardWithAssignments list;
         NextGlobal : Map<Var,Var>;
-        //GlobalVars
     }
 
     // this is the main function of this algorithm
     let transformPgmToGuardWithFinalAssignmentModel (pgm:Pgm) : GuardWithAssignmentModel =
+        // SSA may not be necessary
         let atomicStmBlocks = collectPaths pgm.Body
         let globalVars = pgm.Globals |> List.map (fun gl-> gl.Var)
         let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList
@@ -156,3 +156,14 @@ module internal VcGuardWithAssignmentModel =
             GuardWithAssignmentModel.GuardsWithFinalAssignments = guardsWithFinalAssignments;
             GuardWithAssignmentModel.NextGlobal = pgm.NextGlobal;
         }
+
+        
+
+    open SafetySharp.Workflow
+
+        
+    let transformWorkflow : WorkflowFunction<VcSam.Pgm,GuardWithAssignmentModel,unit> = workflow {
+        let! model = getState
+        let transformedModel = transformPgmToGuardWithFinalAssignmentModel model
+        do! updateState transformedModel
+    }

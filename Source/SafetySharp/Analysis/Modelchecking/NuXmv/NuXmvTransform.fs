@@ -46,70 +46,70 @@ open SafetySharp.Models.SamSimplifyBlocks
 open SafetySharp.Analysis.VerificationCondition
 
 
+type internal NuXmvVariables = {
+    VarToNuXmvIdentifier: Map<VcSam.Var,NuXmvIdentifier>;
+    VarToNuXmvComplexIdentifier: Map<VcSam.Var,NuXmv.ComplexIdentifier>;
+    VirtualVarToVar: Map<VcSam.Var,VcSam.Var>;
+    VarToVirtualVar : Map<VcSam.Var,VcSam.Var>;
+}
+    with    
+        member this.generateNuXmvIdentifier (var:VcSam.Var) : (NuXmvVariables) =
+            let nuXmvIdentifier = {NuXmvIdentifier.Name=var.getName}
+            let nuXmvComplexIdentifier = NuXmv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
+            let newState=
+                { this with
+                    NuXmvVariables.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
+                    NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
+                }
+            newState
 
-module internal SamToNuXmvWp =
+
+
+module internal VcSamToNuXmvWp =
             
-
-    type NuXmvVariables = {
-        VarToNuXmvIdentifier: Map<VcSam.Var,NuXmvIdentifier>;
-        VarToNuXmvComplexIdentifier: Map<VcSam.Var,NuXmv.ComplexIdentifier>;
-        VirtualVarToVar: Map<VcSam.Var,VcSam.Var>;
-        VarToVirtualVar : Map<VcSam.Var,VcSam.Var>;
-    }
-        with    
-            member private this.generateNuXmvIdentifier (var:VcSam.Var) : (NuXmvVariables) =
-                let nuXmvIdentifier = {NuXmvIdentifier.Name=var.getName}
-                let nuXmvComplexIdentifier = NuXmv.ComplexIdentifier.NameComplexIdentifier(nuXmvIdentifier)
-                let newState=
-                    { this with
-                        NuXmvVariables.VarToNuXmvIdentifier = this.VarToNuXmvIdentifier.Add (var,nuXmvIdentifier)
-                        NuXmvVariables.VarToNuXmvComplexIdentifier = this.VarToNuXmvComplexIdentifier.Add (var,nuXmvComplexIdentifier)
-                    }
-                newState
-
-            static member private createVirtualVarEntries (pgm:VcSam.Pgm) : (VcSam.Var*VcSam.Var) list =
-                    // next( var_x) = NextGlobal( var_x).
-                    
-                    //TODO: Think about it. In SSA and Passive: last version is next version. That value could also be used as virtual var. Maybe no need to create a new one.
-                                        
-                    //Var to Virtual Var which represents "next(Var)"
-                    let takenNames:Set<string> ref = 
-                        let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
-                        let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
-                        (localNames @ globalNames) |> Set.ofList |> ref            
-                    let createNewName (based_on:VcSam.Var) : string =
-                        let nameCandidate = sprintf "%s_virtual" based_on.getName
-                        let nameGenerator = SafetySharp.FreshNameGenerator.namegenerator_c_like
-                        let freshName = nameGenerator takenNames.Value (nameCandidate)
-                        takenNames:=takenNames.Value.Add(freshName)
-                        freshName        
-                    let createFreshVarsForNewVariableVersions (var:VcSam.GlobalVarDecl) =
-                            let freshVar = VcSam.Var.Var(createNewName var.Var)
-                            let nextGlobalVarOfVar = pgm.NextGlobal.Item (var.Var)
-                            (nextGlobalVarOfVar,freshVar)        
-                    let virtualVarEntries =
-                        pgm.Globals |> List.map createFreshVarsForNewVariableVersions
-                    virtualVarEntries
+    // Extension methods only valid here
+    type NuXmvVariables with
+        static member private createVirtualVarEntries (pgm:VcSam.Pgm) : (VcSam.Var*VcSam.Var) list =
+                // next( var_x) = NextGlobal( var_x).                    
+                //TODO: Think about it. In SSA and Passive: last version is next version. That value could also be used as virtual var. Maybe no need to create a new one.                                        
+                //Var to Virtual Var which represents "next(Var)"
+                let takenNames:Set<string> ref = 
+                    let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
+                    let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
+                    (localNames @ globalNames) |> Set.ofList |> ref            
+                let createNewName (based_on:VcSam.Var) : string =
+                    let nameCandidate = sprintf "%s_virtual" based_on.getName
+                    let nameGenerator = SafetySharp.FreshNameGenerator.namegenerator_c_like
+                    let freshName = nameGenerator takenNames.Value (nameCandidate)
+                    takenNames:=takenNames.Value.Add(freshName)
+                    freshName        
+                let createFreshVarsForNewVariableVersions (var:VcSam.GlobalVarDecl) =
+                        let freshVar = VcSam.Var.Var(createNewName var.Var)
+                        let nextGlobalVarOfVar = pgm.NextGlobal.Item (var.Var)
+                        (nextGlobalVarOfVar,freshVar)        
+                let virtualVarEntries =
+                    pgm.Globals |> List.map createFreshVarsForNewVariableVersions
+                virtualVarEntries
                 
-            static member initial (pgm:VcSam.Pgm) (nameGenerator:NameGenerator) =
-                // * create a nuXmv identifier for each global var
-                let nuXmvKeywords: Set<string> = Set.empty<string>
-                let varDeclsToAdd : VcSam.GlobalVarDecl list= pgm.Globals
-                let virtualVarEntries = NuXmvVariables.createVirtualVarEntries pgm
-                let takenVariableNames = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var.getName) |> Set.ofList
-                let initialState =
-                    {
-                        NuXmvVariables.VarToNuXmvIdentifier = Map.empty<VcSam.Var,NuXmvIdentifier>;
-                        NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<VcSam.Var,NuXmv.ComplexIdentifier>;
-                        NuXmvVariables.VirtualVarToVar = virtualVarEntries |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
-                        NuXmvVariables.VarToVirtualVar = virtualVarEntries |> Map.ofList
-                    }
-                let variablesToAdd = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var)
+        static member initial (pgm:VcSam.Pgm) (nameGenerator:NameGenerator) =
+            // * create a nuXmv identifier for each global var
+            let nuXmvKeywords: Set<string> = Set.empty<string>
+            let varDeclsToAdd : VcSam.GlobalVarDecl list= pgm.Globals
+            let virtualVarEntries = NuXmvVariables.createVirtualVarEntries pgm
+            let takenVariableNames = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var.getName) |> Set.ofList
+            let initialState =
+                {
+                    NuXmvVariables.VarToNuXmvIdentifier = Map.empty<VcSam.Var,NuXmvIdentifier>;
+                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<VcSam.Var,NuXmv.ComplexIdentifier>;
+                    NuXmvVariables.VirtualVarToVar = virtualVarEntries |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
+                    NuXmvVariables.VarToVirtualVar = virtualVarEntries |> Map.ofList
+                }
+            let variablesToAdd = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var)
                     
-                let generateAndAddToList (state:NuXmvVariables) (variableToAdd:VcSam.Var): (NuXmvVariables) =
-                    let (newState) = state.generateNuXmvIdentifier variableToAdd
-                    newState
-                Seq.fold generateAndAddToList (initialState) variablesToAdd
+            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:VcSam.Var): (NuXmvVariables) =
+                let (newState) = state.generateNuXmvIdentifier variableToAdd
+                newState
+            Seq.fold generateAndAddToList (initialState) variablesToAdd
             
             
 
@@ -250,9 +250,14 @@ module internal SamToNuXmvWp =
         do! updateState nuXmvProgram
     }
         
+module internal SamToNuXmvWp =
+
+    open SafetySharp.Workflow
+    open SafetySharp.Analysis.VerificationCondition
+
     let transformConfiguration_fromSam : WorkflowFunction<Sam.Pgm,NuXmvProgram,unit> = workflow {
         do! VcSamModelForModification.transformSamToVcSamForModification
-        do! transformConfiguration_fromVcSam
+        do! VcSamToNuXmvWp.transformConfiguration_fromVcSam
         return ()
     }
     
@@ -271,6 +276,59 @@ module internal ScmToNuXmv =
         do! SamToNuXmvWp.transformConfiguration_fromSam
     }
     
+
+
+module internal GwaToNuXmv =
+
+    open SafetySharp.Workflow
+
+    type NuXmvVariables with
+        static member private createVirtualVarEntries (pgm:VcSam.Pgm) : (VcSam.Var*VcSam.Var) list =
+            // next( var_x) = NextGlobal( var_x).                    
+            //TODO: Think about it. In SSA and Passive: last version is next version. That value could also be used as virtual var. Maybe no need to create a new one.                                        
+            //Var to Virtual Var which represents "next(Var)"
+            let takenNames:Set<string> ref = 
+                let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
+                let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
+                (localNames @ globalNames) |> Set.ofList |> ref            
+            let createNewName (based_on:VcSam.Var) : string =
+                let nameCandidate = sprintf "%s_virtual" based_on.getName
+                let nameGenerator = SafetySharp.FreshNameGenerator.namegenerator_c_like
+                let freshName = nameGenerator takenNames.Value (nameCandidate)
+                takenNames:=takenNames.Value.Add(freshName)
+                freshName        
+            let createFreshVarsForNewVariableVersions (var:VcSam.GlobalVarDecl) =
+                    let freshVar = VcSam.Var.Var(createNewName var.Var)
+                    let nextGlobalVarOfVar = pgm.NextGlobal.Item (var.Var)
+                    (nextGlobalVarOfVar,freshVar)        
+            let virtualVarEntries =
+                pgm.Globals |> List.map createFreshVarsForNewVariableVersions
+            virtualVarEntries
+                
+        static member initial (pgm:VcSam.Pgm) (nameGenerator:NameGenerator) =
+            // * create a nuXmv identifier for each global var
+            let nuXmvKeywords: Set<string> = Set.empty<string>
+            let varDeclsToAdd : VcSam.GlobalVarDecl list= pgm.Globals
+            let virtualVarEntries = NuXmvVariables.createVirtualVarEntries pgm
+            let takenVariableNames = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var.getName) |> Set.ofList
+            let initialState =
+                {
+                    NuXmvVariables.VarToNuXmvIdentifier = Map.empty<VcSam.Var,NuXmvIdentifier>;
+                    NuXmvVariables.VarToNuXmvComplexIdentifier = Map.empty<VcSam.Var,NuXmv.ComplexIdentifier>;
+                    NuXmvVariables.VirtualVarToVar = virtualVarEntries |> List.map ( fun (var,virtVar) -> (virtVar,var)) |> Map.ofList
+                    NuXmvVariables.VarToVirtualVar = virtualVarEntries |> Map.ofList
+                }
+            let variablesToAdd = varDeclsToAdd |> List.map (fun varDecl -> varDecl.Var)
+                    
+            let generateAndAddToList (state:NuXmvVariables) (variableToAdd:VcSam.Var): (NuXmvVariables) =
+                let (newState) = state.generateNuXmvIdentifier variableToAdd
+                newState
+            Seq.fold generateAndAddToList (initialState) variablesToAdd
+
+
+
+
+
 //module internal SamToNuXmvSsa =
     
 
