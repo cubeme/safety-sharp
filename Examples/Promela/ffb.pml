@@ -1,28 +1,28 @@
 //-- SCALES -------------------------------------------------------------------------------------
-#define PosScale 	3	// 1 unit represents PosScale meters
-#define TimeScale 	2	// 1 unit represents TimeScale seconds
+#define DefPosScale 	3	// 1 unit represents PosScale meters
+#define DefTimeScale 	2	// 1 unit represents TimeScale seconds
 //-- SCALES -------------------------------------------------------------------------------------
 
 //-- POSITIONS ----------------------------------------------------------------------------------
 //-- The train's position ranges from 0 to EndPos. We are not interested in the train's actual
 //-- position if it falls outside that range.		
-#define EndPos 		(10000 / PosScale)	//-- 10km
-#define SensorPos 	(9300 / PosScale)	//-- 9,3km
-#define CrossingPos (9000 / PosScale)	//-- 9km
+#define DefEndPos 		(10000 / DefPosScale)	//-- 10km
+#define DefSensorPos 	(9300 / DefPosScale)	//-- 9,3km
+#define DefCrossingPos (9000 / DefPosScale)	//-- 9km
 
-#define VirtualSpeed 	(Speed + failureOdometer.Delta > 0 ? Speed + failureOdometer.Delta : 0)
-#define ClosePos 		(QueryPos - (CommDelay + ClosingDelay) * VirtualSpeed - SafetyMargin)
-#define QueryPos 		(StopPos - 2 * CommDelay * VirtualSpeed - SafetyMargin)
-#define StopPos 		(CrossingPos - VirtualSpeed * VirtualSpeed / (2 * Dec) - SafetyMargin)
+#define DefVirtualSpeed 	(DefSpeed + failureOdometer.Delta > 0 ? Speed + failureOdometer.Delta : 0)
+#define DefClosePos 		(DefQueryPos - (DefCommDelay + DefClosingDelay) * DefVirtualSpeed - DefSafetyMargin)
+#define DefQueryPos 		(DefStopPos - 2 * DefCommDelay * DefVirtualSpeed - DefSafetyMargin)
+#define DefStopPos 		(DefCrossingPos - DefVirtualSpeed * DefVirtualSpeed / (2 * DefDec) - SafetyMargin)
 //-- POSITIONS ----------------------------------------------------------------------------------
 
 //-- MISC PARAMETERS ----------------------------------------------------------------------------
-#define SafetyMargin 	(350 / PosScale) 							//-- 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
-#define CommDelay 		(2 / TimeScale)							//-- 2s
-#define ClosingDelay 	(60 / TimeScale)							//-- 60s
-#define CloseTimeout 	(240 / TimeScale)							//-- 240s
-#define MaxSpeed 		(44 * TimeScale / PosScale)				//-- 160km/h = 44m/s
-#define Dec 			(1 * TimeScale * TimeScale / PosScale)	//-- 1m/s^2 -> at 160km/h, the train stops after 0,97km
+#define DefSafetyMargin 	(350 / PosScale) 							//-- 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
+#define DefCommDelay 		(2 / DefTimeScale)							//-- 2s
+#define DefClosingDelay 	(60 / DefTimeScale)							//-- 60s
+#define DefCloseTimeout 	(240 / DefTimeScale)							//-- 240s
+#define DefMaxSpeed 		(44 * DefTimeScale / DefPosScale)				//-- 160km/h = 44m/s
+#define DefDec 			(1 * DefTimeScale * DefTimeScale / DefPosScale)	//-- 1m/s^2 -> at 160km/h, the train stops after 0,97km
 //-- MISC PARAMETERS ----------------------------------------------------------------------------
 
 
@@ -118,6 +118,13 @@ int FailureStuck = 0;
 int FailureComm = 0;
 //-- STATES -------------------------------------------------------------------------------------
 
+
+//-- OTHER VARIABLES ----------------------------------------------------------------------------
+int Speed = DefMaxSpeed;
+
+
+
+//-- OTHER VARIABLES ----------------------------------------------------------------------------
 
 
 //-- ABBREVIATIONS ------------------------------------------------------------------------------
@@ -225,6 +232,22 @@ active proctype ffb( ) {
   
   do
   ::	true -> // guard
+  
+		//-- ENVIRONMENT ---------------------------
+		//   1. TrainSpeed		
+		if
+			:: IsStateBrakesEngaged && (Speed >= 0) && (Speed-DefDec >= 0) -> Speed = Speed - DefDec
+			:: IsStateBrakesEngaged && (Speed >= 0) && (Speed-DefDec < 0) -> Speed = 0
+			:: else -> skip
+		fi;
+		if
+			:: Speed > 0 -> StateSpeed = NoStateSpeedMoving
+			:: else -> StateSpeed = NoStateSpeedStopped
+		fi;
+		
+		//   2. TrainPosition
+  
+  
 				
 		//-- FAILURES ------------------------------
 		//  11. FailureBrakes (persistent)
@@ -264,8 +287,6 @@ active proctype ffb( ) {
 		if
 			:: true -> FailureComm = NoFailureCommYes
 			:: true -> FailureComm = NoFailureCommNo
-		fi;
-		
-  od
-  
+		fi		
+  od  
 }
