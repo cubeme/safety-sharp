@@ -100,16 +100,16 @@
 
 
 //-- STATES -------------------------------------------------------------------------------------
-int StateTimerClosing = 1;
-int StateTimerOpen = 1;
+int StateTimerClosing = NoStateTimerClosingInactive;
+int StateTimerOpen = NoStateTimerOpenInactive;
 int StateCommClose = NoStateCommCloseInactive;
 int StateCommQuery = NoStateCommQueryInactive;
 int StateCommSecured = NoStateCommSecuredInactive;
 int StateCrossing = 1;
-int StateTrain = 1;
+int StateTrain = NoStateTrainIdle;
 int StatePos = NoStatePosApproaching;
 int StateSpeed = NoStateSpeedMoving;
-int StateBrakes = 1;
+int StateBrakes = NoStateBrakesIdle;
 
 int FailureBrakes = NoFailureBrakesNo;
 int FailureOdometer = 0;
@@ -261,6 +261,7 @@ active proctype ffb( ) {
 			:: StatePos = NoStatePosApproaching && Pos >= DefEndPos -> StatePos = NoStatePosLeave
 			:: else -> skip
 		fi;
+		//-- ENVIRONMENT ---------------------------
 		
 		//-- COMMUNICATION -------------------------
 		//   3. CommQuery
@@ -307,6 +308,42 @@ active proctype ffb( ) {
 			   StateCommSecured = NoStateCommSecuredInactive
 			:: else -> skip
 		fi;
+		//-- COMMUNICATION -------------------------
+		
+		
+		//-- TRAIN ---------------------------------		
+		//   6. TrainControl
+		if
+			:: IsStateTrainIdle && Pos >= DefClosePos -> StateTrain = NoStateTrainWait
+			:: IsStateTrainWait && Pos >= DefQueryPos -> StateTrain = NoStateTrainQuery
+			:: IsStateTrainQuery && IsStateCommSecuredActive -> StateTrain = NoStateTrainGo
+			:: IsStateTrainQuery && Pos >= DefStopPos -> StateTrain = NoStateTrainStop
+			:: else -> skip
+		fi;
+		
+		
+		//   7. Brakes
+		if
+			:: IsStateTrainStop && IsFailureBrakesNo -> StateBrakes = NoStateBrakesEngaged
+			:: IsStateBrakesEngaged & ! IsFailureBrakesNo -> StateBrakes = NoStateBrakesIdle
+			:: else -> skip
+		fi;
+		
+		//-- TRAIN ---------------------------------
+		
+		
+		//-- CROSSING ------------------------------
+		//   8. CrossingControl
+		if
+			:: IsStateCrossingOpened && IsStateCommCloseSignal && IsFailureCloseNo -> StateCrossing = NoStateCrossingClosing
+			:: IsStateCrossingClosing && IsStateTimerClosingSignal && IsFailureStuckNo -> StateCrossing = NoStateCrossingClosed
+			:: IsStateCrossingStuck && ! IsFailureStuckNo -> StateCrossing = NoStateCrossingClosed
+			:: IsStateCrossingStuck && ! IsFailureStuckNo -> StateCrossing = NoStateCrossingClosing
+			:: IsStateCrossingStuck && ! IsFailureStuckNo -> StateCrossing = NoStateCrossingOpened
+			:: IsStateCrossingClosed && (IsStateTimerOpenSignal || Pos >= DefSensorPos || ! IsFailureOpenNo) -> StateCrossing = NoStateCrossingOpened
+			:: IsStateCrossingClosed && ! IsFailureStuckNo && (IsStateTimerClosingSignal || Pos >= DefSensorPos) -> StateCrossing = NoStateCrossingStuck
+			:: else -> skip
+		fi;
   
   
 		//   9. TimerClosing
@@ -323,6 +360,7 @@ active proctype ffb( ) {
 			   StateTimerClosing = NoStateTimerClosingInactive
 			:: else -> skip
 		fi;
+		
 		//  10. TimerOpen
 		// Condition is Crossing = Closed
 		if
@@ -337,6 +375,7 @@ active proctype ffb( ) {
 			   StateTimerOpen = NoStateTimerOpenInactive
 			:: else -> skip
 		fi;
+		//-- CROSSING ------------------------------
 				
 		//-- FAILURES ------------------------------
 		//  11. FailureBrakes (persistent)
@@ -377,5 +416,6 @@ active proctype ffb( ) {
 			:: true -> FailureComm = NoFailureCommYes
 			:: true -> FailureComm = NoFailureCommNo
 		fi		
+		//-- FAILURES ------------------------------
   od  
 }
