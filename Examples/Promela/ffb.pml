@@ -266,14 +266,14 @@ active proctype ffb( ) {
 		//   3. CommQuery
 		// Condition is Train = Wait & Pos >= QueryPos & FailureComm = No
 		if
-			:: StateCommQuery == NoStateCommQueryInactive && (IsStateTrainWait && Pos >= DefQueryPos && IsFailureCommNo) ->
+			:: IsStateCommQueryInactive && (IsStateTrainWait && Pos >= DefQueryPos && IsFailureCommNo) ->
 			   CommQueryTimeout = 30;
 			   StateCommQuery = NoStateCommQueryActive
-			:: StateCommQuery == NoStateCommQueryActive && (CommQueryTimeout > 0) ->
+			:: IsStateCommQueryActive && (CommQueryTimeout > 0) ->
 			   CommQueryTimeout = CommQueryTimeout - 1
-			:: StateCommQuery == NoStateCommQueryActive && (CommQueryTimeout == 0) ->
+			:: IsStateCommQueryActive && (CommQueryTimeout == 0) ->
 			   StateCommQuery = NoStateCommQuerySignal
-			:: StateCommQuery == NoStateCommQuerySignal ->
+			:: IsStateCommQuerySignal ->
 			   StateCommQuery = NoStateCommQueryInactive
 			:: else -> skip
 		fi;
@@ -281,14 +281,14 @@ active proctype ffb( ) {
 		//   4. CommClose
 		// Condition is Train = Idle & Pos >= ClosePos & FailureComm = No
 		if
-			:: StateCommClose == NoStateCommCloseInactive && (IsStateTrainIdle && Pos >= DefClosePos && IsFailureCommNo) ->
+			:: IsStateCommCloseInactive && (IsStateTrainIdle && Pos >= DefClosePos && IsFailureCommNo) ->
 			   CommCloseTimeout = 30;
 			   StateCommClose = NoStateCommCloseActive
-			:: StateCommClose == NoStateCommCloseActive && (CommCloseTimeout > 0) ->
+			:: IsStateCommCloseActive && (CommCloseTimeout > 0) ->
 			   CommCloseTimeout = CommCloseTimeout - 1
-			:: StateCommClose == NoStateCommCloseActive && (CommCloseTimeout == 0) ->
+			:: IsStateCommCloseActive && (CommCloseTimeout == 0) ->
 			   StateCommClose = NoStateCommCloseSignal
-			:: StateCommClose == NoStateCommCloseSignal ->
+			:: IsStateCommCloseSignal ->
 			   StateCommClose = NoStateCommCloseInactive
 			:: else -> skip
 		fi;
@@ -296,14 +296,14 @@ active proctype ffb( ) {
 		//   5. CommSecured
 		// Condition is (Crossing = Closed & CommQuery = Signal & FailureComm = No) | (Crossing != Closed & CommQuery = Signal & FailureComm = No & FailureSecured != No)
 		if
-			:: StateCommSecured == NoStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommNo && ( !IsFailureSecuredNo))) ->
+			:: IsStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommNo && ( !IsFailureSecuredNo))) ->
 			   CommSecuredTimeout = 30;
 			   StateCommSecured = NoStateCommSecuredActive
-			:: StateCommSecured == NoStateCommSecuredActive && (CommSecuredTimeout > 0) ->
+			:: IsStateCommSecuredActive && (CommSecuredTimeout > 0) ->
 			   CommSecuredTimeout = CommSecuredTimeout - 1
-			:: StateCommSecured == NoStateCommSecuredActive && (CommSecuredTimeout == 0) ->
+			:: IsStateCommSecuredActive && (CommSecuredTimeout == 0) ->
 			   StateCommSecured = NoStateCommSecuredSignal
-			:: StateCommSecured == NoStateCommSecuredSignal ->
+			:: IsStateCommSecuredSignal ->
 			   StateCommSecured = NoStateCommSecuredInactive
 			:: else -> skip
 		fi;
@@ -312,28 +312,28 @@ active proctype ffb( ) {
 		//   9. TimerClosing
 		// Condition is Crossing = Opened & CommClose = Signal
 		if
-			:: StateTimerClosing == NoStateTimerClosingInactive && (IsStateCrossingOpened && IsStateCommCloseSignal) ->
+			:: IsStateTimerClosingInactive && (IsStateCrossingOpened && IsStateCommCloseSignal) ->
 			   TimerClosingTimeout = 30;
 			   StateTimerClosing = NoStateTimerClosingActive
-			:: StateTimerClosing == NoStateTimerClosingActive && (TimerClosingTimeout > 0) ->
+			:: IsStateTimerClosingActive && (TimerClosingTimeout > 0) ->
 			   TimerClosingTimeout = TimerClosingTimeout - 1
-			:: StateTimerClosing == NoStateTimerClosingActive && (TimerClosingTimeout == 0) ->
+			:: IsStateTimerClosingActive && (TimerClosingTimeout == 0) ->
 			   StateTimerClosing = NoStateTimerClosingSignal
-			:: StateTimerClosing == NoStateTimerClosingSignal ->
+			:: IsStateTimerClosingSignal ->
 			   StateTimerClosing = NoStateTimerClosingInactive
 			:: else -> skip
 		fi;
 		//  10. TimerOpen
 		// Condition is Crossing = Closed
 		if
-			:: StateTimerOpen == NoStateTimerOpenInactive && (IsStateCrossingClosed) ->
+			:: IsStateTimerOpenInactive && (IsStateCrossingClosed) ->
 			   TimerOpenTimeout = 30;
 			   StateTimerOpen = NoStateTimerOpenActive
-			:: StateTimerOpen == NoStateTimerOpenActive && (TimerOpenTimeout > 0) ->
+			:: IsStateTimerOpenActive && (TimerOpenTimeout > 0) ->
 			   TimerOpenTimeout = TimerOpenTimeout - 1
-			:: StateTimerOpen == NoStateTimerOpenActive && (TimerOpenTimeout == 0) ->
+			:: IsStateTimerOpenActive && (TimerOpenTimeout == 0) ->
 			   StateTimerOpen = NoStateTimerOpenSignal
-			:: StateTimerOpen == NoStateTimerOpenSignal ->
+			:: IsStateTimerOpenSignal ->
 			   StateTimerOpen = NoStateTimerOpenInactive
 			:: else -> skip
 		fi;
