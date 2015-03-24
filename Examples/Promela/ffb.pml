@@ -211,6 +211,18 @@ int TimerOpenTimeout = 0;
 //-- ABBREVIATIONS ------------------------------------------------------------------------------
 
 
+//-- OBSERVERS FOR VERIFICATION -----------------------------------------------------------------
+#define DefHazard (Pos <= DefCrossingPos && (DefCrossingPos < Pos + Speed) && ! IsStateCrossingClosed)
+
+#define NoDoNotObserve 0
+#define NoDoObserve 1
+int ObserveHazard =NoDoNotObserve;
+
+
+//-- OBSERVERS FOR VERIFICATION -----------------------------------------------------------------
+
+
+//-- MODEL --------------------------------------------------------------------------------------
 active proctype ffb( ) {
   // Scheduling
   // Environment
@@ -415,7 +427,24 @@ active proctype ffb( ) {
 		if
 			:: true -> FailureComm = NoFailureCommYes
 			:: true -> FailureComm = NoFailureCommNo
-		fi		
+		fi;		
 		//-- FAILURES ------------------------------
+  
+  
+		//-- OBSERVERS
+		// Observe Hazard
+		if
+			:: DefHazard -> ObserveHazard = NoDoObserve
+			:: else -> ObserveHazard = NoDoNotObserve
+		fi
+  
   od  
 }
+//-- MODEL --------------------------------------------------------------------------------------
+
+
+
+//-- VERIFICATION -------------------------------------------------------------------------------
+ltl hazardNeverOccurs { [] (ObserveHazard==NoDoNotObserve) }
+
+//-- VERIFICATION -------------------------------------------------------------------------------
