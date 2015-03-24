@@ -8,4 +8,5 @@ You need Spin (http://spinroot.com and the gcc-compiler of MinGW). Make sure gcc
 > spin.exe -a ffb.pml
 > gcc.exe  -DSAFETY  -o pan pan.c
 > pan.exe  -m10000 -X
+> spin.exe -g -l -p -r -s -t -X -u8000 ffb.pml
 ```
