@@ -59,6 +59,7 @@
 #define NoStateCrossingClosed 			3
 #define NoStateCrossingStuck			4
 
+// mtype = {NoStateTrainIdle,NoStateTrainWait,NoStateTrainQuery,NoStateTrainStop,NoStateTrainGo};
 #define NoStateTrainIdle 				1
 #define NoStateTrainWait 				2
 #define NoStateTrainQuery 				3
@@ -212,11 +213,8 @@ int TimerOpenTimeout = 0;
 
 
 //-- OBSERVERS FOR VERIFICATION -----------------------------------------------------------------
-#define DefHazard (Pos <= DefCrossingPos && (DefCrossingPos < Pos + Speed) && ! IsStateCrossingClosed)
 
-#define NoDoNotObserve 0
-#define NoDoObserve 1
-int ObserveHazard =NoDoNotObserve;
+
 
 
 //-- OBSERVERS FOR VERIFICATION -----------------------------------------------------------------
@@ -430,13 +428,6 @@ active proctype ffb( ) {
 		fi;		
 		//-- FAILURES ------------------------------
   
-  
-		//-- OBSERVERS
-		// Observe Hazard
-		if
-			:: DefHazard -> ObserveHazard = NoDoObserve
-			:: else -> ObserveHazard = NoDoNotObserve
-		fi
   		} //atomic
   od  
 }
@@ -445,6 +436,22 @@ active proctype ffb( ) {
 
 
 //-- VERIFICATION -------------------------------------------------------------------------------
-ltl hazardNeverOccurs { [] (ObserveHazard==NoDoNotObserve) }
+#define DefHazard (Pos <= DefCrossingPos && (DefCrossingPos < Pos + Speed) && ! IsStateCrossingClosed)
+
+
+// ltl hazardNeverOccurs { [] ! (DefHazard) }
+
+//ltl hazardNeverOccurs { ! ((FailureBrakes == NoFailureBrakesNo &&
+//                            FailureSecured == NoFailureSecuredNo &&
+//                            FailureClose == NoFailureCloseNo &&
+//                            FailureOpen == NoFailureOpenNo &&
+//                            FailureStuck == NoFailureStuckNo) U (DefHazard)) }
+
+ltl hazardNeverOccurs { ! ((FailureOdometer == 0 &&
+                            FailureSecured == NoFailureSecuredNo &&
+                            FailureComm == NoFailureCommNo &&
+                            FailureOpen == NoFailureOpenNo &&
+                            FailureStuck == NoFailureStuckNo) U (DefHazard)) }
+
 
 //-- VERIFICATION -------------------------------------------------------------------------------
