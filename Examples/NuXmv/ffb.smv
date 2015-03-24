@@ -1,0 +1,395 @@
+-------------------------------------------------------------------------------------------------------
+-- MAIN
+-------------------------------------------------------------------------------------------------------
+MODULE main
+	DEFINE
+		-- SCALES -------------------------------------------------------------------------------------
+		PosScale 	:= 3;		-- 1 unit represents PosScale meters
+		TimeScale 	:= 2;		-- 1 unit represents TimeScale seconds
+		-- SCALES -------------------------------------------------------------------------------------
+		
+		-- POSITIONS ----------------------------------------------------------------------------------
+		-- The train's position ranges from 0 to EndPos. We are not interested in the train's actual
+		-- position if it falls outside that range.		
+		EndPos 		:= 10000 / PosScale;	-- 10km
+		SensorPos 	:= 9300 / PosScale;		-- 9,3km
+		CrossingPos := 9000 / PosScale;		-- 9km
+		
+		VirtualSpeed 	:= Speed + failureOdometer.Delta > 0 ? Speed + failureOdometer.Delta : 0;
+		ClosePos 		:= QueryPos - (CommDelay + ClosingDelay) * VirtualSpeed - SafetyMargin;
+		QueryPos 		:= StopPos - 2 * CommDelay * VirtualSpeed - SafetyMargin;
+		StopPos 		:= CrossingPos - VirtualSpeed * VirtualSpeed / (2 * Dec) - SafetyMargin;
+		-- POSITIONS ----------------------------------------------------------------------------------
+		
+		-- MISC PARAMETERS ----------------------------------------------------------------------------
+		SafetyMargin 	:= 350 / PosScale; 							-- 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
+		CommDelay 		:= 2 / TimeScale;							-- 2s
+		ClosingDelay 	:= 60 / TimeScale;							-- 60s
+		CloseTimeout 	:= 240 / TimeScale;							-- 240s
+		MaxSpeed 		:= 44 * TimeScale / PosScale;				-- 160km/h = 44m/s
+		Dec 			:= 1 * TimeScale * TimeScale / PosScale;	-- 1m/s^2 -> at 160km/h, the train stops after 0,97km
+		-- MISC PARAMETERS ----------------------------------------------------------------------------
+		
+		-- ABBREVIATIONS ------------------------------------------------------------------------------
+		-- Renames the module instances to increase readability and to better match the graphical
+		-- representation of the system. In particular, when we refer to another automaton, we 
+		-- actually mean its State variable in the graphical representation.
+		
+		-- Timer
+		TimerClosing 	:= timerClosing.State;
+		TimerOpen 		:= timerOpen.State;
+		
+		-- Communication
+		CommClose 		:= commClose.State;
+		CommQuery 		:= commQuery.State;
+		CommSecured 	:= commSecured.State;
+						
+		-- Components
+		Crossing 		:= crossing.State;
+		Train 			:= train.State;
+		Pos 			:= position.Pos;
+		Speed 			:= speed.Speed;
+		Brakes			:= brakes.State;		
+		
+		-- Failure Automata
+		FailureBrakes		:= failureBrakes.State;
+		FailureOdometer 	:= failureOdometer.State;
+		FailureSecured		:= failureSecured.State;
+		FailureClose 		:= failureClose.State;
+		FailureOpen 		:= failureOpen.State;
+		FailureStuck 		:= failureStuck.State;
+		FailureComm 		:= failureComm.State;
+		-- ABBREVIATIONS ------------------------------------------------------------------------------
+		
+	VAR
+		-- TIMER --------------------------------------------------------------------------------------
+		timerClosing 	: Timer(Crossing = Opened & CommClose = Signal, ClosingDelay);
+		timerOpen 		: Timer(Crossing = Closed, CloseTimeout);
+		-- TIMER --------------------------------------------------------------------------------------
+		
+		-- COMMUNICATION ------------------------------------------------------------------------------
+		commClose 		: Timer(Train = Idle & Pos >= ClosePos & FailureComm = No, CommDelay);
+		commQuery 		: Timer(Train = Wait & Pos >= QueryPos & FailureComm = No, CommDelay);
+		commSecured 	: Timer((Crossing = Closed & CommQuery = Signal & FailureComm = No) | (Crossing != Closed & CommQuery = Signal & FailureComm = No & FailureSecured != No), CommDelay);		
+		-- COMMUNICATION ------------------------------------------------------------------------------
+		
+		-- COMPONENTS ---------------------------------------------------------------------------------
+		crossing 		: Crossing(CommClose, TimerClosing, TimerOpen, Pos, SensorPos, FailureStuck, FailureOpen, FailureClose);
+		train 			: Train(CommSecured, Pos, ClosePos, QueryPos, StopPos);
+		position 		: Position(Speed, EndPos);
+		speed 			: Speed(Brakes, MaxSpeed, Dec);
+		brakes 			: Brakes(Train, FailureBrakes);
+		-- COMPONENTS ---------------------------------------------------------------------------------
+		
+		-- FAILURE AUTOMATA ---------------------------------------------------------------------------
+		failureBrakes		: PersistentFailure();
+		failureOdometer		: FailureOdometer();
+		failureSecured		: TransientFailure();
+		failureClose 		: TransientFailure();
+		failureOpen 		: TransientFailure();
+		failureStuck 		: PersistentFailure();
+		failureComm 		: TransientFailure();
+		-- FAILURE AUTOMATA ---------------------------------------------------------------------------
+		
+		securedSent : Observer(CommSecured = Active);
+		timeoutElapsed : Observer(TimerOpen = Signal);
+		securedRecieved : Observer(CommSecured = Signal);
+		failureOpenOccured : Observer(FailureOpen = Yes);
+		failureSecuredOccured : Observer(FailureSecured = Yes);
+		
+	DEFINE
+		e1 := Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed;
+		e2 := e1 & securedRecieved.State = No;
+		e3 := e1 & securedRecieved.State = Yes;
+		e4 := Pos >= StopPos & securedRecieved.State = No & Speed > 0;
+		e5 := FailureSecured = Yes;
+		e6 := securedSent.State = Yes & timeoutElapsed.State = Yes;
+		e7 := securedSent.State = Yes & failureOpenOccured.State = Yes;
+		e8 := FailureBrakes != No;
+		e9 := Train != Stop;
+		chi := Crossing != Closed;
+	
+--	CTLSPEC NAME gate1 :=
+--		AG (e1 -> e2 | e3);
+--		
+--	LTLSPEC NAME gate2 :=
+--		!((!(e5 | e6 | e7)) U (e3 & !(e5 | e6 | e7)))
+--		
+--	LTLSPEC NAME gate3 :=
+--		!((!e4) U (e2 & !e4)) & !((!chi) U (e2 & !chi))
+--		
+--	LTLSPEC NAME gate4 :=
+--		!((!(e8 | e9)) U (e4 & !(e8 | e9)))
+		
+
+		
+		
+		
+-- Functional Correctness DCCA
+LTLSPEC NAME FunctionalCorrectness := 
+	! (FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+-- Single Points of Failure -----------------------------------------------------------------------
+LTLSPEC NAME Single_FailureBrakes := 
+	!(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME Single_FailureOdometer := 
+	!(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+
+LTLSPEC NAME Single_FailureSecured := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+
+LTLSPEC NAME Single_FailureClose := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME Single_FailureOpen := 
+	(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME Single_FailureStuck := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME Single_FailureComm := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+-- Combinations of 2 Failures ---------------------------------------------------------------------
+LTLSPEC NAME FailureComm_FailureOdometer := 
+	(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureClose_FailureBrakes := 
+	(FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureComm_FailureBrakes := 
+	(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureStuck_FailureBrakes := 
+	(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureClose_FailureOdometer := 
+	(FailureBrakes = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureStuck_FailureOdometer := 
+	(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureClose_FailureSecured := 
+	(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureComm_FailureSecured := 
+	(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureStuck_FailureSecured := 
+	(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureBrakes_FailureOdometer := 
+	!(FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureBrakes_FailureSecured := 
+	!(FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureSecured_FailureOdometer := 
+	!(FailureBrakes = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureClose_FailureStuck := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureClose_FailureComm := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+LTLSPEC NAME FailureStuck_FailureComm := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+-- Combinations of 3 Failures ---------------------------------------------------------------------
+LTLSPEC NAME FailureClose_FailureStuck_FailureComm := 
+	!(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureSecured = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+
+LTLSPEC NAME FailureBrakes_FailureSecured_FailureOdometer := 
+	!(FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+	
+
+	
+	
+-- 	-- SANITY
+-- 	CTLSPEC EF (Speed = 0 & Pos < CrossingPos);
+-- 	CTLSPEC EF Pos > CrossingPos;
+-- 	CTLSPEC EF (Pos != 0 & EF (Crossing = Closed & Pos >= CrossingPos & Pos < SensorPos));
+-- 	CTLSPEC EF (Pos != 0 & EF (Crossing = Opened & Pos >= SensorPos));
+-- 	CTLSPEC EF (Pos != 0 & EF (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing = Closed));
+-- 	CTLSPEC EF (Crossing = Stuck);
+		
+-------------------------------------------------------------------------------------------------------
+-- CROSSING
+-------------------------------------------------------------------------------------------------------
+MODULE Crossing(CommClose, TimerClosing, TimerOpen, Pos, SensorPos, FailureStuck, FailureOpen, FailureClose)
+	VAR
+		State : { Opened, Closing, Closed, Stuck };
+	
+	ASSIGN
+		init(State) := Opened;
+		next(State) := case
+				State = Opened & CommClose = Signal & FailureClose = No								: Closing;
+				State = Closing & TimerClosing = Signal & FailureStuck = No							: Closed;
+				State = Closing & FailureStuck != No												: Stuck;
+				State = Stuck & FailureStuck = No													: { Closed, Closing, Opened };
+				State = Closed & (TimerOpen = Signal | Pos >= SensorPos | FailureOpen != No) 		: Opened;
+				State = Closed & FailureStuck != No & (TimerClosing = Signal | Pos >= SensorPos) 	: Stuck;
+				TRUE 																				: State;
+			esac;
+			
+-------------------------------------------------------------------------------------------------------
+-- TRAIN
+-------------------------------------------------------------------------------------------------------
+MODULE Train(CommSecured, Pos, ClosePos, QueryPos, StopPos)
+	VAR
+		State : { Idle, Wait, Query, Stop, Go };
+		
+	ASSIGN
+		init(State) := Idle;
+		next(State) := case
+				State = Idle & Pos >= ClosePos			: Wait;
+				State = Wait & Pos >= QueryPos 			: Query;
+				State = Query & CommSecured = Signal 	: Go;
+				State = Query & Pos >= StopPos 			: Stop;
+				TRUE 									: State;
+			esac;
+			
+-------------------------------------------------------------------------------------------------------
+-- POSITION
+-------------------------------------------------------------------------------------------------------
+MODULE Position(Speed, EndPos)
+	VAR
+		State : { Enter, Approaching, Leave };
+		Pos : 0 .. EndPos;
+		
+	ASSIGN
+		init(State) := Enter;
+		init(Pos) := 0;
+		
+		next(State) := case
+				State = Enter									: { Enter, Approaching };
+				State = Approaching & Pos + Speed < EndPos		: Approaching;
+				State = Approaching & Pos + Speed >= EndPos		: Leave;
+				TRUE											: State;
+			esac;
+		next(Pos) := case
+				State = Approaching & Pos + Speed < EndPos		: Pos + Speed;
+				State = Approaching & Pos + Speed >= EndPos		: EndPos;
+				TRUE											: Pos;
+			esac;
+		
+-------------------------------------------------------------------------------------------------------
+-- SPEED
+-------------------------------------------------------------------------------------------------------
+MODULE Speed(Brakes, MaxSpeed, Dec)
+	VAR
+		State : { Moving, Stopped };
+		Speed : 0 .. MaxSpeed;
+		
+	ASSIGN
+		init(State) := Moving;
+		init(Speed) := MaxSpeed;
+		
+		next(State) := case
+				State = Moving & Brakes = Engaged & Speed - Dec > 0 	: Moving;
+				State = Moving & Brakes = Engaged & Speed - Dec <= 0	: Stopped;
+				TRUE													: State;
+			esac;
+		next(Speed) := case
+				Brakes = Engaged & Speed - Dec > 0 		: Speed - Dec;
+				Brakes = Engaged & Speed - Dec <= 0 	: 0;
+				TRUE									: Speed;
+			esac;
+
+-------------------------------------------------------------------------------------------------------
+-- BRAKES
+-------------------------------------------------------------------------------------------------------
+MODULE Brakes(Train, FailureBrakes)
+	VAR
+		State : { Idle, Engaged };
+	
+	ASSIGN
+		init(State) := Idle;
+		next(State) := case
+				Train = Stop & FailureBrakes = No			: Engaged;
+				State = Engaged & FailureBrakes != No		: Idle;
+				TRUE 										: State;
+			esac;
+			
+-------------------------------------------------------------------------------------------------------
+-- GENERIC TIMER
+-------------------------------------------------------------------------------------------------------
+MODULE Timer(Condition, Delay)
+	VAR
+		State : { Inactive, Signal, Active };
+		Counter : 0 .. Delay;
+		
+	ASSIGN
+		init(State) := Inactive;
+		init(Counter) := 0;
+		
+		next(State) := case
+				State = Inactive & Condition 	: Active;
+				State = Active & Counter != 0	: Active;
+				State = Active & Counter = 0	: Signal;
+				State = Signal					: Inactive;
+				TRUE							: State;
+			esac;
+		next(Counter) := case
+				State = Inactive & Condition	: Delay;
+				State = Active & Counter != 0 	: Counter - 1;
+				TRUE							: 0;
+			esac;
+			
+-------------------------------------------------------------------------------------------------------
+-- TRANSIENT FAILURE
+-------------------------------------------------------------------------------------------------------
+MODULE TransientFailure()
+	VAR 
+		State : { Yes, No };
+	
+	ASSIGN
+		init(State) := No;
+		
+-------------------------------------------------------------------------------------------------------
+-- PERSISTENT FAILURE
+-------------------------------------------------------------------------------------------------------
+MODULE PersistentFailure()
+	VAR
+		State : { Yes, No };
+	
+	ASSIGN
+		init(State) := No;
+		next(State) := case
+				State = Yes		: Yes;
+				TRUE			: { Yes, No };
+			esac;
+			
+-------------------------------------------------------------------------------------------------------
+-- ERROR ODOMETER
+-------------------------------------------------------------------------------------------------------
+MODULE FailureOdometer
+	VAR
+		State : { Yes, No };
+		Delta : -3 .. 0; 	-- Maximum odometer delta of 4,5m/s = 16,2km/h (depends on PosScale and TimeScale)
+		-- A delta of -1 does not pose a problem (safety margin)
+		
+	ASSIGN
+		init(State) := No;
+		init(Delta) := 0;
+		
+		next(Delta) := case
+				State = Yes	: { -3, -2, -1 }; -- Unfortunately, it is impossible to write { -Max, .., 0 } with Max = -3 as above.
+				State = No	: 0;
+			esac;
+			
+-------------------------------------------------------------------------------------------------------
+-- OBSERVER
+-------------------------------------------------------------------------------------------------------
+MODULE Observer(Condition)
+	VAR 
+		State : { Yes, No };
+		
+	ASSIGN
+		init(State) := No;
+		next(State) := case
+				Condition 	: Yes;
+				TRUE		: State;
+			esac;
