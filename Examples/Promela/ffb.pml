@@ -251,7 +251,7 @@ active proctype ffb( ) {
   
   do
   ::	true -> // guard
-  
+  		atomic {
 		//-- ENVIRONMENT ---------------------------
 		//   1. TrainSpeed
 		if
@@ -437,7 +437,7 @@ active proctype ffb( ) {
 			:: DefHazard -> ObserveHazard = NoDoObserve
 			:: else -> ObserveHazard = NoDoNotObserve
 		fi
-  
+  		} //atomic
   od  
 }
 //-- MODEL --------------------------------------------------------------------------------------
