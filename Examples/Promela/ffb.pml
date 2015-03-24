@@ -270,7 +270,7 @@ active proctype ffb( ) {
 			:: else -> Pos = Pos + Speed
 		fi;
 		if
-			:: StatePos = NoStatePosApproaching && Pos >= DefEndPos -> StatePos = NoStatePosLeave
+			:: IsStatePosApproaching && Pos >= DefEndPos -> StatePos = NoStatePosLeave
 			:: else -> skip
 		fi;
 		//-- ENVIRONMENT ---------------------------
