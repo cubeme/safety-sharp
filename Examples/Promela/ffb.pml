@@ -5,7 +5,7 @@
 
 
 //-- MISC PARAMETERS ----------------------------------------------------------------------------
-#define DefSafetyMargin 	(350 / DefPosScale) 							//-- 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
+#define DefSafetyMargin 	(200 / DefPosScale) 							//--here Arbitrarily 200m. In NuSmv 350m: 92m safety margin for odometer failure -1 and 258m technical margin -> 45m rounding errors + 174m 2 time steps delay + 39m discrete position modeling
 #define DefCommDelay 		(2 / DefTimeScale)							//-- 2s
 #define DefClosingDelay 	(60 / DefTimeScale)							//-- 60s
 #define DefCloseTimeout 	(240 / DefTimeScale)							//-- 240s
@@ -94,8 +94,11 @@
 #define NoFailureStuckNo 				0
 #define NoFailureStuckYes 				1
 
-#define NoFailureCommNo 				0
-#define NoFailureCommYes 				1
+#define NoFailureCommTrainNo 			0
+#define NoFailureCommTrainYes 			1
+
+#define NoFailureCommCrossingNo 		0
+#define NoFailureCommCrossingYes 		1
 //-- MAGIC NUMBERS ------------------------------------------------------------------------------
 
 
@@ -118,7 +121,8 @@ int FailureSecured = NoFailureSecuredNo;
 int FailureClose = NoFailureCloseNo;
 int FailureOpen = NoFailureOpenNo;
 int FailureStuck = NoFailureStuckNo;
-int FailureComm = NoFailureCommNo;
+int FailureCommTrain = NoFailureCommTrainNo;
+int FailureCommCrossing = NoFailureCommCrossingNo;
 //-- STATES -------------------------------------------------------------------------------------
 
 
@@ -207,8 +211,14 @@ int TimerOpenTimeout = 0;
 #define IsFailureStuckNo 				(FailureStuck==NoFailureStuckNo)
 #define IsFailureStuckYes 				(FailureStuck==NoFailureStuckYes)
 
-#define IsFailureCommNo 				(FailureComm==NoFailureCommNo)
-#define IsFailureCommYes 				(FailureComm==NoFailureCommYes)
+#define IsFailureCommTrainNo 			(FailureCommTrain==NoFailureCommTrainNo)
+#define IsFailureCommTrainYes 			(FailureCommTrain==NoFailureCommTrainYes)
+
+#define IsFailureCommCrossingNo 		(FailureCommCrossing==NoFailureCommCrossingNo)
+#define IsFailureCommCrossingYes 		(FailureCommCrossing==NoFailureCommCrossingYes)
+
+#define IsFailureCommNo 				(IsFailureCommTrainNo && IsFailureCommCrossingNo)
+#define IsFailureCommYes 				(IsFailureCommCrossingYes || IsFailureCommCrossingYes)
 //-- ABBREVIATIONS ------------------------------------------------------------------------------
 
 
@@ -246,7 +256,8 @@ active proctype ffb( ) {
   //  14. FailureClose
   //  15. FailureOpen
   //  16. FailureStuck
-  //  17. FailureComm
+  //  17. FailureCommTrain
+  //  18. FailureCommCrossing (We need a separate automata, otherwise we do not include the case, where the train sends a "Query" and the Crossing does not send a "Secured")
   
   
   do
@@ -299,7 +310,7 @@ active proctype ffb( ) {
 		//   5. CommQuery
 		// Condition is Train = Wait & Pos >= QueryPos & FailureComm = No
 		if
-			:: IsStateCommQueryInactive && IsStateTrainQuery && IsFailureCommNo ->
+			:: IsStateCommQueryInactive && IsStateTrainQuery && IsFailureCommTrainNo ->
 			   CommQueryTimeout = DefCommDelay;
 			   StateCommQuery = NoStateCommQueryActive
 			:: IsStateCommQueryActive && (CommQueryTimeout > 0) ->
@@ -314,7 +325,7 @@ active proctype ffb( ) {
 		//   6. CommClose
 		// Condition is Train = Idle & Pos >= ClosePos & FailureComm = No
 		if
-			:: IsStateCommCloseInactive && IsStateTrainWait && IsFailureCommNo ->
+			:: IsStateCommCloseInactive && IsStateTrainWait && IsFailureCommTrainNo ->
 			   CommCloseTimeout = DefCommDelay;
 			   StateCommClose = NoStateCommCloseActive
 			:: IsStateCommCloseActive && (CommCloseTimeout > 0) ->
@@ -376,7 +387,7 @@ active proctype ffb( ) {
 		//   10. CommSecured
 		// Condition is (Crossing = Closed & CommQuery = Signal & FailureComm = No) | (Crossing != Closed & CommQuery = Signal & FailureComm = No & FailureSecured != No)
 		if
-			:: IsStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommNo && ( !IsFailureSecuredNo))) ->
+			:: IsStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommCrossingNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommCrossingNo && ( !IsFailureSecuredNo))) ->
 			   CommSecuredTimeout = DefCommDelay;
 			   StateCommSecured = NoStateCommSecuredActive
 			:: IsStateCommSecuredActive && (CommSecuredTimeout > 0) ->
@@ -425,10 +436,15 @@ active proctype ffb( ) {
 			:: true -> FailureStuck = NoFailureStuckYes
 			:: IsFailureStuckNo -> FailureStuck = NoFailureStuckNo
 		fi;
-		//  17. FailureComm (transient)
+		//  17. FailureCommTrain (transient)
 		if
-			:: true -> FailureComm = NoFailureCommYes
-			:: true -> FailureComm = NoFailureCommNo
+			:: true -> FailureCommTrain = NoFailureCommTrainYes
+			:: true -> FailureCommTrain = NoFailureCommTrainNo
+		fi;		
+		//  18. FailureCommCrossing (transient)
+		if
+			:: true -> FailureCommCrossing = NoFailureCommCrossingYes
+			:: true -> FailureCommCrossing = NoFailureCommCrossingNo
 		fi;		
 		//-- FAILURES ------------------------------
   
@@ -445,118 +461,118 @@ active proctype ffb( ) {
 
 		
 // Functional Correctness DCCA
-//ltl FunctionalCorrectness { 
-//	! ((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-//}
-	
-// Single Points of Failure -----------------------------------------------------------------------
-// fails, but should not
-ltl Single_FailureBrakes { 
-	! ((FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+ltl FunctionalCorrectness { 
+	! ((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 }
 	
+// Single Points of Failure -----------------------------------------------------------------------
+//ltl Single_FailureBrakes { 
+//	! ((FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
+//}
+	
 //ltl Single_FailureOdometer { 
-//	!((IsFailureBrakesNo & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
 //ltl Single_FailureSecured { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
 //ltl Single_FailureClose { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 	
-//shoud fail, but doesn't
+//fails
 //ltl Single_FailureOpen { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 	
 //ltl Single_FailureStuck { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureCommNo) U (DefHazard))
 //}
 	
 //ltl Single_FailureComm { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
 //}
 	
 // Combinations of 2 Failures ---------------------------------------------------------------------
 //fails
 //ltl FailureComm_FailureOdometer { 
-//	!((IsFailureBrakesNo & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
+//	!((IsFailureBrakesNo && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
 //}
 
 //fails	
 //ltl FailureClose_FailureBrakes { 
-//	!((FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((FailureOdometer == 0 && IsFailureSecuredNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
-//fails	
-//ltl FailureComm_FailureBrakes { 
-//	!((IsFailureOdometerNo & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
-//}
+//fails
+ltl FailureComm_FailureBrakes { 
+	!((FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
+}
 
 //fails	
 //ltl FailureStuck_FailureBrakes { 
-//	!((FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//	!((FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureCommNo) U (DefHazard))
 //}
 
 //fails	
 //ltl FailureClose_FailureOdometer { 
-//	!((IsFailureBrakesNo & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && IsFailureSecuredNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
 //fails	
 //ltl FailureStuck_FailureOdometer { 
-//	!((IsFailureBrakesNo & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureCommNo) U (DefHazard))
 //}
 
 //fails	
 //ltl FailureClose_FailureSecured { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
-//fails	
+//fails
 //ltl FailureComm_FailureSecured { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
 //}
 	
 //fails
 //ltl FailureStuck_FailureSecured { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureCloseNo && IsFailureOpenNo && IsFailureCommNo) U (DefHazard))
 //}
-	
+
+//fails, but doesn't fail in smv-Model	
 //ltl FailureBrakes_FailureOdometer { 
-//	!((IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 	
 //ltl FailureBrakes_FailureSecured { 
-//	!((FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((FailureOdometer == 0 && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 	
 //ltl FailureSecured_FailureOdometer { 
-//	!((IsFailureBrakesNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 	
 //ltl FailureClose_FailureStuck { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureOpenNo && IsFailureCommNo) U (DefHazard))
 //}
 	
 //ltl FailureClose_FailureComm { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
 //}
 	
 //ltl FailureStuck_FailureComm { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo) U (DefHazard))
 //}
 	
 // Combinations of 3 Failures ---------------------------------------------------------------------
 //ltl FailureClose_FailureStuck_FailureComm { 
-//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureOpenNo & IsFailureSecuredNo) U (DefHazard))
+//	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureOpenNo && IsFailureSecuredNo) U (DefHazard))
 //}
 
 //ltl FailureBrakes_FailureSecured_FailureOdometer { 
-//	!((IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//	!((IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
 
