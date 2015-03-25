@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <compass>
 <fmlist>
-</fmlist>
 <fm name="failureBrakes.State" nominal_value="FALSE"/>
 <fm name="failureOdometer.State" nominal_value="FALSE"/>
 <fm name="failureSecured.State" nominal_value="FALSE"/>
@@ -9,4 +8,5 @@
 <fm name="failureOpen.State" nominal_value="FALSE"/>
 <fm name="failureStuck.State" nominal_value="FALSE"/>
 <fm name="failureComm.State" nominal_value="FALSE"/>
+</fmlist>
 </compass>
