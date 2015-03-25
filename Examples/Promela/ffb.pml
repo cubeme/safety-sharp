@@ -461,9 +461,9 @@ active proctype ffb( ) {
 
 		
 // Functional Correctness DCCA
-ltl FunctionalCorrectness { 
-	! ((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
-}
+//ltl FunctionalCorrectness { 
+//	! ((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
+//}
 	
 // Single Points of Failure -----------------------------------------------------------------------
 //ltl Single_FailureBrakes { 
@@ -507,9 +507,9 @@ ltl FunctionalCorrectness {
 //}
 
 //fails
-ltl FailureComm_FailureBrakes { 
-	!((FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
-}
+//ltl FailureComm_FailureBrakes { 
+//	!((FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
+//}
 
 //fails	
 //ltl FailureStuck_FailureBrakes { 
@@ -541,7 +541,7 @@ ltl FailureComm_FailureBrakes {
 //	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureCloseNo && IsFailureOpenNo && IsFailureCommNo) U (DefHazard))
 //}
 
-//fails, but doesn't fail in smv-Model	
+//Needs Depth 20000. Takes a long time (31.2 seconds)
 //ltl FailureBrakes_FailureOdometer { 
 //	!((IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
@@ -561,23 +561,26 @@ ltl FailureComm_FailureBrakes {
 //ltl FailureClose_FailureComm { 
 //	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureOpenNo && IsFailureStuckNo) U (DefHazard))
 //}
-	
+
+// Needs Depth 30000. Still fast (9 seconds)	
 //ltl FailureStuck_FailureComm { 
 //	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureSecuredNo && IsFailureCloseNo && IsFailureOpenNo) U (DefHazard))
 //}
 	
 // Combinations of 3 Failures ---------------------------------------------------------------------
+// Needs Depth 50000. Still fast (15 seconds)	
 //ltl FailureClose_FailureStuck_FailureComm { 
 //	!((IsFailureBrakesNo && FailureOdometer == 0 && IsFailureOpenNo && IsFailureSecuredNo) U (DefHazard))
 //}
 
+// Needs Depth 20000. Quite slow (57.9 seconds)
 //ltl FailureBrakes_FailureSecured_FailureOdometer { 
 //	!((IsFailureCloseNo && IsFailureOpenNo && IsFailureStuckNo && IsFailureCommNo) U (DefHazard))
 //}
 
 
 
-//ltl hazardNeverOccurs { [] ! (DefHazard) }
+ltl hazardNeverOccurs { [] ! (DefHazard) }
 
 
 //-- VERIFICATION -------------------------------------------------------------------------------
