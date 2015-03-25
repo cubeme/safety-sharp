@@ -226,17 +226,19 @@ active proctype ffb( ) {
   // Environment
   //   1. TrainSpeed
   //   2. TrainPosition
-  // Communication
-  //   3. CommQuery
-  //   4. CommClose
-  //   5. CommSecured
   // Train
-  //   6. TrainControl
-  //   7. Brakes
+  //   3. TrainControl
+  //   4. Brakes
+  // Communication Train -> Crossing
+  //   5. CommQuery
+  //   6. CommClose
   // Crossing
-  //   8. CrossingControl
-  //   9. TimerClosing
-  //  10. TimerOpen
+  //   7. CrossingControl
+  //   8. TimerClosing
+  //   9. TimerOpen
+  // Communication Crossing -> Train
+  //  10. CommSecured
+  
   // Failures
   //  11. FailureBrakes
   //  12. FailureOdometer
@@ -273,12 +275,32 @@ active proctype ffb( ) {
 		fi;
 		//-- ENVIRONMENT ---------------------------
 		
-		//-- COMMUNICATION -------------------------
-		//   3. CommQuery
+		
+		//-- TRAIN ---------------------------------		
+		//   3. TrainControl
+		if
+			:: IsStateTrainIdle && Pos >= DefClosePos -> StateTrain = NoStateTrainWait
+			:: IsStateTrainWait && Pos >= DefQueryPos -> StateTrain = NoStateTrainQuery
+			:: IsStateTrainQuery && IsStateCommSecuredActive -> StateTrain = NoStateTrainGo
+			:: IsStateTrainQuery && Pos >= DefStopPos -> StateTrain = NoStateTrainStop
+			:: else -> skip
+		fi;		
+		
+		//   4. Brakes
+		if
+			:: IsStateTrainStop && IsFailureBrakesNo -> StateBrakes = NoStateBrakesEngaged
+			:: IsStateBrakesEngaged & ! IsFailureBrakesNo -> StateBrakes = NoStateBrakesIdle
+			:: else -> skip
+		fi;		
+		//-- TRAIN ---------------------------------
+		
+		
+		//-- COMMUNICATION TRAIN -> CROSSING -------
+		//   5. CommQuery
 		// Condition is Train = Wait & Pos >= QueryPos & FailureComm = No
 		if
-			:: IsStateCommQueryInactive && (IsStateTrainWait && Pos >= DefQueryPos && IsFailureCommNo) ->
-			   CommQueryTimeout = 30;
+			:: IsStateCommQueryInactive && IsStateTrainQuery && IsFailureCommNo ->
+			   CommQueryTimeout = DefCommDelay;
 			   StateCommQuery = NoStateCommQueryActive
 			:: IsStateCommQueryActive && (CommQueryTimeout > 0) ->
 			   CommQueryTimeout = CommQueryTimeout - 1
@@ -289,11 +311,11 @@ active proctype ffb( ) {
 			:: else -> skip
 		fi;
 		
-		//   4. CommClose
+		//   6. CommClose
 		// Condition is Train = Idle & Pos >= ClosePos & FailureComm = No
 		if
-			:: IsStateCommCloseInactive && (IsStateTrainIdle && Pos >= DefClosePos && IsFailureCommNo) ->
-			   CommCloseTimeout = 30;
+			:: IsStateCommCloseInactive && IsStateTrainWait && IsFailureCommNo ->
+			   CommCloseTimeout = DefCommDelay;
 			   StateCommClose = NoStateCommCloseActive
 			:: IsStateCommCloseActive && (CommCloseTimeout > 0) ->
 			   CommCloseTimeout = CommCloseTimeout - 1
@@ -303,47 +325,11 @@ active proctype ffb( ) {
 			   StateCommClose = NoStateCommCloseInactive
 			:: else -> skip
 		fi;
-		
-		//   5. CommSecured
-		// Condition is (Crossing = Closed & CommQuery = Signal & FailureComm = No) | (Crossing != Closed & CommQuery = Signal & FailureComm = No & FailureSecured != No)
-		if
-			:: IsStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommNo && ( !IsFailureSecuredNo))) ->
-			   CommSecuredTimeout = 30;
-			   StateCommSecured = NoStateCommSecuredActive
-			:: IsStateCommSecuredActive && (CommSecuredTimeout > 0) ->
-			   CommSecuredTimeout = CommSecuredTimeout - 1
-			:: IsStateCommSecuredActive && (CommSecuredTimeout == 0) ->
-			   StateCommSecured = NoStateCommSecuredSignal
-			:: IsStateCommSecuredSignal ->
-			   StateCommSecured = NoStateCommSecuredInactive
-			:: else -> skip
-		fi;
-		//-- COMMUNICATION -------------------------
-		
-		
-		//-- TRAIN ---------------------------------		
-		//   6. TrainControl
-		if
-			:: IsStateTrainIdle && Pos >= DefClosePos -> StateTrain = NoStateTrainWait
-			:: IsStateTrainWait && Pos >= DefQueryPos -> StateTrain = NoStateTrainQuery
-			:: IsStateTrainQuery && IsStateCommSecuredActive -> StateTrain = NoStateTrainGo
-			:: IsStateTrainQuery && Pos >= DefStopPos -> StateTrain = NoStateTrainStop
-			:: else -> skip
-		fi;
-		
-		
-		//   7. Brakes
-		if
-			:: IsStateTrainStop && IsFailureBrakesNo -> StateBrakes = NoStateBrakesEngaged
-			:: IsStateBrakesEngaged & ! IsFailureBrakesNo -> StateBrakes = NoStateBrakesIdle
-			:: else -> skip
-		fi;
-		
-		//-- TRAIN ---------------------------------
-		
+		//-- COMMUNICATION TRAIN -> CROSSING -------
+					
 		
 		//-- CROSSING ------------------------------
-		//   8. CrossingControl
+		//   7. CrossingControl
 		if
 			:: IsStateCrossingOpened && IsStateCommCloseSignal && IsFailureCloseNo -> StateCrossing = NoStateCrossingClosing
 			:: IsStateCrossingClosing && IsStateTimerClosingSignal && IsFailureStuckNo -> StateCrossing = NoStateCrossingClosed
@@ -353,14 +339,13 @@ active proctype ffb( ) {
 			:: IsStateCrossingClosed && (IsStateTimerOpenSignal || Pos >= DefSensorPos || ! IsFailureOpenNo) -> StateCrossing = NoStateCrossingOpened
 			:: IsStateCrossingClosed && ! IsFailureStuckNo && (IsStateTimerClosingSignal || Pos >= DefSensorPos) -> StateCrossing = NoStateCrossingStuck
 			:: else -> skip
-		fi;
+		fi;  
   
-  
-		//   9. TimerClosing
+		//   8. TimerClosing
 		// Condition is Crossing = Opened & CommClose = Signal
 		if
-			:: IsStateTimerClosingInactive && (IsStateCrossingOpened && IsStateCommCloseSignal) ->
-			   TimerClosingTimeout = 30;
+			:: IsStateTimerClosingInactive && IsStateCrossingClosing ->
+			   TimerClosingTimeout = DefClosingDelay;
 			   StateTimerClosing = NoStateTimerClosingActive
 			:: IsStateTimerClosingActive && (TimerClosingTimeout > 0) ->
 			   TimerClosingTimeout = TimerClosingTimeout - 1
@@ -371,11 +356,11 @@ active proctype ffb( ) {
 			:: else -> skip
 		fi;
 		
-		//  10. TimerOpen
+		//  9. TimerOpen
 		// Condition is Crossing = Closed
 		if
-			:: IsStateTimerOpenInactive && (IsStateCrossingClosed) ->
-			   TimerOpenTimeout = 30;
+			:: IsStateTimerOpenInactive && IsStateCrossingClosed ->
+			   TimerOpenTimeout = DefCloseTimeout;
 			   StateTimerOpen = NoStateTimerOpenActive
 			:: IsStateTimerOpenActive && (TimerOpenTimeout > 0) ->
 			   TimerOpenTimeout = TimerOpenTimeout - 1
@@ -386,6 +371,25 @@ active proctype ffb( ) {
 			:: else -> skip
 		fi;
 		//-- CROSSING ------------------------------
+								
+		//-- COMMUNICATION CROSSING -> TRAIN -------
+		//   10. CommSecured
+		// Condition is (Crossing = Closed & CommQuery = Signal & FailureComm = No) | (Crossing != Closed & CommQuery = Signal & FailureComm = No & FailureSecured != No)
+		if
+			:: IsStateCommSecuredInactive && ((IsStateCrossingClosed && IsStateCommQuerySignal && IsFailureCommNo) || ( (! IsStateCrossingClosed) && IsStateCommQuerySignal && IsFailureCommNo && ( !IsFailureSecuredNo))) ->
+			   CommSecuredTimeout = DefCommDelay;
+			   StateCommSecured = NoStateCommSecuredActive
+			:: IsStateCommSecuredActive && (CommSecuredTimeout > 0) ->
+			   CommSecuredTimeout = CommSecuredTimeout - 1
+			:: IsStateCommSecuredActive && (CommSecuredTimeout == 0) ->
+			   StateCommSecured = NoStateCommSecuredSignal
+			:: IsStateCommSecuredSignal ->
+			   skip
+			   //StateCommSecured = NoStateCommSecuredInactive
+			:: else -> skip
+		fi;
+		//-- COMMUNICATION CROSSING -> TRAIN -------
+				
 				
 		//-- FAILURES ------------------------------
 		//  11. FailureBrakes (persistent)
@@ -441,39 +445,40 @@ active proctype ffb( ) {
 
 		
 // Functional Correctness DCCA
-ltl FunctionalCorrectness { 
-	! ((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl FunctionalCorrectness { 
+//	! ((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 	
 // Single Points of Failure -----------------------------------------------------------------------
+// fails, but should not
 ltl Single_FailureBrakes { 
-	!((FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+	! ((FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
 }
 	
-ltl Single_FailureOdometer { 
-	!((IsFailureBrakesNo & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl Single_FailureOdometer { 
+//	!((IsFailureBrakesNo & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 
-ltl Single_FailureSecured { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl Single_FailureSecured { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 
-ltl Single_FailureClose { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl Single_FailureClose { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 	
-//fails
+//shoud fail, but doesn't
 //ltl Single_FailureOpen { 
 //	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
 //}
 	
-ltl Single_FailureStuck { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl Single_FailureStuck { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//}
 	
-ltl Single_FailureComm { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
-}
+//ltl Single_FailureComm { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
+//}
 	
 // Combinations of 2 Failures ---------------------------------------------------------------------
 //fails
@@ -521,42 +526,42 @@ ltl Single_FailureComm {
 //	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
 //}
 	
-ltl FailureBrakes_FailureOdometer { 
-	!((IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl FailureBrakes_FailureOdometer { 
+//	!((IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 	
-ltl FailureBrakes_FailureSecured { 
-	!((FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl FailureBrakes_FailureSecured { 
+//	!((FailureOdometer == 0 & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 	
-ltl FailureSecured_FailureOdometer { 
-	!((IsFailureBrakesNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl FailureSecured_FailureOdometer { 
+//	!((IsFailureBrakesNo & IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 	
-ltl FailureClose_FailureStuck { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl FailureClose_FailureStuck { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureCommNo) U (DefHazard))
+//}
 	
-ltl FailureClose_FailureComm { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
-}
+//ltl FailureClose_FailureComm { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureOpenNo & IsFailureStuckNo) U (DefHazard))
+//}
 	
-ltl FailureStuck_FailureComm { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo) U (DefHazard))
-}
+//ltl FailureStuck_FailureComm { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureSecuredNo & IsFailureCloseNo & IsFailureOpenNo) U (DefHazard))
+//}
 	
 // Combinations of 3 Failures ---------------------------------------------------------------------
-ltl FailureClose_FailureStuck_FailureComm { 
-	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureOpenNo & IsFailureSecuredNo) U (DefHazard))
-}
+//ltl FailureClose_FailureStuck_FailureComm { 
+//	!((IsFailureBrakesNo & FailureOdometer == 0 & IsFailureOpenNo & IsFailureSecuredNo) U (DefHazard))
+//}
 
-ltl FailureBrakes_FailureSecured_FailureOdometer { 
-	!((IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
-}
+//ltl FailureBrakes_FailureSecured_FailureOdometer { 
+//	!((IsFailureCloseNo & IsFailureOpenNo & IsFailureStuckNo & IsFailureCommNo) U (DefHazard))
+//}
 
 
 
-// ltl hazardNeverOccurs { [] ! (DefHazard) }
+//ltl hazardNeverOccurs { [] ! (DefHazard) }
 
 
 //-- VERIFICATION -------------------------------------------------------------------------------

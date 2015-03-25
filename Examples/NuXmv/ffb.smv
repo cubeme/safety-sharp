@@ -123,88 +123,170 @@ MODULE main
 		
 
 		
-		
-		
+				
+---- DCCA LTL STYLE ---------------------------------------------------------------------------------
 -- Functional Correctness DCCA
-LTLSPEC NAME FunctionalCorrectness := 
-	! (FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--LTLSPEC NAME FunctionalCorrectness := 
+--	! (FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+---- Single Points of Failure -----------------------------------------------------------------------
+--LTLSPEC NAME Single_FailureBrakes := 
+--	!(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME Single_FailureOdometer := 
+--	!(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--
+--LTLSPEC NAME Single_FailureSecured := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--
+--LTLSPEC NAME Single_FailureClose := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME Single_FailureOpen := 
+--	(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME Single_FailureStuck := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME Single_FailureComm := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+---- Combinations of 2 Failures ---------------------------------------------------------------------
+--LTLSPEC NAME FailureComm_FailureOdometer := 
+--	(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureClose_FailureBrakes := 
+--	(FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureComm_FailureBrakes := 
+--	(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureStuck_FailureBrakes := 
+--	(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureClose_FailureOdometer := 
+--	(FailureBrakes = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureStuck_FailureOdometer := 
+--	(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureClose_FailureSecured := 
+--	(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureComm_FailureSecured := 
+--	(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureStuck_FailureSecured := 
+--	(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureBrakes_FailureOdometer := 
+--	!(FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureBrakes_FailureSecured := 
+--	!(FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureSecured_FailureOdometer := 
+--	!(FailureBrakes = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureClose_FailureStuck := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureClose_FailureComm := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+--LTLSPEC NAME FailureStuck_FailureComm := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--	
+---- Combinations of 3 Failures ---------------------------------------------------------------------
+--LTLSPEC NAME FailureClose_FailureStuck_FailureComm := 
+--	!(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureSecured = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+--
+--LTLSPEC NAME FailureBrakes_FailureSecured_FailureOdometer := 
+--	!(FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+---- DCCA LTL STYLE ---------------------------------------------------------------------------------
+	
+
+	
+-- DCCA CTL STYLE ---------------------------------------------------------------------------------
+-- Functional Correctness DCCA
+CTLSPEC NAME FunctionalCorrectness := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
 -- Single Points of Failure -----------------------------------------------------------------------
-LTLSPEC NAME Single_FailureBrakes := 
-	!(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureBrakes := 
+	!E [(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME Single_FailureOdometer := 
-	!(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureOdometer := 
+	!E [(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 
-LTLSPEC NAME Single_FailureSecured := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureSecured := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 
-LTLSPEC NAME Single_FailureClose := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureClose := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME Single_FailureOpen := 
-	(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureOpen := 
+	E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME Single_FailureStuck := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureStuck := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME Single_FailureComm := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME Single_FailureComm := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
 -- Combinations of 2 Failures ---------------------------------------------------------------------
-LTLSPEC NAME FailureComm_FailureOdometer := 
-	(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureComm_FailureOdometer := 
+	E [(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureClose_FailureBrakes := 
-	(FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureClose_FailureBrakes := 
+	E [(FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureComm_FailureBrakes := 
-	(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureComm_FailureBrakes := 
+	E [(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureStuck_FailureBrakes := 
-	(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureStuck_FailureBrakes := 
+	E [(FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureClose_FailureOdometer := 
-	(FailureBrakes = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureClose_FailureOdometer := 
+	E [(FailureBrakes = No & FailureSecured = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureStuck_FailureOdometer := 
-	(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureStuck_FailureOdometer := 
+	E [(FailureBrakes = No & FailureSecured = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureClose_FailureSecured := 
-	(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureClose_FailureSecured := 
+	E [(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureComm_FailureSecured := 
-	(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureComm_FailureSecured := 
+	E [(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureStuck_FailureSecured := 
-	(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureStuck_FailureSecured := 
+	E [(FailureBrakes = No & FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureBrakes_FailureOdometer := 
-	!(FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureBrakes_FailureOdometer := 
+	!E [(FailureSecured = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureBrakes_FailureSecured := 
-	!(FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureBrakes_FailureSecured := 
+	!E [(FailureOdometer = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureSecured_FailureOdometer := 
-	!(FailureBrakes = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureSecured_FailureOdometer := 
+	!E [(FailureBrakes = No & FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureClose_FailureStuck := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureClose_FailureStuck := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureClose_FailureComm := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureClose_FailureComm := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureOpen = No & FailureStuck = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
-LTLSPEC NAME FailureStuck_FailureComm := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureStuck_FailureComm := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureSecured = No & FailureClose = No & FailureOpen = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 	
 -- Combinations of 3 Failures ---------------------------------------------------------------------
-LTLSPEC NAME FailureClose_FailureStuck_FailureComm := 
-	!(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureSecured = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
+CTLSPEC NAME FailureClose_FailureStuck_FailureComm := 
+	!E [(FailureBrakes = No & FailureOdometer = No & FailureOpen = No & FailureSecured = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
 
-LTLSPEC NAME FailureBrakes_FailureSecured_FailureOdometer := 
-	!(FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed);
-	
-
+CTLSPEC NAME FailureBrakes_FailureSecured_FailureOdometer := 
+	!E [(FailureClose = No & FailureOpen = No & FailureStuck = No & FailureComm = No) U (Pos <= CrossingPos & CrossingPos < Pos + Speed & Crossing != Closed)];
+-- DCCA CTL STYLE ---------------------------------------------------------------------------------
 	
 	
 -- 	-- SANITY
