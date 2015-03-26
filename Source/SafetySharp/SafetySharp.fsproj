@@ -153,13 +153,16 @@
     <Compile Include="Analysis\Stochastic\FailureRate.fs" />
     <Compile Include="Analysis\SpinModelChecker.fs" />
     <Compile Include="Analysis\Techniques\AtStepInvariant.fs" />
+    <Compile Include="Analysis\Techniques\AtReachable.fs" />
     <Compile Include="Analysis\Techniques\AtLtlFormula.fs" />
     <Compile Include="Analysis\Techniques\AtDccaLtl.fs" />
     <Compile Include="Analysis\Techniques\AtDccaCtl.fs" />
     <Compile Include="Analysis\Techniques\AtDccaPruning.fs" />
     <Compile Include="Analysis\Techniques\AtDccaFastBdd.fs" />
+    <Compile Include="Analysis\Techniques\AtOrderedDccaFastBdd.fs" />
     <Compile Include="Analysis\Techniques\AtProbabilisticFullModel.fs" />
     <Compile Include="Analysis\Techniques\AtContract.fs" />
+    <Compile Include="Analysis\Techniques\AtMethodsCalled.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />
   </ItemGroup>
