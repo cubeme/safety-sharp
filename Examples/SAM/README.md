@@ -17,3 +17,4 @@
 * smokeTest17.sam: example, which has one branch, which always works, and one branch, which stops (in VcSam equivalent: "assume false" anywhere). Promela just stops the execution in such a branch. Check, if model checking of formulas is still valid.
 * smokeTest18.sam: like 4, but start with an assumption
 * smokeTest19.sam: one branch allows a value, another does not
+* smokeTest20.sam: example, which demonstrates, that the definition of assignment in the sp predicate transformer actually needs an \exists
