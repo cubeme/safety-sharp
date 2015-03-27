@@ -180,3 +180,10 @@ module NuXmvCheckSmokeTests =
         let output = runSmokeTest inputFile
         printf "%s" output
         ()
+
+    [<Test>]
+    let ``smokeTest20.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest20.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()

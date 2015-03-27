@@ -22,9 +22,13 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-//  * http://en.wikipedia.org/wiki/Predicate_transformer_semantics
+//  * http://en.wikipedia.org/wiki/
+//  * [CC96] G.C. Gannod, B.H.C. Cheng. Strongest postcondition semantics as the formal basis for reverse engineering.
+//                 http://dx.doi.org/10.1109/WCRE.1995.514707
 //  * [GCFK09] Radu Grigore, Julien Charles, Fintan Fairmichael, Joseph Kiniry. Strongest Postcondition of Unstructured Programs.
 //                 http://dx.doi.org/10.1145/1557898.1557904
+//  * [HS+11] D. Haneberg, G. Schellhorn, et al. Lecture notes of Formal Methods in Software Engineering
+//                 http://www.informatik.uni-augsburg.de/lehrstuehle/swt/se/teaching/fruehere_semester/ss11/FM4SE/Folien/
 
 module internal VcStrongestPostcondition =
     open VcSam
@@ -32,7 +36,28 @@ module internal VcStrongestPostcondition =
     open VcSam
     open SafetySharp.Models.SamHelpers
     // Predicate Transformers
-      
+
+    // Removal of the quantification in the assignment rule is necessary, to automate the transformation and find a compact formula:
+    // Formula for sp:
+    //    sp(\phi, x:=e) = (\exists v^{<}. Q{ x \substby  v^{<} } \wedge e{ x \substby  v^{<} } )
+    //    v^{<} contains a possible value of the "previous" x. There might be more values, see example.
+    //    The x in the expression is replaced by its former value. The \exist collects all former values of
+    //    variable x. This is actually needed, when the former value may be a set (example x>=4).
+    // Example smokeTest20.sam, first branch:
+    // v^{<}
+    // { y >= 2 }
+    //	    x := 1;
+    // { [y >= 2 ] \wedge x = 1}    // the '[' ']' marks Q.
+    //	    x := y + 3;
+    // { [y >= 2 \wedge 1 = 1 ] \wedge x = y + 3}. The only value for x, which satisfies x=1 is 1. Thus, 1 = 1.
+    //	    x := y + x;
+    // { [y >= 2 \wedge 1 = 1 \wedge y + 3 = y + 3 ] \wedge x = y + y + 3 }. The only values for x, which satisfies x = y + 3 is y + 3. Thus, y + 3 = y + 3.
+    //	    y := x + 2;
+    // { ([ 2 >= 2 \wedge 1 = 1 \wedge 2 + 3 = 2 + 3 \wedge x = 2 + 2 + 3] \wedge y = x + 2) \vee 
+    //   ([ 3 >= 2 \wedge 1 = 1 \wedge 3 + 3 = 3 + 3 \wedge x = 3 + 3 + 3] \wedge y = x + 2) \vee ... }. There are more possible values for y, which satisfy y >= 2. E.g. 2 >= 2 or 3 >= 2, ... And we cannot find an abbreviation as in the step before. Thus, we have to enumerate them all somehow.
+    //      ...
+    
+
     (*
     let rec sp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
         match expr with
