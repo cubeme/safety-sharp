@@ -32,6 +32,8 @@ module internal VcGuardWithAssignmentModel =
     // Assumptions go on the left side
     // Forward derivation/ forward reasoning similar to strongest postcondition
     
+    // The Proof ( a1 => b1 ) && ( a2 => b2 ) && ...   === ( a1 && b1 ) || ( a2 && b2 ) || ... in several cases:
+    //   [Nafz12] Florian Nafz. Verhaltensgarantien in selbst-organisierenden Systemen.
     
     [<RequireQualifiedAccessAttribute>]
     type AtomicStm =
@@ -159,7 +161,19 @@ module internal VcGuardWithAssignmentModel =
             GuardWithAssignmentModel.NextGlobal = pgm.NextGlobal;
         }
 
-        
+    (*
+    let toExpression (pgm:GuardWithAssignmentModel) : Expr =
+        // The weakest precondition (backwards) makes indeterministic choice to "And" and "Assumes \phi;S" to "\phi => S".
+        // The strongest postcondition (forward) makes an indeterministic choice to "Or" and "Assumes \phi;S" to "\phi And S".
+        // There is a strong duality between these two. But they are different. See [Nafz12 page 218].
+        // Because we make forward reasoning, we use the sp way.
+        let transformGuardWithAssignment (gwa:GuardWithAssignments) =
+            let assignments =
+            //here make an "and"
+            Expr.BExpr(gwa.Guard,,)
+        //here make an "or"
+        ()
+    *)
 
     open SafetySharp.Workflow
 

@@ -105,6 +105,13 @@ module internal VcSamModelForModification =
         let nextGlobals =
             pgm.Globals |> List.map (fun varDecl -> (varDecl.Var,varDecl.Var) ) //map to the same variable
                         |> Map.ofList
+        let uniqueStatementIdGenerator =
+            let stmIdCounter : int ref = ref 0 // this stays in the closure
+            let generator () : VcSam.StatementId =
+                do stmIdCounter := stmIdCounter.Value + 1
+                failwith "currently not used. need to convert old code first"
+                VcSam.StatementId.Some(stmIdCounter.Value)
+            generator
         {
             VcSam.Pgm.Globals = pgm.Globals;
             VcSam.Pgm.Locals = pgm.Locals;
@@ -112,6 +119,7 @@ module internal VcSamModelForModification =
             VcSam.Pgm.NextGlobal = nextGlobals;
             VcSam.Pgm.CodeForm = VcSam.CodeForm.MultipleAssignments;
             VcSam.Pgm.UsedFeatures = ();
+            VcSam.Pgm.UniqueStatementIdGenerator = uniqueStatementIdGenerator
         }
         
     let rec getMaximalStmId (stm:VcSam.Stm) : int =

@@ -97,6 +97,7 @@
     <Compile Include="Analysis\WellDefined\WellDefinedGuardedCommands.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSam.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamToString.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcTransformSamToVcSam.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamWorkflow.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamRewriter\VcPassiveFormFS01.fs" />
     <Compile Include="Analysis\VerificationCondition\VcSamRewriter\VcPassiveFormGCFK09.fs" />
@@ -104,6 +105,7 @@
     <Compile Include="Analysis\VerificationCondition\VcWeakestPrecondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcStrongestPostcondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcGuardWithAssignmentModel.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcTransitionRelation.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />

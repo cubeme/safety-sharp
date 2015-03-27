@@ -310,13 +310,12 @@ module internal VcPassiveFormFS01 =
                 newSigma.VarToType |> Map.toList
                                    |> List.filter (fun (_var,_) -> not(oldGlobalsAsSet.Contains _var) ) // use only those variables, which are not in global
                                    |> List.map createLocalVarDecl
-            {
+            { pgm with
                 Pgm.Body = newBody;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
                 Pgm.NextGlobal = newSigma.CurrentSubstitution;
                 Pgm.CodeForm = CodeForm.Passive;
-                Pgm.UsedFeatures = ();
             }            
         do! setVcSamModel newPgm
     }
