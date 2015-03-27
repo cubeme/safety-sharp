@@ -28,12 +28,11 @@ module internal SamToTsam =
 
 
 
-    let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : Tsam.Stm =
-        do stmIdCounter := stmIdCounter.Value + 1
-        let freshId = Some(stmIdCounter.Value)
+    let rec translateStm (uniqueStatementIdGenerator : unit -> Tsam.StatementId) (stm : SafetySharp.Models.Sam.Stm) : Tsam.Stm =
+        let freshId = uniqueStatementIdGenerator ()
         match stm with
             | SafetySharp.Models.Sam.Stm.Block(statements) ->
-                Tsam.Stm.Block(freshId,statements |> List.map (translateStm stmIdCounter) )
+                Tsam.Stm.Block(freshId,statements |> List.map (translateStm uniqueStatementIdGenerator) )
             | SafetySharp.Models.Sam.Stm.Choice (clauses) ->                
                 if clauses = [] then
                     (Tsam.Stm.Assume(freshId,Tsam.Expr.Literal(Tsam.Val.BoolVal(false))))
@@ -51,20 +50,17 @@ module internal SamToTsam =
                         // PseudoCode:
                         //     let atLeastOneGuardIsTrue =
                         //         Expr.createOredExpr guardsAsExpr
-                        do stmIdCounter := stmIdCounter.Value + 1
-                        let freshIdForAssertion = Some(stmIdCounter.Value)
+                        let freshIdForAssertion = uniqueStatementIdGenerator ()
                         (Tsam.Stm.Assert(freshIdForAssertion,Tsam.Expr.Literal(Tsam.Val.BoolVal(true))))
                     let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Tsam.Stm =
-                        do stmIdCounter := stmIdCounter.Value + 1
-                        let freshIdForGuard = Some(stmIdCounter.Value)
-                        do stmIdCounter := stmIdCounter.Value + 1
-                        let freshIdForBlock = Some(stmIdCounter.Value)
-                        Tsam.Stm.Block(freshIdForBlock,[Tsam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
+                        let freshIdForGuard = uniqueStatementIdGenerator ()
+                        let freshIdForBlock = uniqueStatementIdGenerator ()
+                        Tsam.Stm.Block(freshIdForBlock,[Tsam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm uniqueStatementIdGenerator clause.Statement]) // the guard is now an assumption
                     Tsam.Stm.Choice(freshId,clauses |> List.map translateClause)
             | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
                 Tsam.Stm.Write (freshId,variable,expression)
                 
-    let translatePgm (stmIdCounter:int ref) (pgm : SafetySharp.Models.Sam.Pgm ) : Tsam.Pgm =
+    let translatePgm (pgm : SafetySharp.Models.Sam.Pgm ) : Tsam.Pgm =
         let nextGlobals =
             pgm.Globals |> List.map (fun varDecl -> (varDecl.Var,varDecl.Var) ) //map to the same variable
                         |> Map.ofList
@@ -72,13 +68,12 @@ module internal SamToTsam =
             let stmIdCounter : int ref = ref 0 // this stays in the closure
             let generator () : Tsam.StatementId =
                 do stmIdCounter := stmIdCounter.Value + 1
-                failwith "currently not used. need to convert old code first"
                 Tsam.StatementId.Some(stmIdCounter.Value)
             generator
         {
             Tsam.Pgm.Globals = pgm.Globals;
             Tsam.Pgm.Locals = pgm.Locals;
-            Tsam.Pgm.Body = translateStm stmIdCounter pgm.Body;
+            Tsam.Pgm.Body = translateStm uniqueStatementIdGenerator pgm.Body;
             Tsam.Pgm.NextGlobal = nextGlobals;
             Tsam.Pgm.CodeForm = Tsam.CodeForm.MultipleAssignments;
             Tsam.Pgm.UsedFeatures = ();
@@ -99,3 +94,11 @@ module internal SamToTsam =
                         |> List.max
             | Tsam.Stm.Write (sid,_,_) ->
                 sid.Value
+
+    open SafetySharp.Workflow
+
+    let transformSamToTsam : WorkflowFunction<Sam.Pgm,Tsam.Pgm,unit> = workflow {
+        let! model = SafetySharp.Models.SamWorkflow.getSamModel
+        let newModel = translatePgm model
+        do! updateState newModel
+    }

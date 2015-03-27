@@ -22,16 +22,17 @@
 
 namespace SafetySharp.Analysis.Modelchecking.Boogie
 
-module internal VcSamToBoogie =
+module internal TsamToBoogie =
     
     open SafetySharp.Workflow
     open SafetySharp.Analysis.VerificationCondition
     open SafetySharp.Analysis.Modelchecking.Boogie
+    open SafetySharp.Models
     
     type HybridCodeBlock = {
         //same as a BoogieSimplifiedAst.CodeBlock but with VcSam Statements
         BlockId : BoogieSimplifiedAst.BlockId
-        Statements : VcSam.Stm list;
+        Statements : Tsam.Stm list;
         Transfer : BoogieSimplifiedAst.Transfer;
     }
     
@@ -46,9 +47,9 @@ module internal VcSamToBoogie =
                     }
                 member this.getHybridCodeBlocks =
                     this.HybridCodeBlocksReverse |> List.rev
-                member this.getBlockIdForVcStmBlock (blockStmId:VcSam.StatementId) (part:int) =
+                member this.getBlockIdForVcStmBlock (blockStmId:Tsam.StatementId) (part:int) =
                     BoogieSimplifiedAst.BlockId(sprintf "Block%dPart%d" blockStmId.Value part)        
-                member this.getBlockIdForVcStmNonBlock (blockStmId:VcSam.StatementId) =
+                member this.getBlockIdForVcStmNonBlock (blockStmId:Tsam.StatementId) =
                     BoogieSimplifiedAst.BlockId(sprintf "NonBlock%d" blockStmId.Value)
                 static member initial = 
                     {
@@ -56,7 +57,7 @@ module internal VcSamToBoogie =
                     }
 
 
-    let transformVcSamToBoogie (model:VcSam.Pgm) : BoogieSimplifiedAst.Pgm =    
+    let transformVcSamToBoogie (model:Tsam.Pgm) : BoogieSimplifiedAst.Pgm =    
         let maxLoops = 5
         let globalVars = model.Globals |> List.map (fun gl -> gl.Var)
         let globalVarDecls = []
@@ -122,23 +123,23 @@ module internal VcSamToBoogie =
 
 
 
-        let rec createTransformationContext (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (stm:VcSam.Stm) : TransformationContext =
+        let rec createTransformationContext (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (stm:Tsam.Stm) : TransformationContext =
             // A list of statements can be split up into groups of 'chained atomar statements' (HybridCodeBlock.Statements), 'block stm' (BS) and 'choice stm' (CS).
-            let processStmBlock (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (blockStmId:VcSam.StatementId,stmts:VcSam.Stm list) : TransformationContext =
+            let processStmBlock (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (blockStmId:Tsam.StatementId,stmts:Tsam.Stm list) : TransformationContext =
                 // we swapped the extraction of CASs in an Block-Statement, which is the most complex processing of all statements
                 let context = ref context
                 let currentPart = ref 1
                 let currentBlockId = ref (context.Value.getBlockIdForVcStmBlock blockStmId currentPart.Value)
                 let currentCASrev = ref ([])
-                let processStmInBlock (stm:VcSam.Stm) : unit  =
+                let processStmInBlock (stm:Tsam.Stm) : unit  =
                     match stm with
-                        | VcSam.Stm.Assert (sid,expr) ->
+                        | Tsam.Stm.Assert (sid,expr) ->
                             currentCASrev := stm::currentCASrev.Value
-                        | VcSam.Stm.Assume (sid,expr) ->
+                        | Tsam.Stm.Assume (sid,expr) ->
                             currentCASrev := stm::currentCASrev.Value
-                        | VcSam.Stm.Write (sid,variable,expression) ->
+                        | Tsam.Stm.Write (sid,variable,expression) ->
                             currentCASrev := stm::currentCASrev.Value
-                        | VcSam.Stm.Block (sid,_) ->
+                        | Tsam.Stm.Block (sid,_) ->
                             let statementBlockId = context.Value.getBlockIdForVcStmNonBlock stm.GetStatementId
                             let transferToBlock = BoogieSimplifiedAst.Transfer.Goto([statementBlockId])
                             // create HybridCodeBlock for all atomic statements until now
@@ -160,7 +161,7 @@ module internal VcSamToBoogie =
                             currentBlockId := nextBlockId
                             currentCASrev := []
                             ()
-                        | VcSam.Stm.Choice (sid,choices) ->
+                        | Tsam.Stm.Choice (sid,choices) ->
                             let choicesBlockIds = choices |> List.map (fun selected -> context.Value.getBlockIdForVcStmNonBlock selected.GetStatementId)
                             let transferToChoices = choicesBlockIds |> BoogieSimplifiedAst.Transfer.Goto
                             // create HybridCodeBlock for all atomic statements until now
@@ -191,7 +192,7 @@ module internal VcSamToBoogie =
                 context := context.Value.appendHybridCodeBlock lastHybridCodeBlock
                 context.Value
             // until now was the extraction of CASs in a block in a swapped function
-            let processStmNonBlock (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (stm:VcSam.Stm) : TransformationContext =
+            let processStmNonBlock (returnTo:BoogieSimplifiedAst.Transfer) (context:TransformationContext) (stm:Tsam.Stm) : TransformationContext =
                 // create an own HybridCodeBlock only for this single statement
                 let currentBlockId = context.getBlockIdForVcStmNonBlock stm.GetStatementId
                 let hybridCodeBlock =
@@ -203,13 +204,13 @@ module internal VcSamToBoogie =
                 context.appendHybridCodeBlock hybridCodeBlock
             // now we actually do something
             match stm with
-                | VcSam.Stm.Assert _ ->
+                | Tsam.Stm.Assert _ ->
                     processStmNonBlock returnTo context stm
-                | VcSam.Stm.Assume _ ->
+                | Tsam.Stm.Assume _ ->
                     processStmNonBlock returnTo context stm
-                | VcSam.Stm.Write _ ->
+                | Tsam.Stm.Write _ ->
                     processStmNonBlock returnTo context stm
-                | VcSam.Stm.Block (sid,stmts) ->
+                | Tsam.Stm.Block (sid,stmts) ->
                     // When a statement refers to a block statement, it refers to the compound block (i.e. the stm containing the other statements).
                     // Thus, we must make a redirection from this compound block to the first part of the block.
                     // We could also make a transfer everywhere directly into the code block. But there a several side conditions to take care of.
@@ -226,31 +227,31 @@ module internal VcSamToBoogie =
                         }
                     let context = context.appendHybridCodeBlock hybridCodeBlock
                     processStmBlock returnTo context (sid,stmts)
-                | VcSam.Stm.Choice (sid,choices) ->
+                | Tsam.Stm.Choice (sid,choices) ->
                     let newContext = List.fold (createTransformationContext returnTo) context choices
                     newContext
                         
-        let rec transformExpr (expr:VcSam.Expr) : BoogieSimplifiedAst.Expr =
+        let rec transformExpr (expr:Tsam.Expr) : BoogieSimplifiedAst.Expr =
             match expr with
-                | VcSam.Expr.Literal (_val) ->
+                | Tsam.Expr.Literal (_val) ->
                     BoogieSimplifiedAst.Expr.Literal (_val)
-                | VcSam.Expr.UExpr( _operand,op) ->
+                | Tsam.Expr.UExpr( _operand,op) ->
                     BoogieSimplifiedAst.Expr.UExpr (transformExpr _operand,op)
-                | VcSam.Expr.BExpr (leftExpression,bop,rightExpression) ->
+                | Tsam.Expr.BExpr (leftExpression,bop,rightExpression) ->
                     BoogieSimplifiedAst.Expr.BExpr (transformExpr leftExpression,bop,transformExpr rightExpression)
-                | VcSam.Expr.Read (variable) ->
+                | Tsam.Expr.Read (variable) ->
                     BoogieSimplifiedAst.Expr.Read (variable)
-                | VcSam.Expr.ReadOld  (variable) ->
+                | Tsam.Expr.ReadOld  (variable) ->
                     failwith "NotSupportedYet"
 
         let transformHybridCodeBlock (entry:HybridCodeBlock) : BoogieSimplifiedAst.CodeBlock =
-            let transformAtomicStatement (stm:VcSam.Stm) : BoogieSimplifiedAst.Stm =
+            let transformAtomicStatement (stm:Tsam.Stm) : BoogieSimplifiedAst.Stm =
                 match stm with
-                    | VcSam.Stm.Assert (sid,expr) ->
+                    | Tsam.Stm.Assert (sid,expr) ->
                         BoogieSimplifiedAst.Stm.Assert(transformExpr expr)
-                    | VcSam.Stm.Assume (sid,expr) ->
+                    | Tsam.Stm.Assume (sid,expr) ->
                         BoogieSimplifiedAst.Stm.Assume(transformExpr expr)
-                    | VcSam.Stm.Write (sid,var,expr) ->
+                    | Tsam.Stm.Write (sid,var,expr) ->
                         BoogieSimplifiedAst.Stm.Write(var,transformExpr expr)
                     | _ ->
                         failwith "Stm.Choice or Stm.Block should not be here in this stage"
@@ -260,7 +261,7 @@ module internal VcSamToBoogie =
                 BoogieSimplifiedAst.CodeBlock.Transfer = entry.Transfer;
             }
                     
-        let transformPgm (stm:VcSam.Stm) : BoogieSimplifiedAst.CodeBlock list =
+        let transformPgm (stm:Tsam.Stm) : BoogieSimplifiedAst.CodeBlock list =
             let hybridCodeBlocks = createTransformationContext (BoogieSimplifiedAst.Transfer.Return(None)) TransformationContext.initial stm
             let transformedCodeBlocks = hybridCodeBlocks.getHybridCodeBlocks |> List.map transformHybridCodeBlock
             transformedCodeBlocks
@@ -290,8 +291,8 @@ module internal VcSamToBoogie =
     
     
     
-    let transformVcSamToBoogieWf : WorkflowFunction<VcSam.Pgm,BoogieSimplifiedAst.Pgm,unit> = workflow {
-        let! vcsamModel = VcSamWorkflow.getVcSamModel
+    let transformVcSamToBoogieWf : WorkflowFunction<Tsam.Pgm,BoogieSimplifiedAst.Pgm,unit> = workflow {
+        let! vcsamModel = getState
         let newBoogieAst = transformVcSamToBoogie vcsamModel
         do! updateState newBoogieAst        
     }

@@ -31,9 +31,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 //                 http://www.informatik.uni-augsburg.de/lehrstuehle/swt/se/teaching/fruehere_semester/ss11/FM4SE/Folien/
 
 module internal VcStrongestPostcondition =
-    open VcSam
-        
-    open VcSam
+    open SafetySharp.Models.Tsam
     open SafetySharp.Models.SamHelpers
     // Predicate Transformers
 

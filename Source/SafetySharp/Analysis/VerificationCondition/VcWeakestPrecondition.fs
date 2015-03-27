@@ -24,7 +24,7 @@ namespace SafetySharp.Analysis.VerificationCondition
 
 
 module internal VcWeakestPrecondition =
-    open VcSam
+    open SafetySharp.Models.Tsam
     open SafetySharp.Models.SamHelpers
        
     // Predicate Transformers

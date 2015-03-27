@@ -118,7 +118,7 @@ module internal Tsam =
     
     // Extension methods
     type Stm with
-        member stm.appendStatements (referenceToStmIdCounter:int ref) (stmsToAppend:Stm list) =
+        member stm.appendStatements (uniqueStatementIdGenerator : unit -> StatementId) (stmsToAppend:Stm list) =
             if stmsToAppend.IsEmpty then
                 stm
             else
@@ -126,9 +126,8 @@ module internal Tsam =
                     | Stm.Block (sid,stmnts) ->
                         Stm.Block (sid,stmnts@stmsToAppend)
                     | _ ->
-                        do referenceToStmIdCounter := referenceToStmIdCounter.Value + 1
-                        let freshStmId = referenceToStmIdCounter.Value
-                        Stm.Block (Some(freshStmId),stm::stmsToAppend)
+                        let freshStmId = uniqueStatementIdGenerator ()
+                        Stm.Block (freshStmId,stm::stmsToAppend)
                     
     (*
     let mergeEntriesOfVarSetMap<'b when 'b : comparison> (oldEntries:Map<Var,Set<'b>>) (newEntries:Map<Var,Set<'b>>) : Map<Var,Set<'b>> =

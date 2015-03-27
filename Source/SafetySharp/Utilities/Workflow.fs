@@ -268,3 +268,21 @@ module internal Workflow =
         do FileSystem.WriteToAsciiFile outputFileName input
         return ()
     }
+
+    let printToStdout : WorkflowFunction<string,string,unit> = workflow {
+        let! input = getState
+        printfn "%s" input
+        return ()
+    }    
+
+    let printObjectToStdout<'a> : WorkflowFunction<'a,'a,unit> = workflow {
+        let! input = getState
+        printfn "%+A" input
+        return ()
+    }    
+
+    let printNewParagraphToConsole<'a> : WorkflowFunction<'a,'a,unit> = workflow {
+        printfn ""
+        printfn ""
+        return ()
+    }

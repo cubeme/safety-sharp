@@ -306,32 +306,32 @@ module internal TsamPassiveFormGCFK09 =
                     versionedVarToFreshVar.Item (_var,writeVersionOfVar)
                 Stm.Write (sid,_newVar,replaceVarInExpr readVersions versionedVarToFreshVar expr)
         
-    let rec addMissingAssignmentsBeforeMerges (statementInfos:StatementInfos) (stmIdCounter:int ref) (versionedVarToFreshVar:Map<Var*int,Var>) (stm:Stm) : Stm =
+    let rec addMissingAssignmentsBeforeMerges (statementInfos:StatementInfos) (uniqueStatementIdGenerator : unit -> StatementId) (versionedVarToFreshVar:Map<Var*int,Var>) (stm:Stm) : Stm =
         match stm with
             | Stm.Assert (sid,expr) ->
                 stm
             | Stm.Assume (sid,expr) ->
                 stm
             | Stm.Block (sid,statements) ->
-                let newStmnts = statements |> List.map (addMissingAssignmentsBeforeMerges statementInfos stmIdCounter versionedVarToFreshVar)
+                let newStmnts = statements |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar)
                 Stm.Block (sid,newStmnts)
             | Stm.Choice (sid,choices) ->
-                let newChoices = choices |> List.map (addMissingAssignmentsBeforeMerges statementInfos stmIdCounter versionedVarToFreshVar)                
+                let newChoices = choices |> List.map (addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar)                
                 let readOfNextNode = statementInfos.MaxLastWrite.Item sid.Value
                 //Note: maxLastWrite of this statement is firstRead of next Statement. Thus we still check the formula int the paper.
                 let addMissingAssignmentsToBranch (branch:Stm) : Stm =
                     let missingStatementsOfBranch =
                         let maxLastWriteOfBranch = statementInfos.MaxLastWrite.Item branch.GetStatementId.Value
                         let createAssignment (_var:Var,nextReadVersion:int,writeVersionOfBranch:int) =
-                            do stmIdCounter := stmIdCounter.Value + 1
+                            let freshStatementId = uniqueStatementIdGenerator ()
                             let assignTo = versionedVarToFreshVar.Item (_var,nextReadVersion)
                             let assignExpr = Expr.Read(versionedVarToFreshVar.Item (_var,writeVersionOfBranch))
-                            Stm.Write(Some(stmIdCounter.Value),assignTo,assignExpr)                            
+                            Stm.Write(freshStatementId,assignTo,assignExpr)                            
                         readOfNextNode |> Map.toList
                                        |> List.map (fun (_var,nextReadVersion ) -> (_var,nextReadVersion, maxLastWriteOfBranch.Item _var ) )
                                        |> List.filter (fun (_var,nextReadVersion , writeVersionOfBranch) -> nextReadVersion<>writeVersionOfBranch )
                                        |> List.map createAssignment
-                    branch.appendStatements stmIdCounter missingStatementsOfBranch
+                    branch.appendStatements uniqueStatementIdGenerator missingStatementsOfBranch
                 // check each new branch
                 let newChoices =
                     newChoices |> List.map addMissingAssignmentsToBranch
@@ -369,8 +369,7 @@ module internal TsamPassiveFormGCFK09 =
         // replace versionedVar by fresh Var in each statement and expression
         let newBodyWithReplacedExprs = replaceVarInStm statementInfos versionedVarToFreshVar pgm.Body
         // Add Assignments. To add assignments, we need to introduce new statements. For that, we need new statement ids
-        let! stmIdCounter = getReferenceToStmIdCounter
-        let newBodyWithoutMissingAssignments = addMissingAssignmentsBeforeMerges statementInfos stmIdCounter versionedVarToFreshVar newBodyWithReplacedExprs
+        let newBodyWithoutMissingAssignments = addMissingAssignmentsBeforeMerges statementInfos pgm.UniqueStatementIdGenerator versionedVarToFreshVar newBodyWithReplacedExprs
         // statementInfos is now outdated
         
         let mappingToNextGlobal =

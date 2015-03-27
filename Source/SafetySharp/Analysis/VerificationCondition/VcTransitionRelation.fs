@@ -23,5 +23,5 @@
 namespace SafetySharp.Analysis.VerificationCondition
 
 module VcTransitionRelation =
-    open VcSam
+    open SafetySharp.Models.Tsam
 

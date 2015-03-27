@@ -23,7 +23,7 @@
 namespace SafetySharp.Analysis.VerificationCondition
 
 module internal VcGuardWithAssignmentModel =
-    open VcSam
+    open SafetySharp.Models.Tsam
     open SafetySharp.Models.SamHelpers
     
     // Predicate Transformers
@@ -178,7 +178,7 @@ module internal VcGuardWithAssignmentModel =
     open SafetySharp.Workflow
 
         
-    let transformWorkflow : WorkflowFunction<VcSam.Pgm,GuardWithAssignmentModel,unit> = workflow {
+    let transformWorkflow : WorkflowFunction<Pgm,GuardWithAssignmentModel,unit> = workflow {
         let! model = getState
         let transformedModel = transformPgmToGuardWithFinalAssignmentModel model
         do! updateState transformedModel
