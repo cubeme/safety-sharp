@@ -55,14 +55,3 @@ module internal VcWeakestPrecondition =
             Expr.createAndedExpr choicesAsExpr
         | Write (_,variable,expression) ->
             wp_rewriteExpr_varsToExpr (variable,expression) formula
-
-    (*
-    let wpWrapper<'stateWithVcSam when 'stateWithVcSam :> IVcSamModel<'stateWithVcSam>> :
-                        VcSamToVcWorkflowFunction<'stateWithSam> = workflow {
-        
-        
-        
-        let! model = getModel
-        return ()
-    }
-    *)

@@ -104,7 +104,7 @@
     <Compile Include="Analysis\VerificationCondition\VcWeakestPrecondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcStrongestPostcondition.fs" />
     <Compile Include="Analysis\VerificationCondition\VcGuardWithAssignmentModel.fs" />
-    <Compile Include="Analysis\VerificationCondition\VcTransitionRelation.fs" />
+    <Compile Include="Analysis\VerificationCondition\VcTransitionSystemAsRelationExpr.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Ast.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Predefined.fs" />
     <Compile Include="Analysis\Smt-Solving\SMT-LIBv2\SmtLib2Convenience.fs" />

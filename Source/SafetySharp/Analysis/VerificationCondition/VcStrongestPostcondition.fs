@@ -55,7 +55,6 @@ module internal VcStrongestPostcondition =
     //   ([ 3 >= 2 \wedge 1 = 1 \wedge 3 + 3 = 3 + 3 \wedge x = 3 + 3 + 3] \wedge y = x + 2) \vee ... }. There are more possible values for y, which satisfy y >= 2. E.g. 2 >= 2 or 3 >= 2, ... And we cannot find an abbreviation as in the step before. Thus, we have to enumerate them all somehow.
     //      ...
     
-
     (*
     let rec sp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
         match expr with
@@ -77,13 +76,13 @@ module internal VcStrongestPostcondition =
     // [GCFK09] doesn't need a complicated assignment rule, because the input program is in passive form.
     let rec sp (stm:Stm) (previousProofObligations:Expr list) (formula:Expr) : Expr*(Expr list) = 
         match stm with
-        | Assert (_,expr) ->
-            Expr.BExpr(expr,BOp.And,formula)
-        | Assume (_,expr) ->
-            Expr.BExpr(expr,BOp.Implies,formula)
-        | Block (_,statements) ->
-            List.foldBack wp statements formula
-        | Choice (_,choices) ->
-            let choicesAsExpr =
-                choices |> List.map (fun choice -> wp choice formula)               
-    *)
+            | Assert (_,expr) ->
+                Expr.BExpr(expr,BOp.And,formula)
+            | Assume (_,expr) ->
+                Expr.BExpr(expr,BOp.Implies,formula)
+            | Block (_,statements) ->
+                List.foldBack wp statements formula
+            | Choice (_,choices) ->
+                let choicesAsExpr =
+                    choices |> List.map (fun choice -> wp choice formula)
+                    *)

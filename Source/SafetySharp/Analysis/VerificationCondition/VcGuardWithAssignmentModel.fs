@@ -160,21 +160,7 @@ module internal VcGuardWithAssignmentModel =
             GuardWithAssignmentModel.GuardsWithFinalAssignments = guardsWithFinalAssignments;
             GuardWithAssignmentModel.NextGlobal = pgm.NextGlobal;
         }
-
-    (*
-    let toExpression (pgm:GuardWithAssignmentModel) : Expr =
-        // The weakest precondition (backwards) makes indeterministic choice to "And" and "Assumes \phi;S" to "\phi => S".
-        // The strongest postcondition (forward) makes an indeterministic choice to "Or" and "Assumes \phi;S" to "\phi And S".
-        // There is a strong duality between these two. But they are different. See [Nafz12 page 218].
-        // Because we make forward reasoning, we use the sp way.
-        let transformGuardWithAssignment (gwa:GuardWithAssignments) =
-            let assignments =
-            //here make an "and"
-            Expr.BExpr(gwa.Guard,,)
-        //here make an "or"
-        ()
-    *)
-
+        
     open SafetySharp.Workflow
 
         
