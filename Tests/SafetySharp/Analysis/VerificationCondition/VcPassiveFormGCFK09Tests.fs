@@ -171,6 +171,12 @@ module VcPassiveFormGCFK09Tests =
         let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
         ()
 
+    [<Test>]
+    let ``smokeTest20 gets converted to SSA`` () =
+        let inputFile = """../../Examples/SAM/smokeTest20.sam"""
+        let ssaModel = SafetySharp.Workflow.runWorkflow_getState (TransformationsTestHelpersWorkflowModule.readInputFileAndTransformToSsa inputFile)
+        ()
+
 
 
         
