@@ -22,5 +22,5 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtDccaCtl =
+module internal AtDccaCtl =
     open SafetySharp.Workflow

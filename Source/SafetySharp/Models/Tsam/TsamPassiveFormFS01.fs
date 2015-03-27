@@ -293,8 +293,6 @@ module internal VcPassiveFormFS01 =
                     (newSigma,Stm.Choice (None,newChoices))
                     
     open SafetySharp.Workflow
-    open VcSamWorkflow
-    open VcSamModelForModification
     open SafetySharp.Models.SamHelpers
 
     let passifyPgm : ModelForModificationWorkflowFunction<unit> = workflow {

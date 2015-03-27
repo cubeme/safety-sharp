@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtDccaFastBdd =
+module internal AtDccaFastBdd =
     open SafetySharp.Workflow
 

@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtDccaPruning =
+module internal AtDccaPruning =
     open SafetySharp.Workflow
 

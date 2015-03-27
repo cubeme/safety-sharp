@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtContract =
+module internal AtContract =
     open SafetySharp.Workflow
 

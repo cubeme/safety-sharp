@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtReachable =
+module internal AtReachable =
     open SafetySharp.Workflow
 

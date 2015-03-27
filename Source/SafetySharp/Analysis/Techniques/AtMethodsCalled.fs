@@ -22,5 +22,5 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtMethodsCalled =
+module internal AtMethodsCalled =
     open SafetySharp.Workflow

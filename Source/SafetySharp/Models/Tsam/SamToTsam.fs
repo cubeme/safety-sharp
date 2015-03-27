@@ -1,6 +1,6 @@
 ﻿// The MIT License (MIT)
 // 
-// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineeringgineering
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +21,15 @@
 // THE SOFTWARE.
 
 namespace SafetySharp.Analysis.VerificationCondition
-module internal VcSamWorkflow =
+
+module internal VcTransformSamToVcSam =
     open SafetySharp.Workflow
 
-    type VcExpr = SafetySharp.Models.Sam.Expr
-    type TransformToVcWorkflowFunction<'source> = WorkflowFunction<'source,VcExpr,unit>
-
     
-    let getVcSamModel : WorkflowFunction<VcSam.Pgm,VcSam.Pgm,VcSam.Pgm> =
-        getState
-    
-    let setVcSamModel<'oldIrrelevantState> (model:VcSam.Pgm) : WorkflowFunction<'oldIrrelevantState,VcSam.Pgm,unit> = workflow {
-        do! updateState model
-    }
-
-
-    
-
-module internal VcSamModelForModification =
     open SafetySharp.Workflow
-    open VcSamWorkflow
 
     
     type VcSamPgm = VcSam.Pgm
-
-    type IVcSamModel<'state> =
-        interface
-            abstract getModel : VcSam.Pgm
-            abstract setModel : VcSam.Pgm -> 'state
-        end
-           
-    let getVcSamModel<'state when 'state :> IVcSamModel<'state>> : WorkflowFunction<'state,'state,VcSam.Pgm> = workflow {
-        let! state = getState
-        let model = state.getModel
-        return model
-    }    
-    
-    let setVcSamModel<'state when 'state :> IVcSamModel<'state>> (model:VcSam.Pgm) : WorkflowFunction<'state,'state,unit> = workflow {
-        let! state = getState
-        let newState = state.setModel model
-        do! updateState newState
-    }
 
 
 
@@ -136,64 +104,3 @@ module internal VcSamModelForModification =
                         |> List.max
             | VcSam.Stm.Write (sid,_,_) ->
                 sid.Value
-
-    // VcSam: Model with generator for fresh versions of variables
-    type ModelForModification =
-        {
-            StmIdCounter : int ref;
-            Model : VcSam.Pgm;
-        }
-            with
-                static member initial (model:SafetySharp.Models.Sam.Pgm) =
-                    let counter = ref 0
-                    {
-                        ModelForModification.StmIdCounter = counter;
-                        ModelForModification.Model = translatePgm counter model;
-                    }                    
-                static member initial (model:VcSam.Pgm) =
-                    let counter = ref (getMaximalStmId model.Body)
-                    {
-                        ModelForModification.StmIdCounter = counter;
-                        ModelForModification.Model = model;
-                    }
-                interface IVcSamModel<ModelForModification> with
-                    member this.getModel : VcSam.Pgm = this.Model
-                    member this.setModel (model:VcSam.Pgm) =
-                        { this with
-                            ModelForModification.Model = model;
-                        }
-    
-    type ModelForModificationWorkflowState = WorkflowState<ModelForModification>
-    type ModelForModificationWorkflowFunction<'returnType> = WorkflowFunction<ModelForModification,ModelForModification,'returnType>
-    
-    open SafetySharp.Models
-    type TransformToModelForVerificationWorkflowFunction<'source> = WorkflowFunction<'source,ModelForModification,unit>
-            
-    let transformSamToVcSamForModification : TransformToModelForVerificationWorkflowFunction<Sam.Pgm> = workflow {
-        let! model = SafetySharp.Models.SamWorkflow.getSamModel
-        let newModel = (ModelForModification.initial model)
-        do! updateState newModel
-    }
-    
-    let transformVcSamForModificationToVcSam : WorkflowFunction<ModelForModification,VcSam.Pgm,unit> = workflow {
-        let! model = getVcSamModel
-        do! updateState model
-    }
-    
-    let transformIVcSamToModelForModification<'state when 'state :> IVcSamModel<'state>>
-                     : WorkflowFunction<'state,ModelForModification,unit> = workflow {
-        let! model = getVcSamModel
-        let newModel = (ModelForModification.initial model)
-        do! updateState newModel
-    }
-    
-    let getFreshId : WorkflowFunction<ModelForModification,ModelForModification,int> = workflow {
-        let! state = getState
-        do state.StmIdCounter:=state.StmIdCounter.Value + 1
-        return state.StmIdCounter.Value       
-    }
-
-    let getReferenceToStmIdCounter : WorkflowFunction<ModelForModification,ModelForModification,int ref> = workflow {
-        let! state = getState
-        return state.StmIdCounter        
-    }

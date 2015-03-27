@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtStepInvariant =
+module internal AtStepInvariant =
     open SafetySharp.Workflow
 

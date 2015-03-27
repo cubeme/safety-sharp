@@ -22,6 +22,6 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtLtlFormula =
+module internal AtLtlFormula =
     open SafetySharp.Workflow
 

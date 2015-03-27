@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Analysis.Techniques
 
-module AtProbabilisticFullModel =
+module internal AtProbabilisticFullModel =
 
     open SafetySharp.Workflow
 
