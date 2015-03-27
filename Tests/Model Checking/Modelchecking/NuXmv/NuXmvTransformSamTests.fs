@@ -46,7 +46,11 @@ module SamToNuXmvTests =
         let workflowToExecute = workflow {
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Analysis.Modelchecking.NuXmv.SamToNuXmvWp.transformConfiguration_fromSam
+                do! SafetySharp.Models.SamToTsam.transformSamToTsam
+                do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
+                do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow
+                do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow
+                do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow
                 do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
             }
         let output = runWorkflow_getState workflowToExecute

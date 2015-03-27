@@ -101,6 +101,13 @@ module internal TransitionSystemAsRelationExpr =
             TransitionSystem.Trans = transformedGwas;
         }
 
+    open SafetySharp.Workflow
+
+    let transformGwamToTsareWorkflow : WorkflowFunction<GuardWithAssignmentModel,TransitionSystem,unit> = workflow {
+        let! model = getState
+        let transformed = transformGwamToTsare model
+        do! updateState transformed
+    }
     
     (*
     let createVirtualVarEntriesForPgm (pgm:Pgm) : (Var*Var) list =
