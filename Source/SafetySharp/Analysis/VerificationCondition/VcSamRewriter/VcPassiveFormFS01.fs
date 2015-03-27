@@ -315,6 +315,8 @@ module internal VcPassiveFormFS01 =
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
                 Pgm.NextGlobal = newSigma.CurrentSubstitution;
+                Pgm.CodeForm = CodeForm.Passive;
+                Pgm.UsedFeatures = ();
             }            
         do! setVcSamModel newPgm
     }

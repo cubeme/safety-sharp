@@ -400,6 +400,8 @@ module internal VcPassiveFormGCFK09 =
                 Pgm.Body = newBodyWithoutMissingAssignments;
                 Pgm.Globals = pgm.Globals; // globals stay globals
                 Pgm.Locals = newLocals;
+                Pgm.CodeForm = CodeForm.SingleAssignments;
+                Pgm.UsedFeatures = ();
                 Pgm.NextGlobal = mappingToNextGlobal;
             }            
         do! setVcSamModel newPgm
@@ -417,6 +419,7 @@ module internal VcPassiveFormGCFK09 =
         let newPgm =
             { pgm with
                 Pgm.Body = newBody;
+                Pgm.CodeForm = CodeForm.Passive;
             }
         do! setVcSamModel newPgm
     }

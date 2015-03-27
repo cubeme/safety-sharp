@@ -100,7 +100,6 @@ module internal VcGuardWithAssignmentModel =
     let transformAtomicStmBlockToGuardWithAssignments (globalVars:Var list) (AtomicStmBlock(toTransform)) : GuardWithAssignments =
         // Start with guard true. Every time we cross an assumption, we add this assumption to our guard.
         // Every time we cross an assignment, we update the current assignments (forward similar to strongest postcondition)
-        // and if the assignment is to a finalVar, we add it to the Assignments.
         let initialGuard =
             Expr.Literal(Val.BoolVal(true))
         let initialValuation =
@@ -112,8 +111,9 @@ module internal VcGuardWithAssignmentModel =
                     failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
                     // I think, we could add the assertion, but it would generate a new proof obligation.
                 | AtomicStm.Assume (expr) ->
+                    let newExpr = gwa_rewriteExpr_varsToExpr currentValuation expr
                     let newGuard =
-                        Expr.BExpr(currentGuard,BOp.And,expr)
+                        Expr.BExpr(currentGuard,BOp.And,newExpr)
                     (newGuard,currentValuation)
                 | AtomicStm.Write (var, expr) ->
                     // replace vars in expr by their current valuation (such that no localVar occurs in any valuation)
@@ -144,7 +144,9 @@ module internal VcGuardWithAssignmentModel =
 
     // this is the main function of this algorithm
     let transformPgmToGuardWithFinalAssignmentModel (pgm:Pgm) : GuardWithAssignmentModel =
-        // SSA may not be necessary
+        // SSA may not be necessary. Passive Form cannot be used with this algorithm.
+        if pgm.CodeForm = CodeForm.Passive then
+            failwith "passive form cannot be used with this algorithm"
         let atomicStmBlocks = collectPaths pgm.Body
         let globalVars = pgm.Globals |> List.map (fun gl-> gl.Var)
         let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList

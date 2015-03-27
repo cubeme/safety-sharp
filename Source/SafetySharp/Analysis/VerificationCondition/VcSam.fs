@@ -61,12 +61,27 @@ module internal VcSam =
     type Type = SafetySharp.Models.Sam.Type
     type GlobalVarDecl = SafetySharp.Models.Sam.GlobalVarDecl
     type LocalVarDecl = SafetySharp.Models.Sam.LocalVarDecl
- 
+    
+    [<RequireQualifiedAccessAttribute>]
+    type CodeForm =
+        | MultipleAssignments
+        | SingleAssignments
+        | Passive
+        
+    type UsedFeatures = unit
+    (*{
+        Indeterminism : bool;
+        Probabilism : bool;
+        Clocks : bool;
+    }*)
+
     type Pgm = {
         Globals : GlobalVarDecl list
         Locals : LocalVarDecl list
         //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
         NextGlobal : Map<Var,Var>
+        CodeForm : CodeForm
+        UsedFeatures : UsedFeatures
         Body : Stm
     }
                     

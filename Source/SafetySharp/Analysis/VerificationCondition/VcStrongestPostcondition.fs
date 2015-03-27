@@ -73,8 +73,10 @@ module internal VcStrongestPostcondition =
     // that this strongest postcondition is true. If the proof obligations are not fulfilled, the resulting formula
     // is not guaranteed to be valid.
     // These proof obligations mainly originate from assertions.
-    // (Weakest Precondition is easier. It doesn't create additional proof obligations)
-    // [GCFK09] doesn't need a complicated assignment rule, because the input program is in passive form
+    // Weakest Precondition is easier. It doesn't create additional proof obligations for assertions and has
+    // no exists in the assignment rule. To enable an easy translation, we require passive form. For details on the
+    // assignment rule see [CC96].
+    // [GCFK09] doesn't need a complicated assignment rule, because the input program is in passive form.
     let rec sp (stm:Stm) (previousProofObligations:Expr list) (formula:Expr) : Expr*(Expr list) = 
         match stm with
         | Assert (_,expr) ->

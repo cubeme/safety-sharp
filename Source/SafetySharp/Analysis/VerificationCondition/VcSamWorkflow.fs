@@ -75,6 +75,22 @@ module internal VcSamModelForModification =
                 if clauses = [] then
                     (VcSam.Stm.Assume(freshId,VcSam.Expr.Literal(VcSam.Val.BoolVal(false))))
                 else
+                    let atLeastOneGuardIsTrue =                        
+                        // TODO: It is not guaranteed, that at least one branch is true
+                        // See examples smokeTest17.sam and smokeTest18.sam.
+                        // A variant of the formula adds the ored guards to the anded expression.
+                        // This ensures, that at least one path is viable. Otherwise the wp returns false.
+                        // The difference between a program with this assertion and without:
+                        // If no guard matches (not fully specified), the program without assertion returns true
+                        // (and thus allows everything. Each variable may have an arbitrary value afterwards).
+                        // If no guard matches, the program without assertion returns false
+                        // (and thus blocks every execution).
+                        // PseudoCode:
+                        //     let atLeastOneGuardIsTrue =
+                        //         Expr.createOredExpr guardsAsExpr
+                        do stmIdCounter := stmIdCounter.Value + 1
+                        let freshIdForAssertion = Some(stmIdCounter.Value)
+                        (VcSam.Stm.Assert(freshIdForAssertion,VcSam.Expr.Literal(VcSam.Val.BoolVal(true))))
                     let translateClause ( clause :SafetySharp.Models.Sam.Clause) : VcSam.Stm =
                         do stmIdCounter := stmIdCounter.Value + 1
                         let freshIdForGuard = Some(stmIdCounter.Value)
@@ -94,6 +110,8 @@ module internal VcSamModelForModification =
             VcSam.Pgm.Locals = pgm.Locals;
             VcSam.Pgm.Body = translateStm stmIdCounter pgm.Body;
             VcSam.Pgm.NextGlobal = nextGlobals;
+            VcSam.Pgm.CodeForm = VcSam.CodeForm.MultipleAssignments;
+            VcSam.Pgm.UsedFeatures = ();
         }
         
     let rec getMaximalStmId (stm:VcSam.Stm) : int =
@@ -116,9 +134,6 @@ module internal VcSamModelForModification =
         {
             StmIdCounter : int ref;
             Model : VcSam.Pgm;
-            // TODO: HasMultipleAssignments
-            // TODO: Deterministic = Unknown, Deterministic, Indeterministic, DTMC, MDP
-            //TODO: CodeForm = Unknown, MultipleAssignmentsNoAss, MultipleAssignmentsWithAss, SingleAssignmentNoAss, SingleAssignmentWithAss, Passive
         }
             with
                 static member initial (model:SafetySharp.Models.Sam.Pgm) =

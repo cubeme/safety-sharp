@@ -115,7 +115,7 @@ module internal VcsamrChangeIdentifier =
             samPgm.NextGlobal |> Map.toList
                               |> List.map (fun (fromOldVar,toOldVar) -> (newState.OldToNew.Item fromOldVar,newState.OldToNew.Item toOldVar) )
                               |> Map.ofList
-        {
+        { samPgm with
             Pgm.Globals = newGlobals;
             Pgm.Locals = newLocals;
             Pgm.Body = transformStm newState samPgm.Body;
