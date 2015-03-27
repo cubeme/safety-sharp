@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.VerificationCondition
+namespace SafetySharp.Models
 
-module internal VcSam =
+module internal Tsam =
     // Both the transformation with weakest precondition or strongest postcondition work with a modified Sam-Model.
     
     // every statement also has a statement id = SID

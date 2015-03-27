@@ -20,28 +20,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.VerificationCondition
+namespace SafetySharp.Models
 
-module internal VcTransformSamToVcSam =
-    open SafetySharp.Workflow
-
-    
-    open SafetySharp.Workflow
-
-    
-    type VcSamPgm = VcSam.Pgm
+module internal SamToTsam =
+    open SafetySharp.Workflow    
+    type TsamPgm = Tsam.Pgm
 
 
 
-    let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : VcSam.Stm =
+    let rec translateStm (stmIdCounter:int ref) (stm : SafetySharp.Models.Sam.Stm) : Tsam.Stm =
         do stmIdCounter := stmIdCounter.Value + 1
         let freshId = Some(stmIdCounter.Value)
         match stm with
             | SafetySharp.Models.Sam.Stm.Block(statements) ->
-                VcSam.Stm.Block(freshId,statements |> List.map (translateStm stmIdCounter) )
+                Tsam.Stm.Block(freshId,statements |> List.map (translateStm stmIdCounter) )
             | SafetySharp.Models.Sam.Stm.Choice (clauses) ->                
                 if clauses = [] then
-                    (VcSam.Stm.Assume(freshId,VcSam.Expr.Literal(VcSam.Val.BoolVal(false))))
+                    (Tsam.Stm.Assume(freshId,Tsam.Expr.Literal(Tsam.Val.BoolVal(false))))
                 else
                     let atLeastOneGuardIsTrue =                        
                         // TODO: It is not guaranteed, that at least one branch is true
@@ -58,49 +53,49 @@ module internal VcTransformSamToVcSam =
                         //         Expr.createOredExpr guardsAsExpr
                         do stmIdCounter := stmIdCounter.Value + 1
                         let freshIdForAssertion = Some(stmIdCounter.Value)
-                        (VcSam.Stm.Assert(freshIdForAssertion,VcSam.Expr.Literal(VcSam.Val.BoolVal(true))))
-                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : VcSam.Stm =
+                        (Tsam.Stm.Assert(freshIdForAssertion,Tsam.Expr.Literal(Tsam.Val.BoolVal(true))))
+                    let translateClause ( clause :SafetySharp.Models.Sam.Clause) : Tsam.Stm =
                         do stmIdCounter := stmIdCounter.Value + 1
                         let freshIdForGuard = Some(stmIdCounter.Value)
                         do stmIdCounter := stmIdCounter.Value + 1
                         let freshIdForBlock = Some(stmIdCounter.Value)
-                        VcSam.Stm.Block(freshIdForBlock,[VcSam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
-                    VcSam.Stm.Choice(freshId,clauses |> List.map translateClause)
+                        Tsam.Stm.Block(freshIdForBlock,[Tsam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm stmIdCounter clause.Statement]) // the guard is now an assumption
+                    Tsam.Stm.Choice(freshId,clauses |> List.map translateClause)
             | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
-                VcSam.Stm.Write (freshId,variable,expression)
+                Tsam.Stm.Write (freshId,variable,expression)
                 
-    let translatePgm (stmIdCounter:int ref) (pgm : SafetySharp.Models.Sam.Pgm ) : VcSam.Pgm =
+    let translatePgm (stmIdCounter:int ref) (pgm : SafetySharp.Models.Sam.Pgm ) : Tsam.Pgm =
         let nextGlobals =
             pgm.Globals |> List.map (fun varDecl -> (varDecl.Var,varDecl.Var) ) //map to the same variable
                         |> Map.ofList
         let uniqueStatementIdGenerator =
             let stmIdCounter : int ref = ref 0 // this stays in the closure
-            let generator () : VcSam.StatementId =
+            let generator () : Tsam.StatementId =
                 do stmIdCounter := stmIdCounter.Value + 1
                 failwith "currently not used. need to convert old code first"
-                VcSam.StatementId.Some(stmIdCounter.Value)
+                Tsam.StatementId.Some(stmIdCounter.Value)
             generator
         {
-            VcSam.Pgm.Globals = pgm.Globals;
-            VcSam.Pgm.Locals = pgm.Locals;
-            VcSam.Pgm.Body = translateStm stmIdCounter pgm.Body;
-            VcSam.Pgm.NextGlobal = nextGlobals;
-            VcSam.Pgm.CodeForm = VcSam.CodeForm.MultipleAssignments;
-            VcSam.Pgm.UsedFeatures = ();
-            VcSam.Pgm.UniqueStatementIdGenerator = uniqueStatementIdGenerator
+            Tsam.Pgm.Globals = pgm.Globals;
+            Tsam.Pgm.Locals = pgm.Locals;
+            Tsam.Pgm.Body = translateStm stmIdCounter pgm.Body;
+            Tsam.Pgm.NextGlobal = nextGlobals;
+            Tsam.Pgm.CodeForm = Tsam.CodeForm.MultipleAssignments;
+            Tsam.Pgm.UsedFeatures = ();
+            Tsam.Pgm.UniqueStatementIdGenerator = uniqueStatementIdGenerator
         }
         
-    let rec getMaximalStmId (stm:VcSam.Stm) : int =
+    let rec getMaximalStmId (stm:Tsam.Stm) : int =
         match stm with
-            | VcSam.Stm.Assert (sid,_) ->
+            | Tsam.Stm.Assert (sid,_) ->
                 sid.Value
-            | VcSam.Stm.Assume (sid,_) ->
+            | Tsam.Stm.Assume (sid,_) ->
                 sid.Value
-            | VcSam.Stm.Block (sid,statements) ->
+            | Tsam.Stm.Block (sid,statements) ->
                 statements |> List.map getMaximalStmId
                            |> List.max
-            | VcSam.Stm.Choice (sid,choices) ->
+            | Tsam.Stm.Choice (sid,choices) ->
                 choices |> List.map getMaximalStmId
                         |> List.max
-            | VcSam.Stm.Write (sid,_,_) ->
+            | Tsam.Stm.Write (sid,_,_) ->
                 sid.Value

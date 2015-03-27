@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.VerificationCondition
+namespace SafetySharp.Models
 
 
-module internal VcSamToString =
+module internal TsamToString =
     open SafetySharp.Models.SamToStringHelpers
-    open VcSam
+    open Tsam
 
     //////////////////////////////////////////////////////////////////////////////
     // actual export

@@ -21,12 +21,12 @@
 // THE SOFTWARE.
 
 
-namespace SafetySharp.Analysis.VerificationCondition
+namespace SafetySharp.Models
 open SafetySharp.Models.Sam
 
-module internal VcsamrChangeIdentifier =
+module internal TsamChangeIdentifier =
 
-    open SafetySharp.Analysis.VerificationCondition.VcSam
+    open Tsam
     open SafetySharp.Models.SamHelpers
     
     type NameGenerator = Set<string> -> string -> string
@@ -125,17 +125,14 @@ module internal VcsamrChangeIdentifier =
     
     
     open SafetySharp.Workflow
-    open VcSamWorkflow
-    open VcSamModelForModification
-
     
-    let changeIdentifiers (forbiddenNames:Set<string>) : ModelForModificationWorkflowFunction<unit> = workflow {
-        let! pgm = getVcSamModel
+    let changeIdentifiers (forbiddenNames:Set<string>) : WorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
+        let! pgm = getState
         
         let changeIdsState = ChangeIdentifierState.initial forbiddenNames SafetySharp.FreshNameGenerator.namegenerator_c_like
         let newPgm = changeNamesPgm changeIdsState pgm
         
-        do! setVcSamModel newPgm
+        do! updateState newPgm
     }
 
 

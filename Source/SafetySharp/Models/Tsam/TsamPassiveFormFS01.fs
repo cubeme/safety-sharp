@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.VerificationCondition
+namespace SafetySharp.Models
 
 // Preamble
 // A passive form of a SAM-Model is a model which makes for every variable _at most one_ assignment. In those cases
@@ -50,9 +50,9 @@ namespace SafetySharp.Analysis.VerificationCondition
 //   * more variables (artificial variables get introduced)
 
 
-module internal VcPassiveFormFS01 =
+module internal TsamPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
-    open VcSam
+    open Tsam
             
     type Substitutions =
         {
@@ -295,8 +295,8 @@ module internal VcPassiveFormFS01 =
     open SafetySharp.Workflow
     open SafetySharp.Models.SamHelpers
 
-    let passifyPgm : ModelForModificationWorkflowFunction<unit> = workflow {
-        let! pgm = getVcSamModel
+    let passifyPgm : WorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
+        let! pgm = getState
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         let sigma = Substitutions.initial globalVars localVars
@@ -315,7 +315,7 @@ module internal VcPassiveFormFS01 =
                 Pgm.NextGlobal = newSigma.CurrentSubstitution;
                 Pgm.CodeForm = CodeForm.Passive;
             }            
-        do! setVcSamModel newPgm
+        do! updateState newPgm
     }
 
     (*

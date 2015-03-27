@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Analysis.VerificationCondition
+namespace SafetySharp.Models
 
 // Preamble
 // A passive form of a SAM-Model is a model which makes for every variable _at most one_ assignment. In those cases
@@ -50,9 +50,9 @@ namespace SafetySharp.Analysis.VerificationCondition
 
 
 
-module internal VcPassiveFormGCFK09 =
+module internal TsamPassiveFormGCFK09 =
     open SafetySharp.Models.SamHelpers
-    open VcSam
+    open Tsam
     
     type StatementInfos =
         {
@@ -356,12 +356,10 @@ module internal VcPassiveFormGCFK09 =
                 Stm.Assume(sid,Expr.BExpr(Expr.Read(_var),BOp.Equals,expr))
 
     open SafetySharp.Workflow
-    open VcSamWorkflow
-    open VcSamModelForModification
     open SafetySharp.Models.SamHelpers
     
-    let transformProgramToSsaForm_Original : ModelForModificationWorkflowFunction<unit> = workflow {
-        let! pgm = getVcSamModel
+    let transformProgramToSsaForm_Original : WorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
+        let! pgm = getState
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         
@@ -403,15 +401,15 @@ module internal VcPassiveFormGCFK09 =
                 Pgm.CodeForm = CodeForm.SingleAssignments;
                 Pgm.NextGlobal = mappingToNextGlobal;
             }            
-        do! setVcSamModel newPgm
+        do! updateState newPgm
     }
 
 
 
     //to Passive Form: 
-    let transformProgramToPassiveForm_Original : ModelForModificationWorkflowFunction<unit> = workflow {
+    let transformProgramToPassiveForm_Original : WorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
         do! transformProgramToSsaForm_Original
-        let! pgm = getVcSamModel        
+        let! pgm = getState        
         // Todo: checkEveryVariableWrittenAtMostOnce ()
         // replace all assignments by assumptions
         let newBody = replaceAssignmentByAssumption pgm.Body
@@ -420,7 +418,7 @@ module internal VcPassiveFormGCFK09 =
                 Pgm.Body = newBody;
                 Pgm.CodeForm = CodeForm.Passive;
             }
-        do! setVcSamModel newPgm
+        do! updateState newPgm
     }
         
 
