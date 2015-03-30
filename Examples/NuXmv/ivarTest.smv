@@ -1,0 +1,11 @@
+-- based on smokeTest17.sam
+
+MODULE main 
+	IVAR
+		j : 0..10;
+	VAR
+		i : 0..50;
+	INIT
+( i = 3 )
+	TRANS
+		( ( ( ( TRUE & ( j >= 3 ) ) & ( i < 10 ) ) & ( next(i) = ( i + 1 ) ) ) | ( ( ( TRUE & ( i >= 3 ) ) & ( i = 10 ) ) & ( next(i) = 0 ) ) )
