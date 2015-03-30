@@ -20,12 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.Promela.PromelaAstToFileTests
+namespace SafetySharp.Modelchecking.Promela.PromelaAstToFileTests
 
 open NUnit.Framework
 open SafetySharp.Analysis.Modelchecking.PromelaSpin
 open PromelaAstHelpers
-open SafetySharp.Tests
 
 [<TestFixture>]
 module EnumTests =

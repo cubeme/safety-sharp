@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
+namespace SafetySharp.Modelchecking.NuXmv.NuXmvTransformMetamodelTests
 
 
 open System

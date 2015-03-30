@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.Promela.PromelaTransformSamTests
+namespace SafetySharp.Modelchecking.Promela.PromelaTransformSamTests
 
 open System
 open NUnit.Framework

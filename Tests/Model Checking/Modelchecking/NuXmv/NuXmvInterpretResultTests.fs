@@ -20,11 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.NuXmv.NuXmvInterpretResultTests
+namespace SafetySharp.Modelchecking.NuXmv.NuXmvInterpretResultTests
 
 open NUnit.Framework
-open SafetySharp.Tests
-open SafetySharp.Tests.Modelchecking
+open SafetySharp.Modelchecking
 open SafetySharp
 open SafetySharp.Analysis.Modelchecking
 open SafetySharp.Analysis.Modelchecking.NuXmv

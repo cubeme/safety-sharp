@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.NuXmv.Models
+namespace SafetySharp.Modelchecking.NuXmv.Models
 
 module Models =
     let ``incomplete-case-distinction`` =

@@ -20,12 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SafetySharp.Tests.Modelchecking.Prism.PrismExecuteTests
+namespace SafetySharp.Modelchecking.Prism.PrismExecuteTests
 
 
 open NUnit.Framework
-open SafetySharp.Tests
-open SafetySharp.Tests.Modelchecking
+open SafetySharp.Modelchecking
 open SafetySharp
 open SafetySharp.Analysis.Modelchecking
 open SafetySharp.Analysis.Modelchecking.Prism
