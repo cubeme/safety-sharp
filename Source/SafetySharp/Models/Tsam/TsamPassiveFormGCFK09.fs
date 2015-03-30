@@ -375,7 +375,9 @@ module internal TsamPassiveFormGCFK09 =
         let mappingToNextGlobal =
             //NextGlobal maps to each global variable var_i the variable var_j, which contains the value of var_i, after Body was executed. var_i can be var_j (substitution)
             let maxLastWriteOfRoot = statementInfos.MaxLastWrite.Item pgm.Body.GetStatementId.Value
-            maxLastWriteOfRoot |> Map.map (fun var nextVarVersion -> versionedVarToFreshVar.Item(var,nextVarVersion))
+            let globalVarSet = pgm.Globals |> List.map (fun gl -> gl.Var) |> Set.ofList
+            maxLastWriteOfRoot |> Map.filter (fun var nextVarVersion -> globalVarSet.Contains var) //only use global vars and not local vars
+                               |> Map.map (fun var nextVarVersion -> versionedVarToFreshVar.Item(var,nextVarVersion))
         // statementInfos is now useless
                 
         let varToType =

@@ -128,20 +128,26 @@ module internal VcGuardWithAssignmentModel =
             GuardWithAssignments.Guard = finalGuard;
             GuardWithAssignments.Assignments = finalValuation;
         }
-
-    let removeNonFinalAssignments (finalVars:Set<Var>) (gwa:GuardWithAssignments) =
+        
+    let redirectFinalVarsAndRemoveNonFinalAssignments (nextGlobal : Map<Var,Var>) (gwa:GuardWithAssignments) =
         //finalVars:
         //   In SSA-Form each GlobalVar has several representatives with different versions of this variable
         //   after each assignment. The representative with the last version of each GlobalVar is in the set FinalVars        
-        // remove every assignment entry, which is not done on a finalVar
+        // remove every assignment entry, which is not done on a finalVar        
+        let finalVars = nextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList      
+        let nextGlobalToCurrent = nextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (newVar,oldVar) ) |> Map.ofList
         { gwa with
-            GuardWithAssignments.Assignments = gwa.Assignments |> Map.filter (fun key value -> finalVars.Contains key);
+            GuardWithAssignments.Assignments =
+                gwa.Assignments |> Map.filter (fun key value -> finalVars.Contains key)
+                                |> Map.toList
+                                |> List.map (fun (oldkey,value) -> (nextGlobalToCurrent.Item oldkey,value)) // use the nextGlobal redirection here
+                                |> Map.ofList
         }
+
 
     type GuardWithAssignmentModel = {
         Globals : GlobalVarDecl list;
         GuardsWithFinalAssignments : GuardWithAssignments list;
-        NextGlobal : Map<Var,Var>;
     }
 
     // this is the main function of this algorithm
@@ -151,14 +157,12 @@ module internal VcGuardWithAssignmentModel =
             failwith "passive form cannot be used with this algorithm"
         let atomicStmBlocks = collectPaths pgm.Body
         let globalVars = pgm.Globals |> List.map (fun gl-> gl.Var)
-        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList
         let guardsWithFinalAssignments =
             atomicStmBlocks |> List.map (transformAtomicStmBlockToGuardWithAssignments globalVars)
-                            |> List.map (removeNonFinalAssignments finalVars)
+                            |> List.map (redirectFinalVarsAndRemoveNonFinalAssignments pgm.NextGlobal)
         {
             GuardWithAssignmentModel.Globals = pgm.Globals;
             GuardWithAssignmentModel.GuardsWithFinalAssignments = guardsWithFinalAssignments;
-            GuardWithAssignmentModel.NextGlobal = pgm.NextGlobal;
         }
         
     open SafetySharp.Workflow

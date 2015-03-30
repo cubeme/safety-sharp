@@ -149,11 +149,11 @@ module internal VcTransitionRelationToNuXmv =
 
     let generateGlobalVarInitialisations (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
         transitionSystem.Init
-            |> translateExpression (transitionSystem.VarToVirtualNextVar,nuXmvVariables)
+            |> translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables)
             |> ModuleElement.InitConstraint
 
     let generateTransRelation (transitionSystem:TransitionSystem) (nuXmvVariables:NuXmvVariables) : ModuleElement =
-        ModuleElement.TransConstraint(translateExpression (transitionSystem.VarToVirtualNextVar,nuXmvVariables) transitionSystem.Trans)
+        ModuleElement.TransConstraint(translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables) transitionSystem.Trans)
 
     
     let transformConfiguration (transitionSystem:TransitionSystem) : NuXmvProgram =
