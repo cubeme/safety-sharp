@@ -35,7 +35,7 @@ module internal VcStrongestPostcondition =
     open SafetySharp.Models.SamHelpers
     // Predicate Transformers
 
-    // Removal of the quantification in the assignment rule is necessary, to automate the transformation and find a compact formula:
+    // Removal of the quantification in the assignment rule is necessary, to automate the transformation and find a compact formula.
     // Formula for sp:
     //    sp(\phi, x:=e) = (\exists v^{<}. Q{ x \substby  v^{<} } \wedge e{ x \substby  v^{<} } )
     //    v^{<} contains a possible value of the "previous" x. There might be more values, see example.
@@ -54,17 +54,10 @@ module internal VcStrongestPostcondition =
     // { ([ 2 >= 2 \wedge 1 = 1 \wedge 2 + 3 = 2 + 3 \wedge x = 2 + 2 + 3] \wedge y = x + 2) \vee 
     //   ([ 3 >= 2 \wedge 1 = 1 \wedge 3 + 3 = 3 + 3 \wedge x = 3 + 3 + 3] \wedge y = x + 2) \vee ... }. There are more possible values for y, which satisfy y >= 2. E.g. 2 >= 2 or 3 >= 2, ... And we cannot find an abbreviation as in the step before. Thus, we have to enumerate them all somehow.
     //      ...
+    // See [CC96 Appendix A] for a detailed motivation.
     
-    (*
-    let rec sp_rewriteExpr_varsToExpr (variable:Var,toExpr:Expr) (expr:Expr): Expr =
-        match expr with
-            | Expr.Literal (_val) -> Expr.Literal(_val)
-            | Expr.Read (_var) -> if _var = variable then toExpr else expr
-            | Expr.ReadOld (_var) -> expr //old variables keep their value
-            | Expr.UExpr (expr,uop) -> Expr.UExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) expr ,uop)
-            | Expr.BExpr (left, bop, right) -> Expr.BExpr(wp_rewriteExpr_varsToExpr (variable,toExpr) left,bop,wp_rewriteExpr_varsToExpr (variable,toExpr) right)
-
-
+    // Here we implement the version of [GCFK09], which requires a passive form. Details on how to transform structured code were taken from [CC96].
+    
 
     // Returns the strongest postcondition of stm and a list of proof obligations that are needed as requirements,
     // that this strongest postcondition is true. If the proof obligations are not fulfilled, the resulting formula
@@ -74,15 +67,28 @@ module internal VcStrongestPostcondition =
     // no exists in the assignment rule. To enable an easy translation, we require passive form. For details on the
     // assignment rule see [CC96].
     // [GCFK09] doesn't need a complicated assignment rule, because the input program is in passive form.
-    let rec sp (stm:Stm) (previousProofObligations:Expr list) (formula:Expr) : Expr*(Expr list) = 
+    let rec sp (precondition:Expr,stm:Stm) : Expr*(Set<Expr>) = 
         match stm with
             | Assert (_,expr) ->
-                Expr.BExpr(expr,BOp.And,formula)
+                let proofObligation = Expr.BExpr(precondition,BOp.Implies,expr)
+                Expr.BExpr(expr,BOp.And,precondition),Set.empty<Expr>.Add(proofObligation)
             | Assume (_,expr) ->
-                Expr.BExpr(expr,BOp.Implies,formula)
+                Expr.BExpr(expr,BOp.And,precondition),Set.empty<Expr>
             | Block (_,statements) ->
-                List.foldBack wp statements formula
+                let proofObligations = ref Set.empty<Expr>
+                let newFormula =
+                    let processBlockStm (precondition:Expr) (stm:Stm): Expr =
+                        let postcondition,newProofObligations = sp (precondition,stm)
+                        do proofObligations := Set.union proofObligations.Value newProofObligations
+                        postcondition
+                    statements |> List.fold processBlockStm precondition
+                (newFormula,proofObligations.Value)
             | Choice (_,choices) ->
-                let choicesAsExpr =
-                    choices |> List.map (fun choice -> wp choice formula)
-                    *)
+                let choicesAsExpr,proofObligations =
+                    choices |> List.map (fun (choice:Stm) -> sp (precondition,choice) )
+                            |> List.unzip
+                let newFormula = choicesAsExpr |> Expr.createOredExpr
+                let newProofObligations = proofObligations |> Set.unionMany
+                (newFormula,newProofObligations)
+            | Stm.Write _ ->
+                failwith "Passive form is required to use this transformation"
