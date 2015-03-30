@@ -71,9 +71,9 @@ module internal VcStrongestPostcondition =
         match stm with
             | Assert (_,expr) ->
                 let proofObligation = Expr.BExpr(precondition,BOp.Implies,expr)
-                Expr.BExpr(expr,BOp.And,precondition),Set.empty<Expr>.Add(proofObligation)
+                Expr.BExpr(precondition,BOp.And,expr),Set.empty<Expr>.Add(proofObligation)
             | Assume (_,expr) ->
-                Expr.BExpr(expr,BOp.And,precondition),Set.empty<Expr>
+                Expr.BExpr(precondition,BOp.And,expr),Set.empty<Expr>
             | Block (_,statements) ->
                 let proofObligations = ref Set.empty<Expr>
                 let newFormula =

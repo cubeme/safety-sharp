@@ -28,12 +28,12 @@ open SafetySharp.Workflow
 open SafetySharp.Analysis.Modelchecking.NuXmv
 
 [<TestFixture>]
-module NuXmvCheckSmokeTests =
+module NuXmvGwamCheckSamSmokeTests =
     open SafetySharp.Models
 
     let internal inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
         let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-        let newDirectory = "../../Examples/NuXmv/TransformedSam"
+        let newDirectory = "../../Examples/NuXmv/TransformedSamGwam"
         SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
         
     let internal smokeTestWorkflow (inputFile:string) = workflow {
@@ -43,6 +43,171 @@ module NuXmvCheckSmokeTests =
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
             do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow
             do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
+            let outputFile = inputFileNameToOutputFileName inputFile
+            do! printToFile outputFile
+        }
+                   
+    let runSmokeTest (inputFile) =
+        SafetySharp.Workflow.runWorkflow_getState (smokeTestWorkflow inputFile)
+        
+    [<Test>]
+    let ``smokeTest1.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest1.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest2.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest2.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest3.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest3.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest4.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest4.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest5.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest5.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest6.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest6.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest7.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest7.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest8.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest8.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest9.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest9.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest10.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest10.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest11.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest11.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest12.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest12.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest13.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest13.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest14.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest14.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest15.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest15.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest16.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest16.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest17.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest17.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest18.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest18.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest19.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest19.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+    [<Test>]
+    let ``smokeTest20.sam returns the expected results`` () =        
+        let inputFile = """../../Examples/SAM/smokeTest20.sam"""
+        let output = runSmokeTest inputFile
+        printf "%s" output
+        ()
+
+
+[<TestFixture>]
+module NuXmvSpCheckSamSmokeTests =
+    open SafetySharp.Models
+
+    let internal inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
+        let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
+        let newDirectory = "../../Examples/NuXmv/TransformedSamSp"
+        SafetySharp.FileSystem.FileName (sprintf "%s/%s.smv" newDirectory filenameWithoutPath)
+        
+    let internal smokeTestWorkflow (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.SamParser.parseStringWorkflow
+            do! SafetySharp.Models.SamToTsam.transformSamToTsam
+            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
+            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow
             do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow
             do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
             let outputFile = inputFileNameToOutputFileName inputFile

@@ -146,7 +146,6 @@ module internal TransitionSystemAsRelationExpr =
             // If there already exists a local variable, which contains the next value of this global variable,
             // we do not threat this variable as a global variable anymore (remove from ivars).
             // Otherwise we add a new virtual variable.
-            // we reuse the name of virtualPrevVars, if we need 
             let virtualVarPool = createVirtualVarEntryPool pgm            
             let ivarsComplete = pgm.Locals |> Set.ofList            
             let processGlobalVar (varToVirtualNextVarEntries:(Var*Var) list,ivars:Set<LocalVarDecl>) (gl:GlobalVarDecl) =
@@ -178,11 +177,14 @@ module internal TransitionSystemAsRelationExpr =
             // use strongest postcondition on program
             let passivePgmAsExpr,additionalProofObligations =
                 VcStrongestPostcondition.sp (formulaForSPPrecondition,pgm.Body)
-            // to add a connection between now and the next state, we add next(x) = pgm.next[x] for each global variable
+            // to add a connection between now and the next state, we add next(x) = pgm.next[x] for each global variable,
+            // which was not changed. (When a variable was changed at least once, there is an entry in the passive program.)
             let globalNextExprList =
-                let createEntry (globalVar,varWithNextVar) =
-                    Expr.BExpr(Expr.Read(globalVar),BOp.Equals,Expr.Read(varWithNextVar))
-                varToVirtualNextVarEntries |> List.map createEntry
+                let createEntry (globalVarWhichDoesNotChange,_) =
+                    Expr.BExpr(Expr.Read(globalVarWhichDoesNotChange),BOp.Equals,Expr.Read(varToVirtualNextVar.Item globalVarWhichDoesNotChange))
+                pgm.NextGlobal |> Map.toList
+                               |> List.filter (fun (prev,next) -> prev=next)
+                               |> List.map createEntry
             // add proof obligations, which come from Stm.Asserts
             let proofObligationsAsList = additionalProofObligations |> Set.toList
             // we "And" all three things and get our transExpr
@@ -225,28 +227,11 @@ module internal TransitionSystemAsRelationExpr =
         let! model = getState
         let transformed = transformGwamToTsare model
         do! updateState transformed
+    }   
+
+    let transformTsamToTsareWithSpWorkflow : WorkflowFunction<Pgm,TransitionSystem,unit> = workflow {
+        let! model = getState
+        let transformed = transformTsamToTsareWithSp model
+        do! updateState transformed
     }
     
-    let createVirtualVarEntriesForPgm (pgm:Pgm) : (Var*Var) list =
-        // next( var_x) = NextGlobal( var_x).
-        //TODO: Think about it. In SSA and Passive: last version is next version. That value could also be used as virtual var. Maybe no need to create a new one.
-        //Var to Virtual Var which represents "next(Var)"
-        let takenNames:Set<string> ref = 
-            let localNames = pgm.Locals |> List.map (fun l -> l.Var.getName)
-            let globalNames = pgm.Globals |> List.map (fun g -> g.Var.getName)
-            (localNames @ globalNames) |> Set.ofList |> ref            
-        let createNewName (based_on:Var) : string =
-            let nameCandidate = sprintf "%s_virtual" based_on.getName
-            let nameGenerator = SafetySharp.FreshNameGenerator.namegenerator_c_like
-            let freshName = nameGenerator takenNames.Value (nameCandidate)
-            takenNames:=takenNames.Value.Add(freshName)
-            freshName        
-        let createFreshVarsForNewVariableVersions (var:GlobalVarDecl) =
-            let freshVar = Var.Var(createNewName var.Var)
-            let nextGlobalVarOfVar = pgm.NextGlobal.Item (var.Var)
-            (nextGlobalVarOfVar,freshVar)        
-        let virtualVarEntries =
-            pgm.Globals |> List.map createFreshVarsForNewVariableVersions
-        virtualVarEntries
-    
-

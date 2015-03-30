@@ -63,7 +63,7 @@
     <Compile Include="Modelchecking\NuXmv\NuXmvExecuteTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformSamTests.fs" />
     <Compile Include="Modelchecking\NuXmv\NuXmvTransformScmTests.fs" />
-    <Compile Include="Modelchecking\NuXmv\NuXmvCheckSmokeTests.fs" />
+    <Compile Include="Modelchecking\NuXmv\NuXmvCheckSamSmokeTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaAstToFileTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaExecuteTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaTransformSamTests.fs" />
