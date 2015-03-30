@@ -20,72 +20,74 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module Z3ExamplesFiles
+namespace SafetySharp.SmtSolving.Z3
+
+module Z3ExamplesFiles =
 
 
-open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
-open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
-open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
-open SafetySharp.Analysis.SmtSolving.SmtLib2.SMTLIB2Convenience
-open SafetySharp.Analysis.SmtSolving.Z3.Ast
-open SafetySharp.Analysis.SmtSolving.Z3.Parser
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.SMTLIB2Convenience
+    open SafetySharp.Analysis.SmtSolving.Z3.Ast
+    open SafetySharp.Analysis.SmtSolving.Z3.Parser
 
-let exampleOutputEmptyGoalString =
-    "(goal\n  :precision precise :depth 4)"
-let exampleOutputEmptyGoalAst : Goal =
-    ([],Precision.PrecisionPrecise,4,None)
+    let exampleOutputEmptyGoalString =
+        "(goal\n  :precision precise :depth 4)"
+    let exampleOutputEmptyGoalAst : Goal =
+        ([],Precision.PrecisionPrecise,4,None)
 
-let exampleOutputEmptyGoalsString =
-    "(goals\n(goal\n  :precision precise :depth 4)\n)"
-let exampleOutputEmptyGoalsAst : Goals =
-    [exampleOutputEmptyGoalAst]
+    let exampleOutputEmptyGoalsString =
+        "(goals\n(goal\n  :precision precise :depth 4)\n)"
+    let exampleOutputEmptyGoalsAst : Goals =
+        [exampleOutputEmptyGoalAst]
         
-let exampleOutputFileSimplify1aString =
-    "(or (= s ON) (= s OFF) (= s BROKEN))\n(and (not (<= a 0)) (not (<= a 1)))"
-//let exampleOutputFileSimplify1aAst =
-//    Expr.
+    let exampleOutputFileSimplify1aString =
+        "(or (= s ON) (= s OFF) (= s BROKEN))\n(and (not (<= a 0)) (not (<= a 1)))"
+    //let exampleOutputFileSimplify1aAst =
+    //    Expr.
     
-let exampleOutputFileSimplify1bString =
-    "(goals\n(goal\n  (not (<= a 1))\n  :precision precise :depth 1)\n)"
-let exampleOutputFileSimplify1bAst : Goal list=
-    let exprlist = [Expr.TermQualIdTerm(QualifiedIdentifierFromString "not",[ Expr.TermQualIdTerm(QualifiedIdentifierFromString "<=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "a");
-                                                                                                                                      Term.TermSpecConstant(SpecConstant.SpecConstantNumeral(bigint(1)))
-                                                                                                                                     ])
-                                                                            ])
-                   ]
-    let precision = Precision.PrecisionPrecise
-    let depth = 1
-    let goaldependency = None
-    [exprlist,precision,depth,goaldependency]
+    let exampleOutputFileSimplify1bString =
+        "(goals\n(goal\n  (not (<= a 1))\n  :precision precise :depth 1)\n)"
+    let exampleOutputFileSimplify1bAst : Goal list=
+        let exprlist = [Expr.TermQualIdTerm(QualifiedIdentifierFromString "not",[ Expr.TermQualIdTerm(QualifiedIdentifierFromString "<=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "a");
+                                                                                                                                          Term.TermSpecConstant(SpecConstant.SpecConstantNumeral(bigint(1)))
+                                                                                                                                         ])
+                                                                                ])
+                       ]
+        let precision = Precision.PrecisionPrecise
+        let depth = 1
+        let goaldependency = None
+        [exprlist,precision,depth,goaldependency]
 
-let exampleOutputFileSimplify2String =
-    "(goals\n(goal\n  (>= t 0)\n  (<= t 1)\n  :precision precise :depth 3)\n)"
+    let exampleOutputFileSimplify2String =
+        "(goals\n(goal\n  (>= t 0)\n  (<= t 1)\n  :precision precise :depth 3)\n)"
 
-let exampleOutputFileTacticsandgoals1String =
-    "(goals\n(goal\n  (not (<= y (- 2.0)))\n  (not (<= y 0.0))\n  :precision precise :depth 2)\n)"
+    let exampleOutputFileTacticsandgoals1String =
+        "(goals\n(goal\n  (not (<= y (- 2.0)))\n  (not (<= y 0.0))\n  :precision precise :depth 2)\n)"
 
-let exampleOutputFileUnsat =
-    "unsat"
+    let exampleOutputFileUnsat =
+        "unsat"
 
 
-let internal exampleFileSimplify1bAst : ICommand list=
-    [ CommandZ3.CommandZ3DeclareDatatypes {DeclareDataTypes.formalParameters=[];
-                                           DeclareDataTypes.datatypes=[{DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("SE");
-                                                                        DatatypeDeclaration.constructors=[{ConstructorDecl.constructorName=Symbol.Symbol("BROKEN");ConstructorDecl.content=[]};
-                                                                                                          {ConstructorDecl.constructorName=Symbol.Symbol("ON");ConstructorDecl.content=[]};
-                                                                                                          {ConstructorDecl.constructorName=Symbol.Symbol("OFF");ConstructorDecl.content=[]}
-                                                                                                         ]
-                                                                       }
-                                                                      ]
-                                          };
-      CommandZ3.CommandZ3DeclareConst (Symbol.Symbol("s"),SortFromString "SE" );
-      CommandZ3.CommandZ3DeclareConst (Symbol.Symbol("a"),SortFromString "Int" );
-      Command.CommandAssert (Term.TermQualIdTerm(QualifiedIdentifierFromString "or",[Term.TermQualIdTerm(QualifiedIdentifierFromString "=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "s");Term.TermQualIdentifier(QualifiedIdentifierFromString "ON")]);
-                                                                                     Term.TermQualIdTerm(QualifiedIdentifierFromString "=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "s");Term.TermQualIdentifier(QualifiedIdentifierFromString "OFF")]);
-                                                                                     Term.TermQualIdTerm(QualifiedIdentifierFromString "=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "s");Term.TermQualIdentifier(QualifiedIdentifierFromString "BROKEN")])
-                                                                                    ]));
-      Command.CommandAssert (Term.TermQualIdTerm(QualifiedIdentifierFromString "and",[Term.TermQualIdTerm(QualifiedIdentifierFromString ">",[Term.TermQualIdentifier(QualifiedIdentifierFromString "a");Term.TermSpecConstant(SpecConstant.SpecConstantNumeral(bigint(0)))]);
-                                                                                      Term.TermQualIdTerm(QualifiedIdentifierFromString ">",[Term.TermQualIdentifier(QualifiedIdentifierFromString "a");Term.TermSpecConstant(SpecConstant.SpecConstantNumeral(bigint(1)))])
-                                                                                     ]));
-      CommandZ3.CommandZ3Apply(Tacticals.TacticalsTactics(Tactics.TacticsCtxSolverSimplify),[])
-    ]
+    let internal exampleFileSimplify1bAst : ICommand list=
+        [ CommandZ3.CommandZ3DeclareDatatypes {DeclareDataTypes.formalParameters=[];
+                                               DeclareDataTypes.datatypes=[{DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("SE");
+                                                                            DatatypeDeclaration.constructors=[{ConstructorDecl.constructorName=Symbol.Symbol("BROKEN");ConstructorDecl.content=[]};
+                                                                                                              {ConstructorDecl.constructorName=Symbol.Symbol("ON");ConstructorDecl.content=[]};
+                                                                                                              {ConstructorDecl.constructorName=Symbol.Symbol("OFF");ConstructorDecl.content=[]}
+                                                                                                             ]
+                                                                           }
+                                                                          ]
+                                              };
+          CommandZ3.CommandZ3DeclareConst (Symbol.Symbol("s"),SortFromString "SE" );
+          CommandZ3.CommandZ3DeclareConst (Symbol.Symbol("a"),SortFromString "Int" );
+          Command.CommandAssert (Term.TermQualIdTerm(QualifiedIdentifierFromString "or",[Term.TermQualIdTerm(QualifiedIdentifierFromString "=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "s");Term.TermQualIdentifier(QualifiedIdentifierFromString "ON")]);
+                                                                                         Term.TermQualIdTerm(QualifiedIdentifierFromString "=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "s");Term.TermQualIdentifier(QualifiedIdentifierFromString "OFF")]);
+                                                                                         Term.TermQualIdTerm(QualifiedIdentifierFromString "=",[Term.TermQualIdentifier(QualifiedIdentifierFromString "s");Term.TermQualIdentifier(QualifiedIdentifierFromString "BROKEN")])
+                                                                                        ]));
+          Command.CommandAssert (Term.TermQualIdTerm(QualifiedIdentifierFromString "and",[Term.TermQualIdTerm(QualifiedIdentifierFromString ">",[Term.TermQualIdentifier(QualifiedIdentifierFromString "a");Term.TermSpecConstant(SpecConstant.SpecConstantNumeral(bigint(0)))]);
+                                                                                          Term.TermQualIdTerm(QualifiedIdentifierFromString ">",[Term.TermQualIdentifier(QualifiedIdentifierFromString "a");Term.TermSpecConstant(SpecConstant.SpecConstantNumeral(bigint(1)))])
+                                                                                         ]));
+          CommandZ3.CommandZ3Apply(Tacticals.TacticalsTactics(Tactics.TacticsCtxSolverSimplify),[])
+        ]

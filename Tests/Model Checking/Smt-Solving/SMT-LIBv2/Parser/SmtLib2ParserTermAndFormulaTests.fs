@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SMTLIB2Parser.Tests
+namespace SafetySharp.SmtSolving.SmtLib2.Parser
 
 open System
 open NUnit.Framework

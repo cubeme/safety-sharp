@@ -20,48 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-module Z3ExampleDatatypes
+namespace SafetySharp.SmtSolving.Z3
 
-open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
-open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
-open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
-open SafetySharp.Analysis.SmtSolving.SmtLib2.SMTLIB2Convenience
-open SafetySharp.Analysis.SmtSolving.Z3.Ast
-open SafetySharp.Analysis.SmtSolving.Z3.Parser
+module Z3ExampleDatatypes =
+
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Ast
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.Parser.SmtLib2ParsingResult
+    open SafetySharp.Analysis.SmtSolving.SmtLib2.SMTLIB2Convenience
+    open SafetySharp.Analysis.SmtSolving.Z3.Ast
+    open SafetySharp.Analysis.SmtSolving.Z3.Parser
 
 
-//I think this isn't exported correctly at location "(Tree leaf (node (..."
-let internal exampleTutorialMutuallyRecursiveDatatypes : DeclareDataTypes =
-    { DeclareDataTypes.formalParameters=[Symbol.Symbol("T")];
-      DeclareDataTypes.datatypes=[{ DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("Tree");
-                                    DatatypeDeclaration.constructors=[ {ConstructorDecl.constructorName=Symbol.Symbol("leaf");
-                                                                        ConstructorDecl.content=[]
-                                                                       };
-                                                                       {ConstructorDecl.constructorName=Symbol.Symbol("node");
-                                                                        ConstructorDecl.content=[{AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("value");
-                                                                                                  AccessorDecl.typeOfPartialContent=SortFromString "T"
-                                                                                                 };
-                                                                                                 {AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("children");
-                                                                                                  AccessorDecl.typeOfPartialContent=SortFromString "TreeList"
-                                                                                                 }
-                                                                                                ]
-                                                                       }
-                                                                     ]
-                                  };
-                                  { DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("TreeList");
-                                    DatatypeDeclaration.constructors=[ {ConstructorDecl.constructorName=Symbol.Symbol("nil");
-                                                                        ConstructorDecl.content=[]
-                                                                       };
-                                                                       {ConstructorDecl.constructorName=Symbol.Symbol("cons");
-                                                                        ConstructorDecl.content=[{AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("car");
-                                                                                                  AccessorDecl.typeOfPartialContent=SortFromString "Tree"
-                                                                                                 };
-                                                                                                 {AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("cdr");
-                                                                                                  AccessorDecl.typeOfPartialContent=SortFromString "TreeList"
-                                                                                                 }
-                                                                                                ]
-                                                                       }
-                                                                     ]
-                                  };
-                                 ]
-    }
+    //I think this isn't exported correctly at location "(Tree leaf (node (..."
+    let internal exampleTutorialMutuallyRecursiveDatatypes : DeclareDataTypes =
+        { DeclareDataTypes.formalParameters=[Symbol.Symbol("T")];
+          DeclareDataTypes.datatypes=[{ DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("Tree");
+                                        DatatypeDeclaration.constructors=[ {ConstructorDecl.constructorName=Symbol.Symbol("leaf");
+                                                                            ConstructorDecl.content=[]
+                                                                           };
+                                                                           {ConstructorDecl.constructorName=Symbol.Symbol("node");
+                                                                            ConstructorDecl.content=[{AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("value");
+                                                                                                      AccessorDecl.typeOfPartialContent=SortFromString "T"
+                                                                                                     };
+                                                                                                     {AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("children");
+                                                                                                      AccessorDecl.typeOfPartialContent=SortFromString "TreeList"
+                                                                                                     }
+                                                                                                    ]
+                                                                           }
+                                                                         ]
+                                      };
+                                      { DatatypeDeclaration.nameOfDatatype=Symbol.Symbol("TreeList");
+                                        DatatypeDeclaration.constructors=[ {ConstructorDecl.constructorName=Symbol.Symbol("nil");
+                                                                            ConstructorDecl.content=[]
+                                                                           };
+                                                                           {ConstructorDecl.constructorName=Symbol.Symbol("cons");
+                                                                            ConstructorDecl.content=[{AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("car");
+                                                                                                      AccessorDecl.typeOfPartialContent=SortFromString "Tree"
+                                                                                                     };
+                                                                                                     {AccessorDecl.accessPartialContentFunctionName=Symbol.Symbol("cdr");
+                                                                                                      AccessorDecl.typeOfPartialContent=SortFromString "TreeList"
+                                                                                                     }
+                                                                                                    ]
+                                                                           }
+                                                                         ]
+                                      };
+                                     ]
+        }

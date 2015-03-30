@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Z3ExecuteExternal.Tests
+namespace SafetySharp.SmtSolving.Z3
 
 open System
 open NUnit.Framework
