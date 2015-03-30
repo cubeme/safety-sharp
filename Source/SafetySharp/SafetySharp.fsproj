@@ -119,7 +119,6 @@
     <Compile Include="Analysis\Smt-Solving\Z3\Z3AstToString.fs" />
     <Compile Include="Analysis\Smt-Solving\Z3\Z3Parser.fs" />
     <Compile Include="Analysis\Smt-Solving\Z3\Z3Execute.fs" />
-    <Compile Include="Analysis\Modelchecking\Common\WriteOnceMetamodel.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaOperators.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAst.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTypedefs.fs" />
