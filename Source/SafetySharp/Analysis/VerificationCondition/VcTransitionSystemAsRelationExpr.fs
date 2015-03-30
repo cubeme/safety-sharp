@@ -31,6 +31,7 @@ module internal TransitionSystemAsRelationExpr =
     
     type TransitionSystem = {
         Globals : GlobalVarDecl list;
+        Ivars : LocalVarDecl list;
         VirtualNextVarToVar : Map<Var,Var>;
         VarToVirtualNextVar : Map<Var,Var>;
         Init : Expr;
@@ -95,6 +96,7 @@ module internal TransitionSystemAsRelationExpr =
                                             |> Expr.createOredExpr // the gwas are connected with an or                        
         {
             TransitionSystem.Globals = gwam.Globals;
+            TransitionSystem.Ivars = [];
             TransitionSystem.VirtualNextVarToVar = virtualVarToVar;
             TransitionSystem.VarToVirtualNextVar = varToVirtualVar;
             TransitionSystem.Init = initExpr;
