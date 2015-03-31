@@ -91,7 +91,7 @@ and internal Expression =
     | Variable of Name:Identifier
     | Formula of Name:Identifier
     // Expressions with operators known from Propositional Logic
-    | UnaryNegation  of Operand:Expression                                  // !
+    | UnaryNot of Operand:Expression                                        // !
     | BinaryMultiplication of Left:Expression * Right:Expression            // *
     | BinaryDivision of Left:Expression * Right:Expression                  // / be cautious: Always performs floating point operation. 22/7 is 3.14... instead of 3, even on integers
     | BinaryAddition of Left:Expression * Right:Expression                  // +
@@ -104,6 +104,8 @@ and internal Expression =
     | BinaryDisjunction of Left:Expression * Right:Expression               // |
     | BinaryIfAndOnlyIf of Left:Expression * Right:Expression               // <=>
     | BinaryImplication of Left:Expression * Right:Expression               // =>
+    | BinaryEquals of Left:Expression * Right:Expression                    // =
+    | BinaryNotEquals of Left:Expression * Right:Expression                 // !=
     | TenaryIfThenElse of If:Expression * Then:Expression * Else:Expression // ? :
     // Functions
     | FunctionMin of Expression list

@@ -89,7 +89,7 @@ type internal ExportPrismAstToFile() =
             | Expression.Formula (name:Identifier) ->
                 this.ExportIdentifier name
             // Expressions with operators known from Propositional Logic
-            | Expression.UnaryNegation  (operand:Expression) ->                                 // !
+            | Expression.UnaryNot  (operand:Expression) ->                                 // !
                 sprintf "!(%s)" (this.ExportExpression operand)
             | Expression.BinaryMultiplication (left:Expression, right:Expression) ->             // *
                 sprintf "(%s)*(%s)" (this.ExportExpression left) (this.ExportExpression right)
@@ -115,6 +115,10 @@ type internal ExportPrismAstToFile() =
                 sprintf "(%s)<=>(%s)" (this.ExportExpression left) (this.ExportExpression right)
             | Expression.BinaryImplication (left:Expression, right:Expression  ) ->              // =>
                 sprintf "(%s)=>(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryEquals (left:Expression, right:Expression  ) ->                   // =
+                sprintf "(%s)=(%s)" (this.ExportExpression left) (this.ExportExpression right)
+            | Expression.BinaryNotEquals(left:Expression, right:Expression  ) ->                 // !=
+                sprintf "(%s)!=(%s)" (this.ExportExpression left) (this.ExportExpression right)
             | Expression.TenaryIfThenElse (_if:Expression, _then:Expression, _else:Expression) ->  // ? :
                 sprintf "(%s)?(%s):(%s)" (this.ExportExpression _if) (this.ExportExpression _then) (this.ExportExpression _else)
             // Functions
@@ -175,7 +179,7 @@ type internal ExportPrismAstToFile() =
                 | CommandAction.NoActionLabel -> ""
                 | CommandAction.Synchronized(actionLabel) -> sprintf "%s" (this.ExportIdentifier actionLabel) //actionLabel is in fact an identifier, there are no quotation marks necessary
         let actionForSynchronization = (exportAction command.Action)
-        let guard = exportAction command.Action
+        let guard = this.ExportExpression command.Guard
         let updates = exportQuantifiedUpdateOfVariables command.QuantifiedUpdateOfVariables
         sprintf "[%s] %s -> %s" actionForSynchronization guard updates
 
@@ -494,3 +498,14 @@ type internal ExportPrismAstToFile() =
                     | Some(states) -> sprintf "filter(state, %s, %s)" (this.ExportProperty property) (this.ExportProperty states)
                     | None -> sprintf "filter(state, %s)" (this.ExportProperty property)                
 
+                    
+open SafetySharp.Workflow
+
+type internal ExportPrismAstToFile with
+    static member instance : ExportPrismAstToFile =
+        ExportPrismAstToFile()
+
+    static member workflow : WorkflowFunction<PrismModel,string,unit> = workflow {
+        let! model = getState
+        do! updateState (ExportPrismAstToFile.instance.ExportPrismModel model)
+    }

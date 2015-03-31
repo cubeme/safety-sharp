@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// TODO: Convert vars with reserved names in NuSMV
+
 namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 open SafetySharp.Analysis.Modelchecking
