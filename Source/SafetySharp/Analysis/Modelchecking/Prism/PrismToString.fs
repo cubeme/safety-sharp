@@ -41,6 +41,9 @@ type internal ExportPrismAstToFile() =
                           )
         newStr.ToString()
         
+    let indent0ElementsWithNewLine (lst:string list): string =
+        indentElementsWithNewLine 0 lst
+        
     let indent1ElementsWithNewLine (lst:string list): string =
         indentElementsWithNewLine 1 lst
 
@@ -49,7 +52,7 @@ type internal ExportPrismAstToFile() =
         match constant with
             | Integer (_int) -> _int.ToString()
             | Double (_double) -> _double.ToString()
-            | Boolean (_bool) -> _bool.ToString()
+            | Boolean (_bool) -> if _bool then "true" else "false"
     
     member this.ExportIdentifier (identifier : Identifier) = 
         identifier.Name
@@ -145,15 +148,15 @@ type internal ExportPrismAstToFile() =
         let _type = this.ExportVariableDeclarationType variableDeclaration.Type
         let _initValue =
             match variableDeclaration.InitialValue with
-                | Some(expr) -> sprintf " %s" (this.ExportExpression expr)
+                | Some(expr) -> sprintf " init %s" (this.ExportExpression expr)
                 | None -> ""
-        sprintf "%s : %s%s" _name _type _initValue
+        sprintf "%s : %s%s;" _name _type _initValue
 
     member this.ExportConstantDeclaration (constantDeclaration:ConstantDeclaration) : string =
         let _type = this.ExportDefactoType constantDeclaration.Type
         let _name = this.ExportIdentifier constantDeclaration.Name
         let _init = this.ExportExpression constantDeclaration.Value
-        sprintf "const %s %s = %s" _type _name _init
+        sprintf "const %s %s = %s;" _type _name _init
 
     member this.ExportCommand (command:Command) : string =
         let exportDeterministicUpdateOfVariables (update:DeterministicUpdateOfVariables) : string =
@@ -171,7 +174,7 @@ type internal ExportPrismAstToFile() =
                 update |> List.map (fun (associateProbability,deterministicUpdate) ->
                                             let associateProbability = this.ExportExpression associateProbability
                                             let deterministicUpdate = exportDeterministicUpdateOfVariables deterministicUpdate
-                                            sprintf "(%s:%s)" associateProbability deterministicUpdate
+                                            sprintf "(%s):%s" associateProbability deterministicUpdate
                                          )
                        |> String.concat " + "
         let exportAction (action:CommandAction) : string =
@@ -181,7 +184,7 @@ type internal ExportPrismAstToFile() =
         let actionForSynchronization = (exportAction command.Action)
         let guard = this.ExportExpression command.Guard
         let updates = exportQuantifiedUpdateOfVariables command.QuantifiedUpdateOfVariables
-        sprintf "[%s] %s -> %s" actionForSynchronization guard updates
+        sprintf "[%s] %s -> %s;" actionForSynchronization guard updates
 
     member this.ExportModule (_module:Module) : string =
         match _module with
@@ -257,12 +260,12 @@ type internal ExportPrismAstToFile() =
                 | CTMC -> "ctmc"
                 | PTA -> "pta"
         let modelType = exportModelType prismModel.ModelType
-        let constants = prismModel.Constants |> List.map this.ExportConstantDeclaration |> indent1ElementsWithNewLine
+        let constants = prismModel.Constants |> List.map this.ExportConstantDeclaration |> indent0ElementsWithNewLine
         let initModule =
             match prismModel.InitModule with
                 | None -> ""
                 | Some(expr) -> sprintf "init\n\t%s\nendinit\n\n" (this.ExportExpression expr)
-        let globalVariables = prismModel.GlobalVariables |> List.map this.ExportVariableDeclaration |> indent1ElementsWithNewLine
+        let globalVariables = prismModel.GlobalVariables |> List.map (fun glVar -> "global " + (this.ExportVariableDeclaration glVar) )  |> indent0ElementsWithNewLine
         let formulas = prismModel.Formulas |> List.map this.ExportFormula |> String.concat "\n"
         let modules = prismModel.Modules |> List.map this.ExportModule |> String.concat "\n"
         let labels = prismModel.Labels |> List.map this.ExportLabeledExpression |> String.concat "\n"

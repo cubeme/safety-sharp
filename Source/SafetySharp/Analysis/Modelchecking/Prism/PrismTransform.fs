@@ -44,13 +44,16 @@ module internal GwamToPrism =
             newVarMap,newTakenNames
         let varMap,takenNames = vars |> List.fold addVar (initialMap,takenNames)
         varMap
-        
+    
+    let translateLiteral (_val : Tsam.Val ) : Prism.Expression =
+        match _val with
+            | Tsam.Val.BoolVal(_val) -> Prism.Constant(Prism.Boolean(_val))
+            | Tsam.Val.NumbVal(_val) -> Prism.Constant(Prism.Integer(int _val))
+
     let rec translateExpression (prismVariables:PrismVariables) (expr:Tsam.Expr) : Prism.Expression =
         match expr with
             | Tsam.Expr.Literal (_val) ->
-                match _val with
-                    | Tsam.Val.BoolVal(_val) -> Prism.Constant(Prism.Boolean(_val))
-                    | Tsam.Val.NumbVal(_val) -> Prism.Constant(Prism.Integer(int _val))
+                translateLiteral _val
             | Tsam.Expr.Read (_var) ->
                 Prism.Variable(prismVariables.Item _var)
             | Tsam.Expr.ReadOld (_var) ->            
@@ -91,12 +94,36 @@ module internal GwamToPrism =
                          |> Tsam.createOredExpr
         varDecls |> List.map generateInit
                  |> Tsam.createAndedExpr
-        
+    
+    let transformTsamTypeToPrismType (_type:Tsam.Type) : Prism.VariableDeclarationType =
+        match _type with
+            | Tsam.Type.BoolType -> Prism.VariableDeclarationType.Bool
+            | Tsam.Type.IntType -> Prism.VariableDeclarationType.Int
+    
     let transformGwamToPrism (gwam:GuardWithAssignmentModel) : Prism.PrismModel =
+        let allInitsDeterministic = gwam.Globals |> List.forall (fun gl -> gl.Init.Length = 1 )
+
         let prismIdentifiers = gwam.Globals |> List.map (fun gl -> gl.Var) |> createPrismIdentifiers
-                        
-        let initExpr = gwam.Globals |> generateInitCondition  |> (translateExpression prismIdentifiers)
         
+        let initModule =
+            if allInitsDeterministic then
+                None
+            else
+                gwam.Globals |> generateInitCondition  |> (translateExpression prismIdentifiers) |> Some
+        
+        let globalVariables =
+            let transformGlobalVar (globalVarDecl:Tsam.GlobalVarDecl) : Prism.VariableDeclaration =
+                {
+                    VariableDeclaration.Name = prismIdentifiers.Item (globalVarDecl.Var);
+                    VariableDeclaration.Type = transformTsamTypeToPrismType (globalVarDecl.Type);
+                    VariableDeclaration.InitialValue =
+                        if allInitsDeterministic then
+                            Some(translateLiteral (globalVarDecl.Init.Head) )
+                        else
+                            None
+                }
+            gwam.Globals |> List.map transformGlobalVar
+
         // probForSure := probability = 1.0
         let probForSure = Prism.Expression.Constant(Prism.Double(1.0))
 
@@ -128,8 +155,8 @@ module internal GwamToPrism =
         {
             Prism.PrismModel.ModelType = Prism.ModelType.MDP;
             Prism.PrismModel.Constants = [];
-            Prism.PrismModel.InitModule = Some(initExpr); //Chapter Multiple Initial States e.g. "x+y=1"
-            Prism.PrismModel.GlobalVariables = []; //VariableDeclaration list;
+            Prism.PrismModel.InitModule = initModule; //Chapter Multiple Initial States e.g. "x+y=1"
+            Prism.PrismModel.GlobalVariables = globalVariables;
             Prism.PrismModel.Modules = [moduleWithTransitions];
             Prism.PrismModel.Formulas = [];
             Prism.PrismModel.Labels = [];
