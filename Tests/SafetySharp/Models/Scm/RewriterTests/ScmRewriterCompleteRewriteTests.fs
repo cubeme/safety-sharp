@@ -41,8 +41,8 @@ type CompleteRewriteTests () =
 
     
     [<Test>]
-    member this.``Example beh5 gets flattened completely`` () =
-        let inputFile = """../../Examples/SCM/beh5.scm"""
+    member this.``Example beh3 gets flattened completely`` () =
+        let inputFile = """../../Examples/SCM/beh3.scm"""
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
@@ -334,19 +334,6 @@ type CompleteRewriteTests () =
     [<Test>]
     member this.``Example behWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/behWithFaults1.scm"""
-        let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
-        let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
-        let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
-        printfn ""
-        printfn ""
-        printfn "%+A" newModel
-        newModel.Subs =? []
-        ()
-
-    [<Test>]
-    member this.``Example behWithFaults2 gets flattened completely`` () =
-        let inputFile = """../../Examples/SCM/behWithFaults2.scm"""
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel

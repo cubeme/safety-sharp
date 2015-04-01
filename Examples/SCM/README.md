@@ -40,9 +40,8 @@
 * beh1.scm: 2 Components. 1 parent with 1 subcomponent. Parent calls behaviour of its subcomponent
 * beh2.scm: Like beh1. Additionally  the behaviours of both components make field assignments
 * beh3.scm: Like beh2. Additionally  the behaviours of both components make local variable assignments
+* beh3.verification: invariant-formulas for beh3.scm
 * beh4.scm: Like beh3. But stops during the execution (for better introspection)
-* beh5.scm: Like beh3. But with invariant-formulas
-* beh6.scm: Like beh3. But with contract at provided port
 
 
 ## (call)-Tests (instantaneous)
@@ -84,7 +83,7 @@
 * simpleComponentWithFaults2.scm: like simpleComponentWithFaults1 but with fault behavior and assignments to faults
 * simpleComponentWithFaults3.scm: 1 component with 2 transient failures and 3 steps, where each assigns a different int-value to a field.
 * behWithFaults1.scm: like beh3.scm but with several faults and affected ports and steps
-* behWithFaults2.scm: like behWithFaults1.scm. But with invariant-formulas
+* behWithFaults1.verification: invariant-formulas for behWithFaults1
 * callInstFromBehWithFaults1.scm: like callInstFromBeh3 but with several faults and affected ports and steps
 * callInstFromProvWithFaults1.scm: like callInstFromProv1 but with several faults and affected ports and steps
 * callInstHierarchyWithFaults1.scm: like callInstHierarchy2 but with several faults and affected ports and steps

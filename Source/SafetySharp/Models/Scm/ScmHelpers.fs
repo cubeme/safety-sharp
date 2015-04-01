@@ -317,22 +317,6 @@ module internal ScmHelpers =
         member node.replaceStep (stepToReplace:StepDecl, newStep:StepDecl) =
             { node with
                 CompDecl.Steps = (node.Steps |> List.map (fun step -> if step=stepToReplace then newStep else step));
-            }            
-        member node.removeFormula (formula:Formula) =
-            { node with
-                CompDecl.Formulas = (node.Formulas |> List.filter (fun _formula -> _formula<>formula));
-            }
-        member node.addFormula (formula:Formula) =
-            { node with
-                CompDecl.Formulas = formula::node.Formulas
-            }
-        member node.replaceFormula (formulaToReplace:Formula, newFormula:Formula) =
-            { node with
-                CompDecl.Formulas = (node.Formulas |> List.map (fun formula -> if formula=formulaToReplace then newFormula else formula));
-            }                                    
-        member node.replaceFormulas (formulas:Formula list) =
-            { node with
-                CompDecl.Formulas = formulas
             }
         member node.removeChild (child:CompDecl) =
             { node with

@@ -224,13 +224,6 @@ module internal ScmToString =
             contract s.Contract
             behavior s.Behavior
                     
-        let formula (f : Formula) =
-            match f with
-                | Formula.InterStepInvariant(l) ->
-                    writer.Append "formula-stepinvar "
-                    locExpr l
-                    writer.AppendLine ";"
-
         let rec compDecl (c : CompDecl) = 
             writer.Append "component "
             comp c.Comp
@@ -251,7 +244,6 @@ module internal ScmToString =
                 append provPortDecl c.ProvPorts "provided ports" c.ReqPorts false
                 append bndDecl c.Bindings "bindings" c.ProvPorts true
                 append stepDecl c.Steps "steps" c.Bindings false
-                append formula c.Formulas "formulas" c.Steps true
             )
 
         compDecl c

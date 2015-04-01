@@ -683,13 +683,8 @@ module internal ScmParser =
 
         instantbinding_ws <|> delayedbinding_ws
 
-    let formula_ws : Parser<_,UserState> =
-        let invarformula_ws : Parser<_,UserState> =
-            pstring_ws1 "formula-stepinvar" >>. hierarchical_expression_ws .>> pstring_ws ";" |>> Formula.InterStepInvariant
-        invarformula_ws
-
     do compRef :=
-        let createComponent comp subcomp fields faults reqPorts provPorts bindings steps formulas =
+        let createComponent comp subcomp fields faults reqPorts provPorts bindings steps =
             {
                 CompDecl.Comp = comp;
                 CompDecl.Subs = subcomp;
@@ -699,17 +694,15 @@ module internal ScmParser =
                 CompDecl.ProvPorts = provPorts;
                 CompDecl.Bindings = bindings;
                 CompDecl.Steps = steps;
-                CompDecl.Formulas = formulas;
             }
-        pipe9 ((pstring_ws1 "component") >>. declareComponentName_and_pushUserStateComponentStack_ws .>> (pstring_ws "{"))
+        pipe8 ((pstring_ws1 "component") >>. declareComponentName_and_pushUserStateComponentStack_ws .>> (pstring_ws "{"))
               (many comp_ws)
               (many typedFieldDecl_ws)
               (many faultDecls_ws)
               (many reqPortDecl_ws)
               (many provPortDecl_ws)
               (many binding_ws)
-              (many stepDecl_ws)
-              ((many formula_ws) .>> (pstring "}") .>> popUserStateComponentStack)
+              ((many stepDecl_ws) .>> (pstring "}") .>> popUserStateComponentStack)
               createComponent
         
     let scmFile = comp_ws

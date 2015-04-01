@@ -177,19 +177,7 @@ module internal Scm =
         FaultExpr : FaultExpr option
         Behavior : BehaviorDecl
         Contract : Contract
-    }
-        
-    type internal Formula = // It would be nice to have a "plugin system" for new kinds of formulas. Also Formula macros would be nice, which could be translated differently to each model checker.
-        | InterStepInvariant of Invariant:LocExpr
-        //| InterPortCallInvariant of PortCallsToCheck:ProvPort list * Invariant:LocExpr // The PortCallsToCheck are in this sense the "public" interface. TODO: Maybe remove the list and introduce a Visibility to every PortDecl
-        //| RG of Rely:LocExpr * Guarantee:LocExpr
-        //| DCCA of FaultsToConsider:(CompPath*Fault) list
-        //| LTL of LtlExpression
-        //| CTL of CtlExpression
-        //| PCtl of PCtlExpression
-        //| CheckContract
-        //| FunctionGetsCalled
-        //| Finally
+    }        
 
     type internal CompDecl = {
         Comp : Comp
@@ -200,5 +188,4 @@ module internal Scm =
         ProvPorts : ProvPortDecl list
         Bindings : BndDecl list
         Steps : StepDecl list
-        Formulas : Formula list
     }

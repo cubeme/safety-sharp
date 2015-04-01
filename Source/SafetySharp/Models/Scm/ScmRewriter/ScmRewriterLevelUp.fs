@@ -531,65 +531,6 @@ module internal ScmRewriterLevelUp =
     }
 
     
-    let levelUpAndRewriteFormulaDeclaredInChild : ScmRewriterLevelUpFunction<unit> = workflow {
-        let! levelUp = getLevelUpState
-        // parent is target, child is source
-        let! childCompDecl = getChildCompDecl
-        let! parentCompDecl = getParentCompDecl
-
-        if childCompDecl.Formulas.IsEmpty then
-            // do not modify old tainted state here
-            return ()
-        else
-            let formula = childCompDecl.Formulas.Head            
-            let newChildCompDecl = childCompDecl.removeFormula formula
-            
-            let oldLoc = [childCompDecl.Comp]
-            let newLoc = [parentCompDecl.Comp]
-
-            let transformedFormula =
-                match formula with
-                    | Formula.InterStepInvariant(locExpr) ->
-                        let newLocExpr =
-                            locExpr.rewriteLocation oldLoc newLoc levelUp.oldToNewMaps3
-                        Formula.InterStepInvariant(newLocExpr)
-                    
-            let newParentCompDecl = parentCompDecl.replaceChild(childCompDecl,newChildCompDecl)
-                                                  .addFormula(transformedFormula)
-            do! updateParentCompDecl newParentCompDecl
-            return ()
-    }   
-
-    let rewriteFormulasDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
-        // fields and faults need to be upleveled first
-
-        let! model = getIscmModel
-        let! levelUp = getLevelUpState
-
-        let rewriteFormula (relativeLeveledUpPath:CompPath) (formulaToRewrite:Formula) : Formula =
-            match formulaToRewrite with
-                | Formula.InterStepInvariant(locExpr) ->
-                    let relChildPathToCheckFor = relativeLeveledUpPath
-                    let relParentPath = relativeLeveledUpPath.Tail
-                    let newLocExpr = locExpr.rewriteLocation (relChildPathToCheckFor) (relParentPath) levelUp.oldToNewMaps3
-                    Formula.InterStepInvariant(newLocExpr)
-        
-        
-        let compRewriter (relativeLeveledUpPath:CompPath) (currentComp:CompDecl) : CompDecl =
-            { currentComp with
-                CompDecl.Formulas = currentComp.Formulas |> List.map (rewriteFormula (relativeLeveledUpPath:CompPath))
-            }
-                            
-                
-        let! childCompDecl = getChildCompDecl
-        let! fullPathToChild = getChildPath
-        let fullPathToParent = fullPathToChild.Tail
-        let relativePathToChild = [fullPathToChild.Head] //viewport of parent
-
-        let newModel = model.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
-        do! setIscmModel newModel
-
-    }
 
     
     let rewriteContractsDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
@@ -796,7 +737,6 @@ module internal ScmRewriterLevelUp =
             assert (childCompDecl.ReqPorts = [])
             assert (childCompDecl.ProvPorts = [])
             assert (childCompDecl.Bindings = [])
-            assert (childCompDecl.Formulas = [])
             return ()
         }
     let removeSubComponent : ScmRewriterLevelUpFunction<unit> = workflow {            
@@ -820,12 +760,10 @@ module internal ScmRewriterLevelUp =
         do! (iterateToFixpoint levelUpReqPort)
         do! (iterateToFixpoint levelUpProvPort)
         do! (iterateToFixpoint levelUpAndRewriteBindingDeclaredInChild)
-        do! (iterateToFixpoint levelUpAndRewriteFormulaDeclaredInChild)
         do! (iterateToFixpoint rewriteParentStep)
         do! (iterateToFixpoint rewriteProvPort)
         do! (iterateToFixpoint rewriteFaults)
         do! (rewriteBindingsDeclaredInAncestors)
-        do! (rewriteFormulasDeclaredInAncestors)
         do! (rewriteContractsDeclaredInAncestors)
         do! assertSubcomponentEmpty
         // do! assertSubcomponentNotReferenced

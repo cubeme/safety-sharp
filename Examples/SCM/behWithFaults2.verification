@@ -1,0 +1,3 @@
+formula-stepinvar simple.nested.intField2 >= 0;
+formula-stepinvar simple.intField3 >= simple.intField1;
+formula-stepinvar simple.faultPermanent == false;
