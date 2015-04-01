@@ -32,6 +32,7 @@ module internal ScmRewriterNormalize =
     
     let createEmptySteps : PlainScmModelWorkflowFunction<unit> = workflow {
         let! model = getIscmModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let emptyStep =
             {
                 StepDecl.FaultExpr = None;
@@ -54,7 +55,7 @@ module internal ScmRewriterNormalize =
                 CompDecl.Steps = newSteps;
                 CompDecl.Subs = newSubs
             }
-        do! setIscmModel (newCompDecl model)
+        do! setIscmModel (ScmModel(newCompDecl rootComp))
     }
     
     let normalize : PlainScmModelWorkflowFunction<unit> = workflow {

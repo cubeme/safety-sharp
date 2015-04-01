@@ -332,14 +332,14 @@ module internal ScmRewriterConvertFaults =
     }
        
     let createConvertFaultsStateForRootComponent (model:ScmModel) = 
-            let rootComp = model
-            let rootPath = [model.Comp]
+            let rootComp = match model with | ScmModel(model) -> model
+            let rootPath = [rootComp.Comp]
             let convertFaultsState =
                 let behaviorsToRewrite =
                     BehaviorWithLocation.collectAllBehaviorsInPath rootComp rootPath
                 {
                     ScmRewriterConvertFaultsState.Model = model;
-                    ScmRewriterConvertFaultsState.TakenNames = model.getTakenNames () |> Set.ofList ;
+                    ScmRewriterConvertFaultsState.TakenNames = rootComp.getTakenNames () |> Set.ofList ;
                     ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = rootPath;
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToPortNew = Map.empty<Fault,ProvPort*ReqPort>;

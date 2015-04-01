@@ -43,8 +43,9 @@ module internal ScmRewriterBase =
     let getSubComponentToChange<'state when 'state :> IScmChangeSubcomponent<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
         let! state = getState
         let model = state.getModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let path = state.getPathOfChangingSubcomponent
-        return (model.getDescendantUsingPath path)
+        return (rootComp.getDescendantUsingPath path)
     }
                 
     // example with exact type annotation without workflow-surrounding (also easily implementable with workflow {})
@@ -56,9 +57,10 @@ module internal ScmRewriterBase =
     let updateSubComponentToChange<'state when 'state :> IScmChangeSubcomponent<'state>> (updatedSubComponent:CompDecl) : WorkflowFunction<'state,'state,unit> = workflow {
         let! state = getState
         let model = state.getModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let path = state.getPathOfChangingSubcomponent
-        let newModel = model.replaceDescendant path updatedSubComponent
-        let newState = state.setModel newModel
+        let newRootComp = rootComp.replaceDescendant path updatedSubComponent
+        let newState = state.setModel (ScmModel(newRootComp))
         do! updateState newState
     }
         

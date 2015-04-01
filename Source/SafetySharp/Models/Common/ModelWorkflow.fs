@@ -27,13 +27,15 @@ module internal ModelWorkflow =
     open SafetySharp.Workflow
 
     let getModel<'model,'trackinginfo when 'model :> IModel and 'trackinginfo :> ITrackingInfo>
-                    : WorkflowFunction<'model*'trackinginfo,'model*'trackinginfo,'model> = workflow {
+                    : WorkflowFunction<'model*('trackinginfo option),'model*('trackinginfo option),'model> = workflow {
         let! (model,trackingInfo) = getState
         return model
     }
 
+
+    // We track back to the first model of the workflow. The first model has "None" trackingInfo
     let getTrackingInfo<'model,'trackinginfo when 'model :> IModel and 'trackinginfo :> ITrackingInfo>
-                    : WorkflowFunction<'model*'trackinginfo,'model*'trackinginfo,'trackinginfo> = workflow {
+                    : WorkflowFunction<'model*('trackinginfo option),'model*('trackinginfo option),'trackinginfo option> = workflow {
         let! (model,trackingInfo) = getState
         return trackingInfo
     }

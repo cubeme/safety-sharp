@@ -32,7 +32,7 @@ module internal ScmTestHelpersWorkflowModule =
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow
         }
-    let internal flattenModel (model:Scm.CompDecl) = workflow {
+    let internal flattenModel (model:Scm.ScmModel) = workflow {
             do! ScmWorkflow.setPlainModelState model
             do! ScmRewriterFlattenModel.flattenModel
         }

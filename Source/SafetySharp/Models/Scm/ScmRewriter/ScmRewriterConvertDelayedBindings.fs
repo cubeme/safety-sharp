@@ -230,11 +230,12 @@ module internal ScmRewriterConvertDelayedBindings =
                         WorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,unit> = workflow {
         // Use As1
         let! model = getIscmModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let newState =
             {
                 ScmRewriterConvertDelayedBindingsState.Model = model;
-                ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = [model.Comp];
-                ScmRewriterConvertDelayedBindingsState.TakenNames = model.getTakenNames () |> Set.ofList;
+                ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = [rootComp.Comp];
+                ScmRewriterConvertDelayedBindingsState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
             }
         do! updateState newState
     }

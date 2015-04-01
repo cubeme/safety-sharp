@@ -189,3 +189,9 @@ module internal Scm =
         Bindings : BndDecl list
         Steps : StepDecl list
     }
+
+    type internal ScmModel =
+        ScmModel of CompDecl
+            with
+                interface IModel
+                member model.getRootComp = match model with | ScmModel(rootComp) -> rootComp

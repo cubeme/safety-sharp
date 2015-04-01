@@ -25,18 +25,18 @@ namespace SafetySharp.Models
 module internal ScmWorkflow =
     open SafetySharp.Workflow
     open Scm
-    
-    type ScmModel = CompDecl
-    
+        
     type IScmModel<'state> =
         interface
+            inherit IModel
             abstract getModel : ScmModel
             abstract setModel : ScmModel -> 'state
         end
+
         
         
-    let getIscmModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompDecl> = workflow {
-        let! state = getState
+    let getIscmModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,ScmModel> = workflow {
+        let! (state) = getState
         let model = state.getModel
         return model
     }    
@@ -47,13 +47,14 @@ module internal ScmWorkflow =
         do! updateState newState
     }
     
-    let getScmModel : WorkflowFunction<Scm.CompDecl,Scm.CompDecl,Scm.CompDecl> = workflow {
+    let getScmModel : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Scm.ScmModel> = workflow {
         let! model = getState
         return model
     }
 
-    let setScmModel<'oldIrrelevantState> (model:ScmModel) : WorkflowFunction<'oldIrrelevantState,Scm.CompDecl,unit> = workflow {
+    let setScmModel<'oldIrrelevantState> (model:ScmModel) : WorkflowFunction<'oldIrrelevantState,ScmModel,unit> = workflow {
         do! updateState model
+
     }
 
     type PlainScmModel(model:ScmModel) =
@@ -79,12 +80,12 @@ module internal ScmWorkflow =
         do! setPlainModelState state.getModel
     }
     
-    let scmToPlainModelState : WorkflowFunction<Scm.CompDecl,PlainScmModel,unit> = workflow {
+    let scmToPlainModelState : WorkflowFunction<ScmModel,PlainScmModel,unit> = workflow {
         let! state = getState
         do! setPlainModelState state
     }
         
-    let iscmToScmState<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,Scm.CompDecl,unit> = workflow {
+    let iscmToScmState<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,ScmModel,unit> = workflow {
         let! state = getState
         do! SafetySharp.Workflow.updateState state.getModel
     }

@@ -248,3 +248,12 @@ module internal ScmToString =
 
         compDecl c
         writer.ToString ()
+        
+    open SafetySharp.Workflow
+
+    let modelToStringWorkflow : WorkflowFunction<ScmModel,string,unit> = workflow {
+        let! model = getState
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
+        let asString = toString rootComp
+        do! updateState asString
+    }

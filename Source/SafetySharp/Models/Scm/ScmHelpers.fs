@@ -365,7 +365,7 @@ module internal ScmHelpers =
                 model.rewriteAncestors compRewriter parentPath nextRelativeLeveledUpPath rewrittenComponent
 
 
-        // search in the model
+        // search in the model. Todo: Make extension methods of ScmModel
         member model.tryFindBindingOfReqPort (pathOfReqPort:ReqPortPath) : BndDeclPath option =
             // option, because it might not be in the model (binding is not declared, or declared in any parent node)
             let compPath,reqPort = pathOfReqPort            

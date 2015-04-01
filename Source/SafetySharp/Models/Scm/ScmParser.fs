@@ -711,7 +711,7 @@ module internal ScmParser =
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmWorkflow
 
-    let parseStringWorkflow : WorkflowFunction<string,CompDecl,unit> = workflow {
+    let parseStringWorkflow : WorkflowFunction<string,ScmModel,unit> = workflow {
         
         let runWithUserState parser str = runParserOnString parser UserState.initialUserState "" str
 
@@ -721,6 +721,6 @@ module internal ScmParser =
             | Failure(errorMsg, a, b) -> failwith errorMsg
             
         let! model = SafetySharp.Workflow.getState
-        let parsedModel = parseWithParser (scmFile .>> eof) model
-        do! SafetySharp.Workflow.updateState parsedModel
+        let rootComp = parseWithParser (scmFile .>> eof) model
+        do! SafetySharp.Workflow.updateState (ScmModel(rootComp))
     }

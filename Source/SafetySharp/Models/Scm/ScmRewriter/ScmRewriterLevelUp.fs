@@ -479,6 +479,7 @@ module internal ScmRewriterLevelUp =
         // This function is the only function in LevelUp, which has to look and rewrite every ancestor of the component which gets upleveled.
         // Luckily it is enough to look at every ancestor* and not every component in the whole model.
         let! model = getIscmModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let! levelUp = getLevelUpState
               
         let rewriteBinding (relativeLeveledUpPath:CompPath) (bindingToRewrite:BndDecl) : BndDecl =
@@ -526,8 +527,8 @@ module internal ScmRewriterLevelUp =
         let fullPathToParent = fullPathToChild.Tail
         let relativePathToChild = [fullPathToChild.Head] //viewport of parent
 
-        let newModel = model.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
-        do! setIscmModel newModel
+        let newRootComp = rootComp.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
+        do! setIscmModel (ScmModel(newRootComp))
     }
 
     
@@ -536,6 +537,7 @@ module internal ScmRewriterLevelUp =
     let rewriteContractsDeclaredInAncestors : ScmRewriterLevelUpFunction<unit> = workflow {
         // fields and faults need to be upleveled first
         let! model = getIscmModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let! levelUp = getLevelUpState
 
         let rewriteContract (relativeLeveledUpPath:CompPath) (contractToRewrite:Contract) : Contract =            
@@ -562,8 +564,8 @@ module internal ScmRewriterLevelUp =
         let fullPathToParent = fullPathToChild.Tail
         let relativePathToChild = [fullPathToChild.Head] //viewport of parent
 
-        let newModel = model.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
-        do! setIscmModel newModel
+        let newRootComp = rootComp.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
+        do! setIscmModel (ScmModel(newRootComp))
 
     }
 
@@ -772,7 +774,8 @@ module internal ScmRewriterLevelUp =
               
     let findSubComponentForLevelingUp<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,CompPath option> = workflow {
         let! model = ScmWorkflow.getIscmModel
-        if model.Subs = [] then
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
+        if rootComp.Subs = [] then
             // nothing to do, we are done
             return None
         else
@@ -784,20 +787,20 @@ module internal ScmRewriterLevelUp =
                 else
                     let firstChild = node.Subs.Head
                     findLeaf nodePath firstChild
-            let leaf = findLeaf ([]) (model)
+            let leaf = findLeaf ([]) (rootComp)
             return Some(leaf)
     }
 
     let createLevelUpStateForSubComponent (model:ScmModel) (subComponentToLevelUp:CompPath) =              
-        //let model = oldState.getModel
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let parentPath = subComponentToLevelUp.Tail
-        let parentCompDecl = model.getDescendantUsingPath parentPath
+        let parentCompDecl = rootComp.getDescendantUsingPath parentPath
         let childName = subComponentToLevelUp.Head
         let newLevelUp =
             {
                 ScmRewriterLevelUpState.Model = model;
                 ScmRewriterLevelUpState.PathOfChangingSubcomponent = parentPath;
-                ScmRewriterLevelUpState.TakenNames = model.getTakenNames () |> Set.ofList;
+                ScmRewriterLevelUpState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
                 ScmRewriterLevelUpState.NameOfChildToRewrite = Some(childName);
                 ScmRewriterLevelUpState.ArtificialFieldsOldToNew = Map.empty<Field,Field>;
                 ScmRewriterLevelUpState.ArtificialFaultsOldToNew = Map.empty<Fault,Fault>;
@@ -828,7 +831,8 @@ module internal ScmRewriterLevelUp =
     
     let assertNoSubcomponent<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,unit> = workflow {
         let! model = ScmWorkflow.getIscmModel
-        assert (model.Subs=[])
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
+        assert (rootComp.Subs=[])
         return ()
     }
     
@@ -837,9 +841,10 @@ module internal ScmRewriterLevelUp =
     let levelUpSubcomponentsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,_,unit> = workflow {                        
         let emptyLevelUpState (model:ScmModel) =
+            let rootComp = match model with | ScmModel(rootComp) -> rootComp
             {
                 ScmRewriterLevelUpState.Model = model;
-                ScmRewriterLevelUpState.PathOfChangingSubcomponent = [model.Comp];
+                ScmRewriterLevelUpState.PathOfChangingSubcomponent = [rootComp.Comp];
                 ScmRewriterLevelUpState.TakenNames = Set.empty<string>
                 ScmRewriterLevelUpState.NameOfChildToRewrite = None;
                 ScmRewriterLevelUpState.ArtificialFieldsOldToNew = Map.empty<Field,Field>;

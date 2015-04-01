@@ -36,8 +36,9 @@ type SpinModelChecker (model : Model) =
 
     let ssm = model |> CilToSsm.transformModel |> SsmLowering.lowerPreValidation model
     do SsmValidation.validate model ssm
-    let scm = ssm |> SsmLowering.lowerPostValidation model |> SsmToScm.transform
-    do printf "%s" (ScmToString.toString scm)
+    let scmRootComp = ssm |> SsmLowering.lowerPostValidation model |> SsmToScm.transform
+    do printf "%s" (ScmToString.toString scmRootComp)
+    let scm = scmRootComp |> Scm.ScmModel
    // do printf "======================================="
    
     let workflowToExecute = workflow {

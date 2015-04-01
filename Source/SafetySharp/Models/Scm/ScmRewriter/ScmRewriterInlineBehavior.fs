@@ -99,8 +99,9 @@ module internal ScmRewriterInlineBehavior =
     // Inline Behavior
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let findInlineBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {    
-        let! state = getState
-        let compPath = [state.Model.Comp]
+        let! state = getState        
+        let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
+        let compPath = [rootComp.Comp]
 
         let rec callingDepth (stm:Stm) (currentLevel:int) (stopAtLevel:int) : int =  //TODO: Move to ScmHelpers.fs. May be useful for later applications.
             let rec maxLevel (stmnts:Stm list) (accMaxLevel:int) : int =
@@ -123,19 +124,19 @@ module internal ScmRewriterInlineBehavior =
                         choices |> List.map (fun (expr,stm) -> stm)
                     maxLevel stmnts currentLevel          
                 | Stm.CallPort (reqPort,_params) ->
-                    let binding = state.Model.getBindingOfLocalReqPort reqPort
+                    let binding = rootComp.getBindingOfLocalReqPort reqPort
                     //if binding.Kind= BndKind.Delayed then
                     //    failwith "Delayed Bindings cannot be inlined yet" // doesn't matter for depth
                     let provPortsStmts =
                         binding.Source.ProvPort
-                            |> state.Model.getProvPortDecls
+                            |> rootComp.getProvPortDecls
                             |> List.map (fun portDecl -> portDecl.Behavior.Body)
                     maxLevel provPortsStmts (currentLevel+1)
                 | Stm.StepComp (comp) ->
                     failwith "BUG: In this phase Stm.StepComp should not be in any statement"
                 | Stm.StepFault (fault) ->
                     let faultStmts =
-                        state.Model.Faults
+                        rootComp.Faults
                             |> List.map (fun fault -> fault.Step.Body)
                     maxLevel faultStmts (currentLevel+1)
 
@@ -150,24 +151,24 @@ module internal ScmRewriterInlineBehavior =
                     match port with
                         | None -> None
                         | Some (portDecl) -> Some(BehaviorWithLocation.InProvPort(compPath,portDecl,portDecl.Behavior))
-                state.Model.ProvPorts |> List.tryFind (fun port -> (callingDepth port.Behavior.Body 0 2)=1)
-                                      |> encapsulateResult
+                rootComp.ProvPorts |> List.tryFind (fun port -> (callingDepth port.Behavior.Body 0 2)=1)
+                                   |> encapsulateResult
 
             let tryFindInFaultDecls () : BehaviorWithLocation option =
                 let encapsulateResult (port:FaultDecl option) : BehaviorWithLocation option =
                     match port with
                         | None -> None
                         | Some (faultDecl) -> Some(BehaviorWithLocation.InFault(compPath,faultDecl,faultDecl.Step))
-                state.Model.Faults|> List.tryFind (fun fault -> (callingDepth fault.Step.Body 0 2)=1)
-                                  |> encapsulateResult
+                rootComp.Faults |> List.tryFind (fun fault -> (callingDepth fault.Step.Body 0 2)=1)
+                                |> encapsulateResult
 
             let tryFindInStep () : BehaviorWithLocation option =
                 let encapsulateResult (port:StepDecl option) : BehaviorWithLocation option =
                     match port with
                         | None -> None
                         | Some (stepDecl) -> Some(BehaviorWithLocation.InStep(compPath,stepDecl,stepDecl.Behavior))
-                state.Model.Steps|> List.tryFind (fun step -> (callingDepth step.Behavior.Body 0 2)=1)
-                                 |> encapsulateResult
+                rootComp.Steps |> List.tryFind (fun step -> (callingDepth step.Behavior.Body 0 2)=1)
+                               |> encapsulateResult
 
             let candidateToInline : BehaviorWithLocation option =
                 match tryFindInProvPorts () with
@@ -246,7 +247,8 @@ module internal ScmRewriterInlineBehavior =
                         failwith "BUG: In this phase Stm.StepFault should not be in any statement"; return ()
                     | Stm.CallPort (reqPort,_params) ->
                         let! state = getState
-                        let binding = state.Model.getBindingOfLocalReqPort reqPort
+                        let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
+                        let binding = rootComp.getBindingOfLocalReqPort reqPort
                         if binding.Kind= BndKind.Delayed then
                             failwith "TODO: Delayed Bindings cannot be inlined yet"
                             return ()
@@ -255,7 +257,7 @@ module internal ScmRewriterInlineBehavior =
                             //      does not include the parts, which are in the already rewritten part of the model.
                             //      Move this part into "State".
                             //      Actually, it makes no difference now, but might become a problem later.
-                            let provPortDecls = binding.Source.ProvPort |> state.Model.getProvPortDecls
+                            let provPortDecls = binding.Source.ProvPort |> rootComp.getProvPortDecls
                             assert (provPortDecls.Length = 1) //exactly one provPortDecl should exist. Assume uniteProvPortDecls was called
                             let provPortDecl = provPortDecls.Head
                                 // Note: assure, no name clashes and inside always fresh names are used
@@ -368,32 +370,33 @@ module internal ScmRewriterInlineBehavior =
     let writeBackChangedBehavior : ScmRewriterInlineBehaviorFunction<unit> = workflow {
         // Assert: only inline statements in the root-component 
         let! state = getState
+        let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
         let! inlineBehavior=getInlineBehaviorState
         if (inlineBehavior.IsNone) then
             return ()
         else
             let inlineBehavior = inlineBehavior.Value
-            let newModel =
+            let newModelroot =
                 match inlineBehavior.BehaviorToReplace with
                     | BehaviorWithLocation.InProvPort (_,provPortDecl,beh) ->
                         let newProvPort =
                             { provPortDecl with
                                 ProvPortDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
-                        state.Model.replaceProvPort(provPortDecl,newProvPort) 
+                        rootComp.replaceProvPort(provPortDecl,newProvPort) 
                     | BehaviorWithLocation.InFault (_,faultDecl,beh) ->
                         let newFault =
                             { faultDecl with
                                 FaultDecl.Step = inlineBehavior.InlinedBehavior;
                             }
-                        state.Model.replaceFault(faultDecl,newFault) 
+                        rootComp.replaceFault(faultDecl,newFault) 
                     | BehaviorWithLocation.InStep (_,stepDecl,beh) ->
                         let newStep =
                             { stepDecl with
                                 StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
-                        state.Model.replaceStep (stepDecl,newStep) 
-            do! ScmWorkflow.setIscmModel newModel
+                        rootComp.replaceStep (stepDecl,newStep) 
+            do! ScmWorkflow.setIscmModel (ScmModel(newModelroot))
             do! removeInlineBehaviorState
         }
 
@@ -411,9 +414,10 @@ module internal ScmRewriterInlineBehavior =
     }
 
     let createInlineBehaviorState (model:ScmModel) =
+        let rootComp = match model with | ScmModel(rootComp) -> rootComp
         {
             ScmRewriterInlineBehaviorState.Model = model;
-            ScmRewriterInlineBehaviorState.TakenNames = model.getTakenNames () |> Set.ofList;
+            ScmRewriterInlineBehaviorState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
             ScmRewriterInlineBehaviorState.ConcreteBehavior = None;
         }
 
