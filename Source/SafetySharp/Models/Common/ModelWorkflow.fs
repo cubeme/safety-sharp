@@ -27,7 +27,7 @@ module internal ModelWorkflow =
     open SafetySharp.Workflow
 
     let getModel<'model,'trackinginfo when 'model :> IModel and 'trackinginfo :> ITrackingInfo>
-                    : WorkflowFunction<'model*('trackinginfo option),'model*('trackinginfo option),'model> = workflow {
+                    : WorkflowFunction<'model*'trackinginfo,'model*'trackinginfo,'model> = workflow {
         let! (model,trackingInfo) = getState
         return model
     }
@@ -35,50 +35,43 @@ module internal ModelWorkflow =
 
     // We track back to the first model of the workflow. The first model has "None" trackingInfo
     let getTrackingInfo<'model,'trackinginfo when 'model :> IModel and 'trackinginfo :> ITrackingInfo>
-                    : WorkflowFunction<'model*('trackinginfo option),'model*('trackinginfo option),'trackinginfo option> = workflow {
+                    : WorkflowFunction<'model*'trackinginfo,'model*'trackinginfo,'trackinginfo> = workflow {
         let! (model,trackingInfo) = getState
         return trackingInfo
     }
+
+    // to facilitate the porting to model with trackinginfo
+    let removeTrackingInfo<'model,'trackinginfo when 'model :> IModel and 'trackinginfo :> ITrackingInfo>
+                    : WorkflowFunction<'model*'trackinginfo,'model,unit> = workflow {
+        let! (model,trackingInfo) = getState
+        do! updateState model
+        return ()
+    }
     
-    // The transformation of a model goes from source to sink (e.g. from Scm to NuXmv).
-    // It has several intermediate steps. Every such step transforms from untransformed to transformed.
-    // e.g.:
+    // The model transformation goes from a source model to sink model (e.g. from Scm to NuXmv).
+    // It performs several intermediate steps (IS) to achieve this. Every such intermediate step
+    // makes a tiny transformation of an intermediate model (IM).
+    // As formula "transformed IM = IS (untransformed IM)". Examples of IS:
     //   - leveling SCM up transforms SCM to a flat SCM
     //   - converting a flat scm into sam.
-    // Every intermediate transformation should also provide a function, which provides a transformation 
-
-    // Each step for model transformation should not only update the model, but also the TrackingInfo.
-    // It needs to provide a new function "trackForwardFromSource" which it can gain by
-    // appending the old "trackForwardFromSource<'source,'untransformed>" to
-    // its own "trackForwardIntermediate"<'untransformed,'transformed>. 
-    // "trackForwardFromSource >>= trackForwardIntermediate" should be <'source,'transformed>.
-    // The function "trackForwardIntermediate" should contain the forwarding map
-    // (Map<'untransformed,'untransformed>) in its closure.
-    
+    // Each IM of the model transformation should not only update the model, but also the TrackingInfo.
+    // The TrackingInfo contains several forward maps and backward maps.
+    // Forward Maps map from source elements to elements in the model currently processed (current elements).
+    // Backward Maps map from current elements to source elements.
+    // It is possible to conserve the TrackingInfos from anywhere in the workflow and start a new
+    // TrackingInfo from this point (see function startFreshTrackingInfo).
+        
     type TrackVariableForwardFunction<'source,'transformed> = 'source -> 'transformed
 
     type TrackingInfo<'varSource,'varTarget when 'varSource : comparison and 'varTarget : comparison> = {
         ForwardVariables : Map<'varSource,'varTarget>;
     }
         with
-            member this.applyIntermediateForward (TrackVariableForwardFunction)
+            member this.applyIntermediateForward (TrackVariableForwardFunction) = ()
     
 
-    type TrackingInfoBuilder<'source,'sink> = {
-    }
-        with
-            member this.createTrackingInfo (varsToTrack:'source list) =
-                //TODO: Create a map which summarizes all infos
-                ()
-
-    type TrackingInfoBuilder with
-        static member forwardVariable (functionOnLeft:AstToStringStateFunction)
-                                      (:AstToStringStateFunction)
-                                      (state:AstToStringState) : TrackingInfo =
-            let newState = m state
-            f newState
-
-    // TODO: This function is used to split the TrackingInfo during a workflow (conserve the current TrackingInfo start a new one)
+    // TODO: This function is used to split the TrackingInfo during a workflow (conserve the current TrackingInfo start a new one).
+    // Thus, this function creates a new TrackingInfo with a new source model.
     // E.g:
     //   workflow {
     //       do! readModelA
@@ -96,5 +89,17 @@ module internal ModelWorkflow =
     //   }
     //let startFreshTrackingInfo = 
 
-
+    // Note:
+    //   This approach here only works, if the new map can easily be generated. If more sophisticated
+    //   transformations are needed, it is better to implement an approach with a "TrackingInfoBuilder".
+    //   This type does not safe the resulting maps itself, but safes a function, which performs the remapping.
+    //   These functions can be chained (see FParsec).
+    //   Every IS should not perform the remapping itself, update the TrackingInfoBuilder.
+    //   Example with "trackForwardFromSource":
+    //   It needs to provide a new function "trackForwardFromSource" which it can be gained by
+    //   appending the "trackForwardFromSource<'source,'untransformed>" in TrackingInfoBuilder of the current state
+    //   to its own "trackForwardIntermediate"<'untransformed,'transformed>. 
+    //   "let newForward <'source,'transformed> = (trackForwardFromSource<'source,'untransformed> >>= trackForwardIntermediate<'untransformed,'transformed>".
+    //   The function "trackForwardIntermediate" should contain the forwarding map
+    //   (Map<'untransformed,'untransformed>) in its closure.
 
