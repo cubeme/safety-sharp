@@ -46,11 +46,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
         
     [<Test>]
@@ -59,11 +60,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -72,11 +74,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -85,11 +88,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -98,11 +102,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -111,11 +116,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
         
     [<Test>]
@@ -124,11 +130,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -137,11 +144,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -150,11 +158,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -163,11 +172,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
         
@@ -178,11 +188,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
 
@@ -193,11 +204,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -206,11 +218,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -219,11 +232,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -232,11 +246,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -245,11 +260,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -258,11 +274,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -271,11 +288,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
 
@@ -286,11 +304,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
     [<Test>]
     member this.``Example simpleComponentWithFaults1 gets flattened completely`` () =
@@ -298,11 +317,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -311,11 +331,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -324,11 +345,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -337,11 +359,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
         
     [<Test>]
@@ -350,11 +373,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -363,11 +387,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -376,11 +401,12 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
 
     [<Test>]
@@ -389,9 +415,10 @@ type CompleteRewriteTests () =
         let model = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.readInputFileToScm inputFile)
         let resultingState = SafetySharp.Workflow.runWorkflow_getState (ScmTestHelpersWorkflowModule.flattenModel model)
         let newModel = resultingState.getModel
-        printf "%s" (SafetySharp.Models.ScmToString.toString newModel)
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
         printfn ""
         printfn ""
         printfn "%+A" newModel
-        newModel.Subs =? []
+        newRootComp.Subs =? []
         ()
