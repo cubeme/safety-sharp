@@ -830,6 +830,11 @@ module internal ScmRewriterLevelUp =
                 do! levelUpSubcomponent
     }
     
+    let selectSpecificSubcomponent (subComponentToLevelUp:CompPath) = workflow {
+        let! state = getState
+        do! updateState (createLevelUpStateForSubComponent state.Model subComponentToLevelUp)
+    }
+    
     
     let assertNoSubcomponent<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,unit> = workflow {
         let! model = ScmWorkflow.getIscmModel
