@@ -40,31 +40,41 @@ module internal TraceableModel =
     // It is possible to conserve the TracingInfos from anywhere in the workflow and start a new
     // TracingInfo from this point (see function startFreshTracingInfo).
     
-    type TracingInfo<'varSource,'varTarget when 'varSource : comparison and 'varTarget : comparison> = {
-        ForwardStateVariables : Map<'varSource,'varTarget>;
+    type TracingInfo<'source,'target when 'source : comparison and 'target : comparison> = {
+        Forward : Map<'source,'target>;
     }
 
-    let getModel<'model,'varSource,'varTarget when 'model :> IModel<'varTarget> and 'varSource : comparison and 'varTarget : comparison>
-                    : WorkflowFunction<'model*TracingInfo<'varSource,'varTarget>,
-                                       'model*TracingInfo<'varSource,'varTarget>,
+
+
+    let getModel<'model,'source,'target when 'model :> IModel<'target> and 'source : comparison and 'target : comparison>
+                    : WorkflowFunction<'model*TracingInfo<'source,'target>,
+                                       'model*TracingInfo<'source,'target>,
                                        'model> = workflow {
         let! (model,tracingInfo) = getState
         return model
     }
-
+    
+    let setModel<'oldmodel,'newmodel,'source,'target when 'newmodel :> IModel<'target> and 'source : comparison and 'target : comparison>
+            (model:'newmodel)
+                    : WorkflowFunction<'oldmodel*TracingInfo<'source,'target>,
+                                       'newmodel*TracingInfo<'source,'target>,
+                                       unit> = workflow {
+        let! (_,tracingInfo) = getState
+        do! updateState (model,tracingInfo)
+    }
 
     // We trace back to the first model of the workflow. The first model has "None" tracingInfo
-    let getTracingInfo<'model,'varSource,'varTarget when 'model :> IModel<'varTarget> and 'varSource : comparison and 'varTarget : comparison>
-                    : WorkflowFunction<'model*TracingInfo<'varSource,'varTarget>,
-                                       'model*TracingInfo<'varSource,'varTarget>,
-                                       TracingInfo<'varSource,'varTarget>> = workflow {
+    let getTracingInfo<'model,'source,'target when 'model :> IModel<'target> and 'source : comparison and 'target : comparison>
+                    : WorkflowFunction<'model*TracingInfo<'source,'target>,
+                                       'model*TracingInfo<'source,'target>,
+                                       TracingInfo<'source,'target>> = workflow {
         let! (model,tracingInfo) = getState
         return tracingInfo
     }
 
     // to facilitate the porting to model with tracinginfo
-    let removeTracingInfo<'model,'varSource,'varTarget when 'model :> IModel<'varTarget> and 'varSource : comparison and 'varTarget : comparison>
-                    : WorkflowFunction<'model*TracingInfo<'varSource,'varTarget>,
+    let removeTracingInfo<'model,'source,'target when 'model :> IModel<'target> and 'source : comparison and 'target : comparison>
+                    : WorkflowFunction<'model*TracingInfo<'source,'target>,
                                        'model,
                                        unit> = workflow {
         let! (model,tracingInfo) = getState
@@ -82,7 +92,7 @@ module internal TraceableModel =
         let reflexiveVarMap = variables |> List.map (fun var -> var,var) |> Map.ofList
         let tracingInfos =
             {
-                TracingInfo.ForwardStateVariables = reflexiveVarMap;
+                TracingInfo.Forward = reflexiveVarMap;
             }
         do! updateState (model,tracingInfos)
     }
@@ -95,8 +105,24 @@ module internal TraceableModel =
             (currentMapping:Map<'source,'untransformed>)
             (intermediateMapping:Map<'untransformed,'transformed>)
                 : Map<'source,'transformed> =   // returns updatedMapping
-        currentMapping |> Map.map (fun key value -> intermediateMapping.Item value)
-
+        currentMapping |> Map.filter (fun key value-> intermediateMapping.ContainsKey value)
+                       |> Map.map (fun key value -> intermediateMapping.Item value)
+    
+    // Note:
+    //    Making the transformations directly to 'source requires _every_ function to be a generic function
+    //    which depends on the source type. E.g.:
+    //        let createEmptySteps<'source when 'source : comparison> : PlainScmModelWorkflowFunction<unit> = workflow { }
+    //    This is nasty. Either we need a fixed source or another solution.
+    //    We introduce tworkflow (traceable workflow). It is done by collecting the TraceInfo-transformation-functions. These
+    //    have the needed maps in their closure.
+    //    Another idea is to lose the type information and cast everything into a ITraceable
+    //    
+    //        type ListElement<'a> = int*'a
+    //        let moda (b:ListElement<_>) =
+    //            let (l,_) = b
+    //            l
+    
+    
     // TODO: This function is used to split the TracingInfo during a workflow (conserve the current TracingInfo start a new one).
     // Thus, this function creates a new TracingInfo with a new source model.
     // E.g:
@@ -132,4 +158,25 @@ module internal TraceableModel =
     //   The function "traceForwardIntermediate" should contain the forwarding map
     //   (Map<'untransformed,'untransformed>) in its closure.
     //   type TraceVariableForwardFunction<'source,'transformed> = 'source -> 'transformed
+    //       type TracingInfoBuilder<'source,'target when 'source : comparison and 'target : comparison> = {
+    //           ForwardStateVariablesFunction : 'source -> 'target ;
+    //       }
+    //           with
+    //               member this.generateTracingInfo (sourceVariables:'source list) : TracingInfo<'source,'target> =
+    //                   {
+    //                       TracingInfo.ForwardStateVariables =
+    //                           sourceVariables |> List.map (fun var -> (var,this.ForwardStateVariablesFunction var) ) |> Map.ofList
+    //                   }
+    //       
+    //       let applyTracingInfoBuilder<'source,'untransformed,'transformed when 'source : comparison
+    //                                                                        and 'untransformed : comparison
+    //                                                                        and 'transformed : comparison>
+    //               (currentFunction: 'source -> 'untransformed)
+    //               (intermediateFunction: 'untransformed' -> 'transformed )
+    //                   : ('source -> 'transformed) =   // returns updatedMapping
+    //           let newFunction (var:'source) : 'transformed =
+    //               let transformation1 = currentFunction var
+    //               let transformation2 = intermediateFunction transformation1
+    //               transformation2
+    //           newFunction
 

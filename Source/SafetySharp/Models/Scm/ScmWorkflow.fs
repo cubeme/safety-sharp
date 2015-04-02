@@ -34,17 +34,24 @@ module internal ScmWorkflow =
         end
 
         
-        
-    let getIscmModel<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,ScmModel> = workflow {
-        let! (state) = getState
-        let model = state.getModel
+    type IScmModelWithTracing<'state,'source when 'state :> IScmModel<'state> and 'source : comparison> =
+        'state * TraceableModel.TracingInfo<'source,StateVar>
+
+    type IScmModelWorkflowFunction<'state,'source,'returnType when 'state :> IScmModel<'state> and 'source : comparison> =
+        WorkflowFunction<IScmModelWithTracing<'state,'source>,
+                         IScmModelWithTracing<'state,'source>,
+                         'returnType>
+                
+    let getIscmModel<'state when 'state :> IScmModel<'state>> : IScmModelWorkflowFunction<'state,_,_> = workflow {
+        let! iscmModel = TraceableModel.getModel
+        let model = iscmModel.getModel
         return model
     }    
     
-    let setIscmModel<'state when 'state :> IScmModel<'state>> (model:ScmModel) : WorkflowFunction<'state,'state,unit> = workflow {
-        let! state = getState
-        let newState = state.setModel model
-        do! updateState newState
+    let setIscmModel<'state when 'state :> IScmModel<'state>> (model:ScmModel) : IScmModelWorkflowFunction<'state,_,_> = workflow {
+        let! iscmModel = TraceableModel.getModel
+        let newIscmModel = iscmModel.setModel model
+        do! TraceableModel.setModel newIscmModel
     }
     
     let getScmModel : WorkflowFunction<Scm.ScmModel,Scm.ScmModel,Scm.ScmModel> = workflow {
@@ -68,8 +75,13 @@ module internal ScmWorkflow =
                     member this.getModel : ScmModel = model
                     member this.setModel (model:ScmModel) = PlainScmModel(model)
     
-    type PlainScmModelWorkflowState = WorkflowState<PlainScmModel>
-    type PlainScmModelWorkflowFunction<'returnType> = WorkflowFunction<PlainScmModel,PlainScmModel,'returnType>
+    type PlainScmModelWithTracing<'source when 'source : comparison> =
+        PlainScmModel * TraceableModel.TracingInfo<'source,StateVar>
+
+    type PlainScmModelWorkflowFunction<'returnType,'source when 'source : comparison> =
+        WorkflowFunction<PlainScmModelWithTracing<'source>,
+                         PlainScmModelWithTracing<'source>,
+                         'returnType>
         
     let setPlainModelState (model:ScmModel) = workflow {
         do! updateState (PlainScmModel(model))

@@ -45,7 +45,7 @@ module internal ScmRewriterFlattenModel =
     let flattenModel<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,PlainScmModel,unit> = workflow {
             /// normalize
-            do! normalizeWrapper
+            do! normalize
             
             // level up everything
             do! levelUpSubcomponentsWrapper
