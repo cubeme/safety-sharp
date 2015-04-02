@@ -91,7 +91,6 @@ module internal ScmRewriterLevelUp =
 
 
     type ScmRewriterLevelUpFunction<'returnType> = WorkflowFunction<ScmRewriterLevelUpState,ScmRewriterLevelUpState,'returnType>
-    type ScmRewriterLevelUpWorkflowState = WorkflowState<ScmRewriterLevelUpState>
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Accessor Functions to ScmRewriterLevelUp (and ScmRewriterState
@@ -794,7 +793,7 @@ module internal ScmRewriterLevelUp =
             return Some(leaf)
     }
 
-    let createLevelUpStateForSubComponent (model:ScmModel) (subComponentToLevelUp:CompPath) =              
+    let createLevelUpStateForSubComponent (model:ScmModel) (subComponentToLevelUp:CompPath) =
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let parentPath = subComponentToLevelUp.Tail
         let parentCompDecl = rootComp.getDescendantUsingPath parentPath
@@ -827,7 +826,7 @@ module internal ScmRewriterLevelUp =
             | None -> return ()
             | Some(subComponentToLevelUp) ->
                 let! state = getState
-                do! updateState (createLevelUpStateForSubComponent state.getModel subComponentToLevelUp)
+                do! updateState (createLevelUpStateForSubComponent state.Model subComponentToLevelUp)
                 do! levelUpSubcomponent
     }
     
@@ -839,9 +838,7 @@ module internal ScmRewriterLevelUp =
         return ()
     }
     
-
-    // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
-    let levelUpSubcomponentsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+    let prepareForLevelingUp<'oldState when 'oldState :> IScmModel<'oldState>> :
                         WorkflowFunction<'oldState,_,unit> = workflow {                        
         let emptyLevelUpState (model:ScmModel) =
             let rootComp = match model with | ScmModel(rootComp) -> rootComp
@@ -865,15 +862,17 @@ module internal ScmRewriterLevelUp =
             }
         let! model = getIscmModel
         do! updateState (emptyLevelUpState model)
-        
-        do! (iterateToFixpoint selectAndLevelUpSubcomponent)
+    }
 
+
+    // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
+    let levelUpSubcomponentsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+                        WorkflowFunction<'oldState,_,unit> = workflow {                        
+        do! prepareForLevelingUp        
+        do! (iterateToFixpoint selectAndLevelUpSubcomponent)
         do! assertNoSubcomponent
     }
 
     
     let initialLevelUpState (scm:ScmModel) (subComponentToLevelUp:CompPath) =
         createLevelUpStateForSubComponent scm subComponentToLevelUp 
-
-    let initialLevelUpWorkflowState (scm:ScmModel) (subComponentToLevelUp:CompPath) =
-        WorkflowState<ScmRewriterLevelUpState>.stateInit (initialLevelUpState scm subComponentToLevelUp) 

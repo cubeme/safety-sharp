@@ -95,7 +95,6 @@ module internal ScmRewriterConvertDelayedBindings =
                     }
     
     type ScmRewriterConvertDelayedBindingsFunction<'returnType> = WorkflowFunction<ScmRewriterConvertDelayedBindingsState,ScmRewriterConvertDelayedBindingsState,'returnType>
-    type ScmRewriterConvertDelayedBindingsWorkflowState = WorkflowState<ScmRewriterConvertDelayedBindingsState>
     
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
                 : ScmRewriterConvertDelayedBindingsFunction<Map<Var,Field>> = workflow {

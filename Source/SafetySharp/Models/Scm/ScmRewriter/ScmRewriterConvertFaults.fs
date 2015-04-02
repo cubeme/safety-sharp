@@ -66,7 +66,6 @@ module internal ScmRewriterConvertFaults =
 
 
     type ScmRewriterConvertFaultsFunction<'returnType> = WorkflowFunction<ScmRewriterConvertFaultsState,ScmRewriterConvertFaultsState,'returnType>
-    type ScmRewriterConvertFaultsWorkflowState = WorkflowState<ScmRewriterConvertFaultsState>
     
 
     

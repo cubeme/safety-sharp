@@ -71,7 +71,6 @@ module internal ScmRewriterInlineBehavior =
             
                 
     type ScmRewriterInlineBehaviorFunction<'returnType> = WorkflowFunction<ScmRewriterInlineBehaviorState,ScmRewriterInlineBehaviorState,'returnType>
-    type ScmRewriterInlineBehaviorWorkflowState = WorkflowState<ScmRewriterInlineBehaviorState>
 
     
     let getInlineBehaviorState : ScmRewriterInlineBehaviorFunction<ScmRewriterInlineBehaviorStateConcreteBehavior option> = workflow {

@@ -70,10 +70,7 @@ module internal ScmWorkflow =
     
     type PlainScmModelWorkflowState = WorkflowState<PlainScmModel>
     type PlainScmModelWorkflowFunction<'returnType> = WorkflowFunction<PlainScmModel,PlainScmModel,'returnType>
-
-    let createPlainScmWorkFlowState (model:ScmModel) : PlainScmModelWorkflowState =
-        WorkflowState<PlainScmModel>.stateInit (PlainScmModel(model))
-    
+        
     let setPlainModelState (model:ScmModel) = workflow {
         do! updateState (PlainScmModel(model))
     }
