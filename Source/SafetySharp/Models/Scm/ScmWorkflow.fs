@@ -28,7 +28,7 @@ module internal ScmWorkflow =
         
     type IScmModel<'state> =
         interface
-            inherit IModel
+            inherit IModel<StateVar> 
             abstract getModel : ScmModel
             abstract setModel : ScmModel -> 'state
         end
@@ -62,6 +62,9 @@ module internal ScmWorkflow =
             with
                 member this.getModel : ScmModel = model
                 interface IScmModel<PlainScmModel> with
+                    member this.getStateVars =
+                        let imodel = this.getModel :> IModel<StateVar>
+                        imodel.getStateVars
                     member this.getModel : ScmModel = model
                     member this.setModel (model:ScmModel) = PlainScmModel(model)
     

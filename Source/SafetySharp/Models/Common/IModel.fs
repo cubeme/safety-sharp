@@ -22,12 +22,7 @@
 
 namespace SafetySharp.Models
 
-type internal IModel =
+type internal IModel<'variable when 'variable : comparison> =
     interface
+        abstract getStateVars : 'variable list
     end
-
-// used for variable tracking
-type internal ITrackingInfo =
-    interface
-    end
-

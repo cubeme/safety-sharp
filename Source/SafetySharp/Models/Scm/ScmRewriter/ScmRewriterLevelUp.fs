@@ -65,6 +65,9 @@ module internal ScmRewriterLevelUp =
             member levelUp.oldToNewMaps3=                
                     (levelUp.ArtificialFaultsOldToNew,levelUp.ArtificialFieldsOldToNew)
             interface IScmModel<ScmRewriterLevelUpState> with
+                member this.getStateVars =
+                    let imodel = this.Model :> IModel<StateVar>
+                    imodel.getStateVars
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with

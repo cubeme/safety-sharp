@@ -43,6 +43,9 @@ module internal ScmRewriterConvertFaults =
     }
         with
             interface IScmModel<ScmRewriterConvertFaultsState> with
+                member this.getStateVars =
+                    let imodel = this.Model :> IModel<StateVar>
+                    imodel.getStateVars
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with

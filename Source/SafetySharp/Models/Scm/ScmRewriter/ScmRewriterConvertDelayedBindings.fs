@@ -73,6 +73,9 @@ module internal ScmRewriterConvertDelayedBindings =
     }
         with
             interface IScmModel<ScmRewriterConvertDelayedBindingsState> with
+                member this.getStateVars =
+                    let imodel = this.Model :> IModel<StateVar>
+                    imodel.getStateVars
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
