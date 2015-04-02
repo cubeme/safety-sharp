@@ -53,7 +53,10 @@ module internal ScmRewriterBase =
                          'returnType>
         
 
-    let getSubComponentToChange : IScmChangeSubcomponentWorkflowFunction<_,_,CompDecl> = workflow {
+    let getSubComponentToChange<'state,'source when 'state :> IScmModel<'state>
+                                                      and 'state :> IScmChangeSubcomponent<'state>
+                                                      and 'source : comparison>
+             : IScmChangeSubcomponentWorkflowFunction<'state,'source,CompDecl> = workflow {
         let! state = TraceableModel.getModel
         let model = state.getModel
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
@@ -126,7 +129,8 @@ module internal ScmRewriterBase =
                 else
                     inventName 0
             let modifiedState = state.setTakenNames (state.getTakenNames.Add newName)
-            return! updateStateAndReturn modifiedState newName
+            do! TraceableModel.setModel modifiedState
+            return newName
         }
 
     let getUnusedFieldName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,Field> = workflow {
@@ -154,26 +158,34 @@ module internal ScmRewriterBase =
             return Var(name)
         }
 
-    let getUnusedVarNames (basedOn:string list) : IFreshNameDepotWorkflowFunction<_,_,Var list> =
-        let newUnusedVarNames (state:WorkflowState<'state> when 'state :> IScmModel<'state> and 'state :> IFreshNameDepot<'state>,tracinginfo)
-                : (Var list * WorkflowState<'state>) =
-            let mutable varState = state
+    let getUnusedVarNames<'state,'source when 'state :> IScmModel<'state>
+                                          and 'state :> IFreshNameDepot<'state>
+                                          and 'source : comparison>
+                          (basedOn:string list) : IFreshNameDepotWorkflowFunction<'state,'source,Var list> =
+
+        let newUnusedVarNames (workflowState:WorkflowState<IFreshNameDepotWithTracing<'state,'source>>)
+                : (Var list * WorkflowState<IFreshNameDepotWithTracing<'state,'source>>) =
+            let mutable varState = workflowState
             let mutable newVars = []
             for i in basedOn do
-                let (newVar,newState) = runWorkflowState (getUnusedVarName i) varState
-                varState <- newState
+                let (newVar,newWorkflowState) = runWorkflowState (getUnusedVarName i) varState
+                varState <- newWorkflowState
                 newVars <- newVar::newVars
             (List.rev newVars, varState)
         WorkflowFunction (newUnusedVarNames)
 
-    let getUnusedFieldNames (basedOn:string list) : IFreshNameDepotWorkflowFunction<_,_,Field list> =
-        let newUnusedFieldNames (state:WorkflowState<'state> when 'state :> IScmModel<'state> and 'state :> IFreshNameDepot<'state>,tracinginfo)
-            : (Field list * WorkflowState<'state>) =
-            let mutable varState = state
+    let getUnusedFieldNames<'state,'source when 'state :> IScmModel<'state>
+                                          and 'state :> IFreshNameDepot<'state>
+                                          and 'source : comparison>
+                          (basedOn:string list) : IFreshNameDepotWorkflowFunction<'state,'source,Field list> =
+
+        let newUnusedFieldNames (workflowState:WorkflowState<IFreshNameDepotWithTracing<'state,'source>>)
+                : (Field list * WorkflowState<IFreshNameDepotWithTracing<'state,'source>>) =
+            let mutable varState = workflowState
             let mutable newFields = []
             for i in basedOn do
-                let (newField,newState) = runWorkflowState (getUnusedFieldName i) varState
-                varState <- newState
+                let (newField,newWorkflowState) = runWorkflowState (getUnusedFieldName i) varState
+                varState <- newWorkflowState
                 newFields <- newField::newFields
             (List.rev newFields, varState)
         WorkflowFunction (newUnusedFieldNames)
