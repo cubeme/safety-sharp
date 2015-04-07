@@ -36,8 +36,8 @@ open SafetySharp.Models.ScmToSam
 module internal TransformationsTestHelpersWorkflowModule =
     let internal readInputFileAndTransformToSam (inputFile:string) = workflow {
             do! readFile inputFile
-            do! SafetySharp.Models.ScmParser.parseStringWorkflow
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Models.ScmToSam.transformIscmToSam
         }
 

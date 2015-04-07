@@ -44,8 +44,8 @@ module internal ScmRewriterTestHelpers =
 
     let internal inputFileToPromelaAstWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
-            do! SafetySharp.Models.ScmParser.parseStringWorkflow
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration
         }
 
@@ -60,10 +60,10 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpField ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -95,10 +95,10 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpField
+            do! ScmRewriterLevelUp.levelUpField ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -130,10 +130,10 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpFault
+            do! ScmRewriterLevelUp.levelUpFault ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -165,10 +165,10 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
+            do! ScmRewriterLevelUp.levelUpReqPort ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -201,10 +201,10 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpProvPort
+            do! ScmRewriterLevelUp.levelUpProvPort ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -239,12 +239,12 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -289,11 +289,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -339,11 +339,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -388,12 +388,12 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -439,11 +439,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -489,11 +489,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -539,11 +539,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -589,11 +589,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -639,11 +639,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -690,11 +690,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpReqPort
-            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpReqPort ()
+            do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -741,13 +741,13 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpField
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteProvPort
-            do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpField ()
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.rewriteProvPort ()
+            do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -804,16 +804,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! ScmRewriterLevelUp.levelUpField
-            do! ScmRewriterLevelUp.levelUpFault
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.levelUpProvPort
-            do! ScmRewriterLevelUp.rewriteProvPort
-            do! ScmRewriterLevelUp.rewriteProvPort
-            do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors
+            do! ScmRewriterLevelUp.levelUpField ()
+            do! ScmRewriterLevelUp.levelUpFault ()
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.levelUpProvPort ()
+            do! ScmRewriterLevelUp.rewriteProvPort ()
+            do! ScmRewriterLevelUp.rewriteProvPort ()
+            do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -880,10 +880,10 @@ type FixpointIteratorTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! ScmRewriterLevelUp.prepareForLevelingUp
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
-            do! (iterateToFixpoint ScmRewriterLevelUp.levelUpField) 
+            do! (iterateToFixpoint (ScmRewriterLevelUp.levelUpField ())) 
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }        
@@ -928,8 +928,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper  ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -955,8 +955,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -982,8 +982,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -1006,8 +1006,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -1030,8 +1030,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -1054,8 +1054,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -1079,8 +1079,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -1104,8 +1104,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
@@ -1128,8 +1128,8 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
             let! oldModel = getState
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
-            do! levelUpSubcomponentsWrapper 
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState
             return (oldModel,levelUpState)
         }
