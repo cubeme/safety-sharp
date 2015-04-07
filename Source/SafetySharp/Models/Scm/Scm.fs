@@ -210,6 +210,3 @@ module internal Scm =
                         let rootComponent = this.getRootComp
                         collectGlobalVariables []  (rootComponent)
                 member model.getRootComp = match model with | ScmModel(rootComp) -> rootComp
-
-    type internal ScmModelWithTracing<'varSource when 'varSource : comparison> =
-        ScmModel * TraceableModel.TracingInfo<'varSource,StateVar>

@@ -69,7 +69,7 @@ module internal ScmRewriterConvertFaults =
     
 
     
-    let getConvertFaultsState : ScmRewriterConvertFaultsFunction<ScmRewriterConvertFaultsState> = 
+    let getConvertFaultsState () : ScmRewriterConvertFaultsFunction<ScmRewriterConvertFaultsState> = 
         getState
 
     let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaultsState) : ScmRewriterConvertFaultsFunction<unit> = 
@@ -84,9 +84,9 @@ module internal ScmRewriterConvertFaults =
     
 
     
-    let replaceFaultByPortsAndFields : ScmRewriterConvertFaultsFunction<unit> = workflow {
-        let! convertFaultsState = getConvertFaultsState
-        let! compDecl = getSubComponentToChange
+    let replaceFaultByPortsAndFields () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+        let! convertFaultsState = getConvertFaultsState ()
+        let! compDecl = getSubComponentToChange ()
         if compDecl.Faults = [] then
             return ()
         else
@@ -132,7 +132,7 @@ module internal ScmRewriterConvertFaults =
                                         .addBinding(newBindingDecl)
                                         .removeFault(faultToConvert) 
             do! updateSubComponentToChange newCompDecl           
-            let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+            let! convertFaultsState = getConvertFaultsState () // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
             let newConvertFaultsState =
                 { convertFaultsState with
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = convertFaultsState.ArtificialFaultOldToFieldNew.Add ( (faultToConvert.Fault,field) ) ;
@@ -141,14 +141,14 @@ module internal ScmRewriterConvertFaults =
             do! updateConvertFaultsState newConvertFaultsState
     }
 
-    let replaceStepFaultByCallPort : ScmRewriterConvertFaultsFunction<unit> = workflow {
-        let! convertFaultsState = getConvertFaultsState
+    let replaceStepFaultByCallPort () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+        let! convertFaultsState = getConvertFaultsState ()
 
         if convertFaultsState.BehaviorsToRewrite.IsEmpty then
             // do not modify old tainted state here
             return ()
         else
-            let! compDecl = getSubComponentToChange
+            let! compDecl = getSubComponentToChange ()
             let behaviorToRewriteWithLocation = convertFaultsState.BehaviorsToRewrite.Head
             let behaviorToRewrite = behaviorToRewriteWithLocation.Behavior
 
@@ -165,7 +165,7 @@ module internal ScmRewriterConvertFaults =
                         }
                     let newCompDecl = compDecl.replaceProvPort(provPort,newProvPort);
                     do! updateSubComponentToChange newCompDecl
-                    let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                    let! convertFaultsState = getConvertFaultsState () // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
                             ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
@@ -178,7 +178,7 @@ module internal ScmRewriterConvertFaults =
                         }
                     let newCompDecl = compDecl.replaceFault(fault,newFault);                        
                     do! updateSubComponentToChange newCompDecl
-                    let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                    let! convertFaultsState = getConvertFaultsState () // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
                             ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
@@ -191,7 +191,7 @@ module internal ScmRewriterConvertFaults =
                         }
                     let newCompDecl = compDecl.replaceStep(step,newStep);                        
                     do! updateSubComponentToChange newCompDecl
-                    let! convertFaultsState = getConvertFaultsState // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
+                    let! convertFaultsState = getConvertFaultsState () // To get the updated state. TODO: Make updates to state only by accessor-functions. Then remove this.
                     let newConvertFaultsState =
                         { convertFaultsState with
                             ScmRewriterConvertFaultsState.BehaviorsToRewrite = convertFaultsState.BehaviorsToRewrite.Tail;
@@ -201,11 +201,11 @@ module internal ScmRewriterConvertFaults =
 
     
 
-    let uniteProvPortDecls  : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let uniteProvPortDecls () : ScmRewriterConvertFaultsFunction<unit> = workflow {
         //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
         
-        let! convertFaultsState = getConvertFaultsState
-        let! compDecl = getSubComponentToChange
+        let! convertFaultsState = getConvertFaultsState ()
+        let! compDecl = getSubComponentToChange ()
 
         // TODO: Assume semantics:
         //     - For every ProvPort, _exactly_ 1 ProvPortDecl without FaultExpr exists
@@ -264,10 +264,10 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }    
     
-    let uniteStep : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let uniteStep () : ScmRewriterConvertFaultsFunction<unit> = workflow {
           //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
-        let! convertFaultsState = getConvertFaultsState
-        let! compDecl = getSubComponentToChange
+        let! convertFaultsState = getConvertFaultsState ()
+        let! compDecl = getSubComponentToChange ()
             
         // TODO: Assume semantics:
         //     - _exactly_ 1 Step without FaultExpr exists
@@ -326,11 +326,11 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }
     
-    let convertFaults : ScmRewriterConvertFaultsFunction<unit> = workflow {
-        do! (iterateToFixpoint replaceFaultByPortsAndFields)
-        do! (iterateToFixpoint replaceStepFaultByCallPort)
-        do! (iterateToFixpoint uniteProvPortDecls)
-        do! uniteStep
+    let convertFaults () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+        do! (iterateToFixpoint (replaceFaultByPortsAndFields ()))
+        do! (iterateToFixpoint (replaceStepFaultByCallPort ()))
+        do! (iterateToFixpoint (uniteProvPortDecls ()))
+        do! uniteStep ()
     }
        
     let createConvertFaultsStateForRootComponent (model:ScmModel) = 
@@ -350,9 +350,9 @@ module internal ScmRewriterConvertFaults =
             convertFaultsState
             
     
-    let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
+    let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> () :
                         WorkflowFunction<'oldState,ScmRewriterConvertFaultsState,unit> = workflow {
-        let! model = getIscmModel
+        let! model = getIscmModel ()
         do! updateState (createConvertFaultsStateForRootComponent model)
-        do! convertFaults
+        do! convertFaults ()
     }

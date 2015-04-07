@@ -146,9 +146,9 @@ module internal ScmToSam =
 
     let transformIscmToSam<'state when 'state :> IScmModel<'state>>
                         : WorkflowFunction<'state,Sam.Pgm,unit> = workflow {
-        do! ScmRewriterFlattenModel.flattenModel
-        do! ScmWorkflow.iscmToScmState
-        let! model = ScmWorkflow.getScmModel
+        do! ScmRewriterFlattenModel.flattenModel ()
+        do! ScmWorkflow.iscmToScmState ()
+        let! model = ScmWorkflow.getScmModel ()
         let rootComp = match model with | Scm.ScmModel(rootComp) -> rootComp
         let newModel = transformCompDeclToPgm rootComp
         do! SamWorkflow.setSamModel newModel

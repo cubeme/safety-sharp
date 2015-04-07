@@ -42,23 +42,23 @@ module internal ScmRewriterFlattenModel =
     //  * convert delayed ports
     //  * inline behaviors
 
-    let flattenModel<'oldState when 'oldState :> IScmModel<'oldState>> :
+    let flattenModel<'oldState when 'oldState :> IScmModel<'oldState>> () :
                         WorkflowFunction<'oldState,PlainScmModel,unit> = workflow {
             /// normalize
             do! normalize
             
             // level up everything
-            do! levelUpSubcomponentsWrapper
+            do! levelUpSubcomponentsWrapper ()
             //do! assertNoSubcomponent (assertion is done as last step)
             //do! checkConsistency
             
             // convert faults
-            do! convertFaultsWrapper
+            do! convertFaultsWrapper ()
             //do! assertNoFault
             //do! checkConsistency
             
             // convert delayed bindings            
-            do! convertDelayedBindingsWrapper
+            do! convertDelayedBindingsWrapper ()
             //do! checkConsistency
 
             // inline everything beginning with the main step
@@ -67,7 +67,7 @@ module internal ScmRewriterFlattenModel =
             //do! checkConsistency
 
             //do! iscmToScmState
-            do! iscmToPlainModelState
+            do! iscmToPlainModelState ()
         }
 
 
