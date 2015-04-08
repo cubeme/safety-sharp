@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Models
 
-type internal IModel<'variable when 'variable : comparison> =
+type internal IModel<'traceable when 'traceable: comparison> =
     interface
-        abstract getStateVars : 'variable list
+        abstract getTraceables : 'traceable list
     end

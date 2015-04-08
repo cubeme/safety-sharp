@@ -250,10 +250,11 @@ module internal ScmToString =
         writer.ToString ()
         
     open SafetySharp.Workflow
-
-    let modelToStringWorkflow () : WorkflowFunction<ScmModel,string,unit> = workflow {
-        let! model = getState
+    
+    let modelToStringWorkflow () : ExogenousWorkflowFunction<ScmModel,string,_,_,unit,unit> = workflow {
+        let! model = getState ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let asString = toString rootComp
         do! updateState asString
+        do! removeTraceables ()
     }

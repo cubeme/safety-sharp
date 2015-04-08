@@ -177,14 +177,17 @@ module internal SamParser =
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmWorkflow
 
-    let parseStringWorkflow : WorkflowFunction<string,Pgm,unit> = workflow {
+    let parseStringWorkflow : LoadWorkflowFunction<string,Pgm,Traceable,unit> = workflow {
         let parseWithParser parser str =
             match run parser str with
             | Success(result, _, _)   -> result
             | Failure(errorMsg, _, _) -> failwith errorMsg
 
             
-        let! model = SafetySharp.Workflow.getState
+        let! model = SafetySharp.Workflow.getState ()
         let parsedModel = parseWithParser (samFile .>> eof) model
         do! SafetySharp.Workflow.updateState parsedModel
+        let traceables = parsedModel.getTraceables
+        do! SafetySharp.Workflow.initializeTracer traceables
+        return ()
     }

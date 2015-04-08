@@ -53,9 +53,9 @@ module internal ScmRewriterInlineBehavior =
     }
         with
             interface IScmModel<ScmRewriterInlineBehaviorState> with
-                member this.getStateVars =
-                    let imodel = this.Model :> IModel<StateVar>
-                    imodel.getStateVars
+                member this.getTraceables =
+                    let imodel = this.Model :> IModel<Traceable>
+                    imodel.getTraceables
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -70,16 +70,17 @@ module internal ScmRewriterInlineBehavior =
 
             
                 
-    type ScmRewriterInlineBehaviorFunction<'returnType> = WorkflowFunction<ScmRewriterInlineBehaviorState,ScmRewriterInlineBehaviorState,'returnType>
+    type ScmRewriterInlineBehaviorFunction<'traceableOfOrigin,'returnType> =
+        EndogenousWorkflowFunction<ScmRewriterInlineBehaviorState,'traceableOfOrigin,Traceable,'returnType>
 
     
-    let getInlineBehaviorState () : ScmRewriterInlineBehaviorFunction<ScmRewriterInlineBehaviorStateConcreteBehavior option> = workflow {
-        let! state = getState
+    let getInlineBehaviorState () : ScmRewriterInlineBehaviorFunction<_,ScmRewriterInlineBehaviorStateConcreteBehavior option> = workflow {
+        let! state = getState ()
         return state.ConcreteBehavior
     }
 
-    let updateConcreteBehavior (concreteBehavior:ScmRewriterInlineBehaviorStateConcreteBehavior) : ScmRewriterInlineBehaviorFunction<unit> = workflow {
-        let! state = getState
+    let updateConcreteBehavior (concreteBehavior:ScmRewriterInlineBehaviorStateConcreteBehavior) : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
+        let! state = getState ()
         let newState =
             { state with
                 ScmRewriterInlineBehaviorState.ConcreteBehavior = Some(concreteBehavior);
@@ -87,8 +88,8 @@ module internal ScmRewriterInlineBehavior =
         do! updateState newState
     }
     
-    let removeInlineBehaviorState () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
-        let! state = getState
+    let removeInlineBehaviorState () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
+        let! state = getState ()
         let newState =
             { state with
                 ScmRewriterInlineBehaviorState.ConcreteBehavior = None;
@@ -100,8 +101,8 @@ module internal ScmRewriterInlineBehavior =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inline Behavior
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let findInlineBehavior () : ScmRewriterInlineBehaviorFunction<unit> = workflow {    
-        let! state = getState        
+    let findInlineBehavior () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {    
+        let! state = getState ()
         let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
         let compPath = [rootComp.Comp]
 
@@ -187,7 +188,7 @@ module internal ScmRewriterInlineBehavior =
                     do! updateConcreteBehavior rewriterInlineBehavior
         }
     
-    let findCallToInline () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+    let findCallToInline () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
         let! inlineBehavior=getInlineBehaviorState ()
         if (inlineBehavior.IsNone) then
                 return ()
@@ -225,7 +226,7 @@ module internal ScmRewriterInlineBehavior =
                             do! updateConcreteBehavior newInlineBehavior
         }
 
-    let inlineCall () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+    let inlineCall () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
         let! inlineBehavior=getInlineBehaviorState ()
         if (inlineBehavior.IsNone) then
             return ()
@@ -248,7 +249,7 @@ module internal ScmRewriterInlineBehavior =
                     | Stm.StepFault (fault) ->
                         failwith "BUG: In this phase Stm.StepFault should not be in any statement"; return ()
                     | Stm.CallPort (reqPort,_params) ->
-                        let! state = getState
+                        let! state = getState ()
                         let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
                         let binding = rootComp.getBindingOfLocalReqPort reqPort
                         if binding.Kind= BndKind.Delayed then
@@ -360,7 +361,7 @@ module internal ScmRewriterInlineBehavior =
                             do! updateConcreteBehavior newRewriterInlineBehavior
     }   
 
-    let inlineBehavior () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+    let inlineBehavior () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
         // Assert: only inline statements in the root-component
 
         do! (iterateToFixpoint (workflow {
@@ -369,9 +370,9 @@ module internal ScmRewriterInlineBehavior =
         }))
     }
 
-    let writeBackChangedBehavior () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+    let writeBackChangedBehavior () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
         // Assert: only inline statements in the root-component 
-        let! state = getState
+        let! state = getState ()
         let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
         let! inlineBehavior=getInlineBehaviorState ()
         if (inlineBehavior.IsNone) then
@@ -404,14 +405,14 @@ module internal ScmRewriterInlineBehavior =
 
 
         
-    let findAndInlineBehavior () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+    let findAndInlineBehavior () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
         // Assert: only inline statements in the root-component
         do! findInlineBehavior ()            
         do! inlineBehavior ()
         do! writeBackChangedBehavior ()
     }
 
-    let inlineBehaviors () : ScmRewriterInlineBehaviorFunction<unit> = workflow {
+    let inlineBehaviors () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {
         do! (iterateToFixpoint (findAndInlineBehavior ()))
     }
 
@@ -425,9 +426,9 @@ module internal ScmRewriterInlineBehavior =
 
 
 
-    let inlineBehaviorsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> :
-                        WorkflowFunction<'oldState,ScmRewriterInlineBehaviorState,unit> = workflow {
-        let! state = getState
+    let inlineBehaviorsWrapper<'oldState when 'oldState :> IScmModel<'oldState>>
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState,_,Traceable,Traceable,unit> = workflow {
+        let! state = getState ()
         do! updateState (createInlineBehaviorState state.getModel)
         do! inlineBehaviors ()
     }

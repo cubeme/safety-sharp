@@ -73,9 +73,9 @@ module internal ScmRewriterConvertDelayedBindings =
     }
         with
             interface IScmModel<ScmRewriterConvertDelayedBindingsState> with
-                member this.getStateVars =
-                    let imodel = this.Model :> IModel<StateVar>
-                    imodel.getStateVars
+                member this.getTraceables =
+                    let imodel = this.Model :> IModel<Traceable>
+                    imodel.getTraceables
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -94,10 +94,11 @@ module internal ScmRewriterConvertDelayedBindings =
                         ScmRewriterConvertDelayedBindingsState.TakenNames = takenNames
                     }
     
-    type ScmRewriterConvertDelayedBindingsFunction<'returnType> = WorkflowFunction<ScmRewriterConvertDelayedBindingsState,ScmRewriterConvertDelayedBindingsState,'returnType>
+    type ScmRewriterConvertDelayedBindingsFunction<'traceableOfOrigin,'returnType> =
+        EndogenousWorkflowFunction<ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,'returnType>
     
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
-                : ScmRewriterConvertDelayedBindingsFunction<Map<Var,Field>> = workflow {
+                : ScmRewriterConvertDelayedBindingsFunction<_,Map<Var,Field>> = workflow {
         let varList = provPortDecl.Params |> List.map (fun param -> param.Var )
         let fieldNamesBasedOn = varList |> List.map (fun var -> sprintf "%s_%s" fieldNamePrefix var.getName)
         let! newFieldList = getUnusedFieldNames fieldNamesBasedOn
@@ -117,7 +118,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return  varToFieldMap
     }
 
-    let createPreStepOfProvPort (fieldNamePrefix:string)  (provPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
+    let createPreStepOfProvPort (fieldNamePrefix:string)  (provPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) : ScmRewriterConvertDelayedBindingsFunction<_,unit> = workflow {
         let varListOfBeh = provPortDecl.Behavior.Locals |> List.map (fun param -> param.Var )
         let newVarNamesOfBehBasedOn = varListOfBeh |> List.map (fun var -> sprintf "preStepVar_%s_%s" fieldNamePrefix var.getName)
         let! newVarsForBeh = getUnusedVarNames newVarNamesOfBehBasedOn
@@ -152,7 +153,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
     
-    let createReflectionOfProvPort (oldProvPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {        
+    let createReflectionOfProvPort (oldProvPortDecl:ProvPortDecl) (varToNewFieldMap:Map<Var,Field>) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<_,unit> = workflow {
         let assignments =
             varToNewFieldMap |> Map.toList
                              |> List.map (fun (var,field)-> Stm.AssignVar(var,Expr.ReadField(field)))
@@ -175,7 +176,7 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
 
-    let replaceDelayedBinding (bndDecl:BndDecl) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
+    let replaceDelayedBinding (bndDecl:BndDecl) (newProvPort:ProvPort) : ScmRewriterConvertDelayedBindingsFunction<_,unit> = workflow {
         let! compDecl = getSubComponentToChange ()
         let newBndSource =
             {
@@ -193,8 +194,8 @@ module internal ScmRewriterConvertDelayedBindings =
         return ()
     }
 
-    let findProvPortOfDelayedBinding (bndDecl:BndDecl) : ScmRewriterConvertDelayedBindingsFunction<ProvPortDecl> = workflow {
-        let! state = getState
+    let findProvPortOfDelayedBinding (bndDecl:BndDecl) : ScmRewriterConvertDelayedBindingsFunction<_,ProvPortDecl> = workflow {
+        let! state = getState ()
         // Use As1
         let location = state.PathOfChangingSubcomponent
         let! changingSubComponent = getSubComponentToChange ()
@@ -206,8 +207,8 @@ module internal ScmRewriterConvertDelayedBindings =
         return provPortDecl
     }
         
-    let convertDelayedBinding () : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
-        let! state = getState
+    let convertDelayedBinding () : ScmRewriterConvertDelayedBindingsFunction<_,unit> = workflow {
+        let! state = getState ()
         let! changingSubComponent = getSubComponentToChange ()
         let bindingToConvert =
             // Use As2
@@ -228,8 +229,8 @@ module internal ScmRewriterConvertDelayedBindings =
                 return ()
     }
     
-    let selectRootComponentForConvertingDelayedBindings<'oldState when 'oldState :> IScmModel<'oldState>> () :
-                        WorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,unit> = workflow {
+    let selectRootComponentForConvertingDelayedBindings<'oldState when 'oldState :> IScmModel<'oldState>> () 
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,_,Traceable,Traceable,unit> = workflow {
         // Use As1
         let! model = getIscmModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
@@ -242,12 +243,12 @@ module internal ScmRewriterConvertDelayedBindings =
         do! updateState newState
     }
         
-    let convertDelayedBindings () : ScmRewriterConvertDelayedBindingsFunction<unit> = workflow {
+    let convertDelayedBindings () : ScmRewriterConvertDelayedBindingsFunction<_,unit> = workflow {
         do! (iterateToFixpoint (convertDelayedBinding()))
     }
 
-    let convertDelayedBindingsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> () :
-                        WorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,unit> = workflow {
+    let convertDelayedBindingsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,_,Traceable,Traceable,unit> = workflow {
         do! selectRootComponentForConvertingDelayedBindings ()
         do! convertDelayedBindings ()
     }

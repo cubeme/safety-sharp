@@ -112,8 +112,17 @@ module internal Sam =
         Type : Type
     }
 
+    type internal Traceable = Var
+
     type internal Pgm = {
         Globals : GlobalVarDecl list
         Locals : LocalVarDecl list
         Body : Stm
     }
+            with
+                interface IModel<Traceable> with
+                    member this.getTraceables : Traceable list =
+                        this.Globals |> List.map (fun gl -> gl.Var)
+                member this.getTraceables : Traceable list  =
+                    let imodel = this :> IModel<Traceable>
+                    imodel.getTraceables

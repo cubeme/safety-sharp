@@ -3,7 +3,7 @@
 # Example 1 (without trace)
 
 ```    
-    let ex1InitialValue_int (initialValue:int) : LoadWorkflowFunction<int,_,_,unit> = workflow {
+    let ex1InitialValue_int (initialValue:int) : LoadWorkflowFunction<_,int,_,unit> = workflow {
         do! updateState initialValue
     }
     
@@ -72,7 +72,7 @@
 # Example 2 (with trace)
 
 ```
-    let ex2InitialValue_int (initialValue:int) : LoadWorkflowFunction<int,_,_,unit> = workflow {
+    let ex2InitialValue_int (initialValue:int) : LoadWorkflowFunction<_,int,_,unit> = workflow {
         do! updateState initialValue
         do! initializeTracer ([initialValue])
     }

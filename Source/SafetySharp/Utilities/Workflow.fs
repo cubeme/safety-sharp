@@ -81,10 +81,15 @@ module internal Workflow =
     type InitialWorkflowFunction<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType> =
         WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>
 
+    // SimpleWorkflowFunction:
+    //    These workflow functions only use unit as placeholder for tracing.
+    type SimpleWorkflowFunction<'oldState,'newState,'returnType> =
+        WorkflowFunction<'oldState,'newState,unit,unit,unit,unit,'returnType>
+
     // LoadWorkflowFunction:
     //    These workflow functions a
-    type LoadWorkflowFunction<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType> =
-        WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>
+    type LoadWorkflowFunction<'oldstate,'newState,'traceable,'returnType> =
+        WorkflowFunction<'oldstate,'newState,unit,'traceable,unit,'traceable,'returnType>
 
     // EndogenousWorkflowFunction:
     //    These workflow functions keep the type of the state and also of the tracer.
@@ -169,6 +174,26 @@ module internal Workflow =
                         let newTracer (toTrace:'traceableOfOrigin) =
                             let toOldTraceEnd = wfState.ForwardTracer toTrace
                             intermediateForwardTracer toOldTraceEnd
+                        newTracer;
+                    WorkflowState.StepNumber = wfState.StepNumber;
+                    WorkflowState.StepName = wfState.StepName;
+                    WorkflowState.Log = wfState.Log;
+                    WorkflowState.CancellationToken = wfState.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
+                }
+            (),newWfState            
+        WorkflowFunction(behavior)
+
+    let removeTraceables<'state,'traceableOfOrigin,'oldTraceableOfState> ()
+                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfOrigin,'oldTraceableOfState,unit,unit> =
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State;
+                    WorkflowState.TraceablesOfOrigin = wfState.TraceablesOfOrigin;
+                    WorkflowState.ForwardTracer =
+                        let newTracer (toTrace:'traceableOfOrigin) : unit =
+                            ()
                         newTracer;
                     WorkflowState.StepNumber = wfState.StepNumber;
                     WorkflowState.StepName = wfState.StepName;

@@ -38,33 +38,30 @@ module internal ScmRewriterBase =
             abstract getPathOfChangingSubcomponent : CompPath
             abstract setPathOfChangingSubcomponent : CompPath -> 'state
         end
-
         
-    type IScmChangeSubcomponentWorkflowFunction<'state,'returnType when 'state :> IScmModel<'state>
-                                                                    and 'state :> IScmChangeSubcomponent<'state>> =
-        WorkflowFunction<'state,
-                         'state,
-                         'returnType>
+    type IScmChangeSubcomponentWorkflowFunction<'state,'traceableOfOrigin,'returnType when 'state :> IScmModel<'state>
+                                                                                       and 'state :> IScmChangeSubcomponent<'state>> =
+        EndogenousWorkflowFunction<'state,'traceableOfOrigin,Traceable,'returnType>
                  
-    let getSubComponentToChange () : IScmChangeSubcomponentWorkflowFunction<_,CompDecl> = workflow {
-        let! model = getState
+    let getSubComponentToChange () : IScmChangeSubcomponentWorkflowFunction<_,_,CompDecl> = workflow {
+        let! model = getState ()
         let rootComp = match model.getModel with | ScmModel(rootComp) -> rootComp
         let path = model.getPathOfChangingSubcomponent
         return (rootComp.getDescendantUsingPath path)
     }
                 
     // example with exact type annotation without workflow-surrounding (also easily implementable with workflow {})
-    let getPathOfSubComponentToChange ()  : IScmChangeSubcomponentWorkflowFunction<_,CompPath> =
+    let getPathOfSubComponentToChange ()  : IScmChangeSubcomponentWorkflowFunction<_,_,CompPath> =
         let getPathOfSubComponentToChange
-                (workflowState : WorkflowState<'state> )
-                    : (CompPath * (WorkflowState<'state>))
+                (workflowState : WorkflowState<'state,_,_> )
+                    : (CompPath * (WorkflowState<'state,_,_>))
                 when 'state :> IScmModel<'state> and 'state :> IScmChangeSubcomponent<'state> =
             let state = workflowState.State
             (state.getPathOfChangingSubcomponent,workflowState)
         WorkflowFunction (getPathOfSubComponentToChange)
 
-    let updateSubComponentToChange (updatedSubComponent:CompDecl) : IScmChangeSubcomponentWorkflowFunction<_,unit> = workflow {
-        let! state = getState
+    let updateSubComponentToChange (updatedSubComponent:CompDecl) : IScmChangeSubcomponentWorkflowFunction<_,_,unit> = workflow {
+        let! state = getState ()
         let rootComp = match state.getModel with | ScmModel(rootComp) -> rootComp
         let path = state.getPathOfChangingSubcomponent
         let newRootComp = rootComp.replaceDescendant path updatedSubComponent
@@ -83,14 +80,12 @@ module internal ScmRewriterBase =
             abstract setTakenNames : Set<string> -> 'state //must be implemented by every state
         end
                  
-    type IFreshNameDepotWorkflowFunction<'state,'returnType when 'state :> IScmModel<'state>
-                                                             and 'state :> IFreshNameDepot<'state>> =
-        WorkflowFunction<'state,
-                         'state,
-                         'returnType>
+    type IFreshNameDepotWorkflowFunction<'state,'traceableOfOrigin,'returnType when 'state :> IScmModel<'state>
+                                                                                and 'state :> IFreshNameDepot<'state>> =
+        EndogenousWorkflowFunction<'state,'traceableOfOrigin,Traceable,'returnType>
 
-    let getCompletlyFreshName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,string> = workflow {
-            let! state = getState
+    let getCompletlyFreshName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,string> = workflow {
+            let! state = getState ()
             let newName = 
                 let existsName (nameCandidate:string) : bool =
                     state.getTakenNames.Contains nameCandidate
@@ -111,34 +106,34 @@ module internal ScmRewriterBase =
             return newName
         }
 
-    let getUnusedFieldName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,Field> = workflow {
+    let getUnusedFieldName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,Field> = workflow {
             let! name = getCompletlyFreshName basedOn
             return Field(name)
         }
 
-    let getUnusedFaultName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,Fault> = workflow {
+    let getUnusedFaultName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,Fault> = workflow {
             let! name = getCompletlyFreshName basedOn
             return Fault.Fault(name)
         }
             
-    let getUnusedReqPortName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,ReqPort> = workflow {
+    let getUnusedReqPortName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,ReqPort> = workflow {
             let! name = getCompletlyFreshName basedOn
             return ReqPort(name)
         }
 
-    let getUnusedProvPortName  (basedOn:string) : IFreshNameDepotWorkflowFunction<_,ProvPort> = workflow {
+    let getUnusedProvPortName  (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,ProvPort> = workflow {
             let! name = getCompletlyFreshName basedOn
             return ProvPort(name)
         }
         
-    let getUnusedVarName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,Var> = workflow {
+    let getUnusedVarName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,Var> = workflow {
             let! name = getCompletlyFreshName basedOn
             return Var(name)
         }
 
-    let getUnusedVarNames (basedOn:string list) : IFreshNameDepotWorkflowFunction<_,Var list> =
-        let newUnusedVarNames (workflowState:WorkflowState<'state>)
-                               : (Var list * WorkflowState<'state>)
+    let getUnusedVarNames (basedOn:string list) : IFreshNameDepotWorkflowFunction<_,_,Var list> =
+        let newUnusedVarNames (workflowState:WorkflowState<'state,_,_>)
+                               : (Var list * WorkflowState<'state,_,_>)
                 when 'state :> IScmModel<'state> and 'state :> IFreshNameDepot<'state> =
             let mutable varState = workflowState
             let mutable newVars = []
@@ -150,10 +145,10 @@ module internal ScmRewriterBase =
         WorkflowFunction (newUnusedVarNames)
 
 
-    let getUnusedFieldNames (basedOn:string list) : IFreshNameDepotWorkflowFunction<_,Field list> =
+    let getUnusedFieldNames (basedOn:string list) : IFreshNameDepotWorkflowFunction<_,_,Field list> =
 
-        let newUnusedFieldNames (workflowState:WorkflowState<'state>)
-                : (Field list * WorkflowState<'state>)
+        let newUnusedFieldNames (workflowState:WorkflowState<'state,_,_>)
+                : (Field list * WorkflowState<'state,_,_>)
                 when 'state :> IScmModel<'state> and 'state :> IFreshNameDepot<'state> =
 
             let mutable varState = workflowState
@@ -172,7 +167,7 @@ module internal ScmRewriterBase =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Check Consistency
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let checkConsistency<'state> : WorkflowFunction<'state,'state,bool> = workflow {
+    let checkConsistency<'state> : EndogenousWorkflowFunction<'state,_,Traceable,bool> = workflow {
             return true
         }
     

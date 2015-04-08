@@ -190,23 +190,26 @@ module internal Scm =
         Steps : StepDecl list
     }
 
-    type StateVar = // this is necessary for tracing of changes
-        | StateField of CompPath * Field
-        | StateFault of CompPath * Fault
+    type Traceable = // this is necessary for tracing of changes
+        | TraceableField of CompPath * Field
+        | TraceableFault of CompPath * Fault
 
     type internal ScmModel =
         ScmModel of CompDecl
             with
-                interface IModel<StateVar> with
-                    member this.getStateVars : StateVar list =
-                        let rec collectGlobalVariables (parentPath:CompPath) (currentCompDecl:CompDecl) : StateVar list =
+                interface IModel<Traceable> with
+                    member this.getTraceables : Traceable list =
+                        let rec collectGlobalVariables (parentPath:CompPath) (currentCompDecl:CompDecl) : Traceable list =
                             let currentPath = (currentCompDecl.Comp)::parentPath
                             let varsFromSubs = currentCompDecl.Subs |> List.collect (collectGlobalVariables currentPath)
                             let varsFromHere =
-                                let varsFromFields = currentCompDecl.Fields |> List.map (fun field -> StateVar.StateField(currentPath,field.Field) )
-                                let varsFromFaults = currentCompDecl.Faults |> List.map (fun fault -> StateVar.StateFault(currentPath,fault.Fault) )
+                                let varsFromFields = currentCompDecl.Fields |> List.map (fun field -> Traceable.TraceableField(currentPath,field.Field) )
+                                let varsFromFaults = currentCompDecl.Faults |> List.map (fun fault -> Traceable.TraceableFault(currentPath,fault.Fault) )
                                 (varsFromFields@varsFromFaults)
                             (varsFromHere@varsFromSubs)
                         let rootComponent = this.getRootComp
                         collectGlobalVariables []  (rootComponent)
+                member this.getTraceables : Traceable list  =
+                    let imodel = this :> IModel<Traceable>
+                    imodel.getTraceables
                 member model.getRootComp = match model with | ScmModel(rootComp) -> rootComp

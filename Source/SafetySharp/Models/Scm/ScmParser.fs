@@ -710,8 +710,8 @@ module internal ScmParser =
     
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmWorkflow
-
-    let parseStringWorkflow () : WorkflowFunction<string,Scm.ScmModel,unit> = workflow {
+    
+    let parseStringWorkflow () : LoadWorkflowFunction<string,Scm.ScmModel,Traceable,unit> = workflow {
         
         let runWithUserState parser str = runParserOnString parser UserState.initialUserState "" str
 
@@ -720,7 +720,11 @@ module internal ScmParser =
             | Success(result, _, _)   -> result
             | Failure(errorMsg, a, b) -> failwith errorMsg
             
-        let! model = SafetySharp.Workflow.getState
+        let! model = SafetySharp.Workflow.getState ()
         let rootComp = parseWithParser (scmFile .>> eof) model
-        do! SafetySharp.Workflow.updateState (ScmModel(rootComp))        
+        let scmModel = ScmModel(rootComp)
+        do! SafetySharp.Workflow.updateState scmModel
+        let traceables = scmModel.getTraceables
+        do! SafetySharp.Workflow.initializeTracer traceables
+        return ()
     }

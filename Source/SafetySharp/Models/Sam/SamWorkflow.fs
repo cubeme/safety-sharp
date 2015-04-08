@@ -24,10 +24,14 @@ namespace SafetySharp.Models
 
 module internal SamWorkflow =
     open SafetySharp.Workflow
+        
+    type SamWorkflowFunction<'traceableOfOrigin,'returnType> =
+        EndogenousWorkflowFunction<Sam.Pgm,'traceableOfOrigin,Sam.Traceable,'returnType>
             
-    let getSamModel : WorkflowFunction<Sam.Pgm,Sam.Pgm,Sam.Pgm> =
-        getState
+    let getSamModel () : SamWorkflowFunction<_,Sam.Pgm> =
+        getState ()
     
-    let setSamModel<'oldIrrelevantState> (model:Sam.Pgm) : WorkflowFunction<'oldIrrelevantState,Sam.Pgm,unit> = workflow {
+    let setSamModel<'oldIrrelevantState,'traceable> (model:Sam.Pgm)
+            : ExogenousWorkflowFunction<'oldIrrelevantState,Sam.Pgm,_,'traceable,'traceable,unit> = workflow {
         do! updateState model
     }

@@ -30,7 +30,7 @@ module internal ScmRewriterNormalize =
     open SafetySharp.Workflow
     open ScmWorkflow
     
-    let createEmptySteps<'state when 'state :> IScmModel<'state>> () : WorkflowFunction<'state,'state,_> = workflow {
+    let createEmptySteps () : IScmModelWorkflowFunction<_,_,_> = workflow {
         let! model = getIscmModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let emptyStep =
@@ -58,6 +58,6 @@ module internal ScmRewriterNormalize =
         do! setIscmModel (ScmModel(newCompDecl rootComp))
     }
     
-    let normalize<'state when 'state :> IScmModel<'state>> : WorkflowFunction<'state,'state,_> = workflow {
+    let normalize () : IScmModelWorkflowFunction<_,_,_> = workflow {
         do! createEmptySteps ()
     }

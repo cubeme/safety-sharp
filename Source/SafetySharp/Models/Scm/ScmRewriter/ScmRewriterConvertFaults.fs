@@ -43,9 +43,9 @@ module internal ScmRewriterConvertFaults =
     }
         with
             interface IScmModel<ScmRewriterConvertFaultsState> with
-                member this.getStateVars =
-                    let imodel = this.Model :> IModel<StateVar>
-                    imodel.getStateVars
+                member this.getTraceables =
+                    let imodel = this.Model :> IModel<Traceable>
+                    imodel.getTraceables
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -65,14 +65,15 @@ module internal ScmRewriterConvertFaults =
                     }
 
 
-    type ScmRewriterConvertFaultsFunction<'returnType> = WorkflowFunction<ScmRewriterConvertFaultsState,ScmRewriterConvertFaultsState,'returnType>
+    type ScmRewriterConvertFaultsFunction<'traceableOfOrigin,'returnType>  =
+        EndogenousWorkflowFunction<ScmRewriterConvertFaultsState,'traceableOfOrigin,Traceable,'returnType>
     
 
     
-    let getConvertFaultsState () : ScmRewriterConvertFaultsFunction<ScmRewriterConvertFaultsState> = 
-        getState
+    let getConvertFaultsState () : ScmRewriterConvertFaultsFunction<_,ScmRewriterConvertFaultsState> = 
+        getState ()
 
-    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaultsState) : ScmRewriterConvertFaultsFunction<unit> = 
+    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaultsState) : ScmRewriterConvertFaultsFunction<_,unit> = 
         updateState newConvertFaults
 
 
@@ -84,7 +85,7 @@ module internal ScmRewriterConvertFaults =
     
 
     
-    let replaceFaultByPortsAndFields () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let replaceFaultByPortsAndFields () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
         let! convertFaultsState = getConvertFaultsState ()
         let! compDecl = getSubComponentToChange ()
         if compDecl.Faults = [] then
@@ -141,7 +142,7 @@ module internal ScmRewriterConvertFaults =
             do! updateConvertFaultsState newConvertFaultsState
     }
 
-    let replaceStepFaultByCallPort () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let replaceStepFaultByCallPort () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
         let! convertFaultsState = getConvertFaultsState ()
 
         if convertFaultsState.BehaviorsToRewrite.IsEmpty then
@@ -201,7 +202,7 @@ module internal ScmRewriterConvertFaults =
 
     
 
-    let uniteProvPortDecls () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let uniteProvPortDecls () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
         //for each ProvPort: replace all ProvPortDecls with the same ProvPort with one ProvPortDecl: Make a guarded command, which differentiates between the different faults
         
         let! convertFaultsState = getConvertFaultsState ()
@@ -264,7 +265,7 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }    
     
-    let uniteStep () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let uniteStep () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
           //for each StepDecl: replace all StepDecls one StepDecl: Make a guarded command, which differentiates between the different faults
         let! convertFaultsState = getConvertFaultsState ()
         let! compDecl = getSubComponentToChange ()
@@ -326,7 +327,7 @@ module internal ScmRewriterConvertFaults =
             do! updateSubComponentToChange newCompDecl
     }
     
-    let convertFaults () : ScmRewriterConvertFaultsFunction<unit> = workflow {
+    let convertFaults () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
         do! (iterateToFixpoint (replaceFaultByPortsAndFields ()))
         do! (iterateToFixpoint (replaceStepFaultByCallPort ()))
         do! (iterateToFixpoint (uniteProvPortDecls ()))
@@ -350,8 +351,8 @@ module internal ScmRewriterConvertFaults =
             convertFaultsState
             
     
-    let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> () :
-                        WorkflowFunction<'oldState,ScmRewriterConvertFaultsState,unit> = workflow {
+    let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState,_,Traceable,Traceable,unit> = workflow {
         let! model = getIscmModel ()
         do! updateState (createConvertFaultsStateForRootComponent model)
         do! convertFaults ()

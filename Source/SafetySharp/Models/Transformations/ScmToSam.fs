@@ -138,19 +138,35 @@ module internal ScmToSam =
             Sam.Pgm.Body = stm;
         }
 
+    let createForwardTracingMap (scmModel:Scm.CompDecl) (samModel:Sam.Pgm): Map<Scm.Traceable,Sam.Traceable> =
+        // assume fields are in the same order as global vars
+        let toTraceable (field:Scm.FieldDecl,gl:Sam.GlobalVarDecl) =
+            let scmTraceable =
+                Scm.TraceableField( [scmModel.Comp] , field.Field)
+            let samTraceable =
+               gl.Var
+            (scmTraceable,samTraceable)        
+        List.zip (scmModel.Fields) (samModel.Globals)
+            |> List.map toTraceable
+            |> Map.ofList
+
     ////////////////////////////////////////////////
             
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmWorkflow
     open SafetySharp.Models.SamWorkflow
 
-    let transformIscmToSam<'state when 'state :> IScmModel<'state>>
-                        : WorkflowFunction<'state,Sam.Pgm,unit> = workflow {
+    let transformIscmToSam<'oldState when 'oldState :> IScmModel<'oldState>>
+                        : ExogenousWorkflowFunction<'oldState,Sam.Pgm,_,Scm.Traceable,Sam.Traceable,unit> = workflow {
         do! ScmRewriterFlattenModel.flattenModel ()
         do! ScmWorkflow.iscmToScmState ()
         let! model = ScmWorkflow.getScmModel ()
         let rootComp = match model with | Scm.ScmModel(rootComp) -> rootComp
         let newModel = transformCompDeclToPgm rootComp
         do! SamWorkflow.setSamModel newModel
+        
+        let mapInClosure = createForwardTracingMap model.getRootComp newModel
+        let intermediateTracer (oldValue:Scm.Traceable) = mapInClosure.Item oldValue
+        do! updateTracer intermediateTracer
     }
 
