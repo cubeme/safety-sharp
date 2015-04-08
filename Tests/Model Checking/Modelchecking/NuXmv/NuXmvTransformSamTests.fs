@@ -46,7 +46,8 @@ module SamToNuXmvTests =
         let workflowToExecute = workflow {
                 do! readFile inputFile
                 do! SafetySharp.Models.SamParser.parseStringWorkflow
-                do! SafetySharp.Models.SamToTsam.transformSamToTsam
+                do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+                do! removeAllTraceables ()
                 do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
                 do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow
                 do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow

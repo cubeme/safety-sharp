@@ -33,26 +33,28 @@ module internal TransformationsTestHelpersWorkflowModule =
     let internal readInputFileAndTransformToSsa (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
-            do! SafetySharp.Models.SamToTsam.transformSamToTsam
+            do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
 
-            do! SafetySharp.Workflow.printObjectToStdout
-            do! SafetySharp.Workflow.printNewParagraphToConsole
+            do! SafetySharp.Workflow.printObjectToStdout ()
+            do! SafetySharp.Workflow.printNewParagraphToConsole ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow
-            do! SafetySharp.Workflow.printToStdout
+            do! SafetySharp.Workflow.printToStdout ()
     }
 
 
     let internal readInputFileAndTransformToPassiveForm (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
-            do! SafetySharp.Models.SamToTsam.transformSamToTsam
+            do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
 
-            do! SafetySharp.Workflow.printObjectToStdout
-            do! SafetySharp.Workflow.printNewParagraphToConsole
+            do! SafetySharp.Workflow.printObjectToStdout ()
+            do! SafetySharp.Workflow.printNewParagraphToConsole ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow
-            do! SafetySharp.Workflow.printToStdout
+            do! SafetySharp.Workflow.printToStdout ()
     }
 
 [<TestFixture>]

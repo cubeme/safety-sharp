@@ -32,7 +32,8 @@ module BoogieSmokeTests =
     let internal smokeTestWorkflow (inputFile:string) = workflow {    
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
-            do! SafetySharp.Models.SamToTsam.transformSamToTsam
+            do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+            do! removeAllTraceables ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf
             do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf
             //let filename = sprintf "%s.bpl" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName

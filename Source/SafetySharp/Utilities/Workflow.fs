@@ -203,6 +203,23 @@ module internal Workflow =
                 }
             (),newWfState            
         WorkflowFunction(behavior)
+
+    let removeAllTraceables<'state,'traceableOfOrigin,'oldTraceableOfState> ()
+                : WorkflowFunction<'state,'state,'traceableOfOrigin,unit,'oldTraceableOfState,unit,unit> =
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State;
+                    WorkflowState.TraceablesOfOrigin = [];
+                    WorkflowState.ForwardTracer = id
+                    WorkflowState.StepNumber = wfState.StepNumber;
+                    WorkflowState.StepName = wfState.StepName;
+                    WorkflowState.Log = wfState.Log;
+                    WorkflowState.CancellationToken = wfState.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
+                }
+            (),newWfState            
+        WorkflowFunction(behavior)
         
     let logEntry<'state,'traceableOfOrigin,'traceableOfState> (entry:string) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =
         let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =

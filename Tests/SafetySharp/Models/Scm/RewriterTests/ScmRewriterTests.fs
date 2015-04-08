@@ -46,25 +46,29 @@ module internal ScmRewriterTestHelpers =
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
-            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration
+            do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
         }
 
 [<TestFixture>]
 type SingleLevelUpTests () =
-
+    
+    let readInputFileToScm (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+        }
             
     [<Test>]
     member this.``A simple field in a nested component gets leveled up`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let pathOfChild = Comp("nested_n22") :: Comp("nested_n2") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -93,13 +97,13 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let pathOfChild = Comp("nested_n2") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -128,13 +132,13 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/nestedComponentWithFaults1.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpFault ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -163,13 +167,13 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
         let pathOfChild = Comp("nestedRequired") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -199,13 +203,13 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
         let pathOfChild = Comp("nestedProvided") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -237,15 +241,15 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy6.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -287,14 +291,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy3.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -337,14 +341,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy4.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -386,15 +390,15 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -437,14 +441,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
         let pathOfChild = Comp("nestedProvided") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -487,14 +491,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy5.scm"""
         let pathOfChild = Comp("nestedRequired") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -537,14 +541,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
         let pathOfChild = Comp("nested2Required") :: Comp("nestedRequired") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -587,14 +591,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
         let pathOfChild = Comp("nested2Provided") :: Comp("nestedProvided") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -637,14 +641,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy8.scm"""
         let pathOfChild = Comp("nested3Required") :: Comp("nested2Required") :: Comp("nestedRequired") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -688,14 +692,14 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchy9.scm"""
         let pathOfChild = Comp("nested3Required") :: Comp("nested2Required") :: Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -739,8 +743,8 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithContracts1.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
@@ -748,7 +752,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -802,8 +806,8 @@ type SingleLevelUpTests () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
@@ -814,7 +818,7 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -872,19 +876,24 @@ type FixpointIteratorTests () =
         | Failure(errorMsg, a, b) -> failwith errorMsg
         
     let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
+    
+    let readInputFileToScm (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+        }
 
     [<Test>]
     member this.``Several fields get leveled up by using levelUpFields with the iterateToFixpoint function`` () =
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
         let pathOfChild = Comp("nested") :: Comp("simple") :: []
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! (iterateToFixpoint (ScmRewriterLevelUp.levelUpField ())) 
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }        
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -922,15 +931,20 @@ type CompleteLevelUpTests () =
         
     let parseSCM str = parseWithParser (ScmParser.scmFile .>> eof) str
     
+    let readInputFileToScm (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+        }
+
     [<Test>]
     member this.``Example nestedComponent1 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent1.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper  ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -953,11 +967,11 @@ type CompleteLevelUpTests () =
     member this.``Example nestedComponent2 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent2.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -980,11 +994,11 @@ type CompleteLevelUpTests () =
     member this.``Example nestedComponent3 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent3.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -1004,11 +1018,11 @@ type CompleteLevelUpTests () =
     member this.``Example nestedComponent4 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent4.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -1028,11 +1042,11 @@ type CompleteLevelUpTests () =
     member this.``Example nestedComponent5 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/nestedComponent5.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -1052,11 +1066,11 @@ type CompleteLevelUpTests () =
     member this.``Example callInstHierarchy2 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy2.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -1077,11 +1091,11 @@ type CompleteLevelUpTests () =
     member this.``Example callInstHierarchy7 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchy7.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -1102,11 +1116,11 @@ type CompleteLevelUpTests () =
     member this.``Example callInstFromBehWithContracts1 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstFromBehWithContracts1.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
@@ -1126,11 +1140,11 @@ type CompleteLevelUpTests () =
     member this.``Example callInstHierarchyWithFaultsAndContract1 gets leveled up completely`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaultsAndContract1.scm"""
         let workFlow = workflow {
-            do! ScmTestHelpersWorkflowModule.readInputFileToScm inputFile
-            let! oldModel = getState
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState
+            let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow

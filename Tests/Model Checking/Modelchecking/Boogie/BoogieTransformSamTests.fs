@@ -31,7 +31,8 @@ module BoogieTransformSamTests =
     let internal transformSamWorkflow (inputFile:string) = workflow {    
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
-            do! SafetySharp.Models.SamToTsam.transformSamToTsam
+            do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+            do! removeAllTraceables ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf
             do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf
     }

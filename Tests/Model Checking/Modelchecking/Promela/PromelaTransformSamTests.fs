@@ -52,7 +52,7 @@ module SamToPromelaTests =
         let inputFile = """../../Examples/SAM/simpleBoolean1.sam"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSam input
-        let promela = SamToPromela.transformConfiguration model
+        let (promela,_) = SamToPromela.transformConfiguration model
 
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString
@@ -64,7 +64,7 @@ module SamToPromelaTests =
         let inputFile = """../../Examples/SAM/smokeTest1.sam"""
         let input = System.IO.File.ReadAllText inputFile
         let model = parseSam input
-        let promela = SamToPromela.transformConfiguration model
+        let (promela,_) = SamToPromela.transformConfiguration model
 
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString

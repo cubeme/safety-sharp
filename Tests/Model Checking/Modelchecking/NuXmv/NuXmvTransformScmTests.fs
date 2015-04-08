@@ -39,10 +39,11 @@ module ScmToNuXmvTests =
     
     let internal inputFileToNuXmvAstWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
-            do! SafetySharp.Models.ScmParser.parseStringWorkflow
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState
+            do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Models.ScmToSam.transformIscmToSam
-            do! SafetySharp.Models.SamToTsam.transformSamToTsam
+            do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
+            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
             do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow
             do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow
