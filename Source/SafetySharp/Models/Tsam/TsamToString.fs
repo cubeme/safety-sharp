@@ -153,8 +153,8 @@ module internal TsamToString =
 
     open SafetySharp.Workflow
 
-    let exportModelWorkflow : WorkflowFunction<Pgm,string,unit> = workflow {
-        let! pgm = getState
+    let exportModelWorkflow : SimpleWorkflowFunction<Pgm,string,unit> = workflow {
+        let! pgm = getState ()
         let asString = exportModel pgm
         do! updateState asString
     }

@@ -168,8 +168,8 @@ module internal VcGuardWithAssignmentModel =
     open SafetySharp.Workflow
 
         
-    let transformWorkflow : WorkflowFunction<Pgm,GuardWithAssignmentModel,unit> = workflow {
-        let! model = getState
+    let transformWorkflow : SimpleWorkflowFunction<Pgm,GuardWithAssignmentModel,unit> = workflow {
+        let! model = getState ()
         let transformedModel = transformPgmToGuardWithFinalAssignmentModel model
         do! updateState transformedModel
     }

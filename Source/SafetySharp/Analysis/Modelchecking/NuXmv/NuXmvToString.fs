@@ -476,7 +476,7 @@ type internal NuXmvToString with
     static member instance : NuXmvToString =
         NuXmvToString()
 
-    static member workflow : WorkflowFunction<NuXmvProgram,string,unit> = workflow {
-        let! model = getState
+    static member workflow : SimpleWorkflowFunction<NuXmvProgram,string,unit> = workflow {
+        let! model = getState ()
         do! updateState (NuXmvToString.instance.ExportNuXmvProgram model)
     }

@@ -188,8 +188,8 @@ module internal SamToPromela =
     
     open SafetySharp.Workflow
 
-    let transformConfigurationWf : WorkflowFunction<Sam.Pgm,PrSpec,unit> = workflow {
-        let! samModel = SamWorkflow.getSamModel
+    let transformConfigurationWf : SimpleWorkflowFunction<Sam.Pgm,PrSpec,unit> = workflow {
+        let! samModel = SamWorkflow.getSamModel ()
         let newPromelaSpec = transformConfiguration samModel
         do! updateState newPromelaSpec        
     }
@@ -202,9 +202,9 @@ module internal ScmToPromela =
     open SafetySharp.Analysis.VerificationCondition
                 
     let transformConfiguration<'state when 'state :> IScmModel<'state>>
-                        : WorkflowFunction<'state,PrSpec,unit> = workflow {
-        do! SafetySharp.Models.ScmToSam.transformIscmToSam
-        let! samModel = SamWorkflow.getSamModel
+                        : SimpleWorkflowFunction<'state,PrSpec,unit> = workflow {
+        do! SafetySharp.Models.ScmToSam.transformIscmToSam ()
+        let! samModel = SamWorkflow.getSamModel ()
         let newPromelaSpec = SamToPromela.transformConfiguration samModel
         do! updateState newPromelaSpec        
     }

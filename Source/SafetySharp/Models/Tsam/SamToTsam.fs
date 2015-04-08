@@ -97,8 +97,8 @@ module internal SamToTsam =
 
     open SafetySharp.Workflow
 
-    let transformSamToTsam : WorkflowFunction<Sam.Pgm,Tsam.Pgm,unit> = workflow {
-        let! model = SafetySharp.Models.SamWorkflow.getSamModel
+    let transformSamToTsam : SimpleWorkflowFunction<Sam.Pgm,Tsam.Pgm,unit> = workflow {
+        let! model = SafetySharp.Models.SamWorkflow.getSamModel ()
         let newModel = translatePgm model
         do! updateState newModel
     }

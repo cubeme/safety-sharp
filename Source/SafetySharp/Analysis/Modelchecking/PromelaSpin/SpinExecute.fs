@@ -340,8 +340,8 @@ type internal ExecuteSpin with
         return ()
     }*)
 
-    static member runPan : WorkflowFunction<SafetySharp.FileSystem.FileName,string,unit> = workflow {
-        let! file = getState
+    static member runPan : SimpleWorkflowFunction<SafetySharp.FileSystem.FileName,string,unit> = workflow {
+        let! file = getState ()
         let (SafetySharp.FileSystem.FileName(filename)) = file
         let executeSpin = new ExecuteSpin(filename)
         let result = executeSpin.GetAllResults() |> String.concat "\n"

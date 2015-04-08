@@ -317,7 +317,7 @@ type internal PromelaToString with
     static member instance : PromelaToString =
         PromelaToString()
 
-    static member workflow : WorkflowFunction<Spec,string,unit> = workflow {
-        let! model = getState
+    static member workflow : SimpleWorkflowFunction<Spec,string,unit> = workflow {
+        let! model = getState ()
         do! updateState (PromelaToString.instance.ExportSpec 0 model)
     }

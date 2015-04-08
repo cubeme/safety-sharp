@@ -508,7 +508,7 @@ type internal ExportPrismAstToFile with
     static member instance : ExportPrismAstToFile =
         ExportPrismAstToFile()
 
-    static member workflow : WorkflowFunction<PrismModel,string,unit> = workflow {
-        let! model = getState
+    static member workflow : SimpleWorkflowFunction<PrismModel,string,unit> = workflow {
+        let! model = getState ()
         do! updateState (ExportPrismAstToFile.instance.ExportPrismModel model)
     }

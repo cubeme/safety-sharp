@@ -223,14 +223,14 @@ module internal TransitionSystemAsRelationExpr =
     // -- Workflow ----------------------------------------------------
     open SafetySharp.Workflow
 
-    let transformGwamToTsareWorkflow : WorkflowFunction<GuardWithAssignmentModel,TransitionSystem,unit> = workflow {
-        let! model = getState
+    let transformGwamToTsareWorkflow : SimpleWorkflowFunction<GuardWithAssignmentModel,TransitionSystem,unit> = workflow {
+        let! model = getState ()
         let transformed = transformGwamToTsare model
         do! updateState transformed
     }   
 
-    let transformTsamToTsareWithSpWorkflow : WorkflowFunction<Pgm,TransitionSystem,unit> = workflow {
-        let! model = getState
+    let transformTsamToTsareWithSpWorkflow : SimpleWorkflowFunction<Pgm,TransitionSystem,unit> = workflow {
+        let! model = getState ()
         let transformed = transformTsamToTsareWithSp model
         do! updateState transformed
     }
