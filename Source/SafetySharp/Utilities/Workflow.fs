@@ -183,6 +183,26 @@ module internal Workflow =
                 }
             (),newWfState            
         WorkflowFunction(behavior)
+                
+    // returns old traceables of the origin and tracer
+    let startNewTracer<'state,'traceableOfOrigin,'traceableOfState>
+                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfState,'traceableOfState,'traceableOfState,('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfState)> =
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>)
+                : (('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfState)) * (WorkflowState<'state,'traceableOfState,'traceableOfState>)  =
+            let newWfState =
+                {
+                    WorkflowState.State = wfState.State;
+                    WorkflowState.TraceablesOfOrigin =
+                        wfState.TraceablesOfOrigin |> List.map (wfState.ForwardTracer); //trace every original traceable
+                    WorkflowState.ForwardTracer = id
+                    WorkflowState.StepNumber = wfState.StepNumber;
+                    WorkflowState.StepName = wfState.StepName;
+                    WorkflowState.Log = wfState.Log;
+                    WorkflowState.CancellationToken = wfState.CancellationToken;
+                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
+                }
+            (wfState.TraceablesOfOrigin,wfState.ForwardTracer),newWfState
+        WorkflowFunction(behavior)
 
     let removeTraceables<'state,'traceableOfOrigin,'oldTraceableOfState> ()
                 : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfOrigin,'oldTraceableOfState,unit,unit> =
@@ -220,7 +240,7 @@ module internal Workflow =
                 }
             (),newWfState            
         WorkflowFunction(behavior)
-        
+                
     let logEntry<'state,'traceableOfOrigin,'traceableOfState> (entry:string) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =
         let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
             do printfn "%s" entry
