@@ -220,8 +220,8 @@ open SafetySharp.Workflow
      
 type internal ExecuteBoogie with
     
-    static member runBoogie : WorkflowFunction<SafetySharp.FileSystem.FileName,string,unit> = workflow {
-        let! file = getState
+    static member runBoogie : SimpleWorkflowFunction<SafetySharp.FileSystem.FileName,string,unit> = workflow {
+        let! file = getState ()
         let (SafetySharp.FileSystem.FileName(filename)) = file
         let executeBoogie = new ExecuteBoogie(filename)
         let result = executeBoogie.GetAllResults() |> String.concat "\n"

@@ -229,8 +229,8 @@ module internal ScmRewriterConvertDelayedBindings =
                 return ()
     }
     
-    let selectRootComponentForConvertingDelayedBindings<'oldState when 'oldState :> IScmModel<'oldState>> () 
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,_,Traceable,Traceable,unit> = workflow {
+    let selectRootComponentForConvertingDelayedBindings<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> () 
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         // Use As1
         let! model = getIscmModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
@@ -247,8 +247,8 @@ module internal ScmRewriterConvertDelayedBindings =
         do! (iterateToFixpoint (convertDelayedBinding()))
     }
 
-    let convertDelayedBindingsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,_,Traceable,Traceable,unit> = workflow {
+    let convertDelayedBindingsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         do! selectRootComponentForConvertingDelayedBindings ()
         do! convertDelayedBindings ()
     }

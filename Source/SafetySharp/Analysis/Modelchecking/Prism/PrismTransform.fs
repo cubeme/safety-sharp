@@ -168,8 +168,8 @@ module internal GwamToPrism =
         
     open SafetySharp.Workflow
     
-    let transformGwamToTsareWorkflow : WorkflowFunction<GuardWithAssignmentModel,Prism.PrismModel,unit> = workflow {
-        let! model = getState
+    let transformGwamToTsareWorkflow : SimpleWorkflowFunction<GuardWithAssignmentModel,Prism.PrismModel,unit> = workflow {
+        let! model = getState ()
         let transformed = transformGwamToPrism model
         do! updateState transformed
     }   

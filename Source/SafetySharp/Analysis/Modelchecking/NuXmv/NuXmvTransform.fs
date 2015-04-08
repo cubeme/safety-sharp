@@ -205,8 +205,8 @@ module internal VcTransitionRelationToNuXmv =
         
     open SafetySharp.Workflow
     
-    let transformTsareToNuXmvWorkflow : WorkflowFunction<TransitionSystem,NuXmvProgram,unit> = workflow {
-        let! model = getState
+    let transformTsareToNuXmvWorkflow : SimpleWorkflowFunction<TransitionSystem,NuXmvProgram,unit> = workflow {
+        let! model = getState ()
         let transformed = transformConfiguration model
         do! updateState transformed
     }

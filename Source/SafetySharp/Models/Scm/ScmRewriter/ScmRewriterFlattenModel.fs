@@ -42,8 +42,8 @@ module internal ScmRewriterFlattenModel =
     //  * convert delayed ports
     //  * inline behaviors
 
-    let flattenModel<'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,PlainScmModel,_,Traceable,Traceable,unit> = workflow {
+    let flattenModel<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,PlainScmModel,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
             /// normalize
             do! normalize ()
             

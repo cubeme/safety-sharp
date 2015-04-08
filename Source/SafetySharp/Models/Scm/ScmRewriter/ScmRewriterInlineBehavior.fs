@@ -426,8 +426,8 @@ module internal ScmRewriterInlineBehavior =
 
 
 
-    let inlineBehaviorsWrapper<'oldState when 'oldState :> IScmModel<'oldState>>
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState,_,Traceable,Traceable,unit> = workflow {
+    let inlineBehaviorsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>>
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
         do! updateState (createInlineBehaviorState state.getModel)
         do! inlineBehaviors ()

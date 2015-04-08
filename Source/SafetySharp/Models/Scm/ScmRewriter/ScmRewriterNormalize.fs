@@ -30,7 +30,7 @@ module internal ScmRewriterNormalize =
     open SafetySharp.Workflow
     open ScmWorkflow
     
-    let createEmptySteps () : IScmModelWorkflowFunction<_,_,_> = workflow {
+    let createEmptySteps<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
         let! model = getIscmModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let emptyStep =
@@ -58,6 +58,6 @@ module internal ScmRewriterNormalize =
         do! setIscmModel (ScmModel(newCompDecl rootComp))
     }
     
-    let normalize () : IScmModelWorkflowFunction<_,_,_> = workflow {
+    let normalize<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
         do! createEmptySteps ()
     }

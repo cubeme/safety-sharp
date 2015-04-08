@@ -179,7 +179,7 @@ module internal BoogieToString =
         stateAfterExport.ToString()
 
     open SafetySharp.Workflow
-    let boogieToStringWf : WorkflowFunction<Pgm,string,unit> = workflow {
-        let! model = getState
+    let boogieToStringWf : SimpleWorkflowFunction<Pgm,string,unit> = workflow {
+        let! model = getState ()
         do! updateState (exportModel model)
     }

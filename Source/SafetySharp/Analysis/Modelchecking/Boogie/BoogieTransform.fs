@@ -291,8 +291,8 @@ module internal TsamToBoogie =
     
     
     
-    let transformVcSamToBoogieWf : WorkflowFunction<Tsam.Pgm,BoogieSimplifiedAst.Pgm,unit> = workflow {
-        let! vcsamModel = getState
+    let transformVcSamToBoogieWf : SimpleWorkflowFunction<Tsam.Pgm,BoogieSimplifiedAst.Pgm,unit> = workflow {
+        let! vcsamModel = getState ()
         let newBoogieAst = transformVcSamToBoogie vcsamModel
         do! updateState newBoogieAst        
     }

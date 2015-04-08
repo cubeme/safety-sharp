@@ -351,8 +351,8 @@ module internal ScmRewriterConvertFaults =
             convertFaultsState
             
     
-    let convertFaultsWrapper<'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState,_,Traceable,Traceable,unit> = workflow {
+    let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! model = getIscmModel ()
         do! updateState (createConvertFaultsStateForRootComponent model)
         do! convertFaults ()

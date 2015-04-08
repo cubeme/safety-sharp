@@ -37,13 +37,13 @@ module internal ScmWorkflow =
         EndogenousWorkflowFunction<'state,'traceableOfOrigin,Traceable,'returnType>
                 
 
-    let getIscmModel<'state when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,_,ScmModel> = workflow {
+    let getIscmModel<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,ScmModel> = workflow {
         let! iscmModel = getState ()
         let model = iscmModel.getModel
         return model
     }    
     
-    let setIscmModel<'state when 'state :> IScmModel<'state>> (model:ScmModel) : IScmModelWorkflowFunction<'state,_,unit> = workflow {
+    let setIscmModel<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> (model:ScmModel) : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
         let! iscmModel = getState ()
         let newIscmModel = iscmModel.setModel model
         do! updateState newIscmModel
@@ -73,12 +73,18 @@ module internal ScmWorkflow =
     type PlainScmModelWorkflowFunction<'traceableOfOrigin,'returnType> =
         EndogenousWorkflowFunction<PlainScmModel,'traceableOfOrigin,Traceable,'returnType>
         
+       
+    let setInitialPlainModelState (model:ScmModel) : LoadWorkflowFunction<_,PlainScmModel,Traceable,unit> = workflow {
+        do! initializeTracer (model.getTraceables)
+        do! updateState (PlainScmModel(model))
+    }
+    
     let setPlainModelState (model:ScmModel) = workflow {
         do! updateState (PlainScmModel(model))
     }
     
-    let iscmToPlainModelState<'state when 'state :> IScmModel<'state>> ()
-            : ExogenousWorkflowFunction<'state,PlainScmModel,_,Traceable,Traceable,unit> = workflow {
+    let iscmToPlainModelState<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> ()
+            : ExogenousWorkflowFunction<'state,PlainScmModel,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
         do! setPlainModelState state.getModel
     }
@@ -89,8 +95,8 @@ module internal ScmWorkflow =
         do! setPlainModelState state
     }
         
-    let iscmToScmState<'state when 'state :> IScmModel<'state>> ()
-            : ExogenousWorkflowFunction<'state,ScmModel,_,Traceable,Traceable,unit> = workflow {
+    let iscmToScmState<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> ()
+            : ExogenousWorkflowFunction<'state,ScmModel,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
         do! SafetySharp.Workflow.updateState state.getModel
     }

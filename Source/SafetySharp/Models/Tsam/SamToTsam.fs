@@ -97,8 +97,10 @@ module internal SamToTsam =
 
     open SafetySharp.Workflow
 
-    let transformSamToTsam : SimpleWorkflowFunction<Sam.Pgm,Tsam.Pgm,unit> = workflow {
+    let transformSamToTsam ()
+            : ExogenousWorkflowFunction<Sam.Pgm,Tsam.Pgm,_,Sam.Traceable,unit,unit> = workflow {
         let! model = SafetySharp.Models.SamWorkflow.getSamModel ()
         let newModel = translatePgm model
         do! updateState newModel
+        do! removeTraceables ()
     }

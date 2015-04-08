@@ -296,7 +296,7 @@ module internal TsamPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
 
     let passifyPgm : SimpleWorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
-        let! pgm = getState
+        let! pgm = getState ()
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         let sigma = Substitutions.initial globalVars localVars

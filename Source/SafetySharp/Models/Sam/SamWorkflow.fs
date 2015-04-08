@@ -31,7 +31,7 @@ module internal SamWorkflow =
     let getSamModel () : SamWorkflowFunction<_,Sam.Pgm> =
         getState ()
     
-    let setSamModel<'oldIrrelevantState,'traceable> (model:Sam.Pgm)
-            : ExogenousWorkflowFunction<'oldIrrelevantState,Sam.Pgm,_,'traceable,'traceable,unit> = workflow {
+    let setSamModel<'oldIrrelevantState,'traceableOfOrigin,'traceable> (model:Sam.Pgm)
+            : ExogenousWorkflowFunction<'oldIrrelevantState,Sam.Pgm,'traceableOfOrigin,'traceable,'traceable,unit> = workflow {
         do! updateState model
     }

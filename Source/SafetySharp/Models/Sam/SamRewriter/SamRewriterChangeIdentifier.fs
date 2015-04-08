@@ -103,7 +103,7 @@ module internal SamChangeIdentifier =
             | Write (variable:Var, expression:Expr) ->
                 Stm.Write(state.OldToNew.Item variable,transformExpr state expression)
     
-    let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : Pgm =
+    let changeNamesPgm (state:ChangeIdentifierState) (samPgm:Pgm) : (Pgm*Map<Var,Var>) = // returns new program * forward tracing map
         let currentVars = seq {
             yield! samPgm.Globals |> List.map (fun var -> var.Var)
             yield! samPgm.Locals |> List.map (fun var -> var.Var)
@@ -132,11 +132,13 @@ module internal SamChangeIdentifier =
                 }
             samPgm.Locals |> List.map transformLocal
 
-        {
-            Pgm.Globals = newGlobals;
-            Pgm.Locals = newLocals;
-            Pgm.Body = transformStm newState samPgm.Body;
-        }
+        let samPgm =
+            {
+                Pgm.Globals = newGlobals;
+                Pgm.Locals = newLocals;
+                Pgm.Body = transformStm newState samPgm.Body;
+            }
+        (samPgm,state.OldToNew)
 
     
 
