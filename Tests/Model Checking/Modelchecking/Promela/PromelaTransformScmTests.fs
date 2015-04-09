@@ -42,6 +42,7 @@ module ScmToPromelaTests =
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
+            do! logForwardTracesOfOrigins ()
         }
            
     [<Test>]

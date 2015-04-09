@@ -157,7 +157,7 @@ module internal SamToPromela =
         let changeIdsState = ChangeIdentifierState.initial Set.empty<string> SafetySharp.FreshNameGenerator.namegenerator_c_like
         let (pgm,forwardTrace) = changeNamesPgm changeIdsState pgm
         
-        let forwardTrace = forwardTrace |> Map.map (fun key value -> value.getName)
+        let forwardTrace = forwardTrace |> Map.toList |> List.map (fun (samVar,promelaVar) -> (Sam.Traceable(samVar),promelaVar.getName) ) |> Map.ofList
 
         // declare both locals and globals
         let globalVarModule = generateGlobalVarDeclarations pgm.Globals

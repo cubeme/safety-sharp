@@ -144,7 +144,7 @@ module internal ScmToSam =
             let scmTraceable =
                 Scm.TraceableField( [scmModel.Comp] , field.Field)
             let samTraceable =
-               gl.Var
+               Sam.Traceable(gl.Var)
             (scmTraceable,samTraceable)        
         List.zip (scmModel.Fields) (samModel.Globals)
             |> List.map toTraceable

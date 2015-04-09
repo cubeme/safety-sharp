@@ -31,28 +31,26 @@ open AstTestHelpers
 
 open SafetySharp.Analysis.Modelchecking.PromelaSpin
 
+open SafetySharp.Workflow
 
 
 [<TestFixture>]
 module SamToPromelaTests =
 
-    let parseWithParser parser str =
-        match run parser str with
-        | Success(result, _, _)   -> result
-        | Failure(errorMsg, _, _) -> failwith errorMsg
-
-    let internal parseSam str = parseWithParser (SafetySharp.Models.SamParser.samFile .>> eof) str
-
     let internal promelaWriter = PromelaToString()
     
+    let internal inputFileToPromelaAstWorkflow (inputFile:string) = workflow {
+            do! readFile inputFile
+            do! SafetySharp.Models.SamParser.parseStringWorkflow
+            do! SamToPromela.transformConfigurationWf ()
+            do! logForwardTracesOfOrigins ()
+        }
            
     [<Test>]
     let ``simpleBoolean1.sam gets converted to promela`` () =
         
         let inputFile = """../../Examples/SAM/simpleBoolean1.sam"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSam input
-        let (promela,_) = SamToPromela.transformConfiguration model
+        let promela = runWorkflow_getState (inputFileToPromelaAstWorkflow inputFile)
 
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString
@@ -62,9 +60,7 @@ module SamToPromelaTests =
     let ``smokeTest1.sam gets converted to promela`` () =
         
         let inputFile = """../../Examples/SAM/smokeTest1.sam"""
-        let input = System.IO.File.ReadAllText inputFile
-        let model = parseSam input
-        let (promela,_) = SamToPromela.transformConfiguration model
+        let promela = runWorkflow_getState (inputFileToPromelaAstWorkflow inputFile)
 
         let promelaCodeString = promelaWriter.Export promela
         printf "%s" promelaCodeString

@@ -112,7 +112,12 @@ module internal Sam =
         Type : Type
     }
 
-    type internal Traceable = Var
+    type internal Traceable =
+        Traceable of Var
+            with
+                override traceable.ToString() =
+                    let (Traceable(Var(name))) = traceable
+                    name
 
     type internal Pgm = {
         Globals : GlobalVarDecl list
@@ -122,7 +127,7 @@ module internal Sam =
             with
                 interface IModel<Traceable> with
                     member this.getTraceables : Traceable list =
-                        this.Globals |> List.map (fun gl -> gl.Var)
+                        this.Globals |> List.map (fun gl -> Traceable(gl.Var))
                 member this.getTraceables : Traceable list  =
                     let imodel = this :> IModel<Traceable>
                     imodel.getTraceables

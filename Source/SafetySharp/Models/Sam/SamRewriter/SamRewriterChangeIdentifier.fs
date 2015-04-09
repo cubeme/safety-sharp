@@ -138,7 +138,7 @@ module internal SamChangeIdentifier =
                 Pgm.Locals = newLocals;
                 Pgm.Body = transformStm newState samPgm.Body;
             }
-        (samPgm,state.OldToNew)
+        (samPgm,newState.OldToNew)
 
     
 
