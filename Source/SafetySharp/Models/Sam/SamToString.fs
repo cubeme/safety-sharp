@@ -152,7 +152,7 @@ module internal SamToStringHelpers =
     let newLineAndDecreaseIndent : AstToStringStateFunction =
         newLine >>= decreaseIndent
 
-module internal SamAstToString =
+module internal SamToString =
     open SamToStringHelpers
 
     //////////////////////////////////////////////////////////////////////////////
@@ -267,5 +267,14 @@ module internal SamAstToString =
         let stateAfterExport =
             exportPgm pgm AstToStringState.initial
         stateAfterExport.ToString()
+        
 
+    open SafetySharp.Workflow
+    
+    let modelToStringWorkflow () : ExogenousWorkflowFunction<Pgm,string,_,_,unit,unit> = workflow {
+        let! model = getState ()
+        let asString = exportModel model
+        do! updateState asString
+        do! removeTraceables ()
+    }
 

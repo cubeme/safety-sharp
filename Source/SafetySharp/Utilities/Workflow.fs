@@ -359,13 +359,15 @@ module internal Workflow =
     
     (* TODO            
     // Allows the use of a workflow function on a list. Result is the same as execution each function on the source state. Source state is preserved.
-    // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state.
+    // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state. Executed independently.
     let listIter_srcState = ()
     
     // Allows the use of a workflow function on a list. Result is the same as execution the function sequentially on each element and collecting the results.
     let listMap_seqState = ()
     
+    // Allows the use of a workflow function on a list. Result is the same as execution each function on the source state. Source state is preserved.
     // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state and collecting the results.
+    // Executed independently.
     let listMap_srcState = ()
     *)
 

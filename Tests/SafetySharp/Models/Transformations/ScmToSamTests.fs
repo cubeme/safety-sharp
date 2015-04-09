@@ -40,6 +40,9 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Models.ScmToSam.transformIscmToSam
             do! logForwardTracesOfOrigins ()
+            do! printNewParagraphToStdout ()
+            do! SafetySharp.Models.SamToString.modelToStringWorkflow ()
+            do! printToStdout ()
         }
 
 [<TestFixture>]

@@ -117,7 +117,7 @@ module internal Sam =
             with
                 override traceable.ToString() =
                     let (Traceable(Var(name))) = traceable
-                    name
+                    sprintf "global variable '%s'" name
 
     type internal Pgm = {
         Globals : GlobalVarDecl list
