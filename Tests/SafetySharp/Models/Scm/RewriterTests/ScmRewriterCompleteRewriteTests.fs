@@ -44,11 +44,16 @@ type CompleteRewriteTests () =
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
             do! ScmWorkflow.scmToPlainModelState ()
-            do! ScmRewriterFlattenModel.flattenModel ()
+            do! ScmRewriterFlattenModel.flattenModel ()           
+            do! ScmWorkflow.iscmToScmState ()
             let! model = getState ()
-            do printf "%s" (SafetySharp.Models.ScmToString.toString model.getModel.getRootComp)
-            do! SafetySharp.Workflow.printNewParagraphToConsole ()
-            do! SafetySharp.Workflow.printObjectToStdout ()
+            do printf "%s" (SafetySharp.Models.ScmToString.toString model.getRootComp)
+            do! SafetySharp.Workflow.printNewParagraphToStdout ()
+            do! logForwardTracesOfOrigins ()
+            do! SafetySharp.Workflow.printNewParagraphToStdout ()
+            do! SafetySharp.Workflow.printObjectToStdout () 
+            let! allTraceablesExist = ScmConsistencyCheck.``check if all traced traceables from origin actually exists`` ()
+            allTraceablesExist =? true
         }
     
     [<Test>]

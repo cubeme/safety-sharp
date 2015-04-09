@@ -31,7 +31,7 @@ module internal ScmRewriterNormalize =
     open ScmWorkflow
     
     let createEmptySteps<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
-        let! model = getIscmModel ()
+        let! model = iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let emptyStep =
             {
@@ -55,7 +55,7 @@ module internal ScmRewriterNormalize =
                 CompDecl.Steps = newSteps;
                 CompDecl.Subs = newSubs
             }
-        do! setIscmModel (ScmModel(newCompDecl rootComp))
+        do! iscmSetModel (ScmModel(newCompDecl rootComp))
     }
     
     let normalize<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {

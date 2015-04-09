@@ -31,35 +31,78 @@ module internal ScmWorkflow =
             inherit IModel<Traceable> 
             abstract getModel : ScmModel
             abstract setModel : ScmModel -> 'state
+            
+            abstract getUncommittedForwardTracerMap : Map<Traceable,Traceable> //to be able to inherit uncommitted traces
+            abstract setUncommittedForwardTracerMap : Map<Traceable,Traceable> -> 'state //used to commit
         end
 
     type IScmModelWorkflowFunction<'state,'traceableOfOrigin,'returnType when 'state :> IScmModel<'state>> =
         EndogenousWorkflowFunction<'state,'traceableOfOrigin,Traceable,'returnType>
                 
 
-    let getIscmModel<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,ScmModel> = workflow {
+    let iscmGetModel<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,ScmModel> = workflow {
         let! iscmModel = getState ()
         let model = iscmModel.getModel
         return model
     }    
     
-    let setIscmModel<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> (model:ScmModel) : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
+    let iscmSetModel<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> (model:ScmModel) : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
         let! iscmModel = getState ()
         let newIscmModel = iscmModel.setModel model
         do! updateState newIscmModel
     }
+
+    let iscmSetUncommittedForwardTracerMap<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> (newUncommittedForwardTracerMap:Map<Traceable,Traceable>) : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
+        let! iscmModel = getState ()
+        let newIscmModel = iscmModel.setUncommittedForwardTracerMap newUncommittedForwardTracerMap
+        do! updateState newIscmModel
+    }    
+
+    let iscmGetUncommittedForwardTracerMap<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,Map<Traceable,Traceable>> = workflow {
+        let! iscmModel = getState ()
+        let uncommittedForwardTracerMap = iscmModel.getUncommittedForwardTracerMap
+        return uncommittedForwardTracerMap
+    } 
     
-    let getScmModel () : EndogenousWorkflowFunction<Scm.ScmModel,_,Traceable,Scm.ScmModel> = workflow {
+    let iscmTraceTraceable<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> (_from:Traceable) (_to:Traceable) : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        let newUncommittedForwardTracerMap =
+            if uncommittedForwardTracerMap.ContainsKey _from then
+                failwith "BUG: There exists already an entry for this traceable. The traceable is not unique. Maybe because there was a name clash."
+            uncommittedForwardTracerMap.Add(_from,_to)
+        do! iscmSetUncommittedForwardTracerMap newUncommittedForwardTracerMap
+    }    
+
+    let iscmCommitForwardTracerMap<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> () : IScmModelWorkflowFunction<'state,'traceableOfOrigin,unit> = workflow {
+        let! iscmModel = getState ()
+
+        let forwardTracerMapInClosure = iscmModel.getUncommittedForwardTracerMap
+        let intermediateTracer (oldValue:Traceable) =
+            let rec findValue (oldValue:Traceable) =
+                if forwardTracerMapInClosure.ContainsKey oldValue then
+                    findValue (forwardTracerMapInClosure.Item oldValue)
+                else
+                    oldValue
+            findValue oldValue
+        
+        let emptyUncommittedTracerMap = Map.empty<Traceable,Traceable>
+        let newIscmModel = iscmModel.setUncommittedForwardTracerMap emptyUncommittedTracerMap
+
+        do! updateState newIscmModel
+        do! updateTracer intermediateTracer
+    }
+    
+    let scmGetModel () : EndogenousWorkflowFunction<Scm.ScmModel,_,Traceable,Scm.ScmModel> = workflow {
         let! model = getState ()
         return model
     }
 
-    let setScmModel<'oldIrrelevantState> (model:ScmModel)
+    let scmSetModel<'oldIrrelevantState> (model:ScmModel)
             : ExogenousWorkflowFunction<'oldIrrelevantState,ScmModel,_,_,Traceable,unit> = workflow {
         do! updateState model
     }
 
-    type PlainScmModel(model:ScmModel) =
+    type PlainScmModel(model:ScmModel,forwardTracerMap:Map<Traceable,Traceable>) =
         class end
             with
                 member this.getModel : ScmModel = model
@@ -68,7 +111,9 @@ module internal ScmWorkflow =
                         let imodel = this.getModel :> IModel<Traceable>
                         imodel.getTraceables
                     member this.getModel : ScmModel = model
-                    member this.setModel (model:ScmModel) = PlainScmModel(model)
+                    member this.setModel (model:ScmModel) = PlainScmModel(model,forwardTracerMap)
+                    member this.getUncommittedForwardTracerMap : Map<Traceable,Traceable> = forwardTracerMap
+                    member this.setUncommittedForwardTracerMap (forwardTracerMap:Map<Traceable,Traceable>) = PlainScmModel(model,forwardTracerMap)
     
     type PlainScmModelWorkflowFunction<'traceableOfOrigin,'returnType> =
         EndogenousWorkflowFunction<PlainScmModel,'traceableOfOrigin,Traceable,'returnType>
@@ -76,28 +121,31 @@ module internal ScmWorkflow =
        
     let setInitialPlainModelState (model:ScmModel) : LoadWorkflowFunction<_,PlainScmModel,Traceable,unit> = workflow {
         do! initializeTracer (model.getTraceables)
-        do! updateState (PlainScmModel(model))
+        let emptyUncommittedTracerMap = Map.empty<Traceable,Traceable>
+        do! updateState (PlainScmModel(model,emptyUncommittedTracerMap))
     }
     
-    let setPlainModelState (model:ScmModel) = workflow {
-        do! updateState (PlainScmModel(model))
+    let setPlainModelState (model:ScmModel) (uncommittedTracerMap:Map<Traceable,Traceable>) = workflow {
+        do! updateState (PlainScmModel(model,uncommittedTracerMap))
     }
     
     let iscmToPlainModelState<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> ()
             : ExogenousWorkflowFunction<'state,PlainScmModel,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
-        do! setPlainModelState state.getModel
+        do! setPlainModelState state.getModel state.getUncommittedForwardTracerMap //inherit uncommitted traces
     }
     
     let scmToPlainModelState ()
             : ExogenousWorkflowFunction<ScmModel,PlainScmModel,_,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
-        do! setPlainModelState state
+        let emptyUncommittedTracerMap = Map.empty<Traceable,Traceable>
+        do! setPlainModelState state emptyUncommittedTracerMap
     }
         
     let iscmToScmState<'state,'traceableOfOrigin when 'state :> IScmModel<'state>> ()
             : ExogenousWorkflowFunction<'state,ScmModel,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
+        do! iscmCommitForwardTracerMap ()
         do! SafetySharp.Workflow.updateState state.getModel
     }
     

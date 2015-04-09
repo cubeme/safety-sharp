@@ -68,6 +68,7 @@ module internal ScmRewriterConvertDelayedBindings =
     
     type ScmRewriterConvertDelayedBindingsState = {
         Model : ScmModel;
+        UncommittedForwardTracerMap : Map<Traceable,Traceable>;
         PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
         TakenNames : Set<string>;
     }
@@ -80,6 +81,11 @@ module internal ScmRewriterConvertDelayedBindings =
                 member this.setModel (model:ScmModel) =
                     { this with
                         ScmRewriterConvertDelayedBindingsState.Model = model
+                    }
+                member this.getUncommittedForwardTracerMap : Map<Traceable,Traceable> = this.UncommittedForwardTracerMap
+                member this.setUncommittedForwardTracerMap (forwardTracerMap:Map<Traceable,Traceable>) =
+                    { this with
+                        ScmRewriterConvertDelayedBindingsState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
             interface IScmChangeSubcomponent<ScmRewriterConvertDelayedBindingsState> with
                 member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
@@ -232,11 +238,13 @@ module internal ScmRewriterConvertDelayedBindings =
     let selectRootComponentForConvertingDelayedBindings<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> () 
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         // Use As1
-        let! model = getIscmModel ()
+        let! model = iscmGetModel ()
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let newState =
             {
                 ScmRewriterConvertDelayedBindingsState.Model = model;
+                ScmRewriterConvertDelayedBindingsState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
                 ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = [rootComp.Comp];
                 ScmRewriterConvertDelayedBindingsState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
             }

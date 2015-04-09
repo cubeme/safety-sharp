@@ -160,7 +160,7 @@ module internal ScmToSam =
                         : ExogenousWorkflowFunction<'oldState,Sam.Pgm,'traceableOfOrigin,Scm.Traceable,Sam.Traceable,unit> = workflow {
         do! ScmRewriterFlattenModel.flattenModel ()
         do! ScmWorkflow.iscmToScmState ()
-        let! model = ScmWorkflow.getScmModel ()
+        let! model = ScmWorkflow.scmGetModel ()
         let rootComp = match model with | Scm.ScmModel(rootComp) -> rootComp
         let newModel = transformCompDeclToPgm rootComp
         do! SamWorkflow.setSamModel newModel

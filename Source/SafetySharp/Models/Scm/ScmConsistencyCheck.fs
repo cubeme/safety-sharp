@@ -235,3 +235,26 @@ module internal ScmConsistencyCheck =
         
     //let ``check if all ProvPortDecls with the same ProvPort have the same signature`` =
     //    false
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    
+    open SafetySharp.Workflow
+    
+    /////////////
+    // workflow to check, if all traceables are actually in the model
+    ////////////
+
+    let ``check if all traced traceables from origin actually exists``<'traceableOfOrigin> ()
+            : EndogenousWorkflowFunction<ScmModel,'traceableOfOrigin,Traceable,bool> = workflow {
+        let! traceablesOfOrigin = getTraceablesOfOrigin ()
+        let! forwardTracer = getForwardTracer ()
+        let! model = getState ()
+        let currentlyExistingTraceables = model.getTraceables |> Set.ofList
+        let isTraceableExisting (traceable:'traceableOfOrigin) : bool =
+            let tracedTracable = forwardTracer traceable
+            currentlyExistingTraceables.Contains tracedTracable
+        let allTraceablesExist = traceablesOfOrigin |> List.forall isTraceableExisting
+        return allTraceablesExist
+    }

@@ -38,7 +38,7 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
 
             do! SafetySharp.Workflow.printObjectToStdout ()
-            do! SafetySharp.Workflow.printNewParagraphToConsole ()
+            do! SafetySharp.Workflow.printNewParagraphToStdout ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow
             do! SafetySharp.Workflow.printToStdout ()
     }
@@ -52,7 +52,7 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
 
             do! SafetySharp.Workflow.printObjectToStdout ()
-            do! SafetySharp.Workflow.printNewParagraphToConsole ()
+            do! SafetySharp.Workflow.printNewParagraphToStdout ()
             do! SafetySharp.Models.TsamToString.exportModelWorkflow
             do! SafetySharp.Workflow.printToStdout ()
     }

@@ -33,19 +33,22 @@ module internal ScmRewriterInlineBehavior =
     
     type ScmRewriterInlineBehaviorStateConcreteBehavior = {
         BehaviorToReplace : BehaviorWithLocation;
+        UncommittedForwardTracerMap : Map<Traceable,Traceable>;
         InlinedBehavior : BehaviorDecl;
         CallToReplace : StmPath option;
     }
         with
-            static member createEmptyFromBehavior (behaviorWithLocaltion:BehaviorWithLocation) =
+            static member createEmptyFromBehavior (behaviorWithLocaltion:BehaviorWithLocation) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) =
                 {
                     ScmRewriterInlineBehaviorStateConcreteBehavior.BehaviorToReplace = behaviorWithLocaltion;
+                    ScmRewriterInlineBehaviorStateConcreteBehavior.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
                     ScmRewriterInlineBehaviorStateConcreteBehavior.InlinedBehavior = behaviorWithLocaltion.Behavior;
                     ScmRewriterInlineBehaviorStateConcreteBehavior.CallToReplace = None;
                 }
     
     type ScmRewriterInlineBehaviorState = {
         Model : ScmModel;
+        UncommittedForwardTracerMap : Map<Traceable,Traceable>;
         TakenNames : Set<string>;
 
         ConcreteBehavior : ScmRewriterInlineBehaviorStateConcreteBehavior option;
@@ -60,6 +63,11 @@ module internal ScmRewriterInlineBehavior =
                 member this.setModel (model:ScmModel) =
                     { this with
                         ScmRewriterInlineBehaviorState.Model = model
+                    }
+                member this.getUncommittedForwardTracerMap : Map<Traceable,Traceable> = this.UncommittedForwardTracerMap
+                member this.setUncommittedForwardTracerMap (forwardTracerMap:Map<Traceable,Traceable>) =
+                    { this with
+                        ScmRewriterInlineBehaviorState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
             interface IFreshNameDepot<ScmRewriterInlineBehaviorState> with
                 member this.getTakenNames : Set<string> = this.TakenNames
@@ -103,6 +111,7 @@ module internal ScmRewriterInlineBehavior =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     let findInlineBehavior () : ScmRewriterInlineBehaviorFunction<_,unit> = workflow {    
         let! state = getState ()
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
         let rootComp = match state.Model with | ScmModel(rootComp) -> rootComp
         let compPath = [rootComp.Comp]
 
@@ -184,7 +193,7 @@ module internal ScmRewriterInlineBehavior =
             match candidateToInline with
                 | None -> return ()
                 | Some (inlineBehavior) ->
-                    let rewriterInlineBehavior = ScmRewriterInlineBehaviorStateConcreteBehavior.createEmptyFromBehavior inlineBehavior
+                    let rewriterInlineBehavior = ScmRewriterInlineBehaviorStateConcreteBehavior.createEmptyFromBehavior inlineBehavior uncommittedForwardTracerMap
                     do! updateConcreteBehavior rewriterInlineBehavior
         }
     
@@ -399,7 +408,7 @@ module internal ScmRewriterInlineBehavior =
                                 StepDecl.Behavior = inlineBehavior.InlinedBehavior;
                             }
                         rootComp.replaceStep (stepDecl,newStep) 
-            do! ScmWorkflow.setIscmModel (ScmModel(newModelroot))
+            do! ScmWorkflow.iscmSetModel (ScmModel(newModelroot))
             do! removeInlineBehaviorState ()
         }
 
@@ -416,10 +425,11 @@ module internal ScmRewriterInlineBehavior =
         do! (iterateToFixpoint (findAndInlineBehavior ()))
     }
 
-    let createInlineBehaviorState (model:ScmModel) =
+    let createInlineBehaviorState (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) =
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         {
             ScmRewriterInlineBehaviorState.Model = model;
+            ScmRewriterInlineBehaviorState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
             ScmRewriterInlineBehaviorState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
             ScmRewriterInlineBehaviorState.ConcreteBehavior = None;
         }
@@ -429,6 +439,7 @@ module internal ScmRewriterInlineBehavior =
     let inlineBehaviorsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>>
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! state = getState ()
-        do! updateState (createInlineBehaviorState state.getModel)
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        do! updateState (createInlineBehaviorState state.getModel uncommittedForwardTracerMap)
         do! inlineBehaviors ()
     }

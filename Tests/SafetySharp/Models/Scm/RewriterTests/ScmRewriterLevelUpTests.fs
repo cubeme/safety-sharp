@@ -866,7 +866,7 @@ type SingleLevelUpTests () =
 
 
 [<TestFixture>]
-type FixpointIteratorTests () =
+type LevelUpWithIterateToFixpoint () =
 
     let runWithUserState parser str = runParserOnString parser ScmParser.UserState.initialUserState "" str
 

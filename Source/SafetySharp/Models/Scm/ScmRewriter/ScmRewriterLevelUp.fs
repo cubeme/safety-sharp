@@ -31,6 +31,7 @@ module internal ScmRewriterLevelUp =
     
     type ScmRewriterLevelUpState = {
         Model : ScmModel;
+        UncommittedForwardTracerMap : Map<Traceable,Traceable>;
         PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
         TakenNames : Set<string>;
 
@@ -45,6 +46,7 @@ module internal ScmRewriterLevelUp =
         ArtificialFaultsOldToNew : Map<Fault,Fault>
         ArtificialReqPortOldToNew : Map<ReqPort,ReqPort>
         ArtificialProvPortOldToNew : Map<ProvPort,ProvPort>
+                
 
         //Maps from new path to old path (TODO: when not necessary, delete); or change to newToOrigin
         ArtificialFieldsNewToOld : Map<FieldPath,FieldPath> 
@@ -72,6 +74,11 @@ module internal ScmRewriterLevelUp =
                 member this.setModel (model:ScmModel) =
                     { this with
                         ScmRewriterLevelUpState.Model = model
+                    }
+                member this.getUncommittedForwardTracerMap : Map<Traceable,Traceable> = this.UncommittedForwardTracerMap
+                member this.setUncommittedForwardTracerMap (forwardTracerMap:Map<Traceable,Traceable>) =
+                    { this with
+                        ScmRewriterLevelUpState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
             interface IScmChangeSubcomponent<ScmRewriterLevelUpState> with
                 member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
@@ -117,21 +124,7 @@ module internal ScmRewriterLevelUp =
 
     let updateLevelUpState (newLevelUp:ScmRewriterLevelUpState) : ScmRewriterLevelUpFunction<_,unit> = 
         updateState newLevelUp
-
-    (*
-    let getParentPath () : ScmRewriterLevelUpFunction<CompPath> = workflow {
-        let! state = getState
-        let parentPath = state.PathOfChangingSubcomponent
-        return parentPath
-    }
-
-    let getChildPath () : ScmRewriterLevelUpFunction<CompPath> = workflow {
-        let! state = getState
-        let parentPath = state.PathOfChangingSubcomponent
-        return state.LevelUp.Value.NameOfChildToRewrite::parentPath
-    }
-    *)
-    
+            
     let addArtificialField (oldField:Field) (newField:Field) : ScmRewriterLevelUpFunction<_,unit> = workflow {
         let! state = getState ()
         let! levelUp = getLevelUpState ()
@@ -298,7 +291,9 @@ module internal ScmRewriterLevelUp =
     let levelUpField () : ScmRewriterLevelUpFunction<_,unit> = workflow {
         // parent is target, child is source
         let! childCompDecl = getChildCompDecl ()
+        let! childPath = getChildPath ()
         let! parentCompDecl = getParentCompDecl ()
+        let! parentPath = getPathOfSubComponentToChange ()
 
         if childCompDecl.Fields.IsEmpty then
             // do not modify old tainted state here
@@ -317,12 +312,15 @@ module internal ScmRewriterLevelUp =
                                                     .addField(transformedFieldDecl)
             do! updateParentCompDecl newParentCompDecl
             do! addArtificialField field transformedField
+            do! iscmTraceTraceable (Traceable.TraceableField(childPath,field)) (Traceable.TraceableField(parentPath,transformedField))
         }
 
     let levelUpFault () : ScmRewriterLevelUpFunction<_,unit> = workflow {
         // parent is target, child is source
         let! childCompDecl = getChildCompDecl ()
+        let! childPath = getChildPath ()
         let! parentCompDecl = getParentCompDecl ()
+        let! parentPath = getPathOfSubComponentToChange ()
         if childCompDecl.Faults.IsEmpty then
             // do not modify old tainted state here
             return ()
@@ -340,6 +338,7 @@ module internal ScmRewriterLevelUp =
             do! updateParentCompDecl newParentCompDecl
             do! addArtificialFault fault transformedFault
             do! pushFaultToRewrite transformedFaultDecl
+            do! iscmTraceTraceable (Traceable.TraceableFault(childPath,fault)) (Traceable.TraceableFault(parentPath,transformedFault))
         }
     let levelUpReqPort () : ScmRewriterLevelUpFunction<_,unit> = workflow {
         // parent is target, child is source
@@ -476,7 +475,7 @@ module internal ScmRewriterLevelUp =
 
         // This function is the only function in LevelUp, which has to look and rewrite every ancestor of the component which gets upleveled.
         // Luckily it is enough to look at every ancestor* and not every component in the whole model.
-        let! model = getIscmModel ()
+        let! model = iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let! levelUp = getLevelUpState ()
               
@@ -526,7 +525,7 @@ module internal ScmRewriterLevelUp =
         let relativePathToChild = [fullPathToChild.Head] //viewport of parent
 
         let newRootComp = rootComp.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
-        do! setIscmModel (ScmModel(newRootComp))
+        do! iscmSetModel (ScmModel(newRootComp))
     }
 
     
@@ -534,7 +533,7 @@ module internal ScmRewriterLevelUp =
     
     let rewriteContractsDeclaredInAncestors () : ScmRewriterLevelUpFunction<_,unit> = workflow {
         // fields and faults need to be upleveled first
-        let! model = getIscmModel ()
+        let! model = iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let! levelUp = getLevelUpState ()
 
@@ -563,7 +562,7 @@ module internal ScmRewriterLevelUp =
         let relativePathToChild = [fullPathToChild.Head] //viewport of parent
 
         let newRootComp = rootComp.rewriteAncestors compRewriter fullPathToParent relativePathToChild childCompDecl
-        do! setIscmModel (ScmModel(newRootComp))
+        do! iscmSetModel (ScmModel(newRootComp))
 
     }
 
@@ -771,7 +770,7 @@ module internal ScmRewriterLevelUp =
     }
               
     let findSubComponentForLevelingUp () : IScmModelWorkflowFunction<_,_,CompPath option> = workflow {
-        let! model = ScmWorkflow.getIscmModel ()
+        let! model = ScmWorkflow.iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         if rootComp.Subs = [] then
             // nothing to do, we are done
@@ -789,7 +788,7 @@ module internal ScmRewriterLevelUp =
             return Some(leaf)
     }
 
-    let createLevelUpStateForSubComponent (model:ScmModel) (subComponentToLevelUp:CompPath) =
+    let createLevelUpStateForSubComponent (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) (subComponentToLevelUp:CompPath) =
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let parentPath = subComponentToLevelUp.Tail
         let parentCompDecl = rootComp.getDescendantUsingPath parentPath
@@ -797,6 +796,7 @@ module internal ScmRewriterLevelUp =
         let newLevelUp =
             {
                 ScmRewriterLevelUpState.Model = model;
+                ScmRewriterLevelUpState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
                 ScmRewriterLevelUpState.PathOfChangingSubcomponent = parentPath;
                 ScmRewriterLevelUpState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
                 ScmRewriterLevelUpState.NameOfChildToRewrite = Some(childName);
@@ -818,22 +818,24 @@ module internal ScmRewriterLevelUp =
         
     let selectAndLevelUpSubcomponent () = workflow {
         let! subComponentToLevelUp = findSubComponentForLevelingUp ()
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
         match subComponentToLevelUp with
             | None -> return ()
             | Some(subComponentToLevelUp) ->
                 let! state = getState ()
-                do! updateState (createLevelUpStateForSubComponent state.Model subComponentToLevelUp)
+                do! updateState (createLevelUpStateForSubComponent state.Model uncommittedForwardTracerMap subComponentToLevelUp)
                 do! levelUpSubcomponent ()
     }
     
     let selectSpecificSubcomponent (subComponentToLevelUp:CompPath) = workflow {
         let! state = getState ()
-        do! updateState (createLevelUpStateForSubComponent state.Model subComponentToLevelUp)
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        do! updateState (createLevelUpStateForSubComponent state.Model uncommittedForwardTracerMap subComponentToLevelUp)
     }
     
     
     let assertNoSubcomponent () : IScmModelWorkflowFunction<_,_,unit> = workflow {
-        let! model = ScmWorkflow.getIscmModel ()
+        let! model = ScmWorkflow.iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         assert (rootComp.Subs=[])
         return ()
@@ -841,10 +843,11 @@ module internal ScmRewriterLevelUp =
     
     let prepareForLevelingUp<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
-        let emptyLevelUpState (model:ScmModel) =
+        let emptyLevelUpState (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) =
             let rootComp = match model with | ScmModel(rootComp) -> rootComp
             {
                 ScmRewriterLevelUpState.Model = model;
+                ScmRewriterLevelUpState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
                 ScmRewriterLevelUpState.PathOfChangingSubcomponent = [rootComp.Comp];
                 ScmRewriterLevelUpState.TakenNames = Set.empty<string>
                 ScmRewriterLevelUpState.NameOfChildToRewrite = None;
@@ -861,8 +864,9 @@ module internal ScmRewriterLevelUp =
                 ScmRewriterLevelUpState.StepsToRewrite = [];
                 ScmRewriterLevelUpState.ArtificialStep = None;
             }
-        let! model = getIscmModel ()
-        do! updateState (emptyLevelUpState model)
+        let! model = iscmGetModel ()
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        do! updateState (emptyLevelUpState model uncommittedForwardTracerMap)
     }
 
 
@@ -876,4 +880,4 @@ module internal ScmRewriterLevelUp =
 
     
     let initialLevelUpState (scm:ScmModel) (subComponentToLevelUp:CompPath) =
-        createLevelUpStateForSubComponent scm subComponentToLevelUp 
+        createLevelUpStateForSubComponent scm (Map.empty<Traceable,Traceable>) subComponentToLevelUp 

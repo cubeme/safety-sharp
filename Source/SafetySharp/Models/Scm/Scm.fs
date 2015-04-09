@@ -193,6 +193,13 @@ module internal Scm =
     type Traceable = // this is necessary for tracing of changes
         | TraceableField of CompPath * Field
         | TraceableFault of CompPath * Fault
+            with
+                override traceable.ToString() =
+                    let compPathStr (compPath:CompPath) =
+                        compPath |> List.rev |> List.map (fun (Comp(comp)) -> comp) |> String.concat "."
+                    match traceable with
+                        | TraceableField(compPath,Field.Field(field)) -> sprintf "field '%s%s'" (compPathStr compPath) (field)
+                        | TraceableFault(compPath,Fault.Fault(fault)) -> sprintf "fault '%s%s'" (compPathStr compPath) (fault)
 
     type internal ScmModel =
         ScmModel of CompDecl

@@ -240,7 +240,19 @@ module internal Workflow =
                 }
             (),newWfState            
         WorkflowFunction(behavior)
-                
+
+    let getTraceablesOfOrigin<'state,'traceableOfOrigin,'traceableOfState> ()
+                : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,'traceableOfOrigin list> =
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
+            (wfState.TraceablesOfOrigin),wfState
+        WorkflowFunction(behavior)
+
+    let getForwardTracer<'state,'traceableOfOrigin,'traceableOfState> ()
+                : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,('traceableOfOrigin -> 'traceableOfState)> =
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
+            (wfState.ForwardTracer),wfState
+        WorkflowFunction(behavior)
+                        
     let logEntry<'state,'traceableOfOrigin,'traceableOfState> (entry:string) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =
         let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
             do printfn "%s" entry
@@ -327,6 +339,26 @@ module internal Workflow =
                 ((),wfStateAfterOneCall)
         WorkflowFunction (iterate)
 
+    let listIter<'state,'traceableOfOrigin,'traceableOfState,'inputListType>
+                (workflowFunctionWithParameter : 'inputListType -> EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit>)
+                (listToIterate:'inputListType list)
+                    : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =        
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) : (unit*WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+            let rec iterate (intermediateWfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) (listToIterate:'inputListType list) =
+                if listToIterate.IsEmpty then
+                    ((),intermediateWfState)
+                else
+                    let element = listToIterate.Head
+                    let functionToIterate = match workflowFunctionWithParameter element with | WorkflowFunction(functionToIterate) -> functionToIterate
+                    let (_,newIntermediateWfState) = functionToIterate intermediateWfState
+                    iterate newIntermediateWfState listToIterate.Tail
+            iterate wfState listToIterate
+        WorkflowFunction (behavior)
+                
+    (* TODO
+    let listMap = ()
+    *)
+
     let runWorkflow_getResultAndWfState<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType>
                 (WorkflowFunction s:(WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>)) =
         // no cancellation token
@@ -395,9 +427,6 @@ module internal Workflow =
 
     let workflow = new Workflow()
     
-
-
-
     ////////////// Basic Workflow element
     let readFile<'oldIrrelevantState,'traceableOfOrigin,'oldTraceableOfState>
             (inputFile:string)
@@ -451,9 +480,20 @@ module internal Workflow =
         return ()
     }    
 
-    let printNewParagraphToConsole<'a,'traceableOfOrigin,'traceableOfState> ()
+    let printNewParagraphToStdout<'a,'traceableOfOrigin,'traceableOfState> ()
             : EndogenousWorkflowFunction<'a,'traceableOfOrigin,'traceableOfState,unit> = workflow {
         printfn ""
         printfn ""
         return ()
+    }
+        
+    let logForwardTracesOfOrigins<'state,'traceableOfOrigin,'traceableOfState> ()
+                : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> = workflow {
+        let! traceablesOfOrigin = getTraceablesOfOrigin ()
+        let! forwardTracer = getForwardTracer ()
+        let tracedTraceables (traceable:'traceableOfOrigin) : string =
+            let tracedTracable = forwardTracer traceable
+            sprintf "trace %s to %s" (traceable.ToString()) (tracedTracable.ToString())
+        let tracedTraceablesOfOrigin = traceablesOfOrigin |> List.map tracedTraceables
+        do! listIter logEntry tracedTraceablesOfOrigin
     }

@@ -33,8 +33,9 @@ module internal ScmRewriterConvertFaults =
                                         
     type ScmRewriterConvertFaultsState = {
         Model : ScmModel;
+        UncommittedForwardTracerMap : Map<Traceable,Traceable>;
         PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
-        TakenNames : Set<string>;
+        TakenNames : Set<string>;        
 
         // Forwarder
         ArtificialFaultOldToFieldNew : Map<Fault,Field>;
@@ -50,6 +51,11 @@ module internal ScmRewriterConvertFaults =
                 member this.setModel (model:ScmModel) =
                     { this with
                         ScmRewriterConvertFaultsState.Model = model
+                    }
+                member this.getUncommittedForwardTracerMap : Map<Traceable,Traceable> = this.UncommittedForwardTracerMap
+                member this.setUncommittedForwardTracerMap (forwardTracerMap:Map<Traceable,Traceable>) =
+                    { this with
+                        ScmRewriterConvertFaultsState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
             interface IScmChangeSubcomponent<ScmRewriterConvertFaultsState> with
                 member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
@@ -88,6 +94,7 @@ module internal ScmRewriterConvertFaults =
     let replaceFaultByPortsAndFields () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
         let! convertFaultsState = getConvertFaultsState ()
         let! compDecl = getSubComponentToChange ()
+        let! compPath = getPathOfSubComponentToChange ()
         if compDecl.Faults = [] then
             return ()
         else
@@ -140,6 +147,7 @@ module internal ScmRewriterConvertFaults =
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToPortNew = convertFaultsState.ArtificialFaultOldToPortNew.Add ( (faultToConvert.Fault,(newProvPortDecl.ProvPort,newReqPortDecl.ReqPort)) );
                 }
             do! updateConvertFaultsState newConvertFaultsState
+            do! iscmTraceTraceable (Traceable.TraceableFault(compPath,faultToConvert.Fault)) (Traceable.TraceableField(compPath,field))
     }
 
     let replaceStepFaultByCallPort () : ScmRewriterConvertFaultsFunction<_,unit> = workflow {
@@ -334,7 +342,7 @@ module internal ScmRewriterConvertFaults =
         do! uniteStep ()
     }
        
-    let createConvertFaultsStateForRootComponent (model:ScmModel) = 
+    let createConvertFaultsStateForRootComponent (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) = 
             let rootComp = match model with | ScmModel(model) -> model
             let rootPath = [rootComp.Comp]
             let convertFaultsState =
@@ -342,6 +350,7 @@ module internal ScmRewriterConvertFaults =
                     BehaviorWithLocation.collectAllBehaviorsInPath rootComp rootPath
                 {
                     ScmRewriterConvertFaultsState.Model = model;
+                    ScmRewriterConvertFaultsState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
                     ScmRewriterConvertFaultsState.TakenNames = rootComp.getTakenNames () |> Set.ofList ;
                     ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = rootPath;
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
@@ -353,7 +362,8 @@ module internal ScmRewriterConvertFaults =
     
     let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
                         : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
-        let! model = getIscmModel ()
-        do! updateState (createConvertFaultsStateForRootComponent model)
+        let! model = iscmGetModel ()
+        let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        do! updateState (createConvertFaultsStateForRootComponent model uncommittedForwardTracerMap)
         do! convertFaults ()
     }
