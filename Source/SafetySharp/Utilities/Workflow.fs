@@ -339,7 +339,8 @@ module internal Workflow =
                 ((),wfStateAfterOneCall)
         WorkflowFunction (iterate)
 
-    let listIter<'state,'traceableOfOrigin,'traceableOfState,'inputListType>
+    // Allows the use of a workflow function on a list. Result is the same as execution the function sequentially on each element.
+    let listIter_seqState<'state,'traceableOfOrigin,'traceableOfState,'inputListType>
                 (workflowFunctionWithParameter : 'inputListType -> EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit>)
                 (listToIterate:'inputListType list)
                     : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =        
@@ -355,8 +356,17 @@ module internal Workflow =
             iterate wfState listToIterate
         WorkflowFunction (behavior)
                 
-    (* TODO
-    let listMap = ()
+    
+    (* TODO            
+    // Allows the use of a workflow function on a list. Result is the same as execution each function on the source state. Source state is preserved.
+    // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state.
+    let listIter_srcState = ()
+    
+    // Allows the use of a workflow function on a list. Result is the same as execution the function sequentially on each element and collecting the results.
+    let listMap_seqState = ()
+    
+    // Can be used for "what if" analysis, where different checks are started and evaluated from the same source state and collecting the results.
+    let listMap_srcState = ()
     *)
 
     let runWorkflow_getResultAndWfState<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType>
@@ -495,5 +505,5 @@ module internal Workflow =
             let tracedTracable = forwardTracer traceable
             sprintf "trace %s to %s" (traceable.ToString()) (tracedTracable.ToString())
         let tracedTraceablesOfOrigin = traceablesOfOrigin |> List.map tracedTraceables
-        do! listIter logEntry tracedTraceablesOfOrigin
+        do! listIter_seqState logEntry tracedTraceablesOfOrigin
     }
