@@ -24,4 +24,37 @@ namespace SafetySharp.Analysis.Techniques
 
 module internal AtLtlFormula =
     open SafetySharp.Workflow
+    open SafetySharp.Models
+    open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
 
+    type AnalyseLtlFormulas (untransformedModel:Scm.ScmModel) =
+    
+        let mutable formulasToVerify : ScmVerificationElements.LtlExpr list = []
+
+        member this.addLtlFormula (formula: ScmVerificationElements.LtlExpr) =
+            formulasToVerify <- formula :: formulasToVerify
+
+        member this.checkWithPromela () =        
+            let transformModelToPromela = workflow {
+                    do! SafetySharp.Models.ScmWorkflow.setInitialPlainModelState untransformedModel
+                    do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
+                    do! logForwardTracesOfOrigins ()
+                    let! forwardTracer = getForwardTracer ()
+                    let! promelaModel = getState ()
+                    return (promelaModel,forwardTracer)
+            }
+            let (promelaModel,forwardTracer) = runWorkflow_getResult transformModelToPromela            
+            let promelaModelWithFormulas = 
+                { promelaModel with
+                    PrSpec.Formulas = formulasToVerify |> List.map (SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression forwardTracer)
+                }
+            let executeModelWithFormulas = workflow {                
+                // do! removeAllTraceables ()
+                do! updateState promelaModelWithFormulas
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow
+                let filename = "verification.pml" |> SafetySharp.FileSystem.FileName
+                do! saveToFile filename
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
+            }
+            do runWorkflow_getResult executeModelWithFormulas
+            ()
