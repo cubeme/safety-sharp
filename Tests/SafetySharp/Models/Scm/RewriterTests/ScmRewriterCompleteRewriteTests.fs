@@ -196,3 +196,18 @@ type CompleteRewriteTests () =
     member this.``Example callDelayedSimpleWithFaults1 gets flattened completely`` () =
         let inputFile = """../../Examples/SCM/callDelayedSimpleWithFaults1.scm"""
         do SafetySharp.Workflow.runWorkflow_getResult (rewriteWorkflow inputFile)
+
+    [<Test>]
+    member this.``Example exampleBackupRecovery1 gets flattened completely`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
+        do SafetySharp.Workflow.runWorkflow_getResult (rewriteWorkflow inputFile)
+
+    [<Test>]
+    member this.``Example exampleBackupRecovery2 gets flattened completely`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery2.scm"""
+        do SafetySharp.Workflow.runWorkflow_getResult (rewriteWorkflow inputFile)
+
+    [<Test>]
+    member this.``Example exampleBackupRecovery3 gets flattened completely`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery3.scm"""
+        do SafetySharp.Workflow.runWorkflow_getResult (rewriteWorkflow inputFile)

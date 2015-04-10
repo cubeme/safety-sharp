@@ -643,7 +643,7 @@ module internal ScmRewriterLevelUp =
             return ()
         else
             let! parentCompDecl = getParentCompDecl ()
-                             
+            let! childPath = getChildPath ()
             let! stepToRewrite = popStepToRewrite ()
                                 
             match stepToRewrite with
@@ -664,7 +664,10 @@ module internal ScmRewriterLevelUp =
                                     let newChoices = choices |> List.map (fun (expr,stm) -> (expr,rewriteStm stm) )
                                     Stm.Choice(newChoices)
                                 | Stm.StepComp (comp) ->
-                                    Stm.CallPort (stepReqPortNowInParent,[])
+                                    if comp = childPath.Head then //do we actually replace the step of the child?
+                                        Stm.CallPort (stepReqPortNowInParent,[])
+                                    else
+                                        stm
                                 | _ -> stm
                         let newBehavior =
                             { step.Behavior with

@@ -734,6 +734,44 @@ type SingleLevelUpTests () =
         newGrandparentNode.Bindings.Head.Source.Comp =? [Comp("nested")]
         newGrandparentNode.Bindings.Head.Target.Comp =? [Comp("nested2Required"); Comp("nested")]
         ()
+
+    [<Test>]
+    member this.``A subcomponent with a step gets upleveled and only affected step of parent is replaced`` () =
+        let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
+
+        let pathOfChild = Comp("in") :: Comp("backupRecoverySystem") :: []
+        let workFlow = workflow {
+            do! readInputFileToScm inputFile
+            let! oldModel = getState ()
+            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
+            do! ScmRewriterLevelUp.prepareForLevelingUp ()
+            do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
+            do! ScmRewriterLevelUp.levelUpSubcomponent ()
+            let! levelUpState = getState ()
+            return (oldModel,levelUpState)
+        }
+        let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
+
+        let newModel = resultingState.Model
+        let newRootComp = newModel.getRootComp
+        printf "%s" (SafetySharp.Models.ScmToString.toString newRootComp)
+        printfn ""
+        printfn ""
+        printf "%+A" newModel
+        let mainStep = newRootComp.Steps.Head
+        let statementsOfMainStep =
+            match mainStep.Behavior.Body with
+                | Stm.Block (stmnts) -> stmnts
+                | _ -> failwith "did not expect a non block in this example"                
+        let replacedStmInParentStep = statementsOfMainStep.Item 0
+        statementsOfMainStep.Item 1 <>? replacedStmInParentStep
+        statementsOfMainStep.Item 2 <>? replacedStmInParentStep
+        let wasReplaced = 
+            match replacedStmInParentStep with
+                | Stm.CallPort _ -> true
+                | _ -> false
+        wasReplaced =? true
+
         
     [<Test>]
     member this.``A port gets leveled up and its contract (with fields) get rewritten`` () =
