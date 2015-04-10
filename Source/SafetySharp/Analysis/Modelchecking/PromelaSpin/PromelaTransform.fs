@@ -169,7 +169,11 @@ module internal SamToPromela =
 
 
         // initialize globals
-        let globalVarInitialisations = generateGlobalVarInitialisations pgm.Globals
+        let globalVarInitialisations =
+            // cover initialization in atomic block. Example, why this is necessary.
+            // If we have a formula "[] A==B" and the initialization ensures this property (by setting A to 1 and B to 1),
+            // in a short moment, A is 1 and B is still 0. Atomic block ensures, that A and B are set in the same point of time.
+            coverInAtomicBlockStatement (generateGlobalVarInitialisations pgm.Globals)
         
 
         let codeOfMetamodelInAtomicLoop =
@@ -178,7 +182,7 @@ module internal SamToPromela =
             [coverStmInEndlessloop (coverInAtomicBlockStatement [codeOfMetamodel])]
         
         let systemModule =
-            let systemCode = globalVarInitialisations @ codeOfMetamodelInAtomicLoop
+            let systemCode = globalVarInitialisations :: codeOfMetamodelInAtomicLoop
             let systemSequence : PrSequence = statementsToSequence (systemCode)
             let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
             [PrModule.ProcTypeModule(systemProctype)]
