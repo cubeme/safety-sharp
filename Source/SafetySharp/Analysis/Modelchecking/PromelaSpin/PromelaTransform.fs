@@ -88,9 +88,7 @@ module internal SamToPromela =
                          |> PrOptions.Options
                          |> PrStatement.IfStmnt
         varDecls |> List.map generateInit
-
-
-                                
+                                        
     let rec transformSamExpr (expression:Sam.Expr) : PrExpression =
         match expression with
             | Sam.Expr.Literal (value:Sam.Val) ->
@@ -216,82 +214,84 @@ module internal ScmToPromela =
         do! SamToPromela.transformConfigurationWf ()
     }
 
-    (*
-
+module internal ScmVeToPromela =
     
-
-    // TODO: maybe an alternative is to transform a formula to a SimpleFormula
-    let transformExpressionInsideAFormula (expression:MMExpression) : PrExpression =
-        match expression with
-            | MMExpression.BooleanLiteral (value:bool) ->
+    open ScmVerificationElements
+        
+    let transformScmVal (literal:Scm.Val) : PrLtlExpr =
+        match literal with
+            | Scm.Val.IntVal (value) ->
+                    PrLtlExpr.Const(PrConst.Number(  value ))
+            | Scm.Val.BoolVal (value) ->
                 match value with
-                    | true ->  PrExpression.Const(PrConst.True)
-                    | false -> PrExpression.Const(PrConst.False)
-            | MMExpression.IntegerLiteral (value:int) ->
-                PrExpression.Const(PrConst.Number(value))
-            | MMExpression.DecimalLiteral (value:decimal) ->
-                failwith "NotImplementedYet"
-            | MMExpression.UnaryExpression (operand:MMExpression, operator:MMUnaryOperator) ->
-                let transformedOperand = this.transformExpressionInsideAFormula operand
-                match operator with
-                    | MMUnaryOperator.LogicalNot -> PrExpression.UnaryExpr(PrUnarop.Not,transformedOperand)
-                    | MMUnaryOperator.Minus      -> PrExpression.UnaryExpr(PrUnarop.Neg,transformedOperand)
-            | MMExpression.BinaryExpression (leftExpression:MMExpression, operator:MMBinaryOperator, rightExpression : MMExpression) ->
-                let transformedLeft = this.transformExpressionInsideAFormula leftExpression
-                let transformedRight = this.transformExpressionInsideAFormula rightExpression
-                match operator with
-                    | MMBinaryOperator.Add                -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Add,transformedRight)
-                    | MMBinaryOperator.Subtract           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Min,transformedRight)
-                    | MMBinaryOperator.Multiply           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mul,transformedRight)
-                    | MMBinaryOperator.Divide             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Div,transformedRight)
-                    | MMBinaryOperator.Modulo             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Mod,transformedRight)
-                    | MMBinaryOperator.LogicalAnd         -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.And),transformedRight)
-                    | MMBinaryOperator.LogicalOr          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Andor(PrAndor.Or),transformedRight)
-                    | MMBinaryOperator.Equals             -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Eq,transformedRight)
-                    | MMBinaryOperator.NotEquals          -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Neq,transformedRight)
-                    | MMBinaryOperator.LessThan           -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Lt,transformedRight)
-                    | MMBinaryOperator.LessThanOrEqual    -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Le,transformedRight)
-                    | MMBinaryOperator.GreaterThan        -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Gt,transformedRight)
-                    | MMBinaryOperator.GreaterThanOrEqual -> PrExpression.BinaryExpr(transformedLeft,PrBinarop.Ge,transformedRight)
-            | MMExpression.ReadField (field:MMFieldSymbol, componentReference:MMComponentReferenceSymbol option) ->
-                if componentReference.IsNone then
-                    //called inside a component
-                    failwith "Use transformExpressionInsideAFormula only for expression inside untransformed formulas and not in components"
-                else
-                    //called inside a formula
-                    let simpleGlobalField = toSimplifiedMetamodel.resolveFieldAccessInsideAFormula componentReference.Value field
-                    let varref = this.transformSamVarToVarref simpleGlobalField
-                    PrExpression.Varref varref
-            | MMExpression.ReadLocal (local:MMLocalSymbol) ->
-                failwith "NotImplementedYet"
-            | MMExpression.ReadParameter (parameter:MMParameterSymbol) ->
-                failwith "NotImplementedYet"
-          
-            
+                    | true  -> PrLtlExpr.Const(PrConst.True)
+                    | false -> PrLtlExpr.Const(PrConst.False)
+                                            
+    let transformBinaryOperator (operator:Scm.BOp) =
+        match operator with
+            | Scm.BOp.Add          -> PrBinarop.Add
+            | Scm.BOp.Subtract     -> PrBinarop.Min
+            | Scm.BOp.Multiply     -> PrBinarop.Mul
+            | Scm.BOp.Divide       -> PrBinarop.Div
+            | Scm.BOp.Modulo       -> PrBinarop.Mod
+            | Scm.BOp.And          -> PrBinarop.Andor(PrAndor.And)
+            | Scm.BOp.Or           -> PrBinarop.Andor(PrAndor.Or)
+            | Scm.BOp.Equals       -> PrBinarop.Eq
+            | Scm.BOp.NotEquals    -> PrBinarop.Neq
+            | Scm.BOp.Less         -> PrBinarop.Lt
+            | Scm.BOp.LessEqual    -> PrBinarop.Le
+            | Scm.BOp.Greater      -> PrBinarop.Gt
+            | Scm.BOp.GreaterEqual -> PrBinarop.Ge
+
+    let transformUnaryOperator (operator:Scm.UOp) =
+        match operator with
+            | Scm.UOp.Not -> PrUnarop.Not
+            | Scm.UOp.Minus -> failwith "NotImplementedYet"
+                
+    let transformBinaryLtlOperator (operator:LbOp) =
+        match operator with
+            | LbOp.Until -> BinaryLtlOperator.Until
+
+    let transformUnaryLtlOperator (operator:LuOp) =
+        match operator with
+            | LuOp.Next -> 
+                failwith "Spin is not particularly suited to check next formulas. Read http://spinroot.com/spin/Man/ltl.html"
+            | LuOp.Globally -> UnaryLtlOperator.Always
+            | LuOp.Eventually -> UnaryLtlOperator.Eventually
 
 
-    let transformFormula (formula:MMFormula) : PrFormula =
-        //TODO: check if LTL
-        match formula with
-             | MMFormula.StateFormula (stateExpression : MMExpression) ->
-                PrFormula.PropositionalStateFormula(this.transformExpressionInsideAFormula stateExpression)
-             | MMFormula.UnaryFormula (operand : MMFormula, operator : MMUnaryFormulaOperator) ->
-                let transformedOperand = this.transformFormula operand
-                match operator with
-                    | MMUnaryFormulaOperator.Not      -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Not,transformedOperand)
-                    | MMUnaryFormulaOperator.Next     -> failwith "UnaryTemporalOperator.Next not yet implemented in Promela. There are diverse problems with it. Read http://spinroot.com/spin/Man/ltl.html"
-                    | MMUnaryFormulaOperator.Finally  -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Eventually,transformedOperand)
-                    | MMUnaryFormulaOperator.Globally -> PrFormula.UnaryFormula(PrUnaryFormulaOperator.Always,transformedOperand)
-                    | _ -> failwith "No CTL available"
-             | MMFormula.BinaryFormula (leftFormula : MMFormula, operator : MMBinaryFormulaOperator, rightFormula : MMFormula) ->
-                let transformedLeft = this.transformFormula leftFormula
-                let transformedRight = this.transformFormula rightFormula
-                match operator with
-                    | MMBinaryFormulaOperator.And         -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.And,transformedRight)
-                    | MMBinaryFormulaOperator.Or          -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Or,transformedRight)
-                    | MMBinaryFormulaOperator.Implication -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Implies,transformedRight)
-                    | MMBinaryFormulaOperator.Equivalence -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Equals,transformedRight)
-                    | MMBinaryFormulaOperator.Until       -> PrFormula.BinaryFormula(transformedLeft,PrBinaryFormulaOperator.Until,transformedRight)
-                    | _ -> failwith "No CTL available"
-    
-    *)
+    let transformScmFieldToVarref (tracer:Scm.Traceable->string) (compPath:Scm.CompPath,field:Scm.Field) : PrVarref =
+        let varName = tracer (Scm.TraceableField(compPath,field))
+        PrVarref.Varref(varName,None,None)
+
+    let transformScmFaultToVarref (tracer:Scm.Traceable->string) (compPath:Scm.CompPath,fault:Scm.Fault) : PrVarref =
+        let varName = tracer (Scm.TraceableFault(compPath,fault))
+        PrVarref.Varref(varName,None,None)
+
+    let rec transformLtlExpression (tracer:Scm.Traceable->string) (expression:LtlExpr) : PrLtlExpr =
+        match expression with
+            | LtlExpr.Literal  (value) ->
+                transformScmVal value
+            | LtlExpr.ReadField (compPath,field) ->
+                PrLtlExpr.Varref ( transformScmFieldToVarref tracer (compPath,field))
+            | LtlExpr.ReadFault (compPath,fault) ->
+                PrLtlExpr.Varref ( transformScmFaultToVarref tracer (compPath,fault))
+            | LtlExpr.UExpr (expr,op) ->
+                let transformedOperator = transformUnaryOperator op
+                let transformedOperand = (transformLtlExpression tracer) expr
+                PrLtlExpr.UnaryExpr(transformedOperator,transformedOperand)
+            | LtlExpr.BExpr  (left,op,right) ->
+                let transformedLeft = (transformLtlExpression tracer) left
+                let transformedRight = (transformLtlExpression tracer) right
+                let transformedOperator = transformBinaryOperator op
+                PrLtlExpr.BinaryExpr(transformedLeft,transformedOperator,transformedRight)
+            | LtlExpr.LuExpr (expr,op) ->
+                let transformedOperator = transformUnaryLtlOperator op
+                let transformedOperand = (transformLtlExpression tracer) expr
+                PrLtlExpr.UnaryLtlExpr(transformedOperand,transformedOperator)
+            | LtlExpr.LbExpr (left,op,right) ->
+                let transformedLeft = (transformLtlExpression tracer) left
+                let transformedRight = (transformLtlExpression tracer) right
+                let transformedOperator = transformBinaryLtlOperator op
+                PrLtlExpr.BinaryLtlExpr(transformedLeft,transformedOperator,transformedRight)
+

@@ -271,42 +271,41 @@ type internal PromelaToString () =
             | ProcTypeModule proc        -> (this.ExportProctype lvl) proc
             | InitModule init            -> (this.ExportInit lvl) init
             | GlobalVarsAndChans decllst -> (this.ExportDeclLst lvl) decllst
-
+                    
+    member this.ExporUnaryLtlOperator (unarop : UnaryLtlOperator) : string =
+        match unarop with
+            | UnaryLtlOperator.Always     -> "[]"
+            | UnaryLtlOperator.Eventually -> "<>"
+                
+    member this.ExportBinaryLtlOperator (binarop : BinaryLtlOperator) : string =
+        match binarop with
+            | BinaryLtlOperator.Equals     -> "<->"
+            | BinaryLtlOperator.Until      -> "U"
+            | BinaryLtlOperator.WeakUntil  -> "W"
+            | BinaryLtlOperator.Release    -> "V"
+            | BinaryLtlOperator.And        -> "/\\"
+            | BinaryLtlOperator.Or         -> "\\/"
+            | BinaryLtlOperator.Implies    -> "->"
+    
+    member this.ExportLtlExpr (lvl:int) (formula : LtlExpr) : string =
+        match formula with
+            | LtlExpr.BinaryExpr (left,op,right) -> "("+ (this.ExportLtlExpr lvl left) + (this.ExportBinarop op) + (this.ExportLtlExpr lvl right) + ")" // of AnyExpr * Binarop * AnyExpr
+            | LtlExpr.UnaryExpr (op,expr) -> "("+ (this.ExportUnarop op) + (this.ExportLtlExpr lvl expr) + ")"  // of Unarop * AnyExpr
+            | LtlExpr.Varref varr -> this.ExportVarref varr // of Varref
+            | LtlExpr.Const cons -> this.ExportConst cons
+            | LtlExpr.BinaryLtlExpr (left,op,right) -> "("+ (this.ExportLtlExpr lvl left) + (this.ExportBinaryLtlOperator op) + (this.ExportLtlExpr lvl right) + ")" // of AnyExpr * Binarop * AnyExpr
+            | LtlExpr.UnaryLtlExpr (expr,op) -> "("+ (this.ExporUnaryLtlOperator op) + (this.ExportLtlExpr lvl expr) + ")"  // of Unarop * AnyExpr
+            
     member this.ExportSpec (lvl:int) (spec : Spec) : string =
         let transformedCode =
             spec.Code |> List.map (this.ExportModule lvl)
                       |> List.reduce (fun acc r -> acc + ";"  + (nli lvl) + (nli lvl) + r ) //after first element no ";". So we use reduce instead of fold. 1st element of list is initial accumulator
                     //|> List.fold (fun acc r -> acc + r + (nli lvl) ) ""
         let transformedFormulas =
-            spec.Formulas |> List.map (this.ExportFormula lvl)
+            spec.Formulas |> List.map (this.ExportLtlExpr lvl)
                           |> String.concat "\n"
 
         sprintf "%s\n\n\n%s" transformedCode transformedFormulas
-
-    
-    member this.ExportFormula (lvl:int) (formula : Formula) : string =
-        match formula with
-            | PropositionalStateFormula ( expression : AnyExpr) ->
-                this.ExportAnyExpr expression
-            | BinaryFormula (left : Formula, operator : BinaryFormulaOperator, right : Formula) ->
-                let ExportLeft = this.ExportFormula lvl left
-                let ExportRight = this.ExportFormula lvl right
-                let ExportOperator = match operator with
-                                        | BinaryFormulaOperator.Equals     -> "<->"
-                                        | BinaryFormulaOperator.Until      -> "U"
-                                        | BinaryFormulaOperator.WeakUntil  -> "W"
-                                        | BinaryFormulaOperator.Release    -> "V"
-                                        | BinaryFormulaOperator.And        -> "/\\"
-                                        | BinaryFormulaOperator.Or         -> "\\/"
-                                        | BinaryFormulaOperator.Implies    -> "->"
-                sprintf "( %s %s %s )" ExportLeft ExportOperator ExportRight
-            | UnaryFormula (operator : UnaryFormulaOperator, operand : Formula) ->
-                let ExportOperand = this.ExportFormula lvl operand
-                let ExportOperator = match operator with
-                                         | UnaryFormulaOperator.Not        -> "!"
-                                         | UnaryFormulaOperator.Always     -> "[]"
-                                         | UnaryFormulaOperator.Eventually -> "<>"
-                sprintf "( %s %s )" ExportOperator ExportOperand
 
     member this.Export = this.ExportSpec 0
 

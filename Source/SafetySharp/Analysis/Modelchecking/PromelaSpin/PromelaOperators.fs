@@ -50,7 +50,7 @@ type internal Binarop =
     | Brs  // >> (Bitwise left shift)
     | Andor of Andor // &&, ||
   
-type internal BinaryFormulaOperator =
+type internal BinaryLtlOperator =
     | Equals     // == <->
     | Until      // U
     | WeakUntil  // W
@@ -59,7 +59,7 @@ type internal BinaryFormulaOperator =
     | Or         // || \/
     | Implies    // maybe equivalent to <=
 
-type internal UnaryFormulaOperator =
-    | Not       // !
+type internal UnaryLtlOperator =
+    //| Next       // X, but needs Spin to be compiled with flag -DNXT
     | Always    // []
     | Eventually // <>

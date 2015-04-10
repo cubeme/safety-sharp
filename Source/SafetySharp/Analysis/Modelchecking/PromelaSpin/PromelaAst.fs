@@ -146,12 +146,17 @@ type internal Module =
     | InitModule of Init
     | GlobalVarsAndChans of DeclLst
     
-type internal Formula =
-    | PropositionalStateFormula of Expression : AnyExpr
-    | BinaryFormula of Left : Formula * Operator : BinaryFormulaOperator * Right : Formula
-    | UnaryFormula of Operator : UnaryFormulaOperator * Operand : Formula
+
+[<RequireQualifiedAccessAttribute>]
+type internal LtlExpr =
+    | BinaryExpr of LtlExpr * Binarop * LtlExpr
+    | UnaryExpr of Unarop * LtlExpr
+    | Varref of Varref
+    | Const of Const
+    | BinaryLtlExpr of LtlExpr * BinaryLtlOperator * LtlExpr
+    | UnaryLtlExpr of LtlExpr * UnaryLtlOperator
 
 type internal Spec = {
     Code : Module list;
-    Formulas : Formula list;
+    Formulas : LtlExpr list;
 }

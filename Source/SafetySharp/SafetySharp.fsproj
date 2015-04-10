@@ -73,6 +73,7 @@
     <Compile Include="Models\Ssm\SsmValidation.fs" />
     <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
+    <Compile Include="Models\Scm\ScmVerificationElements.fs" />
     <Compile Include="Models\Scm\ScmWorkflow.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />

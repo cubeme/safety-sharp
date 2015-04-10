@@ -28,7 +28,7 @@ module internal Sam =
     type internal UOp =
         | Not
 
-    /// Represents the operator in a binary expression. (same as SafetySharp.Internal.Metamodel.UnaryOperatorBinaryOperator)
+    /// Represents the operator in a binary expression.
     type internal BOp =
         // Arithmetic operators
         | Add
@@ -61,7 +61,7 @@ module internal Sam =
         /// Represents a number value.
         | NumbVal of Value : bigint
 
-    /// Represents side-effect free expressions within a FIL model. (not the same as SafetySharp.Internal.Metamodel.Expression)
+    /// Represents side-effect free expressions within a SAM model.
     type internal Expr =
         /// Represents a literal
         | Literal of Val
