@@ -76,6 +76,7 @@
     <Compile Include="Modelchecking\Boogie\BoogieExecuteTests.fs" />
     <Compile Include="Modelchecking\Boogie\BoogieTransformSamTests.fs" />
     <Compile Include="Modelchecking\Boogie\BoogieCheckSmokeTests.fs" />
+    <Compile Include="Modelchecking\Techniques\AtLtlFormulaTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserInputTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserSExprTests.fs" />
     <Compile Include="Smt-Solving\SMT-LIBv2\Parser\SmtLib2ParserLexiconTests.fs" />
@@ -90,7 +91,6 @@
     <Compile Include="Smt-Solving\Z3\Z3InteractiveModeTests.fs" />
     <Compile Include="Smt-Solving\Z3\Z3ParserTests.fs" />
     <Content Include="app.config" />
-    <Compile Include="Modelchecking\Techniques\AtLtlFormulaTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FParsec">
