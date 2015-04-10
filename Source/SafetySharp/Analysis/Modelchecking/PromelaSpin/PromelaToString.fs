@@ -287,22 +287,25 @@ type internal PromelaToString () =
             | BinaryLtlOperator.Or         -> "\\/"
             | BinaryLtlOperator.Implies    -> "->"
     
-    member this.ExportLtlExpr (lvl:int) (formula : LtlExpr) : string =
+    member this.ExportLtlExpr (formula : LtlExpr) : string =
         match formula with
-            | LtlExpr.BinaryExpr (left,op,right) -> "("+ (this.ExportLtlExpr lvl left) + (this.ExportBinarop op) + (this.ExportLtlExpr lvl right) + ")" // of AnyExpr * Binarop * AnyExpr
-            | LtlExpr.UnaryExpr (op,expr) -> "("+ (this.ExportUnarop op) + (this.ExportLtlExpr lvl expr) + ")"  // of Unarop * AnyExpr
+            | LtlExpr.BinaryExpr (left,op,right) -> "("+ (this.ExportLtlExpr left) + (this.ExportBinarop op) + (this.ExportLtlExpr right) + ")" // of AnyExpr * Binarop * AnyExpr
+            | LtlExpr.UnaryExpr (op,expr) -> "("+ (this.ExportUnarop op) + (this.ExportLtlExpr expr) + ")"  // of Unarop * AnyExpr
             | LtlExpr.Varref varr -> this.ExportVarref varr // of Varref
             | LtlExpr.Const cons -> this.ExportConst cons
-            | LtlExpr.BinaryLtlExpr (left,op,right) -> "("+ (this.ExportLtlExpr lvl left) + (this.ExportBinaryLtlOperator op) + (this.ExportLtlExpr lvl right) + ")" // of AnyExpr * Binarop * AnyExpr
-            | LtlExpr.UnaryLtlExpr (expr,op) -> "("+ (this.ExporUnaryLtlOperator op) + (this.ExportLtlExpr lvl expr) + ")"  // of Unarop * AnyExpr
+            | LtlExpr.BinaryLtlExpr (left,op,right) -> "("+ (this.ExportLtlExpr left) + (this.ExportBinaryLtlOperator op) + (this.ExportLtlExpr right) + ")" // of AnyExpr * Binarop * AnyExpr
+            | LtlExpr.UnaryLtlExpr (expr,op) -> "("+ (this.ExporUnaryLtlOperator op) + (this.ExportLtlExpr expr) + ")"  // of Unarop * AnyExpr
             
+    member this.ExportFormula (lvl:int) (formula: LtlExpr) : string =
+        sprintf "ltl { %s } " (this.ExportLtlExpr formula)
+    
     member this.ExportSpec (lvl:int) (spec : Spec) : string =
         let transformedCode =
             spec.Code |> List.map (this.ExportModule lvl)
                       |> List.reduce (fun acc r -> acc + ";"  + (nli lvl) + (nli lvl) + r ) //after first element no ";". So we use reduce instead of fold. 1st element of list is initial accumulator
                     //|> List.fold (fun acc r -> acc + r + (nli lvl) ) ""
         let transformedFormulas =
-            spec.Formulas |> List.map (this.ExportLtlExpr lvl)
+            spec.Formulas |> List.map (this.ExportFormula lvl)
                           |> String.concat "\n"
 
         sprintf "%s\n\n\n%s" transformedCode transformedFormulas

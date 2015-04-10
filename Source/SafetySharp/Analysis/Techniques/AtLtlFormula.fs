@@ -55,6 +55,7 @@ module internal AtLtlFormula =
                 let filename = "verification.pml" |> SafetySharp.FileSystem.FileName
                 do! saveToFile filename
                 do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
+                do! printToStdout ()
             }
             do runWorkflow_getResult executeModelWithFormulas
             ()

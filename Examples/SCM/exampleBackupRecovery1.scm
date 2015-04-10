@@ -108,7 +108,7 @@ component backupRecoverySystem {
 			locals{}
 			choice {
 				(isActiveField) => {  }
-				!(isActiveField) => { isActiveField := false; }
+				!(isActiveField) => { isActiveField := true; }
 			}
 		}
 		
@@ -116,6 +116,8 @@ component backupRecoverySystem {
 	}
 	
 	component monitor {
+		monitorIsActive : bool = true;	
+	
 		doSensorValuesMatchR ( inout sensorValuesMatchInout : bool );
 		switchArithmeticalUnitR_PartActivate ( );
 		switchArithmeticalUnitR_PartDeactivate ( );
@@ -126,14 +128,20 @@ component backupRecoverySystem {
 			locals{
 				bool doSensorValuesMatchLocal;
 			}
-			doSensorValuesMatchR ( inout doSensorValuesMatchLocal) ;
 			choice {
-				doSensorValuesMatchLocal => {}
-				! doSensorValuesMatchLocal => {
-					switchArithmeticalUnitR_PartActivate () ;
-					switchArithmeticalUnitR_PartDeactivate () ;
-					switchArithmeticalUnitR_PartSwitchOutput ();
+				monitorIsActive => {
+					doSensorValuesMatchR ( inout doSensorValuesMatchLocal) ;
+					choice {
+						doSensorValuesMatchLocal => {}
+						! doSensorValuesMatchLocal => {
+							switchArithmeticalUnitR_PartActivate () ;
+							switchArithmeticalUnitR_PartDeactivate () ;
+							switchArithmeticalUnitR_PartSwitchOutput ();
+							monitorIsActive := false;
+						}
+					}
 				}
+				! monitorIsActive => {}
 			}
 		}
 	}

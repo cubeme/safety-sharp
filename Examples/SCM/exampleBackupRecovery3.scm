@@ -117,7 +117,7 @@ component backupRecoverySystem {
 			locals{}
 			choice {
 				(isActiveField) => { }
-				!(isActiveField) => { isActiveField := false; }
+				!(isActiveField) => { isActiveField := true; }
 			}
 		}
 		

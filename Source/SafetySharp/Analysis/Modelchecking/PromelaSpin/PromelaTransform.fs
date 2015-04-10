@@ -172,14 +172,14 @@ module internal SamToPromela =
         let globalVarInitialisations = generateGlobalVarInitialisations pgm.Globals
         
 
-        let codeOfMetamodelInLoop =
+        let codeOfMetamodelInAtomicLoop =
             let stmWithoutNestedBlocks = pgm.Body.simplifyBlocks
             let codeOfMetamodel = transformSamStm stmWithoutNestedBlocks
-            [coverStmInEndlessloop codeOfMetamodel]
+            [coverStmInEndlessloop (coverInAtomicBlockStatement [codeOfMetamodel])]
         
         let systemModule =
-            let systemCode = globalVarInitialisations @ codeOfMetamodelInLoop
-            let systemSequence : PrSequence = statementsToSequence (globalVarInitialisations @ codeOfMetamodelInLoop)
+            let systemCode = globalVarInitialisations @ codeOfMetamodelInAtomicLoop
+            let systemSequence : PrSequence = statementsToSequence (systemCode)
             let systemProctype = activeProctypeWithNameAndSequence "System" systemSequence
             [PrModule.ProcTypeModule(systemProctype)]
         let newPromelaSpec =
