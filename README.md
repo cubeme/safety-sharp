@@ -61,7 +61,7 @@ the adequacy of the results of safety analyses performed by S#.
 ####Modeling Language and Tool Support
 Instead of inventing a completely new modeling language and corresponding tools, S# models are written in a 
 domain specific language (DSL) that is embedded into the C# programming language with full access to all .NET 
-libraries and tools. S#'s own analysis tools are integrated into Visual Studi with state-of-the-art code editing 
+libraries and tools. S#'s own analysis tools are integrated into Visual Studio with state-of-the-art code editing 
 and debugging features. Even though S# models are _represented_ as code, they are still models, albeit 
 executable ones; conceptually, they are at a higher level of abstraction than actual code. The implementation of 
 a safety-critical system's software is typically done in the C or C++ programming languages and compiled for 
