@@ -31,8 +31,8 @@ namespace SafetySharp.Compiler.Normalization
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 	/// <summary>
-	///     A base class for C# normalizers that normalize certain SafetySharp C# language features in order to
-	///     ensure that the SafetySharp models remain executable.
+	///     A base class for C# normalizers that normalize certain S# language features in order to
+	///     ensure that the S# models remain executable.
 	/// </summary>
 	public abstract class Normalizer : CSharpSyntaxRewriter
 	{

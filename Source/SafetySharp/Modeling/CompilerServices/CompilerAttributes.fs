@@ -32,7 +32,7 @@ open SafetySharp
 type LiftExpressionAttribute () =
     inherit Attribute ()
 
-///// Provides metadata about a compilation unit within a SafetySharp modeling assembly.
+///// Provides metadata about a compilation unit within a S# modeling assembly.
 //[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
 //[<Sealed>]
 //type ModelingCompilationUnitAttribute (syntaxTree : string, filePath : string) =
@@ -44,13 +44,13 @@ type LiftExpressionAttribute () =
 //        nullOrWhitespaceArg filePath "filePath"
 //        SyntaxFactory.ParseSyntaxTree (syntaxTree, filePath)
 //
-///// Provides metadata about a SafetySharp modeling assembly.
+///// Provides metadata about a S# modeling assembly.
 //[<AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)>]
 //[<AllowNullLiteral; Sealed>]
 //type ModelingAssemblyAttribute (compilerVersion : string) =
 //    inherit Attribute ()
 //
-//    /// Gets the version string of the SafetySharp compiler that was used to compile the modeling assembly.
+//    /// Gets the version string of the S# compiler that was used to compile the modeling assembly.
 //    member this.CompilerVersion = 
 //        nullOrWhitespaceArg compilerVersion "compilerVersion"
 //        compilerVersion

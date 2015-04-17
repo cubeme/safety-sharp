@@ -36,7 +36,7 @@ namespace SafetySharp.Compiler
 	using Normalization;
 
 	/// <summary>
-	///     Compiles a SafetySharp modeling project authored in C# to a SafetySharp modeling assembly.
+	///     Compiles a S# modeling project authored in C# to a S# modeling assembly.
 	/// </summary>
 	internal static class Compiler
 	{
@@ -197,7 +197,7 @@ namespace SafetySharp.Compiler
 		}
 
 		/// <summary>
-		///     Runs the SafetySharp diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
+		///     Runs the S# diagnostic analyzers on the compilation, reporting all generated diagnostics. The function returns
 		///     <c>false</c> when at least one error diagnostic has been reported.
 		/// </summary>
 		/// <param name="compilation">The compilation containing the code that should be diagnosed.</param>

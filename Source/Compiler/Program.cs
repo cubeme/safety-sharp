@@ -107,7 +107,7 @@ namespace SafetySharp.Compiler
 
 			Log.Info("");
 
-			Log.Info("SafetySharp Compiler");
+			Log.Info("S# Compiler");
 			Log.Info("Copyright (c) 2014 Institute for Software & Systems Engineering");
 
 			Log.Info("");

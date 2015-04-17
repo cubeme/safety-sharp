@@ -30,7 +30,7 @@ namespace SafetySharp.CSharp.Roslyn
 	using Utilities;
 
 	/// <summary>
-	///     A base class for SafetySharp C# code analyzers.
+	///     A base class for S# code analyzers.
 	/// </summary>
 	public abstract class CSharpAnalyzer : DiagnosticAnalyzer
 	{
