@@ -25,7 +25,7 @@ namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 open System
 
-type internal NuXmvToString() =
+module internal NuXmvToString =
 
     let indent (number:int) : string =
         let s=System.Text.StringBuilder ()
@@ -120,80 +120,19 @@ type internal NuXmvToString() =
             | Some(opt) -> exporter opt + " "
             | None -> ""
 
-    
-    //We keep approximately the order of the Ast in NuXmvAst.fs. Operators are introduced when needed
-        
-    member this.ExportIdentifier (identifier : Identifier) = 
+            
+    let exportIdentifier (identifier : Identifier) = 
         identifier.Name
     
-    member this.ExportComplexIdentifier (complexIdentifier : ComplexIdentifier) =
-        match complexIdentifier with
-            | NameComplexIdentifier (nameIdentifier:Identifier) ->
-                // NestedComplexIdentifier : Identifier
-                this.ExportIdentifier nameIdentifier
-            | NestedComplexIdentifier (container:ComplexIdentifier,nameIdentifier:Identifier) ->
-                // NestedComplexIdentifier : Container '.' NameIdentifier
-                sprintf "%s.%s" (this.ExportComplexIdentifier container) (this.ExportIdentifier nameIdentifier)
-            | ArrayAccessComplexIdentifier (container:ComplexIdentifier, index:SimpleExpression) ->
-                // NestedComplexIdentifier : Container '[' Index ']'
-                sprintf "%s[%s]" (this.ExportComplexIdentifier container) (this.ExportSimpleExpression index)
-            | SelfComplexIdentfier ->
-                "self"
-
-    member this.ExportTypeSpecifier (typeSpecifier:TypeSpecifier) =
-        match typeSpecifier with
-            | SimpleTypeSpecifier (specifier:SimpleTypeSpecifier) -> this.ExportSimpleTypeSpecifier specifier
-            | ModuleTypeSpecifier (specifier:ModuleTypeSpecifier) -> this.ExportModuleTypeSpecifier specifier
-
-// The types themselves are only used internally. The declaration of variables
-// in the smv-file may use expression to define e.g. the lower and upper bound 
-// of an array, the number of bytes of a word, etc...
-    member this.ExportType (_type:Type) =
-        failwith "NotImplemented"
-        (*
-        match _type with
-            | BooleanType
-            | EnumerationType of Domain:(ConstExpression list)
-            | UnsignedWordType of Length:int  //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
-            | SignedWordType of Length:int    //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
-            | IntegerType
-            | RealType
-            | ArrayType of Lower:int * Upper:int *ElementType:Type
-            | SetType //this one is todo
-        *)
-
-
-    member this.ExportSimpleTypeSpecifier (simpleTypeSpecifier:SimpleTypeSpecifier) =
-        match simpleTypeSpecifier with
-            | BooleanTypeSpecifier ->
-                "boolean"
-            | UnsignedWordTypeSpecifier (length:BasicExpression) -> 
-                sprintf "unsigned word [%s]" (this.ExportBasicExpression length) //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
-            | SignedWordTypeSpecifier (length:BasicExpression) ->
-                sprintf "signed word [%s]" (this.ExportBasicExpression length) //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
-            | RealTypeSpecifier ->
-                "real"
-            | IntegerTypeSpecifier ->
-                "integer"
-            | EnumerationTypeSpecifier (domain:(ConstExpression list)) ->
-                let content =
-                    domain |> List.map (fun constExpr -> this.ExportConstExpression constExpr)
-                           |> joinWithWhitespace 
-                sprintf "{ %s }" content // TODO: "HasSymbolicConstants" and "HasIntegerNumbers" Method, "GetEnumerationType -> {SymbolicEnum, Integer-And-Symbolic-Enum,Integer-Enum}
-            | IntegerRangeTypeSpecifier (lower:BasicExpression, upper:BasicExpression) ->
-                sprintf "%s .. %s" (this.ExportBasicExpression lower) (this.ExportBasicExpression upper)
-            | ArrayTypeSpecifier (lower:BasicExpression, upper:BasicExpression,elementType:SimpleTypeSpecifier) ->
-                sprintf "array %s..%s of %s" (this.ExportBasicExpression lower) (this.ExportBasicExpression upper) (this.ExportSimpleTypeSpecifier elementType)
-             
-
-    member this.ExportConstExpression (constExpression:ConstExpression) =
+    
+    let exportConstExpression (constExpression:ConstExpression) =
         match constExpression with
             | BooleanConstant (value:bool) ->
                 match value with
                     | true -> "TRUE"
                     | false -> "FALSE"
             | SymbolicConstant (symbolName:Identifier) ->
-                this.ExportIdentifier symbolName
+                exportIdentifier symbolName
             | IntegerConstant (value:System.Numerics.BigInteger) ->
                 value.ToString()
             | RealConstant (value:float) ->
@@ -215,19 +154,19 @@ type internal NuXmvToString() =
             | RangeConstant (from:System.Numerics.BigInteger, _to:System.Numerics.BigInteger) ->
                 sprintf "%s..%s" (from.ToString()) (_to.ToString())
 
-    member this.ExportBasicExpression (basicExpression:BasicExpression) =
+    let rec exportBasicExpression (basicExpression:BasicExpression) =
         match basicExpression with
             | ConstExpression (constExpression) ->
-                this.ExportConstExpression constExpression
+                exportConstExpression constExpression
             | ComplexIdentifierExpression (identifier:ComplexIdentifier) ->
                 //Identifier is the reference to a variable or a define. Might be hierarchical.
-                this.ExportComplexIdentifier identifier
+                exportComplexIdentifier identifier
             | UnaryExpression (operator:UnaryOperator, operand:BasicExpression) ->
                 match operator with
-                    | UnaryOperator.LogicalNot -> sprintf "(! %s)" (this.ExportBasicExpression operand)
+                    | UnaryOperator.LogicalNot -> sprintf "(! %s)" (exportBasicExpression operand)
             | BinaryExpression (left:BasicExpression, operator:BinaryOperator, right:BasicExpression) ->
-                let left = this.ExportBasicExpression left
-                let right = this.ExportBasicExpression right
+                let left = exportBasicExpression left
+                let right = exportBasicExpression right
                 let opStr = match operator with
                                 | BinaryOperator.LogicalAnd             -> "&"
                                 | BinaryOperator.LogicalOr              -> "|"
@@ -253,35 +192,161 @@ type internal NuXmvToString() =
                 "" //TODO
             | IndexSubscriptExpression (expressionLeadingToArray:BasicExpression, index:BasicExpression) -> 
                 //TODO: Validation, Index has to be word or integer
-                sprintf "%s[%s]" (this.ExportBasicExpression expressionLeadingToArray) (this.ExportBasicExpression index)
+                sprintf "%s[%s]" (exportBasicExpression expressionLeadingToArray) (exportBasicExpression index)
             | SetExpression (setBodyExpressions:(BasicExpression list)) -> 
                 // TODO there is another way to gain set-expressions by the union-operator. See page 19. Here we use the way by enumerating every possible value
-                let content = setBodyExpressions |> List.map (fun elem -> this.ExportBasicExpression elem)
+                let content = setBodyExpressions |> List.map (fun elem -> exportBasicExpression elem)
                                                  |> joinWithComma
                 sprintf "{ %s }" content
             | CaseExpression (caseBody:(CaseConditionAndEffect list)) ->
                 let ExportCaseConditionAndEffect (caseConditionAndEffect:CaseConditionAndEffect) =
-                    sprintf "%s : %s;" (this.ExportBasicExpression caseConditionAndEffect.CaseCondition) (this.ExportBasicExpression caseConditionAndEffect.CaseEffect)
+                    sprintf "%s : %s;" (exportBasicExpression caseConditionAndEffect.CaseCondition) (exportBasicExpression caseConditionAndEffect.CaseEffect)
                 let content = caseBody |> List.map ExportCaseConditionAndEffect
                                        |> joinWithIndentedNewLine 4
                 sprintf "\n\t\t\tcase\n\t\t\t\t%s\n\t\t\tesac" content
             | BasicNextExpression (expression:BasicExpression) ->
                 // TODO: Description reads as if argument is a SimpleExpression. Maybe introduce a validator or use simpleexpression. Basically it is also a unary operator, but with different validations
-                sprintf "next(%s)" (this.ExportBasicExpression expression)
+                sprintf "next(%s)" (exportBasicExpression expression)
 
-    member this.ExportSimpleExpression (basicExpression:BasicExpression) =
-        this.ExportBasicExpression basicExpression
+    and exportSimpleExpression (basicExpression:BasicExpression) =
+        exportBasicExpression basicExpression
 
-    member this.ExportNextExpression (basicExpression:BasicExpression) =
-        this.ExportBasicExpression basicExpression
+    and exportNextExpression (basicExpression:BasicExpression) =
+        exportBasicExpression basicExpression
             
-    member this.ExportModuleElement (moduleElement:ModuleElement) =
+    and exportComplexIdentifier (complexIdentifier : ComplexIdentifier) =
+        match complexIdentifier with
+            | NameComplexIdentifier (nameIdentifier:Identifier) ->
+                // NestedComplexIdentifier : Identifier
+                exportIdentifier nameIdentifier
+            | NestedComplexIdentifier (container:ComplexIdentifier,nameIdentifier:Identifier) ->
+                // NestedComplexIdentifier : Container '.' NameIdentifier
+                sprintf "%s.%s" (exportComplexIdentifier container) (exportIdentifier nameIdentifier)
+            | ArrayAccessComplexIdentifier (container:ComplexIdentifier, index:SimpleExpression) ->
+                // NestedComplexIdentifier : Container '[' Index ']'
+                sprintf "%s[%s]" (exportComplexIdentifier container) (exportSimpleExpression index)
+            | SelfComplexIdentfier ->
+                "self"
+                
+
+// The types themselves are only used internally. The declaration of variables
+// in the smv-file may use expression to define e.g. the lower and upper bound 
+// of an array, the number of bytes of a word, etc...
+    let exportType (_type:Type) =
+        failwith "NotImplemented"
+        (*
+        match _type with
+            | BooleanType
+            | EnumerationType of Domain:(ConstExpression list)
+            | UnsignedWordType of Length:int  //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
+            | SignedWordType of Length:int    //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
+            | IntegerType
+            | RealType
+            | ArrayType of Lower:int * Upper:int *ElementType:Type
+            | SetType //this one is todo
+        *)
+
+
+    let rec exportSimpleTypeSpecifier (simpleTypeSpecifier:SimpleTypeSpecifier) =
+        match simpleTypeSpecifier with
+            | BooleanTypeSpecifier ->
+                "boolean"
+            | UnsignedWordTypeSpecifier (length:BasicExpression) -> 
+                sprintf "unsigned word [%s]" (exportBasicExpression length) //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
+            | SignedWordTypeSpecifier (length:BasicExpression) ->
+                sprintf "signed word [%s]" (exportBasicExpression length) //in two's complement: See wikipedia http://en.wikipedia.org/wiki/Two's_complement
+            | RealTypeSpecifier ->
+                "real"
+            | IntegerTypeSpecifier ->
+                "integer"
+            | EnumerationTypeSpecifier (domain:(ConstExpression list)) ->
+                let content =
+                    domain |> List.map (fun constExpr -> exportConstExpression constExpr)
+                           |> joinWithWhitespace 
+                sprintf "{ %s }" content // TODO: "HasSymbolicConstants" and "HasIntegerNumbers" Method, "GetEnumerationType -> {SymbolicEnum, Integer-And-Symbolic-Enum,Integer-Enum}
+            | IntegerRangeTypeSpecifier (lower:BasicExpression, upper:BasicExpression) ->
+                sprintf "%s .. %s" (exportBasicExpression lower) (exportBasicExpression upper)
+            | ArrayTypeSpecifier (lower:BasicExpression, upper:BasicExpression,elementType:SimpleTypeSpecifier) ->
+                sprintf "array %s..%s of %s" (exportBasicExpression lower) (exportBasicExpression upper) (exportSimpleTypeSpecifier elementType)
+             
+    
+    let exportModuleTypeSpecifier (moduleTypeSpecifier:ModuleTypeSpecifier) = 
+        // Chapter 2.3.11 MODULE Instantiations p 31.
+        let name = exportIdentifier moduleTypeSpecifier.ModuleName
+        let parameterString =
+            let parameterStringContent =
+                moduleTypeSpecifier.ModuleParameters |> List.map exportBasicExpression
+                                                     |> joinWithComma
+            if moduleTypeSpecifier.ModuleParameters.Length > 0 then (sprintf "(%s)" parameterStringContent) else " "
+        sprintf "%s%s" name parameterString
+        
+    let exportTypeSpecifier (typeSpecifier:TypeSpecifier) =
+        match typeSpecifier with
+            | SimpleTypeSpecifier (specifier:SimpleTypeSpecifier) -> exportSimpleTypeSpecifier specifier
+            | ModuleTypeSpecifier (specifier:ModuleTypeSpecifier) -> exportModuleTypeSpecifier specifier
+            
+    let rec exportCtlExpression (ctlExpression:CtlExpression) =
+        match ctlExpression with
+            | CtlSimpleExpression (expression:SimpleExpression) ->
+                exportSimpleExpression expression
+            | CtlUnaryExpression (operator:CtlUnaryOperator, operand:CtlExpression) ->
+                let opStr = match operator with
+                                | CtlUnaryOperator.LogicalNot      -> "!"
+                                | CtlUnaryOperator.ExistsGlobally  -> "EG"
+                                | CtlUnaryOperator.ExistsNextState -> "EX"
+                                | CtlUnaryOperator.ExistsFinally   -> "EF"
+                                | CtlUnaryOperator.ForallGlobally  -> "AG"
+                                | CtlUnaryOperator.ForallNext      -> "AX"
+                                | CtlUnaryOperator.ForallFinally   -> "AF"
+                sprintf "(%s %s)" opStr (exportCtlExpression operand)
+            | CtlBinaryExpression (left:CtlExpression, operator:CtlBinaryOperator, right:CtlExpression) ->
+                match operator with
+                    | CtlBinaryOperator.LogicalAnd         -> sprintf "(%s & %s)" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.LogicalOr          -> sprintf "(%s | %s)" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.LogicalXor         -> sprintf "(%s xor %s)" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.LogicalNxor        -> sprintf "(%s nxor %s)" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.LogicalImplies     -> sprintf "(%s -> %s)" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.LogicalEquivalence -> sprintf "(%s <-> %s)" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.ExistsUntil        -> sprintf "(E [%s U %s])" (exportCtlExpression left) (exportCtlExpression right)
+                    | CtlBinaryOperator.ForallUntil        -> sprintf "(A [%s U %s])" (exportCtlExpression left) (exportCtlExpression right)
+                        
+            
+    let rec exportLtlExpression (ltlExpression:LtlExpression) =
+        match ltlExpression with
+            | LtlSimpleExpression (expression:SimpleExpression) ->
+                exportSimpleExpression expression
+            | LtlUnaryExpression (operator:LtlUnaryOperator,  operand:LtlExpression) ->
+                let opStr = match operator with
+                                | LtlUnaryOperator.LogicalNot              -> "!"
+                                | LtlUnaryOperator.FutureNext              -> "X"
+                                | LtlUnaryOperator.FutureGlobally          -> "G"
+                                | LtlUnaryOperator.FutureFinally           -> "F"
+                                | LtlUnaryOperator.PastPrevious            -> "Y"
+                                | LtlUnaryOperator.PastNotPreviousStateNot -> "Z"
+                                | LtlUnaryOperator.PastHistorically        -> "H"
+                                | LtlUnaryOperator.PastOnce                -> "O"
+                sprintf "(%s %s)" opStr (exportLtlExpression operand)
+            | LtlBinaryExpression (left:LtlExpression, operator:LtlBinaryOperator, right:LtlExpression) ->
+                match operator with
+                    | LtlBinaryOperator.LogicalAnd         -> sprintf "(%s & %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.LogicalOr          -> sprintf "(%s | %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.LogicalXor         -> sprintf "(%s xor %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.LogicalNxor        -> sprintf "(%s nxor %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.LogicalImplies     -> sprintf "(%s -> %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.LogicalEquivalence -> sprintf "(%s <-> %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.FutureUntil        -> sprintf "(%s U %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.FutureReleases     -> sprintf "(%s R %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.PastSince          -> sprintf "(%s S %s)" (exportLtlExpression left) (exportLtlExpression right)
+                    | LtlBinaryOperator.PastTriggered      -> sprintf "(%s T %s)" (exportLtlExpression left) (exportLtlExpression right)
+
+
+    let rec exportModuleElement (moduleElement:ModuleElement) =
         let ExportVariable (variable:TypedIdentifier) =
-            sprintf "%s : %s;" (this.ExportIdentifier variable.Identifier) (this.ExportTypeSpecifier variable.TypeSpecifier)
+            sprintf "%s : %s;" (exportIdentifier variable.Identifier) (exportTypeSpecifier variable.TypeSpecifier)
         let ExportVariableSimple (variable:SimpleTypedIdentifier) =
-            sprintf "%s : %s;" (this.ExportIdentifier variable.Identifier) (this.ExportSimpleTypeSpecifier variable.TypeSpecifier)
+            sprintf "%s : %s;" (exportIdentifier variable.Identifier) (exportSimpleTypeSpecifier variable.TypeSpecifier)
         let ExportIdentifierNextExpressionTuple (identifierNextExpressionTuple:IdentifierNextExpressionTuple) =
-            sprintf "%s := %s;" (this.ExportIdentifier identifierNextExpressionTuple.Identifier) (this.ExportNextExpression identifierNextExpressionTuple.Expression)
+            sprintf "%s := %s;" (exportIdentifier identifierNextExpressionTuple.Identifier) (exportNextExpression identifierNextExpressionTuple.Expression)
         match moduleElement with
             | VarDeclaration (variables:(TypedIdentifier list)) -> 
                 // Chapter 2.3.1 Variable Declarations p 23-26. Type Specifiers are moved into Type-Namespace.                
@@ -304,179 +369,80 @@ type internal NuXmvToString() =
             // TODO | ArrayDefineDeclaration // Chapter 2.3.3 Array Define Declarations p 26-27
             | ConstantsDeclaration (constants:(Identifier list)) ->
                 // Chapter 2.3.4 CONSTANTS Declarations p 27
-                let content = constants |> List.map this.ExportIdentifier
+                let content = constants |> List.map exportIdentifier
                                         |> joinWithComma
                 sprintf "\tCONSTANTS\n%s" content
             | InitConstraint (expression:SimpleExpression) ->
                 // Chapter 2.3.5 INIT Constraint p 27
-                let content = this.ExportSimpleExpression expression
+                let content = exportSimpleExpression expression
                 sprintf "\tINIT\n%s" content
             | InvarConstraint (expression:SimpleExpression) ->
                 // Chapter 2.3.6 INVAR Constraint p 27
-                let content = this.ExportSimpleExpression expression
+                let content = exportSimpleExpression expression
                 sprintf "\tINVAR\n%s" content
             | TransConstraint (expression:NextExpression) ->
                 // Chapter 2.3.7 TRANS Constraint p 28                
-                let content = this.ExportSimpleExpression expression
+                let content = exportSimpleExpression expression
                 sprintf "\tTRANS\n\t\t%s" content
             | AssignConstraint (assigns:(SingleAssignConstraint list)) ->
                 let ExportSingleAssignConstraint (singleAssignConstraint:SingleAssignConstraint) = 
                     // Chapter 2.3.8 ASSIGN Constraint p 28-29 (for AssignConstraint)
                     match singleAssignConstraint with
                         | CurrentStateAssignConstraint (identifier:ComplexIdentifier, expression:SimpleExpression) -> 
-                            sprintf "%s := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
+                            sprintf "%s := %s;" (exportComplexIdentifier identifier) (exportSimpleExpression expression)
                         | InitialStateAssignConstraint (identifier:ComplexIdentifier, expression:SimpleExpression) ->
-                            sprintf "init(%s) := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
+                            sprintf "init(%s) := %s;" (exportComplexIdentifier identifier) (exportSimpleExpression expression)
                         | NextStateAssignConstraint (identifier:ComplexIdentifier, expression:NextExpression) ->
-                            sprintf "next(%s) := %s;" (this.ExportComplexIdentifier identifier) (this.ExportSimpleExpression expression)
+                            sprintf "next(%s) := %s;" (exportComplexIdentifier identifier) (exportSimpleExpression expression)
                 // Chapter 2.3.8 ASSIGN Constraint p 28-29
                 let content = assigns |> List.map ExportSingleAssignConstraint
                                       |> joinWithIndentedNewLine 2
                 sprintf "\tASSIGN\n\t\t%s" content
             // TODO | FairnessConstraint // Chapter 2.3.9 FAIRNESS Constraints p 30
             | SpecificationInModule (specification) -> 
-                this.ExportSpecification specification
+                exportSpecification specification
             // // Chapter 2.3.16 ISA Declarations p 34 (depreciated).Ddon't implement as it is depreciated
             | PredDeclaration (identifier:Identifier, expression:SimpleExpression) -> 
                 // Chapter 2.3.17 PRED and MIRROR Declarations p 34-35. Useful for debugging and CEGAR (Counterexample Guided Abstraction Refinement)
                 //TODO: optional
-                sprintf "\tPRED <%s> :=  %s" (this.ExportIdentifier identifier) (this.ExportSimpleExpression expression)
+                sprintf "\tPRED <%s> :=  %s" (exportIdentifier identifier) (exportSimpleExpression expression)
             | MirrorDeclaration (variableIdentifier:ComplexIdentifier) -> 
-                sprintf "\tMIRROR %s" (this.ExportComplexIdentifier variableIdentifier)
+                sprintf "\tMIRROR %s" (exportComplexIdentifier variableIdentifier)
 
 
-    member this.ExportModuleDeclaration (moduleDeclaration:ModuleDeclaration) = 
+    and exportModuleDeclaration (moduleDeclaration:ModuleDeclaration) = 
          // Chapter 2.3.10 MODULE Declarations p 30-31
-        let name = this.ExportIdentifier moduleDeclaration.Identifier
+        let name = exportIdentifier moduleDeclaration.Identifier
         let parameterString =
             let parameterStringContent =
-                moduleDeclaration.ModuleParameters |> List.map this.ExportIdentifier
+                moduleDeclaration.ModuleParameters |> List.map exportIdentifier
                                                    |> joinWithComma
             if moduleDeclaration.ModuleParameters.Length > 0 then (sprintf "(%s)" parameterStringContent) else " "
         let content =
-            moduleDeclaration.ModuleElements |> List.map this.ExportModuleElement
+            moduleDeclaration.ModuleElements |> List.map exportModuleElement
                                              |> joinWithNewLine
         sprintf "MODULE %s%s\n%s" name parameterString content
-    
 
-
-    member this.ExportModuleTypeSpecifier (moduleTypeSpecifier:ModuleTypeSpecifier) = 
-        // Chapter 2.3.11 MODULE Instantiations p 31.
-        let name = this.ExportIdentifier moduleTypeSpecifier.ModuleName
-        let parameterString =
-            let parameterStringContent =
-                moduleTypeSpecifier.ModuleParameters |> List.map this.ExportBasicExpression
-                                                     |> joinWithComma
-            if moduleTypeSpecifier.ModuleParameters.Length > 0 then (sprintf "(%s)" parameterStringContent) else " "
-        sprintf "%s%s" name parameterString
-
-
-    member this.ExportNuXmvProgram (nuXmvProgram:NuXmvProgram) = 
-        // Chapter 2.3.13 A Program and the main Module p 33
-        let modules =
-            nuXmvProgram.Modules |> List.map this.ExportModuleDeclaration
-                                 |> joinWithNewLine
-        let specifications =
-            nuXmvProgram.Specifications |> List.map this.ExportSpecification
-                                        |> joinWithNewLine
-        sprintf "%s\n\n%s" modules specifications
-
-    member this.ExportCtlExpression (ctlExpression:CtlExpression) =
-        match ctlExpression with
-            | CtlSimpleExpression (expression:SimpleExpression) ->
-                this.ExportSimpleExpression expression
-            | CtlUnaryExpression (operator:CtlUnaryOperator, operand:CtlExpression) ->
-                let opStr = match operator with
-                                | CtlUnaryOperator.LogicalNot      -> "!"
-                                | CtlUnaryOperator.ExistsGlobally  -> "EG"
-                                | CtlUnaryOperator.ExistsNextState -> "EX"
-                                | CtlUnaryOperator.ExistsFinally   -> "EF"
-                                | CtlUnaryOperator.ForallGlobally  -> "AG"
-                                | CtlUnaryOperator.ForallNext      -> "AX"
-                                | CtlUnaryOperator.ForallFinally   -> "AF"
-                sprintf "(%s %s)" opStr (this.ExportCtlExpression operand)
-            | CtlBinaryExpression (left:CtlExpression, operator:CtlBinaryOperator, right:CtlExpression) ->
-                match operator with
-                    | CtlBinaryOperator.LogicalAnd         -> sprintf "(%s & %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.LogicalOr          -> sprintf "(%s | %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.LogicalXor         -> sprintf "(%s xor %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.LogicalNxor        -> sprintf "(%s nxor %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.LogicalImplies     -> sprintf "(%s -> %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.LogicalEquivalence -> sprintf "(%s <-> %s)" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.ExistsUntil        -> sprintf "(E [%s U %s])" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                    | CtlBinaryOperator.ForallUntil        -> sprintf "(A [%s U %s])" (this.ExportCtlExpression left) (this.ExportCtlExpression right)
-                        
-            
-    member this.ExportLtlExpression (ltlExpression:LtlExpression) =
-        match ltlExpression with
-            | LtlSimpleExpression (expression:SimpleExpression) ->
-                this.ExportSimpleExpression expression
-            | LtlUnaryExpression (operator:LtlUnaryOperator,  operand:LtlExpression) ->
-                let opStr = match operator with
-                                | LtlUnaryOperator.LogicalNot              -> "!"
-                                | LtlUnaryOperator.FutureNext              -> "X"
-                                | LtlUnaryOperator.FutureGlobally          -> "G"
-                                | LtlUnaryOperator.FutureFinally           -> "F"
-                                | LtlUnaryOperator.PastPrevious            -> "Y"
-                                | LtlUnaryOperator.PastNotPreviousStateNot -> "Z"
-                                | LtlUnaryOperator.PastHistorically        -> "H"
-                                | LtlUnaryOperator.PastOnce                -> "O"
-                sprintf "(%s %s)" opStr (this.ExportLtlExpression operand)
-            | LtlBinaryExpression (left:LtlExpression, operator:LtlBinaryOperator, right:LtlExpression) ->
-                match operator with
-                    | LtlBinaryOperator.LogicalAnd         -> sprintf "(%s & %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.LogicalOr          -> sprintf "(%s | %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.LogicalXor         -> sprintf "(%s xor %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.LogicalNxor        -> sprintf "(%s nxor %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.LogicalImplies     -> sprintf "(%s -> %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.LogicalEquivalence -> sprintf "(%s <-> %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.FutureUntil        -> sprintf "(%s U %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.FutureReleases     -> sprintf "(%s R %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.PastSince          -> sprintf "(%s S %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-                    | LtlBinaryOperator.PastTriggered      -> sprintf "(%s T %s)" (this.ExportLtlExpression left) (this.ExportLtlExpression right)
-
-    member this.ExportSpecification (specification:Specification) =
+    and exportSpecification (specification:Specification) =
         match specification with
-            | CtlSpecification (ctlExpression:CtlExpression) -> "CTLSPEC " + this.ExportCtlExpression ctlExpression
-            | LtlSpecification (ltlExpression:LtlExpression) -> "LTLSPEC " + this.ExportLtlExpression ltlExpression
+            | CtlSpecification (ctlExpression:CtlExpression) -> "CTLSPEC " + exportCtlExpression ctlExpression
+            | LtlSpecification (ltlExpression:LtlExpression) -> "LTLSPEC " + exportLtlExpression ltlExpression
         
 
-    (*
-    // Operators
-    type UnaryOperator = 
-        | LogicalNot
+    let exportNuXmvProgram (nuXmvProgram:NuXmvProgram) = 
+        // Chapter 2.3.13 A Program and the main Module p 33
+        let modules =
+            nuXmvProgram.Modules |> List.map exportModuleDeclaration
+                                 |> joinWithNewLine
+        let specifications =
+            nuXmvProgram.Specifications |> List.map exportSpecification
+                                        |> joinWithNewLine
+        sprintf "%s\n\n%s" modules specifications
+        
+    open SafetySharp.Workflow
 
-    type BinaryOperator=      
-        | LogicalAnd
-        | LogicalOr
-        | LogicalXor
-        | LogicalNxor
-        | LogicalImplies
-        | LogicalEquivalence
-        | Equality
-        | Inequality
-        | LessThan
-        | GreaterThan
-        | LessEqual
-        | GreaterEqual
-        | IntegerAddition
-        | IntegerSubtraction
-        | IntegerMultiplication
-        | IntegerDivision
-        | IntegerRemainder
-        | BitShiftRight
-        | BitShiftLeft
-
-   *)
-
-   
-open SafetySharp.Workflow
-
-type internal NuXmvToString with
-    static member instance : NuXmvToString =
-        NuXmvToString()
-
-    static member workflow : SimpleWorkflowFunction<NuXmvProgram,string,unit> = workflow {
+    let workflow<'traceableOfOrigin> () 
+            : ExogenousWorkflowFunction<NuXmvProgram,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! model = getState ()
-        do! updateState (NuXmvToString.instance.ExportNuXmvProgram model)
+        do! updateState (exportNuXmvProgram model)
     }
