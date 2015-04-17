@@ -69,7 +69,6 @@
       <Link>AstTestHelpers.fs</Link>
     </Compile>
     <Compile Include="Modeling\ModelingTestHelpers.fs" />
-    <Compile Include="Modeling\BindingTests.fs" />
     <Compile Include="Modeling\ComponentTests.fs" />
     <Compile Include="Modeling\ModelTests.fs" />
     <Compile Include="Models\Ssm\CilToSsm.Assemblies.fs" />
