@@ -114,6 +114,8 @@ type Model () =
     /// on the <see cref="PortBinding" /> instance returned by this method to create a delayed binding instead.
     member this.Bind (binding : PortBinding) =
         nullArg binding "binding"
+        requiresNotSealed ()
+
         binding.Binder <- this
         bindings.Add binding
         binding
