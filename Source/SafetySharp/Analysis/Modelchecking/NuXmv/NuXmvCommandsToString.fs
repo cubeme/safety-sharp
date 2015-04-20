@@ -23,11 +23,10 @@
 namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 
-type internal NuXmvCommandsToString() =
-    
-    let astToFile = NuXmvToString()
+module internal NuXmvCommandsToString =
+    open NuXmvToString
 
-    member this.ExportNameOfEnvironmentVariable (variable:IEnvironmentVariable) : string =
+    let exportNameOfEnvironmentVariable (variable:IEnvironmentVariable) : string =
         match variable with
             // NuSMV
             | :? NuSMVEnvironmentVariables.NusmvStdErr as stderr -> "nusmv_stderr"
@@ -39,7 +38,7 @@ type internal NuXmvCommandsToString() =
             // NotImplementedYet
             | _ -> failwith "NotImplementedYet"
 
-    member this.ExportNuSMVCommand (command:NuSMVCommand) : string =
+    let exportNuSMVCommand (command:NuSMVCommand) : string =
         match command with
             | NuSMVCommand.ReadModel (fileName:string) ->
                  sprintf "read_model -i %s" fileName
@@ -47,7 +46,7 @@ type internal NuXmvCommandsToString() =
                 "flatten_hierarchy"
             | NuSMVCommand.ShowVars -> "show_vars"
             | NuSMVCommand.ShowDependencies (expression:NextExpression) ->
-                sprintf "show_dependencies -e %s" (astToFile.ExportNextExpression expression)
+                sprintf "show_dependencies -e %s" (exportNextExpression expression)
             | NuSMVCommand.EncodeVariables ->
                 "encode_variables"
             | NuSMVCommand.BuildModel ->
@@ -60,31 +59,31 @@ type internal NuXmvCommandsToString() =
             | NuSMVCommand.CheckFsm ->
                 "check_fsm"
             | NuSMVCommand.CheckCtlSpec (formula:CtlExpression) ->
-                sprintf "check_ctlspec -p \"%s\"" (astToFile.ExportCtlExpression formula)
+                sprintf "check_ctlspec -p \"%s\"" (exportCtlExpression formula)
             | NuSMVCommand.CheckInvar (formula:NextExpression) ->
-                sprintf "check_invar -p \"%s\"" (astToFile.ExportNextExpression formula)
+                sprintf "check_invar -p \"%s\"" (exportNextExpression formula)
             | NuSMVCommand.CheckLtlSpec (formula:LtlExpression) ->
-                sprintf "check_ltlspec -p \"%s\"" (astToFile.ExportLtlExpression formula)
+                sprintf "check_ltlspec -p \"%s\"" (exportLtlExpression formula)
             //| NuSMVCommand.CheckCompute  ->
             //    ""
             | NuSMVCommand.CheckProperty (name:string) ->
                 sprintf "check_property -P \"%s\"" name
             | NuSMVCommand.AddPropertyCtl (name:string,formula:CtlExpression) ->
-                sprintf "add_property -c -p \"%s\" -n \"%s\"" (astToFile.ExportCtlExpression formula) name
+                sprintf "add_property -c -p \"%s\" -n \"%s\"" (exportCtlExpression formula) name
             | NuSMVCommand.AddPropertyInvar (name:string,formula:NextExpression) ->
-                sprintf "add_property -i -p \"%s\" -n \"%s\"" (astToFile.ExportNextExpression formula) name
+                sprintf "add_property -i -p \"%s\" -n \"%s\"" (exportNextExpression formula) name
             | NuSMVCommand.AddPropertyLtl (name:string,formula:LtlExpression) ->
-                sprintf "add_property -l -p \"%s\" -n \"%s\"" (astToFile.ExportLtlExpression formula) name
+                sprintf "add_property -l -p \"%s\" -n \"%s\"" (exportLtlExpression formula) name
             //| NuSMVCommand.AddPropertyCompute (name:string,formula:LtlExpression) ->
-            //    sprintf "add_property -q -p \"%s\" -n \"%s\"" (astToFile.ExportCtlExpression formula) name
+            //    sprintf "add_property -q -p \"%s\" -n \"%s\"" (exportCtlExpression formula) name
 
             //| NuSMVCommand.AddPropertyPsl (name:string,formula) ->
-            //    sprintf "add_property -s -p \"%s\" -n \"%s\"" (astToFile.ExportCtlExpression formula) name
+            //    sprintf "add_property -s -p \"%s\" -n \"%s\"" (exportCtlExpression formula) name
 
             | NuSMVCommand.Echo (variable:string) ->
                 sprintf "echo %s" variable
             | NuSMVCommand.EchoTyped (variable:IEnvironmentVariable) ->
-                sprintf "echo %s" (this.ExportNameOfEnvironmentVariable variable)
+                sprintf "echo %s" (exportNameOfEnvironmentVariable variable)
             | NuSMVCommand.PrintUsage ->
                 "print_usage"
             | NuSMVCommand.Quit ->
@@ -133,11 +132,11 @@ type internal NuXmvCommandsToString() =
                 sprintf "unset %s" name
             
             | NuSMVCommand.UnsetTyped (variable:IEnvironmentVariable)  ->
-                sprintf "unset %s" (this.ExportNameOfEnvironmentVariable variable)
+                sprintf "unset %s" (exportNameOfEnvironmentVariable variable)
             | NuSMVCommand.Usage ->
                 "usage"
 
-    member this.ExportNuXmvCommand (command:NuXmvCommand) : string =
+    let exportNuXmvCommand (command:NuXmvCommand) : string =
         match command with
             | NuXmvCommand.MsatPickState             -> failwith "NotImplementedYet"
             | NuXmvCommand.MsatSimulate              -> failwith "NotImplementedYet"
@@ -155,24 +154,24 @@ type internal NuXmvCommandsToString() =
             | NuXmvCommand.WriteSimplifiedModelFunc  -> failwith "NotImplementedYet"
             | NuXmvCommand.BuildSimplifiedProperty   -> failwith "NotImplementedYet"
 
-    member this.ExportCustomCommand (command:NuXmvCustomCommand) : string =
+    let exportCustomCommand (command:NuXmvCustomCommand) : string =
         command.Command
     
-    member this.ExportICommand (command:ICommand) : string =
+    let exportICommand (command:ICommand) : string =
         match command with
-            | :? NuXmvCustomCommand as command -> this.ExportCustomCommand command
+            | :? NuXmvCustomCommand as command -> exportCustomCommand command
             | :? NuXmvStartedCommand as command -> "NuXmv Started"
-            | :? NuSMVCommand as command -> this.ExportNuSMVCommand command
-            | :? NuXmvCommand as command -> this.ExportNuXmvCommand command
+            | :? NuSMVCommand as command -> exportNuSMVCommand command
+            | :? NuXmvCommand as command -> exportNuXmvCommand command
             | _ -> failwith "NotImplementedYet"
 
-    member this.ExportNuXmvCommandLineArgument (argument:NuXmvCommandLine) : string =
+    let exportNuXmvCommandLineArgument (argument:NuXmvCommandLine) : string =
         match argument with
             | NuXmvCommandLine.Help                        -> "-help"
             | NuXmvCommandLine.Verbose                     -> "-v 1"
             | NuXmvCommandLine.Interactive                 -> "-int"
             | NuXmvCommandLine.AvoidLoadingDefaultSettings -> "-s"
 
-    member this.ExportNuXmvCommandLine (arguments:NuXmvCommandLine list) : string =
-        arguments |> List.map (fun argument -> this.ExportNuXmvCommandLineArgument argument)
+    let exportNuXmvCommandLine (arguments:NuXmvCommandLine list) : string =
+        arguments |> List.map (fun argument -> exportNuXmvCommandLineArgument argument)
                   |> String.concat " "

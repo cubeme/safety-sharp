@@ -325,7 +325,8 @@ type internal PromelaToString with
         do! updateState (PromelaToString.instance.ExportSpec 0 model)
     }
 
-    static member workflow : SimpleWorkflowFunction<Spec,string,unit> = workflow {
+    static member workflow () 
+            : ExogenousWorkflowFunction<Spec,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! model = getState ()
         do! updateState (PromelaToString.instance.ExportSpec 0 model)
     }

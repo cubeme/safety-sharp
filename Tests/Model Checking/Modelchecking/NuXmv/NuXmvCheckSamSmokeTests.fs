@@ -40,12 +40,11 @@ module NuXmvGwamCheckSamSmokeTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
-            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow
-            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
+            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow ()
+            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
         }
@@ -207,11 +206,10 @@ module NuXmvSpCheckSamSmokeTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
-            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
+            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
         }

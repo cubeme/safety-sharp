@@ -44,3 +44,5 @@ module Typedefs =
     type internal PrIvar = Ivar
     type internal PrAssign = Assign
     type internal PrSpec = Spec
+
+    type internal PrTraceable = Traceable

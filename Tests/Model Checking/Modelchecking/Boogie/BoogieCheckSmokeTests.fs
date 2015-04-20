@@ -33,9 +33,8 @@ module BoogieSmokeTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! removeAllTraceables ()
-            do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf
-            do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf
+            do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf ()
+            do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf ()
             //let filename = sprintf "%s.bpl" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName
             //do! saveToFile filename
             //do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan

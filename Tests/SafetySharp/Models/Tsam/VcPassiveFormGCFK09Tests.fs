@@ -34,12 +34,11 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
 
             do! SafetySharp.Workflow.printObjectToStdout ()
             do! SafetySharp.Workflow.printNewParagraphToStdout ()
-            do! SafetySharp.Models.TsamToString.exportModelWorkflow
+            do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
             do! SafetySharp.Workflow.printToStdout ()
     }
 
@@ -48,12 +47,11 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
 
             do! SafetySharp.Workflow.printObjectToStdout ()
             do! SafetySharp.Workflow.printNewParagraphToStdout ()
-            do! SafetySharp.Models.TsamToString.exportModelWorkflow
+            do! SafetySharp.Models.TsamToString.exportModelWorkflow ()
             do! SafetySharp.Workflow.printToStdout ()
     }
 

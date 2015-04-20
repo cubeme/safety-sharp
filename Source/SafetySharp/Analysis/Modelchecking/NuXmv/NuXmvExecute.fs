@@ -83,10 +83,7 @@ type internal NuXmvCurrentTechniqueForVerification =
                     
 
 
-type internal ExecuteNuXmv() =
-    let commandToString = NuXmvCommandsToString ()
-
-    
+type internal ExecuteNuXmv() =    
     let commandActiveMutex = new System.Threading.Mutex()
     let stdoutAndCommandFinishedBlocker = new System.Threading.AutoResetEvent (false);
     let stderrFinishedBlocker = new System.Threading.AutoResetEvent (false);
@@ -221,7 +218,7 @@ type internal ExecuteNuXmv() =
             activeCommand <- Some(command)
             // NuXmv uses GNU readline and accepts commands from it. So it might be necessary to strip anything
             // which might be a control word of GNU readline out of the input-stream
-            proc.StandardInput.WriteLine(commandToString.ExportICommand command) 
+            proc.StandardInput.WriteLine(NuXmvCommandsToString.exportICommand command) 
 
             stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
 
@@ -281,7 +278,7 @@ type internal ExecuteNuXmv() =
 
     member this.IsNuXmvRunable () : bool =
         use proc = new System.Diagnostics.Process()        
-        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine NuXmvHelpfulCommandsAndCommandSequences.commandLineHelp
+        proc.StartInfo.Arguments <- NuXmvCommandsToString.exportNuXmvCommandLine NuXmvHelpfulCommandsAndCommandSequences.commandLineHelp
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
@@ -307,7 +304,7 @@ type internal ExecuteNuXmv() =
         commandActiveMutex.WaitOne() |> ignore
         
         // TODO: check if already started
-        proc.StartInfo.Arguments <- commandToString.ExportNuXmvCommandLine (NuXmvHelpfulCommandsAndCommandSequences.commandLineStart)
+        proc.StartInfo.Arguments <- NuXmvCommandsToString.exportNuXmvCommandLine (NuXmvHelpfulCommandsAndCommandSequences.commandLineStart)
         proc.StartInfo.FileName <- ExecuteNuXmv.FindNuXmv ()
         proc.StartInfo.WindowStyle <-  System.Diagnostics.ProcessWindowStyle.Hidden
         proc.StartInfo.CreateNoWindow <-  true
@@ -323,14 +320,14 @@ type internal ExecuteNuXmv() =
         processWaiter <- this.TaskWaitForEnd (timeInMs)
         
         // this.ExecuteCommand cannot be used during initialization, so use StandardInput directly
-        let quitOnFailure = commandToString.ExportICommand NuXmvHelpfulCommandsAndCommandSequences.enableOnFailureScriptQuits
+        let quitOnFailure = NuXmvCommandsToString.exportICommand NuXmvHelpfulCommandsAndCommandSequences.enableOnFailureScriptQuits
         proc.StandardInput.WriteLine(quitOnFailure)
-        let switchToXmlOutput = commandToString.ExportICommand NuXmvHelpfulCommandsAndCommandSequences.switchToXmlOutput
+        let switchToXmlOutput = NuXmvCommandsToString.exportICommand NuXmvHelpfulCommandsAndCommandSequences.switchToXmlOutput
         proc.StandardInput.WriteLine(switchToXmlOutput)
         // indication must be the last command!!!
         let enableIndicationOfCommandEnd =
             let commandForAutoexec = sprintf "echo %s; echo -2 %s" commandEndingStringStdout commandEndingStringStderr
-            commandToString.ExportICommand (NuXmvHelpfulCommandsAndCommandSequences.setAutoexec commandForAutoexec)            
+            NuXmvCommandsToString.exportICommand (NuXmvHelpfulCommandsAndCommandSequences.setAutoexec commandForAutoexec)            
         proc.StandardInput.WriteLine(enableIndicationOfCommandEnd) 
 
         stdoutAndCommandFinishedBlocker.WaitOne() |> ignore
@@ -356,7 +353,7 @@ type internal ExecuteNuXmv() =
         
     member this.ReturnCommandResult (entry:INuXmvCommandResult) : string = 
         let stringBuilder = new System.Text.StringBuilder()
-        stringBuilder.AppendLine ((commandToString.ExportICommand entry.Basic.Command)) |> ignore
+        stringBuilder.AppendLine ((NuXmvCommandsToString.exportICommand entry.Basic.Command)) |> ignore
         stringBuilder.AppendLine ("stdout:\n" + entry.Basic.Stdout) |> ignore
         stringBuilder.AppendLine ("stderr:\n" + entry.Basic.Stderr) |> ignore
         stringBuilder.AppendLine "==========" |> ignore
@@ -371,7 +368,7 @@ type internal ExecuteNuXmv() =
             stringBuilder.AppendLine "==========" |> ignore
         let printActiveCommand () : unit =
             if activeCommand.IsSome then
-                stringBuilder.AppendLine ("current Command:\n" + (commandToString.ExportICommand activeCommand.Value)) |> ignore
+                stringBuilder.AppendLine ("current Command:\n" + (NuXmvCommandsToString.exportICommand activeCommand.Value)) |> ignore
             else
                 stringBuilder.AppendLine ("current Command:\n ---- ") |> ignore
             stringBuilder.AppendLine "==========" |> ignore

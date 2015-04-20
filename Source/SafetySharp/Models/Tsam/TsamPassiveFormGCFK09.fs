@@ -358,7 +358,8 @@ module internal TsamPassiveFormGCFK09 =
     open SafetySharp.Workflow
     open SafetySharp.Models.SamHelpers
     
-    let transformProgramToSsaForm_Original : SimpleWorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
+    let transformProgramToSsaForm_Original<'traceableOfOrigin>
+            : EndogenousWorkflowFunction<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,unit> = workflow {
         let! pgm = getState ()
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
@@ -408,7 +409,8 @@ module internal TsamPassiveFormGCFK09 =
 
 
     //to Passive Form: 
-    let transformProgramToPassiveForm_Original : SimpleWorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
+    let transformProgramToPassiveForm_Original<'traceableOfOrigin>
+            : EndogenousWorkflowFunction<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,unit> = workflow {
         do! transformProgramToSsaForm_Original
         let! pgm = getState ()        
         // Todo: checkEveryVariableWrittenAtMostOnce ()

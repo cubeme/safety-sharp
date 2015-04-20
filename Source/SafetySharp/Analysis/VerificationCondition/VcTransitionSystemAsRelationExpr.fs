@@ -25,13 +25,20 @@ namespace SafetySharp.Analysis.VerificationCondition
 module internal TransitionSystemAsRelationExpr =
     // Tsare
 
-    open SafetySharp.Models.Tsam
+    open SafetySharp.Models
     open SafetySharp.Models.SamHelpers
     open VcGuardWithAssignmentModel
     
+    type VarDecl = Tsam.GlobalVarDecl
+    type IvarDecl = Tsam.LocalVarDecl
+    type Var = Tsam.Var
+    type Val = Tsam.Val
+    type BOp= Tsam.BOp
+    type Expr = Tsam.Expr
+
     type TransitionSystem = {
-        Globals : GlobalVarDecl list;
-        Ivars : LocalVarDecl list;
+        Globals : VarDecl list;
+        Ivars : IvarDecl list;
         // The virtual next var should be purely virtual. In e.g. NuXmv it will be replaced by next(x). This variable should neither appear in
         // Globals nor in Ivars. Every Global should have a virtual next var
         VirtualNextVarToVar : Map<Var,Var>;
@@ -39,21 +46,23 @@ module internal TransitionSystemAsRelationExpr =
         Init : Expr;
         Trans : Expr;
     }
+
+    type Traceable = Tsam.Traceable
         
 
     // -- COMMON ------------------------------------------------------
 
-    let generateInitCondition (varDecls:GlobalVarDecl list) : Expr =
-        let generateInit (varDecl:GlobalVarDecl) : Expr =
+    let generateInitCondition (varDecls:VarDecl list) : Expr =
+        let generateInit (varDecl:VarDecl) : Expr =
             let generatePossibleValues (initialValue : Val) : Expr =
                 let assignVar = varDecl.Var
                 let assignExpr = Expr.Literal(initialValue)
                 let operator = BOp.Equals
                 Expr.BExpr(Expr.Read(assignVar),operator,assignExpr)
             varDecl.Init |> List.map generatePossibleValues
-                         |> createOredExpr
+                         |> Tsam.createOredExpr
         varDecls |> List.map generateInit
-                 |> createAndedExpr
+                 |> Tsam.createAndedExpr
     
     
     // -- GWAM --------------------------------------------------------
@@ -70,7 +79,7 @@ module internal TransitionSystemAsRelationExpr =
             let freshName = nameGenerator takenNames.Value (nameCandidate)
             takenNames:=takenNames.Value.Add(freshName)
             freshName        
-        let createVirtualVarForVar (var:GlobalVarDecl) =
+        let createVirtualVarForVar (var:VarDecl) =
             let virtualVar = Var.Var(createNewName var.Var)
             (var.Var,virtualVar)        
         let virtualVarEntries =
@@ -114,7 +123,7 @@ module internal TransitionSystemAsRelationExpr =
     
     // This strongest postcondition transformation requires input variables
         
-    let createVirtualVarEntryPool (pgm:Pgm) : Map<Var,Var> =
+    let createVirtualVarEntryPool (pgm:Tsam.Pgm) : Map<Var,Var> =
         //var_x,next(var_x).
         //Var to Virtual Var which represents "next(Var)"
         let takenNames:Set<string> ref = 
@@ -127,18 +136,18 @@ module internal TransitionSystemAsRelationExpr =
             let freshName = nameGenerator takenNames.Value (nameCandidate)
             takenNames:=takenNames.Value.Add(freshName)
             freshName
-        let createVirtualVarForVar (var:GlobalVarDecl) =
+        let createVirtualVarForVar (var:VarDecl) =
             let virtualVar = Var.Var(createNewName var.Var)
             (var.Var,virtualVar)        
         let virtualVarEntries =
             pgm.Globals |> List.map createVirtualVarForVar
         virtualVarEntries |> Map.ofList
 
-    let transformTsamToTsareWithSp (pgm:Pgm) : TransitionSystem =
+    let transformTsamToTsareWithSp (pgm:Tsam.Pgm) : TransitionSystem =
         // Program needs to be in passive form!
         // The way we implemented VcStrongestPostcondition.sp requires pgm to be in passive form
         // Note: In the description below, pgm.next[x:Var] : Var is the map entry of pgm.NextGlobal
-        if pgm.CodeForm <> CodeForm.Passive then
+        if pgm.CodeForm <> Tsam.CodeForm.Passive then
             failwith "program needs to be in passive form to use this algorithm"
 
         let varToVirtualNextVarEntries,ivars =
@@ -148,7 +157,7 @@ module internal TransitionSystemAsRelationExpr =
             // Otherwise we add a new virtual variable.
             let virtualVarPool = createVirtualVarEntryPool pgm            
             let ivarsComplete = pgm.Locals |> Set.ofList            
-            let processGlobalVar (varToVirtualNextVarEntries:(Var*Var) list,ivars:Set<LocalVarDecl>) (gl:GlobalVarDecl) =
+            let processGlobalVar (varToVirtualNextVarEntries:(Var*Var) list,ivars:Set<IvarDecl>) (gl:VarDecl) =
                 if pgm.NextGlobal.Item gl.Var =  gl.Var then
                     // We need to create a new virtual var. we use one from the pool. Ivars needs no change
                     let newVirtualEntry =
@@ -161,7 +170,7 @@ module internal TransitionSystemAsRelationExpr =
                     let newVirtualEntry =
                         pgm.NextGlobal.Item gl.Var
                     let newIvars = 
-                        ivars.Remove ({LocalVarDecl.Type=gl.Type;LocalVarDecl.Var=newVirtualEntry;})
+                        ivars.Remove ({IvarDecl.Type=gl.Type;IvarDecl.Var=newVirtualEntry;})
                     let newEntry = (gl.Var,newVirtualEntry)
                     (newEntry::varToVirtualNextVarEntries,newIvars)
             pgm.Globals |> List.fold processGlobalVar ([],ivarsComplete)
@@ -223,13 +232,15 @@ module internal TransitionSystemAsRelationExpr =
     // -- Workflow ----------------------------------------------------
     open SafetySharp.Workflow
 
-    let transformGwamToTsareWorkflow : SimpleWorkflowFunction<GuardWithAssignmentModel,TransitionSystem,unit> = workflow {
+    let transformGwamToTsareWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<GuardWithAssignmentModel,TransitionSystem,'traceableOfOrigin,Tsam.Traceable,Traceable,unit> = workflow {
         let! model = getState ()
         let transformed = transformGwamToTsare model
         do! updateState transformed
     }   
 
-    let transformTsamToTsareWithSpWorkflow : SimpleWorkflowFunction<Pgm,TransitionSystem,unit> = workflow {
+    let transformTsamToTsareWithSpWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<Tsam.Pgm,TransitionSystem,'traceableOfOrigin,Tsam.Traceable,Traceable,unit> = workflow {
         let! model = getState ()
         let transformed = transformTsamToTsareWithSp model
         do! updateState transformed

@@ -23,9 +23,17 @@
 namespace SafetySharp.Analysis.VerificationCondition
 
 module internal VcGuardWithAssignmentModel =
-    open SafetySharp.Models.Tsam
+    open SafetySharp.Models
     open SafetySharp.Models.SamHelpers
     
+    type VarDecl = Tsam.GlobalVarDecl
+    type Var = Tsam.Var
+    type Val = Tsam.Val
+    type BOp= Tsam.BOp
+    type Expr = Tsam.Expr
+
+    type Traceable = Tsam.Traceable
+
     // Predicate Transformers
     // Assume VcSam is in SSA-Form
     // Use Strongest Postcondition on the left side. Collect Guard...
@@ -47,15 +55,15 @@ module internal VcGuardWithAssignmentModel =
                     AtomicStmBlock.AtomicStmBlock(firstStmBlock @ secondStmBlock)
 
     // number of paths is exponential in the number of nested choices
-    let rec collectPaths (stm:Stm) : AtomicStmBlock list =
+    let rec collectPaths (stm:Tsam.Stm) : AtomicStmBlock list =
         // Bottom up. Top down might be more efficient.
         match stm with
-            | Stm.Assert (_,expr) ->
+            | Tsam.Stm.Assert (_,expr) ->
                 [AtomicStmBlock ([AtomicStm.Assert(expr)])]
-            | Stm.Assume (_,expr) ->
+            | Tsam.Stm.Assume (_,expr) ->
                 [AtomicStmBlock ([AtomicStm.Assume(expr)])]
-            | Stm.Block (_,statements) ->
-                let rec appendStatementOfBlock (previousStmBlocks:AtomicStmBlock list) (stm:Stm) : AtomicStmBlock list =
+            | Tsam.Stm.Block (_,statements) ->
+                let rec appendStatementOfBlock (previousStmBlocks:AtomicStmBlock list) (stm:Tsam.Stm) : AtomicStmBlock list =
                     // here we have to combine every possible path "previousStmBlocks X newStmBlocks"
                     // If one of the lists is empty, it should return the other list.
                     // Otherwise it would be possible, that the resulting combination list is empty.
@@ -74,9 +82,9 @@ module internal VcGuardWithAssignmentModel =
                             newStmBlocks |> List.map (fun newStmBlock -> AtomicStmBlock.concat previousStmBlock newStmBlock)
                         previousStmBlocks |> List.collect combineWithEveryNewStmBlock
                 statements |> List.fold appendStatementOfBlock []
-            | Stm.Choice (_,choices) ->
+            | Tsam.Stm.Choice (_,choices) ->
                 choices |> List.collect collectPaths
-            | Stm.Write (_,variable,expression) ->
+            | Tsam.Stm.Write (_,variable,expression) ->
                 [AtomicStmBlock ([AtomicStm.Write(variable,expression)])]
 
     
@@ -146,14 +154,14 @@ module internal VcGuardWithAssignmentModel =
 
 
     type GuardWithAssignmentModel = {
-        Globals : GlobalVarDecl list;
+        Globals : VarDecl list;
         GuardsWithFinalAssignments : GuardWithAssignments list;
     }
 
     // this is the main function of this algorithm
-    let transformPgmToGuardWithFinalAssignmentModel (pgm:Pgm) : GuardWithAssignmentModel =
+    let transformPgmToGuardWithFinalAssignmentModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
         // SSA may not be necessary. Passive Form cannot be used with this algorithm.
-        if pgm.CodeForm = CodeForm.Passive then
+        if pgm.CodeForm = Tsam.CodeForm.Passive then
             failwith "passive form cannot be used with this algorithm"
         let atomicStmBlocks = collectPaths pgm.Body
         let globalVars = pgm.Globals |> List.map (fun gl-> gl.Var)
@@ -168,7 +176,7 @@ module internal VcGuardWithAssignmentModel =
     open SafetySharp.Workflow
 
         
-    let transformWorkflow : SimpleWorkflowFunction<Pgm,GuardWithAssignmentModel,unit> = workflow {
+    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<Tsam.Pgm,GuardWithAssignmentModel,'traceableOfOrigin,Tsam.Traceable,Traceable,unit> = workflow {
         let! model = getState ()
         let transformedModel = transformPgmToGuardWithFinalAssignmentModel model
         do! updateState transformedModel

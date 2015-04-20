@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Analysis.Modelchecking.Prism
 
-type internal ExportPrismAstToFile() =
+type internal ExportPrismAstToFile () =
     
     let indentElementWithNewLine (indent:int) (elem:string): string =
         let indents = String.replicate indent "\t"
@@ -508,7 +508,8 @@ type internal ExportPrismAstToFile with
     static member instance : ExportPrismAstToFile =
         ExportPrismAstToFile()
 
-    static member workflow : SimpleWorkflowFunction<PrismModel,string,unit> = workflow {
+    static member workflow<'traceableOfOrigin> () 
+            : ExogenousWorkflowFunction<PrismModel,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {            
         let! model = getState ()
         do! updateState (ExportPrismAstToFile.instance.ExportPrismModel model)
     }

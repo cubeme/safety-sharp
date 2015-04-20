@@ -366,3 +366,4 @@ type internal Property =
 ///////////////////////////
 
 
+type internal Traceable = string

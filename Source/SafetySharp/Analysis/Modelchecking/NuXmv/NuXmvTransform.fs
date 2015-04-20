@@ -37,8 +37,7 @@ type internal NuXmvLtlExpression = SafetySharp.Analysis.Modelchecking.NuXmv.LtlE
 type internal NuXmvSpecification = SafetySharp.Analysis.Modelchecking.NuXmv.Specification
 type internal NuXmvModuleTypeSpecifier = SafetySharp.Analysis.Modelchecking.NuXmv.ModuleTypeSpecifier
 type internal NuXmvModuleDeclaration = SafetySharp.Analysis.Modelchecking.NuXmv.ModuleDeclaration
-
-
+type internal NuXmvTraceable = SafetySharp.Analysis.Modelchecking.NuXmv.Traceable
 
 open SafetySharp.Analysis.Modelchecking
 open SafetySharp.Models
@@ -173,7 +172,7 @@ module internal VcTransitionRelationToNuXmv =
         ModuleElement.TransConstraint(translateExpression (transitionSystem.VirtualNextVarToVar,nuXmvVariables) transitionSystem.Trans)
 
     
-    let transformConfiguration (transitionSystem:TransitionSystem) : NuXmvProgram =
+    let transformConfiguration (transitionSystem:TransitionSystem) : NuXmvProgram * Map<Tsam.Traceable,NuXmvTraceable> =
         // create the nuXmvVariables: Keeps the association between the post value variable and the current value variable
         // (the post variable value is purely "virtual". It will be replaced by "next(currentValue)" )
         let nuXmvVariables = NuXmvVariables.initial transitionSystem SafetySharp.FreshNameGenerator.namegenerator_c_like
@@ -196,19 +195,30 @@ module internal VcTransitionRelationToNuXmv =
                 NuXmvModuleDeclaration.ModuleParameters = [];
                 NuXmvModuleDeclaration.ModuleElements = [globalVarModuleElement;ivarModuleElement;globalVarInitialisations;transRelation];
             }
-        
-        {
-            NuXmvProgram.Modules = [systemModule];
-            NuXmvProgram.Specifications = [];
-        }
+        let transformedConfiguration =
+            {
+                NuXmvProgram.Modules = [systemModule];
+                NuXmvProgram.Specifications = [];
+            }
+        let tracing =
+            nuXmvVariables.VarToNuXmvIdentifier
+                |> Map.toList
+                |> List.map (fun (_var,_nuxmv) -> (Tsam.Traceable.Traceable(_var),_nuxmv.Name) )
+                |> Map.ofList
+        (transformedConfiguration,tracing)
 
         
     open SafetySharp.Workflow
     
-    let transformTsareToNuXmvWorkflow : SimpleWorkflowFunction<TransitionSystem,NuXmvProgram,unit> = workflow {
+    let transformTsareToNuXmvWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<TransitionSystem,NuXmvProgram,'traceableOfOrigin,Sam.Traceable,NuXmvTraceable,unit> = workflow {
         let! model = getState ()
-        let transformed = transformConfiguration model
+        let (transformed,forwardTraceInClosure) = transformConfiguration model
         do! updateState transformed
+
+        let intermediateTracer (oldValue:Sam.Traceable) = forwardTraceInClosure.Item oldValue
+        do! updateTracer intermediateTracer
+        return ()
     }
 
     (*

@@ -43,19 +43,18 @@ module internal AtLtlFormula =
                     let! promelaModel = getState ()
                     return (promelaModel,forwardTracer)
             }
-            let (promelaModel,forwardTracer) = runWorkflow_getResult transformModelToPromela            
+            let ((promelaModel,forwardTracer),wfState) = runWorkflow_getResultAndWfState transformModelToPromela            
             let promelaModelWithFormulas = 
                 { promelaModel with
                     PrSpec.Formulas = formulasToVerify |> List.map (SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression forwardTracer)
                 }
-            let executeModelWithFormulas = workflow {                
-                // do! removeAllTraceables ()
+            let executeModelWithFormulas = workflow {
                 do! updateState promelaModelWithFormulas
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString.workflow ()
                 let filename = "verification.pml" |> SafetySharp.FileSystem.FileName
                 do! saveToFile filename
-                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
+                do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan ()
                 do! printToStdout ()
             }
-            do runWorkflow_getResult executeModelWithFormulas
+            let (_,wfState) = runWorkflowState executeModelWithFormulas wfState //must continue with resulting wfState to keep the tracing
             ()

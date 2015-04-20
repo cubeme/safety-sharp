@@ -129,15 +129,4 @@ module internal Tsam =
                         let freshStmId = uniqueStatementIdGenerator ()
                         Stm.Block (freshStmId,stm::stmsToAppend)
                     
-    (*
-    let mergeEntriesOfVarSetMap<'b when 'b : comparison> (oldEntries:Map<Var,Set<'b>>) (newEntries:Map<Var,Set<'b>>) : Map<Var,Set<'b>> =
-        let newEntries = newEntries |> Map.toSeq
-        let mergeVariables (state:Map<Var,Set<'b>>) (_var:Var,newEntries:Set<'b>) : Map<Var,Set<'b>> =
-            if not(state.ContainsKey _var) then
-                state.Add(_var,newEntries)
-            else
-                let oldEntries = oldEntries.Item _var
-                let mergedEntries = Set.union oldEntries newEntries
-                state.Add(_var,mergedEntries)
-        Seq.fold mergeVariables oldEntries newEntries
-    *)
+    type Traceable = SafetySharp.Models.Sam.Traceable

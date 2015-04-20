@@ -179,7 +179,9 @@ module internal BoogieToString =
         stateAfterExport.ToString()
 
     open SafetySharp.Workflow
-    let boogieToStringWf : SimpleWorkflowFunction<Pgm,string,unit> = workflow {
+
+    let boogieToStringWf<'traceableOfOrigin> () 
+            : ExogenousWorkflowFunction<Pgm,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! model = getState ()
         do! updateState (exportModel model)
     }

@@ -81,3 +81,5 @@ module internal BoogieSimplifiedAst =
         GlobalVars : VarDecl list;
         Procedures : Procedure list;
     }
+
+    type Traceable = string

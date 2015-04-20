@@ -160,3 +160,5 @@ type internal Spec = {
     Code : Module list;
     Formulas : LtlExpr list;
 }
+
+type internal Traceable = string

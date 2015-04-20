@@ -224,3 +224,8 @@ and internal Specification =
     | LtlSpecification of LtlExpression:LtlExpression
         
 // Chapter 2.5 Variable Order Input p 42-44
+
+
+// ADDED
+
+type internal Traceable = string

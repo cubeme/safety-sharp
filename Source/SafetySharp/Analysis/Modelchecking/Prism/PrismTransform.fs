@@ -100,7 +100,7 @@ module internal GwamToPrism =
             | Tsam.Type.BoolType -> Prism.VariableDeclarationType.Bool
             | Tsam.Type.IntType -> Prism.VariableDeclarationType.Int
     
-    let transformGwamToPrism (gwam:GuardWithAssignmentModel) : Prism.PrismModel =
+    let transformGwamToPrism (gwam:GuardWithAssignmentModel) : (Prism.PrismModel*Map<Traceable,Prism.Traceable>) =
         let allInitsDeterministic = gwam.Globals |> List.forall (fun gl -> gl.Init.Length = 1 )
 
         let prismIdentifiers = gwam.Globals |> List.map (fun gl -> gl.Var) |> createPrismIdentifiers
@@ -111,18 +111,21 @@ module internal GwamToPrism =
             else
                 gwam.Globals |> generateInitCondition  |> (translateExpression prismIdentifiers) |> Some
         
-        let globalVariables =
-            let transformGlobalVar (globalVarDecl:Tsam.GlobalVarDecl) : Prism.VariableDeclaration =
-                {
-                    VariableDeclaration.Name = prismIdentifiers.Item (globalVarDecl.Var);
-                    VariableDeclaration.Type = transformTsamTypeToPrismType (globalVarDecl.Type);
-                    VariableDeclaration.InitialValue =
-                        if allInitsDeterministic then
-                            Some(translateLiteral (globalVarDecl.Init.Head) )
-                        else
-                            None
-                }
+        let (globalVariables,forwardTrace) =
+            let transformGlobalVar (globalVarDecl:Tsam.GlobalVarDecl) : (Prism.VariableDeclaration*(Traceable*Prism.Traceable)) =
+                let variableDeclaration =
+                    {
+                        VariableDeclaration.Name = prismIdentifiers.Item (globalVarDecl.Var);
+                        VariableDeclaration.Type = transformTsamTypeToPrismType (globalVarDecl.Type);
+                        VariableDeclaration.InitialValue =
+                            if allInitsDeterministic then
+                                Some(translateLiteral (globalVarDecl.Init.Head) )
+                            else
+                                None
+                    }
+                (variableDeclaration,(Tsam.Traceable.Traceable(globalVarDecl.Var),variableDeclaration.Name.Name))
             gwam.Globals |> List.map transformGlobalVar
+                         |> List.unzip
 
         // probForSure := probability = 1.0
         let probForSure = Prism.Expression.Constant(Prism.Double(1.0))
@@ -152,26 +155,34 @@ module internal GwamToPrism =
             let transformedGwas = gwam.GuardsWithFinalAssignments |> List.map transformGwa
             Prism.Module(systemModuleIdentifier,[],transformedGwas)
         
-        {
-            Prism.PrismModel.ModelType = Prism.ModelType.MDP;
-            Prism.PrismModel.Constants = [];
-            Prism.PrismModel.InitModule = initModule; //Chapter Multiple Initial States e.g. "x+y=1"
-            Prism.PrismModel.GlobalVariables = globalVariables;
-            Prism.PrismModel.Modules = [moduleWithTransitions];
-            Prism.PrismModel.Formulas = [];
-            Prism.PrismModel.Labels = [];
-            Prism.PrismModel.Rewards = [];
-            Prism.PrismModel.ParallelComposition = None;
-        }
+        let prismModel = 
+            {
+                Prism.PrismModel.ModelType = Prism.ModelType.MDP;
+                Prism.PrismModel.Constants = [];
+                Prism.PrismModel.InitModule = initModule; //Chapter Multiple Initial States e.g. "x+y=1"
+                Prism.PrismModel.GlobalVariables = globalVariables;
+                Prism.PrismModel.Modules = [moduleWithTransitions];
+                Prism.PrismModel.Formulas = [];
+                Prism.PrismModel.Labels = [];
+                Prism.PrismModel.Rewards = [];
+                Prism.PrismModel.ParallelComposition = None;
+            }
+        let forwardTrace = forwardTrace |> Map.ofList
+        (prismModel,forwardTrace)
 
 
         
     open SafetySharp.Workflow
+    open SafetySharp.Analysis.VerificationCondition
     
-    let transformGwamToTsareWorkflow : SimpleWorkflowFunction<GuardWithAssignmentModel,Prism.PrismModel,unit> = workflow {
+    let transformWorkflow<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<GuardWithAssignmentModel,Prism.PrismModel,'traceableOfOrigin,VcGuardWithAssignmentModel.Traceable,Prism.Traceable,unit> = workflow {
         let! model = getState ()
-        let transformed = transformGwamToPrism model
+        let (transformed,forwardTraceInClosure) = transformGwamToPrism model
         do! updateState transformed
+        
+        let intermediateTracer (oldValue:VcGuardWithAssignmentModel.Traceable) = forwardTraceInClosure.Item oldValue
+        do! updateTracer intermediateTracer
     }   
 
 

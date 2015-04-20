@@ -28,6 +28,7 @@ module internal TsamToBoogie =
     open SafetySharp.Analysis.VerificationCondition
     open SafetySharp.Analysis.Modelchecking.Boogie
     open SafetySharp.Models
+    open SafetySharp.Models.SamHelpers
     
     type HybridCodeBlock = {
         //same as a BoogieSimplifiedAst.CodeBlock but with VcSam Statements
@@ -57,7 +58,7 @@ module internal TsamToBoogie =
                     }
 
 
-    let transformVcSamToBoogie (model:Tsam.Pgm) : BoogieSimplifiedAst.Pgm =    
+    let transformVcSamToBoogie (model:Tsam.Pgm) : (BoogieSimplifiedAst.Pgm*Map<Tsam.Traceable,BoogieSimplifiedAst.Traceable>) =
         let maxLoops = 5
         let globalVars = model.Globals |> List.map (fun gl -> gl.Var)
         let globalVarDecls = []
@@ -213,7 +214,7 @@ module internal TsamToBoogie =
                 | Tsam.Stm.Block (sid,stmts) ->
                     // When a statement refers to a block statement, it refers to the compound block (i.e. the stm containing the other statements).
                     // Thus, we must make a redirection from this compound block to the first part of the block.
-                    // We could also make a transfer everywhere directly into the code block. But there a several side conditions to take care of.
+                    // An alternative implementation could also make a transfer everywhere directly into the code block. But then several side conditions need to be taken care of.
                     // Note: The sub statements of this block should return to the position where this block should actually return to.
                     let compoundBlock_BlockId = context.getBlockIdForVcStmNonBlock stm.GetStatementId
                     let firstPartInBlock_BlockId = context.getBlockIdForVcStmBlock stm.GetStatementId 1
@@ -286,13 +287,17 @@ module internal TsamToBoogie =
                 BoogieSimplifiedAst.Pgm.GlobalVars = [];
                 BoogieSimplifiedAst.Pgm.Procedures = [mainProcedure;loopProcedure];
             }
-
-        boogiePgm
+        let forwardTrace = globalVars |> List.map (fun gl->(Tsam.Traceable.Traceable(gl),gl.getName)) |> Map.ofList
+        (boogiePgm,forwardTrace)
     
     
     
-    let transformVcSamToBoogieWf : SimpleWorkflowFunction<Tsam.Pgm,BoogieSimplifiedAst.Pgm,unit> = workflow {
+    let transformVcSamToBoogieWf<'traceableOfOrigin> ()
+            : ExogenousWorkflowFunction<Tsam.Pgm,BoogieSimplifiedAst.Pgm,'traceableOfOrigin,Tsam.Traceable,BoogieSimplifiedAst.Traceable,unit> = workflow {
         let! vcsamModel = getState ()
-        let newBoogieAst = transformVcSamToBoogie vcsamModel
-        do! updateState newBoogieAst        
+        let (newBoogieAst,forwardTraceInClosure) = transformVcSamToBoogie vcsamModel
+        do! updateState newBoogieAst
+
+        let intermediateTracer (oldValue:VcGuardWithAssignmentModel.Traceable) = forwardTraceInClosure.Item oldValue
+        do! updateTracer intermediateTracer
     }

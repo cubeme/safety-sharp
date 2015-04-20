@@ -43,12 +43,11 @@ module ScmToNuXmvTests =
             do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Models.ScmToSam.transformIscmToSam
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! removeAllTraceables ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
-            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow
-            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow
-            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow
+            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow ()
+            do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+            do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
         }
            
     [<Test>]
