@@ -43,6 +43,7 @@ module PrismCheckSmokeTests =
             do! SafetySharp.Analysis.Modelchecking.Prism.ExportPrismAstToFile.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
+            do! logForwardTracesOfOrigins ()
         }
                    
     let runSmokeTest (inputFile) =

@@ -38,6 +38,7 @@ module BoogieSmokeTests =
             //let filename = sprintf "%s.bpl" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName
             //do! saveToFile filename
             //do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
+            do! logForwardTracesOfOrigins ()
     }
     
     let runSmokeTest (inputFile) =

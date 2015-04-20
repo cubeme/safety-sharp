@@ -47,6 +47,7 @@ module NuXmvGwamCheckSamSmokeTests =
             do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
+            do! logForwardTracesOfOrigins ()
         }
                    
     let runSmokeTest (inputFile) =
