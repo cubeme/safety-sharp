@@ -33,6 +33,14 @@ module internal ScmToString =
         let typeRef = function
             | BoolType    -> writer.Append "bool"
             | IntType     -> writer.Append "int"
+            | RangedIntType (_from,_to,_overflow) ->
+                match _overflow with
+                    | OverflowBehavior.Error ->
+                        writer.Append "int<"
+                        writer.Append "%d" _from
+                        writer.Append ".."
+                        writer.Append "%d" _to
+                        writer.Append ">"
 
         let uop = function
             | Not   -> writer.Append "!"
