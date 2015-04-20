@@ -43,6 +43,7 @@ module internal ScmToSam =
         match _type with
             | Scm.BoolType -> Sam.BoolType
             | Scm.IntType -> Sam.IntType
+            | Scm.RangedIntType(_from,_to,_overflow) -> Sam.RangedIntType(_from,_to,_overflow)
 
     let transformValToVal (_val:Scm.Val) : Sam.Val=
         match _val with
