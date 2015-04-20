@@ -237,6 +237,11 @@ module internal SamToString =
         match _type with
             | BoolType -> append "bool"
             | IntType -> append "int"
+            | RangedIntType(_from,_to,_overflow) ->
+                match _overflow with
+                    | OverflowBehavior.Error ->
+                        let newType = sprintf "int<%d..%d>" _from _to
+                        append newType
 
     let exportLocalVarDecl (varDecl:LocalVarDecl) : AstToStringStateFunction =
         (exportType varDecl.Type) >>=
