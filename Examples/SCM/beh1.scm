@@ -1,10 +1,8 @@
 component simple {
 	component nested {
-		step {
-			locals { }			
+		step {	
 		}
 	}
 	step {
-		locals { }
 	}
 }

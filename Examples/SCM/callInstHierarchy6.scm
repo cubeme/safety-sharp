@@ -1,28 +1,22 @@
 component simple {	
 	component nested {
-		intField : int = 0;
+		intField : int<0..100> = 0;
 		
 		rport1 ( );
 		
 		pport1 ( ) {
-			locals{
-			}
 			intField := 1;
 		}	
 		
 		nested.rport1 = instantly nested.pport1
 		
 		step {
-			locals{
-			}
 			rport1 ( );
 		}
 	}
 	
 	
 	step {
-		locals{
-		}
 		step nested;
 	}
 }

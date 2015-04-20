@@ -1,21 +1,17 @@
 component simple {
-	intField : int = 1;
+	intField : int<0..100> = 1;
 	
-	rport1 ( r_input1 : int, r_input2 : int );
+	rport1 ( in r_input1:int, in r_input2:int );
 	
-	pport1 ( p_input1 : int, p_input2  : int ) {
-		locals{
-		}
+	pport1 ( in p_input1:int, in p_input2:int ) {
 		intField := intField + p_input1 + p_input2;		
 	}
 	
 	simple.rport1 = instantly simple.pport1 
 	
 	step {		
-		locals{
-			int intLocal;
-		}
+		int intLocal;
 		intLocal := 4 ;
-		rport1 ( 5 + 7 , intLocal);
+		rport1 ( in 5 + 7, in intLocal);
 	}
 }

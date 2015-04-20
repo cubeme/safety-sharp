@@ -1,14 +1,12 @@
 component backupRecoverySystem {
 	component in {
-		sourceValueField : int = 1;
+		sourceValueField : int<0..100> = 1;
 		
 		getSourceValueP ( inout sourceValueInout : int ) {
-			locals{}
 			sourceValueInout := sourceValueField;
 		}
 		
 		step {
-			locals{}
 			choice {
 				true => { sourceValueField := 1; }
 				true => { sourceValueField := 2; }
@@ -20,38 +18,32 @@ component backupRecoverySystem {
 	}
 
 	component s1 {
-		sensorValueField : int = 1;
+		sensorValueField : int<0..100> = 1;
 
 		senseSourceValueR ( inout sourceValueInout : int );
 	
 		getSensorValueP ( inout sensorValueInout : int ) {
-			locals{}
 			sensorValueInout := sensorValueField;
 		}
 		
 		step {
-			locals{
-				int sensorValueInout;
-			}
+			int sensorValueInout;
 			senseSourceValueR ( inout sensorValueInout ) ;
 			sensorValueField := sensorValueInout;
 		}
 	}
 	
 	component s2 {
-		sensorValueField : int = 1;
+		sensorValueField : int<0..100> = 1;
 
 		senseSourceValueR ( inout sourceValueInout : int );
 	
 		getSensorValueP ( inout sensorValueInout : int ) {
-			locals{}
 			sensorValueInout := sensorValueField;
 		}
 		
 		step {
-			locals{
-				int sensorValueInout;
-			}
+			int sensorValueInout;
 			senseSourceValueR ( inout sensorValueInout ) ;
 			sensorValueField := sensorValueInout;
 		}
@@ -59,7 +51,7 @@ component backupRecoverySystem {
 	
 	component a1 {
 		isActiveField : bool = true;
-		arithmeticalValueField : int = 1;
+		arithmeticalValueField : int<0..100> = 1;
 		doSensorValuesMatchField : bool = true;
 	
 		getSensorValue1R ( inout sensorValueInout : int );
@@ -67,17 +59,14 @@ component backupRecoverySystem {
 		
 	
 		getArithmeticalValueP ( inout arithmeticalValueInout : int ) {
-			locals{}
 			arithmeticalValueInout := arithmeticalValueField;
 		}
 		
 		doSensorValuesMatchP ( inout sensorValuesMatchInout : bool ) {
-			locals{}
 			sensorValuesMatchInout := doSensorValuesMatchField;
 		}
 		
 		deactivateP ( ) {
-			locals{}
 			choice {
 				(isActiveField) => { isActiveField := false; }
 				!(isActiveField) => { }
@@ -85,10 +74,8 @@ component backupRecoverySystem {
 		}
 						
 		step {
-			locals{
-				int sensorValue1Local;
-				int sensorValue2Local;
-			}
+			int sensorValue1Local;
+			int sensorValue2Local;
 			choice {
 				(isActiveField) => {
 					getSensorValue1R ( inout sensorValue1Local ) ;
@@ -104,17 +91,15 @@ component backupRecoverySystem {
 	
 	component a2 {
 		isActiveField : bool = false;
-		arithmeticalValueField : int = 1;
+		arithmeticalValueField : int<0..100> = 1;
 		
 		getSensorValueR ( inout sensorValueInout : int );
 	
 		getArithmeticalValueP ( inout arithmeticalValueInout : int ) {
-			locals{}
 			arithmeticalValueInout := arithmeticalValueField;
 		}
 		
 		activateP ( ) {
-			locals{}
 			choice {
 				(isActiveField) => { }
 				!(isActiveField) => { isActiveField := true; }
@@ -122,9 +107,7 @@ component backupRecoverySystem {
 		}
 		
 		step {
-			locals{
-				int arithmeticalValueInout;
-			}
+			int arithmeticalValueInout;
 			choice {
 				(isActiveField) => {
 					getSensorValueR ( inout arithmeticalValueInout ) ;
@@ -143,9 +126,7 @@ component backupRecoverySystem {
 	
 		
 		step {
-			locals{
-				bool doSensorValuesMatchLocal;
-			}
+			bool doSensorValuesMatchLocal;
 			doSensorValuesMatchR ( inout doSensorValuesMatchLocal) ;
 			choice {
 				doSensorValuesMatchLocal => { } 
@@ -160,20 +141,17 @@ component backupRecoverySystem {
 
 	component out {
 		useA1 : bool = true;
-		result : int = 1;
+		result : int<0..100> = 1;
 		
 		getArithmeticalValue1R ( inout arithmeticalValueInout : int );
 		getArithmeticalValue2R ( inout arithmeticalValueInout : int );
 		
 		switchArithmeticalUnitP ( ) {
-			locals{}
 			useA1 := ! useA1;
 		}
 		
 		step {
-			locals{
-				int arithmeticalValueLocal;
-			}
+			int arithmeticalValueLocal;
 			choice {
 				useA1 => {getArithmeticalValue1R ( inout arithmeticalValueLocal ); }
 				! useA1 =>  {getArithmeticalValue2R ( inout arithmeticalValueLocal ); }
@@ -196,7 +174,6 @@ component backupRecoverySystem {
 	backupRecoverySystem.out.getArithmeticalValue2R = instantly backupRecoverySystem.a2.getArithmeticalValueP
 	
 	step {
-		locals{}
 		step in;
 		step s1;
 		step s2;

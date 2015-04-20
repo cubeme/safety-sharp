@@ -1,14 +1,12 @@
 component simple {
 	component nested {
-		intField1 : int = 2;
-		intField2 : int = 1;
-		intField5 : int = 3;
+		intField1 : int<0..100> = 2;
+		intField2 : int<0..100> = 1;
+		intField5 : int<0..100> = 3;
 		step {
-			locals{}
 		}
 	}
-	intField1 : int = 5;
+	intField1 : int<0..100> = 5;
 	step {
-		locals{}
 	}
 }

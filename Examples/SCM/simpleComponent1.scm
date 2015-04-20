@@ -1,5 +1,4 @@
 component simple {
 	step {
-		locals{}
 	}
 }

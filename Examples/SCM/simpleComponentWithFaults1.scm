@@ -1,36 +1,28 @@
 component simple {
 	fault faultNo1 {
 		step {
-			locals{}
 		}
 	}
 	fault faultNo2 {
 		step {
-			locals{}
 		}
 	}
 	
 	[faultNo1 && ! faultNo2]
-	pport1 ( a: int, inout b:bool) {
-		locals{}
+	pport1 ( in a:int, inout b:bool) {
 	}	
 	[faultNo2]
-	pport1 ( a: int, inout b:bool) {
-		locals{}
+	pport1 ( in a:int, inout b:bool) {
 	}	
-	pport1 ( a: int, inout b:bool) {
-		locals{}
+	pport1 ( in a:int, inout b:bool) {
 	}
 	
 	[faultNo1 && ! faultNo2]
 	step {
-		locals{}
 	}
 	[faultNo2]
 	step {
-		locals{}
 	}
 	step {
-		locals{}
 	}
 }

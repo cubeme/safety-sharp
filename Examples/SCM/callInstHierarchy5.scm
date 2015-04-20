@@ -1,16 +1,12 @@
 component simple {	
 	component nestedProvided {
-		intField : int = 0;
+		intField : int<0..100> = 0;
 		
 		pport1 ( ) {
-			locals{
-			}
 			intField := 1;
 		}	
 		
 		step {
-			locals{
-			}
 		}
 	}
 	
@@ -18,7 +14,6 @@ component simple {
 		rport1 ( );
 		
 		step {
-			locals{}
 			rport1 ( );
 		}
 	}
@@ -26,8 +21,6 @@ component simple {
 	simple.nestedRequired.rport1 = instantly simple.nestedProvided.pport1
 	
 	step {
-		locals{
-		}
 		step nestedRequired;
 	}
 }

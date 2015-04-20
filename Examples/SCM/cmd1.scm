@@ -1,9 +1,7 @@
 component simple {
-	intField : int = 1, 2;
+	intField : int<0..100> = 1, 2;
 	
 	step {
-		locals{
-		}
 		choice {
 			intField == 1 => { intField := 10; }
 			intField == 2 => { intField := 20; }

@@ -1,9 +1,8 @@
 component simple {
 	component nested {
-		intField : int = 0;
+		intField : int<0..100> = 0;
 		fault faultTransient2 {
 				step {
-					locals{}
 					choice {
 						true => { faultTransient2 := false;}
 						true => { faultTransient2 := true;}
@@ -15,19 +14,13 @@ component simple {
 		
 		[faultTransient2]
 		pport1 ( ) {
-			locals{
-			}
 		}
 		
 		pport1 ( ) {
-			locals{
-			}
 			intField := 1;
 		}
 		
 		step {
-			locals{
-			}
 			step faultTransient2;
 			rport1 ( );
 		}
@@ -35,7 +28,6 @@ component simple {
 	
 	fault faultTransient1 {
 			step {
-				locals{}
 				choice {
 					true => { faultTransient1 := false;}
 					true => { faultTransient1 := true;}
@@ -46,13 +38,9 @@ component simple {
 	
 	[faultTransient1]
 	step {
-		locals{
-		}
 	}
 	
 	step {
-		locals{
-		}
 		step nested;
 		step faultTransient1;		
 	}

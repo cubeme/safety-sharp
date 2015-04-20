@@ -1,10 +1,9 @@
 component simple {
 	
-	intField1 : int = 0;
+	intField1 : int<0..100> = 0;
 	
 	fault faultNo1 {
 		step {
-			locals{}
 			choice {
 				true => { faultNo1 := false;}
 				true => { faultNo1 := true;}
@@ -13,7 +12,6 @@ component simple {
 	}
 	fault faultNo2 {
 		step {
-			locals{}
 			choice {
 				true => { faultNo2 := false;}
 				true => { faultNo2 := true;}
@@ -23,20 +21,17 @@ component simple {
 		
 	[faultNo1 && ! faultNo2]
 	step {
-		locals{}
 		step faultNo1;
 		step faultNo2;
 		intField1 := 2;
 	}
 	[faultNo2]
 	step {
-		locals{}
 		step faultNo1;
 		step faultNo2;
 		intField1 := 3;
 	}
 	step {
-		locals{}
 		step faultNo1;
 		step faultNo2;
 		intField1 := 1;

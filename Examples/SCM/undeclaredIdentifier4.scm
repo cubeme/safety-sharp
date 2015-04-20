@@ -1,17 +1,13 @@
 component simple {
 	component nested {
-		nestedIntField : int = 5;
+		nestedIntField : int<0..100> = 5;
 		step {
-			locals{}
 		}
 	}
 	pport1 ( ) {
-		locals{}
 		nestedIntField :=5;
 	}
-	
-	
+		
 	step {
-		locals{}
 	}
 }

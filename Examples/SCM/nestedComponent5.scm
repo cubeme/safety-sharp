@@ -1,14 +1,11 @@
 component simple {
 	component nested {
 		step {
-			locals{
-				int localVal1;
-			}
+			int localVal1;
 			localVal1 := 5+3;
 		}
 	}
-	intField1 : int = 5;
+	intField1 : int<0..100> = 5;
 	step {
-		locals{}
 	}
 }

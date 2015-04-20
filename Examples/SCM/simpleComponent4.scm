@@ -1,7 +1,6 @@
 component simple {
-	rport1 ( a: int, inout b:bool);
+	rport1 ( in a:int, inout b:bool);
 	
 	step {
-		locals{}
 	}
 }

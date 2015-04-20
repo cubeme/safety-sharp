@@ -1,9 +1,8 @@
 component simple {
-	intField : int = 1 ;
+	intField : int<0..100> = 1 ;
 	
 	fault faultTransient1 {
 			step {
-				locals{}
 				choice {
 					true => { faultTransient1 := false;}
 					true => { faultTransient1 := true;}
@@ -12,7 +11,6 @@ component simple {
 		}
 	fault faultTransient2 {
 			step {
-				locals{}
 				choice {
 					true => { faultTransient2 := false;}
 					true => { faultTransient2 := true;}
@@ -24,9 +22,7 @@ component simple {
 	rport2 ( inout r_inout  : int );
 	
 	pport1 ( ) {
-		locals{
-			int intLocal;
-		}
+		int intLocal;
 		intLocal := 3 ;
 		rport2 ( inout intLocal ) ;
 		intField := intLocal;
@@ -34,13 +30,9 @@ component simple {
 	
 	[faultTransient1]
 	pport2 ( inout p_inout  : int ) {
-		locals{
-		}
 	}
 	
 	pport2 ( inout p_inout  : int ) {
-		locals{
-		}
 		p_inout := p_inout + 1;
 	}
 	
@@ -50,14 +42,10 @@ component simple {
 	
 	[faultTransient2]
 	step {
-		locals{
-		}
 		step faultTransient2;
 	}
 	
 	step {
-		locals{
-		}
 		rport1 ();
 		step faultTransient1;
 		step faultTransient2;

@@ -1,11 +1,9 @@
 component simple {
-	intField : int = 0;
+	intField : int<0..100> = 0;
 	
-	rport1 ( a : bool , b : bool , c : bool );
+	rport1 ( in a:bool, in b:bool, in c:bool );
 	
-	pport1 ( a : bool , b : bool , c : bool ) {
-		locals{
-		}
+	pport1 ( in a:bool, in b:bool, in c:bool ) {
 		choice {
 			a => { intField := 1; }
 			(!a) && (!b) => { intField := 2; }
@@ -16,8 +14,6 @@ component simple {
 	simple.rport1 = instantly simple.pport1
 	
 	step {
-		locals{
-		}
-		rport1 (true, true, true);
+		rport1 (in true, in true, in true);
 	}
 }
