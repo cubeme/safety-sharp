@@ -55,6 +55,8 @@ module internal Scm =
     type internal Val = 
         | BoolVal of bool
         | IntVal of int
+        | RealVal of double
+        | ProbVal of double
 
     type internal Expr =
         | Literal of Val
@@ -92,13 +94,20 @@ module internal Scm =
         | AssignFault of Fault * Expr
         | Block of Stm list
         | Choice of (Expr * Stm) list
+        | Stochastic of (Expr * Stm) list //Expr must be of type ProbVal
         | CallPort of ReqPort * Param list
         | StepComp of Comp
         | StepFault of Fault
+        
+    type internal OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
 
     type internal Type =
         | BoolType
-        | IntType
+        | IntType // for local variables, which get inlined
+        | RealType // for local variables, which get inlined
+        | RangedIntType of From:int * To:int * Overflow:OverflowBehavior
+        | RangedRealType of From:double  * To:double * Overflow:OverflowBehavior
+        // | Measure of Unit:DerivedSiType * From:double * To:double "length1 : measure<m,0..100>; speed1 : measure<m/s,0..4>"
         
     [<RequireQualifiedAccessAttribute>]
     type internal Contract = 

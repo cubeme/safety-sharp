@@ -55,11 +55,17 @@ module internal Sam =
     type internal Var =
         | Var of string
         
+    type internal OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
+
     type internal Val = 
         /// Represents a Boolean literal, that is, either <c>true</c> or <c>false</c>.
         | BoolVal of bool
         /// Represents a number value.
         | NumbVal of Value : bigint
+        
+        | RealVal of double
+
+        | ProbVal of double
 
     /// Represents side-effect free expressions within a SAM model.
     type internal Expr =
@@ -93,12 +99,17 @@ module internal Sam =
         /// clause is chosen nondeterministically.
         | Choice of Clauses : Clause list
 
+        | Stochastic of (Expr * Stm) list //Expr must be of type ProbVal
+
         /// Represents the assignment of a variable.
         | Write of Variable:Var * Expression:Expr
 
     type internal Type =
         | BoolType
-        | IntType
+        | IntType // for local variables, which get inlined
+        | RealType // for local variables, which get inlined
+        | RangedIntType of From:int * To:int * Overflow:OverflowBehavior
+        | RangedRealType of From:double  * To:double * Overflow:OverflowBehavior
 
     type internal GlobalVarDecl = {
         Var : Var
