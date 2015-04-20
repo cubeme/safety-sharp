@@ -28,6 +28,7 @@ module internal SamParser =
     // The statement and expression parser is similar to the FIL-parser, but the Data Structures are different.
 
     open FParsec
+    open SafetySharp.GenericParsers
 
     // parses the Boolean constants true or false, yielding a Boolean AST node
     let trueKeyword : Parser<_,unit> =
@@ -43,9 +44,19 @@ module internal SamParser =
     // parses a number
     let number : Parser<_,unit> =
         many1Satisfy isDigit |>> (fun value -> value |> bigint.Parse |> Val.NumbVal)
-
+        
+    let parseReal : Parser<_,unit> =
+        let decimalToVal (dec:string) =
+            System.Convert.ToDouble(dec) |> Val.RealVal
+        parseDecimal |>> decimalToVal
+        
     let value : Parser<_,unit> =
-        boolean <|> number
+        boolean <|> parseReal<|> number        
+        
+    let probVal : Parser<_,unit> =
+        let decimalToVal (dec:string) =
+            System.Convert.ToDouble(dec) |> Val.ProbVal
+        parseDecimal |>> decimalToVal
 
     // parses an identifier of a variable 
     let variable : Parser<_,unit> =
@@ -56,6 +67,7 @@ module internal SamParser =
     let boolean_ws = boolean .>> spaces
     let number_ws = number .>> spaces
     let value_ws = value .>> spaces
+    let probVal_ws = probVal .>> spaces
     let variable_ws = variable .>> spaces
     let parentOpen_ws = pstring_ws "("
     let parentClose_ws = pstring_ws ")"
@@ -100,6 +112,27 @@ module internal SamParser =
     let guardedCommandClause_ws = guardedCommandClause .>> spaces
     let statement_ws = statement .>> spaces
     
+    
+    let probability_expression =
+        let opp = new OperatorPrecedenceParser<_,_,_>()        
+        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Divide, e2)))
+        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Multiply, e2)))
+        // >
+        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Add, e2)))
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">" , 4, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Subtract, e2)))
+        // parses an expression between ( and )
+        let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
+        // recursive term parser for expressions
+        opp.TermParser <-
+            (probVal_ws |>> Expr.Literal) <|> (parenExpr_ws)
+        opp.ExpressionParser
+    let probability_expression_ws = probability_expression .>> spaces
+    let stochasticClause,stochasticClauseRef = createParserForwardedToRef()
+    let stochasticClause_ws = stochasticClause .>> spaces
+    do stochasticClauseRef :=
+       tuple2 (probability_expression .>> (pstring_ws "=>") .>> (pstring_ws "{") )
+              ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
+    
     do guardedCommandClauseRef :=
        pipe2 (expression_ws .>> (pstring_ws "=>") .>> (pstring_ws "{") )
              ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
@@ -111,21 +144,39 @@ module internal SamParser =
         let parseChoice =
             attempt (pstring_ws "choice") >>. (pstring_ws "{") >>.
                     ((many guardedCommandClause_ws) |>> Stm.Choice ) .>>
-                    (pstring_ws "}")        
+                    (pstring_ws "}")  
+        let parseStochastic =
+            attempt (pstring_ws "stochastic") >>. (pstring_ws "{") >>.
+                    ((many stochasticClause_ws) |>> Stm.Stochastic ) .>>
+                    (pstring_ws "}")      
         let parseAssignment =
             attempt (tuple2 (variable_ws .>> (pstring_ws ":="))
                             (expression_ws .>> (pstring_ws ";")) |>> Stm.Write)     
         let allKindsOfStatements =
             parseAssignment <|>
             parseBlock <|>
-            parseChoice
+            parseChoice <|>
+            parseStochastic
         allKindsOfStatements
 
         
-    let type_ws =
+    let typeBasic_ws =
         let boolType = stringReturn "bool" Type.BoolType
-        let intType = stringReturn "int"  Type.IntType
-        (boolType <|> intType) .>> spaces
+        let intType = stringReturn "int" Type.IntType
+        let realType = stringReturn "real" Type.RealType
+        (boolType <|> intType <|> realType) .>> spaces
+
+    let typeExtended_ws =
+        let rangedIntType =
+            let createRangedIntType (_from,_to) =
+                Type.RangedIntType(int32 _from,int32 _to,OverflowBehavior.Error)
+            ((pstring_ws "int<") >>. parseBigint_ws .>> (pstring_ws "..")) .>>. (parseBigint_ws .>> (pstring_ws ">")) |>>  createRangedIntType        
+        let rangedRealType =
+            let createRangedRealType (_from:string,_to:string) =
+                Type.RangedRealType(System.Convert.ToDouble(_from),System.Convert.ToDouble(_to),OverflowBehavior.Error)
+            ((pstring_ws "real<") >>. parseDecimal_ws .>> (pstring_ws "..")) .>>. (parseDecimal_ws .>> (pstring_ws ">")) |>>  createRangedRealType
+        (rangedIntType <|> rangedRealType <|> typeBasic_ws)
+
 
 
     let globalVarDecl_ws : Parser<_,unit> =
@@ -136,7 +187,7 @@ module internal SamParser =
                 GlobalVarDecl.Init = inits;
             }
         pipe3 (variable_ws .>> (pstring_ws ":"))
-              (type_ws .>> (pstring_ws "="))
+              (typeExtended_ws .>> (pstring_ws "="))
               ((sepBy1 value_ws (pstring_ws ",")) .>> (pstring_ws ";"))
               createVarDecl
               
@@ -150,7 +201,7 @@ module internal SamParser =
                 LocalVarDecl.Type = _type ;
             }
         pipe2 (variable_ws .>> (pstring_ws ":"))
-              (type_ws .>> (pstring_ws ";"))
+              (typeBasic_ws .>> (pstring_ws ";"))
               createVarDecl
 
     let localVarDecls_ws =

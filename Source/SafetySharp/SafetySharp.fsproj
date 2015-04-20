@@ -57,6 +57,7 @@
     <Compile Include="Utilities\Reflection.fs" />
     <Compile Include="Utilities\FreshNameGenerator.fs" />
     <Compile Include="Utilities\Workflow.fs" />
+    <Compile Include="Utilities\GenericParsers.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Modeling\Binding.fs" />

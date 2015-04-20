@@ -25,6 +25,7 @@ namespace SafetySharp.Models
 module internal ScmParser =
     open FParsec
     open SafetySharp.Models.Scm
+    open SafetySharp.GenericParsers
     
     [<RequireQualifiedAccess>]
     type IdentifierType =
@@ -210,12 +211,23 @@ module internal ScmParser =
         (trueKeyword <|> falseKeyword) .>>? (notFollowedBy (many1Satisfy isIdentifierChar))
 
     // parses a number
+
     let numberVal : Parser<_,UserState> =
         many1Satisfy isDigit |>> ( fun value -> (bigint.Parse value |> int32 |> Val.IntVal ))
-
-    let value : Parser<_,UserState> =
-        boolVal <|> numberVal        
         
+    let parseRealVal : Parser<_,UserState> =
+        let decimalToVal (dec:string) =
+            System.Convert.ToDouble(dec) |> Val.RealVal
+        parseDecimal |>> decimalToVal
+        
+    let value : Parser<_,UserState> =
+        boolVal <|> parseRealVal <|> numberVal        
+        
+    let probVal : Parser<_,UserState> =
+        let decimalToVal (dec:string) =
+            System.Convert.ToDouble(dec) |> Val.ProbVal
+        parseDecimal |>> decimalToVal
+
     let parseIdentifierDecl (scope:Scope) (id_type:IdentifierType) : Parser<_,UserState> =
         fun stream ->
             let identifier = (parseIdentifier stream)
@@ -315,6 +327,7 @@ module internal ScmParser =
     let boolVal_ws = boolVal .>> spaces
     let numberVal_ws = numberVal .>> spaces
     let value_ws = value .>> spaces
+    let probVal_ws = probVal .>> spaces
     let parseIdentifier_ws = parseIdentifier .>> spaces
     let varIdDecl_ws = varIdDecl .>> spaces
     let varIdInst_ws = varIdInst .>> spaces
@@ -366,23 +379,42 @@ module internal ScmParser =
 
         opp.ExpressionParser
         
-    let (guardedCommandClause:Parser<_,UserState>),guardedCommandClauseRef = createParserForwardedToRef()
     let (statement:Parser<_,UserState>),statementRef = createParserForwardedToRef()
     
     let expression_ws = expression .>> spaces
-    let guardedCommandClause_ws = guardedCommandClause .>> spaces
     let statement_ws = statement .>> spaces
 
     let expressions_ws = sepBy expression_ws (pstring_ws ",")
     let varIdInsts_ws = sepBy varIdInst_ws (pstring_ws ",")
-
     let param_ws =
         let inoutVarParam = attempt ((pstring_ws1 "inout") >>. varIdInst_ws) |>> Param.InOutVarParam
         let inoutFieldParam = attempt ((pstring_ws1 "inout") >>. fieldIdInst_ws) |>> Param.InOutFieldParam
-        let exprParam = attempt expression_ws |>> Param.ExprParam
+        let exprParam = attempt ((pstring_ws1 "in") >>. expression_ws) |>> Param.ExprParam
         inoutVarParam <|> inoutFieldParam <|> exprParam
     let params_ws = sepBy (param_ws) (pstring_ws ",")
-
+    
+    let probability_expression : Parser<_,UserState> =
+        let opp = new OperatorPrecedenceParser<_,_,_>()        
+        opp.AddOperator(InfixOperator("/"   , spaces , 5, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Divide, e2)))
+        opp.AddOperator(InfixOperator("*"   , spaces , 5, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Multiply, e2)))
+        // >
+        opp.AddOperator(InfixOperator("+"   , spaces , 4, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Add, e2)))
+        opp.AddOperator(InfixOperator("-"   , spaces .>> notFollowedByString ">" , 4, Associativity.Left, fun e1 e2 -> Expr.BExpr(e1, BOp.Subtract, e2)))
+        // parses an expression between ( and )
+        let parenExpr_ws = between parentOpen_ws parentClose_ws (opp.ExpressionParser)
+        // recursive term parser for expressions
+        opp.TermParser <-
+            (probVal_ws |>> Expr.Literal) <|> (parenExpr_ws)
+        opp.ExpressionParser
+    let probability_expression_ws = probability_expression .>> spaces
+    let (stochasticClause:Parser<_,UserState>),stochasticClauseRef = createParserForwardedToRef()
+    let stochasticClause_ws = stochasticClause .>> spaces
+    do stochasticClauseRef :=
+       tuple2 (probability_expression .>> (pstring_ws "=>") .>> (pstring_ws "{") )
+              ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
+    
+    let (guardedCommandClause:Parser<_,UserState>),guardedCommandClauseRef = createParserForwardedToRef()
+    let guardedCommandClause_ws = guardedCommandClause .>> spaces
     do guardedCommandClauseRef :=
        tuple2 (expression_ws .>> (pstring_ws "=>") .>> (pstring_ws "{") )
               ((many statement_ws |>> Stm.Block) .>> (pstring_ws "}"))
@@ -404,6 +436,10 @@ module internal ScmParser =
             attempt (pstring_ws "choice") >>. (pstring_ws "{") >>.
                     ((many guardedCommandClause_ws) |>> Stm.Choice ) .>>
                     (pstring_ws "}")
+        let parseStochastic =
+            attempt (pstring_ws "stochastic") >>. (pstring_ws "{") >>.
+                    ((many stochasticClause_ws) |>> Stm.Stochastic ) .>>
+                    (pstring_ws "}")
         let parsePortCall =
             attempt (tuple2 (reqPortId_ws .>> parentOpen_ws)
                             (params_ws .>> parentClose_ws .>>  (pstring_ws ";")) |>> Stm.CallPort)
@@ -418,6 +454,7 @@ module internal ScmParser =
             parseFaultAssignment <|>
             parseBlock <|>
             parseChoice <|>
+            parseStochastic <|>
             parsePortCall <|>
             parseStepComp <|>
             parseStepFault
@@ -467,30 +504,40 @@ module internal ScmParser =
         opp.ExpressionParser
 
     let hierarchical_expression_ws = hierarchical_expression .>> spaces
-        
-    let type_ws =
-        let boolType = stringReturn "bool" Type.BoolType
-        let intType = stringReturn "int"  Type.IntType
-        (boolType <|> intType) .>> spaces
 
-    let type_ws1 =
+    let typeBasic =
         let boolType = stringReturn "bool" Type.BoolType
-        let intType = stringReturn "int"  Type.IntType
-        (boolType <|> intType) .>> spaces1
+        let intType = stringReturn "int" Type.IntType
+        let realType = stringReturn "real" Type.RealType
+        (boolType <|> intType <|> realType)
+        
+    let typeBasic_ws =
+        typeBasic .>> spaces
+
+    let typeBasic_ws1 =
+        typeBasic .>> spaces1
+
+    let typeExtended_ws =
+        let rangedIntType =
+            let createRangedIntType (_from,_to) =
+                Type.RangedIntType(int32 _from,int32 _to,OverflowBehavior.Error)
+            ((pstring_ws "int<") >>. parseBigint_ws .>> (pstring_ws "..")) .>>. (parseBigint_ws .>> (pstring_ws ">")) |>>  createRangedIntType        
+        let rangedRealType =
+            let createRangedRealType (_from:string,_to:string) =
+                Type.RangedRealType(System.Convert.ToDouble(_from),System.Convert.ToDouble(_to),OverflowBehavior.Error)
+            ((pstring_ws "real<") >>. parseDecimal_ws .>> (pstring_ws "..")) .>>. (parseDecimal_ws .>> (pstring_ws ">")) |>>  createRangedRealType
+        (rangedIntType <|> rangedRealType <|> typeBasic_ws)
     
-    let varDecl1_ws : Parser<_,UserState> =
+    let varDeclInParam_ws : Parser<_,UserState> =
         let createVarDecl var _type =
             {
                 VarDecl.Var = var ;
                 VarDecl.Type = _type ;
             }
         pipe2 (varIdDecl_ws .>> (pstring_ws ":" )) 
-              (type_ws)
+              (typeBasic_ws)
               createVarDecl
-
-    let varDecls1_ws =
-        sepBy varDecl1_ws (pstring_ws ",")
-
+              
     let paramDecl_ws : Parser<_,UserState> =
         let createParamDecl varDecl dir =
             {
@@ -498,27 +545,27 @@ module internal ScmParser =
                 ParamDecl.Dir = dir ;
             }
         let inParam_ws =
-            attempt varDecl1_ws |>> (fun varDecl -> createParamDecl varDecl ParamDir.In)
+            attempt ((pstring_ws1 "in") >>. varDeclInParam_ws) |>> (fun varDecl -> createParamDecl varDecl ParamDir.In)
         let inoutParam_ws =
-            attempt ((pstring_ws1 "inout") >>. varDecl1_ws) |>> (fun varDecl -> createParamDecl varDecl ParamDir.InOut)
+            attempt ((pstring_ws1 "inout") >>. varDeclInParam_ws) |>> (fun varDecl -> createParamDecl varDecl ParamDir.InOut)
         inParam_ws <|> inoutParam_ws
 
     let paramDecls_ws =
         sepBy paramDecl_ws (pstring_ws ",")
     
     
-    let varDecl2_ws : Parser<_,UserState> =
+    let varDeclLocal_ws : Parser<_,UserState> =
         let createVarDecl _type var=
             {
                 VarDecl.Var = var ;
                 VarDecl.Type = _type ;
             }
-        pipe2 (type_ws1)
+        pipe2 (typeBasic_ws1) //ws1 to ensure, that at least one space is available (thus "intx" is not valid. Need space between int and x)
               (varIdDecl_ws ) 
               createVarDecl
 
-    let varDecls2_ws =
-        many (varDecl2_ws .>> (pstring_ws ";"))
+    let varDeclsLocal_ws =
+        many (attempt (varDeclLocal_ws .>> (pstring_ws ";")))
 
     let behaviorDecl_ws  =
         let createBehavior locals body =
@@ -526,7 +573,7 @@ module internal ScmParser =
                 BehaviorDecl.Locals = locals ;
                 BehaviorDecl.Body = body;
             }
-        pipe2 ((pstring_ws "locals") >>. (pstring_ws "{") >>. varDecls2_ws .>> (pstring_ws "}"))
+        pipe2 (varDeclsLocal_ws)
               (many statement_ws |>> Stm.Block)
               createBehavior
     
@@ -610,7 +657,7 @@ module internal ScmParser =
                 FieldDecl.Init = init ;
             }
         attempt (pipe3 (fieldIdDecl_ws .>> (pstring_ws ":"))
-                       (type_ws1 .>> (pstring_ws "="))
+                       (typeExtended_ws .>> (pstring_ws "="))
                        ((sepBy1 value_ws (pstring_ws ",")) .>> (pstring_ws ";"))
                        createFieldDecl)
 
