@@ -8,7 +8,7 @@
 * simpleGuardedCommands3.sam: example
 * simpleGuardedCommands4.sam: example
 * simplePrev.sam: example
-
+* reservedNames.sam: Example, which contains all reserved Names of Prism. TODO: Other model checkers
 
 ## Smoke Tests of evaluation
 
