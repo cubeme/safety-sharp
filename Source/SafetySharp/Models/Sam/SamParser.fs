@@ -165,19 +165,33 @@ module internal SamParser =
         let intType = stringReturn "int" Type.IntType
         let realType = stringReturn "real" Type.RealType
         (boolType <|> intType <|> realType) .>> spaces
-
+        
+    let overflowBehavior_ws =
+        let error = stringReturn "error on overrun" OverflowBehavior.Error
+        let clamp = stringReturn "clamp on overrun" OverflowBehavior.Clamp
+        let wraparound = stringReturn "wrap around on overrun" OverflowBehavior.WrapAround
+        (error <|> clamp <|> wraparound) .>> spaces
+    
     let typeExtended_ws =
         let rangedIntType =
-            let createRangedIntType (_from,_to) =
-                Type.RangedIntType(int32 _from,int32 _to,OverflowBehavior.Error)
-            ((pstring_ws "int<") >>. parseBigint_ws .>> (pstring_ws "..")) .>>. (parseBigint_ws .>> (pstring_ws ">")) |>>  createRangedIntType        
+            let createRangedIntType _from _to _overflow =
+                match _overflow with
+                    | Some(_overflow) -> Type.RangedIntType(int32 _from,int32 _to,_overflow)
+                    | None -> Type.RangedIntType(int32 _from,int32 _to,OverflowBehavior.Error)
+            pipe3 ((pstring_ws "int<") >>. parseBigint_ws .>> (pstring_ws ".."))
+                  (parseBigint_ws)
+                  ((opt ((pstring_ws",")>>. overflowBehavior_ws)) .>> pstring_ws ">")
+                  createRangedIntType
         let rangedRealType =
-            let createRangedRealType (_from:string,_to:string) =
-                Type.RangedRealType(System.Convert.ToDouble(_from),System.Convert.ToDouble(_to),OverflowBehavior.Error)
-            ((pstring_ws "real<") >>. parseDecimal_ws .>> (pstring_ws "..")) .>>. (parseDecimal_ws .>> (pstring_ws ">")) |>>  createRangedRealType
+            let createRangedRealType (_from:string) (_to:string) _overflow =
+                match _overflow with
+                    | Some(_overflow) -> Type.RangedRealType(System.Convert.ToDouble(_from),System.Convert.ToDouble(_to),_overflow)
+                    | None -> Type.RangedRealType(System.Convert.ToDouble(_from),System.Convert.ToDouble(_to),OverflowBehavior.Error)
+            pipe3 ((pstring_ws "real<") >>. parseDecimal_ws .>> (pstring_ws ".."))
+                  (parseDecimal_ws)
+                  ((opt ((pstring_ws",")>>. overflowBehavior_ws)) .>> pstring_ws ">")
+                  createRangedRealType
         (rangedIntType <|> rangedRealType <|> typeBasic_ws)
-
-
 
     let globalVarDecl_ws : Parser<_,unit> =
         let createVarDecl var _type inits =

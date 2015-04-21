@@ -105,9 +105,10 @@ module internal Scm =
         | BoolType
         | IntType // for local variables, which get inlined
         | RealType // for local variables, which get inlined
-        | RangedIntType of From:int * To:int * Overflow:OverflowBehavior
+        | RangedIntType of From:int * To:int * Overflow:OverflowBehavior // "intValue1: int<0..100>; intValue2: int<0..100,clamp on overrun>; intValue3: int<0..100,wrap around on overrun>; intValue4: int<0..100,error on overrun>"
         | RangedRealType of From:double  * To:double * Overflow:OverflowBehavior
-        // | Measure of Unit:DerivedSiType * From:double * To:double "length1 : measure<m,0..100>; speed1 : measure<m/s,0..4>"
+        // | RangedMeasure of Unit:DerivedSiType * From:double * To:double "length1: measure<m><0..100>; speed1: measure<m/s><0..4>; acc1:measure<m/s²>"
+        // | DerivedMeasures (may be given an initial value. assignments may only be reseted) "time1: measure<s,auto tick>; speed2: measure<m/s,based on acc1>; position1: measure<m,based on speed 2>"
         
     [<RequireQualifiedAccessAttribute>]
     type internal Contract = 

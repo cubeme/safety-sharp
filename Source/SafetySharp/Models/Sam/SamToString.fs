@@ -233,15 +233,27 @@ module internal SamToString =
                 (exportExpr expr) >>=
                 (append "; ")
        
+    let realFormat = new System.Globalization.CultureInfo("en-US")
+    
     let exportType (_type:Type) : AstToStringStateFunction =
+        let onOverrun _overflow = 
+            match _overflow with
+                | OverflowBehavior.Error -> "error"
+                | OverflowBehavior.WrapAround -> "wrap around"
+                | OverflowBehavior.Clamp -> "clamp"
+                | _ -> failwith "NotImplementedYet"
         match _type with
             | BoolType -> append "bool"
             | IntType -> append "int"
+            | RealType -> append "real"
             | RangedIntType(_from,_to,_overflow) ->
-                match _overflow with
-                    | OverflowBehavior.Error ->
-                        let newType = sprintf "int<%d..%d>" _from _to
-                        append newType
+                let newType = sprintf "int<%d..%d,%s on overrun>" _from _to (onOverrun _overflow)
+                append newType
+            | RangedRealType(_from,_to,_overflow) ->
+                //https://msdn.microsoft.com/en-us/library/ee370560.aspx
+                let newType = sprintf "real<%s..%s,%s on overrun>" (System.Convert.ToString(_from,realFormat)) (System.Convert.ToString(_to,realFormat)) (onOverrun _overflow)
+                append newType
+
 
     let exportLocalVarDecl (varDecl:LocalVarDecl) : AstToStringStateFunction =
         (exportType varDecl.Type) >>=

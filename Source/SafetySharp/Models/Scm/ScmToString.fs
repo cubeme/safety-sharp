@@ -29,18 +29,25 @@ module internal ScmToString =
     /// Gets a string representation of the given SCM model.
     let toString (c : CompDecl) =
         let writer = StructuredWriter ()
+                
+        let onOverrun _overflow = 
+            match _overflow with
+                | OverflowBehavior.Error -> "error"
+                | OverflowBehavior.WrapAround -> "wrap around"
+                | OverflowBehavior.Clamp -> "clamp"
+                | _ -> failwith "NotImplementedYet"
+                
+        let realFormat = new System.Globalization.CultureInfo("en-US")
 
         let typeRef = function
             | BoolType    -> writer.Append "bool"
             | IntType     -> writer.Append "int"
-            | RangedIntType (_from,_to,_overflow) ->
-                match _overflow with
-                    | OverflowBehavior.Error ->
-                        writer.Append "int<"
-                        writer.Append "%d" _from
-                        writer.Append ".."
-                        writer.Append "%d" _to
-                        writer.Append ">"
+            | RealType -> writer.Append "real"
+            | RangedIntType(_from,_to,_overflow) ->
+                writer.Append "int<%d..%d,%s on overrun>" _from _to (onOverrun _overflow)
+            | RangedRealType(_from,_to,_overflow) ->
+                //https://msdn.microsoft.com/en-us/library/ee370560.aspx
+                writer.Append "real<%s..%s,%s on overrun>" (System.Convert.ToString(_from,realFormat)) (System.Convert.ToString(_to,realFormat)) (onOverrun _overflow)
 
         let uop = function
             | Not   -> writer.Append "!"
