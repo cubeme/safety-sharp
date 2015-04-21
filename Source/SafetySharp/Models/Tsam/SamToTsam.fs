@@ -57,6 +57,10 @@ module internal SamToTsam =
                         let freshIdForBlock = uniqueStatementIdGenerator ()
                         Tsam.Stm.Block(freshIdForBlock,[Tsam.Stm.Assume(freshIdForGuard,clause.Guard);translateStm uniqueStatementIdGenerator clause.Statement]) // the guard is now an assumption
                     Tsam.Stm.Choice(freshId,clauses |> List.map translateClause)
+            | SafetySharp.Models.Sam.Stm.Stochastic (stochasticChoices) -> 
+                let translateStochasticChoice ( (probability,stm) : Sam.Expr * Sam.Stm) : Tsam.Expr * Tsam.Stm =
+                    (probability,translateStm uniqueStatementIdGenerator stm)
+                Tsam.Stm.Stochastic(freshId,stochasticChoices |> List.map translateStochasticChoice)
             | SafetySharp.Models.Sam.Stm.Write (variable,expression) ->
                 Tsam.Stm.Write (freshId,variable,expression)
                 
@@ -90,8 +94,9 @@ module internal SamToTsam =
                 statements |> List.map getMaximalStmId
                            |> List.max
             | Tsam.Stm.Choice (sid,choices) ->
-                choices |> List.map getMaximalStmId
-                        |> List.max
+                choices |> List.map getMaximalStmId |> List.max
+            | Tsam.Stm.Stochastic (sid,stochasticChoices) ->
+                stochasticChoices |> List.map (fun (prob,stm) -> getMaximalStmId stm) |> List.max
             | Tsam.Stm.Write (sid,_,_) ->
                 sid.Value
 

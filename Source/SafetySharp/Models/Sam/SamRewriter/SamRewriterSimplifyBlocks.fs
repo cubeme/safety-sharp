@@ -50,6 +50,10 @@ module internal SamSimplifyBlocks =
                         else
                             clauses |> List.map transformOption
                                     |> Stm.Choice
+                    | Stm.Stochastic (stochasticChoice: (Expr*Stm) list) ->
+                        let transformStochasticChoice (prob,stm) : Expr*Stm=
+                            (prob, removeEmptyBlocks stm)
+                        Stm.Stochastic(stochasticChoice |> List.map transformStochasticChoice)
                     | Stm.Write (variable:Var, expression:Expr) ->
                         stm // nothing to do
             let rec iterRemove (stm) =
@@ -83,6 +87,10 @@ module internal SamSimplifyBlocks =
                     else
                         clauses |> List.map transformOption
                                 |> Stm.Choice
+                | Stm.Stochastic (stochasticChoice: (Expr*Stm) list) ->
+                    let transformStochasticChoice (prob,stm:Stm) : Expr*Stm=
+                        (prob, stm.simplifyBlocksWithOnlyOneStatement)
+                    Stm.Stochastic(stochasticChoice |> List.map transformStochasticChoice)
                 | Stm.Write (variable:Var, expression:Expr) ->
                     stm // nothing to do
                     

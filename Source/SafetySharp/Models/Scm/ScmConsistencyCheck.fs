@@ -66,6 +66,7 @@ module internal ScmConsistencyCheck =
                 | Stm.AssignFault (_) -> false,true // stop walking, and everything is fine
                 | Stm.Block (_) -> true,true // keep on walking
                 | Stm.Choice (_) -> true,true  // keep on walking
+                | Stm.Stochastic(_) -> true,true  // keep on walking
                 | Stm.StepComp (_) -> true,true // keep on walking
                 | Stm.StepFault (_) -> true,true // keep on walking
                 | Stm.CallPort (reqPort,_params) ->
@@ -99,6 +100,7 @@ module internal ScmConsistencyCheck =
                 | Stm.AssignFault (_) -> false,oldValue // stop walking, and everything is fine
                 | Stm.Block (_) -> true,oldValue // keep on walking
                 | Stm.Choice (_) -> true,oldValue  // keep on walking
+                | Stm.Stochastic(_) -> true,oldValue  // keep on walking
                 | Stm.StepComp (_) -> true,oldValue // keep on walking
                 | Stm.StepFault (_) -> true,oldValue // keep on walking
                 | Stm.CallPort (reqPort,_params) ->
@@ -162,6 +164,9 @@ module internal ScmConsistencyCheck =
                 | Choice (choices:(Expr * Stm) list) ->
                     let guardsAreOkay = choices |> List.forall (fun (guard,_)-> checkExpression guard)
                     (true,guardsAreOkay)
+                | Stochastic (stochasticChoice: (Expr*Stm) list) ->
+                    let probsAreOkay = stochasticChoice |> List.forall (fun (prob,_)-> checkExpression prob)
+                    (true,probsAreOkay)
                 | CallPort (_,_params:Param list) ->
                     let paramsAreOkay = _params |> List.forall (fun _param -> checkParams _param)
                     (true,paramsAreOkay)

@@ -134,6 +134,10 @@ module internal ScmRewriterInlineBehavior =
                 | Stm.Choice (choices:(Expr * Stm) list) ->                    
                     let stmnts =
                         choices |> List.map (fun (expr,stm) -> stm)
+                    maxLevel stmnts currentLevel      
+                | Stm.Stochastic (choices:(Expr * Stm) list) ->                    
+                    let stmnts =
+                        choices |> List.map (fun (expr,stm) -> stm)
                     maxLevel stmnts currentLevel          
                 | Stm.CallPort (reqPort,_params) ->
                     let binding = rootComp.getBindingOfLocalReqPort reqPort
@@ -217,6 +221,9 @@ module internal ScmRewriterInlineBehavior =
                             | Stm.Choice (choices:(Expr * Stm) list) ->
                                 choices |> List.map2 (fun index stm -> (index,stm)) ([0..(choices.Length-1)])
                                         |> List.tryPick( fun (index,(guard,stm)) -> findCall stm (currentPath@[index]))
+                            | Stm.Stochastic (stochasticChoices:(Expr * Stm) list) ->
+                                stochasticChoices |> List.map2 (fun index stm -> (index,stm)) ([0..(stochasticChoices.Length-1)])
+                                                  |> List.tryPick( fun (index,(guard,stm)) -> findCall stm (currentPath@[index]))
                             | Stm.CallPort (_) ->
                                 Some(currentPath)
                             | Stm.StepComp (comp) ->
@@ -253,6 +260,7 @@ module internal ScmRewriterInlineBehavior =
                     | Stm.AssignFault (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
                     | Stm.Block (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
                     | Stm.Choice (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
+                    | Stm.Stochastic (_) -> failwith "BUG: Nothing to be inlined at desired position"; return ()
                     | Stm.StepComp (comp) ->
                         failwith "BUG: In this phase Stm.StepComp should not be in any statement"; return ()
                     | Stm.StepFault (fault) ->

@@ -100,6 +100,10 @@ module internal SamChangeIdentifier =
                         Clause.Statement = transformStm state clause.Statement
                     }
                 Stm.Choice(clauses |> List.map transformClause)
+            | Stochastic (stochasticChoice: (Expr*Stm) list) ->
+                let transformStochasticChoice (prob,stm) : Expr*Stm=
+                    (transformExpr state prob, transformStm state stm)
+                Stm.Stochastic(stochasticChoice |> List.map transformStochasticChoice)
             | Write (variable:Var, expression:Expr) ->
                 Stm.Write(state.OldToNew.Item variable,transformExpr state expression)
     

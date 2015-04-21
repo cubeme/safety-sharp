@@ -26,6 +26,8 @@ namespace SafetySharp.Models
 module internal TsamToString =
     open SafetySharp.Models.SamToStringHelpers
     open Tsam
+    
+    let realFormat = new System.Globalization.CultureInfo("en-US")
 
     //////////////////////////////////////////////////////////////////////////////
     // actual export
@@ -72,6 +74,8 @@ module internal TsamToString =
                         | true -> "true"
                         | false -> "false"
                 | Val.NumbVal (_val) -> _val.ToString()
+                | Val.RealVal (_val) -> System.Convert.ToString(_val,realFormat)
+                | Val.ProbVal (_val) -> System.Convert.ToString(_val,realFormat)
         append toAppend
 
     let rec exportExpr (expr:Expr) : AstToStringStateFunction =
@@ -109,6 +113,14 @@ module internal TsamToString =
                 (foreach choices exportStm) >>=
                 decreaseIndent >>= (append "}") >>=
                 (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
+            | Stm.Stochastic (sid,stochasticChoices) ->
+                newLine >>= (append "stochastic {") >>= newLineAndIncreaseIndent >>= 
+                (foreach stochasticChoices
+                    (fun (probExpr,stm) -> 
+                        exportExpr probExpr >>= append " => " >>= exportStm stm >>= newLine)
+                    ) >>=
+                decreaseIndent >>= (append "}") >>=
+                (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
             | Stm.Write (sid,var,expr) ->
                 (exportVar var) >>=
                 (append " := ") >>=
@@ -117,9 +129,23 @@ module internal TsamToString =
                 (append "\t\t\t// ") >>= (append (sid.ToString() )) >>= newLine
        
     let exportType (_type:Type) : AstToStringStateFunction =
+        let onOverrun _overflow = 
+            match _overflow with
+                | OverflowBehavior.Error -> "error"
+                | OverflowBehavior.WrapAround -> "wrap around"
+                | OverflowBehavior.Clamp -> "clamp"
+                | _ -> failwith "NotImplementedYet"
         match _type with
             | Type.BoolType -> append "bool"
             | Type.IntType -> append "int"
+            | Type.RealType -> append "real"
+            | Type.RangedIntType(_from,_to,_overflow) ->
+                let newType = sprintf "int<%d..%d,%s on overrun>" _from _to (onOverrun _overflow)
+                append newType
+            | Type.RangedRealType(_from,_to,_overflow) ->
+                //https://msdn.microsoft.com/en-us/library/ee370560.aspx
+                let newType = sprintf "real<%s..%s,%s on overrun>" (System.Convert.ToString(_from,realFormat)) (System.Convert.ToString(_to,realFormat)) (onOverrun _overflow)
+                append newType
 
     let exportLocalVarDecl (varDecl:LocalVarDecl) : AstToStringStateFunction =
         (exportType varDecl.Type) >>=

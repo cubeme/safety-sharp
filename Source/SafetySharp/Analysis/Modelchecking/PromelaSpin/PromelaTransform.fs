@@ -147,7 +147,15 @@ module internal SamToPromela =
             | Sam.Stm.Write (variable:Sam.Var, expression:Sam.Expr) ->
                 let transformedTarget = transformSamVarToVarref variable
                 let transformedExpression = transformSamExpr expression
-                createAssignmentStatement transformedTarget transformedExpression            
+                createAssignmentStatement transformedTarget transformedExpression
+            | Sam.Stm.Stochastic _ ->
+                // Very faint idea:
+                //   Via embedded C code it might be possible to calculate the probability of each branch. This might be printed out
+                //   for a branch.
+                //      float probability = 1.0f
+                //      probability *= prob * probability
+                //   see http://spinroot.com/spin/Man/float.html
+                failwith "Promela does not support stochastic statements"
                 
                 
     let transformConfiguration (pgm:Sam.Pgm) : (PrSpec*Map<Sam.Traceable,string>) = // returns new program * forward tracing map

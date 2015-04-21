@@ -154,6 +154,8 @@ module internal SamToStringHelpers =
 
 module internal SamToString =
     open SamToStringHelpers
+    
+    let realFormat = new System.Globalization.CultureInfo("en-US")
 
     //////////////////////////////////////////////////////////////////////////////
     // actual export
@@ -200,6 +202,8 @@ module internal SamToString =
                         | true -> "true"
                         | false -> "false"
                 | Val.NumbVal (_val) -> _val.ToString()
+                | Val.RealVal (_val) -> System.Convert.ToString(_val,realFormat)
+                | Val.ProbVal (_val) -> System.Convert.ToString(_val,realFormat)
         append toAppend
 
     let rec exportExpr (expr:Expr) : AstToStringStateFunction =
@@ -227,14 +231,19 @@ module internal SamToString =
                                        exportExpr clause.Guard >>= append " => " >>= exportStm clause.Statement >>= newLine)
                                  ) >>=
                 decreaseIndent >>= (append "}") >>= newLine
+            | Stm.Stochastic (stochasticChoices) ->
+                newLine >>= (append "stochastic {") >>= newLineAndIncreaseIndent >>= 
+                (foreach stochasticChoices
+                    (fun (probExpr,stm) -> 
+                        exportExpr probExpr >>= append " => " >>= exportStm stm >>= newLine)
+                    ) >>=
+                decreaseIndent >>= (append "}") >>= newLine                
             | Stm.Write (var,expr) ->
                 (exportVar var) >>=
                 (append " := ") >>=
                 (exportExpr expr) >>=
                 (append "; ")
-       
-    let realFormat = new System.Globalization.CultureInfo("en-US")
-    
+           
     let exportType (_type:Type) : AstToStringStateFunction =
         let onOverrun _overflow = 
             match _overflow with

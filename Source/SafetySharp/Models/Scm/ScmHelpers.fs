@@ -57,8 +57,11 @@ module internal ScmHelpers =
                         subStatement.getSubStatement path.Tail                        
                     | Stm.Choice (choices:(Expr * Stm) list) ->
                         let (expr,stm) = List.nth choices path.Head
+                        stm.getSubStatement path.Tail                      
+                    | Stm.Stochastic (choices:(Expr * Stm) list) ->
+                        let (expr,stm) = List.nth choices path.Head
                         stm.getSubStatement path.Tail
-                    | _ -> failwith "Try to get a SubStatement from a non Block/Choice Statement"
+                    | _ -> failwith "Try to get a SubStatement from a non Block/Choice/Stochastic Statement"
         member stm.replaceSubStatement (path:StmPath) (replaceBy:Stm) : Stm =
             if path = [] then
                 replaceBy
@@ -76,7 +79,13 @@ module internal ScmHelpers =
                         let newSubStatement = subStatement.replaceSubStatement path.Tail replaceBy
                         let newChoices = ( List.map2 (fun index (guard,stm) -> if index<>stmIndex then (guard,stm) else (guard,newSubStatement)) ([0..(choices.Length-1)]) (choices) );
                         Stm.Choice(newChoices)
-                    | _ -> failwith "Try to replace a SubStatement from a non Block/Choice Statement"
+                    | Stm.Stochastic (choices:(Expr * Stm) list) ->
+                        let stmIndex = path.Head
+                        let (expr,subStatement) = List.nth choices stmIndex
+                        let newSubStatement = subStatement.replaceSubStatement path.Tail replaceBy
+                        let newChoices = ( List.map2 (fun index (guard,stm) -> if index<>stmIndex then (guard,stm) else (guard,newSubStatement)) ([0..(choices.Length-1)]) (choices) );
+                        Stm.Stochastic(newChoices)
+                    | _ -> failwith "Try to replace a SubStatement from a non Block/Choice/Stochastic Statement"
                
 
     // Extension methods
@@ -96,6 +105,10 @@ module internal ScmHelpers =
             match _type with
                 | Type.BoolType -> Val.BoolVal(true)
                 | Type.IntType -> Val.IntVal(0)
+                | Type.RealType -> Val.RealVal(0.0)
+                | Type.RangedIntType(_from,_,_) -> Val.IntVal(_from)
+                | Type.RangedRealType(_from,_,_) -> Val.RealVal(_from)
+
 
     // Extension methods
     type Field with
@@ -495,6 +508,9 @@ module internal ScmHelpers =
             | Stm.Choice (choices:(Expr * Stm) list) ->
                 let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr (varMap,fieldMap)  expr,rewriteStm (reqPortMap,faultMap,varMap,fieldMap) stm) )
                 Stm.Choice(newChoices)
+            | Stm.Stochastic (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr (varMap,fieldMap)  expr,rewriteStm (reqPortMap,faultMap,varMap,fieldMap) stm) )
+                Stm.Stochastic(newChoices)
             | Stm.CallPort (reqPort,_params) ->
                 let newReqPort = itemOrOld reqPortMap (reqPort)
                 let newParams = _params |> List.map (rewriteParam (varMap,fieldMap) )
@@ -563,6 +579,9 @@ module internal ScmHelpers =
             | Stm.Choice (choices:(Expr * Stm) list) ->
                 let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToFields (varMap)  expr,rewriteStm_varsToFields (varMap) stm) )
                 Stm.Choice(newChoices)
+            | Stm.Stochastic (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToFields (varMap)  expr,rewriteStm_varsToFields (varMap) stm) )
+                Stm.Stochastic(newChoices)
             | Stm.CallPort (reqPort,_params) ->
                 let newParams = _params |> List.map (rewriteParam_varsToFields (varMap) )
                 Stm.CallPort (reqPort,newParams)
@@ -615,6 +634,9 @@ module internal ScmHelpers =
             | Stm.Choice (choices:(Expr * Stm) list) ->
                 let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToExpr (varMap)  expr,rewriteStm_varsToExpr (varMap) stm) )
                 Stm.Choice(newChoices)
+            | Stm.Stochastic (choices:(Expr * Stm) list) ->
+                let newChoices = choices |> List.map (fun (expr,stm) -> (rewriteExpr_varsToExpr (varMap)  expr,rewriteStm_varsToExpr (varMap) stm) )
+                Stm.Stochastic(newChoices)
             | Stm.CallPort (reqPort,_params) ->
                 let newParams = _params |> List.map (rewriteParam_varsToExpr (varMap) )
                 Stm.CallPort (reqPort,newParams)

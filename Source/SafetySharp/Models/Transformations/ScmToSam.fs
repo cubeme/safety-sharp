@@ -43,12 +43,16 @@ module internal ScmToSam =
         match _type with
             | Scm.BoolType -> Sam.BoolType
             | Scm.IntType -> Sam.IntType
+            | Scm.RealType -> Sam.RealType
             | Scm.RangedIntType(_from,_to,_overflow) -> Sam.RangedIntType(_from,_to,_overflow)
+            | Scm.RangedRealType(_from,_to,_overflow) -> Sam.RangedRealType(_from,_to,_overflow)
 
     let transformValToVal (_val:Scm.Val) : Sam.Val=
         match _val with
             | Scm.BoolVal (_val) -> Sam.BoolVal(_val)
             | Scm.IntVal (_val)  -> Sam.NumbVal(bigint(_val))
+            | Scm.RealVal (_val)  -> Sam.RealVal(_val)
+            | Scm.ProbVal (_val)  -> Sam.ProbVal(_val)
 
     
     let transformUopToUop (uop:Scm.UOp) : Sam.UOp =
@@ -123,6 +127,11 @@ module internal ScmToSam =
                     }
                 let newChoices = choices |> List.map transformChoice
                 Sam.Stm.Choice(newChoices)
+            | Scm.Stochastic (choices:(Scm.Expr * Scm.Stm) list) ->
+                let transformChoice (expr,stm) =
+                    (transformExprToExpr expr,transformStmToStm stm)
+                let newChoices = choices |> List.map transformChoice
+                Sam.Stm.Stochastic(newChoices)
             | Scm.CallPort (_) -> failwith "Statements are expected not to call a port. By inlining with levelUpAndInline you can convert the model to a new model with this property!"
             | Scm.StepComp  (_) -> failwith "Statements are expected not to perform a component step. By inlining with levelUpAndInline you can convert the model to a new model with this property!"
             | Scm.StepFault  (_) -> failwith "Statements are expected not to perform a fault step. By inlining with levelUpAndInline you can convert the model to a new model with this property!"

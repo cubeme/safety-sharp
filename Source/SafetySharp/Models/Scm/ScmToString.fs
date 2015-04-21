@@ -71,6 +71,8 @@ module internal ScmToString =
         let value = function
             | BoolVal b -> writer.Append "%b" b
             | IntVal i  -> writer.Append "%d" i
+            | Val.RealVal (_val) -> writer.Append "%s" (System.Convert.ToString(_val,realFormat))
+            | Val.ProbVal (_val) -> writer.Append "%s" (System.Convert.ToString(_val,realFormat))
 
         let var (Var v)           = writer.Append "%s" v
         let field (Field f)       = writer.Append "%s" f
@@ -122,6 +124,17 @@ module internal ScmToString =
             | Block s -> writer.AppendBlockStatement (fun () -> stms s)
             | Choice c -> 
                 writer.AppendLine "choice"
+                writer.AppendBlockStatement (fun () ->
+                    writer.AppendRepeated c (fun (e, s) -> 
+                        expr e
+                        writer.Append " => "
+                        match s with
+                        | Block _ -> stm s
+                        | s       -> writer.Append "{ "; stm s; writer.Append " }"
+                    ) (fun () -> writer.NewLine ())
+                )
+            | Stochastic c -> 
+                writer.AppendLine "stochastic"
                 writer.AppendBlockStatement (fun () ->
                     writer.AppendRepeated c (fun (e, s) -> 
                         expr e

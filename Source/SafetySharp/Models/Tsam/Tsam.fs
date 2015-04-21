@@ -38,6 +38,7 @@ module internal Tsam =
     type UOp = SafetySharp.Models.Sam.UOp
     type BOp = SafetySharp.Models.Sam.BOp
     type Var = SafetySharp.Models.Sam.Var
+    type OverflowBehavior = SafetySharp.Modeling.OverflowBehavior
     type Val = SafetySharp.Models.Sam.Val
     type Expr = SafetySharp.Models.Sam.Expr
     
@@ -48,6 +49,7 @@ module internal Tsam =
         | Assume of SID:StatementId * Expression:Expr       //semantics: wp( Stm.Assume(e), phi) := e -> phi
         | Block of SID:StatementId * Statements:Stm list
         | Choice of SID:StatementId * Choices:Stm list
+        | Stochastic of SID:StatementId * (Expr * Stm) list //Expr must be of type ProbVal
         | Write of SID:StatementId * Variable:Var * Expression:Expr
         with
             member this.GetStatementId : StatementId =
@@ -56,6 +58,7 @@ module internal Tsam =
                     | Assume (sid,_) -> sid
                     | Block (sid,_) -> sid
                     | Choice (sid,_) -> sid
+                    | Stochastic (sid,_) -> sid
                     | Write (sid,_,_) -> sid
     
     type Type = SafetySharp.Models.Sam.Type
