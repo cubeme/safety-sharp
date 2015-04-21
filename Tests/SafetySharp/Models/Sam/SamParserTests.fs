@@ -242,3 +242,59 @@ type ExampleFiles() =
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSam input
         ()
+
+    [<Test>]
+    member this.``Example overflowIntError1 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntError1.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntError2 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntError2.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntWrapAround1 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround1.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntWrapAround2 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround2.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntWrapAround3 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround3.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntWrapAround4 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntWrapAround4.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntClamp1 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntClamp1.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example overflowIntClamp2 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/overflowIntClamp2.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()

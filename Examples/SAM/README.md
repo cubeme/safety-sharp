@@ -9,6 +9,14 @@
 * simpleGuardedCommands4.sam: example
 * simplePrev.sam: example
 * reservedNames.sam: Example, which contains all reserved Names of Prism. TODO: Other model checkers
+* overflowIntError1.sam: Upper bound
+* overflowIntError2.sam: Lower bound
+* overflowIntWrapAround1.sam: Upper bound 
+* overflowIntWrapAround2.sam: Upper bound twice the range
+* overflowIntWrapAround3.sam: Lower bound 
+* overflowIntWrapAround4.sam: Lower bound twice the range
+* overflowIntClamp1.sam: upper bound
+* overflowIntClamp2.sam: lower bound
 
 ## Smoke Tests of evaluation
 

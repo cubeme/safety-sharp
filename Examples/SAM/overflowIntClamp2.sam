@@ -1,0 +1,8 @@
+globals {
+	i : int<0..20,clamp on overrun> = 10;
+}
+locals {
+}
+choice {
+	true => { i := i - 1; }
+}
