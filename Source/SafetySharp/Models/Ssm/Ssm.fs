@@ -22,7 +22,6 @@
 
 namespace SafetySharp.Models
 open SafetySharp
-open SafetySharp.Modeling
 
 /// Provides types and functions for working with S# models (SSM). Basically, the S# metamodel is a subset of
 /// the metadata and instructions supported by the .NET common language runtime (CLR); a S# model is a view
@@ -133,6 +132,10 @@ module internal Ssm =
         Name : string
         // TODO   
     }
+
+    /// Indicates the kind of a binding.
+    type internal BindingKind = 
+        Modeling.BindingKind
 
     /// Represents a port binding.
     type internal Binding = {

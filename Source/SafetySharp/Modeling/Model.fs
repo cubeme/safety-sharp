@@ -41,7 +41,7 @@ type SharedComponentsException internal (components : Component list) =
 
 /// Represents a base class for all models.
 [<AllowNullLiteral>]
-type Model () =
+type Model private () =
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Model state and metadata
@@ -63,6 +63,15 @@ type Model () =
                 yield! component'.Subcomponents |> Seq.collect (getAllComponents checkedComponents)
         }
 
+    /// <summary>
+    ///    Initializes a new instance.
+    /// </summary>
+    /// <param name="rootComponents">The root components of the model.</param>
+    new ([<ParamArray>] rootComponents : Component array) as this =
+        Model ()
+        then 
+            if rootComponents <> null && rootComponents.Length > 0 then this.SetRootComponents rootComponents
+
     /// Gets a value indicating whether the metadata has been finalized and any modifications of the metadata are prohibited.
     member internal this.IsMetadataFinalized = isSealed
 
@@ -74,7 +83,7 @@ type Model () =
     member this.SetRootComponents ([<ParamArray>] rootComponents : Component array) =
         nullArg rootComponents "rootComponents"
         invalidArg (rootComponents.Length <= 0) "rootComponents" "There must be at least one root component."
-        invalidCall (components <> []) "This method can only be called once on any given model instance."
+        invalidCall (components <> []) "The root components have already been set."
         invalidCall isSealed "The model's metadata has already been finalized."
 
         // Disallow future modifications of the components' metadata

@@ -34,9 +34,14 @@ type SpinModelChecker (model : Model) =
     do nullArg model "model"
     do model.FinalizeMetadata ()
 
-    let ssm = model |> CilToSsm.transformModel |> SsmLowering.lowerPreValidation model
-    do SsmValidation.validate model ssm
-    let scmRootComp = ssm |> SsmLowering.lowerPostValidation model |> SsmToScm.transform
+    let scmRootComp = 
+        model 
+        |> CilToSsm.transformModel 
+        |> SsmLowering.lowerPreValidation model
+        |> SsmValidation.validate model
+        |> SsmLowering.lowerPostValidation model 
+        |> SsmToScm.transform
+
     do printf "%s" (ScmToString.toString scmRootComp)
     let scm = scmRootComp |> Scm.ScmModel
    // do printf "======================================="

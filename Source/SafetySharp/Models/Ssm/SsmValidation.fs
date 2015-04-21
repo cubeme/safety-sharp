@@ -207,3 +207,4 @@ module internal SsmValidation =
         invalidBindings model c
         invalidRequiredPortBindings model c
         controlFlowCycles model c
+        c

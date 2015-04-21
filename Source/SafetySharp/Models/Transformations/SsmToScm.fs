@@ -33,7 +33,7 @@ module internal SsmToScm =
         match t with
         | Ssm.BoolType   -> Scm.BoolType
         | Ssm.IntType    -> Scm.IntType
-        | Ssm.DoubleType -> notImplemented ()
+        | Ssm.DoubleType -> Scm.RealType
         | _              -> invalidOp "Invalid type '%+A'." t
 
     /// Maps the given SSM initial field value to a SCM literal

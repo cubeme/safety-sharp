@@ -40,7 +40,7 @@ module ``Invalid bindings`` =
 
     let private check kinds binders sourceComponents targetComponents sourceMethods targetMethods csharpCode =
         let (model, ssm) = transform csharpCode
-        let e = raisesWith<InvalidBindingsException> (fun () -> SsmValidation.validate model ssm)
+        let e = raisesWith<InvalidBindingsException> (fun () -> SsmValidation.validate model ssm |> ignore)
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.Kind) =? kinds
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> binding.BinderName) =? binders
         e.InvalidBindings |> List.ofArray |> List.map (fun binding -> (binding.SourcePort.Component :?> Component).UnmangledName) =? sourceComponents
@@ -55,7 +55,7 @@ module ``Invalid bindings`` =
               "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
         let (model, ssm) = 
             transform
@@ -63,7 +63,7 @@ module ``Invalid bindings`` =
                class Y : Component { X x = new X(); public Y() { Bind(x.RequiredPorts.M = x.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``binding spanning one level of the hierarchy is valid`` () =
@@ -73,7 +73,7 @@ module ``Invalid bindings`` =
                class Y : Component { void N() {} X x = new X(); public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
         let (model, ssm) = 
             transform
@@ -81,7 +81,7 @@ module ``Invalid bindings`` =
                class Y : Component { extern void M(); X x = new X(); public Y() { Bind(RequiredPorts.M = x.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``binding with subsubcomponent is valid`` () =
@@ -92,7 +92,7 @@ module ``Invalid bindings`` =
                class Y : Component { extern void M(); X x; public Y(X x, Z z) { this.x = x; Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
         let (model, ssm) = 
             transform
@@ -101,7 +101,7 @@ module ``Invalid bindings`` =
                class Y : Component { void M() {} X x; public Y(X x, Z z) { this.x = x; Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
                class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new Y(new X(z), z)); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``binding with non-subcomponent is invalid`` () =
@@ -132,7 +132,7 @@ module ``Invalid bindings`` =
                     } 
                }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``model binding across roots and levels is valid`` () =
@@ -151,7 +151,7 @@ module ``Invalid bindings`` =
                     } 
                }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
 [<TestFixture>]
 module ``Unbound required ports`` =
@@ -163,7 +163,7 @@ module ``Unbound required ports`` =
 
     let private check componentNames portNames csharpCode =
         let (model, ssm) = transform csharpCode
-        let e = raisesWith<UnboundRequiredPortsException> (fun () -> SsmValidation.validate model ssm)
+        let e = raisesWith<UnboundRequiredPortsException> (fun () -> SsmValidation.validate model ssm |> ignore)
         e.UnboundPorts |> List.ofArray |> List.map (fun p -> (p.Component :?> Component).UnmangledName) =? componentNames
         e.UnboundPorts |> List.ofArray |> List.map (fun p -> p.Method.Name) =? portNames
 
@@ -174,7 +174,7 @@ module ``Unbound required ports`` =
               "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``invalid when single port is unbound`` () =
@@ -199,7 +199,7 @@ module ``Ambiguous required port bindings`` =
 
     let private check bindings kinds binders csharpCode =
         let (model, ssm) = transform csharpCode
-        let e = raisesWith<AmbiguousRequiredPortBindingsException> (fun () -> SsmValidation.validate model ssm)
+        let e = raisesWith<AmbiguousRequiredPortBindingsException> (fun () -> SsmValidation.validate model ssm |> ignore)
         e.AmbiguousBindings |> List.ofArray |> List.map (fun p -> 
             p |> List.ofArray |> List.map (fun b -> 
                 ((b.TargetPort.Component :?> Component).UnmangledName,
@@ -219,7 +219,7 @@ module ``Ambiguous required port bindings`` =
               "class X : Component { extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by the same component`` () =
@@ -261,7 +261,7 @@ module ``Cyclic control flow`` =
 
     let private check componentNames portNames csharpCode =
         let (model, ssm) = transform csharpCode
-        let e = raisesWith<CyclicControlFlowException> (fun () -> SsmValidation.validate model ssm)
+        let e = raisesWith<CyclicControlFlowException> (fun () -> SsmValidation.validate model ssm |> ignore)
         e.ControlFlow |> List.ofArray |> List.map (fun (c, _) -> c.UnmangledName) =? componentNames
         e.ControlFlow |> List.ofArray |> List.map (fun (_, m) -> sprintf "%s.%s" m.DeclaringType.FullName m.Name) =? portNames
 
@@ -276,7 +276,7 @@ module ``Cyclic control flow`` =
            }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``model with simple delayed binding cycle is valid`` () =
@@ -289,7 +289,7 @@ module ``Cyclic control flow`` =
                }
                class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``model with simple instantaneous binding cycle is invalid`` () =
@@ -326,7 +326,7 @@ module ``Cyclic control flow`` =
                  }
                  class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``model with mutually recursive functions is invalid`` () =
@@ -394,7 +394,7 @@ module ``Cyclic control flow`` =
                  }
                  class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``recursive virtual call is invalid`` () =
@@ -430,7 +430,7 @@ module ``Cyclic control flow`` =
                  }
                  class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
-        nothrow (fun () -> SsmValidation.validate model ssm)
+        nothrow (fun () -> SsmValidation.validate model ssm |> ignore)
 
     [<Test>]
     let ``recursive virtual functions and properties are invalid`` () =

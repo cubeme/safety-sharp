@@ -38,8 +38,7 @@
 			var heightControl = new HeightControl(preControl, mainControl, endControl, trafficLights);
 			var vehicles = new VehicleCollection(vehicle1, vehicle2, vehicle3);
 
-			_model = new Model();
-			_model.SetRootComponents(heightControl, vehicles);
+			_model = new Model(heightControl, vehicles);
 
 			Bind(vehicles, lightBarrier1);
 			Bind(vehicles, lightBarrier2);

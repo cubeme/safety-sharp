@@ -1159,6 +1159,19 @@ to transform into a formal model.
 	determined. Code accessing array or struct elements must be rewritten accordingly. Operations on arrays (Linq-like functions or
 	\texttt{foreach} loops) must be unrolled. For arrays, the builders generate the appropriate instructions dynamically at runtime
 	based on the determined array size.
+	\item Component scheduling: By default, all subcomponents of a component are scheduled at the beginning of the parent component's
+	\texttt{Update} method in some fixed but undefined order. The \texttt{Schedule} function can be used in the
+	constructor of the parent component to define an explicit schedule.
+	The call to \texttt{Schedule} must be exhaustive and it must also include the parent component itself. 
+	If a component's \texttt{Update} method is called explicitly by the parent component's \texttt{Update} method, it is not allowed in a call to \texttt{Schedule} and it is never
+	scheduled automatically by the system.
+	An inherited component must call the base \texttt{Update} at some time in its \texttt{Update} function, if it decides to override
+	\texttt{Update}. Multiple calls to \texttt{Schedule} are allowed so that inherited components can use \texttt{Schedule} to
+	explicitly define the scheduling of their subcomponents in addition to the base component's call to \texttt{Schedule}; inherited
+	components can for instance schedule their subcomponents in-between two subcomponents of the base component, provided that the
+	base component exposes its subcomponents to its derived types (via the \texttt{protected} visibility modifier, for instance). If
+	different calls to \texttt{Schedule} contradict each other, an error is raised at runtime. Root components are scheduled in the
+	order they're added to the model.
 \end{itemize}
 
 \end{document}

@@ -74,6 +74,11 @@ module ``SetRootComponents method`` =
         raisesInvalidOpException (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
 
     [<Test>]
+    let ``throws when root components have been passed via the constructor`` () =
+        let model = Model (EmptyComponent ())
+        raisesInvalidOpException (fun () -> model.SetRootComponents [| EmptyComponent () :> Component |] |> ignore)
+
+    [<Test>]
     let ``throws when method is called twice on same object`` () =
         let model = EmptyModel ()
         model.SetRootComponents [| EmptyComponent () :> Component |]
