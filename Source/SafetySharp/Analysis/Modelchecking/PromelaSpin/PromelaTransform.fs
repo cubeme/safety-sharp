@@ -30,6 +30,8 @@ open SafetySharp.Models.SamHelpers
 open SafetySharp.Models.SamChangeIdentifier
 open SafetySharp.Models.SamSimplifyBlocks
 
+// TODO: CHECK EVERY CYCLE, IF RANGES ARE RESPECTED!!!!!!
+
 // IDEA: 
 //   - Use pool of temporary fields of each type for the implementation of temporary variables
 //       * Determine the size of the pool
@@ -47,6 +49,9 @@ module internal SamToPromela =
                             | Sam.Type.BoolType -> PrTypename.Bool
                             | Sam.Type.IntType -> PrTypename.Int
                             //| Sam.Type.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.RangedIntType _ -> PrTypename.Int
+                            | Sam.Type.RealType -> failwith "No support in Promela for real values, yet."
+                            | Sam.Type.RangedRealType _ -> failwith "No support in Promela for real values, yet."
             let _varName = varDecl.Var.getName 
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
@@ -59,6 +64,9 @@ module internal SamToPromela =
                             | Sam.Type.BoolType -> PrTypename.Bool
                             | Sam.Type.IntType -> PrTypename.Int
                             //| Sam.Type.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.RangedIntType _ -> PrTypename.Int
+                            | Sam.Type.RealType -> failwith "No support in Promela for real values, yet."
+                            | Sam.Type.RangedRealType _ -> failwith "No support in Promela for real values, yet."
             let _varName = varDecl.Var.getName 
             let _variable = PrIvar.Ivar(_varName,None,None)
             PrOneDecl.OneDecl(None,_type,[_variable])
@@ -76,6 +84,8 @@ module internal SamToPromela =
                 match value with
                     | true  -> PrExpression.Const(PrConst.True)
                     | false -> PrExpression.Const(PrConst.False)
+            | Sam.Val.RealVal _ -> failwith "No support in Promela for real values, yet."
+            | Sam.Val.ProbVal _ -> failwith "No support in Promela for probabilities, yet."
 
     let generateGlobalVarInitialisations (varDecls:Sam.GlobalVarDecl list) : PrStatement list =
         let generateInit (varDecl:Sam.GlobalVarDecl) : PrStatement =
@@ -242,6 +252,8 @@ module internal ScmVeToPromela =
                 match value with
                     | true  -> PrLtlExpr.Const(PrConst.True)
                     | false -> PrLtlExpr.Const(PrConst.False)
+            | Scm.Val.RealVal _ -> failwith "No support in Promela for real values, yet."
+            | Scm.Val.ProbVal _ -> failwith "No support in Promela for probabilities, yet."
                                             
     let transformBinaryOperator (operator:Scm.BOp) =
         match operator with

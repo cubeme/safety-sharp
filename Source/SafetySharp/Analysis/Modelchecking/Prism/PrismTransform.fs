@@ -49,6 +49,8 @@ module internal GwamToPrism =
         match _val with
             | Tsam.Val.BoolVal(_val) -> Prism.Constant(Prism.Boolean(_val))
             | Tsam.Val.NumbVal(_val) -> Prism.Constant(Prism.Integer(int _val))
+            | Tsam.Val.RealVal(_val) -> Prism.Constant(Prism.Double(_val))
+            | Tsam.Val.ProbVal(_val) -> Prism.Constant(Prism.Double(_val))
 
     let rec translateExpression (prismVariables:PrismVariables) (expr:Tsam.Expr) : Prism.Expression =
         match expr with
@@ -99,6 +101,12 @@ module internal GwamToPrism =
         match _type with
             | Tsam.Type.BoolType -> Prism.VariableDeclarationType.Bool
             | Tsam.Type.IntType -> Prism.VariableDeclarationType.Int
+            | Tsam.Type.RangedIntType (_from,_to,_) ->
+                let _from = Prism.Expression.Constant(Constant.Integer(_from))
+                let _to = Prism.Expression.Constant(Constant.Integer(_to))
+                Prism.VariableDeclarationType.IntRange(_from,_to)
+            | Tsam.Type.RealType -> failwith "No support in Prism for real values, yet."
+            | Tsam.Type.RangedRealType _ -> failwith "No support in Prism for ranged real values, yet."
     
     let transformGwamToPrism (gwam:GuardWithAssignmentModel) : (Prism.PrismModel*Map<Traceable,Prism.Traceable>) =
         let allInitsDeterministic = gwam.Globals |> List.forall (fun gl -> gl.Init.Length = 1 )

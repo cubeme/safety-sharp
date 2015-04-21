@@ -71,6 +71,8 @@ module internal BoogieToString =
                         | true -> "true"
                         | false -> "false"
                 | Val.NumbVal (_val) -> _val.ToString()
+                | Val.RealVal _ -> failwith "No support in Boogie for real values, yet."
+                | Val.ProbVal _ -> failwith "No support in Boogie for probabilities, yet."
         append toAppend
 
     let rec exportExpr (expr:Expr) : AstToStringStateFunction =
@@ -140,6 +142,9 @@ module internal BoogieToString =
         match _type with
             | Type.BoolType -> append "bool"
             | Type.IntType -> append "int"
+            | Type.RangedIntType (_from,_to,_) -> append "int" //TODO: Bitvector
+            | Type.RealType -> failwith "No support in Boogie for real values, yet."
+            | Type.RangedRealType _ -> failwith "No support in Boogie for ranged real values, yet."
 
     let exportVarDecl (varDecl:VarDecl) : AstToStringStateFunction =
         (append "var") >>=

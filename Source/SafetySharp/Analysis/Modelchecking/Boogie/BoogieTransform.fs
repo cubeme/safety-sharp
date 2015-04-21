@@ -183,6 +183,8 @@ module internal TsamToBoogie =
                             currentBlockId := nextBlockId
                             currentCASrev := []
                             ()
+                        | Tsam.Stm.Stochastic _ ->
+                            failwith "Boogie does not support stochastic statements"
                 List.iter processStmInBlock stmts
                 let lastHybridCodeBlock =
                     {
@@ -231,6 +233,8 @@ module internal TsamToBoogie =
                 | Tsam.Stm.Choice (sid,choices) ->
                     let newContext = List.fold (createTransformationContext returnTo) context choices
                     newContext
+                | Tsam.Stm.Stochastic _ ->
+                    failwith "Boogie does not support stochastic statements"
                         
         let rec transformExpr (expr:Tsam.Expr) : BoogieSimplifiedAst.Expr =
             match expr with

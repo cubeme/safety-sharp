@@ -22,6 +22,8 @@
 
 // TODO: Convert vars with reserved names in NuSMV
 
+// TODO: Overflow behavior
+
 namespace SafetySharp.Analysis.Modelchecking.NuXmv
 
 open SafetySharp.Analysis.Modelchecking
@@ -95,6 +97,12 @@ module internal VcTransitionRelationToNuXmv =
                             | Sam.Type.BoolType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.BooleanTypeSpecifier)
                             | Sam.Type.IntType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerTypeSpecifier)
                             //| SamType.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.RangedIntType (_from,_to,_) ->
+                                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _from))
+                                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _to))
+                                TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to))
+                            | Sam.Type.RealType -> TypeSpecifier.SimpleTypeSpecifier(SimpleTypeSpecifier.RealTypeSpecifier)
+                            | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
             let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
             {
                 TypedIdentifier.Identifier = _variable ;
@@ -110,6 +118,12 @@ module internal VcTransitionRelationToNuXmv =
                             | Sam.Type.BoolType -> SimpleTypeSpecifier.BooleanTypeSpecifier
                             | Sam.Type.IntType -> SimpleTypeSpecifier.IntegerTypeSpecifier
                             //| SamType.Decimal -> failwith "NotImplementedYet"
+                            | Sam.Type.RangedIntType (_from,_to,_) ->
+                                let _from = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _from))
+                                let _to = BasicExpression.ConstExpression(ConstExpression.IntegerConstant(bigint _to))
+                                SimpleTypeSpecifier.IntegerRangeTypeSpecifier(_from,_to)
+                            | Sam.Type.RealType -> SimpleTypeSpecifier.RealTypeSpecifier
+                            | Sam.Type.RangedRealType _ -> failwith "No support in NuXmv for ranged real values, yet."
             let _variable = nuXmvVariables.VarToNuXmvIdentifier.Item varDecl.Var
             {
                 SimpleTypedIdentifier.Identifier = _variable ;
@@ -124,6 +138,8 @@ module internal VcTransitionRelationToNuXmv =
                 match _val with
                     | Tsam.Val.BoolVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.BooleanConstant(_val))
                     | Tsam.Val.NumbVal(_val) -> NuXmvBasicExpression.ConstExpression(NuXmvConstExpression.IntegerConstant(_val))
+                    | Tsam.Val.RealVal _ -> failwith "No support in SMV for real values, yet."
+                    | Tsam.Val.ProbVal _ -> failwith "No support in SMV for probabilities, yet."
             | Tsam.Expr.Read (_var) ->
                 match virtualNextVarToVar.TryFind _var with
                     | None ->

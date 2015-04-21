@@ -80,6 +80,8 @@ module internal TsamChangeIdentifier =
                 Stm.Block(sid,statements |> List.map (transformStm state) )
             | Stm.Choice (sid,clauses) ->
                 Stm.Choice(sid,clauses |> List.map (transformStm state))
+            | Stm.Stochastic (sid,clauses) ->
+                Stm.Stochastic(sid,clauses |> List.map (fun (prob,stm) -> (transformExpr state prob,transformStm state stm)))
             | Write (sid,variable:Var, expression:Expr) ->
                 Stm.Write(sid,state.OldToNew.Item variable,transformExpr state expression)
     
