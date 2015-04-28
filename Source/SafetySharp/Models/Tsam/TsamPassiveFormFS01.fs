@@ -291,6 +291,22 @@ module internal TsamPassiveFormFS01 =
                     let newChoices =
                         List.map2 (fun passifiedChoice stmtsToAppend -> Stm.Block(None,passifiedChoice::stmtsToAppend)) passifiedChoices stmtssToAppend
                     (newSigma,Stm.Choice (None,newChoices))
+            | Stm.Stochastic (_,choices) ->
+                // TODO: Is this really what we want?!?
+                failwith "To be validated"
+                let passifyChoice (probability,stm) : Substitutions*(Expr*Stm) =
+                    let probability = replaceVarsWithCurrentVars sigma probability
+                    let (sigma,stm) = passify (sigma,stm)
+                    (sigma,(probability,stm))                    
+                let (sigmas,passifiedChoices) =
+                    choices |> List.map passifyChoice
+                            |> List.unzip
+                let (newSigma,stmtssToAppend) = Substitutions.merge sigmas
+                let newChoices =
+                    let appendPrefixToChoice (passifiedChoiceProb,passifiedChoiceStm) stmtsToAppend =
+                        (passifiedChoiceProb,Stm.Block(None,passifiedChoiceStm::stmtsToAppend))
+                    List.map2 appendPrefixToChoice passifiedChoices stmtssToAppend
+                (newSigma,Stm.Stochastic (None,newChoices))
                     
     open SafetySharp.Workflow
     open SafetySharp.Models.SamHelpers
