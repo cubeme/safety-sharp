@@ -50,32 +50,18 @@ module internal VcGuardWithAssignmentModel =
         | Write of Var * Expr
     
     type AtomicStmBlock =
-        AtomicStmBlock of BranchedAt:(unit) * Probability:(Expr option) * Statements:(AtomicStm list)
-                member this.multiplyProbabilityWith (multiplyWith:Expr) =
-                    match this with
-                        | AtomicStmBlock (probability,statements) ->
-                            let newProbability =
-                                match probability with
-                                    | Some (probability) -> Some(Expr.BExpr(probability,BOp.Multiply,multiplyWith))
-                                    | None -> Some(multiplyWith)
-                            AtomicStmBlock(newProbability,statements)                            
-                static member concat (AtomicStmBlock(firstProbability,firstStmBlock)) (AtomicStmBlock(secondProbability,secondStmBlock)) : AtomicStmBlock =
-                    let mergedProbability = 
-                        match firstProbability,secondProbability with
-                                | Some(firstProbability),Some(secondProbability) -> Some(Expr.BExpr(firstProbability,BOp.Multiply,secondProbability))
-                                | None,Some(_) -> secondProbability
-                                | Some(_),None -> firstProbability
-                                | None,None -> None
-                    AtomicStmBlock.AtomicStmBlock(mergedProbability,firstStmBlock @ secondStmBlock)
+        AtomicStmBlock of Statements:(AtomicStm list)
+                static member concat (AtomicStmBlock(firstStmBlock)) (AtomicStmBlock(secondStmBlock)) : AtomicStmBlock =
+                    AtomicStmBlock.AtomicStmBlock(firstStmBlock @ secondStmBlock)
 
     // number of paths is exponential in the number of nested choices
     let rec collectPaths (stm:Tsam.Stm) : AtomicStmBlock list =
         // Bottom up. Top down might be more efficient.
         match stm with
             | Tsam.Stm.Assert (_,expr) ->
-                [AtomicStmBlock (None,[AtomicStm.Assert(expr)])]
+                [AtomicStmBlock ([AtomicStm.Assert(expr)])]
             | Tsam.Stm.Assume (_,expr) ->
-                [AtomicStmBlock (None,[AtomicStm.Assume(expr)])]
+                [AtomicStmBlock ([AtomicStm.Assume(expr)])]
             | Tsam.Stm.Block (_,statements) ->
                 let rec appendStatementOfBlock (previousStmBlocks:AtomicStmBlock list) (stm:Tsam.Stm) : AtomicStmBlock list =
                     // here we have to combine every possible path "previousStmBlocks X newStmBlocks"
@@ -99,14 +85,9 @@ module internal VcGuardWithAssignmentModel =
             | Tsam.Stm.Choice (_,choices) ->
                 choices |> List.collect collectPaths
             | Tsam.Stm.Stochastic (_,stochasticChoices) ->
-                // this is similar to Tsam.Stm.Choice, but we must consider the probability of each stochasticChoice of each sub path
-                let collectStochasticChoices (probability,choiceStm) =
-                    // multiply probability to the probability of every path of the child stochasticChoices
-                    let atomicStmBlocks = collectPaths choiceStm
-                    atomicStmBlocks |> List.map (fun atomicStmBlock -> atomicStmBlock.multiplyProbabilityWith probability)
-                stochasticChoices |> List.collect collectStochasticChoices
+                failwith "not supported"
             | Tsam.Stm.Write (_,variable,expression) ->
-                [AtomicStmBlock (None,[AtomicStm.Write(variable,expression)])]
+                [AtomicStmBlock ([AtomicStm.Write(variable,expression)])]
 
     
     let rec gwa_rewriteExpr_varsToExpr (currentValuation:Map<Var,Expr>) (expr:Expr) : Expr =
