@@ -104,7 +104,7 @@ module internal SamToTsam =
 
     let transformSamToTsam<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<Sam.Pgm,Tsam.Pgm,'traceableOfOrigin,Sam.Traceable,Tsam.Traceable,unit> = workflow {
-        let! model = SafetySharp.Models.SamWorkflow.getSamModel ()
+        let! model = SafetySharp.Models.SamMutable.getSamModel ()
         let newModel = translatePgm model
         do! updateState newModel
     }

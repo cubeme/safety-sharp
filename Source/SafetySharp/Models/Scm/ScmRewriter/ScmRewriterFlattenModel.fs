@@ -32,7 +32,7 @@ module internal ScmRewriterFlattenModel =
     open ScmRewriterConvertDelayedBindings
     open ScmRewriterInlineBehavior
     open SafetySharp.Workflow
-    open ScmWorkflow
+    open ScmMutable
 
     
     // flatten model means
@@ -42,8 +42,8 @@ module internal ScmRewriterFlattenModel =
     //  * convert delayed ports
     //  * inline behaviors
 
-    let flattenModel<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,PlainScmModel,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+    let flattenModel<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,SimpleScmMutable<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
             /// normalize
             do! normalize ()
             

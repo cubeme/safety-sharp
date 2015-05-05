@@ -27,7 +27,7 @@ module internal ScmRewriterConvertDelayedBindings =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
-    open ScmWorkflow
+    open ScmMutable
     
     // Assumptions:
     //  As1: Only root component gets converted
@@ -66,14 +66,16 @@ module internal ScmRewriterConvertDelayedBindings =
     //       First Step)
     //     * Create example with indeterministic initialisazion
     
-    type ScmRewriterConvertDelayedBindingsState = {
+    type ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin> = {
         Model : ScmModel;
         UncommittedForwardTracerMap : Map<Traceable,Traceable>;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Traceable;
         PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
         TakenNames : Set<string>;
     }
         with
-            interface IScmModel<ScmRewriterConvertDelayedBindingsState> with
+            interface IScmMutable<'traceableOfOrigin,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>> with
                 member this.getTraceables =
                     let imodel = this.Model :> IModel<Traceable>
                     imodel.getTraceables
@@ -87,13 +89,17 @@ module internal ScmRewriterConvertDelayedBindings =
                     { this with
                         ScmRewriterConvertDelayedBindingsState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
-            interface IScmChangeSubcomponent<ScmRewriterConvertDelayedBindingsState> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Traceable)) = {this with ForwardTracer=forwardTracer}
+            interface IScmChangeSubcomponent<'traceableOfOrigin,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>> with
                 member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
                 member this.setPathOfChangingSubcomponent (compPath:CompPath) =
                     { this with
                         ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = compPath
                     }
-            interface IFreshNameDepot<ScmRewriterConvertDelayedBindingsState> with
+            interface IFreshNameDepot<ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>> with
                 member this.getTakenNames : Set<string> = this.TakenNames
                 member this.setTakenNames (takenNames:Set<string>) =
                     { this with
@@ -101,7 +107,7 @@ module internal ScmRewriterConvertDelayedBindings =
                     }
     
     type ScmRewriterConvertDelayedBindingsFunction<'traceableOfOrigin,'returnType> =
-        EndogenousWorkflowFunction<ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,'returnType>
+        EndogenousWorkflowFunction<ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
     
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
                 : ScmRewriterConvertDelayedBindingsFunction<_,Map<Var,Field>> = workflow {
@@ -235,16 +241,20 @@ module internal ScmRewriterConvertDelayedBindings =
                 return ()
     }
     
-    let selectRootComponentForConvertingDelayedBindings<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> () 
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+    let selectRootComponentForConvertingDelayedBindings<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> () 
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         // Use As1
         let! model = iscmGetModel ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()
+        let! forwardTracer = iscmGetForwardTracer ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let newState =
             {
                 ScmRewriterConvertDelayedBindingsState.Model = model;
                 ScmRewriterConvertDelayedBindingsState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
+                ScmRewriterConvertDelayedBindingsState.TraceablesOfOrigin = traceablesOfOrigin;
+                ScmRewriterConvertDelayedBindingsState.ForwardTracer = forwardTracer;
                 ScmRewriterConvertDelayedBindingsState.PathOfChangingSubcomponent = [rootComp.Comp];
                 ScmRewriterConvertDelayedBindingsState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
             }
@@ -255,8 +265,8 @@ module internal ScmRewriterConvertDelayedBindings =
         do! (iterateToFixpoint (convertDelayedBinding()))
     }
 
-    let convertDelayedBindingsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+    let convertDelayedBindingsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         do! selectRootComponentForConvertingDelayedBindings ()
         do! convertDelayedBindings ()
     }

@@ -772,7 +772,7 @@ module internal ScmParser =
     
     
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmWorkflow
+    open SafetySharp.Models.ScmMutable
     
     let parseStringWorkflow () : LoadWorkflowFunction<string,Scm.ScmModel,Traceable,unit> = workflow {
         

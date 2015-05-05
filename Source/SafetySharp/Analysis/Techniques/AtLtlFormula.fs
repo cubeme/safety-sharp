@@ -36,7 +36,7 @@ module internal AtLtlFormula =
 
         member this.checkWithPromela () =        
             let transformModelToPromela = workflow {
-                    do! SafetySharp.Models.ScmWorkflow.setInitialPlainModelState untransformedModel
+                    do! SafetySharp.Models.ScmMutable.setInitialPlainModelState untransformedModel
                     do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
                     do! logForwardTracesOfOrigins ()
                     let! forwardTracer = getForwardTracer ()

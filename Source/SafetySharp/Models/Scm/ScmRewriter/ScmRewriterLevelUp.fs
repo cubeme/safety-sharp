@@ -27,11 +27,13 @@ module internal ScmRewriterLevelUp =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
-    open ScmWorkflow
+    open ScmMutable
     
-    type ScmRewriterLevelUpState = {
+    type ScmRewriterLevelUpState<'traceableOfOrigin> = {
         Model : ScmModel;
         UncommittedForwardTracerMap : Map<Traceable,Traceable>;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Traceable;
         PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
         TakenNames : Set<string>;
 
@@ -66,7 +68,7 @@ module internal ScmRewriterLevelUp =
                     (levelUp.ArtificialFaultsOldToNew)
             member levelUp.oldToNewMaps3=                
                     (levelUp.ArtificialFaultsOldToNew,levelUp.ArtificialFieldsOldToNew)
-            interface IScmModel<ScmRewriterLevelUpState> with
+            interface IScmMutable<'traceableOfOrigin,ScmRewriterLevelUpState<'traceableOfOrigin>> with
                 member this.getTraceables =
                     let imodel = this.Model :> IModel<Traceable>
                     imodel.getTraceables
@@ -80,20 +82,24 @@ module internal ScmRewriterLevelUp =
                     { this with
                         ScmRewriterLevelUpState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
-            interface IScmChangeSubcomponent<ScmRewriterLevelUpState> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Traceable)) = {this with ForwardTracer=forwardTracer}
+            interface IScmChangeSubcomponent<'traceableOfOrigin,ScmRewriterLevelUpState<'traceableOfOrigin>> with
                 member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
                 member this.setPathOfChangingSubcomponent (compPath:CompPath) =
                     { this with
                         ScmRewriterLevelUpState.PathOfChangingSubcomponent = compPath
                     }
-            interface IFreshNameDepot<ScmRewriterLevelUpState> with
+            interface IFreshNameDepot<ScmRewriterLevelUpState<'traceableOfOrigin>> with
                 member this.getTakenNames : Set<string> = this.TakenNames
                 member this.setTakenNames (takenNames:Set<string>) =
                     { this with
                         ScmRewriterLevelUpState.TakenNames = takenNames
                     }
     type ScmRewriterLevelUpFunction<'traceableOfOrigin,'returnType> =
-        EndogenousWorkflowFunction<ScmRewriterLevelUpState,'traceableOfOrigin,Traceable,'returnType>
+        EndogenousWorkflowFunction<ScmRewriterLevelUpState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Accessor Functions to ScmRewriterLevelUp (and ScmRewriterState
@@ -119,10 +125,10 @@ module internal ScmRewriterLevelUp =
         return childCompDecl
     }
        
-    let getLevelUpState () : ScmRewriterLevelUpFunction<_,ScmRewriterLevelUpState> =
+    let getLevelUpState () : ScmRewriterLevelUpFunction<_,ScmRewriterLevelUpState<'traceableOfOrigin>> =
         getState ()
 
-    let updateLevelUpState (newLevelUp:ScmRewriterLevelUpState) : ScmRewriterLevelUpFunction<_,unit> = 
+    let updateLevelUpState (newLevelUp:ScmRewriterLevelUpState<'traceableOfOrigin>) : ScmRewriterLevelUpFunction<_,unit> = 
         updateState newLevelUp
             
     let addArtificialField (oldField:Field) (newField:Field) : ScmRewriterLevelUpFunction<_,unit> = workflow {
@@ -772,8 +778,8 @@ module internal ScmRewriterLevelUp =
         do! removeSubComponent ()
     }
               
-    let findSubComponentForLevelingUp () : IScmModelWorkflowFunction<_,_,CompPath option> = workflow {
-        let! model = ScmWorkflow.iscmGetModel ()
+    let findSubComponentForLevelingUp () : IScmMutableWorkflowFunction<_,_,CompPath option> = workflow {
+        let! model = ScmMutable.iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         if rootComp.Subs = [] then
             // nothing to do, we are done
@@ -791,7 +797,12 @@ module internal ScmRewriterLevelUp =
             return Some(leaf)
     }
 
-    let createLevelUpStateForSubComponent (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) (subComponentToLevelUp:CompPath) =
+    let createLevelUpStateForSubComponent
+            (model:ScmModel)
+            (uncommittedForwardTracerMap:Map<Traceable,Traceable>)
+            (traceablesOfOrigin : 'traceableOfOrigin list)
+            (forwardTracer : 'traceableOfOrigin -> Traceable)
+            (subComponentToLevelUp:CompPath) =
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         let parentPath = subComponentToLevelUp.Tail
         let parentCompDecl = rootComp.getDescendantUsingPath parentPath
@@ -800,6 +811,8 @@ module internal ScmRewriterLevelUp =
             {
                 ScmRewriterLevelUpState.Model = model;
                 ScmRewriterLevelUpState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
+                ScmRewriterLevelUpState.TraceablesOfOrigin = traceablesOfOrigin;
+                ScmRewriterLevelUpState.ForwardTracer = forwardTracer;
                 ScmRewriterLevelUpState.PathOfChangingSubcomponent = parentPath;
                 ScmRewriterLevelUpState.TakenNames = rootComp.getTakenNames () |> Set.ofList;
                 ScmRewriterLevelUpState.NameOfChildToRewrite = Some(childName);
@@ -822,11 +835,13 @@ module internal ScmRewriterLevelUp =
     let selectAndLevelUpSubcomponent () = workflow {
         let! subComponentToLevelUp = findSubComponentForLevelingUp ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
+        let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()
+        let! forwardTracer = iscmGetForwardTracer ()
         match subComponentToLevelUp with
             | None -> return ()
             | Some(subComponentToLevelUp) ->
                 let! state = getState ()
-                do! updateState (createLevelUpStateForSubComponent state.Model uncommittedForwardTracerMap subComponentToLevelUp)
+                do! updateState (createLevelUpStateForSubComponent state.Model uncommittedForwardTracerMap traceablesOfOrigin forwardTracer subComponentToLevelUp)
                 do! levelUpSubcomponent ()
     }
     
@@ -837,20 +852,26 @@ module internal ScmRewriterLevelUp =
     }
     
     
-    let assertNoSubcomponent () : IScmModelWorkflowFunction<_,_,unit> = workflow {
-        let! model = ScmWorkflow.iscmGetModel ()
+    let assertNoSubcomponent () : IScmMutableWorkflowFunction<_,_,unit> = workflow {
+        let! model = ScmMutable.iscmGetModel ()
         let rootComp = match model with | ScmModel(rootComp) -> rootComp
         assert (rootComp.Subs=[])
         return ()
     }
     
-    let prepareForLevelingUp<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
-        let emptyLevelUpState (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) =
+    let prepareForLevelingUp<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+        let emptyLevelUpState
+                (model:ScmModel)
+                (uncommittedForwardTracerMap:Map<Traceable,Traceable>)
+                (traceablesOfOrigin : 'traceableOfOrigin list)
+                (forwardTracer : 'traceableOfOrigin -> Traceable) = 
             let rootComp = match model with | ScmModel(rootComp) -> rootComp
             {
                 ScmRewriterLevelUpState.Model = model;
                 ScmRewriterLevelUpState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
+                ScmRewriterLevelUpState.TraceablesOfOrigin = traceablesOfOrigin;
+                ScmRewriterLevelUpState.ForwardTracer = forwardTracer;
                 ScmRewriterLevelUpState.PathOfChangingSubcomponent = [rootComp.Comp];
                 ScmRewriterLevelUpState.TakenNames = Set.empty<string>
                 ScmRewriterLevelUpState.NameOfChildToRewrite = None;
@@ -869,13 +890,15 @@ module internal ScmRewriterLevelUp =
             }
         let! model = iscmGetModel ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
-        do! updateState (emptyLevelUpState model uncommittedForwardTracerMap)
+        let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()
+        let! forwardTracer = iscmGetForwardTracer ()
+        do! updateState (emptyLevelUpState model uncommittedForwardTracerMap traceablesOfOrigin forwardTracer)
     }
 
 
     // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
-    let levelUpSubcomponentsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+    let levelUpSubcomponentsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         do! prepareForLevelingUp ()
         do! (iterateToFixpoint (selectAndLevelUpSubcomponent ()))
         do! assertNoSubcomponent ()

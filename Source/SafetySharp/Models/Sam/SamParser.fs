@@ -240,7 +240,7 @@ module internal SamParser =
 
         
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmWorkflow
+    open SafetySharp.Models.ScmMutable
 
     let parseStringWorkflow : LoadWorkflowFunction<string,Pgm,Traceable,unit> = workflow {
         let parseWithParser parser str =

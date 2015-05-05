@@ -47,7 +47,7 @@ type SpinModelChecker (model : Model) =
    // do printf "======================================="
    
     let workflowToExecute : InitialWorkflowFunction<_,Scm.Traceable,string,unit> = workflow {
-            do! ScmWorkflow.setInitialPlainModelState scm
+            do! ScmMutable.setInitialPlainModelState scm
             do! ScmToPromela.transformConfiguration ()
             return ()
         }

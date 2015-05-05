@@ -219,7 +219,7 @@ module internal SamToPromela =
     open SafetySharp.Workflow
     
     let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<Sam.Pgm,PrSpec,'traceableOfOrigin,Sam.Traceable,PrTraceable,unit> = workflow {
-        let! samModel = SamWorkflow.getSamModel ()
+        let! samModel = SamMutable.getSamModel ()
         let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration samModel
         do! updateState newPromelaSpec
         
@@ -231,10 +231,10 @@ module internal SamToPromela =
 module internal ScmToPromela =
 
     open SafetySharp.Workflow
-    open SafetySharp.Models.ScmWorkflow
+    open SafetySharp.Models.ScmMutable
     open SafetySharp.Analysis.VerificationCondition
                 
-    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmModel<'state>> ()
+    let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
                         : ExogenousWorkflowFunction<'state,PrSpec,'traceableOfOrigin,Scm.Traceable,PrTraceable,unit> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SamToPromela.transformConfigurationWf ()

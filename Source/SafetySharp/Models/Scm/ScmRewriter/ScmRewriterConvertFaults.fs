@@ -27,13 +27,15 @@ module internal ScmRewriterConvertFaults =
     open ScmHelpers
     open ScmRewriterBase
     open SafetySharp.Workflow
-    open ScmWorkflow
+    open ScmMutable
     
     
                                         
-    type ScmRewriterConvertFaultsState = {
+    type ScmRewriterConvertFaultsState<'traceableOfOrigin> = {
         Model : ScmModel;
         UncommittedForwardTracerMap : Map<Traceable,Traceable>;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Traceable;
         PathOfChangingSubcomponent : CompPath; //path of the Parent of the subcomponent, which gets changed
         TakenNames : Set<string>;        
 
@@ -43,7 +45,7 @@ module internal ScmRewriterConvertFaults =
         BehaviorsToRewrite : BehaviorWithLocation list;
     }
         with
-            interface IScmModel<ScmRewriterConvertFaultsState> with
+            interface IScmMutable<'traceableOfOrigin,ScmRewriterConvertFaultsState<'traceableOfOrigin>> with
                 member this.getTraceables =
                     let imodel = this.Model :> IModel<Traceable>
                     imodel.getTraceables
@@ -56,14 +58,18 @@ module internal ScmRewriterConvertFaults =
                 member this.setUncommittedForwardTracerMap (forwardTracerMap:Map<Traceable,Traceable>) =
                     { this with
                         ScmRewriterConvertFaultsState.UncommittedForwardTracerMap = forwardTracerMap;
-                    }
-            interface IScmChangeSubcomponent<ScmRewriterConvertFaultsState> with
+                    }                    
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Traceable)) = {this with ForwardTracer=forwardTracer}
+            interface IScmChangeSubcomponent<'traceableOfOrigin,ScmRewriterConvertFaultsState<'traceableOfOrigin>> with
                 member this.getPathOfChangingSubcomponent = this.PathOfChangingSubcomponent
                 member this.setPathOfChangingSubcomponent (compPath:CompPath) =
                     { this with
                         ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = compPath
                     }
-            interface IFreshNameDepot<ScmRewriterConvertFaultsState> with
+            interface IFreshNameDepot<ScmRewriterConvertFaultsState<'traceableOfOrigin>> with
                 member this.getTakenNames : Set<string> = this.TakenNames
                 member this.setTakenNames (takenNames:Set<string>) =
                     { this with
@@ -72,14 +78,14 @@ module internal ScmRewriterConvertFaults =
 
 
     type ScmRewriterConvertFaultsFunction<'traceableOfOrigin,'returnType>  =
-        EndogenousWorkflowFunction<ScmRewriterConvertFaultsState,'traceableOfOrigin,Traceable,'returnType>
+        EndogenousWorkflowFunction<ScmRewriterConvertFaultsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
     
 
     
-    let getConvertFaultsState () : ScmRewriterConvertFaultsFunction<_,ScmRewriterConvertFaultsState> = 
+    let getConvertFaultsState () : ScmRewriterConvertFaultsFunction<_,ScmRewriterConvertFaultsState<'traceableOfOrigin>> = 
         getState ()
 
-    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaultsState) : ScmRewriterConvertFaultsFunction<_,unit> = 
+    let updateConvertFaultsState (newConvertFaults:ScmRewriterConvertFaultsState<'traceableOfOrigin>) : ScmRewriterConvertFaultsFunction<_,unit> = 
         updateState newConvertFaults
 
 
@@ -342,7 +348,11 @@ module internal ScmRewriterConvertFaults =
         do! uniteStep ()
     }
        
-    let createConvertFaultsStateForRootComponent (model:ScmModel) (uncommittedForwardTracerMap:Map<Traceable,Traceable>) = 
+    let createConvertFaultsStateForRootComponent<'traceableOfOrigin>
+                (model:ScmModel)
+                (uncommittedForwardTracerMap:Map<Traceable,Traceable>)
+                (traceablesOfOrigin : 'traceableOfOrigin list)
+                (forwardTracer : 'traceableOfOrigin -> Traceable) = 
             let rootComp = match model with | ScmModel(model) -> model
             let rootPath = [rootComp.Comp]
             let convertFaultsState =
@@ -351,6 +361,8 @@ module internal ScmRewriterConvertFaults =
                 {
                     ScmRewriterConvertFaultsState.Model = model;
                     ScmRewriterConvertFaultsState.UncommittedForwardTracerMap = uncommittedForwardTracerMap;
+                    ScmRewriterConvertFaultsState.TraceablesOfOrigin = traceablesOfOrigin;
+                    ScmRewriterConvertFaultsState.ForwardTracer = forwardTracer;
                     ScmRewriterConvertFaultsState.TakenNames = rootComp.getTakenNames () |> Set.ofList ;
                     ScmRewriterConvertFaultsState.PathOfChangingSubcomponent = rootPath;
                     ScmRewriterConvertFaultsState.ArtificialFaultOldToFieldNew = Map.empty<Fault,Field>;
@@ -360,10 +372,12 @@ module internal ScmRewriterConvertFaults =
             convertFaultsState
             
     
-    let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmModel<'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+    let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
         let! model = iscmGetModel ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
-        do! updateState (createConvertFaultsStateForRootComponent model uncommittedForwardTracerMap)
+        let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()
+        let! forwardTracer = iscmGetForwardTracer ()
+        do! updateState (createConvertFaultsStateForRootComponent model uncommittedForwardTracerMap traceablesOfOrigin forwardTracer)
         do! convertFaults ()
     }

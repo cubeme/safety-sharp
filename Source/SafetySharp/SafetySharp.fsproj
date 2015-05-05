@@ -75,7 +75,7 @@
     <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmVerificationElements.fs" />
-    <Compile Include="Models\Scm\ScmWorkflow.fs" />
+    <Compile Include="Models\Scm\ScmMutable.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
     <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmToString.fs" />
@@ -88,7 +88,7 @@
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterInlineBehavior.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
-    <Compile Include="Models\Sam\SamWorkflow.fs" />
+    <Compile Include="Models\Sam\SamMutable.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
     <Compile Include="Models\Sam\SamHelpers.fs" />
     <Compile Include="Models\Sam\SamToString.fs" />
@@ -96,6 +96,7 @@
     <Compile Include="Models\Sam\SamRewriter\SamRewriterSimplifyBlocks.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\Tsam.fs" />
+    <Compile Include="Models\Tsam\TsamMutable.fs" />
     <Compile Include="Models\Tsam\TsamToString.fs" />
     <Compile Include="Models\Tsam\SamToTsam.fs" />
     <Compile Include="Models\Tsam\TsamChangeIdentifier.fs" />
