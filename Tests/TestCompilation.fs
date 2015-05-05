@@ -339,7 +339,10 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         let compilation = TestCompilation csharpCode
         let analyzerArray = ImmutableArray.Create analyzer
 
-        compilation.CSharpCompilation.WithAnalyzers(analyzerArray).GetAnalyzerDiagnosticsAsync().Result
+        // Get all diangostics and filter out warnings emitted by the C# compiler; we can't use GetAnalyzerDiagnosticsAsync
+        // here as that would silently swallow all exceptions thrown by the analyzer
+        compilation.CSharpCompilation.WithAnalyzers(analyzerArray).GetAllDiagnosticsAsync().Result
+        |> Seq.filter (fun diagnostic -> diagnostic.Descriptor.Id.StartsWith "CS" |> not)
         |> Seq.map (fun diagnostic ->
             let span = diagnostic.Location.GetLineSpan ()
             let kind = 

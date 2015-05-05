@@ -98,10 +98,7 @@ namespace SafetySharp.CSharp.Analyzers
 			if (!classSymbol.IsDerivedFromComponent(semanticModel))
 				return;
 
-			var methods = node.Descendants<MethodDeclarationSyntax>().ToArray();
-			var accessors = node.Descendants<PropertyDeclarationSyntax>().SelectMany(property => property.AccessorList.Accessors).ToArray();
-
-			var methodEdges = methods.SelectMany(method =>
+			var methods = node.Descendants<MethodDeclarationSyntax>().SelectMany(method =>
 			{
 				var symbol = method.GetMethodSymbol(semanticModel);
 				var source = new InvocationInfo(method, symbol);
@@ -109,17 +106,30 @@ namespace SafetySharp.CSharp.Analyzers
 					.Select(invocation => new SEquatableEdge<InvocationInfo>(source, invocation));
 			});
 
-			var accessorEdges = accessors.SelectMany(accessor =>
-			{
-				var symbol = semanticModel.GetDeclaredSymbol(accessor);
-				var source = new InvocationInfo(accessor, symbol);
-				return GetInvocations(accessor, semanticModel)
-					.Select(invocation => new SEquatableEdge<InvocationInfo>(source, invocation));
-			});
+			var accessors =
+				node.Descendants<PropertyDeclarationSyntax>()
+					.Where(property => property.AccessorList != null)
+					.SelectMany(property => property.AccessorList.Accessors)
+					.SelectMany(accessor =>
+					{
+						var symbol = semanticModel.GetDeclaredSymbol(accessor);
+						var source = new InvocationInfo(accessor, symbol);
+						return GetInvocations(accessor, semanticModel)
+							.Select(invocation => new SEquatableEdge<InvocationInfo>(source, invocation));
+					});
+
+			var expressionGetters =
+				node.Descendants<PropertyDeclarationSyntax>().Where(property => property.ExpressionBody != null).SelectMany(property =>
+				{
+					var symbol = semanticModel.GetDeclaredSymbol(property);
+					var source = new InvocationInfo(property.ExpressionBody, symbol.GetMethod);
+					return GetInvocations(property.ExpressionBody, semanticModel)
+						.Select(invocation => new SEquatableEdge<InvocationInfo>(source, invocation));
+				});
 
 			// Check for recursive function calls; this is a special case that is not detected by the
 			// SSC-based cycle detection below.
-			var edges = methodEdges.Concat(accessorEdges).ToArray();
+			var edges = methods.Concat(accessors).Concat(expressionGetters).ToArray();
 			foreach (var edge in edges.Where(e => e.Source.Equals(e.Target)))
 				Recursion.Emit(context, edge.Target.Node);
 

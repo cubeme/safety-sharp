@@ -20,3 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using SafetySharp.Modeling;
+
+internal class PressureSensor : Component
+{
+    public extern int CheckPhysicalPressure();
+
+    public bool IsTriggered()
+    {
+        const int MaxPressure = 40;
+        return CheckPhysicalPressure() >= MaxPressure;
+    }
+
+    [Transient]
+    private class SenseNoPressure : Fault
+    {
+        public bool IsTriggered()
+        {
+            return false;
+        }
+    }
+}

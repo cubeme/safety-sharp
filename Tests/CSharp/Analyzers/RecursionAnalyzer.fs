@@ -56,12 +56,20 @@ module ``Recursion`` =
         getDiagnostic "class X { void M() { M(); } }" =? None
 
     [<Test>]
+    let ``recursive call outside of component in expression-bodied method is valid`` () =
+        getDiagnostic "class X { void M() => M(); }" =? None
+
+    [<Test>]
     let ``mutually recursive calls outside of component is valid`` () =
         getDiagnostic "class X { void M() { N(); } void N() { M(); } }" =? None
 
     [<Test>]
     let ``non-recursive method call is valid`` () =
         getDiagnostic "class X : Component { void M() { N(); } void N() {} }" =? None
+
+    [<Test>]
+    let ``non-recursive method call in expression-bodied method is valid`` () =
+        getDiagnostic "class X : Component { void M() => N(); void N() {} }" =? None
 
     [<Test>]
     let ``non-recursive getter call is valid`` () =
@@ -86,6 +94,10 @@ module ``Recursion`` =
     let ``recursive getter call is invalid`` () =
         getDiagnostic "class X : Component { int M { get { var m = M; return m; } } }" =? recursion 44 1
         getDiagnostic "class X : Component { int N(int i) { return i; } int M { get { return N(M); } } }" =? recursion 72 1
+
+    [<Test>]
+    let ``recursive expression-bodied getter call is invalid`` () =
+        getDiagnostic "class X : Component { int M => M; }" =? recursion 31 1
 
     [<Test>]
     let ``multiple recursive getter calls are invalid`` () =
