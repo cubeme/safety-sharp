@@ -26,6 +26,7 @@ namespace SafetySharp.CSharp.Utilities
 	using System.Collections;
 	using System.Diagnostics;
 	using System.Linq.Expressions;
+	using JetBrains.Annotations;
 
 	/// <summary>
 	///     Defines a set of helper functions that should be used to assert preconditions of functions.

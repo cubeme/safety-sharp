@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Utilities
 {
 	using System;
 	using System.Diagnostics;
+	using JetBrains.Annotations;
 
 	/// <summary>
 	///     Provides globally accessible functions to log fatal errors, non-fatal errors, warnings, informational messages, and

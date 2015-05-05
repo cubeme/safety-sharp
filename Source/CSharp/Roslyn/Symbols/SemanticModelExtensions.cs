@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Roslyn.Symbols
 {
 	using System;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Modeling;
 	using Utilities;

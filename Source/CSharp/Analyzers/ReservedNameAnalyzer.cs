@@ -24,13 +24,13 @@ namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Roslyn;
 	using Roslyn.Syntax;
-	using Utilities;
 
 	/// <summary>
 	///     Ensures that no type, type member, variable, etc. uses a name reserved for synthesized variables.

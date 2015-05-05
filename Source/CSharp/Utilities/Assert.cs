@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Utilities
 	using System;
 	using System.Collections;
 	using System.Diagnostics;
+	using JetBrains.Annotations;
 
 	/// <summary>
 	///     Defines a set of helper functions for assertions

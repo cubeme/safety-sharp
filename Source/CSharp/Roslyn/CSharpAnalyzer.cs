@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Roslyn
 	using System;
 	using System.Collections.Immutable;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Utilities;
@@ -52,7 +53,7 @@ namespace SafetySharp.CSharp.Roslyn
 		/// <summary>
 		///     Returns a set of descriptors for the diagnostics that this analyzer is capable of producing.
 		/// </summary>
-		public sealed override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+		public override sealed ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 		{
 			get { return _supportedDiagnostics; }
 		}

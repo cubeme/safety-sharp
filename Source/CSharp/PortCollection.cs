@@ -26,6 +26,7 @@ namespace SafetySharp.CSharp
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Utilities;
 
@@ -41,7 +42,8 @@ namespace SafetySharp.CSharp
 		/// <param name="portSymbols">The ports contained in the collection.</param>
 		/// <param name="name">The common name of the ports contained in the collection.</param>
 		/// <param name="containsRequiredPorts">Indicates whether the collection contains required ports.</param>
-		public PortCollection([NotNull] ITypeSymbol declaringType, [NotNull] IMethodSymbol[] portSymbols, string name, bool containsRequiredPorts)
+		public PortCollection([NotNull] ITypeSymbol declaringType, [NotNull] IMethodSymbol[] portSymbols, [NotNull] string name,
+							  bool containsRequiredPorts)
 		{
 			Requires.NotNull(declaringType, () => declaringType);
 			Requires.NotNull(portSymbols, () => portSymbols);
@@ -128,6 +130,7 @@ namespace SafetySharp.CSharp
 		///     Gets a set of possible port bindings.
 		/// </summary>
 		/// <param name="other">The other collection of ports the binding candidates should be returned for.</param>
+		[NotNull]
 		public BindingCandidate[] GetBindingCandidates([NotNull] PortCollection other)
 		{
 			return this

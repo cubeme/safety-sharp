@@ -339,7 +339,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
         let compilation = TestCompilation csharpCode
         let analyzerArray = ImmutableArray.Create analyzer
 
-        // Get all diangostics and filter out warnings emitted by the C# compiler; we can't use GetAnalyzerDiagnosticsAsync
+        // Get all diagnostics and filter out the ones emitted by the C# compiler; we can't use GetAnalyzerDiagnosticsAsync
         // here as that would silently swallow all exceptions thrown by the analyzer
         compilation.CSharpCompilation.WithAnalyzers(analyzerArray).GetAllDiagnosticsAsync().Result
         |> Seq.filter (fun diagnostic -> diagnostic.Descriptor.Id.StartsWith "CS" |> not)
@@ -349,7 +349,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
                 match diagnostic.Severity with
                 | DiagnosticSeverity.Error   -> Error
                 | DiagnosticSeverity.Warning -> Warning
-                | s                          -> sprintf "Unsupported diagnostic: '%A'" diagnostic |> invalidOp
+                | _                          -> sprintf "Unsupported diagnostic: '%A'" diagnostic |> invalidOp
 
             // Check whether the analyzer is allowed to emit the diagnostic
             if analyzer.SupportedDiagnostics |> Seq.exists (fun supportedDiagnostic -> supportedDiagnostic.Id = diagnostic.Id) |> not then

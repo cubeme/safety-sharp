@@ -24,12 +24,12 @@ namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Utilities;
 
 	/// <summary>
 	///     Ensures that no class implements <see cref="IComponent" /> without being derived from <see cref="Component" />.

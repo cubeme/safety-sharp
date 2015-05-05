@@ -24,12 +24,12 @@ namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
 	using System.Linq;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Utilities;
 
 	/// <summary>
 	///     Ensures that the port kind of an interface implementing method or property matches the port kind of the

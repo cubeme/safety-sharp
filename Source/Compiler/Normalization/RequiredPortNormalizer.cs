@@ -113,7 +113,7 @@ namespace SafetySharp.Compiler.Normalization
 
 			return classDeclaration.WithMembers(members);
 		}
-		
+
 		/// <summary>
 		///     Normalizes the given method declaration and adds the generated members to the member list at the given index.
 		/// </summary>

@@ -30,6 +30,7 @@ namespace SafetySharp.Compiler
 	using System.Linq;
 	using CSharp.Roslyn;
 	using CSharp.Utilities;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Microsoft.CodeAnalysis.MSBuild;

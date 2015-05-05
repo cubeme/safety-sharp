@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Roslyn.Syntax
 {
 	using System;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Utilities;

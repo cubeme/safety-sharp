@@ -23,12 +23,12 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Modeling;
 	using Roslyn;
 	using Roslyn.Symbols;
-	using Utilities;
 
 	/// <summary>
 	///     Ensures that a method or property marked with the <see cref="ProvidedAttribute" /> is not <c>extern</c>.

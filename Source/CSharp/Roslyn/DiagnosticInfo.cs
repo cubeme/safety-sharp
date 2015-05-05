@@ -24,6 +24,7 @@ namespace SafetySharp.CSharp.Roslyn
 {
 	using System;
 	using Analyzers;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.Diagnostics;
 	using Utilities;

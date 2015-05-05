@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp
 {
 	using System;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Roslyn.Symbols;
 	using Utilities;
@@ -38,7 +39,7 @@ namespace SafetySharp.CSharp
 		/// <param name="symbol">The symbol that represents the port.</param>
 		/// <param name="name">The name of the port.</param>
 		/// <param name="isRequiredPort">Indicates whether the port is a required port.</param>
-		public Port([NotNull] IMethodSymbol symbol, string name, bool isRequiredPort)
+		public Port([NotNull] IMethodSymbol symbol, [NotNull] string name, bool isRequiredPort)
 		{
 			Requires.NotNull(symbol, () => symbol);
 			Requires.NotNullOrWhitespace(name, () => name);

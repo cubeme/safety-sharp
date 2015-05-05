@@ -20,24 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using SafetySharp.Modeling;
-
-internal class PressureSensor : Component
+namespace PressureTank
 {
-    public extern int CheckPhysicalPressure();
+    using System;
+    using SafetySharp.Modeling;
 
-    public bool IsTriggered()
+    internal class PressureSensor : Component
     {
-        const int MaxPressure = 40;
-        return CheckPhysicalPressure() >= MaxPressure;
-    }
+        private const int MaxPressure = 40;
+        public extern int CheckPhysicalPressure();
 
-    [Transient]
-    private class SenseNoPressure : Fault
-    {
         public bool IsTriggered()
         {
-            return false;
+            return CheckPhysicalPressure() >= MaxPressure;
+        }
+
+        [Transient]
+        private class SenseNoPressure : Fault
+        {
+            public bool IsTriggered => false;
         }
     }
 }

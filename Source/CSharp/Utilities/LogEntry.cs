@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Utilities
 {
 	using System;
+	using JetBrains.Annotations;
 
 	/// <summary>
 	///     Represents a log entry, describing fatal errors, non-fatal errors, or warnings as well as providing debugging

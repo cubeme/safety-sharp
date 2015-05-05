@@ -23,6 +23,7 @@
 namespace SafetySharp.CSharp.Analyzers
 {
 	using System;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,7 +32,6 @@ namespace SafetySharp.CSharp.Analyzers
 	using Roslyn;
 	using Roslyn.Symbols;
 	using Roslyn.Syntax;
-	using Utilities;
 
 	/// <summary>
 	///     Ensures that no instances of the <see cref="PortBinding" /> class are created explicitly.

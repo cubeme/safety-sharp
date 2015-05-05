@@ -25,6 +25,7 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 	using System;
 	using System.Linq;
 	using System.Linq.Expressions;
+	using JetBrains.Annotations;
 	using Microsoft.CodeAnalysis;
 	using Microsoft.CodeAnalysis.CSharp.Syntax;
 	using Modeling.CompilerServices;
