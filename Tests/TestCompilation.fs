@@ -120,7 +120,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     member this.SyntaxRoot = syntaxTree.GetRoot ()
 
     /// Gets the semantic model for the compilation's syntax tree.
-    member this.SemanticModel = csharpCompilation.GetSemanticModel syntaxTree
+    member this.SemanticModel = csharpCompilation.GetSemanticModel (syntaxTree, false)
 
     /// Emits an assembly for the compilation and loads the assembly into the app domain.
     member this.Compile () =
