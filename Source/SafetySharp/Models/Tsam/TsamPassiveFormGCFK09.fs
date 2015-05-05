@@ -113,7 +113,7 @@ module internal TsamPassiveFormGCFK09 =
             | Expr.Read (_var) ->                
                 acc.Add( (_var,currentVersions.Item _var) )
             | Expr.ReadOld (_var) ->
-                acc.Add( (_var,1) ) //initial version of a gloabal field is 1
+                acc.Add( (_var,1) ) //initial version of a global field is 1
             | Expr.UExpr (expr,uop) ->
                 readsOfExpression currentVersions acc expr
             | Expr.BExpr (left, bop, right) ->
@@ -359,8 +359,9 @@ module internal TsamPassiveFormGCFK09 =
     open SafetySharp.Models.SamHelpers
     
     let transformProgramToSsaForm_Original<'traceableOfOrigin>
-            : EndogenousWorkflowFunction<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,unit> = workflow {
-        let! pgm = getState ()
+            () : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let pgm = state.Pgm
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         
@@ -403,16 +404,18 @@ module internal TsamPassiveFormGCFK09 =
                 Pgm.CodeForm = CodeForm.SingleAssignments;
                 Pgm.NextGlobal = mappingToNextGlobal;
             }            
-        do! updateState newPgm
+        let newState = {state with Pgm=newPgm}
+        do! updateState newState
     }
 
 
 
     //to Passive Form: 
     let transformProgramToPassiveForm_Original<'traceableOfOrigin>
-            : EndogenousWorkflowFunction<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,unit> = workflow {
-        do! transformProgramToSsaForm_Original
-        let! pgm = getState ()        
+            () : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+        do! transformProgramToSsaForm_Original ()
+        let! state = getState ()
+        let pgm = state.Pgm
         // Todo: checkEveryVariableWrittenAtMostOnce ()
         // replace all assignments by assumptions
         let newBody = replaceAssignmentByAssumption pgm.Body
@@ -421,7 +424,8 @@ module internal TsamPassiveFormGCFK09 =
                 Pgm.Body = newBody;
                 Pgm.CodeForm = CodeForm.Passive;
             }
-        do! updateState newPgm
+        let newState = {state with Pgm=newPgm}
+        do! updateState newState
     }
         
 

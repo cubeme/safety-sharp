@@ -246,15 +246,17 @@ module internal ScmConsistencyCheck =
     ////////////////////////////////////////////////////////////////////////////////////////////
     
     open SafetySharp.Workflow
+    open SafetySharp.Models.ScmMutable
     
     /////////////
     // workflow to check, if all traceables are actually in the model
     ////////////
 
-    let ``check if all traced traceables from origin actually exists``<'traceableOfOrigin> ()
-            : EndogenousWorkflowFunction<ScmModel,'traceableOfOrigin,Traceable,bool> = workflow {
-        let! traceablesOfOrigin = getTraceablesOfOrigin ()
-        let! forwardTracer = getForwardTracer ()
+    let ``check if all traced traceables from origin actually exists``<'state,'traceableOfOrigin,'returnType when 'state :> IScmMutable<'traceableOfOrigin,'state>>
+            ()
+            : WorkflowFunction<'state,'state,bool> = workflow {
+        let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()
+        let! forwardTracer = iscmGetForwardTracer ()
         let! model = getState ()
         let currentlyExistingTraceables = model.getTraceables |> Set.ofList
         let isTraceableExisting (traceable:'traceableOfOrigin) : bool =

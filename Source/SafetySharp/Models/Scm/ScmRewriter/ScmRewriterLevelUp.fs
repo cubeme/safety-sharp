@@ -99,7 +99,7 @@ module internal ScmRewriterLevelUp =
                         ScmRewriterLevelUpState.TakenNames = takenNames
                     }
     type ScmRewriterLevelUpFunction<'traceableOfOrigin,'returnType> =
-        EndogenousWorkflowFunction<ScmRewriterLevelUpState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
+        WorkflowFunction<ScmRewriterLevelUpState<'traceableOfOrigin>,ScmRewriterLevelUpState<'traceableOfOrigin>,'returnType>
     
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Accessor Functions to ScmRewriterLevelUp (and ScmRewriterState
@@ -860,7 +860,7 @@ module internal ScmRewriterLevelUp =
     }
     
     let prepareForLevelingUp<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>> = workflow {
         let emptyLevelUpState
                 (model:ScmModel)
                 (uncommittedForwardTracerMap:Map<Traceable,Traceable>)
@@ -898,7 +898,7 @@ module internal ScmRewriterLevelUp =
 
     // This function must implement the conversion from 'oldState to ScmRewriterLevelUpState
     let levelUpSubcomponentsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterLevelUpState<'traceableOfOrigin>> = workflow {
         do! prepareForLevelingUp ()
         do! (iterateToFixpoint (selectAndLevelUpSubcomponent ()))
         do! assertNoSubcomponent ()

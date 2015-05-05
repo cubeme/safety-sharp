@@ -508,8 +508,8 @@ type internal ExportPrismAstToFile with
     static member instance : ExportPrismAstToFile =
         ExportPrismAstToFile()
 
-    static member workflow<'traceableOfOrigin> () 
-            : ExogenousWorkflowFunction<PrismModel,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {            
+    static member workflow () 
+            : ExogenousWorkflowFunction<PrismModel,string> = workflow {            
         let! model = getState ()
         do! updateState (ExportPrismAstToFile.instance.ExportPrismModel model)
     }

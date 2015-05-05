@@ -180,8 +180,8 @@ module internal TsamToString =
     open SafetySharp.Workflow
 
     let exportModelWorkflow () 
-            : ExogenousWorkflowFunction<Pgm,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,string> = workflow {
         let! pgm = getState ()
-        let asString = exportModel pgm
+        let asString = exportModel (pgm.Pgm)
         do! updateState asString
     }

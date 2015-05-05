@@ -154,10 +154,16 @@ module internal VcGuardWithAssignmentModel =
                                 |> Map.ofList
         }
 
-
+        
     type GuardWithAssignmentModel = {
         Globals : VarDecl list;
         GuardsWithFinalAssignments : GuardWithAssignments list;
+    }
+
+    type GuardWithAssignmentModelTracer<'traceableOfOrigin> = {
+        GuardWithAssignmentModel : GuardWithAssignmentModel;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
 
     // this is the main function of this algorithm
@@ -178,8 +184,14 @@ module internal VcGuardWithAssignmentModel =
     open SafetySharp.Workflow
 
         
-    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<Tsam.Pgm,GuardWithAssignmentModel,'traceableOfOrigin,Tsam.Traceable,Traceable,unit> = workflow {
-        let! model = getState ()
-        let transformedModel = transformPgmToGuardWithFinalAssignmentModel model
-        do! updateState transformedModel
+    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.Pgm
+        let transformed =
+            {
+                GuardWithAssignmentModelTracer.GuardWithAssignmentModel = transformPgmToGuardWithFinalAssignmentModel model;
+                GuardWithAssignmentModelTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                GuardWithAssignmentModelTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
     }

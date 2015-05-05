@@ -442,7 +442,7 @@ module internal NuXmvToString =
     open SafetySharp.Workflow
 
     let workflow<'traceableOfOrigin> () 
-            : ExogenousWorkflowFunction<NuXmvProgram,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+            : ExogenousWorkflowFunction<NuXmvProgram,string> = workflow {
         let! model = getState ()
         do! updateState (exportNuXmvProgram model)
     }

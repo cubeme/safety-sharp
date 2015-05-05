@@ -319,14 +319,14 @@ type internal PromelaToString with
     static member instance : PromelaToString =
         PromelaToString()
 
-    static member printWithLogEntriesWorkflow : SimpleWorkflowFunction<Spec,string,unit> = workflow {
+    static member printWithLogEntriesWorkflow : ExogenousWorkflowFunction<Spec,string> = workflow {
         let! model = getState ()
         // TODO
         do! updateState (PromelaToString.instance.ExportSpec 0 model)
     }
 
     static member workflow () 
-            : ExogenousWorkflowFunction<Spec,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+            : ExogenousWorkflowFunction<Spec,string> = workflow {
         let! model = getState ()
         do! updateState (PromelaToString.instance.ExportSpec 0 model)
     }

@@ -296,11 +296,11 @@ module internal SamToString =
         
 
     open SafetySharp.Workflow
+    open SafetySharp.Models.SamMutable
     
-    let modelToStringWorkflow () : ExogenousWorkflowFunction<Pgm,string,_,_,unit,unit> = workflow {
+    let modelToStringWorkflow<'traceableOfOrigin> () : WorkflowFunction<MutablePgm<'traceableOfOrigin>,string,unit> = workflow {
         let! model = getState ()
-        let asString = exportModel model
+        let asString = exportModel (model.Pgm)
         do! updateState asString
-        do! removeTraceables ()
     }
 

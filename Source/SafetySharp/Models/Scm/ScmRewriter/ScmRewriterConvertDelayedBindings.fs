@@ -107,7 +107,7 @@ module internal ScmRewriterConvertDelayedBindings =
                     }
     
     type ScmRewriterConvertDelayedBindingsFunction<'traceableOfOrigin,'returnType> =
-        EndogenousWorkflowFunction<ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
+        WorkflowFunction<ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'returnType>
     
     let createArtificialFieldsForProvPort (fieldNamePrefix:string) (bndDecl:BndDecl) (provPortDecl:ProvPortDecl)
                 : ScmRewriterConvertDelayedBindingsFunction<_,Map<Var,Field>> = workflow {
@@ -242,7 +242,7 @@ module internal ScmRewriterConvertDelayedBindings =
     }
     
     let selectRootComponentForConvertingDelayedBindings<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> () 
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>> = workflow {
         // Use As1
         let! model = iscmGetModel ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
@@ -266,7 +266,7 @@ module internal ScmRewriterConvertDelayedBindings =
     }
 
     let convertDelayedBindingsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertDelayedBindingsState<'traceableOfOrigin>> = workflow {
         do! selectRootComponentForConvertingDelayedBindings ()
         do! convertDelayedBindings ()
     }

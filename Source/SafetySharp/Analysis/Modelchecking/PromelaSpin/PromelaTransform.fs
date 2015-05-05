@@ -217,14 +217,27 @@ module internal SamToPromela =
     
 
     open SafetySharp.Workflow
+
+    type PromelaTracer<'traceableOfOrigin> = {
+        PrSpec : PrSpec;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+    }
     
-    let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<Sam.Pgm,PrSpec,'traceableOfOrigin,Sam.Traceable,PrTraceable,unit> = workflow {
-        let! samModel = SamMutable.getSamModel ()
+    let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamMutable.MutablePgm<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let samModel = state.Pgm
         let (newPromelaSpec,forwardTraceInClosure) = transformConfiguration samModel
-        do! updateState newPromelaSpec
-        
-        let intermediateTracer (oldValue:Sam.Traceable) = forwardTraceInClosure.Item oldValue
-        do! updateTracer intermediateTracer
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            forwardTraceInClosure.Item beforeTransform
+        let transformed =
+            {
+                PromelaTracer.PrSpec = newPromelaSpec;
+                PromelaTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                PromelaTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
     }
 
     
@@ -235,7 +248,7 @@ module internal ScmToPromela =
     open SafetySharp.Analysis.VerificationCondition
                 
     let transformConfiguration<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state>> ()
-                        : ExogenousWorkflowFunction<'state,PrSpec,'traceableOfOrigin,Scm.Traceable,PrTraceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'state,SamToPromela.PromelaTracer<'traceableOfOrigin>> = workflow {
         do! SafetySharp.Models.ScmToSam.transformIscmToSam
         do! SamToPromela.transformConfigurationWf ()
     }

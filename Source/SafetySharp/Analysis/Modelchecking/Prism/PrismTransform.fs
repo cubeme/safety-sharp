@@ -182,15 +182,28 @@ module internal GwamToPrism =
         
     open SafetySharp.Workflow
     open SafetySharp.Analysis.VerificationCondition
+
+    type PrismModelTracer<'traceableOfOrigin> = {
+        PrismModel : Prism.PrismModel;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+    }
     
     let transformWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<GuardWithAssignmentModel,Prism.PrismModel,'traceableOfOrigin,VcGuardWithAssignmentModel.Traceable,Prism.Traceable,unit> = workflow {
-        let! model = getState ()
-        let (transformed,forwardTraceInClosure) = transformGwamToPrism model
+            : ExogenousWorkflowFunction<GuardWithAssignmentModelTracer<'traceableOfOrigin>,PrismModelTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.GuardWithAssignmentModel
+        let (transformedModel,forwardTraceInClosure) = transformGwamToPrism model
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            forwardTraceInClosure.Item beforeTransform
+        let transformed =
+            {
+                PrismModelTracer.PrismModel = transformedModel;
+                PrismModelTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                PrismModelTracer.ForwardTracer = state.ForwardTracer;
+            }
         do! updateState transformed
-        
-        let intermediateTracer (oldValue:VcGuardWithAssignmentModel.Traceable) = forwardTraceInClosure.Item oldValue
-        do! updateTracer intermediateTracer
     }   
 
 

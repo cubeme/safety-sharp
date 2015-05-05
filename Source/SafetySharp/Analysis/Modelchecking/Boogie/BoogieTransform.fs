@@ -295,13 +295,25 @@ module internal TsamToBoogie =
         (boogiePgm,forwardTrace)
     
     
+    type BoogiePgmTracer<'traceableOfOrigin> = {
+        Pgm : BoogieSimplifiedAst.Pgm;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+    }
     
     let transformVcSamToBoogieWf<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<Tsam.Pgm,BoogieSimplifiedAst.Pgm,'traceableOfOrigin,Tsam.Traceable,BoogieSimplifiedAst.Traceable,unit> = workflow {
-        let! vcsamModel = getState ()
-        let (newBoogieAst,forwardTraceInClosure) = transformVcSamToBoogie vcsamModel
-        do! updateState newBoogieAst
-
-        let intermediateTracer (oldValue:VcGuardWithAssignmentModel.Traceable) = forwardTraceInClosure.Item oldValue
-        do! updateTracer intermediateTracer
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,BoogiePgmTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.Pgm
+        let (newBoogieAst,forwardTraceInClosure) = transformVcSamToBoogie model
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            forwardTraceInClosure.Item beforeTransform
+        let transformed =
+            {
+                BoogiePgmTracer.Pgm = newBoogieAst;
+                BoogiePgmTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                BoogiePgmTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
     }

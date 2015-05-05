@@ -311,8 +311,10 @@ module internal TsamPassiveFormFS01 =
     open SafetySharp.Workflow
     open SafetySharp.Models.SamHelpers
 
-    let passifyPgm : SimpleWorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
-        let! pgm = getState ()
+    let passifyPgm<'traceableOfOrigin>
+            () : EndogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let pgm = state.Pgm
         let globalVars = pgm.Globals |> List.map (fun gl -> gl.Var,gl.Type)
         let localVars= pgm.Locals |> List.map (fun lo -> lo.Var,lo.Type)
         let sigma = Substitutions.initial globalVars localVars
@@ -331,7 +333,8 @@ module internal TsamPassiveFormFS01 =
                 Pgm.NextGlobal = newSigma.CurrentSubstitution;
                 Pgm.CodeForm = CodeForm.Passive;
             }            
-        do! updateState newPgm
+        let newState = {state with Pgm=newPgm}
+        do! updateState newState
     }
 
     (*

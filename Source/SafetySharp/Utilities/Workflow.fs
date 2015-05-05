@@ -28,10 +28,8 @@ module internal Workflow =
     //    http://blogs.msdn.com/b/mulambda/archive/2010/05/01/value-restriction-in-f.aspx
     //    The solution we use is to make everything a function. Empty parameter is added, if otherwise no parameter.
 
-    type WorkflowState<'state,'traceableOfOrigin,'traceableOfState> = {
+    type WorkflowState<'state> = {
         State : 'state;
-        TraceablesOfOrigin : 'traceableOfOrigin list
-        ForwardTracer : 'traceableOfOrigin -> 'traceableOfState    //forward tracer traces from traceable of origin to a traceable of the current state
         StepNumber : int list;
         StepName : string list;
         Log : string list;
@@ -44,22 +42,18 @@ module internal Workflow =
         member this.CurrentStepName = this.StepName.Head
     
     
-    let workflowState_emptyInit : WorkflowState<unit,unit,unit> =
+    let workflowState_emptyInit : WorkflowState<unit> =
         {
             WorkflowState.State = ();
-            WorkflowState.TraceablesOfOrigin = [];
-            WorkflowState.ForwardTracer = (fun () -> ())
             WorkflowState.StepNumber = [];
             WorkflowState.StepName = [];
             WorkflowState.Log = [];
             WorkflowState.CancellationToken = None;
             WorkflowState.Tainted = false;
         }
-    let workflowState_stateInit<'state> (state:'state) : WorkflowState<'state,unit,unit> =
+    let workflowState_stateInit<'state> (state:'state) : WorkflowState<'state> =
         {
             WorkflowState.State = state;
-            WorkflowState.TraceablesOfOrigin = [];
-            WorkflowState.ForwardTracer = (fun () -> ())
             WorkflowState.StepNumber = [];
             WorkflowState.StepName = [];
             WorkflowState.Log = [];
@@ -70,38 +64,28 @@ module internal Workflow =
 
     
     // WorkflowFunction is the main and most generic primitive of the workflow computation expression
-    type WorkflowFunction<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType> =
-        WorkflowFunction of (WorkflowState<'oldState,'oldTraceableOfOrigin,'oldTraceableOfState> -> 'returnType * WorkflowState<'newState,'newTraceableOfOrigin,'newTraceableOfState>)        
+    type WorkflowFunction<'oldState,'newState,'returnType> =
+        WorkflowFunction of (WorkflowState<'oldState> -> 'returnType * WorkflowState<'newState>)        
     
     // Convenience: Type abbreviations for WorkflowFunction. They also allow using "_" as placeholder in type annotations.
 
 
     // InitialWorkflowFunction:
-    //    These workflow functions have an empty state as 'oldState and only use unit as placeholder for tracing.
-    type InitialWorkflowFunction<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType> =
-        WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>
-
-    // SimpleWorkflowFunction:
-    //    These workflow functions only use unit as placeholder for tracing.
-    type SimpleWorkflowFunction<'oldState,'newState,'returnType> =
-        WorkflowFunction<'oldState,'newState,unit,unit,unit,unit,'returnType>
-
-    // LoadWorkflowFunction:
-    //    These workflow functions a
-    type LoadWorkflowFunction<'oldstate,'newState,'traceable,'returnType> =
-        WorkflowFunction<'oldstate,'newState,unit,'traceable,unit,'traceable,'returnType>
-
+    //    These workflow functions have an empty state as 'oldState.
+    type InitialWorkflowFunction<'newState,'returnType> =
+        WorkflowFunction<unit,'newState,'returnType>
+                
     // EndogenousWorkflowFunction:
-    //    These workflow functions keep the type of the state and also of the tracer.
+    //    These workflow functions keep the type of the state
     //    A EndogenousWorkflowFunction may be used to implement a M2M-transformation when the type of the model does not change (endogenous transformation).
-    type EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,'returnType> =
-        WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfOrigin,'traceableOfState,'traceableOfState,'returnType>
+    type EndogenousWorkflowFunction<'state> =
+        WorkflowFunction<'state,'state,unit>
 
     // ExogenousWorkflowFunction:
-    //    These workflow functions modify the type of state and also of the tracer.
+    //    These workflow functions modify the type of state
     //    A ExogenousWorkflowFunction may be used to implement a M2M-transformation when the type of the model changes (exogenous transformation).
-    type ExogenousWorkflowFunction<'oldState,'newState,'traceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType> =
-        WorkflowFunction<'oldState,'newState,'traceableOfOrigin,'traceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>
+    type ExogenousWorkflowFunction<'oldState,'newState> =
+        WorkflowFunction<'oldState,'newState,unit>
 
     let runWorkflowState (WorkflowFunction s) a = s a
     let getWorkflowState () = WorkflowFunction (fun s -> (s,s)) //Called in workflow: (implicitly) gets wfState (s) from workflow; assign this State s to the let!; and set (in this case keep) wfState to s
@@ -126,15 +110,13 @@ module internal Workflow =
         WorkflowFunction(behavior)
     *)
 
-    let updateState<'oldState,'newState,'traceableOfOrigin,'oldTraceableOfState,'returnType>
+    let updateState<'oldState,'newState>
             (newState:'newState)
-                : ExogenousWorkflowFunction<'oldState,'newState,'traceableOfOrigin,'oldTraceableOfState,'oldTraceableOfState,unit> =
-        let behavior (wfState:WorkflowState<'oldState,'traceableOfOrigin,'oldTraceableOfState>) =
+                : ExogenousWorkflowFunction<'oldState,'newState> =
+        let behavior (wfState:WorkflowState<'oldState>) =
             let newWfState =
                 {
                     WorkflowState.State = newState;
-                    WorkflowState.TraceablesOfOrigin = wfState.TraceablesOfOrigin;
-                    WorkflowState.ForwardTracer = wfState.ForwardTracer;
                     WorkflowState.StepNumber = wfState.StepNumber;
                     WorkflowState.StepName = wfState.StepName;
                     WorkflowState.Log = wfState.Log;
@@ -144,117 +126,9 @@ module internal Workflow =
             (),newWfState
         WorkflowFunction(behavior)
 
-    let initializeTracer<'state,'newTraceables>
-            (traceables : 'newTraceables list)
-                : WorkflowFunction<'state,'state,unit,'newTraceables,unit,'newTraceables,unit> =
-        let behavior (wfState:WorkflowState<'state,unit,unit>) =
-            let newWfState =
-                {
-                    WorkflowState.State = wfState.State;
-                    WorkflowState.TraceablesOfOrigin = traceables;
-                    WorkflowState.ForwardTracer = id;
-                    WorkflowState.StepNumber = wfState.StepNumber;
-                    WorkflowState.StepName = wfState.StepName;
-                    WorkflowState.Log = wfState.Log;
-                    WorkflowState.CancellationToken = wfState.CancellationToken;
-                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
-                }
-            (),newWfState            
-        WorkflowFunction(behavior)
-    
-    let updateTracer<'state,'traceableOfOrigin,'oldTraceableOfState,'newTraceableOfState>
-            (intermediateForwardTracer : 'oldTraceableOfState -> 'newTraceableOfState)
-                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,unit> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
-            let newWfState =
-                {
-                    WorkflowState.State = wfState.State;
-                    WorkflowState.TraceablesOfOrigin = wfState.TraceablesOfOrigin;
-                    WorkflowState.ForwardTracer =
-                        let newTracer (toTrace:'traceableOfOrigin) =
-                            let toOldTraceEnd = wfState.ForwardTracer toTrace
-                            intermediateForwardTracer toOldTraceEnd
-                        newTracer;
-                    WorkflowState.StepNumber = wfState.StepNumber;
-                    WorkflowState.StepName = wfState.StepName;
-                    WorkflowState.Log = wfState.Log;
-                    WorkflowState.CancellationToken = wfState.CancellationToken;
-                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
-                }
-            (),newWfState            
-        WorkflowFunction(behavior)
-                
-    // returns old traceables of the origin and tracer
-    let startNewTracer<'state,'traceableOfOrigin,'traceableOfState>
-                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfState,'traceableOfState,'traceableOfState,('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfState)> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>)
-                : (('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfState)) * (WorkflowState<'state,'traceableOfState,'traceableOfState>)  =
-            let newWfState =
-                {
-                    WorkflowState.State = wfState.State;
-                    WorkflowState.TraceablesOfOrigin =
-                        wfState.TraceablesOfOrigin |> List.map (wfState.ForwardTracer); //trace every original traceable
-                    WorkflowState.ForwardTracer = id
-                    WorkflowState.StepNumber = wfState.StepNumber;
-                    WorkflowState.StepName = wfState.StepName;
-                    WorkflowState.Log = wfState.Log;
-                    WorkflowState.CancellationToken = wfState.CancellationToken;
-                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
-                }
-            (wfState.TraceablesOfOrigin,wfState.ForwardTracer),newWfState
-        WorkflowFunction(behavior)
-
-    let removeTraceables<'state,'traceableOfOrigin,'oldTraceableOfState> ()
-                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfOrigin,'oldTraceableOfState,unit,unit> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
-            let newWfState =
-                {
-                    WorkflowState.State = wfState.State;
-                    WorkflowState.TraceablesOfOrigin = wfState.TraceablesOfOrigin;
-                    WorkflowState.ForwardTracer =
-                        let newTracer (toTrace:'traceableOfOrigin) : unit =
-                            ()
-                        newTracer;
-                    WorkflowState.StepNumber = wfState.StepNumber;
-                    WorkflowState.StepName = wfState.StepName;
-                    WorkflowState.Log = wfState.Log;
-                    WorkflowState.CancellationToken = wfState.CancellationToken;
-                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
-                }
-            (),newWfState            
-        WorkflowFunction(behavior)
-
-    let removeAllTraceables<'state,'traceableOfOrigin,'oldTraceableOfState> ()
-                : WorkflowFunction<'state,'state,'traceableOfOrigin,unit,'oldTraceableOfState,unit,unit> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
-            let newWfState =
-                {
-                    WorkflowState.State = wfState.State;
-                    WorkflowState.TraceablesOfOrigin = [];
-                    WorkflowState.ForwardTracer = id
-                    WorkflowState.StepNumber = wfState.StepNumber;
-                    WorkflowState.StepName = wfState.StepName;
-                    WorkflowState.Log = wfState.Log;
-                    WorkflowState.CancellationToken = wfState.CancellationToken;
-                    WorkflowState.Tainted = wfState.Tainted; //tainted keeps old value, because state itself does not get changed!
-                }
-            (),newWfState            
-        WorkflowFunction(behavior)
-
-    let getTraceablesOfOrigin<'state,'traceableOfOrigin,'traceableOfState> ()
-                : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,'traceableOfOrigin list> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
-            (wfState.TraceablesOfOrigin),wfState
-        WorkflowFunction(behavior)
-
-    let getForwardTracer<'state,'traceableOfOrigin,'traceableOfState> ()
-                : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,('traceableOfOrigin -> 'traceableOfState)> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'oldTraceableOfState>) =
-            (wfState.ForwardTracer),wfState
-        WorkflowFunction(behavior)
                         
-    let logEntry<'state,'traceableOfOrigin,'traceableOfState> (entry:string) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+    let logEntry<'state> (entry:string) : EndogenousWorkflowFunction<'state> =
+        let behavior (wfState:WorkflowState<'state>) =
             do printfn "%s" entry
             let newWfState =
                 { wfState with
@@ -264,8 +138,8 @@ module internal Workflow =
             (),newWfState            
         WorkflowFunction(behavior)
 
-    let trackSteps_NextStep<'state,'traceableOfOrigin,'traceableOfState> (stepName:string) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> = 
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+    let trackSteps_NextStep<'state> (stepName:string) : EndogenousWorkflowFunction<'state> = 
+        let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 if wfState.StepNumber = [] then
                     { wfState with
@@ -286,8 +160,8 @@ module internal Workflow =
             (),newWfState            
         WorkflowFunction(behavior)
                 
-    let trackSteps_CreateSubstepAndEnter<'state,'traceableOfOrigin,'traceableOfState> (stepName:string) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> = 
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+    let trackSteps_CreateSubstepAndEnter<'state,'traceableOfOrigin,'traceableOfState> (stepName:string) : EndogenousWorkflowFunction<'state> = 
+        let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 { wfState with
                     WorkflowState.StepNumber = 1 :: wfState.StepNumber; //begin with step 1
@@ -300,8 +174,8 @@ module internal Workflow =
             (),newWfState
         WorkflowFunction(behavior)
 
-    let trackSteps_LeaveSubstep<'state,'traceableOfOrigin,'traceableOfState> () : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> = 
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+    let trackSteps_LeaveSubstep<'state,'traceableOfOrigin,'traceableOfState> () : EndogenousWorkflowFunction<'state> = 
+        let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 { wfState with
                     WorkflowState.StepName = wfState.StepName.Tail ;
@@ -312,8 +186,8 @@ module internal Workflow =
         WorkflowFunction(behavior)
 
 
-    let iterateToFixpoint<'state,'traceableOfOrigin,'traceableOfState> ( (WorkflowFunction(functionToIterate)) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit>) : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =
-        let adjust_tainted_and_call (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) : (bool*WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+    let iterateToFixpoint<'state,'traceableOfOrigin,'traceableOfState> ( (WorkflowFunction(functionToIterate)) : EndogenousWorkflowFunction<'state>) : EndogenousWorkflowFunction<'state> =
+        let adjust_tainted_and_call (wfState:WorkflowState<'state>) : (bool*WorkflowState<'state>) =
             // 1) Tainted is set to false
             // 2) function is called
             // 3) Tainted is set to true, if (at least one option applies)
@@ -331,7 +205,7 @@ module internal Workflow =
                     WorkflowState.Tainted = wasTaintedBefore || taintedByCall;
                 }
             (taintedByCall,newWfState)
-        let rec iterate (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) : (unit*WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
+        let rec iterate (wfState:WorkflowState<'state>) : (unit*WorkflowState<'state>) =
             let (taintedByCall,wfStateAfterOneCall) = adjust_tainted_and_call wfState
             if taintedByCall then
                 iterate wfStateAfterOneCall
@@ -340,12 +214,12 @@ module internal Workflow =
         WorkflowFunction (iterate)
 
     // Allows the use of a workflow function on a list. Result is the same as execution the function sequentially on each element.
-    let listIter_seqState<'state,'traceableOfOrigin,'traceableOfState,'inputListType>
-                (workflowFunctionWithParameter : 'inputListType -> EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit>)
+    let listIter_seqState<'state,'inputListType>
+                (workflowFunctionWithParameter : 'inputListType -> EndogenousWorkflowFunction<'state>)
                 (listToIterate:'inputListType list)
-                    : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> =        
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) : (unit*WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) =
-            let rec iterate (intermediateWfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>) (listToIterate:'inputListType list) =
+                    : EndogenousWorkflowFunction<'state> =        
+        let behavior (wfState:WorkflowState<'state>) : (unit*WorkflowState<'state>) =
+            let rec iterate (intermediateWfState:WorkflowState<'state>) (listToIterate:'inputListType list) =
                 if listToIterate.IsEmpty then
                     ((),intermediateWfState)
                 else
@@ -371,47 +245,47 @@ module internal Workflow =
     let listMap_srcState = ()
     *)
 
-    let runWorkflow_getResultAndWfState<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType>
-                (WorkflowFunction s:(WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>)) =
+    let runWorkflow_getResultAndWfState<'newState,'returnType>
+                (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
         let result,newWfState = s workflowState_emptyInit
         (result,newWfState)
                               
-    let runWorkflow_getResult<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType>
-                (WorkflowFunction s:(WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>)) =
+    let runWorkflow_getResult<'newState,'returnType>
+                (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
         let result,newWfState = s workflowState_emptyInit
         result
         
-    let runWorkflow_getState<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType>
-                (WorkflowFunction s:(WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>)) =
+    let runWorkflow_getState<'newState,'returnType>
+                (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
         let result,newWfState = s workflowState_emptyInit
         newWfState.State
           
-    let runWorkflow_getWfState<'newState,'newTraceableOfOrigin,'newTraceableOfState,'returnType>
-                (WorkflowFunction s:(WorkflowFunction<unit,'newState,unit,'newTraceableOfOrigin,unit,'newTraceableOfState,'returnType>)) =
+    let runWorkflow_getWfState<'newState,'returnType>
+                (WorkflowFunction s:(WorkflowFunction<unit,'newState,'returnType>)) =
         // no cancellation token
         let result,newWfState = s workflowState_emptyInit
         newWfState
           
-    let runWorkflowState_getState<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>
-                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>))
-                    (initialState:WorkflowState<'oldState,'oldTraceableOfOrigin,'oldTraceableOfState>) 
+    let runWorkflowState_getState<'oldState,'newState,'returnType>
+                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>))
+                    (initialState:WorkflowState<'oldState>) 
                         : 'newState =
         let result,newWfState = s (initialState)
         newWfState.State
         
-    let runWorkflowState_getWfState<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>
-                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>))
-                    (initialState:WorkflowState<'oldState,'oldTraceableOfOrigin,'oldTraceableOfState>) 
-                        : WorkflowState<'newState,'newTraceableOfOrigin,'newTraceableOfState> =
+    let runWorkflowState_getWfState<'oldState,'newState,'returnType>
+                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>))
+                    (initialState:WorkflowState<'oldState>) 
+                        : WorkflowState<'newState> =
         let result,newWfState = s (initialState)
         newWfState
         
     let ignoreResult<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>
-                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,'returnType>))
-                        : WorkflowFunction<'oldState,'newState,'oldTraceableOfOrigin,'newTraceableOfOrigin,'oldTraceableOfState,'newTraceableOfState,unit> =
+                    (WorkflowFunction s:(WorkflowFunction<'oldState,'newState,'returnType>))
+                        : WorkflowFunction<'oldState,'newState,unit> =
         let ignoreResult oldState =
             let result,newState = s oldState
             (),newState
@@ -431,8 +305,8 @@ module internal Workflow =
                     runWorkflowState (k a) wfState')
         member this.ReturnFrom (m) =
             m
-        member this.Zero<'oldState,'traceableOfOrigin,'oldTraceableOfState> () =
-            let behavior (wfState:WorkflowState<'oldState,'traceableOfOrigin,'oldTraceableOfState>) =
+        member this.Zero<'oldState> () =
+            let behavior (wfState:WorkflowState<'oldState>) =
                 (),wfState
             WorkflowFunction(behavior)
             
@@ -440,9 +314,9 @@ module internal Workflow =
     let workflow = new Workflow()
     
     ////////////// Basic Workflow element
-    let readFile<'oldIrrelevantState,'traceableOfOrigin,'oldTraceableOfState>
+    let readFile<'oldIrrelevantState>
             (inputFile:string)
-                : ExogenousWorkflowFunction<'oldIrrelevantState,string,'traceableOfOrigin,'oldTraceableOfState,'oldTraceableOfState,unit> = workflow {
+                : ExogenousWorkflowFunction<'oldIrrelevantState,string> = workflow {
         let input = System.IO.File.ReadAllText inputFile
         do! updateState input
     }
@@ -461,7 +335,7 @@ module internal Workflow =
     }
     *)
     
-    let saveToFile (outputFile:FileSystem.FileName) : ExogenousWorkflowFunction<string,FileSystem.FileName,_,_,_,unit> = workflow {
+    let saveToFile (outputFile:FileSystem.FileName) : ExogenousWorkflowFunction<string,FileSystem.FileName> = workflow {
         let! input = getState ()
         let (FileSystem.FileName(outputFileName)) = outputFile
         //do FileSystem.WriteToAsciiFile outputFileName input
@@ -470,7 +344,7 @@ module internal Workflow =
     }
 
     let printToFile (outputFile:FileSystem.FileName)
-            : EndogenousWorkflowFunction<string,'traceableOfOrigin,'traceableOfState,unit> = workflow {
+            : EndogenousWorkflowFunction<string> = workflow {
         let! input = getState ()
         let (FileSystem.FileName(outputFileName)) = outputFile
         //do FileSystem.WriteToAsciiFile outputFileName input
@@ -479,33 +353,22 @@ module internal Workflow =
     }
 
     let printToStdout ()
-            : EndogenousWorkflowFunction<string,'traceableOfOrigin,'traceableOfState,unit> = workflow {
+            : EndogenousWorkflowFunction<string> = workflow {
         let! input = getState ()
         printfn "%s" input
         return ()
     }    
 
     let printObjectToStdout ()
-            : EndogenousWorkflowFunction<'a,'traceableOfOrigin,'traceableOfState,unit> = workflow {
+            : EndogenousWorkflowFunction<'a> = workflow {
         let! input = getState ()
         printfn "%+A" input
         return ()
     }    
 
     let printNewParagraphToStdout<'a,'traceableOfOrigin,'traceableOfState> ()
-            : EndogenousWorkflowFunction<'a,'traceableOfOrigin,'traceableOfState,unit> = workflow {
+            : EndogenousWorkflowFunction<'a> = workflow {
         printfn ""
         printfn ""
         return ()
-    }
-        
-    let logForwardTracesOfOrigins<'state,'traceableOfOrigin,'traceableOfState> ()
-                : EndogenousWorkflowFunction<'state,'traceableOfOrigin,'traceableOfState,unit> = workflow {
-        let! traceablesOfOrigin = getTraceablesOfOrigin ()
-        let! forwardTracer = getForwardTracer ()
-        let tracedTraceables (traceable:'traceableOfOrigin) : string =
-            let tracedTracable = forwardTracer traceable
-            sprintf "trace %s to %s" (traceable.ToString()) (tracedTracable.ToString())
-        let tracedTraceablesOfOrigin = traceablesOfOrigin |> List.map tracedTraceables
-        do! listIter_seqState logEntry tracedTraceablesOfOrigin
     }

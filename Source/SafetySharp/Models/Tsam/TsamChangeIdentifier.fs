@@ -128,7 +128,7 @@ module internal TsamChangeIdentifier =
     
     open SafetySharp.Workflow
     
-    let changeIdentifiers (forbiddenNames:Set<string>) : SimpleWorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
+    let changeIdentifiers (forbiddenNames:Set<string>) : WorkflowFunction<Tsam.Pgm,Tsam.Pgm,unit> = workflow {
         let! pgm = getState ()
         
         let changeIdsState = ChangeIdentifierState.initial forbiddenNames SafetySharp.FreshNameGenerator.namegenerator_c_like

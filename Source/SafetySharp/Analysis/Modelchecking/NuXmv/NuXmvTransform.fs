@@ -226,15 +226,27 @@ module internal VcTransitionRelationToNuXmv =
         
     open SafetySharp.Workflow
     
+    type NuXmvTracer<'traceableOfOrigin> = {
+        NuXmvProgram : NuXmvProgram;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+    }
+    
     let transformTsareToNuXmvWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<TransitionSystem,NuXmvProgram,'traceableOfOrigin,Sam.Traceable,NuXmvTraceable,unit> = workflow {
-        let! model = getState ()
-        let (transformed,forwardTraceInClosure) = transformConfiguration model
+            : ExogenousWorkflowFunction<TransitionSystemTracer<'traceableOfOrigin>,NuXmvTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let transitionSystem = state.TransitionSystem
+        let (transformedTs,forwardTraceInClosure) = transformConfiguration transitionSystem
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            forwardTraceInClosure.Item beforeTransform
+        let transformed =
+            {
+                NuXmvTracer.NuXmvProgram = transformedTs;
+                NuXmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                NuXmvTracer.ForwardTracer = state.ForwardTracer;
+            }
         do! updateState transformed
-
-        let intermediateTracer (oldValue:Sam.Traceable) = forwardTraceInClosure.Item oldValue
-        do! updateTracer intermediateTracer
-        return ()
     }
 
     (*

@@ -341,7 +341,7 @@ type internal ExecuteSpin with
     }*)
 
     static member runPan () 
-            : ExogenousWorkflowFunction<SafetySharp.FileSystem.FileName,string,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+            : ExogenousWorkflowFunction<SafetySharp.FileSystem.FileName,string> = workflow {
         let! file = getState ()
         let (SafetySharp.FileSystem.FileName(filename)) = file
         let executeSpin = new ExecuteSpin(filename)

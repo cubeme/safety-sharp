@@ -85,7 +85,7 @@ module internal ScmRewriterInlineBehavior =
             
                 
     type ScmRewriterInlineBehaviorFunction<'traceableOfOrigin,'returnType> =
-        EndogenousWorkflowFunction<ScmRewriterInlineBehaviorState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
+        WorkflowFunction<ScmRewriterInlineBehaviorState<'traceableOfOrigin>,ScmRewriterInlineBehaviorState<'traceableOfOrigin>,'returnType>
 
     
     let getInlineBehaviorState () : ScmRewriterInlineBehaviorFunction<_,ScmRewriterInlineBehaviorStateConcreteBehavior option> = workflow {
@@ -457,7 +457,7 @@ module internal ScmRewriterInlineBehavior =
 
 
     let inlineBehaviorsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>>
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterInlineBehaviorState<'traceableOfOrigin>> = workflow {
         let! state = getState ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
         let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()

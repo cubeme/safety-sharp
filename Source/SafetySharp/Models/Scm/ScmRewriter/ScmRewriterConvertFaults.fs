@@ -78,7 +78,7 @@ module internal ScmRewriterConvertFaults =
 
 
     type ScmRewriterConvertFaultsFunction<'traceableOfOrigin,'returnType>  =
-        EndogenousWorkflowFunction<ScmRewriterConvertFaultsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,'returnType>
+        WorkflowFunction<ScmRewriterConvertFaultsState<'traceableOfOrigin>,ScmRewriterConvertFaultsState<'traceableOfOrigin>,'returnType>
     
 
     
@@ -373,7 +373,7 @@ module internal ScmRewriterConvertFaults =
             
     
     let convertFaultsWrapper<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,ScmRewriterConvertFaultsState<'traceableOfOrigin>> = workflow {
         let! model = iscmGetModel ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
         let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()

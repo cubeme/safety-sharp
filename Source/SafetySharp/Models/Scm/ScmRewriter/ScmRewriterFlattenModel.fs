@@ -43,7 +43,7 @@ module internal ScmRewriterFlattenModel =
     //  * inline behaviors
 
     let flattenModel<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>> ()
-                        : ExogenousWorkflowFunction<'oldState,SimpleScmMutable<'traceableOfOrigin>,'traceableOfOrigin,Traceable,Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,SimpleScmMutable<'traceableOfOrigin>> = workflow {
             /// normalize
             do! normalize ()
             

@@ -242,7 +242,7 @@ module internal SamParser =
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmMutable
 
-    let parseStringWorkflow : LoadWorkflowFunction<string,Pgm,Traceable,unit> = workflow {
+    let parseStringWorkflow : ExogenousWorkflowFunction<string,SamMutable.MutablePgm<Sam.Traceable>> = workflow {
         let parseWithParser parser str =
             match run parser str with
             | Success(result, _, _)   -> result
@@ -251,8 +251,6 @@ module internal SamParser =
             
         let! model = SafetySharp.Workflow.getState ()
         let parsedModel = parseWithParser (samFile .>> eof) model
-        do! SafetySharp.Workflow.updateState parsedModel
-        let traceables = parsedModel.getTraceables
-        do! SafetySharp.Workflow.initializeTracer traceables
+        do! SamMutable.setInitialSamModel parsedModel
         return ()
     }

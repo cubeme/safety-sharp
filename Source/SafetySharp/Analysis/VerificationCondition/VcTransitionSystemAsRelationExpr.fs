@@ -46,6 +46,12 @@ module internal TransitionSystemAsRelationExpr =
         Init : Expr;
         Trans : Expr;
     }
+    
+    type TransitionSystemTracer<'traceableOfOrigin> = {
+        TransitionSystem : TransitionSystem;
+        TraceablesOfOrigin : 'traceableOfOrigin list;
+        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+    }
 
     type Traceable = Tsam.Traceable
         
@@ -233,16 +239,28 @@ module internal TransitionSystemAsRelationExpr =
     open SafetySharp.Workflow
 
     let transformGwamToTsareWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<GuardWithAssignmentModel,TransitionSystem,'traceableOfOrigin,Tsam.Traceable,Traceable,unit> = workflow {
-        let! model = getState ()
-        let transformed = transformGwamToTsare model
+            : ExogenousWorkflowFunction<GuardWithAssignmentModelTracer<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.GuardWithAssignmentModel
+        let transformed =
+            {
+                TransitionSystemTracer.TransitionSystem = transformGwamToTsare model;
+                TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
+            }
         do! updateState transformed
     }   
 
     let transformTsamToTsareWithSpWorkflow<'traceableOfOrigin> ()
-            : ExogenousWorkflowFunction<Tsam.Pgm,TransitionSystem,'traceableOfOrigin,Tsam.Traceable,Traceable,unit> = workflow {
-        let! model = getState ()
-        let transformed = transformTsamToTsareWithSp model
+            : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,TransitionSystemTracer<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let model = state.Pgm
+        let transformed =
+            {
+                TransitionSystemTracer.TransitionSystem = transformTsamToTsareWithSp model;
+                TransitionSystemTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                TransitionSystemTracer.ForwardTracer = state.ForwardTracer;
+            }
         do! updateState transformed
     }
     

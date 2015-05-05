@@ -166,7 +166,7 @@ module internal ScmToSam =
     open SafetySharp.Models.ScmMutable
 
     let transformIscmToSam<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>>
-                        : ExogenousWorkflowFunction<'oldState,Sam.Pgm,'traceableOfOrigin,Scm.Traceable,Sam.Traceable,unit> = workflow {
+                        : ExogenousWorkflowFunction<'oldState,SamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
         do! ScmRewriterFlattenModel.flattenModel ()
         do! ScmMutable.iscmToScmState ()
         let! model = ScmMutable.scmGetModel ()

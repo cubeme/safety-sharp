@@ -33,12 +33,21 @@ module internal SamMutable =
     open SafetySharp.Workflow
         
     type SamWorkflowFunction<'traceableOfOrigin,'returnType> =
-        EndogenousWorkflowFunction<Sam.Pgm,'traceableOfOrigin,Sam.Traceable,'returnType>
+        WorkflowFunction<MutablePgm<'traceableOfOrigin>,MutablePgm<'traceableOfOrigin>,'returnType>
             
-    let getSamModel () : SamWorkflowFunction<_,Sam.Pgm> =
-        getState ()
-    
-    let setSamModel<'oldIrrelevantState,'traceableOfOrigin,'traceable> (model:Sam.Pgm)
-            : ExogenousWorkflowFunction<'oldIrrelevantState,Sam.Pgm,'traceableOfOrigin,'traceable,'traceable,unit> = workflow {
-        do! updateState model
+    let getSamModel ()
+            : SamWorkflowFunction<_,Sam.Pgm> = workflow {
+        let! state = getState ()
+        return state.Pgm
+    }
+
+    let setInitialSamModel<'oldIrrelevantState> (pgm:Sam.Pgm)
+            : WorkflowFunction<'oldIrrelevantState,MutablePgm<Sam.Traceable>,unit> = workflow {
+        let samMutable =
+            {
+                MutablePgm.Pgm = pgm;
+                MutablePgm.TraceablesOfOrigin = pgm.getTraceables;
+                MutablePgm.ForwardTracer = id;
+            }
+        do! updateState samMutable
     }

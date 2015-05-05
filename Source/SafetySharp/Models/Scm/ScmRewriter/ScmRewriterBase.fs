@@ -41,7 +41,7 @@ module internal ScmRewriterBase =
         
     type IScmChangeSubcomponentWorkflowFunction<'state,'traceableOfOrigin,'returnType when 'state :> IScmMutable<'traceableOfOrigin,'state>
                                                                                        and 'state :> IScmChangeSubcomponent<'traceableOfOrigin,'state>> =
-        EndogenousWorkflowFunction<'state,'traceableOfOrigin,Traceable,'returnType>
+        WorkflowFunction<'state,'state,'returnType>
                  
     let getSubComponentToChange () : IScmChangeSubcomponentWorkflowFunction<_,_,CompDecl> = workflow {
         let! model = getState ()
@@ -54,8 +54,8 @@ module internal ScmRewriterBase =
     let getPathOfSubComponentToChange<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state> and 'state :> IScmChangeSubcomponent<'traceableOfOrigin,'state>>
             () : IScmChangeSubcomponentWorkflowFunction<'state,'traceableOfOrigin,CompPath> =
         let getPathOfSubComponentToChange
-                (workflowState : WorkflowState<'state,_,_> )
-                    : (CompPath * (WorkflowState<'state,_,_>))
+                (workflowState : WorkflowState<'state> )
+                    : (CompPath * (WorkflowState<'state>))
                 when 'state :> IScmMutable<'traceableOfOrigin,'state> and 'state :> IScmChangeSubcomponent<'traceableOfOrigin,'state> =
             let state = workflowState.State
             (state.getPathOfChangingSubcomponent,workflowState)
@@ -83,7 +83,7 @@ module internal ScmRewriterBase =
                  
     type IFreshNameDepotWorkflowFunction<'state,'traceableOfOrigin,'returnType when 'state :> IScmMutable<'traceableOfOrigin,'state>
                                                                                 and 'state :> IFreshNameDepot<'state>> =
-        EndogenousWorkflowFunction<'state,'traceableOfOrigin,Traceable,'returnType>
+        WorkflowFunction<'state,'state,'returnType>
 
     let getCompletlyFreshName (basedOn:string) : IFreshNameDepotWorkflowFunction<_,_,string> = workflow {
             let! state = getState ()
@@ -134,8 +134,8 @@ module internal ScmRewriterBase =
 
     let getUnusedVarNames<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state> and 'state :> IFreshNameDepot<'state>>
             (basedOn:string list) : IFreshNameDepotWorkflowFunction<'state,'traceableOfOrigin,Var list> =
-        let newUnusedVarNames (workflowState:WorkflowState<'state,_,_>)
-                               : (Var list * WorkflowState<'state,_,_>)
+        let newUnusedVarNames (workflowState:WorkflowState<'state>)
+                               : (Var list * WorkflowState<'state>)
                 when 'state :> IScmMutable<'traceableOfOrigin,'state> and 'state :> IFreshNameDepot<'state> =
             let mutable varState = workflowState
             let mutable newVars = []
@@ -150,8 +150,8 @@ module internal ScmRewriterBase =
     let getUnusedFieldNames<'traceableOfOrigin,'state when 'state :> IScmMutable<'traceableOfOrigin,'state> and 'state :> IFreshNameDepot<'state>>
             (basedOn:string list) : IFreshNameDepotWorkflowFunction<'state,'traceableOfOrigin,Field list> =
 
-        let newUnusedFieldNames (workflowState:WorkflowState<'state,_,_>)
-                : (Field list * WorkflowState<'state,_,_>)
+        let newUnusedFieldNames (workflowState:WorkflowState<'state>)
+                : (Field list * WorkflowState<'state>)
                 when 'state :> IScmMutable<'traceableOfOrigin,'state> and 'state :> IFreshNameDepot<'state> =
 
             let mutable varState = workflowState
@@ -170,7 +170,7 @@ module internal ScmRewriterBase =
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Check Consistency
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    let checkConsistency<'state> : EndogenousWorkflowFunction<'state,_,Traceable,bool> = workflow {
+    let checkConsistency<'state> : WorkflowFunction<'state,'state,bool> = workflow {
             return true
         }
     
