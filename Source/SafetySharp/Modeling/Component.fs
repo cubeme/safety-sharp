@@ -153,7 +153,7 @@ type Component internal (components : Component list, bindings : List<PortBindin
     member internal this.IsMetadataFinalized = isSealed
 
     /// Gets the name of the synthesized root component.
-    static member internal SynthesizedRootName = "SynRoot"
+    static member internal SynthesizedRootName = "R"
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Internal access

@@ -105,13 +105,13 @@ module ``Invalid bindings`` =
 
     [<Test>]
     let ``binding with non-subcomponent is invalid`` () =
-        check [Delayed] ["Root1"] ["Root0.z"] ["Root1"] ["N"] ["M"]
+        check [Delayed] ["Y1"] ["X0.z"] ["Y1"] ["N"] ["M"]
           "class Z : Component { public void N() {} }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
            class Y : Component { extern void M(); public Y(Z z) { Bind(RequiredPorts.M = z.ProvidedPorts.N).Delayed(); } }
            class TestModel : Model { public TestModel() { var z = new Z(); SetRootComponents(new X(z), new Y(z)); } }"
 
-        check [Delayed] ["Root1"] ["Root1"] ["Root0.z"] ["M"] ["N"]
+        check [Delayed] ["Y1"] ["Y1"] ["X0.z"] ["M"] ["N"]
           "class Z : Component { public extern void N(); }
            class X : Component { Z z; public X(Z z) { this.z = z; } }
            class Y : Component { void M() {} public Y(Z z) { Bind(z.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }
@@ -178,13 +178,13 @@ module ``Unbound required ports`` =
 
     [<Test>]
     let ``invalid when single port is unbound`` () =
-        check ["Root0"] ["M"] 
+        check ["X0"] ["M"] 
           "class X : Component { extern void M(); }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
     let ``invalid when subcomponent port is unbound`` () =
-        check ["Root0.x"] ["N"] 
+        check ["Y0.x"] ["N"] 
           "class X : Component { public extern void M(); public extern void N(); }
            class Y : Component { void N() {} X x = new X(); public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
@@ -223,21 +223,21 @@ module ``Ambiguous required port bindings`` =
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by the same component`` () =
-        check [[("Root0", "M", "Root0", "N"); ("Root0", "M", "Root0", "R")]] [Instantaneous; Delayed] ["Root0"; "Root0"]
+        check [[("X0", "M", "X0", "N"); ("X0", "M", "X0", "R")]] [Instantaneous; Delayed] ["X0"; "X0"]
           "class X : Component { extern void M(); void N() {} void R() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N); Bind(RequiredPorts.M = ProvidedPorts.R).Delayed(); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new X()); } }"
 
     [<Test>]
     let ``invalid when single port is bound ambiguously by different components`` () =
-        check [["Root0.x", "M", "Root0", "N"; "Root0.x", "M", "Root0.x", "N"]] [Instantaneous; Delayed] ["Root0"; "Root0.x"]
+        check [["Y0.x", "M", "Y0", "N"; "Y0.x", "M", "Y0.x", "N"]] [Instantaneous; Delayed] ["Y0"; "Y0.x"]
           "class X : Component { public extern void M(); void N() {} public X() { Bind(RequiredPorts.M = ProvidedPorts.N).Delayed(); } }
            class Y : Component { X x = new X(); void N() {} public Y() { Bind(x.RequiredPorts.M = ProvidedPorts.N); } }
            class TestModel : Model { public TestModel() { SetRootComponents(new Y()); } }"
 
     [<Test>]
     let ``invalid when multiple ports are bound ambiguously`` () =
-        check [[("Root0", "N", "Root0", "A"); ("Root0", "N", "Root0", "B")]; [("Root0", "M", "Root0", "A"); ("Root0", "M", "Root0", "B")]] 
-          [Delayed; Instantaneous; Delayed; Instantaneous] ["Root0"; "Root0"; "Root0"; "Root0"]
+        check [[("X0", "N", "X0", "A"); ("X0", "N", "X0", "B")]; [("X0", "M", "X0", "A"); ("X0", "M", "X0", "B")]] 
+          [Delayed; Instantaneous; Delayed; Instantaneous] ["X0"; "X0"; "X0"; "X0"]
           "class X : Component { 
                 extern void N();
                 extern void M();
@@ -293,7 +293,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with simple instantaneous binding cycle is invalid`` () =
-        check ["Root0"; "Root0"] ["X.M"; "X.N"] 
+        check ["X0"; "X0"] ["X.M"; "X.N"] 
           "class X : Component { 
                 extern void M(); 
                 void N() { M(); }
@@ -303,7 +303,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with recursive function is invalid`` () =
-        check ["Root0"] ["X.N"] 
+        check ["X0"] ["X.N"] 
           "class X : Component { 
                 void N() { N(); }
            }
@@ -311,7 +311,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with recursive update function is invalid`` () =
-        check ["Root0"] ["X.Update"] 
+        check ["X0"] ["X.Update"] 
           "class X : Component { 
                 public override void Update() { Update(); }
            }
@@ -330,7 +330,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with mutually recursive functions is invalid`` () =
-        check ["Root0"; "Root0"] ["X.M"; "X.N"] 
+        check ["X0"; "X0"] ["X.M"; "X.N"] 
           "class X : Component { 
                 void M() { N(); }
                 void N() { M(); }
@@ -339,7 +339,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with long cycle involving subcomponents is invalid`` () =
-        check ["Root0.t1"; "Root0.t2"; "Root0.t2"; "Root0"; "Root0"; "Root0.t1"] ["T.Req"; "T.Prov"; "T.Req"; "X.N"; "X.M"; "T.Prov"] 
+        check ["X0.t1"; "X0.t2"; "X0.t2"; "X0"; "X0"; "X0.t1"] ["T.Req"; "T.Prov"; "T.Req"; "X.N"; "X.M"; "T.Prov"] 
           "class T : Component {
                 public extern void Req();
                 public void Prov() { Req(); }
@@ -359,7 +359,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model involving recursive direct subcomponent provided port call is invalid`` () =
-        check ["Root0.t"; "Root0"; "Root0.t"] ["T.Req"; "X.N"; "T.Prov"] 
+        check ["X0.t"; "X0"; "X0.t"] ["T.Req"; "X.N"; "T.Prov"] 
           "class T : Component {
                 public extern void Req();
                 public void Prov() { Req(); }
@@ -398,7 +398,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``recursive virtual call is invalid`` () =
-        check ["Root0"] ["Y.M"] 
+        check ["Y0"] ["Y.M"] 
             "class X : Component {
                 public virtual void M() {}
              }
@@ -409,7 +409,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``recursive virtual and base call is invalid`` () =
-        check ["Root0"; "Root0"] ["X.M"; "Y.M"] 
+        check ["Y0"; "Y0"] ["X.M"; "Y.M"] 
             "class X : Component {
                 public virtual void M() { M(); }
              }
@@ -434,7 +434,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``recursive virtual functions and properties are invalid`` () =
-        check ["Root0"; "Root0"; "Root0"] ["X.get_P"; "Y.M"; "Y.get_P"] 
+        check ["Y0"; "Y0"; "Y0"] ["X.get_P"; "Y.M"; "Y.get_P"] 
             "abstract class X : Component {
                 public virtual int M() { return 0; }
                 public virtual int P { get { return M(); } }
@@ -447,7 +447,7 @@ module ``Cyclic control flow`` =
 
     [<Test>]
     let ``model with recursion involving virtual binding is valid`` () =
-        check ["Root0"; "Root0"] ["Y.Req"; "X.Prov"] 
+        check ["X0"; "X0"] ["Y.Req"; "X.Prov"] 
             "class Y : Component {
                 public extern void Req();
                 public virtual void Prov() { }

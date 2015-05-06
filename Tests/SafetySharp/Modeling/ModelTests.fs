@@ -226,12 +226,17 @@ module ``Components property`` =
         let model = TestModel (component4, component6)
         model.FinalizeMetadata ()
 
-        let name root = function
-            | [] -> sprintf "SynRoot.Root%i@%i" root root
-            | fields -> sprintf "SynRoot.Root%i@%i.%s" root root <| String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
+        let name rootName rootIndex = function
+            | [] -> sprintf "R.%s%i@%i" rootName rootIndex rootIndex
+            | fields -> 
+                String.Join (".", fields |> List.map (fun (name, idx) -> fsharpSubcomponentName name idx))
+                |> sprintf "R.%s%i@%i.%s" rootName rootIndex rootIndex
         
         model.Components |> List.map (fun component' -> component'.Name) =?
-        [name 0 []; name 0 [("_component", 0)]; name 1 []; name 1 [("_component1", 0)]; name 1 [("_component2", 1)]; name 1 [("_component2", 1); ("_component", 0)]] 
+        [name "OneSubcomponent" 0 []; name "OneSubcomponent" 0 [("_component", 0)]; 
+         name "TwoSubcomponents" 1 []; name "TwoSubcomponents" 1 [("_component1", 0)]; 
+         name "TwoSubcomponents" 1 [("_component2", 1)]; 
+         name "TwoSubcomponents" 1 [("_component2", 1); ("_component", 0)]] 
 
 [<TestFixture>]
 module ``Roots property`` =
@@ -271,13 +276,13 @@ module ``Roots property`` =
     let ``contained roots have unique names`` () =
         let model = TestModel (EmptyComponent ())
         model.FinalizeMetadata ()
-        model.Roots.[0].Name =? "SynRoot.Root0@0"
+        model.Roots.[0].Name =? "R.EmptyComponent0@0"
 
         let model = TestModel (EmptyComponent (), EmptyComponent (), EmptyComponent ())
         model.FinalizeMetadata ()
-        model.Roots.[0].Name =? "SynRoot.Root0@0"
-        model.Roots.[1].Name =? "SynRoot.Root1@1"
-        model.Roots.[2].Name =? "SynRoot.Root2@2"
+        model.Roots.[0].Name =? "R.EmptyComponent0@0"
+        model.Roots.[1].Name =? "R.EmptyComponent1@1"
+        model.Roots.[2].Name =? "R.EmptyComponent2@2"
 
 [<TestFixture>]
 module ``Bind method`` =

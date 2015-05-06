@@ -48,8 +48,8 @@ module Bindings =
         transform "class X : Component { extern void N(); void M() {} public X() { Bind(RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
                     Kind = Delayed
@@ -61,8 +61,8 @@ module Bindings =
         transform "class X : Component { extern void N(); void M() {} public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
                     Kind = Instantaneous
@@ -74,15 +74,15 @@ module Bindings =
         transform "class X : Component { extern void N(); void M() {} extern int Q(int i); int P(int i) { return i; } public X() { Bind(RequiredPorts.N = ProvidedPorts.M); Bind(RequiredPorts.Q = ProvidedPorts.P).Delayed(); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
                     Kind = Instantaneous
                 }
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0"
                     TargetPort = methodName "Q" 2 0
                     SourcePort = methodName "P" 2 0
                     Kind = Delayed
@@ -94,8 +94,8 @@ module Bindings =
         transform "class Y : Component { public extern void N(); } class X : Component { Y y = new Y(); void M() {} public X() { Bind(y.RequiredPorts.N = ProvidedPorts.M).Delayed(); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0.y@0"
-                    SourceComp = "SynRoot.Root0@0"
+                    TargetComp =  "R.X0@0.y@0"
+                    SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
                     Kind = Delayed
@@ -107,8 +107,8 @@ module Bindings =
         transform "class Y : Component { public void N() {} } class X : Component { Y y = new Y(); extern void M(); public X() { Bind(RequiredPorts.M = y.ProvidedPorts.N).Delayed(); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0.y@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0.y@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "N" 2 0
                     Kind = Delayed
@@ -120,8 +120,8 @@ module Bindings =
         transform "class Y : Component { public void N() {} public extern void M(); } class X : Component { Y y = new Y(); public X() { Bind(y.RequiredPorts.M = y.ProvidedPorts.N).Delayed(); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0.y@0"
-                    SourceComp = "SynRoot.Root0@0.y@0"
+                    TargetComp =  "R.X0@0.y@0"
+                    SourceComp = "R.X0@0.y@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "N" 2 0
                     Kind = Delayed
@@ -153,22 +153,22 @@ module Bindings =
                    }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0.z@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0.z@0"
                     TargetPort = methodName "Q" 2 0
                     SourcePort = methodName "N" 2 0
                     Kind = Delayed
                 }
                 { 
-                    TargetComp =  "SynRoot.Root0@0.z@0"
-                    SourceComp = "SynRoot.Root0@0.z@0"
+                    TargetComp =  "R.X0@0.z@0"
+                    SourceComp = "R.X0@0.z@0"
                     TargetPort = methodName "M" 2 0
                     SourcePort = methodName "Q" 3 0
                     Kind = Delayed
                 }
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0.y@1"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0.y@1"
                     TargetPort = methodName "Q" 3 1
                     SourcePort = methodName "N" 2 1
                     Kind = Delayed
@@ -180,8 +180,8 @@ module Bindings =
         transform "class X : Component { extern void N(); void M() { N(); } public X() { Bind(RequiredPorts.N = ProvidedPorts.M); } }" "new X()" =? 
             [
                 { 
-                    TargetComp =  "SynRoot.Root0@0"
-                    SourceComp = "SynRoot.Root0@0"
+                    TargetComp =  "R.X0@0"
+                    SourceComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
                     Kind = Instantaneous
@@ -194,8 +194,8 @@ module Bindings =
             [
                 {
                     Kind = Instantaneous
-                    SourceComp = "SynRoot.Root0@0"
-                    TargetComp = "SynRoot.Root0@0"
+                    SourceComp = "R.X0@0"
+                    TargetComp = "R.X0@0"
                     TargetPort = methodName "N" 3 0
                     SourcePort = methodName "M" 3 0
                 }
@@ -205,8 +205,8 @@ module Bindings =
             [
                 {
                     Kind = Instantaneous
-                    SourceComp = "SynRoot.Root0@0.y@0"
-                    TargetComp = "SynRoot.Root0@0.y@0"
+                    SourceComp = "R.X0@0.y@0"
+                    TargetComp = "R.X0@0.y@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 3 0
                 }
@@ -218,8 +218,8 @@ module Bindings =
             [
                 {
                     Kind = Instantaneous
-                    SourceComp = "SynRoot.Root0@0.y@0"
-                    TargetComp = "SynRoot.Root0@0"
+                    SourceComp = "R.X0@0.y@0"
+                    TargetComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 2 0
                 }
@@ -229,8 +229,8 @@ module Bindings =
             [
                 {
                     Kind = Instantaneous
-                    SourceComp = "SynRoot.Root0@0.i@0"
-                    TargetComp = "SynRoot.Root0@0"
+                    SourceComp = "R.X0@0.i@0"
+                    TargetComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "M" 3 0
                 }
@@ -240,8 +240,8 @@ module Bindings =
             [
                 {
                     Kind = Instantaneous
-                    SourceComp = "SynRoot.Root0@0.y@0"
-                    TargetComp = "SynRoot.Root0@0"
+                    SourceComp = "R.X0@0.y@0"
+                    TargetComp = "R.X0@0"
                     TargetPort = methodName "N" 2 0
                     SourcePort = methodName "I.M" 2 0
                 }

@@ -46,13 +46,13 @@ module Components =
         transform "class S : Component {} class X : Component { S s = new S(); } class Y : X { S s1 = new S(); S s2 = new S(); }" "new Y()" =?
             [
                 {
-                    Name = "SynRoot.Root0@0"
+                    Name = "R.Y0@0"
                     Fields = []
                     Methods = [Ssm.BaseUpdateMethod]
                     Subs =
                         [
                             {
-                                Name = "SynRoot.Root0@0.s@0"
+                                Name = "R.Y0@0.s@0"
                                 Fields = []
                                 Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
@@ -60,7 +60,7 @@ module Components =
                                 Bindings = []
                             }
                             {
-                                Name = "SynRoot.Root0@0.s1@1"
+                                Name = "R.Y0@0.s1@1"
                                 Fields = []
                                 Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
@@ -68,7 +68,7 @@ module Components =
                                 Bindings = []
                             }
                             {
-                                Name = "SynRoot.Root0@0.s2@2"
+                                Name = "R.Y0@0.s2@2"
                                 Fields = []
                                 Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
@@ -86,13 +86,13 @@ module Components =
         transform "class S : Component {} class X : Component { S s = new S(); } class Y : X { S s = new S(); S s2 = new S(); }" "new Y()" =?
             [
                 {
-                    Name = "SynRoot.Root0@0"
+                    Name = "R.Y0@0"
                     Fields = []
                     Methods = [Ssm.BaseUpdateMethod]
                     Subs =
                         [
                             {
-                                Name = "SynRoot.Root0@0.s@0"
+                                Name = "R.Y0@0.s@0"
                                 Fields = []
                                 Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
@@ -100,7 +100,7 @@ module Components =
                                 Bindings = []
                             }
                             {
-                                Name = "SynRoot.Root0@0.s@1"
+                                Name = "R.Y0@0.s@1"
                                 Fields = []
                                 Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
@@ -108,7 +108,7 @@ module Components =
                                 Bindings = []
                             }
                             {
-                                Name = "SynRoot.Root0@0.s2@2"
+                                Name = "R.Y0@0.s2@2"
                                 Fields = []
                                 Methods = [Ssm.BaseUpdateMethod]
                                 Subs = []
@@ -126,7 +126,7 @@ module Components =
         transform "namespace Y { class X : Component { int M() { return 1; }}}" "new Y.X()" =?
         [
             {
-                Name = "SynRoot.Root0@0"
+                Name = "R.X0@0"
                 Fields = []
                 Subs = []
                 Methods = 
@@ -151,12 +151,12 @@ module Components =
         transform "class X : Component { public void M() {} } class Y : Component { X x = new X(); void N() { x.M(); }}" "new Y()" =?
         [
             {
-                Name = "SynRoot.Root0@0"
+                Name = "R.Y0@0"
                 Fields = []
                 Subs = 
                     [
                         {
-                            Name = "SynRoot.Root0@0.x@0"
+                            Name = "R.Y0@0.x@0"
                             Fields = []
                             Subs = []
                             Methods = 
@@ -185,7 +185,7 @@ module Components =
                             Locals = []
                             Body = SeqStm 
                                 [
-                                    ExprStm (MemberExpr (Field ("SynRoot.Root0@0.x@0", ClassType "X"),
+                                    ExprStm (MemberExpr (Field ("R.Y0@0.x@0", ClassType "X"),
                                                          CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [], true)))
                                     RetStm None
                                 ]

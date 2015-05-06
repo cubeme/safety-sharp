@@ -49,12 +49,12 @@ module Assemblies =
         transform "public class X : Component { public void M() {} }" "class Y : Component { X x = new X(); void N() { x.M(); }}" "new Y()" =?
             [
                 {
-                    Name = "SynRoot.Root0@0"
+                    Name = "R.Y0@0"
                     Fields = []
                     Subs = 
                         [
                             {
-                                Name = "SynRoot.Root0@0.x@0"
+                                Name = "R.Y0@0.x@0"
                                 Fields = []
                                 Subs = []
                                 Methods = 
@@ -83,7 +83,7 @@ module Assemblies =
                                 Locals = []
                                 Body = SeqStm
                                     [
-                                        ExprStm (MemberExpr (Field ("SynRoot.Root0@0.x@0", ClassType "X"), 
+                                        ExprStm (MemberExpr (Field ("R.Y0@0.x@0", ClassType "X"), 
                                                              CallExpr (methodName "M" 2 0, "X", [], [], VoidType, [], true)))
                                         RetStm None
                                     ]
@@ -100,7 +100,7 @@ module Assemblies =
         transform "public class X : Component { protected bool b; public void M() {} }" "class Y : X { void N() { M(); b = true; }}" "new Y()" =?
             [
                 {
-                    Name = "SynRoot.Root0@0"
+                    Name = "R.Y0@0"
                     Fields = [{ Var = Field (fieldName "b" 2, BoolType); Init = [BoolVal false] }]
                     Subs = []
                     Methods =

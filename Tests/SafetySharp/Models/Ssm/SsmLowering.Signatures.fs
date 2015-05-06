@@ -183,7 +183,7 @@ module ``Port signatures`` =
     let ``lowers static value-returning method without parameters`` () =
         transform "static int Q() { return 1; } int M() { return Q(); }" =?
             {
-                Name = "SynRoot.Root0@0"
+                Name = "R.X0@0"
                 Fields = []
                 Methods = 
                     [
@@ -222,7 +222,7 @@ module ``Port signatures`` =
     let ``lowers subcomponents`` () =
         transform "int M() { return q.Q(); } Sub q = new Sub(); class Sub : Component { public extern int Q(); } " =?
             {
-                Name = "SynRoot.Root0@0"
+                Name = "R.X0@0"
                 Fields = []
                 Methods = 
                     [
@@ -235,7 +235,7 @@ module ``Port signatures`` =
                             Body = 
                                 SeqStm 
                                     [
-                                        ExprStm (MemberExpr (Field ("SynRoot.Root0@0.q@0", ClassType "X/Sub"), CallExpr (methodName "Q" 2 0, "X/Sub", [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)], false)))
+                                        ExprStm (MemberExpr (Field ("R.X0@0.q@0", ClassType "X/Sub"), CallExpr (methodName "Q" 2 0, "X/Sub", [IntType], [Out], VoidType, [VarRefExpr (tmp 2 0 IntType)], false)))
                                         SeqStm [
                                             AsgnStm (Arg ("retVal", IntType), VarExpr (tmp 2 0 IntType))
                                             RetStm None
@@ -247,7 +247,7 @@ module ``Port signatures`` =
                 Subs = 
                     [
                         {
-                            Name = "SynRoot.Root0@0.q@0"
+                            Name = "R.X0@0.q@0"
                             Fields = []
                             Subs = []
                             Methods = 

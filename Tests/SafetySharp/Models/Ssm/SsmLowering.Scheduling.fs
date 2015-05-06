@@ -61,17 +61,17 @@ module ``Scheduling`` =
     [<Test>]
     let ``synthesized root schedules subcomponent`` () =
         transform "class X : Component {}" "new X()" 
-        |> checkSchedule id ["SynRoot.Root0@0"]
+        |> checkSchedule id ["R.X0@0"]
 
     [<Test>]
     let ``synthesized root schedules two subcomponents in correct order`` () =
         transform "class X : Component {} class Y : Component {}" "new X(), new Y()" 
-        |> checkSchedule id ["SynRoot.Root0@0"; "SynRoot.Root1@1"]
+        |> checkSchedule id ["R.X0@0"; "R.Y1@1"]
 
     [<Test>]
     let ``synthesized root schedules three subcomponents in correct order`` () =
         transform "class X : Component {} class Y : Component {} class Z : Component {}" "new X(), new Y(), new Z()" 
-        |> checkSchedule id ["SynRoot.Root0@0"; "SynRoot.Root1@1"; "SynRoot.Root2@2"]
+        |> checkSchedule id ["R.X0@0"; "R.Y1@1"; "R.Z2@2"]
 
     [<Test>]
     let ``component without subcomponent`` () =
@@ -80,19 +80,19 @@ module ``Scheduling`` =
     [<Test>]
     let ``component schedules subcomponent`` () =
         transform "class X : Component { Y y = new Y(); } class Y : Component {}" "new X()" 
-        |> checkSchedule (fun c -> c.Subs.[0]) ["SynRoot.Root0@0.y@0"]
+        |> checkSchedule (fun c -> c.Subs.[0]) ["R.X0@0.y@0"]
 
     [<Test>]
     let ``component schedules two subcomponents in correct order`` () =
         transform "class X : Component { Y y1 = new Y(); Y y2 = new Y(); } class Y : Component {}" "new X()" 
-        |> checkSchedule (fun c -> c.Subs.[0]) ["SynRoot.Root0@0.y1@0"; "SynRoot.Root0@0.y2@1"]
+        |> checkSchedule (fun c -> c.Subs.[0]) ["R.X0@0.y1@0"; "R.X0@0.y2@1"]
 
     [<Test>]
     let ``component schedules four subcomponents in correct order`` () =
         transform "class X : Component { Y y1 = new Y(); Z a = new Z(); Z z = new Z(); Y y2 = new Y(); } class Y : Component {} class Z : Component {}" "new X()" 
-        |> checkSchedule (fun c -> c.Subs.[0]) ["SynRoot.Root0@0.y1@0"; "SynRoot.Root0@0.a@1"; "SynRoot.Root0@0.z@2"; "SynRoot.Root0@0.y2@3"]
+        |> checkSchedule (fun c -> c.Subs.[0]) ["R.X0@0.y1@0"; "R.X0@0.a@1"; "R.X0@0.z@2"; "R.X0@0.y2@3"]
 
     [<Test>]
     let ``inherited component schedules four subcomponents in correct order`` () =
         transform "class W : Component { Y y1 = new Y(); Z a = new Z(); } class X : W { Z z = new Z(); Y y2 = new Y(); } class Y : Component {} class Z : Component {}" "new X()" 
-        |> checkSchedule (fun c -> c.Subs.[0]) ["SynRoot.Root0@0.y1@0"; "SynRoot.Root0@0.a@1"; "SynRoot.Root0@0.z@2"; "SynRoot.Root0@0.y2@3"]
+        |> checkSchedule (fun c -> c.Subs.[0]) ["R.X0@0.y1@0"; "R.X0@0.a@1"; "R.X0@0.z@2"; "R.X0@0.y2@3"]

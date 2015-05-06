@@ -90,8 +90,8 @@ type Model private () =
         rootComponents |> Seq.iteri (fun index component' -> 
             // Make sure that we won't finalize the same component twice (might happen when components are shared, will be detected later)
             if not component'.IsMetadataFinalized then
-                // Add the index to the name to disambiguate roots in execption messages
-                component'.FinalizeMetadata (null, sprintf "%s.Root%d" Component.SynthesizedRootName index, index) 
+                // Add the index to the name to disambiguate roots in exception messages
+                component'.FinalizeMetadata (null, sprintf "%s.%s%d" Component.SynthesizedRootName (component'.GetType().Name) index, index) 
         )
 
         // Store the root components and collect all components of the model
