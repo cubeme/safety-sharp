@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Analysis.VerificationCondition
+namespace Models.Sam
 
 open NUnit.Framework
 open SafetySharp.Workflow
