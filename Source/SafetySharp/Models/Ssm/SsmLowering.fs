@@ -165,7 +165,10 @@ module internal SsmLowering =
                     c.Subs // TODO: Respect scheduling metadata
                     |> List.map (fun sub ->
                         // Note: We don't know the original type of the subcomponent at this point, but we don't really care about it anyway...
-                        ExprStm (MemberExpr (Field (sub.Name, ClassType ""), CallExpr ("Update", "", [], [], VoidType, [], false)))
+                        let name = 
+                            let lastDot = sub.Name.LastIndexOf "."
+                            if lastDot = -1 then sub.Name else sub.Name.Substring (lastDot + 1)
+                        ExprStm (MemberExpr (Field (name, ClassType ""), CallExpr ("Update", "", [], [], VoidType, [], false)))
                     )
 
                 let body = SeqStm (stepCalls @ [m.Body])

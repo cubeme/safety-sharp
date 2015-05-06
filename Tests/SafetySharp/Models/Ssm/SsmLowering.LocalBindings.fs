@@ -199,6 +199,64 @@ module ``Local bindings`` =
             }
 
     [<Test>]
+    let ``introduces binding for provided port invocation for non-root component`` () =
+        transform "class X : Component { Y y = new Y(); } class Y : Component { void M() { } void N() { M(); } }" =?
+            {
+                Name = "R.X0@0"
+                Fields = []
+                Subs = 
+                    [
+                        {
+                            Name = "R.X0@0.y@0"
+                            Fields = []
+                            Subs = []
+                            Faults = []
+                            Bindings = 
+                                [
+                                    { 
+                                        SourceComp = "R.X0@0.y@0"
+                                        SourcePort = methodName "M" 2 0
+                                        TargetComp = "R.X0@0.y@0"; 
+                                        TargetPort = synName "M" 2 0 0
+                                        Kind = Instantaneous 
+                                    }
+                                ]
+                            Methods = 
+                                [
+                                    Ssm.BaseUpdateMethod
+                                    {
+                                        Name = methodName "M" 2 0
+                                        Kind = ProvPort
+                                        Params = []
+                                        Locals = []
+                                        Return = VoidType
+                                        Body = RetStm None
+                                    }
+                                    {
+                                        Name = methodName "N" 2 0
+                                        Kind = ProvPort
+                                        Params = []
+                                        Locals = []
+                                        Return = VoidType
+                                        Body = SeqStm [ExprStm (CallExpr (synName "M" 2 0 0, "Y", [], [], VoidType, [], false)); RetStm None]
+                                    }
+                                    {
+                                        Name = synName "M" 2 0 0
+                                        Kind = ReqPort
+                                        Params = []
+                                        Locals = []
+                                        Return = VoidType
+                                        Body = NopStm
+                                    }
+                                ]
+                        }
+                    ]
+                Faults = []
+                Bindings = []
+                Methods = [Ssm.BaseUpdateMethod]
+            }
+
+    [<Test>]
     let ``introduces binding for virtual overridden provided port invocation`` () =
         transform "class Y : Component { public virtual void M() { } void N() { M(); } } class X : Y { public override void M() {} }" =?
             {
