@@ -22,16 +22,19 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-// The idea here is to
+// TODO: This is currently only a draft of an idea
+
+// The idea here is to transform the Tsam to a form, which resembles the guard with assignment form.
 //   1st: Push every assignment to the end
-//   2nd: Push every stochastic statement before the assignments. Merge stochastic statements
-//   3rd: Push every choice to the beginning. Merge choices.
+//   2nd: Push every stochastic statement before the assignments (or to end, if none exists). Merge stochastic statements
+//   3rd: Pull every choice to the beginning. Merge choices.
+// TODO: Empty Blocks and nested blocks are difficult to treat. Maybe write a normalizer to facilitate this step.
 // Result: Choice* of (Assume*, Prob of (Assign*)) <--- exactly what we want
 
 
 module internal VcGuardWithAssignmentModel =
     open SafetySharp.Models
-    open SafetySharp.Models.SamHelpers
+    open SafetySharp.Models.TsamHelpers
     
     type VarDecl = Tsam.GlobalVarDecl
     type Var = Tsam.Var
@@ -40,6 +43,63 @@ module internal VcGuardWithAssignmentModel =
     type Expr = Tsam.Expr
 
     type Traceable = Tsam.Traceable
+
+    open SafetySharp.Workflow
+    open SafetySharp.Models.Tsam
+    open SafetySharp.Models.TsamMutable
+
+    let phase1FindAssignmentNotAtTheEnd () : TsamWorkflowFunction<_,StatementId option> = workflow {
+        //returns StatementId and type of next statement. type of the next statement should not be assignment
+        return None
+    }
+    
+    let phase1PushAssignmentOverChoice (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+        return ()
+    }
+        
+    let phase1PushAssignmentOverStochastic (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+        return ()
+    }
+        
+    let phase1PushAssignmentOverAssumption (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+        return ()
+    }
+
+    let phase1PushAssignmentOverAssertion (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+        return ()
+    }
+
+    let phase1PushAssignmentTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        let! (a) = phase1FindAssignmentNotAtTheEnd ()
+        match a with
+            | None -> return ()
+            | Some(stmId) ->
+                do! phase1PushAssignmentOverChoice stmId
+    }
+
+    let phase2PushStochasticTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        let! (a) = phase1FindAssignmentNotAtTheEnd ()
+        match a with
+            | None -> return ()
+            | Some(stmId) ->
+                do! phase1PushAssignmentOverChoice stmId
+    }
+
+    let phase3PullChoicesTowardsBeginning () : TsamWorkflowFunction<_,unit> = workflow {
+        let! (a) = phase1FindAssignmentNotAtTheEnd ()
+        match a with
+            | None -> return ()
+            | Some(stmId) ->
+                do! phase1PushAssignmentOverChoice stmId
+    }
+
+    let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
+        do! iterateToFixpoint (phase1PushAssignmentTowardsEnd ())
+        do! iterateToFixpoint (phase2PushStochasticTowardsEnd ())
+        do! iterateToFixpoint (phase3PullChoicesTowardsBeginning ())
+        return ()
+    }
+    
 
     type GuardWithAssignments = {        
         Guard : Expr;
@@ -50,6 +110,12 @@ module internal VcGuardWithAssignmentModel =
         Globals : VarDecl list;
         GuardsWithFinalAssignments : GuardWithAssignments list;
     }
+    
+    let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
+        {
+            GuardWithAssignmentModel.Globals = [];
+            GuardWithAssignmentModel.GuardsWithFinalAssignments = [];
+        }
 
     open SafetySharp.ITracing
 
@@ -67,3 +133,18 @@ module internal VcGuardWithAssignmentModel =
                 member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Sam.Traceable)) = {this with ForwardTracer=forwardTracer}
                 member this.getTraceables : Tsam.Traceable list =
                     this.GuardWithAssignmentModel.Globals |> List.map (fun varDecl -> Traceable.Traceable(varDecl.Var))
+                    
+                    
+    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
+        do! transformTsamToTsamInGuardToAssignmentForm ()
+
+        let! state = getState ()
+        let model = state.Pgm
+        let transformed =
+            {
+                GuardWithAssignmentModelTracer.GuardWithAssignmentModel = transformGwaTsamToGwaModel model;
+                GuardWithAssignmentModelTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                GuardWithAssignmentModelTracer.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState transformed
+    }

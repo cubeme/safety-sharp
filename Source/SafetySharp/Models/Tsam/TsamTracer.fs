@@ -41,3 +41,26 @@ module internal TsamMutable =
                 member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Sam.Traceable)) = {this with ForwardTracer=forwardTracer}
                 member this.getTraceables : Tsam.Traceable list =
                     this.Pgm.getTraceables
+                    
+    open SafetySharp.Workflow
+        
+    type TsamWorkflowFunction<'traceableOfOrigin,'returnType> =
+        WorkflowFunction<MutablePgm<'traceableOfOrigin>,MutablePgm<'traceableOfOrigin>,'returnType>
+            
+    let getTsamModel ()
+            : TsamWorkflowFunction<_,Tsam.Pgm> = workflow {
+        let! state = getState ()
+        return state.Pgm
+    }
+
+    let updateTsamModel<'traceableOfOrigin> (pgm:Tsam.Pgm)
+            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let tsamMutable =
+            {
+                MutablePgm.Pgm = pgm;
+                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                MutablePgm.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState tsamMutable
+    }
