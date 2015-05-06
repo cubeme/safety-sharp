@@ -33,7 +33,6 @@ open SafetySharp.Models
 open SafetySharp.Models.Scm
 open SafetySharp.Models.ScmHelpers
 open SafetySharp.Models.ScmRewriterBase
-open SafetySharp.Models.ScmWorkflow
 
 
 [<TestFixture>]
@@ -43,13 +42,11 @@ type CompleteRewriteTests () =
         workflow {
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
-            do! ScmWorkflow.scmToPlainModelState ()
-            do! ScmRewriterFlattenModel.flattenModel ()           
-            do! ScmWorkflow.iscmToScmState ()
+            do! ScmRewriterFlattenModel.flattenModel ()  
             let! model = getState ()
-            do printf "%s" (SafetySharp.Models.ScmToString.toString model.getRootComp)
+            do printf "%s" (SafetySharp.Models.ScmToString.toString model.Model.getRootComp)
             do! SafetySharp.Workflow.printNewParagraphToStdout ()
-            do! logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
             do! SafetySharp.Workflow.printNewParagraphToStdout ()
             do! SafetySharp.Workflow.printObjectToStdout () 
             let! allTraceablesExist = ScmConsistencyCheck.``check if all traced traceables from origin actually exists`` ()

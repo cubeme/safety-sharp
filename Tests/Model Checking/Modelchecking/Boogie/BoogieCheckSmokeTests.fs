@@ -27,6 +27,7 @@ open NUnit.Framework
 module BoogieSmokeTests =
     open SafetySharp.Models
     open SafetySharp.Workflow
+    open SafetySharp.ITracing
 
 
     let internal smokeTestWorkflow (inputFile:string) = workflow {    
@@ -34,11 +35,12 @@ module BoogieSmokeTests =
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf ()
+            do! logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.removeTracing ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf ()
             //let filename = sprintf "%s.bpl" (System.IO.Path.GetFileName(inputFile) ) |> SafetySharp.FileSystem.FileName
             //do! saveToFile filename
             //do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ExecuteSpin.runPan
-            do! logForwardTracesOfOrigins ()
     }
     
     let runSmokeTest (inputFile) =

@@ -40,14 +40,15 @@ module NuXmvGwamCheckSamSmokeTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
+            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
             do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow ()
             do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformGwamToTsareWorkflow ()
             do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.removeTracing ()
             do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
-            do! logForwardTracesOfOrigins ()
         }
                    
     let runSmokeTest (inputFile) =
@@ -270,9 +271,10 @@ module NuXmvSpCheckSamSmokeTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
+            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
             do! SafetySharp.Analysis.VerificationCondition.TransitionSystemAsRelationExpr.transformTsamToTsareWithSpWorkflow ()
             do! SafetySharp.Analysis.Modelchecking.NuXmv.VcTransitionRelationToNuXmv.transformTsareToNuXmvWorkflow ()
+            do! SafetySharp.ITracing.removeTracing ()
             do! SafetySharp.Analysis.Modelchecking.NuXmv.NuXmvToString.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile

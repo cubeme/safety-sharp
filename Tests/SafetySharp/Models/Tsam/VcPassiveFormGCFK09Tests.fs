@@ -34,7 +34,7 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
+            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
 
             do! SafetySharp.Workflow.printObjectToStdout ()
             do! SafetySharp.Workflow.printNewParagraphToStdout ()
@@ -47,7 +47,7 @@ module internal TransformationsTestHelpersWorkflowModule =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original
+            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToPassiveForm_Original ()
 
             do! SafetySharp.Workflow.printObjectToStdout ()
             do! SafetySharp.Workflow.printNewParagraphToStdout ()

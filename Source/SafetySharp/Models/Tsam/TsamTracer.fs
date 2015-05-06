@@ -33,7 +33,8 @@ module internal TsamMutable =
         ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
         with
-            interface ITracing<'traceableOfOrigin,Tsam.Traceable,MutablePgm<'traceableOfOrigin>> with
+            interface ITracing<Tsam.Pgm,'traceableOfOrigin,Tsam.Traceable,MutablePgm<'traceableOfOrigin>> with
+                member this.getModel = this.Pgm
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> Sam.Traceable) = this.ForwardTracer

@@ -38,14 +38,12 @@ open SafetySharp.Models.ScmRewriterLevelUp
 open SafetySharp.Models.ScmRewriterConvertFaults
 open SafetySharp.Models.ScmRewriterInlineBehavior
 open SafetySharp.Models.ScmRewriterFlattenModel
-open SafetySharp.Models.ScmWorkflow
 
 module internal ScmRewriterTestHelpers =
 
     let internal inputFileToPromelaAstWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
         }
 
@@ -64,16 +62,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -99,16 +97,15 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -134,16 +131,15 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpFault ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -169,16 +165,15 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -205,16 +200,15 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -243,18 +237,17 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.levelUpAndRewriteBindingDeclaredInChild ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -293,17 +286,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -343,16 +335,15 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -392,18 +383,17 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -443,17 +433,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -493,17 +482,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -543,17 +531,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let grandparentNode = rootComp.getDescendantUsingPath pathOfGrandparent
@@ -593,17 +580,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let grandparentNode = rootComp.getDescendantUsingPath pathOfGrandparent
@@ -643,17 +629,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfGrandparent = pathOfChild.Tail.Tail.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let greatgrandparentNode = rootComp.getDescendantUsingPath pathOfGrandparent
@@ -694,17 +679,16 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpReqPort ()
             do! ScmRewriterLevelUp.rewriteBindingsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfGrandparent = pathOfChild.Tail.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let grandparentNode = rootComp.getDescendantUsingPath pathOfGrandparent
@@ -743,12 +727,11 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpSubcomponent ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
@@ -783,19 +766,18 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
             do! ScmRewriterLevelUp.levelUpProvPort ()
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -846,7 +828,6 @@ type SingleLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! ScmRewriterLevelUp.levelUpField ()
@@ -856,12 +837,12 @@ type SingleLevelUpTests () =
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteProvPort ()
             do! ScmRewriterLevelUp.rewriteContractsDeclaredInAncestors ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -927,16 +908,15 @@ type LevelUpWithIterateToFixpoint () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! ScmRewriterLevelUp.prepareForLevelingUp ()
             do! ScmRewriterLevelUp.selectSpecificSubcomponent pathOfChild
             do! (iterateToFixpoint (ScmRewriterLevelUp.levelUpField ())) 
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }        
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         let pathOfParent = pathOfChild.Tail
         let childNode = rootComp.getDescendantUsingPath pathOfChild
         let parentNode = rootComp.getDescendantUsingPath pathOfParent
@@ -980,14 +960,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper  ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         rootComp.ProvPorts.Length =? 0
 
         let newModel = resultingState.Model
@@ -1007,14 +986,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         rootComp.ProvPorts.Length =? 0
 
         let newModel = resultingState.Model
@@ -1034,14 +1012,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
 
         let newModel = resultingState.Model
         let newRootComp = newModel.getRootComp
@@ -1058,14 +1035,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
 
         let newModel = resultingState.Model
         let newRootComp = newModel.getRootComp
@@ -1082,14 +1058,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
 
         let newModel = resultingState.Model
         let newRootComp = newModel.getRootComp
@@ -1106,14 +1081,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
             let! levelUpState = getState ()
             return (oldModel,levelUpState)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         rootComp.ProvPorts.Length =? 0
 
         let newModel = resultingState.Model
@@ -1131,14 +1105,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         rootComp.ProvPorts.Length =? 0
 
         let newModel = resultingState.Model
@@ -1156,14 +1129,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
 
         let newModel = resultingState.Model
         let newRootComp = newModel.getRootComp
@@ -1180,14 +1152,13 @@ type CompleteLevelUpTests () =
         let workFlow = workflow {
             do! readInputFileToScm inputFile
             let! oldModel = getState ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! levelUpSubcomponentsWrapper ()
-            let! levelUpState = getState ()
-            return (oldModel,levelUpState)
+            let! leveledUpModel = getState ()
+            return (oldModel,leveledUpModel)
         }
         let (model,resultingState) = SafetySharp.Workflow.runWorkflow_getResult workFlow
 
-        let rootComp = model.getRootComp
+        let rootComp = model.Model.getRootComp
         rootComp.ProvPorts.Length =? 0
 
         let newModel = resultingState.Model

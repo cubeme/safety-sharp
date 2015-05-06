@@ -233,7 +233,8 @@ module internal VcTransitionRelationToNuXmv =
         ForwardTracer : 'traceableOfOrigin -> NuXmv.Traceable;
     }
         with
-            interface ITracing<'traceableOfOrigin,NuXmv.Traceable,NuXmvTracer<'traceableOfOrigin>> with
+            interface ITracing<NuXmvProgram,'traceableOfOrigin,NuXmv.Traceable,NuXmvTracer<'traceableOfOrigin>> with
+                member this.getModel = this.NuXmvProgram
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> NuXmv.Traceable) = this.ForwardTracer
@@ -255,7 +256,7 @@ module internal VcTransitionRelationToNuXmv =
                 NuXmvTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
-    }
+    }   
 
     (*
         let reservedNames = Set.empty<string>

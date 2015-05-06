@@ -190,7 +190,8 @@ module internal GwamToPrism =
         ForwardTracer : 'traceableOfOrigin -> Prism.Traceable;
     }
         with
-            interface ITracing<'traceableOfOrigin,Prism.Traceable,PrismModelTracer<'traceableOfOrigin>> with
+            interface ITracing<Prism.PrismModel,'traceableOfOrigin,Prism.Traceable,PrismModelTracer<'traceableOfOrigin>> with
+                member this.getModel = this.PrismModel
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> Prism.Traceable) = this.ForwardTracer
@@ -212,7 +213,7 @@ module internal GwamToPrism =
                 PrismModelTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
-    }   
+    }
 
 
 

@@ -30,8 +30,7 @@ module internal ScmMutable =
         
     type IScmMutable<'traceableOfOrigin,'state> =
         interface
-            inherit ITracing<'traceableOfOrigin,Traceable,'state> 
-            abstract getModel : ScmModel
+            inherit ITracing<ScmModel,'traceableOfOrigin,Traceable,'state> 
             abstract setModel : ScmModel -> 'state
             
             abstract getUncommittedForwardTracerMap : Map<Traceable,Traceable> //to be able to inherit uncommitted traces

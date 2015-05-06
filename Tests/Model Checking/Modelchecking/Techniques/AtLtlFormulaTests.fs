@@ -34,6 +34,7 @@ module AtLtlFormulaTests =
     let internal inputFileToScmWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
+            do! SafetySharp.ITracing.removeTracing ()
             let! scmModel = getState ()
             return scmModel
     }

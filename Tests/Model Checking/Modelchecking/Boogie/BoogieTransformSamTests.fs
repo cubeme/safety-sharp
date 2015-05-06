@@ -33,6 +33,7 @@ module BoogieTransformSamTests =
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.TsamToBoogie.transformVcSamToBoogieWf ()
+            do! SafetySharp.ITracing.removeTracing ()
             do! SafetySharp.Analysis.Modelchecking.Boogie.BoogieToString.boogieToStringWf ()
     }
     

@@ -160,7 +160,7 @@ module internal Workflow =
             (),newWfState            
         WorkflowFunction(behavior)
                 
-    let trackSteps_CreateSubstepAndEnter<'state,'traceableOfOrigin,'traceableOfState> (stepName:string) : EndogenousWorkflowFunction<'state> = 
+    let trackSteps_CreateSubstepAndEnter<'state,'traceableOfOrigin,'traceableOfModel> (stepName:string) : EndogenousWorkflowFunction<'state> = 
         let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 { wfState with
@@ -174,7 +174,7 @@ module internal Workflow =
             (),newWfState
         WorkflowFunction(behavior)
 
-    let trackSteps_LeaveSubstep<'state,'traceableOfOrigin,'traceableOfState> () : EndogenousWorkflowFunction<'state> = 
+    let trackSteps_LeaveSubstep<'state,'traceableOfOrigin,'traceableOfModel> () : EndogenousWorkflowFunction<'state> = 
         let behavior (wfState:WorkflowState<'state>) =
             let newWfState =
                 { wfState with
@@ -186,7 +186,7 @@ module internal Workflow =
         WorkflowFunction(behavior)
 
 
-    let iterateToFixpoint<'state,'traceableOfOrigin,'traceableOfState> ( (WorkflowFunction(functionToIterate)) : EndogenousWorkflowFunction<'state>) : EndogenousWorkflowFunction<'state> =
+    let iterateToFixpoint<'state,'traceableOfOrigin,'traceableOfModel> ( (WorkflowFunction(functionToIterate)) : EndogenousWorkflowFunction<'state>) : EndogenousWorkflowFunction<'state> =
         let adjust_tainted_and_call (wfState:WorkflowState<'state>) : (bool*WorkflowState<'state>) =
             // 1) Tainted is set to false
             // 2) function is called
@@ -366,7 +366,7 @@ module internal Workflow =
         return ()
     }    
 
-    let printNewParagraphToStdout<'a,'traceableOfOrigin,'traceableOfState> ()
+    let printNewParagraphToStdout<'a,'traceableOfOrigin,'traceableOfModel> ()
             : EndogenousWorkflowFunction<'a> = workflow {
         printfn ""
         printfn ""

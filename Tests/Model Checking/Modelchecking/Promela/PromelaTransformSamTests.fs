@@ -43,7 +43,8 @@ module SamToPromelaTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SamToPromela.transformConfigurationWf ()
-            do! logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.removeTracing ()
         }
            
     [<Test>]

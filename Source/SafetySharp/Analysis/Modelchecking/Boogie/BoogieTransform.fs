@@ -302,7 +302,8 @@ module internal TsamToBoogie =
         ForwardTracer : 'traceableOfOrigin -> BoogieSimplifiedAst.Traceable;
     }
         with
-            interface ITracing<'traceableOfOrigin,BoogieSimplifiedAst.Traceable,BoogiePgmTracer<'traceableOfOrigin>> with
+            interface ITracing<BoogieSimplifiedAst.Pgm,'traceableOfOrigin,BoogieSimplifiedAst.Traceable,BoogiePgmTracer<'traceableOfOrigin>> with
+                member this.getModel = this.Pgm
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> BoogieSimplifiedAst.Traceable) = this.ForwardTracer

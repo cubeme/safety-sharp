@@ -225,7 +225,8 @@ module internal SamToPromela =
         ForwardTracer : 'traceableOfOrigin -> PrTraceable;
     }
         with
-            interface ITracing<'traceableOfOrigin,PrTraceable,PromelaTracer<'traceableOfOrigin>> with
+            interface ITracing<PrSpec,'traceableOfOrigin,PrTraceable,PromelaTracer<'traceableOfOrigin>> with
+                member this.getModel = this.PrSpec
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> PrTraceable) = this.ForwardTracer

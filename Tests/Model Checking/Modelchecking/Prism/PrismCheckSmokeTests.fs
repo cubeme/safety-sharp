@@ -37,13 +37,14 @@ module PrismCheckSmokeTests =
             do! readFile inputFile
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
-            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original
+            do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
             do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow ()
             do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
+            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.removeTracing ()
             do! SafetySharp.Analysis.Modelchecking.Prism.ExportPrismAstToFile.workflow ()
             let outputFile = inputFileNameToOutputFileName inputFile
             do! printToFile outputFile
-            do! logForwardTracesOfOrigins ()
         }
                    
     let runSmokeTest (inputFile) =

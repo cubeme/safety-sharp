@@ -23,32 +23,34 @@
 namespace SafetySharp
 
 module internal ITracing =
-    type ITracing<'traceableOfOrigin,'traceableOfState,'state> =
+    type ITracing<'model,'traceableOfOrigin,'traceableOfModel,'state> =
         interface
-            abstract getTraceables : 'traceableOfState list
+            abstract getModel : 'model
+
+            abstract getTraceables : 'traceableOfModel list
 
             abstract getTraceablesOfOrigin : 'traceableOfOrigin list
             abstract setTraceablesOfOrigin : 'traceableOfOrigin list -> 'state
 
-            abstract getForwardTracer : ('traceableOfOrigin -> 'traceableOfState)
-            abstract setForwardTracer : ('traceableOfOrigin -> 'traceableOfState) -> 'state
+            abstract getForwardTracer : ('traceableOfOrigin -> 'traceableOfModel)
+            abstract setForwardTracer : ('traceableOfOrigin -> 'traceableOfModel) -> 'state
         end
         
     open SafetySharp.Workflow
 
-    let getTraceablesOfOrigin<'state,'traceableOfOrigin,'traceableOfState when 'state :> ITracing<'traceableOfOrigin,'traceableOfState,'state> > ()
+    let getTraceablesOfOrigin<'model,'state,'traceableOfOrigin,'traceableOfModel when 'state :> ITracing<'model,'traceableOfOrigin,'traceableOfModel,'state> > ()
                 : WorkflowFunction<'state,'state,'traceableOfOrigin list> =
         let behavior (wfState:WorkflowState<'state>) =
             (wfState.State.getTraceablesOfOrigin),wfState
         WorkflowFunction(behavior)
 
-    let getForwardTracer<'state,'traceableOfOrigin,'traceableOfState when 'state :> ITracing<'traceableOfOrigin,'traceableOfState,'state> > ()
-                : WorkflowFunction<'state,'state,('traceableOfOrigin -> 'traceableOfState)> =
+    let getForwardTracer<'model,'state,'traceableOfOrigin,'traceableOfModel when 'state :> ITracing<'model,'traceableOfOrigin,'traceableOfModel,'state> > ()
+                : WorkflowFunction<'state,'state,('traceableOfOrigin -> 'traceableOfModel)> =
         let behavior (wfState:WorkflowState<'state>) =
             (wfState.State.getForwardTracer),wfState
         WorkflowFunction(behavior)
         
-    let logForwardTracesOfOrigins<'state,'traceableOfOrigin,'traceableOfState when 'state :> ITracing<'traceableOfOrigin,'traceableOfState,'state> > ()
+    let logForwardTracesOfOrigins<'model,'state,'traceableOfOrigin,'traceableOfModel when 'state :> ITracing<'model,'traceableOfOrigin,'traceableOfModel,'state> > ()
                 : WorkflowFunction<'state,'state,unit> = workflow {
         let! traceablesOfOrigin = getTraceablesOfOrigin ()
         let! forwardTracer = getForwardTracer ()
@@ -59,6 +61,11 @@ module internal ITracing =
         do! listIter_seqState logEntry tracedTraceablesOfOrigin
     }
 
+    let removeTracing<'model,'state,'traceableOfOrigin,'traceableOfModel when 'state :> ITracing<'model,'traceableOfOrigin,'traceableOfModel,'state> > ()
+                : WorkflowFunction<'state,'model,unit> = workflow {
+        let! state = getState ()
+        do! updateState (state.getModel)
+    }
 
     (*
     
@@ -85,10 +92,10 @@ module internal ITracing =
         WorkflowFunction(behavior)
                 
     // returns old traceables of the origin and tracer
-    let startNewTracer<'state,'traceableOfOrigin,'traceableOfState>
-                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfState,'traceableOfState,'traceableOfState,('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfState)> =
-        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfState>)
-                : (('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfState)) * (WorkflowState<'state,'traceableOfState,'traceableOfState>)  =
+    let startNewTracer<'state,'traceableOfOrigin,'traceableOfModel>
+                : WorkflowFunction<'state,'state,'traceableOfOrigin,'traceableOfModel,'traceableOfModel,'traceableOfModel,('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfModel)> =
+        let behavior (wfState:WorkflowState<'state,'traceableOfOrigin,'traceableOfModel>)
+                : (('traceableOfOrigin list)*('traceableOfOrigin->'traceableOfModel)) * (WorkflowState<'state,'traceableOfModel,'traceableOfModel>)  =
             let newWfState =
                 {
                     WorkflowState.State = wfState.State;

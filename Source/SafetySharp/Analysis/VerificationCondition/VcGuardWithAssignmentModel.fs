@@ -168,7 +168,8 @@ module internal VcGuardWithAssignmentModel =
         ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
         with
-            interface ITracing<'traceableOfOrigin,Tsam.Traceable,GuardWithAssignmentModelTracer<'traceableOfOrigin>> with
+            interface ITracing<GuardWithAssignmentModel,'traceableOfOrigin,Tsam.Traceable,GuardWithAssignmentModelTracer<'traceableOfOrigin>> with
+                member this.getModel = this.GuardWithAssignmentModel
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> Sam.Traceable) = this.ForwardTracer

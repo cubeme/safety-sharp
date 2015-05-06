@@ -40,9 +40,9 @@ module ScmToPromelaTests =
     let internal inputFileToPromelaAstWorkflow (inputFile:string) = workflow {
             do! readFile inputFile
             do! SafetySharp.Models.ScmParser.parseStringWorkflow ()
-            do! SafetySharp.Models.ScmWorkflow.scmToPlainModelState ()
             do! SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmToPromela.transformConfiguration ()
-            do! logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
+            do! SafetySharp.ITracing.removeTracing ()
         }
            
     [<Test>]

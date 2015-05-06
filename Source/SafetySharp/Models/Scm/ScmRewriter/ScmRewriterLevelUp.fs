@@ -846,8 +846,10 @@ module internal ScmRewriterLevelUp =
     
     let selectSpecificSubcomponent (subComponentToLevelUp:CompPath) = workflow {
         let! state = getState ()
+        let! traceablesOfOrigin = iscmGetTraceablesOfOrigin ()
+        let! forwardTracer = iscmGetForwardTracer ()
         let! uncommittedForwardTracerMap = iscmGetUncommittedForwardTracerMap ()
-        do! updateState (createLevelUpStateForSubComponent state.Model uncommittedForwardTracerMap subComponentToLevelUp)
+        do! updateState (createLevelUpStateForSubComponent state.Model uncommittedForwardTracerMap traceablesOfOrigin forwardTracer subComponentToLevelUp)
     }
     
     
