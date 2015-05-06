@@ -120,8 +120,8 @@ module internal SsmLowering =
     /// declared by itself or one of its subcomponents, a required port with matching signature is synthesized and an
     /// instantaneous binding between the provided port and the sythesized required port is added to the component.
     let rec lowerLocalBindings (c : Comp) =
-        let synPorts = List<Method> ()
-        let synBindings = List<Binding> ()
+        let synPorts = List<_> ()
+        let synBindings = List<_> ()
 
         let callSynthesized c' (m : Method) t p d r e =
             match m.Kind with
@@ -156,10 +156,30 @@ module internal SsmLowering =
             Subs = c.Subs |> List.map lowerLocalBindings
             Bindings = c.Bindings @ (synBindings |> Seq.toList) }
 
+    /// Introduces calls to the component's subcomponents' Update methods in accordance with the component's scheduling metadata.
+    let rec lowerScheduling (c : Comp) =
+        let lower (m : Method) =
+            match m.Kind with
+            | Step when c.Subs <> [] ->
+                let stepCalls = 
+                    c.Subs // TODO: Respect scheduling metadata
+                    |> List.map (fun sub ->
+                        // Note: We don't know the original type of the subcomponent at this point, but we don't really care about it anyway...
+                        ExprStm (MemberExpr (Field (sub.Name, ClassType ""), CallExpr ("Update", "", [], [], VoidType, [], false)))
+                    )
+
+                let body = SeqStm (stepCalls @ [m.Body])
+                { m with Body = body }
+            | _ -> m
+
+        { c with
+            Methods = c.Methods |> List.map lower
+            Subs = c.Subs |> List.map lowerScheduling }
+
     /// Applies all lowerings to the given components before SSM model validation.
     let lowerPreValidation (model : Model) (root : Comp) : Comp =
         root |> lowerVirtualCalls model
 
     /// Applies all lowerings to the given components after SSM model validation.
     let lowerPostValidation (model : Model) (root : Comp) : Comp =
-        root |> lowerSignatures |> lowerLocalBindings
+        root |> lowerSignatures |> lowerLocalBindings |> lowerScheduling

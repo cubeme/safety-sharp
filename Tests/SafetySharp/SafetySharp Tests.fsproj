@@ -80,6 +80,7 @@
     <Compile Include="Models\Ssm\SsmLowering.Signatures.fs" />
     <Compile Include="Models\Ssm\SsmLowering.LocalBindings.fs" />
     <Compile Include="Models\Ssm\SsmLowering.VirtualDispatch.fs" />
+    <Compile Include="Models\Ssm\SsmLowering.Scheduling.fs" />
     <Compile Include="Models\Ssm\SsmValidations.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterLevelUpTests.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
