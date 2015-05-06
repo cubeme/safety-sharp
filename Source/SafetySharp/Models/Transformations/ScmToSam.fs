@@ -169,7 +169,7 @@ module internal ScmToSam =
     let transformIscmToSam<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>>
                         : ExogenousWorkflowFunction<'oldState,SamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
         do! ScmRewriterFlattenModel.flattenModel ()
-        
+        do! iscmCommitForwardTracerMap ()
         let! state = getState ()
 
         let oldModel = state.Model
