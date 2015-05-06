@@ -22,7 +22,6 @@
 
 namespace Elbtunnel.Sensors
 {
-    using System;
     using SafetySharp.Modeling;
 
     /// <summary>

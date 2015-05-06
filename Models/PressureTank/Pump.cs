@@ -20,48 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel.Environment
+namespace PressureTank
 {
     using SafetySharp.Modeling;
 
     /// <summary>
-    ///   A common interface for vehciles using the tunnel.
+    ///   Represents the pump that fills the pressure tank.
     /// </summary>
-    public interface IVehicle : IComponent
+    internal class Pump : Component
     {
         /// <summary>
-        ///   Gets the current position of the vehicle.
+        ///   Indicates whether the pump is currently filling the pressure tank.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        int GetPosition();
+        private bool _enabled = true;
 
         /// <summary>
-        ///   Gets the current speed of the vehicle.
+        ///   Disables the pump.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        int GetSpeed();
+        public void Disable()
+        {
+            _enabled = false;
+        }
 
         /// <summary>
-        ///   Gets the current lane of the vehicle.
+        ///   Gets a value indicating whether the pump is currently enabled.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        Lane GetLane();
-
-        /// <summary>
-        ///   Gets the kind the vehicle.
-        /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        VehicleKind GetKind();
-
-        /// <summary>
-        ///   Informs the vehicle whether the tunnel is closed.
-        /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Required]
-        bool IsTunnelClosed();
+        // TODO: Consider using a property once supported by S#.
+        public bool IsEnabled() => _enabled;
     }
 }

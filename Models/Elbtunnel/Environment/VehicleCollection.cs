@@ -22,7 +22,6 @@
 
 namespace Elbtunnel.Environment
 {
-    using System;
     using SafetySharp.Modeling;
 
     /// <summary>

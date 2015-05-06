@@ -90,7 +90,7 @@ namespace SafetySharp.Compiler
 		/// <param name="compilation">The compilation that should be compiled.</param>
 		/// <param name="outputPath">The output path of the compiled assembly.</param>
 		/// <param name="runSSharpDiagnostics">Indicates whether S#-specific diagnostics should be run.</param>
-		public static bool Compile([NotNull] Compilation compilation, string outputPath, bool runSSharpDiagnostics)
+		public static bool Compile([NotNull] Compilation compilation, [NotNull] string outputPath, bool runSSharpDiagnostics)
 		{
 			Requires.NotNull(compilation, () => compilation);
 			Requires.NotNullOrWhitespace(outputPath, () => outputPath);

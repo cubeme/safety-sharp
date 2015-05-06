@@ -22,7 +22,6 @@
 
 namespace Elbtunnel.Controllers
 {
-    using System;
     using SafetySharp.Modeling;
 
     /// <summary>

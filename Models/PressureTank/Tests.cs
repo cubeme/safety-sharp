@@ -23,22 +23,44 @@
 namespace PressureTank
 {
     using System;
+    using System.Diagnostics;
+    using NUnit.Framework;
+    using SafetySharp.Analysis;
     using SafetySharp.Modeling;
 
-    internal class PressureSensor : Component
+    [TestFixture]
+    public class Tests
     {
-        private const int MaxPressure = 40;
-        public extern int CheckPhysicalPressure();
-
-        public bool IsTriggered()
+        [SetUp]
+        public void Initialize()
         {
-            return CheckPhysicalPressure() >= MaxPressure;
+            var sensor = new Sensor(triggerPressure: 40);
+            var pump = new Pump();
+            var controller = new Controller(sensor, pump, timeout: 42);
+            var tank = new Tank(maxPressure: 45);
+
+            _model = new Model(tank, controller);
+
+            _model.Bind(sensor.RequiredPorts.CheckPhysicalPressure = tank.ProvidedPorts.PressureLevel);
+            _model.Bind(tank.RequiredPorts.IsBeingFilled = pump.ProvidedPorts.IsEnabled).Delayed();
         }
 
-        [Transient]
-        private class SenseNoPressure : Fault
+        private Model _model;
+
+        private static void Main()
         {
-            public bool IsTriggered => false;
+            var tests = new Tests();
+            tests.Initialize();
+            tests.FirstTest();
+        }
+
+        [Test]
+        public void FirstTest()
+        {
+            var watch = new Stopwatch();
+            watch.Start();
+            var spin = new SpinModelChecker(_model);
+            Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
         }
     }
 }

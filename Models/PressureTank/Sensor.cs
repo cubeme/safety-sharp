@@ -20,48 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel.Environment
+namespace PressureTank
 {
     using SafetySharp.Modeling;
 
     /// <summary>
-    ///   A common interface for vehciles using the tunnel.
+    ///   Represents the sensor that monitors the pressure within the pressure tank.
     /// </summary>
-    public interface IVehicle : IComponent
+    internal class Sensor : Component
     {
         /// <summary>
-        ///   Gets the current position of the vehicle.
+        ///   The pressure level the sensor is watching for.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        int GetPosition();
+        private readonly int _triggerPressure;
 
         /// <summary>
-        ///   Gets the current speed of the vehicle.
+        ///   Initializes a new instance.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        int GetSpeed();
+        /// <param name="triggerPressure">The pressure level the sensor should be watching for.</param>
+        public Sensor(int triggerPressure)
+        {
+            _triggerPressure = triggerPressure;
+        }
 
         /// <summary>
-        ///   Gets the current lane of the vehicle.
+        ///   Senses the physical pressure level within the tank.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        Lane GetLane();
+        // TODO: Consider using a property once supported by S#.
+        public extern int CheckPhysicalPressure();
 
         /// <summary>
-        ///   Gets the kind the vehicle.
+        ///   Gets a value indicating whether the triggering pressure level has been reached or exceeded.
         /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Provided]
-        VehicleKind GetKind();
+        // TODO: Consider using a property once supported by S#.
+        public bool IsTriggered() => CheckPhysicalPressure() >= _triggerPressure;
 
-        /// <summary>
-        ///   Informs the vehicle whether the tunnel is closed.
-        /// </summary>
-        // TODO: Use a property once supported by the S# compiler.
-        [Required]
-        bool IsTunnelClosed();
+        [Transient]
+        private class SenseNoPressure : Fault
+        {
+            public bool IsTriggered() => false;
+        }
     }
 }

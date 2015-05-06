@@ -22,8 +22,6 @@
 
 namespace Elbtunnel
 {
-    using System;
-
     /// <summary>
     ///   Identifies a lane going into the tunnel.
     /// </summary>

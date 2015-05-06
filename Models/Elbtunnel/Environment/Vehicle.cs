@@ -22,7 +22,6 @@
 
 namespace Elbtunnel.Environment
 {
-    using System;
     using SafetySharp.Modeling;
 
     /// <summary>
@@ -103,7 +102,7 @@ namespace Elbtunnel.Environment
         public extern bool IsTunnelClosed();
 
         /// <summary>
-        ///   Updates the vehicles internal state.
+        ///   Updates the vehicle's internal state.
         /// </summary>
         public override void Update()
         {

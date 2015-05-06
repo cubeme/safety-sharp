@@ -20,69 +20,64 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel.Controllers
+namespace PressureTank
 {
     using SafetySharp.Modeling;
-    using Sensors;
     using SharedComponents;
 
     /// <summary>
-    ///   Represents the original design of the end-control.
+    ///   The software controller that enables and disables the pump.
     /// </summary>
-    public class OriginalEndControl : Component, IEndControl
+    internal class Controller : Component
     {
         /// <summary>
-        ///   The sensor that is used to detect vehicles in the end-control area.
+        ///   The pump that is used to fill the tank.
         /// </summary>
-        private readonly IVehicleDetector _detector;
+        private readonly Pump _pump;
 
         /// <summary>
-        ///   The timer that is used to deactivate the end-control automatically.
+        ///   The sensor that is used to sense the pressure level within the tank.
+        /// </summary>
+        private readonly Sensor _sensor;
+
+        /// <summary>
+        ///   The timer that is used to determine whether the pump should be disabled to prevent tank ruptures.
         /// </summary>
         private readonly Timer _timer;
 
         /// <summary>
-        ///   Indicates whether the end-control is currently active.
-        /// </summary>
-        private bool _active;
-
-        /// <summary>
         ///   Initializes a new instance.
         /// </summary>
-        /// <param name="detector">The sensor that should be used to detect vehicles in the end-control area.</param>
-        /// <param name="timeout">The amount of time after which the end-control is deactivated.</param>
-        public OriginalEndControl(IVehicleDetector detector, int timeout)
+        /// <param name="sensor">The sensor that is used to sense the pressure level within the tank.</param>
+        /// <param name="pump">The pump that is used to fill the tank.</param>
+        /// <param name="timeout">The timeout after which the pump is disabled automatically.</param>
+        public Controller(Sensor sensor, Pump pump, int timeout)
         {
+            _pump = pump;
+            _sensor = sensor;
             _timer = new Timer(timeout);
-            _detector = detector;
         }
 
         /// <summary>
-        ///   Gets a value indicating whether a crash is potentially imminent.
-        /// </summary>
-        public bool IsCrashPotentiallyImminent()
-        {
-            return _active && _detector.IsVehicleDetected();
-        }
-
-        /// <summary>
-        ///   Signals the end-control whether it's activation has been requested.
-        /// </summary>
-        public extern bool ActivationRequested();
-
-        /// <summary>
-        ///   Updates the internal state of the component.
+        ///   Updates the controller's internal state.
         /// </summary>
         public override void Update()
         {
-            if (ActivationRequested())
-            {
-                _active = true;
-                _timer.Start();
-            }
+            // We're only interested in a single cycle at the moment, so the pump is enabled
+            // at the beginning and disabled by the controller once the sensor triggers or
+            // the timer times out. We do not care what happens after that, i.e., refilling
+            // the tank once it has been depleted, etc.
 
-            if (_timer.HasElapsed())
-                _active = false;
+            if (_pump.IsEnabled())
+            {
+                var shouldStop = _sensor.IsTriggered() || _timer.HasElapsed();
+
+                if (shouldStop)
+                {
+                    _pump.Disable();
+                    _timer.Stop();
+                }
+            }
         }
     }
 }

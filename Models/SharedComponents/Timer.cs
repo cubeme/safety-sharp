@@ -22,7 +22,6 @@
 
 namespace SharedComponents
 {
-    using System;
     using SafetySharp.Modeling;
 
     public class Timer : Component

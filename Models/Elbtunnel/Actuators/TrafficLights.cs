@@ -22,7 +22,6 @@
 
 namespace Elbtunnel.Actuators
 {
-    using System;
     using SafetySharp.Modeling;
 
     /// <summary>

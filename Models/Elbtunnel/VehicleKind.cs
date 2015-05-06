@@ -22,8 +22,6 @@
 
 namespace Elbtunnel
 {
-    using System;
-
     /// <summary>
     ///   Identifies the kind of a vehicle.
     /// </summary>

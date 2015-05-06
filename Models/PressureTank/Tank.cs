@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -20,69 +20,59 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace Elbtunnel.Controllers
+namespace PressureTank
 {
     using SafetySharp.Modeling;
-    using Sensors;
-    using SharedComponents;
 
     /// <summary>
-    ///   Represents the original design of the end-control.
+    ///   Represents the pressure tank that is filled by the system.
     /// </summary>
-    public class OriginalEndControl : Component, IEndControl
+    internal class Tank : Component
     {
         /// <summary>
-        ///   The sensor that is used to detect vehicles in the end-control area.
+        ///   The maximum allowed pressure level of the tank.
         /// </summary>
-        private readonly IVehicleDetector _detector;
+        private readonly int _maxPressure;
 
         /// <summary>
-        ///   The timer that is used to deactivate the end-control automatically.
+        ///   The current pressure level.
         /// </summary>
-        private readonly Timer _timer;
-
-        /// <summary>
-        ///   Indicates whether the end-control is currently active.
-        /// </summary>
-        private bool _active;
+        private int _pressureLevel;
 
         /// <summary>
         ///   Initializes a new instance.
         /// </summary>
-        /// <param name="detector">The sensor that should be used to detect vehicles in the end-control area.</param>
-        /// <param name="timeout">The amount of time after which the end-control is deactivated.</param>
-        public OriginalEndControl(IVehicleDetector detector, int timeout)
+        /// <param name="maxPressure">The maximum allowed pressure level of the tank.</param>
+        public Tank(int maxPressure)
         {
-            _timer = new Timer(timeout);
-            _detector = detector;
+            _maxPressure = maxPressure;
         }
 
         /// <summary>
-        ///   Gets a value indicating whether a crash is potentially imminent.
+        ///   Gets a value indicating whether the pressure tank has ruptured after exceeding its maximum allowed pressure level.
         /// </summary>
-        public bool IsCrashPotentiallyImminent()
-        {
-            return _active && _detector.IsVehicleDetected();
-        }
+        // TODO: Consider using a property once supported by S#.
+        public bool IsRuptured() => _pressureLevel > _maxPressure;
 
         /// <summary>
-        ///   Signals the end-control whether it's activation has been requested.
+        ///   Gets the current pressure level within the tank.
         /// </summary>
-        public extern bool ActivationRequested();
+        // TODO: Consider using a property once supported by S#.
+        public int PressureLevel() => _pressureLevel;
 
         /// <summary>
-        ///   Updates the internal state of the component.
+        ///   Gets a value indicating whether the pressure tank is currently being filled.
+        /// </summary>
+        // TODO: Consider using a property once supported by S#.
+        public extern bool IsBeingFilled();
+
+        /// <summary>
+        ///   Updates the pressure tank's internal state.
         /// </summary>
         public override void Update()
         {
-            if (ActivationRequested())
-            {
-                _active = true;
-                _timer.Start();
-            }
-
-            if (_timer.HasElapsed())
-                _active = false;
+            if (IsBeingFilled())
+                _pressureLevel += 1;
         }
     }
 }
