@@ -93,9 +93,9 @@ module internal GwamToPrism =
                 let operator = Tsam.BOp.Equals
                 Tsam.Expr.BExpr(Tsam.Expr.Read(assignVar),operator,assignExpr)
             varDecl.Init |> List.map generatePossibleValues
-                         |> Tsam.createOredExpr
+                         |> TsamHelpers.createOredExpr
         varDecls |> List.map generateInit
-                 |> Tsam.createAndedExpr
+                 |> TsamHelpers.createAndedExpr
     
     let transformTsamTypeToPrismType (_type:Tsam.Type) : Prism.VariableDeclarationType =
         match _type with
@@ -182,12 +182,20 @@ module internal GwamToPrism =
         
     open SafetySharp.Workflow
     open SafetySharp.Analysis.VerificationCondition
+    open SafetySharp.ITracing
 
     type PrismModelTracer<'traceableOfOrigin> = {
         PrismModel : Prism.PrismModel;
         TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+        ForwardTracer : 'traceableOfOrigin -> Prism.Traceable;
     }
+        with
+            interface ITracing<'traceableOfOrigin,Prism.Traceable,PrismModelTracer<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Prism.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Prism.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Prism.Traceable list = []
     
     let transformWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<GuardWithAssignmentModelTracer<'traceableOfOrigin>,PrismModelTracer<'traceableOfOrigin>> = workflow {
@@ -201,7 +209,7 @@ module internal GwamToPrism =
             {
                 PrismModelTracer.PrismModel = transformedModel;
                 PrismModelTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                PrismModelTracer.ForwardTracer = state.ForwardTracer;
+                PrismModelTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }   

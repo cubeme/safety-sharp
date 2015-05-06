@@ -225,12 +225,20 @@ module internal VcTransitionRelationToNuXmv =
 
         
     open SafetySharp.Workflow
+    open SafetySharp.ITracing
     
     type NuXmvTracer<'traceableOfOrigin> = {
         NuXmvProgram : NuXmvProgram;
         TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+        ForwardTracer : 'traceableOfOrigin -> NuXmv.Traceable;
     }
+        with
+            interface ITracing<'traceableOfOrigin,NuXmv.Traceable,NuXmvTracer<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> NuXmv.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> NuXmv.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : NuXmv.Traceable list = []
     
     let transformTsareToNuXmvWorkflow<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TransitionSystemTracer<'traceableOfOrigin>,NuXmvTracer<'traceableOfOrigin>> = workflow {
@@ -244,7 +252,7 @@ module internal VcTransitionRelationToNuXmv =
             {
                 NuXmvTracer.NuXmvProgram = transformedTs;
                 NuXmvTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                NuXmvTracer.ForwardTracer = state.ForwardTracer;
+                NuXmvTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }

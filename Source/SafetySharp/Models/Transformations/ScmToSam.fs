@@ -164,18 +164,28 @@ module internal ScmToSam =
             
     open SafetySharp.Workflow
     open SafetySharp.Models.ScmMutable
+    open SafetySharp.Models.ScmHelpers
 
     let transformIscmToSam<'traceableOfOrigin,'oldState when 'oldState :> IScmMutable<'traceableOfOrigin,'oldState>>
                         : ExogenousWorkflowFunction<'oldState,SamMutable.MutablePgm<'traceableOfOrigin>> = workflow {
         do! ScmRewriterFlattenModel.flattenModel ()
-        do! ScmMutable.iscmToScmState ()
-        let! model = ScmMutable.scmGetModel ()
-        let rootComp = match model with | Scm.ScmModel(rootComp) -> rootComp
-        let newModel = transformCompDeclToPgm rootComp
-        do! SamMutable.setSamModel newModel
         
-        let mapInClosure = createForwardTracingMap model.getRootComp newModel
-        let intermediateTracer (oldValue:Scm.Traceable) = mapInClosure.Item oldValue
-        do! updateTracer intermediateTracer
+        let! state = getState ()
+
+        let oldModel = state.Model
+        let newModel = transformCompDeclToPgm (oldModel.getRootComp)
+
+        let tracer (oldValue:'traceableOfOrigin) =
+            let beforeTransform = state.ForwardTracer oldValue
+            let mapInClosure = createForwardTracingMap oldModel.getRootComp newModel
+            let intermediateTracer (oldValue:Scm.Traceable) = mapInClosure.Item oldValue
+            intermediateTracer beforeTransform
+        let transformed =
+            {
+                SamMutable.MutablePgm.Pgm = newModel
+                SamMutable.MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                SamMutable.MutablePgm.ForwardTracer = tracer;
+            }
+        do! updateState transformed
     }
 

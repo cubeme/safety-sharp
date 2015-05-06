@@ -58,7 +58,7 @@
     <Compile Include="Utilities\FreshNameGenerator.fs" />
     <Compile Include="Utilities\Workflow.fs" />
     <Compile Include="Utilities\GenericParsers.fs" />
-    <Compile Include="Utilities\ITracer.fs" />
+    <Compile Include="Utilities\ITracing.fs" />
     <Compile Include="Modeling\CompilerServices\CompilerAttributes.fs" />
     <Compile Include="Modeling\Attributes.fs" />
     <Compile Include="Modeling\Binding.fs" />
@@ -67,7 +67,6 @@
     <Compile Include="Modeling\Model.fs" />
     <Compile Include="Modeling\Choose.fs" />
     <Compile Include="Modeling\OverflowBehavior.fs" />
-    <Compile Include="Models\Common\IModel.fs" />
     <Compile Include="Models\Ssm\Cil.fs" />
     <Compile Include="Models\Ssm\Ssm.fs" />
     <Compile Include="Models\Ssm\CilToSsm.fs" />
@@ -76,9 +75,9 @@
     <Compile Include="Models\Ssm\SsmToCSharp.fs" />
     <Compile Include="Models\Scm\Scm.fs" />
     <Compile Include="Models\Scm\ScmVerificationElements.fs" />
+    <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmTracer.fs" />
     <Compile Include="Models\Scm\ScmParser.fs" />
-    <Compile Include="Models\Scm\ScmHelpers.fs" />
     <Compile Include="Models\Scm\ScmToString.fs" />
     <Compile Include="Models\Scm\ScmConsistencyCheck.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterBase.fs" />
@@ -89,14 +88,15 @@
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterInlineBehavior.fs" />
     <Compile Include="Models\Scm\ScmRewriter\ScmRewriterFlattenModel.fs" />
     <Compile Include="Models\Sam\Sam.fs" />
+    <Compile Include="Models\Sam\SamHelpers.fs" />
     <Compile Include="Models\Sam\SamTracer.fs" />
     <Compile Include="Models\Sam\SamParser.fs" />
-    <Compile Include="Models\Sam\SamHelpers.fs" />
     <Compile Include="Models\Sam\SamToString.fs" />
     <Compile Include="Models\Sam\SamConsistencyCheck.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterSimplifyBlocks.fs" />
     <Compile Include="Models\Sam\SamRewriter\SamRewriterChangeIdentifier.fs" />
     <Compile Include="Models\Tsam\Tsam.fs" />
+    <Compile Include="Models\Tsam\TsamHelpers.fs" />
     <Compile Include="Models\Tsam\TsamTracer.fs" />
     <Compile Include="Models\Tsam\TsamToString.fs" />
     <Compile Include="Models\Tsam\SamToTsam.fs" />

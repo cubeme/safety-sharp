@@ -216,13 +216,21 @@ module internal SamToPromela =
         (newPromelaSpec,forwardTrace)
     
 
-    open SafetySharp.Workflow
+    open SafetySharp.Workflow    
+    open SafetySharp.ITracing
 
     type PromelaTracer<'traceableOfOrigin> = {
         PrSpec : PrSpec;
         TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+        ForwardTracer : 'traceableOfOrigin -> PrTraceable;
     }
+        with
+            interface ITracing<'traceableOfOrigin,PrTraceable,PromelaTracer<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> PrTraceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> PrTraceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables = []
     
     let transformConfigurationWf<'traceableOfOrigin> () : ExogenousWorkflowFunction<SamMutable.MutablePgm<'traceableOfOrigin>,PromelaTracer<'traceableOfOrigin>> = workflow {
         let! state = getState ()
@@ -235,7 +243,7 @@ module internal SamToPromela =
             {
                 PromelaTracer.PrSpec = newPromelaSpec;
                 PromelaTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                PromelaTracer.ForwardTracer = state.ForwardTracer;
+                PromelaTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }

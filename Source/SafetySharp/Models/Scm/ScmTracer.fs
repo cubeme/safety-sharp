@@ -24,22 +24,18 @@ namespace SafetySharp.Models
 
 module internal ScmMutable =
     open SafetySharp.Workflow
+    open SafetySharp.ITracing
     open Scm
+    open ScmHelpers
         
     type IScmMutable<'traceableOfOrigin,'state> =
         interface
-            inherit IModel<Traceable> 
+            inherit ITracing<'traceableOfOrigin,Traceable,'state> 
             abstract getModel : ScmModel
             abstract setModel : ScmModel -> 'state
             
             abstract getUncommittedForwardTracerMap : Map<Traceable,Traceable> //to be able to inherit uncommitted traces
             abstract setUncommittedForwardTracerMap : Map<Traceable,Traceable> -> 'state //used to commit
-
-            abstract getTraceablesOfOrigin : 'traceableOfOrigin list
-            abstract setTraceablesOfOrigin : 'traceableOfOrigin list -> 'state
-
-            abstract getForwardTracer : ('traceableOfOrigin -> Traceable)
-            abstract setForwardTracer : ('traceableOfOrigin -> Traceable) -> 'state
         end
 
     type IScmMutableWorkflowFunction<'state,'traceableOfOrigin,'returnType when 'state :> IScmMutable<'traceableOfOrigin,'state>> =
@@ -129,9 +125,6 @@ module internal ScmMutable =
 
                 member this.getModel : ScmModel = this.Model
                 interface IScmMutable<'traceableOfOrigin,SimpleScmMutable<'traceableOfOrigin>> with
-                    member this.getTraceables =
-                        let imodel = this.getModel :> IModel<Traceable>
-                        imodel.getTraceables
                     member this.getModel : ScmModel = this.Model
                     member this.setModel (model:ScmModel) = {this with Model=model}
                     member this.getUncommittedForwardTracerMap : Map<Traceable,Traceable> = this.UncommitedForwardTracerMap
@@ -140,6 +133,8 @@ module internal ScmMutable =
                     member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                     member this.getForwardTracer : ('traceableOfOrigin -> Traceable) = this.ForwardTracer
                     member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Traceable)) = {this with ForwardTracer=forwardTracer}
+                    member this.getTraceables : Traceable list =
+                        this.Model.getTraceables
 
     
     type SimpleScmMutableWorkflowFunction<'traceableOfOrigin,'returnType> =

@@ -55,7 +55,7 @@ type SpinModelChecker (model : Model) =
 
     //do printf "%+A" spin
     let spinWriter = SafetySharp.Analysis.Modelchecking.PromelaSpin.PromelaToString()
-    let spincode = spinWriter.Export spin
+    let spincode = spinWriter.Export (spin.PrSpec)
     do printf "%s" spincode
 
 //    member this.Check (formula : LtlFormula) =

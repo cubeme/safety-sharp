@@ -135,10 +135,3 @@ module internal Sam =
         Locals : LocalVarDecl list
         Body : Stm
     }
-            with
-                interface IModel<Traceable> with
-                    member this.getTraceables : Traceable list =
-                        this.Globals |> List.map (fun gl -> Traceable(gl.Var))
-                member this.getTraceables : Traceable list  =
-                    let imodel = this :> IModel<Traceable>
-                    imodel.getTraceables

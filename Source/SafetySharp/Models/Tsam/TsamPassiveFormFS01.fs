@@ -53,6 +53,7 @@ namespace SafetySharp.Models
 module internal TsamPassiveFormFS01 =
     open SafetySharp.Models.SamHelpers
     open Tsam
+    open TsamHelpers
             
     type Substitutions =
         {

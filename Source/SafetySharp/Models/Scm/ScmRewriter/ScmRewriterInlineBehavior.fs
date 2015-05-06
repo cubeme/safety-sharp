@@ -58,9 +58,6 @@ module internal ScmRewriterInlineBehavior =
     }
         with
             interface IScmMutable<'traceableOfOrigin,ScmRewriterInlineBehaviorState<'traceableOfOrigin>> with
-                member this.getTraceables =
-                    let imodel = this.Model :> IModel<Traceable>
-                    imodel.getTraceables
                 member this.getModel : ScmModel = this.Model
                 member this.setModel (model:ScmModel) =
                     { this with
@@ -71,6 +68,7 @@ module internal ScmRewriterInlineBehavior =
                     { this with
                         ScmRewriterInlineBehaviorState.UncommittedForwardTracerMap = forwardTracerMap;
                     }
+                member this.getTraceables = this.Model.getTraceables
                 member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
                 member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
                 member this.getForwardTracer : ('traceableOfOrigin -> Traceable) = this.ForwardTracer

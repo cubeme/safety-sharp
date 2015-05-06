@@ -25,6 +25,7 @@ namespace SafetySharp.Analysis.Techniques
 module internal AtLtlFormula =
     open SafetySharp.Workflow
     open SafetySharp.Models
+    open SafetySharp.ITracing
     open SafetySharp.Analysis.Modelchecking.PromelaSpin.Typedefs
 
     type AnalyseLtlFormulas (untransformedModel:Scm.ScmModel) =
@@ -45,7 +46,7 @@ module internal AtLtlFormula =
             }
             let ((promelaModel,forwardTracer),wfState) = runWorkflow_getResultAndWfState transformModelToPromela            
             let promelaModelWithFormulas = 
-                { promelaModel with
+                { promelaModel.PrSpec with
                     PrSpec.Formulas = formulasToVerify |> List.map (SafetySharp.Analysis.Modelchecking.PromelaSpin.ScmVeToPromela.transformLtlExpression forwardTracer)
                 }
             let executeModelWithFormulas = workflow {

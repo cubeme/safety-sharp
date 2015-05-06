@@ -53,6 +53,7 @@ namespace SafetySharp.Models
 module internal TsamPassiveFormGCFK09 =
     open SafetySharp.Models.SamHelpers
     open Tsam
+    open TsamHelpers
     
     type StatementInfos =
         {

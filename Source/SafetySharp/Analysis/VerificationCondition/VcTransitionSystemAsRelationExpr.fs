@@ -46,12 +46,22 @@ module internal TransitionSystemAsRelationExpr =
         Init : Expr;
         Trans : Expr;
     }
+
+    open SafetySharp.ITracing
     
     type TransitionSystemTracer<'traceableOfOrigin> = {
         TransitionSystem : TransitionSystem;
         TraceablesOfOrigin : 'traceableOfOrigin list;
         ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
+        with
+            interface ITracing<'traceableOfOrigin,Tsam.Traceable,TransitionSystemTracer<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Sam.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Sam.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Tsam.Traceable list =
+                    this.TransitionSystem.Globals |> List.map (fun varDecl -> Traceable.Traceable(varDecl.Var))
 
     type Traceable = Tsam.Traceable
         
@@ -66,9 +76,9 @@ module internal TransitionSystemAsRelationExpr =
                 let operator = BOp.Equals
                 Expr.BExpr(Expr.Read(assignVar),operator,assignExpr)
             varDecl.Init |> List.map generatePossibleValues
-                         |> Tsam.createOredExpr
+                         |> TsamHelpers.createOredExpr
         varDecls |> List.map generateInit
-                 |> Tsam.createAndedExpr
+                 |> TsamHelpers.createAndedExpr
     
     
     // -- GWAM --------------------------------------------------------

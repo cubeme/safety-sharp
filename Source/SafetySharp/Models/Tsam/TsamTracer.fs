@@ -24,10 +24,19 @@ namespace SafetySharp.Models
 
 module internal TsamMutable =
 
+    open SafetySharp.ITracing
+    open SafetySharp.Models.TsamHelpers
+
     type MutablePgm<'traceableOfOrigin> = {
         Pgm : Tsam.Pgm;
         TraceablesOfOrigin : 'traceableOfOrigin list;
         ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
     }
-
-    open SafetySharp
+        with
+            interface ITracing<'traceableOfOrigin,Tsam.Traceable,MutablePgm<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Sam.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Sam.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Tsam.Traceable list =
+                    this.Pgm.getTraceables

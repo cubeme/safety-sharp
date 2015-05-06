@@ -50,13 +50,19 @@ module internal SamHelpers =
             else
                 Expr.BExpr(exprs.Head,BOp.And,Expr.createAndedExpr exprs.Tail)        
         
+    // Extension methods
     type LocalVarDecl with
         static member createLocalVarDecl (_var:Var) (_type:Type) : LocalVarDecl=
             {
                 LocalVarDecl.Var = _var
                 LocalVarDecl.Type = _type;
             }
-        
+            
+    // Extension methods
+    type Pgm with
+        member this.getTraceables : Traceable list  =
+            this.Globals |> List.map (fun gl -> Traceable(gl.Var))
+
         (*
         member expr.getSamType (varToType:Map<Var,Type>) : Type =
             // TODO: things like a==b==c not supported yet

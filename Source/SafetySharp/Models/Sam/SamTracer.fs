@@ -23,12 +23,23 @@
 namespace SafetySharp.Models
 
 module internal SamMutable =
-    
+
+    open SamHelpers
+    open SafetySharp.ITracing
+
     type MutablePgm<'traceableOfOrigin> = {
         Pgm : Sam.Pgm;
         TraceablesOfOrigin : 'traceableOfOrigin list;
         ForwardTracer : 'traceableOfOrigin -> Sam.Traceable;
     }
+        with
+            interface ITracing<'traceableOfOrigin,Sam.Traceable,MutablePgm<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> Sam.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> Sam.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : Sam.Traceable list =
+                    this.Pgm.getTraceables
 
     open SafetySharp.Workflow
         

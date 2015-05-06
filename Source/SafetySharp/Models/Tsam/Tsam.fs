@@ -88,48 +88,6 @@ module internal Tsam =
         Body : Stm;
         UniqueStatementIdGenerator : unit -> StatementId;
     }
-                    
-    let rec createAndedExpr (exprs:Expr list) : Expr =
-        if exprs.IsEmpty then
-            Expr.Literal(Val.BoolVal(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
-        else if exprs.Tail = [] then
-            // only one element, so return it
-            exprs.Head
-        else
-            Expr.BExpr(exprs.Head,BOp.And,createAndedExpr exprs.Tail)
-                
-    let rec createOredExpr (exprs:Expr list) : Expr =
-        if exprs.IsEmpty then
-            Expr.Literal(Val.BoolVal(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable.
-        else if exprs.Tail = [] then
-            // only one element, so return it
-            exprs.Head
-        else
-            Expr.BExpr(exprs.Head,BOp.Or,createOredExpr exprs.Tail)
-    
-    let unionManyVarMaps<'b when 'b : comparison> (mapsToUnite:Map<Var,'b> list) =
-        let rec unionManyVarMaps (united:Map<Var,'b>) (mapsToUnite:Map<Var,'b> list) =
-            if mapsToUnite.IsEmpty then
-                united
-            else
-                let newUnited =
-                    mapsToUnite.Head |> Map.toList
-                                     |> List.fold (fun (united:Map<Var,'b>) (key:Var,value:'b) -> united.Add(key,value)) united
-                unionManyVarMaps newUnited mapsToUnite.Tail
-        unionManyVarMaps Map.empty<Var,'b> mapsToUnite
 
-    
-    // Extension methods
-    type Stm with
-        member stm.appendStatements (uniqueStatementIdGenerator : unit -> StatementId) (stmsToAppend:Stm list) =
-            if stmsToAppend.IsEmpty then
-                stm
-            else
-                match stm with
-                    | Stm.Block (sid,stmnts) ->
-                        Stm.Block (sid,stmnts@stmsToAppend)
-                    | _ ->
-                        let freshStmId = uniqueStatementIdGenerator ()
-                        Stm.Block (freshStmId,stm::stmsToAppend)
-                    
     type Traceable = SafetySharp.Models.Sam.Traceable
+                

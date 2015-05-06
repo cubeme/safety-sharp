@@ -196,6 +196,21 @@ module internal ScmHelpers =
                 | Comp.Comp (name) -> name
                 
     // Extension methods
+    type ScmModel with
+        member model.getRootComp = match model with | ScmModel(rootComp) -> rootComp
+        member this.getTraceables : Traceable list =
+            let rec collectGlobalVariables (parentPath:CompPath) (currentCompDecl:CompDecl) : Traceable list =
+                let currentPath = (currentCompDecl.Comp)::parentPath
+                let varsFromSubs = currentCompDecl.Subs |> List.collect (collectGlobalVariables currentPath)
+                let varsFromHere =
+                    let varsFromFields = currentCompDecl.Fields |> List.map (fun field -> Traceable.TraceableField(currentPath,field.Field) )
+                    let varsFromFaults = currentCompDecl.Faults |> List.map (fun fault -> Traceable.TraceableFault(currentPath,fault.Fault) )
+                    (varsFromFields@varsFromFaults)
+                (varsFromHere@varsFromSubs)
+            let rootComponent = this.getRootComp
+            collectGlobalVariables []  (rootComponent)
+    
+    // Extension methods
     type CompDecl with
         member node.getName =
             node.Comp.getName

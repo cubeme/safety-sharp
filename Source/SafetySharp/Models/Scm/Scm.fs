@@ -213,20 +213,3 @@ module internal Scm =
 
     type internal ScmModel =
         ScmModel of CompDecl
-            with
-                interface IModel<Traceable> with
-                    member this.getTraceables : Traceable list =
-                        let rec collectGlobalVariables (parentPath:CompPath) (currentCompDecl:CompDecl) : Traceable list =
-                            let currentPath = (currentCompDecl.Comp)::parentPath
-                            let varsFromSubs = currentCompDecl.Subs |> List.collect (collectGlobalVariables currentPath)
-                            let varsFromHere =
-                                let varsFromFields = currentCompDecl.Fields |> List.map (fun field -> Traceable.TraceableField(currentPath,field.Field) )
-                                let varsFromFaults = currentCompDecl.Faults |> List.map (fun fault -> Traceable.TraceableFault(currentPath,fault.Fault) )
-                                (varsFromFields@varsFromFaults)
-                            (varsFromHere@varsFromSubs)
-                        let rootComponent = this.getRootComp
-                        collectGlobalVariables []  (rootComponent)
-                member this.getTraceables : Traceable list  =
-                    let imodel = this :> IModel<Traceable>
-                    imodel.getTraceables
-                member model.getRootComp = match model with | ScmModel(rootComp) -> rootComp

@@ -294,12 +294,20 @@ module internal TsamToBoogie =
         let forwardTrace = globalVars |> List.map (fun gl->(Tsam.Traceable.Traceable(gl),gl.getName)) |> Map.ofList
         (boogiePgm,forwardTrace)
     
-    
+    open SafetySharp.ITracing
+
     type BoogiePgmTracer<'traceableOfOrigin> = {
         Pgm : BoogieSimplifiedAst.Pgm;
         TraceablesOfOrigin : 'traceableOfOrigin list;
-        ForwardTracer : 'traceableOfOrigin -> Tsam.Traceable;
+        ForwardTracer : 'traceableOfOrigin -> BoogieSimplifiedAst.Traceable;
     }
+        with
+            interface ITracing<'traceableOfOrigin,BoogieSimplifiedAst.Traceable,BoogiePgmTracer<'traceableOfOrigin>> with
+                member this.getTraceablesOfOrigin : 'traceableOfOrigin list = this.TraceablesOfOrigin
+                member this.setTraceablesOfOrigin (traceableOfOrigin:('traceableOfOrigin list)) = {this with TraceablesOfOrigin=traceableOfOrigin}
+                member this.getForwardTracer : ('traceableOfOrigin -> BoogieSimplifiedAst.Traceable) = this.ForwardTracer
+                member this.setForwardTracer (forwardTracer:('traceableOfOrigin -> BoogieSimplifiedAst.Traceable)) = {this with ForwardTracer=forwardTracer}
+                member this.getTraceables : BoogieSimplifiedAst.Traceable list = []
     
     let transformVcSamToBoogieWf<'traceableOfOrigin> ()
             : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,BoogiePgmTracer<'traceableOfOrigin>> = workflow {
@@ -313,7 +321,7 @@ module internal TsamToBoogie =
             {
                 BoogiePgmTracer.Pgm = newBoogieAst;
                 BoogiePgmTracer.TraceablesOfOrigin = state.TraceablesOfOrigin;
-                BoogiePgmTracer.ForwardTracer = state.ForwardTracer;
+                BoogiePgmTracer.ForwardTracer = tracer;
             }
         do! updateState transformed
     }
