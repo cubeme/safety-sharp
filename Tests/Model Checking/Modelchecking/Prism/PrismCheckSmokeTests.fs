@@ -38,7 +38,7 @@ module PrismCheckSmokeTests =
             do! SafetySharp.Models.SamParser.parseStringWorkflow
             do! SafetySharp.Models.SamToTsam.transformSamToTsam ()
             do! SafetySharp.Models.TsamPassiveFormGCFK09.transformProgramToSsaForm_Original ()
-            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModel.transformWorkflow ()
+            do! SafetySharp.Analysis.VerificationCondition.VcGuardWithAssignmentModelFast.transformWorkflow ()
             do! SafetySharp.Analysis.Modelchecking.Prism.GwamToPrism.transformWorkflow ()
             do! SafetySharp.ITracing.logForwardTracesOfOrigins ()
             do! SafetySharp.ITracing.removeTracing ()
