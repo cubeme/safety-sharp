@@ -169,7 +169,7 @@ module internal SsmValidation =
                     | MemberExpr (_, CallExpr (_, _, _, _, _, _, true)) -> notSupported "Unsupported virtual method call '%+A'." e
                     | _ -> ()
 
-                port.Body |> Ssm.iterExprs invocations
+                port.Body |> Ssm.iterExprsInStm invocations
             )
 
         // Compute the edges from the provided ports and step functions to all invoked methods

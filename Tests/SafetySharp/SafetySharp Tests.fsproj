@@ -82,6 +82,7 @@
     <Compile Include="Models\Ssm\SsmLowering.VirtualDispatch.fs" />
     <Compile Include="Models\Ssm\SsmLowering.Scheduling.fs" />
     <Compile Include="Models\Ssm\SsmValidations.fs" />
+    <Compile Include="Models\Ssm\SsmLowering.StepInlining.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterLevelUpTests.fs" />
     <Compile Include="Models\Scm\RewriterTests\ScmRewriterCompleteRewriteTests.fs" />
     <Compile Include="Models\Scm\ScmParserTests.fs" />

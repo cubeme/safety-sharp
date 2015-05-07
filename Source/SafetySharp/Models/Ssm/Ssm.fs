@@ -371,26 +371,59 @@ module internal Ssm =
         let last = Array.length methodBody
         transform 0 last
 
-    /// Maps all expressions within the given statement using the given map function.
-    let rec mapExprs map stm =
+    /// Maps all subexpressions within the given expression using the given map function.
+    let rec mapExprs map e =
+        match e with
+        | UExpr (op, e)                  -> UExpr (op, mapExprs map e) |> map
+        | BExpr (e1, op, e2)             -> BExpr (mapExprs map e1, op, mapExprs map e2) |> map
+        | MemberExpr (t, e)              -> MemberExpr (t, mapExprs map e) |> map
+        | TypeExpr (t, e)                -> TypeExpr (t, mapExprs map e) |> map
+        | CallExpr (n, t, p, d, r, a, v) -> CallExpr (n, t, p, d, r, a |> List.map (mapExprs map), v) |> map
+        | _                              -> map e
+
+    /// Maps all substatements within the given statement using the given map function.
+    let rec mapStms map stm =
         match stm with
-        | NopStm            -> stm
-        | AsgnStm (v, e)    -> AsgnStm (v, map e)
-        | GotoStm (e, pc)   -> GotoStm (map e, pc)
-        | SeqStm s          -> s |> List.map (mapExprs map) |> SeqStm
-        | RetStm None       -> stm
-        | RetStm (Some e)   -> RetStm (Some (map e))
-        | IfStm (e, s1, s2) -> IfStm (map e, mapExprs map s1, mapExprs map s2)
-        | ExprStm e         -> ExprStm (map e)
+        | SeqStm s          -> s |> List.map (mapStms map) |> SeqStm |> map
+        | IfStm (e, s1, s2) -> IfStm (e, mapStms map s1, mapStms map s2) |> map
+        | _                 -> map stm
+
+    /// Maps all expressions within the given statement using the given map function.
+    let mapExprsInStm map =
+        mapStms (fun stm ->
+            match stm with
+            | AsgnStm (v, e)    -> AsgnStm (v, map e)
+            | GotoStm (e, pc)   -> GotoStm (map e, pc)
+            | RetStm (Some e)   -> RetStm (Some (map e))
+            | IfStm (e, s1, s2) -> IfStm (map e, s1, s2)
+            | ExprStm e         -> ExprStm (map e)
+            | _                 -> stm
+        )
+
+    /// Replaces the given variable with the given new one.
+    let replaceVar oldVar newVar stm =
+        stm
+        |> mapStms (fun stm ->
+            match stm with
+            | AsgnStm (v, e) when v = oldVar -> AsgnStm (newVar, e)
+            | _                              -> stm
+        )
+        |> mapExprsInStm (mapExprs (fun e ->
+            match e with
+            | VarExpr v when v = oldVar         -> VarExpr newVar
+            | VarRefExpr v when v = oldVar      -> VarRefExpr newVar
+            | MemberExpr (t, e) when t = oldVar -> MemberExpr (newVar, e)
+            | _                                 -> e
+        ))
 
     /// Iterates all expressions within the given statement, calling the given function.
-    let rec iterExprs func stm =
+    let rec iterExprsInStm func stm =
         match stm with
         | AsgnStm (v, e)    -> func e
         | GotoStm (e, pc)   -> func e
-        | SeqStm s          -> s |> List.iter (iterExprs func)
+        | SeqStm s          -> s |> List.iter (iterExprsInStm func)
         | RetStm (Some e)   -> func e
-        | IfStm (e, s1, s2) -> func e; iterExprs func s1; iterExprs func s2
+        | IfStm (e, s1, s2) -> func e; iterExprsInStm func s1; iterExprsInStm func s2
         | ExprStm e         -> func e
         | _                 -> ()
 
