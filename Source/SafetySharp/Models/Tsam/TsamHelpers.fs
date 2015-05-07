@@ -73,4 +73,58 @@ module internal TsamHelpers =
                     | _ ->
                         let freshStmId = uniqueStatementIdGenerator ()
                         Stm.Block (freshStmId,stm::stmsToAppend)
+
+        member stm.normalizeBlocks (uniqueStatementIdGenerator : unit -> StatementId) =
+            // transform stm to be in a form, where no block contains a block directly   
+            let isBlock (stm:Stm) : bool =
+                match stm with
+                    | Stm.Block(_) -> true
+                    | _ -> false
+            let normalizeInABlockStm (sid,statements:Stm list) : (Stm) =
+                let getSubStatements (stm:Stm) =
+                    match stm with
+                        | Stm.Block(sid,statements:Stm list) -> statements
+                        | _ -> [stm]                    
+                let flatStatements =
+                    statements |> List.collect getSubStatements
+                Stm.Block(sid,flatStatements)
+            let rec normalizeOutOfABlockStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
+                match stm with
+                        | Stm.Block (sid,statements:Stm list) ->
+                            let somethingToDo = statements |> List.exists (isBlock)
+                            if somethingToDo then
+                                (normalizeInABlockStm (sid,statements),true)
+                            else
+                                (stm,false)
+                        | Stm.Choice (sid,choices: Stm list) ->
+                            let (newChoices,somethingChanged) =
+                                choices |> List.map normalizeOutOfABlockStm
+                                        |> List.unzip
+                            let somethingChanged = somethingChanged |> List.exists id
+                            if somethingChanged then
+                                (Stm.Choice(sid,newChoices),true)
+                            else
+                                (stm,false)
+                        | Stm.Stochastic (sid,stochasticChoice: (Expr*Stm) list) ->
+                            let (newChoices,somethingChanged) =
+                                stochasticChoice |> List.map (fun (choiceProb,choiceStm) ->
+                                                                  let (newChoiceStm,somethingChanged) = normalizeOutOfABlockStm choiceStm
+                                                                  ((choiceProb,newChoiceStm),somethingChanged)
+                                                              )
+                                                 |> List.unzip
+                            let somethingChanged = somethingChanged |> List.exists id
+                            if somethingChanged then
+                                (Stm.Stochastic(sid,newChoices),true)
+                            else
+                                (stm,false)
+                        | _ ->
+                            (stm,false)
+            let rec normalizeStmUntilFixpoint (stm:Stm) =
+                let (newStm,wasChanged) = normalizeOutOfABlockStm stm
+                if wasChanged then
+                    normalizeStmUntilFixpoint newStm
+                else
+                    stm
+            normalizeStmUntilFixpoint stm
+
                     
