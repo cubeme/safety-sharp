@@ -17,6 +17,7 @@
 * overflowIntWrapAround4.sam: Lower bound twice the range
 * overflowIntClamp1.sam: upper bound
 * overflowIntClamp2.sam: lower bound
+* nestedBlocks.sam: Many nested Blocks
 
 ## Smoke Tests of evaluation
 

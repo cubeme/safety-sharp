@@ -90,6 +90,7 @@
     <Compile Include="Models\Scm\ScmConsistencyCheckTests.fs" />
     <Compile Include="Models\Sam\SamParserTests.fs" />
     <Compile Include="Models\Tsam\VcPassiveFormGCFK09Tests.fs" />
+    <Compile Include="Models\Tsam\TsamHelpers.fs" />
     <Compile Include="Models\Transformations\SsmToScmTests.fs" />
     <Compile Include="Models\Transformations\ScmToSamTests.fs" />
     <None Include="app.config" />
