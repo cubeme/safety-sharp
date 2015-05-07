@@ -80,22 +80,26 @@ module internal TsamHelpers =
                 match stm with
                     | Stm.Block(_) -> true
                     | _ -> false
-            let normalizeInABlockStm (sid,statements:Stm list) : (Stm) =
-                let getSubStatements (stm:Stm) =
+
+            let rec normalizeInABlockStm (sid,statements:Stm list) : (Stm*bool) =
+                let getSubStatements (stm:Stm) : ((Stm list)*bool)=
                     match stm with
-                        | Stm.Block(sid,statements:Stm list) -> statements
-                        | _ -> [stm]                    
-                let flatStatements =
-                    statements |> List.collect getSubStatements
-                Stm.Block(sid,flatStatements)
-            let rec normalizeOutOfABlockStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
+                        | Stm.Block(sid,statements:Stm list) ->
+                            (statements,true)
+                        | _ ->
+                            let (normalizedOtherStatement,somethingChanged) = normalizeOutOfABlockStm stm
+                            ([normalizedOtherStatement],somethingChanged)
+                let (flatStatementss,somethingChanged) =
+                    statements |> List.map getSubStatements
+                               |> List.unzip
+                let flatStatements = flatStatementss |> List.collect id
+                let somethingChanged = somethingChanged |> List.exists id
+                (Stm.Block(sid,flatStatements),somethingChanged)
+
+            and normalizeOutOfABlockStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
                 match stm with
                         | Stm.Block (sid,statements:Stm list) ->
-                            let somethingToDo = statements |> List.exists (isBlock)
-                            if somethingToDo then
-                                (normalizeInABlockStm (sid,statements),true)
-                            else
-                                (stm,false)
+                            normalizeInABlockStm (sid,statements)
                         | Stm.Choice (sid,choices: Stm list) ->
                             let (newChoices,somethingChanged) =
                                 choices |> List.map normalizeOutOfABlockStm
