@@ -25,9 +25,14 @@ namespace SafetySharp.Analysis.VerificationCondition
 // TODO: This is currently only a draft of an idea
 
 // The idea here is to transform the Tsam to a form, which resembles the guard with assignment form.
-//   1st: Push every assignment to the end
-//   2nd: Push every stochastic statement before the assignments (or to end, if none exists). Merge stochastic statements
-//   3rd: Pull every choice to the beginning. Merge choices.
+//   1st: Treeify: A control flow may split and merge. Avoid the merging by duplicating the statements that happen after the merge.
+//           Example:
+//                     ┌─ 4 ─┐                      ┌─ 4 ─ 6
+//           1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
+//                     └─ 5 ─┘                      └─ 5 ─ 6
+//   2nd: Push every assignment to the end
+//   3rd: Push every stochastic statement before the assignments (or to end, if none exists). Merge stochastic statements
+//   4th: Pull every choice to the beginning. Merge choices.
 // TODO: Empty Blocks and nested blocks are difficult to treat. Maybe write a normalizer to facilitate this step.
 // Result: Choice* of (Assume*, Prob of (Assign*)) <--- exactly what we want
 
@@ -48,55 +53,60 @@ module internal VcGuardWithAssignmentModel =
     open SafetySharp.Models.Tsam
     open SafetySharp.Models.TsamMutable
 
-    let phase1FindAssignmentNotAtTheEnd () : TsamWorkflowFunction<_,StatementId option> = workflow {
+    let phase1Treeify () : TsamWorkflowFunction<_,StatementId option> = workflow {
+        //returns StatementId and type of next statement. type of the next statement should not be assignment
+        
+        // Find block with choice or stochastic. There must be at least one statement after the choice.
+        // Example:
+        //           ┌─ 4 ─┐                      ┌─ 4 ─ 6
+        // 1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
+        //           └─ 5 ─┘                      └─ 5 ─ 6
+
+
+        return None
+    }
+
+    let phase2FindAssignmentNotAtTheEnd () : TsamWorkflowFunction<_,StatementId option> = workflow {
         //returns StatementId and type of next statement. type of the next statement should not be assignment
         return None
     }
     
-    let phase1PushAssignmentOverChoice (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+    let phase2PushAssignmentOverChoice (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
         return ()
     }
         
-    let phase1PushAssignmentOverStochastic (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+    let phase2PushAssignmentOverStochastic (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
         return ()
     }
         
-    let phase1PushAssignmentOverAssumption (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+    let phase2PushAssignmentOverAssumption (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
         return ()
     }
 
-    let phase1PushAssignmentOverAssertion (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
+    let phase2PushAssignmentOverAssertion (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
         return ()
     }
 
-    let phase1PushAssignmentTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        let! (a) = phase1FindAssignmentNotAtTheEnd ()
+    let phase2PushAssignmentTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        let! (a) = phase2FindAssignmentNotAtTheEnd ()
         match a with
             | None -> return ()
             | Some(stmId) ->
-                do! phase1PushAssignmentOverChoice stmId
+                do! phase2PushAssignmentOverChoice stmId
     }
 
-    let phase2PushStochasticTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        let! (a) = phase1FindAssignmentNotAtTheEnd ()
-        match a with
-            | None -> return ()
-            | Some(stmId) ->
-                do! phase1PushAssignmentOverChoice stmId
+    let phase3PushStochasticTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        return ()
     }
 
-    let phase3PullChoicesTowardsBeginning () : TsamWorkflowFunction<_,unit> = workflow {
-        let! (a) = phase1FindAssignmentNotAtTheEnd ()
-        match a with
-            | None -> return ()
-            | Some(stmId) ->
-                do! phase1PushAssignmentOverChoice stmId
+    let phase4PullChoicesTowardsBeginning () : TsamWorkflowFunction<_,unit> = workflow {
+        return ()
     }
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
-        do! iterateToFixpoint (phase1PushAssignmentTowardsEnd ())
-        do! iterateToFixpoint (phase2PushStochasticTowardsEnd ())
-        do! iterateToFixpoint (phase3PullChoicesTowardsBeginning ())
+        do! iterateToFixpoint (phase2PushAssignmentTowardsEnd ())
+        do! iterateToFixpoint (phase3PushStochasticTowardsEnd ())
+        do! iterateToFixpoint (phase4PullChoicesTowardsBeginning ())
         return ()
     }
     

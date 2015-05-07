@@ -277,18 +277,9 @@ module internal ScmRewriterInlineBehavior =
                             failwith "TODO: Delayed Bindings cannot be inlined yet"
                             return ()
                         else
-                            //TODO: rewrite getProvPortDecls: It only gets the ProvPortDecls in the original model and
-                            //      does not include the parts, which are in the already rewritten part of the model.
-                            //      Move this part into "State".
-                            //      Actually, it makes no difference now, but might become a problem later.
                             let provPortDecls = binding.Source.ProvPort |> rootComp.getProvPortDecls
                             assert (provPortDecls.Length = 1) //exactly one provPortDecl should exist. Assume uniteProvPortDecls was called
                             let provPortDecl = provPortDecls.Head
-                                // Note: assure, no name clashes and inside always fresh names are used
-                            //let transformLocal  =
-                            //    let! newName = getUnusedVarName (sprintf "%s_%s" provPortDecl.getName var.getName)
-                            //provPortDecl.Behavior.Locals |> List.iter (fun varDecl -> (varDecl,transformedVarName varDecl) )
-
                                 
                             // Step 1: replace Local:VarDecl by new Local:VarDecl in Statement
 
