@@ -97,8 +97,15 @@ type ExampleFiles() =
         ()
 
     [<Test>]
-    member this.``Example nestedBlocks parses successfully`` () =
-        let inputFile = """../../Examples/SAM/nestedBlocks.sam"""
+    member this.``Example nestedBlocks1 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/nestedBlocks1.sam"""
+        let input = System.IO.File.ReadAllText inputFile
+        let result = parseSam input
+        ()
+
+    [<Test>]
+    member this.``Example nestedBlocks2 parses successfully`` () =
+        let inputFile = """../../Examples/SAM/nestedBlocks2.sam"""
         let input = System.IO.File.ReadAllText inputFile
         let result = parseSam input
         ()

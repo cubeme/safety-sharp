@@ -132,17 +132,29 @@ module internal TsamHelpers =
             normalizeStmUntilFixpoint stm
 
         member stm.recursiveRenumberStatements (uniqueStatementIdGenerator : unit -> StatementId) =
-            stm // TODO
+            let freshId = uniqueStatementIdGenerator ()
+            match stm with
+                | Tsam.Stm.Assert (_,expr) ->
+                    Tsam.Stm.Assert (freshId,expr)
+                | Tsam.Stm.Assume (_,expr) ->
+                    Tsam.Stm.Assume (freshId,expr)
+                | Tsam.Stm.Block (_,statements) ->
+                    let newStmnts = statements |> List.map (fun stm -> stm.recursiveRenumberStatements uniqueStatementIdGenerator)
+                    Tsam.Stm.Block (freshId,newStmnts)                    
+                | Tsam.Stm.Choice (_,choices) ->
+                    let newChoices = choices |> List.map (fun stm -> stm.recursiveRenumberStatements uniqueStatementIdGenerator)
+                    Tsam.Stm.Choice (freshId,newChoices)                    
+                | Tsam.Stm.Stochastic (_,stochasticChoices) ->
+                    let newStochasticChoices= stochasticChoices |> List.map (fun (prob,stm) -> (prob,stm.recursiveRenumberStatements uniqueStatementIdGenerator))
+                    Tsam.Stm.Stochastic(freshId,newStochasticChoices)
+                | Tsam.Stm.Write (_,_var,expr) ->
+                    Tsam.Stm.Write(freshId,_var,expr)
             
         member stm.treeifyStm (uniqueStatementIdGenerator : unit -> StatementId) =
             //    Example:
             //              ┌─ 4 ─┐                      ┌─ 4 ─ 6
             //    1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
             //              └─ 5 ─┘                      └─ 5 ─ 6
-            let isBlock (stm:Stm) : bool =
-                match stm with
-                    | Stm.Block(_) -> true
-                    | _ -> false
             let rec treeifyStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
                 match stm with
                     | Stm.Block (blockSid,statements:Stm list) ->
@@ -151,7 +163,7 @@ module internal TsamHelpers =
                             if toTreeify.IsEmpty && not (alreadySomethingChanged) then
                                 //nothing changed at all, so return old statement
                                 (stm,false)
-                            else if toTreeify.IsEmpty && not (alreadySomethingChanged) then
+                            else if toTreeify.IsEmpty && alreadySomethingChanged then
                                 let alreadyTreeified = revAlreadyTreeified |> List.rev
                                 (Stm.Block (blockSid,alreadyTreeified),true)
                             else
@@ -166,7 +178,8 @@ module internal TsamHelpers =
                                             if not (newAlreadySomethingChanged) then
                                                 (stm,false)
                                             else
-                                                let newTreeified = ((statementToTreeify::revAlreadyTreeified) |> List.rev)
+                                                let newChoiceStm = Stm.Choice (sid,treeifiedChoices)
+                                                let newTreeified = ((newChoiceStm::revAlreadyTreeified) |> List.rev)
                                                 (Stm.Block (blockSid,newTreeified),true)
                                         else
                                             // there are statements after the choice. We need to append them in the choice
@@ -195,7 +208,8 @@ module internal TsamHelpers =
                                             if not (newAlreadySomethingChanged) then
                                                 (stm,false)
                                             else
-                                                let newTreeified = ((statementToTreeify::revAlreadyTreeified) |> List.rev)
+                                                let newStochasticStm = Stm.Stochastic (sid,treeifiedChoices)
+                                                let newTreeified = ((newStochasticStm::revAlreadyTreeified) |> List.rev)
                                                 (Stm.Block (blockSid,newTreeified),true)
                                         else
                                             // there are statements after the choice. We need to append them in the choice
@@ -245,8 +259,25 @@ module internal TsamHelpers =
                 if wasChanged then
                     treeifyStmUntilFixpoint newStm
                 else
-                    stm
-            //let normalizedStm = stm.normalizeBlocks uniqueStatementIdGenerator // normalized stm should not be necessary
-            treeifyStmUntilFixpoint stm
+                    stm                    
+            let normalizedStm =
+                // Normalized stm is necessary. It may otherwise happen, that an outer block hides an assignment which should be added.
+                // Our algorithm assumes in this example, that the choice is the last statement (it actually is in the inner block).
+                // But still we require the outer assignment to be added. Example:
+                //      {
+                //         choice {
+                //            true => {i := 1;}
+                //            true => {i := 2;}
+                //         }
+                //      }
+                //      i := i+3;
+                stm.normalizeBlocks uniqueStatementIdGenerator
+            let treeifiedStm =
+                // the main part of the algorithm
+                treeifyStmUntilFixpoint normalizedStm
+            let treeifiedAndNormalizedStm =
+                // just to make sure everything is normalized afterwards
+                treeifiedStm.normalizeBlocks uniqueStatementIdGenerator
+            treeifiedAndNormalizedStm
 
                     

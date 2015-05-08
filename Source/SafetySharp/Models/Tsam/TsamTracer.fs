@@ -80,3 +80,19 @@ module internal TsamMutable =
             }
         do! updateState tsamMutable
     }
+    
+    let treeifyStm<'traceableOfOrigin> ()
+            : EndogenousWorkflowFunction<MutablePgm<'traceableOfOrigin>> = workflow {
+        let! state = getState ()
+        let newPgm =
+            { state.Pgm with
+                Tsam.Pgm.Body = state.Pgm.Body.treeifyStm (state.Pgm.UniqueStatementIdGenerator)
+            }
+        let tsamMutable =
+            {
+                MutablePgm.Pgm = newPgm;
+                MutablePgm.TraceablesOfOrigin = state.TraceablesOfOrigin;
+                MutablePgm.ForwardTracer = state.ForwardTracer;
+            }
+        do! updateState tsamMutable
+    }

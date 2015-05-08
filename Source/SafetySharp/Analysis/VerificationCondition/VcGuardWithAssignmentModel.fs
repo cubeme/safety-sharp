@@ -53,17 +53,13 @@ module internal VcGuardWithAssignmentModel =
     open SafetySharp.Models.Tsam
     open SafetySharp.Models.TsamMutable
 
-    let phase1Treeify () : TsamWorkflowFunction<_,StatementId option> = workflow {
-        //returns StatementId and type of next statement. type of the next statement should not be assignment
-        
-        // Find block with choice or stochastic. There must be at least one statement after the choice.
+    let phase1TreeifyAndNormalize () : TsamWorkflowFunction<_,unit> = workflow {
         // Example:
         //           ┌─ 4 ─┐                      ┌─ 4 ─ 6
         // 1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
         //           └─ 5 ─┘                      └─ 5 ─ 6
-
-
-        return None
+        do! TsamMutable.treeifyStm ()
+        do! TsamMutable.normalizeBlocks ()
     }
 
     let phase2FindAssignmentNotAtTheEnd () : TsamWorkflowFunction<_,StatementId option> = workflow {
@@ -104,6 +100,7 @@ module internal VcGuardWithAssignmentModel =
     }
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
+        do! (phase1TreeifyAndNormalize ())
         do! iterateToFixpoint (phase2PushAssignmentTowardsEnd ())
         do! iterateToFixpoint (phase3PushStochasticTowardsEnd ())
         do! iterateToFixpoint (phase4PullChoicesTowardsBeginning ())
