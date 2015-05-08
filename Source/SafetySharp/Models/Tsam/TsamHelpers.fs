@@ -109,13 +109,13 @@ module internal TsamHelpers =
                                 (Stm.Choice(sid,newChoices),true)
                             else
                                 (stm,false)
-                        | Stm.Stochastic (sid,stochasticChoice: (Expr*Stm) list) ->
+                        | Stm.Stochastic (sid,stochasticChoices: (Expr*Stm) list) ->
                             let (newChoices,somethingChanged) =
-                                stochasticChoice |> List.map (fun (choiceProb,choiceStm) ->
-                                                                  let (newChoiceStm,somethingChanged) = normalizeOutOfABlockStm choiceStm
-                                                                  ((choiceProb,newChoiceStm),somethingChanged)
-                                                              )
-                                                 |> List.unzip
+                                stochasticChoices |> List.map (fun (choiceProb,choiceStm) ->
+                                                                   let (newChoiceStm,somethingChanged) = normalizeOutOfABlockStm choiceStm
+                                                                   ((choiceProb,newChoiceStm),somethingChanged)
+                                                               )
+                                                  |> List.unzip
                             let somethingChanged = somethingChanged |> List.exists id
                             if somethingChanged then
                                 (Stm.Stochastic(sid,newChoices),true)
@@ -130,5 +130,123 @@ module internal TsamHelpers =
                 else
                     stm
             normalizeStmUntilFixpoint stm
+
+        member stm.recursiveRenumberStatements (uniqueStatementIdGenerator : unit -> StatementId) =
+            stm // TODO
+            
+        member stm.treeifyStm (uniqueStatementIdGenerator : unit -> StatementId) =
+            //    Example:
+            //              ┌─ 4 ─┐                      ┌─ 4 ─ 6
+            //    1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
+            //              └─ 5 ─┘                      └─ 5 ─ 6
+            let isBlock (stm:Stm) : bool =
+                match stm with
+                    | Stm.Block(_) -> true
+                    | _ -> false
+            let rec treeifyStm (stm:Stm) : (Stm*bool) = //returns true, if change occurred
+                match stm with
+                    | Stm.Block (blockSid,statements:Stm list) ->
+                        ///////////// Here we rewrite the block. Result must be block
+                        let rec treeifyBlockStatements (revAlreadyTreeified:Stm list,alreadySomethingChanged:bool) (toTreeify:Stm list) : (Stm*bool) = 
+                            if toTreeify.IsEmpty && not (alreadySomethingChanged) then
+                                //nothing changed at all, so return old statement
+                                (stm,false)
+                            else if toTreeify.IsEmpty && not (alreadySomethingChanged) then
+                                let alreadyTreeified = revAlreadyTreeified |> List.rev
+                                (Stm.Block (blockSid,alreadyTreeified),true)
+                            else
+                                let statementToTreeify = toTreeify.Head
+                                match statementToTreeify with
+                                    | Stm.Choice (sid,choices) ->
+                                        let (treeifiedChoices,somethingChanged) = choices |> List.map treeifyStm |> List.unzip
+                                        let somethingChanged = somethingChanged |> List.exists id
+                                        if toTreeify.Tail.IsEmpty then
+                                            // Last statement, everything ok. Nothing to do. We can stop
+                                            let newAlreadySomethingChanged = alreadySomethingChanged || somethingChanged
+                                            if not (newAlreadySomethingChanged) then
+                                                (stm,false)
+                                            else
+                                                let newTreeified = ((statementToTreeify::revAlreadyTreeified) |> List.rev)
+                                                (Stm.Block (blockSid,newTreeified),true)
+                                        else
+                                            // there are statements after the choice. We need to append them in the choice
+                                            let statementsAfterChoice = toTreeify.Tail
+                                            let appendStatementsAfterChoiceToChoice (choice:Stm) =
+                                                // this is the heart of the algorithm
+                                                let newChoice = choice.appendStatements uniqueStatementIdGenerator statementsAfterChoice
+                                                let newChoice = newChoice.recursiveRenumberStatements uniqueStatementIdGenerator
+                                                newChoice
+                                            let newChoiceStm = Stm.Choice(sid,treeifiedChoices |> List.map appendStatementsAfterChoiceToChoice)
+                                            // the appended statements do no longer appear after the block. So toTreeify.Tail is no longer necessary.
+                                            let newTreeified = ((newChoiceStm::revAlreadyTreeified) |> List.rev)
+                                            (Stm.Block(blockSid,newTreeified),true)
+                                    | Stm.Stochastic (sid,stochasticChoices) ->                                    
+                                        let (treeifiedChoices,somethingChanged) =
+                                            stochasticChoices |> List.map (fun (choiceProb,choiceStm) ->
+                                                                               let (newChoiceStm,somethingChanged) = treeifyStm choiceStm
+                                                                               ((choiceProb,newChoiceStm),somethingChanged)
+                                                                           )
+                                                              |> List.unzip
+                                        let somethingChanged = somethingChanged |> List.exists id
+
+                                        if toTreeify.Tail.IsEmpty then
+                                            // Last statement, everything ok. Nothing to do. We can stop
+                                            let newAlreadySomethingChanged = alreadySomethingChanged || somethingChanged
+                                            if not (newAlreadySomethingChanged) then
+                                                (stm,false)
+                                            else
+                                                let newTreeified = ((statementToTreeify::revAlreadyTreeified) |> List.rev)
+                                                (Stm.Block (blockSid,newTreeified),true)
+                                        else
+                                            // there are statements after the choice. We need to append them in the choice
+                                            let statementsAfterChoice = toTreeify.Tail
+                                            let appendStatementsAfterStochasticToStochastic (expr:Expr,choice:Stm) =
+                                                // this is the heart of the algorithm
+                                                let newChoice = choice.appendStatements uniqueStatementIdGenerator statementsAfterChoice
+                                                let newChoice = newChoice.recursiveRenumberStatements uniqueStatementIdGenerator
+                                                (expr,newChoice)
+                                            let newStochasticStm = Stm.Stochastic(sid,treeifiedChoices |> List.map appendStatementsAfterStochasticToStochastic)
+                                            // the appended statements do no longer appear after the block. So toTreeify.Tail is no longer necessary.
+                                            let newTreeified = ((newStochasticStm::revAlreadyTreeified) |> List.rev)
+                                            (Stm.Block(blockSid,newTreeified),true)
+
+                                    | _ ->
+                                        let (treeifiedStatement,somethingChanged) = treeifyStm statementToTreeify
+                                        let newAlreadySomethingChanged = somethingChanged || alreadySomethingChanged
+                                        let newRevAlreadyTreeified = treeifiedStatement :: revAlreadyTreeified
+                                        treeifyBlockStatements (newRevAlreadyTreeified,newAlreadySomethingChanged) (toTreeify.Tail)
+                        treeifyBlockStatements ([],false) statements
+                        ///////////// End of rewriting Block
+                    | Stm.Choice (sid,choices: Stm list) ->
+                        let (newChoices,somethingChanged) =
+                            choices |> List.map treeifyStm
+                                    |> List.unzip
+                        let somethingChanged = somethingChanged |> List.exists id
+                        if somethingChanged then
+                            (Stm.Choice(sid,newChoices),true)
+                        else
+                            (stm,false)
+                    | Stm.Stochastic (sid,stochasticChoice: (Expr*Stm) list) ->
+                        let (newChoices,somethingChanged) =
+                            stochasticChoice |> List.map (fun (choiceProb,choiceStm) ->
+                                                                let (newChoiceStm,somethingChanged) = treeifyStm choiceStm
+                                                                ((choiceProb,newChoiceStm),somethingChanged)
+                                                            )
+                                                |> List.unzip
+                        let somethingChanged = somethingChanged |> List.exists id
+                        if somethingChanged then
+                            (Stm.Stochastic(sid,newChoices),true)
+                        else
+                            (stm,false)
+                    | _ ->
+                        (stm,false)
+            let rec treeifyStmUntilFixpoint (stm:Stm) =
+                let (newStm,wasChanged) = treeifyStm stm
+                if wasChanged then
+                    treeifyStmUntilFixpoint newStm
+                else
+                    stm
+            //let normalizedStm = stm.normalizeBlocks uniqueStatementIdGenerator // normalized stm should not be necessary
+            treeifyStmUntilFixpoint stm
 
                     
