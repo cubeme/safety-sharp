@@ -37,3 +37,12 @@ type ProvidedAttribute () =
 [<Sealed>]
 type RequiredAttribute () =
     inherit Attribute ()
+
+/// For S#-internal use only.
+[<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
+[<Sealed>]
+type BackingFieldAttribute (backingField : string) =
+    inherit Attribute ()
+
+    /// Gets the name of the backing field.
+    member this.BackingField = backingField

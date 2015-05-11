@@ -52,7 +52,7 @@ module RequiredPortNormalizer =
             class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] %s void M() => this.__reqPortField0__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] %s void M() => this.__reqPortField0__();}"
 
         normalize "class X : Component { public extern void M(); }" =? normalized "public"
         normalize "class X : Component { internal extern void M(); }" =? normalized "internal"
@@ -66,19 +66,19 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(int a);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M(int a) => this.__reqPortField0__(a);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public void M(int a) => this.__reqPortField0__(a);}"
 
         normalize "class X : Component { internal extern void M(int a, decimal b); }" =? 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(int a, decimal b);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] internal void M(int a, decimal b) => this.__reqPortField0__(a, b);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] internal void M(int a, decimal b) => this.__reqPortField0__(a, b);}"
 
         normalize "class X : Component { internal extern void M(int a, decimal b, bool c); }" =? 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(int a, decimal b, bool c);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] internal void M(int a, decimal b, bool c) => this.__reqPortField0__(a, b, c);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] internal void M(int a, decimal b, bool c) => this.__reqPortField0__(a, b, c);}"
 
     [<Test>]
     let ``normalizes extern method within params, ref, and out parameters`` () =
@@ -86,13 +86,13 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(ref int a, out bool b);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M(ref int a, out bool b) => this.__reqPortField0__(ref a, out b);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public void M(ref int a, out bool b) => this.__reqPortField0__(ref a, out b);}"
 
         normalize "class X : Component { internal extern void M(params int[] a); }" =? 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(params int[] a);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] internal void M(params int[] a) => this.__reqPortField0__(a);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] internal void M(params int[] a) => this.__reqPortField0__(a);}"
 
     [<Test>]
     let ``normalizes extern non-void returning method within a component`` () =
@@ -100,19 +100,19 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate bool __ReqPortDelegate0__(int a);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public bool M(int a) => this.__reqPortField0__(a);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public bool M(int a) => this.__reqPortField0__(a);}"
 
         normalize "class X : Component { internal extern int M(int a, decimal b); }" =? 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate int __ReqPortDelegate0__(int a, decimal b);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] internal int M(int a, decimal b) => this.__reqPortField0__(a, b);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] internal int M(int a, decimal b) => this.__reqPortField0__(a, b);}"
 
         normalize "class X : Component { internal extern bool M(int a, decimal b, bool c); }" =? 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate bool __ReqPortDelegate0__(int a, decimal b, bool c);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] internal bool M(int a, decimal b, bool c) => this.__reqPortField0__(a, b, c);}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] internal bool M(int a, decimal b, bool c) => this.__reqPortField0__(a, b, c);}"
 
     [<Test>]
     let ``normalizes multiple required ports`` () =
@@ -120,10 +120,10 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate bool __ReqPortDelegate0__(int a);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public bool M(int a) => this.__reqPortField0__(a);\n\
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public bool M(int a) => this.__reqPortField0__(a);\n\
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate1__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate1__ __reqPortField1__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__reqPortField1__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField1__\")] public void M() => this.__reqPortField1__();}"
 
     [<Test>]
     let ``normalizes explictly implemented extern method within a component`` () =
@@ -131,7 +131,7 @@ module RequiredPortNormalizer =
             "class X : Component, A.B.C.I { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] void A.B.C.I.M() => this.__reqPortField0__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] void A.B.C.I.M() => this.__reqPortField0__();}"
 
     [<Test>]
     let ``preserves attributes applied to extern method within a component`` () =
@@ -139,7 +139,7 @@ module RequiredPortNormalizer =
             class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            %s [SafetySharp.Modeling.RequiredAttribute()] void M() => this.__reqPortField0__();}"
+            %s [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] void M() => this.__reqPortField0__();}"
 
         normalize "class X : Component { [DebuggerHidden] extern void M(); }" =? normalized "[DebuggerHidden]"
         normalize "class X : Component { [DebuggerHidden, DebuggerNonUserCode] extern void M(); }" =? normalized "[DebuggerHidden, DebuggerNonUserCode]"
@@ -152,7 +152,7 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__(int a, int b, int c);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M(int a, int b, int c) => this.__reqPortField0__(a, b, c);\n\n\n\n\n\nint f; }"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public void M(int a, int b, int c) => this.__reqPortField0__(a, b, c);\n\n\n\n\n\nint f; }"
 
         actual =? expected
 
@@ -163,7 +163,7 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__reqPortField0__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public void M() => this.__reqPortField0__();}"
 
     [<Test>]
     let ``normalizes required port of component class nested in other non-component class`` () =
@@ -172,7 +172,7 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__reqPortField0__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public void M() => this.__reqPortField0__();}"
 
     [<Test>]
     let ``does not normalize Update method`` () =
@@ -184,7 +184,7 @@ module RequiredPortNormalizer =
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] public new void Update() => this.__reqPortField0__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public new void Update() => this.__reqPortField0__();}"
 
     [<Test>]
     let ``does not get confused by comments`` () =
@@ -192,16 +192,16 @@ module RequiredPortNormalizer =
             "class X : Component { //TODO\n\
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            [SafetySharp.Modeling.RequiredAttribute()] void M() => this.__reqPortField0__();}"
+            [SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] void M() => this.__reqPortField0__();}"
 
         normalize "class X : Component { ///<summary>X</summary>\nextern void M(); }" =? 
             "class X : Component { \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            ///<summary>X</summary>\n[SafetySharp.Modeling.RequiredAttribute()] void M() => this.__reqPortField0__();}"
+            ///<summary>X</summary>\n[SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] void M() => this.__reqPortField0__();}"
 
         normalize "class X : Component { void N() {}\n///<summary>\n///X\n///</summary>\n//TODO\npublic extern void M(); }" =? 
             "class X : Component { void N() {}\n\
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __ReqPortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __ReqPortDelegate0__ __reqPortField0__;\
-            ///<summary>\n///X\n///</summary>\n//TODO\n[SafetySharp.Modeling.RequiredAttribute()] public void M() => this.__reqPortField0__();}"
+            ///<summary>\n///X\n///</summary>\n//TODO\n[SafetySharp.Modeling.RequiredAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__reqPortField0__\")] public void M() => this.__reqPortField0__();}"

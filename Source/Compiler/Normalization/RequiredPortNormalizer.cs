@@ -44,13 +44,13 @@ namespace SafetySharp.Compiler.Normalization
 	///    		// becomes (on a single line with uniquely generated names):
 	///  		[CompilerGenerated] public delegate void d(int a, double b);
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] d f;
-	///    		[SafetySharp.Modeling.RequiredAttribute] public void MyMethod(int a, double b) { f(a, b); }
+	///    		[SafetySharp.Modeling.RequiredAttribute(BackingField = "f")] public void MyMethod(int a, double b) { f(a, b); }
 	///    		
 	///    		private extern bool MyMethod(out int a);
 	///    		// becomes (on a single line with uniquely generated names):
 	///    		[CompilerGenerated] public delegate bool d(out int a);
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d f;
-	///    		[SafetySharp.Modeling.RequiredAttribute] private bool MyMethod(out int a) { return f(out a); }
+	///    		[SafetySharp.Modeling.RequiredAttribute(BackingField = "f")] private bool MyMethod(out int a) { return f(out a); }
 	///  
 	/// 		private extern bool MyProperty { get; set; } // TODO!
 	///    		// becomes (on a single line with uniquely generated names):
@@ -58,7 +58,7 @@ namespace SafetySharp.Compiler.Normalization
 	///   		[CompilerGenerated] public delegate void d2(bool value);
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d1 f1;
 	///  		[DebuggerBrowsable(DebuggerBrowsableState.Never), CompilerGenerated] private d2 f2;
-	///    		private bool MyProperty { [SafetySharp.Modeling.RequiredAttribute] get { return f1(); } [SafetySharp.Modeling.RequiredAttribute] set { f2(value); } }
+	///    		private bool MyProperty { [SafetySharp.Modeling.RequiredAttribute(BackingField = "f1")] get { return f1(); } [SafetySharp.Modeling.RequiredAttribute(BackingField = "f2")] set { f2(value); } }
 	///   	</code>
 	/// </summary>
 	public class RequiredPortNormalizer : Normalizer
@@ -124,8 +124,6 @@ namespace SafetySharp.Compiler.Normalization
 									 ref SyntaxList<MemberDeclarationSyntax> members,
 									 ref int index)
 		{
-			var trivia = methodDeclaration.GetLeadingTrivia();
-
 			// Create the delegate
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration("ReqPortDelegate" + _portCount);
@@ -140,6 +138,12 @@ namespace SafetySharp.Compiler.Normalization
 			var originalDeclaration = methodDeclaration;
 			if (!methodDeclaration.HasAttribute<RequiredAttribute>(SemanticModel))
 				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(RequiredAttribute.WithTrailingSpace()));
+
+			// Add the [BackingField] attribute
+			var backingFieldArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", fieldName));
+			var backingFieldAttribute = SyntaxBuilder.Attribute(typeof(BackingFieldAttribute).FullName, backingFieldArgument);
+
+			methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(backingFieldAttribute));
 
 			// Remove the 'extern' keyword from the method
 			var externIndex = methodDeclaration.Modifiers.IndexOf(SyntaxKind.ExternKeyword);
@@ -164,7 +168,8 @@ namespace SafetySharp.Compiler.Normalization
 			var body = SyntaxFactory.InvocationExpression(fieldReference, SyntaxFactory.ArgumentList(argumentList));
 			var arrowExpression = SyntaxFactory.ArrowExpressionClause(body);
 			methodDeclaration = methodDeclaration.WithExpressionBody(arrowExpression).RemoveComments();
-			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine().WithLeadingTrivia(trivia).EnsureSameLineCount(originalDeclaration);
+			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine().WithLeadingTrivia(originalDeclaration.GetLeadingTrivia());
+			methodDeclaration = methodDeclaration.EnsureSameLineCount(originalDeclaration);
 
 			// Now add the delegate, field, and modified method to the members collection, 
 			// removing the original method declaration
