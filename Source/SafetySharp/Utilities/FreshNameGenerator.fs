@@ -31,7 +31,8 @@ module internal FreshNameGenerator =
         // * https://msdn.microsoft.com/en-us/library/e7f8y25b.aspx
         // * Rule-Type: [a-zA-Z_][a-zA-Z0-9_]* without forbidden names (keywords)
         // * note: omit start with 2 underscores
-        // * max length of identifier 31 (ansi) or 247 (microsoft). let's stay with 31
+        // * max length of identifier 31 (ansi) or 247 (microsoft). let's stay with 31. Seems to be an old
+        //   limitation. Use 100 instead.
         // try to find a real short name (around 20 characters)
         let isContinueCharValid (char:char) :bool =
             ((char >= 'A' && char <= 'Z')||(char >= 'a' && char <= 'z')||(char >= '0' && char <= '9')||char='_')
@@ -41,7 +42,7 @@ module internal FreshNameGenerator =
         // 1. replace invalidChars with '_'
         let nameStep1 = based_on |> String.map ( fun char -> if isContinueCharValid char then char else '_')
         // 2. trim
-        let nameStep2 = if nameStep1.Length>20 then nameStep1.Remove 20 else nameStep1
+        let nameStep2 = if nameStep1.Length>100 then nameStep1.Remove 100 else nameStep1
         // 3. add prefix (to avoid name clashes and empty char and starting with 2 '_' or start with a number)
         let nameStep3 = "v"+nameStep2
         // 4. add suffix (when necessary)

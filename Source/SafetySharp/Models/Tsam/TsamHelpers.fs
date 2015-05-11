@@ -151,7 +151,7 @@ module internal TsamHelpers =
                     Tsam.Stm.Write(freshId,_var,expr)
             
         member stm.treeifyStm (uniqueStatementIdGenerator : unit -> StatementId) =
-            //    Example:
+            // Example:
             //              ┌─ 4 ─┐                      ┌─ 4 ─ 6
             //    1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
             //              └─ 5 ─┘                      └─ 5 ─ 6
@@ -261,9 +261,10 @@ module internal TsamHelpers =
                 else
                     stm                    
             let normalizedStm =
-                // Normalized stm is necessary. It may otherwise happen, that an outer block hides an assignment which should be added.
+                // Note: Normalized stm is necessary. It may otherwise happen, that an outer block hides an assignment which should be added.
                 // Our algorithm assumes in this example, that the choice is the last statement (it actually is in the inner block).
-                // But still we require the outer assignment to be added. Example:
+                // But still we require the outer assignment to be added.
+                // Example:
                 //      {
                 //         choice {
                 //            true => {i := 1;}
@@ -271,6 +272,12 @@ module internal TsamHelpers =
                 //         }
                 //      }
                 //      i := i+3;
+                // The normalization is even necessary, if we have a "Stm_A;Stm_B" instead of a "StmBlock.
+                // Example:
+                //     Stm := ((StmChoice;Stm1);Stm2)
+                //     normalized(Stm) := (StmChoice;(Stm1;Stm2))
+                //     Now the rule for "Stm_A;Stm_B" when Stm_A is a choice is simply to append Stm_B after each choice.
+
                 stm.normalizeBlocks uniqueStatementIdGenerator
             let treeifiedStm =
                 // the main part of the algorithm
