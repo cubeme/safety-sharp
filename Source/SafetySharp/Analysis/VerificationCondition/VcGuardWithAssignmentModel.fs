@@ -62,36 +62,98 @@ module internal VcGuardWithAssignmentModel =
         do! TsamMutable.normalizeBlocks ()
     }
 
-    let phase2FindAssignmentNotAtTheEnd () : TsamWorkflowFunction<_,StatementId option> = workflow {
-        //returns StatementId and type of next statement. type of the next statement should not be assignment
-        return None
-    }
-    
-    let phase2PushAssignmentOverChoice (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
-        return ()
-    }
+    let phase2PushAssignmentsNotAtTheEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        // We assume treeified form.        
+        let rec findAndPushAssignmentNotAtTheEnd (stm:Stm) : (Stm*bool) = //returns true, if change occurred
+            match stm with
+                | Stm.Block (blockSid,statements:Stm list) ->
+                    ///////////// Here we rewrite the block. Result must be block                    
+                    // after _one_ rewrite, we return. This makes analysis of the algorithm easier                    
+                    // at least two statements are necessary to analyze
+                    // the function findAndPushAssignmentInBlock looks through a peephole (pushCandidate,pushAfter)
+                    // if nothing has to be done on the peephole, peephole is shifted to the right
+                    let rec findAndPushAssignmentInBlock (revAlreadyLookedAt:Stm list,pushCandidate:Stm,pushAfter:Stm)
+                                                         (rightNextToPeephole:Stm list) : (Stm*bool) = 
+                        match (pushCandidate,pushAfter) with
+                            | (Stm.Write(leftSid,_var,leftExpr),Assert (rightSid,rightExpr)) ->
+                                // push over Assertion
+                                (newBlockStm,true)
+                            | (Stm.Write(leftSid,_var,leftExpr),Assume (rightSid,rightExpr)) ->
+                                // push over Assumption
+                                (newBlockStm,true)
+                            | (Stm.Write(leftSid,_var,leftExpr),Choice (rightSid,rightChoices)) ->
+                                // push into Choice
+                                (newBlockStm,true)
+                            | (Stm.Write(leftSid,_var,leftExpr),Stochastic (rightSid,rightStochasticChoices)) ->
+                                // push into Stochastic
+                                (newBlockStm,true)
+                            | _ -> 
+                                // pushCandidate is not a Write or we do not have a rule how to push,
+                                // so shift peephole to the right.
+                                if rightNextToPeephole.IsEmpty then
+                                    //nothing changed at all, so return old statement
+                                    (stm,false)
+                                else
+                                    let nextPushCandidate = pushAfter
+                                    let nextPushAfter = rightNextToPeephole.Head
+                                    let nextRightNextToPeephole = rightNextToPeephole.Tail
+                                    findAndPushAssignmentInBlock ([],nextPushCandidate,nextPushAfter) nextRightNextToPeephole
+                    if statements.Length >= 2 then
+                        let firstPushCandidate = statements.Head
+                        let firstPushAfter = statements.Tail.Head
+                        let firstRightNextToPeephole = statements.Tail.Tail
+                        findAndPushAssignmentInBlock ([],firstPushCandidate,firstPushAfter) firstRightNextToPeephole
+                    else
+                        (stm,false)
+                    ///////////// End of rewriting Block
+                | Stm.Choice (sid,choices: Stm list) ->
+                    // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
+                    // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
+                    // from whatever happens after the choice. We do not alter or add anything after the
+                    // Stm.Choice, we only manipulate things inside each of the choices. Thus we can
+                    // manipulate the choices in parallel.
+                    let (newChoices,somethingChanged) =
+                        choices |> List.map findAndPushAssignmentNotAtTheEnd
+                                |> List.unzip
+                    let somethingChanged = somethingChanged |> List.exists id
+                    if somethingChanged then
+                        (Stm.Choice(sid,newChoices),true)
+                    else
+                        (stm,false)
+                | Stm.Stochastic (sid,stochasticChoice: (Expr*Stm) list) ->
+                    // See Stm.Choice, why we can manipulate each stochasticChoice in parallel
+                    let (newChoices,somethingChanged) =
+                        stochasticChoice |> List.map (fun (choiceProb,choiceStm) ->
+                                                            let (newChoiceStm,somethingChanged) = findAndPushAssignmentNotAtTheEnd choiceStm
+                                                            ((choiceProb,newChoiceStm),somethingChanged)
+                                                        )
+                                            |> List.unzip
+                    let somethingChanged = somethingChanged |> List.exists id
+                    if somethingChanged then
+                        (Stm.Stochastic(sid,newChoices),true)
+                    else
+                        (stm,false)
+                | _ ->
+                    (stm,false)
         
-    let phase2PushAssignmentOverStochastic (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
-        return ()
-    }
-        
-    let phase2PushAssignmentOverAssumption (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
-        return ()
+        let rec findAndPushAssignmentNotAtTheEndUntilFixpoint (stm:Stm) =
+            let (newStm,wasChanged) = findAndPushAssignmentNotAtTheEnd stm
+            if wasChanged then
+                findAndPushAssignmentNotAtTheEndUntilFixpoint newStm
+            else
+                stm
+                
+        let! model = getTsamModel ()
+        let allStatementsAtTheEndBody = findAndPushAssignmentNotAtTheEndUntilFixpoint (model.Body)
+        let allStatementsAtTheEndModel = 
+            { model with
+                Pgm.Body = allStatementsAtTheEndBody
+            }
+        do! updateTsamModel allStatementsAtTheEndModel
+
     }
 
-    let phase2PushAssignmentOverAssertion (stmId:StatementId) : TsamWorkflowFunction<_,unit> = workflow {
-        return ()
-    }
-
-    let phase2PushAssignmentTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        let! (a) = phase2FindAssignmentNotAtTheEnd ()
-        match a with
-            | None -> return ()
-            | Some(stmId) ->
-                do! phase2PushAssignmentOverChoice stmId
-    }
-
-    let phase3PushStochasticTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+    let phase3PushStochasticsTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
         return ()
     }
 
@@ -101,8 +163,8 @@ module internal VcGuardWithAssignmentModel =
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
         do! (phase1TreeifyAndNormalize ())
-        do! iterateToFixpoint (phase2PushAssignmentTowardsEnd ())
-        do! iterateToFixpoint (phase3PushStochasticTowardsEnd ())
+        do! iterateToFixpoint (phase2PushAssignmentsNotAtTheEnd ())
+        do! iterateToFixpoint (phase3PushStochasticsTowardsEnd ())
         do! iterateToFixpoint (phase4PullChoicesTowardsBeginning ())
         return ()
     }
