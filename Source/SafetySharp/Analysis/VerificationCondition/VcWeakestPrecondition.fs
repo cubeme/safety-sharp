@@ -52,6 +52,9 @@ module internal VcWeakestPrecondition =
         | Choice (_,choices) ->
             let choicesAsExpr =
                 choices |> List.map (fun choice -> wp choice formula)
-            Expr.createAndedExpr choicesAsExpr
+            Expr.createAndedExpr choicesAsExpr            
+        | Stochastic _ ->
+            failwith "Stochastic case distinction is not supported by boolean only weakest precondition"
+            // TODO: Maybe in future it is possible to declare a transition relation with probabilities in Prism
         | Write (_,variable,expression) ->
             wp_rewriteExpr_varsToExpr (variable,expression) formula

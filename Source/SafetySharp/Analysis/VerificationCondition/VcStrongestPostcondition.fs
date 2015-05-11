@@ -90,5 +90,8 @@ module internal VcStrongestPostcondition =
                 let newFormula = choicesAsExpr |> Expr.createOredExpr
                 let newProofObligations = proofObligations |> Set.unionMany
                 (newFormula,newProofObligations)
+            | Stm.Stochastic _ ->
+                failwith "Stochastic case distinction is not supported by boolean only strongest postcondition"
+                // TODO: Maybe in future it is possible to declare a transition relation with probabilities in Prism
             | Stm.Write _ ->
                 failwith "Passive form is required to use this transformation"

@@ -224,6 +224,48 @@ module internal TsamPassiveFormGCFK09 =
                         CalculationCache.MaxWriteOfPredecessor = maxLastWrite;
                     }
                 newSigma
+            | Stm.Stochastic (sid,stochasticChoices) ->
+                // Adapted code of Stm.Choice
+                // Be careful: This node also reads stuff in its expression. But currently these expressions should only contain
+                // combinations of Literals. But to be future proof, we also add reads of the probabilistic Expressions.
+                let readsOfProbabilistic =
+                    stochasticChoices |> List.map (fun (stochasticChoiceExpr,_) -> readsOfExpression sigma.MaxWriteOfPredecessor Set.empty<Var*int> stochasticChoiceExpr)
+                                      |> Set.unionMany
+
+                let sid = sid.Value       
+                let newSigmas =
+                    stochasticChoices |> List.map (fun (_,stochaticChoiceStm) -> calculateStatementInfosAcc (sid::stmPath) sigma stochaticChoiceStm)
+                let children =
+                    stochasticChoices |> List.map (fun (_,stochaticChoiceStm) -> stochaticChoiceStm.GetStatementId.Value) |> Set.ofList
+                                                                    
+                let statementInfos = sigma.StatementInfos.Value
+                let read =
+                    // be careful: This node also reads stuff in its expression
+                    children |> Set.toSeq
+                             |> Seq.map (fun child -> statementInfos.ReadVersions.Item child)
+                             |> Seq.fold Set.union Set.empty<Var*int>
+                             |> Set.union readsOfProbabilistic
+                let write =
+                    children |> Set.toSeq
+                             |> Seq.map (fun child -> statementInfos.WriteVersions.Item child)
+                             |> Seq.fold Set.union Set.empty<Var*int>
+                let firstRead = sigma.MaxWriteOfPredecessor                
+                let maxLastWrite =
+                    let addToMapIfValueHigher (entries:Map<Var,int>) (_var:Var,version:int) : Map<Var,int> =
+                        if (entries.ContainsKey _var) && (entries.Item _var >= version) then
+                            entries
+                        else
+                            entries.Add(_var,version)
+                    newSigmas |> List.collect (fun (sigma:CalculationCache) -> sigma.MaxWriteOfPredecessor |> Map.toList)
+                              |> List.fold addToMapIfValueHigher Map.empty<Var,int>
+
+                do sigma.addEntryForStatement sid read write firstRead maxLastWrite children
+
+                let newSigma =
+                    { sigma with
+                        CalculationCache.MaxWriteOfPredecessor = maxLastWrite;
+                    }
+                newSigma
 
     let calculateStatementInfos (pgm:Pgm) : StatementInfos =
         // the returned StatementInfos is immutable        
@@ -299,6 +341,14 @@ module internal TsamPassiveFormGCFK09 =
             | Stm.Choice (sid,choices) ->
                 let newChoices = choices |> List.map (replaceVarInStm statementInfos versionedVarToFreshVar)
                 Stm.Choice (sid,newChoices)
+            | Stm.Stochastic (sid,stochasticChoices) ->
+                let readVersions = statementInfos.FirstRead.Item sid.Value
+                let rewriteChoice (stochasticExpr,stochasticStm) =
+                    let newStochasticExpr = replaceVarInExpr readVersions versionedVarToFreshVar stochasticExpr
+                    let newStochasticStm = replaceVarInStm statementInfos versionedVarToFreshVar stochasticStm
+                    (newStochasticExpr,newStochasticStm)
+                let newChoices = stochasticChoices |> List.map rewriteChoice
+                Stm.Stochastic (sid,newChoices)
             | Stm.Write (sid,_var,expr) ->
                 let writeVersions = statementInfos.MaxLastWrite.Item sid.Value
                 let readVersions = statementInfos.FirstRead.Item sid.Value
@@ -337,6 +387,31 @@ module internal TsamPassiveFormGCFK09 =
                 let newChoices =
                     newChoices |> List.map addMissingAssignmentsToBranch
                 Stm.Choice (sid,newChoices)
+            | Stm.Stochastic (sid,stochasticChoices) ->
+                // adapted just code of Stm.Choice
+                let recursiveAddMissing (stochasticExpr,stochasticStm) =
+                    let newStochasticStm = addMissingAssignmentsBeforeMerges statementInfos uniqueStatementIdGenerator versionedVarToFreshVar stochasticStm
+                    (stochasticExpr,newStochasticStm)
+                let newChoices = stochasticChoices |> List.map recursiveAddMissing                
+                let readOfNextNode = statementInfos.MaxLastWrite.Item sid.Value
+                //Note: maxLastWrite of this statement is firstRead of next Statement. Thus we still check the formula int the paper.
+                let addMissingAssignmentsToBranch (branch:Stm) : Stm =
+                    let missingStatementsOfBranch =
+                        let maxLastWriteOfBranch = statementInfos.MaxLastWrite.Item branch.GetStatementId.Value
+                        let createAssignment (_var:Var,nextReadVersion:int,writeVersionOfBranch:int) =
+                            let freshStatementId = uniqueStatementIdGenerator ()
+                            let assignTo = versionedVarToFreshVar.Item (_var,nextReadVersion)
+                            let assignExpr = Expr.Read(versionedVarToFreshVar.Item (_var,writeVersionOfBranch))
+                            Stm.Write(freshStatementId,assignTo,assignExpr)                            
+                        readOfNextNode |> Map.toList
+                                       |> List.map (fun (_var,nextReadVersion ) -> (_var,nextReadVersion, maxLastWriteOfBranch.Item _var ) )
+                                       |> List.filter (fun (_var,nextReadVersion , writeVersionOfBranch) -> nextReadVersion<>writeVersionOfBranch )
+                                       |> List.map createAssignment
+                    branch.appendStatements uniqueStatementIdGenerator missingStatementsOfBranch
+                // check each new branch
+                let newChoices =
+                    newChoices |> List.map (fun (stochasticExpr,stochasticStm) -> (stochasticExpr,addMissingAssignmentsToBranch stochasticStm))
+                Stm.Stochastic (sid,newChoices)
             | Stm.Write (sid,_var,expr) ->
                 stm
                 
@@ -353,6 +428,9 @@ module internal TsamPassiveFormGCFK09 =
             | Stm.Choice (sid,choices) ->
                 let newChoices = choices |> List.map replaceAssignmentByAssumption
                 Stm.Choice (sid,newChoices)
+            | Stm.Stochastic (sid,stochasticChoices) ->
+                let newChoices = stochasticChoices |> List.map (fun (stochasticExpr,stochasticStm) -> (stochasticExpr,replaceAssignmentByAssumption stochasticStm))
+                Stm.Stochastic (sid,newChoices)
             | Stm.Write (sid,_var,expr) ->
                 Stm.Assume(sid,Expr.BExpr(Expr.Read(_var),BOp.Equals,expr))
 
