@@ -86,6 +86,15 @@ type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
         invalidCall isSealed "The port binding's metadata has already been finalized."
         isSealed <- true
 
+        let backingField = targetPort.Method.GetCustomAttribute<BackingFieldAttribute> ()
+        if backingField = null then invalidOp "Expected to find an instance of '%s' on the target port." (typeof<BackingFieldAttribute>.FullName)
+
+        let field = targetPort.Method.DeclaringType.GetField(backingField.BackingField, BindingFlags.DeclaredOnly ||| BindingFlags.Instance ||| BindingFlags.NonPublic)
+        if field = null then invalidOp "Unable to find backing field '%s.%s'." (targetPort.Component.GetType().FullName) backingField.BackingField
+
+        let adaptedDelegate = Delegate.CreateDelegate (field.FieldType, sourcePort.Component, sourcePort.Method)
+        field.SetValue (targetPort.Component, adaptedDelegate)
+
     /// Changes the kind of the binding to delayed, meaning that the invocation of the bound port is delayed by one system step.
     member this.Delayed () =
         invalidCall isSealed "Modifications of the port binding's metadata are only allowed during object construction."

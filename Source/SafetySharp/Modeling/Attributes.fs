@@ -27,20 +27,20 @@ open System
 /// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
 /// marks the method or property as a provided port.
 [<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
-[<Sealed>]
+[<Sealed; AllowNullLiteral>]
 type ProvidedAttribute () =
     inherit Attribute ()
 
 /// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
 /// marks the method or property as a required port.
 [<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
-[<Sealed>]
+[<Sealed; AllowNullLiteral>]
 type RequiredAttribute () =
     inherit Attribute ()
 
 /// For S#-internal use only.
 [<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
-[<Sealed>]
+[<Sealed; AllowNullLiteral>]
 type BackingFieldAttribute (backingField : string) =
     inherit Attribute ()
 
