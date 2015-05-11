@@ -71,15 +71,24 @@ module internal VcGuardWithAssignmentModel =
             match stm with
                 | Stm.Block (blockSid,statements:Stm list) ->
                     ///////////// Here we rewrite the block. Result must be block                    
-                    // after _one_ rewrite, we return. This makes analysis of the algorithm easier                    
-                    // at least two statements are necessary to analyze
-                    // the function findAndPushAssignmentInBlock looks through a peephole (pushCandidate,pushAfter)
+                    // After _one_ rewrite, we return. This makes analysis of the algorithm easier
+                    // Sliding window: The function findAndPushAssignmentInBlock looks through a peephole
                     // if nothing has to be done on the peephole, peephole is shifted to the right
-                    let rec findAndPushAssignmentInBlock (revAlreadyLookedAt:Stm list,pushCandidate:Stm,pushAfter:Stm)
+                    // Example:
+                    //   Assume Stm1;Stm2;Stm3;Stm4;Stm5
+                    //     1st Peephole: None;Stm1
+                    //     2nd Peephole: Stm1;Stm2
+                    //     3rd Peephole: Stm2;Stm3
+                    //     4th Peephole: Stm3;Stm4
+                    //     5th Peephole: Stm4;Stm5
+                    //   Every Stm was at least one time peepholeRight
+                    let rec findAndPushAssignmentInBlock (revAlreadyLookedAt:Stm list,peepholeLeft:Stm option,peepholeRight:Stm option)
                                                          (rightNextToPeephole:Stm list) : (Stm*bool) = 
-                        match (pushCandidate,pushAfter) with
-                            | (Stm.Write(leftSid,_var,leftExpr),Assert (rightSid,rightExpr)) ->
+                        let peepholeLeft = peepholeLeft
+                        match (peepholeLeft,peepholeRight) with
+                            | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Assert (rightSid,rightExpr))) ->
                                 // push over Assertion
+                                let pushCandidate=peepholeLeft.Value
                                 let newAssertStm =
                                     let newAssertExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
                                     Stm.Assert(rightSid,newAssertExpr)
@@ -88,8 +97,9 @@ module internal VcGuardWithAssignmentModel =
                                     @ [newAssertStm;pushCandidate]
                                     @ rightNextToPeephole
                                 (Stm.Block(blockSid,newBlock),true)
-                            | (Stm.Write(leftSid,_var,leftExpr),Assume (rightSid,rightExpr)) ->
+                            | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Assume (rightSid,rightExpr))) ->
                                 // push over Assumption
+                                let pushCandidate=peepholeLeft.Value
                                 let newAssumeStm =
                                     let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
                                     Stm.Assume(rightSid,newAssumeStmExpr)
@@ -98,16 +108,18 @@ module internal VcGuardWithAssignmentModel =
                                     @ [newAssumeStm;pushCandidate]
                                     @ rightNextToPeephole
                                 (Stm.Block(blockSid,newBlock),true)
-                            | (Stm.Write(leftSid,_var,leftExpr),Choice (rightSid,rightChoices)) ->
+                            | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Choice (rightSid,rightChoices))) ->
                                 // push into Choice
+                                let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choice:Stm) =
                                     choice.prependStatements uniqueStatementIdGenerator [pushCandidate]
                                 let newChoiceStm = Stm.Choice(rightSid,rightChoices |> List.map createNewChoice)
                                 assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
                                 (Stm.Block(blockSid,newBlock),true)
-                            | (Stm.Write(leftSid,_var,leftExpr),Stochastic (rightSid,rightStochasticChoices)) ->
+                            | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Stochastic (rightSid,rightStochasticChoices))) ->
                                 // push into Stochastic
+                                let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choiceExpr:Expr,choiceStm:Stm) =
                                     let newChoiceExpr = choiceExpr.rewriteExpr_varToExpr (_var,leftExpr)
                                     let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
@@ -116,23 +128,31 @@ module internal VcGuardWithAssignmentModel =
                                 assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
                                 (Stm.Block(blockSid,newBlock),true)
-                            | _ -> 
-                                // pushCandidate is not a Write or we do not have a rule how to push,
-                                // so shift peephole to the right.
-                                if rightNextToPeephole.IsEmpty then
+                            | (peepholeLeft,Some(stmOfRightPeephole)) ->
+                                let (newStmOfRightPeephole,changedSomething) = findAndPushAssignmentNotAtTheEnd stmOfRightPeephole
+                                let stmOfPeepholeLeft = if peepholeLeft.IsSome then [peepholeLeft.Value] else []
+                                if changedSomething then
+                                    let newBlock =
+                                        (revAlreadyLookedAt |> List.rev)
+                                        @ stmOfPeepholeLeft @ [newStmOfRightPeephole]
+                                        @ rightNextToPeephole
+                                    (Stm.Block(blockSid,newBlock),true)
+                                else if rightNextToPeephole.IsEmpty then
                                     //nothing changed at all, so return old statement
                                     (stm,false)
                                 else
-                                    let nextRevAlreadyLookedAt = pushCandidate::revAlreadyLookedAt
-                                    let nextPushCandidate = pushAfter
-                                    let nextPushAfter = rightNextToPeephole.Head
+                                    let nextRevAlreadyLookedAt = stmOfPeepholeLeft @ revAlreadyLookedAt
+                                    let nextPeepholeRight = Some(rightNextToPeephole.Head)
+                                    let nextPeepholeLeft = peepholeRight
                                     let nextRightNextToPeephole = rightNextToPeephole.Tail
-                                    findAndPushAssignmentInBlock (nextRevAlreadyLookedAt,nextPushCandidate,nextPushAfter) nextRightNextToPeephole
-                    if statements.Length >= 2 then
-                        let firstPushCandidate = statements.Head
-                        let firstPushAfter = statements.Tail.Head
-                        let firstRightNextToPeephole = statements.Tail.Tail
-                        findAndPushAssignmentInBlock ([],firstPushCandidate,firstPushAfter) firstRightNextToPeephole
+                                    findAndPushAssignmentInBlock (nextRevAlreadyLookedAt,nextPeepholeLeft,nextPeepholeRight) nextRightNextToPeephole
+                            | _ ->
+                                (stm,false)
+                    if statements.IsEmpty = false then
+                        let firstPeepholeRight = Some(statements.Head)
+                        let firstPeepholeLeft = None
+                        let firstRightNextToPeephole = statements.Tail
+                        findAndPushAssignmentInBlock ([],firstPeepholeLeft,firstPeepholeRight) firstRightNextToPeephole
                     else
                         (stm,false)
                     ///////////// End of rewriting Block
@@ -192,10 +212,9 @@ module internal VcGuardWithAssignmentModel =
     }
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
-        // TODO: Assume Single Assignment Form
-        
-        do! (phase1TreeifyAndNormalize ())
-        do! iterateToFixpoint (phase2PushAssignmentsNotAtTheEnd ())
+        // TODO: Assume Single Assignment Form        
+        do! phase1TreeifyAndNormalize ()
+        do! phase2PushAssignmentsNotAtTheEnd ()
         do! iterateToFixpoint (phase3PushStochasticsTowardsEnd ())
         do! iterateToFixpoint (phase4PullChoicesTowardsBeginning ())
         return ()
