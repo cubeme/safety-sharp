@@ -83,7 +83,7 @@ type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
 
     /// Finalizes the bindings's metadata, disallowing any future metadata modifications.
     member internal this.FinalizeMetadata () =
-        invalidCall isSealed "The port bindings's metadata has already been finalized."
+        invalidCall isSealed "The port binding's metadata has already been finalized."
         isSealed <- true
 
     /// Changes the kind of the binding to delayed, meaning that the invocation of the bound port is delayed by one system step.

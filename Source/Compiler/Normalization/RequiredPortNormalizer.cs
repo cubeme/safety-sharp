@@ -124,6 +124,8 @@ namespace SafetySharp.Compiler.Normalization
 									 ref SyntaxList<MemberDeclarationSyntax> members,
 									 ref int index)
 		{
+			var trivia = methodDeclaration.GetLeadingTrivia();
+
 			// Create the delegate
 			var methodSymbol = methodDeclaration.GetMethodSymbol(SemanticModel);
 			var methodDelegate = methodSymbol.GetSynthesizedDelegateDeclaration("ReqPortDelegate" + _portCount);
@@ -162,7 +164,7 @@ namespace SafetySharp.Compiler.Normalization
 			var body = SyntaxFactory.InvocationExpression(fieldReference, SyntaxFactory.ArgumentList(argumentList));
 			var arrowExpression = SyntaxFactory.ArrowExpressionClause(body);
 			methodDeclaration = methodDeclaration.WithExpressionBody(arrowExpression).RemoveComments();
-			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine().EnsureSameLineCount(originalDeclaration);
+			methodDeclaration = methodDeclaration.NormalizeWhitespace().AsSingleLine().WithLeadingTrivia(trivia).EnsureSameLineCount(originalDeclaration);
 
 			// Now add the delegate, field, and modified method to the members collection, 
 			// removing the original method declaration
