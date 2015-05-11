@@ -22,7 +22,7 @@
 
 namespace SafetySharp.Analysis.VerificationCondition
 
-// TODO: This is currently only a draft of an idea
+// Assume Single Assignment Form (To allow sp on the final assignments)
 
 // The idea here is to transform the Tsam to a form, which resembles the guard with assignment form.
 //   1st: Treeify: A control flow may split and merge. Avoid the merging by duplicating the statements that happen after the merge.
@@ -63,7 +63,10 @@ module internal VcGuardWithAssignmentModel =
     }
 
     let phase2PushAssignmentsNotAtTheEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        // We assume treeified form.        
+        // We assume treeified form.
+        let! state = getState ()
+        let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
+
         let rec findAndPushAssignmentNotAtTheEnd (stm:Stm) : (Stm*bool) = //returns true, if change occurred
             match stm with
                 | Stm.Block (blockSid,statements:Stm list) ->
@@ -77,16 +80,42 @@ module internal VcGuardWithAssignmentModel =
                         match (pushCandidate,pushAfter) with
                             | (Stm.Write(leftSid,_var,leftExpr),Assert (rightSid,rightExpr)) ->
                                 // push over Assertion
-                                (newBlockStm,true)
+                                let newAssertStm =
+                                    let newAssertExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
+                                    Stm.Assert(rightSid,newAssertExpr)
+                                let newBlock =
+                                    (revAlreadyLookedAt |> List.rev)
+                                    @ [newAssertStm;pushCandidate]
+                                    @ rightNextToPeephole
+                                (Stm.Block(blockSid,newBlock),true)
                             | (Stm.Write(leftSid,_var,leftExpr),Assume (rightSid,rightExpr)) ->
                                 // push over Assumption
-                                (newBlockStm,true)
+                                let newAssumeStm =
+                                    let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
+                                    Stm.Assume(rightSid,newAssumeStmExpr)
+                                let newBlock =
+                                    (revAlreadyLookedAt |> List.rev)
+                                    @ [newAssumeStm;pushCandidate]
+                                    @ rightNextToPeephole
+                                (Stm.Block(blockSid,newBlock),true)
                             | (Stm.Write(leftSid,_var,leftExpr),Choice (rightSid,rightChoices)) ->
                                 // push into Choice
-                                (newBlockStm,true)
+                                let createNewChoice (choice:Stm) =
+                                    choice.prependStatements uniqueStatementIdGenerator [pushCandidate]
+                                let newChoiceStm = Stm.Choice(rightSid,rightChoices |> List.map createNewChoice)
+                                assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
+                                let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
+                                (Stm.Block(blockSid,newBlock),true)
                             | (Stm.Write(leftSid,_var,leftExpr),Stochastic (rightSid,rightStochasticChoices)) ->
                                 // push into Stochastic
-                                (newBlockStm,true)
+                                let createNewChoice (choiceExpr:Expr,choiceStm:Stm) =
+                                    let newChoiceExpr = choiceExpr.rewriteExpr_varToExpr (_var,leftExpr)
+                                    let newChoiceStm = choiceStm.prependStatements uniqueStatementIdGenerator [pushCandidate]
+                                    (newChoiceExpr,newChoiceStm)
+                                let newChoiceStm = Stm.Stochastic(rightSid,rightStochasticChoices |> List.map createNewChoice)
+                                assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
+                                let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
+                                (Stm.Block(blockSid,newBlock),true)
                             | _ -> 
                                 // pushCandidate is not a Write or we do not have a rule how to push,
                                 // so shift peephole to the right.
@@ -94,10 +123,11 @@ module internal VcGuardWithAssignmentModel =
                                     //nothing changed at all, so return old statement
                                     (stm,false)
                                 else
+                                    let nextRevAlreadyLookedAt = pushCandidate::revAlreadyLookedAt
                                     let nextPushCandidate = pushAfter
                                     let nextPushAfter = rightNextToPeephole.Head
                                     let nextRightNextToPeephole = rightNextToPeephole.Tail
-                                    findAndPushAssignmentInBlock ([],nextPushCandidate,nextPushAfter) nextRightNextToPeephole
+                                    findAndPushAssignmentInBlock (nextRevAlreadyLookedAt,nextPushCandidate,nextPushAfter) nextRightNextToPeephole
                     if statements.Length >= 2 then
                         let firstPushCandidate = statements.Head
                         let firstPushAfter = statements.Tail.Head
@@ -162,6 +192,8 @@ module internal VcGuardWithAssignmentModel =
     }
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
+        // TODO: Assume Single Assignment Form
+        
         do! (phase1TreeifyAndNormalize ())
         do! iterateToFixpoint (phase2PushAssignmentsNotAtTheEnd ())
         do! iterateToFixpoint (phase3PushStochasticsTowardsEnd ())

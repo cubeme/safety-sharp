@@ -26,6 +26,7 @@ module internal VcGuardWithAssignmentModelFast =
     open VcGuardWithAssignmentModel
     open SafetySharp.Models
     open SafetySharp.Models.SamHelpers
+    open SafetySharp.Models.TsamHelpers
     
     // Predicate Transformers
     // Assume VcSam is in SSA-Form
@@ -86,20 +87,6 @@ module internal VcGuardWithAssignmentModelFast =
             | Tsam.Stm.Write (_,variable,expression) ->
                 [AtomicStmBlock ([AtomicStm.Write(variable,expression)])]
 
-    
-    let rec gwa_rewriteExpr_varsToExpr (currentValuation:Map<Var,Expr>) (expr:Expr) : Expr =
-        match expr with
-            | Expr.Literal (_) -> expr
-            | Expr.Read (_var) ->                
-                if currentValuation.ContainsKey _var then
-                    currentValuation.Item _var
-                else
-                    expr
-            | Expr.ReadOld (_var) -> expr //old variables keep their value
-            | Expr.UExpr (expr,uop) ->
-                Expr.UExpr (gwa_rewriteExpr_varsToExpr currentValuation expr,uop)
-            | Expr.BExpr (left, bop, right) ->
-                Expr.BExpr (gwa_rewriteExpr_varsToExpr currentValuation left, bop, gwa_rewriteExpr_varsToExpr currentValuation right)
         
     let transformAtomicStmBlockToGuardWithAssignments (globalVars:Var list) (AtomicStmBlock(toTransform)) : GuardWithAssignments =
         // Start with guard true. Every time we cross an assumption, we add this assumption to our guard.
@@ -115,13 +102,13 @@ module internal VcGuardWithAssignmentModelFast =
                     failwith "I am not sure yet, what to do with it. Have to read about strongest postcondition"
                     // I think, we could add the assertion, but it would generate a new proof obligation.
                 | AtomicStm.Assume (expr) ->
-                    let newExpr = gwa_rewriteExpr_varsToExpr currentValuation expr
+                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation 
                     let newGuard =
                         Expr.BExpr(currentGuard,BOp.And,newExpr)
                     (newGuard,currentValuation)
                 | AtomicStm.Write (var, expr) ->
                     // replace vars in expr by their current valuation (such that no localVar occurs in any valuation)
-                    let newExpr = gwa_rewriteExpr_varsToExpr currentValuation expr
+                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
                     let newValuation = currentValuation.Add(var,newExpr)
                     (currentGuard,newValuation)
         

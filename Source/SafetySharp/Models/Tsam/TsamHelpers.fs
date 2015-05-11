@@ -57,12 +57,50 @@ module internal TsamHelpers =
 
     
     // Extension methods
+    type Sam.Expr with    
+        member expr.rewriteExpr_varsToExpr (currentValuation:Map<Var,Expr>) : Expr =
+            match expr with
+                | Expr.Literal (_) -> expr
+                | Expr.Read (_var) ->                
+                    if currentValuation.ContainsKey _var then
+                        currentValuation.Item _var
+                    else
+                        expr
+                | Expr.ReadOld (_var) -> expr //old variables keep their value
+                | Expr.UExpr (expr,uop) ->
+                    Expr.UExpr (expr.rewriteExpr_varsToExpr currentValuation,uop)
+                | Expr.BExpr (left, bop, right) ->
+                    Expr.BExpr (left.rewriteExpr_varsToExpr currentValuation, bop, right.rewriteExpr_varsToExpr currentValuation)
+
+        member expr.rewriteExpr_varToExpr (varToUpdate:Var,assignVarTo:Expr) : Expr =
+            match expr with
+                | Expr.Literal (_) -> expr
+                | Expr.Read (_var) ->                
+                    if varToUpdate = _var then assignVarTo else expr
+                | Expr.ReadOld (_var) -> expr //old variables keep their value
+                | Expr.UExpr (expr,uop) ->
+                    Expr.UExpr (expr.rewriteExpr_varToExpr (varToUpdate,assignVarTo) ,uop)
+                | Expr.BExpr (left, bop, right) ->
+                    Expr.BExpr (left.rewriteExpr_varToExpr (varToUpdate,assignVarTo), bop, right.rewriteExpr_varToExpr (varToUpdate,assignVarTo))
+
+    // Extension methods
     type Pgm with
         member this.getTraceables : Traceable list  =
             this.Globals |> List.map (fun gl -> Sam.Traceable(gl.Var))
 
     // Extension methods
     type Stm with
+        member stm.prependStatements (uniqueStatementIdGenerator : unit -> StatementId) (stmsToPrepend:Stm list) =
+            if stmsToPrepend.IsEmpty then
+                stm
+            else
+                match stm with
+                    | Stm.Block (sid,stmnts) ->
+                        Stm.Block (sid,stmsToPrepend@stmnts)
+                    | _ ->
+                        let freshStmId = uniqueStatementIdGenerator ()
+                        Stm.Block (freshStmId,stmsToPrepend@[stm])
+
         member stm.appendStatements (uniqueStatementIdGenerator : unit -> StatementId) (stmsToAppend:Stm list) =
             if stmsToAppend.IsEmpty then
                 stm
