@@ -20,42 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SharedComponents
+namespace Visualization
 {
-    using SafetySharp.Modeling;
+    using System.Windows;
+    using System.Windows.Media;
 
-    public class Timer : Component
+    /// <summary>
+    ///   Interaction logic for IconButton.xaml
+    /// </summary>
+    public partial class IconButton
     {
-        private readonly int _timeout;
-        // TODO: OverflowBehavior.Clamp
-        private int _remainingTime;
+        public static readonly DependencyProperty IconProperty = DependencyProperty.Register(
+            "Icon", typeof(Visual), typeof(IconButton), new PropertyMetadata(default(Visual)));
 
-        public Timer(int timeout)
+        public IconButton()
         {
-            _timeout = timeout;
+            InitializeComponent();
         }
 
-        public bool HasElapsed()
+        public Visual Icon
         {
-            return _remainingTime == 0;
-        }
-
-        public void Start()
-        {
-            _remainingTime = _timeout;
-        }
-
-        public void Stop()
-        {
-            _remainingTime = 0;
-        }
-
-        public int GetRemainingTime() => _remainingTime;
-
-        public override void Update()
-        {
-            // TODO: Support different system step times
-            --_remainingTime;
+            get { return (Visual)GetValue(IconProperty); }
+            set { SetValue(IconProperty, value); }
         }
     }
 }

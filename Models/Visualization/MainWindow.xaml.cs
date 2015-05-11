@@ -20,42 +20,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace SharedComponents
+namespace Visualization
 {
-    using SafetySharp.Modeling;
-
-    public class Timer : Component
+    /// <summary>
+    ///   Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow
     {
-        private readonly int _timeout;
-        // TODO: OverflowBehavior.Clamp
-        private int _remainingTime;
-
-        public Timer(int timeout)
+        public MainWindow()
         {
-            _timeout = timeout;
-        }
-
-        public bool HasElapsed()
-        {
-            return _remainingTime == 0;
-        }
-
-        public void Start()
-        {
-            _remainingTime = _timeout;
-        }
-
-        public void Stop()
-        {
-            _remainingTime = 0;
-        }
-
-        public int GetRemainingTime() => _remainingTime;
-
-        public override void Update()
-        {
-            // TODO: Support different system step times
-            --_remainingTime;
+            InitializeComponent();
         }
     }
 }

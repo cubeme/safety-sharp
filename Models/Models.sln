@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22512.0
+VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elbtunnel", "Elbtunnel\Elbtunnel.csproj", "{6AE088BD-212E-4F38-96A1-B16C4F95D243}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -28,6 +28,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp", "..\Source\CSharp\CSharp.csproj", "{24C31B36-8ED2-4A2A-AC73-6539EC8CAE63}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compiler", "..\Source\Compiler\Compiler.csproj", "{8823091C-387F-4F4D-ABCD-8F71D1528CBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Visualization", "Visualization\Visualization.csproj", "{C0ED19A4-1362-49E4-9721-AAFCF012710A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +61,10 @@ Global
 		{8823091C-387F-4F4D-ABCD-8F71D1528CBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8823091C-387F-4F4D-ABCD-8F71D1528CBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8823091C-387F-4F4D-ABCD-8F71D1528CBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0ED19A4-1362-49E4-9721-AAFCF012710A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
