@@ -55,7 +55,7 @@ module internal SamParser =
         
     let probVal : Parser<_,unit> =
         let decimalToVal (dec:string) =
-            System.Convert.ToDouble(dec) |> Val.ProbVal
+            System.Convert.ToDouble(dec,System.Globalization.CultureInfo.InvariantCulture) |> Val.ProbVal
         parseDecimal |>> decimalToVal
 
     // parses an identifier of a variable 
