@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controller.cs" />
+    <Compile Include="PressureTankModel.cs" />
     <Compile Include="Sensor.cs" />
     <Compile Include="Tank.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

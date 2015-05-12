@@ -8,11 +8,11 @@
                       mc:Ignorable="d"
                       GlowBrush="{DynamicResource AccentColorBrush}"
                       WindowStartupLocation="CenterScreen"
-                      Title="S# Visualizer" Width="1000" Height="720">
+                      Title="S# Visualizer" Width="700" Height="500">
     <Grid>
         <TabControl>
             <TabItem Header="Pressure Tank">
-                <visualization:Simulator />
+                <visualization:PressureTank />
             </TabItem>
         </TabControl>
     </Grid>

@@ -28,7 +28,7 @@ namespace PressureTank
     /// <summary>
     ///   The software controller that enables and disables the pump.
     /// </summary>
-    internal class Controller : Component
+    public class Controller : Component
     {
         /// <summary>
         ///   The pump that is used to fill the tank.
@@ -50,12 +50,14 @@ namespace PressureTank
         /// </summary>
         /// <param name="sensor">The sensor that is used to sense the pressure level within the tank.</param>
         /// <param name="pump">The pump that is used to fill the tank.</param>
-        /// <param name="timeout">The timeout after which the pump is disabled automatically.</param>
-        public Controller(Sensor sensor, Pump pump, int timeout)
+        /// <param name="timer">The timer that is used to determine whether the pump should be disabled.</param>
+        public Controller(Sensor sensor, Pump pump, Timer timer)
         {
             _pump = pump;
             _sensor = sensor;
-            _timer = new Timer(timeout);
+            _timer = timer;
+
+            _timer.Start();
         }
 
         /// <summary>
@@ -73,10 +75,10 @@ namespace PressureTank
                 var shouldStop = _sensor.IsTriggered() || _timer.HasElapsed();
 
                 if (shouldStop)
-                {
                     _pump.Disable();
+
+                if (_sensor.IsTriggered())
                     _timer.Stop();
-                }
             }
         }
     }

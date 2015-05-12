@@ -157,7 +157,6 @@
     <Compile Include="Analysis\Stochastic\DiscreteDistributions.fs" />
     <Compile Include="Analysis\Stochastic\ContinuousDistributions.fs" />
     <Compile Include="Analysis\Stochastic\FailureRate.fs" />
-    <Compile Include="Analysis\SpinModelChecker.fs" />
     <Compile Include="Analysis\Techniques\AtStepInvariant.fs" />
     <Compile Include="Analysis\Techniques\AtReachable.fs" />
     <Compile Include="Analysis\Techniques\AtLtlFormula.fs" />
@@ -169,6 +168,8 @@
     <Compile Include="Analysis\Techniques\AtProbabilisticFullModel.fs" />
     <Compile Include="Analysis\Techniques\AtContract.fs" />
     <Compile Include="Analysis\Techniques\AtMethodsCalled.fs" />
+    <Compile Include="Analysis\SpinModelChecker.fs" />
+    <Compile Include="Analysis\Simulation.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="app.config" />
   </ItemGroup>

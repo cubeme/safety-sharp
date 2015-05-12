@@ -20,38 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-namespace PressureTank
+namespace Visualization
 {
-    using System;
-    using System.Diagnostics;
-    using NUnit.Framework;
-    using SafetySharp.Analysis;
+    using System.Windows;
 
-    [TestFixture]
-    public class Tests
+    /// <summary>
+    ///   Provides extension methods for use with WPF.
+    /// </summary>
+    internal static class WpfExtensions
     {
-        [SetUp]
-        public void Initialize()
+        public static Visibility ToVisibility(this bool value)
         {
-            _model = new PressureTankModel();
-        }
-
-        private PressureTankModel _model;
-
-        private static void Main()
-        {
-            var tests = new Tests();
-            tests.Initialize();
-            tests.FirstTest();
-        }
-
-        [Test]
-        public void FirstTest()
-        {
-            var watch = new Stopwatch();
-            watch.Start();
-            var spin = new SpinModelChecker(_model);
-            Console.WriteLine("Elapsed: {0}ms", watch.Elapsed.TotalMilliseconds);
+            return value ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }

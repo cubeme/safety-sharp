@@ -1,4 +1,4 @@
-// The MIT License (MIT)
+﻿// The MIT License (MIT)
 // 
 // Copyright (c) 2014-2015, Institute for Software & Systems Engineering
 // 
@@ -23,56 +23,63 @@
 namespace PressureTank
 {
     using SafetySharp.Modeling;
+    using SharedComponents;
 
     /// <summary>
-    ///   Represents the pressure tank that is filled by the system.
+    ///   Represents a model of the pressure tank case study.
     /// </summary>
-    public class Tank : Component
+    public class PressureTankModel : Model
     {
         /// <summary>
-        ///   The maximum allowed pressure level of the tank.
+        ///   The maximum allowed pressure level within the tank.
         /// </summary>
-        private readonly int _maxPressure;
+        public const int MaxPressure = 45;
 
         /// <summary>
-        ///   The current pressure level.
+        ///   The pressure level that triggers the sensor.
         /// </summary>
-        private int _pressureLevel;
+        public const int SensorPressure = 43;
 
         /// <summary>
         ///   Initializes a new instance.
         /// </summary>
-        /// <param name="maxPressure">The maximum allowed pressure level of the tank.</param>
-        public Tank(int maxPressure)
+        public PressureTankModel()
         {
-            _maxPressure = maxPressure;
+            Sensor = new Sensor(SensorPressure);
+            Pump = new Pump();
+            Timer = new Timer(timeout: 44);
+            Controller = new Controller(Sensor, Pump, Timer);
+            Tank = new Tank(MaxPressure);
+
+            SetRootComponents(Tank, Controller);
+
+            Bind(Sensor.RequiredPorts.CheckPhysicalPressure = Tank.ProvidedPorts.PressureLevel);
+            Bind(Tank.RequiredPorts.IsBeingFilled = Pump.ProvidedPorts.IsEnabled);
         }
 
         /// <summary>
-        ///   Gets a value indicating whether the pressure tank has ruptured after exceeding its maximum allowed pressure level.
+        ///   Gets the sensor that is used to determine the pressure level within the tank.
         /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public bool IsRuptured() => _pressureLevel > _maxPressure;
+        public Sensor Sensor { get; }
 
         /// <summary>
-        ///   Gets the current pressure level within the tank.
+        ///   Gets the pump that fills the tank.
         /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public int PressureLevel() => _pressureLevel;
+        public Pump Pump { get; }
 
         /// <summary>
-        ///   Gets a value indicating whether the pressure tank is currently being filled.
+        ///   Gets the tank that is being filled.
         /// </summary>
-        // TODO: Consider using a property once supported by S#.
-        public extern bool IsBeingFilled();
+        public Tank Tank { get; }
 
         /// <summary>
-        ///   Updates the pressure tank's internal state.
+        ///   The timer that is used to determine whether the pump should be disabled.
         /// </summary>
-        public override void Update()
-        {
-            if (IsBeingFilled())
-                _pressureLevel += 1;
-        }
+        public Timer Timer { get; }
+
+        /// <summary>
+        ///   Gets the controller that stops filling the tank when it is full.
+        /// </summary>
+        public Controller Controller { get; }
     }
 }

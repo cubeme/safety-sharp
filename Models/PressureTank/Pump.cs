@@ -27,7 +27,7 @@ namespace PressureTank
     /// <summary>
     ///   Represents the pump that fills the pressure tank.
     /// </summary>
-    internal class Pump : Component
+    public class Pump : Component
     {
         /// <summary>
         ///   Indicates whether the pump is currently filling the pressure tank.

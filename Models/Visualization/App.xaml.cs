@@ -22,10 +22,15 @@
 
 namespace Visualization
 {
-    /// <summary>
-    ///   Interaction logic for App.xaml
-    /// </summary>
+    using System.Globalization;
+    using System.Threading;
+
     public partial class App
     {
+        public App()
+        {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+        }
     }
 }

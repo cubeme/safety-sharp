@@ -59,11 +59,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="WpfExtensions.cs" />
     <Compile Include="IconButton.xaml.cs">
       <DependentUpon>IconButton.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SimulatorControls.xaml.cs">
-      <DependentUpon>SimulatorControls.xaml</DependentUpon>
+    <Compile Include="PressureTank.xaml.cs">
+      <DependentUpon>PressureTank.xaml</DependentUpon>
     </Compile>
     <Page Include="IconButton.xaml">
       <SubType>Designer</SubType>
@@ -81,11 +82,11 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Resources\Icons.xaml">
+    <Page Include="PressureTank.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="SimulatorControls.xaml">
+    <Page Include="Resources\Icons.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -126,6 +127,10 @@
     <ProjectReference Include="..\PressureTank\PressureTank.csproj">
       <Project>{2834343c-5d3a-4673-9f58-f869f4e3cc01}</Project>
       <Name>PressureTank</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SharedComponents\SharedComponents.csproj">
+      <Project>{c7377ef7-e8fe-4864-802f-b2dab535d20c}</Project>
+      <Name>SharedComponents</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

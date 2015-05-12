@@ -27,7 +27,7 @@ namespace PressureTank
     /// <summary>
     ///   Represents the sensor that monitors the pressure within the pressure tank.
     /// </summary>
-    internal class Sensor : Component
+    public class Sensor : Component
     {
         /// <summary>
         ///   The pressure level the sensor is watching for.

@@ -28,7 +28,7 @@ namespace SharedComponents
     {
         private readonly int _timeout;
         // TODO: OverflowBehavior.Clamp
-        private int _remainingTime;
+        private int _remainingTime = -1;
 
         public Timer(int timeout)
         {
@@ -47,9 +47,10 @@ namespace SharedComponents
 
         public void Stop()
         {
-            _remainingTime = 0;
+            _remainingTime = -1;
         }
 
+        public bool IsActive() => _remainingTime > 0;
         public int GetRemainingTime() => _remainingTime;
 
         public override void Update()

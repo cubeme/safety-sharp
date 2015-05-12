@@ -1,0 +1,170 @@
+﻿// The MIT License (MIT)
+// 
+// Copyright (c) 2014-2015, Institute for Software & Systems Engineering
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+namespace Visualization
+{
+    using System;
+    using System.Windows;
+    using System.Windows.Media.Animation;
+    using global::PressureTank;
+    using SafetySharp.Analysis;
+
+    public partial class PressureTank
+    {
+        private const double MaxSpeed = 32;
+        private const double MinSpeed = 0.25;
+        private readonly PressureTankModel _model = new PressureTankModel();
+        private readonly Storyboard _pumpingStoryboard;
+        private readonly Storyboard _pressureLevelStoryboard;
+        private readonly Simulator _simulator;
+        private double _speed = 1;
+
+        public PressureTank()
+        {
+            InitializeComponent();
+
+            // Initialize visualization resources
+            _pumpingStoryboard = (Storyboard)Resources["RotatePump"];
+            _pumpingStoryboard.Begin();
+
+            _pressureLevelStoryboard = (Storyboard)Resources["PressureLevel"];
+            _pressureLevelStoryboard.Begin();
+            _pressureLevelStoryboard.Pause();
+
+            // Initialize the simulation environment
+            _simulator = new Simulator(_model, stepDelay: 1000);
+            _simulator.SimulationStateChanged += (o, e) => UpdateSimulationButtonVisibilities();
+            _simulator.ModelStateChanged += (o, e) => UpdateModelState();
+
+            // Initialize the visualization state
+            UpdateSimulationButtonVisibilities();
+            UpdateModelState();
+        }
+
+        private void OnStop(object sender, RoutedEventArgs e)
+        {
+            if (_simulator.State != SimulationState.Stopped)
+                _simulator.Stop();
+        }
+
+        private void OnRun(object sender, RoutedEventArgs e)
+        {
+            _simulator.Run();
+        }
+
+        private void OnPause(object sender, RoutedEventArgs e)
+        {
+            _simulator.Pause();
+        }
+
+        private void OnStep(object sender, RoutedEventArgs e)
+        {
+            _simulator.Step();
+        }
+
+        private void OnIncreaseSpeed(object sender, RoutedEventArgs e)
+        {
+            ChangeSpeed(_speed * 2);
+        }
+
+        private void OnDecreaseSpeed(object sender, RoutedEventArgs e)
+        {
+            ChangeSpeed(_speed / 2);
+        }
+
+        private void ChangeSpeed(double speed)
+        {
+            speed = Math.Min(MaxSpeed, Math.Max(MinSpeed, speed));
+
+            if (Math.Abs(speed - _speed) > 0.001)
+            {
+                _simulator.StepDelay = (int)Math.Round(1000 / speed);
+                _speed = speed;
+            }
+
+            SimulationSpeed.Text = $"Speed: {_speed}x";
+        }
+
+        private void UpdateSimulationButtonVisibilities()
+        {
+            switch (_simulator.State)
+            {
+                case SimulationState.Stopped:
+                    StopButton.Visibility = Visibility.Collapsed;
+                    StartButton.Visibility = Visibility.Visible;
+                    PauseButton.Visibility = Visibility.Collapsed;
+                    StepButton.Visibility = Visibility.Visible;
+                    break;
+                case SimulationState.Paused:
+                    StopButton.Visibility = Visibility.Visible;
+                    StartButton.Visibility = Visibility.Visible;
+                    PauseButton.Visibility = Visibility.Collapsed;
+                    StepButton.Visibility = Visibility.Visible;
+                    break;
+                case SimulationState.Running:
+                    StopButton.Visibility = Visibility.Visible;
+                    StartButton.Visibility = Visibility.Collapsed;
+                    PauseButton.Visibility = Visibility.Visible;
+                    StepButton.Visibility = Visibility.Collapsed;
+                    break;
+                default:
+                    throw new InvalidOperationException("Unknown simulator state.");
+            }
+            
+            UpdateModelState();
+        }
+
+        private void UpdateModelState()
+        {
+            // Timer
+            CountDown.Text = _model.Timer.GetRemainingTime().ToString();
+            CountDown.Visibility = _model.Timer.IsActive().ToVisibility();
+            TimerAlert.Visibility = _model.Timer.HasElapsed().ToVisibility();
+
+            // Tank
+            var pressureLevel = Math.Round(_model.Tank.PressureLevel() / (double)PressureTankModel.MaxPressure * 100);
+            _pressureLevelStoryboard.Seek(TimeSpan.FromMilliseconds(10 * pressureLevel));
+            PressureLevel.Text = $"{pressureLevel}%";
+            PressureLevel.Visibility = (!_model.Tank.IsRuptured()).ToVisibility();
+            TankRupture.Visibility = _model.Tank.IsRuptured().ToVisibility();
+
+            // Sensor
+            SensorAlert.Visibility = _model.Sensor.IsTriggered().ToVisibility();
+
+            // Controller
+            if (_simulator.State == SimulationState.Stopped)
+                ControllerScreen.Text = "Inactive";
+            else if (_model.Pump.IsEnabled())
+                ControllerScreen.Text = "Pumping";
+            else if (_model.Sensor.IsTriggered())
+                ControllerScreen.Text = "Stopped: Sensor";
+            else
+                ControllerScreen.Text = "Stopped: Timer";
+
+            // Pump
+            if (!_model.Pump.IsEnabled() || _simulator.State == SimulationState.Stopped)
+                _pumpingStoryboard.Pause();
+            else
+                _pumpingStoryboard.Resume();
+        }
+    }
+}

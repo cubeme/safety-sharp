@@ -239,7 +239,9 @@ type Component internal (components : Component list, bindings : List<PortBindin
                     (field.GetValue(this) :?> IConvertible).ToInt32 (CultureInfo.InvariantCulture) :> obj
                 else
                     field.GetValue this
-            fields.Add (field, [value])
+
+            if field.FieldType.IsEnum || field.FieldType = typeof<int> || field.FieldType = typeof<bool> || field.FieldType = typeof<double> then
+                fields.Add (field, [value])
         )
 
         // Finalize the component's bindings
@@ -279,6 +281,14 @@ type Component internal (components : Component list, bindings : List<PortBindin
         | None   -> 
             invalidArg true "field" "Unable to retrieve initial values for field '%s'." field.FullName
             [] // Required, but cannot be reached
+
+    /// Resets all fields to their initial values.
+    member internal this.ResetFields () =
+        // TODO: What about fields with nondeterministic initial values
+        // TODO: Requires tests
+        fields |> Seq.iter (fun field ->
+            field.Key.SetValue (this, field.Value.[0])
+        )
 
     /// Gets the unique name of the component instance. Returns the empty string if no component name could be determined.
     member internal this.Name

@@ -25,13 +25,13 @@ namespace Visualization
     using System.Windows;
     using System.Windows.Media;
 
-    /// <summary>
-    ///   Interaction logic for IconButton.xaml
-    /// </summary>
     public partial class IconButton
     {
         public static readonly DependencyProperty IconProperty = DependencyProperty.Register(
             "Icon", typeof(Visual), typeof(IconButton), new PropertyMetadata(default(Visual)));
+
+        public static readonly RoutedEvent ClickedEvent = EventManager.RegisterRoutedEvent(
+            "Clicked", RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(IconButton));
 
         public IconButton()
         {
@@ -42,6 +42,17 @@ namespace Visualization
         {
             get { return (Visual)GetValue(IconProperty); }
             set { SetValue(IconProperty, value); }
+        }
+
+        public event RoutedEventHandler Clicked
+        {
+            add { AddHandler(ClickedEvent, value); }
+            remove { RemoveHandler(ClickedEvent, value); }
+        }
+
+        private void OnClicked(object sender, RoutedEventArgs e)
+        {
+            RaiseEvent(new RoutedEventArgs(ClickedEvent));
         }
     }
 }
