@@ -205,8 +205,10 @@ module internal VcGuardWithAssignmentModel =
 
     }
     let phase3PullChoicesTowardsBeginning () : TsamWorkflowFunction<_,unit> = workflow {
-        // We assume treeified form and all assignments at the end
-        // We need to pull choices out of stochastic:
+        // We assume treeified form and all assignments at the end. Thus there are only
+        // Asserts, Choices and Stochastics. After this algorithm has finished, all
+        // choices are at the beginning.
+        // A) We need to pull choices out of stochastic:
         // Example:
         //    stochastic {                   choice {
         //       p1 => {                        { 
@@ -224,6 +226,76 @@ module internal VcGuardWithAssignmentModel =
         //                                          }
         //                                      }
         //                                   }
+        // Note: Choice may be first in Block or direct Child of Stochastic
+        // B) We need to pull a choice towards beginning over an Assume or Assert.
+        // Assume/Assert prepend each choice. Assertion may not be pulled left over a
+        // choice.
+
+        // Summary: Cases to treat:
+        // * StmBlock1 { Stm... ; StmStochastic { StmBlock2 { StmChoice { } } } <--- Choice is first and only child in a Block
+        // * StmBlock1 { Stm... ; StmStochastic {  StmChoice { } } <--- Choice is the direct child of a Stochastic
+        // * In a Block:  StmX;StmAssume;StmChoice
+        // * In a Block:  StmX;StmAssert;StmChoice
+
+        let! state = getState ()
+        let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
+
+        let rec findAndPullChoicesNotAtTheBeginning (stm:Stm) : (Stm*bool) = //returns true, if change occurred
+            match stm with
+                | Stm.Block (blockSid,statements:Stm list) ->
+                    ()
+                | Stm.Choice (sid,choices: Stm list) ->
+                    // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
+                    // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
+                    // from whatever happens after the choice. We do not alter or add anything after the
+                    // Stm.Choice, we only manipulate things inside each of the choices. Thus we can
+                    // manipulate the choices in parallel.
+                    let (newChoices,somethingChanged) =
+                        choices |> List.map findAndPullChoicesNotAtTheBeginning
+                                |> List.unzip
+                    let somethingChanged = somethingChanged |> List.exists id
+                    if somethingChanged then
+                        (Stm.Choice(sid,newChoices),true)
+                    else
+                        (stm,false)
+                | Stm.Stochastic (sid,stochasticChoice: (Expr*Stm) list) ->
+                    // See Stm.Choice, why we can manipulate each stochasticChoice in parallel
+                    let (newChoices,somethingChanged) =
+                        stochasticChoice |> List.map (fun (choiceProb,choiceStm) ->
+                                                            let (newChoiceStm,somethingChanged) = findAndPullChoicesNotAtTheBeginning choiceStm
+                                                            ((choiceProb,newChoiceStm),somethingChanged)
+                                                        )
+                                            |> List.unzip
+                    let somethingChanged = somethingChanged |> List.exists id
+                    if somethingChanged then
+                        (Stm.Stochastic(sid,newChoices),true)
+                    else
+                        (stm,false)
+                | _ ->
+                    (stm,false)
+        
+        let rec findAndPullChoicesNotAtTheBeginningUntilFixpoint (stm:Stm) =
+            let (newStm,wasChanged) = findAndPullChoicesNotAtTheBeginning stm
+            if wasChanged then
+                findAndPullChoicesNotAtTheBeginningUntilFixpoint newStm
+            else
+                stm
+                
+        let! model = getTsamModel ()
+        let allChoicesAtTheBeginningBody = findAndPullChoicesNotAtTheBeginningUntilFixpoint (model.Body)
+        let allChoicesAtTheBeginningModel = 
+            { model with
+                Pgm.Body = allChoicesAtTheBeginningBody
+            }
+        do! updateTsamModel allChoicesAtTheBeginningModel
+    }
+
+    let phase4PushStochasticsTowardsEnd() : TsamWorkflowFunction<_,unit> = workflow {
+        //Assertions/Assumptions. It may be pulled over a probabilistic.
+        return ()
+    }
+        
+    let phase5MergeChoicesAtTheBeginning () : TsamWorkflowFunction<_,unit> = workflow {
         // We need to merge choices with choices:
         // Example:
         //    choice {                             choice {
@@ -236,6 +308,12 @@ module internal VcGuardWithAssignmentModel =
         //           }
         //       }
         //    }
+        return ()
+    }
+
+    let phase6MergeStochasticsAtTheEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        // We want Stochastic Statements to be exactly before the Assignment Statements
+        // They should be there
         // We need to merge stochastics with stochastics:
         // Example:
         //    stochastic {                       stochastic {
@@ -246,14 +324,6 @@ module internal VcGuardWithAssignmentModel =
         //           p5 => {Stm5}                }
         //       }
         //    }
-        // We need to pull a choice towards beginning over an Assume or Assert.
-        // Assume/Assert prepend each choice. Assertion may not be pulled left over a
-        // choice. It may be pulled over a probabilistic.
-        return ()
-    }
-
-    let phase4PushStochasticsTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
-        // We want Stochastic Statements to be exactly before the Assignment Statements
         return ()
     }
 
@@ -263,6 +333,8 @@ module internal VcGuardWithAssignmentModel =
         do! phase2PushAssignmentsNotAtTheEnd ()
         do! phase3PullChoicesTowardsBeginning ()
         do! phase4PushStochasticsTowardsEnd ()
+        do! phase5MergeChoicesAtTheBeginning ()
+        do! phase6MergeStochasticsAtTheEnd ()
         return ()
     }
     
