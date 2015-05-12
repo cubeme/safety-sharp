@@ -33,9 +33,11 @@ namespace Visualization
         private const double MaxSpeed = 32;
         private const double MinSpeed = 0.25;
         private readonly PressureTankModel _model = new PressureTankModel();
-        private readonly Storyboard _pumpingStoryboard;
         private readonly Storyboard _pressureLevelStoryboard;
+        private readonly Storyboard _pumpingStoryboard;
+        private readonly Storyboard _sensorAlertStoryboard;
         private readonly Simulator _simulator;
+        private readonly Storyboard _timerAlertStoryboard;
         private double _speed = 1;
 
         public PressureTank()
@@ -50,6 +52,9 @@ namespace Visualization
             _pressureLevelStoryboard.Begin();
             _pressureLevelStoryboard.Pause();
 
+            _timerAlertStoryboard = (Storyboard)Resources["TimerEvent"];
+            _sensorAlertStoryboard = (Storyboard)Resources["SensorEvent"];
+
             // Initialize the simulation environment
             _simulator = new Simulator(_model, stepDelay: 1000);
             _simulator.SimulationStateChanged += (o, e) => UpdateSimulationButtonVisibilities();
@@ -58,6 +63,9 @@ namespace Visualization
             // Initialize the visualization state
             UpdateSimulationButtonVisibilities();
             UpdateModelState();
+
+            TimerAlert.Opacity = 0;
+            SensorAlert.Opacity = 0;
         }
 
         private void OnStop(object sender, RoutedEventArgs e)
@@ -126,10 +134,8 @@ namespace Visualization
                     PauseButton.Visibility = Visibility.Visible;
                     StepButton.Visibility = Visibility.Collapsed;
                     break;
-                default:
-                    throw new InvalidOperationException("Unknown simulator state.");
             }
-            
+
             UpdateModelState();
         }
 
@@ -138,7 +144,9 @@ namespace Visualization
             // Timer
             CountDown.Text = _model.Timer.GetRemainingTime().ToString();
             CountDown.Visibility = _model.Timer.IsActive().ToVisibility();
-            TimerAlert.Visibility = _model.Timer.HasElapsed().ToVisibility();
+
+            if (_model.Timer.HasElapsed())
+                _timerAlertStoryboard.Begin();
 
             // Tank
             var pressureLevel = Math.Round(_model.Tank.PressureLevel() / (double)PressureTankModel.MaxPressure * 100);
@@ -148,17 +156,25 @@ namespace Visualization
             TankRupture.Visibility = _model.Tank.IsRuptured().ToVisibility();
 
             // Sensor
-            SensorAlert.Visibility = _model.Sensor.IsTriggered().ToVisibility();
+            if ((_model.Sensor.IsFull() || _model.Sensor.IsEmpty()) && _simulator.State != SimulationState.Stopped)
+                _sensorAlertStoryboard.Begin();
 
             // Controller
-            if (_simulator.State == SimulationState.Stopped)
-                ControllerScreen.Text = "Inactive";
-            else if (_model.Pump.IsEnabled())
-                ControllerScreen.Text = "Pumping";
-            else if (_model.Sensor.IsTriggered())
-                ControllerScreen.Text = "Stopped: Sensor";
-            else
-                ControllerScreen.Text = "Stopped: Timer";
+            switch (_model.Controller.GetState())
+            {
+                case global::PressureTank.Controller.State.Inactive:
+                    ControllerScreen.Text = "Inactive";
+                    break;
+                case global::PressureTank.Controller.State.Filling:
+                    ControllerScreen.Text = "Filling";
+                    break;
+                case global::PressureTank.Controller.State.StoppedBySensor:
+                    ControllerScreen.Text = "Stopped: Sensor";
+                    break;
+                case global::PressureTank.Controller.State.StoppedByTimer:
+                    ControllerScreen.Text = "Stopped: Timer";
+                    break;
+            }
 
             // Pump
             if (!_model.Pump.IsEnabled() || _simulator.State == SimulationState.Stopped)

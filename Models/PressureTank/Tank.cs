@@ -72,7 +72,13 @@ namespace PressureTank
         public override void Update()
         {
             if (IsBeingFilled())
-                _pressureLevel += 1;
+                _pressureLevel += 2;
+
+            _pressureLevel -= 1;
+
+            // TODO: Remove the following two lines once S# supports explicit overflow behaviors
+            _pressureLevel = _pressureLevel > _maxPressure ? _maxPressure : _pressureLevel;
+            _pressureLevel = _pressureLevel < 0 ? 0 : _pressureLevel;
         }
     }
 }

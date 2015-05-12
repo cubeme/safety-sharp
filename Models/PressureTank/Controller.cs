@@ -31,6 +31,32 @@ namespace PressureTank
     public class Controller : Component
     {
         /// <summary>
+        ///   Describes the state of the controller.
+        /// </summary>
+        public enum State
+        {
+            /// <summary>
+            ///   Indicates that the controller is inactive.
+            /// </summary>
+            Inactive,
+
+            /// <summary>
+            ///   Indicates that the tank is currently being filled.
+            /// </summary>
+            Filling,
+
+            /// <summary>
+            ///   Indicates that the last fill cycle was stopped because of the pressure sensor.
+            /// </summary>
+            StoppedBySensor,
+
+            /// <summary>
+            ///   Indicates that the last fill cycle was stopped because of a timeout.
+            /// </summary>
+            StoppedByTimer
+        }
+
+        /// <summary>
         ///   The pump that is used to fill the tank.
         /// </summary>
         private readonly Pump _pump;
@@ -46,6 +72,11 @@ namespace PressureTank
         private readonly Timer _timer;
 
         /// <summary>
+        ///   The current state of the controller.
+        /// </summary>
+        private State _state = State.Inactive;
+
+        /// <summary>
         ///   Initializes a new instance.
         /// </summary>
         /// <param name="sensor">The sensor that is used to sense the pressure level within the tank.</param>
@@ -56,29 +87,37 @@ namespace PressureTank
             _pump = pump;
             _sensor = sensor;
             _timer = timer;
-
-            _timer.Start();
         }
+
+        /// <summary>
+        ///   Gets the state of the controller.
+        /// </summary>
+        public State GetState() => _state;
 
         /// <summary>
         ///   Updates the controller's internal state.
         /// </summary>
         public override void Update()
         {
-            // We're only interested in a single cycle at the moment, so the pump is enabled
-            // at the beginning and disabled by the controller once the sensor triggers or
-            // the timer times out. We do not care what happens after that, i.e., refilling
-            // the tank once it has been depleted, etc.
-
-            if (_pump.IsEnabled())
+            if (_state == State.Filling)
             {
-                var shouldStop = _sensor.IsTriggered() || _timer.HasElapsed();
-
-                if (shouldStop)
+                if (_timer.HasElapsed())
+                {
                     _pump.Disable();
-
-                if (_sensor.IsTriggered())
+                    _state = State.StoppedByTimer;
+                }
+                else if (_sensor.IsFull())
+                {
+                    _pump.Disable();
                     _timer.Stop();
+                    _state = State.StoppedBySensor;
+                }
+            }
+            else if (_sensor.IsEmpty())
+            {
+                _timer.Start();
+                _pump.Enable();
+                _state = State.Filling;
             }
         }
     }

@@ -53,7 +53,13 @@ namespace PressureTank
         ///   Gets a value indicating whether the triggering pressure level has been reached or exceeded.
         /// </summary>
         // TODO: Consider using a property once supported by S#.
-        public bool IsTriggered() => CheckPhysicalPressure() >= _triggerPressure;
+        public bool IsFull() => CheckPhysicalPressure() >= _triggerPressure;
+
+        /// <summary>
+        ///   Gets a value indicating whether the tank is empty.
+        /// </summary>
+        // TODO: Consider using a property once supported by S#.
+        public bool IsEmpty() => CheckPhysicalPressure() == 0;
 
         [Transient]
         private class SenseNoPressure : Fault

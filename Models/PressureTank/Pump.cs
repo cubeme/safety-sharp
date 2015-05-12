@@ -32,7 +32,7 @@ namespace PressureTank
         /// <summary>
         ///   Indicates whether the pump is currently filling the pressure tank.
         /// </summary>
-        private bool _enabled = true;
+        private bool _enabled;
 
         /// <summary>
         ///   Disables the pump.
@@ -40,6 +40,14 @@ namespace PressureTank
         public void Disable()
         {
             _enabled = false;
+        }
+
+        /// <summary>
+        ///   Enables the pump.
+        /// </summary>
+        public void Enable()
+        {
+            _enabled = true;
         }
 
         /// <summary>
