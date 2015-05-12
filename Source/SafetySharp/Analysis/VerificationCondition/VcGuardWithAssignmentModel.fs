@@ -82,6 +82,7 @@ module internal VcGuardWithAssignmentModel =
                     //     4th Peephole: Stm3;Stm4
                     //     5th Peephole: Stm4;Stm5
                     //   Every Stm was at least one time peepholeRight
+                    // phase4PullAssertionsAndAssumptionsTowardsBeginning shows a single Statement peephole
                     let rec findAndPushAssignmentInBlock (revAlreadyLookedAt:Stm list,peepholeLeft:Stm option,peepholeRight:Stm option)
                                                          (rightNextToPeephole:Stm list) : (Stm*bool) = 
                         let peepholeLeft = peepholeLeft
@@ -234,8 +235,8 @@ module internal VcGuardWithAssignmentModel =
         // Summary: Cases to treat:
         // * 1) StmBlock1 { Stm... ; StmStochastic { StmBlock2 { StmChoice { } } } <--- Choice is first and only child in a Block
         // * 2) StmBlock1 { Stm... ; StmStochastic {  StmChoice { } } <--- Choice is the direct child of a Stochastic
-        // * 3) In a Block:  StmX;StmAssume;StmChoice
-        // * 4) In a Block:  StmX;StmAssert;StmChoice
+        // * 3) In a Block:  StmX;StmAssume;StmChoice   => StmX;StmChoice (assume is part of choice)
+        // * 4) In a Block:  StmX;StmAssert;StmChoice    => StmX;StmChoice (assert is part of choice)
 
         let! state = getState ()
         let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
@@ -370,9 +371,158 @@ module internal VcGuardWithAssignmentModel =
         do! updateTsamModel allChoicesAtTheBeginningModel
     }
 
-    let phase4PushStochasticsTowardsEnd() : TsamWorkflowFunction<_,unit> = workflow {
+    let phase4PullAssertionsAndAssumptionsTowardsBeginning() : TsamWorkflowFunction<_,unit> = workflow {
         //Assertions/Assumptions. It may be pulled over a probabilistic.
-        return ()
+        
+        let! state = getState ()
+        let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
+
+        let rec findAndPull (stm:Stm) : (Stm*(Stm option)*bool) = //returns Stm (without pulled) * Stm to pull (if Stm to pull exists) * changedSomething
+            match stm with
+                | Stm.Block (blockSid,statements:Stm list) ->
+                    ///////////// Here we rewrite the block. Result must be block                    
+                    // After _one_ rewrite, we return. This makes analysis of the algorithm easier
+                    // Sliding window: The function findAndPushAssignmentInBlock looks through a peephole
+                    // if nothing has to be done on the peephole, peephole is shifted to the right
+                    // Example:
+                    //   Assume Stm1;Stm2;Stm3;Stm4;Stm5
+                    //     1st Peephole: Stm1
+                    //     2nd Peephole: Stm2
+                    //     3rd Peephole: Stm3
+                    //     4th Peephole: Stm4
+                    //     5th Peephole: Stm5
+                    //   Every Stm was at least one time peephole
+                    let rec traverseBlock (revAlreadyLookedAt:Stm list,peephole:Stm)
+                                                         (rightNextToPeephole:Stm list) : (Stm*(Stm option)*bool) = 
+                        // recursive cases (Stochastic or Choices)
+                        let (newStmOfPeephole,statementToPull,changedSomething) = findAndPull peephole
+                        if changedSomething then
+                            let statementToPull = if statementToPull.IsSome then [statementToPull.Value] else []
+                            let newBlock =
+                                (revAlreadyLookedAt |> List.rev)
+                                @ statementToPull @ [newStmOfPeephole]
+                                @ rightNextToPeephole
+                            (Stm.Block(blockSid,newBlock),None,true)
+                        else if rightNextToPeephole.IsEmpty then
+                            //nothing changed at all, so return old statement
+                            (stm,None,false)
+                        else
+                            // shift peephole to the right
+                            let nextRevAlreadyLookedAt = peephole :: revAlreadyLookedAt
+                            let nextPeephole = rightNextToPeephole.Head
+                            let nextRightNextToPeephole = rightNextToPeephole.Tail
+                            traverseBlock (nextRevAlreadyLookedAt,nextPeephole) nextRightNextToPeephole
+                    if statements.IsEmpty = false then
+                        let firstPeephole = statements.Head
+                        let firstRightNextToPeephole = statements.Tail
+                        traverseBlock ([],firstPeephole) firstRightNextToPeephole
+                    else
+                        (stm,None,false)
+                    ///////////// End of rewriting Block
+                | Stm.Choice (sid,choices: Stm list) ->
+                    // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
+                    // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
+                    // from whatever happens after the choice. We do not alter or add anything after the
+                    // Stm.Choice, we only manipulate things inside each of the choices. Thus we can
+                    // manipulate the choices in parallel.
+                    let (newChoices,statementsToPull,somethingChanged) =
+                        choices |> List.map findAndPull
+                                |> List.unzip3
+                    let somethingChanged = somethingChanged |> List.exists id
+                    let statementsToPull = statementsToPull |> List.collect (fun toPull -> if toPull.IsSome then [toPull.Value] else [])
+                    if somethingChanged then
+                        let newChoiceStm = Stm.Choice(sid,newChoices)
+                        if statementsToPull.IsEmpty = false then
+                            let newId = uniqueStatementIdGenerator()
+                            (Stm.Block(newId,statementsToPull@[newChoiceStm]),None,true)
+                        else
+                            (newChoiceStm,None,true)
+                    else
+                        (stm,None,false)
+                | Stm.Stochastic (stochasticSid,stochasticChoices: (Expr*Stm) list) ->
+                    let rec traverseStochasticChoices (revAlreadyTraversed:(Expr*Stm) list) (toTraverse:(Expr*Stm) list) : (Stm*(Stm option)*bool) = 
+                        if toTraverse.IsEmpty then
+                            (stm,None,false)
+                        else
+                            let (stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm) = toTraverse.Head
+                            match stochasticChoiceToTraverseStm with
+                                | Stm.Block(blockSid,Stm.Assert(assertToPullSid,assertToPullExpr)::otherBlockStmnts ) ->
+                                    //case 1: ... { StmBlock2 { StmAssert { } }
+                                    let newStochasticWithoutAssert : Stm =
+                                        let otherStochasticChoicesLeft = revAlreadyTraversed |> List.rev
+                                        let otherStochasticChoicesRight = toTraverse.Tail
+                                        let stochasticChoiceInTheMiddle = (stochasticChoiceToTraverseExpr,Stm.Block(blockSid,otherBlockStmnts))
+                                        let stochasticChoicesInChoice = otherStochasticChoicesLeft@[stochasticChoiceInTheMiddle]@otherStochasticChoicesRight
+                                        let stochasticChoiceStm = Stm.Stochastic(stochasticSid,stochasticChoicesInChoice)
+                                        stochasticChoiceStm
+                                    let toPull = Stm.Assert(assertToPullSid,assertToPullExpr)
+                                    (newStochasticWithoutAssert,Some(toPull),true)
+                                | Stm.Block(blockSid,Stm.Assume(assumeToPullSid,assumeToPullExpr)::otherBlockStmnts ) ->
+                                    //case 2: ... { StmBlock2 { StmAssume { } }
+                                    let newStochasticWithoutAssume : Stm =
+                                        let otherStochasticChoicesLeft = revAlreadyTraversed |> List.rev
+                                        let otherStochasticChoicesRight = toTraverse.Tail
+                                        let stochasticChoiceInTheMiddle = (stochasticChoiceToTraverseExpr,Stm.Block(blockSid,otherBlockStmnts))
+                                        let stochasticChoicesInChoice = otherStochasticChoicesLeft@[stochasticChoiceInTheMiddle]@otherStochasticChoicesRight
+                                        let stochasticChoiceStm = Stm.Stochastic(stochasticSid,stochasticChoicesInChoice)
+                                        stochasticChoiceStm
+                                    let toPull = Stm.Assume(assumeToPullSid,assumeToPullExpr)
+                                    (newStochasticWithoutAssume,Some(toPull),true)
+                                | Stm.Assert(assertToPullSid,assertToPullExpr) ->
+                                    //case 3: ... { StmAssert { } }
+                                    // generate block to be able to use case 1
+                                    let newId = uniqueStatementIdGenerator()
+                                    let assertInBlock = Stm.Assert(assertToPullSid,assertToPullExpr)
+                                    let newBlock = Stm.Block(newId,[assertInBlock])
+                                    (newBlock,None,true)
+                                | Stm.Assume(assumeToPullSid,assumeToPullExpr) ->
+                                    //case 4: ... { StmAssume { } }
+                                    // generate block to be able to use case 2
+                                    let newId = uniqueStatementIdGenerator()
+                                    let assumeInBlock = Stm.Assume(assumeToPullSid,assumeToPullExpr)
+                                    let newBlock = Stm.Block(newId,[assumeInBlock])
+                                    (newBlock,None,true)
+                                | _ ->
+                                    // recursive case (try to change something inside)
+                                    // stochastic statement may propagate upwards
+                                    let (traversedStochasticChoice,statementToPull,somethingChanged) = findAndPull stochasticChoiceToTraverseStm
+                                    if somethingChanged then
+                                        let newChoices =
+                                            (revAlreadyTraversed |> List.rev)
+                                            @ [(stochasticChoiceToTraverseExpr,traversedStochasticChoice)]
+                                            @ toTraverse.Tail
+                                        let alreadyTraversed = revAlreadyTraversed |> List.rev
+                                        let stochasticStatement = Stm.Stochastic (stochasticSid,newChoices)
+                                        (stochasticStatement,statementToPull,true)
+                                    else
+                                        //nothing was changed by toTraverse.Head, so try the next candidate in the list
+                                        traverseStochasticChoices ((stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm)::revAlreadyTraversed) (toTraverse.Tail)
+                    traverseStochasticChoices [] stochasticChoices
+                | _ ->
+                    (stm,None,false)
+        
+        let rec findAndPullUntilFixpoint (stm:Stm) =
+            let (newStm,statementToPull,wasChanged) = findAndPull stm
+            if wasChanged then
+                let newStm =
+                    if statementToPull.IsSome then
+                        let newId = uniqueStatementIdGenerator()
+                        Stm.Block(newId,[statementToPull.Value;newStm])
+                    else
+                        newStm
+                findAndPullUntilFixpoint newStm
+            else
+                stm
+                
+        let! model = getTsamModel ()
+        let allAssumptionsAndAssertionsAfterChoiceBody = findAndPullUntilFixpoint (model.Body)
+        let allAssumptionsAndAssertionsAfterChoiceModel = 
+            { model with
+                Pgm.Body = allAssumptionsAndAssertionsAfterChoiceBody
+            }
+        do! updateTsamModel allAssumptionsAndAssertionsAfterChoiceModel
+
+
     }
         
     let phase5MergeChoicesAtTheBeginning () : TsamWorkflowFunction<_,unit> = workflow {
@@ -412,7 +562,7 @@ module internal VcGuardWithAssignmentModel =
         do! phase1TreeifyAndNormalize ()
         do! phase2PushAssignmentsNotAtTheEnd ()
         do! phase3PullChoicesTowardsBeginning ()
-        do! phase4PushStochasticsTowardsEnd ()
+        do! phase4PullAssertionsAndAssumptionsTowardsBeginning ()
         do! phase5MergeChoicesAtTheBeginning ()
         do! phase6MergeStochasticsAtTheEnd ()
         return ()
