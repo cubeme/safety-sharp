@@ -232,10 +232,10 @@ module internal VcGuardWithAssignmentModel =
         // choice.
 
         // Summary: Cases to treat:
-        // * StmBlock1 { Stm... ; StmStochastic { StmBlock2 { StmChoice { } } } <--- Choice is first and only child in a Block
-        // * StmBlock1 { Stm... ; StmStochastic {  StmChoice { } } <--- Choice is the direct child of a Stochastic
-        // * In a Block:  StmX;StmAssume;StmChoice
-        // * In a Block:  StmX;StmAssert;StmChoice
+        // * 1) StmBlock1 { Stm... ; StmStochastic { StmBlock2 { StmChoice { } } } <--- Choice is first and only child in a Block
+        // * 2) StmBlock1 { Stm... ; StmStochastic {  StmChoice { } } <--- Choice is the direct child of a Stochastic
+        // * 3) In a Block:  StmX;StmAssume;StmChoice
+        // * 4) In a Block:  StmX;StmAssert;StmChoice
 
         let! state = getState ()
         let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
@@ -243,7 +243,64 @@ module internal VcGuardWithAssignmentModel =
         let rec findAndPullChoicesNotAtTheBeginning (stm:Stm) : (Stm*bool) = //returns true, if change occurred
             match stm with
                 | Stm.Block (blockSid,statements:Stm list) ->
-                    ()
+                    ///////////// Here we rewrite the block. Result must be block                    
+                    // After _one_ rewrite, we return. This makes analysis of the algorithm easier
+                    // Sliding window: The function findAndPushAssignmentInBlock looks through a peephole
+                    // if nothing has to be done on the peephole, peephole is shifted to the right
+                    // Example:
+                    //   Assume Stm1;Stm2;Stm3;Stm4;Stm5
+                    //     1st Peephole: None;Stm1
+                    //     2nd Peephole: Stm1;Stm2
+                    //     3rd Peephole: Stm2;Stm3
+                    //     4th Peephole: Stm3;Stm4
+                    //     5th Peephole: Stm4;Stm5
+                    //   Every Stm was at least one time peepholeRight
+                    let rec traverseBlock (revAlreadyLookedAt:Stm list,peepholeLeft:Stm option,peepholeRight:Stm option)
+                                                         (rightNextToPeephole:Stm list) : (Stm*bool) = 
+                        let peepholeLeft = peepholeLeft
+                        match (peepholeLeft,peepholeRight) with
+                            | (Some(Assume (leftSid,leftExpr)),Some(Choice (rightSid,rightChoices)))
+                                // case 3) In a Block:  StmX;StmAssume;StmChoice
+                            | (Some(Assert (leftSid,leftExpr)),Some(Choice (rightSid,rightChoices))) ->
+                                // case 4) In a Block:  StmX;StmAssert;StmChoice
+                                // push into Choice. (prepend to each of the rightChoices at the beginning)
+                                let pushCandidate=peepholeLeft.Value
+                                let createNewChoice (choice:Stm) =
+                                    choice.prependStatements uniqueStatementIdGenerator [pushCandidate]
+                                let newChoiceStm = Stm.Choice(rightSid,rightChoices |> List.map createNewChoice)
+                                assert rightNextToPeephole.IsEmpty // in treeified Stmts there is nothing after stochastic
+                                let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
+                                (Stm.Block(blockSid,newBlock),true)
+                            | (peepholeLeft,Some(stmOfRightPeephole)) ->
+                                // recursive cases (Stochastic or Choices)
+                                let (newStmOfRightPeephole,changedSomething) = findAndPullChoicesNotAtTheBeginning stmOfRightPeephole
+                                let stmOfPeepholeLeft = if peepholeLeft.IsSome then [peepholeLeft.Value] else []
+                                if changedSomething then
+                                    let newBlock =
+                                        (revAlreadyLookedAt |> List.rev)
+                                        @ stmOfPeepholeLeft @ [newStmOfRightPeephole]
+                                        @ rightNextToPeephole
+                                    (Stm.Block(blockSid,newBlock),true)
+                                else if rightNextToPeephole.IsEmpty then
+                                    //nothing changed at all, so return old statement
+                                    (stm,false)
+                                else
+                                    // shift peephole to the right
+                                    let nextRevAlreadyLookedAt = stmOfPeepholeLeft @ revAlreadyLookedAt
+                                    let nextPeepholeRight = Some(rightNextToPeephole.Head)
+                                    let nextPeepholeLeft = peepholeRight
+                                    let nextRightNextToPeephole = rightNextToPeephole.Tail
+                                    traverseBlock (nextRevAlreadyLookedAt,nextPeepholeLeft,nextPeepholeRight) nextRightNextToPeephole
+                            | _ ->
+                                (stm,false)
+                    if statements.IsEmpty = false then
+                        let firstPeepholeRight = Some(statements.Head)
+                        let firstPeepholeLeft = None
+                        let firstRightNextToPeephole = statements.Tail
+                        traverseBlock ([],firstPeepholeLeft,firstPeepholeRight) firstRightNextToPeephole
+                    else
+                        (stm,false)
+                    ///////////// End of rewriting Block
                 | Stm.Choice (sid,choices: Stm list) ->
                     // We assume a treeified version. Thus this Stm.Choice is at the end of a Block.
                     // Thus nothing happens after this Stm.Choice. Thus this Stm.Choice is independent
@@ -258,19 +315,42 @@ module internal VcGuardWithAssignmentModel =
                         (Stm.Choice(sid,newChoices),true)
                     else
                         (stm,false)
-                | Stm.Stochastic (sid,stochasticChoice: (Expr*Stm) list) ->
-                    // See Stm.Choice, why we can manipulate each stochasticChoice in parallel
-                    let (newChoices,somethingChanged) =
-                        stochasticChoice |> List.map (fun (choiceProb,choiceStm) ->
-                                                            let (newChoiceStm,somethingChanged) = findAndPullChoicesNotAtTheBeginning choiceStm
-                                                            ((choiceProb,newChoiceStm),somethingChanged)
-                                                        )
-                                            |> List.unzip
-                    let somethingChanged = somethingChanged |> List.exists id
-                    if somethingChanged then
-                        (Stm.Stochastic(sid,newChoices),true)
-                    else
-                        (stm,false)
+                | Stm.Stochastic (stochasticSid,stochasticChoices: (Expr*Stm) list) ->                    
+                    // case 1) StmBlock1 { Stm... ; StmStochastic { StmBlock2 { StmChoice { } } } <--- Choice is first and only child in a Block
+                    // case 2) StmBlock1 { Stm... ; StmStochastic {  StmChoice { } } <--- Choice is the direct child of a Stochastic
+                    let rec traverseStochasticChoices (revAlreadyTraversed:(Expr*Stm) list) (toTraverse:(Expr*Stm) list) : (Stm*bool) = 
+                            if toTraverse.IsEmpty then
+                                (stm,false)
+                            else
+                                let (stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm) = toTraverse.Head
+                                match stochasticChoiceToTraverseStm with
+                                    | Stm.Block(_,Stm.Choice(choiceToPullSid,choiceToPullChoices)::[] )
+                                        //case 1: ... { StmBlock2 { StmChoice { } }
+                                    | Stm.Choice(choiceToPullSid,choiceToPullChoices) ->
+                                        //case 2: ... { StmChoice { } }
+                                        let otherStochasticChoicesLeft = revAlreadyTraversed |> List.rev
+                                        let otherStochasticChoicesRight = toTraverse.Tail
+                                        let createChoice (choiceInStochastic:Stm) : Stm =
+                                            let stochasticChoiceInTheMiddle = (stochasticChoiceToTraverseExpr,choiceInStochastic)
+                                            let stochasticChoicesInChoice = otherStochasticChoicesLeft@[stochasticChoiceInTheMiddle]@otherStochasticChoicesRight
+                                            let stochasticChoiceStm = Stm.Stochastic(stochasticSid,stochasticChoicesInChoice)
+                                            stochasticChoiceStm.recursiveRenumberStatements uniqueStatementIdGenerator
+                                        let outerChoices = choiceToPullChoices |> List.map createChoice
+                                        (Stm.Choice(choiceToPullSid,outerChoices),true)
+                                    | _ ->
+                                        // recursive case (try to change something inside)
+                                        let (traversedStochasticChoice,somethingChanged) = findAndPullChoicesNotAtTheBeginning stochasticChoiceToTraverseStm
+                                        if somethingChanged then
+                                            let newChoices =
+                                                (revAlreadyTraversed |> List.rev)
+                                                @ [(stochasticChoiceToTraverseExpr,traversedStochasticChoice)]
+                                                @ toTraverse.Tail
+                                            let alreadyTraversed = revAlreadyTraversed |> List.rev
+                                            (Stm.Stochastic (stochasticSid,newChoices),true)
+                                        else
+                                            //nothing was changed by toTraverse.Head, so try the next candidate in the list
+                                            traverseStochasticChoices ((stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm)::revAlreadyTraversed) (toTraverse.Tail)
+                    traverseStochasticChoices [] stochasticChoices
                 | _ ->
                     (stm,false)
         
