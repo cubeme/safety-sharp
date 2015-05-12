@@ -87,7 +87,7 @@ module internal VcGuardWithAssignmentModel =
                         let peepholeLeft = peepholeLeft
                         match (peepholeLeft,peepholeRight) with
                             | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Assert (rightSid,rightExpr))) ->
-                                // push over Assertion
+                                // push over Assertion. Adapt rightExpr
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssertStm =
                                     let newAssertExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
@@ -98,7 +98,7 @@ module internal VcGuardWithAssignmentModel =
                                     @ rightNextToPeephole
                                 (Stm.Block(blockSid,newBlock),true)
                             | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Assume (rightSid,rightExpr))) ->
-                                // push over Assumption
+                                // push over Assumption. Adapt rightExpr
                                 let pushCandidate=peepholeLeft.Value
                                 let newAssumeStm =
                                     let newAssumeStmExpr = rightExpr.rewriteExpr_varToExpr  (_var,leftExpr)
@@ -109,7 +109,7 @@ module internal VcGuardWithAssignmentModel =
                                     @ rightNextToPeephole
                                 (Stm.Block(blockSid,newBlock),true)
                             | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Choice (rightSid,rightChoices))) ->
-                                // push into Choice
+                                // push into Choice. (prepend to each of the rightChoices at the beginning)
                                 let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choice:Stm) =
                                     choice.prependStatements uniqueStatementIdGenerator [pushCandidate]
@@ -118,7 +118,7 @@ module internal VcGuardWithAssignmentModel =
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
                                 (Stm.Block(blockSid,newBlock),true)
                             | (Some(Stm.Write(leftSid,_var,leftExpr)),Some(Stochastic (rightSid,rightStochasticChoices))) ->
-                                // push into Stochastic
+                                // push into Stochastic (prepend to each of the rightStochasticChoices at the beginning). Adapt choiceExprs.
                                 let pushCandidate=peepholeLeft.Value
                                 let createNewChoice (choiceExpr:Expr,choiceStm:Stm) =
                                     let newChoiceExpr = choiceExpr.rewriteExpr_varToExpr (_var,leftExpr)
@@ -129,6 +129,7 @@ module internal VcGuardWithAssignmentModel =
                                 let newBlock = ((newChoiceStm::revAlreadyLookedAt) |> List.rev)
                                 (Stm.Block(blockSid,newBlock),true)
                             | (peepholeLeft,Some(stmOfRightPeephole)) ->
+                                // recursive cases (Stochastic or Choices)
                                 let (newStmOfRightPeephole,changedSomething) = findAndPushAssignmentNotAtTheEnd stmOfRightPeephole
                                 let stmOfPeepholeLeft = if peepholeLeft.IsSome then [peepholeLeft.Value] else []
                                 if changedSomething then
@@ -141,6 +142,7 @@ module internal VcGuardWithAssignmentModel =
                                     //nothing changed at all, so return old statement
                                     (stm,false)
                                 else
+                                    // shift peephole to the right
                                     let nextRevAlreadyLookedAt = stmOfPeepholeLeft @ revAlreadyLookedAt
                                     let nextPeepholeRight = Some(rightNextToPeephole.Head)
                                     let nextPeepholeLeft = peepholeRight
@@ -202,12 +204,56 @@ module internal VcGuardWithAssignmentModel =
         do! updateTsamModel allStatementsAtTheEndModel
 
     }
-
-    let phase3PushStochasticsTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+    let phase3PullChoicesTowardsBeginning () : TsamWorkflowFunction<_,unit> = workflow {
+        // We assume treeified form and all assignments at the end
+        // We need to pull choices out of stochastic:
+        // Example:
+        //    stochastic {                   choice {
+        //       p1 => {                        { 
+        //          choice {                        stochastic {
+        //              {Stm1}                          p1 => {Stm1}
+        //              {Stm2}                          p2 => {Stm3}
+        //          }                ===>               p3 => {Stm4}
+        //       }                                  }
+        //       p2 => {                        }
+        //          Stm3                        { 
+        //       }                                  stochastic {
+        //       p3 => {                                p1 => {Stm2}
+        //          Stm4                                p2 => {Stm3}
+        //       }                                      p3 => {Stm4}
+        //                                          }
+        //                                      }
+        //                                   }
+        // We need to merge choices with choices:
+        // Example:
+        //    choice {                             choice {
+        //       { Stm1 }                             { Stm1 }
+        //       { Stm2 }                             { Stm2 }
+        //       {                                    { Stm3 }
+        //           choice {            ===>         { Stm4 }
+        //               {Stm3}                    }
+        //               {Stm4}
+        //           }
+        //       }
+        //    }
+        // We need to merge stochastics with stochastics:
+        // Example:
+        //    stochastic {                       stochastic {
+        //       p1 => {Stm1}                       p1 => {Stm1}
+        //       p2 => stochastic {                 p2 * p3 => {Stm3}
+        //           p3 => {Stm3}                   p2 * p4 => {Stm4}
+        //           p4 => {Stm4}     ===>          p2 * p5 => {Stm5} 
+        //           p5 => {Stm5}                }
+        //       }
+        //    }
+        // We need to pull a choice towards beginning over an Assume or Assert.
+        // Assume/Assert prepend each choice. Assertion may not be pulled left over a
+        // choice. It may be pulled over a probabilistic.
         return ()
     }
 
-    let phase4PullChoicesTowardsBeginning () : TsamWorkflowFunction<_,unit> = workflow {
+    let phase4PushStochasticsTowardsEnd () : TsamWorkflowFunction<_,unit> = workflow {
+        // We want Stochastic Statements to be exactly before the Assignment Statements
         return ()
     }
 
@@ -215,8 +261,8 @@ module internal VcGuardWithAssignmentModel =
         // TODO: Assume Single Assignment Form        
         do! phase1TreeifyAndNormalize ()
         do! phase2PushAssignmentsNotAtTheEnd ()
-        do! iterateToFixpoint (phase3PushStochasticsTowardsEnd ())
-        do! iterateToFixpoint (phase4PullChoicesTowardsBeginning ())
+        do! phase3PullChoicesTowardsBeginning ()
+        do! phase4PushStochasticsTowardsEnd ()
         return ()
     }
     
