@@ -16,7 +16,7 @@
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
         <Storyboard x:Key="PressureLevel">
-            <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Storyboard.TargetName="Tank">
+            <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(Shape.Fill).(SolidColorBrush.Color)" Storyboard.TargetName="TankFill">
                 <EasingColorKeyFrame KeyTime="0" Value="#00000000" />
                 <EasingColorKeyFrame KeyTime="0:0:0.7" Value="#7F68FF00" />
                 <EasingColorKeyFrame KeyTime="0:0:0.9" Value="#B2FFB900" />
@@ -48,8 +48,13 @@
         </DockPanel>
 
         <Canvas Width="483.143" Height="316.534" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <Rectangle x:Name="Tank" Height="316" Canvas.Left="300" Stroke="White" Canvas.Top="10" Width="171" RadiusX="48" RadiusY="48"
-                       StrokeThickness="3" Fill="Black" />
+            <Rectangle x:Name="TankFill" Height="221.667" Canvas.Left="300" Canvas.Top="49" Width="171"
+                       StrokeThickness="0" Fill="Black" />
+            <Rectangle x:Name="Tank" Height="306.534" Canvas.Left="300" Canvas.Top="10" Width="171" Fill="White">
+                <Rectangle.OpacityMask>
+                    <VisualBrush Visual="{DynamicResource appbar_database}" />
+                </Rectangle.OpacityMask>
+            </Rectangle>
 
             <Rectangle x:Name="Controller" Height="161.906" Canvas.Left="5" Canvas.Top="21" Width="170" Fill="White">
                 <Rectangle.OpacityMask>
@@ -63,13 +68,13 @@
                 </Rectangle.Fill>
             </Rectangle>
 
-            <Rectangle x:Name="Sensor" Height="50" Canvas.Left="261" Canvas.Top="65" Width="72">
+            <Rectangle x:Name="Sensor" Height="48.667" Canvas.Left="232" Canvas.Top="102" Width="58">
                 <Rectangle.Fill>
-                    <VisualBrush Visual="{DynamicResource appbar_return}" />
+                    <VisualBrush Visual="{DynamicResource appbar_camera}" />
                 </Rectangle.Fill>
             </Rectangle>
 
-            <Rectangle x:Name="SensorAlert" Height="28.667" Canvas.Left="239.667" Canvas.Top="49" Width="34" Fill="#FFFFAE00">
+            <Rectangle x:Name="SensorAlert" Height="28.667" Canvas.Left="213.001" Canvas.Top="135" Width="34" Fill="#FFFFAE00">
                 <Rectangle.OpacityMask>
                     <VisualBrush Visual="{DynamicResource appbar_alert}" />
                 </Rectangle.OpacityMask>
@@ -89,7 +94,7 @@
                 </Rectangle.OpacityMask>
             </Rectangle>
 
-            <Canvas x:Name="Pump" Width="64" Height="64" Canvas.Left="245" Canvas.Top="226">
+            <Canvas x:Name="Pump" Width="64" Height="64" Canvas.Left="239.335" Canvas.Top="226.667">
                 <Rectangle x:Name="Fan" Height="50" Width="50" RenderTransformOrigin="0.5,0.5">
                     <Rectangle.RenderTransform>
                         <TransformGroup>
@@ -119,19 +124,28 @@
 
             <Path Data="M177,219 L177,278.03389" Height="30" Canvas.Left="66" StrokeStartLineCap="Round" Stretch="Fill"
                   StrokeEndLineCap="Round" Stroke="White" StrokeThickness="5" Canvas.Top="191" Width="6" />
-            <Path Data="M237,180 L364.00394,180" Height="5" Canvas.Left="163" StrokeStartLineCap="Round" Stretch="Fill"
-                  StrokeEndLineCap="Round" Stroke="White" StrokeThickness="5" Canvas.Top="100" Width="94.004" />
+            <Path Data="M237,180 L364.00394,180" Height="7.666" Canvas.Left="172.663" StrokeStartLineCap="Round" Stretch="Fill"
+                  StrokeEndLineCap="Round" Stroke="White" StrokeThickness="5" Canvas.Top="127.334" Width="54.337" />
             <Rectangle x:Name="TimerAlert" Height="28.667" Canvas.Left="90" Canvas.Top="269.949" Width="34" Fill="#FFFFAE00">
                 <Rectangle.OpacityMask>
                     <VisualBrush Visual="{DynamicResource appbar_alert}" />
                 </Rectangle.OpacityMask>
             </Rectangle>
-            <Path Data="M237,217 L352,303" Height="36" Canvas.Left="186" Stretch="Fill" Canvas.Top="191" Width="61" Stroke="White"
-                  StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+            <Path Data="M237,217 L352,303" Height="36" Canvas.Left="179.333" Stretch="Fill" Canvas.Top="189.667" Width="61" Stroke="White"
+                  StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5" >
+                <Path.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform/>
+                        <RotateTransform Angle="7.146"/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </Path.RenderTransform>
+            </Path>
             <TextBlock x:Name="CountDown" Canvas.Left="93.253" TextWrapping="NoWrap" Text="45" Canvas.Top="269.983" Foreground="White"
                        FontSize="24" FontWeight="Bold" />
             <TextBlock x:Name="PressureLevel" Canvas.Left="352.253" TextWrapping="NoWrap" Width="70" TextAlignment="Center" Text="100%"
-                       Canvas.Top="150.983" Foreground="White" FontSize="24" FontWeight="Bold" />
+                       Canvas.Top="131.743" Foreground="Black" FontSize="24" FontWeight="Bold" />
 
             <DockPanel Canvas.Left="22.253" Width="112" Canvas.Top="39.1" Height="65.9">
                 <TextBlock x:Name="ControllerScreen" TextWrapping="Wrap" TextAlignment="Center" Text="Pumping"
