@@ -900,7 +900,7 @@ module internal VcGuardWithAssignmentModel =
                
 
 
-    let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
+    let transformTsamToGwaModelWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
         do! transformTsamToTsamInGuardToAssignmentForm ()
 
         let! state = getState ()
