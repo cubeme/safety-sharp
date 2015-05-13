@@ -30,12 +30,14 @@ namespace SafetySharp.Analysis.VerificationCondition
 //                     ┌─ 4 ─┐                      ┌─ 4 ─ 6
 //           1 ─ 2 ─ 3 ┤     ├ 6    ===>  1 ─ 2 ─ 3 ┤   
 //                     └─ 5 ─┘                      └─ 5 ─ 6
-//   2nd: Push every assignment to the end
-//   3rd: Push every stochastic statement before the assignments (or to end, if none exists). Merge stochastic statements
-//   4th: Pull every choice to the beginning. Merge choices.
-// TODO: Empty Blocks and nested blocks are difficult to treat. Maybe write a normalizer to facilitate this step.
-// Result: Choice* of (Assume*, Prob of (Assign*)) <--- exactly what we want
+//   2nd: Push every assignment to the very end
+//   3rd: Pull every choice to the very beginning
+//   4th: Push Assertions and Assumptions towards the beginning after the choices (Indirectly push every stochastic statement before the assignments (or to end, if none exists))
+//   5th: Merge choices.
+//   6th: Merge stochastic statements
 
+// Result: Choice* of (Assume*, Prob of (Assign*)) <--- exactly what we want
+     
 
 module internal VcGuardWithAssignmentModel =
     open SafetySharp.Models
@@ -346,7 +348,6 @@ module internal VcGuardWithAssignmentModel =
                                                 (revAlreadyTraversed |> List.rev)
                                                 @ [(stochasticChoiceToTraverseExpr,traversedStochasticChoice)]
                                                 @ toTraverse.Tail
-                                            let alreadyTraversed = revAlreadyTraversed |> List.rev
                                             (Stm.Stochastic (stochasticSid,newChoices),true)
                                         else
                                             //nothing was changed by toTraverse.Head, so try the next candidate in the list
@@ -491,7 +492,6 @@ module internal VcGuardWithAssignmentModel =
                                             (revAlreadyTraversed |> List.rev)
                                             @ [(stochasticChoiceToTraverseExpr,traversedStochasticChoice)]
                                             @ toTraverse.Tail
-                                        let alreadyTraversed = revAlreadyTraversed |> List.rev
                                         let stochasticStatement = Stm.Stochastic (stochasticSid,newChoices)
                                         (stochasticStatement,statementToPull,true)
                                     else
@@ -521,8 +521,6 @@ module internal VcGuardWithAssignmentModel =
                 Pgm.Body = allAssumptionsAndAssertionsAfterChoiceBody
             }
         do! updateTsamModel allAssumptionsAndAssertionsAfterChoiceModel
-
-
     }
         
     let phase5MergeChoicesAtTheBeginning () : TsamWorkflowFunction<_,unit> = workflow {
@@ -538,6 +536,97 @@ module internal VcGuardWithAssignmentModel =
         //           }
         //       }
         //    }
+        
+        let! state = getState ()
+        let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
+        let rec findAndMerge (stm:Stm) : (Stm*bool) = //returns Stm (without pulled) * Stm to pull (if Stm to pull exists) * changedSomething
+            match stm with
+                | Stm.Block (blockSid,statements:Stm list) ->
+                    ///////////// Here we rewrite the block. Result must be block                    
+                    // After _one_ rewrite, we return. This makes analysis of the algorithm easier
+                    // Sliding window: The function findAndPushAssignmentInBlock looks through a peephole
+                    // if nothing has to be done on the peephole, peephole is shifted to the right
+                    // Example:
+                    //   Assume Stm1;Stm2;Stm3;Stm4;Stm5
+                    //     1st Peephole: Stm1
+                    //     2nd Peephole: Stm2
+                    //     3rd Peephole: Stm3
+                    //     4th Peephole: Stm4
+                    //     5th Peephole: Stm5
+                    //   Every Stm was at least one time peephole
+                    let rec traverseBlock (revAlreadyLookedAt:Stm list,peephole:Stm)
+                                                         (rightNextToPeephole:Stm list) : (Stm*bool) = 
+                        // recursive cases (Stochastic or Choices)
+                        let (newStmOfPeephole,changedSomething) = findAndMerge peephole
+                        if changedSomething then
+                            let newBlock =
+                                (revAlreadyLookedAt |> List.rev)
+                                @ [newStmOfPeephole]
+                                @ rightNextToPeephole
+                            (Stm.Block(blockSid,newBlock),true)
+                        else if rightNextToPeephole.IsEmpty then
+                            //nothing changed at all, so return old statement
+                            (stm,false)
+                        else
+                            // shift peephole to the right
+                            let nextRevAlreadyLookedAt = peephole :: revAlreadyLookedAt
+                            let nextPeephole = rightNextToPeephole.Head
+                            let nextRightNextToPeephole = rightNextToPeephole.Tail
+                            traverseBlock (nextRevAlreadyLookedAt,nextPeephole) nextRightNextToPeephole
+                    if statements.IsEmpty = false then
+                        let firstPeephole = statements.Head
+                        let firstRightNextToPeephole = statements.Tail
+                        traverseBlock ([],firstPeephole) firstRightNextToPeephole
+                    else
+                        (stm,false)
+                    ///////////// End of rewriting Block
+                | Stm.Choice (sid,choices: Stm list) ->
+                    let rec traverseChoices (revAlreadyTraversed:(Stm) list) (toTraverse:(Stm) list) : (Stm*bool) = 
+                        if toTraverse.IsEmpty then
+                            (stm,false)
+                        else
+                            let choiceToTraverseStm = toTraverse.Head
+                            match choiceToTraverseStm with
+                                | Stm.Block(_,Stm.Choice(_,innerChoices)::[])
+                                | Stm.Choice(_,innerChoices) ->
+                                    // The main part of this algorithm
+                                    let newChoices =
+                                        (revAlreadyTraversed |> List.rev)
+                                        @ innerChoices
+                                        @ toTraverse.Tail
+                                    let choiceStatement = Stm.Choice (sid,newChoices)
+                                    (choiceStatement,true)
+                                | _ ->
+                                    // recursive case (try to change something inside)
+                                    // stochastic statement may propagate upwards
+                                    let (traversedChoice,somethingChanged) = findAndMerge choiceToTraverseStm
+                                    if somethingChanged then
+                                        let newChoices =
+                                            (revAlreadyTraversed |> List.rev)
+                                            @ [(traversedChoice)]
+                                            @ toTraverse.Tail
+                                        let choiceStatement = Stm.Choice (sid,newChoices)
+                                        (choiceStatement,true)
+                                    else
+                                        //nothing was changed by toTraverse.Head, so try the next candidate in the list
+                                        traverseChoices (choiceToTraverseStm::revAlreadyTraversed) (toTraverse.Tail)
+                    traverseChoices [] choices
+                | _ ->
+                    (stm,false)
+        
+        let rec findAndMergeUntilFixpoint (stm:Stm) =
+            let (newStm,wasChanged) = findAndMerge stm
+            if wasChanged then
+                findAndMergeUntilFixpoint newStm
+            else
+                stm
+        let! model = getTsamModel ()
+        let allChoicesMergedAtTheBeginningBody = findAndMergeUntilFixpoint (model.Body)
+        let allChoicesMergedAtTheBeginningModel = 
+            { model with
+                Pgm.Body = allChoicesMergedAtTheBeginningBody
+            }
+        do! updateTsamModel allChoicesMergedAtTheBeginningModel
         return ()
     }
 
@@ -554,7 +643,112 @@ module internal VcGuardWithAssignmentModel =
         //           p5 => {Stm5}                }
         //       }
         //    }
-        return ()
+        
+        let! state = getState ()
+        let uniqueStatementIdGenerator = state.Pgm.UniqueStatementIdGenerator
+        let rec findAndMerge (stm:Stm) : (Stm*bool) = //returns Stm (without pulled) * Stm to pull (if Stm to pull exists) * changedSomething
+            match stm with
+                | Stm.Block (blockSid,statements:Stm list) ->
+                    ///////////// Here we rewrite the block. Result must be block                    
+                    // After _one_ rewrite, we return. This makes analysis of the algorithm easier
+                    // Sliding window: The function findAndPushAssignmentInBlock looks through a peephole
+                    // if nothing has to be done on the peephole, peephole is shifted to the right
+                    // Example:
+                    //   Assume Stm1;Stm2;Stm3;Stm4;Stm5
+                    //     1st Peephole: Stm1
+                    //     2nd Peephole: Stm2
+                    //     3rd Peephole: Stm3
+                    //     4th Peephole: Stm4
+                    //     5th Peephole: Stm5
+                    //   Every Stm was at least one time peephole
+                    let rec traverseBlock (revAlreadyLookedAt:Stm list,peephole:Stm)
+                                                         (rightNextToPeephole:Stm list) : (Stm*bool) = 
+                        // recursive cases (Stochastic or Choices)
+                        let (newStmOfPeephole,changedSomething) = findAndMerge peephole
+                        if changedSomething then
+                            let newBlock =
+                                (revAlreadyLookedAt |> List.rev)
+                                @ [newStmOfPeephole]
+                                @ rightNextToPeephole
+                            (Stm.Block(blockSid,newBlock),true)
+                        else if rightNextToPeephole.IsEmpty then
+                            //nothing changed at all, so return old statement
+                            (stm,false)
+                        else
+                            // shift peephole to the right
+                            let nextRevAlreadyLookedAt = peephole :: revAlreadyLookedAt
+                            let nextPeephole = rightNextToPeephole.Head
+                            let nextRightNextToPeephole = rightNextToPeephole.Tail
+                            traverseBlock (nextRevAlreadyLookedAt,nextPeephole) nextRightNextToPeephole
+                    if statements.IsEmpty = false then
+                        let firstPeephole = statements.Head
+                        let firstRightNextToPeephole = statements.Tail
+                        traverseBlock ([],firstPeephole) firstRightNextToPeephole
+                    else
+                        (stm,false)
+                    ///////////// End of rewriting Block
+                | Stm.Choice (sid,choices: Stm list) ->
+                    let rec traverseChoices (revAlreadyTraversed:(Stm) list) (toTraverse:(Stm) list) : (Stm*bool) = 
+                        if toTraverse.IsEmpty then
+                            (stm,false)
+                        else
+                            let choiceToTraverseStm = toTraverse.Head
+                            // recursive case (try to change something inside)
+                            // stochastic statement may propagate upwards
+                            let (traversedChoice,somethingChanged) = findAndMerge choiceToTraverseStm
+                            if somethingChanged then
+                                let newChoices =
+                                    (revAlreadyTraversed |> List.rev)
+                                    @ [(traversedChoice)]
+                                    @ toTraverse.Tail
+                                let choiceStatement = Stm.Choice (sid,newChoices)
+                                (choiceStatement,true)
+                            else
+                                //nothing was changed by toTraverse.Head, so try the next candidate in the list
+                                traverseChoices (choiceToTraverseStm::revAlreadyTraversed) (toTraverse.Tail)
+                    traverseChoices [] choices
+
+                | Stm.Stochastic (stochasticSid,stochasticChoices: (Expr*Stm) list) ->
+                    let rec traverseStochasticChoices (revAlreadyTraversed:(Expr*Stm) list) (toTraverse:(Expr*Stm) list) : (Stm*bool) = 
+                        if toTraverse.IsEmpty then
+                            (stm,false)
+                        else
+                            let (stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm) = toTraverse.Head
+                            match stochasticChoiceToTraverseStm with
+                                // InnerStochastic
+                                // here the magic happens
+                                | _ ->
+                                    // recursive case (try to change something inside)
+                                    // stochastic statement may propagate upwards
+                                    let (traversedStochasticChoice,somethingChanged) = findAndMerge stochasticChoiceToTraverseStm
+                                    if somethingChanged then
+                                        let newChoices =
+                                            (revAlreadyTraversed |> List.rev)
+                                            @ [(stochasticChoiceToTraverseExpr,traversedStochasticChoice)]
+                                            @ toTraverse.Tail
+                                        let stochasticStatement = Stm.Stochastic (stochasticSid,newChoices)
+                                        (stochasticStatement,true)
+                                    else
+                                        //nothing was changed by toTraverse.Head, so try the next candidate in the list
+                                        traverseStochasticChoices ((stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm)::revAlreadyTraversed) (toTraverse.Tail)
+                    traverseStochasticChoices [] stochasticChoices
+                | _ ->
+                    (stm,false)
+        
+        let rec findAndMergeUntilFixpoint (stm:Stm) =
+            let (newStm,wasChanged) = findAndMerge stm
+            if wasChanged then
+                findAndMergeUntilFixpoint newStm
+            else
+                stm
+        let! model = getTsamModel ()
+        let allStochasticsMergedAtTheEndBody = findAndMergeUntilFixpoint (model.Body)
+        let allStochasticsMergedAtTheEndModel = 
+            { model with
+                Pgm.Body = allStochasticsMergedAtTheEndBody
+            }
+        do! updateTsamModel allStochasticsMergedAtTheEndModel
+        return ()        
     }
 
     let transformTsamToTsamInGuardToAssignmentForm () : TsamWorkflowFunction<_,unit> = workflow {
