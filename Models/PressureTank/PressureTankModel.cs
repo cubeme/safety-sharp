@@ -33,12 +33,17 @@ namespace PressureTank
         /// <summary>
         ///   The maximum allowed pressure level within the tank.
         /// </summary>
-        public const int MaxPressure = 45;
+        public const int MaxPressure = 60;
 
         /// <summary>
         ///   The pressure level that triggers the sensor.
         /// </summary>
-        public const int SensorPressure = 43;
+        public const int SensorPressure = 58;
+
+        /// <summary>
+        ///   The controller's timeout in seconds.
+        /// </summary>
+        public const int Timeout = 59;
 
         /// <summary>
         ///   Initializes a new instance.
@@ -47,7 +52,7 @@ namespace PressureTank
         {
             Sensor = new Sensor(SensorPressure);
             Pump = new Pump();
-            Timer = new Timer(timeout: 44);
+            Timer = new Timer(Timeout);
             Controller = new Controller(Sensor, Pump, Timer);
             Tank = new Tank(MaxPressure);
 

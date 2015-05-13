@@ -66,6 +66,8 @@ namespace Visualization
 
             TimerAlert.Opacity = 0;
             SensorAlert.Opacity = 0;
+
+            ChangeSpeed(8);
         }
 
         private void OnStop(object sender, RoutedEventArgs e)

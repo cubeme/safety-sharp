@@ -52,7 +52,7 @@ namespace PressureTank
         ///   Gets a value indicating whether the pressure tank has ruptured after exceeding its maximum allowed pressure level.
         /// </summary>
         // TODO: Consider using a property once supported by S#.
-        public bool IsRuptured() => _pressureLevel > _maxPressure;
+        public bool IsRuptured() => _pressureLevel >= _maxPressure;
 
         /// <summary>
         ///   Gets the current pressure level within the tank.
