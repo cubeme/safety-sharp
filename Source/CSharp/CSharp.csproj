@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analyzers\BindingAnalyzer.cs" />
+    <Compile Include="Analyzers\FaultEffectAnalyzer.cs" />
     <Compile Include="Analyzers\OccurrencePatternAnalyzer.cs" />
     <Compile Include="Analyzers\PortImplementationAnalyzer.cs" />
     <Compile Include="Analyzers\PortReferenceAnalyzer.cs" />

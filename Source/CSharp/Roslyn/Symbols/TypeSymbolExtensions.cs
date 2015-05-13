@@ -217,6 +217,9 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		[Pure]
 		public static IEnumerable<IMethodSymbol> GetRequiredPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
 			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
 				if (portSymbol.HasAttribute<RequiredAttribute>(semanticModel))
@@ -245,6 +248,9 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 		[Pure]
 		public static IEnumerable<IMethodSymbol> GetProvidedPorts([NotNull] this ITypeSymbol typeSymbol, [NotNull] SemanticModel semanticModel)
 		{
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(semanticModel, () => semanticModel);
+
 			return typeSymbol.GetPorts(semanticModel, (type, portSymbol) =>
 			{
 				if (portSymbol.HasAttribute<ProvidedAttribute>(semanticModel))
@@ -263,6 +269,36 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 
 				return false;
 			});
+		}
+
+		/// <summary>
+		///     Checks the accessibility of <paramref name="baseSymbol" /> to determine whether it can be accessed by
+		///     <paramref name="typeSymbol" />. This method assumes that <paramref name="baseSymbol" /> is defined by a base class of
+		///     <paramref name="typeSymbol" />; otherwise the result is meaningless.
+		/// </summary>
+		/// <param name="typeSymbol">The symbol the accessibility should be checked for.</param>
+		/// <param name="baseSymbol">
+		///     The symbol defined in one of <paramref name="typeSymbol" />'s base classes whose accessibility should be checked.
+		/// </param>
+		public static bool CanAccessBaseMember([NotNull] this ITypeSymbol typeSymbol, [NotNull] ISymbol baseSymbol)
+		{
+			Requires.NotNull(typeSymbol, () => typeSymbol);
+			Requires.NotNull(baseSymbol, () => baseSymbol);
+
+			switch (baseSymbol.DeclaredAccessibility)
+			{
+				case Accessibility.Private:
+					return false;
+				case Accessibility.ProtectedAndInternal:
+				case Accessibility.Internal:
+					return typeSymbol.ContainingAssembly.Equals(baseSymbol.ContainingAssembly);
+				case Accessibility.Protected:
+				case Accessibility.ProtectedOrInternal:
+				case Accessibility.Public:
+					return true;
+				default:
+					throw new InvalidOperationException("Invalid accessibility.");
+			}
 		}
 	}
 }

@@ -372,7 +372,7 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     static member GetDiagnostic (analyzer : DiagnosticAnalyzer) csharpCode =
         let diagnostics = TestCompilation.GetDiagnostics analyzer csharpCode |> Seq.toArray
         if diagnostics.Length > 1 then
-            raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, diagnostics))))
+            raise (CompilationException (sprintf "More than one diagnostic has been emitted: %s" (String.Join(Environment.NewLine, sprintf "%+A" diagnostics))))
         elif diagnostics.Length = 0 then
             None
         else

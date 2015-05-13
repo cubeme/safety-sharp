@@ -61,10 +61,23 @@ namespace PressureTank
         // TODO: Consider using a property once supported by S#.
         public bool IsEmpty() => CheckPhysicalPressure() == 0;
 
+        /// <summary>
+        ///   Represents a failure mode that prevents the sensor from triggering when the tank has reached or exceeded its
+        ///   maximum allowed pressure level.
+        /// </summary>
         [Transient]
-        private class SenseNoPressure : Fault
+        private class SuppressIsFull : Fault
         {
-            public bool IsTriggered() => false;
+            public bool IsFull() => false;
+        }
+
+        /// <summary>
+        ///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
+        /// </summary>
+        [Transient]
+        private class SuppressIsEmpty : Fault
+        {
+            public bool IsEmpty() => false;
         }
     }
 }

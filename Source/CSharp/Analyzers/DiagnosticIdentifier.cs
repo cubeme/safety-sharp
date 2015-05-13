@@ -41,6 +41,12 @@ namespace SafetySharp.CSharp.Analyzers
 		MissingOccurrencePattern = 2000,
 		AmbiguousOccurrencePattern,
 		OccurrencePatternHasNoEffect,
+		FaultEffectUnknownMethodPort,
+		FaultEffectUnknownPropertyPort,
+		FaultEffectBaseMember,
+		FaultEffectSignatureIncompatible,
+		FaultEffectIncompatibleType,
+		FaultEffectOptionalParameter,
 
 		// Port diagnostics
 		AmbiguousPortKind = 3000,

@@ -58,5 +58,11 @@ namespace SharedComponents
             // TODO: Support different system step times
             --_remainingTime;
         }
+
+        [Transient]
+        private class SupressTimeout : Fault
+        {
+            public bool HasElapsed() => false;
+        }
     }
 }
