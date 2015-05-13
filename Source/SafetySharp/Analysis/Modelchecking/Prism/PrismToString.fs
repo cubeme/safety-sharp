@@ -51,7 +51,7 @@ type internal ExportPrismAstToFile () =
     member this.ExportConstant (constant : Constant) = 
         match constant with
             | Integer (_int) -> _int.ToString()
-            | Double (_double) -> _double.ToString()
+            | Double (_double) -> _double.ToString(System.Globalization.CultureInfo.InvariantCulture)
             | Boolean (_bool) -> if _bool then "true" else "false"
     
     member this.ExportIdentifier (identifier : Identifier) = 

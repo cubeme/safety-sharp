@@ -225,7 +225,7 @@ module internal ScmParser =
         
     let probVal : Parser<_,UserState> =
         let decimalToVal (dec:string) =
-            System.Convert.ToDouble(dec) |> Val.ProbVal
+            System.Convert.ToDouble(dec,System.Globalization.CultureInfo.InvariantCulture) |> Val.ProbVal
         parseDecimal |>> decimalToVal
 
     let parseIdentifierDecl (scope:Scope) (id_type:IdentifierType) : Parser<_,UserState> =
