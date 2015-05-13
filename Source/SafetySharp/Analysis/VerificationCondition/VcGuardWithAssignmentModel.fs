@@ -800,30 +800,46 @@ module internal VcGuardWithAssignmentModel =
     
     let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
         let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
+        
+        let initialValuation =
+            // add for each globalVar a self assignment. Local Vars should only appear during the statements.
+            pgm.Globals |> List.fold (fun (acc:Map<Var,Expr>) var -> acc.Add(var.Var,Expr.Read(var.Var))) Map.empty<Var,Expr>
+            
+        let finalVars = pgm.NextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList  
+        let nextGlobalToCurrent = pgm.NextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (newVar,oldVar) ) |> Map.ofList
+
+        let redirectFinalVars (variableValuation:Map<Var,Expr>) : Map<Var,Expr> =
+            variableValuation
+                |> Map.filter (fun key value -> finalVars.Contains key)
+                |> Map.toList
+                |> List.map (fun (oldkey,value) -> (nextGlobalToCurrent.Item oldkey,value)) // use the nextGlobal redirection here
+                |> Map.ofList
 
         let processWrites (stm:Stm) : FinalVariableAssignments =
-            // TODO: Every variable not mentioned should keep its value.            
-            // TODO: currently requires SSA Form
             match stm with
                 | Stm.Block(_,statements) ->
-                    let rec traverseBlock (alreadyWritten:Map<Var,Expr>)
+                    let rec traverseBlock (currentValuation:Map<Var,Expr>)
                                           (toTraverse:Stm list) : (Map<Var,Expr>) = //returns the assumes and rest of the block (Block with a Stochastic or with a bunch of assignments)
                         if toTraverse.IsEmpty then
-                            alreadyWritten
+                            currentValuation
                         else
                             let peepholeStm = toTraverse.Head
                             match peepholeStm with
-                                | Stm.Write (_,_var,expr) ->
-                                    traverseBlock (alreadyWritten.Add(_var,expr)) (toTraverse.Tail)
+                                | Stm.Write (_,var,expr) ->
+                                    let newExpr = expr.rewriteExpr_varsToExpr currentValuation
+                                    let newValuation = currentValuation.Add(var,newExpr)
+                                    traverseBlock (newValuation) (toTraverse.Tail)
                                 | _ ->
                                     failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
-                    let assignments = traverseBlock (Map.empty<Var,Expr>) statements
+                    let assignments = traverseBlock (initialValuation) statements
                     {
-                        FinalVariableAssignments.Assignments = assignments
+                        FinalVariableAssignments.Assignments = (assignments |> redirectFinalVars)
                     }
-                | Stm.Write(_,_var,expr) ->
+                | Stm.Write(_,var,expr) ->
+                    let newExpr = expr.rewriteExpr_varsToExpr initialValuation
+                    let newValuation = initialValuation.Add(var,newExpr)
                     {
-                        FinalVariableAssignments.Assignments = Map.empty<Var,Expr>.Add(_var,expr)
+                        FinalVariableAssignments.Assignments = (newValuation |> redirectFinalVars)
                     }
                 | _ -> failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
         
@@ -871,13 +887,14 @@ module internal VcGuardWithAssignmentModel =
 
         let processChoices (stm:Stm) : Assignments list =
             match stm  with
+                | Stm.Block(_,Stm.Choice(_,choices)::[])
                 | Stm.Choice(_,choices) ->
                     choices |> List.map (processAssumptionsAndAssertions)
                 | _ ->
                     [processAssumptionsAndAssertions stm]
         {
             GuardWithAssignmentModel.Globals = pgm.Globals;
-            GuardWithAssignmentModel.Assignments = [];
+            GuardWithAssignmentModel.Assignments = processChoices pgm.Body;
         }
 
     open SafetySharp.ITracing
