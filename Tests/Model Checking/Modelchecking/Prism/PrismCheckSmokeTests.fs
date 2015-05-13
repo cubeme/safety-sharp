@@ -30,7 +30,7 @@ module PrismCheckSmokeWithGwamFastTests =
     
     let internal inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
         let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-        let newDirectory = "../../Examples/Prism/TransformedSam"
+        let newDirectory = "../../Examples/Prism/TransformedSamWithGwamFast"
         SafetySharp.FileSystem.FileName (sprintf "%s/%s.prism" newDirectory filenameWithoutPath)
         
     let internal smokeTestWorkflow (inputFile:string) = workflow {
@@ -267,7 +267,7 @@ module PrismCheckSmokeWithGwamTests =
     
     let internal inputFileNameToOutputFileName (inputFile:string) : SafetySharp.FileSystem.FileName =
         let filenameWithoutPath = System.IO.Path.GetFileNameWithoutExtension inputFile
-        let newDirectory = "../../Examples/Prism/TransformedSam"
+        let newDirectory = "../../Examples/Prism/TransformedSamWithGwam"
         SafetySharp.FileSystem.FileName (sprintf "%s/%s.prism" newDirectory filenameWithoutPath)
         
     let internal smokeTestWorkflow (inputFile:string) = workflow {
