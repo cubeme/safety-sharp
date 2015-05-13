@@ -715,6 +715,20 @@ module internal VcGuardWithAssignmentModel =
                         else
                             let (stochasticChoiceToTraverseExpr,stochasticChoiceToTraverseStm) = toTraverse.Head
                             match stochasticChoiceToTraverseStm with
+                                | Stm.Block(_,Stm.Stochastic(_,innerStochasticChoices)::[])
+                                | Stm.Stochastic(_,innerStochasticChoices) ->
+                                    // The main part of this algorithm
+                                    let combineInnerChoiceWithOuterChoice (innerStochasticChoiceExpr,innerStochasticChoiceStm) =
+                                        let combinedExpr = Expr.BExpr(stochasticChoiceToTraverseExpr,BOp.Multiply,innerStochasticChoiceExpr)
+                                        (combinedExpr,innerStochasticChoiceStm)
+                                    let newInnerStochasticChoices =
+                                        innerStochasticChoices |> List.map combineInnerChoiceWithOuterChoice
+                                    let newStochasticChoices =
+                                        (revAlreadyTraversed |> List.rev)
+                                        @ newInnerStochasticChoices
+                                        @ toTraverse.Tail
+                                    let choiceStatement = Stm.Stochastic (stochasticSid,newStochasticChoices)
+                                    (choiceStatement,true)
                                 // InnerStochastic
                                 // here the magic happens
                                 | _ ->
