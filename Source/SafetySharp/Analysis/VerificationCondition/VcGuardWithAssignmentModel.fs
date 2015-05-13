@@ -775,19 +775,8 @@ module internal VcGuardWithAssignmentModel =
         do! phase6MergeStochasticsAtTheEnd ()
         return ()
     }
-    
 
-
-
-
-
-
-
-
-
-
-
-
+        
 
 
 
@@ -810,8 +799,84 @@ module internal VcGuardWithAssignmentModel =
     }
     
     let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
+        let skipStm = Stm.Block(pgm.UniqueStatementIdGenerator (),[])
+
+        let processWrites (stm:Stm) : FinalVariableAssignments =
+            // TODO: Every variable not mentioned should keep its value.            
+            // TODO: currently requires SSA Form
+            match stm with
+                | Stm.Block(_,statements) ->
+                    let rec traverseBlock (alreadyWritten:Map<Var,Expr>)
+                                          (toTraverse:Stm list) : (Map<Var,Expr>) = //returns the assumes and rest of the block (Block with a Stochastic or with a bunch of assignments)
+                        if toTraverse.IsEmpty then
+                            alreadyWritten
+                        else
+                            let peepholeStm = toTraverse.Head
+                            match peepholeStm with
+                                | Stm.Write (_,_var,expr) ->
+                                    traverseBlock (alreadyWritten.Add(_var,expr)) (toTraverse.Tail)
+                                | _ ->
+                                    failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
+                    let assignments = traverseBlock (Map.empty<Var,Expr>) statements
+                    {
+                        FinalVariableAssignments.Assignments = assignments
+                    }
+                | Stm.Write(_,_var,expr) ->
+                    {
+                        FinalVariableAssignments.Assignments = Map.empty<Var,Expr>.Add(_var,expr)
+                    }
+                | _ -> failwith "BUG: Structure of Tsam.Pgm.Body was not in GwaTsam Form"
+        
+        let processStochastic (guard:Expr,stm:Stm) : Assignments =
+            match stm with
+                | Stm.Block(_,Stm.Stochastic(_,stochasticChoices)::[])
+                | Stm.Stochastic(_,stochasticChoices) ->
+                    let createStochasticAssignment (probability:Expr,assignments:Stm) =
+                        {
+                            StochasticAssignment.Probability = probability
+                            StochasticAssignment.Assignments = processWrites assignments
+                        }
+                    let stochasticAssignments = stochasticChoices |> List.map createStochasticAssignment
+                    Assignments.Stochastic(guard,stochasticAssignments)
+                | _ ->
+                    Assignments.Deterministic(guard,processWrites stm)
+        
+        let processAssumptionsAndAssertions (stm:Stm) : Assignments =
+            match stm with
+                | Stm.Block(blockSid,statements) ->                    
+                    let rec traverseBlock (revAlreadyToAssume:Expr list)
+                                          (toTraverse:Stm list) : (Expr list*Stm) = //returns the assumes and rest of the block (Block with a Stochastic or with a bunch of assignments)
+                        if toTraverse.IsEmpty then
+                            (revAlreadyToAssume |> List.rev,skipStm)
+                        else
+                            let peepholeStm = toTraverse.Head
+                            match peepholeStm with
+                                | Stm.Assume (_,expr) ->
+                                    traverseBlock (expr::revAlreadyToAssume) (toTraverse.Tail)
+                                | Stm.Assert (_,expr) ->
+                                    failwith "Not doing proof obligations, yet" //Assert: TODO: Generate proof obligations. We even could calculate the probability of a violation of an assertion.
+                                | _ ->
+                                    let alreadyToAssume = revAlreadyToAssume |> List.rev
+                                    let restBlock = toTraverse
+                                    (alreadyToAssume,Stm.Block(blockSid,restBlock))
+                    let (assumes,restBlock) = traverseBlock [] statements
+                    let guard = createAndedExpr assumes
+                    processStochastic (guard,restBlock)
+                | Stm.Assume(_,expr) ->
+                    processStochastic (expr,skipStm)
+                | Stm.Assert(_,_expr) ->
+                    failwith "Not doing proof obligations, yet" //Assert: TODO: Generate proof obligations. We even could calculate the probability of a violation of an assertion.
+                | _ ->
+                    processStochastic (Expr.Literal(Val.BoolVal(true)),stm)
+
+        let processChoices (stm:Stm) : Assignments list =
+            match stm  with
+                | Stm.Choice(_,choices) ->
+                    choices |> List.map (processAssumptionsAndAssertions)
+                | _ ->
+                    [processAssumptionsAndAssertions stm]
         {
-            GuardWithAssignmentModel.Globals = [];
+            GuardWithAssignmentModel.Globals = pgm.Globals;
             GuardWithAssignmentModel.Assignments = [];
         }
 
@@ -832,7 +897,9 @@ module internal VcGuardWithAssignmentModel =
                 member this.getTraceables : Tsam.Traceable list =
                     this.GuardWithAssignmentModel.Globals |> List.map (fun varDecl -> Traceable.Traceable(varDecl.Var))
                     
-                    
+               
+
+
     let transformWorkflow<'traceableOfOrigin> () : ExogenousWorkflowFunction<TsamMutable.MutablePgm<'traceableOfOrigin>,GuardWithAssignmentModelTracer<'traceableOfOrigin>> = workflow {
         do! transformTsamToTsamInGuardToAssignmentForm ()
 
