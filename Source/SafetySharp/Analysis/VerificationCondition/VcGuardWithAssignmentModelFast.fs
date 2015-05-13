@@ -88,7 +88,7 @@ module internal VcGuardWithAssignmentModelFast =
                 [AtomicStmBlock ([AtomicStm.Write(variable,expression)])]
 
         
-    let transformAtomicStmBlockToGuardWithAssignments (globalVars:Var list) (AtomicStmBlock(toTransform)) : GuardWithAssignments =
+    let transformAtomicStmBlockToGuardWithAssignments (globalVars:Var list) (AtomicStmBlock(toTransform)) : Assignments =
         // Start with guard true. Every time we cross an assumption, we add this assumption to our guard.
         // Every time we cross an assignment, we update the current assignments (forward similar to strongest postcondition)
         let initialGuard =
@@ -113,25 +113,38 @@ module internal VcGuardWithAssignmentModelFast =
                     (currentGuard,newValuation)
         
         let finalGuard,finalValuation = toTransform |> List.fold foldStm (initialGuard,initialValuation)
-        {
-            GuardWithAssignments.Guard = finalGuard;
-            GuardWithAssignments.Assignments = finalValuation;
-        }
+        let finalValuation = {FinalVariableAssignments.Assignments=finalValuation}
+        Assignments.Deterministic(finalGuard,finalValuation)
         
-    let redirectFinalVarsAndRemoveNonFinalAssignments (nextGlobal : Map<Var,Var>) (gwa:GuardWithAssignments) =
+    let redirectFinalVarsAndRemoveNonFinalAssignments (nextGlobal : Map<Var,Var>) (assignments:Assignments) =
         //finalVars:
         //   In SSA-Form each GlobalVar has several representatives with different versions of this variable
         //   after each assignment. The representative with the last version of each GlobalVar is in the set FinalVars        
         // remove every assignment entry, which is not done on a finalVar        
         let finalVars = nextGlobal |> Map.toList |> List.map (fun (original,final) -> final) |> Set.ofList      
         let nextGlobalToCurrent = nextGlobal |> Map.toList |> List.map (fun (oldVar,newVar) -> (newVar,oldVar) ) |> Map.ofList
-        { gwa with
-            GuardWithAssignments.Assignments =
-                gwa.Assignments |> Map.filter (fun key value -> finalVars.Contains key)
-                                |> Map.toList
-                                |> List.map (fun (oldkey,value) -> (nextGlobalToCurrent.Item oldkey,value)) // use the nextGlobal redirection here
-                                |> Map.ofList
-        }
+        
+        let redirectFinalVarsAndRemoveNonFinal (preliminaryFinalVars:FinalVariableAssignments) : FinalVariableAssignments =
+            preliminaryFinalVars.Assignments
+                |> Map.filter (fun key value -> finalVars.Contains key)
+                |> Map.toList
+                |> List.map (fun (oldkey,value) -> (nextGlobalToCurrent.Item oldkey,value)) // use the nextGlobal redirection here
+                |> Map.ofList
+                |> (fun assignments -> {FinalVariableAssignments.Assignments=assignments} )
+        
+        match assignments with
+            | Assignments.Deterministic (guard:Expr, assignments:FinalVariableAssignments) ->
+                let newAssignments = redirectFinalVarsAndRemoveNonFinal assignments
+                Assignments.Deterministic (guard,newAssignments)
+            | Assignments.Stochastic (guard:Expr, assignments:(StochasticAssignment list)) ->
+                let redirectStochastic (stochasticAssignment:StochasticAssignment) : StochasticAssignment =
+                    {
+                        StochasticAssignment.Probability = stochasticAssignment.Probability
+                        StochasticAssignment.Assignments = redirectFinalVarsAndRemoveNonFinal stochasticAssignment.Assignments
+                    }
+                let newAssignments = assignments |> List.map redirectStochastic
+                Assignments.Stochastic (guard,newAssignments)
+
 
 
     // this is the main function of this algorithm
@@ -146,7 +159,7 @@ module internal VcGuardWithAssignmentModelFast =
                             |> List.map (redirectFinalVarsAndRemoveNonFinalAssignments pgm.NextGlobal)
         {
             GuardWithAssignmentModel.Globals = pgm.Globals;
-            GuardWithAssignmentModel.GuardsWithFinalAssignments = guardsWithFinalAssignments;
+            GuardWithAssignmentModel.Assignments = guardsWithFinalAssignments;
         }
         
     open SafetySharp.Workflow

@@ -777,20 +777,42 @@ module internal VcGuardWithAssignmentModel =
     }
     
 
-    type GuardWithAssignments = {        
-        Guard : Expr;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    type FinalVariableAssignments = {
         Assignments : Map<Var,Expr>;
-    }   
-        
+    }
+    type StochasticAssignment = {
+        Probability : Expr;
+        Assignments : FinalVariableAssignments;
+    }
+
+    [<RequireQualifiedAccessAttribute>]
+    type Assignments =
+        | Deterministic of Guard:Expr * Assignments:FinalVariableAssignments
+        | Stochastic of Guard:Expr * Assignments:(StochasticAssignment list)
+            
     type GuardWithAssignmentModel = {
         Globals : VarDecl list;
-        GuardsWithFinalAssignments : GuardWithAssignments list;
+        Assignments : Assignments list;
     }
     
     let transformGwaTsamToGwaModel (pgm:Tsam.Pgm) : GuardWithAssignmentModel =
         {
             GuardWithAssignmentModel.Globals = [];
-            GuardWithAssignmentModel.GuardsWithFinalAssignments = [];
+            GuardWithAssignmentModel.Assignments = [];
         }
 
     open SafetySharp.ITracing

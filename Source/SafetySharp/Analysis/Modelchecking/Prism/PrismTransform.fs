@@ -138,19 +138,29 @@ module internal GwamToPrism =
         // probForSure := probability = 1.0
         let probForSure = Prism.Expression.Constant(Prism.Double(1.0))
 
-        let transformGwa (gwa:GuardWithAssignments) : Prism.Command =
-            let transformedGuard = translateExpression prismIdentifiers gwa.Guard
-            
+        let transformAssignments (assignments:Assignments) : Prism.Command =        
             let transformAssignment (var:Tsam.Var,expr:Tsam.Expr) : (Prism.Identifier * Prism.Expression) =
                 let varToWrite = prismIdentifiers.Item var
                 let expr = translateExpression prismIdentifiers expr
                 (varToWrite,expr)
-            let transformedAssignments : (Prism.Expression * Prism.DeterministicUpdateOfVariables) =
-                let probability = probForSure
-                let assignment = gwa.Assignments |> Map.toList |> List.map transformAssignment
-                (probability,assignment)
-            let quantifiedUpdateOfVariables =
-                [transformedAssignments] // we only have one element, because we currently only handle the deterministic case with probability 1.0            
+
+            let transformedGuard,quantifiedUpdateOfVariables =
+                match assignments with            
+                    | Assignments.Deterministic (guard:Expr, assignments:FinalVariableAssignments) ->
+                        let transformedGuard = translateExpression prismIdentifiers guard
+                        let transformedAssignments : (Prism.Expression * Prism.DeterministicUpdateOfVariables) list =
+                            let probability = probForSure
+                            let assignment = assignments.Assignments |> Map.toList |> List.map transformAssignment
+                            [(probability,assignment)]  // we only have one element, because we handle the deterministic case with probability 1.0
+                        (transformedGuard,transformedAssignments)
+                    | Assignments.Stochastic (guard:Expr, assignments:(StochasticAssignment list)) ->
+                        let transformedGuard = translateExpression prismIdentifiers guard
+                        let transformAssignment (assignment:StochasticAssignment) : (Prism.Expression * Prism.DeterministicUpdateOfVariables) =
+                            let probability = translateExpression prismIdentifiers (assignment.Probability)
+                            let assignment = assignment.Assignments.Assignments |> Map.toList |> List.map transformAssignment
+                            (probability,assignment)
+                        let transformedAssignments = assignments |> List.map transformAssignment
+                        (transformedGuard,transformedAssignments)
             {
                 Prism.Command.Action = Prism.CommandAction.NoActionLabel;
                 Prism.Command.Guard = transformedGuard;
@@ -160,7 +170,7 @@ module internal GwamToPrism =
         
         let moduleWithTransitions =
             let systemModuleIdentifier = {Prism.Identifier.Name="systemModule"}
-            let transformedGwas = gwam.GuardsWithFinalAssignments |> List.map transformGwa
+            let transformedGwas = gwam.Assignments |> List.map transformAssignments
             Prism.Module(systemModuleIdentifier,[],transformedGwas)
         
         let prismModel = 

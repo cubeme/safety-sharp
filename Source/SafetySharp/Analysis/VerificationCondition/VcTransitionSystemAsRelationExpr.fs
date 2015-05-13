@@ -115,17 +115,25 @@ module internal TransitionSystemAsRelationExpr =
         
         let initExpr = generateInitCondition gwam.Globals
 
-        let transformGwa (gwa:GuardWithAssignments) =
-            let transformAssignment (var:Var,expr:Expr) : Expr =
-                Expr.BExpr(Expr.Read(varToVirtualVar.Item var),BOp.Equals,expr)
-            let transformedAssignments =
-                gwa.Assignments |> Map.toList
-                                |> List.map transformAssignment                            
-                                |> Expr.createAndedExpr //here make an "and"
-            Expr.BExpr(gwa.Guard,BOp.And,transformedAssignments)
+        let transformAssignments (assignments:Assignments) : Expr =
+            match assignments with            
+                | Assignments.Deterministic (guard:Expr, assignments:FinalVariableAssignments) ->                    
+                    let transformAssignment (var:Var,expr:Expr) : Expr =
+                        Expr.BExpr(Expr.Read(varToVirtualVar.Item var),BOp.Equals,expr)
+                    let transformedAssignments =
+                        assignments.Assignments |> Map.toList
+                                                |> List.map transformAssignment                            
+                                                |> Expr.createAndedExpr //here make an "and"
+
+
+                    Expr.BExpr(guard,BOp.And,transformedAssignments)
+                | Assignments.Stochastic (guard:Expr, assignments:(StochasticAssignment list)) ->
+                    failwith ""
+
+
         let transformedGwas =
-            gwam.GuardsWithFinalAssignments |> List.map transformGwa
-                                            |> Expr.createOredExpr // the gwas are connected with an or                        
+            gwam.Assignments |> List.map transformAssignments
+                             |> Expr.createOredExpr // the gwas are connected with an or                        
         {
             TransitionSystem.Globals = gwam.Globals;
             TransitionSystem.Ivars = [];
