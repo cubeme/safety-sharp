@@ -223,7 +223,8 @@ type Component internal (components : Component list, bindings : List<PortBindin
 
             let field = backingField.GetFieldInfo m.DeclaringType
             let flags = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
-            let implementation = m.DeclaringType.GetMethod (sprintf "__%s__" m.Name, flags)
+            let parameters = m.GetParameters () |> Array.map (fun p -> p.ParameterType)
+            let implementation = m.DeclaringType.GetMethod (sprintf "__%s__" m.Name, flags, null, parameters, null)
             if implementation = null then
                 invalidOp "Unable to find implementation of provided port '%A'." m
 
