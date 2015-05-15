@@ -27,6 +27,7 @@ namespace Visualization
     using System.Windows.Media.Animation;
     using global::PressureTank;
     using SafetySharp.Analysis;
+    using SharedComponents;
 
     public partial class PressureTank
     {
@@ -101,6 +102,26 @@ namespace Visualization
             ChangeSpeed(_speed / 2);
         }
 
+        private void OnSuppressPumping(object sender, RoutedEventArgs e)
+        {
+            _simulator.SetFaultOccurrence<Pump.SuppressPumping>(_model.Pump, !_simulator.IsFaultOccurring<Pump.SuppressPumping>(_model.Pump));
+        }
+
+        private void OnSuppressTimeout(object sender, RoutedEventArgs e)
+        {
+            _simulator.SetFaultOccurrence<Timer.SuppressTimeout>(_model.Timer, !_simulator.IsFaultOccurring<Timer.SuppressTimeout>(_model.Timer));
+        }
+
+        private void OnSuppressFull(object sender, RoutedEventArgs e)
+        {
+            _simulator.SetFaultOccurrence<Sensor.SuppressIsFull>(_model.Sensor, !_simulator.IsFaultOccurring<Sensor.SuppressIsFull>(_model.Sensor));
+        }
+
+        private void OnSuppressEmpty(object sender, RoutedEventArgs e)
+        {
+            _simulator.SetFaultOccurrence<Sensor.SuppressIsEmpty>(_model.Sensor, !_simulator.IsFaultOccurring<Sensor.SuppressIsEmpty>(_model.Sensor));
+        }
+
         private void ChangeSpeed(double speed)
         {
             speed = Math.Min(MaxSpeed, Math.Max(MinSpeed, speed));
@@ -146,6 +167,8 @@ namespace Visualization
             // Timer
             CountDown.Text = _model.Timer.GetRemainingTime().ToString();
             CountDown.Visibility = _model.Timer.IsActive().ToVisibility();
+            SuppressTimeout.IsChecked = _simulator.IsFaultOccurring<Timer.SuppressTimeout>(_model.Timer);
+            TimerFailure.Visibility = SuppressTimeout.IsChecked.ToVisibility();
 
             if (_model.Timer.HasElapsed())
                 _timerAlertStoryboard.Begin();
@@ -158,6 +181,10 @@ namespace Visualization
             TankRupture.Visibility = _model.Tank.IsRuptured().ToVisibility();
 
             // Sensor
+            SuppressFull.IsChecked = _simulator.IsFaultOccurring<Sensor.SuppressIsFull>(_model.Sensor);
+            SuppressEmpty.IsChecked = _simulator.IsFaultOccurring<Sensor.SuppressIsEmpty>(_model.Sensor);
+            SensorFailure.Visibility = (SuppressFull.IsChecked || SuppressEmpty.IsChecked).ToVisibility();
+
             if ((_model.Sensor.IsFull() || _model.Sensor.IsEmpty()) && _simulator.State != SimulationState.Stopped)
                 _sensorAlertStoryboard.Begin();
 
@@ -183,6 +210,9 @@ namespace Visualization
                 _pumpingStoryboard.Pause();
             else
                 _pumpingStoryboard.Resume();
+
+            SuppressPumping.IsChecked = _simulator.IsFaultOccurring<Pump.SuppressPumping>(_model.Pump);
+            PumpFailure.Visibility = SuppressPumping.IsChecked.ToVisibility();
         }
     }
 }

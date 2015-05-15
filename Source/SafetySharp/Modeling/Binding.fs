@@ -89,8 +89,7 @@ type PortBinding (targetPort : PortInfo, sourcePort : PortInfo) =
         let backingField = targetPort.Method.GetCustomAttribute<BackingFieldAttribute> ()
         if backingField = null then invalidOp "Expected to find an instance of '%s' on the target port." (typeof<BackingFieldAttribute>.FullName)
 
-        let field = targetPort.Method.DeclaringType.GetField(backingField.BackingField, BindingFlags.DeclaredOnly ||| BindingFlags.Instance ||| BindingFlags.NonPublic)
-        if field = null then invalidOp "Unable to find backing field '%s.%s'." (targetPort.Component.GetType().FullName) backingField.BackingField
+        let field = backingField.GetFieldInfo targetPort.Method.DeclaringType
 
         let adaptedDelegate = Delegate.CreateDelegate (field.FieldType, sourcePort.Component, sourcePort.Method)
         field.SetValue (targetPort.Component, adaptedDelegate)

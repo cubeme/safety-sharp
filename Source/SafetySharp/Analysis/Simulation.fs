@@ -91,7 +91,7 @@ type Simulator (model : Model, stepDelay : int) =
 
         let rec reset (c : Component) =
             c.Subcomponents |> List.iter reset
-            c.ResetFields ()
+            c.Reset ()
 
         reset model.SynthesizedRoot
         modelChangedEvent.Trigger (this, EventArgs.Empty)
@@ -101,11 +101,27 @@ type Simulator (model : Model, stepDelay : int) =
         invalidCall (state <> SimulationState.Running) "Only running simulations can be stopped."
         this.ChangeState SimulationState.Paused
 
+    /// Gets the fault of the given type for the given component.
+    member private this.GetFault<'a when 'a :> Fault> (c : Component) =
+        nullArg c "c"
+        match c.Faults |> List.tryFind (function :? 'a -> true | _ -> false) with
+        | None   -> invalidOp "A component of type '%s' does not declare a fault of type '%s'." (c.GetType().FullName) (typeof<'a>.FullName)
+        | Some f -> f
+
+    /// Gets a value indicating whether the given fault is currently occurring for the given component.
+    member this.IsFaultOccurring<'a when 'a :> Fault> (c : Component) =
+        this.GetFault<'a>(c).Occurring
+
+    /// Sets a value indicating whether the given fault is currently occurring for the given component.
+    member this.SetFaultOccurrence<'a when 'a :> Fault> (c : Component) occurring =
+        this.GetFault<'a>(c).Occurring <- occurring
+
     /// Executes the next step of the simulation.
     member private this.ExecuteStep () =
         // TODO: Respect explicit component scheduling
         let rec update (c : Component) =
             c.Subcomponents |> List.iter update
+            //c.UpdateFaults ()
             c.Update ()
 
         update model.SynthesizedRoot

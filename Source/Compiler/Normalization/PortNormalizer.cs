@@ -253,8 +253,8 @@ namespace SafetySharp.Compiler.Normalization
 		/// <param name="methodDelegate">The delegate the field should be created for.</param>
 		private FieldDeclarationSyntax CreateField(DelegateDeclarationSyntax methodDelegate)
 		{
-			var field = SyntaxBuilder.Field(GetFieldName(), methodDelegate.Identifier.ValueText, Visibility.Private, BrowsableAttribute);
-			field = field.AddAttributeLists(CompilerGeneratedAttribute).AsSingleLine();
+			var field = SyntaxBuilder.Field(GetFieldName(), methodDelegate.Identifier.ValueText, Visibility.Private);//, BrowsableAttribute);
+		//	field = field.AddAttributeLists(CompilerGeneratedAttribute).AsSingleLine();
 
 			return field;
 		}

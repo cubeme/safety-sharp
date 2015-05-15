@@ -22,7 +22,9 @@
 
 namespace SafetySharp.Modeling
 
+open SafetySharp
 open System
+open System.Reflection
 
 /// When applied to a method or property of a <see cref="Component" /> class or a <see cref="IComponent" /> interface, 
 /// marks the method or property as a provided port.
@@ -45,4 +47,10 @@ type BackingFieldAttribute (backingField : string) =
     inherit Attribute ()
 
     /// Gets the name of the backing field.
-    member this.BackingField = backingField
+    member internal this.BackingField = backingField
+
+    /// Gets the reflected field for the given type.
+    member internal this.GetFieldInfo (t : Type) =
+        let field = t.GetField(this.BackingField, BindingFlags.DeclaredOnly ||| BindingFlags.Instance ||| BindingFlags.NonPublic)
+        if field = null then invalidOp "Unable to find backing field '%s.%s'." (t.FullName) this.BackingField
+        field

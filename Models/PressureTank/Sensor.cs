@@ -66,7 +66,7 @@ namespace PressureTank
         ///   maximum allowed pressure level.
         /// </summary>
         [Transient]
-        private class SuppressIsFull : Fault
+        public class SuppressIsFull : Fault
         {
             public bool IsFull() => false;
         }
@@ -75,7 +75,7 @@ namespace PressureTank
         ///   Represents a failure mode that prevents the sensor from triggering when the tank has become empty.
         /// </summary>
         [Transient]
-        private class SuppressIsEmpty : Fault
+        public class SuppressIsEmpty : Fault
         {
             public bool IsEmpty() => false;
         }

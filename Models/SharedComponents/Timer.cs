@@ -60,7 +60,7 @@ namespace SharedComponents
         }
 
         [Transient]
-        private class SupressTimeout : Fault
+        public class SuppressTimeout : Fault
         {
             public bool HasElapsed() => false;
         }

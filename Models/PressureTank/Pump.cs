@@ -60,7 +60,7 @@ namespace PressureTank
         ///   Represents a persistent failure mode that prevents the pump from pumping.
         /// </summary>
         [Persistent]
-        private class SupressPumping : Fault
+        public class SuppressPumping : Fault
         {
             public bool IsEnabled() => false;
         }

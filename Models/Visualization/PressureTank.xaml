@@ -52,16 +52,14 @@
         </Storyboard>
         <Storyboard x:Key="SensorEvent">
             <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="SensorAlert">
-                <EasingDoubleKeyFrame KeyTime="0" Value="0" />
-                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="1" />
+                <EasingDoubleKeyFrame KeyTime="0" Value="1" />
                 <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="1" />
                 <EasingDoubleKeyFrame KeyTime="0:0:1.5" Value="0" />
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
         <Storyboard x:Key="TimerEvent">
             <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="TimerAlert">
-                <EasingDoubleKeyFrame KeyTime="0" Value="0" />
-                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="1" />
+                <EasingDoubleKeyFrame KeyTime="0" Value="1" />
                 <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="1" />
                 <EasingDoubleKeyFrame KeyTime="0:0:1.5" Value="0">
                     <EasingDoubleKeyFrame.EasingFunction>
@@ -103,7 +101,11 @@
                 </Rectangle.OpacityMask>
             </Rectangle>
             <Rectangle x:Name="TankRupture" Height="359.773" Canvas.Left="351.568" Canvas.Top="-4.602" Width="84.667"
-                       Style="{StaticResource FailureIndicator}" />
+                       Style="{StaticResource FailureIndicator}" >
+                <Rectangle.Effect>
+                    <DropShadowEffect BlurRadius="20"/>
+                </Rectangle.Effect>
+            </Rectangle>
             <TextBlock x:Name="PressureLevel" Canvas.Left="352.253" TextWrapping="NoWrap" Width="70" TextAlignment="Center" Text="100%"
                        Canvas.Top="131.743" Foreground="Black" FontSize="24" FontWeight="Bold" />
 
@@ -120,7 +122,7 @@
                 </Rectangle.OpacityMask>
                 <Rectangle.ContextMenu>
                     <ContextMenu StaysOpen="true">
-                        <MenuItem Header="Suppress 'Timeout'" IsCheckable="true" />
+                        <MenuItem x:Name="SuppressTimeout" Header="Suppress 'Timeout'" IsCheckable="true" Click="OnSuppressTimeout" />
                     </ContextMenu>
                 </Rectangle.ContextMenu>
             </Rectangle>
@@ -142,8 +144,8 @@
                 </Rectangle.OpacityMask>
                 <Rectangle.ContextMenu>
                     <ContextMenu StaysOpen="true">
-                        <MenuItem Header="Suppress 'Tank Full'" IsCheckable="true" />
-                        <MenuItem Header="Suppress 'Tank Empty'" IsCheckable="true" />
+                        <MenuItem x:Name="SuppressFull" Header="Suppress 'Tank Full'" IsCheckable="true" Click="OnSuppressFull" />
+                        <MenuItem x:Name="SuppressEmpty" Header="Suppress 'Tank Empty'" IsCheckable="true" Click="OnSuppressEmpty" />
                     </ContextMenu>
                 </Rectangle.ContextMenu>
             </Rectangle>
@@ -186,7 +188,7 @@
 
                 <Canvas.ContextMenu>
                     <ContextMenu StaysOpen="true">
-                        <MenuItem Header="Suppress 'Pumping'" IsCheckable="true" />
+                        <MenuItem x:Name="SuppressPumping" Header="Suppress 'Pumping'" IsCheckable="true" Click="OnSuppressPumping" />
                     </ContextMenu>
                 </Canvas.ContextMenu>
             </Canvas>

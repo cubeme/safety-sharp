@@ -71,6 +71,9 @@ namespace PressureTank
         /// </summary>
         public override void Update()
         {
+            if (IsRuptured())
+                return;
+
             if (IsBeingFilled())
                 _pressureLevel += 2;
 

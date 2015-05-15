@@ -101,12 +101,66 @@ type MemberAccess<'T> internal (component', memberName) =
 
 /// Represents a base class for all faults.
 [<AbstractClass; AllowNullLiteral>]
-type Fault () =
-    class end
+type Fault () as this =
+    let occurrencePattern = this.GetType().GetCustomAttribute<OccurrencePatternAttribute> ()
+    do if occurrencePattern = null then invalidOp "Expected fault to be marked with an instance of '%s'" typeof<OccurrencePatternAttribute>.FullName
+
+    /// Gets the fault's occurrence pattern.
+    member internal this.OccurrencePattern = occurrencePattern
+
+    /// Gets or sets a value indicating whether the fault is currently occurring.
+    member val internal Occurring = false with get, set
+
+    /// Updates the faults internal state.
+    member internal this.Update () =
+        this.Occurring <- occurrencePattern.UpdateOccurrence ()
+
+    /// Initialize the fault for the given component.
+    member internal this.Initialize (c : obj) =
+        let faultEffects = 
+            this.GetType().GetMethods (BindingFlags.NonPublic ||| BindingFlags.Public ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Instance)
+            |> Seq.filter (fun m -> m.DeclaringType <> typeof<Fault> && m.DeclaringType <> typeof<obj>)
+            |> Seq.toList
+
+        let affectedMethods =
+            this.GetType().DeclaringType.GetMethods (BindingFlags.NonPublic ||| BindingFlags.Public ||| BindingFlags.FlattenHierarchy ||| BindingFlags.Instance)
+            |> Seq.filter (fun m -> m.GetCustomAttribute<ProvidedAttribute> () <> null)
+            |> Seq.toList
+
+        let matches (m1 : MethodInfo) (m2 : MethodInfo) =
+            m1.Name = m2.Name &&
+            m1.ReturnType = m2.ReturnType &&
+            m1.GetParameters().Length = m2.GetParameters().Length &&
+            m1.GetGenericArguments().Length = m2.GetGenericArguments().Length &&
+            Array.zip (m1.GetParameters ()) (m2.GetParameters ()) |> Array.forall (fun (p1, p2) -> p1.ParameterType = p2.ParameterType) &&
+            Array.zip (m1.GetGenericArguments ()) (m2.GetGenericArguments ()) |> Array.forall (fun (p1, p2) -> p1 = p2)
+
+        faultEffects |> List.iter (fun m ->
+            match affectedMethods |> List.tryFind (matches m) with
+            | None    -> invalidOp "Unable to find affected method for fault effect '%A'." m
+            | Some m' -> 
+                let field = m'.GetCustomAttribute<BackingFieldAttribute>().GetFieldInfo m'.DeclaringType
+                let faultEffectDelegate = Delegate.CreateDelegate (field.FieldType, this, m)
+
+                let parameters = m.GetParameters () |> Array.map (fun p -> Expression.Parameter (p.ParameterType, p.Name))
+                let fault = Expression.Constant (this)
+                let delegateExpression = Expression.Constant (faultEffectDelegate)
+                let elseDelegate = Expression.Constant (field.GetValue c)
+                let occurringGetter = typeof<Fault>.GetProperty("Occurring", BindingFlags.NonPublic ||| BindingFlags.Instance).GetMethod
+                let isOccurring = Expression.Property (fault, occurringGetter)
+                let returnTarget = Expression.Label m.ReturnType
+                let invokeFault = Expression.Invoke (delegateExpression, parameters |> Seq.map (fun p -> p :> Expression))
+                let invokeOther = Expression.Invoke (elseDelegate, parameters |> Seq.map (fun p -> p :> Expression))
+                let body = Expression.Condition (isOccurring, invokeFault, invokeOther)
+                let lambda = Expression.Lambda (field.FieldType, body, parameters)
+                let compiledMethodDelegate = lambda.Compile ()
+
+                field.SetValue (c, compiledMethodDelegate)
+        )
 
 /// Represents a base class for all components.
 [<AbstractClass; AllowNullLiteral>] 
-type Component internal (components : Component list, bindings : List<PortBinding>) =
+type Component internal (components : Component list, bindings : List<PortBinding>) as this =
     
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Component state and metadata
@@ -119,9 +173,12 @@ type Component internal (components : Component list, bindings : List<PortBindin
     let fields = Dictionary<FieldInfo, obj list> ()
     let mutable subcomponents = components
     let mutable parentField : FieldInfo = null
+    let mutable faults : Fault list = []
 
     let requiresNotSealed () = invalidCall isSealed "Modifications of the component metadata are only allowed during object construction."
     let requiresIsSealed () = invalidCall (not <| isSealed) "Cannot access the component metadata as it might not yet be complete."
+
+    do this.InitializeProvidedPorts ()
 
     new () = Component ([], List<PortBinding> ())
 
@@ -154,6 +211,25 @@ type Component internal (components : Component list, bindings : List<PortBindin
 
     /// Gets the name of the synthesized root component.
     static member internal SynthesizedRootName = "R"
+
+    /// Initializes all provided ports of the component by assigning the ports' non-faulty implementations to the ports' delegate fields.
+    member private this.InitializeProvidedPorts () =
+        this.GetType().GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+        |> Seq.filter (fun m -> m.GetCustomAttribute<ProvidedAttribute> () <> null)
+        |> Seq.iter (fun m ->
+            let backingField = m.GetCustomAttribute<BackingFieldAttribute> ()
+            if backingField = null then 
+                invalidOp "Expected to find an instance of '%s' on provided port '%A'." (typeof<BackingFieldAttribute>.FullName) m
+
+            let field = backingField.GetFieldInfo m.DeclaringType
+            let flags = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
+            let implementation = m.DeclaringType.GetMethod (sprintf "__%s__" m.Name, flags)
+            if implementation = null then
+                invalidOp "Unable to find implementation of provided port '%A'." m
+
+            let implementationDelegate = Delegate.CreateDelegate (field.FieldType, this, implementation)
+            field.SetValue (this, implementationDelegate)
+        )
 
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Internal access
@@ -266,6 +342,15 @@ type Component internal (components : Component list, bindings : List<PortBindin
                     component'.FinalizeMetadata (this, field.Name, idx, field)
             )
 
+        // Initialize the faults of the component
+        faults <-
+            this.GetType().GetNestedTypes (BindingFlags.FlattenHierarchy ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+            |> Seq.filter (fun t -> t.IsClass && typeof<Fault>.IsAssignableFrom t)
+            |> Seq.map (fun t -> Activator.CreateInstance t :?> Fault)
+            |> Seq.toList
+
+        faults |> List.iter (fun f -> f.Initialize this)
+
     // ---------------------------------------------------------------------------------------------------------------------------------------
     // Methods that can only be called after metadata initialization
     // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -282,13 +367,23 @@ type Component internal (components : Component list, bindings : List<PortBindin
             invalidArg true "field" "Unable to retrieve initial values for field '%s'." field.FullName
             [] // Required, but cannot be reached
 
-    /// Resets all fields to their initial values.
-    member internal this.ResetFields () =
+    /// Resets the state of the component, i.e., resets all fields and faults to their initial values.
+    member internal this.Reset () =
+        requiresIsSealed ()
+
         // TODO: What about fields with nondeterministic initial values
         // TODO: Requires tests
         fields |> Seq.iter (fun field ->
             field.Key.SetValue (this, field.Value.[0])
         )
+
+        // TODO: Respect other initial states
+        faults |> Seq.iter (fun fault -> fault.Occurring <- false)
+
+    /// Updates the occurrence patterns and internal state of all faults.
+    member internal this.UpdateFaults () =
+        requiresIsSealed ()
+        faults |> List.iter (fun f -> f.Update ())
 
     /// Gets the unique name of the component instance. Returns the empty string if no component name could be determined.
     member internal this.Name
@@ -318,6 +413,12 @@ type Component internal (components : Component list, bindings : List<PortBindin
         with get () =
             requiresIsSealed ()
             bindings |> Seq.toList
+
+    /// Gets the faults of the component.
+    member internal this.Faults
+        with get () =
+            requiresIsSealed ()
+            faults
 
     /// Gets the parent component of the component within the hierarchy or null if the component represents the root of the hierarchy.
     member internal this.Parent 
