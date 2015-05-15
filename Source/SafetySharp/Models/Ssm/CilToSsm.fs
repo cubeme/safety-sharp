@@ -132,7 +132,7 @@ module internal CilToSsm =
     /// of the corresponding SSM instruction, a list of assignments to temporary variables,
     /// and a new symbolic stack.
     /// This function corresponds to the BC2BIR_instr function in the Demange paper.
-    let private transformInstr (c : Component) (resolver : GenericResolver) pc instr stack =
+    let private transformInstr (o : obj) (resolver : GenericResolver) pc instr stack =
         // Checks whether the stack contains an expression referencing a variable that satisfies the given predicate.
         let checkStack pred stack =
             let rec check = function
@@ -195,9 +195,12 @@ module internal CilToSsm =
             // If this is a subcomponent field, use the subcomponent name as the field name
             let field =
                 if Ssm.isClassType field then
-                    match c.Subcomponents |> Seq.tryFind (fun sub -> f.Module.Import(sub.ParentField).Resolve () = f.Resolve ()) with
-                    | None -> field
-                    | Some sub -> Field (sub.Name, Ssm.getVarType field)
+                    match o with
+                    | :? Component as c ->
+                        match c.Subcomponents |> Seq.tryFind (fun sub -> f.Module.Import(sub.ParentField).Resolve () = f.Resolve ()) with
+                        | None -> field
+                        | Some sub -> Field (sub.Name, Ssm.getVarType field)
+                    | _ -> field
                 else
                     field
             
@@ -206,14 +209,17 @@ module internal CilToSsm =
                 else (NopStm, [], (MemberExpr (v, VarExpr field)) :: s)
 
             // Inline readonly fields of non-class type
-            if Ssm.isThis v && resolvedField.IsInitOnly && not (Ssm.isClassType field) then
-                match (c.GetInitialValuesOfField resolvedField, Ssm.getVarType field) with
-                | (b :: [], BoolType)   -> (NopStm, [], (BoolExpr (b :?> bool)) :: s)
-                | (i :: [], IntType)    -> (NopStm, [], (IntExpr (i :?> int)) :: s)
-                | (d :: [], DoubleType) -> (NopStm, [], (DoubleExpr (d :?> double)) :: s)
-                | _                     -> readField
-            else
-                readField
+            match o with
+            | :? Component as c ->
+                if Ssm.isThis v && resolvedField.IsInitOnly && not (Ssm.isClassType field) then
+                    match (c.GetInitialValuesOfField resolvedField, Ssm.getVarType field) with
+                    | (b :: [], BoolType)   -> (NopStm, [], (BoolExpr (b :?> bool)) :: s)
+                    | (i :: [], IntType)    -> (NopStm, [], (IntExpr (i :?> int)) :: s)
+                    | (d :: [], DoubleType) -> (NopStm, [], (DoubleExpr (d :?> double)) :: s)
+                    | _                     -> readField
+                else
+                    readField
+            | _ -> readField
         | (Instr.Ldflda f, (VarExpr v) :: s) when Ssm.isClassType v -> (NopStm, [], (VarRefExpr (field f)) :: s)
         | (Instr.Ldarg a, s) when a.ParameterType.IsByReference -> (NopStm, [], (VarRefExpr (arg a)) :: s)
         | (Instr.Ldarg a, s) -> (NopStm, [], (VarExpr (arg a)) :: s)
@@ -311,7 +317,7 @@ module internal CilToSsm =
 
     /// Transforms all instructions of the method body to list of SSM statements with unstructured control flow.
     /// This function corresponds to the BC2BIR function in the Demange paper.
-    let private transformMethodBody (c : Component) (resolver : GenericResolver) methodBody =
+    let private transformMethodBody (o : obj) (resolver : GenericResolver) methodBody =
         let jumpTargets = getJumpTargets methodBody
         let isJumpTarget pc = Set.contains pc jumpTargets
         let succ = Cil.getSuccessors methodBody
@@ -368,7 +374,7 @@ module internal CilToSsm =
         let (_, _, stms) =
             Array.fold (fun (pc, stack, stms) instr ->
                 let stack = if isJumpTarget pc then getJumpStack pc else stack
-                let (stm, vars, stack') = transformInstr c resolver pc instr stack
+                let (stm, vars, stack') = transformInstr o resolver pc instr stack
                 outStacks.[pc] <- stack'
                 
                 if stack' <> [] && succ pc |> Set.exists (fun pc' -> pc' < pc) then 
@@ -493,14 +499,14 @@ module internal CilToSsm =
         |> Seq.toList
 
     /// Transforms the given method to an SSM method with structured control flow.
-    let private transformMethod (metadata : MetadataProvider) (c : Component) (resolver : GenericResolver) (m : MethodDefinition) =
+    let private transformMethod (metadata : MetadataProvider) (o : obj) (resolver : GenericResolver) (m : MethodDefinition) =
         let name = Renaming.getUniqueMethodName m
         let body =
             if m.IsAbstract then NopStm
             else
                 m
                 |> Cil.getMethodBody
-                |> transformMethodBody c resolver
+                |> transformMethodBody o resolver
                 |> compress
                 |> fixIntIsBool (m.ReturnType.MetadataType = MetadataType.Boolean)
                 |> Ssm.replaceGotos
@@ -514,14 +520,14 @@ module internal CilToSsm =
            Return = m.ReturnType |> resolveGenericType resolver |> mapReturnType
            Locals = Ssm.getLocalsOfStm body |> Seq.distinct |> Seq.toList
            Kind = 
-                let methodInfo = metadata.UnmapMethod (c.GetType ()) name
+                let methodInfo = metadata.UnmapMethod (o.GetType ()) name
                 if methodInfo.GetBaseDefinition () = componentUpdateMethod then Step
                 else if m.RVA <> 0 || m.IsAbstract then ProvPort else ReqPort }
 
     /// Transforms all methods of the given type to an SSM method with structured control flow.
-    let private transformMethods (metadata : MetadataProvider) (c : Component) (t : TypeDefinition) (resolver : GenericResolver) =
+    let private transformMethods (metadata : MetadataProvider) (o : obj) (t : TypeDefinition) (resolver : GenericResolver) =
         t.GetMethods()
-        |> Seq.map (transformMethod metadata c resolver)
+        |> Seq.map (transformMethod metadata o resolver)
         |> List.ofSeq
 
     /// Transforms the given bindings.
@@ -537,6 +543,12 @@ module internal CilToSsm =
             Kind       = binding.Kind }
 
         List.map transform
+
+    /// Transforms the given fault.
+    let transformFault (metadata : MetadataProvider) (resolver : GenericResolver) (f : Modeling.Fault) =
+        let faultType = metadata.GetTypeReference(f).Resolve ()
+        { Fault.Name = f.GetType().Name
+          Fault.Methods = transformMethods metadata f faultType resolver }
 
     /// Transforms the given component class to an SSM component, flattening the inheritance hierarchy.
     let rec private transformType (metadata : MetadataProvider) (c : Component) =
@@ -555,7 +567,8 @@ module internal CilToSsm =
 
         { transform (metadata.GetTypeReference c) with 
             Subs = c.Subcomponents |> List.map (transformType metadata)
-            Bindings = transformBindings metadata c.Bindings }
+            Bindings = transformBindings metadata c.Bindings
+            Faults = c.Faults |> List.map (transformFault metadata resolver) }
         
     /// Transforms the given model instance to a SSM model.
     let transformModel (model : Model) =

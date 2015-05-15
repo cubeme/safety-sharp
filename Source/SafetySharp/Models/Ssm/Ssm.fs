@@ -130,7 +130,7 @@ module internal Ssm =
     /// Represents a fault of a S# component
     type internal Fault = {
         Name : string
-        // TODO   
+        Methods : Method list
     }
 
     /// Indicates the kind of a binding.

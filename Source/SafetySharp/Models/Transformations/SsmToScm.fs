@@ -173,6 +173,27 @@ module internal SsmToScm =
         Contract = Scm.Contract.None
     }
 
+    /// Transforms the given fault to a SCM fault declaration.
+    let private transformFault (f : Ssm.Fault) : Scm.FaultDecl = {
+        Fault = Scm.Fault f.Name
+        // TODO: Actually transform the occurrence pattern
+        Step = { Locals = []
+                 Body = Scm.Choice
+                      [
+                          (Scm.Literal (Scm.BoolVal true), Scm.AssignFault (Scm.Fault f.Name, Scm.Literal (Scm.BoolVal true)))
+                          (Scm.Literal (Scm.BoolVal true), Scm.AssignFault (Scm.Fault f.Name, Scm.Literal (Scm.BoolVal false)))
+                      ] 
+               }
+    }
+
+    /// Transforms the provided port fault methods contained in the given fault.
+    let private transformFaultProvPorts (f : Ssm.Fault) : Scm.ProvPortDecl list =
+        f.Methods
+        |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort)
+        |> Seq.map transformProvPort
+        |> Seq.map (fun p -> { p with FaultExpr = Scm.FaultExpr.Fault (Scm.Fault f.Name) |> Some })
+        |> Seq.toList
+
     /// Transforms the given binding to a SCM binding.
     let private transformBinding (c : Ssm.Comp) (b : Ssm.Binding) : Scm.BndDecl = 
         let getComp (name : string) =
@@ -192,10 +213,15 @@ module internal SsmToScm =
         Comp = Scm.Comp (c.Name.Substring (c.Name.LastIndexOf '.' + 1))
         Subs = c.Subs |> List.map transform
         Fields = c.Fields |> List.map transformField
-        Faults = []
+        Faults = c.Faults |> List.map transformFault 
+        // TODO: Support fault injections in required ports
         ReqPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ReqPort) |> Seq.map transformReqPort |> Seq.toList
-        ProvPorts = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort) |> Seq.map transformProvPort |> Seq.toList
+        ProvPorts = 
+            let noFaults = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.ProvPort) |> Seq.map transformProvPort |> Seq.toList
+            let faults = c.Faults |> List.collect transformFaultProvPorts
+            noFaults @ faults
         Bindings = c.Bindings |> List.map (transformBinding c)
+        // TODO: Support fault injections in step methods
         Steps = c.Methods |> Seq.filter (fun m -> m.Kind = Ssm.Step) |> Seq.map transformSteps |> Seq.toList
     }
         

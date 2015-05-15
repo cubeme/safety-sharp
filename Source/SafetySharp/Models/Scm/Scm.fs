@@ -65,7 +65,6 @@ module internal Scm =
         | UExpr of Expr * UOp
         | BExpr of Expr * BOp * Expr
 
-        
     [<RequireQualifiedAccessAttribute>]
     type internal LocExpr = // expression with location //TODO: Maybe split into LocAtom and LocExpr. Makes LTL and CTL easier
         | Literal of Val
