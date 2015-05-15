@@ -215,16 +215,20 @@ type Component internal (components : Component list, bindings : List<PortBindin
     /// Initializes all provided ports of the component by assigning the ports' non-faulty implementations to the ports' delegate fields.
     member private this.InitializeProvidedPorts () =
         this.GetType().GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-        |> Seq.filter (fun m -> m.GetCustomAttribute<ProvidedAttribute> () <> null)
+        |> Seq.filter (fun m -> m.GetCustomAttribute<ProvidedAttribute> () <> null && not m.IsAbstract)
         |> Seq.iter (fun m ->
             let backingField = m.GetCustomAttribute<BackingFieldAttribute> ()
             if backingField = null then 
                 invalidOp "Expected to find an instance of '%s' on provided port '%A'." (typeof<BackingFieldAttribute>.FullName) m
 
+            let defaultImplementation = m.GetCustomAttribute<DefaultImplementationAttribute> ()
+            if defaultImplementation = null then
+                invalidOp "Expected to find an instance of '%s' on provided port '%A'." (typeof<BackingFieldAttribute>.FullName) m
+
             let field = backingField.GetFieldInfo m.DeclaringType
             let flags = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.DeclaredOnly
             let parameters = m.GetParameters () |> Array.map (fun p -> p.ParameterType)
-            let implementation = m.DeclaringType.GetMethod (sprintf "__%s__" m.Name, flags, null, parameters, null)
+            let implementation = m.DeclaringType.GetMethod (defaultImplementation.MethodName, flags, null, parameters, null)
             if implementation = null then
                 invalidOp "Unable to find implementation of provided port '%A'." m
 

@@ -54,3 +54,12 @@ type BackingFieldAttribute (backingField : string) =
         let field = t.GetField(this.BackingField, BindingFlags.DeclaredOnly ||| BindingFlags.Instance ||| BindingFlags.NonPublic)
         if field = null then invalidOp "Unable to find backing field '%s.%s'." (t.FullName) this.BackingField
         field
+
+/// For S#-internal use only.
+[<AttributeUsage(AttributeTargets.Method ||| AttributeTargets.Property, AllowMultiple = false, Inherited = false)>]
+[<Sealed; AllowNullLiteral>]
+type DefaultImplementationAttribute (methodName : string) =
+    inherit Attribute ()
+
+    /// Gets the name of method with the default implementation.
+    member internal this.MethodName = methodName

@@ -186,11 +186,8 @@ namespace SafetySharp.Compiler.Normalization
 			var methodField = CreateField(methodDelegate);
 
 			// Create the private port implementation method
-			var prefix = originalDeclaration.ExplicitInterfaceSpecifier != null
-				? originalDeclaration.ExplicitInterfaceSpecifier.ToString().Replace(".", "_").Replace("<", "_").Replace(">", "_")
-				: String.Empty;
-			var methodName = prefix + originalDeclaration.Identifier.Text;
-			var portImplementationName = SyntaxFactory.Identifier(IdentifierNameSynthesizer.ToSynthesizedName(methodName));
+			var methodName = IdentifierNameSynthesizer.ToSynthesizedName("DefaultImplementation" + _portCount);
+			var portImplementationName = SyntaxFactory.Identifier(methodName);
 			var portImplementation = originalDeclaration.WithIdentifier(portImplementationName);
 			portImplementation = portImplementation.WithAccessibility(Accessibility.Private).WithExplicitInterfaceSpecifier(null);
 
@@ -209,6 +206,11 @@ namespace SafetySharp.Compiler.Normalization
 				UpdateMemberDeclarations(ref members, ref index, methodDeclaration);
 			else
 			{
+				// Add the [DefaultImplementation] attribute
+				var implementationArgument = SyntaxFactory.ParseExpression(String.Format("\"{0}\"", methodName));
+				var implementationAttribute = SyntaxBuilder.Attribute(typeof(DefaultImplementationAttribute).FullName, implementationArgument);
+				methodDeclaration = methodDeclaration.WithAttributeLists(methodDeclaration.AttributeLists.Add(implementationAttribute));
+
 				methodDeclaration = AddBackingFieldAttribute(methodDeclaration);
 				methodDeclaration = ReplaceBodyWithDelegateInvocation(methodDeclaration);
 				methodDeclaration = methodDeclaration.RemoveComments();

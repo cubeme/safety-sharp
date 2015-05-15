@@ -227,117 +227,117 @@ module PortNormalizer =
     let ``normalizes Update method replaced by provided port`` () =
         normalize "class X : Component { public new void Update() {} }" =? 
             "class X : Component { \
-            private void __Update__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public new void Update() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public new void Update() => this.__portField0__();}"
 
     [<Test>]
     let ``documentation comments are placed correctly on provided port`` () =
         normalize "class X : Component { ///<summary>X</summary>\npublic void M() {} }" =? 
             "class X : Component { \
-            ///<summary>X</summary>\nprivate void __M__() {} \
+            ///<summary>X</summary>\nprivate void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes provided port with implicit private accessibility`` () =
         normalize "class X : Component { void M() {} }" =? 
             "class X : Component { \
-            private void __M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes provided port with protected internal accessibility and trivia`` () =
         normalize "class X : Component { \nprotected\n\ninternal\nvoid M() {} }" =? 
             "class X : Component { \
-            \n\nprivate\n\nvoid __M__() {} \
+            \n\nprivate\n\nvoid __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] protected internal void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] protected internal void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes virtual provided port`` () =
         normalize "class X : Component { public virtual void M() {} }" =? 
             "class X : Component { \
-            private void __M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public virtual void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] public virtual void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes overridden provided port`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y : Component { public virtual void M() {}} class X : Y { public override void M() {} }"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Y { \
-            private void __M__() {} \
+            private void __DefaultImplementation1__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate1__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate1__ __portField1__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public override void M() => this.__portField1__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation1__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public override void M() => this.__portField1__();}"
 
     [<Test>]
     let ``normalizes overridden sealed provided port`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y : Component { public virtual void M() {}} class X : Y { public override sealed void M() {} }"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Y { \
-            private void __M__() {} \
+            private void __DefaultImplementation1__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate1__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate1__ __portField1__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public override sealed void M() => this.__portField1__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation1__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public override sealed void M() => this.__portField1__();}"
 
     [<Test>]
     let ``normalizes replaced provided port`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y : Component { public virtual void M() {}} class X : Y { public new void M() {} }"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Y { \
-            private void __M__() {} \
+            private void __DefaultImplementation1__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate1__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate1__ __portField1__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public new void M() => this.__portField1__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation1__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] public new void M() => this.__portField1__();}"
 
     [<Test>]
     let ``does not change attribute of component method that is already marked with the attribute`` () =
         normalize "class X : Component { [Provided] void M() {} }" =? 
             "class X : Component { \
-            [Provided] private void __M__() {} \
+            [Provided] private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [Provided] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [Provided] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes provided port of component`` () =
         normalize "class X : Component { void M() {} }" =?
             "class X : Component { \
-            private void __M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
 
         normalize "class X : Component { protected void M() {} }" =? 
             "class X : Component { \
-            private void __M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] protected void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] protected void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes explicitly implemented provided port of component`` () =
         normalize "namespace Q { interface I { void M(); }} class X : Component, Q.I { void Q.I.M() {} }" =? 
             "class X : Component, Q.I { \
-            private void __Q_I_M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void Q.I.M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void Q.I.M() => this.__portField0__();}"
 
         normalize "namespace Q { interface I<T> { void M(T t); }} class X : Component, Q.I<int> { void Q.I<int>.M(int t) {} }" =? 
             "class X : Component, Q.I<int> { \
-            private void __Q_I_int__M__(int t) {} \
+            private void __DefaultImplementation0__(int t) {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__(int t);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void Q.I<int>.M(int t) => this.__portField0__(t);}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void Q.I<int>.M(int t) => this.__portField0__(t);}"
 
     [<Test>]
     let ``normalizes explicitly implemented required port of component`` () =
@@ -357,62 +357,62 @@ module PortNormalizer =
     let ``normalizes multiple provided ports of component`` () =
         normalize "class X : Component { void M() {} void N() {} }" =?
             "class X : Component { \
-            private void __M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();\
-            private void __N__() {} \
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();\
+            private void __DefaultImplementation1__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate1__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate1__ __portField1__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] void N() => this.__portField1__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation1__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField1__\")] void N() => this.__portField1__();}"
 
     [<Test>]
     let ``normalizes provided port of component and keeps all attributes`` () =
         normalize "class X : Component { [DebuggerHidden] void M() {} }" =? 
             "class X : Component { \
-            [DebuggerHidden] private void __M__() {} \
+            [DebuggerHidden] private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [DebuggerHidden] [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [DebuggerHidden] [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
         
         normalize "class X : Component { [DebuggerHidden, DebuggerNonUserCode] void M() {} }" =? 
             "class X : Component { \
-            [DebuggerHidden, DebuggerNonUserCode] private void __M__() {} \
+            [DebuggerHidden, DebuggerNonUserCode] private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [DebuggerHidden, DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [DebuggerHidden, DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
         
         normalize "class X : Component { [DebuggerHidden] [DebuggerNonUserCode] void M() {} }" =? 
             "class X : Component { \
-            [DebuggerHidden] [DebuggerNonUserCode] private void __M__() {} \
+            [DebuggerHidden] [DebuggerNonUserCode] private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [DebuggerHidden] [DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [DebuggerHidden] [DebuggerNonUserCode] [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes provided port of component class nested in other component class`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y : Component { class X : Component { void M() {} }}"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Component { \
-            private void __M__() {} \
+            private void __DefaultImplementation0__() {} \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate void __PortDelegate0__();\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] void M() => this.__portField0__();}"
 
     [<Test>]
     let ``normalizes provided port of component class nested in other non-component class`` () =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y { class X : Component { int M(int i) { return i; } }}"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Component { \
-            private int __M__(int i) { return i; } \
+            private int __DefaultImplementation0__(int i) { return i; } \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate int __PortDelegate0__(int i);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] int M(int i) => this.__portField0__(i);}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] int M(int i) => this.__portField0__(i);}"
 
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree (PortNormalizer()) "class Y { class X : Component { int M(int i) \n=>\n 1; }}"
         syntaxTree.Descendants<ClassDeclarationSyntax>().Single(fun c -> c.Identifier.ValueText = "X").ToFullString () =?  
             "class X : Component { \
-            private int __M__(int i) \n=>\n 1; \
+            private int __DefaultImplementation0__(int i) \n=>\n 1; \
             [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private delegate int __PortDelegate0__(int i);\
             [System.Diagnostics.DebuggerBrowsableAttribute(System.Diagnostics.DebuggerBrowsableState.Never)] [System.Runtime.CompilerServices.CompilerGeneratedAttribute()] private __PortDelegate0__ __portField0__;\
-            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] int M(int i) => this.__portField0__(i);}"
+            [SafetySharp.Modeling.ProvidedAttribute()] [SafetySharp.Modeling.DefaultImplementationAttribute(\"__DefaultImplementation0__\")] [SafetySharp.Modeling.BackingFieldAttribute(\"__portField0__\")] int M(int i) => this.__portField0__(i);}"
