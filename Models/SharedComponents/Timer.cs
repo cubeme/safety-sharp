@@ -49,7 +49,7 @@ namespace SharedComponents
         {
             _remainingTime = -1;
         }
-
+       
         public bool IsActive() => _remainingTime > 0;
         public int GetRemainingTime() => _remainingTime;
 

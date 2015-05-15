@@ -391,6 +391,11 @@ type TestCompilation (csharpCode, assemblies : Assembly array, externAliases : (
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.
     static member GetNormalizedClass (normalizer : Normalizer) csharpCode =
         let syntaxTree = TestCompilation.GetNormalizedSyntaxTree normalizer csharpCode
+
+        // Check if the normalized tree is valid C# code
+        let compilation = TestCompilation (syntaxTree.ToString ())
+        compilation.Compile () |> ignore
+
         syntaxTree.Descendants<ClassDeclarationSyntax>().First().ToFullString ()
 
     /// Normalizes the code using the given normalizer and returns the code of the first class contained in the given code.

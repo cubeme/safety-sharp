@@ -96,5 +96,78 @@ namespace SafetySharp.CSharp.Roslyn.Syntax
 			argumentTypes = argumentTypes.Concat(new[] { methodDeclaration.ReturnType.ToString() });
 			return generateType("System.Func", argumentTypes.ToArray());
 		}
+
+		/// <summary>
+		///     Changes the <paramref name="methodDeclaration" />'s accessibility to <paramref name="accessibility" /> while preserving
+		///     all trivia.
+		/// </summary>
+		/// <param name="methodDeclaration">The method declaration whose accessibility should be changed.</param>
+		/// <param name="accessibility">The new accessibility of the method.</param>
+		public static MethodDeclarationSyntax WithAccessibility(this MethodDeclarationSyntax methodDeclaration, Accessibility accessibility)
+		{
+			Requires.NotNull(methodDeclaration, () => methodDeclaration);
+			Requires.InRange(accessibility, () => accessibility);
+			Requires.ArgumentSatisfies(accessibility != Accessibility.NotApplicable, () => accessibility, "Unsupported accessibility.");
+			Requires.ArgumentSatisfies(accessibility != Accessibility.ProtectedAndInternal, () => accessibility, "Unsupported accessibility.");
+
+			var leadingTrivia = SyntaxTriviaList.Empty;
+			var trailingTrivia = SyntaxTriviaList.Empty;
+			var modifiers = methodDeclaration.Modifiers;
+
+			var accessibilityKeywords = new[]
+			{
+				SyntaxKind.PrivateKeyword, SyntaxKind.PublicKeyword, SyntaxKind.InternalKeyword, SyntaxKind.ProtectedKeyword
+			};
+
+			foreach (var keyword in accessibilityKeywords)
+			{
+				var keywordIndex = modifiers.IndexOf(keyword);
+				if (keywordIndex == -1)
+					continue;
+
+				var modifier = modifiers[keywordIndex];
+				modifiers = modifiers.RemoveAt(keywordIndex);
+
+				leadingTrivia = leadingTrivia.AddRange(modifier.LeadingTrivia);
+				trailingTrivia = trailingTrivia.AddRange(modifier.TrailingTrivia);
+			}
+
+			if (trailingTrivia == SyntaxTriviaList.Empty)
+				trailingTrivia = SyntaxTriviaList.Create(SyntaxFactory.Space);
+
+			if (accessibility == Accessibility.ProtectedOrInternal)
+			{
+				var protectedKeyword = SyntaxFactory.Token(SyntaxKind.ProtectedKeyword).WithLeadingTrivia(leadingTrivia).WithTrailingSpace();
+				var internalKeyword = SyntaxFactory.Token(SyntaxKind.InternalKeyword).WithTrailingTrivia(trailingTrivia);
+				modifiers = modifiers.Insert(0, protectedKeyword);
+				modifiers = modifiers.Insert(1, internalKeyword);
+			}
+			else
+			{
+				SyntaxKind kind;
+				switch (accessibility)
+				{
+					case Accessibility.Private:
+						kind = SyntaxKind.PrivateKeyword;
+						break;
+					case Accessibility.Protected:
+						kind = SyntaxKind.ProtectedKeyword;
+						break;
+					case Accessibility.Internal:
+						kind = SyntaxKind.InternalKeyword;
+						break;
+					case Accessibility.Public:
+						kind = SyntaxKind.PublicKeyword;
+						break;
+					default:
+						throw new ArgumentOutOfRangeException("accessibility", accessibility, null);
+				}
+
+				var keyword = SyntaxFactory.Token(kind).WithLeadingTrivia(leadingTrivia).WithTrailingTrivia(trailingTrivia);
+				modifiers = modifiers.Insert(0, keyword);
+			}
+
+			return methodDeclaration.WithModifiers(modifiers);
+		}
 	}
 }

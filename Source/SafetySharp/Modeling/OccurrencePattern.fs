@@ -30,12 +30,23 @@ open System
 type OccurrencePatternAttribute () =
     inherit Attribute ()
 
+    /// Updates the occurrence state of the fault. Returns <c>true</c> to indicate that the fault is occurring.
+    abstract UpdateOccurrence : unit -> bool
+
 /// Represents the transient occurrence pattern where a fault can come and go at any time.
 [<AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)>]
 type TransientAttribute () =
     inherit OccurrencePatternAttribute ()
 
+    /// Updates the occurrence state of the fault. Returns <c>true</c> to indicate that the fault is occurring.
+    override this.UpdateOccurrence () =
+        true
+
 /// Represents the persistent occurrence pattern where a fault, once active, remains active.
 [<AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)>]
 type PersistentAttribute () =
     inherit OccurrencePatternAttribute ()
+
+    /// Updates the occurrence state of the fault. Returns <c>true</c> to indicate that the fault is occurring.
+    override this.UpdateOccurrence () =
+        true

@@ -120,7 +120,7 @@ module ``GetSynthesizedDelegateDeclaration method`` =
     let synthesize csharpCode methodName =
         let compilation = TestCompilation csharpCode
         let methodSymbol = compilation.FindMethodSymbol "X" methodName
-        methodSymbol.GetSynthesizedDelegateDeclaration("D").ToString ()
+        methodSymbol.GetSynthesizedDelegateDeclaration(IdentifierNameSynthesizer.ToSynthesizedName "D").ToString ()
 
     [<Test>]
     let ``throws when method symbol is null`` () =

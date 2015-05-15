@@ -100,7 +100,7 @@ namespace SafetySharp.Compiler.Normalization
 			if (ShouldNormalizeClassDeclaration(classDeclaration))
 				return NormalizeClassDeclaration((ClassDeclarationSyntax)base.VisitClassDeclaration(classDeclaration));
 
-			// We still might have to normalize nested types, though
+			// Even if we don't have to normalize this class, we might still have to normalize any nested types
 			var originalDeclaration = classDeclaration;
 			foreach (var nestedType in originalDeclaration.Descendants<BaseTypeDeclarationSyntax>())
 				classDeclaration = classDeclaration.ReplaceNode(nestedType, Visit(nestedType));

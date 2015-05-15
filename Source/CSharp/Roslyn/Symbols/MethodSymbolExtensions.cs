@@ -150,7 +150,7 @@ namespace SafetySharp.CSharp.Roslyn.Symbols
 			});
 
 			return SyntaxFactory
-				.DelegateDeclaration(returnType, IdentifierNameSynthesizer.ToSynthesizedName(name))
+				.DelegateDeclaration(returnType, name)
 				.WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PrivateKeyword)))
 				.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters)))
 				.NormalizeWhitespace();

@@ -129,7 +129,8 @@ namespace SafetySharp.Compiler.Normalization
 				rightPorts.Filter(castExpression.Type.GetReferencedSymbol<INamedTypeSymbol>(SemanticModel));
 
 			var boundPorts = leftPorts.GetBindingCandidates(rightPorts)[0];
-			var delegateType = boundPorts.Left.Symbol.GetSynthesizedDelegateDeclaration("BindingDelegate" + _bindingCount++);
+			var delegateName = IdentifierNameSynthesizer.ToSynthesizedName("BindingDelegate" + _bindingCount++);
+			var delegateType = boundPorts.Left.Symbol.GetSynthesizedDelegateDeclaration(delegateName);
 			_delegates.Add(delegateType);
 
 			var leftPort = CreatePortInfoExpression(boundPorts.Left, leftExpression, delegateType.Identifier.ValueText);
