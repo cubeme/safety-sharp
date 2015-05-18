@@ -26,6 +26,14 @@ module internal ScmVerificationElements =
     open Scm
     
     [<RequireQualifiedAccessAttribute>]
+    type PropositionalExpr =
+        | Literal of Val
+        | ReadField of CompPath * Field
+        | ReadFault of CompPath * Fault
+        | UExpr of PropositionalExpr * UOp
+        | BExpr of PropositionalExpr * BOp * PropositionalExpr
+    
+    [<RequireQualifiedAccessAttribute>]
     type internal LuOp =
         | Next
         | Globally
@@ -68,3 +76,34 @@ module internal ScmVerificationElements =
         | BExpr of CtlExpr * BOp * CtlExpr
         | CuExpr of CtlExpr * CuOp
         | CbExpr of CtlExpr * CbOp * CtlExpr
+        
+    // ExtensionModels
+    type LtlExpr with 
+        static member fromPropositionalExpr (propExpr:PropositionalExpr) =
+            match propExpr with
+                | PropositionalExpr.Literal (_val:Val) ->
+                    LtlExpr.Literal(_val) 
+                | PropositionalExpr.ReadField (compPath,field:Field) ->
+                    LtlExpr.ReadField (compPath,field)
+                | PropositionalExpr.ReadFault (compPath,fault:Fault) ->
+                    LtlExpr.ReadFault (compPath,fault)
+                | PropositionalExpr.UExpr (expr, uop) ->
+                    LtlExpr.UExpr (LtlExpr.fromPropositionalExpr expr,uop)
+                | PropositionalExpr.BExpr (leftExpr, bop, rightExpr) ->
+                    LtlExpr.BExpr (LtlExpr.fromPropositionalExpr leftExpr,bop,LtlExpr.fromPropositionalExpr rightExpr)
+        static member createOredExpr (exprs:LtlExpr list) : LtlExpr =
+            if exprs.IsEmpty then
+                LtlExpr.Literal(Val.BoolVal(false)) //see Conjunctive Normal Form. An empty clause is unsatisfiable
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                LtlExpr.BExpr(exprs.Head,BOp.Or,LtlExpr.createOredExpr exprs.Tail)
+        static member createAndedExpr (exprs:LtlExpr list) : LtlExpr =
+            if exprs.IsEmpty then
+                LtlExpr.Literal(Val.BoolVal(true)) //see Conjunctive Normal Form. If there is no clause, the formula is true.
+            else if exprs.Tail = [] then
+                // only one element, so return it
+                exprs.Head
+            else
+                LtlExpr.BExpr(exprs.Head,BOp.And,LtlExpr.createAndedExpr exprs.Tail)

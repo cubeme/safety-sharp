@@ -209,6 +209,15 @@ module internal ScmHelpers =
                 (varsFromHere@varsFromSubs)
             let rootComponent = this.getRootComp
             collectGlobalVariables []  (rootComponent)
+
+        member model.getFaults :(FaultPath list) =
+            let rec collectFaults (parentPath:CompPath) (currentCompDecl:CompDecl) : FaultPath list =
+                let currentPath = (currentCompDecl.Comp)::parentPath
+                let faultsFromSubs = currentCompDecl.Subs |> List.collect (collectFaults currentPath)
+                let faultsFromHere = currentCompDecl.Faults |> List.map (fun fault -> (currentPath,fault.Fault) )
+                (faultsFromHere@faultsFromSubs)
+            let rootComponent = model.getRootComp
+            collectFaults []  (rootComponent)
     
     // Extension methods
     type CompDecl with
