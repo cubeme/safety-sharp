@@ -130,6 +130,7 @@
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTypedefs.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaAstHelpers.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaToString.fs" />
+    <Compile Include="Analysis\Modelchecking\PromelaSpin\PanInterpretResult.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\SpinExecute.fs" />
     <Compile Include="Analysis\Modelchecking\PromelaSpin\PromelaTransform.fs" />
     <Compile Include="Analysis\Modelchecking\NuXmv\NuXmvOperators.fs" />

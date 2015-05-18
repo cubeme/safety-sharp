@@ -68,6 +68,7 @@
     <Compile Include="Modelchecking\Promela\PromelaExecuteTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaTransformSamTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaTransformScmTests.fs" />
+    <Compile Include="Modelchecking\Promela\PanInterpretResultTests.fs" />
     <Compile Include="Modelchecking\Promela\PromelaCheckSmokeTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismAstToFileTests.fs" />
     <Compile Include="Modelchecking\Prism\PrismExecuteTests.fs" />
