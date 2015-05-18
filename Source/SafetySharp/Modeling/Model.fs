@@ -117,7 +117,12 @@ type Model private () =
 
         isSealed <- true
         synthesizedRoot <- SynthesizedRootComponent (roots, bindings)
-        metadataProvider <- MetadataProvider (typeof<SynthesizedRootComponent> :: (components |> List.map (fun c -> c.GetType ())))
+
+        let metadataTypes = 
+            typeof<SynthesizedRootComponent> ::
+            (components |> List.map (fun c -> c.GetType ())) @
+            (components |> List.collect (fun c -> c.Faults |> List.map (fun f -> f.GetType ())))
+        metadataProvider <- MetadataProvider metadataTypes
 
     /// Establishes the given port binding. By default, the binding is instantenous; invoke the <see cref="PortBinding.Delayed" /> method
     /// on the <see cref="PortBinding" /> instance returned by this method to create a delayed binding instead.

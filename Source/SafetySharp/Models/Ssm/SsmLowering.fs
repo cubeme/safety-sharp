@@ -114,6 +114,7 @@ module internal SsmLowering =
 
         { c with
             Methods = c.Methods |> List.map lowerSignature
+            Faults = c.Faults |> List.map (fun f -> { f with Methods = f.Methods |> List.map lowerSignature })
             Subs = c.Subs |> List.map lowerSignatures }
 
     /// Introduces bindings for local provided port invocations. That is, whenever a component invokes a provided port
