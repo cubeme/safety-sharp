@@ -36,25 +36,7 @@ module AtDccaLtlTests =
             let! scmModel = getState ()
             return scmModel
     }
-    
-    (*
-    [<Test>]
-    let ``check exampleBackupRecovery1.scm with Promela`` () =        
-        let inputFile = """../../Examples/SCM/exampleBackupRecovery1.scm"""
-        let scmExample = runWorkflow_getResult (inputFileToScmWorkflow inputFile)
         
-        let analyzer = AtLtlFormula.AnalyseLtlFormulas (scmExample)
-        // TODO: Write parser
-        let formulaAsString = "[] backupRecoverySystem.in.sourceValueField == backupRecoverySystem.out.result"
-        let formula =
-            let left = (Scm.Comp("in")::Scm.Comp("backupRecoverySystem")::[]),Scm.Field("sourceValueField")
-            let right = (Scm.Comp("out")::Scm.Comp("backupRecoverySystem")::[]),Scm.Field("result")
-            let equals = ScmVerificationElements.LtlExpr.BExpr(ScmVerificationElements.LtlExpr.ReadField(left),Scm.BOp.Equals,ScmVerificationElements.LtlExpr.ReadField(right) )
-            ScmVerificationElements.LtlExpr.LuExpr(equals,ScmVerificationElements.LuOp.Globally)
-        do analyzer.addLtlFormula (formula)
-        do analyzer.checkWithPromela ()
-    *)
-    
     [<Test>]
     let ``check ElementToCheck generator`` () =
         let inputFile = """../../Examples/SCM/callInstHierarchyWithFaults1.scm"""

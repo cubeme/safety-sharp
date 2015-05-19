@@ -45,6 +45,7 @@ module internal AtDccaLtl =
         let hazardAsLtl = ScmVerificationElements.LtlExpr.fromPropositionalExpr hazard
         let allFaultsAsList = untransformedModel.getFaults
         let allFaultsAsSet = allFaultsAsList |> Set.ofList
+        let numberOfAllFaults = allFaultsAsSet.Count
         // assert (List.Length allFaultsAsList = Set.count allFaultsAsSet)
 
         let ``even when these faults appear, system is safe``(faultsWhichMayAppear:Set<FaultPath>) : ElementToCheck =
@@ -72,15 +73,18 @@ module internal AtDccaLtl =
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (0) ...
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (...) ...
             // formulasToVerify_CheckIfNumberOfFaultsIsSafe (allFaults.Size) ...
-            let rec createCandidates (selectionsLeft:int) (alreadyInSet:Set<FaultPath>) (toDecide:FaultPath list) : Set<FaultPath> list =
+            let rec createCandidates (selectionsLeft:int,decisionsLeft:int) (alreadyInSet:Set<FaultPath>) (toDecide:FaultPath list) : Set<FaultPath> list =
                 if selectionsLeft <= 0 then
                     [alreadyInSet]
+                else if decisionsLeft = selectionsLeft then                    
+                    let takeTheRest = toDecide |> Set.ofList |> Set.union alreadyInSet
+                    [takeTheRest]
                 else
                     assert (toDecide.IsEmpty = false)
-                    let selectedBranch =    createCandidates (selectionsLeft - 1) (alreadyInSet.Add (toDecide.Head)) (toDecide.Tail)
-                    let notSelectedBranch = createCandidates (selectionsLeft)     (alreadyInSet)                     (toDecide.Tail)
+                    let selectedBranch =    createCandidates (selectionsLeft - 1, decisionsLeft - 1) (alreadyInSet.Add (toDecide.Head)) (toDecide.Tail)
+                    let notSelectedBranch = createCandidates (selectionsLeft,     decisionsLeft - 1) (alreadyInSet)                     (toDecide.Tail)
                     selectedBranch@notSelectedBranch
-            let allCandidates = createCandidates (exactNumberOfFaults) (Set.empty<FaultPath>) (allFaultsAsList)
+            let allCandidates = createCandidates (exactNumberOfFaults,numberOfAllFaults) (Set.empty<FaultPath>) (allFaultsAsList)
             let filteredCandidates = allCandidates |> List.filter (isAlreadyKnownThatUnsafe knownUnsafe)
             let ltlOfFilteredCandidates = filteredCandidates |> List.map ``even when these faults appear, system is safe``
             ltlOfFilteredCandidates
@@ -133,8 +137,7 @@ module internal AtDccaLtl =
                 checkedFormulas |> List.fold calculateNewKnownUnsafe knownUnsafe
             
             let fullDcca : Set<FaultPath> list =
-                let numberOfFaults = allFaultsAsList.Length
-                {0..numberOfFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
+                {0..numberOfAllFaults} |> Seq.toList |> List.fold checkIfSizeIsSafe ([]:Set<FaultPath> list)
             fullDcca
 
             
